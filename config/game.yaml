@@ -1,0 +1,27 @@
+Machine:
+    HZ: 50
+    Balls Installed: 6
+    Min Balls: 3  # game will not start with fewer than this
+    Max Balls: 6  # game will not start if it finds more than this
+    
+GameFlow:
+    - attract:
+        Module: mpf.attract
+        Class: Attract
+    - game:
+        Module: mpf.game
+        Class: Game
+
+BallSearch:
+    Secs until ball search start: 10
+    Secs between ball search rounds: 3
+    Secs between ball search coils: .15
+
+    Phase 1 secs: 10
+    Phase 2 secs: 10
+    Missing balls on startup: ignore # search, halt #todo
+
+Game:
+    num_hits_for_valid_playfied: 2
+    Balls per game: 2
+    Max players per game: 4

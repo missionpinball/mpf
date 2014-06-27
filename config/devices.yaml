@@ -1,0 +1,97 @@
+Devices:
+    Flippers:
+        LowerLeft:
+            main_coil: flipperLwLMain
+            hold_coil: flipperLwLHold
+            activation_switch: flipperLwL
+            eos_switch: flipperLwL_EOS
+            #use_eos: True
+            #hold_pwm:
+            #tags:
+            label: Left Main Flipper
+        LowerRight:
+            main_coil: flipperLwRMain
+            hold_coil: flipperLwRHold
+            activation_switch: flipperLwR
+            eos_switch: flipperLwR_EOS
+            label: Right Main Flipper
+        UpperLeft:
+            main_coil: flipperUpLMain
+            hold_coil: flipperUpLHold
+            activation_switch: flipperUpL
+            eos_switch: flipperUpL_EOS
+            label: Upper Left Flipper
+        UpperRight:
+            main_coil: flipperUpRMain
+            hold_coil: flipperUpRHold
+            activation_switch: flipperUpR
+            eos_switch: flipperUpR_EOS
+            label: Upper Right Flipper
+            
+    Autofire Coils:
+        # label
+            # coil - name
+            # switch - name
+            # switch activity - 0 = inactive, 1 = active
+            # coil action - enable, pulse, pwm, pulse_pwm, disable
+            # delay - ms before firing
+            # recycle time - ms before being allowed to fire again
+            
+        SlingL:
+            coil: slingL
+            switch: slingL
+        SlingR:
+            coil: slingR
+            switch: slingR
+            
+    DropTargets:
+        Judge:
+            J:
+                switch: dropTargetJ
+                light: dropTargetJ
+                reset_coil: resetDropTarget
+            U:
+                switch: dropTargetU
+                light: dropTargetU
+                reset_coil: resetDropTarget
+            D:
+                switch: dropTargetD
+                light: dropTargetD
+                reset_coil: resetDropTarget
+                drop_coil: tripDropTarget
+            G:
+                switch: dropTargetG
+                light: dropTargetG
+                reset_coil: resetDropTarget
+            E:
+                switch: dropTargetE
+                light: dropTargetE
+                reset_coil: resetDropTarget
+    Standups:
+        QuestionMark:
+            switch:
+            light:
+                
+    BallDevices:
+        trough:
+            tags: trough, home, drain
+            label: Main Trough
+            ball_switches: trough1, trough2, trough3, trough4, trough5, trough6, troughJam
+            ball_count_delay: 0.5  # change to msec? todo
+            eject_coil: trough
+            eject_switch: trough6
+            post_eject_delay_check: 2  # change to msec? todo
+            confirm_eject_type: device
+            confirm_eject_target: shooterLaneR
+        shooterLaneR:
+            tags: plunger, home, add_ball_live
+            label: Right Plunger Lane
+            ball_switches: shooterR
+            eject_switch: shooterR
+            ball_count_delay: 0.3
+            eject_coil: shooterR
+            confirm_eject_type: playfield
+            feeder_device: trough
+            player_controlled_eject: True
+            player_controlled_eject_tag: plunger  # dunno if this should be here
+            

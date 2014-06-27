@@ -1,0 +1,8 @@
+# Base configuration file which lists other configuration files
+# Files are processed in order
+
+- machine.yaml
+- devices.yaml
+- game.yaml
+- textstrings.yaml
+- keymap.yaml

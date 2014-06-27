@@ -1,0 +1,488 @@
+# Machine hardware config file for P-ROC for Judge Dredd
+
+Language: en
+
+Hardware:
+    Platform: p_roc # proc or fast
+    DriverBoards: wpc95 # pdb, wpc, wpc95, wpcAlphaNumeric, sternSAM, sternWhitestar
+
+Switches:
+    # **** Format ****
+    # name:
+    #   number: <number>
+    #   type: <type>
+    #
+    #   <number> can be: SFx (Flipper switch, labeled Fx in WPC manual
+    #                    SDx (Dedicated switch, labeled SDx in WPC manual
+    #                    Sx  (Matrix switch, labeled x in WPC manual
+    #   <type> can be: 'NO' (normally open.  This is the default; so no need to use this)
+    #                  'NC' (normally closed.  Common for optos)
+
+
+    # name:
+    #   number: <number>
+    #   type: <type>
+    #
+    #   <number> can be: SDx (Dedicated switch, x = P-ROC input) (valid x's are 0-32)
+    #                    c/r (Matrix switch, c = column, r = row
+    #
+    #                        Note - valid columns are 0-7, valid rows are 0-15
+    #
+
+    flipperLwR_EOS:
+        number: SF1
+    flipperLwR:
+        number: SF6
+    flipperLwL_EOS:
+        number: SF3
+    flipperLwL: 
+        number: SF4
+    flipperUpR_EOS: 
+        number: SF5
+    flipperUpR: 
+        number: SF2
+    flipperUpL_EOS: 
+        number: SF7
+    flipperUpL: 
+        number: SF8
+    coin1:
+        number: SD1
+    coin2:
+        number: SD2
+    coin3:
+        number: SD3
+    coin4:
+        number: SD4
+    esc: 
+        number: SD5
+    down: 
+        number: SD6
+    up: 
+        number: SD7
+    enter: 
+        number: SD8
+    fireL:
+        number: S11
+    fireR:
+        number: S12
+        tags: plunger
+    start:
+        number: S13
+        tags: start
+    plumbBob:
+        number: S14
+    ShooterLaneL:
+        number: S15
+    outlaneL:
+        number: S16
+        tags: ballLive
+    inlaneL:
+        number: S17
+        tags: ballLive
+    threeBankTargets:
+        number: S18
+        tags: ballLive
+    slamTilt:
+        number: S21
+    coinDoor:
+        number: S22
+    ticketDispenser:
+        number: S23
+    alwaysClosed:
+        number: S24
+    rightTopPost:
+        number: S25
+        tags: ballLive
+    captiveBall1:
+        number: S26
+        tags: ballLive
+    mystery:
+        number: S27
+        tags: ballLive
+#    ballOnMagnet:
+#        number: S28
+    buyIn:
+        number: S31
+ #   leftRampEnter:
+ #       number: S32
+ #       type: 'NC'
+    leftRollover:
+        number: S33
+        tags: ballLive
+    inlaneR:
+        number: S34
+        tags: ballLive
+    topCenterRollover:
+        number: S35
+        tags: ballLive
+    leftScorePost:
+        number: S36
+        tags: ballLive
+    subwayEnter1:
+        number: S37
+        tags: ballLive
+    subwayEnter2:
+        number: S38
+    shooterR:
+        number: S41
+        tags: plunger
+    outlaneR:
+        number: S42
+        tags: ballLive
+    outerInlaneR:
+        number: S43
+        tags: ballLive
+    superGame:
+        number: S44
+    slingL: 
+        number: S51
+        tags: ballLive
+    slingR: 
+        number: S52
+        tags: ballLive
+    captiveBall2:
+        number: S53
+        tags: ballLive
+    dropTargetJ:
+        number: S54
+        type: 'NC'
+        tags: ballLive
+    dropTargetU:
+        number: S55
+        type: 'NC'
+        tags: ballLive
+    dropTargetD:
+        number: S56
+        type: 'NC'
+        tags: ballLive
+    dropTargetG:
+        number: S57
+        type: 'NC'
+        tags: ballLive
+    dropTargetE:
+        number: S58
+        type: 'NC'
+        tags: ballLive
+    globePosition1: 
+        number: S61
+        type: 'NO' # Manual says NC
+    craneRelease: 
+        number: S62
+        type: 'NC'
+    leftRampToLock:
+        number: S63
+        type: 'NC'
+        tags: ballLive
+    leftRampExit:
+        number: S64
+        type: 'NC'
+        tags: ballLive
+    centerRampExit:
+        number: S66
+        type: 'NC'
+        tags: ballLive
+    leftRampEnter:
+        number: S67
+        type: 'NC'
+        tags: ballLive
+    captiveBall3:
+        number: S68
+        tags: ballLive
+    magnetOverRing:
+        number: S71
+        type: 'NO' # Manual says NC
+    topRightOpto:
+        number: S72
+        type: 'NC'
+        tags: ballLive
+    popperL:
+        number: S73
+        type: 'NC'
+        tags: ballLive
+    popperR:
+        number: S74
+        type: 'NC'
+        tags: ballLive
+    topRampExit:
+        number: S75
+        type: 'NC'
+        tags: ballLive
+    rightRampExit:
+        number: S76
+        type: 'NC'
+        tags: ballLive
+    globePosition2:
+        number: S77
+        type: 'NO' # Manual says NC
+    trough1:
+        number: S81
+        type: 'NC'
+    trough2:
+        number: S82
+        type: 'NC'
+    trough3:
+        number: S83
+        type: 'NC'
+    trough4:
+        number: S84
+        type: 'NC'
+    trough5:
+        number: S85
+        type: 'NC'
+    trough6:
+        number: S86
+        type: 'NC'
+    troughJam:
+        number: S87
+        type: 'NC'
+
+Coils:
+# Coil numbering format: Ax-By-z:
+
+# Capital letters are required, lower case letters represent the numbers:
+# x : Board address (0-7)
+# y : Bank address (0 for A, 1 for B)
+# z : Output number (0-7)
+
+# label: The 'friendly' name for the coil. This is that name that will be
+# shown to the operator in configuration menus, reports, etc.
+
+# 'pulseTime' - the time in ms this coil is pulsed for. Either enter a value or
+# the word 'adjustable' which means the pulse time is adjustable via the
+# service menu. Note that in this case, you can set the default, min, and max
+# values in the operator settings template file.
+
+# tags: assigns properties to various coils. Setting a tag here causes the
+# software to do different things. Valid tags are:
+# 'ballSearch' - this coil will be fired when the machine is looking for a ball
+
+# 'holdPatter' - the on-off times (in ms) to patter a coil while it's held on.
+# For example holdPatter: 1-4 will patter the coil on for 1ms, off for 4ms
+
+    flipperLwRMain: 
+        number: FLRM
+    flipperLwRHold: 
+        number: FLRH
+    flipperLwLMain: 
+        number: FLLM
+    flipperLwLHold: 
+        number: FLLH
+    flipperUpRMain: 
+        number: FURM
+    flipperUpRHold: 
+        number: FURH
+    flipperUpLMain: 
+        number: FULM
+    flipperUpLHold: 
+        number: FULH
+    craneMagnet:
+        number: C01
+    popperL:
+        number: C02
+    popperR:
+        number: C03
+    crane:
+        number: C04
+    resetDropTarget:
+        number: C05
+        tags: ballSearch
+    globeMotor:
+        number: C06
+    knocker:
+        number: C07
+    shooterR:
+        number: C08
+    shooterL:
+        number: C09
+    tripDropTarget:
+        number: C10
+        tags: ballSearch
+    diverter:
+        number: C11
+        tags: ballSearch
+    trough:
+        number: C13
+    slingL: 
+        number: C15
+        tags: ballSearch
+    slingR: 
+        number: C16
+        tags: ballSearch
+    flasherFire:
+        number: C17
+    flasherFear:
+        number: C18
+    flasherDeath:
+        number: C19
+    flasherMortis:
+        number: C20
+    flasherPursuitL:
+        number: C21
+    flasherPursuitR:
+        number: C22
+    flasherBlackout:
+        number: C23
+    flasherCursedEarth:
+        number: C24
+    flashersLowerLeft:
+        number: C25
+    flasherGlobe:
+        number: C26
+    flashersRtRamp:
+        number: C27
+    flashersInsert:
+        number: C28
+Lamps:
+# Lamp numbering format: C-Ax-By-z:R-Am-Bn-p:
+
+# Capital letters are required, lower case letters represent the numbers:
+# For Columns (Source circuits - represented by the 'C')
+# x : Column board address (0-7)
+# y : Column bank address (0 for A, 1 for B)
+# z : Output number (0-7)
+
+# For Rows (Sink circuits - represented by the 'R')
+# m : Row board address (0-7)
+# n : Row bank address (0 for A, 1 for B)
+# p : Output number (0-7)
+
+    perp1White:
+        number: L11
+    perp1Red:
+        number: L12
+    perp1Yellow:
+        number: L13
+    perp1Green:
+        number: L14
+    perp2White:
+        number: L15
+    perp2Rred:
+        number: L16
+    perp2Yellow:
+        number: L17
+    perp2Green:
+        number: L18
+    perp4White:
+        number: L21
+    perp4Red:
+        number: L22
+    perp4Yellow:
+        number: L23
+    perp4Green:
+        number: L24
+    perp5White:
+        number: L25
+    perp5Red:
+        number: L26
+    perp5Yellow:
+        number: L27
+    perp5Green:
+        number: L28
+    perp3White:
+        number: L31
+    perp3Red:
+        number: L32
+    perp3Yellow:
+        number: L33
+    perp3Green:
+        number: L34
+    lock1:
+        number: L35
+    lock2:
+        number: L36
+    lock3:
+        number: L37
+    buyIn:
+        number: L38
+    crimeLevel4:
+        number: L41
+    crimeLevel3:
+        number: L42
+    crimeLevel2:
+        number: L43
+    crimeLevel1:
+        number: L44
+    meltdown:
+        number: L45
+    impersonator:
+        number: L46
+    battleTank:
+        number: L47
+    stopMeltdown:
+        number: L48
+    stakeout:
+        number: L51
+    safecracker:
+        number: L52
+    pursuit:
+        number: L53
+    ultimateChallenge:
+        number: L54
+    manhunt:
+        number: L55
+    blackout:
+        number: L56
+    sniper:
+        number: L57
+    pickAPrize:
+        number: L58
+    ExtraBall: # I think this is for both?
+        number: L61
+    rightStartFeature:
+        number: L62
+    tankCenter:
+        number: L63
+    awardSniper:
+        number: L64
+    airRade:
+        number: L65
+    leftCenterFeature:
+        number: L66
+    tankLeft:
+        number: L67
+    mystery:
+        number: L68
+    dropTargetJ:
+        number: L71
+    dropTargetU:
+        number: L72
+    dropTargetD:
+        number: L73
+    dropTargetG:
+        number: L74
+    dropTargetE:
+        number: L75
+    awardSafecracker:
+        number: L76
+    multiballJackpot:
+        number: L77
+    awardBadImpersonator:
+        number: L78
+    awardStakeout:
+        number: L81
+    blackoutJackpot:
+        number: L82
+    drainShield:
+        number: L83
+    judgeAgain:
+        number: L84
+    advanceCrimeLevel:
+        number: L85
+    tankRight:
+        number: L86
+    superGame:
+        number: L87
+    startButton:
+        number: L88
+        
+GI:
+    gi01:
+        number: G01
+    gi02:
+        number: G02
+    gi03:
+        number: G03
+    gi04:
+        number: G04
+    gi05:
+        number: G05

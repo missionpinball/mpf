@@ -1,0 +1,47 @@
+key_map:
+    
+# key is which key on the keyboard
+# key options include modifiers plus a dash, like:
+# shift-x
+# ctrl-x
+# shift-ctrl-x
+
+# options are key/value pairs
+# switch - the name of the switch device in your game
+# event - the name of the event in the framework which will fire
+# toggle - True/False - turns this into a "push on, push off" switch
+# invert - inverts the key, so key down is inactive and key up is active
+
+    z:
+        switch: flipperLwL
+    /:
+        switch: flipperLwR
+    s:
+        switch: start
+        #invert: True
+    1:
+        switch: trough1
+        toggle: True
+        start_active: True
+    2:
+        switch: trough2
+        toggle: True
+        start_active: True
+    3:
+        switch: trough3
+        toggle: True
+        start_active: True
+    4:
+        switch: trough4
+        toggle: True
+        start_active: True
+    5:
+        switch: trough5
+        toggle: True
+        start_active: True
+    6:
+        switch: trough6
+        toggle: True
+        start_active: True
+    q:
+        event: machine_reset
