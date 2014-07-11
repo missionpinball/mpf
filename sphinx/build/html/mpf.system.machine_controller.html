@@ -1,0 +1,214 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.machine_controller module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.machine_controller">
+<span id="mpf-system-machine-controller-module"></span><h1>mpf.system.machine_controller module</h1>
+<p>The main machine object for the Mission Pinball Framework.</p>
+<dl class="class">
+<dt id="mpf.system.machine_controller.MachineController">
+<em class="property">class </em><tt class="descclassname">mpf.system.machine_controller.</tt><tt class="descname">MachineController</tt><big>(</big><em>config_file</em>, <em>physical_hw=True</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for the Machine Controller object.</p>
+<p>The machine controller is the main entity of the entire framework. It&#8217;s the
+main part that&#8217;s in charge and makes things happen.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config_file</strong> : string</p>
+<blockquote>
+<div><p>The name of the main configuration file which will be read when the
+machine controller is created. This config file typically contains a
+list of additional config files that hold settings for the machine, but
+it can also hold settings itself.</p>
+</div></blockquote>
+<p><strong>physical_hw</strong> : bool</p>
+<blockquote class="last">
+<div><p>Specifies whether there is a physical pinball controller attached, or
+whether the machine controller should operate in software-only
+(virtual hardware) mode.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.disable_autofires">
+<tt class="descname">disable_autofires</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables all the autofire coils in the machine.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.disable_flippers">
+<tt class="descname">disable_flippers</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables all the flippers in the machine.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.enable_autofires">
+<tt class="descname">enable_autofires</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables all the autofire coils in the machine.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.enable_flippers">
+<tt class="descname">enable_flippers</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables all the flippers in the machine.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.end_run_loop">
+<tt class="descname">end_run_loop</tt><big>(</big><big>)</big></dt>
+<dd><p>Causes the main run_loop to end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.flow_advance">
+<tt class="descname">flow_advance</tt><big>(</big><em>position=None</em><big>)</big></dt>
+<dd><p>Advances the machine to the next machine mode as specified in the
+gameflow. Typically this just advances between Attract mode and Game
+mode.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.periodic_timer_test">
+<tt class="descname">periodic_timer_test</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.process_config">
+<tt class="descname">process_config</tt><big>(</big><big>)</big></dt>
+<dd><p>Processes the hardware config based on the machine config files.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.reset">
+<tt class="descname">reset</tt><big>(</big><big>)</big></dt>
+<dd><p>Resets the machine.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.run">
+<tt class="descname">run</tt><big>(</big><big>)</big></dt>
+<dd><p>The main machine run loop.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.set_platform">
+<tt class="descname">set_platform</tt><big>(</big><big>)</big></dt>
+<dd><p>Sets the hardware platform based on the &#8220;Platform&#8221; item in the
+configuration dictionary. Looks for a module of that name in the
+/platform directory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.string_to_list">
+<tt class="descname">string_to_list</tt><big>(</big><em>string</em><big>)</big></dt>
+<dd><p>Converts a comma-separated string into a python list.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.test">
+<tt class="descname">test</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.timer_tick">
+<tt class="descname">timer_tick</tt><big>(</big><big>)</big></dt>
+<dd><p>Called by the platform each machine tick based on self.HZ</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.machine_controller.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

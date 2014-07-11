@@ -1,0 +1,420 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.devices module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.devices">
+<span id="mpf-system-devices-module"></span><h1>mpf.system.devices module</h1>
+<p>Contains the classes for our various playfield devices, including:</p>
+<ul class="simple">
+<li>Flippers</li>
+<li>Autofire Coils (Coils that automatically fire based on switch activity, like</li>
+</ul>
+<p>pop bumpers or slingshots.)
+* Ball Devices (Anything that can hold a ball, like the trough, VUKs, the
+plunger lane, etc.)</p>
+<dl class="class">
+<dt id="mpf.system.devices.AutofireCoil">
+<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">AutofireCoil</tt><big>(</big><em>name</em>, <em>machine</em>, <em>hw_dict</em>, <em>config=False</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for coils in the pinball machine which should fire
+automatically based on switch activity using hardware switch rules.</p>
+<p>Autofire coils are used when you want the coils to respond &#8220;instantly&#8221;
+without waiting for the lag of the python game code running on the host
+computer.</p>
+<p>Examples of Autofire Coils are pop bumpers, slingshots, and flippers.</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.devices.AutofireCoil.configure">
+<tt class="descname">configure</tt><big>(</big><em>config=None</em><big>)</big></dt>
+<dd><p>Configures an autofire coil.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config</strong> : dictionary</p>
+<blockquote class="last">
+<div><p>The configuration dictionary which contains all the settings this
+coil should be configured with.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.AutofireCoil.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables the autofire coil rule.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.AutofireCoil.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables the autofire coil rule.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.devices.BallDevice">
+<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">BallDevice</tt><big>(</big><em>name</em>, <em>machine</em>, <em>hw_dict</em>, <em>config=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.HardwareObject" title="mpf.system.hardware.HardwareObject"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.HardwareObject</span></tt></a></p>
+<p>Base class for a &#8216;Ball Device&#8217; in a pinball machine.</p>
+<p>A ball device  is anything that can hold one or more balls, such as a
+trough, an eject hole, a VUK, a catapult, etc.</p>
+<p>Most (all?) machines will have at least two: the main trough (or wherever
+the balls end up when they drain), and the shooter lane.</p>
+<p>todo:
+whether they&#8217;re 1-to-1 or virtual?
+trigger recount switch(es)
+manual eject only?
+found_new_ball / or ball count change?
+eject type: 1, all, manual?
+eject firing type: hold a coil, for how long, etc.
+what happens on eject? event on attempt. event on success?</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong> : string</p>
+<blockquote>
+<div><p>How you want to refer to this ball device.</p>
+</div></blockquote>
+<p><strong>machine: machine controller instance</strong></p>
+<blockquote>
+<div><p>A reference to the machine controller</p>
+</div></blockquote>
+<p><strong>hw_dict</strong> : dict</p>
+<blockquote>
+<div><p>A reference to the hardware dictionary which holds a list of ball
+devices. (Note: this might change)</p>
+</div></blockquote>
+<p><strong>config</strong> : dict</p>
+<blockquote class="last">
+<div><p>A dictionary of settings which specify how this ball device should be
+set up. These settings typically come from the machine config files,
+but really they could come from anywhere. Refer to the config file
+reference for a description of these settings.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.devices.BallDevice.configure">
+<tt class="descname">configure</tt><big>(</big><em>config=None</em><big>)</big></dt>
+<dd><p>Performs the actual configuration of the ball device based on the
+dictionary that was passed to it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.BallDevice.count_balls">
+<tt class="descname">count_balls</tt><big>(</big><em>process_balls=True</em><big>)</big></dt>
+<dd><p>Counts the balls in the device and (optionally) processes any
+new balls that came in.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>process_balls</strong> : bool</p>
+<blockquote class="last">
+<div><p>False means that it only updates the count value and does not
+process new balls. This is useful for the first count after a
+machine reset.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.BallDevice.eject">
+<tt class="descname">eject</tt><big>(</big><em>num=0</em>, <em>force=False</em><big>)</big></dt>
+<dd><p>Eject a ball from the device</p>
+<p>Parameter &#8216;force&#8217; will force the eject even if eject_in_progress
+is not zero</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.BallDevice.eject_all">
+<tt class="descname">eject_all</tt><big>(</big><em>increment_live=False</em><big>)</big></dt>
+<dd><p>Ejects all balls from the device.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.BallDevice.eject_success">
+<tt class="descname">eject_success</tt><big>(</big><em>balls_ejected=1</em><big>)</big></dt>
+<dd><p>We got an eject success for this device.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.BallDevice.is_full">
+<tt class="descname">is_full</tt><big>(</big><big>)</big></dt>
+<dd><p>Checks to see if this device is &#8220;full&#8221;, meaning it is holding
+either the max number of balls it can hold, or it&#8217;s holding all the
+known balls in the machine.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.BallDevice.jam_switch_handler">
+<tt class="descname">jam_switch_handler</tt><big>(</big><big>)</big></dt>
+<dd><p>The device&#8217;s jam switch was just activated.</p>
+<p>This method is typically used with trough devices to figure out if
+balls fell back in.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.BallDevice.player_requests_eject">
+<tt class="descname">player_requests_eject</tt><big>(</big><big>)</big></dt>
+<dd><p>We just got a request for the device to eject a ball based on an
+event from the player who&#8217;s initiating the eject request.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.BallDevice.stage_ball">
+<tt class="descname">stage_ball</tt><big>(</big><big>)</big></dt>
+<dd><p>Used to make sure the device has a ball &#8216;staged&#8217; and ready to
+eject.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.devices.Flipper">
+<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">Flipper</tt><big>(</big><em>name</em>, <em>machine</em>, <em>hw_dict</em>, <em>config=True</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents a flipper in a pinball machine.</p>
+<p>Contains several methods for actions that can be performed on this flipper,
+like <a class="reference internal" href="#mpf.system.devices.Flipper.enable" title="mpf.system.devices.Flipper.enable"><tt class="xref py py-meth docutils literal"><span class="pre">enable()</span></tt></a>, <a class="reference internal" href="#mpf.system.devices.Flipper.disable" title="mpf.system.devices.Flipper.disable"><tt class="xref py py-meth docutils literal"><span class="pre">disable()</span></tt></a>, etc.</p>
+<p>Flippers have several options, including player buttons, EOS swtiches,
+multiple coil options (pulsing, hold coils, etc.)</p>
+<p>More details: <a class="reference external" href="http://missionpinball.com/docs/devices/flippers/">http://missionpinball.com/docs/devices/flippers/</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name: string</strong></p>
+<blockquote>
+<div><p>The name you&#8217;ll refer to this flipper object as.</p>
+</div></blockquote>
+<p><strong>machine: machine object</strong></p>
+<blockquote>
+<div><p>A reference to the machine controller instance.</p>
+</div></blockquote>
+<p><strong>hw_dict: dictionary</strong></p>
+<blockquote>
+<div><p>A dictionary that holds the configuration values which specify how
+this flipper should be configured. If this is None, it will use the
+system config settings that were read in from the config files when
+the machine was reset.</p>
+</div></blockquote>
+<p><strong>config: bool</strong></p>
+<blockquote class="last">
+<div><p>Specifies whether the flipper is configured now (versus simply created
+as a placeholder).</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.devices.Flipper.configure">
+<tt class="descname">configure</tt><big>(</big><em>config=None</em><big>)</big></dt>
+<dd><p>Configures the flipper device.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config</strong> : dictionary</p>
+<blockquote class="last">
+<div><p>A dictionary that holds the configuration values which specify how
+this flipper should be configured. If this is None, it will use the
+system config settings that were read in from the config files when
+the machine was reset.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.Flipper.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables the flipper.</p>
+<p>This method makes it so the cabinet flipper buttons no longer control
+the flippers. Used when no game is active and when the player has
+tilted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.Flipper.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables the flipper by writing the necessary hardware rules to the
+hardware controller.</p>
+<p>The hardware rules for coils can be kind of complex given all the
+options, so we&#8217;ve mapped all the options out here. We literally have
+methods to enable the various rules based on the rule letters here,
+which we&#8217;ve implemented below. Keeps it easy to understand. :)</p>
+<p>Two coils, using EOS switch to indicate the end of the power stroke:
+Rule  Type     Coil  Switch  Action
+A.    Enable   Main  Button  active
+D.    Enable   Hold  Button  active
+E.    Disable  Main  EOS     active
+F.    Disable  Main  Button  inactive
+G.    Disable  Hold  Button  inactive</p>
+<p>One coil, using EOS switch
+Rule  Type     Coil  Switch  Action
+A.    Enable   Main  Button  active
+H.    PWM      Main  EOS     active
+F.    Disable  Main  Button  inactive</p>
+<p>Two coils, not using EOS switch:
+Rule  Type     Coil  Switch  Action
+B.    Pulse    Main  Button  active
+D.    Enable   Hold  Button  active
+F.    Disable  Main  Button  inactive
+G.    Disable  Hold  Button  inactive</p>
+<p>One coil, not using EOS switch
+Rule  Type       Coil  Switch  Action
+C.    Pulse/PWM  Main  button  active
+F.    Disable    Main  button  inactive</p>
+<p>Use EOS switch for safety (for platforms that support mutiple switch
+rules). Note that this rule is the letter &#8220;i&#8221;, not a numeral 1.
+I. Enable power if button is active and EOS is not active</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.Flipper.enable_inverted">
+<tt class="descname">enable_inverted</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables inverted flippers.</p>
+<p>Inverted flippers is a novelty mode where the left flipper button
+controls the right flippers and vice-versa.</p>
+<p>This mode is not yet implemented.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.Flipper.enable_no_hold">
+<tt class="descname">enable_no_hold</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables the flippers in &#8216;no hold&#8217; mode.</p>
+<p>No Hold is a novelty mode where the flippers to not stay up even when
+the buttons are held in.</p>
+<p>This mode is not yet implemented.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.Flipper.enable_partial_power">
+<tt class="descname">enable_partial_power</tt><big>(</big><em>percent</em><big>)</big></dt>
+<dd><p>Enables flippers which operated at less than full power.</p>
+<p>This is a novelty mode, like &#8220;weak flippers&#8221; from the Wizard of Oz.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>percent</strong> : float</p>
+<blockquote>
+<div><p>Value between 0 and 1.0 which represents the percentage of power
+the flippers will be enabled at.</p>
+</div></blockquote>
+<p class="last"><strong>This mode is not yet implemented.</strong></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.devices.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

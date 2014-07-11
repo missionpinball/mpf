@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.modules.keyboard module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.modules.keyboard">
+<span id="mpf-modules-keyboard-module"></span><h1>mpf.modules.keyboard module</h1>
+<p>Contains the Keyboard class which allows a computer keyboard to be used to
+activate switches for MPF Python games.</p>
+<dl class="class">
+<dt id="mpf.modules.keyboard.Keyboard">
+<em class="property">class </em><tt class="descclassname">mpf.modules.keyboard.</tt><tt class="descname">Keyboard</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class which allows a computer keyboard to be used to similate
+switch activity in a pinball machine. This is good for testing purposes
+when you aren&#8217;t sitting at the actual machine.</p>
+<p>The Keyboard class gets its settings from the Machine Configuration Files
+in the [keymap] section.</p>
+<p>This module uses a pyglet window to capture the key events.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>machine</strong> : <tt class="xref py py-class docutils literal"><span class="pre">MachineController</span></tt></p>
+<blockquote class="last">
+<div><p>A reference to the instance of the MachineController object.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.modules.keyboard.Keyboard.add_key_map">
+<tt class="descname">add_key_map</tt><big>(</big><em>key</em>, <em>switch_name</em>, <em>toggle_key=False</em>, <em>start_active=False</em>, <em>invert=False</em><big>)</big></dt>
+<dd><p>Maps the given <em>key</em> to <em>switch_name</em>, where <em>key</em> is one of the
+key constants in <tt class="xref py py-mod docutils literal"><span class="pre">pygame.locals</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.modules.keyboard.Keyboard.get_keyboard_events">
+<tt class="descname">get_keyboard_events</tt><big>(</big><big>)</big></dt>
+<dd><p>Gets the key events from the pyglet window.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.modules.keyboard.Keyboard.set_initial_states">
+<tt class="descname">set_initial_states</tt><big>(</big><big>)</big></dt>
+<dd><p>Sets the initial states of all the switches by activating switches
+configured to start active.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.modules.keyboard.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

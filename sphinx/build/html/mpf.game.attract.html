@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.game.attract module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.game.attract">
+<span id="mpf-game-attract-module"></span><h1>mpf.game.attract module</h1>
+<p>Contains the Attract class which is the attract mode in a pinball machine.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Still need to add the code to watch for combinations of  button presses,
+like a long-press, pressing start while holding a flipper button, holding a
+flipper button to start tournament mode, etc.</p>
+</div>
+<dl class="class">
+<dt id="mpf.game.attract.Attract">
+<em class="property">class </em><tt class="descclassname">mpf.game.attract.</tt><tt class="descname">Attract</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.machine_mode.html#mpf.system.machine_mode.MachineMode" title="mpf.system.machine_mode.MachineMode"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.machine_mode.MachineMode</span></tt></a></p>
+<p>Base class for the active mode for a machine when a game is not in
+progress. It&#8217;s main job is to watch for the start button to be pressed, to
+post the requests to start games, and to move the machine flow to the next
+mode if the request to start game comes back as approved.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>machine</strong> : <tt class="xref py py-class docutils literal"><span class="pre">MachineController</span></tt></p>
+<blockquote class="last">
+<div><p>A reference to the instance of the MachineController object.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.game.attract.Attract.result_of_start_request">
+<tt class="descname">result_of_start_request</tt><big>(</big><em>result=True</em><big>)</big></dt>
+<dd><p>Called after the <em>request_to_start_game</em> event is posted.</p>
+<p>If <cite>result</cite> is True, this method posts the event
+<em>machine_flow_advance</em>. If False, nothing happens, as the game start
+request was denied by some handler.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>result</strong> : bool</p>
+<blockquote class="last">
+<div><p>Result of the boolean event <a href="#id1"><span class="problematic" id="id2">*</span></a>request_to_start_game. If any
+registered event handler did not want the game to start, this will
+be False. Otherwise it&#8217;s True.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.attract.Attract.start">
+<tt class="descname">start</tt><big>(</big><big>)</big></dt>
+<dd><p>Automatically called when the Attract game mode becomes active.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.attract.Attract.start_button_pressed">
+<tt class="descname">start_button_pressed</tt><big>(</big><big>)</big></dt>
+<dd><p>Called when the a switch tagged with <em>start</em> is activated.</p>
+<p>Since this is the Attract mode, this method posts a boolean event
+called <em>request_to_start_game</em>. If that event comes back True, this
+method calls <a class="reference internal" href="#mpf.game.attract.Attract.result_of_start_request" title="mpf.game.attract.Attract.result_of_start_request"><tt class="xref py py-meth docutils literal"><span class="pre">result_of_start_request()</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.attract.Attract.tick">
+<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
+<dd><p>Called once per machine tick.</p>
+<p>Currently this method does nothing. Eventually it will drive the DMD
+and do other Attract-type things.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.game.attract.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

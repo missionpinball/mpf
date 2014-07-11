@@ -1,0 +1,300 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.hardware module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.hardware">
+<span id="mpf-system-hardware-module"></span><h1>mpf.system.hardware module</h1>
+<p>Contains the class for hardware objects, as well as generic subclasses for
+each type of hardware item (LED, Lamp, Coil, Switch, Stepper). Then each
+platform will subclass these to add the platform-specific things it needs.</p>
+<dl class="class">
+<dt id="mpf.system.hardware.HardwareDict">
+<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">HardwareDict</tt></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></p>
+<p>A collection of HardwareObjects that make up all the hardware of one type.
+For example, there will be subclasses of this for LEDs, Lamps, Switches,
+Coils, etc.</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDict.get_from_number">
+<tt class="descname">get_from_number</tt><big>(</big><em>number</em><big>)</big></dt>
+<dd><p>Returns an item name based on its number.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDict.items_tagged">
+<tt class="descname">items_tagged</tt><big>(</big><em>tag</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.hardware.HardwareDirectLED">
+<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">HardwareDirectLED</tt><big>(</big><em>machine</em>, <em>name</em>, <em>number</em>, <em>platform_driver</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.system.hardware.HardwareLight" title="mpf.system.hardware.HardwareLight"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.HardwareLight</span></tt></a></p>
+<p>Represents an LED connected to an LED interface board. Can have any
+number of elements. Typically it&#8217;s single element (single color), or three
+element (RGB). (Though dual element red/green also exist.)</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDirectLED.color">
+<tt class="descname">color</tt><big>(</big><em>color</em><big>)</big></dt>
+<dd><p>Set an LED to a color. Color is a dictionary of ints, one for R, G,
+and B. Single or dual color LEDs only use the first or first two
+entries</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDirectLED.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables an LED, including all elements of a multi-color LED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDirectLED.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables all the elements of an LED. Really only useful for single
+color LEDs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDirectLED.fade">
+<tt class="descname">fade</tt><big>(</big><em>color</em>, <em>fadetime</em><big>)</big></dt>
+<dd><p>Fades the LED to the color via the fadetime in ms</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.hardware.HardwareDriver">
+<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">HardwareDriver</tt><big>(</big><em>machine</em>, <em>name</em>, <em>number</em>, <em>platform_driver</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.system.hardware.HardwareObject" title="mpf.system.hardware.HardwareObject"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.HardwareObject</span></tt></a></p>
+<p>Generic class that holds driver elements.</p>
+<p>This exposes the methods you can use. Then each platform module subclasses
+these to actually perform the actions.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="60%" />
+<col width="40%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>platform_driver</td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDriver.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables this driver</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDriver.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.hardware.HardwareDriver.log">
+<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x10b380390&gt;</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.hardware.HardwareDriver.platform_driver">
+<tt class="descname">platform_driver</tt><em class="property"> = None</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDriver.pulse">
+<tt class="descname">pulse</tt><big>(</big><em>milliseconds=None</em><big>)</big></dt>
+<dd><p>Enables this driver. If no params are provided then it uses the
+default.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDriver.pulse_pwm">
+<tt class="descname">pulse_pwm</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareDriver.pwm">
+<tt class="descname">pwm</tt><big>(</big><em>on_time</em>, <em>off_time</em>, <em>orig_on_time</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.hardware.HardwareLight">
+<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">HardwareLight</tt></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.system.hardware.HardwareObject" title="mpf.system.hardware.HardwareObject"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.HardwareObject</span></tt></a></p>
+<p>Parent class of &#8220;lights&#8221; in a pinball machine. These can either be
+traditional incandescent lamps (or replacement LEDs) connected to a lamp
+matrix, or they can be LEDs connected to an LED control board.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.hardware.HardwareMatrixLight">
+<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">HardwareMatrixLight</tt></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.system.hardware.HardwareLight" title="mpf.system.hardware.HardwareLight"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.HardwareLight</span></tt></a></p>
+<p>Represents a light connected to a traditional lamp matrix. Could
+technically be an incandescent lamp or a replacement single-color LED.</p>
+<p>Note you cannot control brightness on these. They&#8217;re either &#8220;on&#8221; or &#8220;off.&#8221;</p>
+<p>Also you can&#8217;t control the color. (Color is dictated by the color of the
+light and/or the color of the plastic insert or cap.)</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareMatrixLight.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.HardwareMatrixLight.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.hardware.HardwareObject">
+<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">HardwareObject</tt><big>(</big><em>machine</em>, <em>name</em>, <em>number=-1</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.hardware.HardwareSwitch">
+<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">HardwareSwitch</tt><big>(</big><em>machine</em>, <em>name</em>, <em>number</em>, <em>platform_driver</em>, <em>type='NO'</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.system.hardware.HardwareObject" title="mpf.system.hardware.HardwareObject"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.HardwareObject</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.hardware.Platform">
+<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">Platform</tt><big>(</big><em>platform_object</em>, <em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class which communicates with the actual platform drivers.</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.hardware.Platform.clear_hw_rule">
+<tt class="descname">clear_hw_rule</tt><big>(</big><em>sw_name</em><big>)</big></dt>
+<dd><p>Clears all the hardware switch rules for a switch, meaning those
+switch actions will no longer affect coils.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.Platform.hw_loop">
+<tt class="descname">hw_loop</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.Platform.process_hw_config">
+<tt class="descname">process_hw_config</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.Platform.set_hw_rule">
+<tt class="descname">set_hw_rule</tt><big>(</big><em>sw_name</em>, <em>sw_activity</em>, <em>coil_name=None</em>, <em>coil_action_time=0</em>, <em>pulse_time=0</em>, <em>pwm_on=0</em>, <em>pwm_off=0</em>, <em>delay=0</em>, <em>recycle_time=0</em>, <em>debounced=False</em>, <em>drive_now=False</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.Platform.timer_config">
+<tt class="descname">timer_config</tt><big>(</big><em>HZ</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.hardware.Platform.timer_initialize">
+<tt class="descname">timer_initialize</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.hardware.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

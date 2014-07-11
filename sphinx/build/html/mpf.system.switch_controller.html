@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.switch_controller">
+<span id="mpf-system-switch-controller-module"></span><h1>mpf.system.switch_controller module</h1>
+<dl class="class">
+<dt id="mpf.system.switch_controller.SwitchController">
+<em class="property">class </em><tt class="descclassname">mpf.system.switch_controller.</tt><tt class="descname">SwitchController</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for the switch controller, which is responsible for receiving
+all switch activity in the machine and converting them into events.</p>
+<p>More info:
+<a class="reference external" href="http://missionpinball.com/docs/system-components/switch-controller/">http://missionpinball.com/docs/system-components/switch-controller/</a></p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.add_switch_handler">
+<tt class="descname">add_switch_handler</tt><big>(</big><em>switch_name</em>, <em>callback</em>, <em>state=1</em>, <em>ms=0</em><big>)</big></dt>
+<dd><p>Register a handler to take action on some switch event.</p>
+<p>These events can be trigger when a switch becomes active (state=1) or
+inactive (state=0).</p>
+<p>If you specify a &#8216;ms&#8217; parameter, the handler won&#8217;t be called until the
+switch is in that state for that many ms (rounded up to the nearst
+machine timer tick).</p>
+<p>You can mix &amp; match entries for the same switch here.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.initialize_hw_states">
+<tt class="descname">initialize_hw_states</tt><big>(</big><big>)</big></dt>
+<dd><p>Reads in all the hw states of the switches.</p>
+<p>We can&#8217;t do this in __init__() because we need the switch controller to
+be setup first before we set up the hw switches.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.is_active">
+<tt class="descname">is_active</tt><big>(</big><em>switch_name</em>, <em>ticks=None</em><big>)</big></dt>
+<dd><p>Queries whether a switch is active.</p>
+<p>Returns True if the current switch is active. If optional arg ticks
+is passed, will only return true if switch has been active for that
+many ticks.</p>
+<p>Note this method does consider whether a switch is NO or NC. So an NC
+switch will show as active if it is open, rather than closed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.is_inactive">
+<tt class="descname">is_inactive</tt><big>(</big><em>switch_name</em>, <em>ticks=None</em><big>)</big></dt>
+<dd><p>Queries whether a switch is inactive.</p>
+<p>Returns True if the current switch is inactive. If optional arg
+ticks is passed, will only return true if switch has been inactive
+for that many ticks.</p>
+<p>Note this method does consider whether a switch is NO or NC. So an NC
+switch will show as active if it is closed, rather than open.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.is_state">
+<tt class="descname">is_state</tt><big>(</big><em>switch_name</em>, <em>state</em>, <em>ticks=0</em><big>)</big></dt>
+<dd><p>Queries whether a switch is in a given state.</p>
+<p>Returns True if the switch_name has been in the state for the given
+number of ticks. If ticks is not specific, returns True if the switch
+is in the state regardless of how long its been in that state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.post_switch_events">
+<tt class="descname">post_switch_events</tt><big>(</big><em>switch_name</em>, <em>state</em><big>)</big></dt>
+<dd><p>Posts the game events based on this switch changing state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.process_switch">
+<tt class="descname">process_switch</tt><big>(</big><em>name=None</em>, <em>state=1</em>, <em>num=None</em>, <em>obj=None</em><big>)</big></dt>
+<dd><p>Processes a new switch state change.</p>
+<p>Default is to pass in a name, but you can also pass a switch based on
+its number or a reference to the switch object.</p>
+<p>State 0 means the switch changed from active to inactive, and 1 means
+it changed from inactive to active. (The hardware &amp; platform code
+handles NC versus NO switches and translates them to &#8216;active&#8217; versus
+&#8216;inactive&#8217;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.set_state">
+<tt class="descname">set_state</tt><big>(</big><em>switch_name</em>, <em>state</em><big>)</big></dt>
+<dd><p>Sets the state of a switch.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.tick">
+<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
+<dd><p>Called once per machine tick.</p>
+<p>Checks the current list of active timed switches to see if it&#8217;s
+time to take action on any of them. If so, does the callback and then
+removes that entry from the list.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.ticks_since_change">
+<tt class="descname">ticks_since_change</tt><big>(</big><em>switch_name</em><big>)</big></dt>
+<dd><p>Returns the number of ticks that have elapsed since this switch
+last changed state.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.switch_controller.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

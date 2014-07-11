@@ -1,0 +1,506 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.ball_controller module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.ball_controller">
+<span id="mpf-system-ball-controller-module"></span><h1>mpf.system.ball_controller module</h1>
+<p>Manages and tracks all the balls in a pinball machine.</p>
+<dl class="class">
+<dt id="mpf.system.ball_controller.BallController">
+<em class="property">class </em><tt class="descclassname">mpf.system.ball_controller.</tt><tt class="descname">BallController</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for the Ball Controller which is used to keep track of all
+the balls in a pinball machine.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>machine</strong> : <tt class="xref py py-class docutils literal"><span class="pre">MachineController</span></tt></p>
+<blockquote class="last">
+<div><p>A reference to the instance of the MachineController object.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.are_all_balls_home">
+<tt class="descname">are_all_balls_home</tt><big>(</big><big>)</big></dt>
+<dd><p>Checks to see if all the balls are &#8216;home,&#8217; which means they&#8217;re all
+contained in ball devices that are have the &#8216;home&#8217; tag.</p>
+<p>Typically this is the trough and the plunger lane, but you can make
+them whatever you want.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_add_live">
+<tt class="descname">ball_add_live</tt><big>(</big><em>num=0</em>, <em>stealth=False</em>, <em>auto=False</em>, <em>device=None</em><big>)</big></dt>
+<dd><p>Adds one or more balls into play. This is how start a ball or how
+you add additional balls in a multiball scenario.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>num</strong> : int</p>
+<blockquote>
+<div><p>Number of balls to be launched. If ball launches are still
+pending from a previous request, this number will be added to the
+previously requested number.</p>
+</div></blockquote>
+<p><strong>stealth</strong> : bool</p>
+<blockquote>
+<div><p>Set to True if the balls being launched should NOT
+be added to the number of balls in play.  For instance, if
+a ball is being locked on the playfield, and a new ball is
+being launched to keep only 1 active ball in play,
+stealth=True should be used.</p>
+</div></blockquote>
+<p><strong>auto</strong> : bool</p>
+<blockquote>
+<div><p>Whether the balls should be added automatically. False means the
+player has to hit the plunger switch or manually plunge. True means
+the plunger will automatically fire.</p>
+<p>Note if the ball device you&#8217;re adding from is not configured with a
+player switch and you request to add live with auto=False, it will
+eject the ball(s) anyway since there&#8217;s no way for the player to do
+it.</p>
+</div></blockquote>
+<p><strong>device</strong> : ball device object</p>
+<blockquote class="last">
+<div><p>Specifies which ball device you want to add the ball from.
+Default is whichever device is tagged with &#8216;add_live.&#8217; (If you have
+multiple devices taggeed with add_live it will be random. If that&#8217;s
+not what you want then pass the device you want to launch from.)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_add_live_success">
+<tt class="descname">ball_add_live_success</tt><big>(</big><big>)</big></dt>
+<dd><p>A ball was just added live to the playfield.</p>
+<p>Note there&#8217;s no option to specify how many balls were added live since
+fundamentally you can only add one ball at a time. If you add a bunch
+of balls really fast (like from opening a gate on a lock device, then
+just call this method multiple times.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_contained_count_change">
+<tt class="descname">ball_contained_count_change</tt><big>(</big><em>change=0</em><big>)</big></dt>
+<dd><p>Used when you want to change the count of balls that are contained
+(held) versus uncontained (loose).</p>
+<p>Pass a positive value (+) to increase the contained count and
+decrease the uncontained count (i.e. when a ball enters a device or is
+captured.)</p>
+<p>Pass a negavitve value (-) to decrease the contained count and
+increase the uncontained count (i.e. when a ball is released from a
+device and is now loose on the playfield)</p>
+<p>If this count changes results in at least one ball being uncontained,
+the ball controller will start the ball search timer. If this count
+change results in no balls being uncontained, it will stop the ball
+search timer. If a ball search is in progress, it will sttop it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>change</strong> : int</p>
+<blockquote class="last">
+<div><p>The change in contained balls.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_drained">
+<tt class="descname">ball_drained</tt><big>(</big><em>new_balls=1</em><big>)</big></dt>
+<dd><p>We&#8217;ve confirmed that a ball has entered a ball device tagged with
+<em>drain</em>.</p>
+<p>When this method is called, it posts a relay event called <em>ball_drain</em>
+along with the number of balls that just entered the device. This gives
+other modules a chance to intervene before the ball controller posts
+the <em>ball_remove_live</em> event.</p>
+<p>This is typically used with ball save. If ball save is active and a
+ball drains, when we post the ball_drain event the ball save module
+will pick it up and change the balls parameter that&#8217;s being passed
+around to zero. That will cause our callback
+<a class="reference internal" href="#mpf.system.ball_controller.BallController.process_ball_drained" title="mpf.system.ball_controller.BallController.process_ball_drained"><tt class="xref py py-meth docutils literal"><span class="pre">process_ball_drained()</span></tt></a> to not post the <em>ball_remove_live event</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_ending">
+<tt class="descname">ball_ending</tt><big>(</big><em>queue</em><big>)</big></dt>
+<dd><p>Tells the ball controller that the game received a request to end
+a ball.</p>
+<p>Typically this happens if the last ball drains.</p>
+<p>This method is tied to a queue event which means we can cancel the
+ball ending request if we want to. In this case we&#8217;ll check the count
+of the number of balls we still have to add live. If it&#8217;s more than
+zero then we&#8217;re canceling the ball ending request by returning False.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_found">
+<tt class="descname">ball_found</tt><big>(</big><em>num=1</em><big>)</big></dt>
+<dd><p>Used when a previously missing ball is found. Updates the balls
+known and balls missing variables.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>num</strong> : int</p>
+<blockquote class="last">
+<div><p>Specifies how many balls have been found. Default is 1.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_initial_count">
+<tt class="descname">ball_initial_count</tt><big>(</big><big>)</big></dt>
+<dd><p>Sets up our counts when the machine is first powered on or after
+a reset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_live_hit">
+<tt class="descname">ball_live_hit</tt><big>(</big><big>)</big></dt>
+<dd><p>A ball just hit a playfield switch.</p>
+<p>This means we have a ball loose on the playfield. (It doesn&#8217;t
+necessarily mean that ball is &#8220;live,&#8221; as this could happen as a ball
+rolls towards the drain after a tilt.)</p>
+<p>This method is mainly used to continuously push out the start time of
+the ball search. If this method is called when a ball search is in
+progress, it will end the it. (Since this method means we found the
+stuck ball.)</p>
+<p>Note you shouldn&#8217;t have to call this method manually. The switch
+controller will do it automatically each time a switch tagged with
+&#8216;ball_live&#8217; has been activated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_lost">
+<tt class="descname">ball_lost</tt><big>(</big><big>)</big></dt>
+<dd><p>Mark a ball as lost</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_search_begin">
+<tt class="descname">ball_search_begin</tt><big>(</big><em>force=False</em><big>)</big></dt>
+<dd><p>Begin the ball search process</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_search_disable">
+<tt class="descname">ball_search_disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables ball search.</p>
+<p>Note this is used to prevent a future ball
+search from happening (like when all balls become contained.) This
+method is not used to cancel an existing ball search. (Use
+ball_search_end for that.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_search_end">
+<tt class="descname">ball_search_end</tt><big>(</big><big>)</big></dt>
+<dd><p>End the ball search, either because we found the ball or
+are giving up.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_search_failed">
+<tt class="descname">ball_search_failed</tt><big>(</big><big>)</big></dt>
+<dd><p>Ball Search did not find the ball.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_search_schedule">
+<tt class="descname">ball_search_schedule</tt><big>(</big><em>secs=None</em>, <em>force=False</em><big>)</big></dt>
+<dd><p>Schedules a ball search to start. By default it will schedule it
+based on the time configured in the machine configuration files.</p>
+<p>If a ball search is already scheduled, this method will reset that
+schedule to the new time passed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>secs</strong> : into</p>
+<blockquote>
+<div><p>Schedules the ball search that many secs from now.</p>
+</div></blockquote>
+<p><strong>force</strong> : bool</p>
+<blockquote class="last">
+<div><p>Set True to force a ball search. Otherwise it will only schedule it
+if self.flag_no_ball_search is False</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_started">
+<tt class="descname">ball_started</tt><big>(</big><big>)</big></dt>
+<dd><p>Tells the ball controller that a ball has started.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.ball_update_all_counts">
+<tt class="descname">ball_update_all_counts</tt><big>(</big><big>)</big></dt>
+<dd><p>Does a full count of all balls, including counting all balls in
+all devices and adding in any uncontained balls.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.count_contained_balls">
+<tt class="descname">count_contained_balls</tt><big>(</big><em>process=True</em><big>)</big></dt>
+<dd><p>Loops through all the ball devices and gets a count of how many
+balls they have.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>process</strong> : bool</p>
+<blockquote class="last">
+<div><p>If True, then if there&#8217;s a contained count change, this method
+will call <a class="reference internal" href="#mpf.system.ball_controller.BallController.ball_contained_count_change" title="mpf.system.ball_controller.BallController.ball_contained_count_change"><tt class="xref py py-meth docutils literal"><span class="pre">ball_contained_count_change()</span></tt></a>.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.empty_playfield_devices">
+<tt class="descname">empty_playfield_devices</tt><big>(</big><big>)</big></dt>
+<dd><p>Ejects all balls from all devices tagged with &#8216;playfield&#8217;.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.flag_ball_search_in_progress">
+<tt class="descname">flag_ball_search_in_progress</tt><em class="property"> = None</em></dt>
+<dd><p>True if there&#8217;s currently a ball search in progress.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.flag_no_ball_search">
+<tt class="descname">flag_no_ball_search</tt><em class="property"> = None</em></dt>
+<dd><p>Ball search is enabled and disabled automatically based on whether
+any balls are uncontained. Set this flag_no_ball_search to True if for
+some reason you don&#8217;t want the ball search to be enabled. BTW I can&#8217;t
+think of why you&#8217;d ever want this. The automatic stuff works great, and
+you need to keep it enabled even after tilts and stuff. Maybe for some
+kind of maintainance mode or something?</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.game">
+<tt class="descname">game</tt><em class="property"> = None</em></dt>
+<dd><p>Holds the game object when a game is in progress.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.game_end">
+<tt class="descname">game_end</tt><big>(</big><big>)</big></dt>
+<dd><p>Tells the ball controller that the game is ending.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.game_start">
+<tt class="descname">game_start</tt><big>(</big><em>game</em><big>)</big></dt>
+<dd><p>Used to inform the ball controller that a game is starting.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>game</strong> : <a class="reference internal" href="mpf.game.game.html#mpf.game.game.Game" title="mpf.game.game.Game"><tt class="xref py py-meth docutils literal"><span class="pre">mpf.game.game.Game()</span></tt></a> instance</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.get_balldevice_status">
+<tt class="descname">get_balldevice_status</tt><big>(</big><em>includetrough=False</em><big>)</big></dt>
+<dd><p>Returns a dictionary of ball devices, along with the number of
+balls the machine <em>thinks</em> are in each device.</p>
+<p>Format is a dictionary, with the device object as the key, and the
+number of balls contained as the value.</p>
+<p># todo need to think about priorities. Assume it should start with ones
+it thinks are empty? And then maybe do them in the order the game
+wants?</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.num_balls_contained">
+<tt class="descname">num_balls_contained</tt><em class="property"> = None</em></dt>
+<dd><p>Balls contained in ball devices.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.num_balls_known">
+<tt class="descname">num_balls_known</tt><em class="property"> = None</em></dt>
+<dd><p>How many balls the machine knows about. Could vary from the number
+of balls installed based on how many are <em>actually</em> in the machine, or
+to compensate for balls that are lost or stuck.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.num_balls_missing">
+<tt class="descname">num_balls_missing</tt><em class="property"> = None</em></dt>
+<dd><p>Balls lost and/or not installed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.num_balls_uncontained">
+<tt class="descname">num_balls_uncontained</tt><em class="property"> = None</em></dt>
+<dd><p>Balls loose on the playfield.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.process_ball_drained">
+<tt class="descname">process_ball_drained</tt><big>(</big><em>balls=0</em><big>)</big></dt>
+<dd><p>Callback from the ball_drained event. If it receives a
+parameter of <em>balls</em> which is greater than 1, it will post a
+<em>ball_remove_live</em> event for each ball.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.request_to_start_game">
+<tt class="descname">request_to_start_game</tt><big>(</big><big>)</big></dt>
+<dd><p>Method registered for the <em>request_to_start_game</em> event.</p>
+<p>Checks to make sure that the balls are in all the right places and
+returns. If too many balls are missing (based on the config files &#8216;Min
+Balls&#8217; setting), it will return False to reject the game start request.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.send_all_balls_home">
+<tt class="descname">send_all_balls_home</tt><big>(</big><big>)</big></dt>
+<dd><p>Ejects all balls from all ball devices that do not have the &#8216;home&#8217;
+tag.</p>
+<p>Typically this would be used after a game ends, or when the machine is
+reset or first starts up.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.tilt">
+<tt class="descname">tilt</tt><big>(</big><big>)</big></dt>
+<dd><p>Registers for the &#8216;tilt&#8217; event so the ball controller can do what
+it needs to do.</p>
+<p>Mainly this just tracks how many balls were live before
+the tilt and waits for them all to drain so the game can proceed. It
+also makes sure any balls that enter ball devices are ejected as
+they&#8217;re rolling towards the drain.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.ball_controller.BallController.validate_playfield">
+<tt class="descname">validate_playfield</tt><big>(</big><big>)</big></dt>
+<dd><p>Validates the playfield, but only if it was not valid before.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.ball_controller.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

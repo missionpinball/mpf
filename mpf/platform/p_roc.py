@@ -1,14 +1,15 @@
-"""
-proc.py
-Contains the drivers and interface code for pinball machines which use the
-Multimorphic R-ROC controller. Can be used with P-ROC driver boards, or with
-Stern SAM, Stern Whitestar, Williams WPC, or Williams WPC95  driver boards.
+"""Contains the drivers and interface code for pinball machines which
+use the Multimorphic R-ROC or P3-ROC hardware controllers.
+
+This code can be used with P-ROC driver boards, or with Stern SAM, Stern
+Whitestar, Williams WPC, or Williams WPC95  driver boards.
 
 Most of this code is from the P-ROC drivers section of the pyprocgame project,
 written by Adam Preble and Gerry Stellenberg. It was originally released under
-the MIT license.
+the MIT license and is released here under the MIT License.
 
 More info on the P-ROC hardware platform: http://pinballcontrollers.com/
+
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 
@@ -17,18 +18,31 @@ need libpinproc and pypinproc. More info:
 http://www.pinballcontrollers.com/forum/index.php?board=10.0
 
 """
+# p_roc.py
+# Mission Pinball Framework
+# Written by Brian Madden & Gabe Knuth
+# Released under the MIT License. (See license info at the end of this file.)
+
+# Documentation and more info at http://missionpinball.com/framework
+
 import logging
 import pinproc  # If this fails it's because you don't have pypinproc.
 import re
 import time
 import sys
-import mpf.hardware
+from mpf.system.hardware import (
+    Platform, HardwareObject, HardwareDriver, HardwareSwitch,
+    HardwareDirectLED)
+from mpf.system.timing import Timing
 
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00
 
 
 class HardwarePlatform(object):
+    """Base class of the hardware controller.
+
+    """
 
     def __init__(self, machine):
         self.log = logging.getLogger('P-ROC Platform')
@@ -46,7 +60,7 @@ class HardwarePlatform(object):
         self.platform_features = {}
         self.hw_switch_rules = {}
 
-        self.parent = mpf.hardware.Platform(self, machine)
+        self.parent = Platform(self, machine)
 
         # Setup the dictionary of platform features. This is how we let the
         # framework know about certain capabilities of the hardware platform
@@ -56,16 +70,11 @@ class HardwarePlatform(object):
 
     def create_pinproc(self):
         """Instantiates and returns the class to use as the P-ROC device.
-        This method is called by :class:xxx init method to
-        populate :attr:`proc`.
 
-        Checks :mod:`~procgame.config` for the key path ``pinproc_class``.
-        If that key path exists the string is used as the fully qualified class
-        name to instantiate.  The class is then instantiated with one
-        initializer argument, :attr:`machine_type`.
+        Checks the machine controller's attribute *physical_hw* to see whether
+        it should use a physical PinPROC or the FakePinPROC class to setup the
+        P-ROC.
 
-        If that key path does not exist then this method returns an instance of
-        :class:`pinproc.PinPROC`.
         """
         if self.machine.physical_hw:  # move to platform? todo
             proc_class_name = "pinproc.PinPROC"
@@ -91,6 +100,16 @@ class HardwarePlatform(object):
         return m
 
     def process_hw_config(self):
+        """Processes the P-ROC hardware configuration items in the config
+        files.
+
+        This includes sections for:
+            * Coils
+            * Lamps
+            * Switches
+            * LEDs
+
+        """
 
         pairs = [('Coils', self.machine.coils, PROCDriver),
                  ('Lamps', self.machine.lamps, PROCDriver),
@@ -102,13 +121,12 @@ class HardwarePlatform(object):
             self.machine_type == pinproc.MachineTypeSternSAM or \
             self.machine_type == pinproc.MachineTypePDB
 
-        """
-        Because PDBs can be configured in many different ways, we need to
-        traverse the YAML settings to see how many PDBs are being used.
-        Then we can configure the P-ROC appropriately to use those PDBs.
-        Only then can we relate the YAML coil/lamp #'s to P-ROC numbers for
-        the collections.
-        """
+
+        # Because PDBs can be configured in many different ways, we need to
+        # traverse the YAML settings to see how many PDBs are being used.
+        # Then we can configure the P-ROC appropriately to use those PDBs.
+        # Only then can we relate the YAML coil/lamp #'s to P-ROC numbers for
+        # the collections.
 
         if self.machine_type == pinproc.MachineTypePDB:
             self.log.debug("Configuring P-ROC for P-ROC driver boards.")
@@ -124,12 +142,12 @@ class HardwarePlatform(object):
 
                     item_dict = sect_dict[name]
 
-                    """
-                    Find the P-ROC number for each item in the YAML sections.
-                    For PDBs the number is based on the PDB configuration
-                    determined above.  For other machine types, pinproc's
-                    decode() method can provide the number.
-                    """
+
+                    # Find the P-ROC number for each item in the YAML sections.
+                    # For PDBs the number is based on the PDB configuration
+                    # determined above.  For other machine types, pinproc's
+                    # decode() method can provide the number.
+
                     if self.machine_type == pinproc.MachineTypePDB:
                         number = pdb_config.get_proc_number(section,
                             str(item_dict['number']))
@@ -199,6 +217,7 @@ class HardwarePlatform(object):
         # In the P-ROC, VirtualDrivers will conflict with regular drivers on
         # the same group. So if any VirtualDrivers were added, the regular
         # drivers in that group must be changed to VirtualDrivers as well.
+
         for virtual_driver in new_virtual_drivers:
             base_group_number = virtual_driver/8
             for collection in [self.machine.coils, self.machine.lamps]:
@@ -248,6 +267,12 @@ class HardwarePlatform(object):
             sw_object._set_state(states[sw_object.number] == 1)
 
     def hw_loop(self):
+        """Loop code which checks the P-ROC for any events (switch state
+        changes or notification that a DMD frame was updated).
+
+        Also tickles the watchdog and flushes any queued commands to the P-ROC.
+
+        """
 
         # Get P-ROC events (switches & DMD frames displayed)
 
@@ -281,10 +306,10 @@ class HardwarePlatform(object):
             self.proc.watchdog_tickle()
             self.proc.flush()
 
-        if mpf.timing.HZ:
+        if Timing.HZ:
             if self.next_tick_time <= time.time():
                 self.machine.timer_tick()
-                self.next_tick_time += mpf.timing.secs_per_tick
+                self.next_tick_time += Timing.secs_per_tick
                 # todo add detection to see if the system is running behind?
                 # if you ask for 100HZ and the system can only do 50, that is
                 # not good
@@ -316,13 +341,67 @@ class HardwarePlatform(object):
                     recycle_time=0,
                     debounced=True,
                     drive_now=False):
+        """Used to write (or update) a hardware rule to the P-ROC.
 
-        self.log.debug("Setting HW Rule. Switch:%s, Action ms:%s, "
-                         "Coil:%s, Pulse:%s, pwm_on:%s, pwm_off:%s, "
-                         "Delay:%s, Recycle:%s, Debounced:%s, Now:%s",
-                         sw.name, coil_action_time, coil.name, pulse_time,
-                         pwm_on, pwm_off, delay, recycle_time, debounced,
-                         drive_now)
+        *Hardware Rules* are used to configure the P-ROC to automatically
+        change driver states based on switch changes. These rules are
+        completely handled by the P-ROC hardware (i.e. with no interaction from
+        the Python game code). They're used for things that you want to happen
+        fast, like firing coils when flipper buttons are pushed, slingshots,
+        pop bumpers, etc.
+
+        You can overwrite existing hardware rules at any time to change or
+        remove them.
+
+        Parameters
+        ----------
+            sw : switch object
+                Which switch you're creating this rule for. The parameter is a
+                reference to the switch object itsef.
+            sw_activity : int
+                Do you want this coil to fire when the switch becomes active
+                (1) or inactive (0)
+            coil_action_time : int
+                The total time (in ms) that this coil action should take place.
+                A value of -1 means it's forever.
+            coil : coil object
+                Which coil is this rule controlling
+            pulse_time : int
+                How long should the coil be pulsed (ms)
+            pwm_on : int
+                If the coil should be held on at less than 100% duty cycle,
+                this is the "on" time (in ms).
+            pwm_off : int
+                If the coil should be held on at less than 100% duty cycle,
+                this is the "off" time (in ms).
+            delay : int
+                Not currently implemented for the P-ROC hardware
+            recycle_time : int
+                How long (in ms) should this switch rule wait before firing
+                again. Put another way, what's the "fastest" this rule can
+                fire? This is used to prevent "machine gunning" of slingshots
+                and pop bumpers. Do not use it with flippers. Note the P-ROC
+                has a non-configurable delay time of 125ms. (So it's either
+                125ms or 0.) So if you set this delay to anything other than
+                0, it will be 125ms.
+            debounced : bool
+                Should the P-ROC fire this coil after the switch has been
+                debounced? Typically no.
+            drive_now : bool
+                Should the P-ROC check the state of the switches when this
+                rule is firts applied, and fire the coils if they should be?
+                Typically this is True, especially with flippers because you
+                want them to fire if the player is holding in the buttons when
+                the machine enables the flippers (which is done via several
+                calls to this method.)
+
+        """
+
+        self.log.debug("Setting HW Rule. Switch:%s, Action ms:%s, Coil:%s, "
+                       "Pulse:%s, pwm_on:%s, pwm_off:%s, Delay:%s, Recycle:%s,"
+                       "Debounced:%s, Now:%s", sw.name, coil_action_time,
+                       coil.name, pulse_time, pwm_on, pwm_off, delay,
+                       recycle_time, debounced, drive_now)
 
         if (sw_activity == 0 and debounced):
             event_type = "open_debounced"
@@ -335,6 +414,7 @@ class HardwarePlatform(object):
 
         # Note the P-ROC uses a 125ms non-configurable recycle time. So any
         # non-zero value passed here will enable the 125ms recycle.
+
         reloadActive = False
         if recycle_time:
             reloadActive = True
@@ -343,6 +423,7 @@ class HardwarePlatform(object):
         # debounced for hw_rules since they're faster, but we don't want to
         # notify the host on them since the host would then get two events
         # one for the nondebounced followed by one for the debounced.
+
         notifyHost = False
         if debounced:
             notifyHost = True
@@ -406,6 +487,7 @@ class HardwarePlatform(object):
                 coil_action_time)]
 
         # merge in any previously-configured driver rules for this switch
+
         final_driver = list(this_driver)  # need to make an actual copy
         sw_rule_string = str(sw.name)+str(event_type)
         if sw_rule_string in self.hw_switch_rules:
@@ -419,6 +501,21 @@ class HardwarePlatform(object):
                                      drive_now)
 
     def clear_hw_rule(self, sw_num):
+        """Clears a hardware rule.
+
+        This is used if you want to remove the linkage between a switch and
+        some driver activity. For example, if you wanted to disable your
+        flippers (so that a player pushing the flipper buttons wouldn't cause
+        the flippers to flip), you'd call this method with your flipper button
+        as the *sw_num*.
+
+        Parameters
+        ----------
+
+        sw_num : int
+            The number of the switch whose rule you want to clear.
+
+        """
         self.proc.switch_update_rule(sw_num, 'open_nondebounced',
                                      {'notifyHost': False,
                                       'reloadActive': False}, [], False)
@@ -440,17 +537,18 @@ class HardwarePlatform(object):
         # appropriately.
 
 
-class PROCHardwareObject(mpf.hardware.HardwareObject):
+class PROCHardwareObject(HardwareObject):
+    """Base class for P-ROC Hardware Objects."""
     yaml_number = None
-    """Number string from YAML config file"""
 
     def __init__(self, machine, name, number):
         super(PROCHardwareObject, self).__init__(machine, name, number)
 
 
 class PROCSwitch(object):
+    """Represents a switch in a pinball machine connected to a P-ROC."""
     def __init__(self, machine, name, number):
-        self.parent = mpf.hardware.HardwareSwitch(machine, name, number,
+        self.parent = HardwareSwitch(machine, name, number,
                                                   platform_driver=self)
 
     # todo add methods that query hardware-specific things of P-ROC switches,
@@ -458,7 +556,10 @@ class PROCSwitch(object):
 
 
 class PROCLED(object):
-    """Represents an LED connected to a P-ROC PD-LED board.
+    """Represents an LED connected to a PD-LED board.
+
+    This code is not yet implemented.
+
     """
 
     def __init__(self, machine, name, number):
@@ -466,7 +567,7 @@ class PROCLED(object):
         machine.yaml
         """
         self.log = logging.getLogger('PROCLED')
-        self.parent = mpf.hardware.HardwareDirectLED(machine, name, number,
+        self.parent = HardwareDirectLED(machine, name, number,
                                                      platform_driver=self)
         self.name = name
         self.number = number
@@ -713,7 +814,7 @@ class PROCDriver(PlatformDriver):
         self.log = logging.getLogger('PROCDriver')
         self.machine = machine
         self.number = number
-        self.parent = mpf.hardware.HardwareDriver(machine, name, number, self)
+        self.parent = HardwareDriver(machine, name, number, self)
 
     def disable(self):
         """Disables (turns off) this driver."""
@@ -913,20 +1014,18 @@ class PDBConfig(object):
 
         group_ctr += 1
 
-        """
-        Process lamps first.  The P-ROC can only control so many drivers
-        directly. Since software won't have the speed to control lamp matrixes,
-        map the lamps first.  If there aren't enough P-ROC driver groups for
-        coils, the overflow coils can be controlled by software via
-        VirtualDrivers (which should get set up automatically by this code.)
-        """
+        # Process lamps first. The P-ROC can only control so many drivers
+        # directly. Since software won't have the speed to control lamp
+        # matrixes, map the lamps first. If there aren't enough P-ROC driver
+        # groups for coils, the overflow coils can be controlled by software
+        # via VirtualDrivers (which should get set up automatically by this
+        # code.)
 
         for i, lamp_dict in enumerate(lamp_list):
             # If the bank is 16 or higher, the P-ROC can't control it
-            # directly.
-            # SW can't really control lamp matrixes either (need microsecond
-            # resolution).  Instead of doing crazy logic here for a case that
-            # probably won't happen, just ignore these banks.
+            # directly. Software can't really control lamp matrixes either
+            # (need microsecond resolution).  Instead of doing crazy logic here
+            # for a case that probably won't happen, just ignore these banks.
             if (group_ctr >= num_proc_banks or lamp_dict['sink_bank'] >= 16):
                 self.log.error("Lamp matrix banks can't be mapped to index "
                                   "%d because that's outside of the banks the "
@@ -952,22 +1051,21 @@ class PDBConfig(object):
                 group_ctr += 1
 
         for coil_bank in coil_bank_list:
-            """
-            If the bank is 16 or higher, the P-ROC can't control it directly.
-            SW will have do the driver logic and write any changes to the PDB
-            bus. Therefore, map these banks to indexes above the P-ROC's driver
-            count, which will force the drivers to be created as
-            VirtualDrivers. Appending the bank avoids conflicts when group_ctr
-            gets too high.
-            """
+            # If the bank is 16 or higher, the P-ROC can't control it directly.
+            # Software will have do the driver logic and write any changes to
+            # the PDB bus. Therefore, map these banks to indexes above the
+            # P-ROC's driver count, which will force the drivers to be created
+            # as VirtualDrivers. Appending the bank avoids conflicts when
+            # group_ctr gets too high.
+
             if (group_ctr >= num_proc_banks or coil_bank >= 16):
                 self.log.warning("Driver group %d mapped to driver index"
-                                    "outside of P-ROC control.  These Drivers "
-                                    "will become VirtualDrivers.  Note, the "
-                                    "index will not match the board/bank "
-                                    "number; so software will need to request "
-                                    "those values before updating the "
-                                    "drivers.", coil_bank)
+                                 "outside of P-ROC control.  These Drivers "
+                                 "will become VirtualDrivers.  Note, the "
+                                 "index will not match the board/bank "
+                                 "number; so software will need to request "
+                                 "those values before updating the "
+                                 "drivers.", coil_bank)
                 self.indexes.append(coil_bank)
             else:
                 self.log.debug("Driver group %02d: slow_time=%d Enable "
@@ -1078,12 +1176,13 @@ class PDBConfig(object):
                                          self.watchdog_time)
 
     def get_proc_number(self, section, number_str):
-        """
-        Returns the P-ROC number for the requested driver string.
+        """Returns the P-ROC number for the requested driver string.
+
         This method uses the driver string to look in the indexes list that
         was set up when the PDBs were configured.  The resulting P-ROC index
         * 3 is the first driver number in the group, and the driver offset is
         to that.
+
         """
         if section == 'Coils':
             coil = PDBCoil(self, number_str)
@@ -1143,6 +1242,7 @@ def decode_pdb_address(addr, aliases=[]):
 
     Raises a ValueError exception if it is not a PDB address, otherwise returns
     a tuple of (addr, bank, number).
+
     """
     for alias in aliases:
         if alias.matches(addr):
@@ -1171,13 +1271,14 @@ def decode_pdb_address(addr, aliases=[]):
         raise ValueError('PDB address delimeter (- or /) not found.')
 
 
-class VirtualDriver(mpf.hardware.HardwareDriver):
+class VirtualDriver(HardwareDriver):
     """Represents a driver in a pinball machine, such as a lamp, coil/solenoid,
     or flasher that should be driver by Auxiliar Port logic rather directly by
     P-ROC hardware.  This means any automatic logic to determine when to turn
     on or off the driver is implemented in software in this class.
 
-    Subclass of :class:`Driver`.
+    Subclass of :class:`HardwareDriver`.
+
     """
     curr_state = False
     """The current state of the driver.  Active is True.  Inactive is False."""
@@ -1215,7 +1316,9 @@ class VirtualDriver(mpf.hardware.HardwareDriver):
 
     def update_state(self, state):
         """ Generic state change request that represents the P-ROC's
-        PRDriverUpdateState function. """
+        PRDriverUpdateState function.
+
+        """
         self.state = state.copy()
         if not state['state']:
             self.disable()
@@ -1235,7 +1338,9 @@ class VirtualDriver(mpf.hardware.HardwareDriver):
         """Enables this driver for `milliseconds`.
 
         If no parameters are provided or `milliseconds` is `None`,
-        :attr:`pulse_time` is used."""
+        :attr:`pulse_time` is used.
+
+        """
         self.function = 'pulse'
         self.function_active = True
         if milliseconds is None:
@@ -1245,13 +1350,13 @@ class VirtualDriver(mpf.hardware.HardwareDriver):
             self.time_ms = 0
         else:
             self.time_ms = time.time() + milliseconds / 1000.0
-        self.log.debug("Time: %f: VirtualDriver %s - pulse %d. End time: "
-                          "%f", time.time(), self.name, milliseconds,
-                          self.time_ms)
+        self.log.debug("Time: %f: VirtualDriver %s - pulse %d. End time: %f",
+                       time.time(), self.name, milliseconds, self.time_ms)
 
     def schedule(self, schedule, cycle_seconds=0, now=True):
         """Schedules this driver to be enabled according to the given
         `schedule` bitmask.
+
         """
         self.function = 'schedule'
         self.function_active = True
@@ -1299,3 +1404,28 @@ class VirtualDriver(mpf.hardware.HardwareDriver):
         # Rotate schedule down.
         self.state['timeslots'] = self.state['timeslots'] >> 1 | \
             ((self.state['timeslots'] << 31) & 0x80000000)
+
+# The MIT License (MIT)
+
+# Oringal code on which this module was based:
+# Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
+
+# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
