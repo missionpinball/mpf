@@ -522,13 +522,13 @@ class BallDevice(HardwareObject):
         self.config['eject_switch'] = None  # todo what about devices w/o this?
         self.config['entrance_switch'] = None
         self.config['jam_switch'] = None
-        self.config['eject_coil_hold'] = None
+        self.config['eject_coil_hold_times'] = None  # todo change to list
         self.config['eject_target'] = None
         self.config['confirm_eject_type'] = 'count'  # todo make optional?
         self.config['confirm_eject_target'] = None
         self.config['eject_type'] = 'single'
-        self.config['player_controlled_eject'] = False
-        self.config['player_controlled_switch_tag'] = None
+        self.config['player_controlled_eject'] = False  # todo change this
+        self.config['player_controlled_switch_tag'] = None  # todo change this
         self.config['feeder_device'] = None
 
         # initialize our variables

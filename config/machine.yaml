@@ -1,9 +1,16 @@
-# Machine hardware config file for P-ROC for Judge Dredd
+# Instructions for this config file:
+# https://missionpinball.com/docs/configuration-file-reference/
 
-Language: en
+# Machine hardware config file for Judge Dredd
+
+Machine:
+    HZ: 30
+    Balls Installed: 6
+    Min Balls: 3  # game will not start with fewer than this
+    Max Balls: 6  # game will not start if it finds more than this
 
 Hardware:
-    Platform: p_roc # proc or fast
+    Platform: none # p_roc, fast, or none
     DriverBoards: wpc95 # pdb, wpc, wpc95, wpcAlphaNumeric, sternSAM, sternWhitestar
 
 Switches:

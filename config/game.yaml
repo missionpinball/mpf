@@ -1,8 +1,7 @@
-Machine:
-    HZ: 50
-    Balls Installed: 6
-    Min Balls: 3  # game will not start with fewer than this
-    Max Balls: 6  # game will not start if it finds more than this
+# Instructions for this config file:
+# https://missionpinball.com/docs/configuration-file-reference/
+
+
     
 GameFlow:
     - attract:
@@ -25,5 +24,5 @@ BallSearch:
 
 Game:
     num_hits_for_valid_playfied: 2
-    Balls per game: 2
+    Balls per game: 3
     Max players per game: 4

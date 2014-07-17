@@ -12,6 +12,7 @@ import logging
 import os
 import yaml
 from collections import defaultdict
+from copy import deepcopy
 import time
 
 from mpf.system.hardware import HardwareDict
@@ -34,7 +35,7 @@ class MachineController(object):
     Parameters
     ----------
 
-    config_file : string
+    config_file : str
         The name of the main configuration file which will be read when the
         machine controller is created. This config file typically contains a
         list of additional config files that hold settings for the machine, but
@@ -49,7 +50,7 @@ class MachineController(object):
     def __init__(self, config_file, physical_hw=True):
         self.log = logging.getLogger(__name__)
         self.starttime = time.time()
-        self.config = defaultdict()  # so we can simplify checking for options
+        self.config = defaultdict(list)  # so we can simplify checking
         self.platform = None
         self.physical_hw = physical_hw
         self.switch_events = []
@@ -66,7 +67,7 @@ class MachineController(object):
 
         # create all the machine-wide objects & set them up.
         self.events = EventManager()
-        self.config = self._load_config(config_file)
+        self.update_config(config_file)
         self.set_platform()
         self.timing = Timing(self)
         self.timing.configure(HZ=self.config['Machine']['HZ'])
@@ -147,37 +148,71 @@ class MachineController(object):
 
         # todo when I fix this, also clean up the stuff in init
 
-    def _get_config_from_file(self, file):
-        # Returns a yaml dictionary from the passed file
-        if os.path.isfile(file):
+    def update_config(self, config):
+        """Merges updates into the self.config dictionary.
+
+        This method does what we call a "deep merge" which means it merges
+        together subdictionaries instead of overwriting them. See the
+        documentation for `meth:dict_merge` for a description of how this
+        works.
+
+        Parameters
+        ----------
+
+        config : dict or str
+            The settings to deep merge into the config dictionary. If `config`
+            is a dict, then it will merge those settings in. If it's a string,
+            it will try to find a file with that name and open it to read in
+            the settings.
+
+            Also, if config is a string, it will first try to open it as a file
+            directly (including any path that's there). If that doesn't work,
+            it will try to open the file using the last path that worked. (This
+            path is stored in `self.config['Config_path']`.)
+
+        """
+        new_updates = dict()
+        if not self.config['Config_path']:
+            self.config['Config_path'] = ""
+
+        if type(config) == dict:
+            new_updates = config
+        else:  # Maybe 'config' is a file?
+            if os.path.isfile(config):
+                config_location = config
+                # Pull out the path in case we need it later
+                self.config['Config_path'] = os.path.split(config)[0]
+            elif os.path.isfile(os.path.join(self.config['Config_path'],
+                                             config)):
+                config_location = os.path.join(self.config['Config_path'],
+                                               config)
+            else:
+                self.log.warning("Couldn't find config file: %s. Skipping.",
+                                 config)
+                config_location = ""
+
+        if config_location:
             try:
-                self.log.debug("Loading configuration file: %s", file)
-                return yaml.load(open(file, 'r'))
+                self.log.debug("Loading configuration from file: %s",
+                               config_location)
+                new_updates = yaml.load(open(config_location, 'r'))
             except yaml.YAMLError, exc:
                 if hasattr(exc, 'problem_mark'):
                     mark = exc.problem_mark
-                    self.log.error("Error found in config file %s. "
-                                      "Line %, Position %s", file, mark.line+1,
-                                      mark.column+1)
-        else:
-            self.log.error("Error: %s not found", file)
+                    self.log.error("Error found in config file %s. Line %, "
+                                   "Position %s", config_location, mark.line+1,
+                                   mark.column+1)
+            except:
+                self.log.warning("Couldn't load config from file: %s", config)
 
-    def _load_config(self, file):
-        # Get the list of config files from the passed yaml file
-        file_list = self._get_config_from_file(file)
-        # Pull out the path from that config file to use for the remaining files
-        file_path = os.path.split(file)[0]
+        self.config = self.dict_merge(self.config, new_updates)
 
-        # Loop through all the config files and build up our config dic
-        config = {}
-
-        for config_file in file_list:
-            updates = self._get_config_from_file(os.path.join(file_path,
-                                                              config_file))
-            if updates:
-                config.update(updates)
-
-        return config
+        # now check if there are any more updates to do.
+        # iterate and remove them
+        if config in self.config['Config']:
+            self.config['Config'].remove(config)
+        if self.config['Config']:
+            self.update_config(self.config['Config'][0])
 
     def set_platform(self):
         """ Sets the hardware platform based on the "Platform" item in the
@@ -252,6 +287,17 @@ class MachineController(object):
     def string_to_list(self, string):
         """ Converts a comma-separated string into a python list.
 
+        Parameters
+        ----------
+
+        string : str
+            The string you'd like to convert.
+
+        Returns
+        -------
+            A python list object containing whatever was between commas in the
+            string.
+
         """
         if type(string) is str:
             # convert to list then strip out leading / trailing white space
@@ -259,6 +305,72 @@ class MachineController(object):
         else:
             # if we're not passed a string, just return an empty list.
             return []
+
+    def dict_merge(self, a, b, combine_lists=True):
+        """Recursively merges dicts.
+
+        Used to merge dictionaries of dictionaries, like when we're merging
+        together the machine configuration files. This method is called
+        recursively as it finds sub-dictionaries.
+
+        For example, in the traditional python dictionary
+        update() methods, if a dictionary key exists in the original and
+        merging-in dictionary, the new value will overwrite the old value.
+
+        Consider the following example:
+
+        Original dictionary:
+        `config['foo']['bar'] = 1`
+
+        New dictionary we're merging in:
+        `config['foo']['other_bar'] = 2`
+
+        Default python dictionary update() method would have the updated
+        dictionary as this:
+
+        `{'foo': {'other_bar': 2}}`
+
+        This happens because the original dictionary which had the single key
+        `bar` was overwritten by a new dictionary which has a single key
+        `other_bar`.)
+
+        But really we want this:
+
+        `{'foo': {'bar': 1, 'other_bar': 2}}`
+
+        This code was based on this:
+        https://www.xormedia.com/recursively-merge-dictionaries-in-python/
+
+        Parameters
+        ----------
+
+        a : dict
+            The first dictionary
+
+        b : dict
+            The second dictionary
+
+        combine_lists : bool
+            Controls whether lists should be combined (extended) or
+            overwritten. Default is `True` which combines them.
+
+        Returns
+        -------
+
+        The merged dictionaries.
+
+        """
+        if not isinstance(b, dict):
+            return b
+        result = deepcopy(a)
+        for k, v in b.iteritems():
+            if k in result and isinstance(result[k], dict):
+                result[k] = self.dict_merge(result[k], v)
+            elif k in result and isinstance(result[k], list) and combine_lists:
+                result[k].extend(v)
+            else:
+                result[k] = deepcopy(v)
+        return result
 
     def enable_autofires(self):
         """Enables all the autofire coils in the machine."""

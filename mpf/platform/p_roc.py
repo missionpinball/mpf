@@ -121,7 +121,6 @@ class HardwarePlatform(object):
             self.machine_type == pinproc.MachineTypeSternSAM or \
             self.machine_type == pinproc.MachineTypePDB
 
-
         # Because PDBs can be configured in many different ways, we need to
         # traverse the YAML settings to see how many PDBs are being used.
         # Then we can configure the P-ROC appropriately to use those PDBs.
@@ -142,7 +141,6 @@ class HardwarePlatform(object):
 
                     item_dict = sect_dict[name]
 
-
                     # Find the P-ROC number for each item in the YAML sections.
                     # For PDBs the number is based on the PDB configuration
                     # determined above.  For other machine types, pinproc's
@@ -152,9 +150,9 @@ class HardwarePlatform(object):
                         number = pdb_config.get_proc_number(section,
                             str(item_dict['number']))
                         if number == -1:
-                            self.log.error("%s Item: %s cannot be "
-                                              "controlled by the P-ROC.  "
-                                              "Ignoring...", section, name)
+                            self.log.error("%s Item: %s cannot be controlled "
+                                           "by the P-ROC. Ignoring...",
+                                           section, name)
                             continue
                     else:
                         number = pinproc.decode(self.machine_type,

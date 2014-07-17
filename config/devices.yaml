@@ -1,3 +1,6 @@
+# Instructions for this config file:
+# https://missionpinball.com/docs/configuration-file-reference/
+
 Devices:
     Flippers:
         LowerLeft:
@@ -44,7 +47,7 @@ Devices:
             coil: slingR
             switch: slingR
             
-    DropTargets:
+    DropTargets:  # Not yet implemented
         Judge:
             J:
                 switch: dropTargetJ
@@ -67,12 +70,14 @@ Devices:
                 switch: dropTargetE
                 light: dropTargetE
                 reset_coil: resetDropTarget
-    Standups:
+
+    Standups:  # Not yet implemented
         QuestionMark:
             switch:
             light:
                 
     BallDevices:
+
         trough:
             tags: trough, home, drain
             label: Main Trough
@@ -83,6 +88,7 @@ Devices:
             post_eject_delay_check: 2  # change to msec? todo
             confirm_eject_type: device
             confirm_eject_target: shooterLaneR
+
         shooterLaneR:
             tags: plunger, home, add_ball_live
             label: Right Plunger Lane

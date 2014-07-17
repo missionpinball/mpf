@@ -3,6 +3,7 @@ __all__ = [
            'platform',
            'system',
            'game',
+           'version'
           ]
 
-# from machine_controller import *
+from version import __version__

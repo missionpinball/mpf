@@ -1,8 +1,11 @@
-# Base configuration file which lists other configuration files
-# Files are processed in order
+# Instructions for this config file:
+# https://missionpinball.com/docs/configuration-file-reference/
+Config:
+    # https://missionpinball.com/docs/configuration-file-reference/config/
+    - machine.yaml
+    - devices.yaml
+    - game.yaml
+    - textstrings.yaml
+    - keymap.yaml
 
-- machine.yaml
-- devices.yaml
-- game.yaml
-- textstrings.yaml
-- keymap.yaml
+Language: en
