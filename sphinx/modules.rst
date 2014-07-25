@@ -6,3 +6,4 @@
 
    mpf
    mpf
+   version

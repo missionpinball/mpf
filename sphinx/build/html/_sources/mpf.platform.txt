@@ -7,6 +7,7 @@ Submodules
 .. toctree::
 
    mpf.platform.p_roc
+   mpf.platform.virtual
 
 Module contents
 ---------------

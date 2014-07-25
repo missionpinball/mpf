@@ -1,0 +1,108 @@
+# Mission Pinball Framework machine configuration file for Big Shot
+
+# Instructions for this config file:
+# https://missionpinball.com/docs/configuration-file-reference/
+
+# Created by Brian Madden & Gabe Knuth
+
+# More information about our Big Shot conversion project here:
+# https://missionpinball.com/blog/category/big-shot-em-conversion/
+
+Machine:
+    HZ: 30
+    Balls Installed: 1
+    Min Balls: 1
+    Max Balls: 1
+
+Hardware:
+    Platform: p_roc
+    DriverBoards: pdb
+
+Game:
+    num_hits_for_valid_playfied: 1
+    Balls per game: 5
+    Max players per game: 2
+
+Switches:
+    flipperLeft:
+        number: SD18
+    flipperRight:
+        number: SD17
+    startButton:
+        number: SD16
+        tags: start
+    trough:
+        number: 0/0
+    troughEjected:
+        number: 0/6
+        label: Ball kick to plunger
+    eightBallHole:
+        number: 0/4
+    plungerLane:
+        number: 0/5  # this is a temp number
+        label: Plunger Lane
+        type: NC
+
+Coils:
+    flipperLeftMain: # 0A0
+        number: A0-B0-0
+        pulseTime: 10
+        holdPatter: 1-2
+    flipperRightMain: # 0A1
+        number: A0-B0-1
+        pulseTime: 10
+        holdPatter: 1-2
+    troughEject: # 0A7
+        number: A0-B0-7
+        pulseTime: 10
+    eightBallHoleEject: # 0B2
+        number: A0-B1-2
+        pulseTime: 10
+
+Devices:
+    BallDevices:
+        trough:
+            tags: drain, home
+            ball_switches: trough
+            eject_coil: troughEject
+            eject_switch: trough
+            ball_count_delay: 0.3s
+            confirm_eject_type: device
+            confirm_eject_target: plunger
+        plunger:
+            tags: ball_add_live
+            confirm_eject_type: playfield
+            feeder_container: trough
+            ball_capacity: 1  # needed because there are no ball switches
+        eightBallHole:
+            ball_switches: eightBallHole
+            eject_coil: eightBallHoleEject
+            ball_count_delay: 0.5s
+            eject_switch: eightBallHole
+
+    Flippers:
+            Left:
+                main_coil: flipperLeftMain
+                activation_switch: flipperLeft
+            Right:
+                main_coil: flipperRightMain
+                activation_switch: flipperRight
+            
+key_map:
+    z:
+        switch: flipperLeft
+    /:
+        switch: flipperRight
+    s:
+        switch: startButton
+    1:
+        switch: trough
+        toggle: True
+        start_active: True
+    2:
+        switch: troughEjected
+    3:
+        switch: plungerLane
+    8:
+        switch: eightBallHole
+    

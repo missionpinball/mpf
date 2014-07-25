@@ -118,7 +118,7 @@ class Keyboard(object):
                                                str(pyglet_key)))
             except:
                 self.log.warning("%s is not a valid pyglet key code. "
-                                    "Skipping this entry", pyglet_key)
+                                 "Skipping this entry", pyglet_key)
 
             if switch_name:  # We're processing a key entry for a switch
 
@@ -170,17 +170,15 @@ class Keyboard(object):
         configured to start active.
 
         """
+        # don't set the initial state if we have physical hw
         if not self.machine.physical_hw:
-            # don't set the initial state if we have physical hw
-            # todo make this a command line option or config option?
             for switch_name in self.start_active:
-                if self.machine.switches[switch_name].type == 'NO':
-                    state = 1
-                else:
-                    state = 0
+                self.log.debug("Setting initial state of switch '%s' to "
+                               "active", switch_name)
 
-                self.machine.switch_controller.process_switch(state=state,
-                                                              name=switch_name)
+                self.machine.switch_controller.process_switch(state=1,
+                                                              name=switch_name,
+                                                              logical=True)
 
     def get_keyboard_events(self):
         """Gets the key events from the pyglet window."""

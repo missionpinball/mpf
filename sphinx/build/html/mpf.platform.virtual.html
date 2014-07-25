@@ -1,0 +1,243 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.platform.virtual module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.platform.virtual">
+<span id="mpf-platform-virtual-module"></span><h1>mpf.platform.virtual module</h1>
+<p>Contains code for a virtual hardware platform. At this point this is more
+for testing before you have a P-ROC or FAST board installed. Eventually this
+can be used to allow the MPF to drive PinMAME and Virtual Pinball machines.</p>
+<p>This is similar to the P-ROC&#8217;s &#8216;FakePinPROC&#8217; mode of operation, though unlike
+that it doesn&#8217;t require any P-ROC drivers or modules to be installed.</p>
+<dl class="class">
+<dt id="mpf.platform.virtual.HardwarePlatform">
+<em class="property">class </em><tt class="descclassname">mpf.platform.virtual.</tt><tt class="descname">HardwarePlatform</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Platform" title="mpf.system.hardware.Platform"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Platform</span></tt></a></p>
+<p>Base class for the virtual hardware platform. This is a subclass of
+mpf.system.hardware.Platform.</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.platform.virtual.HardwarePlatform.configure_driver">
+<tt class="descname">configure_driver</tt><big>(</big><em>number</em><big>)</big></dt>
+<dd><p>Configures a virtual driver (coil, flasher, etc.).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>number</strong> : str</p>
+<blockquote>
+<div><p>The number of the driver.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">object</p>
+<blockquote class="last">
+<div><p>Returns a link to the newly-created VirtualDriver object.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.HardwarePlatform.configure_switch">
+<tt class="descname">configure_switch</tt><big>(</big><em>number</em>, <em>debounce</em><big>)</big></dt>
+<dd><p>Configures a virtual switch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>number</strong> : str</p>
+<blockquote>
+<div><p>The number of the driver.</p>
+</div></blockquote>
+<p><strong>debouce</strong> : bool</p>
+<blockquote>
+<div><p><cite>debounce</cite> is ignored on this virtual platform, but it&#8217;s included
+as a parameter for compatibility with code written for other
+platforms.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>switch</strong> : object</p>
+<blockquote>
+<div><p>A reference to the switch object that was just created.</p>
+</div></blockquote>
+<p><strong>number</strong> : int</p>
+<blockquote>
+<div><p>The number of the driver. This is the same as whatever you passed
+as an initial parameter.</p>
+</div></blockquote>
+<p><strong>state</strong> : int</p>
+<blockquote class="last">
+<div><p>The current hardware state of the switch, used to set the initial
+state state in the machine. A value of 0 means the switch is open,
+and 1 means it&#8217;s closed. Note this state is the physical state of
+the switch, so if you configure the switch to be normally-closed
+(i.e. &#8220;inverted&#8221; then your code will have to invert it too.) MPF
+handles this automatically if the switch type is &#8216;NC&#8217;.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.virtual.VirtualDriver">
+<em class="property">class </em><tt class="descclassname">mpf.platform.virtual.</tt><tt class="descname">VirtualDriver</tt><big>(</big><em>number</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualDriver.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualDriver.future_pulse">
+<tt class="descname">future_pulse</tt><big>(</big><em>milliseconds=None</em>, <em>timestamp=0</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualDriver.patter">
+<tt class="descname">patter</tt><big>(</big><em>on_time=10</em>, <em>off_time=10</em>, <em>original_on_time=0</em>, <em>now=True</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualDriver.pulse">
+<tt class="descname">pulse</tt><big>(</big><em>milliseconds=None</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualDriver.pulsed_patter">
+<tt class="descname">pulsed_patter</tt><big>(</big><em>on_time=10</em>, <em>off_time=10</em>, <em>run_time=0</em>, <em>now=True</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualDriver.reconfigure">
+<tt class="descname">reconfigure</tt><big>(</big><em>polarity</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualDriver.schedule">
+<tt class="descname">schedule</tt><big>(</big><em>schedule</em>, <em>cycle_seconds=0</em>, <em>now=True</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualDriver.state">
+<tt class="descname">state</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualDriver.tick">
+<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.virtual.VirtualLED">
+<em class="property">class </em><tt class="descclassname">mpf.platform.virtual.</tt><tt class="descname">VirtualLED</tt></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.virtual.VirtualSwitch">
+<em class="property">class </em><tt class="descclassname">mpf.platform.virtual.</tt><tt class="descname">VirtualSwitch</tt><big>(</big><em>number</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents a switch in a pinball machine used with virtual hardware.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.platform.virtual.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

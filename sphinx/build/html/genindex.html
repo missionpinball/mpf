@@ -68,6 +68,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
@@ -75,6 +76,10 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.active_timed_switches">active_timed_switches (mpf.system.switch_controller.SwitchController attribute)</a>
+  </dt>
+
       
   <dt><a href="mpf.system.tasks.html#mpf.system.tasks.DelayManager.add">add() (mpf.system.tasks.DelayManager method)</a>
   </dt>
@@ -93,12 +98,12 @@
   <dt><a href="mpf.modules.keyboard.html#mpf.modules.keyboard.Keyboard.add_key_map">add_key_map() (mpf.modules.keyboard.Keyboard method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.add_switch_handler">add_switch_handler() (mpf.system.switch_controller.SwitchController method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.are_all_balls_home">are_all_balls_home() (mpf.system.ball_controller.BallController method)</a>
   </dt>
@@ -159,10 +164,6 @@
       </dl></dd>
       
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_found">ball_found() (mpf.system.ball_controller.BallController method)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_initial_count">ball_initial_count() (mpf.system.ball_controller.BallController method)</a>
   </dt>
 
       
@@ -262,11 +263,9 @@
   </dt>
 
       
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDirectLED.color">color() (mpf.system.hardware.HardwareDirectLED method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.DirectLED.color">color() (mpf.system.hardware.DirectLED method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.devices.html#mpf.system.devices.AutofireCoil.configure">configure() (mpf.system.devices.AutofireCoil method)</a>
   </dt>
@@ -285,6 +284,16 @@
   </dt>
 
       </dl></dd>
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.HardwarePlatform.configure_driver">configure_driver() (mpf.platform.virtual.HardwarePlatform method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.HardwarePlatform.configure_switch">configure_switch() (mpf.platform.virtual.HardwarePlatform method)</a>
+  </dt>
+
       
   <dt><a href="mpf.system.devices.html#mpf.system.devices.BallDevice.count_balls">count_balls() (mpf.system.devices.BallDevice method)</a>
   </dt>
@@ -308,6 +317,10 @@
   </dt>
 
       
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Switch.debounce">debounce (mpf.system.hardware.Switch attribute)</a>
+  </dt>
+
+      
   <dt><a href="mpf.system.tasks.html#mpf.system.tasks.DelayManager.delay_managers">delay_managers (mpf.system.tasks.DelayManager attribute)</a>
   </dt>
 
@@ -315,27 +328,43 @@
   <dt><a href="mpf.system.tasks.html#mpf.system.tasks.DelayManager">DelayManager (class in mpf.system.tasks)</a>
   </dt>
 
+      
+  <dt><a href="mpf.system.devices.html#mpf.system.devices.Device">Device (class in mpf.system.devices)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.dict_merge">dict_merge() (mpf.system.machine_controller.MachineController method)</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.devices.html#mpf.system.devices.AutofireCoil.disable">disable() (mpf.system.devices.AutofireCoil method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.DirectLED">DirectLED (class in mpf.system.hardware)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.disable">disable() (mpf.platform.virtual.VirtualDriver method)</a>
   </dt>
 
       <dd><dl>
+        
+  <dt><a href="mpf.system.devices.html#mpf.system.devices.AutofireCoil.disable">(mpf.system.devices.AutofireCoil method)</a>
+  </dt>
+
         
   <dt><a href="mpf.system.devices.html#mpf.system.devices.Flipper.disable">(mpf.system.devices.Flipper method)</a>
   </dt>
 
         
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDirectLED.disable">(mpf.system.hardware.HardwareDirectLED method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.DirectLED.disable">(mpf.system.hardware.DirectLED method)</a>
   </dt>
 
         
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDriver.disable">(mpf.system.hardware.HardwareDriver method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Driver.disable">(mpf.system.hardware.Driver method)</a>
   </dt>
 
         
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareMatrixLight.disable">(mpf.system.hardware.HardwareMatrixLight method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.MatrixLight.disable">(mpf.system.hardware.MatrixLight method)</a>
   </dt>
 
       </dl></dd>
@@ -345,6 +374,10 @@
 
       
   <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.disable_flippers">disable_flippers() (mpf.system.machine_controller.MachineController method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Driver">Driver (class in mpf.system.hardware)</a>
   </dt>
 
   </dl></td>
@@ -383,15 +416,15 @@
   </dt>
 
         
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDirectLED.enable">(mpf.system.hardware.HardwareDirectLED method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.DirectLED.enable">(mpf.system.hardware.DirectLED method)</a>
   </dt>
 
         
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDriver.enable">(mpf.system.hardware.HardwareDriver method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Driver.enable">(mpf.system.hardware.Driver method)</a>
   </dt>
 
         
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareMatrixLight.enable">(mpf.system.hardware.HardwareMatrixLight method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.MatrixLight.enable">(mpf.system.hardware.MatrixLight method)</a>
   </dt>
 
       </dl></dd>
@@ -436,7 +469,7 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDirectLED.fade">fade() (mpf.system.hardware.HardwareDirectLED method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.DirectLED.fade">fade() (mpf.system.hardware.DirectLED method)</a>
   </dt>
 
       
@@ -455,6 +488,10 @@
 
       
   <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.flow_advance">flow_advance() (mpf.system.machine_controller.MachineController method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.future_pulse">future_pulse() (mpf.platform.virtual.VirtualDriver method)</a>
   </dt>
 
   </dl></td>
@@ -514,33 +551,17 @@
   </dt>
 
       
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDirectLED">HardwareDirectLED (class in mpf.system.hardware)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareObject">HardwareObject (class in mpf.system.hardware)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDriver">HardwareDriver (class in mpf.system.hardware)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareLight">HardwareLight (class in mpf.system.hardware)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareMatrixLight">HardwareMatrixLight (class in mpf.system.hardware)</a>
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.HardwarePlatform">HardwarePlatform (class in mpf.platform.virtual)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareObject">HardwareObject (class in mpf.system.hardware)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareSwitch">HardwareSwitch (class in mpf.system.hardware)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Platform.hw_loop">hw_loop() (mpf.system.hardware.Platform method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Switch.hw_state">hw_state (mpf.system.hardware.Switch attribute)</a>
   </dt>
 
       
@@ -616,9 +637,25 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDriver.log">log (mpf.system.hardware.HardwareDriver attribute)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Light">Light (class in mpf.system.hardware)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Driver.log">log (mpf.system.hardware.Driver attribute)</a>
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Switch.log">(mpf.system.hardware.Switch attribute)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.log">(mpf.system.switch_controller.SwitchController attribute)</a>
+  </dt>
+
+      </dl></dd>
   </dl></td>
 </tr></table>
 
@@ -631,6 +668,10 @@
 
       
   <dt><a href="mpf.system.machine_mode.html#mpf.system.machine_mode.MachineMode">MachineMode (class in mpf.system.machine_mode)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.MatrixLight">MatrixLight (class in mpf.system.hardware)</a>
   </dt>
 
       
@@ -675,6 +716,10 @@
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="mpf.platform.virtual.html#module-mpf.platform.virtual">mpf.platform.virtual (module)</a>
+  </dt>
+
       
   <dt><a href="mpf.system.html#module-mpf.system">mpf.system (module)</a>
   </dt>
@@ -750,15 +795,15 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.patter">patter() (mpf.platform.virtual.VirtualDriver method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.periodic_timer_test">periodic_timer_test() (mpf.system.machine_controller.MachineController method)</a>
   </dt>
 
       
   <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Platform">Platform (class in mpf.system.hardware)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDriver.platform_driver">platform_driver (mpf.system.hardware.HardwareDriver attribute)</a>
   </dt>
 
       
@@ -785,14 +830,10 @@
   <dt><a href="mpf.modules.ball_search.html#mpf.modules.ball_search.BallSearch.pop_coil">pop_coil() (mpf.modules.ball_search.BallSearch method)</a>
   </dt>
 
-      
-  <dt><a href="mpf.system.events.html#mpf.system.events.EventManager.post">post() (mpf.system.events.EventManager method)</a>
-  </dt>
-
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.post_switch_events">post_switch_events() (mpf.system.switch_controller.SwitchController method)</a>
+  <dt><a href="mpf.system.events.html#mpf.system.events.EventManager.post">post() (mpf.system.events.EventManager method)</a>
   </dt>
 
       
@@ -808,23 +849,29 @@
   </dt>
 
       
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Platform.process_hw_config">process_hw_config() (mpf.system.hardware.Platform method)</a>
-  </dt>
-
-      
   <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.process_switch">process_switch() (mpf.system.switch_controller.SwitchController method)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDriver.pulse">pulse() (mpf.system.hardware.HardwareDriver method)</a>
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.pulse">pulse() (mpf.platform.virtual.VirtualDriver method)</a>
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Driver.pulse">(mpf.system.hardware.Driver method)</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Driver.pulse_pwm">pulse_pwm() (mpf.system.hardware.Driver method)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDriver.pulse_pwm">pulse_pwm() (mpf.system.hardware.HardwareDriver method)</a>
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.pulsed_patter">pulsed_patter() (mpf.platform.virtual.VirtualDriver method)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.HardwareDriver.pwm">pwm() (mpf.system.hardware.HardwareDriver method)</a>
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Driver.pwm">pwm() (mpf.system.hardware.Driver method)</a>
   </dt>
 
   </dl></td>
@@ -844,6 +891,14 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.reconfigure">reconfigure() (mpf.platform.virtual.VirtualDriver method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.registered_switches">registered_switches (mpf.system.switch_controller.SwitchController attribute)</a>
+  </dt>
+
+      
   <dt><a href="mpf.system.tasks.html#mpf.system.tasks.DelayManager.remove">remove() (mpf.system.tasks.DelayManager method)</a>
   </dt>
 
@@ -861,12 +916,12 @@
   <dt><a href="mpf.game.game.html#mpf.game.game.Game.request_player_add">request_player_add() (mpf.game.game.Game method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.request_to_start_game">request_to_start_game() (mpf.system.ball_controller.BallController method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.reset">reset() (mpf.system.machine_controller.MachineController method)</a>
   </dt>
@@ -896,6 +951,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.schedule">schedule() (mpf.platform.virtual.VirtualDriver method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.system.timing.html#mpf.system.timing.Timing.secs">secs() (mpf.system.timing.Timing static method)</a>
   </dt>
 
@@ -923,8 +982,6 @@
   <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.set_state">set_state() (mpf.system.switch_controller.SwitchController method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.game.game.html#mpf.game.game.Game.shoot_again">shoot_again() (mpf.game.game.Game method)</a>
   </dt>
@@ -933,6 +990,8 @@
   <dt><a href="mpf.system.devices.html#mpf.system.devices.BallDevice.stage_ball">stage_ball() (mpf.system.devices.BallDevice method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.game.attract.html#mpf.game.attract.Attract.start">start() (mpf.game.attract.Attract method)</a>
   </dt>
@@ -956,6 +1015,14 @@
   </dt>
 
       
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Switch.state">state (mpf.system.hardware.Switch attribute)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.state">state() (mpf.platform.virtual.VirtualDriver method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.system.machine_mode.html#mpf.system.machine_mode.MachineMode.stop">stop() (mpf.system.machine_mode.MachineMode method)</a>
   </dt>
 
@@ -970,7 +1037,19 @@
   </dt>
 
       
+  <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.sw_loop">sw_loop() (mpf.system.machine_controller.MachineController method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Switch">Switch (class in mpf.system.hardware)</a>
+  </dt>
+
+      
   <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController">SwitchController (class in mpf.system.switch_controller)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.switches">switches (mpf.system.switch_controller.SwitchController attribute)</a>
   </dt>
 
   </dl></td>
@@ -1009,11 +1088,11 @@
   </dt>
 
         
-  <dt><a href="mpf.system.machine_mode.html#mpf.system.machine_mode.MachineMode.tick">(mpf.system.machine_mode.MachineMode method)</a>
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.tick">(mpf.platform.virtual.VirtualDriver method)</a>
   </dt>
 
         
-  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.tick">(mpf.system.switch_controller.SwitchController method)</a>
+  <dt><a href="mpf.system.machine_mode.html#mpf.system.machine_mode.MachineMode.tick">(mpf.system.machine_mode.MachineMode method)</a>
   </dt>
 
       </dl></dd>
@@ -1033,10 +1112,6 @@
 
       
   <dt><a href="mpf.system.timing.html#mpf.system.timing.Timer">Timer (class in mpf.system.timing)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Platform.timer_config">timer_config() (mpf.system.hardware.Platform method)</a>
   </dt>
 
       
@@ -1069,6 +1144,20 @@
   <dt><a href="mpf.game.player.html#mpf.game.player.Player.total_players">total_players (mpf.game.player.Player attribute)</a>
   </dt>
 
+      
+  <dt><a href="mpf.system.hardware.html#mpf.system.hardware.Switch.type">type (mpf.system.hardware.Switch attribute)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.update_config">update_config() (mpf.system.machine_controller.MachineController method)</a>
+  </dt>
+
   </dl></td>
 </tr></table>
 
@@ -1077,6 +1166,24 @@
   <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.validate_playfield">validate_playfield() (mpf.system.ball_controller.BallController method)</a>
+  </dt>
+
+      
+  <dt><a href="version.html#module-version">version (module)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver">VirtualDriver (class in mpf.platform.virtual)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualLED">VirtualLED (class in mpf.platform.virtual)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualSwitch">VirtualSwitch (class in mpf.platform.virtual)</a>
   </dt>
 
   </dl></td>

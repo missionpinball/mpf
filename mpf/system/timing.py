@@ -29,9 +29,9 @@ class Timing(object):
         self.machine = machine
 
     def configure(self, dev=None, HZ=50):
-        # Do the config at the platform level since some hardware handles the
-        # timers and others don't.
-        self.machine.platform.timer_config(HZ)
+        self.log.info("Configuring system Timing for %sHz", HZ)
+        Timing.HZ = HZ
+        Timing.secs_per_tick = 1 / float(HZ)
 
     def add(self, timer):
         timer.wakeup = Timing.tick + timer.frequency

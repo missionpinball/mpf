@@ -30,45 +30,60 @@ import pinproc  # If this fails it's because you don't have pypinproc.
 import re
 import time
 import sys
-from mpf.system.hardware import (
-    Platform, HardwareObject, HardwareDriver, HardwareSwitch,
-    HardwareDirectLED)
+
 from mpf.system.timing import Timing
+from mpf.system.hardware import Platform
 
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00
 
 
-class HardwarePlatform(object):
-    """Base class of the hardware controller.
+class HardwarePlatform(Platform):
+    """Platform class for the P-ROC or P3-ROC hardware controller.
+
+    Parameters
+    ----------
+
+    machine : int
+        A reference to the MachineController instance
 
     """
 
     def __init__(self, machine):
+        super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P-ROC Platform')
         self.log.debug("Configuring machine for P-ROC hardware.")
-        self.machine = machine
-        self.machine.hw_polling = True
+        #self.machine = machine
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['Hardware']['DriverBoards'])
-        self.proc = self.create_pinproc()
+        self.proc = self._create_pinproc()
         self.proc.reset(1)
-        self.HZ = None
-        self.secs_per_tick = None
-        self.next_tick_time = None
-        self.platform_features = {}
-        self.hw_switch_rules = {}
 
-        self.parent = Platform(self, machine)
+        # Because PDBs can be configured in many different ways, we need to
+        # traverse the YAML settings to see how many PDBs are being used.
+        # Then we can configure the P-ROC appropriately to use those PDBs.
+        # Only then can we relate the YAML coil/lamp #'s to P-ROC numbers for
+        # the collections.
+        if self.machine_type == pinproc.MachineTypePDB:
+            self.log.debug("Configuring P-ROC for PDBs (P-ROC driver boards).")
+            self.pdbconfig = PDBConfig(self.proc, self.machine.config)
 
-        # Setup the dictionary of platform features. This is how we let the
-        # framework know about certain capabilities of the hardware platform
-        self.platform_features['max_pulse'] = 255
-        self.platform_features['hw_rule_coil_delay'] = False
-        self.platform_features['variable_recycle_time'] = False
+        else:
+            self.log.debug("Configuring P-ROC for OEM driver boards.")
 
-    def create_pinproc(self):
+        self.polarity = self.machine_type == pinproc.MachineTypeSternWhitestar\
+            or self.machine_type == pinproc.MachineTypeSternSAM\
+            or self.machine_type == pinproc.MachineTypePDB
+
+        # Set the P-ROC specific platform features
+        self.features['max_pulse'] = 255
+        self.features['hw_polling'] = True
+        self.features['hw_rule_coil_delay'] = False
+        self.features['variable_recycle_time'] = False
+        # todo need to add differences between patter and pulsed_patter
+
+    def _create_pinproc(self):
         """Instantiates and returns the class to use as the P-ROC device.
 
         Checks the machine controller's attribute *physical_hw* to see whether
@@ -82,10 +97,10 @@ class HardwarePlatform(object):
         else:
             proc_class_name = "procgame.fakepinproc.FakePinPROC"
 
-        proc_class = self.get_class(proc_class_name)
+        proc_class = self._get_class(proc_class_name)
         return proc_class(self.machine_type)
 
-    def get_class(self, kls, path_adj='/.'):
+    def _get_class(self, kls, path_adj='/.'):
         """Returns a class for the given fully qualified class name, *kls*.
 
         Source: http://stackoverflow.com/questions/452969/
@@ -99,170 +114,145 @@ class HardwarePlatform(object):
             m = getattr(m, comp)
         return m
 
-    def process_hw_config(self):
-        """Processes the P-ROC hardware configuration items in the config
-        files.
+    def configure_driver(self, number):
+        """ Creates a P-ROC driver.
 
-        This includes sections for:
-            * Coils
-            * Lamps
-            * Switches
-            * LEDs
+        Typically drivers are coils or flashers, but for the P-ROC this is
+        also used for matrix-based lamps.
+
+        Parameters
+        ----------
+
+        number: str
+            The number (or number string) for the driver as specified in the
+            machine configuration file.
+
+        Returns
+        -------
+
+        object
+            Returns a reference to the PROCDriver object which is the actual
+            object you can use to pulse(), patter(), enable(), etc.
+
+        """
+        # todo need to add Aux Bus support
+        # todo need to add virtual driver support for driver counts > 256
+
+        # Find the P-ROC number for each driver. For P-ROC driver boards, the
+        # P-ROC number is specified via the Ax-By-C format. For OEM driver
+        # boards configured via driver numbers, libpinprocs decode() method
+        # can provide the number.
+
+        if self.machine_type == pinproc.MachineTypePDB:
+            proc_num = self.pdbconfig.get_proc_number('Coils', str(number))
+            if number == -1:
+                self.log.error("Coil cannot be controlled by the P-ROC. "
+                               "Ignoring.")
+                return
+        else:
+            proc_num = pinproc.decode(self.machine_type, str(number))
+
+        return PROCDriver(proc_num, self.proc)
+
+    def configure_switch(self, number, debounce):
+        """ Configures a P-ROC switch.
+
+        Parameters
+        ----------
+        number : str
+            The number (or number string) for the switch as specified in the
+            machine configuration file.
+
+        debounce : bool
+            Whether the P-ROC should debouce this switch first before sending
+            open and close notifications to the host computer.
+
+        Returns
+        -------
+
+        switch : object
+            A reference to the switch object that was just created.
+
+        proc_num : int
+            The actual hardware switch number the P-ROC uses to refer to this
+            switch. Typically your machine configuration files would specify
+            a switch number like `SD12` or `7/5`. This `proc_num` is an int
+            between 0 and 255.
+
+        state : int
+            The current hardware state of the switch, used to set the initial
+            state state in the machine. A value of 0 means the switch is open,
+            and 1 means it's closed. Note this state is the physical state of
+            the switch, so if you configure the switch to be normally-closed
+            (i.e. "inverted" then your code will have to invert it too.) MPF
+            handles this automatically if the switch type is 'NC'.
 
         """
 
-        pairs = [('Coils', self.machine.coils, PROCDriver),
-                 ('Lamps', self.machine.lamps, PROCDriver),
-                 ('Switches', self.machine.switches, PROCSwitch),
-                 ('LEDs', self.machine.leds, PROCLED)]
-
-        new_virtual_drivers = []
-        polarity = self.machine_type == pinproc.MachineTypeSternWhitestar or \
-            self.machine_type == pinproc.MachineTypeSternSAM or \
-            self.machine_type == pinproc.MachineTypePDB
-
-        # Because PDBs can be configured in many different ways, we need to
-        # traverse the YAML settings to see how many PDBs are being used.
-        # Then we can configure the P-ROC appropriately to use those PDBs.
-        # Only then can we relate the YAML coil/lamp #'s to P-ROC numbers for
-        # the collections.
-
         if self.machine_type == pinproc.MachineTypePDB:
-            self.log.debug("Configuring P-ROC for P-ROC driver boards.")
-            pdb_config = PDBConfig(self.proc, self.machine.config)
-
+            proc_num = self.pdbconfig.get_proc_number('Switches', str(number))
+            if number == -1:
+                self.log.error("Switch cannot be controlled by the P-ROC. "
+                               "Ignoring.")
+                return
         else:
-            self.log.debug("Configuring P-ROC for OEM driver boards.")
+            proc_num = pinproc.decode(self.machine_type, str(number))
 
-        for section, collection, klass in pairs:
-            if section in self.machine.config:
-                sect_dict = self.machine.config[section]
-                for name in sect_dict:
+        switch = PROCSwitch(proc_num)
+        # The P-ROC needs to be configured to notify the host computers of
+        # switch events. (That notification can be for open and closed,
+        # debounced or nondebounced.)
+        self.log.debug("Configuring switch's host notification settings. P-ROC"
+                       "number: %s, debouce: %s", proc_num, debounce)
+        if debounce is False or proc_num >= pinproc.SwitchNeverDebounceFirst:
+            self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
+                                         {'notifyHost': True, 'reloadActive':
+                                         False}, [], False)
+            self.proc.switch_update_rule(proc_num, 'open_nondebounced',
+                                         {'notifyHost': True,
+                                          'reloadActive': False}, [], False)
+        else:
+            self.proc.switch_update_rule(proc_num, 'closed_debounced',
+                                         {'notifyHost': True,
+                                          'reloadActive': False}, [], False)
+            self.proc.switch_update_rule(proc_num, 'open_debounced',
+                                         {'notifyHost': True,
+                                         'reloadActive': False}, [], False)
 
-                    item_dict = sect_dict[name]
+        # Read in and set the initial switch state
+        # The P-ROC uses the following values for hw switch states:
+        # 1 - closed (debounced)
+        # 2 - open (debounced)
+        # 3 - closed (not debounced)
+        # 4 - open (not debounced)
 
-                    # Find the P-ROC number for each item in the YAML sections.
-                    # For PDBs the number is based on the PDB configuration
-                    # determined above.  For other machine types, pinproc's
-                    # decode() method can provide the number.
-
-                    if self.machine_type == pinproc.MachineTypePDB:
-                        number = pdb_config.get_proc_number(section,
-                            str(item_dict['number']))
-                        if number == -1:
-                            self.log.error("%s Item: %s cannot be controlled "
-                                           "by the P-ROC. Ignoring...",
-                                           section, name)
-                            continue
-                    else:
-                        number = pinproc.decode(self.machine_type,
-                                                str(item_dict['number']))
-
-                    item = None
-                    if ('bus' in item_dict and item_dict['bus'] == 'AuxPort') \
-                            or number >= pinproc.DriverCount:
-                        item = VirtualDriver(self, name, number, polarity)
-                        new_virtual_drivers += [number]
-                    else:
-                        yaml_number = str(item_dict['number'])
-                        if klass == PROCLED:
-                            number = yaml_number
-
-                        item = klass(self, name, number)
-                        item.yaml_number = yaml_number
-
-                        # We write the label, type, & tags to the parent item
-                        if 'label' in item_dict:
-                            item.parent.label = item_dict['label']
-
-                        if 'type' in item_dict:
-                            item.parent.type = item_dict['type']
-                        #else:
-                        #    item.parent.type = 'NO'
-
-                        if 'tags' in item_dict:
-                            tags = item_dict['tags']
-                            if type(tags) == str:
-                                item.parent.tags = tags.split(',')
-                            elif type(tags) == list:
-                                item.parent.tags = tags
-                            else:
-                                self.log.warning('Configuration item named '
-                                    '"%s" has unexpected tags type %s. Should '
-                                    'be list or comma-delimited string.'
-                                    % (name, type(tags)))
-
-                        if klass == PROCSwitch:
-                            if (('debounced' in item_dict and
-                                 item_dict['debounced'] is False) or number >=
-                                 pinproc.SwitchNeverDebounceFirst):
-                                item.debounced = False
-                        if klass == PROCDriver:
-                            if ('pulseTime' in item_dict):
-                                item.pulse_time = \
-                                    item_dict['pulseTime']
-                            if ('polarity' in item_dict):
-                                item.reconfigure(item_dict['polarity'])
-                        if klass == PROCLED:
-                            if ('polarity' in item_dict):
-                                item.invert = not item_dict['polarity']
-
-                    collection[name] = item.parent  # was 'item'
-                    #item.parent.tags = collection[name].tags
-                    self.log.debug("Creating P-ROC hardware device: %s: "
-                                     "%s:%s", section, name, number)
-
-        # In the P-ROC, VirtualDrivers will conflict with regular drivers on
-        # the same group. So if any VirtualDrivers were added, the regular
-        # drivers in that group must be changed to VirtualDrivers as well.
-
-        for virtual_driver in new_virtual_drivers:
-            base_group_number = virtual_driver/8
-            for collection in [self.machine.coils, self.machine.lamps]:
-                items_to_remove = []
-                for item in collection:
-                    if item.number/8 == base_group_number:
-                        items_to_remove += [{name: item.name,
-                                             number: item.number}]
-                for item in items_to_remove:
-                    self.log.debug("Removing %s from %s", item[name],
-                                     str(collection))
-                    collection.remove(item[name], item[number])
-                    # todo change to like above
-                    self.log.debug("Adding %s to VirtualDrivers", item[name])
-                    collection.add(item[name], VirtualDriver(self, item[name],
-                                                             item[number],
-                                                             polarity))
-
-        # We want to receive events for all of the defined switches:
-        self.log.debug("Programming switch rules...")
-        for sw_name, sw_object in self.machine.switches.iteritems():
-            if sw_object.debounced:
-                self.proc.switch_update_rule(sw_object.number,
-                                             'closed_debounced',
-                                             {'notifyHost': True,
-                                              'reloadActive': False}, [],
-                                             False)
-                self.proc.switch_update_rule(sw_object.number,
-                                             'open_debounced',
-                                             {'notifyHost': True,
-                                              'reloadActive': False}, [],
-                                             False)
-            else:
-                self.proc.switch_update_rule(sw_object.number,
-                                             'closed_nondebounced',
-                                             {'notifyHost': True,
-                                             'reloadActive': False}, [], False)
-                self.proc.switch_update_rule(sw_object.number,
-                                             'open_nondebounced',
-                                             {'notifyHost': True,
-                                             'reloadActive': False}, [], False)
-
-        # Configure the initial switch states:
-        # todo remove since switch controller does this now?
         states = self.proc.switch_get_states()
-        for sw_name, sw_object in self.machine.switches.iteritems():
-            sw_object._set_state(states[sw_object.number] == 1)
+        if states[proc_num] == 1 or states[proc_num] == 3:
+            state = 1
+        else:
+            state = 0
+
+        # Return the switch object and an integer of its current state.
+        # 1 = active, 0 = inactive
+        return switch, proc_num, state
+
+    def configure_led(self, name, number, polarity):
+        """ Configures a P-ROC direct LED controlled via a PD-LED.
+
+        This feature is not yet implemented.
+        """
+        # 'yaml_number = number = proc_num
+        #if ('polarity' in item_dict):
+            #item.invert = not item_dict['polarity']
+
+    def configure_lamp(self, name, number):
+        """ Configures a P-ROC matrix Lamp.
+
+        This feature is not yet implemented.
+
+        """
+        # I love Lamp.
+        pass
 
     def hw_loop(self):
         """Loop code which checks the P-ROC for any events (switch state
@@ -271,9 +261,7 @@ class HardwarePlatform(object):
         Also tickles the watchdog and flushes any queued commands to the P-ROC.
 
         """
-
         # Get P-ROC events (switches & DMD frames displayed)
-
         for event in self.proc.get_events():
             event_type = event['type']
             event_value = event['value']
@@ -281,24 +269,20 @@ class HardwarePlatform(object):
             if event_type == 99:  # CTRL-C to quit todo does this go here?
                 self.machine.end_run_loop()
             elif event_type == pinproc.EventTypeDMDFrameDisplayed:
-                # DMD events
                 pass
-                #self.dmd_event()
 
             elif event_type == pinproc.EventTypeSwitchClosedDebounced:
                 self.machine.switch_controller.process_switch(state=1,
-                                                           num=event_value)
+                    num=event_value)
             elif event_type == pinproc.EventTypeSwitchOpenDebounced:
                 self.machine.switch_controller.process_switch(state=0,
-                                                           num=event_value)
+                    num=event_value)
             else:
                 pass
                 # todo we still have event types:
                 # pinproc.EventTypeSwitchClosedNondebounced
                 # pinproc.EventTypeSwitchOpenNondebounced
                 # Do we do anything with them?
-
-        self.tick_virtual_drivers()
 
         if self.proc:
             self.proc.watchdog_tickle()
@@ -312,22 +296,7 @@ class HardwarePlatform(object):
                 # if you ask for 100HZ and the system can only do 50, that is
                 # not good
 
-    def tick_virtual_drivers(self):
-        pass
-        # todo fix this
-        #for coil_name, coil_object in self.machine.coils.iteritems():
-        #    coil_object.tick()
-        #for lamp_name, lamp_object in self.machine.lamps.iteritems():
-        #    lamp_object.tick()
-
-    def timer_initialize(self):
-        """ Run this before the machine loop starts. I want to do it here so we
-        don't need to check for initialization on each machine loop. (Or is this
-        premature optimization?)
-        """
-        self.next_tick_time = time.time()
-
-    def set_hw_rule(self,
+    def _do_set_hw_rule(self,
                     sw,
                     sw_activity,
                     coil_action_time,  # 0 = disable, -1 = hold forever
@@ -465,23 +434,24 @@ class HardwarePlatform(object):
 
         if proc_action == 'pulse':
             this_driver = [pinproc.driver_state_pulse(
-                coil.platform_driver.state(), pulse_time)]
+                coil.hw_driver.state(), pulse_time)]
 
         elif proc_action == 'patter':
             this_driver = [pinproc.driver_state_patter(
-                coil.platform_driver.state(), pwm_on, pwm_off, pulse_time)]
+                coil.hw_driver.state(), pwm_on, pwm_off, pulse_time, True)]
+            # todo above param True should not be there. Change to now?
 
         elif proc_action == 'enable':
             this_driver = [pinproc.driver_state_pulse(
-                coil.platform_driver.state(), 0)]
+                coil.hw_driver.state(), 0)]
 
         elif proc_action == 'disable':
             this_driver = [pinproc.driver_state_disable(
-                coil.platform_driver.state())]
+                coil.hw_driver.state())]
 
         elif proc_action == 'pulsed_patter':
             this_driver = [pinproc.driver_state_pulsed_patter(
-                coil.platform_driver.state(), pwm_on, pwm_off,
+                coil.hw_driver.state(), pwm_on, pwm_off,
                 coil_action_time)]
 
         # merge in any previously-configured driver rules for this switch
@@ -498,7 +468,7 @@ class HardwarePlatform(object):
         self.proc.switch_update_rule(sw.number, event_type, rule, final_driver,
                                      drive_now)
 
-    def clear_hw_rule(self, sw_num):
+    def _do_clear_hw_rule(self, sw_num):
         """Clears a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
@@ -533,24 +503,6 @@ class HardwarePlatform(object):
 
         # todo need to read in the notifyHost settings and reapply those
         # appropriately.
-
-
-class PROCHardwareObject(HardwareObject):
-    """Base class for P-ROC Hardware Objects."""
-    yaml_number = None
-
-    def __init__(self, machine, name, number):
-        super(PROCHardwareObject, self).__init__(machine, name, number)
-
-
-class PROCSwitch(object):
-    """Represents a switch in a pinball machine connected to a P-ROC."""
-    def __init__(self, machine, name, number):
-        self.parent = HardwareSwitch(machine, name, number,
-                                                  platform_driver=self)
-
-    # todo add methods that query hardware-specific things of P-ROC switches,
-    # if there are any??
 
 
 class PROCLED(object):
@@ -664,6 +616,7 @@ class PROCLED(object):
 
 
 class PDBSwitch(object):
+    """Base class for switches connected to a P-ROC."""
     def __init__(self, pdb, number_str):
         upper_str = number_str.upper()
         if upper_str.startswith('SD'):
@@ -685,6 +638,10 @@ class PDBSwitch(object):
 
 
 class PDBCoil(object):
+    """Base class for coils connected to a P-ROC that are controlled via P-ROC
+    driver boards (i.e. the PD-16 board).
+
+    """
     def __init__(self, pdb, number_str):
         self.pdb = pdb
         upper_str = number_str.upper()
@@ -724,6 +681,7 @@ class PDBCoil(object):
 
 
 class PDBLamp(object):
+    """Base class for Lamps connected to a PD-8x8 driver board."""
     def __init__(self, pdb, number_str):
         self.pdb = pdb
         upper_str = number_str.upper()
@@ -802,21 +760,31 @@ class PDBLamp(object):
         return True
 
 
+class PROCSwitch(object):
+    def __init__(self, number):
+        self.log = logging.getLogger('PROCSwitch')
+        self.number = number
+
+
 class PlatformDriver(object):
     pass
 
 
 class PROCDriver(PlatformDriver):
+    """ Base class for drivers connected to a P-ROC. This class is used for all
+    drivers, regardless of whether they're connected to a P-ROC driver board
+    (such as the PD-16 or PD-8x8) or an OEM driver board.
 
-    def __init__(self, machine, name, number):
+    """
+
+    def __init__(self, number, proc_driver):
         self.log = logging.getLogger('PROCDriver')
-        self.machine = machine
         self.number = number
-        self.parent = HardwareDriver(machine, name, number, self)
+        self.proc = proc_driver
 
     def disable(self):
         """Disables (turns off) this driver."""
-        self.machine.proc.driver_disable(self.number)
+        self.proc.driver_disable(self.number)
 
     def pulse(self, milliseconds=None):
         """Enables this driver for `milliseconds`.
@@ -826,7 +794,7 @@ class PROCDriver(PlatformDriver):
         """
         if not milliseconds in range(256):
             raise ValueError('milliseconds must be in range 0-255.')
-        self.machine.proc.driver_pulse(self.number, milliseconds)
+        self.proc.driver_pulse(self.number, milliseconds)
 
     def future_pulse(self, milliseconds=None, timestamp=0):
         """Enables this driver for `milliseconds` at P-ROC timestamp:
@@ -841,7 +809,7 @@ class PROCDriver(PlatformDriver):
             raise ValueError('milliseconds must be in range 0-255.')
         self.log.debug("Driver %s - future pulse %d", self.name,
                           milliseconds, timestamp)
-        self.machine.proc.driver_future_pulse(self.number, milliseconds,
+        self.proc.driver_future_pulse(self.number, milliseconds,
                                            timestamp)
 
     def patter(self, on_time=10, off_time=10, original_on_time=0, now=True):
@@ -860,9 +828,9 @@ class PROCDriver(PlatformDriver):
             raise ValueError('off_time must be in range 0-127.')
 
         self.log.debug("Driver %s - patter on:%d, off:%d, orig_on:%d, "
-                          "now:%s", self.name, on_time, off_time,
-                          original_on_time, now)
-        self.machine.proc.driver_patter(self.number, on_time, off_time,
+                       "now:%s", self.name, on_time, off_time,
+                       original_on_time, now)
+        self.proc.driver_patter(self.number, on_time, off_time,
                                      original_on_time, now)
 
     def pulsed_patter(self, on_time=10, off_time=10, run_time=0, now=True):
@@ -883,7 +851,7 @@ class PROCDriver(PlatformDriver):
         self.log.debug("Driver %s - pulsed patter on:%d, off:%d,"
                           "run_time:%d, now:%s", self.name, on_time, off_time,
                           run_time, now)
-        self.machine.proc.driver_pulsed_patter(self.number, on_time, off_time,
+        self.proc.driver_pulsed_patter(self.number, on_time, off_time,
                                             run_time, now)
         self.last_time_changed = time.time()
 
@@ -891,7 +859,7 @@ class PROCDriver(PlatformDriver):
         """Schedules this driver to be enabled according to the given
         `schedule` bitmask."""
         self.log.debug("Driver %s - schedule %08x", self.name, schedule)
-        self.machine.proc.driver_schedule(number=self.number, schedule=schedule,
+        self.proc.driver_schedule(number=self.number, schedule=schedule,
                                        cycle_seconds=cycle_seconds, now=now)
         self.last_time_changed = time.time()
 
@@ -899,20 +867,22 @@ class PROCDriver(PlatformDriver):
         """Returns a dictionary representing this driver's current
         configuration state.
         """
-        return self.machine.proc.driver_get_state(self.number)
+        return self.proc.driver_get_state(self.number)
 
     def tick(self):
         pass
 
     def reconfigure(self, polarity):
-        state = self.machine.proc.driver_get_state(self.number)
+        state = self.proc.driver_get_state(self.number)
         state['polarity'] = polarity
-        self.machine.proc.driver_update_state(state)
+        self.proc.driver_update_state(state)
 
 
 class PDBConfig(object):
     """ This class is only used when the P-ROC is configured to use P-ROC
-    driver boards. i.e. not when it's operating in WPC or Stern mode.
+    driver boards such as the PD-16 or PD-8x8. i.e. not when it's operating in
+    WPC or Stern mode.
+
     """
     indexes = []
     proc = None
@@ -999,7 +969,7 @@ class PDBConfig(object):
             # bank here.
             enable = group_ctr in coil_bank_list
             self.log.debug("Driver group %02d (dedicated): Enable=%s",
-                             group_ctr, enable)
+                           group_ctr, enable)
             proc.driver_update_group_config(group_ctr,
                                             0,
                                             group_ctr,
@@ -1267,141 +1237,6 @@ def decode_pdb_address(addr, aliases=[]):
 
     else:
         raise ValueError('PDB address delimeter (- or /) not found.')
-
-
-class VirtualDriver(HardwareDriver):
-    """Represents a driver in a pinball machine, such as a lamp, coil/solenoid,
-    or flasher that should be driver by Auxiliar Port logic rather directly by
-    P-ROC hardware.  This means any automatic logic to determine when to turn
-    on or off the driver is implemented in software in this class.
-
-    Subclass of :class:`HardwareDriver`.
-
-    """
-    curr_state = False
-    """The current state of the driver.  Active is True.  Inactive is False."""
-    curr_value = False
-    """The current value of the driver taking into account the desired state
-    and polarity."""
-    time_ms = 0
-    """The time the driver's currently active function should end."""
-    next_action_time_ms = 0
-    """The next time the driver's state should change."""
-    function = None
-    """The currently assigned function (pulse, schedule, patter,
-    pulsed_patter)."""
-    function_active = False
-    """Whether or not a function is currently active."""
-    state_change_handler = None
-    """Function to be called when the driver needs to change state."""
-
-    def __init__(self, machine, name, number, polarity):
-        super(VirtualDriver, self).__init__(machine, name, number)
-
-        self.state = {'polarity':polarity,
-                      'timeslots':0x0,
-                      'patterEnable':False,
-                      'driverNum':number,
-                      'patterOnTime':0,
-                      'patterOffTime':0,
-                      'state':0,
-                      'outputDriveTime':0,
-                      'waitForFirstTimeSlot':0,
-                      'futureEnable':False}
-
-        self.curr_value = not (self.curr_state ^ self.state['polarity'])
-        self.log = logging.getLogger('machine.vdriver')
-
-    def update_state(self, state):
-        """ Generic state change request that represents the P-ROC's
-        PRDriverUpdateState function.
-
-        """
-        self.state = state.copy()
-        if not state['state']:
-            self.disable()
-        elif state['timeslots'] == 0:
-            self.pulse(state['outputDriveTime'])
-        else:
-            self.schedule(state['timeslots'], state['outputDriveTime'],
-                          state['waitForFirstTimeSlot'])
-
-    def disable(self):
-        """Disables (turns off) this driver."""
-        self.log.debug("VirtualDriver %s - disable", self.name)
-        self.function_active = False
-        self.change_state(False)
-
-    def pulse(self, milliseconds=None):
-        """Enables this driver for `milliseconds`.
-
-        If no parameters are provided or `milliseconds` is `None`,
-        :attr:`pulse_time` is used.
-
-        """
-        self.function = 'pulse'
-        self.function_active = True
-        if milliseconds is None:
-            milliseconds = self.pulse_time
-        self.change_state(True)
-        if milliseconds == 0:
-            self.time_ms = 0
-        else:
-            self.time_ms = time.time() + milliseconds / 1000.0
-        self.log.debug("Time: %f: VirtualDriver %s - pulse %d. End time: %f",
-                       time.time(), self.name, milliseconds, self.time_ms)
-
-    def schedule(self, schedule, cycle_seconds=0, now=True):
-        """Schedules this driver to be enabled according to the given
-        `schedule` bitmask.
-
-        """
-        self.function = 'schedule'
-        self.function_active = True
-        self.state['timeslots'] = schedule
-        if cycle_seconds == 0:
-            self.time_ms = 0
-        else:
-            self.time_ms = time.time() + cycle_seconds
-        self.log.debug("VirtualDriver %s - schedule %08x", self.name,
-                          schedule)
-        self.change_state(schedule & 0x1)
-        self.next_action_time_ms = time.time() + 0.03125
-
-    def enable(self):
-        # todo need to change this so it sets a pulse that's 2.5x machine loop
-        self.schedule(0xffffffff, 0, True)
-
-    def change_state(self, new_state):
-        self.curr_state = new_state
-        self.curr_value = not (self.curr_state ^ self.state['polarity'])
-        self.last_time_changed = time.time()
-        if self.state_change_handler:
-            self.state_change_handler()
-        self.log.debug("VirtualDriver %s - state change: %d", self.name,
-                          self.curr_state)
-
-    def tick(self):
-        if self.function_active:
-            # Check for time expired.  time_ms == 0 is a special case that
-            # never expires.
-            if time.time() >= self.time_ms and self.time_ms > 0:
-                self.disable()
-            elif self.function == 'schedule':
-                if time.time() >= self.next_action_time_ms:
-                    self.inc_schedule()
-
-    def inc_schedule(self):
-        self.next_action_time_ms += .0325
-
-        # See if the state needs to change.
-        next_state = (self.state['timeslots'] >> 1) & 0x1
-        if next_state != self.curr_state:
-            self.change_state(next_state)
-
-        # Rotate schedule down.
-        self.state['timeslots'] = self.state['timeslots'] >> 1 | \
-            ((self.state['timeslots'] << 31) & 0x80000000)
 
 # The MIT License (MIT)
 

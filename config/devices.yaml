@@ -90,7 +90,7 @@ Devices:
             confirm_eject_target: shooterLaneR
 
         shooterLaneR:
-            tags: plunger, home, add_ball_live
+            tags: plunger, home, ball_add_live
             label: Right Plunger Lane
             ball_switches: shooterR
             eject_switch: shooterR

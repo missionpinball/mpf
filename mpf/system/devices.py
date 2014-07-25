@@ -7,7 +7,7 @@ pop bumpers or slingshots.)
 plunger lane, etc.)
 
 """
-# devices.py (contains classes for various playfield devices)
+# devices.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -16,14 +16,41 @@ plunger lane, etc.)
 
 import logging
 from collections import defaultdict
-from mpf.system.hardware import HardwareObject
 from mpf.system.tasks import DelayManager
 
-# todo do we need a generic Device class?
+
+class Device(object):
+    """Parent class for all devices in a pinball machine.
+
+    Devices are the "lowest level" hardware in a machine, including lights,
+    coils, switches.
+
+    """
+
+    def __init__(self, machine, name, config, collection=-1):
+
+        # todo this code is similar to the HardwareObject class. Wonder if
+        # there's any value in subclassing and/or combining?
+        self.machine = machine
+        self.name = name
+        self.config = config
+        self.tags = []
+        self.label = ""
+
+        if 'tags' in config:
+            self.tags = self.machine.string_to_list(config['tags'])
+        if 'label' in config:
+            self.label = config['label']  # todo change to multi lang
+        # todo more pythonic way, like self.label = blah if blah?
+
+        # Add this instance to our dictionary for this type of device
+        if collection != -1:
+            # Have to use -1 instead of None to catch an empty collection dict
+            collection[name] = self
 
 
-class Flipper(object):
-    """Represents a flipper in a pinball machine.
+class Flipper(Device):
+    """Represents a flipper in a pinball machine. Subclass of Device.
 
     Contains several methods for actions that can be performed on this flipper,
     like :meth:`enable`, :meth:`disable`, etc.
@@ -36,39 +63,33 @@ class Flipper(object):
     Parameters
     ----------
 
-    name: string
-        The name you'll refer to this flipper object as.
-
     machine: machine object
         A reference to the machine controller instance.
 
-    hw_dict: dictionary
+    name: string
+        The name you'll refer to this flipper object as.
+
+
+    config: dictionary
         A dictionary that holds the configuration values which specify how
         this flipper should be configured. If this is None, it will use the
         system config settings that were read in from the config files when
         the machine was reset.
 
-    config: bool
-        Specifies whether the flipper is configured now (versus simply created
-        as a placeholder).
+    collection: bool
+
 
     """
 
-    def __init__(self, name, machine, hw_dict, config=True):
-        self.log = logging.getLogger("Flipper Device")
-        self.log.debug("Creating Flipper: %s", name)
+    def __init__(self, machine, name, config, collection=None):
+        super(Flipper, self).__init__(machine, name, config, collection)
+        self.log = logging.getLogger('Flipper.' + name)
+        self.log.debug("Creating Flipper device")
 
-        self.name = name
-        self.machine = machine
-
-        self.label = None
-        self.tags = None
-
+        # todo convert to dict
         self.no_hold = False
         self.strength = 100
         self.inverted = False
-
-        hw_dict[name] = self
 
         if config:
             config = defaultdict(lambda: None, config)
@@ -90,19 +111,24 @@ class Flipper(object):
         if not config:
             pass  # todo add an error
 
-        # todo BrianD: Does copying all these to variables make sense? Maybe
-        # I should just create a instance dictionary called 'config' and access
-        # them like that? So it's self.config[main_coil] instead of
-        # self.main_coil
-
         self.main_coil = self.machine.coils[config['main_coil']]
-        self.activation_switch = self.machine.switches[config['activation_switch']]
-        self.hold_coil = self.machine.coils[config['hold_coil']]
-        self.eos_switch = self.machine.switches[config['eos_switch']]
+        self.activation_switch = self.machine.switches[config[
+            'activation_switch']]
+        # I don't love these if/then  statements. See the todo note in the
+        # HardwareDict class of the hardware module
+        if config['hold_coil']:
+            self.hold_coil = self.machine.coils[config['hold_coil']]
+        else:
+            self.hold_coil = None
+
+        if config['eos_switch']:
+            self.eos_switch = self.machine.switches[config['eos_switch']]
+        else:
+            self.eos_switch = None
+
         self.hold_pwm = config['hold_pwm']
         self.use_eos = config['use_eos']
         self.label = config['label']
-        self.tags = self.machine.string_to_list(config['tags'])
 
         self.flipper_coils = []
         self.flipper_coils.append(self.main_coil)
@@ -336,7 +362,7 @@ class Flipper(object):
                                        pwm_off=self.main_coil.pwm_off)
 
 
-class AutofireCoil(object):
+class AutofireCoil(Device):
     """Base class for coils in the pinball machine which should fire
     automatically based on switch activity using hardware switch rules.
 
@@ -348,16 +374,12 @@ class AutofireCoil(object):
 
     """
 
-    def __init__(self, name, machine, hw_dict, config=False):
-        self.log = logging.getLogger("Autofire Coil")
+    def __init__(self, machine, name, config, collection=None):
+        super(AutofireCoil, self).__init__(machine, name, config, collection)
+        self.log = logging.getLogger('AutofireCoil.' + name)
         self.log.debug("Creating auto-firing coil rule: %s", name)
-        self.name = name  # todo do we need this?
-        self.machine = machine
-        hw_dict[name] = self
 
-        self.label = None
-        self.tags = None
-
+        # todo convert to dict
         self.switch = None
         self.switch_activity = 'active'
         self.coil = None
@@ -386,7 +408,7 @@ class AutofireCoil(object):
         """
         if not config:
             self.log.error("No configuration received for AutofireCoil: %s",
-                              self.name)
+                           self.name)
 
         # Required
         self.coil = config['coil']
@@ -407,12 +429,12 @@ class AutofireCoil(object):
         if 'pwm_on_ms' in config:
             self.pwm_on_ms = config['pwm_on_ms']
         else:
-            self.pwm_on_ms = self.machine.coils[config['coil']].pwm_on_time
+            self.pwm_on_ms = self.machine.coils[config['coil']].pwm_on
 
         if 'pwm_off_ms' in config:
             self.pwm_off_ms = config['pwm_off_ms']
         else:
-            self.pwm_off_ms = self.machine.coils[config['coil']].pwm_off_time
+            self.pwm_off_ms = self.machine.coils[config['coil']].pwm_off
 
         if 'coil_action_time' in config:
             self.coil_action_time = config['coil_action_time']
@@ -453,7 +475,7 @@ class AutofireCoil(object):
         self.machine.platform.clear_hw_rule(self.switch)
 
 
-class BallDevice(HardwareObject):
+class BallDevice(Device):
     """Base class for a 'Ball Device' in a pinball machine.
 
     A ball device  is anything that can hold one or more balls, such as a
@@ -492,44 +514,47 @@ class BallDevice(HardwareObject):
 
     """
 
-    # todo currently this is subclass of HardwareObject, but it's not really
-    # leveraging that. Need to figure out what moves to the parent and what
-    # stays here.
-
-    def __init__(self, name, machine, hw_dict, config=None):
+    def __init__(self, machine, name, config, collection=None):
+        super(BallDevice, self).__init__(machine, name, config, collection)
         self.log = logging.getLogger('BallDevice.' + name)
-        self.log.debug("Creating Ball Device: %s", name)
-
-        self.machine = machine
-        self.name = name
+        self.log.debug("Creating Device")
 
         self.delay = DelayManager()
 
-        hw_dict[name] = self  # todo move this to the parent class??
-
-        self.config = {}
-
-        self.label = None
-        self.tags = None
-
         # set our config defaults
-        # todo lost of stuff here
-        self.config['ball_capacity'] = 0
-        self.config['post_eject_delay_check'] = ".5s"  # todo make optional
-        self.config['ball_switches'] = None
-        self.config['ball_count_delay'] = "0.5s"
-        self.config['eject_coil'] = None
-        self.config['eject_switch'] = None  # todo what about devices w/o this?
-        self.config['entrance_switch'] = None
-        self.config['jam_switch'] = None
-        self.config['eject_coil_hold_times'] = None  # todo change to list
-        self.config['eject_target'] = None
-        self.config['confirm_eject_type'] = 'count'  # todo make optional?
-        self.config['confirm_eject_target'] = None
-        self.config['eject_type'] = 'single'
-        self.config['player_controlled_eject'] = False  # todo change this
-        self.config['player_controlled_switch_tag'] = None  # todo change this
-        self.config['feeder_device'] = None
+        # todo lots of stuff here
+        if 'ball_capacity' not in self.config:
+            self.config['ball_capacity'] = 0
+        if 'post_eject_delay_check' not in self.config:
+            self.config['post_eject_delay_check'] = ".5s"  # todo make optional
+        if 'ball_switches' not in self.config:
+            self.config['ball_switches'] = None
+        if 'ball_count_delay' not in self.config:
+            self.config['ball_count_delay'] = "0.5s"
+        if 'eject_coil' not in self.config:
+            self.config['eject_coil'] = None
+        if 'eject_switch' not in self.config:
+            self.config['eject_switch'] = None  # todo what about devices w/o this?
+        if 'entrance_switch' not in self.config:
+            self.config['entrance_switch'] = None
+        if 'jam_switch' not in self.config:
+            self.config['jam_switch'] = None
+        if 'eject_coil_hold_times' not in self.config:
+            self.config['eject_coil_hold_times'] = None  # todo change to list
+        if 'eject_target' not in self.config:
+            self.config['eject_target'] = None
+        if 'confirm_eject_type' not in self.config:
+            self.config['confirm_eject_type'] = 'count'  # todo make optional?
+        if 'confirm_eject_target' not in self.config:
+            self.config['confirm_eject_target'] = None
+        if 'eject_type' not in self.config:
+            self.config['eject_type'] = 'single'
+        if 'player_controlled_eject' not in self.config:
+            self.config['player_controlled_eject'] = False  # todo change this
+        if 'player_controlled_switch_tag' not in self.config:
+            self.config['player_controlled_switch_tag'] = None  # todo change this
+        if 'feeder_device' not in self.config:
+            self.config['feeder_device'] = None
 
         # initialize our variables
         self.num_previous_balls_contained = 0
@@ -556,8 +581,7 @@ class BallDevice(HardwareObject):
         if config:
             self.config.update(config)
 
-        self.tags = config.get('tags', None)
-        self.label = config.get('label', None)
+        self.log.debug("Configuring device with: %s", config)
 
         # now let the fun begin!
 
@@ -565,7 +589,6 @@ class BallDevice(HardwareObject):
         # todo should this be automatic based on having a comma in the item?
         self.config['ball_switches'] = self.machine.string_to_list(
             self.config['ball_switches'])
-        self.tags = self.machine.string_to_list(self.tags)
 
         if not self.config['ball_capacity']:
             self.config['ball_capacity'] = len(self.config['ball_switches'])
@@ -654,67 +677,76 @@ class BallDevice(HardwareObject):
 
         """
 
+        # todo check if a game is in progress. If not, process_balls = False
+
         self.log.debug("Received request to count balls."
                        " Process_balls = %s", process_balls)
 
-        ball_count = 0
-        ball_change = 0
-        self.num_previous_balls_contained = self.num_balls_contained
-        self.log.debug("Previous number of balls: %s",
-                         self.num_previous_balls_contained)
+        # todo look at this code. If we don't have ball switches, do we need
+        # to do anything to count? Right not we just skip this all.
+        if self.config['ball_switches']:
 
-        for switch in self.config['ball_switches']:
-            if self.machine.switch_controller.is_active(switch):
-                ball_count += 1
-                self.log.debug("Active switch: %s", switch)
-        self.log.debug("Counted %s balls", ball_count)
+            ball_count = 0
+            ball_change = 0
+            self.num_previous_balls_contained = self.num_balls_contained
+            self.log.debug("Previous number of balls: %s",
+                             self.num_previous_balls_contained)
 
-        self.num_balls_contained = ball_count
-        ball_change = ball_count - self.num_previous_balls_contained
-        self.log.debug("Ball count change for device '%s': %s", self.name,
-                       ball_change)
-        if ball_change:
-            # if there is a change in the ball count, either up or down, we
-            # want to notify the ball controller
-            self.machine.ball_controller.ball_contained_count_change(
-                change=ball_change)
+            for switch in self.config['ball_switches']:
+                if self.machine.switch_controller.is_active(switch):
+                    ball_count += 1
+                    self.log.debug("Active switch: %s", switch)
+            self.log.debug("Counted %s balls", ball_count)
 
-        if ball_change < 0 and self.eject_in_progress and \
-                self.config['confirm_eject_type'] == 'count':
-            # todo or if the pf is already valid and conf type is pf, then...
-            # device has lost a ball, eject is in progress, and we need
-            # to verify the eject via a count, so we have a successful eject
-            self.eject_success(ball_change)
+            self.num_balls_contained = ball_count
+            ball_change = ball_count - self.num_previous_balls_contained
+            self.log.debug("Ball count change for device '%s': %s", self.name,
+                           ball_change)
+            if ball_change:
+                # if there is a change in the ball count, either up or down, we
+                # want to notify the ball controller
+                self.machine.ball_controller.ball_contained_count_change(
+                    change=ball_change)
 
-        # set ok_to_eject
-        self.ok_to_eject = False
-        if self.machine.switch_controller.is_active(
-                self.config['eject_switch']):
-            if self.config['eject_target'] == 'balldevice':
-                if self.machine.balldevices[self.config['eject_target']].\
-                        ball_capacity - self.machine.balldevices[self.config[
-                        'eject_target']].num_balls_contained > 0:
-                    # We have room in the target
+            if ball_change < 0 and self.eject_in_progress and \
+                    self.config['confirm_eject_type'] == 'count':
+                # todo or if the pf is already valid and conf type is pf, then...
+                # device has lost a ball, eject is in progress, and we need
+                # to verify the eject via a count, so we have a successful eject
+                self.eject_success(ball_change)
+
+            # set ok_to_eject
+            self.ok_to_eject = False
+            if self.machine.switch_controller.is_active(
+                    self.config['eject_switch']):
+                if self.config['eject_target'] == 'balldevice':
+                    if self.machine.balldevices[self.config['eject_target']].\
+                            ball_capacity - self.machine.balldevices[self.config[
+                            'eject_target']].num_balls_contained > 0:
+                        # We have room in the target
+                        self.ok_to_eject = True
+                else:
                     self.ok_to_eject = True
-            else:
-                self.ok_to_eject = True
 
-        if process_balls:
+            if process_balls:
 
-            if ball_change < 0 and not self.eject_in_progress:
-                # Device has randomly lost a ball?
-                self.log.debug("Weird, we're missing a ball but there's not"
-                                 " an eject in progress, so let's do a full"
-                                 "count.")
-                self.machine.ball_controller.ball_update_all_counts()
+                if ball_change < 0 and not self.eject_in_progress:
+                    # Device has randomly lost a ball?
+                    self.log.debug("Weird, we're missing a ball but there's "
+                                   "not an eject in progress, so let's do a "
+                                   "full count.")
+                    self.machine.ball_controller.ball_update_all_counts()
 
-            elif ball_change > 0:
-                # Device has gained a ball
-                self._found_new_ball(ball_change)
+                elif ball_change > 0:
+                    # Device has gained a ball
+                    self._found_new_ball(ball_change)
 
-        if self.num_balls_to_eject and self.ok_to_eject:
-            # if we have a pending request to eject a ball, do it now
-            self.eject()
+            if self.num_balls_to_eject and self.ok_to_eject:
+                # if we have a pending request to eject a ball, do it now
+                self.eject()
+        else:
+            # we don't have ball switches
+            ball_count = self.num_balls_contained
 
         return ball_count
 
@@ -909,7 +941,7 @@ class BallDevice(HardwareObject):
             if self.num_balls_to_eject_stealth:
                 self.num_balls_to_eject_stealth -= 1
                 # change to count this down
-            elif 'add_ball_live' in self.tags:
+            elif 'ball_add_live' in self.tags:
                 self.machine.events.post('ball_add_live_success')
                 # change to add num live?
 

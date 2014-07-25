@@ -15,7 +15,7 @@ from collections import defaultdict
 from copy import deepcopy
 import time
 
-from mpf.system.hardware import HardwareDict
+from mpf.system.hardware import HardwareDict, Driver, Switch
 from mpf.system.timing import Timing, Timer
 from mpf.system.tasks import Task, DelayManager
 from mpf.system.events import EventManager
@@ -48,10 +48,9 @@ class MachineController(object):
     """
 
     def __init__(self, config_file, physical_hw=True):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger("Machine Controller")
         self.starttime = time.time()
         self.config = defaultdict(list)  # so we can simplify checking
-        self.platform = None
         self.physical_hw = physical_hw
         self.switch_events = []
         self.done = False
@@ -65,14 +64,21 @@ class MachineController(object):
         # todo combine leds and lamps?
         # todo add GI and flashers?
 
+        self.autofires = HardwareDict()
+        self.flippers = HardwareDict()
+        self.balldevices = HardwareDict()
+
         # create all the machine-wide objects & set them up.
         self.events = EventManager()
         self.update_config(config_file)
-        self.set_platform()
+        self.platform = self.set_platform()
         self.timing = Timing(self)
         self.timing.configure(HZ=self.config['Machine']['HZ'])
         self.switch_controller = SwitchController(self)
         self.process_config()
+
+
+
         self.ball_controller = BallController(self)
         self.ballsearch = BallSearch(self)
 
@@ -221,6 +227,7 @@ class MachineController(object):
 
         """
 
+
         try:
             hardware_platform = __import__('mpf.platform.%s' %
                                self.config['Hardware']['Platform'],
@@ -228,19 +235,21 @@ class MachineController(object):
 
             # above line has an effect similar to:
             # from mpf.platform.<platform_name> import HardwarePlatform
+            
+            return hardware_platform.HardwarePlatform(self)
 
         except ImportError:
             self.log.error("Error importing platform module: %s",
                            self.config['Hardware']['Platform'])
             quit()  # No point in continuing if we error here
 
-        self.platform = hardware_platform.HardwarePlatform(self).parent
+        
 
     def process_config(self):
         """Processes the hardware config based on the machine config files.
 
         """
-        self.platform.process_hw_config()  # This just sets the low level hw
+        #self.platform.process_hw_config()  # This just sets the low level hw
 
         # read in op settings and merge them into the config dictionary
 
@@ -248,41 +257,43 @@ class MachineController(object):
         # todo also could probably automate this instead of having these very
         # similar repeating blocks
 
+        # Coils
+        if 'Coils' in self.config:
+            for coil in self.config['Coils']:
+                # Driver init (machine, name, config)
+                Driver(self, coil, self.config['Coils'][coil], self.coils)
+
+        # Switches
+        if 'Switches' in self.config:
+            for switch in self.config['Switches']:
+                # Driver init (machine, name, config)
+                Switch(self, switch, self.config['Switches'][switch],
+                       self.switches)
+
+        # Flippers
+        if 'Flippers' in self.config['Devices']:
+            for flipper in self.config['Devices']['Flippers']:
+                Flipper(self, flipper,
+                        self.config['Devices']['Flippers'][flipper],
+                        self.flippers)
+
+        # Autofire Coils
+        if 'Autofire Coils' in self.config['Devices']:
+            for coil in self.config['Devices']['Autofire Coils']:
+                AutofireCoil(self, coil,
+                             self.config['Devices']['Autofire Coils'][coil],
+                             self.autofires)
+
+        # Ball Devices
+        if 'BallDevices' in self.config['Devices']:
+            for balldevice in self.config['Devices']['BallDevices']:
+                BallDevice(self, balldevice,
+                           self.config['Devices']['BallDevices'][balldevice],
+                           self.balldevices)
+
         # Keyboard mapping
         if 'key_map' in self.config:
             self.keyboard = Keyboard(self)
-
-        # Flippers
-        self.flippers = {}
-        self.flippers = HardwareDict()
-        for flipper in self.config['Devices']['Flippers']:
-            Flipper(flipper, self, self.flippers,
-                    self.config['Devices']['Flippers'][flipper])
-
-        # Autofire Coils
-        self.autofires = {}
-        self.autofires = HardwareDict()
-        for coil in self.config['Devices']['Autofire Coils']:
-            coil = AutofireCoil(coil, self, self.autofires,
-                                self.config['Devices']['Autofire Coils'][coil])
-
-        # Ball Devices
-        self.balldevices = {}
-        self.balldevices = HardwareDict()
-        for balldevice in self.config['Devices']['BallDevices']:
-            BallDevice(balldevice, self, self.balldevices,
-                       self.config['Devices']['BallDevices'][balldevice])
-
-        # Create easy references to our trough and plunger devices
-        self.trough = self.balldevices.items_tagged('trough')[0]
-        if len(self.balldevices.items_tagged('trough')) > 1:
-            self.log.warning("More than one trough device found")
-        self.plunger = self.balldevices.items_tagged('plunger')[0]
-        if len(self.balldevices.items_tagged('plunger')) > 1:
-            self.log.warning("More than one plunger device found")
-            # 'plunger' is the device that's served from the trough. It's fine
-            # if there are more than one shooter lane. We're just talking about
-            # where new balls are served from
 
     def string_to_list(self, string):
         """ Converts a comma-separated string into a python list.
@@ -299,6 +310,9 @@ class MachineController(object):
             string.
 
         """
+
+        # make this a static method
+
         if type(string) is str:
             # convert to list then strip out leading / trailing white space
             return [x.strip() for x in string.split(',')]
@@ -405,24 +419,38 @@ class MachineController(object):
 
         """
         self.log.debug("Starting the main machine run loop.")
-        loops = 0
+        num_loops = 0
 
         self.platform.timer_initialize()
 
-        if self.hw_polling:
+        if self.platform.features['hw_polling']:
+            loop = self.platform.hw_loop
+        else:
+            loop = self.sw_loop
 
-            try:
-                while self.done is False:
-                    self.platform.hw_loop()
-                    loops += 1
+        while self.done is False:
+            loop()
+            num_loops += 1
 
-            finally:
-                if loops != 0:
-                    self.log.debug("Hardware loop speed: %sHz",
-                                   round(loops / (time.time() -
-                                                  self.starttime)))
+        else:
+            if num_loops != 0:
+                self.log.debug("Hardware loop speed: %sHz",
+                               round(num_loops /
+                                     (time.time() - self.starttime)))
 
         # todo add support to read software switch events
+
+    def sw_loop(self):
+        """ This is the main game run loop that's used when the hardware
+        platform doesn't have to be polled continuously.
+
+        """
+        # todo currently this just runs as fast as it can. Should I have it
+        # sleep while waiting for the next timer tick?
+
+        if self.platform.next_tick_time <= time.time():
+            self.timer_tick()
+            self.platform.next_tick_time += Timing.secs_per_tick
 
     def timer_tick(self):
         """Called by the platform each machine tick based on self.HZ"""

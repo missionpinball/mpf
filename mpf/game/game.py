@@ -173,10 +173,6 @@ class Game(MachineMode):
             return
         # todo check extra balls
         # todo next_player()
-        print self.player.vars['ball']
-        print self.machine.config['Game']['Balls per game']
-        print self.player.vars['number']
-        print Player.total_players
 
         if self.player.vars['ball'] == self.machine.config['Game']\
                 ['Balls per game'] and \

@@ -1,0 +1,7 @@
+mpf.platform.none module
+========================
+
+.. automodule:: mpf.platform.none
+    :members:
+    :undoc-members:
+    :show-inheritance:

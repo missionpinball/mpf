@@ -1,4 +1,4 @@
-""" Contains the class for hardware objects, as well as generic subclasses for
+""" Contains the parent class for hardware objects, as well as generic subclasses for
 each type of hardware item (LED, Lamp, Coil, Switch, Stepper). Then each
 platform will subclass these to add the platform-specific things it needs.
 """
@@ -16,38 +16,58 @@ import uuid
 
 
 class Platform(object):
-    """Base class which communicates with the actual platform drivers."""
-    def __init__(self, platform_object, machine):
-        self.log = logging.getLogger('Platform')
-        self.hw_platform = platform_object
+    """ Parent class for the machine's hardware controller.
+
+    This is the class that each hardware controller (such as P-ROC or FAST)
+    will subclass to talk to their hardware. If there is no physical hardware
+    attached, then this class can be used on its own. (Many of the methods
+    will do nothing and your game will work.)
+
+    For example, the P-ROC HardwarePlatform class will have a Driver class
+    with methods such as pulse() to fire a coil. 
+
+    """
+    def __init__(self, machine):
         self.machine = machine
+        self.HZ = None
+        self.secs_per_tick = None
+        self.next_tick_time = None
+        self.features = {}
+        self.hw_switch_rules = {}
 
-    def process_hw_config(self):
-        self.hw_platform.process_hw_config()
-
-    def timer_config(self, HZ):
-        if HZ:
-            Timing.HZ = HZ
-            Timing.secs_per_tick = 1 / float(HZ)
+        # Set default platform features. Each platform interface can change
+        # these to notify the framework of the specific features it supports.
+        self.features['max_pulse'] = 255
+        self.features['hw_polling'] = False
+        self.features['hw_rule_coil_delay'] = False
+        self.features['variable_recycle_time'] = False
 
     def timer_initialize(self):
-        self.hw_platform.timer_initialize()
+        """ Run this before the machine loop starts. I want to do it here so we
+        don't need to check for initialization on each machine loop. (Or is
+        this premature optimization?)
 
-    def hw_loop(self):
-        self.hw_platform.hw_loop()
+        """
+        self.next_tick_time = time.time()
 
     def set_hw_rule(self,
                     sw_name,  # switch name
                     sw_activity,  # active or inactive?
                     coil_name=None,  # coil name
-                    coil_action_time=0,
+                    coil_action_time=0,  # total time coil is active for
                     pulse_time=0,  # ms to pulse the coil?
-                    pwm_on=0,
-                    pwm_off=0,
+                    pwm_on=0,  # 'on' ms of a pwm-based patter
+                    pwm_off=0,  # 'off' ms of a pwm-based patter
                     delay=0,  # delay before firing?
-                    recycle_time=0,
-                    debounced=False,
-                    drive_now=False):  # wait before firing again?
+                    recycle_time=0,  # wait before firing again?
+                    debounced=False,  # should coil wait for debounce?
+                    drive_now=False,  # should rule check sw and fire coil now?
+                    ):
+        """Writes the hardware rule to the controller.
+
+        """
+
+        self.log.debug("Writing HW Rule to controller")
 
         sw = self.machine.switches[sw_name]  # todo make a nice error
         coil = self.machine.coils[coil_name]  # here too
@@ -69,140 +89,104 @@ class Platform(object):
         if self.machine.switches[sw_name].type == 'NC':
             sw_activity = sw_activity ^ 1  # bitwise invert
 
-        self.hw_platform.set_hw_rule(sw,
-                                     sw_activity,
-                                     coil_action_time,
-                                     coil,
-                                     pulse_time,
-                                     pwm_on,
-                                     pwm_off,
-                                     delay,
-                                     recycle_time,
-                                     debounced,
-                                     drive_now)
+        self._do_set_hw_rule(sw, sw_activity, coil_action_time, coil,
+                            pulse_time, pwm_on, pwm_off, delay, recycle_time,
+                            debounced, drive_now)
 
     def clear_hw_rule(self, sw_name):
         """ Clears all the hardware switch rules for a switch, meaning those
         switch actions will no longer affect coils.
+
+        Another way to think of this is that it 'disables' a hardware rule.
+        This is what you'd use to disable flippers or bumpers during tilt, game
+        over, etc.
+
         """
-        self.hw_platform.clear_hw_rule(self.machine.switches[sw_name].number)
+        self._do_clear_hw_rule(self.machine.switches[sw_name].number)
+
+    def _do_set_hw_rule(self, *args, **kwargs):
+        pass
+
+    def _do_clear_hw_rule(self, *args, **kwargs):
+        pass
 
 
 class HardwareObject(object):
-    def __init__(self, machine, name, number=-1):
+    """ Generic parent class of for every hardware object in a pinball machine.
+
+    """
+    def __init__(self, machine, name, config, collection=-1):
         self.machine = machine
         self.name = name
+        self.config = config
         self.tags = []
         self.label = None
         self.time_last_changed = 0
 
-        if number == -1:
+        # todo dunno if we want to keep number here in this parent class?
+        if config['number']:
+            self.number = config['number']
+        else:
             self.number = uuid.uuid4().int
             # some hw doesn't have a number, but we need it for everything
             # else to work, so we just make one up. Maybe this should change to
             # not require a number?
-        else:
-            self.number = number
+
+        if 'tags' in config:
+            self.tags = self.machine.string_to_list(config['tags'])
+        if 'label' in config:
+            self.label = config['label']  # todo change to multi lang
+        # todo more pythonic way, like self.label = blah if blah?
+
+        # Add this instance to our dictionary for this type of device
+        if collection != -1:
+            # Have to use -1 here instead of None to catch an empty collection
+            collection[name] = self
 
 
-class HardwareDriver(HardwareObject):
-    """Generic class that holds driver elements.
+class Switch(HardwareObject):
+    """ A switch in a pinball machine.
 
-    This exposes the methods you can use. Then each platform module subclasses
-    these to actually perform the actions.
     """
 
-    log = logging.getLogger("HardwareDriver")
-    platform_driver = None
+    log = logging.getLogger("Switch")
 
-    def __init__(self, machine, name, number, platform_driver):
-        super(HardwareDriver, self).__init__(machine, name, number)
-        self.platform_driver = platform_driver
-        self.pulse_time = 30
-        self.pwm_on_time = 0
-        self.pwm_off_time = 0
+    def __init__(self, machine, name, config, collection=None):
+        super(Switch, self).__init__(machine, name, config, collection)
 
-    def disable(self):
-        """ Disables this driver """
-        self.log.debug("Disabling Driver: %s", self.name)
-        self.time_last_changed = time.time()
-        # todo also disable the timer which reenables this
+        self.machine = machine
+        self.name = name
+        self.config = config
+        self.state = 0
+        """ The logical state of a switch. 1 = active, 0 = inactive. This takes
+        into consideration the NC or NO settings for the switch."""
+        self.hw_state = 0
+        """ The physical hardware state of the switch. 1 = active,
+        0 = inactive. This is what the actual hardware is reporting and does
+        not consider whether a switch is NC or NO."""
 
-    def pulse(self, milliseconds=None):
-        """ Enables this driver. If no params are provided then it uses the
-        default. """
-        if milliseconds is None:
-            milliseconds = self.pulse_time
-        # todo also disable the timer which reenables this
-        self.log.debug("Pulsing Driver %s for %dms", self.name, milliseconds)
-        self.platform_driver.pulse(milliseconds)
-        self.time_last_changed = time.time()
+        # todo read these in and/or change to dict
+        self.type = 'NO'
+        """ Specified whether the switch is normally open ('NO', default) or
+        normally closed ('NC')."""
+        if 'type' in config and config['type'] == 'NC':
+            self.type = 'NC'
 
-    def pwm(self, on_time, off_time, orig_on_time):
-        pass  # todo
-        self.time_last_changed = time.time()
-        # todo also disable the timer which reenables this
+        self.debounce = True
+        """ Specifies whether the hardware should debouce this switch before
+        reporting a state change to the host computer. Default is True."""
+        if 'debouce' in config and config['debouce'] == 'False':
+            self.debouce = False
 
-    def pulse_pwm(self):
-        pass  # todo
-        self.time_last_changed = time.time()
-        # todo also disable the timer which reenables this
-
-    def enable(self):
-        pass  # todo
-        # get the secs per tick
-        # set a pulse for 2.5x secs per tick
-        # set a timer that runs each tick to re-up it
-        self.time_last_changed = time.time()
-
-
-class HardwareDict(dict):
-    """A collection of HardwareObjects that make up all the hardware of one type.
-    For example, there will be subclasses of this for LEDs, Lamps, Switches,
-    Coils, etc.
-    """
-
-    def __getattr__(self, attr):
-        # We use this to allow the programmer to access a hardware item like
-        # self.coils.coilname
-        try:
-            # If we were passed a name of an item
-            if type(attr) == str:
-                return self[attr]
-            elif type(attr) == int:
-                self.get_from_number(number=attr)
-        except KeyError:
-            raise KeyError('Error: No hardware device defined for:', attr)
-
-    def __iter__(self):
-        for item in self.itervalues():
-            yield item
-
-    def items_tagged(self, tag):
-        output = []
-        for item in self:
-            if tag in item.tags:
-                output.append(item)
-        return output
-
-    def get_from_number(self, number):
-        """ Returns an item name based on its number.
-        """
-        for name, obj in self.iteritems():
-            if obj.number == number:
-                return self[name]
-
-
-class HardwareSwitch(HardwareObject):
-    def __init__(self, machine, name, number, platform_driver, type='NO'):
-        super(HardwareSwitch, self).__init__(machine, name, number)
-        self.log = logging.getLogger("HardwareSwitch")
-        self.type = type  # NC or NO
-        self.state = False
         self.last_changed = None
         self.hw_timestamp = None
-        self.debounced = True
-        self.platform_driver = platform_driver
+
+        self.log.debug("Creating '%s' with config: %s", name, config)
+        self.hw_switch, self.number, self.hw_state = self.machine.platform.\
+            configure_switch(self.config['number'], self.debounce)
+
+        self.log.debug("Current hardware state of switch '%s': %s",
+                       self.name, self.hw_state)
 
     def _set_state(self, state):
         self.state = state
@@ -238,30 +222,118 @@ class HardwareSwitch(HardwareObject):
 
         self._last_changed = time.time()
 
-    def _state_str(self):
-        if self._is_closed():
-            return 'closed'
-        else:
-            return 'open  '
+
+class Driver(HardwareObject):
+    """Generic class that holds driver objects.
+
+    A 'driver' is any device controlled from a driver board which is typically
+    the high-voltage stuff like coils and flashers.
+
+    This class exposes the methods you can use on these driver types of
+    devices. Each platform module (i.e. P-ROC, FAST, etc.) subclasses this
+    class to actually communicate with the physitcal hardware and perform the
+    actions.
+
+    """
+
+    log = logging.getLogger("Driver")
+
+    def __init__(self, machine, name, config, collection=None):
+        super(Driver, self).__init__(machine, name, config, collection)
+
+        # todo read these in and/or change to dict
+        self.pulse_time = 30
+        self.pwm_on = 0
+        self.pwm_off = 0
+
+        self.hw_driver = self.machine.platform.configure_driver(
+            self.config['number'])
+        self.log.debug("Creating '%s' with config: %s", name, config)
+
+        '''
+        if klass == PROCDriver:
+                            if 'pulseTime' in item_dict:
+                                item.parent.pulse_time = item_dict['pulseTime']
+                            if 'polarity' in item_dict:
+                                item.reconfigure(item_dict['polarity'])
+                            if 'holdPatter' in item_dict:
+                                item.parent.pwm_on = int(item_dict['holdPatter'].split('-')[0])
+                                item.parent.pwm_off = int(item_dict['holdPatter'].split('-')[1])
+                                '''
+
+    def disable(self):
+        """ Disables this driver """
+        self.log.debug("Disabling Driver: %s", self.name)
+        self.time_last_changed = time.time()
+        # todo , now do it
+        # todo also disable the timer which reenables this
+
+    def pulse(self, milliseconds=None):
+        """ Enables this driver.
+
+        Parameters
+        ----------
+
+        milliseconds : int : optional
+            The number of milliseconds the driver should be enabled for. If no
+            value is provided, the driver will be enabled for the value
+            specified in the config dictionary.
+
+        """
+        if milliseconds is None:
+            milliseconds = self.pulse_time
+        elif milliseconds < 1:
+            self.log.warning("Received command to pulse  Driver %s for %dms, "
+                             "but ms is less than 1, so we're doing nothing.",
+                             self.name, milliseconds)
+            return
+        # todo also disable the timer which reenables this
+        self.log.debug("Pulsing Driver %s for %dms", self.name, milliseconds)
+        self.hw_driver.pulse(int(milliseconds))
+        self.time_last_changed = time.time()
+
+    def pwm(self, on_time, off_time, orig_on_time):
+        pass  # todo
+        self.time_last_changed = time.time()
+        # todo also disable the timer which reenables this
+
+    def pulse_pwm(self):
+        pass  # todo
+        self.time_last_changed = time.time()
+        # todo also disable the timer which reenables this
+
+    def enable(self):
+        pass  # todo
+        # get the secs per tick
+        # set a pulse for 2.5x secs per tick
+        # set a timer that runs each tick to re-up it
+        self.time_last_changed = time.time()
 
 
-class HardwareLight(HardwareObject):
-    """ Parent class of "lights" in a pinball machine. These can either be
-    traditional incandescent lamps (or replacement LEDs) connected to a lamp
-    matrix, or they can be LEDs connected to an LED control board.
+class Light(HardwareObject):
+    """ Parent class of "lights" in a pinball machine.
+
+    These can either be traditional incandescent lamps (or replacement LEDs)
+    connected to a lamp matrix, or they can be LEDs connected to an LED
+    control board.
     """
     def __init__(self):
         self.log = logging.getLogger('HardwareMatrixLight')
 
 
-class HardwareMatrixLight(HardwareLight):
-    """ Represents a light connected to a traditional lamp matrix. Could
-    technically be an incandescent lamp or a replacement single-color LED.
+class MatrixLight(Light):
+    """ Represents a light connected to a traditional lamp matrix in a pinball
+    machine.
+
+    This light could be an incandescent lamp or a replacement single-color
+    LED. The key is that they're connected up to a lamp matrix.
 
     Note you cannot control brightness on these. They're either "on" or "off."
-
     Also you can't control the color. (Color is dictated by the color of the
     light and/or the color of the plastic insert or cap.)
+
+    For "new-style" directly-addressable multi-color LEDs (which are connected
+    to an LED board instead of a lamp matrix), use `class:HardwareDirectLED`.
     """
 
     def __init__(self):
@@ -274,10 +346,13 @@ class HardwareMatrixLight(HardwareLight):
         pass
 
 
-class HardwareDirectLED(HardwareLight):
-    """ Represents an LED connected to an LED interface board. Can have any
-    number of elements. Typically it's single element (single color), or three
-    element (RGB). (Though dual element red/green also exist.)
+class DirectLED(Light):
+    """ Represents an LED connected to an LED interface board.
+
+    This LED can have any number of elements. Typically they're either single
+    element (single color), or three element (RGB), though dual element
+    (red/green) and quad-element (RGB + UV) also exist and can be used.
+
     """
     def __init__(self, machine, name, number, platform_driver):
         HardwareObject.__init__(self, machine, name, number)
@@ -294,9 +369,13 @@ class HardwareDirectLED(HardwareLight):
         self.current_color = []  # one item for each element, 0-255
 
     def color(self, color):
-        """ Set an LED to a color. Color is a dictionary of ints, one for R, G,
-        and B. Single or dual color LEDs only use the first or first two
-        entries
+        """ Set an LED to a color.
+
+        Parameters
+        ----------
+
+        color
+
         """
 
         # If this LED has a default fade set, use color_with_fade instead:
@@ -318,6 +397,54 @@ class HardwareDirectLED(HardwareLight):
         color LEDs.
         """
         pass
+
+
+class HardwareDict(dict):
+    """A collection of HardwareObjects.
+
+    One instance of this class will be created for each different type of
+    hardware device (such as coils, lights, switches, ball devices, etc.)
+
+    """
+
+    def __getattr__(self, attr):
+        # We use this to allow the programmer to access a hardware item like
+        # self.coils.coilname
+        try:
+            # If we were passed a name of an item
+            if type(attr) == str:
+                return self[attr]
+            elif type(attr) == int:
+                self.get_from_number(number=attr)
+        except KeyError:
+            raise KeyError('Error: No hardware device defined for:', attr)
+
+        # todo there's something that's not working here that I need to figure
+        # out. An example like this will fail:
+        # self.hold_coil = self.machine.coils[config['hold_coil']]
+        # even if config is a defaultdict, because config will return
+        # None, and we can't call this HardwareDict on None. Maybe make
+        # default dict return some non-None as its default which we can catch
+        # here?
+
+    def __iter__(self):
+        for item in self.itervalues():
+            yield item
+
+    def items_tagged(self, tag):
+        output = []
+        for item in self:
+            if tag in item.tags:
+                output.append(item)
+        return output
+
+    def get_from_number(self, number):
+        """ Returns an item name based on its number.
+        """
+        for name, obj in self.iteritems():
+            if obj.number == number:
+                return self[name]
+
 
 # The MIT License (MIT)
 

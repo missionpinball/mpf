@@ -46,6 +46,8 @@
             
   <div class="section" id="module-mpf.system.switch_controller">
 <span id="mpf-system-switch-controller-module"></span><h1>mpf.system.switch_controller module</h1>
+<p>Contains the SwitchController class which is responsible for reading switch
+states and posting events to the framework.</p>
 <dl class="class">
 <dt id="mpf.system.switch_controller.SwitchController">
 <em class="property">class </em><tt class="descclassname">mpf.system.switch_controller.</tt><tt class="descname">SwitchController</tt><big>(</big><em>machine</em><big>)</big></dt>
@@ -55,6 +57,15 @@ all switch activity in the machine and converting them into events.</p>
 <p>More info:
 <a class="reference external" href="http://missionpinball.com/docs/system-components/switch-controller/">http://missionpinball.com/docs/system-components/switch-controller/</a></p>
 <p class="rubric">Methods</p>
+<dl class="attribute">
+<dt id="mpf.system.switch_controller.SwitchController.active_timed_switches">
+<tt class="descname">active_timed_switches</tt><em class="property"> = None</em></dt>
+<dd><p>Dictionary of switches that are currently in a state counting ticks
+waiting to notify their handlers. In other words, this is the dict that
+tracks current switches for things like &#8220;do foo() if switch bar is
+active for 100 ticks.&#8221;</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.add_switch_handler">
 <tt class="descname">add_switch_handler</tt><big>(</big><em>switch_name</em>, <em>callback</em>, <em>state=1</em>, <em>ms=0</em><big>)</big></dt>
@@ -70,9 +81,10 @@ machine timer tick).</p>
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.initialize_hw_states">
 <tt class="descname">initialize_hw_states</tt><big>(</big><big>)</big></dt>
-<dd><p>Reads in all the hw states of the switches.</p>
+<dd><p>Reads and processes the hardware states of the physical switches.</p>
 <p>We can&#8217;t do this in __init__() because we need the switch controller to
-be setup first before we set up the hw switches.</p>
+be setup first before we set up the hw switches. This method is
+called via an event handler which listens for <cite>machine_init_complete</cite>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -100,28 +112,55 @@ switch will show as active if it is closed, rather than open.</p>
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.is_state">
 <tt class="descname">is_state</tt><big>(</big><em>switch_name</em>, <em>state</em>, <em>ticks=0</em><big>)</big></dt>
-<dd><p>Queries whether a switch is in a given state.</p>
+<dd><p>Queries whether a switch is in a given state and (optionally)
+whether it has been in that state for the specified number of ticks.</p>
 <p>Returns True if the switch_name has been in the state for the given
-number of ticks. If ticks is not specific, returns True if the switch
-is in the state regardless of how long its been in that state.</p>
+number of ticks. If ticks is not specified, returns True if the switch
+is in the state regardless of how long it&#8217;s been in that state.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="mpf.system.switch_controller.SwitchController.post_switch_events">
-<tt class="descname">post_switch_events</tt><big>(</big><em>switch_name</em>, <em>state</em><big>)</big></dt>
-<dd><p>Posts the game events based on this switch changing state.</p>
-</dd></dl>
+<dl class="attribute">
+<dt id="mpf.system.switch_controller.SwitchController.log">
+<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x10b3052d0&gt;</em></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.process_switch">
-<tt class="descname">process_switch</tt><big>(</big><em>name=None</em>, <em>state=1</em>, <em>num=None</em>, <em>obj=None</em><big>)</big></dt>
+<tt class="descname">process_switch</tt><big>(</big><em>name=None</em>, <em>state=1</em>, <em>logical=False</em>, <em>num=None</em>, <em>obj=None</em><big>)</big></dt>
 <dd><p>Processes a new switch state change.</p>
+<p>This is the method that is called by the platform driver whenever a
+switch changes state. It&#8217;s also used by the &#8220;other&#8221; modules that
+activate switches, including the keyboard and OSC interfaces.</p>
 <p>Default is to pass in a name, but you can also pass a switch based on
 its number or a reference to the switch object.</p>
 <p>State 0 means the switch changed from active to inactive, and 1 means
 it changed from inactive to active. (The hardware &amp; platform code
 handles NC versus NO switches and translates them to &#8216;active&#8217; versus
-&#8216;inactive&#8217;.</p>
+&#8216;inactive&#8217;.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong></p>
+<p><strong>state</strong></p>
+<p><strong>logical</strong> : bool</p>
+<p><strong>Specifies whether we have the &#8220;logical&#8221; state of the switch or not.</strong></p>
+<p><strong>This is post NC/NO inversion processing. Typically the hardware will</strong></p>
+<p><strong>send switch states in their raw (logical=False) states, but other</strong></p>
+<p><strong>interfaces like the keyboard and OSC will use the (logical=True).</strong></p>
+<p><strong>num</strong></p>
+<p class="last"><strong>obj</strong></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.switch_controller.SwitchController.registered_switches">
+<tt class="descname">registered_switches</tt><em class="property"> = None</em></dt>
+<dd><p>Dictionary of switches and states that have been registered for
+callbacks.</p>
 </dd></dl>
 
 <dl class="method">
@@ -130,13 +169,12 @@ handles NC versus NO switches and translates them to &#8216;active&#8217; versus
 <dd><p>Sets the state of a switch.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="mpf.system.switch_controller.SwitchController.tick">
-<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
-<dd><p>Called once per machine tick.</p>
-<p>Checks the current list of active timed switches to see if it&#8217;s
-time to take action on any of them. If so, does the callback and then
-removes that entry from the list.</p>
+<dl class="attribute">
+<dt id="mpf.system.switch_controller.SwitchController.switches">
+<tt class="descname">switches</tt><em class="property"> = None</em></dt>
+<dd><p>Dictionary which holds the master list of switches as well as their
+current states. State here does factor in whether a switch is NO or NC,
+so 1 = active and 0 = inactive.</p>
 </dd></dl>
 
 <dl class="method">

@@ -40,7 +40,7 @@ class BallController(object):
         """Balls contained in ball devices."""
         self.num_balls_uncontained = 0
         """Balls loose on the playfield."""
-        self.num_balls_known = self.num_balls_contained
+        self.num_balls_known = 0
         """How many balls the machine knows about. Could vary from the number
         of balls installed based on how many are *actually* in the machine, or
         to compensate for balls that are lost or stuck.
@@ -66,8 +66,6 @@ class BallController(object):
         """Balls lost and/or not installed."""
 
         # register for events
-        self.machine.events.add_handler('machine_init_complete',
-                                        self.ball_initial_count)
         self.machine.events.add_handler('request_to_start_game',
                                         self.request_to_start_game)
         self.machine.events.add_handler('ball_started', self.ball_started)
@@ -119,24 +117,6 @@ class BallController(object):
             return False
         # todo something about all balls home? op setting?
 
-    def ball_initial_count(self):
-        """Sets up our counts when the machine is first powered on or after
-        a reset.
-        """
-        self.num_balls_contained = self.count_contained_balls(process=False)
-        self.num_balls_known = self.num_balls_contained
-        self.num_balls_missing = self.machine.config['Machine']\
-            ['Balls Installed'] - self.num_balls_known
-        self.num_balls_uncontained = self.num_balls_missing
-        if self.num_balls_missing:
-            # Something ain't right
-            # todo do something about this.
-            # Watch for positive or negative
-            # Probably a config setting will specify what to do
-            # todo add config setting for min balls required to play
-            # If not, put a message on the display that the game is OOO
-            self.ball_search_begin()
-
     def ball_contained_count_change(self, change=0):
         """Used when you want to change the count of balls that are contained
         (held) versus uncontained (loose).
@@ -164,9 +144,16 @@ class BallController(object):
         self.log.debug("Ball contained count change. New values:")
         self.num_balls_contained += change
         self.num_balls_uncontained -= change
+
+        # If this is a first time count, set the initial values
+        if not self.num_balls_known:
+            self.num_balls_known = self.num_balls_contained
+            self.num_balls_uncontained = \
+                self.machine.config['Machine']['Balls Installed'] - \
+                self.num_balls_contained
+
         self.log.debug("num_balls_contained: %s", self.num_balls_contained)
-        self.log.debug("num_balls_uncontained: %s",
-                         self.num_balls_uncontained)
+        self.log.debug("num_balls_uncontained: %s", self.num_balls_uncontained)
 
         if self.num_balls_uncontained > 0:
             # ball search should be enabled since we have live balls
@@ -416,7 +403,8 @@ class BallController(object):
 
         # set which ball device we're working with
         if not device:
-            device = self.machine.plunger  # todo change this to add_live tag
+            # device = self.machine.plunger  # todo change this to add_live tag
+            device = self.machine.balldevices.items_tagged('ball_add_live')[0]
 
         if stealth:
             device.num_balls_to_eject_stealth += num
@@ -610,18 +598,19 @@ class BallController(object):
             if self.flag_no_ball_search is False
 
         """
-        if not self.flag_no_ball_search or force is True:
-            if secs is not None:
-                ball_search_start_ticks = Timing.secs(secs)
-            else:
-                ball_search_start_ticks = Timing.secs(
-                    self.machine.config['BallSearch']
-                    ['Secs until ball search start'])
-            self.log.debug("Scheduling a ball search for %s ticks from now",
-                           ball_search_start_ticks)
-            self.delay.reset("ball_search_start",
-                             delay=ball_search_start_ticks,
-                             callback=self.ball_search_begin)
+        if self.machine.config['BallSearch']:
+            if not self.flag_no_ball_search or force is True:
+                if secs is not None:
+                    ball_search_start_ticks = Timing.secs(secs)
+                else:
+                    ball_search_start_ticks = Timing.secs(
+                        self.machine.config['BallSearch']
+                        ['Secs until ball search start'])
+                self.log.debug("Scheduling a ball search for %s ticks from now",
+                               ball_search_start_ticks)
+                self.delay.reset("ball_search_start",
+                                 delay=ball_search_start_ticks,
+                                 callback=self.ball_search_begin)
 
     def ball_search_disable(self):
         """Disables ball search.

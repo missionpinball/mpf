@@ -58,7 +58,7 @@ main part that&#8217;s in charge and makes things happen.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config_file</strong> : string</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config_file</strong> : str</p>
 <blockquote>
 <div><p>The name of the main configuration file which will be read when the
 machine controller is created. This config file typically contains a
@@ -76,6 +76,57 @@ whether the machine controller should operate in software-only
 </tbody>
 </table>
 <p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.dict_merge">
+<tt class="descname">dict_merge</tt><big>(</big><em>a</em>, <em>b</em>, <em>combine_lists=True</em><big>)</big></dt>
+<dd><p>Recursively merges dicts.</p>
+<p>Used to merge dictionaries of dictionaries, like when we&#8217;re merging
+together the machine configuration files. This method is called
+recursively as it finds sub-dictionaries.</p>
+<p>For example, in the traditional python dictionary
+update() methods, if a dictionary key exists in the original and
+merging-in dictionary, the new value will overwrite the old value.</p>
+<p>Consider the following example:</p>
+<p>Original dictionary:
+<cite>config[&#8216;foo&#8217;][&#8216;bar&#8217;] = 1</cite></p>
+<p>New dictionary we&#8217;re merging in:
+<cite>config[&#8216;foo&#8217;][&#8216;other_bar&#8217;] = 2</cite></p>
+<p>Default python dictionary update() method would have the updated
+dictionary as this:</p>
+<p><cite>{&#8216;foo&#8217;: {&#8216;other_bar&#8217;: 2}}</cite></p>
+<p>This happens because the original dictionary which had the single key
+<cite>bar</cite> was overwritten by a new dictionary which has a single key
+<cite>other_bar</cite>.)</p>
+<p>But really we want this:</p>
+<p><cite>{&#8216;foo&#8217;: {&#8216;bar&#8217;: 1, &#8216;other_bar&#8217;: 2}}</cite></p>
+<p>This code was based on this:
+<a class="reference external" href="https://www.xormedia.com/recursively-merge-dictionaries-in-python/">https://www.xormedia.com/recursively-merge-dictionaries-in-python/</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>a</strong> : dict</p>
+<blockquote>
+<div><p>The first dictionary</p>
+</div></blockquote>
+<p><strong>b</strong> : dict</p>
+<blockquote>
+<div><p>The second dictionary</p>
+</div></blockquote>
+<p><strong>combine_lists</strong> : bool</p>
+<blockquote>
+<div><p>Controls whether lists should be combined (extended) or
+overwritten. Default is <cite>True</cite> which combines them.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The merged dictionaries.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="method">
 <dt id="mpf.system.machine_controller.MachineController.disable_autofires">
 <tt class="descname">disable_autofires</tt><big>(</big><big>)</big></dt>
@@ -149,6 +200,31 @@ configuration dictionary. Looks for a module of that name in the
 <dt id="mpf.system.machine_controller.MachineController.string_to_list">
 <tt class="descname">string_to_list</tt><big>(</big><em>string</em><big>)</big></dt>
 <dd><p>Converts a comma-separated string into a python list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>string</strong> : str</p>
+<blockquote>
+<div><p>The string you&#8217;d like to convert.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A python list object containing whatever was between commas in the</p>
+<blockquote class="last">
+<div><p>string.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.sw_loop">
+<tt class="descname">sw_loop</tt><big>(</big><big>)</big></dt>
+<dd><p>This is the main game run loop that&#8217;s used when the hardware
+platform doesn&#8217;t have to be polled continuously.</p>
 </dd></dl>
 
 <dl class="method">
@@ -160,6 +236,35 @@ configuration dictionary. Looks for a module of that name in the
 <dt id="mpf.system.machine_controller.MachineController.timer_tick">
 <tt class="descname">timer_tick</tt><big>(</big><big>)</big></dt>
 <dd><p>Called by the platform each machine tick based on self.HZ</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.update_config">
+<tt class="descname">update_config</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Merges updates into the self.config dictionary.</p>
+<p>This method does what we call a &#8220;deep merge&#8221; which means it merges
+together subdictionaries instead of overwriting them. See the
+documentation for <cite>meth:dict_merge</cite> for a description of how this
+works.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config</strong> : dict or str</p>
+<blockquote class="last">
+<div><p>The settings to deep merge into the config dictionary. If <cite>config</cite>
+is a dict, then it will merge those settings in. If it&#8217;s a string,
+it will try to find a file with that name and open it to read in
+the settings.</p>
+<p>Also, if config is a string, it will first try to open it as a file
+directly (including any path that&#8217;s there). If that doesn&#8217;t work,
+it will try to open the file using the last path that worked. (This
+path is stored in <cite>self.config[&#8216;Config_path&#8217;]</cite>.)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>

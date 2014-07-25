@@ -10,7 +10,7 @@ Machine:
     Max Balls: 6  # game will not start if it finds more than this
 
 Hardware:
-    Platform: none # p_roc, fast, or none
+    Platform: virtual # p_roc, fast, or virtual
     DriverBoards: wpc95 # pdb, wpc, wpc95, wpcAlphaNumeric, sternSAM, sternWhitestar
 
 Switches:

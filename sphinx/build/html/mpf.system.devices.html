@@ -56,8 +56,8 @@
 plunger lane, etc.)</p>
 <dl class="class">
 <dt id="mpf.system.devices.AutofireCoil">
-<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">AutofireCoil</tt><big>(</big><em>name</em>, <em>machine</em>, <em>hw_dict</em>, <em>config=False</em><big>)</big></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">AutofireCoil</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
 <p>Base class for coils in the pinball machine which should fire
 automatically based on switch activity using hardware switch rules.</p>
 <p>Autofire coils are used when you want the coils to respond &#8220;instantly&#8221;
@@ -100,8 +100,8 @@ coil should be configured with.</p>
 
 <dl class="class">
 <dt id="mpf.system.devices.BallDevice">
-<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">BallDevice</tt><big>(</big><em>name</em>, <em>machine</em>, <em>hw_dict</em>, <em>config=None</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.HardwareObject" title="mpf.system.hardware.HardwareObject"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.HardwareObject</span></tt></a></p>
+<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">BallDevice</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
 <p>Base class for a &#8216;Ball Device&#8217; in a pinball machine.</p>
 <p>A ball device  is anything that can hold one or more balls, such as a
 trough, an eject hole, a VUK, a catapult, etc.</p>
@@ -225,10 +225,19 @@ eject.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="mpf.system.devices.Flipper">
-<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">Flipper</tt><big>(</big><em>name</em>, <em>machine</em>, <em>hw_dict</em>, <em>config=True</em><big>)</big></dt>
+<dt id="mpf.system.devices.Device">
+<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">Device</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=-1</em><big>)</big></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p>Represents a flipper in a pinball machine.</p>
+<p>Parent class for all devices in a pinball machine.</p>
+<p>Devices are the &#8220;lowest level&#8221; hardware in a machine, including lights,
+coils, switches.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.devices.Flipper">
+<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">Flipper</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
+<p>Represents a flipper in a pinball machine. Subclass of Device.</p>
 <p>Contains several methods for actions that can be performed on this flipper,
 like <a class="reference internal" href="#mpf.system.devices.Flipper.enable" title="mpf.system.devices.Flipper.enable"><tt class="xref py py-meth docutils literal"><span class="pre">enable()</span></tt></a>, <a class="reference internal" href="#mpf.system.devices.Flipper.disable" title="mpf.system.devices.Flipper.disable"><tt class="xref py py-meth docutils literal"><span class="pre">disable()</span></tt></a>, etc.</p>
 <p>Flippers have several options, including player buttons, EOS swtiches,
@@ -238,26 +247,22 @@ multiple coil options (pulsing, hold coils, etc.)</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name: string</strong></p>
-<blockquote>
-<div><p>The name you&#8217;ll refer to this flipper object as.</p>
-</div></blockquote>
-<p><strong>machine: machine object</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>machine: machine object</strong></p>
 <blockquote>
 <div><p>A reference to the machine controller instance.</p>
 </div></blockquote>
-<p><strong>hw_dict: dictionary</strong></p>
+<p><strong>name: string</strong></p>
+<blockquote>
+<div><p>The name you&#8217;ll refer to this flipper object as.</p>
+</div></blockquote>
+<p><strong>config: dictionary</strong></p>
 <blockquote>
 <div><p>A dictionary that holds the configuration values which specify how
 this flipper should be configured. If this is None, it will use the
 system config settings that were read in from the config files when
 the machine was reset.</p>
 </div></blockquote>
-<p><strong>config: bool</strong></p>
-<blockquote class="last">
-<div><p>Specifies whether the flipper is configured now (versus simply created
-as a placeholder).</p>
-</div></blockquote>
+<p class="last"><strong>collection: bool</strong></p>
 </td>
 </tr>
 </tbody>
