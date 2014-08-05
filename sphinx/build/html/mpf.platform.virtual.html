@@ -60,16 +60,13 @@ mpf.system.hardware.Platform.</p>
 <p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.platform.virtual.HardwarePlatform.configure_driver">
-<tt class="descname">configure_driver</tt><big>(</big><em>number</em><big>)</big></dt>
+<tt class="descname">configure_driver</tt><big>(</big><em>config</em><big>)</big></dt>
 <dd><p>Configures a virtual driver (coil, flasher, etc.).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>number</strong> : str</p>
-<blockquote>
-<div><p>The number of the driver.</p>
-</div></blockquote>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config</strong> : dict</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">object</p>
@@ -84,17 +81,18 @@ mpf.system.hardware.Platform.</p>
 
 <dl class="method">
 <dt id="mpf.platform.virtual.HardwarePlatform.configure_switch">
-<tt class="descname">configure_switch</tt><big>(</big><em>number</em>, <em>debounce</em><big>)</big></dt>
+<tt class="descname">configure_switch</tt><big>(</big><em>config</em><big>)</big></dt>
 <dd><p>Configures a virtual switch.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>number</strong> : str</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config</strong> : str</p>
+<p><strong>number</strong> : str</p>
 <blockquote>
 <div><p>The number of the driver.</p>
 </div></blockquote>
-<p><strong>debouce</strong> : bool</p>
+<p><strong>debounce</strong> : bool</p>
 <blockquote>
 <div><p><cite>debounce</cite> is ignored on this virtual platform, but it&#8217;s included
 as a parameter for compatibility with code written for other

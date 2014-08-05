@@ -75,8 +75,13 @@ mode if the request to start game comes back as approved.</p>
 </table>
 <p class="rubric">Methods</p>
 <dl class="method">
+<dt id="mpf.game.attract.Attract.coil_test">
+<tt class="descname">coil_test</tt><big>(</big><em>coil_name</em>, <em>pulse_change=0</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="mpf.game.attract.Attract.result_of_start_request">
-<tt class="descname">result_of_start_request</tt><big>(</big><em>result=True</em><big>)</big></dt>
+<tt class="descname">result_of_start_request</tt><big>(</big><em>ev_result=True</em><big>)</big></dt>
 <dd><p>Called after the <em>request_to_start_game</em> event is posted.</p>
 <p>If <cite>result</cite> is True, this method posts the event
 <em>machine_flow_advance</em>. If False, nothing happens, as the game start
@@ -111,6 +116,11 @@ be False. Otherwise it&#8217;s True.</p>
 called <em>request_to_start_game</em>. If that event comes back True, this
 method calls <a class="reference internal" href="#mpf.game.attract.Attract.result_of_start_request" title="mpf.game.attract.Attract.result_of_start_request"><tt class="xref py py-meth docutils literal"><span class="pre">result_of_start_request()</span></tt></a>.</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.attract.Attract.test">
+<tt class="descname">test</tt><big>(</big><em>param=None</em><big>)</big></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.game.attract.Attract.tick">

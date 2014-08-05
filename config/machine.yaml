@@ -10,7 +10,7 @@ Machine:
     Max Balls: 6  # game will not start if it finds more than this
 
 Hardware:
-    Platform: virtual # p_roc, fast, or virtual
+    Platform: p_roc # p_roc, fast, or virtual
     DriverBoards: wpc95 # pdb, wpc, wpc95, wpcAlphaNumeric, sternSAM, sternWhitestar
 
 Switches:
@@ -70,9 +70,10 @@ Switches:
         number: SD8
     fireL:
         number: S11
+        tags: left_eject
     fireR:
         number: S12
-        tags: plunger
+        tags: right_eject
     start:
         number: S13
         tags: start
@@ -132,7 +133,6 @@ Switches:
         number: S38
     shooterR:
         number: S41
-        tags: plunger
     outlaneR:
         number: S42
         tags: ballLive
@@ -299,6 +299,7 @@ Coils:
         number: C07
     shooterR:
         number: C08
+        pulseTime: 20
     shooterL:
         number: C09
     tripDropTarget:

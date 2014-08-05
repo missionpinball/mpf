@@ -36,14 +36,13 @@ class HardwarePlatform(Platform):
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
 
-    def configure_driver(self, number):
+    def configure_driver(self, config):
         """ Configures a virtual driver (coil, flasher, etc.).
 
         Parameters
         ----------
 
-        number : str
-            The number of the driver.
+        config : dict
 
         Returns
         -------
@@ -55,18 +54,20 @@ class HardwarePlatform(Platform):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
 
-        return VirtualDriver(number)
+        return VirtualDriver(config['number'])
 
-    def configure_switch(self, number, debounce):
+    def configure_switch(self, config):
         """ Configures a virtual switch.
 
         Parameters
         ----------
 
+        config : str
+
         number : str
             The number of the driver.
 
-        debouce : bool
+        debounce : bool
             `debounce` is ignored on this virtual platform, but it's included
             as a parameter for compatibility with code written for other
             platforms.
@@ -90,11 +91,11 @@ class HardwarePlatform(Platform):
             handles this automatically if the switch type is 'NC'.
 
         """
-        switch = VirtualSwitch(number)
+        switch = VirtualSwitch(config['number'])
 
         # Return the switch object, the hardare number, and an integer of its
         # current state. (1 = active, 0 = inactive)
-        return switch, number, 0
+        return switch, config['number'], 0
 
     def _do_set_hw_rule(self,
                     sw,

@@ -25,7 +25,6 @@ class BallSave(object):
         # ball_drain
         # timers_pause
         # timers_resume
-        # valid_playfield
 
     def enable(self, time=None, balls=None):
         pass

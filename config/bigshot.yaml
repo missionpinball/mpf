@@ -23,62 +23,373 @@ Game:
     Balls per game: 5
     Max players per game: 2
 
+GameFlow:
+    - attract:
+        Module: mpf.attract
+        Class: Attract
+    - game:
+        Module: mpf.game
+        Class: Game
+
+BallSearch:
+    Secs until ball search start: 10
+    Secs between ball search rounds: 3
+    Secs between ball search coils: .15
+    If ball search fails: Keep Looking
+
 Switches:
+# Direct Switches
     flipperLeft:
         number: SD18
+        label: Left Flipper Button
+        tags: flipper, player
     flipperRight:
         number: SD17
+        label: Right Flipper Button
+        tags: flipper, player
     startButton:
         number: SD16
-        tags: start
-    trough:
-        number: 0/0
-    troughEjected:
-        number: 0/6
-        label: Ball kick to plunger
-    eightBallHole:
-        number: 0/4
-    plungerLane:
-        number: 0/5  # this is a temp number
-        label: Plunger Lane
+        label: Start Button
+        tags: start, player
+    score_1p_10_0:
+        number: SD8
+        label: 1st Player Tens Score - Zero Position
+        tags:
+    score_1p_10_9:
+        number: SD9
+        label: 1st Player Tens Score - Nine Position
+        tags:
+    score_1p_100_0:
+        number: SD10
+        label: 1st Player Hundreds Score - Zero Position
+        tags:
+    score_1p_100_9:
+        number: SD11
+        label: 1st Player Hundreds Score - Nine Position
+        tags:
+    score_1p_1k_0:
+        number: SD12
+        label: 1st Player Thousands Score - Zero Position
+        tags:
+    score_1p_1k_9:
+        number: SD13
+        label: 1st Player Thousands Score - Nine Position
+        tags:
+    score_1p_10k_0:
+        number: SD14
+        label: 1st Player Ten Thousands Score - Zero Position
+        tags:
+    score_1p_10k_9:
+        number: SD15
+        label: 1st Player Ten Ten Thousands Score - Nine Position
+        tags:
+    score_2p_10_0:
+        number: SD0
+        label: 2nd Player Tens Score - Zero Position
+        tags:
+    score_2p_10_9:
+        number: SD1
+        label: 2nd Player Tens Score - Nine Position
+        tags:
+    score_2p_100_0:
+        number: SD2
+        label: 2nd Player Hundreds Score - Zero Position
+        tags:
+    score_2p_100_9:
+        number: SD3
+        label: 2nd Player Hundreds Score - Nine Position
+        tags:
+    score_2p_1k_0:
+        number: SD4
+        label: 2nd Player Thousands Score - Zero Position
+        tags:
+    score_2p_1k_9:
+        number: SD5
+        label: 2nd Player Thousands Score - Nine Position
+        tags:
+    score_2p_10k_0:
+        number: SD6
+        label: 2nd Player Ten Thousands Score - Zero Position
+        tags:
+    score_2p_10k_9:
+        number: SD7
+        label: 2nd Player Ten Thousands Score - Nine Position
+        tags:
+    creditWheel_zero:
+        number: SD24
+        label: Credit Wheel - Zero Position
+        tags:
+    creditWheel_max:
+        number: SD25
+        label: Credit Wheel - Max Position
+        tags:    
+    creditWheel_1Plus:
+        number: SD26
+        label: Credit Wheel - greater than one/less than max Position
+        tags:   
+    tilt:
+        number: SD20
+        label: Plumb Bob Tilt
+        tags: tilt
+    slamTilt:
+        number: SD27
+        label: Slam Tilt
+        tags: slam_tilt, noBroken
         type: NC
+    credit1:
+        number: SD19
+        label: Credit Switch 1
+        tags: noBroken, credit
+    coinDoorClosed:
+        number: SD21
+        label: Coin Door Switch
+        tags:
+
+# Matrix Switches
+    topLaneMid:
+        number: 0/0
+        label: Middle Rollover Top Lanes
+        tags: ballLive
+    topLaneLeft:
+        number: 0/1
+        label: Left Rollover Top Lanes
+        tags: ballLive
+    topLaneRight:
+        number: 0/2
+        label: Right Rollover Top Lanes
+        tags: ballLive
+    popBumper:
+        number: 0/3
+        label: Pop Bumper
+        tags: ballLive
+    eightBallHoleEject:
+        number: 0/4
+        label: 8 Ball center hole
+        tags: balllive
+    drain:
+        number: 0/5
+        label: Trough Enter
+        tags: 
+    drainEject:
+        number: 0/6
+        label: Trough eject
+        tags:
+    plungerLane:
+        number: 0/7
+        label: Plunger Lane Switch
+        tags:
+        type: NC
+    drop15:
+        number: 1/0
+        label: Right Bank 15
+        tags:
+    drop14:
+        number: 1/1
+        label: Right Bank 14
+        tags:
+    drop13:
+        number: 1/2
+        label: Right Bank 13
+        tags:
+    drop12:
+        number: 1/3
+        label: Right Bank 12
+        tags:
+    drop11:
+        number: 1/4
+        label: Right Bank 11
+        tags:
+    drop10:
+        number: 1/5
+        label: Right Bank 10
+        tags:
+    drop9:
+        number: 1/6
+        label: Right Bank 9
+        tags:
+    midRtLane:
+        number: 1/7
+        label: Middle Right Lane Rollover
+        tags:
+    drop7:
+        number: 2/0
+        label: Left Bank 7
+        tags:
+    drop6:
+        number: 2/1
+        label: Left Bank 6
+        tags:
+    drop5:
+        number: 2/2
+        label: Left Bank 5
+        tags:
+    drop4:
+        number: 2/3
+        label: Left Bank 4
+        tags:
+    drop3:
+        number: 2/4
+        label: Left Bank 3
+        tags:
+    drop2:
+        number: 2/5
+        label: Left Bank 2
+        tags:
+    drop1:
+        number: 2/6
+        label: Left Bank 1
+        tags:
+    midLtLane:
+        number: 2/7
+        label: Middle Left Lane Rollover
+        tags:
+    slingL:
+        number: 3/0
+        label: Left Slingshot
+        tags:
+    slingR:
+        number: 3/1
+        label: Right Slingshot
+        tags:
+    leftOutlane:
+        number: 3/2
+        label: Left Outlane
+        tags: earlyDrain
+    leftInlane:
+        number: 3/3
+        label: Left Inlane
+        tags:
+    rightOutlane:
+        number: 3/4
+        label: Right Outlane
+        tags: earlyDrain
+    rightInlane:
+        number: 3/5
+        label: Right Inlane
+        tags: 
+    rtMidStandup:
+        number: 3/6
+        label: Right Middle Target
+        tags:
+    ltMidStandup:
+        number: 3/7
+        label: Left Middle Target
+        tags:
+    midLtRubber:
+        number: 4/0
+        label: Left Middle lane behind rubber
+        tags:
+    midRtRubber:
+        number: 4/1
+        label: Right Middle lane behind rubber
+        tags:
+    behindSolids:
+        number: 4/2
+        label:
+        tags:
+    behindStripes:
+        number: 4/3
+        label:
+        tags:
 
 Coils:
     flipperLeftMain: # 0A0
         number: A0-B0-0
-        pulseTime: 10
-        holdPatter: 1-2
+        pulseTime: 50
+        holdPatter: 1-4
     flipperRightMain: # 0A1
         number: A0-B0-1
+        pulseTime: 50
+        holdPatter: 1-4
+    gameCounter:
+        number: A0-B0-2
         pulseTime: 10
-        holdPatter: 1-2
+    knocker:
+        number: A0-B0-3
+        pulseTime: 20
+    chime1:
+        number: A0-B0-4
+        pulseTime: 20
+    chime2:
+        number: A0-B0-5
+        pulseTime: 20
+    chime3:
+        number: A0-B0-6
+        pulseTime: 20
     troughEject: # 0A7
         number: A0-B0-7
-        pulseTime: 10
-    eightBallHoleEject: # 0B2
+        pulseTime: 35
+    diverter:
+        number: A0-B1-0
+        pulseTime: 25
+    popBumper:
+        number: A0-B1-1
+        pulseTime: 18
+    eightBallEject:
         number: A0-B1-2
+        pulseTime: 30
+    rightBankReset:
+        number: A0-B1-3
         pulseTime: 10
+    leftBankReset:
+        number: A0-B1-4
+        pulseTime: 10
+    leftSling:
+        number: A0-B1-5
+        pulseTime: 150
+    rightSling:
+        number: A0-B1-6
+        pulseTime: 150
+    player1_10:
+        number: A1-B0-0
+        pulseTime: 10
+    player1_100:
+        number: A1-B0-1
+        pulseTime: 10
+    player1_1k:
+        number: A1-B0-2
+        pulseTime: 10
+    player1_10k:
+        number: A1-B0-3
+        pulseTime: 125
+    player2_10:
+        number: A1-B0-4
+        pulseTime: 10
+    player2_100:
+        number: A1-B0-5
+        pulseTime: 10
+    player2_1k:
+        number: A1-B0-6
+        pulseTime: 10
+    player2_10k:
+        number: A1-B0-7
+        pulseTime: 10
+    creditAdd:
+        number: A1-B1-0
+        pulseTime: 26
+    creditSubtract:
+        number: A1-B1-1
+        pulseTime: 20
+
 
 Devices:
     BallDevices:
         trough:
-            tags: drain, home
-            ball_switches: trough
+            tags: drain, home, ball_add_live
+            ball_switches: drain
             eject_coil: troughEject
-            eject_switch: trough
+            eject_switch: drain
             ball_count_delay: 0.3s
-            confirm_eject_type: device
-            confirm_eject_target: plunger
-        plunger:
-            tags: ball_add_live
-            confirm_eject_type: playfield
-            feeder_container: trough
-            ball_capacity: 1  # needed because there are no ball switches
+            confirm_eject_type: switch
+            confirm_eject_target: drainEject
+
         eightBallHole:
-            ball_switches: eightBallHole
-            eject_coil: eightBallHoleEject
+            ball_switches: eightBallHoleEject
+            eject_coil: eightBallEject
             ball_count_delay: 0.5s
-            eject_switch: eightBallHole
+            eject_switch: eightBallHoleEject
+            confirm_eject_type: count
+            post_eject_delay_check: 0.3s
 
     Flippers:
             Left:
@@ -87,6 +398,21 @@ Devices:
             Right:
                 main_coil: flipperRightMain
                 activation_switch: flipperRight
+    
+    Autofire Coils:
+        SlingL:
+            coil: leftSling
+            switch: slingL
+        SlingR:
+            coil: rightSling
+            switch: slingR
+        popBumper:
+            coil: popBumper
+            switch: popBumper
+#        eightBallHole:
+#            coil: eightBallEject
+#            switch: eightBallHoleEject
+            
             
 key_map:
     z:
@@ -95,14 +421,122 @@ key_map:
         switch: flipperRight
     s:
         switch: startButton
-    1:
-        switch: trough
+    q:
+        switch: drain
         toggle: True
         start_active: True
-    2:
-        switch: troughEjected
-    3:
+    w:
+        switch: drainEject
+    e:
         switch: plungerLane
-    8:
-        switch: eightBallHole
-    
+    r:
+        switch: eightBallHoleEject
+    x:
+        switch: slingL
+    period:
+        switch: slingR
+    1:
+        event: coil_test
+        params:
+            coil_name: player1_10k
+    shift-1:
+        event: coil_test
+        params:
+            coil_name: player1_10k
+            pulse_change: -1
+    ctrl-1:
+        event: coil_test
+        params:
+            coil_name: player1_10k
+            pulse_change: 1
+    2:
+        event: coil_test
+        params:
+            coil_name: player1_1k
+    shift-2:
+        event: coil_test
+        params:
+            coil_name: player1_1k
+            pulse_change: -1
+    ctrl-2:
+        event: coil_test
+        params:
+            coil_name: player1_1k
+            pulse_change: 1
+
+    3:
+        event: coil_test
+        params:
+            coil_name: player1_100
+    shift-3:
+        event: coil_test
+        params:
+            coil_name: player1_100
+            pulse_change: -1
+    ctrl-3:
+        event: coil_test
+        params:
+            coil_name: player1_100
+            pulse_change: 1
+
+    4:
+        event: coil_test
+        params:
+            coil_name: player1_10
+    shift-4:
+        event: coil_test
+        params:
+            coil_name: player1_10
+            pulse_change: -1
+    ctrl-4:
+        event: coil_test
+        params:
+            coil_name: player1_10
+            pulse_change: 1
+
+    5:
+        event: coil_test
+        params:
+            coil_name: player2_10k
+    shift-5:
+        event: coil_test
+        params:
+            coil_name: player2_10k
+            pulse_change: -1
+    ctrl-5:
+        event: coil_test
+        params:
+            coil_name: player2_10k
+            pulse_change: 1
+        
+    6:
+        event: coil_test
+        params:
+            coil_name: diverter
+    shift-6:
+        event: coil_test
+        params:
+            coil_name: diverter
+            pulse_change: -1
+    ctrl-6:
+        event: coil_test
+        params:
+            coil_name: diverter
+            pulse_change: 1
+
+    7:
+        event: coil_test
+        params:
+            coil_name: troughEject
+    alt-7:
+        event: coil_test
+        params:
+            coil_name: troughEject
+            pulse_change: -1
+    ctrl-7:
+        event: coil_test
+        params:
+            coil_name: troughEject
+            pulse_change: 1
+        
+        

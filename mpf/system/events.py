@@ -20,10 +20,10 @@ class EventManager(object):
         self.current_event = None
         self.debug = True  # logs all event activity except timer_ticks.
 
-    def add_handler(self, event, handler, priority=1):
+    def add_handler(self, event, handler, priority=1, **kwargs):
         """Registers an event handler to respond to an event.
 
-        If you add a handlers for an event that has already been
+        If you add a handlers for an event for which it has already been
         registered, the new one will overwrite the old one. This is useful for
         changing priorities of existing handlers. Also it's good to know that
         you can safely add a handler over and over.
@@ -45,6 +45,13 @@ class EventManager(object):
             3 or 10 or 100000.) The numbers don't matter. They're called from
             highest to lowest. (i.e. priority 100 is called before priority 1.)
 
+        kwargs : kwargs
+            A list of any additional keyword arg pairs that will be attached to
+            the handler and called whenever that handler is called. Note these
+            are in addition to kwargs that could be passed as part of the
+            event post. If there's a conflict, the event-level ones will take
+            win.
+
         Returns
         -------
         handler : object reference
@@ -63,19 +70,24 @@ class EventManager(object):
         if not event in self.registered_handlers:
             self.registered_handlers[event] = []
 
+        # An event 'handler' in our case is a tuple with three elements:
+        # the handler method, the priority, and the dict of kwargs.
+
         # Check to see if this handler is already registered for this event.
+        # If we don't have kwargs, then we'll look for just the handler meth.
+        # If we have kwargs, we'll look for that combination
+
         # If so, remove it
         # We use the slice of the full list [:] to make a copy so we can
         # delete from the original while iterating
         for rh in self.registered_handlers[event][:]:
-            if rh[0] == handler:
+            if rh[0] == handler and rh[2] == kwargs:
                 self.registered_handlers[event].remove(rh)
 
         # Now add it
-        self.registered_handlers[event].append((handler, priority))
-        self.log.debug("Registered %s...", handler)
-        self.log.debug("...as a handler for '%s', priority: %s", event,
-                       priority)
+        self.registered_handlers[event].append((handler, priority, kwargs))
+        self.log.debug("Registered %s as a handler for '%s', priority: %s",
+                       (str(handler).split(' '))[2], event, priority)
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
@@ -84,33 +96,60 @@ class EventManager(object):
 
         return handler
 
-    def remove_handler(self, method):
+    def remove_handler(self, method, **kwargs):
         """Removes an event handler.
 
         Parameters
         ----------
 
-        method : string
+        method : str
             this is the method whose handlers you want to remove. This removes
             all of them.
 
-        """
+        kwargs
 
-        # todo for the future: specify a method / event combo?
+        """
+        # todo currently if you just pass method, it will remove handlers that
+        # do not have kwargs. If you also
+        # specify kwargs, then you will remove just those handlers. There's no
+        # way to remove all handlers, w/ and w/o kwargs, but that could be
+        # easy to add if needed.
 
         for event, handler_list in self.registered_handlers.iteritems():
-            for handler_tup in handler_list[:]:
-                if handler_tup[0] == method:
+            for handler_tup in handler_list[:]:  # copy via slice
+                if handler_tup[0] == method and handler_tup[2] == kwargs:
                     handler_list.remove(handler_tup)
                     self.log.debug("Removing method %s from event %s",
-                                   method, event)
+                                   (str(method).split(' '))[2], event)
 
         # If this is the last handler for an event, remove that event
-        for k in self.registered_handlers:
-            if len(k) == 0:
+        for k in self.registered_handlers.keys():
+            if not self.registered_handlers[k]:  # if value is empty list
                 del self.registered_handlers[k]
                 self.log.debug("Removing event %s since there are no more"
                                " handlers registered for it", k)
+
+    def does_event_exist(self, event_name):
+        """Checks to see if any handlers are registered for the event name that
+        is passed.
+
+        Parameters
+        ----------
+
+        event_name : str
+            The name of the event you want to check
+
+        Returns
+        -------
+
+        True or False
+
+        """
+
+        if event_name in self.registered_handlers:
+            return True
+        else:
+            return False
 
     def post(self, event, **kwargs):
         """Posts an event which causes all the registered handlers to be
@@ -146,8 +185,14 @@ class EventManager(object):
 
         """
         if self.debug and event != 'timer_tick':
+            # Use friendly_kwargs so the logger shows a "friendly" name of the
+            # callback handler instead of the bound method object reference.
+            friendly_kwargs = dict(kwargs)
+            if 'callback' in kwargs:
+                friendly_kwargs['callback'] = \
+                    (str(kwargs['callback']).split(' '))[2]
             self.log.debug("^^^^ Posted event '%s' with args: %s", event,
-                           kwargs)
+                           friendly_kwargs)
         if not self.busy:
             self._do_event(event, **kwargs)
         else:
@@ -163,8 +208,13 @@ class EventManager(object):
         result = None
         queue = None
         if self.debug and event != 'timer_tick':
-            self.log.debug(">>>> Processing event '%s' Args: %s",
-                           event, kwargs)
+            # Show friendly callback name. See comment in post() above.
+            friendly_kwargs = dict(kwargs)
+            if 'callback' in kwargs:
+                friendly_kwargs['callback'] = \
+                    (str(kwargs['callback']).split(' '))[2]
+            self.log.debug("^^^^ Processing event '%s' with args: %s", event,
+                           friendly_kwargs)
 
         # if our kwargs include ev_type or callback, we want to pull them
         # out of the kwargs we send to all the registered handlers:
@@ -186,14 +236,25 @@ class EventManager(object):
                 queue = QueuedEvent(callback, **kwargs)
                 kwargs['queue'] = queue
 
-            for handler in self.registered_handlers[event]:
+            for handler in self.registered_handlers[event][:]:
+                # use slice above so we don't process new handlers that came
+                # in while we were processing previous handlers
+
+                # merge the posts kwargs with the registered handler's kwargs
+                # in case of conflict, posts kwargs will win
+                merged_kwargs = dict(handler[2].items() + kwargs.items())
+
+                # log if debug is enabled and this event is not the timer tick
                 if self.debug and event != 'timer_tick':
-                    self.log.debug("Event handler responding: %s to "
-                                   "event '%s', with args %s", handler[0],
-                                   event, kwargs)
-                result = handler[0](**kwargs)
-                # If whatever method we called returns False, we stop
-                # processing the remaining handlers
+                    self.log.debug("%s responding to event '%s' with args %s",
+                                   (str(handler[0]).split(' '))[2], event,
+                                   kwargs)
+
+                # call the handler and save the results
+                result = handler[0](**merged_kwargs)
+
+                # If whatever handler we called returns False, we stop
+                # processing the remaining handlers for bool or queue events
                 if (ev_type == 'boolean' or ev_type == 'queue') and \
                         result is False:
                     if self.debug and event != 'timer_tick':
@@ -220,16 +281,16 @@ class EventManager(object):
             self.log.debug("Queue is empty. Deleting.")
             queue = None
 
-        if callback and not queue:
-            # if we have a queue kwarg from before, strip it since we only
-            # needed it to setup the queue
-            if 'queue' in kwargs:
-                del kwargs['queue']
+        if callback:
+            if not queue:
+                # if we have a queue kwarg from before, strip it since we only
+                # needed it to setup the queue
+                if 'queue' in kwargs:
+                    del kwargs['queue']
 
-            # If we have a result, we pass it as a kwarg
-            # This is the result of the last handler processed
-            if result is not None:
-                kwargs['ev_result'] = result
+                if result:
+                    # if our last handler returned something, add it to kwargs
+                    kwargs['ev_result'] = result
 
             callback(**kwargs)
 

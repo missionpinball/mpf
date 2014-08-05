@@ -53,7 +53,6 @@ class HardwarePlatform(Platform):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P-ROC Platform')
         self.log.debug("Configuring machine for P-ROC hardware.")
-        #self.machine = machine
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['Hardware']['DriverBoards'])
@@ -114,7 +113,7 @@ class HardwarePlatform(Platform):
             m = getattr(m, comp)
         return m
 
-    def configure_driver(self, number):
+    def configure_driver(self, config):
         """ Creates a P-ROC driver.
 
         Typically drivers are coils or flashers, but for the P-ROC this is
@@ -123,9 +122,12 @@ class HardwarePlatform(Platform):
         Parameters
         ----------
 
-        number: str
-            The number (or number string) for the driver as specified in the
-            machine configuration file.
+        config : dict
+            A configuration dictionary of settings for the driver. In the case
+            of the P-ROC, it uses the following:
+        
+        'number'
+        'polarity'
 
         Returns
         -------
@@ -144,27 +146,40 @@ class HardwarePlatform(Platform):
         # can provide the number.
 
         if self.machine_type == pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number('Coils', str(number))
-            if number == -1:
+            proc_num = self.pdbconfig.get_proc_number('Coils',
+                                                      str(config['number']))
+            if config['number'] == -1:
                 self.log.error("Coil cannot be controlled by the P-ROC. "
                                "Ignoring.")
                 return
         else:
-            proc_num = pinproc.decode(self.machine_type, str(number))
+            proc_num = pinproc.decode(self.machine_type, str(config['number']))
 
-        return PROCDriver(proc_num, self.proc)
+        proc_driver_object = PROCDriver(proc_num, self.proc)
 
-    def configure_switch(self, number, debounce):
+        if 'polarity' in config:
+            state = proc_driver_object.proc.driver_get_state(config['number'])
+            state['polarity'] = config['polarity']
+            proc_driver_object.proc.driver_update_state(state)
+
+        return proc_driver_object
+
+    def configure_switch(self, config):
         """ Configures a P-ROC switch.
 
         Parameters
         ----------
+
+        config : dict
+            A configuration dictionary of settings for the switch. In the case
+            of the P-ROC, it uses the following:
+
         number : str
             The number (or number string) for the switch as specified in the
             machine configuration file.
 
         debounce : bool
-            Whether the P-ROC should debouce this switch first before sending
+            Whether the P-ROC should debounce this switch first before sending
             open and close notifications to the host computer.
 
         Returns
@@ -190,21 +205,24 @@ class HardwarePlatform(Platform):
         """
 
         if self.machine_type == pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number('Switches', str(number))
-            if number == -1:
+            proc_num = self.pdbconfig.get_proc_number('Switches',
+                                                      str(config['number']))
+            if config['number'] == -1:
                 self.log.error("Switch cannot be controlled by the P-ROC. "
                                "Ignoring.")
                 return
         else:
-            proc_num = pinproc.decode(self.machine_type, str(number))
+            proc_num = pinproc.decode(self.machine_type, str(config['number']))
 
         switch = PROCSwitch(proc_num)
         # The P-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open and closed,
         # debounced or nondebounced.)
         self.log.debug("Configuring switch's host notification settings. P-ROC"
-                       "number: %s, debouce: %s", proc_num, debounce)
-        if debounce is False or proc_num >= pinproc.SwitchNeverDebounceFirst:
+                       "number: %s, debounce: %s", proc_num,
+                       config['debounce'])
+        if config['debounce'] is False or \
+                proc_num >= pinproc.SwitchNeverDebounceFirst:
             self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
                                          {'notifyHost': True, 'reloadActive':
                                          False}, [], False)
@@ -871,11 +889,6 @@ class PROCDriver(PlatformDriver):
 
     def tick(self):
         pass
-
-    def reconfigure(self, polarity):
-        state = self.proc.driver_get_state(self.number)
-        state['polarity'] = polarity
-        self.proc.driver_update_state(state)
 
 
 class PDBConfig(object):

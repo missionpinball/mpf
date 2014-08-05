@@ -67,17 +67,17 @@ the balls in a pinball machine.</p>
 </table>
 <p class="rubric">Methods</p>
 <dl class="method">
-<dt id="mpf.system.ball_controller.BallController.are_all_balls_home">
-<tt class="descname">are_all_balls_home</tt><big>(</big><big>)</big></dt>
+<dt id="mpf.system.ball_controller.BallController.are_balls_gathered">
+<tt class="descname">are_balls_gathered</tt><big>(</big><em>target='home'</em><big>)</big></dt>
 <dd><p>Checks to see if all the balls are &#8216;home,&#8217; which means they&#8217;re all
 contained in ball devices that are have the &#8216;home&#8217; tag.</p>
 <p>Typically this is the trough and the plunger lane, but you can make
-them whatever you want.)</p>
+them whatever you want.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.ball_controller.BallController.ball_add_live">
-<tt class="descname">ball_add_live</tt><big>(</big><em>num=0</em>, <em>stealth=False</em>, <em>auto=False</em>, <em>device=None</em><big>)</big></dt>
+<tt class="descname">ball_add_live</tt><big>(</big><em>balls=1</em>, <em>stealth=False</em>, <em>auto=False</em>, <em>device=None</em><big>)</big></dt>
 <dd><p>Adds one or more balls into play. This is how start a ball or how
 you add additional balls in a multiball scenario.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -123,12 +123,8 @@ not what you want then pass the device you want to launch from.)</p>
 
 <dl class="method">
 <dt id="mpf.system.ball_controller.BallController.ball_add_live_success">
-<tt class="descname">ball_add_live_success</tt><big>(</big><big>)</big></dt>
+<tt class="descname">ball_add_live_success</tt><big>(</big><em>balls_added=1</em><big>)</big></dt>
 <dd><p>A ball was just added live to the playfield.</p>
-<p>Note there&#8217;s no option to specify how many balls were added live since
-fundamentally you can only add one ball at a time. If you add a bunch
-of balls really fast (like from opening a gate on a lock device, then
-just call this method multiple times.)</p>
 </dd></dl>
 
 <dl class="method">
@@ -299,22 +295,9 @@ all devices and adding in any uncontained balls.</p>
 
 <dl class="method">
 <dt id="mpf.system.ball_controller.BallController.count_contained_balls">
-<tt class="descname">count_contained_balls</tt><big>(</big><em>process=True</em><big>)</big></dt>
+<tt class="descname">count_contained_balls</tt><big>(</big><big>)</big></dt>
 <dd><p>Loops through all the ball devices and gets a count of how many
 balls they have.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>process</strong> : bool</p>
-<blockquote class="last">
-<div><p>If True, then if there&#8217;s a contained count change, this method
-will call <a class="reference internal" href="#mpf.system.ball_controller.BallController.ball_contained_count_change" title="mpf.system.ball_controller.BallController.ball_contained_count_change"><tt class="xref py py-meth docutils literal"><span class="pre">ball_contained_count_change()</span></tt></a>.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="method">
@@ -367,6 +350,28 @@ kind of maintainance mode or something?</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.system.ball_controller.BallController.gather_balls">
+<tt class="descname">gather_balls</tt><big>(</big><em>target='home'</em><big>)</big></dt>
+<dd><p>Ejects all balls from all ball devices that do not have the <cite>target</cite>
+tag.</p>
+<p>Typically this would be used after a game ends, or when the machine is
+reset or first starts up.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>target</strong> : str</p>
+<blockquote class="last">
+<div><p>The name of the tag of the devices you want all the balls to end up
+in.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="mpf.system.ball_controller.BallController.get_balldevice_status">
 <tt class="descname">get_balldevice_status</tt><big>(</big><em>includetrough=False</em><big>)</big></dt>
 <dd><p>Returns a dictionary of ball devices, along with the number of
@@ -385,6 +390,18 @@ wants?</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.num_balls_contained_in_pf">
+<tt class="descname">num_balls_contained_in_pf</tt><em class="property"> = None</em></dt>
+<dd><p>Balls in playfield devices.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.num_balls_eject_auto">
+<tt class="descname">num_balls_eject_auto</tt><em class="property"> = None</em></dt>
+<dd><p>Balls to autolaunch into play.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="mpf.system.ball_controller.BallController.num_balls_known">
 <tt class="descname">num_balls_known</tt><em class="property"> = None</em></dt>
 <dd><p>How many balls the machine knows about. Could vary from the number
@@ -396,6 +413,18 @@ to compensate for balls that are lost or stuck.</p>
 <dt id="mpf.system.ball_controller.BallController.num_balls_missing">
 <tt class="descname">num_balls_missing</tt><em class="property"> = None</em></dt>
 <dd><p>Balls lost and/or not installed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.num_balls_to_add_live">
+<tt class="descname">num_balls_to_add_live</tt><em class="property"> = None</em></dt>
+<dd><p>Balls to launch into play.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.ball_controller.BallController.num_balls_to_add_stealth">
+<tt class="descname">num_balls_to_add_stealth</tt><em class="property"> = None</em></dt>
+<dd><p>Balls to stealth launch into play.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -422,12 +451,12 @@ Balls&#8217; setting), it will return False to reject the game start request.</p
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.system.ball_controller.BallController.send_all_balls_home">
-<tt class="descname">send_all_balls_home</tt><big>(</big><big>)</big></dt>
-<dd><p>Ejects all balls from all ball devices that do not have the &#8216;home&#8217;
-tag.</p>
-<p>Typically this would be used after a game ends, or when the machine is
-reset or first starts up.</p>
+<dt id="mpf.system.ball_controller.BallController.reset">
+<tt class="descname">reset</tt><big>(</big><big>)</big></dt>
+<dd><p>Resets the BallController.</p>
+<p>Current this just gets an initial count of the balls and sends all the
+balls to their &#8216;home&#8217; position. (Basically it keeps ejecting balls
+until they&#8217;re all contained in devices tagged with &#8216;home&#8217;)</p>
 </dd></dl>
 
 <dl class="method">
@@ -439,12 +468,6 @@ it needs to do.</p>
 the tilt and waits for them all to drain so the game can proceed. It
 also makes sure any balls that enter ball devices are ejected as
 they&#8217;re rolling towards the drain.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.ball_controller.BallController.validate_playfield">
-<tt class="descname">validate_playfield</tt><big>(</big><big>)</big></dt>
-<dd><p>Validates the playfield, but only if it was not valid before.</p>
 </dd></dl>
 
 </dd></dl>

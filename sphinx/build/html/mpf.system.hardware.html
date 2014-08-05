@@ -46,173 +46,39 @@
             
   <div class="section" id="module-mpf.system.hardware">
 <span id="mpf-system-hardware-module"></span><h1>mpf.system.hardware module</h1>
-<p>Contains the parent class for hardware objects, as well as generic subclasses for
-each type of hardware item (LED, Lamp, Coil, Switch, Stepper). Then each
-platform will subclass these to add the platform-specific things it needs.</p>
+<p>Contains the parent classes Platform, Device, and DeviceCollection</p>
 <dl class="class">
-<dt id="mpf.system.hardware.DirectLED">
-<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">DirectLED</tt><big>(</big><em>machine</em>, <em>name</em>, <em>number</em>, <em>platform_driver</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="#mpf.system.hardware.Light" title="mpf.system.hardware.Light"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Light</span></tt></a></p>
-<p>Represents an LED connected to an LED interface board.</p>
-<p>This LED can have any number of elements. Typically they&#8217;re either single
-element (single color), or three element (RGB), though dual element
-(red/green) and quad-element (RGB + UV) also exist and can be used.</p>
+<dt id="mpf.system.hardware.Device">
+<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">Device</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config=None</em>, <em>collection=-1</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Generic parent class of for every hardware object in a pinball machine.</p>
 <p class="rubric">Methods</p>
 <dl class="method">
-<dt id="mpf.system.hardware.DirectLED.color">
-<tt class="descname">color</tt><big>(</big><em>color</em><big>)</big></dt>
-<dd><p>Set an LED to a color.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>color</strong></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.hardware.DirectLED.disable">
-<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
-<dd><p>Disables an LED, including all elements of a multi-color LED.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.hardware.DirectLED.enable">
-<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
-<dd><p>Enables all the elements of an LED. Really only useful for single
-color LEDs.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.hardware.DirectLED.fade">
-<tt class="descname">fade</tt><big>(</big><em>color</em>, <em>fadetime</em><big>)</big></dt>
-<dd><p>Fades the LED to the color via the fadetime in ms</p>
+<dt id="mpf.system.hardware.Device.configure">
+<tt class="descname">configure</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Each device subclass should implement their own configure() method
+which will be called to set up and configure the device.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="mpf.system.hardware.Driver">
-<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">Driver</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="#mpf.system.hardware.HardwareObject" title="mpf.system.hardware.HardwareObject"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.HardwareObject</span></tt></a></p>
-<p>Generic class that holds driver objects.</p>
-<p>A &#8216;driver&#8217; is any device controlled from a driver board which is typically
-the high-voltage stuff like coils and flashers.</p>
-<p>This class exposes the methods you can use on these driver types of
-devices. Each platform module (i.e. P-ROC, FAST, etc.) subclasses this
-class to actually communicate with the physitcal hardware and perform the
-actions.</p>
-<p class="rubric">Methods</p>
-<dl class="method">
-<dt id="mpf.system.hardware.Driver.disable">
-<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
-<dd><p>Disables this driver</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.hardware.Driver.enable">
-<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.system.hardware.Driver.log">
-<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x10acf6f50&gt;</em></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.hardware.Driver.pulse">
-<tt class="descname">pulse</tt><big>(</big><em>milliseconds=None</em><big>)</big></dt>
-<dd><p>Enables this driver.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>milliseconds</strong> : int</p>
-<blockquote class="last">
-<div><p>The number of milliseconds the driver should be enabled for. If no
-value is provided, the driver will be enabled for the value
-specified in the config dictionary.</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.hardware.Driver.pulse_pwm">
-<tt class="descname">pulse_pwm</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.hardware.Driver.pwm">
-<tt class="descname">pwm</tt><big>(</big><em>on_time</em>, <em>off_time</em>, <em>orig_on_time</em><big>)</big></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mpf.system.hardware.HardwareDict">
-<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">HardwareDict</tt></dt>
+<dt id="mpf.system.hardware.DeviceCollection">
+<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">DeviceCollection</tt></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></p>
-<p>A collection of HardwareObjects.</p>
+<p>A collection of Devices.</p>
 <p>One instance of this class will be created for each different type of
 hardware device (such as coils, lights, switches, ball devices, etc.)</p>
 <p class="rubric">Methods</p>
 <dl class="method">
-<dt id="mpf.system.hardware.HardwareDict.get_from_number">
+<dt id="mpf.system.hardware.DeviceCollection.get_from_number">
 <tt class="descname">get_from_number</tt><big>(</big><em>number</em><big>)</big></dt>
 <dd><p>Returns an item name based on its number.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.system.hardware.HardwareDict.items_tagged">
+<dt id="mpf.system.hardware.DeviceCollection.items_tagged">
 <tt class="descname">items_tagged</tt><big>(</big><em>tag</em><big>)</big></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mpf.system.hardware.HardwareObject">
-<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">HardwareObject</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=-1</em><big>)</big></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p>Generic parent class of for every hardware object in a pinball machine.</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="mpf.system.hardware.Light">
-<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">Light</tt></dt>
-<dd><p>Bases: <a class="reference internal" href="#mpf.system.hardware.HardwareObject" title="mpf.system.hardware.HardwareObject"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.HardwareObject</span></tt></a></p>
-<p>Parent class of &#8220;lights&#8221; in a pinball machine.</p>
-<p>These can either be traditional incandescent lamps (or replacement LEDs)
-connected to a lamp matrix, or they can be LEDs connected to an LED
-control board.</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="mpf.system.hardware.MatrixLight">
-<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">MatrixLight</tt></dt>
-<dd><p>Bases: <a class="reference internal" href="#mpf.system.hardware.Light" title="mpf.system.hardware.Light"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Light</span></tt></a></p>
-<p>Represents a light connected to a traditional lamp matrix in a pinball
-machine.</p>
-<p>This light could be an incandescent lamp or a replacement single-color
-LED. The key is that they&#8217;re connected up to a lamp matrix.</p>
-<p>Note you cannot control brightness on these. They&#8217;re either &#8220;on&#8221; or &#8220;off.&#8221;
-Also you can&#8217;t control the color. (Color is dictated by the color of the
-light and/or the color of the plastic insert or cap.)</p>
-<p>For &#8220;new-style&#8221; directly-addressable multi-color LEDs (which are connected
-to an LED board instead of a lamp matrix), use <cite>class:HardwareDirectLED</cite>.</p>
-<p class="rubric">Methods</p>
-<dl class="method">
-<dt id="mpf.system.hardware.MatrixLight.disable">
-<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.hardware.MatrixLight.enable">
-<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -251,47 +117,6 @@ over, etc.</p>
 <dd><p>Run this before the machine loop starts. I want to do it here so we
 don&#8217;t need to check for initialization on each machine loop. (Or is
 this premature optimization?)</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mpf.system.hardware.Switch">
-<em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">Switch</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="#mpf.system.hardware.HardwareObject" title="mpf.system.hardware.HardwareObject"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.HardwareObject</span></tt></a></p>
-<p>A switch in a pinball machine.</p>
-<dl class="attribute">
-<dt id="mpf.system.hardware.Switch.debounce">
-<tt class="descname">debounce</tt><em class="property"> = None</em></dt>
-<dd><p>Specifies whether the hardware should debouce this switch before
-reporting a state change to the host computer. Default is True.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.system.hardware.Switch.hw_state">
-<tt class="descname">hw_state</tt><em class="property"> = None</em></dt>
-<dd><p>The physical hardware state of the switch. 1 = active,
-0 = inactive. This is what the actual hardware is reporting and does
-not consider whether a switch is NC or NO.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.system.hardware.Switch.log">
-<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x10a1d2550&gt;</em></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.system.hardware.Switch.state">
-<tt class="descname">state</tt><em class="property"> = None</em></dt>
-<dd><p>The logical state of a switch. 1 = active, 0 = inactive. This takes
-into consideration the NC or NO settings for the switch.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.system.hardware.Switch.type">
-<tt class="descname">type</tt><em class="property"> = None</em></dt>
-<dd><p>Specified whether the switch is normally open (&#8216;NO&#8217;, default) or
-normally closed (&#8216;NC&#8217;).</p>
 </dd></dl>
 
 </dd></dl>

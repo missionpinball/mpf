@@ -15,7 +15,7 @@ from collections import defaultdict
 from copy import deepcopy
 import time
 
-from mpf.system.hardware import HardwareDict, Driver, Switch
+from mpf.system.hardware import DeviceCollection
 from mpf.system.timing import Timing, Timer
 from mpf.system.tasks import Task, DelayManager
 from mpf.system.events import EventManager
@@ -23,7 +23,11 @@ from mpf.system.switch_controller import SwitchController
 from mpf.system.ball_controller import BallController
 from mpf.modules.ball_search import BallSearch
 from mpf.modules.keyboard import Keyboard
-from mpf.system.devices import Flipper, AutofireCoil, BallDevice
+from mpf.devices.autofire import AutofireCoil
+from mpf.devices.ball_device import BallDevice
+from mpf.devices.driver import Driver
+from mpf.devices.flipper import Flipper
+from mpf.devices.switch import Switch
 
 
 class MachineController(object):
@@ -50,23 +54,22 @@ class MachineController(object):
     def __init__(self, config_file, physical_hw=True):
         self.log = logging.getLogger("Machine Controller")
         self.starttime = time.time()
-        self.config = defaultdict(list)  # so we can simplify checking
+        self.config = defaultdict(int)  # so we can simplify checking
         self.physical_hw = physical_hw
         self.switch_events = []
         self.done = False
         self.HZ = None
         self.gameflow_index = 0
 
-        self.coils = HardwareDict()
-        self.lamps = HardwareDict()
-        self.switches = HardwareDict()
-        self.leds = HardwareDict()
+        self.coils = DeviceCollection()
+        self.lamps = DeviceCollection()
+        self.switches = DeviceCollection()
+        self.leds = DeviceCollection()
+        self.autofires = DeviceCollection()
+        self.flippers = DeviceCollection()
+        self.balldevices = DeviceCollection()
         # todo combine leds and lamps?
         # todo add GI and flashers?
-
-        self.autofires = HardwareDict()
-        self.flippers = HardwareDict()
-        self.balldevices = HardwareDict()
 
         # create all the machine-wide objects & set them up.
         self.events = EventManager()
@@ -76,8 +79,6 @@ class MachineController(object):
         self.timing.configure(HZ=self.config['Machine']['HZ'])
         self.switch_controller = SwitchController(self)
         self.process_config()
-
-
 
         self.ball_controller = BallController(self)
         self.ballsearch = BallSearch(self)
@@ -95,13 +96,15 @@ class MachineController(object):
     def reset(self):
         """Resets the machine."""
         # Do we want to reset all timers here? todo
+        # do we post an event when we do this? Really this should re-read
+        # the config and stuff, right? Maybe we destroy all of our objects
+        # even and recreate them?
 
         # reset variables
         self.gameflow_index = 0
 
-        # todo remove (just a test)
-        self.periodic = self.timing.add(Timer(self.periodic_timer_test,
-                                              frequency=2000))
+        #self.periodic = self.timing.add(Timer(self.periodic_timer_test,
+        #                                      frequency=2000))
 
         self.switch_controller.add_switch_handler(switch_name='start', state=1,
                                                   ms=500, callback=self.test)
@@ -215,10 +218,11 @@ class MachineController(object):
 
         # now check if there are any more updates to do.
         # iterate and remove them
-        if config in self.config['Config']:
-            self.config['Config'].remove(config)
         if self.config['Config']:
-            self.update_config(self.config['Config'][0])
+            if config in self.config['Config']:
+                self.config['Config'].remove(config)
+            if self.config['Config']:
+                self.update_config(self.config['Config'][0])
 
     def set_platform(self):
         """ Sets the hardware platform based on the "Platform" item in the
@@ -227,23 +231,18 @@ class MachineController(object):
 
         """
 
-
         try:
             hardware_platform = __import__('mpf.platform.%s' %
                                self.config['Hardware']['Platform'],
                                fromlist=["HardwarePlatform"])
-
             # above line has an effect similar to:
             # from mpf.platform.<platform_name> import HardwarePlatform
-            
             return hardware_platform.HardwarePlatform(self)
 
         except ImportError:
             self.log.error("Error importing platform module: %s",
                            self.config['Hardware']['Platform'])
             quit()  # No point in continuing if we error here
-
-        
 
     def process_config(self):
         """Processes the hardware config based on the machine config files.
@@ -458,10 +457,6 @@ class MachineController(object):
         Task.timer_tick(Timing.tick)  # notifies tasks
         self.events.post('timer_tick')  # sends the timer_tick system event
         DelayManager.timer_tick()
-
-    def periodic_timer_test(self):  # todo remove
-        print "periodic timer test. Current timer tick:", Timing.tick
-        #self.coils.flipperLwLMain.pulse()
 
     def test(self):
         print "in test method."

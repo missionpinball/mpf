@@ -59,7 +59,7 @@ class SwitchController(object):
 
         self.log.debug("Syncing the logical and physical switch states.")
         for switch in self.machine.switches:
-            self.process_switch(switch.name, switch.state)
+            self.set_state(switch.name, switch.state)
 
     def is_state(self, switch_name, state, ticks=0):
         """Queries whether a switch is in a given state and (optionally)
@@ -116,7 +116,7 @@ class SwitchController(object):
 
         return Timing.tick - self.switches[switch_name]['time']
 
-    def set_state(self, switch_name, state):
+    def set_state(self, switch_name, state=1):
         """Sets the state of a switch."""
         self.switches.update({switch_name: {'state': state,
                                             'time': Timing.tick
@@ -234,6 +234,18 @@ class SwitchController(object):
 
         self.registered_switches[entry_key].append(entry_val)
 
+    def remove_switch_handler(self, switch_name, callback, state=1, ms=0):
+        """Removes a registered switch handler. Currently this only works if
+        you specify everything exactly as you set it up. """
+
+        ticks = int(math.ceil((ms/Timing.secs_per_tick/1000)))
+
+        entry_val = {'ticks': ticks, 'callback': callback}
+        entry_key = str(switch_name) + '-' + str(state)
+
+        if entry_val in self.registered_switches[entry_key]:
+            self.registered_switches[entry_key].remove(entry_val)
+
     def _post_switch_events(self, switch_name, state):
         """Posts the game events based on this switch changing state. """
 
@@ -243,7 +255,7 @@ class SwitchController(object):
         if state == 1:
 
             for tag in self.machine.switches[switch_name].tags:
-                self.machine.events.post("sw_" + tag)
+                self.machine.events.post('sw_' + tag)
 
         # the following events all fire the moment a switch becomes inactive
         elif state == 0:

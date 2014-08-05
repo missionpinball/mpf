@@ -53,9 +53,9 @@
 <p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.system.events.EventManager.add_handler">
-<tt class="descname">add_handler</tt><big>(</big><em>event</em>, <em>handler</em>, <em>priority=1</em><big>)</big></dt>
+<tt class="descname">add_handler</tt><big>(</big><em>event</em>, <em>handler</em>, <em>priority=1</em>, <em>**kwargs</em><big>)</big></dt>
 <dd><p>Registers an event handler to respond to an event.</p>
-<p>If you add a handlers for an event that has already been
+<p>If you add a handlers for an event for which it has already been
 registered, the new one will overwrite the old one. This is useful for
 changing priorities of existing handlers. Also it&#8217;s good to know that
 you can safely add a handler over and over.</p>
@@ -80,6 +80,14 @@ you want to be called first, add it here with a priority of 2. (Or
 3 or 10 or 100000.) The numbers don&#8217;t matter. They&#8217;re called from
 highest to lowest. (i.e. priority 100 is called before priority 1.)</p>
 </div></blockquote>
+<p><strong>kwargs</strong> : kwargs</p>
+<blockquote>
+<div><p>A list of any additional keyword arg pairs that will be attached to
+the handler and called whenever that handler is called. Note these
+are in addition to kwargs that could be passed as part of the
+event post. If there&#8217;s a conflict, the event-level ones will take
+win.</p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>handler</strong> : object reference</p>
@@ -92,6 +100,28 @@ list to easily remove these in the future.</p>
 <p>Then later to remove all the handlers that a module added, you could:</p>
 <p>for handler in handler_list:</p>
 <p class="last"><tt class="docutils literal"><span class="pre">events.remove_handler(handler)</span></tt></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.does_event_exist">
+<tt class="descname">does_event_exist</tt><big>(</big><em>event_name</em><big>)</big></dt>
+<dd><p>Checks to see if any handlers are registered for the event name that
+is passed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>event_name</strong> : str</p>
+<blockquote>
+<div><p>The name of the event you want to check</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True or False</p>
 </td>
 </tr>
 </tbody>
@@ -128,17 +158,18 @@ do not expect keywords.</p>
 
 <dl class="method">
 <dt id="mpf.system.events.EventManager.remove_handler">
-<tt class="descname">remove_handler</tt><big>(</big><em>method</em><big>)</big></dt>
+<tt class="descname">remove_handler</tt><big>(</big><em>method</em>, <em>**kwargs</em><big>)</big></dt>
 <dd><p>Removes an event handler.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>method</strong> : string</p>
-<blockquote class="last">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>method</strong> : str</p>
+<blockquote>
 <div><p>this is the method whose handlers you want to remove. This removes
 all of them.</p>
 </div></blockquote>
+<p class="last"><strong>kwargs</strong></p>
 </td>
 </tr>
 </tbody>

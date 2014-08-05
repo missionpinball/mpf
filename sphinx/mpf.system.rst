@@ -7,7 +7,6 @@ Submodules
 .. toctree::
 
    mpf.system.ball_controller
-   mpf.system.devices
    mpf.system.events
    mpf.system.hardware
    mpf.system.machine_controller

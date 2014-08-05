@@ -36,6 +36,7 @@ class Keyboard(object):
     def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger('Keyboard')
+
         self.keyboard_events = []
         self.key_map = {}
         self.toggle_keys = {}
@@ -60,7 +61,8 @@ class Keyboard(object):
             start_active = v.get('start_active', None)
             # todo convert to True from true or TRUE
             invert = v.get('invert', None)
-            event = v.get('event', None)  # todo
+            event = v.get('event', None)
+            params = v.get('params', None)
             # todo add args processing?
             # will hold our key entry converted to pyglet key format
             pyglet_key = ""
@@ -139,12 +141,12 @@ class Keyboard(object):
                 if start_active:
                     self.start_active.append(switch_name)
 
-            elif event:
-                # todo add event processing
-                pass
+            elif event:  # we're processing an entry for an event
+                event_dict = {'event': event, 'params': params}
+                self.add_key_map(str(key_code), event_dict=event_dict)
 
-    def add_key_map(self, key, switch_name, toggle_key=False,
-                    start_active=False, invert=False):
+    def add_key_map(self, key, switch_name=None, toggle_key=False,
+                    start_active=False, invert=False, event_dict=None):
         """Maps the given *key* to *switch_name*, where *key* is one of the
         key constants in :mod:`pygame.locals`."""
         # todo add event processing
@@ -152,7 +154,10 @@ class Keyboard(object):
             # deletes any random zeros that come through as modifiers
             if key[0:2] == '0-':
                 key = key[2:]
-        self.key_map[key] = switch_name
+        if switch_name:
+            self.key_map[key] = switch_name
+        elif event_dict:
+            self.key_map[key] = event_dict
 
         if toggle_key:
             key = str(key)
@@ -176,9 +181,9 @@ class Keyboard(object):
                 self.log.debug("Setting initial state of switch '%s' to "
                                "active", switch_name)
 
-                self.machine.switch_controller.process_switch(state=1,
-                                                              name=switch_name,
-                                                              logical=True)
+                # Use set_state() instead of process_switch() so this mimics
+                # the physical hw process.
+                self.machine.switch_controller.set_state(switch_name, 1)
 
     def get_keyboard_events(self):
         """Gets the key events from the pyglet window."""
@@ -235,8 +240,18 @@ class Keyboard(object):
                         self.machine.switch_controller.process_switch(state=0,
                             name=self.key_map[key_press])
                     else:
-                        self.machine.switch_controller.process_switch(state=1,
-                            name=self.key_map[key_press])
+                        # do we have an event or a switch?
+                        if type(self.key_map[key_press]) == str:
+                            # we have a switch
+                            self.machine.switch_controller.process_switch(
+                                state=1, name=self.key_map[key_press])
+                        elif type(self.key_map[key_press]) == dict:
+                            # we have an event
+                            event_dict = self.key_map[key_press]
+                            print event_dict['event']
+                            print event_dict['params']
+                            self.machine.events.post(str(event_dict['event']),
+                                                     **event_dict['params'])
 
         @self.window.event
         def on_key_release(symbol, modifiers):
@@ -251,7 +266,7 @@ class Keyboard(object):
                 if self.key_map[key_press] in self.inverted_keys:
                     self.machine.switch_controller.process_switch(state=1,
                         name=self.key_map[key_press])
-                else:
+                elif type(self.key_map[key_press]) == str:
                     self.machine.switch_controller.process_switch(state=0,
                         name=self.key_map[key_press])
 

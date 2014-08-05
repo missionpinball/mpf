@@ -90,7 +90,7 @@ Devices:
             confirm_eject_target: shooterLaneR
 
         shooterLaneR:
-            tags: plunger, home, ball_add_live
+            tags: home, ball_add_live
             label: Right Plunger Lane
             ball_switches: shooterR
             eject_switch: shooterR
@@ -98,6 +98,34 @@ Devices:
             eject_coil: shooterR
             confirm_eject_type: playfield
             feeder_device: trough
+            player_controlled_eject_tag: right_eject
+
+        shooterLaneL:
+            label: Left Plunger Lane
+            ball_switches: ShooterLaneL
+            eject_switch: ShooterLaneL
+            ball_count_delay: 0.3
+            eject_coil: shooterL
+            confirm_eject_type: count
+            post_eject_delay_check: 0.5
             player_controlled_eject: True
-            player_controlled_eject_tag: plunger  # dunno if this should be here
+            player_controlled_eject_tag: left_eject  # dunno if this should be here
+
+        SniperVUK:
+            label: Sniper Tower VUK
+            ball_switches: popperR
+            eject_switch: popperR
+            ball_count_delay: 0.3
+            eject_coil: popperR
+            confirm_eject_type: count
+            post_eject_delay_check: 0.5
+
+        HallOfJusticeVUK:
+            label: Hall of Justice VUK
+            ball_switches: popperL
+            eject_switch: popperL
+            ball_count_delay: 0.3
+            eject_coil: popperL
+            confirm_eject_type: count
+            post_eject_delay_check: 0.5
             

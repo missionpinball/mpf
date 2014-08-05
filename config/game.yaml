@@ -23,6 +23,6 @@ BallSearch:
     Missing balls on startup: ignore # search, halt #todo
 
 Game:
-    num_hits_for_valid_playfied: 2
+    num_hits_for_valid_playfield: 2
     Balls per game: 3
     Max players per game: 4

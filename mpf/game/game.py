@@ -41,8 +41,6 @@ class Game(MachineMode):
         self.player = None  # This is the current player
         self.player_list = []
 
-        self.num_balls_in_play = 0
-
         # todo register for request_to_start_game so you can deny it, or allow
         # it with a long press
 
@@ -113,6 +111,14 @@ class Game(MachineMode):
         event is clear, this method calls :meth:`ball_started`.
         """
         self.log.debug("ball_starting for Ball %s", self.player.vars['ball'])
+        self.log.debug("***************************************************")
+        self.log.debug("***************************************************")
+        self.log.debug("**                                               **")
+        self.log.debug("***    Player: %s    Ball: %s                      **",
+                       self.player.vars['number'], self.player.vars['ball'])
+        self.log.debug("**                                               **")
+        self.log.debug("***************************************************")
+        self.log.debug("***************************************************")
         self.machine.events.post('ball_starting', ev_type='queue',
                                  callback=self.ball_started)
 
@@ -173,6 +179,13 @@ class Game(MachineMode):
             return
         # todo check extra balls
         # todo next_player()
+        self.machine.events.post('ball_ended')
+        # todo this could be a bug, because if the event queue is busy then
+        # this event will get queued and the code will move on. The next part
+        # of this code will rotate the player. What if it rotates to a new
+        # player and we have some game ending stuff that tries to end the
+        # current player, but it accidentally gets applied to the new player
+        # since we rotated already?
 
         if self.player.vars['ball'] == self.machine.config['Game']\
                 ['Balls per game'] and \
@@ -230,7 +243,7 @@ class Game(MachineMode):
         balls), then call this method once for each ball.
 
         """
-        self.num_balls_in_play += 1
+        pass
 
     def ball_remove_live(self):
         """Called when a ball in play has been removed from the playfield.
@@ -239,8 +252,8 @@ class Game(MachineMode):
         drops below 1, it calls :meth:`ball_ending`.
 
         """
-        self.num_balls_in_play -= 1
-        if self.num_balls_in_play < 1:  # todo should we log if this is neg?
+        if self.machine.ball_controller.num_balls_in_play < 1:
+            # todo should we log if this is neg?
             self.ball_ending()
 
     """

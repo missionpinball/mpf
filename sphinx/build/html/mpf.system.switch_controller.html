@@ -121,7 +121,7 @@ is in the state regardless of how long it&#8217;s been in that state.</p>
 
 <dl class="attribute">
 <dt id="mpf.system.switch_controller.SwitchController.log">
-<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x10b3052d0&gt;</em></dt>
+<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x108b9efd0&gt;</em></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -164,8 +164,15 @@ callbacks.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.remove_switch_handler">
+<tt class="descname">remove_switch_handler</tt><big>(</big><em>switch_name</em>, <em>callback</em>, <em>state=1</em>, <em>ms=0</em><big>)</big></dt>
+<dd><p>Removes a registered switch handler. Currently this only works if
+you specify everything exactly as you set it up.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.set_state">
-<tt class="descname">set_state</tt><big>(</big><em>switch_name</em>, <em>state</em><big>)</big></dt>
+<tt class="descname">set_state</tt><big>(</big><em>switch_name</em>, <em>state=1</em><big>)</big></dt>
 <dd><p>Sets the state of a switch.</p>
 </dd></dl>
 

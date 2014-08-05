@@ -1,8 +1,6 @@
-""" Contains the parent class for hardware objects, as well as generic subclasses for
-each type of hardware item (LED, Lamp, Coil, Switch, Stepper). Then each
-platform will subclass these to add the platform-specific things it needs.
+""" Contains the parent classes Platform, Device, and DeviceCollection
 """
-# hardware.py (contains classes for various playfield devices)
+# hardware.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -11,8 +9,9 @@ platform will subclass these to add the platform-specific things it needs.
 
 import logging
 import time
+from collections import defaultdict
+
 from mpf.system.timing import Timing
-import uuid
 
 
 class Platform(object):
@@ -104,303 +103,45 @@ class Platform(object):
         """
         self._do_clear_hw_rule(self.machine.switches[sw_name].number)
 
-    def _do_set_hw_rule(self, *args, **kwargs):
-        pass
 
-    def _do_clear_hw_rule(self, *args, **kwargs):
-        pass
-
-
-class HardwareObject(object):
+class Device(object):
     """ Generic parent class of for every hardware object in a pinball machine.
 
     """
-    def __init__(self, machine, name, config, collection=-1):
+    def __init__(self, machine, name, config=None, collection=-1):
+        self.log.debug("Creating device")
         self.machine = machine
         self.name = name
-        self.config = config
         self.tags = []
         self.label = None
-        self.time_last_changed = 0
+        self.config = defaultdict(lambda: None, config)
 
-        # todo dunno if we want to keep number here in this parent class?
-        if config['number']:
-            self.number = config['number']
-        else:
-            self.number = uuid.uuid4().int
-            # some hw doesn't have a number, but we need it for everything
-            # else to work, so we just make one up. Maybe this should change to
-            # not require a number?
+        if config:
+            self.config.update(config)
 
-        if 'tags' in config:
-            self.tags = self.machine.string_to_list(config['tags'])
-        if 'label' in config:
-            self.label = config['label']  # todo change to multi lang
-        # todo more pythonic way, like self.label = blah if blah?
+            if 'tags' in config:
+                self.tags = self.machine.string_to_list(config['tags'])
+            if 'label' in config:
+                self.label = config['label']  # todo change to multi lang
+            # todo more pythonic way, like self.label = blah if blah?
 
         # Add this instance to our dictionary for this type of device
         if collection != -1:
             # Have to use -1 here instead of None to catch an empty collection
             collection[name] = self
 
+        #self.configure(config)
 
-class Switch(HardwareObject):
-    """ A switch in a pinball machine.
-
-    """
-
-    log = logging.getLogger("Switch")
-
-    def __init__(self, machine, name, config, collection=None):
-        super(Switch, self).__init__(machine, name, config, collection)
-
-        self.machine = machine
-        self.name = name
-        self.config = config
-        self.state = 0
-        """ The logical state of a switch. 1 = active, 0 = inactive. This takes
-        into consideration the NC or NO settings for the switch."""
-        self.hw_state = 0
-        """ The physical hardware state of the switch. 1 = active,
-        0 = inactive. This is what the actual hardware is reporting and does
-        not consider whether a switch is NC or NO."""
-
-        # todo read these in and/or change to dict
-        self.type = 'NO'
-        """ Specified whether the switch is normally open ('NO', default) or
-        normally closed ('NC')."""
-        if 'type' in config and config['type'] == 'NC':
-            self.type = 'NC'
-
-        self.debounce = True
-        """ Specifies whether the hardware should debouce this switch before
-        reporting a state change to the host computer. Default is True."""
-        if 'debouce' in config and config['debouce'] == 'False':
-            self.debouce = False
-
-        self.last_changed = None
-        self.hw_timestamp = None
-
-        self.log.debug("Creating '%s' with config: %s", name, config)
-        self.hw_switch, self.number, self.hw_state = self.machine.platform.\
-            configure_switch(self.config['number'], self.debounce)
-
-        self.log.debug("Current hardware state of switch '%s': %s",
-                       self.name, self.hw_state)
-
-    def _set_state(self, state):
-        self.state = state
-
-    def _is_state(self, state, seconds=None):
-        if self.state == state:
-            if seconds is not None:
-                return self._time_since_change() > seconds
-            else:
-                return True
-        else:
-            return False
-
-    def _is_active(self, seconds=None):
-        if self.type == 'NO':
-            return self._is_state(state=True, seconds=seconds)
-        else:
-            return self._is_state(state=False, seconds=seconds)
-
-    def _is_inactive(self, seconds=None):
-        if self.type == 'NC':
-            return self._is_state(state=True, seconds=seconds)
-        else:
-            return self._is_state(state=False, seconds=seconds)
-
-    def _time_since_change(self):
-        if self._last_changed is None:
-            return 1000000
-        else:
-            return time.time() - self._last_changed
-
-    def _reset_timer(self):
-
-        self._last_changed = time.time()
-
-
-class Driver(HardwareObject):
-    """Generic class that holds driver objects.
-
-    A 'driver' is any device controlled from a driver board which is typically
-    the high-voltage stuff like coils and flashers.
-
-    This class exposes the methods you can use on these driver types of
-    devices. Each platform module (i.e. P-ROC, FAST, etc.) subclasses this
-    class to actually communicate with the physitcal hardware and perform the
-    actions.
-
-    """
-
-    log = logging.getLogger("Driver")
-
-    def __init__(self, machine, name, config, collection=None):
-        super(Driver, self).__init__(machine, name, config, collection)
-
-        # todo read these in and/or change to dict
-        self.pulse_time = 30
-        self.pwm_on = 0
-        self.pwm_off = 0
-
-        self.hw_driver = self.machine.platform.configure_driver(
-            self.config['number'])
-        self.log.debug("Creating '%s' with config: %s", name, config)
-
-        '''
-        if klass == PROCDriver:
-                            if 'pulseTime' in item_dict:
-                                item.parent.pulse_time = item_dict['pulseTime']
-                            if 'polarity' in item_dict:
-                                item.reconfigure(item_dict['polarity'])
-                            if 'holdPatter' in item_dict:
-                                item.parent.pwm_on = int(item_dict['holdPatter'].split('-')[0])
-                                item.parent.pwm_off = int(item_dict['holdPatter'].split('-')[1])
-                                '''
-
-    def disable(self):
-        """ Disables this driver """
-        self.log.debug("Disabling Driver: %s", self.name)
-        self.time_last_changed = time.time()
-        # todo , now do it
-        # todo also disable the timer which reenables this
-
-    def pulse(self, milliseconds=None):
-        """ Enables this driver.
-
-        Parameters
-        ----------
-
-        milliseconds : int : optional
-            The number of milliseconds the driver should be enabled for. If no
-            value is provided, the driver will be enabled for the value
-            specified in the config dictionary.
+    def configure(self, config):
+        """ Each device subclass should implement their own configure() method
+        which will be called to set up and configure the device.
 
         """
-        if milliseconds is None:
-            milliseconds = self.pulse_time
-        elif milliseconds < 1:
-            self.log.warning("Received command to pulse  Driver %s for %dms, "
-                             "but ms is less than 1, so we're doing nothing.",
-                             self.name, milliseconds)
-            return
-        # todo also disable the timer which reenables this
-        self.log.debug("Pulsing Driver %s for %dms", self.name, milliseconds)
-        self.hw_driver.pulse(int(milliseconds))
-        self.time_last_changed = time.time()
-
-    def pwm(self, on_time, off_time, orig_on_time):
-        pass  # todo
-        self.time_last_changed = time.time()
-        # todo also disable the timer which reenables this
-
-    def pulse_pwm(self):
-        pass  # todo
-        self.time_last_changed = time.time()
-        # todo also disable the timer which reenables this
-
-    def enable(self):
-        pass  # todo
-        # get the secs per tick
-        # set a pulse for 2.5x secs per tick
-        # set a timer that runs each tick to re-up it
-        self.time_last_changed = time.time()
-
-
-class Light(HardwareObject):
-    """ Parent class of "lights" in a pinball machine.
-
-    These can either be traditional incandescent lamps (or replacement LEDs)
-    connected to a lamp matrix, or they can be LEDs connected to an LED
-    control board.
-    """
-    def __init__(self):
-        self.log = logging.getLogger('HardwareMatrixLight')
-
-
-class MatrixLight(Light):
-    """ Represents a light connected to a traditional lamp matrix in a pinball
-    machine.
-
-    This light could be an incandescent lamp or a replacement single-color
-    LED. The key is that they're connected up to a lamp matrix.
-
-    Note you cannot control brightness on these. They're either "on" or "off."
-    Also you can't control the color. (Color is dictated by the color of the
-    light and/or the color of the plastic insert or cap.)
-
-    For "new-style" directly-addressable multi-color LEDs (which are connected
-    to an LED board instead of a lamp matrix), use `class:HardwareDirectLED`.
-    """
-
-    def __init__(self):
-        self.log = logging.getLogger('HardwareMatrixLight')
-
-    def enable(self):
-        pass
-
-    def disable(self):
         pass
 
 
-class DirectLED(Light):
-    """ Represents an LED connected to an LED interface board.
-
-    This LED can have any number of elements. Typically they're either single
-    element (single color), or three element (RGB), though dual element
-    (red/green) and quad-element (RGB + UV) also exist and can be used.
-
-    """
-    def __init__(self, machine, name, number, platform_driver):
-        HardwareObject.__init__(self, machine, name, number)
-        self.log = logging.getLogger('HardwareDirectLED')
-        self.platform_driver = platform_driver
-
-        self.num_elements = None
-
-        self.brightness_compensation = [1.0, 1.0, 1.0]
-        # brightness_compensation allows you to set a default multiplier for
-        # the "max" brightness of an LED. Recommended setting is 0.85
-        self.default_fade = 0
-
-        self.current_color = []  # one item for each element, 0-255
-
-    def color(self, color):
-        """ Set an LED to a color.
-
-        Parameters
-        ----------
-
-        color
-
-        """
-
-        # If this LED has a default fade set, use color_with_fade instead:
-        if self.default_fade:
-            self.fade(color, self.default_fade)
-            return
-
-    def fade(self, color, fadetime):
-        """ Fades the LED to the color via the fadetime in ms """
-        pass
-
-    def disable(self):
-        """ Disables an LED, including all elements of a multi-color LED.
-        """
-        pass
-
-    def enable(self):
-        """ Enables all the elements of an LED. Really only useful for single
-        color LEDs.
-        """
-        pass
-
-
-class HardwareDict(dict):
-    """A collection of HardwareObjects.
+class DeviceCollection(dict):
+    """A collection of Devices.
 
     One instance of this class will be created for each different type of
     hardware device (such as coils, lights, switches, ball devices, etc.)
@@ -423,7 +164,7 @@ class HardwareDict(dict):
         # out. An example like this will fail:
         # self.hold_coil = self.machine.coils[config['hold_coil']]
         # even if config is a defaultdict, because config will return
-        # None, and we can't call this HardwareDict on None. Maybe make
+        # None, and we can't call this DeviceCollection on None. Maybe make
         # default dict return some non-None as its default which we can catch
         # here?
 

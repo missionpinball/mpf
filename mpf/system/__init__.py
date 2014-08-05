@@ -1,6 +1,5 @@
 __all__ = [
            'ball_controller',
-           'devices',
            'events',
            'hardware',
            'machine_controller',
