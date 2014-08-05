@@ -674,7 +674,7 @@ class BallDevice(Device):
             # Note this must be higher priority than the failed eject handler
             self.machine.events.add_handler(
                 'balldevice_' + self.config['confirm_eject_target'] +
-                '_ball_enter', self.eject_success, 2)
+                '_ball_enter', self._eject_success, 2)
 
         elif self.config['confirm_eject_type'] == 'switch':
             # watch for that switch to activate momentarily
