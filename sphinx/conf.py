@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # -*- coding: latin-1 -*-
 #
 # Mission Pinball Framework documentation build configuration file, created by
@@ -536,4 +535,3 @@ numpydoc_show_class_members = True
 
 
 html_add_permalinks = None
->>>>>>> FETCH_HEAD
