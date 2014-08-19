@@ -72,7 +72,7 @@ class BallController(object):
         self.machine.events.add_handler('ball_ending', self.ball_ending, 1000)
         self.machine.events.add_handler('sw_ballLive', self.ball_live_hit)
         self.machine.events.add_handler('tilt', self.tilt)
-        self.machine.events.add_handler('game_start', self.game_start)
+        self.machine.events.add_handler('game_starting', self.game_starting)
         self.machine.events.add_handler('game_end', self.game_end)
 
         self.machine.events.add_handler('ball_add_live_success',
@@ -186,6 +186,10 @@ class BallController(object):
             self.ball_update_all_counts()
 
         # todo check for ball search in progress and notify it?
+
+        # if more balls contained then we knew about, then they are "found"
+        if self.num_balls_contained > self.num_balls_known:
+            self.ball_found(self.num_balls_contained - self.num_balls_known)
 
     def ball_update_all_counts(self):
         """Does a full count of all balls, including counting all balls in
@@ -342,7 +346,7 @@ class BallController(object):
         for device in self.machine.devices.items_tagged('playfield'):
             device.eject_all()
 
-    def game_start(self, game):
+    def game_starting(self, queue, game):
         """Used to inform the ball controller that a game is starting.
 
         Parameters
@@ -355,10 +359,10 @@ class BallController(object):
         # case that's so our game mode can keep track of the current ball.
         # But is that really necessary? Why not just have ball_controller keep
         # track of it? We'll see...
-        self.log.debug("ball_controller game_start")
+        self.log.debug("ball_controller game_starting")
         self.game = game
         self.num_balls_in_play = 0
-        # todo make sure all balls are home?
+        # todo make sure all balls are home
         # todo do we need to update ball counts here? meh?
 
     def game_end(self):
@@ -639,15 +643,14 @@ class BallController(object):
         if self.machine.config['BallSearch']:
             if not self.flag_no_ball_search or force is True:
                 if secs is not None:
-                    ball_search_start_ticks = Timing.secs(secs)
+                    start_ms = secs * 1000
                 else:
-                    ball_search_start_ticks = Timing.secs(
-                        self.machine.config['BallSearch']
-                        ['Secs until ball search start'])
-                self.log.debug("Scheduling a ball search for %s ticks from now",
-                               ball_search_start_ticks)
+                    start_ms = (self.machine.config['BallSearch']
+                        ['Secs until ball search start'] * 1000)
+                self.log.debug("Scheduling a ball search for %s secs from now",
+                               start_ms / 1000.0)
                 self.delay.reset("ball_search_start",
-                                 delay=ball_search_start_ticks,
+                                 ms=start_ms,
                                  callback=self.ball_search_begin)
 
     def ball_search_disable(self):

@@ -52,7 +52,7 @@ class Keyboard(object):
         # Setup the key mappings
 
         self.log.debug("Setting up the keyboard mappings")
-        for k, v in self.machine.config['key_map'].iteritems():
+        for k, v in self.machine.config['Keyboard'].iteritems():
             k = str(k)  # k is the value of the key entry in the config
             switch_name = v.get('switch', None)
             # set whether a key is the push on / push off type
@@ -191,6 +191,8 @@ class Keyboard(object):
 
     def _setup_window(self):
         self.window = pyglet.window.Window()
+        self.window.width = 100
+        self.window.height = 100
 
         @self.window.event
         def on_close():
@@ -248,8 +250,6 @@ class Keyboard(object):
                         elif type(self.key_map[key_press]) == dict:
                             # we have an event
                             event_dict = self.key_map[key_press]
-                            print event_dict['event']
-                            print event_dict['params']
                             self.machine.events.post(str(event_dict['event']),
                                                      **event_dict['params'])
 
@@ -257,6 +257,13 @@ class Keyboard(object):
         def on_key_release(symbol, modifiers):
             # see the above on_key_press() method for comments on this method
             key_press = str(symbol)
+
+            if modifiers & 8:  # '8' is the plyglet mod value for caps lock
+                modifiers -= 8  # so we just remove it.
+
+            if modifiers & 16:  # Same for '16' which is for num lock
+                modifiers -= 16
+
             if modifiers:
                 key_press = str(modifiers) + "-" + key_press
 

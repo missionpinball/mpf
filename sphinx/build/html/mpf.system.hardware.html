@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.hardware module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.system.hardware module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -52,7 +52,6 @@
 <em class="property">class </em><tt class="descclassname">mpf.system.hardware.</tt><tt class="descname">Device</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config=None</em>, <em>collection=-1</em><big>)</big></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Generic parent class of for every hardware object in a pinball machine.</p>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.system.hardware.Device.configure">
 <tt class="descname">configure</tt><big>(</big><em>config</em><big>)</big></dt>
@@ -69,7 +68,6 @@ which will be called to set up and configure the device.</p>
 <p>A collection of Devices.</p>
 <p>One instance of this class will be created for each different type of
 hardware device (such as coils, lights, switches, ball devices, etc.)</p>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.system.hardware.DeviceCollection.get_from_number">
 <tt class="descname">get_from_number</tt><big>(</big><em>number</em><big>)</big></dt>
@@ -94,7 +92,6 @@ attached, then this class can be used on its own. (Many of the methods
 will do nothing and your game will work.)</p>
 <p>For example, the P-ROC HardwarePlatform class will have a Driver class
 with methods such as pulse() to fire a coil.</p>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.system.hardware.Platform.clear_hw_rule">
 <tt class="descname">clear_hw_rule</tt><big>(</big><em>sw_name</em><big>)</big></dt>
@@ -107,7 +104,7 @@ over, etc.</p>
 
 <dl class="method">
 <dt id="mpf.system.hardware.Platform.set_hw_rule">
-<tt class="descname">set_hw_rule</tt><big>(</big><em>sw_name</em>, <em>sw_activity</em>, <em>coil_name=None</em>, <em>coil_action_time=0</em>, <em>pulse_time=0</em>, <em>pwm_on=0</em>, <em>pwm_off=0</em>, <em>delay=0</em>, <em>recycle_time=0</em>, <em>debounced=False</em>, <em>drive_now=False</em><big>)</big></dt>
+<tt class="descname">set_hw_rule</tt><big>(</big><em>sw_name</em>, <em>sw_activity</em>, <em>coil_name=None</em>, <em>coil_action_ms=0</em>, <em>pulse_ms=0</em>, <em>pwm_on=0</em>, <em>pwm_off=0</em>, <em>delay=0</em>, <em>recycle_time=0</em>, <em>debounced=False</em>, <em>drive_now=False</em><big>)</big></dt>
 <dd><p>Writes the hardware rule to the controller.</p>
 </dd></dl>
 
@@ -160,7 +157,7 @@ this premature optimization?)</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

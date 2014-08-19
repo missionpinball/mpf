@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -62,15 +62,10 @@ the next player, etc.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>machine</strong> : <tt class="xref py py-class docutils literal"><span class="pre">MachineController</span></tt></p>
-<blockquote class="last">
-<div><p>A reference to the instance of the MachineController object.</p>
-</div></blockquote>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> (<tt class="xref py py-class docutils literal"><span class="pre">MachineController</span></tt>) &#8211; A reference to the instance of the MachineController object.</td>
 </tr>
 </tbody>
 </table>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.game.game.Game.ball_add_live_success">
 <tt class="descname">ball_add_live_success</tt><big>(</big><big>)</big></dt>
@@ -159,6 +154,13 @@ this method calls <a class="reference internal" href="#mpf.game.game.Game.game_e
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.game.game.Game.game_started">
+<tt class="descname">game_started</tt><big>(</big><em>ev_result=True</em>, <em>game=None</em><big>)</big></dt>
+<dd><p>All the modules that needed to do something on game start are done,
+so our game is officially &#8216;started&#8217;.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="mpf.game.game.Game.player_add_success">
 <tt class="descname">player_add_success</tt><big>(</big><em>player</em><big>)</big></dt>
 <dd><p>Called when a new player is successfully added to the current game
@@ -177,12 +179,8 @@ in single-player games between balls.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>player_num</strong> : int</p>
-<blockquote class="last">
-<div><p>Lets you specify which player you want to rotate to. If None, it
-just rotates to the next player in order.</p>
-</div></blockquote>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>player_num</strong> (<em>int</em>) &#8211; Lets you specify which player you want to rotate to. If None, it
+just rotates to the next player in order.</td>
 </tr>
 </tbody>
 </table>
@@ -222,7 +220,7 @@ object as a <em>player</em> kwarg.</p>
 <dl class="method">
 <dt id="mpf.game.game.Game.start">
 <tt class="descname">start</tt><big>(</big><big>)</big></dt>
-<dd><p>Automatically called when the <em>Game</em> game mode becomes active.</p>
+<dd><p>Automatically called when the <em>Game</em> machine mode becomes active.</p>
 </dd></dl>
 
 <dl class="method">
@@ -274,7 +272,7 @@ forever.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

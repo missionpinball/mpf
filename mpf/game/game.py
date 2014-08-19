@@ -60,14 +60,24 @@ class Game(MachineMode):
             'sw_start', self.request_player_add))
 
     def start(self):
-        """Automatically called when the *Game* game mode becomes active.
+        """Automatically called when the *Game* machine mode becomes active.
 
         """
         super(Game, self).start()
         self.log.info("Game Starting!!")
         # todo audit game start
 
-        self.machine.events.post('game_start', game=self)
+        self.machine.events.post('game_starting', ev_type='queue',
+                                 callback=self.game_started, game=self)
+
+    def game_started(self, ev_result=True, game=None):
+        """All the modules that needed to do something on game start are done,
+        so our game is officially 'started'.
+        """
+        # we ignore game in the params since that was just a reference that
+        # was passed around to other registered handlers, but we don't need
+        # it here.
+
         self.request_player_add()  # if this fails we're in limbo.
 
     def player_add_success(self, player):
@@ -114,8 +124,9 @@ class Game(MachineMode):
         self.log.debug("***************************************************")
         self.log.debug("***************************************************")
         self.log.debug("**                                               **")
-        self.log.debug("***    Player: %s    Ball: %s                      **",
-                       self.player.vars['number'], self.player.vars['ball'])
+        self.log.debug("**    Player: %s    Ball: %s   Score: %s",
+                       self.player.vars['number'], self.player.vars['ball'],
+                       self.player.vars['score'])
         self.log.debug("**                                               **")
         self.log.debug("***************************************************")
         self.log.debug("***************************************************")

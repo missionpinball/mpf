@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.tasks module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.system.tasks module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -50,12 +50,10 @@
 <dt id="mpf.system.tasks.DelayManager">
 <em class="property">class </em><tt class="descclassname">mpf.system.tasks.</tt><tt class="descname">DelayManager</tt></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.system.tasks.DelayManager.add">
-<tt class="descname">add</tt><big>(</big><em>name</em>, <em>delay</em>, <em>callback</em>, <em>args=None</em><big>)</big></dt>
-<dd><p>delay comes in via ticks. Use timing.secs() or timing.msecs() for
-real-world times.</p>
+<tt class="descname">add</tt><big>(</big><em>name</em>, <em>ms</em>, <em>callback</em>, <em>args=None</em><big>)</big></dt>
+<dd><p>delay comes in via ms.</p>
 </dd></dl>
 
 <dl class="method">
@@ -86,7 +84,7 @@ real-world times.</p>
 
 <dl class="method">
 <dt id="mpf.system.tasks.DelayManager.reset">
-<tt class="descname">reset</tt><big>(</big><em>name</em>, <em>delay</em>, <em>callback</em>, <em>args=None</em><big>)</big></dt>
+<tt class="descname">reset</tt><big>(</big><em>name</em>, <em>ms</em>, <em>callback</em>, <em>args=None</em><big>)</big></dt>
 <dd><p>Resets a delay, first deleting the old one (if it exists) and then
 adding the delay for the new time.</p>
 </dd></dl>
@@ -105,19 +103,20 @@ adding the delay for the new time.</p>
 <p>A task/coroutine implementation.</p>
 <p>Tasks are similar to timers except they can yield back to the main loop
 at any point, then be resumed later.</p>
-<p>To wait from a Task, do &#8216;yield &lt;timeval&gt;&#8217;, e.g. Timing.msecs(250) to
-wait 250ms. Note the timeval is actually the number of ticks the task will
-yield for, so to make it a real-world time you need to use Timing.msecs(x)
-or Timing.secs(x).</p>
+<p>To wait from a Task, do <cite>yield &lt;ms&gt;</cite>, e.g. <cite>yield 200</cite>.</p>
 <p>To exit from a Task, just return.  This will raise a StopIteration
 exception which the scheduler will catch and remove the task from the
 run queue.</p>
-<p class="rubric">Methods</p>
 <dl class="staticmethod">
 <dt id="mpf.system.tasks.Task.Create">
 <em class="property">static </em><tt class="descname">Create</tt><big>(</big><em>callback</em>, <em>args=()</em>, <em>sleep=0</em><big>)</big></dt>
 <dd><p>Create a new task and insert it into the runnable set.</p>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.tasks.Task.NewTasks">
+<tt class="descname">NewTasks</tt><em class="property"> = set([])</em></dt>
+<dd></dd></dl>
 
 <dl class="attribute">
 <dt id="mpf.system.tasks.Task.Tasks">
@@ -140,9 +139,9 @@ and then deleting it.</p>
 
 <dl class="staticmethod">
 <dt id="mpf.system.tasks.Task.timer_tick">
-<em class="property">static </em><tt class="descname">timer_tick</tt><big>(</big><em>now</em><big>)</big></dt>
+<em class="property">static </em><tt class="descname">timer_tick</tt><big>(</big><big>)</big></dt>
 <dd><p>Scan all tasks now and run those that are ready.</p>
-<p>&#8216;now&#8217; is the tick number, not a time.time(). Just FYI</p>
+<p>&#8216;now&#8217; is the tick number, not a time.clock(). Just FYI</p>
 </dd></dl>
 
 </dd></dl>
@@ -186,7 +185,7 @@ and then deleting it.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

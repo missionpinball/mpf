@@ -1,7 +1,7 @@
 # Instructions for this config file:
 # https://missionpinball.com/docs/configuration-file-reference/
 
-key_map:
+Keyboard:
     
 # key is which key on the keyboard
 # key options include modifiers plus a dash, like:
@@ -48,3 +48,9 @@ key_map:
         start_active: True
     q:
         event: machine_reset
+
+    p:
+        switch: rightRampExit
+    
+    o:
+        switch: topRampExit

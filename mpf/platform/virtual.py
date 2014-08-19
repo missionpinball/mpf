@@ -100,9 +100,9 @@ class HardwarePlatform(Platform):
     def _do_set_hw_rule(self,
                     sw,
                     sw_activity,
-                    coil_action_time,  # 0 = disable, -1 = hold forever
+                    coil_action_ms,  # 0 = disable, -1 = hold forever
                     coil=None,
-                    pulse_time=0,
+                    pulse_ms=0,
                     pwm_on=0,
                     pwm_off=0,
                     delay=0,
@@ -147,10 +147,10 @@ class VirtualDriver(object):
     def future_pulse(self, milliseconds=None, timestamp=0):
         pass
 
-    def patter(self, on_time=10, off_time=10, original_on_time=0, now=True):
+    def patter(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
         pass
 
-    def pulsed_patter(self, on_time=10, off_time=10, run_time=0, now=True):
+    def pulsed_patter(self, on_ms=10, off_ms=10, run_time=0, now=True):
         pass
 
     def schedule(self, schedule, cycle_seconds=0, now=True):

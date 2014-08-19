@@ -11,6 +11,8 @@ Submodules
    mpf.system.hardware
    mpf.system.machine_controller
    mpf.system.machine_mode
+   mpf.system.score_controller
+   mpf.system.shot_controller
    mpf.system.switch_controller
    mpf.system.tasks
    mpf.system.timing

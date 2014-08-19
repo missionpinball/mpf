@@ -43,7 +43,7 @@ class ValidPlayfield(object):
         self.machine.events.add_handler("ball_drain",
                                         self.drain)
         self.machine.events.add_handler('sw_validPlayfield',
-                                        self.validate_playfield, 1000)
+                                        self.validate_playfield, 1000.0)
         # valid playfield at priority 1000 so we validate first.
 
     def live_hit(self):

@@ -11,8 +11,6 @@ import logging
 import time
 from collections import defaultdict
 
-from mpf.system.timing import Timing
-
 
 class Platform(object):
     """ Parent class for the machine's hardware controller.
@@ -23,7 +21,7 @@ class Platform(object):
     will do nothing and your game will work.)
 
     For example, the P-ROC HardwarePlatform class will have a Driver class
-    with methods such as pulse() to fire a coil. 
+    with methods such as pulse() to fire a coil.
 
     """
     def __init__(self, machine):
@@ -47,14 +45,14 @@ class Platform(object):
         this premature optimization?)
 
         """
-        self.next_tick_time = time.time()
+        self.next_tick_time = time.clock()
 
     def set_hw_rule(self,
                     sw_name,  # switch name
                     sw_activity,  # active or inactive?
                     coil_name=None,  # coil name
-                    coil_action_time=0,  # total time coil is active for
-                    pulse_time=0,  # ms to pulse the coil?
+                    coil_action_ms=0,  # total time coil is active for
+                    pulse_ms=0,  # ms to pulse the coil?
                     pwm_on=0,  # 'on' ms of a pwm-based patter
                     pwm_off=0,  # 'off' ms of a pwm-based patter
                     delay=0,  # delay before firing?
@@ -88,8 +86,8 @@ class Platform(object):
         if self.machine.switches[sw_name].type == 'NC':
             sw_activity = sw_activity ^ 1  # bitwise invert
 
-        self._do_set_hw_rule(sw, sw_activity, coil_action_time, coil,
-                            pulse_time, pwm_on, pwm_off, delay, recycle_time,
+        self._do_set_hw_rule(sw, sw_activity, coil_action_ms, coil,
+                            pulse_ms, pwm_on, pwm_off, delay, recycle_time,
                             debounced, drive_now)
 
     def clear_hw_rule(self, sw_name):

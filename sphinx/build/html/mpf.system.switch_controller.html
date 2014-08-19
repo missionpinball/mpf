@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -56,26 +56,42 @@ states and posting events to the framework.</p>
 all switch activity in the machine and converting them into events.</p>
 <p>More info:
 <a class="reference external" href="http://missionpinball.com/docs/system-components/switch-controller/">http://missionpinball.com/docs/system-components/switch-controller/</a></p>
-<p class="rubric">Methods</p>
 <dl class="attribute">
 <dt id="mpf.system.switch_controller.SwitchController.active_timed_switches">
 <tt class="descname">active_timed_switches</tt><em class="property"> = None</em></dt>
-<dd><p>Dictionary of switches that are currently in a state counting ticks
+<dd><p>Dictionary of switches that are currently in a state counting ms
 waiting to notify their handlers. In other words, this is the dict that
 tracks current switches for things like &#8220;do foo() if switch bar is
-active for 100 ticks.&#8221;</p>
+active for 100ms.&#8221;</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.add_switch_handler">
-<tt class="descname">add_switch_handler</tt><big>(</big><em>switch_name</em>, <em>callback</em>, <em>state=1</em>, <em>ms=0</em><big>)</big></dt>
+<tt class="descname">add_switch_handler</tt><big>(</big><em>switch_name</em>, <em>callback</em>, <em>state=1</em>, <em>ms=0</em>, <em>return_info=False</em><big>)</big></dt>
 <dd><p>Register a handler to take action on some switch event.</p>
-<p>These events can be trigger when a switch becomes active (state=1) or
-inactive (state=0).</p>
-<p>If you specify a &#8216;ms&#8217; parameter, the handler won&#8217;t be called until the
-switch is in that state for that many ms (rounded up to the nearst
-machine timer tick).</p>
-<p>You can mix &amp; match entries for the same switch here.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>switch_name</strong> (<em>str</em>) &#8211; The name of the switch you&#8217;re adding this handler for.</li>
+<li><strong>callback</strong> (<em>method</em>) &#8211; The method you want called when this switch handler fires.</li>
+<li><strong>state</strong> (<em>int</em>) &#8211; The state transition you want to callback to be triggered on.
+Default is 1 which means it&#8217;s called when the switch goes from
+inactive to active, but you can also use 0 which means your
+callback will be called when the switch becomes inactive</li>
+<li><strong>ms</strong> (<em>int</em>) &#8211; If you specify a &#8216;ms&#8217; parameter, the handler won&#8217;t be called until
+the witch is in that state for that many milliseconds (rounded up
+to the nearst machine timer tick).</li>
+<li><strong>return_info</strong> (<em>bool</em>) &#8211; If True, the switch controller will pass the parameters of the
+switch handler as arguments to the callback, including switch_name,
+state, and ms. If False (default), it just calls the callback with
+no parameters.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -89,40 +105,47 @@ called via an event handler which listens for <cite>machine_init_complete</cite>
 
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.is_active">
-<tt class="descname">is_active</tt><big>(</big><em>switch_name</em>, <em>ticks=None</em><big>)</big></dt>
+<tt class="descname">is_active</tt><big>(</big><em>switch_name</em>, <em>ms=None</em><big>)</big></dt>
 <dd><p>Queries whether a switch is active.</p>
-<p>Returns True if the current switch is active. If optional arg ticks
+<p>Returns True if the current switch is active. If optional arg ms
 is passed, will only return true if switch has been active for that
-many ticks.</p>
+many ms.</p>
 <p>Note this method does consider whether a switch is NO or NC. So an NC
 switch will show as active if it is open, rather than closed.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.is_inactive">
-<tt class="descname">is_inactive</tt><big>(</big><em>switch_name</em>, <em>ticks=None</em><big>)</big></dt>
+<tt class="descname">is_inactive</tt><big>(</big><em>switch_name</em>, <em>ms=None</em><big>)</big></dt>
 <dd><p>Queries whether a switch is inactive.</p>
 <p>Returns True if the current switch is inactive. If optional arg
-ticks is passed, will only return true if switch has been inactive
-for that many ticks.</p>
+<cite>ms</cite> is passed, will only return true if switch has been inactive
+for that many ms.</p>
 <p>Note this method does consider whether a switch is NO or NC. So an NC
 switch will show as active if it is closed, rather than open.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.is_state">
-<tt class="descname">is_state</tt><big>(</big><em>switch_name</em>, <em>state</em>, <em>ticks=0</em><big>)</big></dt>
+<tt class="descname">is_state</tt><big>(</big><em>switch_name</em>, <em>state</em>, <em>ms=0</em><big>)</big></dt>
 <dd><p>Queries whether a switch is in a given state and (optionally)
-whether it has been in that state for the specified number of ticks.</p>
+whether it has been in that state for the specified number of ms.</p>
 <p>Returns True if the switch_name has been in the state for the given
-number of ticks. If ticks is not specified, returns True if the switch
+number of ms. If ms is not specified, returns True if the switch
 is in the state regardless of how long it&#8217;s been in that state.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="mpf.system.switch_controller.SwitchController.log">
-<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x108b9efd0&gt;</em></dt>
+<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x104a85850&gt;</em></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.ms_since_change">
+<tt class="descname">ms_since_change</tt><big>(</big><em>switch_name</em><big>)</big></dt>
+<dd><p>Returns the number of ms that have elapsed since this switch
+last changed state.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.process_switch">
@@ -141,15 +164,13 @@ handles NC versus NO switches and translates them to &#8216;active&#8217; versus
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong></p>
-<p><strong>state</strong></p>
-<p><strong>logical</strong> : bool</p>
-<p><strong>Specifies whether we have the &#8220;logical&#8221; state of the switch or not.</strong></p>
-<p><strong>This is post NC/NO inversion processing. Typically the hardware will</strong></p>
-<p><strong>send switch states in their raw (logical=False) states, but other</strong></p>
-<p><strong>interfaces like the keyboard and OSC will use the (logical=True).</strong></p>
-<p><strong>num</strong></p>
-<p class="last"><strong>obj</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>logical</strong> (<em>bool</em>) &#8211; </li>
+<li><strong>whether we have the &#8220;logical&#8221; state of the switch or not.</strong> (<em>Specifies</em>) &#8211; </li>
+<li><strong>is post NC/NO inversion processing. Typically the hardware will</strong> (<em>This</em>) &#8211; </li>
+<li><strong>switch states in their raw (logical=False) states, but other</strong> (<em>send</em>) &#8211; </li>
+<li><strong>obj</strong> &#8211; </li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -166,8 +187,17 @@ callbacks.</p>
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.remove_switch_handler">
 <tt class="descname">remove_switch_handler</tt><big>(</big><em>switch_name</em>, <em>callback</em>, <em>state=1</em>, <em>ms=0</em><big>)</big></dt>
-<dd><p>Removes a registered switch handler. Currently this only works if
-you specify everything exactly as you set it up.</p>
+<dd><p>Removes a registered switch handler.</p>
+<p>Currently this only works if you specify everything exactly as you set
+it up. (Except for return_info, which doesn&#8217;t matter if true or false, it
+will remove either / both.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.secs_since_change">
+<tt class="descname">secs_since_change</tt><big>(</big><em>switch_name</em><big>)</big></dt>
+<dd><p>Returns the number of ms that have elapsed since this switch
+last changed state.</p>
 </dd></dl>
 
 <dl class="method">
@@ -182,13 +212,6 @@ you specify everything exactly as you set it up.</p>
 <dd><p>Dictionary which holds the master list of switches as well as their
 current states. State here does factor in whether a switch is NO or NC,
 so 1 = active and 0 = inactive.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.switch_controller.SwitchController.ticks_since_change">
-<tt class="descname">ticks_since_change</tt><big>(</big><em>switch_name</em><big>)</big></dt>
-<dd><p>Returns the number of ticks that have elapsed since this switch
-last changed state.</p>
 </dd></dl>
 
 </dd></dl>
@@ -232,7 +255,7 @@ last changed state.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

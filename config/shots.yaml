@@ -1,0 +1,65 @@
+# Instructions for this config file:
+# https://missionpinball.com/docs/configuration-file-reference/
+
+# bonus
+# bonus section
+# is scoring and shots separate?
+# prob yes
+# types
+# sequence - must hit them in order within time specified
+# any (default) - must hit any one
+
+
+Shots:
+    RightRamp:
+        Switch: rightRampExit
+    LeftRamp:
+        Type: Sequence
+        Switches: leftRampEnter, leftRampExit
+        Time: 3s
+    LeftOrbit:
+        Type: Sequence
+        Switches: leftRollover, topRightOpto
+        Time: 3s
+    WeakRightOrbit:
+        Type: Sequence
+        Switches: topRightOpto, topCenterRollover
+        Time: 3s
+    FullRightOrbit:
+        Type: Sequence
+        Switches: topRightOpto, leftRollover
+        Time: 3s
+    AirRaidRamp:
+        Switch: topRampExit
+    OrangeStandups:
+        Switch: threeBankTargets
+    Slingshot:
+        Switch: slingR, slingL
+    Inlane:
+        Switch: inlaneL, inlaneR, outerInlaneR
+    Outlane:
+        Switch: outlaneR, outlaneL
+
+Scoring:
+    RightRamp:
+        Score: 8000
+    LeftRamp:
+        Score: 7000
+    LeftOrbit:
+        Score: 6000
+    WeakRightOrbit:
+        Score: 11000
+    FullRightOrbit:
+        Score:  6500
+    AirRaidRamp:
+        Score: 10000
+    OrangeStandups:
+        Score: 2500
+    Slingshot:
+        Score: 210
+    Inlane:
+        Score: 1070
+    Outlane:
+        Score: 930
+    _sw_ballLive:
+        Score: 10

@@ -1,0 +1,691 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.devices.score_reel module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.6',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.devices.score_reel">
+<span id="mpf-devices-score-reel-module"></span><h1>mpf.devices.score_reel module</h1>
+<p>Contains the base classes for mechanical EM-style score reels.</p>
+<dl class="class">
+<dt id="mpf.devices.score_reel.ScoreReel">
+<em class="property">class </em><tt class="descclassname">mpf.devices.score_reel.</tt><tt class="descname">ScoreReel</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Device" title="mpf.system.hardware.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Device</span></tt></a></p>
+<p>Represents an individual electro-mechanical score reel in a pinball
+machine.</p>
+<p>Multiples reels of this class can be grouped together into ScoreReelGroups
+which collectively make up a display like &#8220;Player 1 Score&#8221; or &#8220;Player 2
+card value&#8221;, etc.</p>
+<p>This device class is used for all types of mechanical number reels in a
+machine, including reels that have more than ten numbers and that can move
+in multiple directions (such as the credit reel).</p>
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReel.advance">
+<tt class="descname">advance</tt><big>(</big><em>direction=None</em><big>)</big></dt>
+<dd><p>Performs the coil firing to advance this reel one position (up or
+down).</p>
+<p>This method also schedules delays for events to notify the machine when
+the reel is ready to fire again and what the reel has performed a
+hardware switch check to confirm its current value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>direction</strong> (<em>int, optional</em>) &#8211; If direction is 1, advances the reel</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns: If this method is unable to advance the reel (either because</dt>
+<dd>it&#8217;s not ready, because it&#8217;s at its maximum value and does not have
+rollover capabilities, or because you&#8217;re trying to advance it in a
+direction but it doesn&#8217;t have a coil for that direction), it will
+return <cite>False</cite>. If it&#8217;s able to pulse the advance coil, it returns
+<cite>True</cite>.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.assumed_value">
+<tt class="descname">assumed_value</tt><em class="property"> = None</em></dt>
+<dd><p>The assumed value the machine thinks this reel is showing. A value
+of -999 indicates that the value is unknown.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReel.check_hw_switches">
+<tt class="descname">check_hw_switches</tt><big>(</big><big>)</big></dt>
+<dd><p>Checks all the value switches for this score reel.</p>
+<p>This check only happens if <cite>self.ready</cite> is <cite>True</cite>. If the reel is not
+ready, it means another advance request has come in after the initial
+one. In that case then the subsequent advance will call this method
+again when after that advance is done.</p>
+<p>If this method finds an active switch, it sets <cite>self.physical_value</cite> to
+that. Otherwise it sets it to -999. It will also update
+<cite>self.assumed_value</cite> if it finds an active switch. Otherwise it leaves
+that value unchanged.</p>
+<p>This method is automatically called (via a delay) after the reel
+advances. The delay is based on the config value
+<cite>self.config[&#8216;hw_confirm_ms&#8217;]</cite>.</p>
+<p>TODO: What happens if there are multiple active switches? Currently it
+will return the highest one. Is that ok?</p>
+<dl class="docutils">
+<dt>Returns: The hardware value of the switch, either the position or -999.</dt>
+<dd>If the reel is not ready, it returns <cite>False</cite>.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReel.logical_to_physical">
+<tt class="descname">logical_to_physical</tt><big>(</big><em>value</em><big>)</big></dt>
+<dd><p>Converts a logical reel displayed value to what the physical switch
+value should be.</p>
+<p>For example, if a reel has switches for the 0 and 9 values, then an
+input of 0 will return 0 (since that&#8217;s what the physical value should
+be for that logical value). In that case it will return 9 for an input
+of 9, but it will return -999 for any input value of 1 through 8 since
+there are no switches for those values.</p>
+<p>Note this method does not perform any physical or logical check against
+the reel&#8217;s actual position, rather, it&#8217;s only used to indicate what
+hardware switch value should be expected for the display value passed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> (<em>int</em>) &#8211; The value you want to check.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The phsyical switch value, which is same as the input value if
+there&#8217;s a switch there, or -999 if not.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.misfires">
+<tt class="descname">misfires</tt><em class="property"> = None</em></dt>
+<dd><p>Counts the number of &#8220;misfires&#8221; this reel has, which is when we
+advanced a reel to a value where we expected a switch to activate but
+didn&#8217;t receive that activation as expected. This is a dictionary with
+the key equal to the switch position and the value is a tuple with
+the first entry being the number of misfires this attempt, and the
+second value being the number of misfires overall.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.next_pulse_time">
+<tt class="descname">next_pulse_time</tt><em class="property"> = None</em></dt>
+<dd><p>The time when this reel next wants to be pulsed. The reel will set
+this on its own (based on its own attribute of how fast pulses can
+happen). If the ScoreReelController is ready to pulse this reel and the
+value is in the past, it will do a pulse. A value of 0 means this reel
+does not currently need to be pulsed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.num_values">
+<tt class="descname">num_values</tt><em class="property"> = None</em></dt>
+<dd><p>The number of values on this wheel. This starts with zero, so a
+wheel with 10 values will have this value set to 9. (This actually
+makes sense since most (all?) score reels also have a zero value.)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.physical_value">
+<tt class="descname">physical_value</tt><em class="property"> = None</em></dt>
+<dd><p>The physical confirmed value of this reel. This will always
+be the value of whichever switch is active or -999. This differs from
+<cite>self.assumed_value</cite> in that assumed value will make assumptions about
+where the reel is as it pulses through values with no swithces, whereas
+this physical value will always be -999 if there is no switch telling
+it otherwise.</p>
+<p>Note this value will be initialed via self.check_hw_switches() below.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.pulse_ms">
+<tt class="descname">pulse_ms</tt></dt>
+<dd><p>Returns an integer representing the number of milliseconds the coil
+will pulse for.</p>
+<p>This method is used by the jump and step advances so they know when a
+reel&#8217;s coil is done firing so they can fire the next reel in the group.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>direction</strong> (<em>int, optional</em>) &#8211; Lets you specify which coil you want to</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns: Interger of the coil pulse time. If there is no coil for the</dt>
+<dd>direction you specify, returns 0.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.ready">
+<tt class="descname">ready</tt><em class="property"> = None</em></dt>
+<dd><p>Whether this reel is ready to advance. Typically used to make sure
+it&#8217;s not trying to re-fire a stuck position.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReel.set_destination_value">
+<tt class="descname">set_destination_value</tt><big>(</big><em>direction=1</em><big>)</big></dt>
+<dd><p>Returns the integer value of the destination this reel is moving to.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>direction</strong> (<em>int, optional</em>) &#8211; The direction of the reel movement this</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns: The value of the destination. If the current</dt>
+<dd><cite>self.assumed_value</cite> is -999, this method will always return -999
+since it doesn&#8217;t know where the reel is and therefore doesn&#8217;t know
+what the destination value would be.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.value_switches">
+<tt class="descname">value_switches</tt><em class="property"> = None</em></dt>
+<dd><p>This is a list with each element corresponding to a value on the
+reel. An entry of None means there&#8217;s no value switch there. An entry
+of a reference to a switch object (todo or switch name?) means there is
+a switch there.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.devices.score_reel.ScoreReelController">
+<em class="property">class </em><tt class="descclassname">mpf.devices.score_reel.</tt><tt class="descname">ScoreReelController</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>The overall controller that is in charge of and manages the score reels
+in a pinball machine.</p>
+<p>The main thing this controller does is keep track of how many
+ScoreReelGroups there are in the machine and how many players there are,
+as well as maps the current player to the proper score reel.</p>
+<p>This controller is also responsible for working around broken
+ScoreReelGroups and &#8220;stacking&#8221; and switching out players when there are
+multiple players per ScoreReelGroup.</p>
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelController.active_scorereelgroup">
+<tt class="descname">active_scorereelgroup</tt><em class="property"> = None</em></dt>
+<dd><p>Pointer to the active ScoreReelGroup for the current player.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelController.game_starting">
+<tt class="descname">game_starting</tt><big>(</big><em>queue</em>, <em>game</em><big>)</big></dt>
+<dd><p>Resets the score reels when a new game starts.</p>
+<p>This is a queue event so it doesn&#8217;t allow the game start to continue
+until it&#8217;s done.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>queue</strong> (<em>event queue</em>) &#8211; A reference to the queue object for the game
+starting event.</li>
+<li><strong>game</strong> (<em>game object</em>) &#8211; A reference to the main game object.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelController.player_to_scorereel_map">
+<tt class="descname">player_to_scorereel_map</tt><em class="property"> = None</em></dt>
+<dd><p>This is a list of ScoreReelGroup objects which corresponds to player
+indexes. The first element [0] in this list is the first player (which
+is player index [0], the next one is the next player, etc.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelController.queue">
+<tt class="descname">queue</tt><em class="property"> = None</em></dt>
+<dd><p>Holds any active queue event queue objects</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelController.reset_queue">
+<tt class="descname">reset_queue</tt><em class="property"> = None</em></dt>
+<dd><p>List of score reel groups that still need to be reset</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelController.rotate_player">
+<tt class="descname">rotate_player</tt><big>(</big><big>)</big></dt>
+<dd><p>Called when a new player&#8217;s turn starts.</p>
+<p>The main purpose of this method is to map the current player to their
+ScoreReelGroup in the backbox. It will do this by comparing length of
+the list which holds those mappings (<cite>player_to_scorereel_map</cite>) to
+the length of the list of players. If the player list is longer that
+means we don&#8217;t have a ScoreReelGroup for that player.</p>
+<p>In that case it will check the tags of the ScoreReelGroups to see if
+one of them is tagged with playerX which corresponds to this player.
+If not then it will pick the next free one. If there are none free,
+then it will &#8220;double up&#8221; that player on an existing one which means
+the same Score Reels will be used for both players, and they will
+reset themselves automatically between players.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelController.score_change">
+<tt class="descname">score_change</tt><big>(</big><em>score</em>, <em>change</em><big>)</big></dt>
+<dd><p>Called whenever the score changes and adds the score increase to the
+current active ScoreReelGroup.</p>
+<p>This method is the handler for the score change event, so it&#8217;s called
+automatically.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelController.score_reel_groups">
+<tt class="descname">score_reel_groups</tt><em class="property"> = None</em></dt>
+<dd><p>List of score reel groups, in order.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.devices.score_reel.ScoreReelGroup">
+<em class="property">class </em><tt class="descclassname">mpf.devices.score_reel.</tt><tt class="descname">ScoreReelGroup</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Device" title="mpf.system.hardware.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Device</span></tt></a></p>
+<p>Represents a logical grouping of score reels in a pinball machine.</p>
+<p>These groups represent things like player scores, where the score display
+is actually a group of several individual score reels.</p>
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.add_value">
+<tt class="descname">add_value</tt><big>(</big><em>value</em>, <em>jump=False</em><big>)</big></dt>
+<dd><p>Add value to a ScoreReelGroup.</p>
+<p>You can also pass a negative value to subtract points.</p>
+<p>Note you can control the logistics of how these pulses are applied via
+the <cite>jump</cite> parameter. If jump is False (the default), then this method
+whill respect the proper &#8220;sequencing&#8221; of reel advances. For example,
+if the current value is 1700 and the new value is 2200, this method
+will fire the hundreds reel twice (to go to 1800 then 1900), then on
+the third pulse it will fire the thousands and hundreds (to go to
+2000), then do the final two pulses to land at 2200.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>value</strong> (<em>int</em>) &#8211; The integer value you&#8217;d like to add to (or subtract
+from) the current value</li>
+<li><strong>jump</strong> (<em>bool, optional</em>) &#8211; Whether the reels should &#8220;count up&#8221; to the
+new value in the classic EM way (jump=False) or whether they
+should just jump there as fast as they can (jump=True). Default
+is False.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.advance_hw_confirm">
+<tt class="descname">advance_hw_confirm</tt><big>(</big><em>reel</em>, <em>direction=1</em>, <em>callback=None</em><big>)</big></dt>
+<dd><p>Advances a reel one value and optionally registers a callback for
+when the reel hw validates that the advance succeeded.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>reel</strong> (<em>ScoreReel object</em>) &#8211; A reference to the score reel you&#8217;d like
+to advance.</li>
+<li><strong>direction</strong> (<em>int, optional</em>) &#8211; The direction you&#8217;d like to advance
+the reel. 1 is up and -1 is down.</li>
+<li><strong>callback</strong> (<em>callback, optional</em>) &#8211; The method you&#8217;d like called when
+this reel has hw confirmed that the advance is complete.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.advance_in_progress">
+<tt class="descname">advance_in_progress</tt><em class="property"> = None</em></dt>
+<dd><p>Boolean attribute that is True when a step advance is in progress.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.advance_no_hw_confirm">
+<tt class="descname">advance_no_hw_confirm</tt><big>(</big><em>reel</em>, <em>direction=1</em>, <em>callback=None</em><big>)</big></dt>
+<dd><p>Advances a reel one value and optionally registers a callback for
+when the reel is ready to advance again.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>reel</strong> (<em>ScoreReel object</em>) &#8211; A reference to the score reel you&#8217;d like
+to advance.</li>
+<li><strong>direction</strong> (<em>int, optional</em>) &#8211; The direction you&#8217;d like to advance
+the reel. 1 is up and -1 is down.</li>
+<li><strong>callback</strong> (<em>callback, optional</em>) &#8211; The method you&#8217;d like called when
+this reel is ready to advance again.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.advance_queue">
+<tt class="descname">advance_queue</tt><em class="property"> = None</em></dt>
+<dd><p>Holds a list of the next reels that for step advances.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.assumed_value_int">
+<tt class="descname">assumed_value_int</tt></dt>
+<dd><p>An integer representation of the value we assume is shown on this
+ScoreReelGroup. A value of -999 means the value is unknown.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.assumed_value_list">
+<tt class="descname">assumed_value_list</tt></dt>
+<dd><p>TODO add documentation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.chime">
+<tt class="descname">chime</tt><big>(</big><em>chime</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.desired_value_list">
+<tt class="descname">desired_value_list</tt><em class="property"> = None</em></dt>
+<dd><p>A list of what values the machine desires to have the score reel
+group set to.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.get_physical_value_list">
+<tt class="descname">get_physical_value_list</tt><big>(</big><big>)</big></dt>
+<dd><p>Queries all the reels in the group and builds a list of their actual
+current physical state, with either the value of the current switch
+or -999 if no switch is active.</p>
+<p>This method also updates each reel&#8217;s physical value</p>
+<p>Returns: List of physical reel values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.int_to_reel_list">
+<tt class="descname">int_to_reel_list</tt><big>(</big><em>value</em><big>)</big></dt>
+<dd><p>Converts an integer to a list of integers that represent each
+positional digit in this ScoreReelGroup.</p>
+<p>The list returned is customized for this ScoreReelGroup both in terms
+of number of elements and values of <cite>None</cite> used to represent blank
+plastic inserts that are not controlled by a score reel unit.</p>
+<p>For example, if you have a 5-digit score reel group that has 4
+phyiscial reels in the tens through ten-thousands position and a fake
+plastic &#8220;0&#8221; insert for the ones position, if you pass this method a
+value of <cite>12300</cite>, it will return <cite>[None, 0, 3, 2, 1]</cite></p>
+<p>This method will also pad shorter ints with zeros, and it will chop off
+leading digits for ints that are too long. (For example, if you pass a
+value of 10000 to a ScoreReelGroup which only has 4 digits, the
+returns list would correspond to 0000, since your score reel unit has
+rolled over.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> (<em>int</em>) &#8211; The interger value you&#8217;d like to convert.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list containing the values for each corresponding score reel.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.is_assumed_valid">
+<tt class="descname">is_assumed_valid</tt><big>(</big><big>)</big></dt>
+<dd><p>Tests to see whether the ScoreReelGroup value switch states match up
+with where they should be for this group&#8217;s assumed_value.</p>
+<p>Returns: True or False</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.is_desired_valid">
+<tt class="descname">is_desired_valid</tt><big>(</big><big>)</big></dt>
+<dd><p>Tests to see whether the machine thinks the ScoreReelGroup is
+currently showing the desired value. In other words, is the
+ScoreReelGroup &#8220;done&#8221; moving?</p>
+<p>Note this ignores placeholder non-controllable digits.</p>
+<p>Returns: True or False</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.jump_in_progess">
+<tt class="descname">jump_in_progess</tt><em class="property"> = None</em></dt>
+<dd><p>Boolean attribute that is True when a jump advance is in progress.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.reel_list_to_int">
+<tt class="descname">reel_list_to_int</tt><big>(</big><em>reel_list</em><big>)</big></dt>
+<dd><p>Converts an list of integers to a single integer.</p>
+<p>This method is like <cite>int_to_reel_list</cite> except that it works in the
+opposite direction.</p>
+<p>The list inputted is expected to be in &#8220;reverse&#8221; order, with the ones
+digit in the [0] index position. Values of <cite>None</cite> are converted to
+zeros. For example, if you pass <cite>[None, 0, 3, 2, 1]</cite>, this method will
+return an integer value of <cite>12300</cite>.</p>
+<p>Note this method does not take into consideration how many reel
+positions are in this ScoreReelGroup. It just converts whatever you
+pass it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> (<em>list</em>) &#8211; The list containing the values for each score reel
+position.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The resultant integer based on the list passed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.reels">
+<tt class="descname">reels</tt><em class="property"> = None</em></dt>
+<dd><p>A list of individual ScoreReel objects that make up this
+ScoreReelGroup. The number of items in the list correspondis to the
+number of digits that can be displayed. A value of <cite>None</cite> indicates a
+position that is not controlled by a moving reel (like a fake ones
+digit).</p>
+<p>Note that this is &#8220;backwards,&#8221; with element 0 representing the ones
+digit, element 1 representing the tens, etc..</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.reels_waiting_for_hw_sync">
+<tt class="descname">reels_waiting_for_hw_sync</tt><em class="property"> = None</em></dt>
+<dd><p>Holds a list of the reels that the ScoreReelController is waiting
+for hw sync on.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.reset_pulses_per_round">
+<tt class="descname">reset_pulses_per_round</tt><em class="property"> = None</em></dt>
+<dd><p>Interger value of how many &#8220;pulses&#8221; should be done per reset round.
+This is used to simulate the actual mechnical resets the way a classic
+EM machine would do it. If you watch an EM game reset, you&#8217;ll notice
+they pulse the reels in groups, like click-click-click-click-click..
+pause.. click-click-click-click-click.. pause.. etc. Once each reel
+gets to zero, it stops advancing.</p>
+<p>If you don&#8217;t want to emulate this behavior, set this to 0. The default
+is 5.</p>
+<p>TODO / NOTE: This feature is not yet implemented.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.set_rollover_reels">
+<tt class="descname">set_rollover_reels</tt><big>(</big><big>)</big></dt>
+<dd><p>Calls each reel&#8217;s <cite>_set_rollover_reel</cite> method and passes it a
+pointer to the next higher up reel. This is how we know whether we&#8217;re
+able to advance the next higher up reel when a particular reel rolls
+over during a step advance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.set_value">
+<tt class="descname">set_value</tt><big>(</big><em>value=None</em>, <em>value_list=None</em><big>)</big></dt>
+<dd><p>Resets the score reel group to display the value passed.</p>
+<p>This method will &#8220;jump&#8221; the score reel group to display the value
+that&#8217;s passed as an it. (Note this &#8220;jump&#8221; technique means it will just
+move the reels as fast as it can, and nonsensical values might show up
+on the reel while the movement is in place.</p>
+<p>This method is used to &#8220;reset&#8221; a reel group to all zeros at the
+beginning of a game, and can also be used to reset a reel group that is
+confused or to switch a reel to the new player&#8217;s score if multiple
+players a sharing the same reel.</p>
+<p>Note you can choose to pass either an integer representation of the
+value, or a value list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>value</strong> (<em>int, optional</em>) &#8211; An integer value of what the new displayed
+value (i.e. score) should be. This is the default option if you
+only pass a single positional argument, e.g. <cite>set_value(2100)</cite>.</li>
+<li><strong>value_list</strong> (<em>list, optional</em>) &#8211; A value_list of the value you&#8217;d like</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.validate">
+<tt class="descname">validate</tt><big>(</big><em>value=None</em><big>)</big></dt>
+<dd><p>Called to validate that this score reel group is in the position
+the machine wants it to be in.</p>
+<p>If lazy confirm mode is enabled, this method will also make sure the
+reels are in their proper physical positions. If any reels are not done
+moving, it will add event handlers to receive notifications of when the
+reels are done and will call this method again at that time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> (<em>ignored</em>) &#8211; This method takes an argument of <cite>value</cite>, but
+it&#8217;s not used. It&#8217;s only there because when reels post their
+events after they&#8217;re done moving, they include a parameter of
+<cite>value</cite> which is the position they&#8217;re in. So we just need to
+have this argument listed so we can use this method as an event
+handler for those events.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.devices.score_reel.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

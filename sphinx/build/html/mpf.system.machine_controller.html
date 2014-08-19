@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.machine_controller module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.system.machine_controller module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -58,24 +58,19 @@ main part that&#8217;s in charge and makes things happen.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config_file</strong> : str</p>
-<blockquote>
-<div><p>The name of the main configuration file which will be read when the
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>config_file</strong> (<em>str</em>) &#8211; The name of the main configuration file which will be read when the
 machine controller is created. This config file typically contains a
 list of additional config files that hold settings for the machine, but
-it can also hold settings itself.</p>
-</div></blockquote>
-<p><strong>physical_hw</strong> : bool</p>
-<blockquote class="last">
-<div><p>Specifies whether there is a physical pinball controller attached, or
+it can also hold settings itself.</li>
+<li><strong>physical_hw</strong> (<em>bool</em>) &#8211; Specifies whether there is a physical pinball controller attached, or
 whether the machine controller should operate in software-only
-(virtual hardware) mode.</p>
-</div></blockquote>
+(virtual hardware) mode.</li>
+</ul>
 </td>
 </tr>
 </tbody>
 </table>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.system.machine_controller.MachineController.dict_merge">
 <tt class="descname">dict_merge</tt><big>(</big><em>a</em>, <em>b</em>, <em>combine_lists=True</em><big>)</big></dt>
@@ -105,22 +100,18 @@ dictionary as this:</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>a</strong> : dict</p>
-<blockquote>
-<div><p>The first dictionary</p>
-</div></blockquote>
-<p><strong>b</strong> : dict</p>
-<blockquote>
-<div><p>The second dictionary</p>
-</div></blockquote>
-<p><strong>combine_lists</strong> : bool</p>
-<blockquote>
-<div><p>Controls whether lists should be combined (extended) or
-overwritten. Default is <cite>True</cite> which combines them.</p>
-</div></blockquote>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>a</strong> (<em>dict</em>) &#8211; The first dictionary</li>
+<li><strong>b</strong> (<em>dict</em>) &#8211; The second dictionary</li>
+<li><strong>combine_lists</strong> (<em>bool</em>) &#8211; Controls whether lists should be combined (extended) or
+overwritten. Default is <cite>True</cite> which combines them.</li>
+</ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The merged dictionaries.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">The merged dictionaries.</p>
 </td>
 </tr>
 </tbody>
@@ -199,16 +190,12 @@ configuration dictionary. Looks for a module of that name in the
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>string</strong> : str</p>
-<blockquote>
-<div><p>The string you&#8217;d like to convert.</p>
-</div></blockquote>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string</strong> (<em>str</em>) &#8211; The string you&#8217;d like to convert.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A python list object containing whatever was between commas in the</p>
-<blockquote class="last">
-<div><p>string.</p>
-</div></blockquote>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><em>A python list object containing whatever was between commas in the</em></li>
+<li><em>string.</em></li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -245,9 +232,7 @@ works.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config</strong> : dict or str</p>
-<blockquote class="last">
-<div><p>The settings to deep merge into the config dictionary. If <cite>config</cite>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> (<em>dict or str</em>) &#8211; <p>The settings to deep merge into the config dictionary. If <cite>config</cite>
 is a dict, then it will merge those settings in. If it&#8217;s a string,
 it will try to find a file with that name and open it to read in
 the settings.</p>
@@ -255,7 +240,6 @@ the settings.</p>
 directly (including any path that&#8217;s there). If that doesn&#8217;t work,
 it will try to open the file using the last path that worked. (This
 path is stored in <cite>self.config[&#8216;Config_path&#8217;]</cite>.)</p>
-</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -303,7 +287,7 @@ path is stored in <cite>self.config[&#8216;Config_path&#8217;]</cite>.)</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

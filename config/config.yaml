@@ -7,5 +7,6 @@ Config:
     - game.yaml
     - textstrings.yaml
     - keymap.yaml
+    - shots.yaml
 
 Language: en

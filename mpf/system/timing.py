@@ -1,4 +1,5 @@
-# timing.py (contains classes for various playfield devices)
+"""Contains Timing and Timer classes"""
+# timing.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -6,6 +7,8 @@
 # Documentation and more info at http://missionpinball.com/framework
 
 import logging
+from math import ceil
+import time
 
 
 class Timing(object):
@@ -34,7 +37,7 @@ class Timing(object):
         Timing.secs_per_tick = 1 / float(HZ)
 
     def add(self, timer):
-        timer.wakeup = Timing.tick + timer.frequency
+        timer.wakeup = time.clock() + timer.frequency
         self.timers.add(timer)
 
     def remove(self, timer):
@@ -43,8 +46,9 @@ class Timing(object):
     def timer_tick(self):
         global tick
         Timing.tick += 1
+        #self.log.debug("t:%s", Timing.tick)
         for timer in self.timers:
-            if timer.wakeup and timer.wakeup <= Timing.tick:
+            if timer.wakeup and timer.wakeup <= time.clock():
                 timer.call()
                 if timer.frequency:
                     timer.wakeup += timer.frequency
@@ -52,34 +56,34 @@ class Timing(object):
                     timer.wakeup = None
 
     @staticmethod
-    def msecs(ms):
-        """Converts the number of msecs to ticks (based on the machine HZ)"""
-        return int(ms / Timing.secs_per_tick / 1000)
-
-    @staticmethod
     def secs(s):
-        return int(s / Timing.secs_per_tick)
+        return int(s * 1000)
 
     @staticmethod
-    def time_to_ticks(time):
-        """Converts a string of real-world time into game ticks. Example
+    def string_to_ms(time):
+        """Converts a string of real-world time into int of ms. Example
         inputs:
 
         200ms
         2s
 
-        If no "s" or "ms" is provided, we assume "Seconds"
+        If no "s" or "ms" is provided, we assume "milliseconds"
 
-        returns an integer of game ticks
+        returns an integer 200 or 2000, respectively
         """
-
         time = str(time).upper()
-        if time.endswith("ms") or time.endswith("msec"):
+
+        if time.endswith("MS") or time.endswith("MSEC"):
             time = ''.join(i for i in time if not i.isalpha())
-            return Timing.msecs(float(time))
+            return int(time)
+
+        elif time.endswith("S") or time.endswith("SEC"):
+            time = ''.join(i for i in time if not i.isalpha())
+            return int(float(time) * 1000)
+
         else:
             time = ''.join(i for i in time if not i.isalpha())
-            return Timing.secs(float(time))
+            return int(time)
 
 
 class Timer(object):
@@ -93,12 +97,11 @@ class Timer(object):
         self.callback = callback
         self.args = args
         self.wakeup = None
-        # convert incoming frequency in ms to ticks
-        self.frequency = frequency / 1000 * Timing.HZ
+        self.frequency = frequency
 
         self.log = logging.getLogger("Timer")
         self.log.debug('Creating timer for callback "%s" every %sms (every '
-                         '%s ticks)', self.callback.__name__, frequency,
+                         '%sms)', self.callback.__name__, frequency,
                          self.frequency)
 
     def call(self):

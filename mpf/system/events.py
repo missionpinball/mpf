@@ -1,4 +1,5 @@
-# events.py (contains classes for various playfield devices)
+"""Contains the base classes for the EventManager and QueuedEvents"""
+# events.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -280,6 +281,7 @@ class EventManager(object):
         if queue and queue.is_empty():
             self.log.debug("Queue is empty. Deleting.")
             queue = None
+            del kwargs['queue']  # ditch this since we don't need it now
 
         if callback:
             if not queue:
@@ -292,7 +294,7 @@ class EventManager(object):
                     # if our last handler returned something, add it to kwargs
                     kwargs['ev_result'] = result
 
-            callback(**kwargs)
+                callback(**kwargs)
 
         # Finally see if we have any more events to process
         self._do_next()
@@ -333,6 +335,7 @@ class QueuedEvent(object):
         self.log.debug("Clearing a wait. Current count: %s", self.num_waiting)
         if not self.num_waiting:
             self.log.debug("Queue is empty. Calling %s", self.callback)
+            #del self.kwargs['queue']  # ditch this since we don't need it now
             self.callback(**self.kwargs)
 
     def kill(self):

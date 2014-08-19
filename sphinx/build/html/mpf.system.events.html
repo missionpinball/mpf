@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.events module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.system.events module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -46,11 +46,11 @@
             
   <div class="section" id="module-mpf.system.events">
 <span id="mpf-system-events-module"></span><h1>mpf.system.events module</h1>
+<p>Contains the base classes for the EventManager and QueuedEvents</p>
 <dl class="class">
 <dt id="mpf.system.events.EventManager">
 <em class="property">class </em><tt class="descclassname">mpf.system.events.</tt><tt class="descname">EventManager</tt></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.system.events.EventManager.add_handler">
 <tt class="descname">add_handler</tt><big>(</big><em>event</em>, <em>handler</em>, <em>priority=1</em>, <em>**kwargs</em><big>)</big></dt>
@@ -63,43 +63,34 @@ you can safely add a handler over and over.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>event</strong> : string</p>
-<blockquote>
-<div><p>Name of the event you&#8217;re adding a handler for. Since events are
-text strings, they don&#8217;t have to be pre-defined.</p>
-</div></blockquote>
-<p><strong>handler</strong> : string</p>
-<blockquote>
-<div><p>The method that will be called when the event is fired.</p>
-</div></blockquote>
-<p><strong>priority</strong> : int</p>
-<blockquote>
-<div><p>An arbitrary integer value that defines what order the handlers
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>event</strong> (<em>string</em>) &#8211; Name of the event you&#8217;re adding a handler for. Since events are
+text strings, they don&#8217;t have to be pre-defined.</li>
+<li><strong>handler</strong> (<em>string</em>) &#8211; The method that will be called when the event is fired.</li>
+<li><strong>priority</strong> (<em>int</em>) &#8211; An arbitrary integer value that defines what order the handlers
 will be called in. The default is 1, so if you have a handler that
 you want to be called first, add it here with a priority of 2. (Or
 3 or 10 or 100000.) The numbers don&#8217;t matter. They&#8217;re called from
-highest to lowest. (i.e. priority 100 is called before priority 1.)</p>
-</div></blockquote>
-<p><strong>kwargs</strong> : kwargs</p>
-<blockquote>
-<div><p>A list of any additional keyword arg pairs that will be attached to
+highest to lowest. (i.e. priority 100 is called before priority 1.)</li>
+<li><strong>kwargs</strong> (<em>kwargs</em>) &#8211; A list of any additional keyword arg pairs that will be attached to
 the handler and called whenever that handler is called. Note these
 are in addition to kwargs that could be passed as part of the
 event post. If there&#8217;s a conflict, the event-level ones will take
-win.</p>
-</div></blockquote>
+win.</li>
+</ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>handler</strong> : object reference</p>
-<blockquote>
-<div><p>Returns a reference to the handler which you can use to create a
-list to easily remove these in the future.</p>
-</div></blockquote>
-<p>For example:</p>
-<p><tt class="docutils literal"><span class="pre">handler_list.append(events.add_handler('ev',</span> <span class="pre">self.test))</span></tt></p>
-<p>Then later to remove all the handlers that a module added, you could:</p>
-<p>for handler in handler_list:</p>
-<p class="last"><tt class="docutils literal"><span class="pre">events.remove_handler(handler)</span></tt></p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>handler</strong> (<em>object reference</em>) &#8211;
+Returns a reference to the handler which you can use to create a
+list to easily remove these in the future.</li>
+<li><em>For example</em></li>
+<li><tt class="docutils literal"><span class="pre">handler_list.append(events.add_handler('ev',</span> <span class="pre">self.test))</span></tt></li>
+<li><em>Then later to remove all the handlers that a module added, you could</em></li>
+<li><em>for handler in handler_list</em></li>
+<li><tt class="docutils literal"><span class="pre">events.remove_handler(handler)</span></tt></li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -115,14 +106,11 @@ is passed.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>event_name</strong> : str</p>
-<blockquote>
-<div><p>The name of the event you want to check</p>
-</div></blockquote>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event_name</strong> (<em>str</em>) &#8211; The name of the event you want to check</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True or False</p>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">True or False</td>
 </tr>
 </tbody>
 </table>
@@ -164,12 +152,11 @@ do not expect keywords.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>method</strong> : str</p>
-<blockquote>
-<div><p>this is the method whose handlers you want to remove. This removes
-all of them.</p>
-</div></blockquote>
-<p class="last"><strong>kwargs</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>method</strong> (<em>str</em>) &#8211; this is the method whose handlers you want to remove. This removes
+all of them.</li>
+<li><strong>kwargs</strong> &#8211; </li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -187,7 +174,6 @@ event is called.</p>
 <p>See the documentation at
 <a class="reference external" href="http://missionpinball.com/docs/system-components/events/">http://missionpinball.com/docs/system-components/events/</a>
 for a description of how queue events work.</p>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.system.events.QueuedEvent.clear">
 <tt class="descname">clear</tt><big>(</big><big>)</big></dt>
@@ -249,7 +235,7 @@ for a description of how queue events work.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

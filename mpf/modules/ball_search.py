@@ -89,9 +89,9 @@ class BallSearch(object):
         print "popping coil", coil
         '''
         if coil.patter_on:
-            coil.patter(on_time=coil.patter_on,
-                        off_time=coil.patter_off,
-                        original_on_time=coil.default_pulse_time,
+            coil.patter(on_ms=coil.patter_on,
+                        off_ms=coil.patter_off,
+                        original_on_ms=coil.default_pulse_ms,
                         now=True)
             self.log.debug("Ball Search is holding coil %s for %ss",
                              coil.name, coil.search_hold_time)
@@ -100,7 +100,7 @@ class BallSearch(object):
                        callback=self.machine.proc.driver_disable,
                        param=coil.number)
             # todo change above to platform
-        elif coil.default_pulse_time:
+        elif coil.default_pulse_ms:
             # if it's not a hold coil, just pulse it with the default
             coil.pulse()
             self.log.debug("Ball Search is pulsing coil %s", coil.name)

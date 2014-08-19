@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.game.attract module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.game.attract module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -65,15 +65,15 @@ mode if the request to start game comes back as approved.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>machine</strong> : <tt class="xref py py-class docutils literal"><span class="pre">MachineController</span></tt></p>
-<blockquote class="last">
-<div><p>A reference to the instance of the MachineController object.</p>
-</div></blockquote>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> (<tt class="xref py py-class docutils literal"><span class="pre">MachineController</span></tt>) &#8211; A reference to the instance of the MachineController object.</td>
 </tr>
 </tbody>
 </table>
-<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="mpf.game.attract.Attract.advance_reel">
+<tt class="descname">advance_reel</tt><big>(</big><em>reel_name</em>, <em>direction=1</em><big>)</big></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="mpf.game.attract.Attract.coil_test">
 <tt class="descname">coil_test</tt><big>(</big><em>coil_name</em>, <em>pulse_change=0</em><big>)</big></dt>
@@ -90,13 +90,9 @@ request was denied by some handler.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>result</strong> : bool</p>
-<blockquote class="last">
-<div><p>Result of the boolean event <a href="#id1"><span class="problematic" id="id2">*</span></a>request_to_start_game. If any
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>result</strong> (<em>bool</em>) &#8211; Result of the boolean event <a href="#id1"><span class="problematic" id="id2">*</span></a>request_to_start_game. If any
 registered event handler did not want the game to start, this will
-be False. Otherwise it&#8217;s True.</p>
-</div></blockquote>
-</td>
+be False. Otherwise it&#8217;s True.</td>
 </tr>
 </tbody>
 </table>
@@ -171,7 +167,7 @@ and do other Attract-type things.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -229,7 +229,7 @@ class Flipper(Device):
             sw_name=self.config['activation_switch'],
             sw_activity='active',
             coil_name=self.config['main_coil'],
-            coil_action_time=-1,
+            coil_action_ms=-1,
             debounced=False)
 
     def _enable_flipper_rule_B(self):
@@ -241,9 +241,9 @@ class Flipper(Device):
             sw_name=self.config['activation_switch'],
             sw_activity='active',
             coil_name=self.config['main_coil'],
-            coil_action_time=self.machine.coils[self.config['main_coil']].
-                pulse_time,
-            pulse_time=self.machine.coils[self.config['main_coil']].pulse_time,
+            coil_action_ms=self.machine.coils[self.config['main_coil']].
+                pulse_ms,
+            pulse_ms=self.machine.coils[self.config['main_coil']].pulse_ms,
             debounced=False)
 
     def _enable_flipper_rule_C(self):
@@ -255,8 +255,8 @@ class Flipper(Device):
             sw_name=self.config['activation_switch'],
             sw_activity='active',
             coil_name=self.config['main_coil'],
-            coil_action_time=-1,
-            pulse_time=self.machine.coils[self.config['main_coil']].pulse_time,
+            coil_action_ms=-1,
+            pulse_ms=self.machine.coils[self.config['main_coil']].pulse_ms,
             pwm_on=self.machine.coils[self.config['main_coil']].pwm_on,
             pwm_off=self.machine.coils[self.config['main_coil']].pwm_off,
             debounced=False)
@@ -270,7 +270,7 @@ class Flipper(Device):
             sw_name=self.config['activation_switch'],
             sw_activity='active',
             coil_name=self.config['hold_coil'],
-            coil_action_time=-1,
+            coil_action_ms=-1,
             debounced=False)
 
     def _enable_flipper_rule_E(self):
@@ -282,7 +282,7 @@ class Flipper(Device):
             sw_name=self.config['eos_switch'],
             sw_activity='active',
             coil_name=self.config['main_coil'],
-            coil_action_time=0,
+            coil_action_ms=0,
             debounced=False)
 
     def _enable_flipper_rule_F(self):
@@ -294,7 +294,7 @@ class Flipper(Device):
             sw_name=self.config['activation_switch'],
             sw_activity='inactive',
             coil_name=self.config['main_coil'],
-            coil_action_time=0,
+            coil_action_ms=0,
             debounced=False)
 
     def _enable_flipper_rule_G(self):
@@ -306,7 +306,7 @@ class Flipper(Device):
             sw_name=self.config['activation_switch'],
             sw_activity='inactive',
             coil_name=self.config['hold_coil'],
-            coil_action_time=0,
+            coil_action_ms=0,
             debounced=False)
 
     def _enable_flipper_rule_H(self):
@@ -318,7 +318,7 @@ class Flipper(Device):
             sw_name=self.config['eos_switch'],
             sw_activity='active',
             coil_name=self.config['main_coil'],
-            coil_action_time=-1,
+            coil_action_ms=-1,
             pwm_on=self.machine.coils[self.config['main_coil']].pwm_on,
             pwm_off=self.machine.coils[self.config['main_coil']].pwm_off)
 

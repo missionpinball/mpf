@@ -15,6 +15,7 @@
 
 import logging
 from mpf.system.machine_mode import MachineMode
+from mpf.system.tasks import DelayManager
 
 
 class Attract(MachineMode):
@@ -34,6 +35,8 @@ class Attract(MachineMode):
     def __init__(self, machine):
         super(Attract, self).__init__(machine)
         self.log = logging.getLogger("Attract Mode")
+        self.delay = DelayManager()
+        self.holding_coil = None
 
     def start(self):
         """ Automatically called when the Attract game mode becomes active.
@@ -47,37 +50,23 @@ class Attract(MachineMode):
 
         self.machine.ball_controller.gather_balls('home')
 
-        '''
-        self.machine.events.add_handler('test', self.test, 1)
-        self.machine.events.add_handler('test', self.test, 2, foo='bar')
-        self.machine.events.add_handler('test', self.test, 6)
-        self.machine.events.add_handler('test', self.test, 5, foo='bar')
-        print
-        print
-        print "1", self.machine.events.registered_handlers['test']
-        print
-        print
-
-        self.machine.events.remove_handler(self.test, foo='bar')
-        print "2", self.machine.events.registered_handlers['test']
-
-        self.machine.events.add_handler('test', self.test, 3, foo='bar')
-        print "3", self.machine.events.registered_handlers['test']
-
-        self.machine.events.remove_handler(self.test)
-        print "4", self.machine.events.registered_handlers['test']
-        '''
-
         self.machine.events.add_handler('coil_test', self.coil_test)
+        self.machine.events.add_handler('advance_reel_test', self.advance_reel)
+        self.machine.events.add_handler('hold_coil', self.hold_coil)
+
+    ###########################################################################
+    ### The following section holds temporary methods we're using for       ###
+    ### testing our Big Shot EM machine.                                    ###
+    ###########################################################################
 
     def coil_test(self, coil_name, pulse_change=0):
         if pulse_change:
-            self.machine.coils[coil_name].pulse_time += pulse_change
+            self.machine.coils[coil_name].pulse_ms += pulse_change
             self.log.debug("+-----------------------------------------------+")
             self.log.debug("|                                               |")
             self.log.debug("|   Coil: %s   New pulse time: %s           |",
                            self.machine.coils[coil_name].name,
-                           self.machine.coils[coil_name].pulse_time)
+                           self.machine.coils[coil_name].pulse_ms)
             self.log.debug("|                                               |")
             self.log.debug("+-----------------------------------------------+")
         else:
@@ -85,14 +74,28 @@ class Attract(MachineMode):
             self.log.debug("|                                               |")
             self.log.debug("|   Coil: %s   PULSING: %s                |",
                            self.machine.coils[coil_name].name,
-                           self.machine.coils[coil_name].pulse_time)
+                           self.machine.coils[coil_name].pulse_ms)
             self.log.debug("|                                               |")
             self.log.debug("+-----------------------------------------------+")
             self.machine.coils[coil_name].pulse()
 
+    def advance_reel(self, reel_name, direction=1):
+        self.machine.score_reels[reel_name].advance(int(direction))
+
+    def hold_coil(self, coil_name, hold_time):
+        self.delay.add('kill_the_coil', hold_time, self.hold_coil_kill)
+        self.holding_coil = coil_name
+        self.machine.coils[coil_name].enable()
+
+    def hold_coil_kill(self):
+        self.machine.coils[self.holding_coil].disable()
+
     def test(self, param=None):
         print "test"
         print "param", param
+
+    ## End of temp section
+    ###########################################################################
 
     def start_button_pressed(self):
         """ Called when the a switch tagged with *start* is activated.

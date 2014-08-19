@@ -29,25 +29,40 @@ class Driver(Device):
         super(Driver, self).__init__(machine, name, config, collection)
 
         # todo read these in and/or change to dict
-        self.pulse_time = 30
+        self.pulse_ms = 30
         self.pwm_on = 0
         self.pwm_off = 0
+
+
+        self.time_last_changed = 0
+        self.time_when_done = 0
 
         self.hw_driver = self.machine.platform.configure_driver(
             config)
         self.log.debug("Creating '%s' with config: %s", name, config)
 
-        if 'pulseTime' in config:
-            self.pulse_time = config['pulseTime']
+        if 'pulse_ms' in config:
+            self.pulse_ms = config['pulse_ms']
         if 'holdPatter' in config:
             self.pwm_on = int(config['holdPatter'].split('-')[0])
             self.pwm_off = int(config['holdPatter'].split('-')[1])
 
+    def enable(self):
+        # this is a temporary version of this method. The final version will
+        # use a software-controlled hold for safety purposes like this:
+        # get the secs per tick
+        # set a pulse for 2.5x secs per tick
+        # set a timer that runs each tick to re-up it
+        self.log.debug("Enabling Driver: %s", self.name)
+        self.time_when_done = -1
+        self.time_last_changed = time.clock()
+        self.hw_driver.enable()
+
     def disable(self):
         """ Disables this driver """
         self.log.debug("Disabling Driver: %s", self.name)
-        self.time_last_changed = time.time()
-        # todo , now do it
+        self.time_last_changed = time.clock()
+        self.hw_driver.enable()
         # todo also disable the timer which reenables this
 
     def pulse(self, milliseconds=None):
@@ -63,7 +78,7 @@ class Driver(Device):
 
         """
         if milliseconds is None:
-            milliseconds = self.pulse_time
+            milliseconds = self.pulse_ms
         elif milliseconds < 1:
             self.log.warning("Received command to pulse  Driver %s for %dms, "
                              "but ms is less than 1, so we're doing nothing.",
@@ -72,24 +87,22 @@ class Driver(Device):
         # todo also disable the timer which reenables this
         self.log.debug("Pulsing Driver %s for %dms", self.name, milliseconds)
         self.hw_driver.pulse(int(milliseconds))
-        self.time_last_changed = time.time()
+        self.time_last_changed = time.clock()
+        self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
-    def pwm(self, on_time, off_time, orig_on_time):
+    def pwm(self, on_ms, _off_ms, orig_on_ms):
         pass  # todo
-        self.time_last_changed = time.time()
+        self.time_last_changed = time.clock()
+        self.time_when_done = -1
         # todo also disable the timer which reenables this
 
     def pulse_pwm(self):
         pass  # todo
-        self.time_last_changed = time.time()
+        self.time_last_changed = time.clock()
+        self.time_when_done = -1
         # todo also disable the timer which reenables this
 
-    def enable(self):
-        pass  # todo
-        # get the secs per tick
-        # set a pulse for 2.5x secs per tick
-        # set a timer that runs each tick to re-up it
-        self.time_last_changed = time.time()
+
 
 # The MIT License (MIT)
 

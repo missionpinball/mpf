@@ -13,6 +13,7 @@ import logging
 from mpf.system.timing import Timing
 import math
 from collections import defaultdict
+import time
 
 
 class SwitchController(object):
@@ -32,10 +33,10 @@ class SwitchController(object):
         """Dictionary of switches and states that have been registered for
         callbacks."""
         self.active_timed_switches = defaultdict(list)
-        """Dictionary of switches that are currently in a state counting ticks
+        """Dictionary of switches that are currently in a state counting ms
         waiting to notify their handlers. In other words, this is the dict that
         tracks current switches for things like "do foo() if switch bar is
-        active for 100 ticks."
+        active for 100ms."
         """
         self.switches = {}
         """Dictionary which holds the master list of switches as well as their
@@ -43,7 +44,7 @@ class SwitchController(object):
         so 1 = active and 0 = inactive."""
 
         # register for events
-        self.machine.events.add_handler('timer_tick', self._tick)
+        self.machine.events.add_handler('timer_tick', self._tick, 1000)
         self.machine.events.add_handler('machine_init_complete',
                                         self.initialize_hw_states,
                                         1000)
@@ -61,30 +62,30 @@ class SwitchController(object):
         for switch in self.machine.switches:
             self.set_state(switch.name, switch.state)
 
-    def is_state(self, switch_name, state, ticks=0):
+    def is_state(self, switch_name, state, ms=0):
         """Queries whether a switch is in a given state and (optionally)
-        whether it has been in that state for the specified number of ticks.
+        whether it has been in that state for the specified number of ms.
 
         Returns True if the switch_name has been in the state for the given
-        number of ticks. If ticks is not specified, returns True if the switch
+        number of ms. If ms is not specified, returns True if the switch
         is in the state regardless of how long it's been in that state.
 
         """
 
         if self.switches[switch_name]['state'] == state:
-            if ticks <= self.ticks_since_change(switch_name):
+            if ms <= self.ms_since_change(switch_name):
                 return True
             else:
                 return False
         else:
             return False
 
-    def is_active(self, switch_name, ticks=None):
+    def is_active(self, switch_name, ms=None):
         """Queries whether a switch is active.
 
-        Returns True if the current switch is active. If optional arg ticks
+        Returns True if the current switch is active. If optional arg ms
         is passed, will only return true if switch has been active for that
-        many ticks.
+        many ms.
 
         Note this method does consider whether a switch is NO or NC. So an NC
         switch will show as active if it is open, rather than closed.
@@ -92,14 +93,14 @@ class SwitchController(object):
 
         return self.is_state(switch_name=switch_name,
                              state=1,
-                             ticks=ticks)
+                             ms=ms)
 
-    def is_inactive(self, switch_name, ticks=None):
+    def is_inactive(self, switch_name, ms=None):
         """Queries whether a switch is inactive.
 
         Returns True if the current switch is inactive. If optional arg
-        ticks is passed, will only return true if switch has been inactive
-        for that many ticks.
+        `ms` is passed, will only return true if switch has been inactive
+        for that many ms.
 
         Note this method does consider whether a switch is NO or NC. So an NC
         switch will show as active if it is closed, rather than open.
@@ -107,19 +108,26 @@ class SwitchController(object):
 
         return self.is_state(switch_name=switch_name,
                              state=0,
-                             ticks=ticks)
+                             ms=ms)
 
-    def ticks_since_change(self, switch_name):
-        """Returns the number of ticks that have elapsed since this switch
+    def ms_since_change(self, switch_name):
+        """Returns the number of ms that have elapsed since this switch
         last changed state.
         """
 
-        return Timing.tick - self.switches[switch_name]['time']
+        return (time.clock() - self.switches[switch_name]['time']) * 1000.0
+
+    def secs_since_change(self, switch_name):
+        """Returns the number of ms that have elapsed since this switch
+        last changed state.
+        """
+
+        return time.clock() - self.switches[switch_name]['time']
 
     def set_state(self, switch_name, state=1):
         """Sets the state of a switch."""
         self.switches.update({switch_name: {'state': state,
-                                            'time': Timing.tick
+                                            'time': time.clock()
                                             }
                               })
 
@@ -173,7 +181,11 @@ class SwitchController(object):
         if self.machine.switches[name].type == 'NC' and logical is False:
             state = state ^ 1
 
-        self.log.debug("Processing switch: %s, State:%s", name, state)
+        # if the switch is already in this state, then abort
+        if self.switches[name]['state'] == state:
+            return
+
+        self.log.debug("<<<<< switch: %s, State:%s >>>>>", name, state)
 
         # Update the machine's switch state
         self.set_state(name, state)
@@ -186,17 +198,24 @@ class SwitchController(object):
             for entry in self.registered_switches[switch_key]:  # generator?
                 # Found an entry.
 
-                if entry['ticks']:
+                if entry['ms']:
                     # This entry is for a timed switch, so add it to our
                     # active timed switch list
-                    key = Timing.tick + entry['ticks']
+                    key = time.clock() + entry['ms']
                     value = {'switch_action': str(name) + '-' + str(state),
-                             'callback': entry['callback']}
+                             'callback': entry['callback'],
+                             'switch_name': name,
+                             'state': state,
+                             'ms': entry['ms'],
+                             'return_info': entry['return_info']}
                     self.active_timed_switches[key].append(value)
                 else:
                     # This entry doesn't have a timed delay, so do the action
                     # now
-                    entry['callback']()
+                    if entry['return_info']:
+                        entry['callback'](switch_name=name, state=state, ms=0)
+                    else:
+                        entry['callback']()
 
                 # todo need to add args and kwargs support to callback
 
@@ -213,36 +232,62 @@ class SwitchController(object):
 
         self._post_switch_events(name, state)
 
-    def add_switch_handler(self, switch_name, callback, state=1, ms=0):
+    def add_switch_handler(self, switch_name, callback, state=1, ms=0,
+                           return_info=False):
         """Register a handler to take action on some switch event.
 
-        These events can be trigger when a switch becomes active (state=1) or
-        inactive (state=0).
+        Parameters
+        ----------
 
-        If you specify a 'ms' parameter, the handler won't be called until the
-        switch is in that state for that many ms (rounded up to the nearst
-        machine timer tick).
+        switch_name : str
+            The name of the switch you're adding this handler for.
+
+        callback : method
+            The method you want called when this switch handler fires.
+
+        state : int
+            The state transition you want to callback to be triggered on.
+            Default is 1 which means it's called when the switch goes from
+            inactive to active, but you can also use 0 which means your
+            callback will be called when the switch becomes inactive
+
+        ms : int
+            If you specify a 'ms' parameter, the handler won't be called until
+            the witch is in that state for that many milliseconds (rounded up
+            to the nearst machine timer tick).
+
+        return_info : bool
+            If True, the switch controller will pass the parameters of the
+            switch handler as arguments to the callback, including switch_name,
+            state, and ms. If False (default), it just calls the callback with
+            no parameters.
 
         You can mix & match entries for the same switch here.
         """
-        # convert ms into number of machine ticks
+        # todo add support for other parameters to the callback?
 
-        ticks = int(math.ceil((ms/Timing.secs_per_tick/1000)))
-
-        entry_val = {'ticks': ticks, 'callback': callback}
+        entry_val = {'ms': ms, 'callback': callback,
+                     'return_info': return_info}
         entry_key = str(switch_name) + '-' + str(state)
 
         self.registered_switches[entry_key].append(entry_val)
 
     def remove_switch_handler(self, switch_name, callback, state=1, ms=0):
-        """Removes a registered switch handler. Currently this only works if
-        you specify everything exactly as you set it up. """
+        """Removes a registered switch handler.
 
-        ticks = int(math.ceil((ms/Timing.secs_per_tick/1000)))
+        Currently this only works if you specify everything exactly as you set
+        it up. (Except for return_info, which doesn't matter if true or false, it
+        will remove either / both."""
 
-        entry_val = {'ticks': ticks, 'callback': callback}
+        # Try first with return_info: False
+        entry_val = {'ms': ms, 'callback': callback, 'return_info': False}
         entry_key = str(switch_name) + '-' + str(state)
 
+        if entry_val in self.registered_switches[entry_key]:
+            self.registered_switches[entry_key].remove(entry_val)
+
+        # And try again with return_info: True
+        entry_val = {'ms': ms, 'callback': callback, 'return_info': True}
         if entry_val in self.registered_switches[entry_key]:
             self.registered_switches[entry_key].remove(entry_val)
 
@@ -270,11 +315,16 @@ class SwitchController(object):
 
         """
         # Make a copy so we can delete from the orig list while iterating.
-        active_times_switches_copy = dict(self.active_timed_switches)
-        for k, v in active_times_switches_copy.iteritems():
-            if k <= Timing.tick:  # change to generator?
+        active_timed_switches_copy = dict(self.active_timed_switches)
+        for k, v in active_timed_switches_copy.iteritems():
+            if k <= time.clock():  # change to generator?
                 for item in v:
-                    item['callback']()
+                    if item['return_info']:
+                        item['callback'](switch_name=item['switch_name'],
+                                         state=item['state'],
+                                         ms=item['ms'])
+                    else:
+                        item['callback']()
                 del self.active_timed_switches[k]
 
 # The MIT License (MIT)

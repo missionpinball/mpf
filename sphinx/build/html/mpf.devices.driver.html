@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.driver module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.devices.driver module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -58,7 +58,6 @@ the high-voltage stuff like coils and flashers.</p>
 devices. Each platform module (i.e. P-ROC, FAST, etc.) subclasses this
 class to actually communicate with the physitcal hardware and perform the
 actions.</p>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.devices.driver.Driver.disable">
 <tt class="descname">disable</tt><big>(</big><big>)</big></dt>
@@ -78,13 +77,9 @@ actions.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>milliseconds</strong> : int</p>
-<blockquote class="last">
-<div><p>The number of milliseconds the driver should be enabled for. If no
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>milliseconds</strong> (<em>int : optional</em>) &#8211; The number of milliseconds the driver should be enabled for. If no
 value is provided, the driver will be enabled for the value
-specified in the config dictionary.</p>
-</div></blockquote>
-</td>
+specified in the config dictionary.</td>
 </tr>
 </tbody>
 </table>
@@ -97,7 +92,7 @@ specified in the config dictionary.</p>
 
 <dl class="method">
 <dt id="mpf.devices.driver.Driver.pwm">
-<tt class="descname">pwm</tt><big>(</big><em>on_time</em>, <em>off_time</em>, <em>orig_on_time</em><big>)</big></dt>
+<tt class="descname">pwm</tt><big>(</big><em>on_ms</em>, <em>_off_ms</em>, <em>orig_on_ms</em><big>)</big></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -141,7 +136,7 @@ specified in the config dictionary.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -1,6 +1,4 @@
-"""The main machine object for the Mission Pinball Framework.
-
-"""
+"""The main machine object for the Mission Pinball Framework."""
 # devices.py (contains classes for various playfield devices)
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
@@ -28,6 +26,10 @@ from mpf.devices.ball_device import BallDevice
 from mpf.devices.driver import Driver
 from mpf.devices.flipper import Flipper
 from mpf.devices.switch import Switch
+from mpf.system.shot_controller import ShotController
+from mpf.system.score_controller import ScoreController
+from mpf.devices.score_reel import (ScoreReel, ScoreReelGroup,
+                                    ScoreReelController)
 
 
 class MachineController(object):
@@ -53,7 +55,7 @@ class MachineController(object):
 
     def __init__(self, config_file, physical_hw=True):
         self.log = logging.getLogger("Machine Controller")
-        self.starttime = time.time()
+        self.starttime = time.clock()
         self.config = defaultdict(int)  # so we can simplify checking
         self.physical_hw = physical_hw
         self.switch_events = []
@@ -61,6 +63,7 @@ class MachineController(object):
         self.HZ = None
         self.gameflow_index = 0
 
+        # todo make these conditional so they only load if they're used.
         self.coils = DeviceCollection()
         self.lamps = DeviceCollection()
         self.switches = DeviceCollection()
@@ -68,6 +71,8 @@ class MachineController(object):
         self.autofires = DeviceCollection()
         self.flippers = DeviceCollection()
         self.balldevices = DeviceCollection()
+        self.score_reels = DeviceCollection()
+        self.score_reel_groups = DeviceCollection()
         # todo combine leds and lamps?
         # todo add GI and flashers?
 
@@ -81,7 +86,15 @@ class MachineController(object):
         self.process_config()
 
         self.ball_controller = BallController(self)
+
+        # Optional components which should only load if they're used
+        # todo make these conditional
+
         self.ballsearch = BallSearch(self)
+        self.shots = ShotController(self)
+        self.scoring = ScoreController(self)
+        if 'Score Reel Groups' in self.config:
+            self.score_reel_controller = ScoreReelController(self)
 
         # todo clean this up when you fix game flow
         self.game = None
@@ -270,29 +283,43 @@ class MachineController(object):
                        self.switches)
 
         # Flippers
-        if 'Flippers' in self.config['Devices']:
-            for flipper in self.config['Devices']['Flippers']:
+        if 'Flippers' in self.config:
+            for flipper in self.config['Flippers']:
                 Flipper(self, flipper,
-                        self.config['Devices']['Flippers'][flipper],
+                        self.config['Flippers'][flipper],
                         self.flippers)
 
         # Autofire Coils
-        if 'Autofire Coils' in self.config['Devices']:
-            for coil in self.config['Devices']['Autofire Coils']:
+        if 'Autofire Coils' in self.config:
+            for coil in self.config['Autofire Coils']:
                 AutofireCoil(self, coil,
-                             self.config['Devices']['Autofire Coils'][coil],
+                             self.config['Autofire Coils'][coil],
                              self.autofires)
 
         # Ball Devices
-        if 'BallDevices' in self.config['Devices']:
-            for balldevice in self.config['Devices']['BallDevices']:
+        if 'BallDevices' in self.config:
+            for balldevice in self.config['BallDevices']:
                 BallDevice(self, balldevice,
-                           self.config['Devices']['BallDevices'][balldevice],
+                           self.config['BallDevices'][balldevice],
                            self.balldevices)
 
         # Keyboard mapping
-        if 'key_map' in self.config:
+        if 'Keyboard' in self.config:
             self.keyboard = Keyboard(self)
+
+        # Score Reel
+        if 'Score Reels' in self.config:
+            for score_reel in self.config['Score Reels']:
+                ScoreReel(self, score_reel,
+                          self.config['Score Reels'][score_reel],
+                          self.score_reels)
+
+        # Score Reel Groups
+        if 'Score Reel Groups' in self.config:
+            for reel_group in self.config['Score Reel Groups']:
+                ScoreReelGroup(self, reel_group,
+                               self.config['Score Reel Groups'][
+                               reel_group], self.score_reel_groups)
 
     def string_to_list(self, string):
         """ Converts a comma-separated string into a python list.
@@ -433,9 +460,9 @@ class MachineController(object):
 
         else:
             if num_loops != 0:
-                self.log.debug("Hardware loop speed: %sHz",
+                self.log.info("Hardware loop speed: %sHz",
                                round(num_loops /
-                                     (time.time() - self.starttime)))
+                                     (time.clock() - self.starttime)))
 
         # todo add support to read software switch events
 
@@ -447,15 +474,15 @@ class MachineController(object):
         # todo currently this just runs as fast as it can. Should I have it
         # sleep while waiting for the next timer tick?
 
-        if self.platform.next_tick_time <= time.time():
+        if self.platform.next_tick_time <= time.clock():
             self.timer_tick()
             self.platform.next_tick_time += Timing.secs_per_tick
 
     def timer_tick(self):
         """Called by the platform each machine tick based on self.HZ"""
         self.timing.timer_tick()  # notifies the timing module
-        Task.timer_tick(Timing.tick)  # notifies tasks
         self.events.post('timer_tick')  # sends the timer_tick system event
+        Task.timer_tick()  # notifies tasks
         DelayManager.timer_tick()
 
     def test(self):

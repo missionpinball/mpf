@@ -7,6 +7,8 @@
 
 import logging
 from mpf.system.timing import Timing
+from copy import copy
+import time
 
 
 class Task(object):
@@ -15,10 +17,7 @@ class Task(object):
     Tasks are similar to timers except they can yield back to the main loop
     at any point, then be resumed later.
 
-    To wait from a Task, do 'yield <timeval>', e.g. Timing.msecs(250) to
-    wait 250ms. Note the timeval is actually the number of ticks the task will
-    yield for, so to make it a real-world time you need to use Timing.msecs(x)
-    or Timing.secs(x).
+    To wait from a Task, do `yield <ms>`, e.g. `yield 200`.
 
     To exit from a Task, just return.  This will raise a StopIteration
     exception which the scheduler will catch and remove the task from the
@@ -26,6 +25,7 @@ class Task(object):
     """
 
     Tasks = set()
+    NewTasks = set()
 
     def __init__(self, callback, args=None, name=None, sleep=0):
         """Initialization of a task.
@@ -40,7 +40,7 @@ class Task(object):
         self.gen = None
 
         if sleep:
-            self.wakeup = Timing.tick + sleep
+            self.wakeup = time.clock() + sleep
 
     def restart(self):
         """Restart a task."""
@@ -61,34 +61,36 @@ class Task(object):
     def Create(callback, args=tuple(), sleep=0):
         """Create a new task and insert it into the runnable set."""
         task = Task(callback=callback, args=args, sleep=sleep)
-        Task.Tasks.add(task)
+        Task.NewTasks.add(task)
         return task
 
     @staticmethod
-    def timer_tick(now):
+    def timer_tick():
         """Scan all tasks now and run those that are ready.
 
-        'now' is the tick number, not a time.time(). Just FYI
+        'now' is the tick number, not a time.clock(). Just FYI
         """
-        dead_tasks = list()
+        dead_tasks = []
         for task in Task.Tasks:
-            if not task.wakeup or task.wakeup <= now:
+            if not task.wakeup or task.wakeup <= time.clock():
                 if task.gen:
                     try:
                         rc = next(task.gen)
                         if rc:
-                            task.wakeup = now + rc
-                            # todo should probably convert 'rc' to ticks.
-                            # i.e. lets decide tasks yield msec, and we convert
-                            # them to ticks. Or create a timing classmethod to
-                            # convert secs or msecs to ticks.
+                            task.wakeup = time.clock() + rc
                     except StopIteration:
                         dead_tasks.append(task)
                 else:
-                    task.wakeup = now
+                    task.wakeup = time.clock()
                     task.gen = task.callback(*task.args)
         for task in dead_tasks:
             Task.Tasks.remove(task)
+        # We need to queue the addition to new tasks to the set because if we
+        # get a new task while we're iterating above then our set size will
+        # change while iterating and produce an error.
+        for task in Task.NewTasks:
+            Task.Tasks.add(task)
+        Task.NewTasks = set()
 
 
 class DelayManager(object):
@@ -111,44 +113,46 @@ class DelayManager(object):
     def __del__(self):
         DelayManager.dead_delay_managers.add(self)  # todo I don't like this
 
-    def add(self, name, delay, callback, args=None):
-        """ delay comes in via ticks. Use timing.secs() or timing.msecs() for
-        real-world times."""
-        #self.log.debug("Adding delay. Ticks: %s, callback: %s, args: %s",
-        #               delay, callback, args)
-        self.delays[name] = ({'action_time': Timing.tick+delay,
+    def add(self, name, ms, callback, args=None):
+        """ delay comes in via ms.
+        """
+        self.log.debug("---Adding delay. Name: '%s' ms: %s, callback: %s, args: %s",
+                       name, ms, callback, args)
+        self.delays[name] = ({'action_ms': time.clock() + (ms / 1000.0),
                               'callback': callback,
                               'args': args})
 
     def remove(self, name):
+        self.log.debug("---Removing delay: '%s'", name)
         try:
             del self.delays[name]
         except:
             pass
 
-    def reset(self, name, delay, callback, args=None):
+    def reset(self, name, ms, callback, args=None):
         """ Resets a delay, first deleting the old one (if it exists) and then
         adding the delay for the new time.
         """
         self.remove(name)
-        self.add(name, delay, callback, args)
+        self.add(name, ms, callback, args)
 
     def clear(self):
         self.delays = {}
 
     def process_delays(self):
         """ Processes any delays that should fire now """
-
         for delay in self.delays.keys():
-            if self.delays[delay]['action_time'] <= Timing.tick:
-                if self.delays[delay]['args']:
-                    self.delays[delay]['callback'](self.delays[delay]['args'])
-                else:
-                    self.delays[delay]['callback']()
-                #dead_delays.append(delay)
+            if self.delays[delay]['action_ms'] <= time.clock():
+                # Delete the delay first in case the processing of it adds a
+                # new delay with the same name. If we delete as the final step
+                # then we'll inadvertantly delete the newly-set delay
+                this_delay = copy(self.delays[delay])
                 del self.delays[delay]
-
-        # todo change to list comprehension?
+                self.log.debug("---Processing delay: %s", this_delay)
+                if this_delay['args']:
+                    this_delay['callback'](this_delay['args'])
+                else:
+                    this_delay['callback']()
 
     @staticmethod
     def timer_tick():

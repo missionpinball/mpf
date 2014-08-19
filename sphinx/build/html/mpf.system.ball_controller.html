@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.ball_controller module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.system.ball_controller module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -57,15 +57,10 @@ the balls in a pinball machine.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>machine</strong> : <tt class="xref py py-class docutils literal"><span class="pre">MachineController</span></tt></p>
-<blockquote class="last">
-<div><p>A reference to the instance of the MachineController object.</p>
-</div></blockquote>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> (<tt class="xref py py-class docutils literal"><span class="pre">MachineController</span></tt>) &#8211; A reference to the instance of the MachineController object.</td>
 </tr>
 </tbody>
 </table>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.system.ball_controller.BallController.are_balls_gathered">
 <tt class="descname">are_balls_gathered</tt><big>(</big><em>target='home'</em><big>)</big></dt>
@@ -84,37 +79,28 @@ you add additional balls in a multiball scenario.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>num</strong> : int</p>
-<blockquote>
-<div><p>Number of balls to be launched. If ball launches are still
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num</strong> (<em>int</em>) &#8211; Number of balls to be launched. If ball launches are still
 pending from a previous request, this number will be added to the
-previously requested number.</p>
-</div></blockquote>
-<p><strong>stealth</strong> : bool</p>
-<blockquote>
-<div><p>Set to True if the balls being launched should NOT
+previously requested number.</li>
+<li><strong>stealth</strong> (<em>bool</em>) &#8211; Set to True if the balls being launched should NOT
 be added to the number of balls in play.  For instance, if
 a ball is being locked on the playfield, and a new ball is
 being launched to keep only 1 active ball in play,
-stealth=True should be used.</p>
-</div></blockquote>
-<p><strong>auto</strong> : bool</p>
-<blockquote>
-<div><p>Whether the balls should be added automatically. False means the
+stealth=True should be used.</li>
+<li><strong>auto</strong> (<em>bool</em>) &#8211; <p>Whether the balls should be added automatically. False means the
 player has to hit the plunger switch or manually plunge. True means
 the plunger will automatically fire.</p>
 <p>Note if the ball device you&#8217;re adding from is not configured with a
 player switch and you request to add live with auto=False, it will
 eject the ball(s) anyway since there&#8217;s no way for the player to do
 it.</p>
-</div></blockquote>
-<p><strong>device</strong> : ball device object</p>
-<blockquote class="last">
-<div><p>Specifies which ball device you want to add the ball from.
+</li>
+<li><strong>device</strong> (<em>ball device object</em>) &#8211; Specifies which ball device you want to add the ball from.
 Default is whichever device is tagged with &#8216;add_live.&#8217; (If you have
 multiple devices taggeed with add_live it will be random. If that&#8217;s
-not what you want then pass the device you want to launch from.)</p>
-</div></blockquote>
+not what you want then pass the device you want to launch from.)</li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -146,11 +132,7 @@ search timer. If a ball search is in progress, it will sttop it.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>change</strong> : int</p>
-<blockquote class="last">
-<div><p>The change in contained balls.</p>
-</div></blockquote>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>change</strong> (<em>int</em>) &#8211; The change in contained balls.</td>
 </tr>
 </tbody>
 </table>
@@ -193,11 +175,7 @@ known and balls missing variables.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>num</strong> : int</p>
-<blockquote class="last">
-<div><p>Specifies how many balls have been found. Default is 1.</p>
-</div></blockquote>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>num</strong> (<em>int</em>) &#8211; Specifies how many balls have been found. Default is 1.</td>
 </tr>
 </tbody>
 </table>
@@ -265,15 +243,11 @@ schedule to the new time passed.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>secs</strong> : into</p>
-<blockquote>
-<div><p>Schedules the ball search that many secs from now.</p>
-</div></blockquote>
-<p><strong>force</strong> : bool</p>
-<blockquote class="last">
-<div><p>Set True to force a ball search. Otherwise it will only schedule it
-if self.flag_no_ball_search is False</p>
-</div></blockquote>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>secs</strong> (<em>into</em>) &#8211; Schedules the ball search that many secs from now.</li>
+<li><strong>force</strong> (<em>bool</em>) &#8211; Set True to force a ball search. Otherwise it will only schedule it
+if self.flag_no_ball_search is False</li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -336,14 +310,14 @@ kind of maintainance mode or something?</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.system.ball_controller.BallController.game_start">
-<tt class="descname">game_start</tt><big>(</big><em>game</em><big>)</big></dt>
+<dt id="mpf.system.ball_controller.BallController.game_starting">
+<tt class="descname">game_starting</tt><big>(</big><em>queue</em>, <em>game</em><big>)</big></dt>
 <dd><p>Used to inform the ball controller that a game is starting.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>game</strong> : <a class="reference internal" href="mpf.game.game.html#mpf.game.game.Game" title="mpf.game.game.Game"><tt class="xref py py-meth docutils literal"><span class="pre">mpf.game.game.Game()</span></tt></a> instance</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>game</strong> (<a class="reference internal" href="mpf.game.game.html#mpf.game.game.Game" title="mpf.game.game.Game"><tt class="xref py py-meth docutils literal"><span class="pre">mpf.game.game.Game()</span></tt></a> instance) &#8211; </td>
 </tr>
 </tbody>
 </table>
@@ -360,12 +334,8 @@ reset or first starts up.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>target</strong> : str</p>
-<blockquote class="last">
-<div><p>The name of the tag of the devices you want all the balls to end up
-in.</p>
-</div></blockquote>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>target</strong> (<em>str</em>) &#8211; The name of the tag of the devices you want all the balls to end up
+in.</td>
 </tr>
 </tbody>
 </table>
@@ -511,7 +481,7 @@ they&#8217;re rolling towards the drain.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

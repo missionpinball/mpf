@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.flipper module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.devices.flipper module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -61,27 +61,22 @@ multiple coil options (pulsing, hold coils, etc.)</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>machine: machine object</strong></p>
-<blockquote>
-<div><p>A reference to the machine controller instance.</p>
-</div></blockquote>
-<p><strong>name: string</strong></p>
-<blockquote>
-<div><p>The name you&#8217;ll refer to this flipper object as.</p>
-</div></blockquote>
-<p><strong>config: dict</strong></p>
-<blockquote>
-<div><p>A dictionary that holds the configuration values which specify how
-this flipper should be configured. If this is None, it will use the
-system config settings that were read in from the config files when
-the machine was reset.</p>
-</div></blockquote>
-<p class="last"><strong>collection: bool</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>machine</strong> (<em>machine object</em>) &#8211; A reference to the machine controller instance.</li>
+<li><strong>name</strong> (<em>string</em>) &#8211; The name you&#8217;ll refer to this flipper object as.</li>
+</ul>
 </td>
 </tr>
 </tbody>
 </table>
-<p class="rubric">Methods</p>
+<dl class="docutils">
+<dt>config: dict</dt>
+<dd>A dictionary that holds the configuration values which specify how
+this flipper should be configured. If this is None, it will use the
+system config settings that were read in from the config files when
+the machine was reset.</dd>
+</dl>
+<p>collection: bool</p>
 <dl class="method">
 <dt id="mpf.devices.flipper.Flipper.configure">
 <tt class="descname">configure</tt><big>(</big><em>config=None</em><big>)</big></dt>
@@ -90,14 +85,10 @@ the machine was reset.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>config</strong> : dict</p>
-<blockquote class="last">
-<div><p>A dictionary that holds the configuration values which specify how
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> (<em>dict</em>) &#8211; A dictionary that holds the configuration values which specify how
 this flipper should be configured. If this is None, it will use the
 system config settings that were read in from the config files when
-the machine was reset.</p>
-</div></blockquote>
-</td>
+the machine was reset.</td>
 </tr>
 </tbody>
 </table>
@@ -166,12 +157,11 @@ the buttons are held in.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>percent</strong> : float</p>
-<blockquote>
-<div><p>Value between 0 and 1.0 which represents the percentage of power
-the flippers will be enabled at.</p>
-</div></blockquote>
-<p class="last"><strong>This mode is not yet implemented.</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>percent</strong> (<em>float</em>) &#8211; Value between 0 and 1.0 which represents the percentage of power
+the flippers will be enabled at.</li>
+<li><strong>mode is not yet implemented.</strong> (<em>This</em>) &#8211; </li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -228,7 +218,7 @@ controls the right flippers and vice-versa.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

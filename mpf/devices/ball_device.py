@@ -75,8 +75,8 @@ class BallDevice(Device):
             self.config['entrance_switch'] = None
         if 'jam_switch' not in self.config:
             self.config['jam_switch'] = None
-        if 'eject_coil_hold_times' not in self.config:
-            self.config['eject_coil_hold_times'] = None  # todo change to list
+        if 'eject_coil_hold_ms' not in self.config:
+            self.config['eject_coil_hold_ms'] = None  # todo change to list
         if 'eject_target' not in self.config:
             self.config['eject_target'] = None
         if 'confirm_eject_type' not in self.config:
@@ -175,14 +175,14 @@ class BallDevice(Device):
             # todo do I also need to add inactive and make a smarter
             # handler?
 
-        # convert delay times in s or ms to game ticks
+        # convert delay strings to ms ints
         if self.config['post_eject_delay_check']:
             self.config['post_eject_delay_check'] = \
-                Timing.time_to_ticks(self.config['post_eject_delay_check'])
+                Timing.string_to_ms(self.config['post_eject_delay_check'])
 
         if self.config['ball_count_delay']:
             self.config['ball_count_delay'] = \
-                Timing.time_to_ticks(self.config['ball_count_delay'])
+                Timing.string_to_ms(self.config['ball_count_delay'])
 
         # Register for events
         self.machine.events.add_handler('balldevice_' + self.name +
@@ -358,10 +358,10 @@ class BallDevice(Device):
 
         if self.config['ball_count_delay']:
             self.log.debug("%s switch just changed state. Will count after "
-                           "%s ticks", self.name,
+                           "%sms", self.name,
                            self.config['ball_count_delay'])
             self.delay.add(name='ball_count',
-                           delay=self.config['ball_count_delay'],
+                           ms=self.config['ball_count_delay'],
                            callback=self.count_balls)
         else:
             # If no delay is set then just count the balls now
@@ -674,7 +674,7 @@ class BallDevice(Device):
             # Note this must be higher priority than the failed eject handler
             self.machine.events.add_handler(
                 'balldevice_' + self.config['confirm_eject_target'] +
-                '_ball_enter', self.eject_success, 2)
+                '_ball_enter', self._eject_success, 2)
 
         elif self.config['confirm_eject_type'] == 'switch':
             # watch for that switch to activate momentarily
@@ -700,7 +700,7 @@ class BallDevice(Device):
             # via the playfield but there's already a ball in play.
             self.delay.add(name=self.name + '_confirm_eject',
                            event_type=None,
-                           delay=self.config['post_eject_delay_check'],
+                           ms=self.config['post_eject_delay_check'],
                            handler=self.count_balls)
 
         elif self.config['confirm_eject_type'] == 'playfield':

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.timing module &mdash; Mission Pinball Framework 0.1 documentation</title>
+    <title>mpf.system.timing module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1',
+        VERSION:     '0.0.6',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -46,6 +46,7 @@
             
   <div class="section" id="module-mpf.system.timing">
 <span id="mpf-system-timing-module"></span><h1>mpf.system.timing module</h1>
+<p>Contains Timing and Timer classes</p>
 <dl class="class">
 <dt id="mpf.system.timing.Timer">
 <em class="property">class </em><tt class="descclassname">mpf.system.timing.</tt><tt class="descname">Timer</tt><big>(</big><em>callback</em>, <em>args=()</em>, <em>frequency=None</em><big>)</big></dt>
@@ -54,7 +55,6 @@
 <p>A timer defines a callable plus a frequency (in ms) at which it should be
 called. The frequency can be set to None so that the timer is not enabled,
 but it still exists.</p>
-<p class="rubric">Methods</p>
 <dl class="method">
 <dt id="mpf.system.timing.Timer.call">
 <tt class="descname">call</tt><big>(</big><big>)</big></dt>
@@ -71,22 +71,6 @@ but it still exists.</p>
 objects should exist.  By convention it is called &#8216;timing&#8217;.</p>
 <p>The timing keeps the current time in &#8216;time&#8217; and a set of Timer
 objects.</p>
-<p class="rubric">Attributes</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="57%" />
-<col width="43%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td>HZ</td>
-<td>&nbsp;</td>
-</tr>
-<tr class="row-even"><td>secs_per_tick</td>
-<td>&nbsp;</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Methods</p>
 <dl class="attribute">
 <dt id="mpf.system.timing.Timing.HZ">
 <tt class="descname">HZ</tt><em class="property"> = None</em></dt>
@@ -101,12 +85,6 @@ objects.</p>
 <dt id="mpf.system.timing.Timing.configure">
 <tt class="descname">configure</tt><big>(</big><em>dev=None</em>, <em>HZ=50</em><big>)</big></dt>
 <dd></dd></dl>
-
-<dl class="staticmethod">
-<dt id="mpf.system.timing.Timing.msecs">
-<em class="property">static </em><tt class="descname">msecs</tt><big>(</big><em>ms</em><big>)</big></dt>
-<dd><p>Converts the number of msecs to ticks (based on the machine HZ)</p>
-</dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.timing.Timing.remove">
@@ -123,21 +101,21 @@ objects.</p>
 <tt class="descname">secs_per_tick</tt><em class="property"> = None</em></dt>
 <dd></dd></dl>
 
+<dl class="staticmethod">
+<dt id="mpf.system.timing.Timing.string_to_ms">
+<em class="property">static </em><tt class="descname">string_to_ms</tt><big>(</big><em>time</em><big>)</big></dt>
+<dd><p>Converts a string of real-world time into int of ms. Example
+inputs:</p>
+<p>200ms
+2s</p>
+<p>If no &#8220;s&#8221; or &#8220;ms&#8221; is provided, we assume &#8220;milliseconds&#8221;</p>
+<p>returns an integer 200 or 2000, respectively</p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="mpf.system.timing.Timing.tick">
 <tt class="descname">tick</tt><em class="property"> = 0</em></dt>
 <dd></dd></dl>
-
-<dl class="staticmethod">
-<dt id="mpf.system.timing.Timing.time_to_ticks">
-<em class="property">static </em><tt class="descname">time_to_ticks</tt><big>(</big><em>time</em><big>)</big></dt>
-<dd><p>Converts a string of real-world time into game ticks. Example
-inputs:</p>
-<p>200ms
-2s</p>
-<p>If no &#8220;s&#8221; or &#8220;ms&#8221; is provided, we assume &#8220;Seconds&#8221;</p>
-<p>returns an integer of game ticks</p>
-</dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.timing.Timing.timer_tick">
@@ -185,7 +163,7 @@ inputs:</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

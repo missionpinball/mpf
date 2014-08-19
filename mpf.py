@@ -1,3 +1,4 @@
+"""This is the main file you run to start a pinball machine."""
 # mpf.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
@@ -38,14 +39,15 @@ parser.add_option("-x", "--nohw",
 # Configure logging. Creates a logfile and logs to the console.
 # Formating options are documented here:
 # https://docs.python.org/2.7/library/logging.html#logrecord-attributes
-console_format = "%(asctime)s : %(name)s : %(message)s"
-console_timestamp_format = "%H:%M:%S"
+
 logfile_format = "%(asctime)s : %(name)s : %(message)s"
 
 
 logging.basicConfig(level=options.loglevel, filename=options.logfile,
                     format=logfile_format, filemode='w')
 
+console_format = "%(asctime)s : %(name)s : %(message)s"
+console_timestamp_format = "%H:%M:%S"
 console = logging.StreamHandler()
 console.setLevel(options.loglevel)
 console.setFormatter(logging.Formatter(fmt=console_format,

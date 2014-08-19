@@ -254,7 +254,7 @@ Coils:
 # label: The 'friendly' name for the coil. This is that name that will be
 # shown to the operator in configuration menus, reports, etc.
 
-# 'pulseTime' - the time in ms this coil is pulsed for. Either enter a value or
+# 'pulse_ms' - the time in ms this coil is pulsed for. Either enter a value or
 # the word 'adjustable' which means the pulse time is adjustable via the
 # service menu. Note that in this case, you can set the default, min, and max
 # values in the operator settings template file.
@@ -299,7 +299,7 @@ Coils:
         number: C07
     shooterR:
         number: C08
-        pulseTime: 20
+        pulse_ms: 20
     shooterL:
         number: C09
     tripDropTarget:

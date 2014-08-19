@@ -30,7 +30,7 @@ class AutofireCoil(Device):
         self.switch = None
         self.switch_activity = 'active'
         self.coil = None
-        self.coil_action_time = 0  # -1 for hold, 0 for disable, 1+ for pulse
+        self.coil_action_ms = 0  # -1 for hold, 0 for disable, 1+ for pulse
         self.pulse_ms = 0
         self.pwm_on_ms = 0
         self.pwm_off_ms = 0
@@ -71,7 +71,7 @@ class AutofireCoil(Device):
         if 'pulse_ms' in config:
             self.pulse_ms = config['pulse_ms']
         else:
-            self.pulse_ms = self.machine.coils[config['coil']].pulse_time
+            self.pulse_ms = self.machine.coils[config['coil']].pulse_ms
 
         if 'pwm_on_ms' in config:
             self.pwm_on_ms = config['pwm_on_ms']
@@ -83,10 +83,10 @@ class AutofireCoil(Device):
         else:
             self.pwm_off_ms = self.machine.coils[config['coil']].pwm_off
 
-        if 'coil_action_time' in config:
-            self.coil_action_time = config['coil_action_time']
+        if 'coil_action_ms' in config:
+            self.coil_action_ms = config['coil_action_ms']
         else:
-            self.coil_action_time = self.pulse_ms
+            self.coil_action_ms = self.pulse_ms
 
         if 'delay' in config:
             self.delay = config['delay']
@@ -108,8 +108,8 @@ class AutofireCoil(Device):
         self.machine.platform.set_hw_rule(sw_name=self.switch,
                                        sw_activity=self.switch_activity,
                                        coil_name=self.coil,
-                                       coil_action_time=self.coil_action_time,
-                                       pulse_time=self.pulse_ms,
+                                       coil_action_ms=self.coil_action_ms,
+                                       pulse_ms=self.pulse_ms,
                                        pwm_on=self.pwm_on_ms,
                                        pwm_off=self.pwm_off_ms,
                                        delay=self.delay,

@@ -125,7 +125,7 @@ class HardwarePlatform(Platform):
         config : dict
             A configuration dictionary of settings for the driver. In the case
             of the P-ROC, it uses the following:
-        
+
         'number'
         'polarity'
 
@@ -305,9 +305,8 @@ class HardwarePlatform(Platform):
         if self.proc:
             self.proc.watchdog_tickle()
             self.proc.flush()
-
         if Timing.HZ:
-            if self.next_tick_time <= time.time():
+            if self.next_tick_time <= time.clock():
                 self.machine.timer_tick()
                 self.next_tick_time += Timing.secs_per_tick
                 # todo add detection to see if the system is running behind?
@@ -315,17 +314,17 @@ class HardwarePlatform(Platform):
                 # not good
 
     def _do_set_hw_rule(self,
-                    sw,
-                    sw_activity,
-                    coil_action_time,  # 0 = disable, -1 = hold forever
-                    coil=None,
-                    pulse_time=0,
-                    pwm_on=0,
-                    pwm_off=0,
-                    delay=0,
-                    recycle_time=0,
-                    debounced=True,
-                    drive_now=False):
+                        sw,
+                        sw_activity,
+                        coil_action_ms,  # 0 = disable, -1 = hold forever
+                        coil=None,
+                        pulse_ms=0,
+                        pwm_on=0,
+                        pwm_off=0,
+                        delay=0,
+                        recycle_time=0,
+                        debounced=True,
+                        drive_now=False):
         """Used to write (or update) a hardware rule to the P-ROC.
 
         *Hardware Rules* are used to configure the P-ROC to automatically
@@ -346,12 +345,12 @@ class HardwarePlatform(Platform):
             sw_activity : int
                 Do you want this coil to fire when the switch becomes active
                 (1) or inactive (0)
-            coil_action_time : int
+            coil_action_ms : int
                 The total time (in ms) that this coil action should take place.
                 A value of -1 means it's forever.
             coil : coil object
                 Which coil is this rule controlling
-            pulse_time : int
+            pulse_ms : int
                 How long should the coil be pulsed (ms)
             pwm_on : int
                 If the coil should be held on at less than 100% duty cycle,
@@ -384,8 +383,8 @@ class HardwarePlatform(Platform):
 
         self.log.debug("Setting HW Rule. Switch:%s, Action ms:%s, Coil:%s, "
                        "Pulse:%s, pwm_on:%s, pwm_off:%s, Delay:%s, Recycle:%s,"
-                       "Debounced:%s, Now:%s", sw.name, coil_action_time,
-                       coil.name, pulse_time, pwm_on, pwm_off, delay,
+                       "Debounced:%s, Now:%s", sw.name, coil_action_ms,
+                       coil.name, pulse_ms, pwm_on, pwm_off, delay,
                        recycle_time, debounced, drive_now)
 
         if (sw_activity == 0 and debounced):
@@ -425,17 +424,17 @@ class HardwarePlatform(Platform):
         if pwm_on and pwm_off:
             patter = True
 
-        if coil_action_time == -1:  # hold coil forever
+        if coil_action_ms == -1:  # hold coil forever
             if patter:
                 proc_action = 'patter'
             else:
                 proc_action = 'enable'
-        elif coil_action_time > 0:  # timed action of some sort
-            if coil_action_time <= pulse_time:
+        elif coil_action_ms > 0:  # timed action of some sort
+            if coil_action_ms <= pulse_ms:
                 proc_action = 'pulse'
-                pulse_time = coil_action_time
+                pulse_ms = coil_action_ms
             elif patter:
-                if pulse_time:
+                if pulse_ms:
                     pass
                     # todo error, P-ROC can't do timed patter with pulse
                 else:  # no initial pulse
@@ -452,11 +451,11 @@ class HardwarePlatform(Platform):
 
         if proc_action == 'pulse':
             this_driver = [pinproc.driver_state_pulse(
-                coil.hw_driver.state(), pulse_time)]
+                coil.hw_driver.state(), pulse_ms)]
 
         elif proc_action == 'patter':
             this_driver = [pinproc.driver_state_patter(
-                coil.hw_driver.state(), pwm_on, pwm_off, pulse_time, True)]
+                coil.hw_driver.state(), pwm_on, pwm_off, pulse_ms, True)]
             # todo above param True should not be there. Change to now?
 
         elif proc_action == 'enable':
@@ -470,7 +469,7 @@ class HardwarePlatform(Platform):
         elif proc_action == 'pulsed_patter':
             this_driver = [pinproc.driver_state_pulsed_patter(
                 coil.hw_driver.state(), pwm_on, pwm_off,
-                coil_action_time)]
+                coil_action_ms)]
 
         # merge in any previously-configured driver rules for this switch
 
@@ -804,6 +803,10 @@ class PROCDriver(PlatformDriver):
         """Disables (turns off) this driver."""
         self.proc.driver_disable(self.number)
 
+    def enable(self):
+        """Enables (turns on) this driver."""
+        self.proc.driver_enable(self.number)
+
     def pulse(self, milliseconds=None):
         """Enables this driver for `milliseconds`.
 
@@ -817,12 +820,12 @@ class PROCDriver(PlatformDriver):
     def future_pulse(self, milliseconds=None, timestamp=0):
         """Enables this driver for `milliseconds` at P-ROC timestamp:
         `timestamp`. If no parameter is provided for `milliseconds`,
-        :attr:`pulse_time` is used. If no parameter is provided or
+        :attr:`pulse_ms` is used. If no parameter is provided or
         `timestamp`, 0 is used. ``ValueError`` will be raised if `milliseconds`
         is outside of the range 0-255.
         """
         if milliseconds is None:
-            milliseconds = self.pulse_time
+            milliseconds = self.pulse_ms
         if not milliseconds in range(256):
             raise ValueError('milliseconds must be in range 0-255.')
         self.log.debug("Driver %s - future pulse %d", self.name,
@@ -830,48 +833,48 @@ class PROCDriver(PlatformDriver):
         self.proc.driver_future_pulse(self.number, milliseconds,
                                            timestamp)
 
-    def patter(self, on_time=10, off_time=10, original_on_time=0, now=True):
+    def patter(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
         """Enables a pitter-patter sequence.
 
-        It starts by activating the driver for `original_on_time` milliseconds.
-        Then it repeatedly turns the driver on for `on_time` milliseconds and
-        off for `off_time` milliseconds.
+        It starts by activating the driver for `original_on_ms` milliseconds.
+        Then it repeatedly turns the driver on for `on_ms` milliseconds and
+        off for `off_ms` milliseconds.
         """
 
-        if not original_on_time in range(256):
-            raise ValueError('original_on_time must be in range 0-255.')
-        if not on_time in range(128):
-            raise ValueError('on_time must be in range 0-127.')
-        if not off_time in range(128):
-            raise ValueError('off_time must be in range 0-127.')
+        if not original_on_ms in range(256):
+            raise ValueError('original_on_ms must be in range 0-255.')
+        if not on_ms in range(128):
+            raise ValueError('on_ms must be in range 0-127.')
+        if not off_ms in range(128):
+            raise ValueError('off_ms must be in range 0-127.')
 
         self.log.debug("Driver %s - patter on:%d, off:%d, orig_on:%d, "
-                       "now:%s", self.name, on_time, off_time,
-                       original_on_time, now)
-        self.proc.driver_patter(self.number, on_time, off_time,
-                                     original_on_time, now)
+                       "now:%s", self.name, on_ms, off_ms,
+                       original_on_ms, now)
+        self.proc.driver_patter(self.number, on_ms, off_ms,
+                                     original_on_ms, now)
 
-    def pulsed_patter(self, on_time=10, off_time=10, run_time=0, now=True):
+    def pulsed_patter(self, on_ms=10, off_ms=10, run_time=0, now=True):
         """Enables a pitter-patter sequence that runs for `run_time`
         milliseconds.
 
         Until it ends, the sequence repeatedly turns the driver on for
-        `on_time`  milliseconds and off for `off_time` milliseconds.
+        `on_ms`  milliseconds and off for `off_ms` milliseconds.
         """
 
         if not run_time in range(256):
             raise ValueError('run_time must be in range 0-255.')
-        if not on_time in range(128):
-            raise ValueError('on_time must be in range 0-127.')
-        if not off_time in range(128):
-            raise ValueError('off_time must be in range 0-127.')
+        if not on_ms in range(128):
+            raise ValueError('on_ms must be in range 0-127.')
+        if not off_ms in range(128):
+            raise ValueError('off_ms must be in range 0-127.')
 
         self.log.debug("Driver %s - pulsed patter on:%d, off:%d,"
-                          "run_time:%d, now:%s", self.name, on_time, off_time,
+                          "run_time:%d, now:%s", self.name, on_ms, off_ms,
                           run_time, now)
-        self.proc.driver_pulsed_patter(self.number, on_time, off_time,
+        self.proc.driver_pulsed_patter(self.number, on_ms, off_ms,
                                             run_time, now)
-        self.last_time_changed = time.time()
+        self.last_time_changed = time.clock()
 
     def schedule(self, schedule, cycle_seconds=0, now=True):
         """Schedules this driver to be enabled according to the given
@@ -879,7 +882,7 @@ class PROCDriver(PlatformDriver):
         self.log.debug("Driver %s - schedule %08x", self.name, schedule)
         self.proc.driver_schedule(number=self.number, schedule=schedule,
                                        cycle_seconds=cycle_seconds, now=now)
-        self.last_time_changed = time.time()
+        self.last_time_changed = time.clock()
 
     def state(self):
         """Returns a dictionary representing this driver's current

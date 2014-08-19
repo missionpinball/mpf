@@ -13,6 +13,7 @@ Submodules
    mpf.devices.led
    mpf.devices.light
    mpf.devices.matrix_light
+   mpf.devices.score_reel
    mpf.devices.switch
 
 Module contents
