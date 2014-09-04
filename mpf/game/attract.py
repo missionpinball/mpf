@@ -68,7 +68,7 @@ class Attract(MachineMode):
         """Called after the *request_to_start_game* event is posted.
 
         If `result` is True, this method posts the event
-        *machine_flow_advance*. If False, nothing happens, as the game start
+        *machineflow_advance*. If False, nothing happens, as the game start
         request was denied by some handler.
 
         Parameters
@@ -84,7 +84,7 @@ class Attract(MachineMode):
             self.log.debug("Game start was denied")
         else:  # else because we want to start on True *or* None
             self.log.debug("Let's start a game!!")
-            self.machine.events.post('machine_flow_advance')
+            self.machine.events.post('machineflow_advance')
             # machine flow will move on to the next mode when this mode ends
 
 # The MIT License (MIT)

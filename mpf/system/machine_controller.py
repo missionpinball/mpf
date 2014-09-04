@@ -104,7 +104,7 @@ class MachineController(object):
             self.score_reel_controller = ScoreReelController(self)
 
         # register event handlers
-        self.events.add_handler('machine_flow_advance', self.flow_advance)
+        self.events.add_handler('machineflow_advance', self.flow_advance)
 
         self.events.post("machine_init_complete")
         self.reset()

@@ -232,7 +232,7 @@ class Game(MachineMode):
         # todo audit game time
         # todo audit score
         # todo post game end event
-        self.machine.events.post('machine_flow_advance')
+        self.machine.events.post('machineflow_advance')
 
     def shoot_again(self):
         """Called when the same player should shoot again."""
