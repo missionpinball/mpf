@@ -33,12 +33,10 @@ class Driver(Device):
         self.pwm_on = 0
         self.pwm_off = 0
 
-
         self.time_last_changed = 0
         self.time_when_done = 0
 
-        self.hw_driver = self.machine.platform.configure_driver(
-            config)
+        self.hw_driver = self.machine.platform.configure_driver(config)
         self.log.debug("Creating '%s' with config: %s", name, config)
 
         if 'pulse_ms' in config:
@@ -55,14 +53,14 @@ class Driver(Device):
         # set a timer that runs each tick to re-up it
         self.log.debug("Enabling Driver: %s", self.name)
         self.time_when_done = -1
-        self.time_last_changed = time.clock()
+        self.time_last_changed = time.time()
         self.hw_driver.enable()
 
     def disable(self):
         """ Disables this driver """
         self.log.debug("Disabling Driver: %s", self.name)
-        self.time_last_changed = time.clock()
-        self.hw_driver.enable()
+        self.time_last_changed = time.time()
+        self.hw_driver.disable()
         # todo also disable the timer which reenables this
 
     def pulse(self, milliseconds=None):
@@ -87,18 +85,18 @@ class Driver(Device):
         # todo also disable the timer which reenables this
         self.log.debug("Pulsing Driver %s for %dms", self.name, milliseconds)
         self.hw_driver.pulse(int(milliseconds))
-        self.time_last_changed = time.clock()
+        self.time_last_changed = time.time()
         self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
     def pwm(self, on_ms, _off_ms, orig_on_ms):
         pass  # todo
-        self.time_last_changed = time.clock()
+        self.time_last_changed = time.time()
         self.time_when_done = -1
         # todo also disable the timer which reenables this
 
     def pulse_pwm(self):
         pass  # todo
-        self.time_last_changed = time.clock()
+        self.time_last_changed = time.time()
         self.time_when_done = -1
         # todo also disable the timer which reenables this
 

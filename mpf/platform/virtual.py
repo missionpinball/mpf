@@ -36,66 +36,19 @@ class HardwarePlatform(Platform):
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
 
-    def configure_driver(self, config):
-        """ Configures a virtual driver (coil, flasher, etc.).
-
-        Parameters
-        ----------
-
-        config : dict
-
-        Returns
-        -------
-
-        object
-            Returns a link to the newly-created VirtualDriver object.
-
-        """
+    def configure_driver(self, config, device_type='coil'):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
-
         return VirtualDriver(config['number'])
 
     def configure_switch(self, config):
-        """ Configures a virtual switch.
-
-        Parameters
-        ----------
-
-        config : str
-
-        number : str
-            The number of the driver.
-
-        debounce : bool
-            `debounce` is ignored on this virtual platform, but it's included
-            as a parameter for compatibility with code written for other
-            platforms.
-
-        Returns
-        -------
-
-        switch : object
-            A reference to the switch object that was just created.
-
-        number : int
-            The number of the driver. This is the same as whatever you passed
-            as an initial parameter.
-
-        state : int
-            The current hardware state of the switch, used to set the initial
-            state state in the machine. A value of 0 means the switch is open,
-            and 1 means it's closed. Note this state is the physical state of
-            the switch, so if you configure the switch to be normally-closed
-            (i.e. "inverted" then your code will have to invert it too.) MPF
-            handles this automatically if the switch type is 'NC'.
-
-        """
         switch = VirtualSwitch(config['number'])
-
         # Return the switch object, the hardare number, and an integer of its
         # current state. (1 = active, 0 = inactive)
         return switch, config['number'], 0
+
+    def configure_matrixlight(self, config):
+        return VirtualMatrixLight(config['number'])
 
     def _do_set_hw_rule(self,
                     sw,
@@ -128,8 +81,16 @@ class VirtualSwitch(object):
         self.number = number
 
 
-class VirtualLED(object):
-    pass
+class VirtualMatrixLight(object):
+    def __init__(self, number):
+        self.log = logging.getLogger('VirtualMatrixLight')
+        self.number = number
+
+    def on(self, brightness=255, fade_ms=0, start=0):
+        pass
+
+    def off(self):
+        pass
 
 
 class VirtualDriver(object):

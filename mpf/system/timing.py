@@ -37,7 +37,7 @@ class Timing(object):
         Timing.secs_per_tick = 1 / float(HZ)
 
     def add(self, timer):
-        timer.wakeup = time.clock() + timer.frequency
+        timer.wakeup = time.time() + timer.frequency
         self.timers.add(timer)
 
     def remove(self, timer):
@@ -48,7 +48,7 @@ class Timing(object):
         Timing.tick += 1
         #self.log.debug("t:%s", Timing.tick)
         for timer in self.timers:
-            if timer.wakeup and timer.wakeup <= time.clock():
+            if timer.wakeup and timer.wakeup <= time.time():
                 timer.call()
                 if timer.frequency:
                     timer.wakeup += timer.frequency
@@ -84,6 +84,36 @@ class Timing(object):
         else:
             time = ''.join(i for i in time if not i.isalpha())
             return int(time)
+
+    @staticmethod
+    def int_to_pwm(ratio, length):
+        """Converts a decimal between 0 and 1 to a pwm mask of whatever length
+        you want.
+
+        For example, an input ratio of .5 with a result length of 8 returns
+        10101010. And input ratio of .7 with a result length of 32 returns
+        11011011101101101101110110110110.
+
+        Another way to think about this is this method converts a decimal
+        percentage into the corresponding pwm mask.
+
+        Args:
+            ratio (float): A value between 0 and 1 that you want to convert.
+            length (int): How many digits you want in your result.
+        """
+
+        whole_num = 0  # tracks our whole number
+        output = 0  # our output mask
+        count = 0  # our current count
+
+        for _i in range(length):
+            count += ratio
+            if int(count) > whole_num:
+                output = output | 1
+                whole_num += 1
+            output = output << 1
+
+        return output
 
 
 class Timer(object):

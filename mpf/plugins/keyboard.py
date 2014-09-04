@@ -187,18 +187,20 @@ class Keyboard(object):
 
     def get_keyboard_events(self):
         """Gets the key events from the pyglet window."""
-        self.window.dispatch_events()
+        self.machine.window.dispatch_events()
 
     def _setup_window(self):
-        self.window = pyglet.window.Window()
-        self.window.width = 100
-        self.window.height = 100
 
-        @self.window.event
+        if not hasattr(self.machine, 'window'):
+            self.machine.window = pyglet.window.Window()
+            self.machine.window.width = 100
+            self.machine.window.height = 100
+
+        @self.machine.window.event
         def on_close():
             self.machine.done = True
 
-        @self.window.event
+        @self.machine.window.event
         # capture key presses and add them to the event queue
         def on_key_press(symbol, modifiers):
             if (symbol == pyglet.window.key.C and
@@ -253,7 +255,7 @@ class Keyboard(object):
                             self.machine.events.post(str(event_dict['event']),
                                                      **event_dict['params'])
 
-        @self.window.event
+        @self.machine.window.event
         def on_key_release(symbol, modifiers):
             # see the above on_key_press() method for comments on this method
             key_press = str(symbol)

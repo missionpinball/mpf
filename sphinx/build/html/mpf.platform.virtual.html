@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.platform.virtual module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
+    <title>mpf.platform.virtual module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.6',
+        VERSION:     '0.0.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -59,56 +59,18 @@ that it doesn&#8217;t require any P-ROC drivers or modules to be installed.</p>
 mpf.system.hardware.Platform.</p>
 <dl class="method">
 <dt id="mpf.platform.virtual.HardwarePlatform.configure_driver">
-<tt class="descname">configure_driver</tt><big>(</big><em>config</em><big>)</big></dt>
-<dd><p>Configures a virtual driver (coil, flasher, etc.).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Returns a link to the newly-created VirtualDriver object.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">object</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
+<tt class="descname">configure_driver</tt><big>(</big><em>config</em>, <em>device_type='coil'</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.HardwarePlatform.configure_matrixlight">
+<tt class="descname">configure_matrixlight</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.platform.virtual.HardwarePlatform.configure_switch">
 <tt class="descname">configure_switch</tt><big>(</big><em>config</em><big>)</big></dt>
-<dd><p>Configures a virtual switch.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>number</strong> (<em>str</em>) &#8211; The number of the driver.</li>
-<li><strong>debounce</strong> (<em>bool</em>) &#8211; <cite>debounce</cite> is ignored on this virtual platform, but it&#8217;s included
-as a parameter for compatibility with code written for other
-platforms.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>switch</strong> (<em>object</em>) &#8211;
-A reference to the switch object that was just created.</li>
-<li><strong>number</strong> (<em>int</em>) &#8211;
-The number of the driver. This is the same as whatever you passed
-as an initial parameter.</li>
-<li><strong>state</strong> (<em>int</em>) &#8211;
-The current hardware state of the switch, used to set the initial
-state state in the machine. A value of 0 means the switch is open,
-and 1 means it&#8217;s closed. Note this state is the physical state of
-the switch, so if you configure the switch to be normally-closed
-(i.e. &#8220;inverted&#8221; then your code will have to invert it too.) MPF
-handles this automatically if the switch type is &#8216;NC&#8217;.</li>
-</ul>
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -164,9 +126,19 @@ handles this automatically if the switch type is &#8216;NC&#8217;.</li>
 </dd></dl>
 
 <dl class="class">
-<dt id="mpf.platform.virtual.VirtualLED">
-<em class="property">class </em><tt class="descclassname">mpf.platform.virtual.</tt><tt class="descname">VirtualLED</tt></dt>
+<dt id="mpf.platform.virtual.VirtualMatrixLight">
+<em class="property">class </em><tt class="descclassname">mpf.platform.virtual.</tt><tt class="descname">VirtualMatrixLight</tt><big>(</big><em>number</em><big>)</big></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualMatrixLight.off">
+<tt class="descname">off</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualMatrixLight.on">
+<tt class="descname">on</tt><big>(</big><em>brightness=255</em>, <em>fade_ms=0</em>, <em>start=0</em><big>)</big></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="class">
@@ -215,7 +187,7 @@ handles this automatically if the switch type is &#8216;NC&#8217;.</li>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

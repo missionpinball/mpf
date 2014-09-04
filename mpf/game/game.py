@@ -32,14 +32,24 @@ class Game(MachineMode):
 
     """
 
-    def __init__(self, machine):
-        super(Game, self).__init__(machine)
+    def __init__(self, machine, name):
+        super(Game, self).__init__(machine, name)
         self.log = logging.getLogger("Game")
+
+        self.machine.game = None
+
+    def start(self):
+        """Automatically called when the *Game* machine mode becomes active.
+
+        """
+        super(Game, self).start()
+        self.log.info("Game Starting!!")
 
         # Intialize variables
         Player.total_players = 0
         self.player = None  # This is the current player
         self.player_list = []
+        self.machine.game = self
 
         # todo register for request_to_start_game so you can deny it, or allow
         # it with a long press
@@ -59,16 +69,14 @@ class Game(MachineMode):
         self.registered_event_handlers.append(self.machine.events.add_handler(
             'sw_start', self.request_player_add))
 
-    def start(self):
-        """Automatically called when the *Game* machine mode becomes active.
-
-        """
-        super(Game, self).start()
-        self.log.info("Game Starting!!")
         # todo audit game start
 
         self.machine.events.post('game_starting', ev_type='queue',
                                  callback=self.game_started, game=self)
+
+    def stop(self):
+        self.machine.game = None
+        super(Game, self).stop()
 
     def game_started(self, ev_result=True, game=None):
         """All the modules that needed to do something on game start are done,
@@ -88,17 +96,6 @@ class Game(MachineMode):
         """
         if player.vars['number'] == 1:  # this is the first player
             self.player_turn_start()
-
-    def tick(self):
-        """Called once per machine tick.
-
-        Currently this method does nothing. That probably won't be the case
-        forever.
-
-        """
-        while self.active:
-            # do something here
-            yield
 
     """
       _____                       __ _
@@ -286,7 +283,7 @@ class Game(MachineMode):
         number of players must be less than the max number allowed.)
 
         Assuming this method believes it's ok to add a player, it posts the
-        boolean evet *player_add_request* to give other modules the opportunity
+        boolean event *player_add_request* to give other modules the opportunity
         to deny it. (For example, a credits module might deny the request if
         there are not enough credits in the machine.)
 

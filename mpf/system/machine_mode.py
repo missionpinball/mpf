@@ -27,10 +27,11 @@ class MachineMode(object):
     control panel buttons, flippers, start, plunge, etc.)
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine, name):
         self.log = logging.getLogger(__name__)
         self.machine = machine
         self.task = None
+        self.name = name
         self.delays = DelayManager()
         self.registered_event_handlers = []
 
@@ -39,6 +40,7 @@ class MachineMode(object):
         self.log.info("Mode started")
         self.active = True
         self.task = Task.Create(self.tick, sleep=0)
+        self.machine.events.post('machineflow_' + self.name + '_start')
 
     def stop(self):
         """Stops this machine mode. """
@@ -54,6 +56,7 @@ class MachineMode(object):
         for handler in self.registered_event_handlers:
             self.machine.events.remove_handler(handler)
         self.log.debug("Stopped")
+        self.machine.events.post('machineflow_' + self.name + '_stop')
 
     def tick(self):
         """Most likely you'll just copy this entire method to your mode

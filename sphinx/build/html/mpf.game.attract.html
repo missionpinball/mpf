@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.game.attract module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
+    <title>mpf.game.attract module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.6',
+        VERSION:     '0.0.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -55,7 +55,7 @@ flipper button to start tournament mode, etc.</p>
 </div>
 <dl class="class">
 <dt id="mpf.game.attract.Attract">
-<em class="property">class </em><tt class="descclassname">mpf.game.attract.</tt><tt class="descname">Attract</tt><big>(</big><em>machine</em><big>)</big></dt>
+<em class="property">class </em><tt class="descclassname">mpf.game.attract.</tt><tt class="descname">Attract</tt><big>(</big><em>machine</em>, <em>name</em><big>)</big></dt>
 <dd><p>Bases: <a class="reference internal" href="mpf.system.machine_mode.html#mpf.system.machine_mode.MachineMode" title="mpf.system.machine_mode.MachineMode"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.machine_mode.MachineMode</span></tt></a></p>
 <p>Base class for the active mode for a machine when a game is not in
 progress. It&#8217;s main job is to watch for the start button to be pressed, to
@@ -69,16 +69,6 @@ mode if the request to start game comes back as approved.</p>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="mpf.game.attract.Attract.advance_reel">
-<tt class="descname">advance_reel</tt><big>(</big><em>reel_name</em>, <em>direction=1</em><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.game.attract.Attract.coil_test">
-<tt class="descname">coil_test</tt><big>(</big><em>coil_name</em>, <em>pulse_change=0</em><big>)</big></dt>
-<dd></dd></dl>
-
 <dl class="method">
 <dt id="mpf.game.attract.Attract.result_of_start_request">
 <tt class="descname">result_of_start_request</tt><big>(</big><em>ev_result=True</em><big>)</big></dt>
@@ -111,19 +101,6 @@ be False. Otherwise it&#8217;s True.</td>
 <p>Since this is the Attract mode, this method posts a boolean event
 called <em>request_to_start_game</em>. If that event comes back True, this
 method calls <a class="reference internal" href="#mpf.game.attract.Attract.result_of_start_request" title="mpf.game.attract.Attract.result_of_start_request"><tt class="xref py py-meth docutils literal"><span class="pre">result_of_start_request()</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.game.attract.Attract.test">
-<tt class="descname">test</tt><big>(</big><em>param=None</em><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.game.attract.Attract.tick">
-<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
-<dd><p>Called once per machine tick.</p>
-<p>Currently this method does nothing. Eventually it will drive the DMD
-and do other Attract-type things.</p>
 </dd></dl>
 
 </dd></dl>
@@ -167,7 +144,7 @@ and do other Attract-type things.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

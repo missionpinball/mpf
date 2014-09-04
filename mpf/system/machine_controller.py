@@ -12,23 +12,26 @@ import yaml
 from collections import defaultdict
 from copy import deepcopy
 import time
+import sys
 
 from mpf.system.hardware import DeviceCollection
-from mpf.system.timing import Timing, Timer
+from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
 from mpf.system.events import EventManager
 from mpf.system.switch_controller import SwitchController
 from mpf.system.ball_controller import BallController
-from mpf.modules.ball_search import BallSearch
-from mpf.modules.keyboard import Keyboard
+from mpf.system.shot_controller import ShotController
+from mpf.system.score_controller import ScoreController
+from mpf.system.light_controller import LightController
+
 from mpf.devices.autofire import AutofireCoil
 from mpf.devices.ball_device import BallDevice
 from mpf.devices.driver import Driver
+from mpf.devices.light import MatrixLight, DirectLight
 from mpf.devices.flipper import Flipper
 from mpf.devices.switch import Switch
-from mpf.system.shot_controller import ShotController
-from mpf.system.score_controller import ScoreController
-from mpf.devices.score_reel import (ScoreReel, ScoreReelGroup,
+from mpf.devices.score_reel import (ScoreReel,
+                                    ScoreReelGroup,
                                     ScoreReelController)
 
 
@@ -53,32 +56,35 @@ class MachineController(object):
         (virtual hardware) mode.
     """
 
-    def __init__(self, config_file, physical_hw=True):
+    def __init__(self, options):
         self.log = logging.getLogger("Machine Controller")
-        self.starttime = time.clock()
+        self.options = options
+        self.starttime = time.time()
         self.config = defaultdict(int)  # so we can simplify checking
-        self.physical_hw = physical_hw
+        self.physical_hw = options['physical_hw']
         self.switch_events = []
         self.done = False
         self.HZ = None
-        self.gameflow_index = 0
+        self.machineflow_index = None
 
-        # todo make these conditional so they only load if they're used.
         self.coils = DeviceCollection()
-        self.lamps = DeviceCollection()
+        self.lights = DeviceCollection()
         self.switches = DeviceCollection()
-        self.leds = DeviceCollection()
         self.autofires = DeviceCollection()
         self.flippers = DeviceCollection()
         self.balldevices = DeviceCollection()
         self.score_reels = DeviceCollection()
         self.score_reel_groups = DeviceCollection()
-        # todo combine leds and lamps?
-        # todo add GI and flashers?
+        # todo add GI and flashers
+
+        self.plugins = []
+        self.hacklets = []
 
         # create all the machine-wide objects & set them up.
         self.events = EventManager()
-        self.update_config(config_file)
+        self.update_config(os.path.join(options['machinepath'],
+                                        options['configfile']))
+
         self.platform = self.set_platform()
         self.timing = Timing(self)
         self.timing.configure(HZ=self.config['Machine']['HZ'])
@@ -86,25 +92,22 @@ class MachineController(object):
         self.process_config()
 
         self.ball_controller = BallController(self)
+        self.light_controller = LightController(self)
 
         # Optional components which should only load if they're used
-        # todo make these conditional
 
-        self.ballsearch = BallSearch(self)
-        self.shots = ShotController(self)
-        self.scoring = ScoreController(self)
+        if 'Shots' in self.config:
+            self.shots = ShotController(self)
+        if 'Scoring' in self.config:
+            self.scoring = ScoreController(self)
         if 'Score Reel Groups' in self.config:
             self.score_reel_controller = ScoreReelController(self)
 
-        # todo clean this up when you fix game flow
-        self.game = None
-        self.attract = None
+        # register event handlers
+        self.events.add_handler('machine_flow_advance', self.flow_advance)
 
         self.events.post("machine_init_complete")
         self.reset()
-
-        # register event handlers
-        self.events.add_handler('machine_flow_advance', self.flow_advance)
 
     def reset(self):
         """Resets the machine."""
@@ -113,21 +116,8 @@ class MachineController(object):
         # the config and stuff, right? Maybe we destroy all of our objects
         # even and recreate them?
 
-        # reset variables
-        self.gameflow_index = 0
-
-        #self.periodic = self.timing.add(Timer(self.periodic_timer_test,
-        #                                      frequency=2000))
-
-        self.switch_controller.add_switch_handler(switch_name='start', state=1,
-                                                  ms=500, callback=self.test)
-        #self.switch_controller.add_switch_handler('start', self.test, 0, 4000)
-
-        # todo now start attract mode
-        # self.attract_mode = Task()
-
-        # after our reset is over, we start the gameflow
-        self._flow_do()
+        # after our reset is over, we start the machineflow
+        self.flow_advance(0)
 
     def flow_advance(self, position=None):
         """Advances the machine to the next machine mode as specified in the
@@ -136,39 +126,27 @@ class MachineController(object):
 
         """
 
-        if not position:
-            if self.gameflow_index == len(self.config['GameFlow']) - 1:
-                self.gameflow_index = 0
-            else:
-                self.gameflow_index += 1
+        # If there's a current machineflow position, stop that mode
+        if self.machineflow_index is not None:
+            self.config['MachineFlow'][self.machineflow_index].stop()
         else:
-            self.gameflow_index = position
+            self.machineflow_index = 0
+
+        # Now find the new position and start it:
+        if position is None:  # A specific position was not passed, so just advance
+            if self.machineflow_index >= len(self.config['MachineFlow']) - 1:
+                self.machineflow_index = 0
+            else:
+                self.machineflow_index += 1
+
+        else:  # Go to whatever position was passed
+            self.machineflow_index = position
+
         self.log.debug("Advancing Machine Flow. New Index: %s",
-                       self.gameflow_index)
-        self._flow_do()
+                       self.machineflow_index)
 
-    def _flow_do(self):
-        # todo change this to set it self up automatically from the yaml file
-        # Maybe this can switch to events, where there's an event like
-        # 'gameflow_<yamlentry>' that each of these things watches for?
-
-        from mpf.game.attract import Attract
-        from mpf.game.game import Game
-
-        if self.gameflow_index == 0:
-            self.attract = Attract(self)
-            if self.game:
-                self.game.stop()
-                self.game = None
-            self.attract.start()
-        elif self.gameflow_index == 1:
-            self.game = Game(self)
-            if self.attract:
-                self.attract.stop()
-                self.attract = None
-            self.game.start()
-
-        # todo when I fix this, also clean up the stuff in init
+        # Now start the new machine mode
+        self.config['MachineFlow'][self.machineflow_index].start()
 
     def update_config(self, config):
         """Merges updates into the self.config dictionary.
@@ -244,18 +222,23 @@ class MachineController(object):
 
         """
 
-        try:
-            hardware_platform = __import__('mpf.platform.%s' %
-                               self.config['Hardware']['Platform'],
-                               fromlist=["HardwarePlatform"])
-            # above line has an effect similar to:
-            # from mpf.platform.<platform_name> import HardwarePlatform
-            return hardware_platform.HardwarePlatform(self)
+        if self.physical_hw:
+            try:
+                hardware_platform = __import__('mpf.platform.%s' %
+                                   self.config['Hardware']['Platform'],
+                                   fromlist=["HardwarePlatform"])
+                # above line has an effect similar to:
+                # from mpf.platform.<platform_name> import HardwarePlatform
+                return hardware_platform.HardwarePlatform(self)
 
-        except ImportError:
-            self.log.error("Error importing platform module: %s",
-                           self.config['Hardware']['Platform'])
-            quit()  # No point in continuing if we error here
+            except ImportError:
+                self.log.error("Error importing platform module: %s",
+                               self.config['Hardware']['Platform'])
+                quit()  # No point in continuing if we error here
+
+        else:
+            from mpf.platform.virtual import HardwarePlatform
+            return HardwarePlatform(self)
 
     def process_config(self):
         """Processes the hardware config based on the machine config files.
@@ -274,6 +257,21 @@ class MachineController(object):
             for coil in self.config['Coils']:
                 # Driver init (machine, name, config)
                 Driver(self, coil, self.config['Coils'][coil], self.coils)
+
+        # Lights
+        if 'Lights' in self.config:
+            for light in self.config['Lights']:
+
+                # figure out if it's a matrix or direct light
+                if ('number' in self.config['Lights'][light] or
+                        ('row' in self.config['Lights'][light] and
+                         'column' in self.config['Lights'][light])):
+                    MatrixLight(self, light, self.config['Lights'][light],
+                                self.lights)
+                elif ('board' in self.config['Lights'][light] and
+                      'elements' in self.config['Lights'][light]):
+                    DirectLight(self, light, self.config['Lights'][light],
+                                self.lights)
 
         # Switches
         if 'Switches' in self.config:
@@ -303,10 +301,6 @@ class MachineController(object):
                            self.config['BallDevices'][balldevice],
                            self.balldevices)
 
-        # Keyboard mapping
-        if 'Keyboard' in self.config:
-            self.keyboard = Keyboard(self)
-
         # Score Reel
         if 'Score Reels' in self.config:
             for score_reel in self.config['Score Reels']:
@@ -320,6 +314,35 @@ class MachineController(object):
                 ScoreReelGroup(self, reel_group,
                                self.config['Score Reel Groups'][
                                reel_group], self.score_reel_groups)
+
+        # Plugins
+        if 'Plugins' in self.config:
+            self.config['Plugins'] = self.config['Plugins'].split(' ')
+            for plugin in self.config['Plugins']:
+                self.log.info("Loading Plugin: %s", plugin)
+                i = __import__('mpf.plugins.' + plugin.split('.')[0],
+                               fromlist=[''])
+                self.plugins.append(getattr(i, plugin.split('.')[1])(self))
+
+        # Hacklets
+        if 'Hacklets' in self.config:
+            sys.path.append(os.path.abspath(self.options['machinepath']))
+            self.config['Hacklets'] = self.config['Hacklets'].split(' ')
+            for hacklet in self.config['Hacklets']:
+                self.log.info("Loading Hacklet: %s", hacklet)
+                i = __import__('hacklets.' + hacklet.split('.')[0],
+                               fromlist=[''])
+                self.hacklets.append(getattr(i, hacklet.split('.')[1])(self))
+
+        # Machine Flow
+        self.config['MachineFlow'] = self.config['MachineFlow'].split(' ')
+        # Convert the MachineFlow config into a list of objects
+        i = 0
+        for machine_mode in self.config['MachineFlow']:
+            name = machine_mode.split('.')[-1:]
+            self.config['MachineFlow'][i] = self.string_to_class(machine_mode)(
+                                                self, name[0])
+            i += 1
 
     def string_to_list(self, string):
         """ Converts a comma-separated string into a python list.
@@ -345,6 +368,28 @@ class MachineController(object):
         else:
             # if we're not passed a string, just return an empty list.
             return []
+
+    def string_to_class(self, class_string):
+        """Converts a string like mpf.system.events.EventManager into a python
+        class.
+
+        Args:
+            class_string(str): The input string
+
+        Returns:
+            A reference to the python class object
+
+        This function came from here:
+        http://stackoverflow.com/questions/452969/
+        does-python-have-an-equivalent-to-java-class-forname
+        """
+
+        parts = class_string.split('.')
+        module = ".".join(parts[:-1])
+        m = __import__(module)
+        for comp in parts[1:]:
+            m = getattr(m, comp)
+        return m
 
     def dict_merge(self, a, b, combine_lists=True):
         """Recursively merges dicts.
@@ -462,7 +507,7 @@ class MachineController(object):
             if num_loops != 0:
                 self.log.info("Hardware loop speed: %sHz",
                                round(num_loops /
-                                     (time.clock() - self.starttime)))
+                                     (time.time() - self.starttime)))
 
         # todo add support to read software switch events
 
@@ -474,7 +519,7 @@ class MachineController(object):
         # todo currently this just runs as fast as it can. Should I have it
         # sleep while waiting for the next timer tick?
 
-        if self.platform.next_tick_time <= time.clock():
+        if self.platform.next_tick_time <= time.time():
             self.timer_tick()
             self.platform.next_tick_time += Timing.secs_per_tick
 
@@ -484,9 +529,6 @@ class MachineController(object):
         self.events.post('timer_tick')  # sends the timer_tick system event
         Task.timer_tick()  # notifies tasks
         DelayManager.timer_tick()
-
-    def test(self):
-        print "in test method."
 
     def end_run_loop(self):
         """Causes the main run_loop to end."""

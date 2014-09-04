@@ -10,9 +10,7 @@ Submodules
    mpf.devices.ball_device
    mpf.devices.driver
    mpf.devices.flipper
-   mpf.devices.led
    mpf.devices.light
-   mpf.devices.matrix_light
    mpf.devices.score_reel
    mpf.devices.switch
 

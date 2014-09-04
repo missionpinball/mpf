@@ -403,7 +403,7 @@ class ScoreReelGroup(Device):
             for reel in self.reels:
                 if (reel and
                         not reel.hw_sync and
-                        reel.hw_check_time > time.clock()):
+                        reel.hw_check_time > time.time()):
                     # set an event handler to try again then
                     self.machine.events.add_handler(reel.name + '_hw_value',
                                                     self.validate)
@@ -557,7 +557,7 @@ class ScoreReelGroup(Device):
         for reel in self.reels:
             if (reel and
                     self.machine.coils[reel.config['coil_inc']].time_when_done
-                    > time.clock()):
+                    > time.time()):
                 num_energized += 1
         self.log.debug("@@@ num_energized: %s", num_energized)
 
@@ -617,7 +617,7 @@ class ScoreReelGroup(Device):
                 self.delay.add('next_jump_advance',
                                self.machine.coils[this_round_reels[i].
                                config['coil_inc']].time_when_done -
-                               time.clock(),
+                               time.time(),
                                self._jump_advance_step)
 
     def _jump_advance_complete(self):
@@ -1074,7 +1074,7 @@ class ScoreReel(Device):
         self.set_destination_value(direction)
         # above line also sets self._destination_index
 
-        if self.next_pulse_time > time.clock():
+        if self.next_pulse_time > time.time():
                 # This reel is not ready to pulse again
                 # Note we don't allow this to be overridden. Figure the
                 # recycle time is there for a reason and we don't want to
@@ -1104,7 +1104,7 @@ class ScoreReel(Device):
                                self.config['repeat_pulse_ms'],
                                self._ready_to_fire)
 
-                self.next_pulse_time = (time.clock() +
+                self.next_pulse_time = (time.time() +
                                       (self.config['repeat_pulse_ms'] /
                                       1000.0))
                 self.log.debug("@@@ New Next pulse ready time: %s",
@@ -1115,7 +1115,7 @@ class ScoreReel(Device):
                                self.config['hw_confirm_ms'],
                                self.check_hw_switches)
 
-                self.hw_check_time = (time.clock() +
+                self.hw_check_time = (time.time() +
                                       (self.config['hw_confirm_ms'] / 1000.0))
                 self.log.debug("@@@ New HW check time: %s", self.hw_check_time)
 

@@ -8,7 +8,6 @@ Subpackages
 
     mpf.devices
     mpf.game
-    mpf.modules
     mpf.platform
     mpf.system
 

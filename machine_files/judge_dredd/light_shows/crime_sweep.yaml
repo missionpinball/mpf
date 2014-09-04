@@ -1,0 +1,16 @@
+- tocks: 1
+  lights:
+    crimeLevel1: ff
+    crimeLevel4: 00
+- tocks: 1
+  lights:
+    crimeLevel2: ff
+    crimeLevel1: 00
+- tocks: 1
+  lights:
+    crimeLevel3: ff
+    crimeLevel2: 00
+- tocks: 1
+  lights:
+    crimeLevel4: ff
+    crimeLevel3: 00

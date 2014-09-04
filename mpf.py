@@ -20,6 +20,10 @@ parser.add_option("-c", "--configfile",
                   default=os.path.join("config", "config.yaml"),
                   help="Specifies the location of the first config file")
 
+parser.add_option("-m", "--machinepath",
+                  action="store", type="string", dest="machinepath",
+                  help="Specifies the location of the machine files")
+
 parser.add_option("-l", "--logfile",
                   action="store", type="string", dest="logfile",
                   default=os.path.join("logs", datetime.now().strftime(
@@ -35,6 +39,7 @@ parser.add_option("-x", "--nohw",
                   help="Specifies physical game hardware is not connected")
 
 (options, args) = parser.parse_args()
+options_dict = vars(options)  # convert the values instance to python dict
 
 # Configure logging. Creates a logfile and logs to the console.
 # Formating options are documented here:
@@ -56,7 +61,7 @@ logging.getLogger('').addHandler(console)
 
 
 def main():
-    machine = MachineController(options.configfile, options.physical_hw)
+    machine = MachineController(options_dict)
     machine.run()
 
 if __name__ == '__main__':

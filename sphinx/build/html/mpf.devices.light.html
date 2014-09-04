@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.light module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
+    <title>mpf.devices.light module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.6',
+        VERSION:     '0.0.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -46,15 +46,79 @@
             
   <div class="section" id="module-mpf.devices.light">
 <span id="mpf-devices-light-module"></span><h1>mpf.devices.light module</h1>
-<p>Contains the Light parent class.</p>
+<p>Contains the Light. MatrixLight, and DirectLight parent classes.</p>
+<dl class="class">
+<dt id="mpf.devices.light.DirectLight">
+<em class="property">class </em><tt class="descclassname">mpf.devices.light.</tt><tt class="descname">DirectLight</tt><big>(</big><em>machine</em>, <em>name</em>, <em>number</em>, <em>platform_driver</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.devices.light.Light" title="mpf.devices.light.Light"><tt class="xref py py-class docutils literal"><span class="pre">mpf.devices.light.Light</span></tt></a></p>
+<p>Represents an light connected to an new-style interface board.
+Typically this is an LED.</p>
+<p>DirectLights can have any number of elements. Typically they&#8217;re either
+single element (single color), or three element (RGB), though dual element
+(red/green) and quad-element (RGB + UV) also exist and can be used.</p>
+<dl class="method">
+<dt id="mpf.devices.light.DirectLight.color">
+<tt class="descname">color</tt><big>(</big><em>color</em><big>)</big></dt>
+<dd><p>Set an LED to a color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>color</strong> &#8211; </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.light.DirectLight.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables an LED, including all elements of a multi-color LED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.light.DirectLight.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables all the elements of an LED. Really only useful for single
+color LEDs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.light.DirectLight.fade">
+<tt class="descname">fade</tt><big>(</big><em>color</em>, <em>fadetime</em><big>)</big></dt>
+<dd><p>Fades the LED to the color via the fadetime in ms</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="class">
 <dt id="mpf.devices.light.Light">
-<em class="property">class </em><tt class="descclassname">mpf.devices.light.</tt><tt class="descname">Light</tt></dt>
+<em class="property">class </em><tt class="descclassname">mpf.devices.light.</tt><tt class="descname">Light</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
 <dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Device" title="mpf.system.hardware.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Device</span></tt></a></p>
 <p>Parent class of &#8220;lights&#8221; in a pinball machine.</p>
-<p>These can either be traditional incandescent lamps (or replacement LEDs)
-connected to a lamp matrix, or they can be LEDs connected to an LED
-control board.</p>
+<p>Fundamentally there are two types of lights: matrix lights (controlled by
+a column/row lamp matrix), and direct lights (typically LEDs which may have
+more than one individual element to allow variable colors).</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.devices.light.MatrixLight">
+<em class="property">class </em><tt class="descclassname">mpf.devices.light.</tt><tt class="descname">MatrixLight</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.devices.light.Light" title="mpf.devices.light.Light"><tt class="xref py py-class docutils literal"><span class="pre">mpf.devices.light.Light</span></tt></a></p>
+<p>Represents a light connected to a traditional lamp matrix in a pinball
+machine.</p>
+<p>This light could be an incandescent lamp or a replacement single-color
+LED. The key is that they&#8217;re connected up to a lamp matrix.</p>
+<dl class="method">
+<dt id="mpf.devices.light.MatrixLight.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.light.MatrixLight.on">
+<tt class="descname">on</tt><big>(</big><em>brightness=255</em>, <em>fade_ms=0</em>, <em>start_brightness=None</em><big>)</big></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </div>
@@ -96,7 +160,7 @@ control board.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

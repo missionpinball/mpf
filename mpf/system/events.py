@@ -258,8 +258,13 @@ class EventManager(object):
                 # processing the remaining handlers for bool or queue events
                 if (ev_type == 'boolean' or ev_type == 'queue') and \
                         result is False:
+
+                    # add a False result so our handlers no something failed
+                    kwargs['ev_result'] = False
+
                     if self.debug and event != 'timer_tick':
                         self.log.debug("Aborting future event processing")
+
                     break
 
                 elif ev_type == 'relay':

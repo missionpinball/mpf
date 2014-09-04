@@ -3,13 +3,9 @@
 
 
     
-GameFlow:
-    - attract:
-        Module: mpf.attract
-        Class: Attract
-    - game:
-        Module: mpf.game
-        Class: Game
+MachineFlow:
+    mpf.game.attract.Attract
+    mpf.game.game.Game
 
 BallSearch:
     Secs until ball search start: 10
@@ -26,3 +22,21 @@ Game:
     num_hits_for_valid_playfield: 2
     Balls per game: 3
     Max players per game: 4
+
+Hacklets:
+    attract.Attract
+
+Plugins:
+    keyboard.Keyboard
+    window.Window
+    ball_search.BallSearch
+
+Window:
+    width: 800
+    height: 600
+    title: Judge Dredd
+    items:
+        score
+        player
+        ball
+        version

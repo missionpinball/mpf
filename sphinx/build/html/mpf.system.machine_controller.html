@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.machine_controller module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
+    <title>mpf.system.machine_controller module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.6',
+        VERSION:     '0.0.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -49,7 +49,7 @@
 <p>The main machine object for the Mission Pinball Framework.</p>
 <dl class="class">
 <dt id="mpf.system.machine_controller.MachineController">
-<em class="property">class </em><tt class="descclassname">mpf.system.machine_controller.</tt><tt class="descname">MachineController</tt><big>(</big><em>config_file</em>, <em>physical_hw=True</em><big>)</big></dt>
+<em class="property">class </em><tt class="descclassname">mpf.system.machine_controller.</tt><tt class="descname">MachineController</tt><big>(</big><em>options</em><big>)</big></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Base class for the Machine Controller object.</p>
 <p>The machine controller is the main entity of the entire framework. It&#8217;s the
@@ -183,6 +183,26 @@ configuration dictionary. Looks for a module of that name in the
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.string_to_class">
+<tt class="descname">string_to_class</tt><big>(</big><em>class_string</em><big>)</big></dt>
+<dd><p>Converts a string like mpf.system.events.EventManager into a python
+class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>class_string</strong> (<em>str</em>) &#8211; The input string</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A reference to the python class object</td>
+</tr>
+</tbody>
+</table>
+<p>This function came from here:
+<a class="reference external" href="http://stackoverflow.com/questions/452969/">http://stackoverflow.com/questions/452969/</a>
+does-python-have-an-equivalent-to-java-class-forname</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="mpf.system.machine_controller.MachineController.string_to_list">
 <tt class="descname">string_to_list</tt><big>(</big><em>string</em><big>)</big></dt>
 <dd><p>Converts a comma-separated string into a python list.</p>
@@ -208,11 +228,6 @@ configuration dictionary. Looks for a module of that name in the
 <dd><p>This is the main game run loop that&#8217;s used when the hardware
 platform doesn&#8217;t have to be polled continuously.</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.machine_controller.MachineController.test">
-<tt class="descname">test</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.machine_controller.MachineController.timer_tick">
@@ -287,7 +302,7 @@ path is stored in <cite>self.config[&#8216;Config_path&#8217;]</cite>.)</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -115,19 +115,19 @@ class SwitchController(object):
         last changed state.
         """
 
-        return (time.clock() - self.switches[switch_name]['time']) * 1000.0
+        return (time.time() - self.switches[switch_name]['time']) * 1000.0
 
     def secs_since_change(self, switch_name):
         """Returns the number of ms that have elapsed since this switch
         last changed state.
         """
 
-        return time.clock() - self.switches[switch_name]['time']
+        return time.time() - self.switches[switch_name]['time']
 
     def set_state(self, switch_name, state=1):
         """Sets the state of a switch."""
         self.switches.update({switch_name: {'state': state,
-                                            'time': time.clock()
+                                            'time': time.time()
                                             }
                               })
 
@@ -186,7 +186,6 @@ class SwitchController(object):
             return
 
         self.log.debug("<<<<< switch: %s, State:%s >>>>>", name, state)
-
         # Update the machine's switch state
         self.set_state(name, state)
 
@@ -201,7 +200,7 @@ class SwitchController(object):
                 if entry['ms']:
                     # This entry is for a timed switch, so add it to our
                     # active timed switch list
-                    key = time.clock() + entry['ms']
+                    key = time.time() + entry['ms']
                     value = {'switch_action': str(name) + '-' + str(state),
                              'callback': entry['callback'],
                              'switch_name': name,
@@ -317,7 +316,7 @@ class SwitchController(object):
         # Make a copy so we can delete from the orig list while iterating.
         active_timed_switches_copy = dict(self.active_timed_switches)
         for k, v in active_timed_switches_copy.iteritems():
-            if k <= time.clock():  # change to generator?
+            if k <= time.time():  # change to generator?
                 for item in v:
                     if item['return_info']:
                         item['callback'](switch_name=item['switch_name'],

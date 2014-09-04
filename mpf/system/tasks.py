@@ -40,7 +40,7 @@ class Task(object):
         self.gen = None
 
         if sleep:
-            self.wakeup = time.clock() + sleep
+            self.wakeup = time.time() + sleep
 
     def restart(self):
         """Restart a task."""
@@ -68,20 +68,20 @@ class Task(object):
     def timer_tick():
         """Scan all tasks now and run those that are ready.
 
-        'now' is the tick number, not a time.clock(). Just FYI
+        'now' is the tick number, not a time.time(). Just FYI
         """
         dead_tasks = []
         for task in Task.Tasks:
-            if not task.wakeup or task.wakeup <= time.clock():
+            if not task.wakeup or task.wakeup <= time.time():
                 if task.gen:
                     try:
                         rc = next(task.gen)
                         if rc:
-                            task.wakeup = time.clock() + rc
+                            task.wakeup = time.time() + rc
                     except StopIteration:
                         dead_tasks.append(task)
                 else:
-                    task.wakeup = time.clock()
+                    task.wakeup = time.time()
                     task.gen = task.callback(*task.args)
         for task in dead_tasks:
             Task.Tasks.remove(task)
@@ -118,7 +118,7 @@ class DelayManager(object):
         """
         self.log.debug("---Adding delay. Name: '%s' ms: %s, callback: %s, args: %s",
                        name, ms, callback, args)
-        self.delays[name] = ({'action_ms': time.clock() + (ms / 1000.0),
+        self.delays[name] = ({'action_ms': time.time() + (ms / 1000.0),
                               'callback': callback,
                               'args': args})
 
@@ -142,7 +142,7 @@ class DelayManager(object):
     def process_delays(self):
         """ Processes any delays that should fire now """
         for delay in self.delays.keys():
-            if self.delays[delay]['action_ms'] <= time.clock():
+            if self.delays[delay]['action_ms'] <= time.time():
                 # Delete the delay first in case the processing of it adds a
                 # new delay with the same name. If we delete as the final step
                 # then we'll inadvertantly delete the newly-set delay

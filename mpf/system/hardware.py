@@ -45,7 +45,7 @@ class Platform(object):
         this premature optimization?)
 
         """
-        self.next_tick_time = time.clock()
+        self.next_tick_time = time.time()
 
     def set_hw_rule(self,
                     sw_name,  # switch name

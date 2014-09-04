@@ -6,8 +6,8 @@
 Machine:
     HZ: 30
     Balls Installed: 6
-    Min Balls: 3  # game will not start with fewer than this
-    Max Balls: 6  # game will not start if it finds more than this
+    Min Balls: 1
+    Max Balls: 6
 
 Hardware:
     Platform: p_roc # p_roc, fast, or virtual
@@ -340,7 +340,7 @@ Coils:
         number: C27
     flashersInsert:
         number: C28
-Lamps:
+Lights:
 # Lamp numbering format: C-Ax-By-z:R-Am-Bn-p:
 
 # Capital letters are required, lower case letters represent the numbers:
@@ -364,7 +364,7 @@ Lamps:
         number: L14
     perp2White:
         number: L15
-    perp2Rred:
+    perp2Red:
         number: L16
     perp2Yellow:
         number: L17
@@ -442,7 +442,7 @@ Lamps:
         number: L63
     awardSniper:
         number: L64
-    airRade:
+    airRaid:
         number: L65
     leftCenterFeature:
         number: L66

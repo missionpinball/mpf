@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.timing module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
+    <title>mpf.system.timing module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.6',
+        VERSION:     '0.0.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -85,6 +85,30 @@ objects.</p>
 <dt id="mpf.system.timing.Timing.configure">
 <tt class="descname">configure</tt><big>(</big><em>dev=None</em>, <em>HZ=50</em><big>)</big></dt>
 <dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.timing.Timing.int_to_pwm">
+<em class="property">static </em><tt class="descname">int_to_pwm</tt><big>(</big><em>ratio</em>, <em>length</em><big>)</big></dt>
+<dd><p>Converts a decimal between 0 and 1 to a pwm mask of whatever length
+you want.</p>
+<p>For example, an input ratio of .5 with a result length of 8 returns
+10101010. And input ratio of .7 with a result length of 32 returns
+11011011101101101101110110110110.</p>
+<p>Another way to think about this is this method converts a decimal
+percentage into the corresponding pwm mask.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ratio</strong> (<em>float</em>) &#8211; A value between 0 and 1 that you want to convert.</li>
+<li><strong>length</strong> (<em>int</em>) &#8211; How many digits you want in your result.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.timing.Timing.remove">
@@ -163,7 +187,7 @@ inputs:</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

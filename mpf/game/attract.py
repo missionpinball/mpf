@@ -16,6 +16,7 @@
 import logging
 from mpf.system.machine_mode import MachineMode
 from mpf.system.tasks import DelayManager
+import time
 
 
 class Attract(MachineMode):
@@ -32,11 +33,10 @@ class Attract(MachineMode):
 
     """
 
-    def __init__(self, machine):
-        super(Attract, self).__init__(machine)
+    def __init__(self, machine, name):
+        super(Attract, self).__init__(machine, name)
         self.log = logging.getLogger("Attract Mode")
         self.delay = DelayManager()
-        self.holding_coil = None
 
     def start(self):
         """ Automatically called when the Attract game mode becomes active.
@@ -46,56 +46,9 @@ class Attract(MachineMode):
         # register event handlers
         self.registered_event_handlers.append(
             self.machine.events.add_handler('sw_start',
-            self.start_button_pressed))
+                                            self.start_button_pressed))
 
         self.machine.ball_controller.gather_balls('home')
-
-        self.machine.events.add_handler('coil_test', self.coil_test)
-        self.machine.events.add_handler('advance_reel_test', self.advance_reel)
-        self.machine.events.add_handler('hold_coil', self.hold_coil)
-
-    ###########################################################################
-    ### The following section holds temporary methods we're using for       ###
-    ### testing our Big Shot EM machine.                                    ###
-    ###########################################################################
-
-    def coil_test(self, coil_name, pulse_change=0):
-        if pulse_change:
-            self.machine.coils[coil_name].pulse_ms += pulse_change
-            self.log.debug("+-----------------------------------------------+")
-            self.log.debug("|                                               |")
-            self.log.debug("|   Coil: %s   New pulse time: %s           |",
-                           self.machine.coils[coil_name].name,
-                           self.machine.coils[coil_name].pulse_ms)
-            self.log.debug("|                                               |")
-            self.log.debug("+-----------------------------------------------+")
-        else:
-            self.log.debug("+-----------------------------------------------+")
-            self.log.debug("|                                               |")
-            self.log.debug("|   Coil: %s   PULSING: %s                |",
-                           self.machine.coils[coil_name].name,
-                           self.machine.coils[coil_name].pulse_ms)
-            self.log.debug("|                                               |")
-            self.log.debug("+-----------------------------------------------+")
-            self.machine.coils[coil_name].pulse()
-
-    def advance_reel(self, reel_name, direction=1):
-        self.machine.score_reels[reel_name].advance(int(direction))
-
-    def hold_coil(self, coil_name, hold_time):
-        self.delay.add('kill_the_coil', hold_time, self.hold_coil_kill)
-        self.holding_coil = coil_name
-        self.machine.coils[coil_name].enable()
-
-    def hold_coil_kill(self):
-        self.machine.coils[self.holding_coil].disable()
-
-    def test(self, param=None):
-        print "test"
-        print "param", param
-
-    ## End of temp section
-    ###########################################################################
 
     def start_button_pressed(self):
         """ Called when the a switch tagged with *start* is activated.
@@ -133,17 +86,6 @@ class Attract(MachineMode):
             self.log.debug("Let's start a game!!")
             self.machine.events.post('machine_flow_advance')
             # machine flow will move on to the next mode when this mode ends
-
-    def tick(self):
-        """Called once per machine tick.
-
-        Currently this method does nothing. Eventually it will drive the DMD
-        and do other Attract-type things.
-
-        """
-        while self.active:
-            # do something here
-            yield
 
 # The MIT License (MIT)
 

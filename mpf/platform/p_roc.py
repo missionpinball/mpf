@@ -4,7 +4,7 @@ use the Multimorphic R-ROC or P3-ROC hardware controllers.
 This code can be used with P-ROC driver boards, or with Stern SAM, Stern
 Whitestar, Williams WPC, or Williams WPC95  driver boards.
 
-Most of this code is from the P-ROC drivers section of the pyprocgame project,
+Much of this code is from the P-ROC drivers section of the pyprocgame project,
 written by Adam Preble and Gerry Stellenberg. It was originally released under
 the MIT license and is released here under the MIT License.
 
@@ -56,13 +56,13 @@ class HardwarePlatform(Platform):
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['Hardware']['DriverBoards'])
-        self.proc = self._create_pinproc()
+        self.proc = pinproc.PinPROC(self.machine_type)
         self.proc.reset(1)
 
         # Because PDBs can be configured in many different ways, we need to
         # traverse the YAML settings to see how many PDBs are being used.
         # Then we can configure the P-ROC appropriately to use those PDBs.
-        # Only then can we relate the YAML coil/lamp #'s to P-ROC numbers for
+        # Only then can we relate the YAML coil/light #'s to P-ROC numbers for
         # the collections.
         if self.machine_type == pinproc.MachineTypePDB:
             self.log.debug("Configuring P-ROC for PDBs (P-ROC driver boards).")
@@ -82,59 +82,20 @@ class HardwarePlatform(Platform):
         self.features['variable_recycle_time'] = False
         # todo need to add differences between patter and pulsed_patter
 
-    def _create_pinproc(self):
-        """Instantiates and returns the class to use as the P-ROC device.
-
-        Checks the machine controller's attribute *physical_hw* to see whether
-        it should use a physical PinPROC or the FakePinPROC class to setup the
-        P-ROC.
-
-        """
-        if self.machine.physical_hw:  # move to platform? todo
-            proc_class_name = "pinproc.PinPROC"
-
-        else:
-            proc_class_name = "procgame.fakepinproc.FakePinPROC"
-
-        proc_class = self._get_class(proc_class_name)
-        return proc_class(self.machine_type)
-
-    def _get_class(self, kls, path_adj='/.'):
-        """Returns a class for the given fully qualified class name, *kls*.
-
-        Source: http://stackoverflow.com/questions/452969/
-        does-python-have-an-equivalent-to-java-class-forname
-        """
-        sys.path.append(sys.path[0]+path_adj)
-        parts = kls.split('.')
-        module = ".".join(parts[:-1])
-        m = __import__(module)
-        for comp in parts[1:]:
-            m = getattr(m, comp)
-        return m
-
-    def configure_driver(self, config):
+    def configure_driver(self, config, device_type='coil'):
         """ Creates a P-ROC driver.
 
         Typically drivers are coils or flashers, but for the P-ROC this is
-        also used for matrix-based lamps.
+        also used for matrix-based lights.
 
-        Parameters
-        ----------
+        Args:
+            config (dict): A configuration dictionary of settings for the
+                driver.
+            device_type (str): 'coil' or 'switch'
 
-        config : dict
-            A configuration dictionary of settings for the driver. In the case
-            of the P-ROC, it uses the following:
-
-        'number'
-        'polarity'
-
-        Returns
-        -------
-
-        object
-            Returns a reference to the PROCDriver object which is the actual
-            object you can use to pulse(), patter(), enable(), etc.
+        Returns:
+            A reference to the PROCDriver object which is the actual object you
+            can use to pulse(), patter(), enable(), etc.
 
         """
         # todo need to add Aux Bus support
@@ -142,20 +103,23 @@ class HardwarePlatform(Platform):
 
         # Find the P-ROC number for each driver. For P-ROC driver boards, the
         # P-ROC number is specified via the Ax-By-C format. For OEM driver
-        # boards configured via driver numbers, libpinprocs decode() method
+        # boards configured via driver numbers, libpinproc's decode() method
         # can provide the number.
 
         if self.machine_type == pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number('Coils',
+            proc_num = self.pdbconfig.get_proc_number(device_type,
                                                       str(config['number']))
-            if config['number'] == -1:
+            if proc_num == -1:
                 self.log.error("Coil cannot be controlled by the P-ROC. "
                                "Ignoring.")
                 return
         else:
             proc_num = pinproc.decode(self.machine_type, str(config['number']))
 
-        proc_driver_object = PROCDriver(proc_num, self.proc)
+        if device_type == 'coil':
+            proc_driver_object = PROCDriver(proc_num, self.proc)
+        elif device_type == 'light':
+            proc_driver_object = PROCMatrixLight(proc_num, self.proc)
 
         if 'polarity' in config:
             state = proc_driver_object.proc.driver_get_state(config['number'])
@@ -205,7 +169,7 @@ class HardwarePlatform(Platform):
         """
 
         if self.machine_type == pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number('Switches',
+            proc_num = self.pdbconfig.get_proc_number('switch',
                                                       str(config['number']))
             if config['number'] == -1:
                 self.log.error("Switch cannot be controlled by the P-ROC. "
@@ -216,7 +180,7 @@ class HardwarePlatform(Platform):
 
         switch = PROCSwitch(proc_num)
         # The P-ROC needs to be configured to notify the host computers of
-        # switch events. (That notification can be for open and closed,
+        # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)
         self.log.debug("Configuring switch's host notification settings. P-ROC"
                        "number: %s, debounce: %s", proc_num,
@@ -254,7 +218,7 @@ class HardwarePlatform(Platform):
         # 1 = active, 0 = inactive
         return switch, proc_num, state
 
-    def configure_led(self, name, number, polarity):
+    def configure_directlight(self, config):
         """ Configures a P-ROC direct LED controlled via a PD-LED.
 
         This feature is not yet implemented.
@@ -263,14 +227,13 @@ class HardwarePlatform(Platform):
         #if ('polarity' in item_dict):
             #item.invert = not item_dict['polarity']
 
-    def configure_lamp(self, name, number):
-        """ Configures a P-ROC matrix Lamp.
+    def configure_matrixlight(self, config):
+        """ Configures a P-ROC matrix light.
 
         This feature is not yet implemented.
 
         """
-        # I love Lamp.
-        pass
+        return self.configure_driver(config, 'light')
 
     def hw_loop(self):
         """Loop code which checks the P-ROC for any events (switch state
@@ -306,7 +269,7 @@ class HardwarePlatform(Platform):
             self.proc.watchdog_tickle()
             self.proc.flush()
         if Timing.HZ:
-            if self.next_tick_time <= time.clock():
+            if self.next_tick_time <= time.time():
                 self.machine.timer_tick()
                 self.next_tick_time += Timing.secs_per_tick
                 # todo add detection to see if the system is running behind?
@@ -697,8 +660,8 @@ class PDBCoil(object):
         return is_pdb_address(string, self.pdb.aliases)
 
 
-class PDBLamp(object):
-    """Base class for Lamps connected to a PD-8x8 driver board."""
+class PDBLight(object):
+    """Base class for lights connected to a PD-8x8 driver board."""
     def __init__(self, pdb, number_str):
         self.pdb = pdb
         upper_str = number_str.upper()
@@ -783,11 +746,7 @@ class PROCSwitch(object):
         self.number = number
 
 
-class PlatformDriver(object):
-    pass
-
-
-class PROCDriver(PlatformDriver):
+class PROCDriver(object):
     """ Base class for drivers connected to a P-ROC. This class is used for all
     drivers, regardless of whether they're connected to a P-ROC driver board
     (such as the PD-16 or PD-8x8) or an OEM driver board.
@@ -805,7 +764,8 @@ class PROCDriver(PlatformDriver):
 
     def enable(self):
         """Enables (turns on) this driver."""
-        self.proc.driver_enable(self.number)
+        self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
+                                  cycle_seconds=0, now=True)
 
     def pulse(self, milliseconds=None):
         """Enables this driver for `milliseconds`.
@@ -874,7 +834,7 @@ class PROCDriver(PlatformDriver):
                           run_time, now)
         self.proc.driver_pulsed_patter(self.number, on_ms, off_ms,
                                             run_time, now)
-        self.last_time_changed = time.clock()
+        self.last_time_changed = time.time()
 
     def schedule(self, schedule, cycle_seconds=0, now=True):
         """Schedules this driver to be enabled according to the given
@@ -882,7 +842,7 @@ class PROCDriver(PlatformDriver):
         self.log.debug("Driver %s - schedule %08x", self.name, schedule)
         self.proc.driver_schedule(number=self.number, schedule=schedule,
                                        cycle_seconds=cycle_seconds, now=now)
-        self.last_time_changed = time.clock()
+        self.last_time_changed = time.time()
 
     def state(self):
         """Returns a dictionary representing this driver's current
@@ -892,6 +852,45 @@ class PROCDriver(PlatformDriver):
 
     def tick(self):
         pass
+
+
+class PROCMatrixLight(object):
+
+    def __init__(self, number, proc_driver):
+        self.log = logging.getLogger('PROCMatrixLight')
+        self.number = number
+        self.proc = proc_driver
+
+    def off(self):
+        """Disables (turns off) this driver."""
+        self.proc.driver_disable(self.number)
+        self.last_time_changed = time.time()
+
+    def on(self, brightness=255, fade_ms=0, start=0):
+        """Enables (turns on) this driver."""
+        if brightness >= 255:
+            self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
+                                      cycle_seconds=0, now=True)
+        elif brightness == 0:
+            self.off()
+        else:
+            pass
+            # patter rates of 10/1 through 2/9
+
+        self.last_time_changed = time.time()
+
+        '''
+        Koen's fade code he posted to pinballcontrollers:
+        def mode_tick(self):
+            if self.fade_counter % 10 == 0:
+                for lamp in self.game.lamps:
+                    if lamp.name.find("gi0") == -1:
+                        var = 4.0*math.sin(0.02*float(self.fade_counter)) + 5.0
+                        on_time = 11-round(var)
+                        off_time = round(var)
+                        lamp.patter(on_time, off_time)
+                self.fade_counter += 1
+        '''
 
 
 class PDBConfig(object):
@@ -935,13 +934,13 @@ class PDBConfig(object):
 
         # Make a list of unique lamp source banks.  The P-ROC only supports 2.
         # TODO: What should be done if 2 is exceeded?
-        if 'Lamps' in config:
-            for name in config['Lamps']:
-                item_dict = config['Lamps'][name]
-                lamp = PDBLamp(self, str(item_dict['number']))
+        if 'Lights' in config:
+            for name in config['Lights']:
+                item_dict = config['Lights'][name]
+                lamp = PDBLight(self, str(item_dict['number']))
 
                 # Catalog PDB banks
-                # Dedicated lamps don't use PDB banks.  They use P-ROC direct
+                # Dedicated lamps don't use PDB banks. They use P-ROC direct
                 # driver pins.
                 if lamp.lamp_type == 'dedicated':
                     pass
@@ -1079,7 +1078,8 @@ class PDBConfig(object):
                                             True)
 
         # Make sure there are two indexes.  If not, fill them in.
-        while len(lamp_source_bank_list) < 2: lamp_source_bank_list.append(0)
+        while len(lamp_source_bank_list) < 2:
+            lamp_source_bank_list.append(0)
 
         # Now set up globals.  First disable them to allow the P-ROC to set up
         # the polarities on the Drivers.  Then enable them.
@@ -1108,7 +1108,7 @@ class PDBConfig(object):
             self.lamp_matrix_strobe_time = int(config['PRDriverGlobals']
                                                ['lamp_matrix_strobe_time'])
         else:
-            self.lamp_matrix_strobe_time = 200
+            self.lamp_matrix_strobe_time = 100
 
         if 'PRDriverGlobals' in config and 'watchdog_time' \
                 in config['PRDriverGlobals']:
@@ -1159,7 +1159,7 @@ class PDBConfig(object):
                                          self.use_watchdog,  # Enable watchdog
                                          self.watchdog_time)
 
-    def get_proc_number(self, section, number_str):
+    def get_proc_number(self, device_type, number_str):
         """Returns the P-ROC number for the requested driver string.
 
         This method uses the driver string to look in the indexes list that
@@ -1168,7 +1168,7 @@ class PDBConfig(object):
         to that.
 
         """
-        if section == 'Coils':
+        if device_type == 'coil':
             coil = PDBCoil(self, number_str)
             bank = coil.bank()
             if bank == -1:
@@ -1177,8 +1177,8 @@ class PDBConfig(object):
             num = index * 8 + coil.output()
             return num
 
-        if section == 'Lamps':
-            lamp = PDBLamp(self, number_str)
+        if device_type == 'light':
+            lamp = PDBLight(self, number_str)
             if lamp.lamp_type == 'unknown':
                 return (-1)
             elif lamp.lamp_type == 'dedicated':
@@ -1193,7 +1193,7 @@ class PDBConfig(object):
             num = index * 8 + lamp.sink_output()
             return num
 
-        if section == 'Switches':
+        if device_type == 'switch':
             switch = PDBSwitch(self, number_str)
             num = switch.proc_num()
             return num

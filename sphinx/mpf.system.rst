@@ -9,6 +9,7 @@ Submodules
    mpf.system.ball_controller
    mpf.system.events
    mpf.system.hardware
+   mpf.system.light_controller
    mpf.system.machine_controller
    mpf.system.machine_mode
    mpf.system.score_controller

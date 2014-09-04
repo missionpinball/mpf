@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.0.6 documentation</title>
+    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.6',
+        VERSION:     '0.0.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.6 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -53,7 +53,7 @@ actual game in a pinball machine.</p>
 <em>machine</em> is the physical pinball machine.</p>
 <dl class="class">
 <dt id="mpf.game.game.Game">
-<em class="property">class </em><tt class="descclassname">mpf.game.game.</tt><tt class="descname">Game</tt><big>(</big><em>machine</em><big>)</big></dt>
+<em class="property">class </em><tt class="descclassname">mpf.game.game.</tt><tt class="descname">Game</tt><big>(</big><em>machine</em>, <em>name</em><big>)</big></dt>
 <dd><p>Bases: <a class="reference internal" href="mpf.system.machine_mode.html#mpf.system.machine_mode.MachineMode" title="mpf.system.machine_mode.MachineMode"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.machine_mode.MachineMode</span></tt></a></p>
 <p>Base class that runs an active game on a pinball machine.</p>
 <p>Responsible for creating players, starting and ending balls, rotating to
@@ -203,7 +203,7 @@ called again.</p>
 player. (For example, the game must be on ball 1 and the current
 number of players must be less than the max number allowed.)</p>
 <p>Assuming this method believes it&#8217;s ok to add a player, it posts the
-boolean evet <em>player_add_request</em> to give other modules the opportunity
+boolean event <em>player_add_request</em> to give other modules the opportunity
 to deny it. (For example, a credits module might deny the request if
 there are not enough credits in the machine.)</p>
 <p>If <em>player_add_request</em> comes back True, the event
@@ -224,12 +224,9 @@ object as a <em>player</em> kwarg.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.game.game.Game.tick">
-<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
-<dd><p>Called once per machine tick.</p>
-<p>Currently this method does nothing. That probably won&#8217;t be the case
-forever.</p>
-</dd></dl>
+<dt id="mpf.game.game.Game.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -272,7 +269,7 @@ forever.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.6 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
