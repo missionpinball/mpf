@@ -1,7 +1,7 @@
-mpf.devices.led module
+mpf.plugins.lcd module
 ======================
 
-.. automodule:: mpf.devices.led
+.. automodule:: mpf.plugins.lcd
     :members:
     :undoc-members:
     :show-inheritance:

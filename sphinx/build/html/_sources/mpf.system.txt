@@ -8,6 +8,7 @@ Submodules
 
    mpf.system.ball_controller
    mpf.system.events
+   mpf.system.hacklet
    mpf.system.hardware
    mpf.system.light_controller
    mpf.system.machine_controller

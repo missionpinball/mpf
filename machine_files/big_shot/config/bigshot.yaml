@@ -24,14 +24,14 @@ Game:
 
 MachineFlow:
     mpf.game.attract.Attract
-    mpf.game.attract.Game
+    mpf.game.game.Game
 
 Hacklets:
     coil_tests.CoilTests
 
 Plugins:
     keyboard.Keyboard
-    window.Window
+    lcd.LCD
 
 BallSearch:
     Secs until ball search start: 10
@@ -39,7 +39,7 @@ BallSearch:
     Secs between ball search coils: .15
     If ball search fails: Keep Looking
 
-Window:
+LCD:
     width: 800
     height: 600
     title: Big Shot

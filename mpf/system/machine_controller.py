@@ -59,13 +59,14 @@ class MachineController(object):
     def __init__(self, options):
         self.log = logging.getLogger("Machine Controller")
         self.options = options
-        self.starttime = time.time()
+        self.loop_start_time = 0
         self.config = defaultdict(int)  # so we can simplify checking
         self.physical_hw = options['physical_hw']
         self.switch_events = []
         self.done = False
         self.HZ = None
         self.machineflow_index = None
+        self.loop_rate = 0
 
         self.coils = DeviceCollection()
         self.lights = DeviceCollection()
@@ -329,10 +330,11 @@ class MachineController(object):
             sys.path.append(os.path.abspath(self.options['machinepath']))
             self.config['Hacklets'] = self.config['Hacklets'].split(' ')
             for hacklet in self.config['Hacklets']:
-                self.log.info("Loading Hacklet: %s", hacklet)
                 i = __import__('hacklets.' + hacklet.split('.')[0],
                                fromlist=[''])
-                self.hacklets.append(getattr(i, hacklet.split('.')[1])(self))
+                self.hacklets.append(getattr(i, hacklet.split('.')[1])
+                                     (machine=self,
+                                      name=hacklet.split('.')[1]))
 
         # Machine Flow
         self.config['MachineFlow'] = self.config['MachineFlow'].split(' ')
@@ -499,15 +501,17 @@ class MachineController(object):
         else:
             loop = self.sw_loop
 
+        self.loop_start_time = time.time()
+
         while self.done is False:
             loop()
             num_loops += 1
+            self.loop_rate = round(num_loops / (time.time() -
+                                                self.loop_start_time))
 
         else:
             if num_loops != 0:
-                self.log.info("Hardware loop speed: %sHz",
-                               round(num_loops /
-                                     (time.time() - self.starttime)))
+                self.log.info("Hardware loop speed: %sHz", self.loop_rate)
 
         # todo add support to read software switch events
 

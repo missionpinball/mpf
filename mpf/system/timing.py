@@ -119,10 +119,18 @@ class Timing(object):
 class Timer(object):
     """Periodic timer object.
 
-    A timer defines a callable plus a frequency (in ms) at which it should be
+    A timer defines a callable plus a frequency (in sec) at which it should be
     called. The frequency can be set to None so that the timer is not enabled,
     but it still exists.
+
+    Args:
+        callback (method): The method you want called each time this timer is
+            fired.
+        args (tuple): Arguments you want to pass to the callback.
+        frequency (int or float): How often, in seconds, you want this timer
+        to be called.
     """
+
     def __init__(self, callback, args=tuple(), frequency=None):
         self.callback = callback
         self.args = args
@@ -130,9 +138,8 @@ class Timer(object):
         self.frequency = frequency
 
         self.log = logging.getLogger("Timer")
-        self.log.debug('Creating timer for callback "%s" every %sms (every '
-                         '%sms)', self.callback.__name__, frequency,
-                         self.frequency)
+        self.log.debug('Creating timer for callback "%s" every %ss',
+                       self.callback.__name__, self.frequency)
 
     def call(self):
         self.callback(*self.args)

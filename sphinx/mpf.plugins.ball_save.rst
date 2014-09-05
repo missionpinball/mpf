@@ -1,7 +1,7 @@
-mpf.modules.ball_save module
+mpf.plugins.ball_save module
 ============================
 
-.. automodule:: mpf.modules.ball_save
+.. automodule:: mpf.plugins.ball_save
     :members:
     :undoc-members:
     :show-inheritance:

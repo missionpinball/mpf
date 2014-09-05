@@ -1,7 +1,7 @@
-mpf.modules.ball_search module
+mpf.plugins.ball_search module
 ==============================
 
-.. automodule:: mpf.modules.ball_search
+.. automodule:: mpf.plugins.ball_search
     :members:
     :undoc-members:
     :show-inheritance:

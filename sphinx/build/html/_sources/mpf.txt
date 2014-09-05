@@ -9,6 +9,7 @@ Subpackages
     mpf.devices
     mpf.game
     mpf.platform
+    mpf.plugins
     mpf.system
 
 Module contents

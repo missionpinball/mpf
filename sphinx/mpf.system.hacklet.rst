@@ -1,7 +1,7 @@
-mpf.system.devices module
+mpf.system.hacklet module
 =========================
 
-.. automodule:: mpf.system.devices
+.. automodule:: mpf.system.hacklet
     :members:
     :undoc-members:
     :show-inheritance:

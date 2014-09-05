@@ -52,9 +52,23 @@
 <em class="property">class </em><tt class="descclassname">mpf.system.timing.</tt><tt class="descname">Timer</tt><big>(</big><em>callback</em>, <em>args=()</em>, <em>frequency=None</em><big>)</big></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Periodic timer object.</p>
-<p>A timer defines a callable plus a frequency (in ms) at which it should be
+<p>A timer defines a callable plus a frequency (in sec) at which it should be
 called. The frequency can be set to None so that the timer is not enabled,
 but it still exists.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>callback</strong> (<em>method</em>) &#8211; The method you want called each time this timer is
+fired.</li>
+<li><strong>args</strong> (<em>tuple</em>) &#8211; Arguments you want to pass to the callback.</li>
+<li><strong>frequency</strong> (<em>int or float</em>) &#8211; How often, in seconds, you want this timer</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="mpf.system.timing.Timer.call">
 <tt class="descname">call</tt><big>(</big><big>)</big></dt>
@@ -192,7 +206,7 @@ inputs:</p>
     </div>
     <div class="footer">
         &copy; Copyright 2014, Brian Madden, Gabe Knuth.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

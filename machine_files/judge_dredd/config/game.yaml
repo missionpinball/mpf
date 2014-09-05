@@ -28,10 +28,10 @@ Hacklets:
 
 Plugins:
     keyboard.Keyboard
-    window.Window
+    lcd.LCD
     ball_search.BallSearch
 
-Window:
+LCD:
     width: 800
     height: 600
     title: Judge Dredd
@@ -40,3 +40,4 @@ Window:
         player
         ball
         version
+        looprate

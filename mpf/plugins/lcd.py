@@ -1,6 +1,6 @@
-"""Mission Pinball Framework plugin that puts a pyglet Window on the screen."""
+"""Mission Pinball Framework plugin that puts a pyglet window on the screen."""
 
-# machine_mode.py (contains classes for various playfield devices)
+# lcd.py (contains classes for various playfield devices)
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -9,42 +9,45 @@
 import logging
 import pyglet
 import version
+import locale
 
 
-class Window(object):
+class LCD(object):
 
     def __init__(self, machine):
         self.machine = machine
-        self.log = logging.getLogger('Window')
+        self.log = logging.getLogger('LCD')
         self.window_items = []
-        self.current_ball = ''
-        self.current_player = ''
-        self.current_score = ''
+        self.current_ball = None
+        self.current_player = None
+        self.current_score = None
 
-        if 'height' not in self.machine.config['Window']:
-            self.machine.config['Window']['height'] = 800
-        if 'width' not in self.machine.config['Window']:
-            self.machine.config['Window']['width'] = 600
-        if 'title' not in self.machine.config['Window']:
-            self.machine.config['Window']['title'] = 'Mission Pinball Framework'
-        if 'items' in self.machine.config['Window']:
-            self.machine.config['Window']['items'] = (
-                self.machine.config['Window']['items'].split(' '))
+        locale.setlocale(locale.LC_ALL, 'en_US')
+
+        if 'height' not in self.machine.config['LCD']:
+            self.machine.config['LCD']['height'] = 800
+        if 'width' not in self.machine.config['LCD']:
+            self.machine.config['LCD']['width'] = 600
+        if 'title' not in self.machine.config['LCD']:
+            self.machine.config['LCD']['title'] = 'Mission Pinball Framework'
+        if 'items' in self.machine.config['LCD']:
+            self.machine.config['LCD']['items'] = (
+                self.machine.config['LCD']['items'].split(' '))
 
         self.setup_window()
 
         # Register for events
         self.machine.events.add_handler('timer_tick', self.tick)
 
-        if 'player' in self.machine.config['Window']['items']:
+        if 'player' in self.machine.config['LCD']['items']:
             self.machine.events.add_handler('player_turn_start',
                                             self.update_player)
 
-        if 'score' in self.machine.config['Window']['items']:
+        if 'score' in self.machine.config['LCD']['items']:
             self.machine.events.add_handler('score_change',
                                             self.update_score)
 
-        if 'ball' in self.machine.config['Window']['items']:
+        if 'ball' in self.machine.config['LCD']['items']:
             self.machine.events.add_handler('ball_startin',
                                             self.update_ball)
 
@@ -53,9 +56,9 @@ class Window(object):
         if not hasattr(self.machine, 'window'):
             self.machine.window = pyglet.window.Window(resizable=True)
 
-        self.machine.window.width = self.machine.config['Window']['width']
-        self.machine.window.height = self.machine.config['Window']['height']
-        self.machine.window.set_caption(self.machine.config['Window']['title'])
+        self.machine.window.width = self.machine.config['LCD']['width']
+        self.machine.window.height = self.machine.config['LCD']['height']
+        self.machine.window.set_caption(self.machine.config['LCD']['title'])
 
         @self.machine.window.event
         def on_close():
@@ -65,16 +68,17 @@ class Window(object):
         def on_draw():
             self.machine.window.clear()
 
-            if 'title' in self.machine.config['Window']:
-                self.label = pyglet.text.Label(self.machine.config['Window']['title'],
+            if 'title' in self.machine.config['LCD']:
+                self.title = pyglet.text.Label(self.machine.config['LCD']['title'],
                                             font_name='Ariel',
                                             font_size=36,
                                             x=self.machine.window.width//2,
                                             y=self.machine.window.height - 20,
                                             anchor_x='center',
                                             anchor_y='center')
-                self.label.draw()
-            if 'version' in self.machine.config['Window']['items']:
+                self.title.draw()
+
+            if 'version' in self.machine.config['LCD']['items']:
                 self.version = pyglet.text.Label('Mission Pinball Framework v'
                                                  + version.__version__,
                                             font_name='Ariel',
@@ -85,33 +89,49 @@ class Window(object):
                                             anchor_y='bottom')
                 self.version.draw()
 
-            if 'player' in self.machine.config['Window']['items']:
+            if 'looprate' in self.machine.config['LCD']['items']:
+                self.looprate = pyglet.text.Label('Loop Rate: ' +
+                                            str(self.machine.loop_rate) +
+                                            'Hz',
+                                            font_name='Ariel',
+                                            font_size=12,
+                                            x=2,
+                                            y=2,
+                                            anchor_x='left',
+                                            anchor_y='bottom')
+                self.looprate.draw()
+
+            if ('player' in self.machine.config['LCD']['items'] and
+                    self.current_player):
                 self.player = pyglet.text.Label('Player: ' + str(self.current_player),
                                             font_name='Ariel',
                                             font_size=36,
-                                            x=0,
-                                            y=self.machine.window.height - 100,
-                                            anchor_x='left',
+                                            x=self.machine.window.width*.25,
+                                            y=self.machine.window.height - 350,
+                                            anchor_x='center',
                                             anchor_y='top')
                 self.player.draw()
 
-            if 'ball' in self.machine.config['Window']['items']:
+            if ('ball' in self.machine.config['LCD']['items'] and
+                    self.current_ball):
                 self.ball = pyglet.text.Label('Ball: ' + str(self.current_ball),
                                             font_name='Ariel',
                                             font_size=36,
-                                            x=0,
-                                            y=self.machine.window.height - 160,
-                                            anchor_x='left',
+                                            x=self.machine.window.width*.75,
+                                            y=self.machine.window.height - 350,
+                                            anchor_x='center',
                                             anchor_y='top')
                 self.ball.draw()
 
-            if 'score' in self.machine.config['Window']['items']:
-                self.score = pyglet.text.Label('Score: ' + str(self.current_score),
+            if ('score' in self.machine.config['LCD']['items'] and
+                    self.current_score is not None):
+                self.score = pyglet.text.Label(locale.format("%d",
+                                            self.current_score, grouping=True),
                                             font_name='Ariel',
-                                            font_size=36,
-                                            x=0,
-                                            y=self.machine.window.height - 220,
-                                            anchor_x='left',
+                                            font_size=70,
+                                            x=self.machine.window.width//2,
+                                            y=self.machine.window.height - 150,
+                                            anchor_x='center',
                                             anchor_y='top')
                 self.score.draw()
 

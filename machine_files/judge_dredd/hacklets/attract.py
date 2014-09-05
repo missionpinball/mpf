@@ -1,13 +1,13 @@
 # Attract mode hacklet for Judge Dredd
 
+from mpf.system.hacklet import Hacklet
 from mpf.system.light_controller import LightShow
 
 
-class Attract(object):
+class Attract(Hacklet):
 
-    def __init__(self, machine):
+    def on_load(self):
 
-        self.machine = machine
         self.machine.events.add_handler('machineflow_Attract_start', self.start)
         self.machine.events.add_handler('machineflow_Attract_stop', self.stop)
 

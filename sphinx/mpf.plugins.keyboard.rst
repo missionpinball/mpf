@@ -1,7 +1,7 @@
-mpf.modules.keyboard module
+mpf.plugins.keyboard module
 ===========================
 
-.. automodule:: mpf.modules.keyboard
+.. automodule:: mpf.plugins.keyboard
     :members:
     :undoc-members:
     :show-inheritance:
