@@ -1,5 +1,5 @@
 """The main machine object for the Mission Pinball Framework."""
-# devices.py (contains classes for various playfield devices)
+# machine_controller.py (contains classes for various playfield devices)
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
