@@ -10,7 +10,7 @@ Machine:
     Max Balls: 6
 
 Hardware:
-    Platform: fast # p_roc, fast, or virtual
+    Platform: virtual
     DriverBoards: wpc
 
 Fast:
