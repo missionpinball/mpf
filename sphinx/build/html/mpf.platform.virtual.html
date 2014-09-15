@@ -54,12 +54,21 @@ that it doesn&#8217;t require any P-ROC drivers or modules to be installed.</p>
 <dl class="class">
 <dt id="mpf.platform.virtual.HardwarePlatform">
 <em class="property">class </em><tt class="descclassname">mpf.platform.virtual.</tt><tt class="descname">HardwarePlatform</tt><big>(</big><em>machine</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Platform" title="mpf.system.hardware.Platform"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Platform</span></tt></a></p>
-<p>Base class for the virtual hardware platform. This is a subclass of
-mpf.system.hardware.Platform.</p>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.platform.html#mpf.system.platform.Platform" title="mpf.system.platform.Platform"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.platform.Platform</span></tt></a></p>
+<p>Base class for the virtual hardware platform.</p>
 <dl class="method">
 <dt id="mpf.platform.virtual.HardwarePlatform.configure_driver">
 <tt class="descname">configure_driver</tt><big>(</big><em>config</em>, <em>device_type='coil'</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.HardwarePlatform.configure_gi">
+<tt class="descname">configure_gi</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.HardwarePlatform.configure_led">
+<tt class="descname">configure_led</tt><big>(</big><em>config</em><big>)</big></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -81,6 +90,11 @@ mpf.system.hardware.Platform.</p>
 <dl class="method">
 <dt id="mpf.platform.virtual.VirtualDriver.disable">
 <tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualDriver.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -121,6 +135,43 @@ mpf.system.hardware.Platform.</p>
 <dl class="method">
 <dt id="mpf.platform.virtual.VirtualDriver.tick">
 <tt class="descname">tick</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.virtual.VirtualGI">
+<em class="property">class </em><tt class="descclassname">mpf.platform.virtual.</tt><tt class="descname">VirtualGI</tt><big>(</big><em>number</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualGI.off">
+<tt class="descname">off</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualGI.on">
+<tt class="descname">on</tt><big>(</big><em>brightness</em>, <em>fade_ms</em>, <em>start</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.virtual.VirtualLED">
+<em class="property">class </em><tt class="descclassname">mpf.platform.virtual.</tt><tt class="descname">VirtualLED</tt><big>(</big><em>number</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualLED.color">
+<tt class="descname">color</tt><big>(</big><em>color</em>, <em>fade_ms=0</em>, <em>brightness_compensation=True</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualLED.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.virtual.VirtualLED.enable">
+<tt class="descname">enable</tt><big>(</big><em>brightness_compensation=True</em><big>)</big></dt>
 <dd></dd></dl>
 
 </dd></dl>

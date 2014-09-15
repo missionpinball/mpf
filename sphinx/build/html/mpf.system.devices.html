@@ -44,8 +44,51 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="mpf-system-devices-module">
-<h1>mpf.system.devices module</h1>
+  <div class="section" id="module-mpf.system.devices">
+<span id="mpf-system-devices-module"></span><h1>mpf.system.devices module</h1>
+<p>Contains the parent classes Device and DeviceCollection</p>
+<dl class="class">
+<dt id="mpf.system.devices.Device">
+<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">Device</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config=None</em>, <em>collection=-1</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Generic parent class of for every hardware object in a pinball machine.</p>
+<dl class="staticmethod">
+<dt id="mpf.system.devices.Device.create_devices">
+<em class="property">static </em><tt class="descname">create_devices</tt><big>(</big><em>collection</em>, <em>config</em>, <em>machine</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="mpf.system.devices.Device.get_config_info">
+<em class="property">classmethod </em><tt class="descname">get_config_info</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="mpf.system.devices.Device.is_used">
+<em class="property">classmethod </em><tt class="descname">is_used</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.devices.DeviceCollection">
+<em class="property">class </em><tt class="descclassname">mpf.system.devices.</tt><tt class="descname">DeviceCollection</tt></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></p>
+<p>A collection of Devices.</p>
+<p>One instance of this class will be created for each different type of
+hardware device (such as coils, lights, switches, ball devices, etc.)</p>
+<dl class="method">
+<dt id="mpf.system.devices.DeviceCollection.items_tagged">
+<tt class="descname">items_tagged</tt><big>(</big><em>tag</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.DeviceCollection.number">
+<tt class="descname">number</tt><big>(</big><em>number</em><big>)</big></dt>
+<dd><p>Returns a device object based on its number.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 

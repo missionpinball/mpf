@@ -6,14 +6,13 @@
 
 # Documentation and more info at http://missionpinball.com/framework
 
-
 # todo new method to set live count. Like "I want live count of 3"
 
 # todo new method to remove_live? And then if that gets to zero then we have a
 # ball over?
 
-
 import logging
+
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 
@@ -73,11 +72,11 @@ class BallController(object):
         self.machine.events.add_handler('sw_ballLive', self.ball_live_hit)
         self.machine.events.add_handler('tilt', self.tilt)
         self.machine.events.add_handler('game_starting', self.game_starting)
-        self.machine.events.add_handler('game_end', self.game_end)
+        self.machine.events.add_handler('game_ended', self.game_ended)
 
         self.machine.events.add_handler('ball_add_live_success',
                                         self.ball_add_live_success)
-        self.machine.events.add_handler('machine_init_complete',
+        self.machine.events.add_handler('machine_init_phase2',
                                         self.reset)
         self.machine.events.add_handler('ball_add_live_request',
                                         self.ball_add_live)
@@ -365,7 +364,7 @@ class BallController(object):
         # todo make sure all balls are home
         # todo do we need to update ball counts here? meh?
 
-    def game_end(self):
+    def game_ended(self):
         """Tells the ball controller that the game is ending."""
         self.game = None
 

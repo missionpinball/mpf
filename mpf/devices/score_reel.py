@@ -9,7 +9,7 @@
 import logging
 import time
 from collections import deque
-from mpf.system.hardware import Device
+from mpf.system.devices import Device
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 
@@ -182,10 +182,18 @@ class ScoreReelGroup(Device):
 
     """
 
+    config_section = 'Score Reel Groups'
+    collection = 'score_reel_groups'
+
+    @classmethod
+    def device_class_init(cls, machine):
+        # If we have at least one score reel group, we need a
+        # ScoreReelController
+        machine.score_reel_controller = ScoreReelController(machine)
+
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('ScoreReelGroup.' + name)
         super(ScoreReelGroup, self).__init__(machine, name, config, collection)
-        self.delay = DelayManager()
 
         self.reels = []
         """A list of individual ScoreReel objects that make up this
@@ -221,14 +229,6 @@ class ScoreReelGroup(Device):
         """Holds a list of the next reels that for step advances.
         """
 
-        self.reels_waiting_for_hw_sync = []
-        """Holds a list of the reels that the ScoreReelController is waiting
-        for hw sync on.
-        """
-
-        self.advance_in_progress = False
-        """Boolean attribute that is True when a step advance is in progress.
-        """
         self.jump_in_progess = False
         """Boolean attribute that is True when a jump advance is in progress.
         """
@@ -268,8 +268,18 @@ class ScoreReelGroup(Device):
                         chime=self.config['chimes'][i])
         # ---- temp chimes code end --------------------------------
 
-        self.machine.events.add_handler('machine_init_complete',
+        # register for events
+        self.machine.events.add_handler('machine_init_phase1',
                                         self.set_rollover_reels)
+
+        for reel in self.reels:
+            if reel:
+                self.machine.events.add_handler('reel_' + reel.name + '_ready',
+                                                self._reel_state_change)
+                self.machine.events.add_handler('reel_' + reel.name + '_hw_value',
+                                                self._reel_state_change)
+                self.machine.events.add_handler('reel_' + reel.name + '_pulse_done',
+                                                self._reel_state_change)
 
     # ----- temp method for chime ------------------------------------
     def chime(self, chime):
@@ -324,27 +334,6 @@ class ScoreReelGroup(Device):
                     return False
         return True
 
-    def is_assumed_valid(self):
-        """Tests to see whether the ScoreReelGroup value switch states match up
-        with where they should be for this group's assumed_value.
-
-        Returns: True or False
-        """
-        # todo this method is not used... keep it?
-        self.log.debug("+++Checking to see if this group is physically valid")
-        for i in range(len(self.reels)):
-            if self.reels[i]:
-                if (self.reels[i].logical_to_physical(
-                        self.reels[i].assumed_value) !=
-                        self.reels[i].check_hw_switches()):
-                    self.log.debug("+++Reel %s is not where it should "
-                                   "be. Expected: %s Actual: %s",
-                                   self.reels[i].name,
-                                   self.reels[i].assumed_value,
-                                   self.reels[i].physical_value)
-                    return False
-        return True
-
     def get_physical_value_list(self):
         """Queries all the reels in the group and builds a list of their actual
         current physical state, with either the value of the current switch
@@ -379,50 +368,27 @@ class ScoreReelGroup(Device):
                 have this argument listed so we can use this method as an event
                 handler for those events.
         """
-        self.log.debug("Received requestion to mark score reels valid.")
+        self.log.debug("Checking to see if score reels are valid.")
         self.log.debug("Assumed list: %s", self.assumed_value_list)
         self.log.debug("Desired list: %s", self.desired_value_list)
-        self.log.debug("advanced_in_progress: %s", self.advance_in_progress)
+        self.log.debug("advance_queue: %s", self.advance_queue)
         self.log.debug("jump_in_progess: %s", self.jump_in_progess)
 
-        if self.advance_in_progress or self.jump_in_progess:
+        if self.advance_queue or self.jump_in_progess:
             # We got here but something is still moving the reels
-            return
+            return False
 
-        # if lazy validation is requested
-        # todo this is not yet implemented
-        '''
-        if self.config['confirm'] == 'lazy':
-            # remove any handlers that we previously set
-            self.machine.events.remove_handler(self.validate)
+        # If any reels are set to lazy confirm, we're only going to validate
+        # this jump if they've hw_confirmed
+        for reel in self.reels:
+            if reel and reel.config['confirm'] == 'lazy' and not reel.hw_sync:
+                self.jump_in_progess = True
+                # causes the reel's hw_confirm to return back to the jump
+                # advance which will ultimately lead back here
+                return False
 
-            # see if we're waiting for any reels to hw confirm
-
-            # todo bug, need to only do this for reels that are no
-
-            for reel in self.reels:
-                if (reel and
-                        not reel.hw_sync and
-                        reel.hw_check_time > time.time()):
-                    # set an event handler to try again then
-                    self.machine.events.add_handler(reel.name + '_hw_value',
-                                                    self.validate)
-                    # we only need one
-                    return
-            # if all the reels are hw valid then we can validate now
-            if not self.is_desired_valid():
-                self.set_value(value_list=self.desired_value_list)
-            else:
-                self.machine.events.post('scorereelgroup_' + self.name +
-                                         '_valid',
-                                         value=self.assumed_value_int)
-
-        else:
-            self.machine.events.post('scorereelgroup_' + self.name + '_valid',
-                                     value=self.assumed_value_int)
-        '''
         self.machine.events.post('scorereelgroup_' + self.name + '_valid',
-                                     value=self.assumed_value_int)
+                                 value=self.assumed_value_int)
 
     def add_value(self, value, jump=False):
         """Add value to a ScoreReelGroup.
@@ -505,133 +471,90 @@ class ScoreReelGroup(Device):
             self._jump_advance_complete()
 
     def _jump_advance_step(self, value=None):
-        '''if a reel advances from 9 to 0, we want to wait for hw, but when the
-        next round comes in we see its state is ready so we pulse it, not
-        knowing it was valid in hw.
+        # Checks the assumed values of the reels in the group, and if they're
+        # off will automatically correct them.
 
-        have to pulse slower to wait
-        '''
+        # This method is automatically called after any member reel changes
+        # state, including that a coil is done firing, it's ready to advance,
+        # or it just got hw_sync.
 
-        # used for non-anal firings of all our reels in the group
+        # Before we do anything, we make sure we have the latest from the reels.
+        # Note this will only read the switches if the 'hw_confirm_ms' time has
+        # passed since they last advanced.
+        for reel in self.reels:
+            if reel:
+                reel.check_hw_switches(no_event=True)
 
-        self.log.debug("@@@ Entering _jump_advance_step")
+        self.log.debug("Entering _jump_advance_step")
         self.log.debug("Assumed values: %s", self.assumed_value_list)
         self.log.debug("Desired values: %s", self.desired_value_list)
 
         # if our assumed values match the desired values, we're done
         if self.is_desired_valid():
+            self.log.debug("They match! We're done.")
             self._jump_advance_complete()
             return
 
-        # how many reels can we fire?
+        self.jump_in_progess = True
 
-        # make a temp list of reels that need to be advanced and are ready
-        reels_to_fire = []
+        reels_needing_advance = []  # reels that need to be advanced
+        num_energized = 0  # count of the number of coils currently energized
+        current_time = time.time()  # local reference for speed
         # loop through the reels one by one
         for i in range(len(self.reels)):
+            this_reel = self.reels[i]  # local reference for speed
+            if this_reel:
 
-            this_reel = self.reels[i]  # local ref
+                self.log.debug("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                self.log.debug("~~ Reel: %s", this_reel.name)
+                self.log.debug("~~ Ready: %s", this_reel.ready)
+                self.log.debug("~~ d: %s", self.desired_value_list[i])
+                self.log.debug("~~ a: %s", self.assumed_value_list[i])
+                self.log.debug("~~ hw sync: %s", this_reel.hw_sync)
 
-            # if there's a reel, and it's ready to fire, and it's not in
-            # position
-            if (this_reel and this_reel.ready and
-                    self.desired_value_list[i] != self.assumed_value_list[i]):
+                # While we're in here let's get a count of the total number
+                # of reels that are energized
+                if (self.machine.coils[this_reel.config['coil_inc']].
+                        time_when_done > current_time):
+                    num_energized += 1
 
-                # if reel has hw sync, or if it's not in the list we care about
-                if (this_reel.hw_sync or not this_reel in
-                        self.reels_waiting_for_hw_sync):
+                # Does this reel want to be advanced, and is it ready?
+                if (self.desired_value_list[i] != self.assumed_value_list[i]
+                        and this_reel.ready):
 
-                    reels_to_fire.append(self.reels[i])
+                    # Do we need (and have) hw_sync to advance this reel?
+                    if ((self.assumed_value_list[i] == -999 or
+                            this_reel.config['confirm'] == 'strict') and
+                            this_reel.hw_sync):
+                        reels_needing_advance.append(this_reel)
 
-            # if we were waiting for hw_sync and we got it, change its status
-            if this_reel and this_reel.hw_sync and (
-                    this_reel in self.reels_waiting_for_hw_sync):
-                self.reels_waiting_for_hw_sync.remove(this_reel)
+                    else:  # If not we can advance on ready alone
+                        if this_reel.ready:
+                            reels_needing_advance.append(this_reel)
 
-        self.log.debug("@@@ reels_to_fire: %s", reels_to_fire)
+        # How many reels can we advance now?
+        coils_this_round = (self.config['max simultaneous coils'] -
+                            num_energized)
 
-        # ok, now we have reels that need to be fired in reels_to_fire
+        # sort by last firing time, oldest first (so those are fired first)
+        reels_needing_advance.sort(key=lambda x: x.next_pulse_time)
 
-        # how many total are currenly energized?
-        num_energized = 0
-        for reel in self.reels:
-            if (reel and
-                    self.machine.coils[reel.config['coil_inc']].time_when_done
-                    > time.time()):
-                num_energized += 1
-        self.log.debug("@@@ num_energized: %s", num_energized)
+        if len(reels_needing_advance) < coils_this_round:
+            coils_this_round = len(reels_needing_advance)
 
-        # how many can we pulse now?
-        max_coils_this_round = (self.config['max simultaneous coils'] -
-                                num_energized)
-        self.log.debug("@@@ max_coils_this_round: %s", max_coils_this_round)
+        for i in range(coils_this_round):
+            reels_needing_advance[i].advance(direction=1)
 
-        # How many? The smaller of reels_to_fire or max_coils_this_round
-        reels_for_next_round = 0
-        if len(reels_to_fire) > max_coils_this_round:
-            pulse_this_round = max_coils_this_round
-            reels_for_next_round = len(reels_to_fire) - pulse_this_round
-        elif max_coils_this_round > len(reels_to_fire):
-            pulse_this_round = len(reels_to_fire)
-        else:
-            pulse_this_round = max_coils_this_round
-
-        self.log.debug("@@@ reels_for_next_round: %s", reels_for_next_round)
-        self.log.debug("@@@ pulse_this_round: %s", pulse_this_round)
-
-        # order the pulses
-        this_round_reels = []
-        for i in range(pulse_this_round):
-
-            # schedule the pulse with either hw confirm or not
-            # todo here's where we add anal support
-            if reels_to_fire[i].assumed_value == -999:
-                # we need a hw verified advance
-                self.advance_hw_confirm(reels_to_fire[i], 1,
-                                        self._jump_advance_step)
-
-                # add this to self.reels_waiting_for_hw_sync
-                self.reels_waiting_for_hw_sync.append(reels_to_fire[i])
-
-            else:
-                # we can do a ready style advance
-                self.advance_no_hw_confirm(reels_to_fire[i], 1,
-                                           self._jump_advance_step)
-
-            this_round_reels.append(reels_to_fire[i])
-
-        self.log.debug("@@@ this_round_reels: %s", this_round_reels)
-
-        # remove this round's reels from reels_to_fire
-        for reel in this_round_reels:
-            reels_to_fire.remove(reel)
-
-        # if there were more coils than we could pulse now, we need to set a
-        # delay to do this again since we can pulse them as soon as the current
-        # batch is no longer energized and that will happen before our next
-        # coils are ready
-
-        if this_round_reels:
-
-            for i in range(reels_for_next_round):
-                self.delay.add('next_jump_advance',
-                               self.machine.coils[this_round_reels[i].
-                               config['coil_inc']].time_when_done -
-                               time.time(),
-                               self._jump_advance_step)
+        # Any leftover reels that don't get fired this time will get picked up
+        # whenever the next reel changes state and this method is called again.
 
     def _jump_advance_complete(self):
-        #Called when a jump advance routine is complete
+        # Called when a jump advance routine is complete and the score reel
+        # group has been validated.
 
         self.log.debug("Jump complete")
         self.log.debug("Assumed values: %s", self.assumed_value_list)
         self.log.debug("Desired values: %s", self.desired_value_list)
-
-        i = 0
-        for reel in self.reels:
-            if reel:
-                self.machine.events.remove_handler(self._jump_advance_step)
-            i += 1
 
         self.jump_in_progess = False
         self.validate()
@@ -664,18 +587,15 @@ class ScoreReelGroup(Device):
 
         if not self.advance_queue:
             # Looks like we're all done and confirmed
-            self._step_advance_complete()
+            self.validate()
             return
-
-        self.advance_in_progress = True
 
         # set our working reel to be the next one in the queue
         reel = self.advance_queue[0]
 
-        # if this real is not ready, set a handler to grab it when it is
+        # Return if this real is not ready. The reel events will pick this up
+        # later
         if not reel.ready:
-            self.machine.events.add_handler(reel.name + "_ready",
-                                            self._step_advance_step)
             return
 
         # finally looks like we can fire that reel
@@ -691,13 +611,10 @@ class ScoreReelGroup(Device):
                 self.advance_queue.appendleft(reel.rollover_reel)
             else:
                 # whoops, we don't have a rollover reel. Yay for this player!
-                self.machine.events.post(self.name + '_rollover')
+                self.machine.events.post('scorereelgroup_' + self.name + '_rollover')
 
         # advance the reel
-        if self.config['confirm'] == 'anal':
-            self.advance_hw_confirm(reel, 1, self._step_advance_step)
-        else:
-            self.advance_no_hw_confirm(reel, 1, self._step_advance_step)
+        reel.advance(direction=1)
 
         # post the event to notify others we're advancing the reel
         self.machine.events.post('reel_' + reel.name + "_advance")
@@ -705,50 +622,16 @@ class ScoreReelGroup(Device):
         if self.advance_queue:
             # if we have any more reels in the queue, try to advance them now
             self._step_advance_step()
+        else:
+            self.validate()
 
-    def _step_advance_complete(self):
-        self.advance_in_progress = False
-        self.machine.events.remove_handler(self._step_advance_step)
-        self.validate()
-
-    def advance_no_hw_confirm(self, reel, direction=1, callback=None):
-        """Advances a reel one value and optionally registers a callback for
-        when the reel is ready to advance again.
-
-        Args:
-            reel (ScoreReel object): A reference to the score reel you'd like
-                to advance.
-            direction (int, optional): The direction you'd like to advance
-                the reel. 1 is up and -1 is down.
-            callback (callback, optional): The method you'd like called when
-                this reel is ready to advance again.
-        """
-        self.log.debug("Advancing %s with NO hw confirm. Direction: %s, "
-                       "callback: %s", reel.name, direction, callback)
-        if callback:
-            self.machine.events.add_handler(reel.name + '_ready', callback)
-        reel.advance(direction)
-
-    def advance_hw_confirm(self, reel, direction=1, callback=None):
-        """Advances a reel one value and optionally registers a callback for
-        when the reel hw validates that the advance succeeded.
-
-        Args:
-            reel (ScoreReel object): A reference to the score reel you'd like
-                to advance.
-            direction (int, optional): The direction you'd like to advance
-                the reel. 1 is up and -1 is down.
-            callback (callback, optional): The method you'd like called when
-                this reel has hw confirmed that the advance is complete.
-        """
-        self.log.debug("Advancing %s with no hw confirm. Direction: %s, "
-                       "callback: %s", reel.name, direction, callback)
-
-        if callback:
-            self.machine.events.add_handler(reel.name + '_hw_value', callback)
-        reel.advance(direction)
-
-        # todo move the pulse end time to reel object and check each loop?
+    def _reel_state_change(self, **kwargs):
+        # A member reel has just finished something (either pulsing, advancing,
+        # or hw_confirming), so let's see if we can do anything else
+        if self.jump_in_progess:
+            self._jump_advance_step()
+        elif self.advance_queue:
+            self._step_advance_step()
 
     def int_to_reel_list(self, value):
         """Converts an integer to a list of integers that represent each
@@ -861,6 +744,9 @@ class ScoreReel(Device):
 
     """
 
+    config_section = 'Score Reels'
+    collection = 'score_reels'
+
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('ScoreReel.' + name)
         super(ScoreReel, self).__init__(machine, name, config, collection)
@@ -881,6 +767,8 @@ class ScoreReel(Device):
             self.config['repeat_pulse_ms'] = '200ms'
         if 'hw_confirm_ms' not in self.config:
             self.config['hw_confirm_ms'] = '300ms'
+        if 'confirm' not in self.config:
+            self.config['confirm'] = 'lazy'
 
         # Convert times strings to ms ints
         self.config['repeat_pulse_ms'] = \
@@ -908,12 +796,12 @@ class ScoreReel(Device):
         this physical value will always be -999 if there is no switch telling
         it otherwise.
 
-        Note this value will be initialed via self.check_hw_switches() below.
+        Note this value will be initialized via self.check_hw_switches() below.
         """
 
         self.hw_sync = False
-        # todo doc
-        # initialized below
+        """Specifies whether this reel has verified it's positions via the
+        switches since it was last advanced."""
 
         self.ready = True
         """Whether this reel is ready to advance. Typically used to make sure
@@ -924,19 +812,17 @@ class ScoreReel(Device):
         of -999 indicates that the value is unknown.
         """
 
-        #self.desired_value = 0
-        """The value number the real desires to be in. Note this is the
-        index of the `value_switches` list which may not correspond to the
-        actual digit printed on the wheel in that value.
-        """
         self.next_pulse_time = 0
         """The time when this reel next wants to be pulsed. The reel will set
         this on its own (based on its own attribute of how fast pulses can
         happen). If the ScoreReelController is ready to pulse this reel and the
         value is in the past, it will do a pulse. A value of 0 means this reel
         does not currently need to be pulsed. """
+
         self.rollover_reel = None
-        self.hw_check_time = 0
+        """A reference to the ScoreReel object of the next higher reel in the
+        group. This is used so the reel can notify its neighbor that it needs
+        to advance too when this reel rolls over."""
 
         self.misfires = dict()
         """Counts the number of "misfires" this reel has, which is when we
@@ -950,11 +836,6 @@ class ScoreReel(Device):
         self._destination_index = 0
         """Holds the index of the destination the reel is trying to advance to.
         """
-
-        # Can't check the current state of the switches until the switch
-        # handler is configured
-        self.machine.events.add_handler('machine_init_complete',
-                                        self.check_hw_switches)
 
         # todo add some kind of status for broken?
 
@@ -989,9 +870,9 @@ class ScoreReel(Device):
         """
 
         if direction == 1:
-            return self.machine.coils[self.config['coil_inc']].pulse_ms
+            return self.machine.coils[self.config['coil_inc']].config['pulse_ms']
         elif self.config['coil_dec']:
-            return self.machine.coils[self.config['coil_dec']].pulse_ms
+            return self.machine.coils[self.config['coil_dec']].config['pulse_ms']
         else:
             return 0
 
@@ -1027,7 +908,7 @@ class ScoreReel(Device):
         return -999
 
     def _set_rollover_reel(self, reel):
-        # Set's this reels' rollover_reel to the object of the next higher
+        # Sets this reels' rollover_reel to the object of the next higher
         # reel
         self.log.debug("Setting rollover reel: %s", reel.name)
         self.rollover_reel = reel
@@ -1036,17 +917,19 @@ class ScoreReel(Device):
         """Performs the coil firing to advance this reel one position (up or
         down).
 
-        This method also schedules delays for events to notify the machine when
-        the reel is ready to fire again and what the reel has performed a
-        hardware switch check to confirm its current value.
+        This method also schedules delays to post the following events:
+
+        `reel_<name>_pulse_done`: When the coil is done pulsing
+        `reel_<name>_ready`: When the config['repeat_pulse_ms'] time is up
+        `reel_<name>_hw_value: When the config['hw_confirm_ms'] time is up
 
         Args:
             direction (int, optional): If direction is 1, advances the reel
-            to the next higher position. If direction is -1, advances the
-            reel down one position (if the reel has a decrement coil). If
-            direction is not passed, this method will compare the reel's
-            `_destination_index` to its `assumed_value` and will advance it in
-            the direction it needs to go if those values do not match.
+                to the next higher position. If direction is -1, advances the
+                reel down one position (if the reel has a decrement coil). If
+                direction is not passed, this method will compare the reel's
+                `_destination_index` to its `assumed_value` and will advance it
+                in the direction it needs to go if those values do not match.
 
         Returns: If this method is unable to advance the reel (either because
             it's not ready, because it's at its maximum value and does not have
@@ -1115,10 +998,6 @@ class ScoreReel(Device):
                                self.config['hw_confirm_ms'],
                                self.check_hw_switches)
 
-                self.hw_check_time = (time.time() +
-                                      (self.config['hw_confirm_ms'] / 1000.0))
-                self.log.debug("@@@ New HW check time: %s", self.hw_check_time)
-
                 return True
 
             else:
@@ -1134,13 +1013,18 @@ class ScoreReel(Device):
 
         # todo log else error?
 
+    def _pulse_done(self):
+        # automatically called (via a delay) after the reel fires to post an
+        # event that the reel's coil is done pulsing
+        self.machine.events.post('reel_' + self.name + "_pulse_done")
+
     def _ready_to_fire(self):
         # automatically called (via a delay) after the reel fires to post an
         # event that the reel is ready to fire again
         self.ready = True
-        self.machine.events.post(self.name + "_ready")
+        self.machine.events.post('reel_' + self.name + "_ready")
 
-    def check_hw_switches(self):
+    def check_hw_switches(self, no_event=False):
         """Checks all the value switches for this score reel.
 
         This check only happens if `self.ready` is `True`. If the reel is not
@@ -1160,20 +1044,23 @@ class ScoreReel(Device):
         TODO: What happens if there are multiple active switches? Currently it
         will return the highest one. Is that ok?
 
+        Args:
+            no_event: A boolean switch that allows you to suppress the event
+                posting from this call if you just want to update the values.
+
         Returns: The hardware value of the switch, either the position or -999.
             If the reel is not ready, it returns `False`.
         """
-
-        if self.ready:
-
+        # check to make sure the 'hw_confirm_ms' time has passed. If not then we
+        # cannot trust any value we read from the switches
+        if (self.machine.coils[self.config['coil_inc']].time_last_changed +
+                (self.config['hw_confirm_ms'] / 1000.0) <= time.time()):
             self.log.debug("Checking hw switches to determine reel value")
             value = -999
             for i in range(len(self.value_switches)):
                 if self.value_switches[i]:  # not all values have a switch
                     if self.machine.switch_controller.is_active(
                             self.value_switches[i]):
-                        self.log.debug("Reel is currently in value %s",
-                                       self.value_switches[i])
                         value = i
 
             self.log.debug("Setting hw value to: %s", value)
@@ -1181,7 +1068,9 @@ class ScoreReel(Device):
             self.hw_sync = True
             if value != -999:  # only change this if we know where we are
                 self.assumed_value = value
-            self.machine.events.post(self.name + "_hw_value", value=value)
+            if not no_event:
+                self.machine.events.post('reel_' + self.name + "_hw_value",
+                                         value=value)
             return value
 
         else:

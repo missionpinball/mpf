@@ -1,0 +1,118 @@
+# This file contains confinguration options for the MPF itself, including
+# default settings for your pinball machines.
+
+# You should create specific subfolders for each game you want to make and put
+# config files there to override these defaults.
+
+
+# Configuration for the MPF framework itself
+
+MPF:
+    system_modules:  # order is important here
+        timing.Timing
+        events.EventManager
+        switch_controller.SwitchController
+        ball_controller.BallController
+        show_controller.ShowController
+        shots.ShotController
+        scoring.ScoreController
+        auditor.Auditor
+    device_modules:
+        driver.Driver
+        switch.Switch
+        matrix_light.MatrixLight
+        led.LED
+        gi.GI
+        autofire.AutofireCoil
+        ball_device.BallDevice
+        drop_target.DropTarget
+        drop_target.DropTargetBank
+        standup.Standup
+        standup.StandupGroup
+        rollover.Rollover
+        rollover.RolloverGroup
+        flipper.Flipper
+        score_reel.ScoreReel
+        score_reel.ScoreReelGroup
+        diverter.Diverter
+    paths:
+        scriptlets: scriptlets
+        shows: shows
+        audits: audits/audits.yaml
+    auto_load_shows: True
+    default_pulse_ms: 30
+    default_debounce_ms: 0  # fast only
+
+# Default settings for machines. All can be overridden
+
+Machine:
+    HZ: 30
+    Balls Installed: 1
+    Min Balls: 1
+    Max Balls: 10
+
+Hardware:
+    Platform: virtual
+
+Game:
+    Balls per game: 3
+    Max players per game: 2
+
+MachineFlow:
+    mpf.game.attract.Attract
+    mpf.game.game.Game
+
+Plugins:
+    keyboard.Keyboard
+    lcd.LCD
+    auditor.Auditor
+
+OSC:
+    machine_ip: auto
+    machine_port: 9000
+    approved_client_ips: any
+    client_port: 8000
+    debug_messages: false
+    client_updates:
+        switches
+        lights
+
+Auditor:
+    save_events:
+        ball_ended
+        game_ended
+    num_player_top_records: 10
+    audit:
+        shots
+        switches
+        events
+        player
+    events:
+        ball_search_begin
+        machine_init_phase_1
+        game_started
+        game_ended
+        machine_reset
+    player:
+        score
+
+BallSearch:
+    Secs until ball search start: 10
+    Secs between ball search rounds: 3
+    Secs between ball search coils: .15
+    If ball search fails: Keep Looking
+
+Language:
+    en
+
+LCD:
+    width: 800
+    height: 600
+    title: Mission Pinball Framework
+    items:
+        score
+        player
+        ball
+        version
+        title
+        looprate

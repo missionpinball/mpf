@@ -34,8 +34,8 @@ class Keyboard(object):
     """
 
     def __init__(self, machine):
-        self.machine = machine
         self.log = logging.getLogger('Keyboard')
+        self.machine = machine
 
         self.keyboard_events = []
         self.key_map = {}
@@ -46,7 +46,7 @@ class Keyboard(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self.get_keyboard_events)
-        self.machine.events.add_handler('machine_init_complete',
+        self.machine.events.add_handler('machine_init_phase1',
                                         self.set_initial_states, 100)
 
         # Setup the key mappings

@@ -16,25 +16,30 @@ that it doesn't require any P-ROC drivers or modules to be installed.
 import logging
 import time
 from mpf.system.timing import Timing
-from mpf.system.hardware import Platform
+from mpf.system.platform import Platform
 
 
 class HardwarePlatform(Platform):
-    """Base class for the virtual hardware platform. This is a subclass of
-    mpf.system.hardware.Platform.
-
-    """
+    """Base class for the virtual hardware platform."""
 
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring machine for virtual hardware.")
 
-        # Set the 'None Hardware' specific platform features
+        # ----------------------------------------------------------------------
+        # Platform-specific hardware features. WARNING: Do not edit these. They
+        # are based on what the virtual hardware can and cannot do.
         self.features['max_pulse'] = 255
-        self.features['hw_polling'] = False
+        self.features['hw_timer'] = False
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
+        self.features['variable_debounce_time'] = False
+        self.features['hw_enable_auto_disable'] = False
+
+        # Make the platform features available to everyone
+        self.machine.config['Platform'] = self.features
+        # ----------------------------------------------------------------------
 
     def configure_driver(self, config, device_type='coil'):
         # todo should probably throw out the number that we get since it could
@@ -49,6 +54,12 @@ class HardwarePlatform(Platform):
 
     def configure_matrixlight(self, config):
         return VirtualMatrixLight(config['number'])
+
+    def configure_led(self, config):
+        return VirtualLED(config['number'])
+
+    def configure_gi(self, config):
+        return VirtualGI(config['number'])
 
     def _do_set_hw_rule(self,
                     sw,
@@ -70,7 +81,7 @@ class HardwarePlatform(Platform):
     def _do_clear_hw_rule(self, sw_num):
         for entry in self.hw_switch_rules.keys():  # slice for copy
             if entry.startswith(
-                    self.machine.switches.get_from_number(sw_num).name):
+                    self.machine.switches.number(sw_num).name):
                 del self.hw_switch_rules[entry]
 
 
@@ -93,6 +104,34 @@ class VirtualMatrixLight(object):
         pass
 
 
+class VirtualLED(object):
+    def __init__(self, number):
+        self.log = logging.getLogger('VirtualLED')
+        self.number = number
+
+    def color(self, color, fade_ms=0, brightness_compensation=True):
+        self.log.debug("Setting color: %s, fade: %s, comp: %s",
+                       color, fade_ms, brightness_compensation)
+
+    def disable(self):
+        pass
+
+    def enable(self, brightness_compensation=True):
+        pass
+
+
+class VirtualGI(object):
+    def __init__(self, number):
+        self.log = logging.getLogger('VirtualGI')
+        self.number = number
+
+    def on(self, brightness, fade_ms, start):
+        pass
+
+    def off(self):
+        pass
+
+
 class VirtualDriver(object):
 
     def __init__(self, number):
@@ -100,6 +139,9 @@ class VirtualDriver(object):
         self.number = number
 
     def disable(self):
+        pass
+
+    def enable(self):
         pass
 
     def pulse(self, milliseconds=None):

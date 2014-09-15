@@ -7,13 +7,16 @@
 # Documentation and more info at http://missionpinball.com/framework
 
 import logging
-from mpf.system.hardware import Device
+from mpf.system.devices import Device
 
 
 class Switch(Device):
     """ A switch in a pinball machine.
 
     """
+
+    config_section = 'Switches'
+    collection = 'switches'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Switch.' + name)
@@ -22,6 +25,10 @@ class Switch(Device):
         self.machine = machine
         self.name = name
         self.config = config
+        """The string of the number from the machine configuration file. This is
+        used with some plugins (like OSC) that need to know the original number
+        string before it's translated into a hardware number by the hardware
+        controller."""
         self.state = 0
         """ The logical state of a switch. 1 = active, 0 = inactive. This takes
         into consideration the NC or NO settings for the switch."""
@@ -32,13 +39,18 @@ class Switch(Device):
 
         # todo read these in and/or change to dict
         self.type = 'NO'
-        """ Specified whether the switch is normally open ('NO', default) or
+        """ Specifies whether the switch is normally open ('NO', default) or
         normally closed ('NC')."""
-        if 'type' in config and config['type'] == 'NC':
+        if 'type' in config and config['type'].upper() == 'NC':
             self.type = 'NC'
 
         if 'debounce' not in config:
             config['debounce'] = True
+
+        # We save out number_str since the platform driver will convert the
+        # number into a hardware number, but we need the original number for
+        # some things later.
+        self.config['number_str'] = str(config['number']).upper()
 
         self.last_changed = None
         self.hw_timestamp = None
@@ -57,7 +69,6 @@ class Switch(Device):
                 self.state = self.hw_state ^ 1
             else:
                 self.state = self.hw_state
-
 
 # The MIT License (MIT)
 

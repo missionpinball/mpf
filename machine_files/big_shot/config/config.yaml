@@ -1,0 +1,1167 @@
+# Mission Pinball Framework machine configuration file for Big Shot
+
+# Instructions for this config file:
+# https://missionpinball.com/docs/configuration-file-reference/
+
+# Created by Brian Madden & Gabe Knuth
+
+# More information about our Big Shot conversion project here:
+# https://missionpinball.com/blog/category/big-shot-em-conversion/
+
+Machine:
+    HZ: 30
+    Balls Installed: 1
+    Min Balls: 1
+    Max Balls: 1
+
+Hardware:
+    Platform: p_roc
+    DriverBoards: pdb
+
+Game:
+    Balls per game: 5
+    Max players per game: 2
+
+MachineFlow:
+    mpf.game.attract.Attract
+    mpf.game.game.Game
+
+Scriptlets:
+    coil_tests.CoilTests
+    attract.Attract
+
+Plugins:
+    keyboard.Keyboard
+    lcd.LCD
+    osc.OSC
+
+BallSearch:
+    Secs until ball search start: 10
+    Secs between ball search rounds: 3
+    Secs between ball search coils: .15
+    If ball search fails: Keep Looking
+
+LCD:
+    width: 800
+    height: 600
+    title: Big Shot
+    items:
+        score
+        player
+        ball
+        version
+        title
+        looprate
+
+Switches:
+# Direct Switches
+    flipperLeft:
+        number: SD18
+        label: Left Flipper Button
+        tags: flipper, player
+    flipperRight:
+        number: SD17
+        label: Right Flipper Button
+        tags: flipper, player
+    startButton:
+        number: SD16
+        label: Start Button
+        tags: start, player
+    score_1p_10_0:
+        number: SD8
+        label: 1st Player Tens Score - Zero Position
+        tags:
+    score_1p_10_9:
+        number: SD9
+        label: 1st Player Tens Score - Nine Position
+        tags:
+    score_1p_100_0:
+        number: SD10
+        label: 1st Player Hundreds Score - Zero Position
+        tags:
+    score_1p_100_9:
+        number: SD11
+        label: 1st Player Hundreds Score - Nine Position
+        tags:
+    score_1p_1k_0:
+        number: SD12
+        label: 1st Player Thousands Score - Zero Position
+        tags:
+    score_1p_1k_9:
+        number: SD13
+        label: 1st Player Thousands Score - Nine Position
+        tags:
+    score_1p_10k_0:
+        number: SD14
+        label: 1st Player Ten Thousands Score - Zero Position
+        tags:
+    score_1p_10k_9:
+        number: SD15
+        label: 1st Player Ten Ten Thousands Score - Nine Position
+        tags:
+    score_2p_10_0:
+        number: SD0
+        label: 2nd Player Tens Score - Zero Position
+        tags:
+    score_2p_10_9:
+        number: SD1
+        label: 2nd Player Tens Score - Nine Position
+        tags:
+    score_2p_100_0:
+        number: SD2
+        label: 2nd Player Hundreds Score - Zero Position
+        tags:
+    score_2p_100_9:
+        number: SD3
+        label: 2nd Player Hundreds Score - Nine Position
+        tags:
+    score_2p_1k_0:
+        number: SD4
+        label: 2nd Player Thousands Score - Zero Position
+        tags:
+    score_2p_1k_9:
+        number: SD5
+        label: 2nd Player Thousands Score - Nine Position
+        tags:
+    score_2p_10k_0:
+        number: SD6
+        label: 2nd Player Ten Thousands Score - Zero Position
+        tags:
+    score_2p_10k_9:
+        number: SD7
+        label: 2nd Player Ten Thousands Score - Nine Position
+        tags:
+    creditWheel_zero:
+        number: SD24
+        label: Credit Wheel - Zero Position
+        tags:
+    creditWheel_max:
+        number: SD25
+        label: Credit Wheel - Max Position
+        tags:
+    creditWheel_1Plus:
+        number: SD26
+        label: Credit Wheel - greater than one/less than max Position
+        tags:
+    tilt:
+        number: SD20
+        label: Plumb Bob Tilt
+        tags: tilt
+    slamTilt:
+        number: SD27
+        label: Slam Tilt
+        tags: slam_tilt, noBroken
+        type: NC
+    credit1:
+        number: SD19
+        label: Credit Switch 1
+        tags: noBroken, credit
+    coinDoorClosed:
+        number: SD21
+        label: Coin Door Switch
+        tags:
+
+# Matrix Switches
+    topLaneMid:
+        number: 0/0
+        label: Middle Rollover Top Lanes
+        tags: ballLive
+    topLaneLeft:
+        number: 0/1
+        label: Left Rollover Top Lanes
+        tags: ballLive
+    topLaneRight:
+        number: 0/2
+        label: Right Rollover Top Lanes
+        tags: ballLive
+    popBumper:
+        number: 0/3
+        label: Pop Bumper
+        tags: ballLive
+    eightBallHoleEject:
+        number: 0/4
+        label: 8 Ball center hole
+        tags: balllive
+    drain:
+        number: 0/5
+        label: Trough Enter
+        tags:
+    plungerLane:
+        number: 0/6
+        label: Plunger Lane Switch
+        tags: plungerLane
+        type: NC
+    drainEject:
+        number: 0/7
+        label: Trough eject
+        tags:
+    drop15:
+        number: 1/0
+        label: Right Bank 15
+        tags:
+    drop14:
+        number: 1/1
+        label: Right Bank 14
+        tags:
+    drop13:
+        number: 1/2
+        label: Right Bank 13
+        tags:
+    drop12:
+        number: 1/3
+        label: Right Bank 12
+        tags:
+    drop11:
+        number: 1/4
+        label: Right Bank 11
+        tags:
+    drop10:
+        number: 1/5
+        label: Right Bank 10
+        tags:
+    midRtLane:
+        number: 1/6
+        label: Middle Right Lane Rollover
+        tags:
+    drop9:
+        number: 1/7
+        label: Right Bank 9
+        tags:
+    drop1:
+        number: 2/0
+        label: Left Bank 1
+        tags:
+    drop2:
+        number: 2/1
+        label: Left Bank 2
+        tags:
+    drop3:
+        number: 2/2
+        label: Left Bank 3
+        tags:
+    drop4:
+        number: 2/3
+        label: Left Bank 4
+        tags:
+    drop5:
+        number: 2/4
+        label: Left Bank 3
+        tags:
+    drop6:
+        number: 2/5
+        label: Left Bank 2
+        tags:
+    midLtLane:
+        number: 2/6
+        label: Middle Left Lane Rollover
+        tags:
+    drop7:
+        number: 2/7
+        label: Left Bank 1
+        tags:
+    slingL:
+        number: 3/0
+        label: Left Slingshot
+        tags: sling
+    slingR:
+        number: 3/1
+        label: Right Slingshot
+        tags: sling
+    leftOutlane:
+        number: 3/2
+        label: Left Outlane
+        tags: earlyDrain
+    leftInlane:
+        number: 3/3
+        label: Left Inlane
+        tags:
+    rightOutlane:
+        number: 3/4
+        label: Right Outlane
+        tags: earlyDrain
+    rightInlane:
+        number: 3/5
+        label: Right Inlane
+        tags:
+    ltMidStandup:
+        number: 3/6
+        label: Left Middle Target
+        tags:
+    rtMidStandup:
+        number: 3/7
+        label: Right Middle Target
+        tags:
+    midLtRubber:
+        number: 4/6
+        label: Left Middle lane behind rubber
+        tags:
+    midRtRubber:
+        number: 4/7
+        label: Right Middle lane behind rubber
+        tags:
+    behindSolids:
+        number: 4/2
+        label:
+        tags:
+    behindStripes:
+        number: 4/3
+        label:
+        tags:
+
+# Light numbering format: C-Ax-By-z:R-Am-Bn-p:
+
+# Capital letters are required, lower case letters represent the numbers:
+# For Columns (Source circuits - represented by the 'C')
+# x : Column board address (0-7)
+# y : Column bank address (0 for A, 1 for B)
+# z : Output number (0-7)
+
+# For Rows (Sink circuits - represented by the 'R')
+# m : Row board address (0-7)
+# n : Row bank address (0 for A, 1 for B)
+# p : Output number (0-7)
+
+MatrixLights:
+
+# Backbox
+# Adding some columns
+#    bs1:
+#        number: C-A3-B0-5:R-A3-B1-7
+#        label: Made up light to extend Matrix
+#        tags: bullshit
+#    bs2:
+#        number: C-A3-B0-6:R-A3-B1-7
+#        label: Made up light to extend Matrix
+#        tags: bullshit
+#    bs3:
+#        number: C-A3-B0-7:R-A3-B1-7
+#        label: Made up light to extend Matrix
+#        tags: bullshit
+# Real Lights
+    player2_1:
+        number: C-A3-B0-0:R-A3-B1-0
+        label: Player 2, 1s digit
+        tags: player2
+    player1_1:
+        number: C-A3-B0-0:R-A3-B1-1
+        label: Player 1, 1s digit
+        tags: player1
+    o_t:
+        number: C-A3-B0-0:R-A3-B1-2
+        label: Behind letters O and T
+        tags: GI
+    match40:
+        number: C-A3-B0-0:R-A3-B1-3
+        label: Match Light 40
+        tags:
+    player2:
+        number: C-A3-B0-0:R-A3-B1-4
+        label: Player 2, corner
+        tags: player2
+    player2_10:
+        number: C-A3-B0-1:R-A3-B1-0
+        label: Player 2, 10s digit
+        tags: player2
+    player1_10:
+        number: C-A3-B0-1:R-A3-B1-1
+        label: Player 1, 10s digit
+        tags: player1
+    gameOver:
+        number: C-A3-B0-1:R-A3-B1-2
+        label: Game Over
+        tags: 
+    match10:
+        number: C-A3-B0-1:R-A3-B1-3
+        label: Match Light 10
+        tags:
+    player1:
+        number: C-A3-B0-1:R-A3-B1-4
+        label: Player 1, corner
+        tags: player1
+    player2_100:
+        number: C-A3-B0-2:R-A3-B1-0
+        label: Player 2, 100s digit
+        tags: player2
+    player1_100:
+        number: C-A3-B0-2:R-A3-B1-1
+        label: Player 1, 100s digit
+        tags: player1
+    match90:
+        number: C-A3-B0-2:R-A3-B1-2
+        label: Match Light 90
+        tags:
+    match00:
+        number: C-A3-B0-2:R-A3-B1-3
+        label: Match Light 00
+        tags: 
+    bip2:
+        number: C-A3-B0-2:R-A3-B1-4
+        label: Ball in play 2
+        tags:
+    player2_1k:
+        number: C-A3-B0-3:R-A3-B1-0
+        label: Player 2, 1000s digit
+        tags: player2
+    player1_1k:
+        number: C-A3-B0-3:R-A3-B1-1
+        label: Player 1, 1000s digit
+        tags: player1
+    match80:
+        number: C-A3-B0-3:R-A3-B1-2
+        label: Match Light 80
+        tags: 
+    match20:
+        number: C-A3-B0-3:R-A3-B1-3
+        label: Match Light 20
+        tags:
+    bip4:
+        number: C-A3-B0-3:R-A3-B1-4
+        label: Ball in play 4
+        tags:
+    player2_10k:
+        number: C-A3-B0-4:R-A3-B1-0
+        label: Player 2, 10000s unit
+        tags: player2
+    player1_10k:
+        number: C-A3-B0-4:R-A3-B1-1
+        label: Player 1, 10000s unit
+        tags: player1
+    match70:
+        number: C-A3-B0-4:R-A3-B1-2
+        label: Match light 70
+        tags: 
+    match30:
+        number: C-A3-B0-4:R-A3-B1-3
+        label: Match light 30
+        tags:
+    bip1:
+        number: C-A3-B0-4:R-A3-B1-4
+        label: Ball in play 1
+        tags:
+    rtBody:
+        number: C-A3-B0-5:R-A3-B1-0
+        label: Right body
+        tags: GI
+    h:
+        number: C-A3-B0-5:R-A3-B1-1
+        label: Behind letter h
+        tags: GI
+    match60:
+        number: C-A3-B0-5:R-A3-B1-2
+        label: Match light 60
+        tags: 
+    ltLeg:
+        number: C-A3-B0-5:R-A3-B1-3
+        label: Left leg
+        tags: GI
+    bip3:
+        number: C-A3-B0-5:R-A3-B1-4
+        label: Ball in play 3
+        tags: 
+    midBody2:
+        number: C-A3-B0-6:R-A3-B1-0
+        label: Middle body 2
+        tags: GI
+    g_s:
+        number: C-A3-B0-6:R-A3-B1-1
+        label: Behind G and S
+        tags: GI
+    match50:
+        number: C-A3-B0-6:R-A3-B1-2
+        label: Match Light 50
+        tags: 
+    ltBody:
+        number: C-A3-B0-6:R-A3-B1-3
+        label: Left body
+        tags: GI
+    bip5:
+        number: C-A3-B0-6:R-A3-B1-4
+        label: Ball in play 5
+        tags: 
+    guysHair:
+        number: C-A3-B0-7:R-A3-B1-0
+        label: Guys hair
+        tags: GI
+    b_i:
+        number: C-A3-B0-7:R-A3-B1-1
+        label: Behind letters B and I
+        tags: GI
+    tilt:
+        number: C-A3-B0-7:R-A3-B1-2
+        label: Tilt
+        tags: 
+    midBody1:
+        number: C-A3-B0-7:R-A3-B1-3
+        label: Middle Body 1
+        tags: GI
+    rtLeg:
+        number: C-A3-B0-7:R-A3-B1-4
+        label: Right Leg
+        tags: GI
+
+# Playfield
+
+# BS Rows
+
+    bsPF1:
+        number: C-A2-B0-1:R-A2-B1-5
+        label: bs light
+    bsPF2:
+        number: C-A2-B0-1:R-A2-B1-6
+        label: bs light
+    bsPF3:
+        number: C-A2-B0-1:R-A2-B1-7
+        label: bs light
+
+# Real Lights
+    bonus1k:
+        number: C-A2-B0-0:R-A2-B1-0
+        label: Bonus 1,000
+        tags:
+    rtSling:
+        number: C-A2-B0-0:R-A2-B1-1
+        label: Right Slingshot
+        tags: GI
+    ltBank1:
+        number: C-A2-B0-0:R-A2-B1-2
+        label: Bottom light under left bank of drop targets
+        tags: GI
+    ball1:
+        number: C-A2-B0-0:R-A2-B1-3
+        label: Ball 1 
+        tags: 
+    ball8:
+        number: C-A2-B0-0:R-A2-B1-4
+        label: Ball 8
+        tags: 
+    bonus2k:
+        number: C-A2-B0-1:R-A2-B1-0
+        label: Bonus 2,000
+        tags:
+    rtMidLane:
+        number: C-A2-B0-1:R-A2-B1-1
+        label: Under right middle lane divider
+        tags: GI
+    ltBank2:
+        number: C-A2-B0-1:R-A2-B1-2
+        label: Top light under left bank of drop targets 
+        tags: GI
+    ball2:
+        number: C-A2-B0-1:R-A2-B1-3
+        label: Ball 2
+        tags: 
+    ball9:
+        number: C-A2-B0-1:R-A2-B1-4
+        label: Ball 9
+        tags: 
+    bonus3k:
+        number: C-A2-B0-2:R-A2-B1-0
+        label: Bonus 3,000
+        tags:
+    rtMid1k:
+        number: C-A2-B0-2:R-A2-B1-1
+        label: Right middle lane 1,000 light
+        tags: 
+    topLtLane:
+        number: C-A2-B0-2:R-A2-B1-2
+        label: Top Left Lane
+        tags: GI
+    ball3:
+        number: C-A2-B0-2:R-A2-B1-3
+        label: Ball 3
+        tags: 
+    ball10:
+        number: C-A2-B0-2:R-A2-B1-4
+        label: Ball 10
+        tags:
+    ltSling:
+        number: C-A2-B0-3:R-A2-B1-0
+        label: Left Slingshot
+        tags: GI
+    rtBank2:
+        number: C-A2-B0-3:R-A2-B1-1
+        label: Top light under right bank of drop targets
+        tags: GI
+    topMid1:
+        number: C-A2-B0-3:R-A2-B1-2
+        label: Left Middle Top Lane
+        tags: GI
+    ball4:
+        number: C-A2-B0-3:R-A2-B1-3
+        label: Ball 4
+        tags: 
+    ball11:
+        number: C-A2-B0-3:R-A2-B1-4
+        label: Ball 11
+        tags: 
+    ltMidLane:
+        number: C-A2-B0-4:R-A2-B1-0
+        label: Under left middle lane divider
+        tags: GI
+    rtBank1:
+        number: C-A2-B0-4:R-A2-B1-1
+        label: Bottom light under right bank of drop targets
+        tags: GI
+    topMid2:
+        number: C-A2-B0-4:R-A2-B1-2
+        label: Right Middle Top Lane
+        tags: GI
+    ball5:
+        number: C-A2-B0-4:R-A2-B1-3
+        label: Ball 5
+        tags:
+    ball12:
+        number: C-A2-B0-4:R-A2-B1-4
+        label: Ball 12
+        tags:
+    ltMid1k:
+        number: C-A2-B0-5:R-A2-B1-0
+        label: Right middle lane 1,000 light
+        tags:
+    popBumper:
+        number: C-A2-B0-5:R-A2-B1-1
+        label: popBumper
+        tags: GI
+    topRtLane:
+        number: C-A2-B0-5:R-A2-B1-2
+        label: Right Top Lane
+        tags: GI
+    ball6:
+        number: C-A2-B0-5:R-A2-B1-3
+        label: Ball 6
+        tags:
+    ball13:
+        number: C-A2-B0-5:R-A2-B1-4
+        label: Ball 13
+        tags:
+    ltSpecial:
+        number: C-A2-B0-6:R-A2-B1-0
+        label: Left Special Light
+        tags:
+    rtSpecial:
+        number: C-A2-B0-6:R-A2-B1-1
+        label: Right Special Light
+        tags:
+    eightBall500:
+        number: C-A2-B0-6:R-A2-B1-2
+        label: Top 8-ball 500pt light
+        tags:
+    ball7:
+        number: C-A2-B0-6:R-A2-B1-3
+        label: Ball 7
+        tags:
+    ball14:
+        number: C-A2-B0-6:R-A2-B1-4
+        label: Ball 14
+        tags:
+    midPlastic:
+        number: C-A2-B0-7:R-A2-B1-0
+        label: Under plastic in front of popBumper
+        tags: GI
+    eightBallHole:
+        number: C-A2-B0-7:R-A2-B1-1
+        label: Under 8-ball kickout hole
+        tags:
+    coinDoor:
+        number: C-A2-B0-7:R-A2-B1-2
+        label: Coin Door
+        tags:
+    ball15:
+        number: C-A2-B0-7:R-A2-B1-4
+        label: Ball 15
+        tags:
+
+Coils:
+    flipperLeftMain: # 0A0
+        number: A0-B0-0
+        pulse_ms: 50
+        holdPatter: 1-4
+    flipperRightMain: # 0A1
+        number: A0-B0-1
+        pulse_ms: 50
+        holdPatter: 1-4
+    gameCounter:
+        number: A0-B0-2
+        pulse_ms: 10
+    knocker:
+        number: A0-B0-3
+        pulse_ms: 20
+    chime1:
+        number: A0-B0-4
+        pulse_ms: 30
+    chime2:
+        number: A0-B0-5
+        pulse_ms: 30
+    chime3:
+        number: A0-B0-6
+        pulse_ms: 30
+    troughEject: # 0A7
+        number: A0-B0-7
+        pulse_ms: 35
+    diverter:
+        number: A0-B1-0
+        pulse_ms: 25
+        holdPatter: 1-4
+    popBumper:
+        number: A0-B1-1
+        pulse_ms: 18
+    eightBallEject:
+        number: A0-B1-2
+        pulse_ms: 30
+    creditAdd:
+        number: A0-B1-3
+        pulse_ms: 26
+    creditSubtract:
+        number: A0-B1-4
+        pulse_ms: 20
+    leftSling:
+        number: A0-B1-5
+        pulse_ms: 150
+    rightSling:
+        number: A0-B1-6
+        pulse_ms: 150
+    player1_10:
+        number: A1-B0-0
+        pulse_ms: 120
+    player1_100:
+        number: A1-B0-1
+        pulse_ms: 120
+    player1_1k:
+        number: A1-B0-2
+        pulse_ms: 120
+    player1_10k:
+        number: A1-B0-3
+        pulse_ms: 120
+    player2_10:
+        number: A1-B0-4
+        pulse_ms: 120
+    player2_100:
+        number: A1-B0-5
+        pulse_ms: 120
+    player2_1k:
+        number: A1-B0-6
+        pulse_ms: 120
+    player2_10k:
+        number: A1-B0-7
+        pulse_ms: 120
+    rightBankReset1:
+        number: A1-B1-0
+        pulse_ms: 20
+    rightBankReset2:
+        number: A1-B1-1
+        pulse_ms: 20
+    leftBankReset1:
+        number: A1-B1-2
+        pulse_ms: 22
+    leftBankReset2:
+        number: A1-B1-3
+        pulse_ms: 22
+
+
+BallDevices:
+    trough:
+        tags: drain, home, ball_add_live
+        ball_switches: drain
+        eject_coil: troughEject
+        eject_switch: drain
+        ball_count_delay: 0.3s
+        confirm_eject_type: switch
+        confirm_eject_target: drainEject
+
+    eightBallHole:
+        ball_switches: eightBallHoleEject
+        eject_coil: eightBallEject
+        ball_count_delay: 0.5s
+        eject_switch: eightBallHoleEject
+        confirm_eject_type: count
+        post_eject_delay_check: 0.3s
+
+Flippers:
+        Left:
+            main_coil: flipperLeftMain
+            activation_switch: flipperLeft
+        Right:
+            main_coil: flipperRightMain
+            activation_switch: flipperRight
+
+Autofire Coils:
+    SlingL:
+        coil: leftSling
+        switch: slingL
+    SlingR:
+        coil: rightSling
+        switch: slingR
+    popBumper:
+        coil: popBumper
+        switch: popBumper
+#        eightBallHole:
+#            coil: eightBallEject
+#            switch: eightBallHoleEject
+
+Score Reels:
+    score_1p_10k:
+        coil_inc: player1_10k
+        switch_0: score_1p_10k_0
+        switch_9: score_1p_10k_9
+        rollover: True
+        limit_hi: 9
+        limit_lo: 0
+        repeat_pulse_ms: 200ms
+        hw_confirm_ms: 300ms
+        confirm: lazy
+    score_1p_1k:
+        coil_inc: player1_1k
+        switch_0: score_1p_1k_0
+        switch_9: score_1p_1k_9
+        rollover: True
+        limit_hi: 9
+        limit_lo: 0
+        repeat_pulse_ms: 200ms
+        hw_confirm_ms: 300ms
+        confirm: lazy
+    score_1p_100:
+        coil_inc: player1_100
+        switch_0: score_1p_100_0
+        switch_9: score_1p_100_9
+        rollover: True
+        limit_hi: 9
+        limit_lo: 0
+        repeat_pulse_ms: 200ms
+        hw_confirm_ms: 300ms
+        confirm: lazy
+    score_1p_10:
+        coil_inc: player1_10
+        switch_0: score_1p_10_0
+        switch_9: score_1p_10_9
+        rollover: True
+        limit_hi: 9
+        limit_lo: 0
+        repeat_pulse_ms: 200ms
+        hw_confirm_ms: 300ms
+        confirm: lazy
+    score_2p_10k:
+        coil_inc: player2_10k
+        switch_0: score_2p_10k_0
+        switch_9: score_2p_10k_9
+        rollover: True
+        limit_hi: 9
+        limit_lo: 0
+        repeat_pulse_ms: 200ms
+        hw_confirm_ms: 500ms
+        confirm: lazy
+    score_2p_1k:
+        coil_inc: player2_1k
+        switch_0: score_2p_1k_0
+        switch_9: score_2p_1k_9
+        rollover: True
+        limit_hi: 9
+        limit_lo: 0
+        repeat_pulse_ms: 200ms
+        hw_confirm_ms: 300ms
+        confirm: lazy
+    score_2p_100:
+        coil_inc: player2_100
+        switch_0: score_2p_100_0
+        switch_9: score_2p_100_9
+        rollover: True
+        limit_hi: 9
+        limit_lo: 0
+        repeat_pulse_ms: 200ms
+        hw_confirm_ms: 300ms
+        confirm: lazy
+    score_2p_10:
+        coil_inc: player2_10
+        switch_0: score_2p_10_0
+        switch_9: score_2p_10_9
+        rollover: True
+        limit_hi: 9
+        limit_lo: 0
+        repeat_pulse_ms: 200ms
+        hw_confirm_ms: 300ms
+        confirm: lazy
+    credit_reel:
+        coil_inc: creditAdd
+        coil_dec: creditSubtract
+        switch_0: creditWheel_zero
+        switch_12: creditWheel_max
+        rollover: False
+        limit_lo: 0
+        limit_hi: 12
+        repeat_pulse_ms: 200ms
+        hw_confirm_ms: 300ms
+        confirm: strict
+
+Score Reel Groups:
+    player1:
+        reels: score_1p_10k, score_1p_1k, score_1p_100, score_1p_10, None
+        tags: player1
+        max simultaneous coils: 2
+        attract display: time # time, date, zero, none
+        attract display start time: 0
+        chimes: None, chime1, chime2, chime3, None
+        confirm: lazy  # anal, lazy, or none
+    player2:
+        reels: score_2p_10k, score_2p_1k, score_2p_100, score_2p_10, None
+        tags: player2
+        max simultaneous coils: 2
+        chimes: None, chime1, chime2, chime3, None
+        confirm: anal  # anal, lazy, or none
+
+Keyboard:
+    z:
+        switch: flipperLeft
+    /:
+        switch: flipperRight
+    s:
+        switch: startButton
+    q:
+        switch: drain
+        toggle: True
+        start_active: True
+    w:
+        switch: drainEject
+    e:
+        switch: plungerLane
+    r:
+        switch: eightBallHoleEject
+    x:
+        switch: slingL
+    period:
+        switch: slingR
+
+
+    1:
+        event: advance_reel_test
+        params:
+            reel_name: score_1p_10k
+            direction: 1
+    shift-1:
+        event: advance_reel_test
+        params:
+            reel_name: score_1p_10k
+            direction: -1
+
+    2:
+        event: advance_reel_test
+        params:
+            reel_name: score_1p_1k
+            direction: 1
+    shift-2:
+        event: advance_reel_test
+        params:
+            reel_name: score_1p_1k
+            direction: -1
+
+
+    3:
+        event: advance_reel_test
+        params:
+            reel_name: score_1p_100
+            direction: 1
+    shift-3:
+        event: advance_reel_test
+        params:
+            reel_name: score_1p_100
+            direction: -1
+
+
+    4:
+        event: advance_reel_test
+        params:
+            reel_name: score_1p_10
+            direction: 1
+    shift-4:
+        event: advance_reel_test
+        params:
+            reel_name: score_1p_10
+            direction: -1
+
+
+
+    6:
+        event: coil_test
+        params:
+            coil_name: leftBankReset1
+    shift-6:
+        event: coil_test
+        params:
+            coil_name: rightBankReset1
+            pulse_change: -1
+    ctrl-6:
+        event: coil_test
+        params:
+            coil_name: rightBankReset1
+            pulse_change: 1
+
+    7:
+        event: coil_test
+        params:
+            coil_name: leftBankReset2
+    shift-7:
+        event: coil_test
+        params:
+            coil_name: rightBankReset2
+            pulse_change: -1
+    ctrl-7:
+        event: coil_test
+        params:
+            coil_name: rightBankReset2
+            pulse_change: 1
+
+    8:
+        event: hold_coil
+        params:
+            coil_name: leftBankReset
+            hold_time: 800
+
+DropTargets:
+    drop1:
+        switch: drop1
+        light: ball1
+    drop2:
+        switch: drop2
+        light: ball2
+    drop3:
+        switch: drop3
+        light: ball3
+    drop4:
+        switch: drop4
+        light: ball4
+    drop5:
+        switch: drop5
+        light: ball5
+    drop6:
+        switch: drop6
+        light: ball6
+    drop7:
+        switch: drop7
+        light: ball7
+    drop9:
+        switch: drop9
+        light: ball9
+    drop10:
+        switch: drop10
+        light: ball10
+    drop11:
+        switch: drop11
+        light: ball11
+    drop12:
+        switch: drop12
+        light: ball12
+    drop13:
+        switch: drop13
+        light: ball13
+    drop14:
+        switch: drop14
+        light: ball14
+    drop15:
+        switch: drop15
+        light: ball15
+
+DropTargetBanks:
+    Solids:
+        drop_targets: drop1, drop2, drop3, drop4, drop5, drop6, drop7
+        reset_coils: leftBankReset1, leftBankReset2
+        reset_events:
+            ball_starting: 0
+            droptargetbank_Solids_complete: 1s
+    Stripes:
+        drop_targets: drop9, drop10, drop11, drop12, drop13, drop14, drop15
+        reset_coils: rightBankReset1, rightBankReset2
+        reset_events:
+            ball_starting: 0.5s
+            droptargetbank_Solids_complete: 1s
+
+Targets:
+    midRightLane:
+        switch: midRtLane
+        light: rtMidLane
+    midLeftLane:
+        switch: midLtLane
+        light: ltMidLane
+    specialLeft:
+        switch: ltMidStandup
+        light: ltSpecial
+    specialRight:
+        switch: rtMidStandup
+        light: rtSpecial
+
+TargetGroups:
+    middleLanes:
+        targets: midLeftLane, midRightLane
+        rotate_left_events: sw_sling
+    specialStandups:
+        targets: specialLeft, specialRight
+        rotate_left_events: sw_sling
+
+Diverters:
+    rightOutlane:
+        coil: diverter
+        type: hold
+        enable_switch:
+        enable_events: balldevice_eightBallHole_ball_enter
+        disable_events: ball_ending
+        disable_switch: sw_plungerLane
+
+Shots:
+    slingShot:
+        Switch: slingL, slingR
+    dropTarget:
+        Switch: drop1, drop2, drop3, drop4, drop5, drop6, drop7, drop9, drop10, drop11, drop12, drop13, drop14, drop15
+    rubberBehindDropTarget:
+        Switch: behindSolids, behindStripes
+    inlane:
+        Switch: leftInlane, rightInlane
+    outlane:
+        Switch: leftOutlane, rightOutlane
+    eightBallHole:
+        Switch: eightBallHoleEject
+    midLaneLit:
+        Switch: midRtLane, midLtLane # will change with game logic
+#    midLaneUnlit:
+#        Switch:
+    midLaneRubber:
+        Switch: midLtRubber, midRtRubber
+    specialStandupUnlit:
+        Switch: rtMidStandup, ltMidStandup # also change these
+    upperOuterRollover:
+        Switch: topLaneLeft, topLaneRight
+    upperEightBallLane:
+        Switch: topLaneMid
+
+
+Scoring:
+    slingShot:
+        Score: 10
+    dropTarget:
+        Score: 500
+    rubberBehindDropTarget:
+        Score: 210
+    inlane:
+        Score: 500
+    outlane:
+        Score: 1000
+    eightBallHole:
+        Score: 500
+    midLaneLit:
+        Score: 1000
+    midLaneUnlit:
+        Score: 500
+    midLaneRubber:
+        Score: 10
+    specialStandupUnlit:
+        Score: 100
+    upperOuterRollover:
+        Score: 1000
+    upperEightBallLane:
+        Score: 500
+    bonusValue:
+        Score: 1000
+    secondToLastBonusValue:
+        Score: 2000
+    lastBonusValue:
+        Score: 3000
+    popBumper3ball:
+        Score: 1000
+    popBumper5ball:
+        Score: 100

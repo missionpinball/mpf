@@ -10,10 +10,11 @@ states and posting events to the framework.
 # Documentation and more info at http://missionpinball.com/framework
 
 import logging
-from mpf.system.timing import Timing
 import math
 from collections import defaultdict
 import time
+
+from mpf.system.timing import Timing
 
 
 class SwitchController(object):
@@ -45,7 +46,7 @@ class SwitchController(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick, 1000)
-        self.machine.events.add_handler('machine_init_complete',
+        self.machine.events.add_handler('machine_init_phase2',
                                         self.initialize_hw_states,
                                         1000)
                                         # priority 1000 so this fires first
@@ -55,7 +56,7 @@ class SwitchController(object):
 
         We can't do this in __init__() because we need the switch controller to
         be setup first before we set up the hw switches. This method is
-        called via an event handler which listens for `machine_init_complete`.
+        called via an event handler which listens for `machine_init_phase1`.
         """
 
         self.log.debug("Syncing the logical and physical switch states.")
@@ -170,10 +171,16 @@ class SwitchController(object):
         # and OSC interfaces?
 
         # Find the switch name
+
         if num is not None:
             for switch in self.machine.switches:
                 if switch.number == num:
                     name = switch.name
+                    break
+
+        if not name:
+            return
+
         elif obj:
             name = obj.name
 
@@ -184,6 +191,10 @@ class SwitchController(object):
         # if the switch is already in this state, then abort
         if self.switches[name]['state'] == state:
             return
+
+        # audit this activation:
+        if self.machine.auditor.enabled:
+                self.machine.auditor.audit('Switches', name)
 
         self.log.debug("<<<<< switch: %s, State:%s >>>>>", name, state)
         # Update the machine's switch state

@@ -31,10 +31,13 @@ class Timing(object):
         self.log = logging.getLogger("Timing")
         self.machine = machine
 
-    def configure(self, dev=None, HZ=50):
-        self.log.info("Configuring system Timing for %sHz", HZ)
-        Timing.HZ = HZ
-        Timing.secs_per_tick = 1 / float(HZ)
+        if 'HZ' in self.machine.config['Machine']:
+            Timing.HZ = self.machine.config['Machine']['HZ']
+        else:
+            Timing.HZ = 50
+
+        self.log.info("Configuring system Timing for %sHz", Timing.HZ)
+        Timing.secs_per_tick = 1 / float(Timing.HZ)
 
     def add(self, timer):
         timer.wakeup = time.time() + timer.frequency

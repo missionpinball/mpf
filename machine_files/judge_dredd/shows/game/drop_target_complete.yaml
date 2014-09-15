@@ -1,0 +1,98 @@
+- tocks: 1
+  lights:
+    dropTargetJ: 00
+    dropTargetU: 00
+    dropTargetD: 00
+    dropTargetG: 00
+    dropTargetE: 00
+- tocks: 1
+  lights:
+    dropTargetJ: ff
+    dropTargetU: ff
+    dropTargetD: ff
+    dropTargetG: ff
+    dropTargetE: ff
+- tocks: 1
+  lights:
+    dropTargetJ: 00
+    dropTargetU: 00
+    dropTargetD: 00
+    dropTargetG: 00
+    dropTargetE: 00
+- tocks: 1
+  lights:
+    dropTargetJ: ff
+    dropTargetU: ff
+    dropTargetD: ff
+    dropTargetG: ff
+    dropTargetE: ff
+- tocks: 1
+  lights:
+    dropTargetJ: 00
+    dropTargetU: 00
+    dropTargetD: 00
+    dropTargetG: 00
+    dropTargetE: 00
+- tocks: 1
+  lights:
+    dropTargetJ: ff
+    dropTargetU: ff
+    dropTargetD: ff
+    dropTargetG: ff
+    dropTargetE: ff
+- tocks: 1
+  lights:
+    dropTargetJ: 00
+    dropTargetU: 00
+    dropTargetD: 00
+    dropTargetG: 00
+    dropTargetE: 00
+- tocks: 1
+  lights:
+    dropTargetJ: ff
+    dropTargetU: ff
+    dropTargetD: ff
+    dropTargetG: ff
+    dropTargetE: ff
+- tocks: 1
+  lights:
+    dropTargetJ: 00
+    dropTargetU: 00
+    dropTargetD: 00
+    dropTargetG: 00
+    dropTargetE: 00
+- tocks: 1
+  lights:
+    dropTargetJ: ff
+    dropTargetU: ff
+    dropTargetD: ff
+    dropTargetG: ff
+    dropTargetE: ff
+- tocks: 1
+  lights:
+    dropTargetJ: 00
+    dropTargetU: 00
+    dropTargetD: 00
+    dropTargetG: 00
+    dropTargetE: 00
+- tocks: 1
+  lights:
+    dropTargetJ: ff
+    dropTargetU: ff
+    dropTargetD: ff
+    dropTargetG: ff
+    dropTargetE: ff
+- tocks: 1
+  lights:
+    dropTargetJ: 00
+    dropTargetU: 00
+    dropTargetD: 00
+    dropTargetG: 00
+    dropTargetE: 00
+- tocks: 4
+  lights:
+    dropTargetJ: ff
+    dropTargetU: ff
+    dropTargetD: ff
+    dropTargetG: ff
+    dropTargetE: ff

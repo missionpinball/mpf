@@ -22,7 +22,7 @@ class LCD(object):
         self.current_player = None
         self.current_score = None
 
-        locale.setlocale(locale.LC_ALL, 'en_US')
+        locale.setlocale(locale.LC_ALL, '')
 
         if 'height' not in self.machine.config['LCD']:
             self.machine.config['LCD']['height'] = 800
@@ -48,7 +48,7 @@ class LCD(object):
                                             self.update_score)
 
         if 'ball' in self.machine.config['LCD']['items']:
-            self.machine.events.add_handler('ball_startin',
+            self.machine.events.add_handler('ball_starting',
                                             self.update_ball)
 
     def setup_window(self):
@@ -140,7 +140,7 @@ class LCD(object):
         self.update_ball()
         self.update_score()
 
-    def update_ball(self):
+    def update_ball(self, **kwargs):
         self.current_ball = self.machine.game.player.vars['ball']
 
     def update_score(self, change=None, score=None):

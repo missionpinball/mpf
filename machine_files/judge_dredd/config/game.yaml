@@ -20,16 +20,35 @@ BallSearch:
 
 Game:
     num_hits_for_valid_playfield: 2
-    Balls per game: 3
+    Balls per game: 1
     Max players per game: 4
 
-Hacklets:
+Scriptlets:
     attract.Attract
+    deadworld.Deadworld
 
 Plugins:
     keyboard.Keyboard
     lcd.LCD
     ball_search.BallSearch
+    osc.OSC
+    event_triggers.EventTriggers
+
+EventTriggers:
+    tilt:
+        trigger_events: tilt
+        event_when_hit: tilt_hit
+        hits_to_complete: 3
+        multiple_hit_window: 500ms
+        enable_events:
+        disable_events:
+        reset_events: ball_ending
+        event_when_complete: tilt
+        settle_time: 5s
+    slam_tilt:
+        switch_tags: slam_tilt
+        hits_to_tile: 1
+
 
 LCD:
     width: 800
@@ -41,3 +60,10 @@ LCD:
         ball
         version
         looprate
+
+Actions:
+    
+    steps:
+        event1
+        (event2 or event1) and event3
+        

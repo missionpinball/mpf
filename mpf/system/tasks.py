@@ -129,6 +129,17 @@ class DelayManager(object):
         except:
             pass
 
+    def check(self, delay):
+        """ Checks to see if a delay exists.
+
+        Args:
+            delay: A string of the delay you're checking for.
+
+        Returns: The delay object if it exists, or None if not.
+        """
+        if delay in self.delays:
+            return delay
+
     def reset(self, name, ms, callback, args=None):
         """ Resets a delay, first deleting the old one (if it exists) and then
         adding the delay for the new time.

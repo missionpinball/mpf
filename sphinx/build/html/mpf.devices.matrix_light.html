@@ -44,8 +44,56 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="mpf-devices-matrix-light-module">
-<h1>mpf.devices.matrix_light module</h1>
+  <div class="section" id="module-mpf.devices.matrix_light">
+<span id="mpf-devices-matrix-light-module"></span><h1>mpf.devices.matrix_light module</h1>
+<p>Contains the MatrixLight parent classes.</p>
+<dl class="class">
+<dt id="mpf.devices.matrix_light.MatrixLight">
+<em class="property">class </em><tt class="descclassname">mpf.devices.matrix_light.</tt><tt class="descname">MatrixLight</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
+<p>Represents a light connected to a traditional lamp matrix in a pinball
+machine.</p>
+<p>This light could be an incandescent lamp or a replacement single-color
+LED. The key is that they&#8217;re connected up to a lamp matrix.</p>
+<dl class="method">
+<dt id="mpf.devices.matrix_light.MatrixLight.add_handler">
+<tt class="descname">add_handler</tt><big>(</big><em>callback</em><big>)</big></dt>
+<dd><p>Registers a handler to be called when this light changes state.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.matrix_light.MatrixLight.collection">
+<tt class="descname">collection</tt><em class="property"> = 'lights'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.matrix_light.MatrixLight.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'MatrixLights'</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.matrix_light.MatrixLight.off">
+<tt class="descname">off</tt><big>(</big><em>fade_ms=0</em>, <em>priority=0</em>, <em>cache=True</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.matrix_light.MatrixLight.on">
+<tt class="descname">on</tt><big>(</big><em>brightness=255</em>, <em>fade_ms=0</em>, <em>start_brightness=None</em>, <em>priority=0</em>, <em>cache=True</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.matrix_light.MatrixLight.remove_handler">
+<tt class="descname">remove_handler</tt><big>(</big><em>callback=None</em><big>)</big></dt>
+<dd><p>Removes a handler from the list of registered handlers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.matrix_light.MatrixLight.restore">
+<tt class="descname">restore</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
 
 

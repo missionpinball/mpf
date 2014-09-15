@@ -100,7 +100,7 @@ no parameters.</li>
 <dd><p>Reads and processes the hardware states of the physical switches.</p>
 <p>We can&#8217;t do this in __init__() because we need the switch controller to
 be setup first before we set up the hw switches. This method is
-called via an event handler which listens for <cite>machine_init_complete</cite>.</p>
+called via an event handler which listens for <cite>machine_init_phase1</cite>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -137,7 +137,7 @@ is in the state regardless of how long it&#8217;s been in that state.</p>
 
 <dl class="attribute">
 <dt id="mpf.system.switch_controller.SwitchController.log">
-<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x10b90f950&gt;</em></dt>
+<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x10f1b5310&gt;</em></dt>
 <dd></dd></dl>
 
 <dl class="method">

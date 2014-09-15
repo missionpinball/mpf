@@ -217,6 +217,27 @@ our new fade.</li>
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.system.light_controller.LightController.load_light_shows">
+<tt class="descname">load_light_shows</tt><big>(</big><em>path</em><big>)</big></dt>
+<dd><p>Automatically loads all the light shows in a path.</p>
+<p>Light shows are added to the dictionary self.lightshows with they key
+set to the value of the file name.</p>
+<p>For example, the light show &#8216;sweep.yaml&#8217; will be loaded as
+self.lightshows[&#8216;sweep&#8217;]</p>
+<p>This method will also loop through sub-directories, allowing the game
+programmer to organize the light show files into folders as needed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; A string of the relative path to the folder, based from the
+root from where the mpf.py file is running.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="mpf.system.light_controller.LightController.restore_light_state">
 <tt class="descname">restore_light_state</tt><big>(</big><em>lightname</em>, <em>priority=None</em>, <em>fadeend=None</em>, <em>color=None</em><big>)</big></dt>
 <dd><p>Restores a light to whatever state it should be in below the passed

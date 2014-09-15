@@ -8,7 +8,7 @@
 
 import logging
 from mpf.system.tasks import DelayManager
-from mpf.system.hardware import Device
+from mpf.system.devices import Device
 from mpf.system.timing import Timing
 
 
@@ -50,6 +50,9 @@ class BallDevice(Device):
         reference for a description of these settings.
 
     """
+
+    config_section = 'BallDevices'
+    collection = 'balldevices'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('BallDevice.' + name)

@@ -50,7 +50,7 @@
 <dl class="class">
 <dt id="mpf.devices.ball_device.BallDevice">
 <em class="property">class </em><tt class="descclassname">mpf.devices.ball_device.</tt><tt class="descname">BallDevice</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Device" title="mpf.system.hardware.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Device</span></tt></a></p>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
 <p>Base class for a &#8216;Ball Device&#8217; in a pinball machine.</p>
 <p>A ball device  is anything that can hold one or more balls, such as a
 trough, an eject hole, a VUK, a catapult, etc.</p>
@@ -99,6 +99,16 @@ loop through every ball device and call these one-by-one.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.ball_device.BallDevice.collection">
+<tt class="descname">collection</tt><em class="property"> = 'balldevices'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.ball_device.BallDevice.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'BallDevices'</em></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.ball_device.BallDevice.configure">

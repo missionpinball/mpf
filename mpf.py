@@ -13,16 +13,19 @@ from optparse import OptionParser
 from mpf.system.machine_controller import MachineController
 
 # Allow command line options to do things
-# todo Should probably switch to argparse if we're targeting python 2.7+
+# We use optparse instead of argpase so python 2.6 works
 parser = OptionParser()
+
+parser.add_option("-C", "--mpfconfigfile",
+                  action="store", type="string", dest="mpfconfigfile",
+                  default=os.path.join("mpf", "mpfconfig.yaml"),
+                  help="The MPF framework config file")
+
 parser.add_option("-c", "--configfile",
                   action="store", type="string", dest="configfile",
                   default=os.path.join("config", "config.yaml"),
-                  help="Specifies the location of the first config file")
-
-parser.add_option("-m", "--machinepath",
-                  action="store", type="string", dest="machinepath",
-                  help="Specifies the location of the machine files")
+                  help="Specifies the location of the first machine config "
+                  "file")
 
 parser.add_option("-l", "--logfile",
                   action="store", type="string", dest="logfile",
@@ -40,6 +43,9 @@ parser.add_option("-x", "--nohw",
 
 (options, args) = parser.parse_args()
 options_dict = vars(options)  # convert the values instance to python dict
+
+# add the first positional argument into the options dict as the machine path
+options_dict['machinepath'] = args[0]
 
 # Configure logging. Creates a logfile and logs to the console.
 # Formating options are documented here:

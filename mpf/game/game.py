@@ -85,7 +85,7 @@ class Game(MachineMode):
         # we ignore game in the params since that was just a reference that
         # was passed around to other registered handlers, but we don't need
         # it here.
-
+        self.machine.events.post('game_started')
         self.request_player_add()  # if this fails we're in limbo.
 
     def player_add_success(self, player):
@@ -226,7 +226,8 @@ class Game(MachineMode):
         """
         if ev_result is False:
             return
-        self.log.debug("game_end")
+        self.log.debug("game_ended")
+        self.machine.events.post('game_ended')
         # todo disable flippers
         # todo audit games played
         # todo audit game time

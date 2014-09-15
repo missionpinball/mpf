@@ -44,8 +44,99 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="mpf-devices-led-module">
-<h1>mpf.devices.led module</h1>
+  <div class="section" id="module-mpf.devices.led">
+<span id="mpf-devices-led-module"></span><h1>mpf.devices.led module</h1>
+<p>Contains the LED parent classes.</p>
+<dl class="class">
+<dt id="mpf.devices.led.LED">
+<em class="property">class </em><tt class="descclassname">mpf.devices.led.</tt><tt class="descname">LED</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
+<p>Represents an light connected to an new-style interface board.
+Typically this is an LED.</p>
+<p>DirectLEDs can have any number of elements. Typically they&#8217;re either
+single element (single color), or three element (RGB), though dual element
+(red/green) and quad-element (RGB + UV) also exist and can be used.</p>
+<dl class="attribute">
+<dt id="mpf.devices.led.LED.collection">
+<tt class="descname">collection</tt><em class="property"> = 'leds'</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.led.LED.color">
+<tt class="descname">color</tt><big>(</big><em>color</em>, <em>fade_ms=None</em>, <em>brightness_compensation=True</em>, <em>priority=0</em>, <em>cache=True</em><big>)</big></dt>
+<dd><p>Sets this LED to the color passed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>color</strong> &#8211; a list of integers which represent the red, green, and blue
+values the LED will be set to. If this list is fewer than three
+items, it assumes zeros for the rest.</li>
+<li><strong>fade_ms</strong> &#8211; Integer value of how long the LED should fade from its
+current color to the color you&#8217;re passing it here.</li>
+<li><strong>brightness_compensation</strong> &#8211; Boolean value which controls whether this
+LED will be light using the current brightness compensation.
+Default is True.</li>
+<li><strong>priority</strong> &#8211; Arbitrary integer value of the priority of this request.
+If the incoming priority is lower than the current priority,
+this incoming color request will have no effect. Default is 0.
+If the priority is negative, it will force this color to be
+applied now</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.led.LED.compensate">
+<tt class="descname">compensate</tt><big>(</big><em>color</em><big>)</big></dt>
+<dd><p>Applies the current brightness compensation values to the passed
+color.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>color</strong> &#8211; a 3-item color list of ints</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The brightness-compensated 3-item color list of ints</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.led.LED.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'LEDs'</em></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="mpf.devices.led.LED.device_class_init">
+<em class="property">classmethod </em><tt class="descname">device_class_init</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.led.LED.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables an LED, including all elements of a multi-color LED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.led.LED.get_state">
+<tt class="descname">get_state</tt><big>(</big><big>)</big></dt>
+<dd><p>Returns the current state of this LED</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.led.LED.restore">
+<tt class="descname">restore</tt><big>(</big><big>)</big></dt>
+<dd><p>Sets this LED to the cached state.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 

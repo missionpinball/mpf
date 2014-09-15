@@ -12,8 +12,9 @@ from collections import deque
 
 class EventManager(object):
 
-    def __init__(self):
+    def __init__(self, machine):
         self.log = logging.getLogger("Events")
+        self.machine = machine
         self.event_queue = []
         self.registered_handlers = {}
         self.busy = False

@@ -7,8 +7,7 @@
 # Documentation and more info at http://missionpinball.com/framework
 
 import logging
-from collections import defaultdict
-from mpf.system.hardware import Device
+from mpf.system.devices import Device
 
 
 class Flipper(Device):
@@ -22,26 +21,18 @@ class Flipper(Device):
 
     More details: http://missionpinball.com/docs/devices/flippers/
 
-    Parameters
-    ----------
-
-    machine: machine object
-        A reference to the machine controller instance.
-
-    name: string
-        The name you'll refer to this flipper object as.
-
-
-    config: dict
-        A dictionary that holds the configuration values which specify how
-        this flipper should be configured. If this is None, it will use the
-        system config settings that were read in from the config files when
-        the machine was reset.
-
-    collection: bool
-
-
+    Args:
+        machine: A reference to the machine controller instance.
+        name: A string of the name you'll refer to this flipper object as.
+        config: A dictionary that holds the configuration values which specify
+            how this flipper should be configured. If this is None, it will use
+            the system config settings that were read in from the config files
+            when the machine was reset.
+        collection: A reference to the collection list this device will be added
+        to.
     """
+    config_section = 'Flippers'
+    collection = 'flippers'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Flipper.' + name)
@@ -55,17 +46,12 @@ class Flipper(Device):
     def configure(self, config=None):
         """Configures the flipper device.
 
-        Parameters
-        ----------
-
-        config : dict
-            A dictionary that holds the configuration values which specify how
-            this flipper should be configured. If this is None, it will use the
-            system config settings that were read in from the config files when
-            the machine was reset.
-
+        args:
+            config : A dictionary that holds the configuration values which
+                specify how this flipper should be configured. If this is None,
+                it will use the system config settings that were read in from
+                the config files when the machine was reset.
         """
-
         # Merge in any new changes that were just passed
         if config:
             self.config.update(config)
@@ -100,6 +86,14 @@ class Flipper(Device):
         options, so we've mapped all the options out here. We literally have
         methods to enable the various rules based on the rule letters here,
         which we've implemented below. Keeps it easy to understand. :)
+
+        Note there's a platform feature saved at:
+        self.machine.config['Platform']['hw_enable_auto_disable']. If True, it
+        means that the platform hardware rules will automatically disable a coil
+        that has been enabled when the trigger switch is disabled. If False, it
+        means the hardware platform needs its own rule to disable the coil when
+        the switch is disabled. Methods F and G below check for that feature
+        setting and will not be applied to the hardware if it's True.
 
         Two coils, using EOS switch to indicate the end of the power stroke:
         Rule  Type     Coil  Switch  Action
@@ -169,9 +163,7 @@ class Flipper(Device):
         the buttons are held in.
 
         This mode is not yet implemented.
-
         """
-
         self.no_hold = True
         self.enable()
 
@@ -183,9 +175,7 @@ class Flipper(Device):
         controls the right flippers and vice-versa.
 
         This mode is not yet implemented.
-
         """
-
         self.inverted = True
         self.enable()
 
@@ -194,15 +184,11 @@ class Flipper(Device):
 
         This is a novelty mode, like "weak flippers" from the Wizard of Oz.
 
-        Parameters
-        ----------
-
-        percent : float
-            Value between 0 and 1.0 which represents the percentage of power
-            the flippers will be enabled at.
+        Args:
+            percent: A floating point value between 0 and 1.0 which represents the
+                percentage of power the flippers will be enabled at.
 
         This mode is not yet implemented.
-
         """
         self.power = percent
         self.enable()
@@ -242,8 +228,9 @@ class Flipper(Device):
             sw_activity='active',
             coil_name=self.config['main_coil'],
             coil_action_ms=self.machine.coils[self.config['main_coil']].
-                pulse_ms,
-            pulse_ms=self.machine.coils[self.config['main_coil']].pulse_ms,
+                config['pulse_ms'],
+            pulse_ms=self.machine.coils[self.config['main_coil']].
+                config['pulse_ms'],
             debounced=False)
 
     def _enable_flipper_rule_C(self):
@@ -256,9 +243,10 @@ class Flipper(Device):
             sw_activity='active',
             coil_name=self.config['main_coil'],
             coil_action_ms=-1,
-            pulse_ms=self.machine.coils[self.config['main_coil']].pulse_ms,
-            pwm_on=self.machine.coils[self.config['main_coil']].pwm_on,
-            pwm_off=self.machine.coils[self.config['main_coil']].pwm_off,
+            pulse_ms=self.machine.coils[self.config['main_coil']].
+                config['pulse_ms'],
+            pwm_on=self.machine.coils[self.config['main_coil']].config['pwm_on'],
+            pwm_off=self.machine.coils[self.config['main_coil']].config['pwm_on'],
             debounced=False)
 
     def _enable_flipper_rule_D(self):
@@ -290,24 +278,26 @@ class Flipper(Device):
         Rule  Type     Coil  Switch  Action
         F.    Disable  Main  Button  inactive
         """
-        self.machine.platform.set_hw_rule(
-            sw_name=self.config['activation_switch'],
-            sw_activity='inactive',
-            coil_name=self.config['main_coil'],
-            coil_action_ms=0,
-            debounced=False)
+        if not self.machine.config['Platform']['hw_enable_auto_disable']:
+            self.machine.platform.set_hw_rule(
+                sw_name=self.config['activation_switch'],
+                sw_activity='inactive',
+                coil_name=self.config['main_coil'],
+                coil_action_ms=0,
+                debounced=False)
 
     def _enable_flipper_rule_G(self):
         """
         Rule  Type     Coil  Switch  Action
         G.    Disable  Hold  Button  inactive
         """
-        self.machine.platform.set_hw_rule(
-            sw_name=self.config['activation_switch'],
-            sw_activity='inactive',
-            coil_name=self.config['hold_coil'],
-            coil_action_ms=0,
-            debounced=False)
+        if not self.machine.config['Platform']['hw_enable_auto_disable']:
+            self.machine.platform.set_hw_rule(
+                sw_name=self.config['activation_switch'],
+                sw_activity='inactive',
+                coil_name=self.config['hold_coil'],
+                coil_action_ms=0,
+                debounced=False)
 
     def _enable_flipper_rule_H(self):
         """
@@ -319,8 +309,8 @@ class Flipper(Device):
             sw_activity='active',
             coil_name=self.config['main_coil'],
             coil_action_ms=-1,
-            pwm_on=self.machine.coils[self.config['main_coil']].pwm_on,
-            pwm_off=self.machine.coils[self.config['main_coil']].pwm_off)
+            pwm_on=self.machine.coils[self.config['main_coil']].config['pwm_on'],
+            pwm_off=self.machine.coils[self.config['main_coil']].config['pwm_off'])
 
 # The MIT License (MIT)
 

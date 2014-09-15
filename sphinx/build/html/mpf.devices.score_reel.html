@@ -50,7 +50,7 @@
 <dl class="class">
 <dt id="mpf.devices.score_reel.ScoreReel">
 <em class="property">class </em><tt class="descclassname">mpf.devices.score_reel.</tt><tt class="descname">ScoreReel</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Device" title="mpf.system.hardware.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Device</span></tt></a></p>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
 <p>Represents an individual electro-mechanical score reel in a pinball
 machine.</p>
 <p>Multiples reels of this class can be grouped together into ScoreReelGroups
@@ -64,14 +64,20 @@ in multiple directions (such as the credit reel).</p>
 <tt class="descname">advance</tt><big>(</big><em>direction=None</em><big>)</big></dt>
 <dd><p>Performs the coil firing to advance this reel one position (up or
 down).</p>
-<p>This method also schedules delays for events to notify the machine when
-the reel is ready to fire again and what the reel has performed a
-hardware switch check to confirm its current value.</p>
+<p>This method also schedules delays to post the following events:</p>
+<p><cite>reel_&lt;name&gt;_pulse_done</cite>: When the coil is done pulsing
+<cite>reel_&lt;name&gt;_ready</cite>: When the config[&#8216;repeat_pulse_ms&#8217;] time is up
+<a href="#id1"><span class="problematic" id="id2">`</span></a>reel_&lt;name&gt;_hw_value: When the config[&#8216;hw_confirm_ms&#8217;] time is up</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>direction</strong> (<em>int, optional</em>) &#8211; If direction is 1, advances the reel</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>direction</strong> (<em>int, optional</em>) &#8211; If direction is 1, advances the reel
+to the next higher position. If direction is -1, advances the
+reel down one position (if the reel has a decrement coil). If
+direction is not passed, this method will compare the reel&#8217;s
+<cite>_destination_index</cite> to its <cite>assumed_value</cite> and will advance it
+in the direction it needs to go if those values do not match.</td>
 </tr>
 </tbody>
 </table>
@@ -94,7 +100,7 @@ of -999 indicates that the value is unknown.</p>
 
 <dl class="method">
 <dt id="mpf.devices.score_reel.ScoreReel.check_hw_switches">
-<tt class="descname">check_hw_switches</tt><big>(</big><big>)</big></dt>
+<tt class="descname">check_hw_switches</tt><big>(</big><em>no_event=False</em><big>)</big></dt>
 <dd><p>Checks all the value switches for this score reel.</p>
 <p>This check only happens if <cite>self.ready</cite> is <cite>True</cite>. If the reel is not
 ready, it means another advance request has come in after the initial
@@ -109,10 +115,36 @@ advances. The delay is based on the config value
 <cite>self.config[&#8216;hw_confirm_ms&#8217;]</cite>.</p>
 <p>TODO: What happens if there are multiple active switches? Currently it
 will return the highest one. Is that ok?</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>no_event</strong> &#8211; A boolean switch that allows you to suppress the event
+posting from this call if you just want to update the values.</td>
+</tr>
+</tbody>
+</table>
 <dl class="docutils">
 <dt>Returns: The hardware value of the switch, either the position or -999.</dt>
 <dd>If the reel is not ready, it returns <cite>False</cite>.</dd>
 </dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.collection">
+<tt class="descname">collection</tt><em class="property"> = 'score_reels'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'Score Reels'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.hw_sync">
+<tt class="descname">hw_sync</tt><em class="property"> = None</em></dt>
+<dd><p>Specifies whether this reel has verified it&#8217;s positions via the
+switches since it was last advanced.</p>
 </dd></dl>
 
 <dl class="method">
@@ -179,7 +211,7 @@ be the value of whichever switch is active or -999. This differs from
 where the reel is as it pulses through values with no swithces, whereas
 this physical value will always be -999 if there is no switch telling
 it otherwise.</p>
-<p>Note this value will be initialed via self.check_hw_switches() below.</p>
+<p>Note this value will be initialized via self.check_hw_switches() below.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -208,6 +240,14 @@ reel&#8217;s coil is done firing so they can fire the next reel in the group.</p
 <tt class="descname">ready</tt><em class="property"> = None</em></dt>
 <dd><p>Whether this reel is ready to advance. Typically used to make sure
 it&#8217;s not trying to re-fire a stuck position.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReel.rollover_reel">
+<tt class="descname">rollover_reel</tt><em class="property"> = None</em></dt>
+<dd><p>A reference to the ScoreReel object of the next higher reel in the
+group. This is used so the reel can notify its neighbor that it needs
+to advance too when this reel rolls over.</p>
 </dd></dl>
 
 <dl class="method">
@@ -337,7 +377,7 @@ automatically.</p>
 <dl class="class">
 <dt id="mpf.devices.score_reel.ScoreReelGroup">
 <em class="property">class </em><tt class="descclassname">mpf.devices.score_reel.</tt><tt class="descname">ScoreReelGroup</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Device" title="mpf.system.hardware.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Device</span></tt></a></p>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
 <p>Represents a logical grouping of score reels in a pinball machine.</p>
 <p>These groups represent things like player scores, where the score display
 is actually a group of several individual score reels.</p>
@@ -371,58 +411,6 @@ is False.</li>
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="mpf.devices.score_reel.ScoreReelGroup.advance_hw_confirm">
-<tt class="descname">advance_hw_confirm</tt><big>(</big><em>reel</em>, <em>direction=1</em>, <em>callback=None</em><big>)</big></dt>
-<dd><p>Advances a reel one value and optionally registers a callback for
-when the reel hw validates that the advance succeeded.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>reel</strong> (<em>ScoreReel object</em>) &#8211; A reference to the score reel you&#8217;d like
-to advance.</li>
-<li><strong>direction</strong> (<em>int, optional</em>) &#8211; The direction you&#8217;d like to advance
-the reel. 1 is up and -1 is down.</li>
-<li><strong>callback</strong> (<em>callback, optional</em>) &#8211; The method you&#8217;d like called when
-this reel has hw confirmed that the advance is complete.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReelGroup.advance_in_progress">
-<tt class="descname">advance_in_progress</tt><em class="property"> = None</em></dt>
-<dd><p>Boolean attribute that is True when a step advance is in progress.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.score_reel.ScoreReelGroup.advance_no_hw_confirm">
-<tt class="descname">advance_no_hw_confirm</tt><big>(</big><em>reel</em>, <em>direction=1</em>, <em>callback=None</em><big>)</big></dt>
-<dd><p>Advances a reel one value and optionally registers a callback for
-when the reel is ready to advance again.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>reel</strong> (<em>ScoreReel object</em>) &#8211; A reference to the score reel you&#8217;d like
-to advance.</li>
-<li><strong>direction</strong> (<em>int, optional</em>) &#8211; The direction you&#8217;d like to advance
-the reel. 1 is up and -1 is down.</li>
-<li><strong>callback</strong> (<em>callback, optional</em>) &#8211; The method you&#8217;d like called when
-this reel is ready to advance again.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 <dl class="attribute">
 <dt id="mpf.devices.score_reel.ScoreReelGroup.advance_queue">
 <tt class="descname">advance_queue</tt><em class="property"> = None</em></dt>
@@ -448,11 +436,26 @@ ScoreReelGroup. A value of -999 means the value is unknown.</p>
 <dd></dd></dl>
 
 <dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.collection">
+<tt class="descname">collection</tt><em class="property"> = 'score_reel_groups'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'Score Reel Groups'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
 <dt id="mpf.devices.score_reel.ScoreReelGroup.desired_value_list">
 <tt class="descname">desired_value_list</tt><em class="property"> = None</em></dt>
 <dd><p>A list of what values the machine desires to have the score reel
 group set to.</p>
 </dd></dl>
+
+<dl class="classmethod">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.device_class_init">
+<em class="property">classmethod </em><tt class="descname">device_class_init</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.score_reel.ScoreReelGroup.get_physical_value_list">
@@ -491,14 +494,6 @@ rolled over.)</p>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.score_reel.ScoreReelGroup.is_assumed_valid">
-<tt class="descname">is_assumed_valid</tt><big>(</big><big>)</big></dt>
-<dd><p>Tests to see whether the ScoreReelGroup value switch states match up
-with where they should be for this group&#8217;s assumed_value.</p>
-<p>Returns: True or False</p>
 </dd></dl>
 
 <dl class="method">
@@ -553,13 +548,6 @@ position that is not controlled by a moving reel (like a fake ones
 digit).</p>
 <p>Note that this is &#8220;backwards,&#8221; with element 0 representing the ones
 digit, element 1 representing the tens, etc..</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReelGroup.reels_waiting_for_hw_sync">
-<tt class="descname">reels_waiting_for_hw_sync</tt><em class="property"> = None</em></dt>
-<dd><p>Holds a list of the reels that the ScoreReelController is waiting
-for hw sync on.</p>
 </dd></dl>
 
 <dl class="attribute">

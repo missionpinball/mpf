@@ -50,7 +50,7 @@
 <dl class="class">
 <dt id="mpf.devices.driver.Driver">
 <em class="property">class </em><tt class="descclassname">mpf.devices.driver.</tt><tt class="descname">Driver</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Device" title="mpf.system.hardware.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Device</span></tt></a></p>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
 <p>Generic class that holds driver objects.</p>
 <p>A &#8216;driver&#8217; is any device controlled from a driver board which is typically
 the high-voltage stuff like coils and flashers.</p>
@@ -58,6 +58,16 @@ the high-voltage stuff like coils and flashers.</p>
 devices. Each platform module (i.e. P-ROC, FAST, etc.) subclasses this
 class to actually communicate with the physitcal hardware and perform the
 actions.</p>
+<dl class="attribute">
+<dt id="mpf.devices.driver.Driver.collection">
+<tt class="descname">collection</tt><em class="property"> = 'coils'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.driver.Driver.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'Coils'</em></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="mpf.devices.driver.Driver.disable">
 <tt class="descname">disable</tt><big>(</big><big>)</big></dt>
@@ -67,7 +77,20 @@ actions.</p>
 <dl class="method">
 <dt id="mpf.devices.driver.Driver.enable">
 <tt class="descname">enable</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Enables a coil by holding it &#8216;on&#8217;.</p>
+<p>If this coil is configured with a holdPatter, then this method will use
+that holdPatter to pwm pulse the coil.</p>
+<p>If not, then this method will just enable the coil. Note this type of
+enable is software controlled. It actually sends a pulse() to the coil
+which is 2.5x the machine timer tick HZ rate and keeps on re-upping it
+every tick. This is a safety precaution which will prevent a coil from
+getting stuck &#8216;on&#8217; if something weird happens.</p>
+<p>Also note that as a further safety precaution, if you want to enable()
+this coil without pwm, then you have to add the following option to this
+coil in your machine configuration files:</p>
+<p>allow_enable: True</p>
+<p>Note this fancy software hold is not yet implemented.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.driver.Driver.pulse">
@@ -86,13 +109,13 @@ specified in the config dictionary.</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.devices.driver.Driver.pulse_pwm">
-<tt class="descname">pulse_pwm</tt><big>(</big><big>)</big></dt>
+<dt id="mpf.devices.driver.Driver.pwm">
+<tt class="descname">pwm</tt><big>(</big><em>on_ms</em>, <em>off_ms</em>, <em>orig_on_ms</em><big>)</big></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="mpf.devices.driver.Driver.pwm">
-<tt class="descname">pwm</tt><big>(</big><em>on_ms</em>, <em>_off_ms</em>, <em>orig_on_ms</em><big>)</big></dt>
+<dt id="mpf.devices.driver.Driver.timed_pwm">
+<tt class="descname">timed_pwm</tt><big>(</big><em>on_ms</em>, <em>off_ms</em>, <em>runtime_ms</em><big>)</big></dt>
 <dd></dd></dl>
 
 </dd></dl>

@@ -7,7 +7,7 @@
 # Documentation and more info at http://missionpinball.com/framework
 
 import logging
-from mpf.system.hardware import Device
+from mpf.system.devices import Device
 
 
 class AutofireCoil(Device):
@@ -21,6 +21,9 @@ class AutofireCoil(Device):
     Examples of Autofire Coils are pop bumpers, slingshots, and flippers.
 
     """
+
+    config_section = 'Autofire Coils'
+    collection = 'autofires'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('AutofireCoil.' + name)
@@ -71,17 +74,17 @@ class AutofireCoil(Device):
         if 'pulse_ms' in config:
             self.pulse_ms = config['pulse_ms']
         else:
-            self.pulse_ms = self.machine.coils[config['coil']].pulse_ms
+            self.pulse_ms = self.machine.coils[config['coil']].config['pulse_ms']
 
         if 'pwm_on_ms' in config:
             self.pwm_on_ms = config['pwm_on_ms']
         else:
-            self.pwm_on_ms = self.machine.coils[config['coil']].pwm_on
+            self.pwm_on_ms = self.machine.coils[config['coil']].config['pwm_on']
 
         if 'pwm_off_ms' in config:
             self.pwm_off_ms = config['pwm_off_ms']
         else:
-            self.pwm_off_ms = self.machine.coils[config['coil']].pwm_off
+            self.pwm_off_ms = self.machine.coils[config['coil']].config['pwm_off']
 
         if 'coil_action_ms' in config:
             self.coil_action_ms = config['coil_action_ms']

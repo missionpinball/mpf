@@ -50,13 +50,23 @@
 <dl class="class">
 <dt id="mpf.devices.autofire.AutofireCoil">
 <em class="property">class </em><tt class="descclassname">mpf.devices.autofire.</tt><tt class="descname">AutofireCoil</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Device" title="mpf.system.hardware.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Device</span></tt></a></p>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
 <p>Base class for coils in the pinball machine which should fire
 automatically based on switch activity using hardware switch rules.</p>
 <p>Autofire coils are used when you want the coils to respond &#8220;instantly&#8221;
 without waiting for the lag of the python game code running on the host
 computer.</p>
 <p>Examples of Autofire Coils are pop bumpers, slingshots, and flippers.</p>
+<dl class="attribute">
+<dt id="mpf.devices.autofire.AutofireCoil.collection">
+<tt class="descname">collection</tt><em class="property"> = 'autofires'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.autofire.AutofireCoil.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'Autofire Coils'</em></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="mpf.devices.autofire.AutofireCoil.configure">
 <tt class="descname">configure</tt><big>(</big><em>config=None</em><big>)</big></dt>

@@ -10,8 +10,17 @@ Machine:
     Max Balls: 6
 
 Hardware:
-    Platform: p_roc # p_roc, fast, or virtual
-    DriverBoards: wpc95 # pdb, wpc, wpc95, wpcAlphaNumeric, sternSAM, sternWhitestar
+    Platform: fast # p_roc, fast, or virtual
+    DriverBoards: wpc
+
+Fast:
+    port: COM5
+    baud: 921600
+    config_number_format: = 'hex'
+
+LEDSettings:
+    brightness_compensation: 1.0
+    default_led_fade_ms: 100
 
 Switches:
     # **** Format ****
@@ -40,10 +49,12 @@ Switches:
         number: SF1
     flipperLwR:
         number: SF6
+        tags: right_flipper
     flipperLwL_EOS:
         number: SF3
     flipperLwL: 
         number: SF4
+        tags: left_flipper
     flipperUpR_EOS: 
         number: SF5
     flipperUpR: 
@@ -293,8 +304,10 @@ Coils:
     resetDropTarget:
         number: C05
         tags: ballSearch
+        pulse_ms: 25
     globeMotor:
         number: C06
+        allow_enable: True
     knocker:
         number: C07
     shooterR:
@@ -308,6 +321,7 @@ Coils:
     diverter:
         number: C11
         tags: ballSearch
+        holdPatter: 1-2
     trough:
         number: C13
     slingL: 
@@ -340,7 +354,8 @@ Coils:
         number: C27
     flashersInsert:
         number: C28
-Lights:
+
+MatrixLights:
 # Lamp numbering format: C-Ax-By-z:R-Am-Bn-p:
 
 # Capital letters are required, lower case letters represent the numbers:
@@ -434,7 +449,7 @@ Lights:
         number: L57
     pickAPrize:
         number: L58
-    ExtraBall: # I think this is for both?
+    ExtraBall: # This is for both?
         number: L61
     rightStartFeature:
         number: L62
@@ -482,15 +497,36 @@ Lights:
         number: L87
     startButton:
         number: L88
-        
-GI:
-    gi01:
+
+LEDs:
+    led0:
+        number: 0-0
+        brightness_compensation: 0.6
+    led1:
+        number: 0-1
+
+GIs:
+    gi01:  # lower backglass
         number: G01
-    gi02:
+        tags: gi
+        dimmable: False
+    gi02:  # mid backglass and rear playfield
         number: G02
-    gi03:
+        tags: gi
+        dimmable: False
+    gi03:  # upper left backglass and slings, variable
         number: G03
-    gi04:
+        tags: gi
+        dimmable: False
+    gi04:  # upper right backglass and deadworld globe, variable
         number: G04
-    gi05:
+        tags: gi
+        dimmable: False
+        enable_relay: enable_relay
+    gi05:  # coin slot lights & side cabinet fire buttons
         number: G05
+        tags: gi
+        dimmable: False
+        enable_relay: enable_relay
+    enable_relay:  # enables certain GI strings
+        number: G08

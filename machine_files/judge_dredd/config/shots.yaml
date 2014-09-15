@@ -39,6 +39,8 @@ Shots:
         Switch: inlaneL, inlaneR, outerInlaneR
     Outlane:
         Switch: outlaneR, outlaneL
+    DropTarget:
+        Switch: dropTargetJ, dropTargetU, dropTargetD, dropTargetG, dropTargetE
 
 Scoring:
     RightRamp:
@@ -61,5 +63,9 @@ Scoring:
         Score: 1070
     Outlane:
         Score: 930
-    _sw_ballLive:
-        Score: 10
+    DropTarget:
+        Score: 1000
+    _drop_targets_Judge_complete:
+        Score: 10000
+    _standups_pf_standups_complete:
+        Score: 5000

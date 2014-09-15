@@ -5,7 +5,7 @@ Flippers:
     LowerLeft:
         main_coil: flipperLwLMain
         hold_coil: flipperLwLHold
-        activation_switch: flipperLwL
+        activation_switch: esc #flipperLwL
         eos_switch: flipperLwL_EOS
         #use_eos: True
         #hold_pwm:
@@ -14,19 +14,19 @@ Flippers:
     LowerRight:
         main_coil: flipperLwRMain
         hold_coil: flipperLwRHold
-        activation_switch: flipperLwR
+        activation_switch: enter #flipperLwR
         eos_switch: flipperLwR_EOS
         label: Right Main Flipper
     UpperLeft:
         main_coil: flipperUpLMain
         hold_coil: flipperUpLHold
-        activation_switch: flipperUpL
+        activation_switch: esc #flipperUpL
         eos_switch: flipperUpL_EOS
         label: Upper Left Flipper
     UpperRight:
         main_coil: flipperUpRMain
         hold_coil: flipperUpRHold
-        activation_switch: flipperUpR
+        activation_switch: enter #flipperUpR
         eos_switch: flipperUpR_EOS
         label: Upper Right Flipper
         
@@ -46,35 +46,76 @@ Autofire Coils:
         coil: slingR
         switch: slingR
         
-DropTargets:  # Not yet implemented
+DropTargets:
+    J:
+        switch: dropTargetJ
+        light: dropTargetJ
+        reset_coil: resetDropTarget
+    U:
+        switch: dropTargetU
+        light: dropTargetU
+        reset_coil: resetDropTarget
+    D:
+        switch: dropTargetD
+        light: dropTargetD
+        reset_coil: resetDropTarget
+        knockdown_coil: tripDropTarget
+    G:
+        switch: dropTargetG
+        light: dropTargetG
+        reset_coil: resetDropTarget
+    E:
+        switch: dropTargetE
+        light: dropTargetE
+        reset_coil: resetDropTarget
+
+DropTargetBanks:
     Judge:
-        J:
-            switch: dropTargetJ
-            light: dropTargetJ
-            reset_coil: resetDropTarget
-        U:
-            switch: dropTargetU
-            light: dropTargetU
-            reset_coil: resetDropTarget
-        D:
-            switch: dropTargetD
-            light: dropTargetD
-            reset_coil: resetDropTarget
-            drop_coil: tripDropTarget
-        G:
-            switch: dropTargetG
-            light: dropTargetG
-            reset_coil: resetDropTarget
-        E:
-            switch: dropTargetE
-            light: dropTargetE
-            reset_coil: resetDropTarget
+        drop_targets: J, U, G, E
+        reset_coils: resetDropTarget
+        reset_events:
+            ball_starting: 0
+            drop_targets_Judge_complete: 1s
+        complete_show: drop_target_complete
 
 Standups:  # Not yet implemented
     QuestionMark:
-        switch:
-        light:
-            
+        switch: mystery
+        light: mystery
+    AdvanceCrime:
+        switch: threeBankTargets
+        light: advanceCrimeLevel
+    LeftExtraBall:
+        switch: leftScorePost
+        light: ExtraBall
+    RightExtraBall:
+        switch: rightTopPost
+        light: ExtraBall
+
+StandupGroups:
+    pf_standups:
+        standups: QuestionMark, AdvanceCrime, LeftExtraBall, RightExtraBall
+        rotate_left_events: sw_left_flipper
+        rotate_right_events: sw_right_flipper
+        
+
+Diverters:
+    deadWorld:
+        coil: diverter
+        type: hold #pulse or hold
+        timeout: 3s
+        enable_switch: leftRampEnter
+        enable_events: shot_LeftRamp
+        disable_events: ball_ending
+        disable_switch: leftRampToLock
+        target_when_enabled:
+            type: # ball_device, playfield
+            name:
+        target_when_disabled:
+            type:
+            name:
+        
+
 BallDevices:
 
     trough:

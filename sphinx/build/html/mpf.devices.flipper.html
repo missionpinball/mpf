@@ -50,7 +50,7 @@
 <dl class="class">
 <dt id="mpf.devices.flipper.Flipper">
 <em class="property">class </em><tt class="descclassname">mpf.devices.flipper.</tt><tt class="descname">Flipper</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
-<dd><p>Bases: <a class="reference internal" href="mpf.system.hardware.html#mpf.system.hardware.Device" title="mpf.system.hardware.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.hardware.Device</span></tt></a></p>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
 <p>Represents a flipper in a pinball machine. Subclass of Device.</p>
 <p>Contains several methods for actions that can be performed on this flipper,
 like <a class="reference internal" href="#mpf.devices.flipper.Flipper.enable" title="mpf.devices.flipper.Flipper.enable"><tt class="xref py py-meth docutils literal"><span class="pre">enable()</span></tt></a>, <a class="reference internal" href="#mpf.devices.flipper.Flipper.disable" title="mpf.devices.flipper.Flipper.disable"><tt class="xref py py-meth docutils literal"><span class="pre">disable()</span></tt></a>, etc.</p>
@@ -62,21 +62,28 @@ multiple coil options (pulsing, hold coils, etc.)</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>machine</strong> (<em>machine object</em>) &#8211; A reference to the machine controller instance.</li>
-<li><strong>name</strong> (<em>string</em>) &#8211; The name you&#8217;ll refer to this flipper object as.</li>
+<li><strong>machine</strong> &#8211; A reference to the machine controller instance.</li>
+<li><strong>name</strong> &#8211; A string of the name you&#8217;ll refer to this flipper object as.</li>
+<li><strong>config</strong> &#8211; A dictionary that holds the configuration values which specify
+how this flipper should be configured. If this is None, it will use
+the system config settings that were read in from the config files
+when the machine was reset.</li>
+<li><strong>collection</strong> &#8211; A reference to the collection list this device will be added</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
-<dl class="docutils">
-<dt>config: dict</dt>
-<dd>A dictionary that holds the configuration values which specify how
-this flipper should be configured. If this is None, it will use the
-system config settings that were read in from the config files when
-the machine was reset.</dd>
-</dl>
-<p>collection: bool</p>
+<dl class="attribute">
+<dt id="mpf.devices.flipper.Flipper.collection">
+<tt class="descname">collection</tt><em class="property"> = 'flippers'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.flipper.Flipper.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'Flippers'</em></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="mpf.devices.flipper.Flipper.configure">
 <tt class="descname">configure</tt><big>(</big><em>config=None</em><big>)</big></dt>
@@ -85,10 +92,10 @@ the machine was reset.</dd>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> (<em>dict</em>) &#8211; A dictionary that holds the configuration values which specify how
-this flipper should be configured. If this is None, it will use the
-system config settings that were read in from the config files when
-the machine was reset.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> &#8211; A dictionary that holds the configuration values which
+specify how this flipper should be configured. If this is None,
+it will use the system config settings that were read in from
+the config files when the machine was reset.</td>
 </tr>
 </tbody>
 </table>
@@ -112,6 +119,13 @@ hardware controller.</p>
 options, so we&#8217;ve mapped all the options out here. We literally have
 methods to enable the various rules based on the rule letters here,
 which we&#8217;ve implemented below. Keeps it easy to understand. :)</p>
+<p>Note there&#8217;s a platform feature saved at:
+self.machine.config[&#8216;Platform&#8217;][&#8216;hw_enable_auto_disable&#8217;]. If True, it
+means that the platform hardware rules will automatically disable a coil
+that has been enabled when the trigger switch is disabled. If False, it
+means the hardware platform needs its own rule to disable the coil when
+the switch is disabled. Methods F and G below check for that feature
+setting and will not be applied to the hardware if it&#8217;s True.</p>
 <p>Two coils, using EOS switch to indicate the end of the power stroke:
 Rule  Type     Coil  Switch  Action
 A.    Enable   Main  Button  active
@@ -157,15 +171,12 @@ the buttons are held in.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>percent</strong> (<em>float</em>) &#8211; Value between 0 and 1.0 which represents the percentage of power
-the flippers will be enabled at.</li>
-<li><strong>mode is not yet implemented.</strong> (<em>This</em>) &#8211; </li>
-</ul>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>percent</strong> &#8211; A floating point value between 0 and 1.0 which represents the
+percentage of power the flippers will be enabled at.</td>
 </tr>
 </tbody>
 </table>
+<p>This mode is not yet implemented.</p>
 </dd></dl>
 
 <dl class="classmethod">

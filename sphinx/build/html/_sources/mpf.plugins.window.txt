@@ -1,7 +1,0 @@
-mpf.plugins.window module
-=========================
-
-.. automodule:: mpf.plugins.window
-    :members:
-    :undoc-members:
-    :show-inheritance:

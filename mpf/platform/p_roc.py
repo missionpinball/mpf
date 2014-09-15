@@ -32,7 +32,7 @@ import time
 import sys
 
 from mpf.system.timing import Timing
-from mpf.system.hardware import Platform
+from mpf.system.platform import Platform
 
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00
@@ -54,6 +54,21 @@ class HardwarePlatform(Platform):
         self.log = logging.getLogger('P-ROC Platform')
         self.log.debug("Configuring machine for P-ROC hardware.")
 
+        # ----------------------------------------------------------------------
+        # Platform-specific hardware features. WARNING: Do not edit these. They
+        # are based on what the P-ROC hardware can and cannot do.
+        self.features['max_pulse'] = 255
+        self.features['hw_timer'] = False
+        self.features['hw_rule_coil_delay'] = False
+        self.features['variable_recycle_time'] = False
+        self.features['variable_debounce_time'] = False
+        self.features['hw_enable_auto_disable'] = False
+        # todo need to add differences between patter and pulsed_patter
+
+        # Make the platform features available to everyone
+        self.machine.config['Platform'] = self.features
+        # ----------------------------------------------------------------------
+
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['Hardware']['DriverBoards'])
         self.proc = pinproc.PinPROC(self.machine_type)
@@ -74,13 +89,6 @@ class HardwarePlatform(Platform):
         self.polarity = self.machine_type == pinproc.MachineTypeSternWhitestar\
             or self.machine_type == pinproc.MachineTypeSternSAM\
             or self.machine_type == pinproc.MachineTypePDB
-
-        # Set the P-ROC specific platform features
-        self.features['max_pulse'] = 255
-        self.features['hw_polling'] = True
-        self.features['hw_rule_coil_delay'] = False
-        self.features['variable_recycle_time'] = False
-        # todo need to add differences between patter and pulsed_patter
 
     def configure_driver(self, config, device_type='coil'):
         """ Creates a P-ROC driver.
@@ -218,7 +226,7 @@ class HardwarePlatform(Platform):
         # 1 = active, 0 = inactive
         return switch, proc_num, state
 
-    def configure_directlight(self, config):
+    def configure_led(self, config):
         """ Configures a P-ROC direct LED controlled via a PD-LED.
 
         This feature is not yet implemented.
@@ -228,19 +236,19 @@ class HardwarePlatform(Platform):
             #item.invert = not item_dict['polarity']
 
     def configure_matrixlight(self, config):
-        """ Configures a P-ROC matrix light.
+        """Configures a P-ROC matrix light."""
+        return self.configure_driver(config, 'light')
 
-        This feature is not yet implemented.
-
-        """
+    def configure_gi(self, config):
+        """Configures a P-ROC GI string light."""
+        # The P-ROC treats these the same as lights
         return self.configure_driver(config, 'light')
 
     def hw_loop(self):
-        """Loop code which checks the P-ROC for any events (switch state
-        changes or notification that a DMD frame was updated).
+        """Checks the P-ROC for any events (switch state changes or notification
+        that a DMD frame was updated).
 
         Also tickles the watchdog and flushes any queued commands to the P-ROC.
-
         """
         # Get P-ROC events (switches & DMD frames displayed)
         for event in self.proc.get_events():
@@ -251,13 +259,12 @@ class HardwarePlatform(Platform):
                 self.machine.end_run_loop()
             elif event_type == pinproc.EventTypeDMDFrameDisplayed:
                 pass
-
             elif event_type == pinproc.EventTypeSwitchClosedDebounced:
                 self.machine.switch_controller.process_switch(state=1,
-                    num=event_value)
+                                                              num=event_value)
             elif event_type == pinproc.EventTypeSwitchOpenDebounced:
                 self.machine.switch_controller.process_switch(state=0,
-                    num=event_value)
+                                                              num=event_value)
             else:
                 pass
                 # todo we still have event types:
@@ -265,16 +272,8 @@ class HardwarePlatform(Platform):
                 # pinproc.EventTypeSwitchOpenNondebounced
                 # Do we do anything with them?
 
-        if self.proc:
-            self.proc.watchdog_tickle()
-            self.proc.flush()
-        if Timing.HZ:
-            if self.next_tick_time <= time.time():
-                self.machine.timer_tick()
-                self.next_tick_time += Timing.secs_per_tick
-                # todo add detection to see if the system is running behind?
-                # if you ask for 100HZ and the system can only do 50, that is
-                # not good
+        self.proc.watchdog_tickle()
+        self.proc.flush()
 
     def _do_set_hw_rule(self,
                         sw,
@@ -478,7 +477,7 @@ class HardwarePlatform(Platform):
                                       'reloadActive': False}, [], False)
 
         for entry in self.hw_switch_rules.keys():  # slice for copy
-            if entry.startswith(self.machine.switches.get_from_number(sw_num).name):
+            if entry.startswith(self.machine.switches.number(sw_num).name):
                 del self.hw_switch_rules[entry]
 
         # todo need to read in the notifyHost settings and reapply those
@@ -520,8 +519,6 @@ class PROCLED(object):
 
     def color(self, color):
 
-        super(color, self).color(color)
-
         # If the number of colors is the same or greater than the number of LED
         # outputs:
         if len(color) >= len(self.addrs):
@@ -542,8 +539,6 @@ class PROCLED(object):
     def fade(self, color, fadetime):
         # todo have to decide whether we do fadetime in software or hardware
         # for the PD-LED
-
-        super(fade, self).fade(color, fadetime)
 
         fadetime = int(fadetime/4)
 
@@ -760,10 +755,12 @@ class PROCDriver(object):
 
     def disable(self):
         """Disables (turns off) this driver."""
+        self.log.debug('Disabling Driver')
         self.proc.driver_disable(self.number)
 
     def enable(self):
         """Enables (turns on) this driver."""
+        self.log.debug('Enabling Driver')
         self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                   cycle_seconds=0, now=True)
 
@@ -775,6 +772,7 @@ class PROCDriver(object):
         """
         if not milliseconds in range(256):
             raise ValueError('milliseconds must be in range 0-255.')
+        self.log.debug('Pulsing Driver for %sms', milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
 
     def future_pulse(self, milliseconds=None, timestamp=0):
@@ -785,7 +783,7 @@ class PROCDriver(object):
         is outside of the range 0-255.
         """
         if milliseconds is None:
-            milliseconds = self.pulse_ms
+            milliseconds = self.config['pulse_ms']
         if not milliseconds in range(256):
             raise ValueError('milliseconds must be in range 0-255.')
         self.log.debug("Driver %s - future pulse %d", self.name,
@@ -793,7 +791,7 @@ class PROCDriver(object):
         self.proc.driver_future_pulse(self.number, milliseconds,
                                            timestamp)
 
-    def patter(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
+    def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
         """Enables a pitter-patter sequence.
 
         It starts by activating the driver for `original_on_ms` milliseconds.
@@ -808,13 +806,11 @@ class PROCDriver(object):
         if not off_ms in range(128):
             raise ValueError('off_ms must be in range 0-127.')
 
-        self.log.debug("Driver %s - patter on:%d, off:%d, orig_on:%d, "
-                       "now:%s", self.name, on_ms, off_ms,
-                       original_on_ms, now)
-        self.proc.driver_patter(self.number, on_ms, off_ms,
-                                     original_on_ms, now)
+        self.log.debug("Patter on:%d, off:%d, orig_on:%d, now:%s", on_ms,
+                       off_ms, original_on_ms, now)
+        self.proc.driver_patter(self.number, on_ms, off_ms, original_on_ms, now)
 
-    def pulsed_patter(self, on_ms=10, off_ms=10, run_time=0, now=True):
+    def timed_pwm(self, on_ms=10, off_ms=10, run_time=0, now=True):
         """Enables a pitter-patter sequence that runs for `run_time`
         milliseconds.
 
@@ -934,9 +930,9 @@ class PDBConfig(object):
 
         # Make a list of unique lamp source banks.  The P-ROC only supports 2.
         # TODO: What should be done if 2 is exceeded?
-        if 'Lights' in config:
-            for name in config['Lights']:
-                item_dict = config['Lights'][name]
+        if 'MatrixLights' in config:
+            for name in config['MatrixLights']:
+                item_dict = config['MatrixLights'][name]
                 lamp = PDBLight(self, str(item_dict['number']))
 
                 # Catalog PDB banks
