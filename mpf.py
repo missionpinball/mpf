@@ -51,6 +51,12 @@ options_dict['machinepath'] = args[0]
 # Formating options are documented here:
 # https://docs.python.org/2.7/library/logging.html#logrecord-attributes
 
+try:
+    os.makedirs('logs')
+except OSError as exception:
+    if exception.errno != errno.EEXIST:
+        raise
+
 logfile_format = "%(asctime)s : %(name)s : %(message)s"
 
 
