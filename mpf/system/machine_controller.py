@@ -26,8 +26,8 @@ class MachineController(object):
     main part that's in charge and makes things happen.
 
     Attributes:
-        options: A dictionary of options built from the command line options used to
-            launch mpf.py.
+        options: A dictionary of options built from the command line options
+        used to launch mpf.py.
     """
     def __init__(self, options):
         self.log = logging.getLogger("Machine Controller")
@@ -398,8 +398,7 @@ class MachineController(object):
         # todo add support to read software switch events
 
     def sw_loop(self):
-        """ This is the main game run loop that's used when the hardware
-        platform doesn't have to be polled continuously.
+        """ This is the main game run loop.
 
         """
         # todo currently this just runs as fast as it can. Should I have it
@@ -412,7 +411,7 @@ class MachineController(object):
 
         while self.done is False:
             self.platform.hw_loop()
-            if self.platform.next_tick_time <= time.time():
+            if self.platform.next_tick_time <= time.time():  # todo change this
                 self.timer_tick()
                 self.platform.next_tick_time += timing.Timing.secs_per_tick
             num_loops += 1
