@@ -10,6 +10,7 @@ from datetime import datetime
 import socket
 import os
 from optparse import OptionParser
+import errno
 from mpf.system.machine_controller import MachineController
 
 # Allow command line options to do things
