@@ -46,7 +46,7 @@ class Keyboard(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self.get_keyboard_events)
-        self.machine.events.add_handler('machine_init_phase1',
+        self.machine.events.add_handler('machine_init_phase3',
                                         self.set_initial_states, 100)
 
         # Setup the key mappings
@@ -183,7 +183,9 @@ class Keyboard(object):
 
                 # Use set_state() instead of process_switch() so this mimics
                 # the physical hw process.
-                self.machine.switch_controller.set_state(switch_name, 1)
+                self.machine.switch_controller.process_switch(name=switch_name,
+                                                              state=1,
+                                                              logical=True)
 
     def get_keyboard_events(self):
         """Gets the key events from the pyglet window."""
