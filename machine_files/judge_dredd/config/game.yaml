@@ -31,7 +31,6 @@ Plugins:
     keyboard.Keyboard
     lcd.LCD
     ball_search.BallSearch
-    osc.OSC
     event_triggers.EventTriggers
 
 EventTriggers:
