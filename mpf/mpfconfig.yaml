@@ -69,9 +69,9 @@ Plugins:
 
 OSC:
     machine_ip: auto
-    machine_port: 9000
+    machine_port: 8000
     approved_client_ips: any
-    client_port: 8000
+    client_port: 9000
     debug_messages: false
     client_updates:
         switches
