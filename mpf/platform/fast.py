@@ -216,10 +216,8 @@ class HardwarePlatform(Platform):
         return FASTMatrixLight(config['number'], self.fast)
 
     def hw_loop(self):
-        """Loop code which checks the P-ROC for any events (switch state
+        """Loop code which checks the controller for any events (switch state
         changes or notification that a DMD frame was updated).
-
-        Also tickles the watchdog and flushes any queued commands to the P-ROC.
 
         """
         fast_events = fastpinball.fpGetEventObject()
@@ -268,14 +266,14 @@ class HardwarePlatform(Platform):
                         recycle_time=0,
                         debounced=True,
                         drive_now=False):
-        """Used to write (or update) a hardware rule to the P-ROC.
+        """Used to write (or update) a hardware rule to the FAST controller.
 
-        *Hardware Rules* are used to configure the P-ROC to automatically
-        change driver states based on switch changes. These rules are
-        completely handled by the P-ROC hardware (i.e. with no interaction from
+        *Hardware Rules* are used to configure the hardware controller to
+        automatically change driver states based on switch changes. These rules
+        are completely handled by the hardware (i.e. with no interaction from
         the Python game code). They're used for things that you want to happen
-        fast, like firing coils when flipper buttons are pushed, slingshots,
-        pop bumpers, etc.
+        fast, like firing coils when flipper buttons are pushed, slingshots, pop
+        bumpers, etc.
 
         You can overwrite existing hardware rules at any time to change or
         remove them.
@@ -302,20 +300,17 @@ class HardwarePlatform(Platform):
                 If the coil should be held on at less than 100% duty cycle,
                 this is the "off" time (in ms).
             delay : int
-                Not currently implemented for the P-ROC hardware
+                Not currently implemented
             recycle_time : int
                 How long (in ms) should this switch rule wait before firing
                 again. Put another way, what's the "fastest" this rule can
                 fire? This is used to prevent "machine gunning" of slingshots
-                and pop bumpers. Do not use it with flippers. Note the P-ROC
-                has a non-configurable delay time of 125ms. (So it's either
-                125ms or 0.) So if you set this delay to anything other than
-                0, it will be 125ms.
+                and pop bumpers. Do not use it with flippers.
             debounced : bool
-                Should the P-ROC fire this coil after the switch has been
+                Should the hardware fire this coil after the switch has been
                 debounced? Typically no.
             drive_now : bool
-                Should the P-ROC check the state of the switches when this
+                Should the hardware check the state of the switches when this
                 rule is firts applied, and fire the coils if they should be?
                 Typically this is True, especially with flippers because you
                 want them to fire if the player is holding in the buttons when
