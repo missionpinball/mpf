@@ -34,10 +34,11 @@ class MachineMode(object):
         self.name = name
         self.delays = DelayManager()
         self.registered_event_handlers = []
+        self.registered_switch_handlers = []
 
     def start(self):
         """Starts this machine mode. """
-        self.log.info("Mode started")
+        self.log.debug("Mode started")
         self.active = True
         self.task = Task.Create(self.tick, sleep=0)
         self.machine.events.post('machineflow_' + self.name + '_start')
@@ -55,6 +56,16 @@ class MachineMode(object):
         self.log.debug("Removing event handlers")
         for handler in self.registered_event_handlers:
             self.machine.events.remove_handler(handler)
+
+        # deregister switch handlers
+        self.log.debug("Removing switch handlers")
+        for handler in self.registered_switch_handlers:
+            self.machine.switch_controller.remove_switch_handler(
+                switch_name=handler['switch_name'],
+                callback=handler['callback'],
+                state=handler['state'],
+                ms=handler['ms'])
+
         self.log.debug("Stopped")
         self.machine.events.post('machineflow_' + self.name + '_stop')
 

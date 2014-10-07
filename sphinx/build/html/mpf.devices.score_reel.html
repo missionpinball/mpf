@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.score_reel module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
+    <title>mpf.devices.score_reel module &mdash; Mission Pinball Framework 0.0.9 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.7',
+        VERSION:     '0.0.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -91,13 +91,6 @@ return <cite>False</cite>. If it&#8217;s able to pulse the advance coil, it retu
 </dl>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReel.assumed_value">
-<tt class="descname">assumed_value</tt><em class="property"> = None</em></dt>
-<dd><p>The assumed value the machine thinks this reel is showing. A value
-of -999 indicates that the value is unknown.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="mpf.devices.score_reel.ScoreReel.check_hw_switches">
 <tt class="descname">check_hw_switches</tt><big>(</big><em>no_event=False</em><big>)</big></dt>
@@ -140,13 +133,6 @@ posting from this call if you just want to update the values.</td>
 <tt class="descname">config_section</tt><em class="property"> = 'Score Reels'</em></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReel.hw_sync">
-<tt class="descname">hw_sync</tt><em class="property"> = None</em></dt>
-<dd><p>Specifies whether this reel has verified it&#8217;s positions via the
-switches since it was last advanced.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="mpf.devices.score_reel.ScoreReel.logical_to_physical">
 <tt class="descname">logical_to_physical</tt><big>(</big><em>value</em><big>)</big></dt>
@@ -174,47 +160,6 @@ there&#8217;s a switch there, or -999 if not.</td>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReel.misfires">
-<tt class="descname">misfires</tt><em class="property"> = None</em></dt>
-<dd><p>Counts the number of &#8220;misfires&#8221; this reel has, which is when we
-advanced a reel to a value where we expected a switch to activate but
-didn&#8217;t receive that activation as expected. This is a dictionary with
-the key equal to the switch position and the value is a tuple with
-the first entry being the number of misfires this attempt, and the
-second value being the number of misfires overall.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReel.next_pulse_time">
-<tt class="descname">next_pulse_time</tt><em class="property"> = None</em></dt>
-<dd><p>The time when this reel next wants to be pulsed. The reel will set
-this on its own (based on its own attribute of how fast pulses can
-happen). If the ScoreReelController is ready to pulse this reel and the
-value is in the past, it will do a pulse. A value of 0 means this reel
-does not currently need to be pulsed.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReel.num_values">
-<tt class="descname">num_values</tt><em class="property"> = None</em></dt>
-<dd><p>The number of values on this wheel. This starts with zero, so a
-wheel with 10 values will have this value set to 9. (This actually
-makes sense since most (all?) score reels also have a zero value.)</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReel.physical_value">
-<tt class="descname">physical_value</tt><em class="property"> = None</em></dt>
-<dd><p>The physical confirmed value of this reel. This will always
-be the value of whichever switch is active or -999. This differs from
-<cite>self.assumed_value</cite> in that assumed value will make assumptions about
-where the reel is as it pulses through values with no swithces, whereas
-this physical value will always be -999 if there is no switch telling
-it otherwise.</p>
-<p>Note this value will be initialized via self.check_hw_switches() below.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="mpf.devices.score_reel.ScoreReel.pulse_ms">
 <tt class="descname">pulse_ms</tt></dt>
 <dd><p>Returns an integer representing the number of milliseconds the coil
@@ -235,21 +180,6 @@ reel&#8217;s coil is done firing so they can fire the next reel in the group.</p
 </dl>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReel.ready">
-<tt class="descname">ready</tt><em class="property"> = None</em></dt>
-<dd><p>Whether this reel is ready to advance. Typically used to make sure
-it&#8217;s not trying to re-fire a stuck position.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReel.rollover_reel">
-<tt class="descname">rollover_reel</tt><em class="property"> = None</em></dt>
-<dd><p>A reference to the ScoreReel object of the next higher reel in the
-group. This is used so the reel can notify its neighbor that it needs
-to advance too when this reel rolls over.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="mpf.devices.score_reel.ScoreReel.set_destination_value">
 <tt class="descname">set_destination_value</tt><big>(</big><em>direction=1</em><big>)</big></dt>
@@ -268,15 +198,6 @@ to advance too when this reel rolls over.</p>
 since it doesn&#8217;t know where the reel is and therefore doesn&#8217;t know
 what the destination value would be.</dd>
 </dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReel.value_switches">
-<tt class="descname">value_switches</tt><em class="property"> = None</em></dt>
-<dd><p>This is a list with each element corresponding to a value on the
-reel. An entry of None means there&#8217;s no value switch there. An entry
-of a reference to a switch object (todo or switch name?) means there is
-a switch there.</p>
 </dd></dl>
 
 </dd></dl>
@@ -310,14 +231,20 @@ until it&#8217;s done.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>queue</strong> (<em>event queue</em>) &#8211; A reference to the queue object for the game
-starting event.</li>
-<li><strong>game</strong> (<em>game object</em>) &#8211; A reference to the main game object.</li>
+<li><strong>queue</strong> &#8211; A reference to the queue object for the game starting event.</li>
+<li><strong>game</strong> &#8211; A reference to the main game object. This is ignored and only
+included because the game_starting event passes it.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelController.map_new_score_reel_group">
+<tt class="descname">map_new_score_reel_group</tt><big>(</big><big>)</big></dt>
+<dd><p>Creates a mapping of a player to a score reel group.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -364,12 +291,19 @@ reset themselves automatically between players.</p>
 current active ScoreReelGroup.</p>
 <p>This method is the handler for the score change event, so it&#8217;s called
 automatically.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReelController.score_reel_groups">
-<tt class="descname">score_reel_groups</tt><em class="property"> = None</em></dt>
-<dd><p>List of score reel groups, in order.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>score</strong> &#8211; Integer value of the new score. This parameter is ignored,
+and included only because the score change event passes it.</li>
+<li><strong>change</strong> &#8211; Interget value of the change to the score.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -378,32 +312,39 @@ automatically.</p>
 <dt id="mpf.devices.score_reel.ScoreReelGroup">
 <em class="property">class </em><tt class="descclassname">mpf.devices.score_reel.</tt><tt class="descname">ScoreReelGroup</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
 <dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
-<p>Represents a logical grouping of score reels in a pinball machine.</p>
-<p>These groups represent things like player scores, where the score display
-is actually a group of several individual score reels.</p>
+<p>Represents a logical grouping of score reels in a pinball machine, where
+multiple individual ScoreReel object make up the individual digits of this
+group. This group also has support for the blank zero &#8220;inserts&#8221; that some
+machines use. This is a subclass of mpf.system.devices.Device.</p>
 <dl class="method">
 <dt id="mpf.devices.score_reel.ScoreReelGroup.add_value">
-<tt class="descname">add_value</tt><big>(</big><em>value</em>, <em>jump=False</em><big>)</big></dt>
-<dd><p>Add value to a ScoreReelGroup.</p>
+<tt class="descname">add_value</tt><big>(</big><em>value</em>, <em>jump=False</em>, <em>target=None</em><big>)</big></dt>
+<dd><p>Adds value to a ScoreReelGroup.</p>
 <p>You can also pass a negative value to subtract points.</p>
-<p>Note you can control the logistics of how these pulses are applied via
-the <cite>jump</cite> parameter. If jump is False (the default), then this method
-whill respect the proper &#8220;sequencing&#8221; of reel advances. For example,
-if the current value is 1700 and the new value is 2200, this method
-will fire the hundreds reel twice (to go to 1800 then 1900), then on
-the third pulse it will fire the thousands and hundreds (to go to
-2000), then do the final two pulses to land at 2200.</p>
+<p>You can control the logistics of how these pulses are applied via the
+<cite>jump</cite> parameter. If jump is False (default), then this method will
+respect the proper &#8220;sequencing&#8221; of reel advances. For example, if the
+current value is 1700 and the new value is 2200, this method will fire
+the hundreds reel twice (to go to 1800 then 1900), then on the third
+pulse it will fire the thousands and hundreds (to go to 2000), then do
+the final two pulses to land at 2200.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>value</strong> (<em>int</em>) &#8211; The integer value you&#8217;d like to add to (or subtract
+<li><strong>value</strong> &#8211; The integer value you&#8217;d like to add to (or subtract
 from) the current value</li>
-<li><strong>jump</strong> (<em>bool, optional</em>) &#8211; Whether the reels should &#8220;count up&#8221; to the
-new value in the classic EM way (jump=False) or whether they
-should just jump there as fast as they can (jump=True). Default
-is False.</li>
+<li><strong>jump</strong> &#8211; Optional boolean value which controls whether the reels should
+&#8220;count up&#8221; to the new value in the classic EM way (jump=False)
+or whether they should just jump there as fast as they can
+(jump=True). Default is False.</li>
+<li><strong>target</strong> &#8211; Optional integer that&#8217;s the target for where this reel group
+should end up after it&#8217;s done advancing. If this is not
+specified then the target value will be calculated based on the
+current reel positions, though sometimes this get&#8217;s wonky if the
+reel is jumping or moving, so it&#8217;s best to specify the target if
+you can.</li>
 </ul>
 </td>
 </tr>
@@ -412,23 +353,14 @@ is False.</li>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReelGroup.advance_queue">
-<tt class="descname">advance_queue</tt><em class="property"> = None</em></dt>
-<dd><p>Holds a list of the next reels that for step advances.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="mpf.devices.score_reel.ScoreReelGroup.assumed_value_int">
 <tt class="descname">assumed_value_int</tt></dt>
-<dd><p>An integer representation of the value we assume is shown on this
-ScoreReelGroup. A value of -999 means the value is unknown.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="attribute">
 <dt id="mpf.devices.score_reel.ScoreReelGroup.assumed_value_list">
 <tt class="descname">assumed_value_list</tt></dt>
-<dd><p>TODO add documentation</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.score_reel.ScoreReelGroup.chime">
@@ -445,13 +377,6 @@ ScoreReelGroup. A value of -999 means the value is unknown.</p>
 <tt class="descname">config_section</tt><em class="property"> = 'Score Reel Groups'</em></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReelGroup.desired_value_list">
-<tt class="descname">desired_value_list</tt><em class="property"> = None</em></dt>
-<dd><p>A list of what values the machine desires to have the score reel
-group set to.</p>
-</dd></dl>
-
 <dl class="classmethod">
 <dt id="mpf.devices.score_reel.ScoreReelGroup.device_class_init">
 <em class="property">classmethod </em><tt class="descname">device_class_init</tt><big>(</big><em>machine</em><big>)</big></dt>
@@ -463,8 +388,17 @@ group set to.</p>
 <dd><p>Queries all the reels in the group and builds a list of their actual
 current physical state, with either the value of the current switch
 or -999 if no switch is active.</p>
-<p>This method also updates each reel&#8217;s physical value</p>
+<p>This method also updates each reel&#8217;s physical value.</p>
 <p>Returns: List of physical reel values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.initialize">
+<tt class="descname">initialize</tt><big>(</big><big>)</big></dt>
+<dd><p>Initialized the score reels by reading their current physical values
+and setting each reel&#8217;s rollover reel. This is a separate method since
+it can&#8217;t run int __iniit__() because all the other reels have to be
+setup first.</p>
 </dd></dl>
 
 <dl class="method">
@@ -472,14 +406,15 @@ or -999 if no switch is active.</p>
 <tt class="descname">int_to_reel_list</tt><big>(</big><em>value</em><big>)</big></dt>
 <dd><p>Converts an integer to a list of integers that represent each
 positional digit in this ScoreReelGroup.</p>
+<p>The list returned is in reverse order. (See the example below.)</p>
 <p>The list returned is customized for this ScoreReelGroup both in terms
 of number of elements and values of <cite>None</cite> used to represent blank
-plastic inserts that are not controlled by a score reel unit.</p>
+plastic zero inserts that are not controlled by a score reel unit.</p>
 <p>For example, if you have a 5-digit score reel group that has 4
 phyiscial reels in the tens through ten-thousands position and a fake
 plastic &#8220;0&#8221; insert for the ones position, if you pass this method a
 value of <cite>12300</cite>, it will return <cite>[None, 0, 3, 2, 1]</cite></p>
-<p>This method will also pad shorter ints with zeros, and it will chop off
+<p>This method will pad shorter ints with zeros, and it will chop off
 leading digits for ints that are too long. (For example, if you pass a
 value of 10000 to a ScoreReelGroup which only has 4 digits, the
 returns list would correspond to 0000, since your score reel unit has
@@ -488,9 +423,10 @@ rolled over.)</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> (<em>int</em>) &#8211; The interger value you&#8217;d like to convert.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> &#8211; The interger value you&#8217;d like to convert.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list containing the values for each corresponding score reel.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list containing the values for each corresponding score reel,
+with the lowest reel digit position in list position 0.</td>
 </tr>
 </tbody>
 </table>
@@ -506,10 +442,11 @@ ScoreReelGroup &#8220;done&#8221; moving?</p>
 <p>Returns: True or False</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReelGroup.jump_in_progess">
-<tt class="descname">jump_in_progess</tt><em class="property"> = None</em></dt>
-<dd><p>Boolean attribute that is True when a jump advance is in progress.</p>
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.light">
+<tt class="descname">light</tt><big>(</big><em>relight_on_valid=False</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Lights up this ScoreReelGroup based on the &#8216;light_tag&#8217; in its
+config.</p>
 </dd></dl>
 
 <dl class="method">
@@ -529,39 +466,13 @@ pass it.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> (<em>list</em>) &#8211; The list containing the values for each score reel
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> &#8211; The list containing the values for each score reel
 position.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The resultant integer based on the list passed.</td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReelGroup.reels">
-<tt class="descname">reels</tt><em class="property"> = None</em></dt>
-<dd><p>A list of individual ScoreReel objects that make up this
-ScoreReelGroup. The number of items in the list correspondis to the
-number of digits that can be displayed. A value of <cite>None</cite> indicates a
-position that is not controlled by a moving reel (like a fake ones
-digit).</p>
-<p>Note that this is &#8220;backwards,&#8221; with element 0 representing the ones
-digit, element 1 representing the tens, etc..</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.devices.score_reel.ScoreReelGroup.reset_pulses_per_round">
-<tt class="descname">reset_pulses_per_round</tt><em class="property"> = None</em></dt>
-<dd><p>Interger value of how many &#8220;pulses&#8221; should be done per reset round.
-This is used to simulate the actual mechnical resets the way a classic
-EM machine would do it. If you watch an EM game reset, you&#8217;ll notice
-they pulse the reels in groups, like click-click-click-click-click..
-pause.. click-click-click-click-click.. pause.. etc. Once each reel
-gets to zero, it stops advancing.</p>
-<p>If you don&#8217;t want to emulate this behavior, set this to 0. The default
-is 5.</p>
-<p>TODO / NOTE: This feature is not yet implemented.</p>
 </dd></dl>
 
 <dl class="method">
@@ -580,11 +491,11 @@ over during a step advance.</p>
 <p>This method will &#8220;jump&#8221; the score reel group to display the value
 that&#8217;s passed as an it. (Note this &#8220;jump&#8221; technique means it will just
 move the reels as fast as it can, and nonsensical values might show up
-on the reel while the movement is in place.</p>
+on the reel while the movement is in progress.)</p>
 <p>This method is used to &#8220;reset&#8221; a reel group to all zeros at the
 beginning of a game, and can also be used to reset a reel group that is
 confused or to switch a reel to the new player&#8217;s score if multiple
-players a sharing the same reel.</p>
+players a sharing the same reel group.</p>
 <p>Note you can choose to pass either an integer representation of the
 value, or a value list.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -592,10 +503,11 @@ value, or a value list.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>value</strong> (<em>int, optional</em>) &#8211; An integer value of what the new displayed
-value (i.e. score) should be. This is the default option if you
-only pass a single positional argument, e.g. <cite>set_value(2100)</cite>.</li>
-<li><strong>value_list</strong> (<em>list, optional</em>) &#8211; A value_list of the value you&#8217;d like</li>
+<li><strong>value</strong> &#8211; An integer value of what the new displayed value (i.e. score)
+should be. This is the default option if you only pass a single
+positional argument, e.g. <cite>set_value(2100)</cite>.</li>
+<li><strong>value_list</strong> &#8211; A list of the value you&#8217;d like the reel group to
+display.</li>
 </ul>
 </td>
 </tr>
@@ -604,14 +516,26 @@ only pass a single positional argument, e.g. <cite>set_value(2100)</cite>.</li>
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.tick">
+<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
+<dd><p>Automatically called once per machine tick and checks to see if there
+are any jumps or advances in progress, and, if so, calls those methods.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.score_reel.ScoreReelGroup.unlight">
+<tt class="descname">unlight</tt><big>(</big><em>relight_on_valid=False</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Turns off the lights for this ScoreReelGroup based on the
+&#8216;light_tag&#8217; in its config.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="mpf.devices.score_reel.ScoreReelGroup.validate">
 <tt class="descname">validate</tt><big>(</big><em>value=None</em><big>)</big></dt>
 <dd><p>Called to validate that this score reel group is in the position
 the machine wants it to be in.</p>
-<p>If lazy confirm mode is enabled, this method will also make sure the
-reels are in their proper physical positions. If any reels are not done
-moving, it will add event handlers to receive notifications of when the
-reels are done and will call this method again at that time.</p>
+<p>If lazy or strict confirm is enabled, this method will also make sure
+the reels are in their proper physical positions.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -668,7 +592,7 @@ handler for those events.</td>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

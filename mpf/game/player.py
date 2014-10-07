@@ -37,10 +37,12 @@ class Player(object):
         # initialize player vars
         self.vars['ball'] = 0
         self.vars['score'] = 0
-        self.vars['index'] = 0  # the player index (starts with 0)
+        self.vars['extra_balls'] = 0
+        self.vars['extra_balls_total_this_game'] = 0
+        self.vars['index'] = Player.total_players - 1
         self.vars['number'] = Player.total_players
 
-        self.log.info("Creating new player: Player %s. (player index '%s')",
+        self.log.debug("Creating new player: Player %s. (player index '%s')",
                       self.vars['number'], self.index)
 
     # todo method to dump the player vars to disk?

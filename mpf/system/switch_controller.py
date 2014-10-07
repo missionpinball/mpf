@@ -56,7 +56,7 @@ class SwitchController(object):
 
         We can't do this in __init__() because we need the switch controller to
         be setup first before we set up the hw switches. This method is
-        called via an event handler which listens for `machine_init_phase1`.
+        called via an event handler which listens for `machine_init_phase2`.
         """
 
         self.log.debug("Syncing the logical and physical switch states.")
@@ -192,11 +192,7 @@ class SwitchController(object):
         if self.switches[name]['state'] == state:
             return
 
-        # audit this activation:
-        if self.machine.auditor.enabled:
-                self.machine.auditor.audit('Switches', name)
-
-        self.log.debug("<<<<< switch: %s, State:%s >>>>>", name, state)
+        self.log.info("<<<<< switch: %s, State:%s >>>>>", name, state)
         # Update the machine's switch state
         self.set_state(name, state)
 
@@ -211,7 +207,7 @@ class SwitchController(object):
                 if entry['ms']:
                     # This entry is for a timed switch, so add it to our
                     # active timed switch list
-                    key = time.time() + entry['ms']
+                    key = time.time() + (entry['ms'] / 1000.0)
                     value = {'switch_action': str(name) + '-' + str(state),
                              'callback': entry['callback'],
                              'switch_name': name,
@@ -219,6 +215,8 @@ class SwitchController(object):
                              'ms': entry['ms'],
                              'return_info': entry['return_info']}
                     self.active_timed_switches[key].append(value)
+                    self.log.debug("Found timed switch handler for k/v %s / %s",
+                                   key, value)
                 else:
                     # This entry doesn't have a timed delay, so do the action
                     # now
@@ -276,11 +274,59 @@ class SwitchController(object):
         """
         # todo add support for other parameters to the callback?
 
+        self.log.debug("Registering switch handler: %s, %s, state: %s, ms: %s"
+                       ", info: %s", switch_name, callback, state, ms,
+                       return_info)
+
         entry_val = {'ms': ms, 'callback': callback,
                      'return_info': return_info}
         entry_key = str(switch_name) + '-' + str(state)
 
         self.registered_switches[entry_key].append(entry_val)
+
+        # If the switch handler that was just registered has a delay (i.e. ms>0,
+        # then let's see if the switch is currently in the state that the
+        # handler was registered for. If so, and if the switch has been in this
+        # state for less time than the ms registered, then we need to add this
+        # switch to our active_timed_switches list so this handler is called
+        # when this switch's active time expires. (in other words, we're
+        # catching delayed switches that were in progress when this handler was
+        # registered.
+
+        if ms:  # only do this for handlers that have delays
+            if state == 1:
+                if self.is_active(switch_name, 0) and (
+                        self.ms_since_change(switch_name) < ms):
+                    # figure out when this handler should fire based on the
+                    # switch's original activation time.
+                    key = (time.time() + ((ms - self.ms_since_change(switch_name))
+                                                                   / 1000.0))
+                    value = {'switch_action': entry_key,
+                             'callback': callback,
+                             'switch_name': switch_name,
+                             'state': state,
+                             'ms': ms,
+                             'return_info': return_info}
+                    self.active_timed_switches[key].append(value)
+            elif state == 0:
+                if self.is_inactive(switch_name, 0) and (
+                        self.ms_since_change(switch_name) < ms):
+
+                    key = (time.time() + ((ms - self.ms_since_change(switch_name))
+                                                                   / 1000.0))
+                    value = {'switch_action': entry_key,
+                             'callback': callback,
+                             'switch_name': switch_name,
+                             'state': state,
+                             'ms': ms,
+                             'return_info': return_info}
+                    self.active_timed_switches[key].append(value)
+
+        # Return the args we used to setup this handler for easy removal later
+        return {'switch_name': switch_name,
+                'callback': callback,
+                'state': state,
+                'ms': ms}
 
     def remove_switch_handler(self, switch_name, callback, state=1, ms=0):
         """Removes a registered switch handler.
@@ -288,6 +334,9 @@ class SwitchController(object):
         Currently this only works if you specify everything exactly as you set
         it up. (Except for return_info, which doesn't matter if true or false, it
         will remove either / both."""
+
+        self.log.debug("Removing switch handler. Switch: %s, State: %s, ms: %s",
+                      switch_name, state, ms)
 
         # Try first with return_info: False
         entry_val = {'ms': ms, 'callback': callback, 'return_info': False}
@@ -324,17 +373,19 @@ class SwitchController(object):
         removes that entry from the list.
 
         """
-        # Make a copy so we can delete from the orig list while iterating.
-        active_timed_switches_copy = dict(self.active_timed_switches)
-        for k, v in active_timed_switches_copy.iteritems():
+
+        for k in self.active_timed_switches.keys():
             if k <= time.time():  # change to generator?
-                for item in v:
-                    if item['return_info']:
-                        item['callback'](switch_name=item['switch_name'],
-                                         state=item['state'],
-                                         ms=item['ms'])
+                for entry in self.active_timed_switches[k]:
+                    self.log.debug("Processing timed switch handler. Switch: %s "
+                                  " State: %s, ms: %s", entry['switch_name'],
+                                  entry['state'], entry['ms'])
+                    if entry['return_info']:
+                        entry['callback'](switch_name=entry['switch_name'],
+                                         state=entry['state'],
+                                         ms=entry['ms'])
                     else:
-                        item['callback']()
+                        entry['callback']()
                 del self.active_timed_switches[k]
 
 # The MIT License (MIT)

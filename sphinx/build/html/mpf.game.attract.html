@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.game.attract module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
+    <title>mpf.game.attract module &mdash; Mission Pinball Framework 0.0.9 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.7',
+        VERSION:     '0.0.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -90,13 +90,18 @@ be False. Otherwise it&#8217;s True.</td>
 
 <dl class="method">
 <dt id="mpf.game.attract.Attract.start">
-<tt class="descname">start</tt><big>(</big><big>)</big></dt>
+<tt class="descname">start</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
 <dd><p>Automatically called when the Attract game mode becomes active.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.game.attract.Attract.start_button_pressed">
 <tt class="descname">start_button_pressed</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.attract.Attract.start_button_released">
+<tt class="descname">start_button_released</tt><big>(</big><big>)</big></dt>
 <dd><p>Called when the a switch tagged with <em>start</em> is activated.</p>
 <p>Since this is the Attract mode, this method posts a boolean event
 called <em>request_to_start_game</em>. If that event comes back True, this
@@ -144,7 +149,7 @@ method calls <a class="reference internal" href="#mpf.game.attract.Attract.resul
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -84,8 +84,9 @@ class Driver(Device):
 
         Note this fancy software hold is not yet implemented.
         """
-        if self.config['pwn_on'] and selfconfig['pwm_off']:
-            self.pwm(self.config['pwm_on'], self.config['pwm_off'])
+        if self.config['pwm_on'] and self.config['pwm_off']:
+            self.pwm(self.config['pwm_on'], self.config['pwm_off'],
+                     self.config['pulse_ms'])
         elif self.config['allow_enable']:
             self.hw_driver.enable()
         else:
@@ -123,12 +124,12 @@ class Driver(Device):
                              self.name, milliseconds)
             return
         # todo also disable the timer which reenables this
-        self.log.debug("Pulsing Driverfor %dms", milliseconds)
+        self.log.debug("Pulsing Driver for %dms", milliseconds)
         self.hw_driver.pulse(int(milliseconds))
         self.time_last_changed = time.time()
         self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
-    def pwm(self, on_ms, off_ms, orig_on_ms):
+    def pwm(self, on_ms, off_ms, orig_on_ms=0):
         self.log.debug("PWM Driver. initial pulse: %s, on: %s, off: %s",
                        on_ms, off_ms, orig_on_ms)
         self.hw_driver.pwm(on_ms, off_ms, orig_on_ms)
@@ -138,7 +139,7 @@ class Driver(Device):
 
     def timed_pwm(self, on_ms, off_ms, runtime_ms):
         self.log.debug("Timed PWM Driver. on: %s, off: %s, total ms: %s",
-                       on_ms, off_ms, orig_on_ms)
+                       on_ms, off_ms, runtime_ms)
         self.hw_driver.pwm(on_ms, off_ms, runtime_ms)
         self.time_last_changed = time.time()
         self.time_when_done = -1

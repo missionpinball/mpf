@@ -5,7 +5,7 @@ Flippers:
     LowerLeft:
         main_coil: flipperLwLMain
         hold_coil: flipperLwLHold
-        activation_switch: esc #flipperLwL
+        activation_switch: flipperLwL
         eos_switch: flipperLwL_EOS
         #use_eos: True
         #hold_pwm:
@@ -14,19 +14,19 @@ Flippers:
     LowerRight:
         main_coil: flipperLwRMain
         hold_coil: flipperLwRHold
-        activation_switch: enter #flipperLwR
+        activation_switch: flipperLwR
         eos_switch: flipperLwR_EOS
         label: Right Main Flipper
     UpperLeft:
         main_coil: flipperUpLMain
         hold_coil: flipperUpLHold
-        activation_switch: esc #flipperUpL
+        activation_switch: flipperUpL
         eos_switch: flipperUpL_EOS
         label: Upper Left Flipper
     UpperRight:
         main_coil: flipperUpRMain
         hold_coil: flipperUpRHold
-        activation_switch: enter #flipperUpR
+        activation_switch: flipperUpR
         eos_switch: flipperUpR_EOS
         label: Upper Right Flipper
         
@@ -78,7 +78,7 @@ DropTargetBanks:
             drop_targets_Judge_complete: 1s
         complete_show: drop_target_complete
 
-Standups:  # Not yet implemented
+Targets:  # Not yet implemented
     QuestionMark:
         switch: mystery
         light: mystery
@@ -92,9 +92,9 @@ Standups:  # Not yet implemented
         switch: rightTopPost
         light: ExtraBall
 
-StandupGroups:
+TargetGroups:
     pf_standups:
-        standups: QuestionMark, AdvanceCrime, LeftExtraBall, RightExtraBall
+        targets: QuestionMark, AdvanceCrime, LeftExtraBall, RightExtraBall
         rotate_left_events: sw_left_flipper
         rotate_right_events: sw_right_flipper
         
@@ -102,17 +102,17 @@ StandupGroups:
 Diverters:
     deadWorld:
         coil: diverter
-        type: hold #pulse or hold
+        type: hold
         timeout: 3s
-        enable_switch: leftRampEnter
+        activation_switch: leftRampEnter
         enable_events: shot_LeftRamp
         disable_events: ball_ending
         disable_switch: leftRampToLock
         target_when_enabled:
-            type: # ball_device, playfield
-            name:
+            type: ball_device
+            name: deadworld
         target_when_disabled:
-            type:
+            type: playfield
             name:
         
 
@@ -122,50 +122,50 @@ BallDevices:
         tags: trough, home, drain
         label: Main Trough
         ball_switches: trough1, trough2, trough3, trough4, trough5, trough6, troughJam
-        ball_count_delay: 0.5s
+        ball_capacity: 6
+        entrance_count_delay: 0.5s
         eject_coil: trough
         eject_switch: trough6
-        post_eject_delay_check: 2s
+        exit_count_delay: 2s
         confirm_eject_type: device
         confirm_eject_target: shooterLaneR
 
     shooterLaneR:
-        tags: home, ball_add_live
+        tags: ball_add_live
         label: Right Plunger Lane
         ball_switches: shooterR
         eject_switch: shooterR
-        ball_count_delay: 0.3s
+        entrance_count_delay: 0.3s
         eject_coil: shooterR
         confirm_eject_type: playfield
         feeder_device: trough
-        player_controlled_eject_tag: right_eject
 
     shooterLaneL:
         label: Left Plunger Lane
         ball_switches: ShooterLaneL
         eject_switch: ShooterLaneL
-        ball_count_delay: 0.3s
+        entrance_count_delay: 0.3s
         eject_coil: shooterL
         confirm_eject_type: count
-        post_eject_delay_check: 0.5s
-        player_controlled_eject: True
-        player_controlled_eject_tag: left_eject  # dunno if this should be here
+        exit_count_delay: 0.5s
 
     SniperVUK:
         label: Sniper Tower VUK
         ball_switches: popperR
         eject_switch: popperR
-        ball_count_delay: 0.3s
+        entrance_count_delay: 0.3s
         eject_coil: popperR
         confirm_eject_type: count
-        post_eject_delay_check: 0.5s
+        exit_count_delay: 0.5s
 
     HallOfJusticeVUK:
         label: Hall of Justice VUK
         ball_switches: popperL
         eject_switch: popperL
-        ball_count_delay: 0.3s
+        entrance_count_delay: 0.3s
         eject_coil: popperL
         confirm_eject_type: count
-        post_eject_delay_check: 0.5s
+        exit_count_delay: 0.5s
+
+    
             

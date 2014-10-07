@@ -36,7 +36,18 @@ parser.add_option("-l", "--logfile",
 
 parser.add_option("-v", "--verbose",
                   action="store_const", dest="loglevel", const=logging.DEBUG,
-                  default=logging.INFO, help="Enables verbose logging")
+                  default=logging.INFO, help="Enables verbose logging to the "
+                  "log file")
+
+parser.add_option("-V", "--verboseconsole",
+                  action="store_true", dest="consoleloglevel",
+                  default=logging.INFO,
+                  help="Enables verbose logging to the console. Do NOT on "
+                  "Windows platforms")
+
+parser.add_option("-o", "--optimized",
+                  action="store_true", dest="optimized", default=False,
+                  help="Enables performance optimized game loop")
 
 parser.add_option("-x", "--nohw",
                   action="store_false", dest="physical_hw", default=True,
@@ -58,18 +69,23 @@ except OSError as exception:
     if exception.errno != errno.EEXIST:
         raise
 
-logfile_format = "%(asctime)s : %(name)s : %(message)s"
+logging.basicConfig(level=options.loglevel,
+                    format='%(asctime)s : %(name)s : %(message)s',
+                    #datefmt='%H:%M:%S',
+                    filename=options.logfile,
+                    filemode='w')
 
-
-logging.basicConfig(level=options.loglevel, filename=options.logfile,
-                    format=logfile_format, filemode='w')
-
-console_format = "%(asctime)s : %(name)s : %(message)s"
-console_timestamp_format = "%H:%M:%S"
+# define a Handler which writes INFO messages or higher to the sys.stderr
 console = logging.StreamHandler()
-console.setLevel(options.loglevel)
-console.setFormatter(logging.Formatter(fmt=console_format,
-                                       datefmt=console_timestamp_format))
+console.setLevel(options.consoleloglevel)
+
+# set a format which is simpler for console use
+formatter = logging.Formatter('%(levelname)s : %(name)s : %(message)s')
+
+# tell the handler to use this format
+console.setFormatter(formatter)
+
+# add the handler to the root logger
 logging.getLogger('').addHandler(console)
 
 

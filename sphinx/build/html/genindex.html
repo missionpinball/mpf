@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Index &mdash; Mission Pinball Framework 0.0.7 documentation</title>
+    <title>Index &mdash; Mission Pinball Framework 0.0.9 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.7',
+        VERSION:     '0.0.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -58,7 +58,6 @@
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
- | <a href="#J"><strong>J</strong></a>
  | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
@@ -79,6 +78,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.Accrual">Accrual (class in mpf.plugins.logic_blocks)</a>
+  </dt>
+
+      
   <dt><a href="mpf.devices.diverter.html#mpf.devices.diverter.Diverter.activate">activate() (mpf.devices.diverter.Diverter method)</a>
   </dt>
 
@@ -91,7 +94,7 @@
   </dt>
 
       
-  <dt><a href="mpf.system.scoring.html#mpf.system.scoring.ScoreController.add">add() (mpf.system.scoring.ScoreController method)</a>
+  <dt><a href="mpf.plugins.scoring.html#mpf.plugins.scoring.ScoreController.add">add() (mpf.plugins.scoring.ScoreController method)</a>
   </dt>
 
       <dd><dl>
@@ -123,6 +126,10 @@
   </dt>
 
       
+  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.add_live">add_live() (mpf.system.ball_controller.BallController method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.system.show_controller.html#mpf.system.show_controller.Playlist.add_show">add_show() (mpf.system.show_controller.Playlist method)</a>
   </dt>
 
@@ -138,22 +145,14 @@
   <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.advance">advance() (mpf.devices.score_reel.ScoreReel method)</a>
   </dt>
 
-      
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.advance_queue">advance_queue (mpf.devices.score_reel.ScoreReelGroup attribute)</a>
-  </dt>
-
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.Shot.advertise">advertise() (mpf.system.shots.Shot method)</a>
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.Shot.advertise">advertise() (mpf.plugins.shots.Shot method)</a>
   </dt>
 
       
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.are_balls_gathered">are_balls_gathered() (mpf.system.ball_controller.BallController method)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.assumed_value">assumed_value (mpf.devices.score_reel.ScoreReel attribute)</a>
   </dt>
 
       
@@ -169,23 +168,31 @@
   </dt>
 
       
-  <dt><a href="mpf.system.auditor.html#mpf.system.auditor.Auditor.audit">audit() (mpf.system.auditor.Auditor method)</a>
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor.audit">audit() (mpf.plugins.auditor.Auditor method)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.auditor.html#mpf.system.auditor.Auditor.audit_event">audit_event() (mpf.system.auditor.Auditor method)</a>
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor.audit_event">audit_event() (mpf.plugins.auditor.Auditor method)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.auditor.html#mpf.system.auditor.Auditor.audit_player">audit_player() (mpf.system.auditor.Auditor method)</a>
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor.audit_player">audit_player() (mpf.plugins.auditor.Auditor method)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.auditor.html#mpf.system.auditor.Auditor">Auditor (class in mpf.system.auditor)</a>
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor.audit_switch">audit_switch() (mpf.plugins.auditor.Auditor method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor">Auditor (class in mpf.plugins.auditor)</a>
   </dt>
 
       
   <dt><a href="mpf.devices.autofire.html#mpf.devices.autofire.AutofireCoil">AutofireCoil (class in mpf.devices.autofire)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.game.game.html#mpf.game.game.Game.award_extra_ball">award_extra_ball() (mpf.game.game.Game method)</a>
   </dt>
 
   </dl></td>
@@ -195,29 +202,11 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_add_live">ball_add_live() (mpf.system.ball_controller.BallController method)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.game.game.html#mpf.game.game.Game.ball_add_live_success">ball_add_live_success() (mpf.game.game.Game method)</a>
-  </dt>
-
-      <dd><dl>
-        
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_add_live_success">(mpf.system.ball_controller.BallController method)</a>
-  </dt>
-
-      </dl></dd>
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_contained_count_change">ball_contained_count_change() (mpf.system.ball_controller.BallController method)</a>
-  </dt>
-
-      
   <dt><a href="mpf.plugins.ball_save.html#mpf.plugins.ball_save.BallSave.ball_drain">ball_drain() (mpf.plugins.ball_save.BallSave method)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_drained">ball_drained() (mpf.system.ball_controller.BallController method)</a>
+  <dt><a href="mpf.game.game.html#mpf.game.game.Game.ball_drained">ball_drained() (mpf.game.game.Game method)</a>
   </dt>
 
       
@@ -228,14 +217,12 @@
   <dt><a href="mpf.game.game.html#mpf.game.game.Game.ball_ending">ball_ending() (mpf.game.game.Game method)</a>
   </dt>
 
-      <dd><dl>
-        
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_ending">(mpf.system.ball_controller.BallController method)</a>
-  </dt>
-
-      </dl></dd>
       
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_found">ball_found() (mpf.system.ball_controller.BallController method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.game.game.html#mpf.game.game.Game.ball_live_count_change">ball_live_count_change() (mpf.game.game.Game method)</a>
   </dt>
 
       
@@ -247,19 +234,15 @@
   </dt>
 
       
-  <dt><a href="mpf.game.game.html#mpf.game.game.Game.ball_remove_live">ball_remove_live() (mpf.game.game.Game method)</a>
-  </dt>
-
-      
   <dt><a href="mpf.game.game.html#mpf.game.game.Game.ball_saved">ball_saved() (mpf.game.game.Game method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_search_begin">ball_search_begin() (mpf.system.ball_controller.BallController method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_search_disable">ball_search_disable() (mpf.system.ball_controller.BallController method)</a>
   </dt>
@@ -282,16 +265,12 @@
 
       <dd><dl>
         
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_started">(mpf.system.ball_controller.BallController method)</a>
+  <dt><a href="mpf.plugins.info_lights.html#mpf.plugins.info_lights.InfoLights.ball_started">(mpf.plugins.info_lights.InfoLights method)</a>
   </dt>
 
       </dl></dd>
       
   <dt><a href="mpf.game.game.html#mpf.game.game.Game.ball_starting">ball_starting() (mpf.game.game.Game method)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.ball_update_all_counts">ball_update_all_counts() (mpf.system.ball_controller.BallController method)</a>
   </dt>
 
       
@@ -318,10 +297,6 @@
   <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.timing.html#mpf.system.timing.Timer.call">call() (mpf.system.timing.Timer method)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.cancel_eject_confirmation">cancel_eject_confirmation() (mpf.devices.ball_device.BallDevice method)</a>
   </dt>
 
       
@@ -352,6 +327,26 @@
       </dl></dd>
       
   <dt><a href="mpf.system.platform.html#mpf.system.platform.Platform.clear_hw_rule">clear_hw_rule() (mpf.system.platform.Platform method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.client_send_OSC_message">client_send_OSC_message() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.client_update_all">client_update_all() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.client_update_all_switches">client_update_all_switches() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.client_update_light">client_update_light() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.client_update_switch">client_update_switch() (mpf.plugins.osc.OSC method)</a>
   </dt>
 
       
@@ -416,15 +411,15 @@
   </dt>
 
         
-  <dt><a href="mpf.devices.standup.html#mpf.devices.standup.Standup.collection">(mpf.devices.standup.Standup attribute)</a>
-  </dt>
-
-        
-  <dt><a href="mpf.devices.standup.html#mpf.devices.standup.StandupGroup.collection">(mpf.devices.standup.StandupGroup attribute)</a>
-  </dt>
-
-        
   <dt><a href="mpf.devices.switch.html#mpf.devices.switch.Switch.collection">(mpf.devices.switch.Switch attribute)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.devices.target.html#mpf.devices.target.Target.collection">(mpf.devices.target.Target attribute)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.devices.target.html#mpf.devices.target.TargetGroup.collection">(mpf.devices.target.TargetGroup attribute)</a>
   </dt>
 
       </dl></dd>
@@ -438,20 +433,20 @@
   </dt>
 
       </dl></dd>
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.devices.led.html#mpf.devices.led.LED.compensate">compensate() (mpf.devices.led.LED method)</a>
   </dt>
 
       
-  <dt><a href="mpf.plugins.event_triggers.html#mpf.plugins.event_triggers.EventTrigger.complete">complete() (mpf.plugins.event_triggers.EventTrigger method)</a>
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.LogicBlock.complete">complete() (mpf.plugins.logic_blocks.LogicBlock method)</a>
   </dt>
 
       
   <dt><a href="mpf.devices.switch.html#mpf.devices.switch.Switch.config">config (mpf.devices.switch.Switch attribute)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.devices.autofire.html#mpf.devices.autofire.AutofireCoil.config_section">config_section (mpf.devices.autofire.AutofireCoil attribute)</a>
   </dt>
@@ -514,15 +509,15 @@
   </dt>
 
         
-  <dt><a href="mpf.devices.standup.html#mpf.devices.standup.Standup.config_section">(mpf.devices.standup.Standup attribute)</a>
-  </dt>
-
-        
-  <dt><a href="mpf.devices.standup.html#mpf.devices.standup.StandupGroup.config_section">(mpf.devices.standup.StandupGroup attribute)</a>
-  </dt>
-
-        
   <dt><a href="mpf.devices.switch.html#mpf.devices.switch.Switch.config_section">(mpf.devices.switch.Switch attribute)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.devices.target.html#mpf.devices.target.Target.config_section">(mpf.devices.target.Target attribute)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.devices.target.html#mpf.devices.target.TargetGroup.config_section">(mpf.devices.target.TargetGroup attribute)</a>
   </dt>
 
       </dl></dd>
@@ -540,7 +535,7 @@
   </dt>
 
         
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.SequenceShot.configure">(mpf.system.shots.SequenceShot method)</a>
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.SequenceShot.configure">(mpf.plugins.shots.SequenceShot method)</a>
   </dt>
 
       </dl></dd>
@@ -565,15 +560,11 @@
   </dt>
 
       
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.SequenceShot.confirm_shot">confirm_shot() (mpf.system.shots.SequenceShot method)</a>
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.SequenceShot.confirm_shot">confirm_shot() (mpf.plugins.shots.SequenceShot method)</a>
   </dt>
 
       
   <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.count_balls">count_balls() (mpf.devices.ball_device.BallDevice method)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.count_contained_balls">count_contained_balls() (mpf.system.ball_controller.BallController method)</a>
   </dt>
 
       
@@ -604,10 +595,6 @@
 
       
   <dt><a href="mpf.system.tasks.html#mpf.system.tasks.DelayManager">DelayManager (class in mpf.system.tasks)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.desired_value_list">desired_value_list (mpf.devices.score_reel.ScoreReelGroup attribute)</a>
   </dt>
 
       
@@ -666,23 +653,19 @@
   </dt>
 
         
-  <dt><a href="mpf.plugins.event_triggers.html#mpf.plugins.event_triggers.EventTrigger.disable">(mpf.plugins.event_triggers.EventTrigger method)</a>
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor.disable">(mpf.plugins.auditor.Auditor method)</a>
   </dt>
 
         
-  <dt><a href="mpf.system.auditor.html#mpf.system.auditor.Auditor.disable">(mpf.system.auditor.Auditor method)</a>
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.LogicBlock.disable">(mpf.plugins.logic_blocks.LogicBlock method)</a>
   </dt>
 
         
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.SequenceShot.disable">(mpf.system.shots.SequenceShot method)</a>
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.SequenceShot.disable">(mpf.plugins.shots.SequenceShot method)</a>
   </dt>
 
         
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.StandardShot.disable">(mpf.system.shots.StandardShot method)</a>
-  </dt>
-
-        
-  <dt><a href="mpf.system.show_controller.html#mpf.system.show_controller.ShowController.disable">(mpf.system.show_controller.ShowController method)</a>
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.StandardShot.disable">(mpf.plugins.shots.StandardShot method)</a>
   </dt>
 
       </dl></dd>
@@ -692,10 +675,6 @@
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
-      
-  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.disable_eject_event">disable_eject_event() (mpf.devices.ball_device.BallDevice method)</a>
-  </dt>
-
       
   <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.disable_flippers">disable_flippers() (mpf.system.machine_controller.MachineController method)</a>
   </dt>
@@ -743,22 +722,6 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.eject">eject() (mpf.devices.ball_device.BallDevice method)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.eject_all">eject_all() (mpf.devices.ball_device.BallDevice method)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.eject_failed">eject_failed() (mpf.devices.ball_device.BallDevice method)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.empty_playfield_devices">empty_playfield_devices() (mpf.system.ball_controller.BallController method)</a>
-  </dt>
-
-      
   <dt><a href="mpf.devices.autofire.html#mpf.devices.autofire.AutofireCoil.enable">enable() (mpf.devices.autofire.AutofireCoil method)</a>
   </dt>
 
@@ -784,31 +747,39 @@
   </dt>
 
         
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor.enable">(mpf.plugins.auditor.Auditor method)</a>
+  </dt>
+
+        
   <dt><a href="mpf.plugins.ball_save.html#mpf.plugins.ball_save.BallSave.enable">(mpf.plugins.ball_save.BallSave method)</a>
   </dt>
 
         
-  <dt><a href="mpf.plugins.event_triggers.html#mpf.plugins.event_triggers.EventTrigger.enable">(mpf.plugins.event_triggers.EventTrigger method)</a>
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.Accrual.enable">(mpf.plugins.logic_blocks.Accrual method)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.HitCounter.enable">(mpf.plugins.logic_blocks.HitCounter method)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.LogicBlock.enable">(mpf.plugins.logic_blocks.LogicBlock method)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.Sequence.enable">(mpf.plugins.logic_blocks.Sequence method)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.SequenceShot.enable">(mpf.plugins.shots.SequenceShot method)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.StandardShot.enable">(mpf.plugins.shots.StandardShot method)</a>
   </dt>
 
         
   <dt><a href="mpf.plugins.valid_playfield.html#mpf.plugins.valid_playfield.ValidPlayfield.enable">(mpf.plugins.valid_playfield.ValidPlayfield method)</a>
-  </dt>
-
-        
-  <dt><a href="mpf.system.auditor.html#mpf.system.auditor.Auditor.enable">(mpf.system.auditor.Auditor method)</a>
-  </dt>
-
-        
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.SequenceShot.enable">(mpf.system.shots.SequenceShot method)</a>
-  </dt>
-
-        
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.StandardShot.enable">(mpf.system.shots.StandardShot method)</a>
-  </dt>
-
-        
-  <dt><a href="mpf.system.show_controller.html#mpf.system.show_controller.ShowController.enable">(mpf.system.show_controller.ShowController method)</a>
   </dt>
 
       </dl></dd>
@@ -817,13 +788,15 @@
   </dt>
 
       
-  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.enable_eject_event">enable_eject_event() (mpf.devices.ball_device.BallDevice method)</a>
+  <dt><a href="mpf.plugins.first_flips.html#mpf.plugins.first_flips.FirstFlips.enable_flippers">enable_flippers() (mpf.plugins.first_flips.FirstFlips method)</a>
   </dt>
 
-      
-  <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.enable_flippers">enable_flippers() (mpf.system.machine_controller.MachineController method)</a>
+      <dd><dl>
+        
+  <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.enable_flippers">(mpf.system.machine_controller.MachineController method)</a>
   </dt>
 
+      </dl></dd>
       
   <dt><a href="mpf.devices.diverter.html#mpf.devices.diverter.Diverter.enable_hw_switch">enable_hw_switch() (mpf.devices.diverter.Diverter method)</a>
   </dt>
@@ -832,22 +805,18 @@
   <dt><a href="mpf.devices.flipper.html#mpf.devices.flipper.Flipper.enable_no_hold">enable_no_hold() (mpf.devices.flipper.Flipper method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.devices.flipper.html#mpf.devices.flipper.Flipper.enable_partial_power">enable_partial_power() (mpf.devices.flipper.Flipper method)</a>
   </dt>
 
-      
-  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.enable_player_eject">enable_player_eject() (mpf.devices.ball_device.BallDevice method)</a>
-  </dt>
-
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.devices.target.html#mpf.devices.target.TargetGroup.enable_reset_events">enable_reset_events() (mpf.devices.target.TargetGroup method)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.auditor.html#mpf.system.auditor.Auditor.enabled">enabled (mpf.system.auditor.Auditor attribute)</a>
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor.enabled">enabled (mpf.plugins.auditor.Auditor attribute)</a>
   </dt>
 
       
@@ -862,14 +831,6 @@
   <dt><a href="mpf.system.events.html#mpf.system.events.EventManager">EventManager (class in mpf.system.events)</a>
   </dt>
 
-      
-  <dt><a href="mpf.plugins.event_triggers.html#mpf.plugins.event_triggers.EventTrigger">EventTrigger (class in mpf.plugins.event_triggers)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.plugins.event_triggers.html#mpf.plugins.event_triggers.EventTriggers">EventTriggers (class in mpf.plugins.event_triggers)</a>
-  </dt>
-
   </dl></td>
 </tr></table>
 
@@ -877,21 +838,21 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.flag_ball_search_in_progress">flag_ball_search_in_progress (mpf.system.ball_controller.BallController attribute)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.flag_no_ball_search">flag_no_ball_search (mpf.system.ball_controller.BallController attribute)</a>
+  <dt><a href="mpf.plugins.first_flips.html#mpf.plugins.first_flips.FirstFlips">FirstFlips (class in mpf.plugins.first_flips)</a>
   </dt>
 
       
   <dt><a href="mpf.devices.flipper.html#mpf.devices.flipper.Flipper">Flipper (class in mpf.devices.flipper)</a>
   </dt>
 
+      
+  <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.flow_advance">flow_advance() (mpf.system.machine_controller.MachineController method)</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.flow_advance">flow_advance() (mpf.system.machine_controller.MachineController method)</a>
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.found_new_OSC_client">found_new_OSC_client() (mpf.plugins.osc.OSC method)</a>
   </dt>
 
       
@@ -909,17 +870,15 @@
   </dt>
 
       
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.game">game (mpf.system.ball_controller.BallController attribute)</a>
+  <dt><a href="mpf.game.game.html#mpf.game.game.Game.game_ended">game_ended() (mpf.game.game.Game method)</a>
   </dt>
 
-      
-  <dt><a href="mpf.game.game.html#mpf.game.game.Game.game_end">game_end() (mpf.game.game.Game method)</a>
+      <dd><dl>
+        
+  <dt><a href="mpf.plugins.info_lights.html#mpf.plugins.info_lights.InfoLights.game_ended">(mpf.plugins.info_lights.InfoLights method)</a>
   </dt>
 
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.game_ended">game_ended() (mpf.system.ball_controller.BallController method)</a>
-  </dt>
-
+      </dl></dd>
       
   <dt><a href="mpf.game.game.html#mpf.game.game.Game.game_ending">game_ending() (mpf.game.game.Game method)</a>
   </dt>
@@ -934,7 +893,7 @@
 
       <dd><dl>
         
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.game_starting">(mpf.system.ball_controller.BallController method)</a>
+  <dt><a href="mpf.plugins.info_lights.html#mpf.plugins.info_lights.InfoLights.game_starting">(mpf.plugins.info_lights.InfoLights method)</a>
   </dt>
 
       </dl></dd>
@@ -944,10 +903,6 @@
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.get_balldevice_status">get_balldevice_status() (mpf.system.ball_controller.BallController method)</a>
-  </dt>
-
       
   <dt><a href="mpf.system.devices.html#mpf.system.devices.Device.get_config_info">get_config_info() (mpf.system.devices.Device class method)</a>
   </dt>
@@ -970,10 +925,6 @@
 
       
   <dt><a href="mpf.devices.gi.html#mpf.devices.gi.GI">GI (class in mpf.devices.gi)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.target.html#mpf.devices.target.TargetGroup.group_complete">group_complete() (mpf.devices.target.TargetGroup method)</a>
   </dt>
 
   </dl></td>
@@ -1000,22 +951,30 @@
 
       <dd><dl>
         
-  <dt><a href="mpf.plugins.event_triggers.html#mpf.plugins.event_triggers.EventTrigger.hit">(mpf.plugins.event_triggers.EventTrigger method)</a>
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.Accrual.hit">(mpf.plugins.logic_blocks.Accrual method)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.HitCounter.hit">(mpf.plugins.logic_blocks.HitCounter method)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.Sequence.hit">(mpf.plugins.logic_blocks.Sequence method)</a>
   </dt>
 
       </dl></dd>
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.HitCounter">HitCounter (class in mpf.plugins.logic_blocks)</a>
+  </dt>
+
+      
   <dt><a href="mpf.system.platform.html#mpf.system.platform.Platform.hw_loop">hw_loop() (mpf.system.platform.Platform method)</a>
   </dt>
 
       
   <dt><a href="mpf.devices.switch.html#mpf.devices.switch.Switch.hw_state">hw_state (mpf.devices.switch.Switch attribute)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.hw_sync">hw_sync (mpf.devices.score_reel.ScoreReel attribute)</a>
   </dt>
 
       
@@ -1028,6 +987,20 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="mpf.plugins.info_lights.html#mpf.plugins.info_lights.InfoLights">InfoLights (class in mpf.plugins.info_lights)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.initialize">initialize() (mpf.devices.ball_device.BallDevice method)</a>
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.initialize">(mpf.devices.score_reel.ScoreReelGroup method)</a>
+  </dt>
+
+      </dl></dd>
       
   <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.initialize_hw_states">initialize_hw_states() (mpf.system.switch_controller.SwitchController method)</a>
   </dt>
@@ -1052,12 +1025,12 @@
   <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.is_desired_valid">is_desired_valid() (mpf.devices.score_reel.ScoreReelGroup method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.events.html#mpf.system.events.QueuedEvent.is_empty">is_empty() (mpf.system.events.QueuedEvent method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.is_full">is_full() (mpf.devices.ball_device.BallDevice method)</a>
   </dt>
@@ -1079,17 +1052,11 @@
   </dt>
 
       
-  <dt><a href="mpf.system.devices.html#mpf.system.devices.DeviceCollection.items_tagged">items_tagged() (mpf.system.devices.DeviceCollection method)</a>
+  <dt><a href="mpf.system.devices.html#mpf.system.devices.DeviceCollection.is_valid">is_valid() (mpf.system.devices.DeviceCollection method)</a>
   </dt>
 
-  </dl></td>
-</tr></table>
-
-<h2 id="J">J</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.jump_in_progess">jump_in_progess (mpf.devices.score_reel.ScoreReelGroup attribute)</a>
+  <dt><a href="mpf.system.devices.html#mpf.system.devices.DeviceCollection.items_tagged">items_tagged() (mpf.system.devices.DeviceCollection method)</a>
   </dt>
 
   </dl></td>
@@ -1102,10 +1069,14 @@
   <dt><a href="mpf.plugins.keyboard.html#mpf.plugins.keyboard.Keyboard">Keyboard (class in mpf.plugins.keyboard)</a>
   </dt>
 
+      
+  <dt><a href="mpf.system.events.html#mpf.system.events.QueuedEvent.kill">kill() (mpf.system.events.QueuedEvent method)</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.events.html#mpf.system.events.QueuedEvent.kill">kill() (mpf.system.events.QueuedEvent method)</a>
+  <dt><a href="mpf.devices.drop_target.html#mpf.devices.drop_target.DropTarget.knowndown">knowndown() (mpf.devices.drop_target.DropTarget method)</a>
   </dt>
 
   </dl></td>
@@ -1123,6 +1094,20 @@
   </dt>
 
       
+  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.light">light() (mpf.devices.score_reel.ScoreReelGroup method)</a>
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="mpf.devices.target.html#mpf.devices.target.Target.light">(mpf.devices.target.Target method)</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt><a href="mpf.devices.target.html#mpf.devices.target.TargetGroup.lit_complete">lit_complete() (mpf.devices.target.TargetGroup method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.plugins.valid_playfield.html#mpf.plugins.valid_playfield.ValidPlayfield.live_hit">live_hit() (mpf.plugins.valid_playfield.ValidPlayfield method)</a>
   </dt>
 
@@ -1133,7 +1118,7 @@
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.auditor.html#mpf.system.auditor.Auditor.load_from_disk">load_from_disk() (mpf.system.auditor.Auditor method)</a>
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor.load_from_disk">load_from_disk() (mpf.plugins.auditor.Auditor method)</a>
   </dt>
 
       
@@ -1154,6 +1139,14 @@
   <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.logical_to_physical">logical_to_physical() (mpf.devices.score_reel.ScoreReel method)</a>
   </dt>
 
+      
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.LogicBlock">LogicBlock (class in mpf.plugins.logic_blocks)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.LogicBlocks">LogicBlocks (class in mpf.plugins.logic_blocks)</a>
+  </dt>
+
   </dl></td>
 </tr></table>
 
@@ -1169,15 +1162,19 @@
   </dt>
 
       
-  <dt><a href="mpf.system.auditor.html#mpf.system.auditor.Auditor.make_sure_path_exists">make_sure_path_exists() (mpf.system.auditor.Auditor method)</a>
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor.make_sure_path_exists">make_sure_path_exists() (mpf.plugins.auditor.Auditor method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelController.map_new_score_reel_group">map_new_score_reel_group() (mpf.devices.score_reel.ScoreReelController method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.info_lights.html#mpf.plugins.info_lights.InfoLights.match">match() (mpf.plugins.info_lights.InfoLights method)</a>
   </dt>
 
       
   <dt><a href="mpf.devices.matrix_light.html#mpf.devices.matrix_light.MatrixLight">MatrixLight (class in mpf.devices.matrix_light)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.misfires">misfires (mpf.devices.score_reel.ScoreReel attribute)</a>
   </dt>
 
       
@@ -1237,10 +1234,6 @@
   </dt>
 
       
-  <dt><a href="mpf.devices.standup.html#module-mpf.devices.standup">mpf.devices.standup (module)</a>
-  </dt>
-
-      
   <dt><a href="mpf.devices.switch.html#module-mpf.devices.switch">mpf.devices.switch (module)</a>
   </dt>
 
@@ -1264,18 +1257,22 @@
   <dt><a href="mpf.game.player.html#module-mpf.game.player">mpf.game.player (module)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.platform.html#module-mpf.platform">mpf.platform (module)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.platform.virtual.html#module-mpf.platform.virtual">mpf.platform.virtual (module)</a>
   </dt>
 
       
   <dt><a href="mpf.plugins.html#module-mpf.plugins">mpf.plugins (module)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.auditor.html#module-mpf.plugins.auditor">mpf.plugins.auditor (module)</a>
   </dt>
 
       
@@ -1287,7 +1284,11 @@
   </dt>
 
       
-  <dt><a href="mpf.plugins.event_triggers.html#module-mpf.plugins.event_triggers">mpf.plugins.event_triggers (module)</a>
+  <dt><a href="mpf.plugins.first_flips.html#module-mpf.plugins.first_flips">mpf.plugins.first_flips (module)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.info_lights.html#module-mpf.plugins.info_lights">mpf.plugins.info_lights (module)</a>
   </dt>
 
       
@@ -1299,15 +1300,27 @@
   </dt>
 
       
+  <dt><a href="mpf.plugins.logic_blocks.html#module-mpf.plugins.logic_blocks">mpf.plugins.logic_blocks (module)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#module-mpf.plugins.osc">mpf.plugins.osc (module)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.scoring.html#module-mpf.plugins.scoring">mpf.plugins.scoring (module)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.shots.html#module-mpf.plugins.shots">mpf.plugins.shots (module)</a>
+  </dt>
+
+      
   <dt><a href="mpf.plugins.valid_playfield.html#module-mpf.plugins.valid_playfield">mpf.plugins.valid_playfield (module)</a>
   </dt>
 
       
   <dt><a href="mpf.system.html#module-mpf.system">mpf.system (module)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.auditor.html#module-mpf.system.auditor">mpf.system.auditor (module)</a>
   </dt>
 
       
@@ -1335,15 +1348,7 @@
   </dt>
 
       
-  <dt><a href="mpf.system.scoring.html#module-mpf.system.scoring">mpf.system.scoring (module)</a>
-  </dt>
-
-      
   <dt><a href="mpf.system.scriptlet.html#module-mpf.system.scriptlet">mpf.system.scriptlet (module)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.shots.html#module-mpf.system.shots">mpf.system.shots (module)</a>
   </dt>
 
       
@@ -1377,45 +1382,25 @@
   </dt>
 
       
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.next_pulse_time">next_pulse_time (mpf.devices.score_reel.ScoreReel attribute)</a>
-  </dt>
-
-      
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_contained">num_balls_contained (mpf.system.ball_controller.BallController attribute)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_contained_in_pf">num_balls_contained_in_pf (mpf.system.ball_controller.BallController attribute)</a>
+  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.num_balls_desired">num_balls_desired (mpf.devices.ball_device.BallDevice attribute)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_eject_auto">num_balls_eject_auto (mpf.system.ball_controller.BallController attribute)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_known">num_balls_known (mpf.system.ball_controller.BallController attribute)</a>
+  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_desired_live">num_balls_desired_live (mpf.system.ball_controller.BallController attribute)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_missing">num_balls_missing (mpf.system.ball_controller.BallController attribute)</a>
+  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.num_balls_ejectable">num_balls_ejectable (mpf.devices.ball_device.BallDevice attribute)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_to_add_live">num_balls_to_add_live (mpf.system.ball_controller.BallController attribute)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_to_add_stealth">num_balls_to_add_stealth (mpf.system.ball_controller.BallController attribute)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_uncontained">num_balls_uncontained (mpf.system.ball_controller.BallController attribute)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.num_values">num_values (mpf.devices.score_reel.ScoreReel attribute)</a>
+  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_live">num_balls_live (mpf.system.ball_controller.BallController attribute)</a>
   </dt>
 
       
@@ -1464,14 +1449,18 @@
   </dt>
 
       </dl></dd>
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.scriptlet.html#mpf.system.scriptlet.Scriptlet.on_load">on_load() (mpf.system.scriptlet.Scriptlet method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.options">options (mpf.system.machine_controller.MachineController attribute)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC">OSC (class in mpf.plugins.osc)</a>
   </dt>
 
   </dl></td>
@@ -1482,10 +1471,6 @@
   <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.patter">patter() (mpf.platform.virtual.VirtualDriver method)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.physical_value">physical_value (mpf.devices.score_reel.ScoreReel attribute)</a>
   </dt>
 
       
@@ -1505,6 +1490,14 @@
   </dt>
 
       
+  <dt><a href="mpf.plugins.info_lights.html#mpf.plugins.info_lights.InfoLights.player_added">player_added() (mpf.plugins.info_lights.InfoLights method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.game.game.html#mpf.game.game.Game.player_eject_request">player_eject_request() (mpf.game.game.Game method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.game.game.html#mpf.game.game.Game.player_rotate">player_rotate() (mpf.game.game.Game method)</a>
   </dt>
 
@@ -1520,8 +1513,6 @@
   <dt><a href="mpf.system.show_controller.html#mpf.system.show_controller.Playlist">Playlist (class in mpf.system.show_controller)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.plugins.ball_search.html#mpf.plugins.ball_search.BallSearch.pop_coil">pop_coil() (mpf.plugins.ball_search.BallSearch method)</a>
   </dt>
@@ -1530,8 +1521,64 @@
   <dt><a href="mpf.system.events.html#mpf.system.events.EventManager.post">post() (mpf.system.events.EventManager method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.process_ball_drained">process_ball_drained() (mpf.system.ball_controller.BallController method)</a>
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.preload_check">preload_check() (in module mpf.plugins.auditor)</a>
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="mpf.plugins.ball_save.html#mpf.plugins.ball_save.preload_check">(in module mpf.plugins.ball_save)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.ball_search.html#mpf.plugins.ball_search.preload_check">(in module mpf.plugins.ball_search)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.first_flips.html#mpf.plugins.first_flips.preload_check">(in module mpf.plugins.first_flips)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.info_lights.html#mpf.plugins.info_lights.preload_check">(in module mpf.plugins.info_lights)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.keyboard.html#mpf.plugins.keyboard.preload_check">(in module mpf.plugins.keyboard)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.lcd.html#mpf.plugins.lcd.preload_check">(in module mpf.plugins.lcd)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.preload_check">(in module mpf.plugins.logic_blocks)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.preload_check">(in module mpf.plugins.osc)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.scoring.html#mpf.plugins.scoring.preload_check">(in module mpf.plugins.scoring)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.preload_check">(in module mpf.plugins.shots)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.valid_playfield.html#mpf.plugins.valid_playfield.preload_check">(in module mpf.plugins.valid_playfield)</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.process_coil">process_coil() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.process_config">process_config() (mpf.plugins.osc.OSC method)</a>
   </dt>
 
       
@@ -1539,11 +1586,29 @@
   </dt>
 
       
-  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.process_switch">process_switch() (mpf.system.switch_controller.SwitchController method)</a>
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.process_event">process_event() (mpf.plugins.osc.OSC method)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.SequenceShot.progress_index">progress_index (mpf.system.shots.SequenceShot attribute)</a>
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.process_light">process_light() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.process_message">process_message() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.process_switch">process_switch() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.process_switch">(mpf.system.switch_controller.SwitchController method)</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.SequenceShot.progress_index">progress_index (mpf.plugins.shots.SequenceShot attribute)</a>
   </dt>
 
       
@@ -1591,10 +1656,6 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.ready">ready (mpf.devices.score_reel.ScoreReel attribute)</a>
-  </dt>
-
-      
   <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.reconfigure">reconfigure() (mpf.platform.virtual.VirtualDriver method)</a>
   </dt>
 
@@ -1603,15 +1664,27 @@
   </dt>
 
       
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.reels">reels (mpf.devices.score_reel.ScoreReelGroup attribute)</a>
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.register_data">register_data() (mpf.plugins.osc.OSC method)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.scoring.html#mpf.system.scoring.ScoreController.register_score_event">register_score_event() (mpf.system.scoring.ScoreController method)</a>
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.register_lights">register_lights() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.scoring.html#mpf.plugins.scoring.ScoreController.register_score_event">register_score_event() (mpf.plugins.scoring.ScoreController method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.register_switches">register_switches() (mpf.plugins.osc.OSC method)</a>
   </dt>
 
       
   <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.registered_switches">registered_switches (mpf.system.switch_controller.SwitchController attribute)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.system.show_controller.html#mpf.system.show_controller.Show.reload">reload() (mpf.system.show_controller.Show method)</a>
   </dt>
 
       
@@ -1668,7 +1741,19 @@
   </dt>
 
         
-  <dt><a href="mpf.plugins.event_triggers.html#mpf.plugins.event_triggers.EventTrigger.reset">(mpf.plugins.event_triggers.EventTrigger method)</a>
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.Accrual.reset">(mpf.plugins.logic_blocks.Accrual method)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.HitCounter.reset">(mpf.plugins.logic_blocks.HitCounter method)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.LogicBlock.reset">(mpf.plugins.logic_blocks.LogicBlock method)</a>
+  </dt>
+
+        
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.SequenceShot.reset">(mpf.plugins.shots.SequenceShot method)</a>
   </dt>
 
         
@@ -1680,20 +1765,16 @@
   </dt>
 
         
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.SequenceShot.reset">(mpf.system.shots.SequenceShot method)</a>
-  </dt>
-
-        
   <dt><a href="mpf.system.tasks.html#mpf.system.tasks.DelayManager.reset">(mpf.system.tasks.DelayManager method)</a>
   </dt>
 
       </dl></dd>
-      
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.reset_pulses_per_round">reset_pulses_per_round (mpf.devices.score_reel.ScoreReelGroup attribute)</a>
-  </dt>
-
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="mpf.plugins.info_lights.html#mpf.plugins.info_lights.InfoLights.reset_game_lights">reset_game_lights() (mpf.plugins.info_lights.InfoLights method)</a>
+  </dt>
+
       
   <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelController.reset_queue">reset_queue (mpf.devices.score_reel.ScoreReelController attribute)</a>
   </dt>
@@ -1717,15 +1798,19 @@
 
       </dl></dd>
       
+  <dt><a href="mpf.system.show_controller.html#mpf.system.show_controller.ShowController.restore_lower_lights">restore_lower_lights() (mpf.system.show_controller.ShowController method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.game.attract.html#mpf.game.attract.Attract.result_of_start_request">result_of_start_request() (mpf.game.attract.Attract method)</a>
   </dt>
 
       
-  <dt><a href="mpf.devices.rollover.html#mpf.devices.rollover.Rollover">Rollover (class in mpf.devices.rollover)</a>
+  <dt><a href="mpf.system.show_controller.html#mpf.system.show_controller.Show.resync">resync() (mpf.system.show_controller.Show method)</a>
   </dt>
 
       
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.rollover_reel">rollover_reel (mpf.devices.score_reel.ScoreReel attribute)</a>
+  <dt><a href="mpf.devices.rollover.html#mpf.devices.rollover.Rollover">Rollover (class in mpf.devices.rollover)</a>
   </dt>
 
       
@@ -1755,7 +1840,7 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.auditor.html#mpf.system.auditor.Auditor.save_to_disk">save_to_disk() (mpf.system.auditor.Auditor method)</a>
+  <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.Auditor.save_to_disk">save_to_disk() (mpf.plugins.auditor.Auditor method)</a>
   </dt>
 
       
@@ -1771,11 +1856,7 @@
   </dt>
 
       
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelController.score_reel_groups">score_reel_groups (mpf.devices.score_reel.ScoreReelController attribute)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.scoring.html#mpf.system.scoring.ScoreController">ScoreController (class in mpf.system.scoring)</a>
+  <dt><a href="mpf.plugins.scoring.html#mpf.plugins.scoring.ScoreController">ScoreController (class in mpf.plugins.scoring)</a>
   </dt>
 
       
@@ -1807,7 +1888,11 @@
   </dt>
 
       
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.SequenceShot">SequenceShot (class in mpf.system.shots)</a>
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.Sequence">Sequence (class in mpf.plugins.logic_blocks)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.SequenceShot">SequenceShot (class in mpf.plugins.shots)</a>
   </dt>
 
       
@@ -1820,6 +1905,10 @@
 
       
   <dt><a href="mpf.plugins.keyboard.html#mpf.plugins.keyboard.Keyboard.set_initial_states">set_initial_states() (mpf.plugins.keyboard.Keyboard method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.set_live_count">set_live_count() (mpf.system.ball_controller.BallController method)</a>
   </dt>
 
       
@@ -1843,6 +1932,14 @@
   </dt>
 
       
+  <dt><a href="mpf.game.game.html#mpf.game.game.Game.setup_midgame_restart">setup_midgame_restart() (mpf.game.game.Game method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.setup_OSC_client">setup_OSC_client() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.plugins.lcd.html#mpf.plugins.lcd.LCD.setup_window">setup_window() (mpf.plugins.lcd.LCD method)</a>
   </dt>
 
@@ -1853,11 +1950,11 @@
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.Shot">Shot (class in mpf.system.shots)</a>
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.Shot">Shot (class in mpf.plugins.shots)</a>
   </dt>
 
       
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.ShotController">ShotController (class in mpf.system.shots)</a>
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.ShotController">ShotController (class in mpf.plugins.shots)</a>
   </dt>
 
       
@@ -1869,19 +1966,21 @@
   </dt>
 
       
+  <dt><a href="mpf.game.game.html#mpf.game.game.Game.slam_tilt">slam_tilt() (mpf.game.game.Game method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.stage_ball">stage_ball() (mpf.devices.ball_device.BallDevice method)</a>
   </dt>
 
-      
-  <dt><a href="mpf.system.shots.html#mpf.system.shots.StandardShot">StandardShot (class in mpf.system.shots)</a>
+      <dd><dl>
+        
+  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.stage_ball">(mpf.system.ball_controller.BallController method)</a>
   </dt>
 
+      </dl></dd>
       
-  <dt><a href="mpf.devices.standup.html#mpf.devices.standup.Standup">Standup (class in mpf.devices.standup)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.devices.standup.html#mpf.devices.standup.StandupGroup">StandupGroup (class in mpf.devices.standup)</a>
+  <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.StandardShot">StandardShot (class in mpf.plugins.shots)</a>
   </dt>
 
       
@@ -1898,6 +1997,10 @@
   </dt>
 
         
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.start">(mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+        
   <dt><a href="mpf.system.machine_mode.html#mpf.system.machine_mode.MachineMode.start">(mpf.system.machine_mode.MachineMode method)</a>
   </dt>
 
@@ -1908,6 +2011,10 @@
       </dl></dd>
       
   <dt><a href="mpf.game.attract.html#mpf.game.attract.Attract.start_button_pressed">start_button_pressed() (mpf.game.attract.Attract method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.game.attract.html#mpf.game.attract.Attract.start_button_released">start_button_released() (mpf.game.attract.Attract method)</a>
   </dt>
 
       
@@ -1936,6 +2043,10 @@
   </dt>
 
         
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.stop">(mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+        
   <dt><a href="mpf.system.machine_mode.html#mpf.system.machine_mode.MachineMode.stop">(mpf.system.machine_mode.MachineMode method)</a>
   </dt>
 
@@ -1953,7 +2064,7 @@
 
       </dl></dd>
       
-  <dt><a href="mpf.plugins.event_triggers.html#mpf.plugins.event_triggers.EventTrigger.stop_ignoring_hits">stop_ignoring_hits() (mpf.plugins.event_triggers.EventTrigger method)</a>
+  <dt><a href="mpf.plugins.logic_blocks.html#mpf.plugins.logic_blocks.HitCounter.stop_ignoring_hits">stop_ignoring_hits() (mpf.plugins.logic_blocks.HitCounter method)</a>
   </dt>
 
       
@@ -1973,7 +2084,15 @@
   </dt>
 
       
-  <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.sw_loop">sw_loop() (mpf.system.machine_controller.MachineController method)</a>
+  <dt><a href="mpf.system.timing.html#mpf.system.timing.Timing.string_to_secs">string_to_secs() (mpf.system.timing.Timing static method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.sw_data_loop">sw_data_loop() (mpf.system.machine_controller.MachineController method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.sw_optimized_loop">sw_optimized_loop() (mpf.system.machine_controller.MachineController method)</a>
   </dt>
 
       
@@ -2015,10 +2134,14 @@
   </dt>
 
       
-  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.tick">tick() (mpf.platform.virtual.VirtualDriver method)</a>
+  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.tick">tick() (mpf.devices.score_reel.ScoreReelGroup method)</a>
   </dt>
 
       <dd><dl>
+        
+  <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver.tick">(mpf.platform.virtual.VirtualDriver method)</a>
+  </dt>
+
         
   <dt><a href="mpf.plugins.ball_search.html#mpf.plugins.ball_search.BallSearch.tick">(mpf.plugins.ball_search.BallSearch method)</a>
   </dt>
@@ -2033,15 +2156,21 @@
 
       </dl></dd>
       
-  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.tilt">tilt() (mpf.system.ball_controller.BallController method)</a>
+  <dt><a href="mpf.game.game.html#mpf.game.game.Game.tilt">tilt() (mpf.game.game.Game method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
+      <dd><dl>
+        
+  <dt><a href="mpf.plugins.info_lights.html#mpf.plugins.info_lights.InfoLights.tilt">(mpf.plugins.info_lights.InfoLights method)</a>
+  </dt>
+
+      </dl></dd>
       
   <dt><a href="mpf.devices.driver.html#mpf.devices.driver.Driver.timed_pwm">timed_pwm() (mpf.devices.driver.Driver method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.timing.html#mpf.system.timing.Timer">Timer (class in mpf.system.timing)</a>
   </dt>
@@ -2073,6 +2202,10 @@
   </dt>
 
       
+  <dt><a href="mpf.devices.target.html#mpf.devices.target.Target.toggle">toggle() (mpf.devices.target.Target method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.game.player.html#mpf.game.player.Player.total_players">total_players (mpf.game.player.Player attribute)</a>
   </dt>
 
@@ -2087,9 +2220,39 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.unlight">unlight() (mpf.devices.score_reel.ScoreReelGroup method)</a>
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="mpf.devices.target.html#mpf.devices.target.Target.unlight">(mpf.devices.target.Target method)</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt><a href="mpf.devices.target.html#mpf.devices.target.TargetGroup.unlit_complete">unlit_complete() (mpf.devices.target.TargetGroup method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.update_audits">update_audits() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.plugins.lcd.html#mpf.plugins.lcd.LCD.update_ball">update_ball() (mpf.plugins.lcd.LCD method)</a>
   </dt>
 
+      <dd><dl>
+        
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.update_ball">(mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.update_config">update_config() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.devices.target.html#mpf.devices.target.TargetGroup.update_count">update_count() (mpf.devices.target.TargetGroup method)</a>
   </dt>
@@ -2098,12 +2261,22 @@
   <dt><a href="mpf.plugins.lcd.html#mpf.plugins.lcd.LCD.update_player">update_player() (mpf.plugins.lcd.LCD method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
+      <dd><dl>
+        
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.update_player">(mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      </dl></dd>
       
   <dt><a href="mpf.plugins.lcd.html#mpf.plugins.lcd.LCD.update_score">update_score() (mpf.plugins.lcd.LCD method)</a>
   </dt>
 
+      <dd><dl>
+        
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.update_score">(mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      </dl></dd>
       
   <dt><a href="mpf.devices.drop_target.html#mpf.devices.drop_target.DropTarget.update_state_from_switch">update_state_from_switch() (mpf.devices.drop_target.DropTarget method)</a>
   </dt>
@@ -2127,19 +2300,15 @@
   </dt>
 
       
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.value_switches">value_switches (mpf.devices.score_reel.ScoreReel attribute)</a>
-  </dt>
-
-      
   <dt><a href="version.html#module-version">version (module)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualDriver">VirtualDriver (class in mpf.platform.virtual)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.platform.virtual.html#mpf.platform.virtual.VirtualGI">VirtualGI (class in mpf.platform.virtual)</a>
   </dt>
@@ -2215,7 +2384,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -105,6 +105,7 @@ class AutofireCoil(Device):
 
     def enable(self):
         """Enables the autofire coil rule."""
+        self.log.debug("Enabling")
         if not self.coil:
             self.configure()
 
@@ -122,6 +123,7 @@ class AutofireCoil(Device):
 
     def disable(self):
         """Disables the autofire coil rule."""
+        self.log.debug("Disabling")
         self.machine.platform.clear_hw_rule(self.switch)
 
 # The MIT License (MIT)

@@ -11,8 +11,9 @@
 Machine:
     HZ: 30
     Balls Installed: 1
-    Min Balls: 1
+    Min Balls: 0
     Max Balls: 1
+    Enable Loop Data: True
 
 Hardware:
     Platform: p_roc
@@ -21,6 +22,8 @@ Hardware:
 Game:
     Balls per game: 5
     Max players per game: 2
+    Restart on long press: True
+    Allow start with loose balls: True
 
 MachineFlow:
     mpf.game.attract.Attract
@@ -28,18 +31,21 @@ MachineFlow:
 
 Scriptlets:
     coil_tests.CoilTests
+    classic_modern_switcher.ClassicModern
     attract.Attract
+    game.Game
+    bonus.Bonus
 
 Plugins:
     keyboard.Keyboard
     lcd.LCD
     osc.OSC
-
-BallSearch:
-    Secs until ball search start: 10
-    Secs between ball search rounds: 3
-    Secs between ball search coils: .15
-    If ball search fails: Keep Looking
+    auditor.Auditor
+    logic_blocks.LogicBlocks
+    auditor.Auditor
+    info_lights.InfoLights
+    shots.ShotController
+    scoring.ScoreController
 
 LCD:
     width: 800
@@ -52,6 +58,7 @@ LCD:
         version
         title
         looprate
+        mpf_load
 
 Switches:
 # Direct Switches
@@ -71,7 +78,7 @@ Switches:
         number: SD8
         label: 1st Player Tens Score - Zero Position
         tags:
-    score_1p_10_9:
+    score_1p_10_5:
         number: SD9
         label: 1st Player Tens Score - Nine Position
         tags:
@@ -87,7 +94,7 @@ Switches:
         number: SD12
         label: 1st Player Thousands Score - Zero Position
         tags:
-    score_1p_1k_9:
+    score_1p_1k_5:
         number: SD13
         label: 1st Player Thousands Score - Nine Position
         tags:
@@ -95,7 +102,7 @@ Switches:
         number: SD14
         label: 1st Player Ten Thousands Score - Zero Position
         tags:
-    score_1p_10k_9:
+    score_1p_10k_5:
         number: SD15
         label: 1st Player Ten Ten Thousands Score - Nine Position
         tags:
@@ -103,7 +110,7 @@ Switches:
         number: SD0
         label: 2nd Player Tens Score - Zero Position
         tags:
-    score_2p_10_9:
+    score_2p_10_5:
         number: SD1
         label: 2nd Player Tens Score - Nine Position
         tags:
@@ -119,7 +126,7 @@ Switches:
         number: SD4
         label: 2nd Player Thousands Score - Zero Position
         tags:
-    score_2p_1k_9:
+    score_2p_1k_5:
         number: SD5
         label: 2nd Player Thousands Score - Nine Position
         tags:
@@ -127,7 +134,7 @@ Switches:
         number: SD6
         label: 2nd Player Ten Thousands Score - Zero Position
         tags:
-    score_2p_10k_9:
+    score_2p_10k_5:
         number: SD7
         label: 2nd Player Ten Thousands Score - Nine Position
         tags:
@@ -152,10 +159,14 @@ Switches:
         label: Slam Tilt
         tags: slam_tilt, noBroken
         type: NC
-    credit1:
+    classic_mode:
         number: SD19
-        label: Credit Switch 1
-        tags: noBroken, credit
+        label: Switches between modern (inactive) and classic (active) modes
+# Removed to make room for Classic Mode. Leaving here as a placeholder for November
+#    credit1:
+#        number: SD19
+#        label: Credit Switch 1
+#        tags: noBroken, credit
     coinDoorClosed:
         number: SD21
         label: Coin Door Switch
@@ -165,7 +176,7 @@ Switches:
     topLaneMid:
         number: 0/0
         label: Middle Rollover Top Lanes
-        tags: ballLive
+        tags: ballLive, eightball
     topLaneLeft:
         number: 0/1
         label: Left Rollover Top Lanes
@@ -198,115 +209,116 @@ Switches:
     drop15:
         number: 1/0
         label: Right Bank 15
-        tags:
+        tags: balllive
     drop14:
         number: 1/1
         label: Right Bank 14
-        tags:
+        tags: balllive
     drop13:
         number: 1/2
         label: Right Bank 13
-        tags:
+        tags: balllive
     drop12:
         number: 1/3
         label: Right Bank 12
-        tags:
+        tags: balllive
     drop11:
         number: 1/4
         label: Right Bank 11
-        tags:
+        tags: balllive
     drop10:
         number: 1/5
         label: Right Bank 10
-        tags:
+        tags: balllive
     midRtLane:
         number: 1/6
         label: Middle Right Lane Rollover
-        tags:
+        tags: balllive
     drop9:
         number: 1/7
         label: Right Bank 9
-        tags:
+        tags: balllive
     drop1:
         number: 2/0
         label: Left Bank 1
-        tags:
+        tags: balllive
     drop2:
         number: 2/1
         label: Left Bank 2
-        tags:
+        tags: balllive
     drop3:
         number: 2/2
         label: Left Bank 3
-        tags:
+        tags: balllive
     drop4:
         number: 2/3
         label: Left Bank 4
-        tags:
+        tags: balllive
     drop5:
         number: 2/4
         label: Left Bank 3
-        tags:
+        tags: balllive
     drop6:
         number: 2/5
         label: Left Bank 2
-        tags:
+        tags: balllive
     midLtLane:
         number: 2/6
         label: Middle Left Lane Rollover
-        tags:
+        tags: balllive
     drop7:
         number: 2/7
         label: Left Bank 1
-        tags:
+        tags: balllive
     slingL:
         number: 3/0
         label: Left Slingshot
-        tags: sling
+        tags: sling, balllive
     slingR:
         number: 3/1
         label: Right Slingshot
-        tags: sling
+        tags: sling, balllive
     leftOutlane:
         number: 3/2
         label: Left Outlane
-        tags: earlyDrain
+        tags: earlyDrain, balllive
     leftInlane:
         number: 3/3
         label: Left Inlane
-        tags:
+        tags: balllive
     rightOutlane:
         number: 3/4
         label: Right Outlane
-        tags: earlyDrain
+        tags: earlyDrain, balllive
     rightInlane:
         number: 3/5
         label: Right Inlane
-        tags:
+        tags: balllive
     ltMidStandup:
         number: 3/6
         label: Left Middle Target
-        tags:
+        tags: balllive
     rtMidStandup:
         number: 3/7
         label: Right Middle Target
-        tags:
+        tags: em_advance_hold
     midLtRubber:
         number: 4/6
         label: Left Middle lane behind rubber
-        tags:
+        tags: balllive
     midRtRubber:
         number: 4/7
         label: Right Middle lane behind rubber
-        tags:
+        tags: balllive
     behindSolids:
         number: 4/2
         label:
-        tags:
+        tags: balllive
     behindStripes:
         number: 4/3
         label:
-        tags:
+        tags: balllive
+
 
 # Light numbering format: C-Ax-By-z:R-Am-Bn-p:
 
@@ -357,7 +369,7 @@ MatrixLights:
     player2:
         number: C-A3-B0-0:R-A3-B1-4
         label: Player 2, corner
-        tags: player2
+        tags:
     player2_10:
         number: C-A3-B0-1:R-A3-B1-0
         label: Player 2, 10s digit
@@ -377,7 +389,7 @@ MatrixLights:
     player1:
         number: C-A3-B0-1:R-A3-B1-4
         label: Player 1, corner
-        tags: player1
+        tags:
     player2_100:
         number: C-A3-B0-2:R-A3-B1-0
         label: Player 2, 100s digit
@@ -665,7 +677,7 @@ MatrixLights:
     coinDoor:
         number: C-A2-B0-7:R-A2-B1-2
         label: Coin Door
-        tags:
+        tags: GI
     ball15:
         number: C-A2-B0-7:R-A2-B1-4
         label: Ball 15
@@ -701,7 +713,7 @@ Coils:
     diverter:
         number: A0-B1-0
         pulse_ms: 25
-        holdPatter: 1-4
+        holdPatter: 1-2
     popBumper:
         number: A0-B1-1
         pulse_ms: 18
@@ -746,10 +758,10 @@ Coils:
         pulse_ms: 120
     rightBankReset1:
         number: A1-B1-0
-        pulse_ms: 20
+        pulse_ms: 22
     rightBankReset2:
         number: A1-B1-1
-        pulse_ms: 20
+        pulse_ms: 22
     leftBankReset1:
         number: A1-B1-2
         pulse_ms: 22
@@ -760,21 +772,23 @@ Coils:
 
 BallDevices:
     trough:
-        tags: drain, home, ball_add_live
+        tags: drain, ball_add_live, trough
         ball_switches: drain
         eject_coil: troughEject
         eject_switch: drain
-        ball_count_delay: 0.3s
+        entrance_delay_count: 0.3s
+        exit_delay_count: 0.5s
         confirm_eject_type: switch
         confirm_eject_target: drainEject
 
     eightBallHole:
         ball_switches: eightBallHoleEject
         eject_coil: eightBallEject
-        ball_count_delay: 0.5s
+        entrance_delay_count: 0.1s
+        exit_delay_count: 0.1s
         eject_switch: eightBallHoleEject
-        confirm_eject_type: count
-        post_eject_delay_check: 0.3s
+        confirm_eject_type: playfield
+        tags: eightball
 
 Flippers:
         Left:
@@ -794,15 +808,12 @@ Autofire Coils:
     popBumper:
         coil: popBumper
         switch: popBumper
-#        eightBallHole:
-#            coil: eightBallEject
-#            switch: eightBallHoleEject
 
 Score Reels:
     score_1p_10k:
         coil_inc: player1_10k
         switch_0: score_1p_10k_0
-        switch_9: score_1p_10k_9
+        switch_9: score_1p_10k_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
@@ -812,7 +823,7 @@ Score Reels:
     score_1p_1k:
         coil_inc: player1_1k
         switch_0: score_1p_1k_0
-        switch_9: score_1p_1k_9
+        switch_9: score_1p_1k_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
@@ -831,8 +842,8 @@ Score Reels:
         confirm: lazy
     score_1p_10:
         coil_inc: player1_10
-        switch_0: score_1p_10_0
-        switch_9: score_1p_10_9
+        switch_4: score_1p_10_0
+        switch_9: score_1p_10_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
@@ -842,17 +853,17 @@ Score Reels:
     score_2p_10k:
         coil_inc: player2_10k
         switch_0: score_2p_10k_0
-        switch_9: score_2p_10k_9
+        switch_9: score_2p_10k_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
         repeat_pulse_ms: 200ms
-        hw_confirm_ms: 500ms
+        hw_confirm_ms: 300ms
         confirm: lazy
     score_2p_1k:
         coil_inc: player2_1k
         switch_0: score_2p_1k_0
-        switch_9: score_2p_1k_9
+        switch_9: score_2p_1k_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
@@ -872,7 +883,7 @@ Score Reels:
     score_2p_10:
         coil_inc: player2_10
         switch_0: score_2p_10_0
-        switch_9: score_2p_10_9
+        switch_9: score_2p_10_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
@@ -889,23 +900,25 @@ Score Reels:
         limit_hi: 12
         repeat_pulse_ms: 200ms
         hw_confirm_ms: 300ms
-        confirm: strict
+        confirm: lazy
 
 Score Reel Groups:
     player1:
         reels: score_1p_10k, score_1p_1k, score_1p_100, score_1p_10, None
         tags: player1
+        lights_tag: player1
         max simultaneous coils: 2
         attract display: time # time, date, zero, none
         attract display start time: 0
-        chimes: None, chime1, chime2, chime3, None
-        confirm: lazy  # anal, lazy, or none
+        chimes: None, None, None, None, None # None, chime1, chime2, chime3, None
+        confirm: lazy  # strict, lazy, or none
     player2:
         reels: score_2p_10k, score_2p_1k, score_2p_100, score_2p_10, None
         tags: player2
+        lights_tag: player2
         max simultaneous coils: 2
-        chimes: None, chime1, chime2, chime3, None
-        confirm: anal  # anal, lazy, or none
+        chimes: None, None, None, None, None # None, chime1, chime2, chime3, None
+        confirm: strict  # strict, lazy, or none
 
 Keyboard:
     z:
@@ -928,91 +941,90 @@ Keyboard:
         switch: slingL
     period:
         switch: slingR
-
-
     1:
-        event: advance_reel_test
-        params:
-            reel_name: score_1p_10k
-            direction: 1
+        switch: score_1p_10k_0
+        toggle: True
+        start_active: True
     shift-1:
-        event: advance_reel_test
-        params:
-            reel_name: score_1p_10k
-            direction: -1
-
+        switch: score_1p_10k_5
+        toggle: True
+        start_active: False
     2:
-        event: advance_reel_test
-        params:
-            reel_name: score_1p_1k
-            direction: 1
+        switch: score_1p_1k_0
+        toggle: True
+        start_active: True
     shift-2:
-        event: advance_reel_test
-        params:
-            reel_name: score_1p_1k
-            direction: -1
-
-
+        switch: score_1p_1k_5
+        toggle: True
+        start_active: False
     3:
-        event: advance_reel_test
-        params:
-            reel_name: score_1p_100
-            direction: 1
+        switch: score_1p_100_0
+        toggle: True
+        start_active: True
     shift-3:
-        event: advance_reel_test
-        params:
-            reel_name: score_1p_100
-            direction: -1
-
-
+        switch: score_1p_100_9
+        toggle: True
+        start_active: False
     4:
-        event: advance_reel_test
-        params:
-            reel_name: score_1p_10
-            direction: 1
+        switch: score_1p_10_0
+        toggle: True
+        start_active: True
     shift-4:
-        event: advance_reel_test
-        params:
-            reel_name: score_1p_10
-            direction: -1
-
-
-
+        switch: score_1p_10_5
+        toggle: True
+        start_active: False
+    5:
+        switch: score_2p_10k_0
+        toggle: True
+        start_active: True
+    shift-5:
+        switch: score_2p_10k_5
+        toggle: True
+        start_active: False
     6:
-        event: coil_test
-        params:
-            coil_name: leftBankReset1
+        switch: score_2p_1k_0
+        toggle: True
+        start_active: True
     shift-6:
-        event: coil_test
-        params:
-            coil_name: rightBankReset1
-            pulse_change: -1
-    ctrl-6:
-        event: coil_test
-        params:
-            coil_name: rightBankReset1
-            pulse_change: 1
-
+        switch: score_2p_1k_5
+        toggle: True
+        start_active: False
     7:
-        event: coil_test
-        params:
-            coil_name: leftBankReset2
+        switch: score_2p_100_0
+        toggle: True
+        start_active: True
     shift-7:
-        event: coil_test
-        params:
-            coil_name: rightBankReset2
-            pulse_change: -1
-    ctrl-7:
-        event: coil_test
-        params:
-            coil_name: rightBankReset2
-            pulse_change: 1
-
+        switch: score_2p_100_9
+        toggle: True
+        start_active: False
     8:
-        event: hold_coil
+        switch: score_2p_10_0
+        toggle: True
+        start_active: True
+    shift-8:
+        switch: score_2p_10_5
+        toggle: True
+        start_active: False
+    9:
+        switch: classic_mode
+        toggle: True
+        start_active: True
+    b:
+        event: coil_test
         params:
-            coil_name: leftBankReset
-            hold_time: 800
+            coil_name: chime1
+    n:
+        event: coil_test
+        params:
+            coil_name: chime2
+    m:
+        event: coil_test
+        params:
+            coil_name: chime3
+    o:
+        event: reload_and_play_show
+        params:
+            dummy: true
 
 DropTargets:
     drop1:
@@ -1064,44 +1076,54 @@ DropTargetBanks:
         reset_coils: leftBankReset1, leftBankReset2
         reset_events:
             ball_starting: 0
-            droptargetbank_Solids_complete: 1s
+            collect_special: .75s
     Stripes:
         drop_targets: drop9, drop10, drop11, drop12, drop13, drop14, drop15
         reset_coils: rightBankReset1, rightBankReset2
         reset_events:
-            ball_starting: 0.5s
-            droptargetbank_Solids_complete: 1s
+            ball_starting: 0.25s
+            collect_special: 1s
 
 Targets:
     midRightLane:
         switch: midRtLane
-        light: rtMidLane
+        light: rtMid1k
+        default_state: lit
+        light_if_unlit: False
+        unlight_if_lit: False
     midLeftLane:
         switch: midLtLane
-        light: ltMidLane
+        light: ltMid1k
+        light_if_unlit: False
+        unlight_if_lit: False
     specialLeft:
         switch: ltMidStandup
         light: ltSpecial
+        light_if_unlit: False
     specialRight:
         switch: rtMidStandup
         light: rtSpecial
+        light_if_unlit: False
 
 TargetGroups:
     middleLanes:
-        targets: midLeftLane, midRightLane
+        targets: midRightLane, midLeftLane
         rotate_left_events: sw_sling
+        reset_events:
+            ball_starting: 0
     specialStandups:
         targets: specialLeft, specialRight
         rotate_left_events: sw_sling
-
+        reset_events:
+            collect_special: 0
+            ball_starting: 0
 Diverters:
     rightOutlane:
         coil: diverter
         type: hold
-        enable_switch:
-        enable_events: balldevice_eightBallHole_ball_enter
+        enable_events: open_diverter
         disable_events: ball_ending
-        disable_switch: sw_plungerLane
+        disable_switch: plungerLane
 
 Shots:
     slingShot:
@@ -1114,46 +1136,47 @@ Shots:
         Switch: leftInlane, rightInlane
     outlane:
         Switch: leftOutlane, rightOutlane
-    eightBallHole:
-        Switch: eightBallHoleEject
     midLaneLit:
         Switch: midRtLane, midLtLane # will change with game logic
-#    midLaneUnlit:
-#        Switch:
     midLaneRubber:
         Switch: midLtRubber, midRtRubber
-    specialStandupUnlit:
-        Switch: rtMidStandup, ltMidStandup # also change these
     upperOuterRollover:
         Switch: topLaneLeft, topLaneRight
     upperEightBallLane:
         Switch: topLaneMid
-
+    popBumper5ball:
+        Switch: popBumper
 
 Scoring:
-    slingShot:
+    shot_slingShot:
         Score: 10
-    dropTarget:
+    shot_dropTarget:
         Score: 500
-    rubberBehindDropTarget:
+    shot_rubberBehindDropTarget:
         Score: 210
-    inlane:
+    shot_inlane:
         Score: 500
-    outlane:
+    shot_outlane:
         Score: 1000
-    eightBallHole:
+    balldevice_eightBallHole_ball_enter:
         Score: 500
-    midLaneLit:
+    target_midLeftLane_lit_hit:
         Score: 1000
-    midLaneUnlit:
+    target_midRightLane_lit_hit:
+        Score: 1000
+    target_midLeftLane_unlit_hit:
         Score: 500
-    midLaneRubber:
+    target_midRightLane_unlit_hit:
+        Score: 500
+    shot_midLaneRubber:
         Score: 10
-    specialStandupUnlit:
+    target_specialLeft_unlit_hit:
         Score: 100
-    upperOuterRollover:
+    target_specialRight_unlit_hit:
+        Score: 100
+    shot_upperOuterRollover:
         Score: 1000
-    upperEightBallLane:
+    shot_upperEightBallLane:
         Score: 500
     bonusValue:
         Score: 1000
@@ -1161,7 +1184,113 @@ Scoring:
         Score: 2000
     lastBonusValue:
         Score: 3000
-    popBumper3ball:
+    shot_popBumper3ball:
         Score: 1000
-    popBumper5ball:
+    shot_popBumper5ball:
         Score: 100
+
+LogicBlocks:
+
+    Accruals:
+
+        light_special:
+            events:
+                - sw_eightball,
+                - drop_targets_Solids_lit_complete, drop_targets_Stripes_lit_complete
+            events_when_complete: lighting_special, action_target_specialRight_light
+            enable_events: ball_started, collect_special
+            disable_events: ball_ended, lighting_special
+            reset_events: ball_ended, lighting_special
+
+        collect_special:
+            events:
+                - target_specialLeft_lit_hit, target_specialRight_lit_hit
+            events_when_complete:
+                collect_special
+            enable_events: lighting_special
+            disable_events: ball_ended, collect_special
+            reset_events: ball_ended, collect_special
+
+        lightEightBall:
+            events:
+                - sw_eightball
+            events_when_complete:
+                action_light_ball8_on
+                action_light_eightBall500_on
+            enable_events: ball_started
+            disable_events: ball_ended
+            reset_events: ball_ended
+
+        unlightEightBall:
+            events:
+                - collect_special
+            events_when_complete:
+                action_light_ball8_off
+                action_light_eightBall500_off
+            enable_events: ball_started
+            disable_events: ball_ended
+            reset_events: ball_ended
+
+        openDiverter:
+            events:
+                - balldevice_eightBallHole_ball_enter
+            events_when_complete:
+                open_diverter
+            enable_events: ball_started
+            disable_events: ball_ended
+            reset_events: ball_ended
+
+InfoLights:
+    match_00:
+        light: match00
+    match_10:
+        light: match10
+    match_20:
+        light: match20
+    match_30:
+        light: match30
+    match_40:
+        light: match40
+    match_50:
+        light: match50
+    match_60:
+        light: match60
+    match_70:
+        light: match70
+    match_80:
+        light: match80
+    match_90:
+        light: match90
+    ball_1:
+        light: bip1
+    ball_2:
+        light: bip2
+    ball_3:
+        light: bip3
+    ball_4:
+        light: bip4
+    ball_5:
+        light: bip5
+    player_1:
+        light: player1
+    player_2:
+        light: player2
+    tilt:
+        light: tilt
+    game_over:
+        light: gameOver
+
+Auditor:
+
+    events:
+        tilt
+        scorereelgroup_player1_resync
+        scorereelgroup_player2_resync
+        ball_search_begin
+        game_started
+        game_ended
+        lighting_special
+        collect_special
+        diverter_rightOutlane_activating
+        drop_targets_Solids_lit_complete
+        drop_targets_Stripes_lit_complete

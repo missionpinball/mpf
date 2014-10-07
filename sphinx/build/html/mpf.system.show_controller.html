@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.show_controller module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
+    <title>mpf.system.show_controller module &mdash; Mission Pinball Framework 0.0.9 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.7',
+        VERSION:     '0.0.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -51,9 +51,17 @@
 <dt id="mpf.system.show_controller.Playlist">
 <em class="property">class </em><tt class="descclassname">mpf.system.show_controller.</tt><tt class="descname">Playlist</tt><big>(</big><em>machine</em><big>)</big></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p>A list of <a class="reference internal" href="#mpf.system.show_controller.Show" title="mpf.system.show_controller.Show"><tt class="xref py py-class docutils literal"><span class="pre">Show</span></tt></a> objects which are then played sequentially.
-Playlists are useful for things like attract mode where you play one show
+<p>A list of <a class="reference internal" href="#mpf.system.show_controller.Show" title="mpf.system.show_controller.Show"><tt class="xref py py-class docutils literal"><span class="pre">Show</span></tt></a> objects which are then played sequentially.</p>
+<p>Playlists are useful for things like attract mode where you play one show
 for a few seconds, then another, etc.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> &#8211; The main machine_controller object</td>
+</tr>
+</tbody>
+</table>
 <p>Each step in a playlist can contain more than one <a class="reference internal" href="#mpf.system.show_controller.Show" title="mpf.system.show_controller.Show"><tt class="xref py py-class docutils literal"><span class="pre">Show</span></tt></a>. This
 is useful if you have a lot of little shows for different areas of the
 playfield that you want run at the same time. For example, you might have
@@ -102,158 +110,83 @@ before you start playing the playlist.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>step_num</strong> (<em>integer</em>) &#8211; </td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>step_num</strong> &#8211; Interger of which step number you&#8217;re adding this show to.
+You have to specify this since it&#8217;s possible to add multiple
+shows to the same step (in cases where you want them both to
+play at the same time during that step). If you want the same
+show to play in multiple steps, then add it multiple times (once
+to each step). The show plays starting with the lowest number
+step and then moving on. Ideally they&#8217;d be 1, 2, 3... but it
+doesn&#8217;t matter. If you have step numbers of 1, 2, 5... then the
+player will figure it out.</li>
+<li><strong>show</strong> &#8211; The Show object that you&#8217;re adding to this step.</li>
+<li><strong>num_repeats</strong> &#8211; Integer of how many times you want this show to repeat
+within this step. Note this does not affect when the playlist
+advances to the next step. (That is controlled via
+<a class="reference internal" href="#mpf.system.show_controller.Playlist.step_settings" title="mpf.system.show_controller.Playlist.step_settings"><tt class="xref py py-meth docutils literal"><span class="pre">step_settings()</span></tt></a>.) Rather, this is just how many loops this
+show plays. A value of 0 means it repeats indefinitely. (Well,
+until the playlist advances to the next step.) Note that you
+also have to have repeat=True for it to repeat here.</li>
+<li><strong>tocks_per_sec</strong> &#8211; Integer of how fast you want this show to play. See
+<a class="reference internal" href="#mpf.system.show_controller.Show.play" title="mpf.system.show_controller.Show.play"><tt class="xref py py-meth docutils literal"><span class="pre">Show.play()</span></tt></a> for details.</li>
+<li><strong>blend</strong> &#8211; Boolean of whether you want this show to blend with lower
+priority shows below it. See <a class="reference internal" href="#mpf.system.show_controller.Show.play" title="mpf.system.show_controller.Show.play"><tt class="xref py py-meth docutils literal"><span class="pre">Show.play()</span></tt></a> for details.</li>
+<li><strong>repeat</strong> &#8211; Boolean which causes the show to keep repeating until the
+playlist moves on to the next step.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
-<p>Which step number you&#8217;re adding this show to.
-You have to specify this since it&#8217;s possible to add multiple shows to
-the same step (in cases where you want them both to play at the same
-time during that step). If you want the same show to play in multiple
-steps, then add it multiple times (once to each step). The show plays
-starting with the lowest number step and then moving on. Ideally they&#8217;d
-be 1, 2, 3... but it doesn&#8217;t matter. If you have step numbers of 1, 2,
-5... then the player will figure it out.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>show</strong> (<em>object</em>) &#8211; The Show object that you&#8217;re adding to this</td>
-</tr>
-</tbody>
-</table>
-<p>step.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>num_repeats</strong> (<em>integer</em>) &#8211; How many times you want this show to repeat</td>
-</tr>
-</tbody>
-</table>
-<p>within this step. Note this does not affect when the playlist advances
-to the next step. (That is controlled via <a class="reference internal" href="#mpf.system.show_controller.Playlist.step_settings" title="mpf.system.show_controller.Playlist.step_settings"><tt class="xref py py-meth docutils literal"><span class="pre">step_settings()</span></tt></a>.)
-Rather, this is just how many loops this show plays. A value of 0
-means it repeats indefinitely. (Well, until the playlist advances to
-the next step.) Note that you also have to have repeat=True for it to
-repeat here.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tocks_per_sec</strong> (<em>integer</em>) &#8211; How fast you want this show to play. See</td>
-</tr>
-</tbody>
-</table>
-<p><a class="reference internal" href="#mpf.system.show_controller.Show.play" title="mpf.system.show_controller.Show.play"><tt class="xref py py-meth docutils literal"><span class="pre">Show.play()</span></tt></a> for details.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>blend</strong> (<em>boolean</em>) &#8211; Whether you want this show to blend with lower</td>
-</tr>
-</tbody>
-</table>
-<p>priority shows below it. See <a class="reference internal" href="#mpf.system.show_controller.Show.play" title="mpf.system.show_controller.Show.play"><tt class="xref py py-meth docutils literal"><span class="pre">Show.play()</span></tt></a> for details.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>repeat</strong> (<em>boolean</em>) &#8211; Causes the show to keep repeating until the</td>
-</tr>
-</tbody>
-</table>
-<p>playlist moves on to the next step.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.show_controller.Playlist.start">
-<tt class="descname">start</tt><big>(</big><em>priority</em>, <em>repeat=True</em>, <em>repeat_count=0</em>, <em>reset=True</em><big>)</big></dt>
+<tt class="descname">start</tt><big>(</big><em>priority=0</em>, <em>repeat=True</em>, <em>repeat_count=0</em>, <em>reset=True</em><big>)</big></dt>
 <dd><p>Starts playing a playlist. You can only use this after you&#8217;ve added
 at least one show via <a class="reference internal" href="#mpf.system.show_controller.Playlist.add_show" title="mpf.system.show_controller.Playlist.add_show"><tt class="xref py py-meth docutils literal"><span class="pre">add_show()</span></tt></a> and configured the settings for
 each step via <a class="reference internal" href="#mpf.system.show_controller.Playlist.step_settings" title="mpf.system.show_controller.Playlist.step_settings"><tt class="xref py py-meth docutils literal"><span class="pre">step_settings()</span></tt></a>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>priority</strong> (<em>integer</em>) &#8211; What priority you want the <a class="reference internal" href="#mpf.system.show_controller.Show" title="mpf.system.show_controller.Show"><tt class="xref py py-class docutils literal"><span class="pre">Show</span></tt></a></td>
-</tr>
-</tbody>
-</table>
-<p>shows in this playlist to play at. These shows will play &#8220;on top&#8221; of
-lower priority stuff, but &#8220;under&#8221; higher priority things.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>repeat</strong> (<em>boolean</em>) &#8211; <ul class="simple">
-<li>Controls whether this playlist to repeats when</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<p>it&#8217;s finished.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>repeat_count</strong> (<em>integer</em>) &#8211; How many times you want this playlist to</td>
-</tr>
-</tbody>
-</table>
-<p>repeat before it stops itself. (Must be used with <em>repeat=True</em> above.)
+<p>Args</p>
+<dl class="docutils">
+<dt>priority: Integer of what priority you want the <a class="reference internal" href="#mpf.system.show_controller.Show" title="mpf.system.show_controller.Show"><tt class="xref py py-class docutils literal"><span class="pre">Show</span></tt></a> shows in</dt>
+<dd>this playlist to play at. These shows will play &#8220;on top&#8221; of
+lower priority stuff, but &#8220;under&#8221; higher priority things.</dd>
+</dl>
+<p>repeat: Controls whether this playlist to repeats when it&#8217;s finished.
+repeat_count: How many times you want this playlist to</p>
+<blockquote>
+<div>repeat before it stops itself. (Must be used with <em>repeat=True</em> above.)
 A value of 0 here means that this playlist repeats forever until you
-manually stop it. (This is ideal for attract mode.)</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>reset</strong> (<em>boolean</em>) &#8211; <ul class="simple">
-<li>Controls whether you want this playlist to</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<p>start at the begining (True) or you want it to pick up where it left
+manually stop it. (This is ideal for attract mode.)</div></blockquote>
+<dl class="docutils">
+<dt>reset: Boolean which controls whether you want this playlist to</dt>
+<dd>start at the begining (True) or you want it to pick up where it left
 off (False). You can also use <em>reset</em> to restart a playlist that&#8217;s
-currently running.</p>
+currently running.</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.show_controller.Playlist.step_settings">
-<tt class="descname">step_settings</tt><big>(</big><em>step</em>, <em>time=0</em>, <em>trigger_show=None</em><big>)</big></dt>
+<tt class="descname">step_settings</tt><big>(</big><em>step</em>, <em>time=0</em>, <em>trigger_show=None</em>, <em>hold=False</em><big>)</big></dt>
 <dd><p>Used to configure the settings for a step in a <a class="reference internal" href="#mpf.system.show_controller.Playlist" title="mpf.system.show_controller.Playlist"><tt class="xref py py-class docutils literal"><span class="pre">Playlist</span></tt></a>.
 This configuration is required for each step. The main thing you use
 this for is to specify how the playlist knows to move on to the next
 step.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>step</strong> (<em>integer</em>) &#8211; Which step number you&#8217;re configuring</li>
-<li><strong>time</strong> (<em>float</em>) &#8211; The time in seconds that you want this step to run</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<p>before moving on to the next one.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>trigger_show</strong> (<em>object</em>) &#8211; If you want to move to the next step after</td>
-</tr>
-</tbody>
-</table>
-<p>one of the Shows in this step is done playing, specify that
-Show here. This is required because if there are multiple
+<p>Args:</p>
+<p>step: Integer for which step number you&#8217;re configuring
+time: Integer of the time in seconds that you want this step to run</p>
+<blockquote>
+<div>before moving on to the next one.</div></blockquote>
+<dl class="docutils">
+<dt>trigger_show: If you want to move to the next step after</dt>
+<dd>one of the Shows in this step is done playing, pass that show&#8217;s object
+here. This is required because if there are multiple
 Shows in this step of the playlist which all end at different
 times, we wouldn&#8217;t know which one to watch in order to know when to
-move on.</p>
+move on.</dd>
+</dl>
 <p>Note that you can have repeats with a trigger show, but in that case
 you also need to have the num_repeats specified. Otherwise if you have
 your trigger show repeating forever then the playlist will never move
@@ -262,18 +195,26 @@ on. (In that case use the <em>time</em> parameter to move on based on time.)</p>
 
 <dl class="method">
 <dt id="mpf.system.show_controller.Playlist.stop">
-<tt class="descname">stop</tt><big>(</big><em>reset=True</em><big>)</big></dt>
+<tt class="descname">stop</tt><big>(</big><em>reset=True</em>, <em>hold=None</em><big>)</big></dt>
 <dd><p>Stops a playlist. Pretty simple.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>reset</strong> (<em>boolean</em>) &#8211; If <em>True</em>, it resets the playlist tracking</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>reset</strong> &#8211; If <em>True</em>, it resets the playlist tracking counter back to
+the beginning. You can use <em>False</em> here if you want to stop and
+then restart a playlist to pick up where it left off.</li>
+<li><strong>hold</strong> &#8211; Boolean which specifies whether this playlist should should
+hold the lights and LEDs in their current states. Default is
+None which means it inherits whatever the shows or playlist
+settings were, but you can force it True or False if you want
+here.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
-<p>counter back to the beginning. You can use <em>False</em> here if you want to
-stop and then restart a playlist to pick up where it left off.</p>
 </dd></dl>
 
 </dd></dl>
@@ -310,7 +251,7 @@ Either <em>filename</em> or <em>actions</em> is required.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tocks_per_sec</strong> (<em>integer</em>) &#8211; The new tocks_per_second play rate.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tocks_per_sec</strong> &#8211; The new tocks_per_second play rate.</td>
 </tr>
 </tbody>
 </table>
@@ -326,7 +267,7 @@ because we also need to update self.secs_per_tock.</p>
 
 <dl class="method">
 <dt id="mpf.system.show_controller.Show.play">
-<tt class="descname">play</tt><big>(</big><em>repeat=False</em>, <em>priority=0</em>, <em>blend=False</em>, <em>hold=False</em>, <em>tocks_per_sec=32</em>, <em>start_location=-1</em>, <em>callback=None</em>, <em>num_repeats=0</em><big>)</big></dt>
+<tt class="descname">play</tt><big>(</big><em>repeat=False</em>, <em>priority=0</em>, <em>blend=False</em>, <em>hold=False</em>, <em>tocks_per_sec=32</em>, <em>start_location=None</em>, <em>callback=None</em>, <em>num_repeats=0</em><big>)</big></dt>
 <dd><p>Plays a Show. There are many parameters you can use here which
 affect how the show is played. This includes things like the playback
 speed, priority, whether this show blends with others, etc. These are
@@ -338,99 +279,50 @@ how you play the show.)</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>repeat</strong> (<em>boolean</em>) &#8211; True/False, whether the show repeats when it&#8217;s</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>repeat</strong> &#8211; Boolean of whether the show repeats when it&#8217;s done.</li>
+<li><strong>priority</strong> &#8211; Integer value of the relative priority of this show. If there&#8217;s</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
-<p>done.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>priority</strong> (<em>integer</em>) &#8211; The relative priority of this show. If there&#8217;s</td>
-</tr>
-</tbody>
-</table>
-<p>ever a situation where multiple shows want to
-control the same item, the one with the higher priority will win.
-(&#8220;Higher&#8221; means a bigger number, so a show with priority 2 will
-override a priority 1.)</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>blend</strong> (<em>boolean</em>) &#8211; Controls whether this show &#8220;blends&#8221; with lower</td>
-</tr>
-</tbody>
-</table>
-<p>priority shows and scripts. For example, if this show turns a light
+<dl class="docutils">
+<dt>blend: Boolean which controls whether this show &#8220;blends&#8221; with lower</dt>
+<dd>priority shows and scripts. For example, if this show turns a light
 off, but a lower priority show has that light set to blue, then the
 light will &#8220;show through&#8221; as blue while it&#8217;s off here. If you don&#8217;t
 want that behavior, set blend to be False. Then off here will be off
 for sure (unless there&#8217;s a higher priority show or command that turns
 the light on). Note that not all item types blend. (You can&#8217;t blend a
-coil or event, for example.)</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>hold</strong> (<em>boolean</em>) &#8211; If True, then when this Show ends, all the</td>
-</tr>
-</tbody>
-</table>
-<p>items that are on at that time will remain on. If False, it turns them
-all off when the show ends</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tocks_per_sec</strong> (<em>integer</em>) &#8211; This is how fast your show runs.</td>
-</tr>
-</tbody>
-</table>
-<p>(&#8220;Playback speed,&#8221; in other words.) Your Show files specify action
-times in terms of &#8216;tocks&#8217;, like &#8220;make this light red for 3 tocks, then
-off for 4 tocks, then a different light on for 6 tocks. When you play a
-show, you specify how many tocks per second you want it to play.
-Default is 32, but you might even want tocks_per_sec of only 1 or 2 if
-your show doesn&#8217;t need to move than fast. Note this does not affect
-fade rates. So you can have tocks_per_sec of 1 but still have lights
-fade on and off at whatever rate you want. Also the term &#8220;tocks&#8221; was
+coil or event, for example.)</dd>
+<dt>hold: Boolean which controls whether the lights or LEDs remain in their</dt>
+<dd>final show state when the show ends.</dd>
+<dt>tocks_per_sec: Integer of how fast your show runs (&#8220;Playback speed,&#8221; in</dt>
+<dd>other words.) Your Show files specify action times in terms of
+&#8216;tocks&#8217;, like &#8220;make this light red for 3 tocks, then off for 4
+tocks, then a different light on for 6 tocks. When you play a show,
+you specify how many tocks per second you want it to play. Default
+is 32, but you might even want tocks_per_sec of only 1 or 2 if your
+show doesn&#8217;t need to move than fast. Note this does not affect fade
+rates. So you can have tocks_per_sec of 1 but still have lights fade
+on and off at whatever rate you want. Also the term &#8220;tocks&#8221; was
 chosen so as not to confuse it with &#8220;ticks&#8221; which is used by the
-machine run loop.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>start_location</strong> (<em>integer</em>) &#8211; Which position in the show file the show</td>
-</tr>
-</tbody>
-</table>
-<p>should start in. Usually this is 0 but it&#8217;s nice to start part way
-through. Also used for restarting shows that you paused.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback</strong> (<em>object</em>) &#8211; A callback function that is invoked when the</td>
-</tr>
-</tbody>
-</table>
-<p>show is stopped.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>num_repeats</strong> (<em>integer</em>) &#8211; How many times you want this show to repeat</td>
-</tr>
-</tbody>
-</table>
-<p>before stopping. A value of 0 means that it repeats indefinitely. Note
-this only works if you also have repeat=True.</p>
-<p>Example usage from a game mode:</p>
+machine run loop.</dd>
+<dt>start_location: Integer of which position in the show file the show</dt>
+<dd>should start in. Usually this is 0 but it&#8217;s nice to start part way
+through. Also used for restarting shows that you paused.</dd>
+</dl>
+<p>callback: A callback function that is invoked when the show is stopped.
+num_repeats: Integer of how many times you want this show to repeat</p>
+<blockquote>
+<div>before stopping. A value of 0 means that it repeats indefinitely.
+Note this only works if you also have repeat=True.</div></blockquote>
+<p>Example usage from a game:</p>
 <dl class="docutils">
-<dt>Load the show (typically done once when the machine is booting up)</dt>
-<dd>self.show1 = lights.Show(self.machine,
+<dt>Load the show: (Note the MPF has a config option to automatically load</dt>
+<dd>all shows, which by default is True.
+self.show1 = lights.Show(self.machine,
 &#8220;Showsshow1.yaml&#8221;)</dd>
 <dt>Play the show:</dt>
 <dd>self.show1.play(repeat=True, tocks_per_sec=10, priority=3)</dd>
@@ -458,30 +350,46 @@ self.show2.play(repeat=True, tocks_per_sec=5, priority=3)</div></blockquote>
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.system.show_controller.Show.reload">
+<tt class="descname">reload</tt><big>(</big><big>)</big></dt>
+<dd><p>Reloads this show from disk. This is nice for testing so you can
+assign a button to just reload this show so you can test out changes
+without having to constantly stop and start the game.</p>
+<p>Note this will also stop this show if it&#8217;s running.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.show_controller.Show.resync">
+<tt class="descname">resync</tt><big>(</big><big>)</big></dt>
+<dd><p>Causes this show to do a one-time update to resync all the LEDs and
+lights in the show with where they should be now. This is used when a
+higher priority show stops so lower priority shows can put all the
+lights back to how they want them.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="mpf.system.show_controller.Show.stop">
-<tt class="descname">stop</tt><big>(</big><em>reset=True</em>, <em>hold=False</em><big>)</big></dt>
+<tt class="descname">stop</tt><big>(</big><em>reset=True</em>, <em>hold=None</em><big>)</big></dt>
 <dd><p>Stops a Show.</p>
+<p>Note you can also use this method to clear a stopped show&#8217;s held lights
+and LEDs by passing hold=False.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>reset</strong> (<em>boolean</em>) &#8211; True means it resets the show to the beginning.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>reset</strong> &#8211; Boolean which controls whether the show will reset its
+current position back to zero. Default is True.</li>
+<li><strong>hold</strong> &#8211; Boolean which controls whether the show will hold its current
+lights and LEDs in whatever state they are now, including their
+priorities. Default is None which will just use whatever the
+show setting was when you played it, but you can force it to
+hold or not with True or False here.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
-<p>False it keeps it where it is so the show can pick up where it left off</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>hold</strong> (<em>boolean</em>) &#8211; Lets you specify that the lights will be held in</td>
-</tr>
-</tbody>
-</table>
-<p>their current state after the show ends. Note that if you have a show
-that&#8217;s set to hold but you pass hold=False here, it won&#8217;t work. In that
-case you&#8217;d have to set &lt;show&gt;.hold=False and then call this method to
-stop the show.</p>
 </dd></dl>
 
 </dd></dl>
@@ -502,93 +410,27 @@ Shows, etc. There should be only one per machine.</p>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="mpf.system.show_controller.ShowController.disable">
-<tt class="descname">disable</tt><big>(</big><em>lightname</em>, <em>priority=0</em>, <em>clear_all=True</em><big>)</big></dt>
-<dd><p>Command to disable an light</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>lightname</strong> (<em>str</em>) &#8211; The name of the light you&#8217;re disabling</li>
-<li><strong>priority</strong> (<em>int</em>) &#8211; Which priority you&#8217;re clearing (disabling) the
-light at. (See <em>clear_all</em> below for details.) If you don&#8217;t
-pass a priority, then it will disable the light and remove
-<em>all</em> entries from the manual commands list. i.e. In that case
-it disables/removes all the previously issued manual commands</li>
-<li><strong>clear_all</strong> (<em>bool</em>) &#8211; If True, it will clear all the commands from the
-priority you passed and from any lower priority commands. If
-False then it only clears out the command from the priority
-that was passed.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<p>Once cleared, <a class="reference internal" href="#mpf.system.show_controller.ShowController" title="mpf.system.show_controller.ShowController"><tt class="xref py py-class docutils literal"><span class="pre">ShowController</span></tt></a> restore the light&#8217;s state from
-any commands or shows running at a lower priority.</p>
-<p>Note that this method does not affect running <a class="reference internal" href="#mpf.system.show_controller.Show" title="mpf.system.show_controller.Show"><tt class="xref py py-class docutils literal"><span class="pre">Show</span></tt></a> shows,
-so if you clear the <a class="reference internal" href="#mpf.system.show_controller.ShowController.enable" title="mpf.system.show_controller.ShowController.enable"><tt class="xref py py-meth docutils literal"><span class="pre">enable()</span></tt></a> commands but you have a running
-Show which enables that light, then the light will be enablight.
-If you want to absolutely disable the light regardless of whatever
-Show is running, then use <a class="reference internal" href="#mpf.system.show_controller.ShowController.enable" title="mpf.system.show_controller.ShowController.enable"><tt class="xref py py-meth docutils literal"><span class="pre">enable()</span></tt></a> with <em>color=000000</em>,
-<em>blend=False</em>, and a <em>priority</em> that&#8217;s higher than any running show.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.show_controller.ShowController.enable">
-<tt class="descname">enable</tt><big>(</big><em>lightname</em>, <em>priority=0</em>, <em>color=None</em>, <em>dest_color=None</em>, <em>fade=0</em>, <em>blend=True</em><big>)</big></dt>
-<dd><p>This is a single one-time command to enable an light.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>lightname</strong> &#8211; the light you&#8217;re enabling</li>
-<li><strong>priority</strong> (<em>int</em>) &#8211; The priority this light will be enablight at. This
-is used when determining what other enables, scripts, and
-Shows will play over or under it). If you enable an light
-with the same priority that was previously used to enable it,
-it will overwrite the old color with the new one.</li>
-<li><strong>color</strong> (<em>str</em>) &#8211; A hex string (like &#8220;ff00aa&#8221;) for what color you want to
-enable this light to be. Note if you have a single color (i.e.
-one element) light, then just pass it &#8220;ff&#8221; to enable it on full
-brightness, or &#8220;80&#8221; for 50%, etc.</li>
-<li><strong>dest_color</strong> (<em>str</em>) &#8211; If you want to fade the light to your color instead
-of enabling it instantly, pass <em>dest_color</em> instead of <em>color</em>.</li>
-<li><strong>fade</strong> (<em>int</em>) &#8211; If you want to fade the light on, use <em>fade</em> to specify the
-fade on time (in ms). Note this also requires <em>dest_color</em>
-above instead of <em>color</em>.</li>
-<li><strong>blend</strong> (<em>bool</em>) &#8211; If <em>True</em> and if you&#8217;re using a fade, it will fade
-from whatever color the light currently is to your
-<em>dest_color</em>. If False it will turn the light off first before
-fading.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<p>Note that since you enable lights with priorities, you can actually
-&#8220;enable&#8221; the light multiple times at different priorties. Then if you
-disable the light via a higher priority, the lower priority will still
-be there. This means that in your game, each mode can do whatever it
-wants with lights and you don&#8217;t have to worry about a higher priority
-mode clearing out an light and messing up the lower priority mode&#8217;s
-status.</p>
-<p>The ability for this enable method to also keep track of the priority
-that a light is enablight is the reason you&#8217;d want to use this method
-versus calling <tt class="xref py py-meth docutils literal"><span class="pre">lights.color()</span></tt> directly. If you do use
-<tt class="xref py py-meth docutils literal"><span class="pre">lights.color()</span></tt> to enable an light directly,
-<a class="reference internal" href="#mpf.system.show_controller.ShowController" title="mpf.system.show_controller.ShowController"><tt class="xref py py-class docutils literal"><span class="pre">ShowController</span></tt></a> won&#8217;t know about it, and your light could be
-overwritten the next time a Show, script, or enable command is
-used.</p>
-</dd></dl>
-
 <dl class="staticmethod">
 <dt id="mpf.system.show_controller.ShowController.hexstring_to_int">
 <em class="property">static </em><tt class="descname">hexstring_to_int</tt><big>(</big><em>inputstring</em>, <em>maxvalue=255</em><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Takes a string input of hex numbers and an integer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_string</strong> &#8211; A string of incoming hex colors, like ffff00.</li>
+<li><strong>maxvalue</strong> &#8211; Integer of the max value you&#8217;d like to return. Default is
+255. (This is the real value of why this method exists.)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Integer representation of the hex string.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="staticmethod">
 <dt id="mpf.system.show_controller.ShowController.hexstring_to_list">
@@ -635,6 +477,30 @@ root from where the mpf.py file is running.</td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.show_controller.ShowController.restore_lower_lights">
+<tt class="descname">restore_lower_lights</tt><big>(</big><em>show=None</em>, <em>priority=0</em><big>)</big></dt>
+<dd><p>Restores the lights and LEDs from lower priority shows under this
+show.</p>
+<p>This is only useful if this show is stopped, because otherwise this show
+will just immediately override these restored settings.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>show</strong> &#8211; The show which will set the priority of the lights you want to
+restore.</li>
+<li><strong>priority</strong> &#8211; An iteger value of the lights you want to restore.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>In both cases it will only restore lights below the priority you pass,
+skipping ones that are at the same value.</p>
 </dd></dl>
 
 <dl class="method">
@@ -816,7 +682,7 @@ everything.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

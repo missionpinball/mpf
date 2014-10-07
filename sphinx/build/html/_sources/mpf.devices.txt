@@ -18,7 +18,6 @@ Submodules
    mpf.devices.new_device_template
    mpf.devices.rollover
    mpf.devices.score_reel
-   mpf.devices.standup
    mpf.devices.switch
    mpf.devices.target
 

@@ -1,0 +1,24 @@
+- tocks: 1
+  lights:
+    topLtLane: ff
+- tocks: 1
+  lights:
+    topMid1: ff
+- tocks: 1
+  lights:
+    topMid2: ff
+- tocks: 1
+  lights:
+    topRtLane: ff
+- tocks: 1
+  lights:
+    topLtLane: 0
+- tocks: 1
+  lights:
+    topMid1: 0
+- tocks: 1
+  lights:
+    topMid2: 0
+- tocks: 1
+  lights:
+    topRtLane: 0

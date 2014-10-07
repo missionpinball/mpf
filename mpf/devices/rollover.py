@@ -34,7 +34,7 @@ class RolloverGroup(TargetGroup):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('RolloverGroup.' + name)
-        self.devices_str = 'rollovers'
+        self.device_str = 'rollovers'
         self.member_collection = machine.rollovers
         super(RolloverGroup, self).__init__(machine, name, config, collection)
 

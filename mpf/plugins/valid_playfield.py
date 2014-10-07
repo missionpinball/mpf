@@ -1,4 +1,4 @@
-"""Handles valid playfield tracking for a pinball machine."""
+"""MPF plugin that handles valid playfield tracking for a pinball machine."""
 # valid_playfield.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
@@ -12,6 +12,10 @@
 # hook ball add live to setup vpf checking
 
 import logging
+
+
+def preload_check(machine):
+    return True
 
 
 class ValidPlayfield(object):

@@ -19,7 +19,7 @@ class Diverter(Device):
     collection = 'diverter'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('YourNewDevice.' + name)
+        self.log = logging.getLogger('Diverter.' + name)
         super(Diverter, self).__init__(machine, name, config, collection)
 
         self.delay = DelayManager()
@@ -29,8 +29,8 @@ class Diverter(Device):
             self.config['type'] = 'pulse'  # default to pulse to not fry coils
         if 'timeout' not in self.config:
             self.config['timeout'] = 0
-        if 'enable_switch' not in self.config:
-            self.config['enable_switch'] = None
+        if 'activation_switch' not in self.config:
+            self.config['activation_switch'] = None
         if 'enable_events' not in self.config:
             self.config['enable_events'] = None
         else:
@@ -44,9 +44,9 @@ class Diverter(Device):
         if 'disable_switch' not in self.config:
             self.config['disable_switch'] = None
         if 'target_when_enabled' not in self.config:
-            self.config['target_when_enabled'] = None
+            self.config['target_when_enabled'] = None  # todo
         if 'target_when_disabled' not in self.config:
-            self.config['target_when_disabled'] = None
+            self.config['target_when_disabled'] = None  # todo
 
         # convert the timeout to ms
         self.config['timeout'] = Timing.string_to_ms(self.config['timeout'])
@@ -61,15 +61,15 @@ class Diverter(Device):
     def enable(self):
         """Enables this diverter.
 
-        If an 'enable_switch' is configured, then this method writes a hardware
+        If an 'activation_switch' is configured, then this method writes a hardware
         autofire rule to the pinball controller which fires the diverter coil
         when the switch is activated.
 
-        If no `enable_switch` is specified, then the diverter is activated
+        If no `activation_switch` is specified, then the diverter is activated
         immediately.
         """
 
-        if self.config['enable_switch']:
+        if self.config['activation_switch']:
             self.enable_hw_switch()
         else:
             self.activate()
@@ -94,7 +94,7 @@ class Diverter(Device):
                 or whether it has random kwargs attached to it.
         """
         self.log.debug("Disabling Diverter")
-        if self.config['enable_switch']:
+        if self.config['activation_switch']:
             self.disable_hw_switch()
         if deactivate:
             self.deactivate()
@@ -103,6 +103,7 @@ class Diverter(Device):
         """Physically activates this diverter."""
 
         self.log.debug("Activating Diverter")
+        self.machine.events.post('diverter_' + self.name + '_activating')
         if self.config['type'] == 'pulse':
             self.machine.coils[self.config['coil']].pulse()
         elif self.config['type'] == 'hold':
@@ -118,9 +119,10 @@ class Diverter(Device):
         """Schedules a delay to deactivate this diverter based on the configured
         timeout.
         """
-        self.delay.add('disable_held_coil',
-                       self.config['timeout'],
-                       self.disable_held_coil)
+        if self.config['timeout']:
+            self.delay.add('disable_held_coil',
+                           self.config['timeout'],
+                           self.disable_held_coil)
 
     def enable_hw_switch(self):
         """Enables the hardware switch rule which causes this diverter to
@@ -139,12 +141,12 @@ class Diverter(Device):
         deactivation switch is activated.
         """
         self.log.debug("Enabling Diverter for hw switch: %s",
-                       self.config['enable_switch'])
+                       self.config['activation_switch'])
 
         if self.config['type'] == 'hold':
 
             self.machine.platform.set_hw_rule(
-                sw_name=self.config['enable_switch'],
+                sw_name=self.config['activation_switch'],
                 sw_activity='active',
                 coil_name=self.config['coil'],
                 coil_action_ms=-1,
@@ -158,13 +160,13 @@ class Diverter(Device):
 
             if self.config['timeout']:
                 self.machine.switch_controller.add_switch_handler(
-                    self.config['enable_switch'],
+                    self.config['activation_switch'],
                     self.schedule_disable)
 
         elif self.config['type'] == 'pulse':
 
             self.machine.platform.set_hw_rule(
-                sw_name=self.config['enable_switch'],
+                sw_name=self.config['activation_switch'],
                 sw_activity='active',
                 coil_name=self.config['coil'],
                 coil_action_ms=1,
@@ -175,7 +177,7 @@ class Diverter(Device):
         """Removes the hardware rule to disable the hardware activation switch
         for this diverter.
         """
-        self.machine.platform.clear_hw_rule(self.config['enable_switch'])
+        self.machine.platform.clear_hw_rule(self.config['activation_switch'])
 
     def disable_held_coil(self):
         """Physically disables the coil holding this diverter open."""

@@ -1,0 +1,8 @@
+- tocks: 4
+  lights:
+    eightBall500: ff
+    popBumper: 0
+- tocks: 4
+  lights:
+    popBumper: ff
+    eightBall500: 0

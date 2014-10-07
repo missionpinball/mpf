@@ -42,9 +42,6 @@ class ScoreReelController(object):
         self.log = logging.getLogger("ScoreReelController")
         self.log.debug("Loading the ScoreReelController")
 
-        self.score_reel_groups = []
-        """List of score reel groups, in order."""
-        # todo do we need that? I think no?
         self.active_scorereelgroup = None
         """Pointer to the active ScoreReelGroup for the current player.
         """
@@ -90,28 +87,17 @@ class ScoreReelController(object):
         # if our player to reel map is less than the number of players, we need
         # to create a new mapping
         if (len(self.player_to_scorereel_map) <
-                self.machine.game.player_list):
-            # do we have a reel group tagged for this player?
-            for reel_group in self.machine.score_reel_groups.items_tagged(
-                    "player" + str(self.machine.game.player.vars['number'])):
-                if reel_group:
-                    self.player_to_scorereel_map.append(reel_group)
-                    break
-
-        # if we didn't find one..
-        if (len(self.player_to_scorereel_map) <
                 len(self.machine.game.player_list)):
-            # todo: time to double up
-            pass
-        else:  # we found one
-            self.active_scorereelgroup = self.player_to_scorereel_map[
-                self.machine.game.player.vars['index']]
-            self.log.debug("Mapping Player %s to ScoreReelGroup '%s'",
-                           self.machine.game.player.vars['number'],
-                           self.active_scorereelgroup.name)
+            self.map_new_score_reel_group()
 
-        # todo make sure this reel is showing the player's score. If not, make
-        # it so
+        self.active_scorereelgroup = self.player_to_scorereel_map[
+            self.machine.game.player.vars['index']]
+
+        self.log.debug("Mapping Player %s to ScoreReelGroup '%s'",
+                       self.machine.game.player.vars['number'],
+                       self.active_scorereelgroup.name)
+
+        # Make sure this score reel group is showing the right score
         self.log.debug("Current player's score: %s",
                        self.machine.game.player.vars['score'])
         self.log.debug("Score displayed on reels: %s",
@@ -121,14 +107,43 @@ class ScoreReelController(object):
             self.active_scorereelgroup.set_value(
                 self.machine.game.player.vars['score'])
 
+        # light up this group
+        for group in self.machine.score_reel_groups:
+            group.unlight()
+
+        self.active_scorereelgroup.light()
+
+    def map_new_score_reel_group(self):
+        """Creates a mapping of a player to a score reel group."""
+
+        # do we have a reel group tagged for this player?
+        for reel_group in self.machine.score_reel_groups.items_tagged(
+                "player" + str(self.machine.game.player.vars['number'])):
+            self.player_to_scorereel_map.append(reel_group)
+            self.log.debug("Found a mapping to add: %s", reel_group.name)
+            return
+
+        # if we didn't find one, then we'll just use the first player's group
+        # for all the additional ones.
+
+        # todo maybe we should get fancy with looping through? Meh... we'll
+        # cross that bridge when we get to it.
+
+        self.player_to_scorereel_map.append(self.player_to_scorereel_map[0])
+
     def score_change(self, score, change):
         """Called whenever the score changes and adds the score increase to the
         current active ScoreReelGroup.
 
         This method is the handler for the score change event, so it's called
         automatically.
+
+        Args:
+            score: Integer value of the new score. This parameter is ignored,
+                and included only because the score change event passes it.
+            change: Interget value of the change to the score.
         """
-        self.active_scorereelgroup.add_value(change)
+        self.active_scorereelgroup.add_value(value=change, target=score)
 
     def game_starting(self, queue, game):
         """Resets the score reels when a new game starts.
@@ -137,21 +152,20 @@ class ScoreReelController(object):
         until it's done.
 
         Args:
-            queue (event queue): A reference to the queue object for the game
-                starting event.
-            game (game object): A reference to the main game object.
+            queue: A reference to the queue object for the game starting event.
+            game: A reference to the main game object. This is ignored and only
+                included because the game_starting event passes it.
         """
-
         self.queue = queue
         # tell the game_starting event queue that we have stuff to do
         self.queue.wait()
 
         # populate the reset queue
         self.reset_queue = []
-        for score_reel_group in self.machine.score_reel_groups:
+
+        for player, score_reel_group in self.machine.score_reel_groups.iteritems():
             self.reset_queue.append(score_reel_group)
         self.reset_queue.sort(key=lambda x: x.name)
-
         # todo right now this sorts by ScoreGroupName. Need to change to tags
         self._reset_next_group()  # kick off the reset process
 
@@ -164,7 +178,7 @@ class ScoreReelController(object):
             self.machine.events.add_handler('scorereelgroup_' +
                                             next_group.name +
                                             '_valid', self._reset_next_group)
-            next_group.set_value(0)
+            next_group.set_value(value)
 
         else:  # no more to reset
             # clear the event queue
@@ -175,13 +189,11 @@ class ScoreReelController(object):
 
 
 class ScoreReelGroup(Device):
-    """Represents a logical grouping of score reels in a pinball machine.
-
-    These groups represent things like player scores, where the score display
-    is actually a group of several individual score reels.
-
+    """Represents a logical grouping of score reels in a pinball machine, where
+    multiple individual ScoreReel object make up the individual digits of this
+    group. This group also has support for the blank zero "inserts" that some
+    machines use. This is a subclass of mpf.system.devices.Device.
     """
-
     config_section = 'Score Reel Groups'
     collection = 'score_reel_groups'
 
@@ -195,43 +207,42 @@ class ScoreReelGroup(Device):
         self.log = logging.getLogger('ScoreReelGroup.' + name)
         super(ScoreReelGroup, self).__init__(machine, name, config, collection)
 
-        self.reels = []
-        """A list of individual ScoreReel objects that make up this
-        ScoreReelGroup. The number of items in the list correspondis to the
-        number of digits that can be displayed. A value of `None` indicates a
-        position that is not controlled by a moving reel (like a fake ones
-        digit).
+        self.wait_for_valid_queue = None
+        self.valid = True  # Confirmed reels are showing the right values
+        self.lit = False  # This group has its lights on
 
-        Note that this is "backwards," with element 0 representing the ones
-        digit, element 1 representing the tens, etc..
-        """
+        self.reels = []
+        # A list of individual ScoreReel objects that make up this
+        # ScoreReelGroup. The number of items in the list correspondis to the
+        # number of digits that can be displayed. A value of `None` indicates a
+        # position that is not controlled by a moving reel (like a fake ones
+        # digit).
+
+        # Note that this is "backwards," with element 0 representing the ones
+        # digit, element 1 representing the tens, etc..
 
         self.desired_value_list = []
-        """A list of what values the machine desires to have the score reel
-        group set to.
-        """
+        # A list of what values the machine desires to have the score reel
+        # group set to.
 
         self.reset_pulses_per_round = 5
-        """Interger value of how many "pulses" should be done per reset round.
-        This is used to simulate the actual mechnical resets the way a classic
-        EM machine would do it. If you watch an EM game reset, you'll notice
-        they pulse the reels in groups, like click-click-click-click-click..
-        pause.. click-click-click-click-click.. pause.. etc. Once each reel
-        gets to zero, it stops advancing.
+        # Interger value of how many "pulses" should be done per reset round.
+        # This is used to simulate the actual mechnical resets the way a classic
+        # EM machine would do it. If you watch an EM game reset, you'll notice
+        # they pulse the reels in groups, like click-click-click-click-click..
+        # pause.. click-click-click-click-click.. pause.. etc. Once each reel
+        # gets to zero, it stops advancing.
 
-        If you don't want to emulate this behavior, set this to 0. The default
-        is 5.
+        # If you don't want to emulate this behavior, set this to 0. The default
+        # is 5.
 
-        TODO / NOTE: This feature is not yet implemented.
-        """
+        # TODO / NOTE: This feature is not yet implemented.
 
         self.advance_queue = deque()
-        """Holds a list of the next reels that for step advances.
-        """
+        # Holds a list of the next reels that for step advances.
 
-        self.jump_in_progess = False
-        """Boolean attribute that is True when a jump advance is in progress.
-        """
+        self.jump_in_progress = False
+        # Boolean attribute that is True when a jump advance is in progress.
 
         self.config['reels'] = self.machine.string_to_list(
             self.config['reels'])
@@ -240,7 +251,7 @@ class ScoreReelGroup(Device):
             self.config['max simultaneous coils'] = 2
 
         if 'confirm' not in self.config:
-            self.config['confirm'] = 'lazy'
+            self.config['confirm'] = 'strict'
 
         # convert self.config['reels'] from strings to objects
         for reel in self.config['reels']:
@@ -269,17 +280,13 @@ class ScoreReelGroup(Device):
         # ---- temp chimes code end --------------------------------
 
         # register for events
-        self.machine.events.add_handler('machine_init_phase1',
-                                        self.set_rollover_reels)
+        self.machine.events.add_handler('machine_init_phase2',
+                                        self.initialize)
 
-        for reel in self.reels:
-            if reel:
-                self.machine.events.add_handler('reel_' + reel.name + '_ready',
-                                                self._reel_state_change)
-                self.machine.events.add_handler('reel_' + reel.name + '_hw_value',
-                                                self._reel_state_change)
-                self.machine.events.add_handler('reel_' + reel.name + '_pulse_done',
-                                                self._reel_state_change)
+        self.machine.events.add_handler('timer_tick', self.tick)
+
+        # Need to hook this in case reels aren't done when ball ends
+        self.machine.events.add_handler('ball_ending', self._ball_ending, 900)
 
     # ----- temp method for chime ------------------------------------
     def chime(self, chime):
@@ -288,8 +295,7 @@ class ScoreReelGroup(Device):
 
     @property
     def assumed_value_list(self):
-        """ TODO add documentation"""
-        # create a list that holds the values of the reels in the group
+        # List that holds the values of the reels in the group
         value_list = []
         for reel in self.reels:
             if reel:
@@ -301,10 +307,19 @@ class ScoreReelGroup(Device):
 
     @property
     def assumed_value_int(self):
-        """An integer representation of the value we assume is shown on this
-        ScoreReelGroup. A value of -999 means the value is unknown.
-        """
+        # Integer representation of the value we assume is shown on this
+        # ScoreReelGroup. A value of -999 means the value is unknown.
+
         return self.reel_list_to_int(self.assumed_value_list)
+
+    def initialize(self):
+        """Initialized the score reels by reading their current physical values
+        and setting each reel's rollover reel. This is a separate method since
+        it can't run int __iniit__() because all the other reels have to be
+        setup first.
+        """
+        self.get_physical_value_list()
+        self.set_rollover_reels()
 
     def set_rollover_reels(self):
         """Calls each reel's `_set_rollover_reel` method and passes it a
@@ -316,6 +331,17 @@ class ScoreReelGroup(Device):
             if self.reels[reel] and (reel < len(self.reels) - 1):
                 self.reels[reel]._set_rollover_reel(self.reels[reel+1])
 
+    def tick(self):
+        """Automatically called once per machine tick and checks to see if there
+        are any jumps or advances in progress, and, if so, calls those methods.
+        """
+        if self.jump_in_progress:
+            self._jump_advance_step()
+        elif self.advance_queue:
+            self._step_advance_step()
+        elif not self.valid:
+            self.validate()
+
     def is_desired_valid(self):
         """Tests to see whether the machine thinks the ScoreReelGroup is
         currently showing the desired value. In other words, is the
@@ -325,11 +351,8 @@ class ScoreReelGroup(Device):
 
         Returns: True or False
         """
-        self.log.debug("+++ is_desired_valid. a: %s d: %s",
-                       self.assumed_value_list,
-                       self.desired_value_list)
         for i in range(len(self.reels)):
-            if i:
+            if self.reels[i]:
                 if self.assumed_value_list[i] != self.desired_value_list[i]:
                     return False
         return True
@@ -339,15 +362,14 @@ class ScoreReelGroup(Device):
         current physical state, with either the value of the current switch
         or -999 if no switch is active.
 
-        This method also updates each reel's physical value
+        This method also updates each reel's physical value.
 
         Returns: List of physical reel values.
         """
-        # todo this method is not used.. keep it?
         output_list = []
         for reel in self.reels:
             if reel:
-                output_list.append(reel.get_physical_value())
+                output_list.append(reel.check_hw_switches())
 
         return output_list
 
@@ -355,10 +377,8 @@ class ScoreReelGroup(Device):
         """Called to validate that this score reel group is in the position
         the machine wants it to be in.
 
-        If lazy confirm mode is enabled, this method will also make sure the
-        reels are in their proper physical positions. If any reels are not done
-        moving, it will add event handlers to receive notifications of when the
-        reels are done and will call this method again at that time.
+        If lazy or strict confirm is enabled, this method will also make sure
+        the reels are in their proper physical positions.
 
         Args:
             value (ignored): This method takes an argument of `value`, but
@@ -368,68 +388,124 @@ class ScoreReelGroup(Device):
                 have this argument listed so we can use this method as an event
                 handler for those events.
         """
-        self.log.debug("Checking to see if score reels are valid.")
-        self.log.debug("Assumed list: %s", self.assumed_value_list)
-        self.log.debug("Desired list: %s", self.desired_value_list)
-        self.log.debug("advance_queue: %s", self.advance_queue)
-        self.log.debug("jump_in_progess: %s", self.jump_in_progess)
 
-        if self.advance_queue or self.jump_in_progess:
-            # We got here but something is still moving the reels
+        self.log.debug("Checking to see if score reels are valid.")
+
+        # Can't validate until the reels are done moving. This shouldn't happen
+        # but we look for it just in case.
+        if self.jump_in_progress or self.advance_queue:
             return False
 
-        # If any reels are set to lazy confirm, we're only going to validate
-        # this jump if they've hw_confirmed
+        # If any reels are set to lazy or strict confirm, we're only going to
+        # validate if they've hw_confirmed
         for reel in self.reels:
-            if reel and reel.config['confirm'] == 'lazy' and not reel.hw_sync:
-                self.jump_in_progess = True
-                # causes the reel's hw_confirm to return back to the jump
-                # advance which will ultimately lead back here
-                return False
 
+            if (reel and
+                    (reel.config['confirm'] == 'lazy' or
+                     reel.config['confirm'] == 'strict') and
+                    not reel.hw_sync):
+                return False  # need hw_sync to proceed
+
+        self.log.debug("Desired list: %s", self.desired_value_list)
+        self.log.debug("Assumed list: %s", self.assumed_value_list)
+        self.log.debug("Assumed integer: %s", self.assumed_value_int)
+
+        try:
+            self.log.debug("Player's Score: %s",
+                           self.machine.game.player.vars['score'])
+        except:
+            pass
+
+        # todo if confirm is set to none, should we at least wait until the
+        # coils are not energized to validate?
+
+        if not self.is_desired_valid():
+            # FYI each reel will hw check during hw_sync, so if there's a
+            # misfire that we can know about then it will be caught here
+            self.machine.events.post('scorereelgroup_' + self.name + '_resync')
+            self.set_value(value_list=self.desired_value_list)
+            return False
+
+        self.valid = True
         self.machine.events.post('scorereelgroup_' + self.name + '_valid',
                                  value=self.assumed_value_int)
 
-    def add_value(self, value, jump=False):
-        """Add value to a ScoreReelGroup.
+        if self.wait_for_valid_queue:
+            self.log.debug("Found a wait queue. Clearing now.")
+            self.wait_for_valid_queue.clear()
+            self.wait_for_valid_queue = None
+
+        return True
+
+    def add_value(self, value, jump=False, target=None):
+        """Adds value to a ScoreReelGroup.
 
         You can also pass a negative value to subtract points.
 
-        Note you can control the logistics of how these pulses are applied via
-        the `jump` parameter. If jump is False (the default), then this method
-        whill respect the proper "sequencing" of reel advances. For example,
-        if the current value is 1700 and the new value is 2200, this method
-        will fire the hundreds reel twice (to go to 1800 then 1900), then on
-        the third pulse it will fire the thousands and hundreds (to go to
-        2000), then do the final two pulses to land at 2200.
+        You can control the logistics of how these pulses are applied via the
+        `jump` parameter. If jump is False (default), then this method will
+        respect the proper "sequencing" of reel advances. For example, if the
+        current value is 1700 and the new value is 2200, this method will fire
+        the hundreds reel twice (to go to 1800 then 1900), then on the third
+        pulse it will fire the thousands and hundreds (to go to 2000), then do
+        the final two pulses to land at 2200.
 
         Args:
-            value (int): The integer value you'd like to add to (or subtract
+            value: The integer value you'd like to add to (or subtract
                 from) the current value
 
-            jump (bool, optional): Whether the reels should "count up" to the
-                new value in the classic EM way (jump=False) or whether they
-                should just jump there as fast as they can (jump=True). Default
-                is False.
+            jump: Optional boolean value which controls whether the reels should
+                "count up" to the new value in the classic EM way (jump=False)
+                or whether they should just jump there as fast as they can
+                (jump=True). Default is False.
+            target: Optional integer that's the target for where this reel group
+                should end up after it's done advancing. If this is not
+                specified then the target value will be calculated based on the
+                current reel positions, though sometimes this get's wonky if the
+                reel is jumping or moving, so it's best to specify the target if
+                you can.
         """
-
         self.log.debug("Adding '%s' to the displayed value. Jump=%s", value,
                        jump)
-        self.log.debug("Current assumed value: %s", self.assumed_value_list)
 
-        if self.assumed_value_int == - 999:
+        # As a starting point, we'll base our assumed current value of the reels
+        # based on whatever the machine thinks they are. This is subject to
+        # change, which is why we use our own variable here.
+        current_reel_value = self.assumed_value_int
+
+        if self.jump_in_progress:
+            self.log.debug("There's a jump in progress, so we'll just change "
+                           "the target of the jump to include our values.")
+            # We'll base our desired value off whatever the reel is advancing
+            # plus our value, because since there's a jump in progress we have
+            # no idea where the reels are at this exact moment
+            current_reel_value = self.reel_list_to_int(self.desired_value_list)
+            jump = True
+
+        if current_reel_value == - 999:
             self.log.debug("Current displayed value is unkown, "
                            "so we're jumping to the new value.")
+            current_reel_value = 0
             jump = True
+
+        # If we have a target, yay! (And thank you to whatever called this!!)
+        # If not we have to use our current_reel_value as the baseline which is
+        # fine, but it makes a lot of assumptions
+        if target is None:
+            target = current_reel_value + value
 
         elif value < 0:
             self.log.debug("add_value is negative, so we're subtracting this "
                            "value. We will do this via a jump.")
             jump = True
 
+        # If we have to jump to this new value (for whatever reason), go for it
         if jump:
-            self.set_value(self.assumed_value_int + value, jump)
+            self.set_value(target)
+
+        # Otherwise we can do the cool step-wise advance
         else:
+            self.desired_value_list = self.int_to_reel_list(target)
             self._step_advance_add_steps(value)
 
     def set_value(self, value=None, value_list=None):
@@ -438,64 +514,51 @@ class ScoreReelGroup(Device):
         This method will "jump" the score reel group to display the value
         that's passed as an it. (Note this "jump" technique means it will just
         move the reels as fast as it can, and nonsensical values might show up
-        on the reel while the movement is in place.
+        on the reel while the movement is in progress.)
 
         This method is used to "reset" a reel group to all zeros at the
         beginning of a game, and can also be used to reset a reel group that is
         confused or to switch a reel to the new player's score if multiple
-        players a sharing the same reel.
+        players a sharing the same reel group.
 
         Note you can choose to pass either an integer representation of the
         value, or a value list.
 
         Args:
-            value (int, optional): An integer value of what the new displayed
-                value (i.e. score) should be. This is the default option if you
-                only pass a single positional argument, e.g. `set_value(2100)`.
-
-            value_list (list, optional): A value_list of the value you'd like
-            the reel group to display.
+            value: An integer value of what the new displayed value (i.e. score)
+                should be. This is the default option if you only pass a single
+                positional argument, e.g. `set_value(2100)`.
+            value_list: A list of the value you'd like the reel group to
+                display.
         """
 
-        self.log.debug("Jumping to set displayed value to '%s'.", value)
+        if value is None and value_list is None:
+            return  # we can't do anything here if we don't get a new value
 
-        if not value_list:
-            self.desired_value_list = self.int_to_reel_list(value)
-        self.log.debug("desired_value_list: %s", self.desired_value_list)
-        self.log.debug("assumed_value_list: %s", self.assumed_value_list)
+        if value_list is None:
+            value_list = self.int_to_reel_list(value)
 
-        # Check to see if the reels are currently showing the desired values
-        if not self.is_desired_valid():
-            self._jump_advance_step()
-        else:
-            self._jump_advance_complete()
+        self.log.debug("Jumping to %s.", value_list)
 
-    def _jump_advance_step(self, value=None):
+        # set the new desired value which we'll use to verify the reels land
+        # where we want them to.
+        self.desired_value_list = value_list
+        self.log.debug("set_value() just set DVL to: %s",
+                       self.desired_value_list)
+
+        self._jump_advance_step()
+
+    def _jump_advance_step(self):
         # Checks the assumed values of the reels in the group, and if they're
         # off will automatically correct them.
 
-        # This method is automatically called after any member reel changes
-        # state, including that a coil is done firing, it's ready to advance,
-        # or it just got hw_sync.
+        self.jump_in_progress = True
+        self.valid = False
 
-        # Before we do anything, we make sure we have the latest from the reels.
-        # Note this will only read the switches if the 'hw_confirm_ms' time has
-        # passed since they last advanced.
-        for reel in self.reels:
-            if reel:
-                reel.check_hw_switches(no_event=True)
-
-        self.log.debug("Entering _jump_advance_step")
-        self.log.debug("Assumed values: %s", self.assumed_value_list)
-        self.log.debug("Desired values: %s", self.desired_value_list)
-
-        # if our assumed values match the desired values, we're done
         if self.is_desired_valid():
-            self.log.debug("They match! We're done.")
+            self.log.debug("They match! Jump is done.")
             self._jump_advance_complete()
             return
-
-        self.jump_in_progess = True
 
         reels_needing_advance = []  # reels that need to be advanced
         num_energized = 0  # count of the number of coils currently energized
@@ -504,13 +567,6 @@ class ScoreReelGroup(Device):
         for i in range(len(self.reels)):
             this_reel = self.reels[i]  # local reference for speed
             if this_reel:
-
-                self.log.debug("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                self.log.debug("~~ Reel: %s", this_reel.name)
-                self.log.debug("~~ Ready: %s", this_reel.ready)
-                self.log.debug("~~ d: %s", self.desired_value_list[i])
-                self.log.debug("~~ a: %s", self.assumed_value_list[i])
-                self.log.debug("~~ hw sync: %s", this_reel.hw_sync)
 
                 # While we're in here let's get a count of the total number
                 # of reels that are energized
@@ -523,14 +579,14 @@ class ScoreReelGroup(Device):
                         and this_reel.ready):
 
                     # Do we need (and have) hw_sync to advance this reel?
-                    if ((self.assumed_value_list[i] == -999 or
-                            this_reel.config['confirm'] == 'strict') and
-                            this_reel.hw_sync):
-                        reels_needing_advance.append(this_reel)
+                    if (self.assumed_value_list[i] == -999 or
+                            this_reel.config['confirm'] == 'strict'):
 
-                    else:  # If not we can advance on ready alone
-                        if this_reel.ready:
+                        if this_reel.hw_sync:
                             reels_needing_advance.append(this_reel)
+
+                    elif this_reel.ready:
+                        reels_needing_advance.append(this_reel)
 
         # How many reels can we advance now?
         coils_this_round = (self.config['max simultaneous coils'] -
@@ -556,107 +612,133 @@ class ScoreReelGroup(Device):
         self.log.debug("Assumed values: %s", self.assumed_value_list)
         self.log.debug("Desired values: %s", self.desired_value_list)
 
-        self.jump_in_progess = False
-        self.validate()
-
-        # todo need to add lazy validation
+        self.jump_in_progress = False
 
     def _step_advance_add_steps(self, value):
-        #Receives an integer value, converts it to steps, adds them to the
-        #step queue, and kicks off the step advance process.
-        #For example, adding a value of 210 would result the following items
-        #added to the advance queue: [coil_10, coil_100, coil_100]
+        # Receives an integer value, converts it to steps, adds them to the
+        # step queue, and kicks off the step advance process. For example,
+        # adding a value of 210 would result the following items added to the
+        # advance queue: [coil_10, coil_100, coil_100]
 
         value_list = self.int_to_reel_list(value)
+
+        self.log.debug("Will add '%s' to this reel group", value)
 
         for position in range(len(value_list)):
             if value_list[position]:
                 for num in range(value_list[position]):
                     self.advance_queue.append(self.reels[position])
 
-        self._step_advance_step()
+        # if there's a jump in progress we don't want to step on it, so we'll
+        # just do nothing more here and _step_advance_step will be called when
+        # the jump is done since we have entries in the advance queue
+        if not self.jump_in_progress:
+            self._step_advance_step()
 
     def _step_advance_step(self):
-        # Kicks off any advances that are in the advance_queue
-        # This method is also called after a reel confirms a step advance
+        # Attempts to kick off any advances that are in the advance_queue, but
+        # that's not also possible. (For example, all the reels might be busy.)
 
         # todo if reel status is bad, do something
 
-        self.log.debug("Entering _step_advance_step to see if we can advance "
-                       "any reels")
-
         if not self.advance_queue:
-            # Looks like we're all done and confirmed
             self.validate()
             return
+
+        self.valid = False
 
         # set our working reel to be the next one in the queue
         reel = self.advance_queue[0]
 
-        # Return if this real is not ready. The reel events will pick this up
-        # later
-        if not reel.ready:
+        # Check to see if this reel is ready. "Ready" depends on whether we're
+        # using strict confirmation or not.
+
+        # todo what if the hw is -999. Then we should return if we don't have
+        # hw_sync also, right?
+
+        if reel.config['confirm'] == 'strict' and not reel.hw_sync:
+            return
+        elif not reel.ready:
             return
 
-        # finally looks like we can fire that reel
-
-        # pop it from the queue
-        reel = self.advance_queue.popleft()
-
-        # check to see if this reel is at its limit which means we need to
-        # insert an advance for the next higher reel into our queue
-        if reel.assumed_value == reel.config['limit_hi']:
-            # insert the rollover reel
-            if reel.rollover_reel:
-                self.advance_queue.appendleft(reel.rollover_reel)
-            else:
-                # whoops, we don't have a rollover reel. Yay for this player!
-                self.machine.events.post('scorereelgroup_' + self.name + '_rollover')
-
-        # advance the reel
-        reel.advance(direction=1)
-
-        # post the event to notify others we're advancing the reel
-        self.machine.events.post('reel_' + reel.name + "_advance")
-
-        if self.advance_queue:
-            # if we have any more reels in the queue, try to advance them now
-            self._step_advance_step()
+        # is this real going to need a buddy pulse?
+        self.log.debug("Reel: %s, Limit: %s, Current assumed value: %s",
+                       reel.name, reel.config['limit_hi'], reel.assumed_value)
+        if (reel.config['limit_hi'] == reel.assumed_value and
+                not reel.rollover_reel_advanced):
+            buddy_pulse = True
+            # track that we've already ordered the buddy pulse so it doesn't
+            # happen twice if this reel can't fire now for some reason
+            reel.rollover_reel_advanced = True
+            self.log.debug("Setting buddy pulse")
         else:
-            self.validate()
+            buddy_pulse = False
 
-    def _reel_state_change(self, **kwargs):
-        # A member reel has just finished something (either pulsing, advancing,
-        # or hw_confirming), so let's see if we can do anything else
-        if self.jump_in_progess:
-            self._jump_advance_step()
-        elif self.advance_queue:
-            self._step_advance_step()
+        # todo we may not need the rollover_reel_advanced tracker anymore since
+        # we wrapped the reel.advance below in an if block.
+
+        # remove this reel from our queue from the queue
+        self.advance_queue.popleft()
+
+        # try to advance the reel, We use `if` here so this code block only runs
+        # if the reel accepted our advance request
+        if reel.advance(direction=1):
+            self.log.debug("Reel '%s' accepted advance", reel.name)
+            self.log.debug("Reels (assumed): %s", self.assumed_value_int)
+            try:
+                self.log.debug("Score: %s",
+                               self.machine.game.player.vars['score'])
+            except:
+                pass
+            self.machine.events.post('reel_' + reel.name + "_advance")
+            # todo should this advance event be posted here? Or by the reel?
+
+            # Add the reel's buddy to the advance queue
+            if buddy_pulse:
+                # insert the rollover reel
+                if reel.rollover_reel:
+                    self.advance_queue.appendleft(reel.rollover_reel)
+                    # run through this again now so we pulse the buddy reel
+                    # immediately (assuming we don't have too many pulsing
+                    # currently, etc.)
+                    self._step_advance_step()
+                else:
+                    # whoops, we don't have a rollover reel. Yay for player!
+                    self.machine.events.post('scorereelgroup_' + self.name +
+                                             '_rollover')
+
+        else:  # the reel did not accept the advance. Put it back in the queue
+            self.advance_queue.appendleft(reel)
+            self.log.debug("Reel '%s' rejected advance. We'll try again.",
+                           reel.name)
 
     def int_to_reel_list(self, value):
         """Converts an integer to a list of integers that represent each
         positional digit in this ScoreReelGroup.
 
+        The list returned is in reverse order. (See the example below.)
+
         The list returned is customized for this ScoreReelGroup both in terms
         of number of elements and values of `None` used to represent blank
-        plastic inserts that are not controlled by a score reel unit.
+        plastic zero inserts that are not controlled by a score reel unit.
 
         For example, if you have a 5-digit score reel group that has 4
         phyiscial reels in the tens through ten-thousands position and a fake
         plastic "0" insert for the ones position, if you pass this method a
         value of `12300`, it will return `[None, 0, 3, 2, 1]`
 
-        This method will also pad shorter ints with zeros, and it will chop off
+        This method will pad shorter ints with zeros, and it will chop off
         leading digits for ints that are too long. (For example, if you pass a
         value of 10000 to a ScoreReelGroup which only has 4 digits, the
         returns list would correspond to 0000, since your score reel unit has
         rolled over.)
 
         Args:
-            value (int): The interger value you'd like to convert.
+            value: The interger value you'd like to convert.
 
         Returns:
-            A list containing the values for each corresponding score reel.
+            A list containing the values for each corresponding score reel,
+            with the lowest reel digit position in list position 0.
 
         """
 
@@ -672,8 +754,15 @@ class ScoreReelGroup(Device):
         # pad the string with leading zeros
         value = value.zfill(len(self.reels))
 
-        # trim off excess characters if the value is longer than num of reels
-        value = value[:len(self.reels)]
+        # slice off excess characters if the value is longer than num of reels
+
+        # how many digits do we have to slice?
+        trim = len(value) - len(self.reels)
+        # and... slice!
+        value = value[trim:]
+
+        # todo if we don't do the above trim then it will just show the highest
+        # digits, effective "shifting" the score by one. Might be a fun feature?
 
         # generate our list with one digit per item
         for digit in value:
@@ -705,13 +794,12 @@ class ScoreReelGroup(Device):
         pass it.
 
         Args:
-            value (list): The list containing the values for each score reel
+            value: The list containing the values for each score reel
                 position.
 
         Returns:
             The resultant integer based on the list passed.
         """
-
         # reverse the list so it's in normal order
         reel_list.reverse()
         output = ""
@@ -729,6 +817,62 @@ class ScoreReelGroup(Device):
                 output += "0"
         return int(output)
 
+    def light(self, relight_on_valid=False, **kwargs):
+        """Lights up this ScoreReelGroup based on the 'light_tag' in its
+        config.
+        """
+        self.log.info("Turning on Lights")
+        for light in self.machine.lights.items_tagged(
+                self.config['lights_tag']):
+            light.on()
+
+        self.lit = True
+
+        # Watch for these reels going out of sync so we can turn off the lights
+        # while they're resyncing
+
+        self.machine.events.add_handler('scorereelgroup_' + self.name +
+                                        '_resync', self.unlight,
+                                        relight_on_valid=True)
+
+        if relight_on_valid:
+            self.machine.events.remove_handler(self.light,
+                                               relight_on_valid=True)
+
+    def unlight(self, relight_on_valid=False, **kwargs):
+        """Turns off the lights for this ScoreReelGroup based on the
+        'light_tag' in its config.
+        """
+        self.log.info("Turning off Lights")
+        for light in self.machine.lights.items_tagged(
+                self.config['lights_tag']):
+            light.off()
+
+        self.lit = False
+
+        if relight_on_valid:
+            self.machine.events.add_handler('scorereelgroup_' + self.name +
+                                            '_valid', self.light,
+                                            relight_on_valid=True)
+        else:
+            self.machine.events.remove_handler(self.unlight,
+                                               relight_on_valid=True)
+
+    def _ball_ending(self, queue=None):
+        # We need to hook the ball_ending event in case the ball ends while the
+        # score reel is still catching up.
+
+        # only do this if this is the active group
+        if self.machine.score_reel_controller.active_scorereelgroup != self:
+            return
+
+        if not self.valid:
+            self.log.debug("Score reel group is not valid. Setting a queue")
+            self.wait_for_valid_queue = queue
+            self.wait_for_valid_queue.wait()
+        else:
+            self.log.debug("Score reel group is valid. No queue needed.")
+
 
 class ScoreReel(Device):
     """Represents an individual electro-mechanical score reel in a pinball
@@ -741,7 +885,6 @@ class ScoreReel(Device):
     This device class is used for all types of mechanical number reels in a
     machine, including reels that have more than ten numbers and that can move
     in multiple directions (such as the credit reel).
-
     """
 
     config_section = 'Score Reels'
@@ -776,66 +919,64 @@ class ScoreReel(Device):
         self.config['hw_confirm_ms'] = \
             Timing.string_to_ms(self.config['hw_confirm_ms'])
 
+        self.rollover_reel_advanced = False
+        # True when a rollover pulse has been ordered
+
         self.value_switches = []
-        """ This is a list with each element corresponding to a value on the
-        reel. An entry of None means there's no value switch there. An entry
-        of a reference to a switch object (todo or switch name?) means there is
-        a switch there.
-        """
+        # This is a list with each element corresponding to a value on the
+        # reel. An entry of None means there's no value switch there. An entry
+        # of a reference to a switch object (todo or switch name?) means there
+        # is a switch there.
         self.num_values = 0
-        """The number of values on this wheel. This starts with zero, so a
-        wheel with 10 values will have this value set to 9. (This actually
-        makes sense since most (all?) score reels also have a zero value.)
-        """
+        # The number of values on this wheel. This starts with zero, so a
+        # wheel with 10 values will have this value set to 9. (This actually
+        # makes sense since most (all?) score reels also have a zero value.)
 
         self.physical_value = -999
-        """The physical confirmed value of this reel. This will always
-        be the value of whichever switch is active or -999. This differs from
-        `self.assumed_value` in that assumed value will make assumptions about
-        where the reel is as it pulses through values with no swithces, whereas
-        this physical value will always be -999 if there is no switch telling
-        it otherwise.
+        # The physical confirmed value of this reel. This will always be the
+        # value of whichever switch is active or -999. This differs from
+        # `self.assumed_value` in that assumed value will make assumptions about
+        # where the reel is as it pulses through values with no swithces,
+        # whereas this physical value will always be -999 if there is no switch
+        # telling it otherwise.
 
-        Note this value will be initialized via self.check_hw_switches() below.
-        """
+        # Note this value will be initialized via self.check_hw_switches()
+        # below.
 
         self.hw_sync = False
-        """Specifies whether this reel has verified it's positions via the
-        switches since it was last advanced."""
+        # Specifies whether this reel has verified it's positions via the
+        # switches since it was last advanced."""
 
         self.ready = True
-        """Whether this reel is ready to advance. Typically used to make sure
-        it's not trying to re-fire a stuck position."""
+        # Whether this reel is ready to advance. Typically used to make sure
+        # it's not trying to re-fire a stuck position.
 
         self.assumed_value = self.check_hw_switches()
-        """The assumed value the machine thinks this reel is showing. A value
-        of -999 indicates that the value is unknown.
-        """
+        # The assumed value the machine thinks this reel is showing. A value
+        # of -999 indicates that the value is unknown.
 
         self.next_pulse_time = 0
-        """The time when this reel next wants to be pulsed. The reel will set
-        this on its own (based on its own attribute of how fast pulses can
-        happen). If the ScoreReelController is ready to pulse this reel and the
-        value is in the past, it will do a pulse. A value of 0 means this reel
-        does not currently need to be pulsed. """
+        # The time when this reel next wants to be pulsed. The reel will set
+        # this on its own (based on its own attribute of how fast pulses can
+        # happen). If the ScoreReelController is ready to pulse this reel and
+        # the value is in the past, it will do a pulse. A value of 0 means this
+        # reel does not currently need to be pulsed.
 
         self.rollover_reel = None
-        """A reference to the ScoreReel object of the next higher reel in the
-        group. This is used so the reel can notify its neighbor that it needs
-        to advance too when this reel rolls over."""
+        # A reference to the ScoreReel object of the next higher reel in the
+        # group. This is used so the reel can notify its neighbor that it needs
+        # to advance too when this reel rolls over.
 
         self.misfires = dict()
-        """Counts the number of "misfires" this reel has, which is when we
-        advanced a reel to a value where we expected a switch to activate but
-        didn't receive that activation as expected. This is a dictionary with
-        the key equal to the switch position and the value is a tuple with
-        the first entry being the number of misfires this attempt, and the
-        second value being the number of misfires overall.
-        """
+        # Counts the number of "misfires" this reel has, which is when we
+        # advanced a reel to a value where we expected a switch to activate but
+        # didn't receive that activation as expected. This is a dictionary with
+        # the key equal to the switch position and the value is a tuple with
+        # the first entry being the number of misfires this attempt, and the
+        # second value being the number of misfires overall.
 
         self._destination_index = 0
-        """Holds the index of the destination the reel is trying to advance to.
-        """
+        # Holds the index of the destination the reel is trying to advance to.
 
         # todo add some kind of status for broken?
 
@@ -849,8 +990,7 @@ class ScoreReel(Device):
         self.log.debug("Total reel values: %s", self.num_values)
 
         for value in range(self.num_values):
-            self.value_switches.append(self.config.get('switch_' +
-                                                          str(value)))
+            self.value_switches.append(self.config.get('switch_' + str(value)))
 
     @property
     def pulse_ms(self, direction=1):
@@ -868,7 +1008,6 @@ class ScoreReel(Device):
         Returns: Interger of the coil pulse time. If there is no coil for the
             direction you specify, returns 0.
         """
-
         if direction == 1:
             return self.machine.coils[self.config['coil_inc']].config['pulse_ms']
         elif self.config['coil_dec']:
@@ -896,7 +1035,6 @@ class ScoreReel(Device):
         Returns:
             The phsyical switch value, which is same as the input value if
             there's a switch there, or -999 if not.
-
         """
         if value != -999:
 
@@ -937,7 +1075,6 @@ class ScoreReel(Device):
             direction but it doesn't have a coil for that direction), it will
             return `False`. If it's able to pulse the advance coil, it returns
             `True`.
-
         """
         self.log.debug("Received command advance Reel in direction: '%s'",
                        direction)
@@ -974,6 +1111,8 @@ class ScoreReel(Device):
 
                 # Since we're firing, assume we're going to make it
                 self.assumed_value = self._destination_index
+                self.log.debug("+++Setting assumed value to: %s",
+                              self.assumed_value)
 
                 # Reset our statuses (stati?) :)
                 self.ready = False
@@ -988,8 +1127,8 @@ class ScoreReel(Device):
                                self._ready_to_fire)
 
                 self.next_pulse_time = (time.time() +
-                                      (self.config['repeat_pulse_ms'] /
-                                      1000.0))
+                                        (self.config['repeat_pulse_ms'] /
+                                        1000.0))
                 self.log.debug("@@@ New Next pulse ready time: %s",
                                self.next_pulse_time)
 
@@ -1009,7 +1148,7 @@ class ScoreReel(Device):
         # if direction is not 1 we'll assume down, but only if we have
         # the ability to decrement this reel
         elif 'coil_dec' in self.config:
-            pass  # copy the inc from above todo
+            return False  # since we haven't written this yet  todo
 
         # todo log else error?
 
@@ -1051,8 +1190,8 @@ class ScoreReel(Device):
         Returns: The hardware value of the switch, either the position or -999.
             If the reel is not ready, it returns `False`.
         """
-        # check to make sure the 'hw_confirm_ms' time has passed. If not then we
-        # cannot trust any value we read from the switches
+        # check to make sure the 'hw_confirm_ms' time has passed. If not then
+        # we cannot trust any value we read from the switches
         if (self.machine.coils[self.config['coil_inc']].time_last_changed +
                 (self.config['hw_confirm_ms'] / 1000.0) <= time.time()):
             self.log.debug("Checking hw switches to determine reel value")
@@ -1063,7 +1202,7 @@ class ScoreReel(Device):
                             self.value_switches[i]):
                         value = i
 
-            self.log.debug("Setting hw value to: %s", value)
+            self.log.debug("+++Setting hw value to: %s", value)
             self.physical_value = value
             self.hw_sync = True
             if value != -999:  # only change this if we know where we are
@@ -1098,6 +1237,8 @@ class ScoreReel(Device):
                 self._destination_index = self.assumed_value + 1
                 if self._destination_index > (self.num_values-1):
                     self._destination_index = 0
+                if self._destination_index == 1:
+                    self.rollover_reel_advanced = False
                 self.log.debug("@@@ new destination_index: %s",
                                self._destination_index)
                 return self._destination_index

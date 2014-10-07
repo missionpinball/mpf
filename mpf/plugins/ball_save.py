@@ -1,7 +1,7 @@
-"""Contains ball save code which is used to give the player another ball if
-their first ball drains too fast.
+"""MPF plugin for a ball saver code which is used to give the player another
+ball if their first ball drains too fast.
 
-This code is not yet implemented.
+This plugin is not yet finished and doesn't work yet.
 
 """
 # ball_save.py
@@ -10,6 +10,11 @@ This code is not yet implemented.
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/framework
+
+
+def preload_check(machine):
+
+    return True
 
 
 class BallSave(object):

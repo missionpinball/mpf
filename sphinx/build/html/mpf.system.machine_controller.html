@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.machine_controller module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
+    <title>mpf.system.machine_controller module &mdash; Mission Pinball Framework 0.0.9 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.7',
+        VERSION:     '0.0.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -57,9 +57,13 @@ main part that&#8217;s in charge and makes things happen.</p>
 <dl class="attribute">
 <dt id="mpf.system.machine_controller.MachineController.options">
 <tt class="descname">options</tt></dt>
-<dd><p>A dictionary of options built from the command line options used to
-launch mpf.py.</p>
+<dd><p>A dictionary of options built from the command line options</p>
 </dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">used to launch mpf.py.</tt></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.machine_controller.MachineController.dict_merge">
@@ -135,7 +139,7 @@ dictionary as this:</p>
 
 <dl class="method">
 <dt id="mpf.system.machine_controller.MachineController.flow_advance">
-<tt class="descname">flow_advance</tt><big>(</big><em>position=None</em><big>)</big></dt>
+<tt class="descname">flow_advance</tt><big>(</big><em>position=None</em>, <em>**kwargs</em><big>)</big></dt>
 <dd><p>Advances the machine to the next machine mode as specified in the
 machineflow. Typically this just advances between Attract mode and Game
 mode.</p>
@@ -221,18 +225,23 @@ python list.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string</strong> (<em>str</em>) &#8211; The string you&#8217;d like to convert.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A python list object containing whatever was between commas in the
-string.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A python list object containing whatever was between commas and/or
+spaces in the string.</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.system.machine_controller.MachineController.sw_loop">
-<tt class="descname">sw_loop</tt><big>(</big><big>)</big></dt>
-<dd><p>This is the main game run loop that&#8217;s used when the hardware
-platform doesn&#8217;t have to be polled continuously.</p>
+<dt id="mpf.system.machine_controller.MachineController.sw_data_loop">
+<tt class="descname">sw_data_loop</tt><big>(</big><big>)</big></dt>
+<dd><p>This is the main game run loop.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.sw_optimized_loop">
+<tt class="descname">sw_optimized_loop</tt><big>(</big><big>)</big></dt>
+<dd><p>The optimized version of the main game run loop.</p>
 </dd></dl>
 
 <dl class="method">
@@ -282,7 +291,7 @@ platform doesn&#8217;t have to be polled continuously.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

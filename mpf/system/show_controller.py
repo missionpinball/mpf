@@ -22,7 +22,6 @@ class ShowController(object):
 
     Args:
         machine: Parent machine object.
-
     """
     def __init__(self, machine):
         self.log = logging.getLogger("ShowController")
@@ -81,9 +80,14 @@ class ShowController(object):
                                         self._initialize)
 
     def _initialize(self):
-        for light in self.machine.lights:
-            self.light_priorities[light.name] = 0
-        self.initialized = True
+        # Sets up everything that has to be instantiated first
+
+        # We do this in case there are no lights configured, we still want MPF
+        # to work.
+        if hasattr(self.machine, 'lights'):
+            for light in self.machine.lights:
+                self.light_priorities[light.name] = 0
+            self.initialized = True
 
         # Load all the shows in the machine folder
         if self.machine.config['MPF']['auto_load_shows']:
@@ -104,21 +108,12 @@ class ShowController(object):
     def _end_show(self, show, reset=True):
         # Internal method which ends a running Show
 
-        running_shows_copy = list(self.running_shows)
-
-        if show in running_shows_copy:
+        if show in self.running_shows:
             self.running_shows.remove(show)
             show.running = False
-             # Restore the lights not "holding" the final states
-            if not show.hold:
-                for light in show.light_states:
-                    if light.cache['priority'] < show.priority:
-                        light.restore()
-                for led in show.led_states:
-                    if led.cache['priority'] < show.priority:
-                        led.restore()
 
-        # todo need to make the restore so it checks other lower priority shows
+        if not show.hold:
+            self.restore_lower_lights(show=show)
 
         if reset:
             show.current_location = 0
@@ -137,15 +132,47 @@ class ShowController(object):
         if show.callback:
             show.callback()
 
-    def _tick(self):
-        """Runs once per machine loop and services any light updates that are
-        needed. This checks several places:
+    def restore_lower_lights(self, show=None, priority=0):
+        """Restores the lights and LEDs from lower priority shows under this
+        show.
 
-        1. Running Shows
-        2. The ShowController queue for any future commands that should be
-        processed now.
+        This is only useful if this show is stopped, because otherwise this show
+        will just immediately override these restored settings.
 
+        Args:
+            show: The show which will set the priority of the lights you want to
+                restore.
+            priority: An iteger value of the lights you want to restore.
+
+        In both cases it will only restore lights below the priority you pass,
+        skipping ones that are at the same value.
         """
+
+        # set the priority we're working with.
+        if show:
+            priority = show.priority
+
+        # first force the restore of whatever the lights were manually set to
+        for light in show.light_states:
+            if light.cache['priority'] < priority:
+                light.restore(force=True)
+        for led in show.led_states:
+            if led.cache['priority'] < priority:
+                led.restore(force=True)
+
+        # now see if there are other shows that have these lights in an active
+        # state
+        for other_show in self.running_shows:
+            if other_show.priority < priority:
+                other_show.resync()
+
+        # todo the above code could be better. It could only order the restores
+        # for the lights and leds that were in this show that just ended?
+
+    def _tick(self):
+        #Runs once per machine loop and services any light updates that are
+        #needed.
+
         self.current_time = time.time()
         # we calculate current_time one per loop because we want every action
         # in this loop to write the same "last action time" so they all stay
@@ -199,12 +226,11 @@ class ShowController(object):
 
     def _add_to_light_update_list(self, light, brightness, priority, blend):
         # Adds an update to our update list, with intelligence that if the list
-        # already contains an update for this lightname & priority combination,
-        # it deletes it first. This is done so if the machine loop is running
-        # slower than our updates are coming in, we only keep the most recent
-        # entry.
+        # already contains an update for this lightname at the same or lower
+        # priority, it deletes that one since there's not sense sending a light
+        # command that will be immediately overridden by a higher one.
         for item in self.light_update_list:
-            if item['light'] == light and item['priority'] == priority:
+            if item['light'] == light and item['priority'] <= priority:
                 self.light_update_list.remove(item)
         self.light_update_list.append({'light': light,
                                        'brightness': brightness,
@@ -214,7 +240,7 @@ class ShowController(object):
     def _add_to_led_update_list(self, led, color, fade_ms, priority, blend):
         # See comment from above method
         for item in self.led_update_list:
-            if item['led'] == led and item['priority'] == priority:
+            if item['led'] == led and item['priority'] <= priority:
                 self.led_update_list.remove(item)
         self.led_update_list.append({'led': led,
                                      'color': color,
@@ -229,7 +255,6 @@ class ShowController(object):
     def _add_to_coil_queue(self, coil, action):
         # Same goes for coils
         self.coil_queue.add((coil, action))
-        print "add to coil queue", coil, action
 
     def _do_update(self):
         if self.light_update_list:
@@ -468,155 +493,6 @@ class ShowController(object):
 
         # todo callback?
 
-    def enable(self, lightname, priority=0, color=None, dest_color=None,
-               fade=0, blend=True):
-        """This is a single one-time command to enable an light.
-
-        Args:
-            lightname: the light you're enabling
-            priority (int): The priority this light will be enablight at. This
-                is used when determining what other enables, scripts, and
-                Shows will play over or under it). If you enable an light
-                with the same priority that was previously used to enable it,
-                it will overwrite the old color with the new one.
-
-            color (str): A hex string (like "ff00aa") for what color you want to
-                enable this light to be. Note if you have a single color (i.e.
-                one element) light, then just pass it "ff" to enable it on full
-                brightness, or "80" for 50%, etc.
-
-            dest_color (str): If you want to fade the light to your color instead
-                of enabling it instantly, pass *dest_color* instead of *color*.
-
-            fade (int): If you want to fade the light on, use *fade* to specify the
-                fade on time (in ms). Note this also requires *dest_color*
-                above instead of *color*.
-
-            blend (bool): If *True* and if you're using a fade, it will fade
-                from whatever color the light currently is to your
-                *dest_color*. If False it will turn the light off first before
-                fading.
-
-        Note that since you enable lights with priorities, you can actually
-        "enable" the light multiple times at different priorties. Then if you
-        disable the light via a higher priority, the lower priority will still
-        be there. This means that in your game, each mode can do whatever it
-        wants with lights and you don't have to worry about a higher priority
-        mode clearing out an light and messing up the lower priority mode's
-        status.
-
-        The ability for this enable method to also keep track of the priority
-        that a light is enablight is the reason you'd want to use this method
-        versus calling :meth:`lights.color` directly. If you do use
-        :meth:`lights.color` to enable an light directly,
-        :class:`ShowController` won't know about it, and your light could be
-        overwritten the next time a Show, script, or enable command is
-        used. """
-
-        # Add / update this latest info in our manual_commands dictionary
-        params = {'lightname': lightname,
-                  'color': color,
-                  'priority': priority}
-        #fadeend = None
-
-        if fade:
-            fadestart = self.current_time
-            fadeend = fadestart + (fade / 1000)
-            if dest_color and not color:  # received dest_color but not color
-                dest_color = dest_color
-                color = "000000"
-            elif dest_color and color:  # received dest_color and color
-                dest_color = dest_color
-                color = color
-            else:  # received color but not dest_color
-                dest_color = color
-                color = None
-            prevcolor = color
-
-            params.update({'fadeend': fadeend, 'blend': blend,
-                           'fadestart': fadestart, 'dest_color': dest_color,
-                           'color': color, 'prevcolor': prevcolor})
-
-        # check to see if we already have an entry for this lightname /
-        # priority pair. If so, remove it.
-        for entry in self.manual_commands:
-            if entry['lightname'] == lightname and entry['priority'] == priority:
-                self.manual_commands.remove(entry)
-
-        # now add our new command to the list
-        self.manual_commands.append(params)
-
-        # Add this command to our update_list so it gets serviced along with
-        # all the other updates
-        if fade:  # if we have a fade
-            self._add_to_update_list({'lightname': lightname,
-                                     'priority': priority,
-                                     'dest_color': dest_color,
-                                     'fadeend': fadeend,
-                                     'blend': blend,
-                                     'fadestart': fadestart,
-                                     'prevcolor': prevcolor})
-        else:  # no fade
-            self._add_to_update_list({'lightname': lightname,
-                                     'priority': priority,
-                                     'color': color})
-
-    def disable(self, lightname, priority=0, clear_all=True):
-        """Command to disable an light
-
-        Args:
-            lightname (str): The name of the light you're disabling
-            priority (int): Which priority you're clearing (disabling) the
-                light at. (See *clear_all* below for details.) If you don't
-                pass a priority, then it will disable the light and remove
-                *all* entries from the manual commands list. i.e. In that case
-                it disables/removes all the previously issued manual commands
-            clear_all (bool): If True, it will clear all the commands from the
-                priority you passed and from any lower priority commands. If
-                False then it only clears out the command from the priority
-                that was passed.
-
-        Once cleared, :class:`ShowController` restore the light's state from
-        any commands or shows running at a lower priority.
-
-        Note that this method does not affect running :class:`Show` shows,
-        so if you clear the :meth:`enable` commands but you have a running
-        Show which enables that light, then the light will be enablight.
-        If you want to absolutely disable the light regardless of whatever
-        Show is running, then use :meth:`enable` with *color=000000*,
-        *blend=False*, and a *priority* that's higher than any running show.
-        """
-
-        priority_to_restore = priority
-
-        # check to see if we have an entry for this light in our manual
-        # commands dictionary
-
-        if clear_all:
-            if priority:  # clear all, with priority specified
-                for entry in self.manual_commands:
-                    if entry['lightname'] == lightname and \
-                            entry['priority'] <= priority:
-                        self.manual_commands.remove(entry)
-                        priority_to_restore = priority
-                        self.restore_light_state(lightname, priority_to_restore)
-            else:  # clear all, no priority specified
-                for entry in self.manual_commands:
-                    if entry['lightname'] == lightname:
-                        self.manual_commands.remove(entry)
-                        self.restore_light_state(lightname, priority_to_restore)
-
-        else:  # just remove any commands of the priority passed
-            for entry in self.manual_commands:
-                if entry['lightname'] == lightname and \
-                        entry['priority'] == priority:
-                    self.manual_commands.remove(entry)
-                    priority_to_restore = 0
-                    self.restore_light_state(lightname, priority_to_restore)
-
-            # if we get to here, we didn't find any commands to restore, so
-            # don't do anything
-
     def load_shows(self, path):
         """Automatically loads all the light shows in a path.
 
@@ -637,9 +513,12 @@ class ShowController(object):
         self.log.info("Loading shows from: %s", path)
         for root, path, files in os.walk(path, followlinks=True):
             for f in files:
-                fullpath = os.path.join(root, f)
-                self.machine.shows[str(os.path.splitext(f)[0])] = \
-                    Show(self.machine, fullpath)
+                if f.endswith('.yaml'):
+                    # todo Make this a config option in case people want to give
+                    # their show files a different extension?
+                    fullpath = os.path.join(root, f)
+                    self.machine.shows[str(os.path.splitext(f)[0])] = \
+                        Show(self.machine, fullpath)
 
     @staticmethod
     def hexstring_to_list(input_string, output_length=3):
@@ -668,6 +547,16 @@ class ShowController(object):
 
     @staticmethod
     def hexstring_to_int(inputstring, maxvalue=255):
+        """Takes a string input of hex numbers and an integer.
+
+        Args:
+            input_string: A string of incoming hex colors, like ffff00.
+            maxvalue: Integer of the max value you'd like to return. Default is
+                255. (This is the real value of why this method exists.)
+
+        Returns:
+            Integer representation of the hex string.
+        """
 
         return_int = int(inputstring, 16)
 
@@ -722,6 +611,7 @@ class Show(object):
         self.next_action_time = 0  # time of when the next action happens
         self.callback = None  # if the show should call something when it ends
         # naturally. (Not invoked if show is manually stopped)
+        self.filename = filename  # We store this to allow for reloads later
 
         self.light_states = {}
         self.led_states = {}
@@ -739,12 +629,9 @@ class Show(object):
         # Loads a Show yaml file from disk
         self.log.debug("Loading Show: %s", filename)
 
-        try:
-            show_actions = yaml.load(open(filename, 'r'))
-        except:
-            self.log.error("Error loading show: %s", filename)
-        else:
-            self._process(show_actions)
+        show_actions = yaml.load(open(filename, 'r'))   # temp
+
+        self._process(show_actions)
 
     def _process(self, show_actions):
         # Process a new show's actions. This is a separate method from
@@ -757,19 +644,19 @@ class Show(object):
         # use a weakref so garbage collection will del it if we delete the show
         self.machine.show_controller.registered_shows.append(weakref.proxy(self))
 
-        # count how many total locations are in the show. We need this later
-        # so we can know when we're at the end of a show
-        self.total_locations = len(show_actions)
-
-        #todo913 go through and convert item strings to the format we can use
-        # them in. example color hexes to lists, device names to objects
-        # we do all this crazy processing up front when the show loads so we
-        # don't have to do it for each item at each step when the show is playing
-
+        # process each step in the show
         for step_num in range(len(show_actions)):
             step_actions = dict()
 
             step_actions['tocks'] = show_actions[step_num]['tocks']
+
+            # look for empty steps. If we find them we'll just add their tock
+            # time to the previous step.
+
+            if len(show_actions[step_num]) == 1:  # 1 because it still has tocks
+
+                self.show_actions[-1]['tocks'] += step_actions['tocks']
+                continue
 
             # Lights
             if ('lights' in show_actions[step_num] and
@@ -893,8 +780,28 @@ class Show(object):
 
             self.show_actions.append(step_actions)
 
+        # count how many total locations are in the show. We need this later
+        # so we can know when we're at the end of a show
+        self.total_locations = len(self.show_actions)
+
+    def reload(self):
+        """Reloads this show from disk. This is nice for testing so you can
+        assign a button to just reload this show so you can test out changes
+        without having to constantly stop and start the game.
+
+        Note this will also stop this show if it's running.
+        """
+
+        self.log.info("Reloading show file: %s", self.filename)
+
+        # stop the show if it's running
+        self.stop(hold=False, reset=True)
+
+        # reload the show from disk
+        self._load(self.filename)
+
     def play(self, repeat=False, priority=0, blend=False, hold=False,
-             tocks_per_sec=32, start_location=-1, callback=None,
+             tocks_per_sec=32, start_location=None, callback=None,
              num_repeats=0):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
@@ -904,54 +811,45 @@ class Show(object):
         but you can have that circle "spin" as fast as you want depending on
         how you play the show.)
 
-        :param boolean repeat: True/False, whether the show repeats when it's
-        done.
+        Args:
+            repeat: Boolean of whether the show repeats when it's done.
+            priority: Integer value of the relative priority of this show. If there's
+            ever a situation where multiple shows want to control the same item,
+            the one with the higher priority will win. ("Higher" means a bigger
+            number, so a show with priority 2 will override a priority 1.)
+        blend: Boolean which controls whether this show "blends" with lower
+            priority shows and scripts. For example, if this show turns a light
+            off, but a lower priority show has that light set to blue, then the
+            light will "show through" as blue while it's off here. If you don't
+            want that behavior, set blend to be False. Then off here will be off
+            for sure (unless there's a higher priority show or command that turns
+            the light on). Note that not all item types blend. (You can't blend a
+            coil or event, for example.)
+        hold: Boolean which controls whether the lights or LEDs remain in their
+            final show state when the show ends.
+        tocks_per_sec: Integer of how fast your show runs ("Playback speed," in
+            other words.) Your Show files specify action times in terms of
+            'tocks', like "make this light red for 3 tocks, then off for 4
+            tocks, then a different light on for 6 tocks. When you play a show,
+            you specify how many tocks per second you want it to play. Default
+            is 32, but you might even want tocks_per_sec of only 1 or 2 if your
+            show doesn't need to move than fast. Note this does not affect fade
+            rates. So you can have tocks_per_sec of 1 but still have lights fade
+            on and off at whatever rate you want. Also the term "tocks" was
+            chosen so as not to confuse it with "ticks" which is used by the
+            machine run loop.
+        start_location: Integer of which position in the show file the show
+            should start in. Usually this is 0 but it's nice to start part way
+            through. Also used for restarting shows that you paused.
+        callback: A callback function that is invoked when the show is stopped.
+        num_repeats: Integer of how many times you want this show to repeat
+            before stopping. A value of 0 means that it repeats indefinitely.
+            Note this only works if you also have repeat=True.
 
-        :param integer priority: The relative priority of this show. If there's
-        ever a situation where multiple shows want to
-        control the same item, the one with the higher priority will win.
-        ("Higher" means a bigger number, so a show with priority 2 will
-        override a priority 1.)
+        Example usage from a game:
 
-        :param boolean blend: Controls whether this show "blends" with lower
-        priority shows and scripts. For example, if this show turns a light
-        off, but a lower priority show has that light set to blue, then the
-        light will "show through" as blue while it's off here. If you don't
-        want that behavior, set blend to be False. Then off here will be off
-        for sure (unless there's a higher priority show or command that turns
-        the light on). Note that not all item types blend. (You can't blend a
-        coil or event, for example.)
-
-        :param boolean hold: If True, then when this Show ends, all the
-        items that are on at that time will remain on. If False, it turns them
-        all off when the show ends
-
-        :param integer tocks_per_sec: This is how fast your show runs.
-        ("Playback speed," in other words.) Your Show files specify action
-        times in terms of 'tocks', like "make this light red for 3 tocks, then
-        off for 4 tocks, then a different light on for 6 tocks. When you play a
-        show, you specify how many tocks per second you want it to play.
-        Default is 32, but you might even want tocks_per_sec of only 1 or 2 if
-        your show doesn't need to move than fast. Note this does not affect
-        fade rates. So you can have tocks_per_sec of 1 but still have lights
-        fade on and off at whatever rate you want. Also the term "tocks" was
-        chosen so as not to confuse it with "ticks" which is used by the
-        machine run loop.
-
-        :param integer start_location: Which position in the show file the show
-        should start in. Usually this is 0 but it's nice to start part way
-        through. Also used for restarting shows that you paused.
-
-        :param object callback: A callback function that is invoked when the
-        show is stopped.
-
-        :param integer num_repeats: How many times you want this show to repeat
-        before stopping. A value of 0 means that it repeats indefinitely. Note
-        this only works if you also have repeat=True.
-
-        Example usage from a game mode:
-
-        Load the show (typically done once when the machine is booting up)
+        Load the show: (Note the MPF has a config option to automatically load
+            all shows, which by default is True.
             self.show1 = lights.Show(self.machine,
             "Shows\\show1.yaml")
 
@@ -988,34 +886,45 @@ class Show(object):
         self.secs_per_tock = 1/float(tocks_per_sec)
         self.callback = callback
         self.num_repeats = num_repeats
-        if start_location >= 0:
+        if start_location is not None:
             # if you don't specify a start location, it will start where it
             # left off (if you stopped it with reset=False). If the show has
             # never been run, it will start at 0 per the initialization
             self.current_location = start_location
+
         self.machine.show_controller._run_show(self)
 
-    def stop(self, reset=True, hold=False):
+    def stop(self, reset=True, hold=None):
         """Stops a Show.
 
-        :param boolean reset: True means it resets the show to the beginning.
-        False it keeps it where it is so the show can pick up where it left off
+        Note you can also use this method to clear a stopped show's held lights
+        and LEDs by passing hold=False.
 
-        :param boolean hold: Lets you specify that the lights will be held in
-        their current state after the show ends. Note that if you have a show
-        that's set to hold but you pass hold=False here, it won't work. In that
-        case you'd have to set <show>.hold=False and then call this method to
-        stop the show. """
+        Args:
+            reset: Boolean which controls whether the show will reset its
+                current position back to zero. Default is True.
+            hold: Boolean which controls whether the show will hold its current
+                lights and LEDs in whatever state they are now, including their
+                priorities. Default is None which will just use whatever the
+                show setting was when you played it, but you can force it to
+                hold or not with True or False here.
+        """
+        if self.running:
+            if hold:
+                self.hold = True
+            elif hold is False:  # if it's None we do nothing
+                self.hold = False
 
-        if hold:
-            self.hold = True
+            self.machine.show_controller._end_show(self, reset)
 
-        self.machine.show_controller._end_show(self, reset)
+        elif not hold:  # will trigger on hold false or none
+            self.machine.show_controller.restore_lower_lights(show=self)
 
     def change_speed(self, tocks_per_sec=1):
         """Changes the playback speed of a running Show.
 
-        :param integer tocks_per_sec: The new tocks_per_second play rate.
+        Args:
+            tocks_per_sec: The new tocks_per_second play rate.
 
         If you want to change the playback speed by a percentage, you can
         access the current tocks_per_second rate via Show's
@@ -1031,6 +940,7 @@ class Show(object):
         self.secs_per_tock = 1/float(tocks_per_sec)
 
     def _advance(self):
+        # Internal method which advances the show to the next step
         if self.ending:
             self.machine.show_controller._end_show(self)
             return
@@ -1136,15 +1046,37 @@ class Show(object):
         if action_loop_count == self.total_locations:
             return
 
+    def resync(self):
+        """Causes this show to do a one-time update to resync all the LEDs and
+        lights in the show with where they should be now. This is used when a
+        higher priority show stops so lower priority shows can put all the
+        lights back to how they want them.
+        """
+
+        for light_obj, brightness in self.light_states.iteritems():
+            self.machine.show_controller._add_to_light_update_list(
+                light=light_obj,
+                brightness=brightness,
+                priority=self.priority,
+                blend=self.blend)
+
+        for led_obj, led_dict in self.led_states.iteritems():
+            self.machine.show_controller._add_to_led_update_list(
+                led=led_obj,
+                color=led_dict['current_color'],
+                fade_ms=0,
+                priority=self.priority,
+                blend=self.blend)
+
 
 class Playlist(object):
     """A list of :class:`Show` objects which are then played sequentially.
+
     Playlists are useful for things like attract mode where you play one show
     for a few seconds, then another, etc.
 
-    Parameters:
-
-        'machine': Parent machine object
+    Args:
+        machine: The main machine_controller object
 
     Each step in a playlist can contain more than one :class:`Show`. This
     is useful if you have a lot of little shows for different areas of the
@@ -1195,9 +1127,10 @@ class Playlist(object):
         super(Playlist, self).__init__()
         self.log = logging.getLogger("Playlist")
         self.machine = machine
-        self.step_settings_dic = {}  # dictionary with step_num as the key. Values:
-                                 # time - sec this entry runs
-                                 # trigger_show
+        self.step_settings_dic = {}  # dict with step_num as the key. Values:
+                                     # time - sec this entry runs
+                                     # trigger_show
+                                     # hold
         self.step_actions = []  # The actions for the steps in the playlist
         # step_num
         # show
@@ -1220,37 +1153,32 @@ class Playlist(object):
         """Adds a Show to this playlist. You have to add at least one show
         before you start playing the playlist.
 
-        :param integer step_num:
-        Which step number you're adding this show to.
-        You have to specify this since it's possible to add multiple shows to
-        the same step (in cases where you want them both to play at the same
-        time during that step). If you want the same show to play in multiple
-        steps, then add it multiple times (once to each step). The show plays
-        starting with the lowest number step and then moving on. Ideally they'd
-        be 1, 2, 3... but it doesn't matter. If you have step numbers of 1, 2,
-        5... then the player will figure it out.
+        Args:
 
-        :param object show: The Show object that you're adding to this
-        step.
-
-        :param integer num_repeats: How many times you want this show to repeat
-        within this step. Note this does not affect when the playlist advances
-        to the next step. (That is controlled via :meth:`step_settings`.)
-        Rather, this is just how many loops this show plays. A value of 0
-        means it repeats indefinitely. (Well, until the playlist advances to
-        the next step.) Note that you also have to have repeat=True for it to
-        repeat here.
-
-        :param integer tocks_per_sec: How fast you want this show to play. See
-        :meth:`Show.play` for details.
-
-        :param boolean blend: Whether you want this show to blend with lower
-        priority shows below it. See :meth:`Show.play` for details.
-
-        :param boolean repeat: Causes the show to keep repeating until the
-        playlist moves on to the next step.
+            step_num: Interger of which step number you're adding this show to.
+                You have to specify this since it's possible to add multiple
+                shows to the same step (in cases where you want them both to
+                play at the same time during that step). If you want the same
+                show to play in multiple steps, then add it multiple times (once
+                to each step). The show plays starting with the lowest number
+                step and then moving on. Ideally they'd be 1, 2, 3... but it
+                doesn't matter. If you have step numbers of 1, 2, 5... then the
+                player will figure it out.
+            show: The Show object that you're adding to this step.
+            num_repeats: Integer of how many times you want this show to repeat
+                within this step. Note this does not affect when the playlist
+                advances to the next step. (That is controlled via
+                :meth:`step_settings`.) Rather, this is just how many loops this
+                show plays. A value of 0 means it repeats indefinitely. (Well,
+                until the playlist advances to the next step.) Note that you
+                also have to have repeat=True for it to repeat here.
+            tocks_per_sec: Integer of how fast you want this show to play. See
+                :meth:`Show.play` for details.
+            blend: Boolean of whether you want this show to blend with lower
+                priority shows below it. See :meth:`Show.play` for details.
+            repeat: Boolean which causes the show to keep repeating until the
+                playlist moves on to the next step.
         """
-
         # Make a temp copy of our steps since we might have to remove one while
         # iterating through it
         temp_steps = list(self.step_actions)
@@ -1275,23 +1203,23 @@ class Playlist(object):
         # Reorder the list from smallest to biggest
         self.steps.sort()
 
-    def step_settings(self, step, time=0, trigger_show=None):
+    def step_settings(self, step, time=0, trigger_show=None, hold=False):
         """Used to configure the settings for a step in a :class:`Playlist`.
         This configuration is required for each step. The main thing you use
         this for is to specify how the playlist knows to move on to the next
         step.
 
-        :param integer step: Which step number you're configuring
+        Args:
 
-        :param float time: The time in seconds that you want this step to run
-        before moving on to the next one.
-
-        :param object trigger_show: If you want to move to the next step after
-        one of the Shows in this step is done playing, specify that
-        Show here. This is required because if there are multiple
-        Shows in this step of the playlist which all end at different
-        times, we wouldn't know which one to watch in order to know when to
-        move on.
+        step: Integer for which step number you're configuring
+        time: Integer of the time in seconds that you want this step to run
+            before moving on to the next one.
+        trigger_show: If you want to move to the next step after
+            one of the Shows in this step is done playing, pass that show's object
+            here. This is required because if there are multiple
+            Shows in this step of the playlist which all end at different
+            times, we wouldn't know which one to watch in order to know when to
+            move on.
 
         Note that you can have repeats with a trigger show, but in that case
         you also need to have the num_repeats specified. Otherwise if you have
@@ -1299,30 +1227,29 @@ class Playlist(object):
         on. (In that case use the *time* parameter to move on based on time.)
         """
         settings = {'time': time,
-                    'trigger_show': trigger_show}
+                    'trigger_show': trigger_show,
+                    'hold': hold}
         self.step_settings_dic.update({step: settings})
 
-    def start(self, priority, repeat=True, repeat_count=0, reset=True):
+    def start(self, priority=0, repeat=True, repeat_count=0, reset=True):
         """Starts playing a playlist. You can only use this after you've added
         at least one show via :meth:`add_show` and configured the settings for
         each step via :meth:`step_settings`.
 
-        :param integer priority: What priority you want the :class:`Show`
-        shows in this playlist to play at. These shows will play "on top" of
-        lower priority stuff, but "under" higher priority things.
+        Args
 
-        :param boolean repeat: - Controls whether this playlist to repeats when
-        it's finished.
-
-        :param integer repeat_count: How many times you want this playlist to
-        repeat before it stops itself. (Must be used with *repeat=True* above.)
-        A value of 0 here means that this playlist repeats forever until you
-        manually stop it. (This is ideal for attract mode.)
-
-        :param boolean reset: - Controls whether you want this playlist to
-        start at the begining (True) or you want it to pick up where it left
-        off (False). You can also use *reset* to restart a playlist that's
-        currently running.
+        priority: Integer of what priority you want the :class:`Show` shows in
+            this playlist to play at. These shows will play "on top" of
+            lower priority stuff, but "under" higher priority things.
+        repeat: Controls whether this playlist to repeats when it's finished.
+        repeat_count: How many times you want this playlist to
+            repeat before it stops itself. (Must be used with *repeat=True* above.)
+            A value of 0 here means that this playlist repeats forever until you
+            manually stop it. (This is ideal for attract mode.)
+        reset: Boolean which controls whether you want this playlist to
+            start at the begining (True) or you want it to pick up where it left
+            off (False). You can also use *reset* to restart a playlist that's
+            currently running.
         """
         if not self.running:
             if reset:
@@ -1345,20 +1272,29 @@ class Playlist(object):
                 self.start(priority=priority, repeat=repeat,
                            repeat_count=repeat_count)
 
-    def stop(self, reset=True):
+    def stop(self, reset=True, hold=None):
         """Stops a playlist. Pretty simple.
 
-        :param boolean reset: If *True*, it resets the playlist tracking
-        counter back to the beginning. You can use *False* here if you want to
-        stop and then restart a playlist to pick up where it left off.
+        Args:
+            reset: If *True*, it resets the playlist tracking counter back to
+                the beginning. You can use *False* here if you want to stop and
+                then restart a playlist to pick up where it left off.
+            hold: Boolean which specifies whether this playlist should should
+                hold the lights and LEDs in their current states. Default is
+                None which means it inherits whatever the shows or playlist
+                settings were, but you can force it True or False if you want
+                here.
         """
+
+        self.running = False
+
         for action in self.step_actions:
             if action['step_num'] == self.steps[self.current_step_position-1]:
                 # we have to use the "-1" above because the playlist current
                 # position represents the *next* step of shows to play. So when
                 # we stop the current show, we have to come back one.
-                action['show'].stop()
-        self.running = False
+                action['show'].stop(hold=hold)
+
         for item in self.machine.show_controller.queue:
             if item['playlist'] == self:
                 self.machine.show_controller.queue.remove(item)
@@ -1369,6 +1305,12 @@ class Playlist(object):
     def _advance(self):
         #Runs the Show(s) at the current step of the plylist and advances
         # the pointer to the next step
+
+        # If we stop at a step with a trigger show, the stopping of the trigger
+        # show will call _advance(), so we just return here so this last step
+        # doesn't play.
+        if not self.running:
+            return
 
         # Creating a local variable for this just to keep the code easier to
         # read. We track this because it's possible the game programmer will
@@ -1401,7 +1343,7 @@ class Playlist(object):
                                                    ['trigger_show'])
 
         # Now step through all the actions for this step and schedule the
-        # Shows to play
+        # shows to play
         for action in self.step_actions:
             if action['step_num'] == current_step_value:
                 show = action['show']
@@ -1411,23 +1353,23 @@ class Playlist(object):
                 repeat = action['repeat']
 
                 if show == step_trigger_show:
-                    # This show finishing will be used to trigger the advancement
-                    # to the next step.
+                    # This show finishing will be used to trigger the
+                    # advancement to the next step.
                     callback = self._advance
 
-                    if num_repeats == 0:  # Hmm.. we're using this show as the
-                        # trigger, but it's set to repeat indefinitely?!?
-                        # That won't work. Resetting repeat to 1 and raising
-                        # a warning
+                    if num_repeats == 0:
+                        self.log.warning("Found a trigger show that was set to"
+                                         " repeat indefinitely. Changing repeat"
+                                         " to 1.")
                         num_repeats = 1
-                        # todo warning
 
                 else:
                     callback = None
 
                 show.play(repeat=repeat, priority=self.priority, blend=blend,
                           tocks_per_sec=tocks_per_sec, num_repeats=num_repeats,
-                          callback=callback)
+                          callback=callback,
+                          hold=self.step_settings_dic[current_step_value]['hold'])
 
         # if we don't have a trigger_show but we have a time value for this
         # step, set up the time to move on
@@ -1457,7 +1399,6 @@ class Playlist(object):
                 return
         else:
             self.current_step_position += 1
-
 
 # The MIT License (MIT)
 

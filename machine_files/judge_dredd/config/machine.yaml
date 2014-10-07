@@ -10,7 +10,7 @@ Machine:
     Max Balls: 6
 
 Hardware:
-    Platform: virtual
+    Platform: p_roc
     DriverBoards: wpc
 
 Fast:
@@ -90,6 +90,7 @@ Switches:
         tags: start
     plumbBob:
         number: S14
+        tags: tilt
     ShooterLaneL:
         number: S15
     outlaneL:
@@ -103,6 +104,7 @@ Switches:
         tags: ballLive
     slamTilt:
         number: S21
+        tags: slamTilt
     coinDoor:
         number: S22
     ticketDispenser:

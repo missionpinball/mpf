@@ -14,7 +14,6 @@
 import logging
 
 from mpf.system.tasks import DelayManager
-from mpf.system.timing import Timing
 
 
 class BallController(object):
@@ -34,90 +33,236 @@ class BallController(object):
         self.log.debug("Loading the BallController")
         self.delay = DelayManager()
 
-        # Reset variables
-        self.num_balls_contained = 0
-        """Balls contained in ball devices."""
-        self.num_balls_uncontained = 0
-        """Balls loose on the playfield."""
-        self.num_balls_known = 0
-        """How many balls the machine knows about. Could vary from the number
-        of balls installed based on how many are *actually* in the machine, or
-        to compensate for balls that are lost or stuck.
-        """
+        self.game = None
+
+        # Properties:
+        # self.num_balls_contained
+        # self.num_balls_live
+        # self.num_balls_desired_live
+
+        self._num_balls_live = 0  # do not update this. Use the property
+        self._num_balls_desired_live = 0  # do not update. Use the property
+
+        self.num_balls_in_transit = 0
+        #Balls currently in transit from one ball device to another
+        self.num_balls_missing = 0
+        #Balls lost and/or not installed.
+
+        self.num_balls_known = -999
+        #How many balls the machine knows about. Could vary from the number
+        #of balls installed based on how many are *actually* in the machine, or
+        #to compensate for balls that are lost or stuck.
+
         # todo should we save this in the machine data?
 
         self.flag_ball_search_in_progress = False
-        """True if there's currently a ball search in progress."""
+        #True if there's currently a ball search in progress.
 
         self.flag_no_ball_search = False
-        """Ball search is enabled and disabled automatically based on whether
-        any balls are uncontained. Set this flag_no_ball_search to True if for
-        some reason you don't want the ball search to be enabled. BTW I can't
-        think of why you'd ever want this. The automatic stuff works great, and
-        you need to keep it enabled even after tilts and stuff. Maybe for some
-        kind of maintainance mode or something?
-        """
-
-        self.game = None
-        """Holds the game object when a game is in progress."""
-
-        self.num_balls_missing = 0
-        """Balls lost and/or not installed."""
+        #Ball search is enabled and disabled automatically based on whether
+        #any balls are uncontained. Set this flag_no_ball_search to True if for
+        #some reason you don't want the ball search to be enabled. BTW I can't
+        #think of why you'd ever want this. The automatic stuff works great, and
+        #you need to keep it enabled even after tilts and stuff. Maybe for some
+        #kind of maintainance mode or something?
 
         # register for events
         self.machine.events.add_handler('request_to_start_game',
                                         self.request_to_start_game)
-        self.machine.events.add_handler('ball_started', self.ball_started)
-        self.machine.events.add_handler('ball_ending', self.ball_ending, 1000)
-        self.machine.events.add_handler('sw_ballLive', self.ball_live_hit)
-        self.machine.events.add_handler('tilt', self.tilt)
-        self.machine.events.add_handler('game_starting', self.game_starting)
-        self.machine.events.add_handler('game_ended', self.game_ended)
-
-        self.machine.events.add_handler('ball_add_live_success',
-                                        self.ball_add_live_success)
-        self.machine.events.add_handler('machine_init_phase2',
+        self.machine.events.add_handler('sw_ballLive',
+                                        self.ball_live_hit)
+        self.machine.events.add_handler('machine_reset_phase_2',
                                         self.reset)
-        self.machine.events.add_handler('ball_add_live_request',
-                                        self.ball_add_live)
+        self.machine.events.add_handler('timer_tick',
+                                        self._tick)
 
-        # 'game'-specific variables
-        self.num_balls_in_play = 0
-        self.flag_empty_balldevices_in_progress = True
-        self.flag_ball_adding_live = False
+    @property
+    def num_balls_contained(self):
+        balls = 0
+        for device in self.machine.balldevices:
+            balls += device.num_balls_contained
+            if balls > self.num_balls_known:
+                self.num_balls_known = balls
+        if balls < 0:
+            return -999
+        else:
+            return balls
+        # todo figure out how to do this with a generator
 
-        self.num_balls_contained_in_pf = 0
-        """Balls in playfield devices."""
-        self.num_balls_to_add_live = 0
-        """Balls to launch into play."""
-        self.num_balls_to_add_stealth = 0
-        """Balls to stealth launch into play."""
-        self.num_balls_eject_auto = 0
-        """Balls to autolaunch into play."""
+    @property
+    def num_balls_live(self):
+        return self._num_balls_live
 
-        # Ball Save - todo might move these
-        self.num_balls_to_save = 0
-        self.flag_ball_save_active = False
-        self.flag_ball_save_multiple_saves = False
-        self.flag_ball_save_paused = False
-        self.timer_ball_save = 0
+    @num_balls_live.setter
+    def num_balls_live(self, balls):
+
+        prior_count = self._num_balls_live
+
+        if balls > 0:
+            self._num_balls_live = balls
+            self.ball_search_schedule()
+        else:
+            self._num_balls_live = 0
+            self.ball_search_disable()
+
+        self.log.debug("New Live Ball Count: %s. (Prior count: %s)",
+                       self._num_balls_live, prior_count)
+
+        # todo add support for finding missing balls
+
+    @property
+    def num_balls_desired_live(self):
+        return self._num_balls_desired_live
+
+    @num_balls_desired_live.setter
+    def num_balls_desired_live(self, balls):
+
+        prior_count = self._num_balls_desired_live
+
+        if balls > 0:
+            self._num_balls_desired_live = balls
+        else:
+            self._num_balls_desired_live = 0
+
+        self.log.debug("New Desired Live Ball Count: %s. (Prior count: %s)",
+                       self._num_balls_desired_live, prior_count)
+
+        # todo should we ensure that this value never exceed the number of balls
+        # known? Or is that a crutch that will obscure programming errors?
+        # I think we should do it but then log it as a warning.
 
     def reset(self):
         """Resets the BallController.
 
         Current this just gets an initial count of the balls and sends all the
-        balls to their 'home' position. (Basically it keeps ejecting balls
-        until they're all contained in devices tagged with 'home')
+        balls to their 'home' position.
         """
 
-        self.num_balls_known = self.count_contained_balls()
-        self.num_balls_uncontained = \
-            self.machine.config['Machine']['Balls Installed'] - \
-            self.num_balls_contained
-        # todo should we assume this uncontained value? I guess yes?
+        # If there are no ball devices, then the ball controller has no work to
+        # do and will create errors, so we just abort.
+        if not hasattr(self.machine, 'balldevices'):
+            return
 
-        # Send all the balls home.
-        # self.gather_balls('home')
+        self.num_balls_known = self.num_balls_contained
+
+        # remove any old handlers
+        self.machine.events.remove_handler(self._ball_add_live_handler)
+
+        # add handlers to watch for balls ejected to the playfield
+        for device in self.machine.balldevices:
+
+            if device.config['confirm_eject_type'] != 'device':
+                # This device ejects to the playfield
+
+                self.machine.events.add_handler('balldevice_' + device.name +
+                                                '_ball_eject_attempt',
+                                                self._ball_add_live_handler)
+                self.machine.events.add_handler('balldevice_' + device.name +
+                                                '_ball_eject_failed',
+                                                self._ball_remove_live_handler)
+            if 'drain' in device.tags:  # device is used to drain balls from pf
+                self.machine.events.add_handler('balldevice_' + device.name +
+                                                '_ball_enter',
+                                                self._ball_drained_handler)
+
+            if not device.config['feeder_device']:
+                # This device receives balls from the playfield
+                self.machine.events.add_handler('balldevice_' + device.name +
+                                                '_ball_enter',
+                                                self._ball_remove_live_handler,
+                                                priority=100)
+
+        if 'Allow start with loose balls' not in self.machine.config['Game']:
+            self.machine.config['Game']['Allow start with loose balls'] = False
+
+        # todo where do we figure out balls missing?
+        self.num_balls_live = 0
+        self.num_balls_desired_live = 0
+
+    def set_live_count(self, balls=None, from_tag='ball_add_live', device=None):
+        """Tells the ball controller how many balls you want live."""
+        self.log.debug("Setting desired live to: %s. (from_tag: %s, device: %s)",
+                       balls, from_tag, device)
+        self.log.debug("Previous desired live count: %s",
+                       self.num_balls_desired_live)
+
+        if balls is not None:
+            self.num_balls_desired_live = balls
+
+        if self.num_balls_desired_live <= self.num_balls_live:
+            # no live balls to add
+            return
+
+        balls_to_add = self.num_balls_desired_live - self.num_balls_live
+
+        # set which ball device we're working with
+        if not device:
+            device = self.machine.balldevices.items_tagged('ball_add_live')[0]
+            self.log.debug("Will add ball from device: %s", device.name)
+            # todo what if there isn't one? Need a clean error
+
+        # can we eject from this device? Grab a ball if not
+        if not device.num_balls_contained:
+            self.log.debug("Asking device %s to stage 1 ball", device.name)
+            device.num_balls_desired = 1  # this will stage a ball
+
+        self.log.debug("Subtracting 1 ball from %s's desired count",
+                       device.name)
+        device.num_balls_desired -= balls_to_add
+
+        # todo need to check how many balls ejectable this device has, and go
+        # to another device if this one can't serve them all
+
+    def add_live(self, balls=1, from_tag='ball_add_live', device=None):
+        """Tells the ball controller to add a live ball.
+
+        This method ensures you're not adding more balls live than you have
+        available.
+
+        By default it will try to add the ball(s) from devices tagged with
+        'ball_add_live'.
+
+        This is a convenience method which calls set_live_count()
+        """
+        self.log.debug("Received request to add %s live ball(s). Current "
+                       "desired live:  %s", balls, self.num_balls_desired_live)
+        if (self.num_balls_desired_live < self.num_balls_known and
+                self.num_balls_desired_live + balls <= self.num_balls_known):
+
+            self.set_live_count(self.num_balls_desired_live + balls, from_tag,
+                                device)
+            return True
+
+        elif self.num_balls_desired_live + balls > self.num_balls_known:
+            self.log.warning("Live ball request exceeds number of known balls")
+            self.set_live_count(self.num_balls_known, from_tag, device)
+            # should we return something here? I guess None is ok?
+
+        else:
+            self.log.debug("Cannot set new live ball count.")
+            return False
+
+    def stage_ball(self, tag='ball_add_live'):
+        """Makes sure that ball devices with the tag passed have a ball."""
+
+        for device in self.machine.balldevices.items_tagged(tag):
+            device.num_balls_desired = 1
+
+    def _tick(self):
+        # ticks once per game loop. Tries to keep the number of live balls
+        # matching the number of balls in play
+
+        if self.num_balls_desired_live < 0:
+            self.log.debug("Warning. num_balls_desired_live is negative. "
+                          "Resetting to 0.")
+            # todo found a lost ball??
+            self.num_balls_desired_live = 0
+            # todo change num_balls_desired_live to a property?
+
+        if self.num_balls_live != self.num_balls_desired_live:
+            self.log.debug("(tick) Current Balls Live: %s, Balls Desired: %s",
+                           self.num_balls_live, self.num_balls_desired_live)
+            self.set_live_count()
 
     def request_to_start_game(self):
         """Method registered for the *request_to_start_game* event.
@@ -127,373 +272,171 @@ class BallController(object):
         Balls' setting), it will return False to reject the game start request.
         """
         self.log.debug("Received request to start game.")
-        self.log.debug("Balls known: %s, Min balls needed: %s",
-                       self.num_balls_known,
+        self.log.debug("Balls contained: %s, Min balls needed: %s",
+                       self.num_balls_contained,
                        self.machine.config['Machine']['Min Balls'])
-        if self.num_balls_known < self.machine.config['Machine']['Min Balls']:
-            self.log.info("BallController denies game start. Not enough balls")
+        if self.num_balls_contained < self.machine.config['Machine']['Min Balls']:
+            self.log.debug("BallController denies game start. Not enough balls")
             return False
 
-        if not self.are_balls_gathered('home'):
+        if self.machine.config['Game']['Allow start with loose balls']:
+            return
+
+        elif not self.are_balls_gathered(['home', 'trough']):
             self.gather_balls('home')
-            self.log.info("BallController denies game start. Balls are not in"
+            self.log.debug("BallController denies game start. Balls are not in"
                           " their home positions.")
             return False
 
-    def ball_contained_count_change(self, change=0):
-        """Used when you want to change the count of balls that are contained
-        (held) versus uncontained (loose).
+    def are_balls_gathered(self, target=['home', 'trough']):
+        """Checks to see if all the balls are contained in devices tagged with
+        the parameter that was passed.
 
-        Pass a positive value (+) to increase the contained count and
-        decrease the uncontained count (i.e. when a ball enters a device or is
-        captured.)
+        Note if you pass a target that's not used in any ball devices, this
+        method will return True. (Because you're asking if all balls are
+        nowhere, and they always are. :)
 
-        Pass a negavitve value (-) to decrease the contained count and
-        increase the uncontained count (i.e. when a ball is released from a
-        device and is now loose on the playfield)
-
-        If this count changes results in at least one ball being uncontained,
-        the ball controller will start the ball search timer. If this count
-        change results in no balls being uncontained, it will stop the ball
-        search timer. If a ball search is in progress, it will sttop it.
-
-        Parameters
-        ----------
-
-        change : int
-            The change in contained balls.
-
-        """
-        self.log.debug("Ball contained count change. New values:")
-        self.num_balls_contained += change
-        self.num_balls_uncontained -= change
-
-        self.log.debug("num_balls_contained: %s", self.num_balls_contained)
-        self.log.debug("num_balls_uncontained: %s", self.num_balls_uncontained)
-
-        if self.num_balls_uncontained > 0:
-            # ball search should be enabled since we have live balls
-            self.ball_search_schedule()
-        elif self.num_balls_uncontained == 0:
-            # ball search should be off since all balls are known
-            self.ball_search_disable()
-        elif self.num_balls_uncontained < 0:  # this is weird
-            self.log.warning("Balls uncontained (live) went negative. "
-                             "Resetting uncontained to 0 and doing a full "
-                             "recount")
-            self.num_balls_uncontained = 0
-            self.ball_update_all_counts()
-
-        # todo check for ball search in progress and notify it?
-
-        # if more balls contained then we knew about, then they are "found"
-        if self.num_balls_contained > self.num_balls_known:
-            self.ball_found(self.num_balls_contained - self.num_balls_known)
-
-    def ball_update_all_counts(self):
-        """Does a full count of all balls, including counting all balls in
-        all devices and adding in any uncontained balls.
-        """
-        self.log.debug("Entering ball_controller.ball_update_all_counts()")
-
-        total_count = 0
-
-        self.num_balls_contained = self.count_contained_balls()
-        # todo add something about tempcontainer??
-        self.log.debug("We counted %s ball(s) contained",
-                       self.num_balls_contained)
-        self.log.debug("We have %s ball(s) uncontained",
-                       self.num_balls_uncontained)
-        self.log.debug("Ball known count: %s",
-                       self.num_balls_known)
-
-        if self.num_balls_uncontained < 0:
-            self.log.warning("Ball uncontained is less than zero. Resetting to"
-                             " zero.")
-            self.num_balls_uncontained = 0
-
-        total_count = self.num_balls_contained + self.num_balls_uncontained
-        self.log.debug("We counted %s ball(s) grand total", total_count)
-
-        if total_count > self.num_balls_known:
-            self.ball_found(total_count-self.num_balls_known)
-
-        elif total_count < self.num_balls_known:
-            self.log.debug("We just counted %s ball(s), but there "
-                           "should be %s", total_count, self.num_balls_known)
-            # dang, we lost one (or more?)
-            if self.num_balls_uncontained == 0:
-                # if we should have all the balls
-                if not self.flag_ball_search_in_progress:
-                    # and there's not a search in progress
-                    self.log.debug("Since we think all the balls are "
-                                     "contained, let's start a ball search")
-                    self.ball_search_begin()
-
-        elif total_count == self.num_balls_known:
-            # cool, we know where all the balls are
-            # cancel ball search
-            if self.flag_ball_search_in_progress:
-                self.ball_search_end()
-
-        if total_count > self.machine.config['Machine']['Balls Installed']:
-            self.log.warning("WARNING! Too many balls installed. We "
-                                  "counted %s, but there should only be %s "
-                                  "installed", total_count,
-                                  self.machine.config['Machine']\
-                                                  ['Balls Installed'])
-            # todo Do something about this
-
-    def count_contained_balls(self):
-        """Loops through all the ball devices and gets a count of how many
-        balls they have.
-
-        """
-        new_count = 0
-        prev_count = self.num_balls_contained
-        for device in self.machine.balldevices:
-            new_count += device.count_balls()
-        self.num_balls_contained = new_count
-        self.log.debug("Counting contained balls. Found: %s", new_count)
-
-        if new_count != prev_count:
-            self.ball_contained_count_change()
-
-        return new_count
-
-    def ball_found(self, num=1):
-        """Used when a previously missing ball is found. Updates the balls
-        known and balls missing variables.
-
-        Parameters
-        ----------
-
-        num : int
-            Specifies how many balls have been found. Default is 1.
-
-        """
-        self.log.debug("HEY!! We just found %s lost ball(s).", num)
-        self.num_balls_known += num
-        self.num_balls_missing -= num
-        self.log.debug("New ball counts. Known: %s, Missing: %s",
-                       self.num_balls_known, self.num_balls_missing)
-        self.ball_update_all_counts()  # is this necessary? todo
-
-    def are_balls_gathered(self, target='home'):
-        """Checks to see if all the balls are 'home,' which means they're all
-        contained in ball devices that are have the 'home' tag.
-
-        Typically this is the trough and the plunger lane, but you can make
-        them whatever you want.
-
+        Args:
+            target: String value of the tag you'd like to check. Default is
+            'home'
         """
 
         self.log.debug("Checking to see if all the balls are in devices tagged"
                        " with '%s'", target)
+
+        if type(target) is str:
+            target = [target]
+
         count = 0
-        for device in self.machine.balldevices.items_tagged(target):
-                count += device.get_status('num_balls_contained')
+        devices = set()
+
+        for tag in target:
+            for device in self.machine.balldevices.items_tagged(tag):
+                devices.add(device)
+
+        if len(devices) == 0:
+            # didn't find any devices matching that tag, so we return True
+            return True
+
+        for device in devices:
+            count += device.get_status('num_balls_contained')
+
         if count == self.machine.ball_controller.num_balls_known:
             self.log.debug("Yes, all balls are gathered")
-            # do we want to stop() all the devices, or is that a crutch?
             return True
         else:
             self.log.debug("No, all balls are not gathered")
             return False
 
-    def gather_balls(self, target='home'):
-        """Ejects all balls from all ball devices that do not have the `target`
-        tag.
+    def gather_balls(self, target='home', antitarget=None):
+        """Used to ensure that all balls are in (or not in) ball devices with
+        the tag you pass.
 
         Typically this would be used after a game ends, or when the machine is
-        reset or first starts up.
+        reset or first starts up, to ensure that all balls are in devices
+        tagged with 'home'.
 
-        Parameters
-        ----------
+        Args:
+            target: A string of the tag name of the ball devices you want all
+                the balls to end up in. Default is 'home'.
+            antitarget: The opposite of target. Will eject all balls from
+                all devices with the string you pass. Default is None.
 
-        target : str
-            The name of the tag of the devices you want all the balls to end up
-            in.
+        Note you can't pass both a target and antitarget in the same call. (If
+        you do it will just use the target and ignore the antitarget.)
 
+        TODO: Add support to actually move balls into position. e.g. STTNG, the
+        lock at the top of the playfield wants to hold a ball before a game
+        starts, so when a game ends the machine will auto eject one from the
+        plunger with the diverter set so it's held in the rear lock.
         """
-        # todo do we add the option of making the target a list?
-        self.log.debug("Received request gather all the balls to '%s'", target)
 
-        # Create events to watch for ball entry on all devices.
-        for device in self.machine.switches.items_tagged(target):
-            self.machine.events.add_handler("balldevice_" + device.name +
-                                            "ball_enter",
-                                            self.gather_balls, 1)
-
-        if self.are_balls_gathered(target):
-            # Remove the event handler that was watching these devices
-            self.machine.events.remove_handler(self.gather_balls)
-
-        else:
+        if not antitarget:
+            # todo do we add the option of making the target a list?
+            self.log.debug("Gathering all balls to devices tagged '%s'",
+                           target)
             for device in self.machine.balldevices:
-                if (target not in device.tags) and \
-                        device.get_status('num_balls_contained'):
-                    device.eject_all()
+                if (target in device.tags):
+                    device.num_balls_desired = device.config['ball_capacity']
+                else:
+                    device.num_balls_desired = 0
 
-    def empty_playfield_devices(self):
-        """Ejects all balls from all devices tagged with 'playfield'."""
-        # todo should probably change this to accept a tag name as a parameter
-        # so it can be used with anything.
-        self.log.debug("Emptying Playfield Ball Devices")
-        self.flag_empty_devices_in_progress = True
+        elif antitarget:
+            self.log.debug("Emptying balls from devices tagged '%s'",
+                           antitarget)
+            for device in self.machine.devices:
+                if (target in device.tags):
+                    device.num_balls_desired = 0
+                else:
+                    device.num_balls_desired = device.config['ball_capacity']
 
-        for device in self.machine.devices.items_tagged('playfield'):
-            device.eject_all()
-
-    def game_starting(self, queue, game):
-        """Used to inform the ball controller that a game is starting.
-
-        Parameters
-        ----------
-
-        game : :meth:`mpf.game.game.Game` instance
-
-        """
-        # todo I like the idea of receiving the game object on start. In this
-        # case that's so our game mode can keep track of the current ball.
-        # But is that really necessary? Why not just have ball_controller keep
-        # track of it? We'll see...
-        self.log.debug("ball_controller game_starting")
-        self.game = game
-        self.num_balls_in_play = 0
-        # todo make sure all balls are home
-        # todo do we need to update ball counts here? meh?
-
-    def game_ended(self):
-        """Tells the ball controller that the game is ending."""
-        self.game = None
-
-    def ball_started(self):
-        """Tells the ball controller that a ball has started."""
-        self.log.debug("Entering ball_started()")
-        self.num_balls_in_play = 0
-        self.machine.events.post('ball_add_live_request', balls=1,
-                                 stealth=False, auto=False)
-
-    def ball_ending(self, queue):
-        """Tells the ball controller that the game received a request to end
-        a ball.
-
-        Typically this happens if the last ball drains.
-
-        This method is tied to a queue event which means we can cancel the
-        ball ending request if we want to. In this case we'll check the count
-        of the number of balls we still have to add live. If it's more than
-        zero then we're canceling the ball ending request by returning False.
-        """
-        # fyi this is priority 1000 so it runs first since we might end up
-        # killing it if we have a ball launch in progress
-        self.log.debug("Entering ball_ending()")
-        if self.num_balls_to_add_live:
-            self.log.debug("We have at least one ball to add live. Canceling "
-                           " the ball_ending event.")
-            queue.kill()
-            return False
-        else:  # we're ending the ball
-            self.machine.events.remove_handler(self.ball_drained)
-
-    def ball_add_live(self, balls=1, stealth=False, auto=False, device=None):
-        """Adds one or more balls into play. This is how start a ball or how
-        you add additional balls in a multiball scenario.
-
-        Parameters
-        ----------
-
-        num : int
-            Number of balls to be launched. If ball launches are still
-            pending from a previous request, this number will be added to the
-            previously requested number.
-
-        stealth : bool
-            Set to True if the balls being launched should NOT
-            be added to the number of balls in play.  For instance, if
-            a ball is being locked on the playfield, and a new ball is
-            being launched to keep only 1 active ball in play,
-            stealth=True should be used.
-
-        auto : bool
-            Whether the balls should be added automatically. False means the
-            player has to hit the plunger switch or manually plunge. True means
-            the plunger will automatically fire.
-
-            Note if the ball device you're adding from is not configured with a
-            player switch and you request to add live with auto=False, it will
-            eject the ball(s) anyway since there's no way for the player to do
-            it.
-
-        device : ball device object
-            Specifies which ball device you want to add the ball from.
-            Default is whichever device is tagged with 'add_live.' (If you have
-            multiple devices taggeed with add_live it will be random. If that's
-            not what you want then pass the device you want to launch from.)
-
-        """
-
-        self.flag_ball_adding_live = True
-
-        # set which ball device we're working with
-        if not device:
-            device = self.machine.balldevices.items_tagged('ball_add_live')[0]
-
-        self.log.debug("Received request to add %s live ball(s) from "
-                       "ball device: %s", balls, device.name)
-        self.log.debug("Stealth: %s, Auto: %s", stealth, auto)
-
-        if not stealth:  # ball(s) added should increase live count
-            # setup event handlers to watch for eject success
-            # todo should we not allow stealth if there's a game in progress
-            # and no live balls? Or just log that as an error?
-            self.machine.events.add_handler('balldevice_' + device.name +
-                                            '_ball_eject_success',
-                                            self._ball_add_live_handler)
-
-        if not auto:  # We want the player to manually eject this ball
-            if device.config['player_controlled_eject_tag']:
-                device.enable_player_eject(total_balls=balls)
-
-            elif not device.config['manual_eject']:
-                self.log.warning("ball_add_live request is NOT auto, but we "
-                                 "don't have a player_controlled_eject_tag or "
-                                 "manual_eject option, so we're auto-"
-                                 "launching. Sorry.")
-                auto = True
-
-        if auto:  # can't do 'else' here because we might set auto in that code
-            self.machine.events.post('balldevice_' + device.name +
-                                     '_ball_eject_request', balls=balls)
-
-        if device.config['manual_eject'] and not device.config['eject_coil']:
-            # Manual eject with no auto option, so let's post the eject event
-            self.machine.events.post('balldevice_' + device.name +
-                                     '_ball_eject_request', balls=balls)
-
-    def _ball_add_live_handler(self, balls_ejected):
-        # Event handler which watches for device eject confirmations to add
+    def _ball_add_live_handler(self, balls):
+        # Event handler which watches for device eject attempts to add
         # live balls
 
-        self.machine.events.remove_handler(self._ball_add_live_handler)
-        self.ball_add_live_success(balls_ejected)
+        if not balls:
+            return
 
-    def ball_add_live_success(self, balls_added=1):
-        """A ball was just added live to the playfield.
+        # If our previous desired count was less or equal to our live count,
+        # then this eject should increase the desired count. Why? Because
+        # whatever caused this eject wants there to be more balls desired.
 
-        """
+        # If the previous desired count was higher than this eject, then the
+        # desired count shouldn't change, as these balls are fulfilling its
+        # missing desired balls.
 
-        self.num_balls_in_play += balls_added
-        self.log.debug("Live ball added. Balls in play now: %s",
-                       self.num_balls_in_play)
-        self.flag_ball_adding_live = False
+        # todo potential bug: What if prior desired was higher than prior live,
+        # and we get a new live increase which takes it above the prior desired?
+        # I *think* that should never happen since the ball controller would
+        # try to launch a new ball if live fell below desired, but it's possible
+        # we could get into this situation depending on staging times and stuff.
 
-        # for the ball drain events, we scan through all devices and register
-        # the ones that have the 'drain' tag.
-        for device in self.machine.balldevices.items_tagged('drain'):
-            self.machine.events.add_handler('balldevice_' + device.name +
-                                            '_ball_enter', self.ball_drained)
+        # Let's log this as a warning for now and revisit this later.
+
+        if ((self.num_balls_desired_live > self.num_balls_live) and
+                balls > (self.num_balls_desired_live > self.num_balls_live)):
+            self.log.warning("Ball add deficit warning. See note in "
+                             "_ball_add_live_handler() in ball_controller.py")
+
+        if self.num_balls_desired_live <= self.num_balls_live:
+            self.num_balls_desired_live += balls
+
+        self.num_balls_live += balls
+
+        self.machine.events.post('ball_live_added',
+                                 total_live=self.num_balls_live)
+
+    def _ball_remove_live_handler(self, balls=1):
+        # Event handler which watches for device ball entry events
+        self.num_balls_live -= balls
+        self.num_balls_desired_live -= balls
+
+        self.machine.events.post('ball_live_removed',
+                                 total_live=self.num_balls_live)
+
+    def _ball_drained_handler(self, balls):
+        # This is a special handler which is called when balls enter devices
+        # tagged with drain. It posts a ball_drain event and automatically
+        # decrements the desired_balls_live counter.
+        self.log.debug("Ball Drain Handler. Previous desired live: %s. Will "
+                      "decrement by 1 and post 'ball_drain' relay event.",
+                      self.num_balls_desired_live)
+
+        if not self.machine.tilted:
+            self.num_balls_desired_live -= balls
+
+            self.machine.events.post('ball_drain', ev_type='relay',
+                                     callback=self._process_ball_drained,
+                                     balls=balls)
+
+        else:  # received a drain while tilted
+            self.machine.events.post('tilted_ball_drain')
+
+    def _process_ball_drained(self, balls=None, ev_result=None):
+        # We don't need to do anything here because other modules (ball save,
+        # the game, etc. should jump in and do whatever they need to do when a
+        # ball is drained.
+        pass
 
     def ball_live_hit(self):
         """A ball just hit a playfield switch.
@@ -512,66 +455,12 @@ class BallController(object):
         'ball_live' has been activated.
 
         """
-        if self.num_balls_uncontained:
+        if self.num_balls_live:
             self.ball_search_schedule()
         if self.flag_ball_search_in_progress:
             self.log.debug("Just got a live playfield hit during ball search, "
                            "so we're ending ball search.")
             self.ball_search_end()
-
-        # if pending ball launch todo?
-        # call live ball added (or ball launch success) todo?
-        # todo add in game, and ball server request?
-
-    def ball_drained(self, new_balls=1):
-        """We've confirmed that a ball has entered a ball device tagged with
-        *drain*.
-
-        When this method is called, it posts a relay event called *ball_drain*
-        along with the number of balls that just entered the device. This gives
-        other modules a chance to intervene before the ball controller posts
-        the *ball_remove_live* event.
-
-        This is typically used with ball save. If ball save is active and a
-        ball drains, when we post the ball_drain event the ball save module
-        will pick it up and change the balls parameter that's being passed
-        around to zero. That will cause our callback
-        :meth:`process_ball_drained` to not post the *ball_remove_live event*.
-
-        """
-
-        self.log.debug("%s ball(s) just entered a drain device", new_balls)
-        self.log.debug("num_balls_in_play: %s", self.num_balls_in_play)
-
-        self.machine.events.post('ball_drain', ev_type='relay',
-                                 callback=self.process_ball_drained,
-                                 balls=new_balls)
-
-    def process_ball_drained(self, balls=0):
-        """Callback from the ball_drained event. If it receives a
-        parameter of *balls* which is greater than 1, it will post a
-        *ball_remove_live* event for each ball.
-
-        """
-        if balls:
-            self.log.debug("Processing %s newly-drained ball(s)", balls)
-            self.num_balls_in_play -= balls
-            self.log.debug("Balls in play now: %s", self.num_balls_in_play)
-            for i in range(balls):
-                self.machine.events.post('ball_remove_live')
-
-
-    def tilt(self):
-        """ Registers for the 'tilt' event so the ball controller can do what
-        it needs to do.
-
-        Mainly this just tracks how many balls were live before
-        the tilt and waits for them all to drain so the game can proceed. It
-        also makes sure any balls that enter ball devices are ejected as
-        they're rolling towards the drain.
-
-        """
-        pass
 
     '''
      ____        _ _    _____                     _
@@ -669,7 +558,7 @@ class BallController(object):
         if not self.flag_no_ball_search:
             self.log.debug("Received request to start ball search")
             # ball search should only start if we have uncontained balls
-            if self.num_balls_uncontained or force:
+            if self.num_balls_live or force:
                 # todo add audit
                 self.flag_ball_search_in_progress = True
                 self.machine.events.post("ball_search_begin_phase1")
@@ -678,21 +567,6 @@ class BallController(object):
             else:
                 self.log.debug("We got request to start ball search, but we "
                                "have no balls uncontained. WTF??")
-
-    def get_balldevice_status(self, includetrough=False):
-        """ Returns a dictionary of ball devices, along with the number of
-        balls the machine *thinks* are in each device.
-
-        Format is a dictionary, with the device object as the key, and the
-        number of balls contained as the value.
-
-        # todo need to think about priorities. Assume it should start with ones
-        it thinks are empty? And then maybe do them in the order the game
-        wants?
-
-        """
-        # todo
-        pass
 
     def ball_search_failed(self):
         """Ball Search did not find the ball."""
@@ -713,17 +587,30 @@ class BallController(object):
         self.num_balls_known = self.num_balls_contained
         self.num_balls_missing = self.machine.config['Machine']\
             ['Balls Installed'] - self.num_balls_contained
-        self.num_balls_uncontained = 0
+        self.num_balls_live = 0
+        # since desired count doesn't change, this will relaunch them
         self.log.debug("Ball(s) Marked Lost. Known: %s, Missing: %s",
                        self.num_balls_known, self.num_balls_missing)
 
         # todo audit balls lost
 
-        # If we lost balls that were in play, stealth launch the number in play
-        if self.num_balls_in_play:
-            self.machine.events.post('ball_add_live_request',
-                                     balls=self.num_balls_in_play,
-                                     stealth=True, auto=True)
+    def ball_found(self, num=1):
+        """Used when a previously missing ball is found. Updates the balls
+        known and balls missing variables.
+
+        Parameters
+        ----------
+
+        num : int
+            Specifies how many balls have been found. Default is 1.
+
+        """
+        self.log.debug("HEY!! We just found %s lost ball(s).", num)
+        self.num_balls_known += num
+        self.num_balls_missing -= num
+        self.log.debug("New ball counts. Known: %s, Missing: %s",
+                       self.num_balls_known, self.num_balls_missing)
+        self.ball_update_all_counts()  # is this necessary? todo
 
 # The MIT License (MIT)
 

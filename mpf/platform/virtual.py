@@ -14,8 +14,6 @@ that it doesn't require any P-ROC drivers or modules to be installed.
 # Documentation and more info at http://missionpinball.com/framework
 
 import logging
-import time
-from mpf.system.timing import Timing
 from mpf.system.platform import Platform
 
 

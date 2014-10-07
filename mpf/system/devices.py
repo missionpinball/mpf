@@ -27,6 +27,7 @@ class Device(object):
             self.config.update(config)
             if 'tags' in config:
                 self.tags = self.machine.string_to_list(config['tags'])
+
             if 'label' in config:
                 self.label = config['label']  # todo change to multi lang
             # todo more pythonic way, like self.label = blah if blah?
@@ -95,11 +96,34 @@ class DeviceCollection(dict):
             yield item
 
     def items_tagged(self, tag):
+        """Returns of list of device objects which have a certain tag.
+
+        Args:
+            tag: A string of the tag name which specifies what devices are
+                returned.
+        Returns:
+            A list of device objects. If no devices are found with that tag, it
+            will return an empty list.
+        """
         output = []
         for item in self:
             if tag in item.tags:
                 output.append(item)
         return output
+
+    def is_valid(self, name):
+        """Checks to see if the name passed is a valid device.
+
+        Args:
+            name: The string of the device name you want to check.
+        Returns:
+            True or False, depending on whether the name is a valid device or
+            not.
+        """
+        if name in self.itervalues():
+            return True
+        else:
+            return False
 
     def number(self, number):
         """Returns a device object based on its number."""

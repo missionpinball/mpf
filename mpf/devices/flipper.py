@@ -43,6 +43,9 @@ class Flipper(Device):
         self.strength = 100
         self.inverted = False
 
+        if config:
+            self.configure(config)
+
     def configure(self, config=None):
         """Configures the flipper device.
 
@@ -58,15 +61,12 @@ class Flipper(Device):
 
         self.log.debug("Configuring device with: %s", self.config)
 
-        # todo do we convert all of these to objects?
-
+        # todo convert these to objects:
         # config['main_coil']
         # config['activation_switch']
         # config['hold_coil']
         # config['eos_switch']
         # config['use_eos']
-
-        self.hold_pwm = config['hold_pwm']  # todo not used???
 
         self.flipper_coils = []
         self.flipper_coils.append(self.config['main_coil'])
@@ -74,9 +74,9 @@ class Flipper(Device):
             self.flipper_coils.append(self.config['hold_coil'])
 
         self.flipper_switches = []
-        self.flipper_switches.append(self.config['activation_switch'].name)
+        self.flipper_switches.append(self.config['activation_switch'])
         if self.config['eos_switch']:
-            self.flipper_switches.append(self.config['eos_switch'].name)
+            self.flipper_switches.append(self.config['eos_switch'])
 
     def enable(self):
         """Enables the flipper by writing the necessary hardware rules to the
@@ -202,7 +202,8 @@ class Flipper(Device):
 
         """
 
-        if self.config['flipper_switches']:
+        if self.flipper_switches:
+            self.log.debug("Disabling")
             for switch in self.flipper_switches:
                     self.machine.platform.clear_hw_rule(switch)
 

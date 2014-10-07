@@ -43,7 +43,7 @@ class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever yo
         self.machine.events.post('whatever_event_you_want')
 
         # you can register handlers to act on system events
-        self.machine.events.add_handler('ball_add_live_success',
+        self.machine.events.add_handler('ball_add_live',
                                         self.my_handler)
 
         # you can create periodic timers that are called every so often

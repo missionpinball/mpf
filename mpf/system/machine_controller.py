@@ -9,7 +9,7 @@
 import logging
 import os
 import yaml
-from collections import defaultdict
+from collections import defaultdict, deque
 from copy import deepcopy
 import time
 import sys
@@ -40,10 +40,16 @@ class MachineController(object):
         self.done = False  # The machine run() loop will check this and exit if True
         self.HZ = None
         self.machineflow_index = None
-        self.loop_rate = 0
+        self.loop_rate = 0.0
+        self.mpf_load = 0.0
 
         self.plugins = []
         self.scriptlets = []
+
+        self.tilted = False
+        # Technically 'tilted' should be an attribute of game, but since tilts
+        # are complex and affect many devices and plugins, it's simpler across
+        # the board to have it as a machine attribute.
 
         # load the MPF config & machine defaults
         self.load_config_yaml(self.options['mpfconfigfile'])
@@ -65,6 +71,11 @@ class MachineController(object):
             # exec() is supposedly unsafe, but meh, if you have access to put
             # malicious files in the system folder then you have access to this
             # code too.
+
+        self.events.add_handler('action_shutdown', self.end_run_loop)
+        self.events.add_handler('sw_shutdown', self.end_run_loop)
+        self.events.add_handler('machine_reset_phase_3', self.flow_advance,
+                                position=0)
 
         self.events.post("machine_init_phase1")
 
@@ -90,25 +101,34 @@ class MachineController(object):
         # Load plugins
         if 'Plugins' in self.config:
             self.config['Plugins'] = self.config['Plugins'].split(' ')
+
             for plugin in self.config['Plugins']:
-                self.log.info("Loading Plugin: %s", plugin)
+                self.log.info("Checking Plugin: %s", plugin)
                 i = __import__('mpf.plugins.' + plugin.split('.')[0],
                                fromlist=[''])
-                self.plugins.append(getattr(i, plugin.split('.')[1])(self))
+                if i.preload_check(self):
+                    self.log.info("Plugin: %s passes pre-load check. "
+                                  "Loading...", plugin)
+                    self.plugins.append(getattr(i, plugin.split('.')[1])(self))
+                else:
+                    self.log.warning("Plugin: %s failed pre-load check. "
+                                     "Skipping.", plugin)
 
-        # Add the machine path to our system path so we can import stuff from it
+        # Add the machine path to our system path so we can import from it
         sys.path.append(os.path.abspath(self.options['machinepath']))
 
         # Load Scriptlets
         if 'Scriptlets' in self.config:
             self.config['Scriptlets'] = self.config['Scriptlets'].split(' ')
             for scriptlet in self.config['Scriptlets']:
-                i = __import__(self.config['MPF']['paths']['scriptlets'] + '.' +
-                               scriptlet.split('.')[0], fromlist=[''])
+                i = __import__(self.config['MPF']['paths']['scriptlets'] + '.'
+                               + scriptlet.split('.')[0], fromlist=[''])
+
                 self.scriptlets.append(getattr(i, scriptlet.split('.')[1])
                                      (machine=self,
                                       name=scriptlet.split('.')[1]))
 
+        self.log.debug("Configuring Machine Flow")
         # Configure the Machine Flow
         self.config['MachineFlow'] = self.config['MachineFlow'].split(' ')
         # Convert the MachineFlow config into a list of objects
@@ -127,20 +147,26 @@ class MachineController(object):
 
     def reset(self):
         """Resets the machine."""
-        self.events.post('machine_reset')
+        self.events.post('machine_reset_phase_1')
+        self.events.post('machine_reset_phase_2')
+        self.events.post('machine_reset_phase_3')
         # Do we want to reset all timers here? todo
         # do we post an event when we do this? Really this should re-read
         # the config and stuff, right? Maybe we destroy all of our objects
         # even and recreate them?
 
         # after our reset is over, we start the machineflow
-        self.flow_advance(0)
+        #self.flow_advance(0)
 
-    def flow_advance(self, position=None):
+    def flow_advance(self, position=None, **kwargs):
         """Advances the machine to the next machine mode as specified in the
         machineflow. Typically this just advances between Attract mode and Game
         mode.
         """
+
+        # This method will be called for the first time by the event
+        # 'machine_reset_phase_3'
+
         # If there's a current machineflow position, stop that mode
         if self.machineflow_index is not None:
             self.config['MachineFlow'][self.machineflow_index].stop()
@@ -161,7 +187,7 @@ class MachineController(object):
                        self.machineflow_index)
 
         # Now start the new machine mode
-        self.config['MachineFlow'][self.machineflow_index].start()
+        self.config['MachineFlow'][self.machineflow_index].start(**kwargs)
 
     def load_config_yaml(self, config):
         """Merges config updates into the self.config dictionary.
@@ -213,7 +239,7 @@ class MachineController(object):
             except yaml.YAMLError, exc:
                 if hasattr(exc, 'problem_mark'):
                     mark = exc.problem_mark
-                    self.log.error("Error found in config file %s. Line %, "
+                    self.log.error("Error found in config file %s. Line %s, "
                                    "Position %s", config_location, mark.line+1,
                                    mark.column+1)
                     quit()
@@ -225,11 +251,16 @@ class MachineController(object):
 
         # now check if there are any more updates to do.
         # iterate and remove them
-        if self.config['Config']:
-            if config in self.config['Config']:
-                self.config['Config'].remove(config)
+        try:
             if self.config['Config']:
-                self.load_config_yaml(self.config['Config'][0])
+                if config in self.config['Config']:
+                    self.config['Config'].remove(config)
+                if self.config['Config']:
+                    self.load_config_yaml(self.config['Config'][0])
+        except:
+            self.log.info("No configuration file found, or config file is empty"
+                          ". But congrats! Your game works! :)")
+            quit()
 
     def set_platform(self):
         """ Sets the hardware platform based on the "Platform" item in the
@@ -268,16 +299,18 @@ class MachineController(object):
             string (str): The string you'd like to convert.
 
         Returns:
-            A python list object containing whatever was between commas in the
-            string.
+            A python list object containing whatever was between commas and/or
+            spaces in the string.
         """
         if type(string) is str:
             return string.replace(',', ' ').split()
         elif type(string) is list:
             # if it's already a list, do nothing
             return string
+        elif string is None:
+            return []
         else:
-            # if we're not passed a string, just convert it to a list
+            # if we're passed anything else, just make it into a list
             return [string]
 
     def string_to_class(self, class_string):
@@ -393,11 +426,34 @@ class MachineController(object):
         if self.platform.features['hw_timer']:
             self.platform.hw_loop()
         else:
-            self.sw_loop()
+            if 'Enable Loop Data' in self.config['Machine'] and (
+                    self.config['Machine']['Enable Loop Data']):
+                self.sw_data_loop()
+            else:
+                self.sw_optimized_loop()
 
         # todo add support to read software switch events
 
-    def sw_loop(self):
+    def sw_optimized_loop(self):
+        """The optimized version of the main game run loop."""
+
+        self.log.debug("Starting the optimized software loop. Metrics are "
+                       "disabled in this optimized loop.")
+        self.mpf_load = 0
+        self.loop_rate = 0
+
+        secs_per_tick = timing.Timing.secs_per_tick
+
+        try:
+            while self.done is False:
+                self.platform.hw_loop()
+                if self.platform.next_tick_time <= time.time():  # todo change this
+                    self.timer_tick()
+                    self.platform.next_tick_time += secs_per_tick
+        except KeyboardInterrupt:
+            pass
+
+    def sw_data_loop(self):
         """ This is the main game run loop.
 
         """
@@ -406,20 +462,55 @@ class MachineController(object):
 
         self.log.debug("Starting the software loop")
 
-        loop_start_time = time.time() - .01
-        num_loops = 0
+        mpf_times = deque()
+        hw_times = deque()
 
-        while self.done is False:
-            self.platform.hw_loop()
-            if self.platform.next_tick_time <= time.time():  # todo change this
-                self.timer_tick()
-                self.platform.next_tick_time += timing.Timing.secs_per_tick
-            num_loops += 1
-            self.loop_rate = int(num_loops / (time.time() - loop_start_time))
+        mpf_times.extend([0] * 100)
+        hw_times.extend([0] * 100)
+        this_loop_time = 0
+        hw_loop_time = 0
 
-        else:
-            if num_loops != 0:
-                self.log.info("Hardware loop speed: %sHz", self.loop_rate)
+        try:
+            while self.done is False:
+                hw_entry = time.time()
+                self.platform.hw_loop()
+                hw_loop_time += time.time() - hw_entry
+                if self.platform.next_tick_time <= time.time():
+
+                    mpf_entry = time.time()
+                    self.timer_tick()
+
+                    try:
+                        mpf_times.append((time.time() - mpf_entry) /
+                                        (time.time() - this_loop_start))
+                    except:
+                        mpf_times.append(0.0)
+
+                    try:
+                        hw_times.append(hw_loop_time /
+                                        (time.time() - this_loop_start))
+                    except:
+                        hw_times.append(0.0)
+
+                    # throw away the oldest time
+                    mpf_times.popleft()
+                    hw_times.popleft()
+
+                    # update our public info
+                    self.mpf_load = round(sum(mpf_times), 2)
+                    self.loop_rate = round(sum(hw_times), 2)
+
+                    # reset the loop counter
+                    hw_loop_time = 0.0
+                    this_loop_start = time.time()
+
+                    self.platform.next_tick_time += timing.Timing.secs_per_tick
+
+        except KeyboardInterrupt:
+            pass
+
+        self.log.info("Hardware load percent: %s", self.loop_rate)
+        self.log.info("MPF load percent: %s", self.mpf_load)
 
         # todo add detection to see if the system is running behind?
         # if you ask for 100HZ and the system can only do 50, that is

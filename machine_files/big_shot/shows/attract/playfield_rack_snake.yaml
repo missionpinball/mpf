@@ -1,0 +1,87 @@
+- tocks: 1
+  lights:
+    ball1: ff
+- tocks: 1
+  lights:
+    ball3: ff
+- tocks: 1
+  lights:
+    ball6: ff
+- tocks: 1
+  lights:
+    ball10: ff
+- tocks: 1
+  lights:
+    ball15: ff
+- tocks: 1
+  lights:
+    ball14: ff
+- tocks: 1
+  lights:
+    ball13: ff
+- tocks: 1
+  lights:
+    ball12: ff
+- tocks: 1
+  lights:
+    ball11: ff
+- tocks: 1
+  lights:
+    ball7: ff
+- tocks: 1
+  lights:
+    ball4: ff
+- tocks: 1
+  lights:
+    ball2: ff
+- tocks: 1
+  lights:
+    ball5: ff
+- tocks: 1
+  lights:
+    ball9: ff
+- tocks: 2
+  lights:
+    ball8: ff
+- tocks: 1
+  lights:
+    ball8: 0
+- tocks: 1
+  lights:
+    ball9: 0
+- tocks: 1
+  lights:
+    ball5: 0
+- tocks: 1
+  lights:
+    ball2: 0
+- tocks: 1
+  lights:
+    ball4: 0
+- tocks: 1
+  lights:
+    ball7: 0
+- tocks: 1
+  lights:
+    ball11: 0
+- tocks: 1
+  lights:
+    ball12: 0
+- tocks: 1
+  lights:
+    ball13: 0
+- tocks: 1
+  lights:
+    ball14: 0
+- tocks: 1
+  lights:
+    ball15: 0
+- tocks: 1
+  lights:
+    ball10: 0
+- tocks: 1
+  lights:
+    ball6: 0
+- tocks: 1
+  lights:
+    ball3: 0

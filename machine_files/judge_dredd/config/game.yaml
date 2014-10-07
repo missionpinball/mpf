@@ -1,8 +1,6 @@
 # Instructions for this config file:
 # https://missionpinball.com/docs/configuration-file-reference/
 
-
-    
 MachineFlow:
     mpf.game.attract.Attract
     mpf.game.game.Game
@@ -22,32 +20,24 @@ Game:
     num_hits_for_valid_playfield: 2
     Balls per game: 1
     Max players per game: 4
+    Max extra balls stacked: unlimited
+    Max extra balls per game: unlimited
+    player_controlled_eject_tag: right_eject
 
 Scriptlets:
     attract.Attract
     deadworld.Deadworld
+    jd_game.JDGame
 
 Plugins:
+    shots.ShotController
     keyboard.Keyboard
     lcd.LCD
     ball_search.BallSearch
-    event_triggers.EventTriggers
-
-EventTriggers:
-    tilt:
-        trigger_events: tilt
-        event_when_hit: tilt_hit
-        hits_to_complete: 3
-        multiple_hit_window: 500ms
-        enable_events:
-        disable_events:
-        reset_events: ball_ending
-        event_when_complete: tilt
-        settle_time: 5s
-    slam_tilt:
-        switch_tags: slam_tilt
-        hits_to_tile: 1
-
+    logic_blocks.LogicBlocks
+    osc.OSC
+    scoring.ScoreController
+    auditor.Auditor
 
 LCD:
     width: 800
@@ -59,6 +49,7 @@ LCD:
         ball
         version
         looprate
+        mpf_load
 
 Actions:
     

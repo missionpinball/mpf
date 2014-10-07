@@ -1,5 +1,7 @@
-"""Contains ball search functionality which actually controls the coils to
+"""MPF plugin for a ball search module which actually controls the coils to
 search for a missing pinball.
+
+This module is not yet complete and does not work.
 
 """
 # ball_search.py
@@ -12,6 +14,11 @@ search for a missing pinball.
 import logging
 from mpf.system.tasks import Task
 from mpf.system.timing import Timing
+
+
+def preload_check(machine):
+
+    return True
 
 
 class BallSearch(object):
@@ -86,7 +93,6 @@ class BallSearch(object):
         This is not yet implemented. (It's copied in from our ball_controller
         code from our old python project.)
         """
-        print "popping coil", coil
         '''
         if coil.patter_on:
             coil.patter(on_ms=coil.patter_on,

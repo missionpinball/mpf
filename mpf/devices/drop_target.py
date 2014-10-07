@@ -19,15 +19,40 @@ class DropTarget(Target):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('DropTarget.' + name)
+        self.device_str = 'droptarget'
         super(DropTarget, self).__init__(machine, name, config, collection)
 
-        self.device_str = 'droptarget'
+        # drop targets maintain self.complete in addition to self.lit from the
+        # parent class since they can maintain a physical state which could
+        # vary from the lit state. For example, you might want to have a drop
+        # target "lit" that was still standing (i.e. not complete)
+        self.complete = False
 
         # set config defaults
         if 'reset_coil' not in self.config:
             self.config['reset_coil'] = None
         if 'knockdown_coil' not in self.config:
             self.config['knockdown_coil'] = None
+
+        # let's use some different defaults here since drop targets are
+        # different than other targets:
+
+        '''
+        if ('light_when_unlit' not in self.config and
+                'unlight_when_lit' not in self.config):
+            if self.config['default_state'] == 'unlit':
+                self.config['light_when_unlit'] = True
+                self.config['unlight_when_lit'] = True
+        '''
+
+
+        # register for notification of switch state
+        # this is in addition to the parent since drop targets track
+        # self.complete in separately from lit/unlit
+        self.machine.switch_controller.add_switch_handler(self.config['switch'],
+            self.update_state_from_switch, 0)
+        self.machine.switch_controller.add_switch_handler(self.config['switch'],
+            self.update_state_from_switch, 1)
 
         # can't read the switch until the switch controller is set up
         self.machine.events.add_handler('machine_init_phase1',
@@ -36,12 +61,25 @@ class DropTarget(Target):
         # todo add switch handler to watch for reset switch?
         # or do we? What about ball search? Config option?
 
-    def update_state_from_switch(self):
-        """Reads the state of the switch"""
+    def knowndown(self):
+        """Pulses the knockdown coil to knock down this drop target."""
+        if self.config['knockdown_coil']:
+            self.machine.coils[self.config['knockdown_coil']].pulse()
 
+    def update_state_from_switch(self):
+        """Reads the state of the switch and updates this drop target's
+        complete status.
+
+        If this method sees that this target has changed back to its up state,
+        then it will also call its reset() method.
+
+        """
         # set the initial complete state
         if self.machine.switch_controller.is_active(self.config['switch']):
             self.complete = True
+        else:
+            self.complete = False
+            self.reset()
 
 
 class DropTargetBank(TargetGroup):
@@ -52,11 +90,15 @@ class DropTargetBank(TargetGroup):
     config_section = 'DropTargetBanks'
     collection = 'drop_target_banks'
 
-    def __init__(self, machine, name, config, collection=None):
+    def __init__(self, machine, name, config, collection, member_collection=None,
+                 device_str=None):
+
+        self.device_str = 'drop_targets'
+
         self.log = logging.getLogger('DropTargetBank.' + name)
-        self.devices_str = 'drop_targets'
-        self.member_collection = machine.drop_targets
-        super(DropTargetBank, self).__init__(machine, name, config, collection)
+        super(DropTargetBank, self).__init__(machine, name, config, collection,
+                                             machine.drop_targets,
+                                             self.device_str)
 
         # set config defaults
         if 'reset_events' not in self.config:
@@ -97,4 +139,3 @@ class DropTargetBank(TargetGroup):
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-

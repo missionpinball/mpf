@@ -234,9 +234,7 @@ class HardwarePlatform(Platform):
 
             fastpinball.fpEventPoll(self.fast, fast_events)
             eventType = fastpinball.fpGetEventType(fast_events)
-            if eventType != 4 and eventType != 0:
-                #print eventType, time.time()
-                pass
+
             if eventType == 0:
                 continue
             elif eventType == 4:  # timer_tick

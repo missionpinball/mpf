@@ -6,16 +6,13 @@ Submodules
 
 .. toctree::
 
-   mpf.system.auditor
    mpf.system.ball_controller
    mpf.system.devices
    mpf.system.events
    mpf.system.machine_controller
    mpf.system.machine_mode
    mpf.system.platform
-   mpf.system.scoring
    mpf.system.scriptlet
-   mpf.system.shots
    mpf.system.show_controller
    mpf.system.switch_controller
    mpf.system.tasks

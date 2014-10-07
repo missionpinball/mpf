@@ -1,5 +1,5 @@
-"""Contains the Keyboard class which allows a computer keyboard to be used to
-activate switches for MPF Python games.
+"""MPF pluging which allows a computer keyboard to be used to activate switches
+for MPF Python games.
 
 """
 # keyboard.py
@@ -10,9 +10,24 @@ activate switches for MPF Python games.
 # Documentation and more info at http://missionpinball.com/framework
 
 import logging
-import pyglet
 
 # todo do not set toggle keys if real hw is being used.
+
+global import_success
+
+try:
+    import pyglet
+    import_success = True
+except:
+    import_success = False
+
+
+def preload_check(machine):
+
+    if import_success:
+        return True
+    else:
+        return False
 
 
 class Keyboard(object):
@@ -195,8 +210,8 @@ class Keyboard(object):
 
         if not hasattr(self.machine, 'window'):
             self.machine.window = pyglet.window.Window()
-            self.machine.window.width = 100
-            self.machine.window.height = 100
+            self.machine.window.width = 200
+            self.machine.window.height = 200
 
         @self.machine.window.event
         def on_close():

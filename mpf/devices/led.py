@@ -92,8 +92,8 @@ class LED(Device):
 
         self.current_color = []  # one item for each element, 0-255
 
-    def color(self, color, fade_ms=None, brightness_compensation=True, priority=0,
-              cache=True):
+    def color(self, color, fade_ms=None, brightness_compensation=True,
+              priority=0, cache=True, force=False):
         """Sets this LED to the color passed.
 
         Args:
@@ -114,7 +114,7 @@ class LED(Device):
 
         # If the incoming priority is lower that what this LED is at currently
         # ignore this request.
-        if -1 < priority < self.state['priority']:
+        if priority < self.state['priority'] and not force:
             return
 
         if brightness_compensation:
@@ -164,7 +164,11 @@ class LED(Device):
 
     def restore(self):
         """Sets this LED to the cached state."""
-        self.color(self.cache['color'], 0, False, self.cache['priority'])
+        self.color(color=self.cache['color'],
+                   fade_ms=0,
+                   brightness_compensation=False,  # cached value includes this
+                   priority=self.cache['priority'],
+                   force=False)
 
     def compensate(self, color):
         """Applies the current brightness compensation values to the passed

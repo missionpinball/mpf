@@ -270,7 +270,6 @@ class HardwarePlatform(Platform):
                 # todo we still have event types:
                 # pinproc.EventTypeSwitchClosedNondebounced
                 # pinproc.EventTypeSwitchOpenNondebounced
-                # Do we do anything with them?
 
         self.proc.watchdog_tickle()
         self.proc.flush()
@@ -444,6 +443,7 @@ class HardwarePlatform(Platform):
         else:
             self.hw_switch_rules[sw_rule_string] = this_driver
 
+        self.log.debug("Writing HW rule for switch: %s", sw.number)
         self.proc.switch_update_rule(sw.number, event_type, rule, final_driver,
                                      drive_now)
 
@@ -463,21 +463,30 @@ class HardwarePlatform(Platform):
             The number of the switch whose rule you want to clear.
 
         """
+        self.log.debug("Clearing HW rule for switch: %s", sw_num)
+
         self.proc.switch_update_rule(sw_num, 'open_nondebounced',
                                      {'notifyHost': False,
-                                      'reloadActive': False}, [], False)
+                                      'reloadActive': False}, [])
         self.proc.switch_update_rule(sw_num, 'closed_nondebounced',
                                      {'notifyHost': False,
-                                      'reloadActive': False}, [], False)
+                                      'reloadActive': False}, [])
         self.proc.switch_update_rule(sw_num, 'open_debounced',
                                      {'notifyHost': True,
-                                      'reloadActive': False}, [], False)
+                                      'reloadActive': False}, [])
         self.proc.switch_update_rule(sw_num, 'closed_debounced',
                                      {'notifyHost': True,
-                                      'reloadActive': False}, [], False)
+                                      'reloadActive': False}, [])
 
         for entry in self.hw_switch_rules.keys():  # slice for copy
             if entry.startswith(self.machine.switches.number(sw_num).name):
+
+                # disable any drivers from this rule which are active now
+                # todo make this an option?
+                for driver_dict in self.hw_switch_rules[entry]:
+                    self.proc.driver_disable(driver_dict['driverNum'])
+
+                # Remove this rule from our list
                 del self.hw_switch_rules[entry]
 
         # todo need to read in the notifyHost settings and reapply those

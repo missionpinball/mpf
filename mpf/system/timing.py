@@ -60,7 +60,11 @@ class Timing(object):
 
     @staticmethod
     def secs(s):
-        return int(s * 1000)
+        return s / 1000.0
+
+    @staticmethod
+    def string_to_secs(s):
+        return string_to_ms(s) / 1000.0
 
     @staticmethod
     def string_to_ms(time):
@@ -86,7 +90,7 @@ class Timing(object):
 
         else:
             time = ''.join(i for i in time if not i.isalpha())
-            return int(time)
+            return float(time)
 
     @staticmethod
     def int_to_pwm(ratio, length):

@@ -38,19 +38,36 @@ class Attract(MachineMode):
         self.log = logging.getLogger("Attract Mode")
         self.delay = DelayManager()
 
-    def start(self):
+        self.start_button_pressed_time = 0.0
+        self.start_hold_time = 0.0
+        self.start_buttons_held = set()
+
+    def start(self, **kwargs):
         """ Automatically called when the Attract game mode becomes active.
 
         """
         super(Attract, self).start()
-        # register event handlers
-        self.registered_event_handlers.append(
-            self.machine.events.add_handler('sw_start',
-                                            self.start_button_pressed))
 
-        self.machine.ball_controller.gather_balls('home')
+        # register switch handlers for the start button press so we can
+        # capture long presses
+
+        # add these to the registered_switch_handlers list so they'll be removed
+        for switch in self.machine.switches.items_tagged('start'):
+            self.registered_switch_handlers.append(
+                self.machine.switch_controller.add_switch_handler(
+                    switch.name, self.start_button_pressed, 1))
+            self.registered_switch_handlers.append(
+                self.machine.switch_controller.add_switch_handler(
+                    switch.name, self.start_button_released, 0))
+
+        if (hasattr(self.machine, 'balldevices') and
+                self.machine.balldevices.items_tagged('home')):
+            self.machine.ball_controller.gather_balls('home')
 
     def start_button_pressed(self):
+        self.start_button_pressed_time = time.time()
+
+    def start_button_released(self):
         """ Called when the a switch tagged with *start* is activated.
 
         Since this is the Attract mode, this method posts a boolean event
@@ -58,9 +75,15 @@ class Attract(MachineMode):
         method calls :meth:`result_of_start_request`.
 
         """
+        self.start_hold_time = time.time() - self.start_button_pressed_time
+
+        for flipper in self.machine.flippers:
+            if self.machine.switch_controller.is_active(
+                    flipper.config['activation_switch']):
+                self.start_buttons_held.add(flipper.config['activation_switch'])
+
         # todo test for active?
         # todo should this be a decorator?
-        self.log.debug("Received start button press")
         self.machine.events.post('request_to_start_game', ev_type='boolean',
                                  callback=self.result_of_start_request)
 
@@ -84,7 +107,9 @@ class Attract(MachineMode):
             self.log.debug("Game start was denied")
         else:  # else because we want to start on True *or* None
             self.log.debug("Let's start a game!!")
-            self.machine.events.post('machineflow_advance')
+            self.machine.events.post('machineflow_advance',
+                                     buttons=self.start_buttons_held,
+                                     hold_time=self.start_hold_time)
             # machine flow will move on to the next mode when this mode ends
 
 # The MIT License (MIT)

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
+    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.0.9 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.7',
+        VERSION:     '0.0.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -46,8 +46,8 @@
             
   <div class="section" id="module-mpf.game.game">
 <span id="mpf-game-game-module"></span><h1>mpf.game.game module</h1>
-<p>Contains the Game class which is the code that actually runs and manages an
-actual game in a pinball machine.</p>
+<p>Contains the Game class which is the Machine Mode that actually runs and
+manages an the game in a pinball machine.</p>
 <p>Note that in the Mission Pinball Framework, a distinction is made between a
 <em>game</em> and a <em>machine</em>. A <em>game</em> refers to a game in progress, whereas a
 <em>machine</em> is the physical pinball machine.</p>
@@ -67,14 +67,30 @@ the next player, etc.</p>
 </tbody>
 </table>
 <dl class="method">
-<dt id="mpf.game.game.Game.ball_add_live_success">
-<tt class="descname">ball_add_live_success</tt><big>(</big><big>)</big></dt>
-<dd><p>Called after the ball controller has determined that a ball was
-successfully added to the game.</p>
-<p>This method increments the <cite>num_balls_in_play</cite> variable. If multiple
-balls have been added (like if a post drops that releases several
-balls), then call this method once for each ball.</p>
+<dt id="mpf.game.game.Game.award_extra_ball">
+<tt class="descname">award_extra_ball</tt><big>(</big><em>num=1</em>, <em>force=False</em><big>)</big></dt>
+<dd><p>Awards the player an extra ball.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num</strong> &#8211; Integer of the  number of extra balls to award. Default is 1.</li>
+<li><strong>force</strong> &#8211; Boolean which allows you to force the extra ball even if it
+means the player would go above the max extra balls specified
+in the config files. Default is False.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>TODO: The limit checking is not yet implemented</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.ball_drained">
+<tt class="descname">ball_drained</tt><big>(</big><em>balls=0</em><big>)</big></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.game.game.Game.ball_ended">
@@ -102,12 +118,9 @@ though that&#8217;s temporary as we&#8217;ll move those into config file options
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.game.game.Game.ball_remove_live">
-<tt class="descname">ball_remove_live</tt><big>(</big><big>)</big></dt>
-<dd><p>Called when a ball in play has been removed from the playfield.</p>
-<p>This method decrements the <cite>num_balls_in_play</cite> variable. If that value
-drops below 1, it calls <a class="reference internal" href="#mpf.game.game.Game.ball_ending" title="mpf.game.game.Game.ball_ending"><tt class="xref py py-meth docutils literal"><span class="pre">ball_ending()</span></tt></a>.</p>
-</dd></dl>
+<dt id="mpf.game.game.Game.ball_live_count_change">
+<tt class="descname">ball_live_count_change</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.game.game.Game.ball_saved">
@@ -118,10 +131,7 @@ drops below 1, it calls <a class="reference internal" href="#mpf.game.game.Game.
 <dl class="method">
 <dt id="mpf.game.game.Game.ball_started">
 <tt class="descname">ball_started</tt><big>(</big><em>ev_result=True</em><big>)</big></dt>
-<dd><p>Called when the other modules have approved a ball start.</p>
-<p>Mainly used to enable the AutoFire coil rules, like enabling the
-flippers and bumpers.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.game.game.Game.ball_starting">
@@ -135,8 +145,8 @@ event is clear, this method calls <a class="reference internal" href="#mpf.game.
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.game.game.Game.game_end">
-<tt class="descname">game_end</tt><big>(</big><em>ev_result=True</em><big>)</big></dt>
+<dt id="mpf.game.game.Game.game_ended">
+<tt class="descname">game_ended</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
 <dd><p>Actually ends the game once the <em>game_ending</em> event is clear.</p>
 <p>Eventually this method will do lots of things. For now it just
 advances the machine flow which ends the <a class="reference internal" href="#mpf.game.game.Game" title="mpf.game.game.Game"><tt class="xref py py-class docutils literal"><span class="pre">Game</span></tt></a> mode and starts the
@@ -150,7 +160,7 @@ advances the machine flow which ends the <a class="reference internal" href="#mp
 <p>This method posts the queue event <em>game_ending</em>, giving other modules
 an opportunity to finish up whatever they need to do before the game
 ends. Once all the registered handlers for that event have finished,
-this method calls <a class="reference internal" href="#mpf.game.game.Game.game_end" title="mpf.game.game.Game.game_end"><tt class="xref py py-meth docutils literal"><span class="pre">game_end()</span></tt></a>.</p>
+this method calls <tt class="xref py py-meth docutils literal"><span class="pre">game_end()</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -167,6 +177,11 @@ so our game is officially &#8216;started&#8217;.</p>
 (including when the first player is added).</p>
 <p>If this is the first player, calls <a class="reference internal" href="#mpf.game.game.Game.player_turn_start" title="mpf.game.game.Game.player_turn_start"><tt class="xref py py-meth docutils literal"><span class="pre">player_turn_start()</span></tt></a>.</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.player_eject_request">
+<tt class="descname">player_eject_request</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.game.game.Game.player_rotate">
@@ -212,14 +227,25 @@ object as a <em>player</em> kwarg.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.game.game.Game.setup_midgame_restart">
+<tt class="descname">setup_midgame_restart</tt><big>(</big><em>tag='start'</em>, <em>time='1s'</em>, <em>min_ball=0</em><big>)</big></dt>
+<dd><p>Allows a long button press to restart the game.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="mpf.game.game.Game.shoot_again">
 <tt class="descname">shoot_again</tt><big>(</big><big>)</big></dt>
 <dd><p>Called when the same player should shoot again.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.game.game.Game.slam_tilt">
+<tt class="descname">slam_tilt</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="mpf.game.game.Game.start">
-<tt class="descname">start</tt><big>(</big><big>)</big></dt>
+<tt class="descname">start</tt><big>(</big><em>buttons=None</em>, <em>hold_time=None</em><big>)</big></dt>
 <dd><p>Automatically called when the <em>Game</em> machine mode becomes active.</p>
 </dd></dl>
 
@@ -227,6 +253,12 @@ object as a <em>player</em> kwarg.</p>
 <dt id="mpf.game.game.Game.stop">
 <tt class="descname">stop</tt><big>(</big><big>)</big></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.tilt">
+<tt class="descname">tilt</tt><big>(</big><big>)</big></dt>
+<dd><p>Called when the &#8216;tilt&#8217; event is posted indicated the ball has tilted.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -269,7 +301,7 @@ object as a <em>player</em> kwarg.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -14,9 +14,6 @@ MPF:
         switch_controller.SwitchController
         ball_controller.BallController
         show_controller.ShowController
-        shots.ShotController
-        scoring.ScoreController
-        auditor.Auditor
     device_modules:
         driver.Driver
         switch.Switch
@@ -27,14 +24,14 @@ MPF:
         ball_device.BallDevice
         drop_target.DropTarget
         drop_target.DropTargetBank
-        standup.Standup
-        standup.StandupGroup
+        target.Target
+        target.TargetGroup
         rollover.Rollover
         rollover.RolloverGroup
         flipper.Flipper
+        diverter.Diverter
         score_reel.ScoreReel
         score_reel.ScoreReelGroup
-        diverter.Diverter
     paths:
         scriptlets: scriptlets
         shows: shows
@@ -62,11 +59,6 @@ MachineFlow:
     mpf.game.attract.Attract
     mpf.game.game.Game
 
-Plugins:
-    keyboard.Keyboard
-    lcd.LCD
-    auditor.Auditor
-
 OSC:
     machine_ip: auto
     machine_port: 8000
@@ -76,9 +68,11 @@ OSC:
     client_updates:
         switches
         lights
+        data
 
 Auditor:
     save_events:
+        game_started
         ball_ended
         game_ended
     num_player_top_records: 10
@@ -88,11 +82,9 @@ Auditor:
         events
         player
     events:
-        ball_search_begin
-        machine_init_phase_1
+        ball_search_begin_phase1
         game_started
         game_ended
-        machine_reset
     player:
         score
 
@@ -116,3 +108,26 @@ LCD:
         version
         title
         looprate
+
+LogicBlocks:
+
+    HitCounters:
+
+        tilt:
+            trigger_events: sw_tilt
+            event_when_hit: tilt_hit
+            hits_to_complete: 3
+            events_when_complete: tilt
+            multiple_hit_window: 500ms
+            enable_events: ball_started
+            disable_events:
+            reset_events: ball_ended
+            event_when_complete: tilt
+            restart_on_complete: false
+            settle_time: 5s
+
+        slam_tilt:
+            trigger_events: sw_slamTilt
+            enable_events: game_started
+            hits_to_complete: 1
+            events_when_complete: slam_tilt

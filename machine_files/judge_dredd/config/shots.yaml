@@ -43,29 +43,29 @@ Shots:
         Switch: dropTargetJ, dropTargetU, dropTargetD, dropTargetG, dropTargetE
 
 Scoring:
-    RightRamp:
+    shot_RightRamp:
         Score: 8000
-    LeftRamp:
+    shot_LeftRamp:
         Score: 7000
-    LeftOrbit:
+    shot_LeftOrbit:
         Score: 6000
-    WeakRightOrbit:
+    shot_WeakRightOrbit:
         Score: 11000
-    FullRightOrbit:
+    shot_FullRightOrbit:
         Score:  6500
-    AirRaidRamp:
+    shot_AirRaidRamp:
         Score: 10000
-    OrangeStandups:
+    shot_OrangeStandups:
         Score: 2500
-    Slingshot:
+    shot_Slingshot:
         Score: 210
-    Inlane:
+    shot_Inlane:
         Score: 1070
-    Outlane:
+    shot_Outlane:
         Score: 930
-    DropTarget:
+    shot_DropTarget:
         Score: 1000
-    _drop_targets_Judge_complete:
+    drop_targets_Judge_complete:
         Score: 10000
-    _standups_pf_standups_complete:
+    standups_pf_standups_complete:
         Score: 5000

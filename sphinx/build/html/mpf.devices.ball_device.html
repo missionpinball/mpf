@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.ball_device module &mdash; Mission Pinball Framework 0.0.7 documentation</title>
+    <title>mpf.devices.ball_device module &mdash; Mission Pinball Framework 0.0.9 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.7',
+        VERSION:     '0.0.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.7 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -54,52 +54,7 @@
 <p>Base class for a &#8216;Ball Device&#8217; in a pinball machine.</p>
 <p>A ball device  is anything that can hold one or more balls, such as a
 trough, an eject hole, a VUK, a catapult, etc.</p>
-<p>Most (all?) machines will have at least two: the main trough (or wherever
-the balls end up when they drain), and the shooter lane.</p>
-<p>todo:
-whether they&#8217;re 1-to-1 or virtual?
-trigger recount switch(es)
-manual eject only?
-found_new_ball / or ball count change?
-eject type: 1, all, manual?
-eject firing type: hold a coil, for how long, etc.
-what happens on eject? event on attempt. event on success?</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>name</strong> (<em>string</em>) &#8211; How you want to refer to this ball device.</li>
-<li><strong>machine</strong> (<em>machine controller instance</em>) &#8211; A reference to the machine controller</li>
-<li><strong>hw_dict</strong> (<em>dict</em>) &#8211; A reference to the hardware dictionary which holds a list of ball
-devices. (Note: this might change)</li>
-<li><strong>config</strong> (<em>dict</em>) &#8211; A dictionary of settings which specify how this ball device should be
-set up. These settings typically come from the machine config files,
-but really they could come from anywhere. Refer to the config file
-reference for a description of these settings.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="mpf.devices.ball_device.BallDevice.cancel_eject_confirmation">
-<tt class="descname">cancel_eject_confirmation</tt><big>(</big><big>)</big></dt>
-<dd><p>Cancels and removes the checks that were put in place to confirm a
-ball eject from this device.</p>
-<dl class="docutils">
-<dt>This method is used in two ways:</dt>
-<dd><ul class="first simple">
-<li>When the eject has been confirmed, it&#8217;s called to remove any</li>
-</ul>
-<p class="last">checks that had been setup.
-* If something &#8220;big&#8221; happens and the machine has to cancel
-everything (tilt, reset, etc.), then the machine controller can
-loop through every ball device and call these one-by-one.</p>
-</dd>
-</dl>
-</dd></dl>
-
+<p>Args: Same as Device.</p>
 <dl class="attribute">
 <dt id="mpf.devices.ball_device.BallDevice.collection">
 <tt class="descname">collection</tt><em class="property"> = 'balldevices'</em></dt>
@@ -119,105 +74,20 @@ dictionary that was passed to it.</p>
 
 <dl class="method">
 <dt id="mpf.devices.ball_device.BallDevice.count_balls">
-<tt class="descname">count_balls</tt><big>(</big><big>)</big></dt>
+<tt class="descname">count_balls</tt><big>(</big><em>stealth=False</em>, <em>**kwargs</em><big>)</big></dt>
 <dd><p>Counts the balls in the device and processes any new balls that came
-in.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.ball_device.BallDevice.disable_eject_event">
-<tt class="descname">disable_eject_event</tt><big>(</big><big>)</big></dt>
-<dd><p>Removes the handler that watches events to eject balls from this
-device.</p>
-<p>Todo: Currently this will remove all handlers for this eject event for
-this device. If there&#8217;s ever a situation where you&#8217;d want to watch
-multiple events for the same device and then only remove one of them,
-we&#8217;d need to modify this code.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.ball_device.BallDevice.eject">
-<tt class="descname">eject</tt><big>(</big><em>balls=0</em>, <em>force=False</em><big>)</big></dt>
-<dd><p>Eject a ball from the device</p>
+in or balls that have gone out.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>balls</strong> (<em>int</em>) &#8211; Number of balls to eject. Default is 0. If this value is zero, this
-method will still process existing ejecting balls or balls to
-eject.</li>
-<li><strong>force</strong> (<em>bool</em>) &#8211; Forces the device to fire the eject coil, even if it thinks it&#8217;s
-not ok to eject.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.ball_device.BallDevice.eject_all">
-<tt class="descname">eject_all</tt><big>(</big><em>increment_live=False</em><big>)</big></dt>
-<dd><p>Ejects all balls from the device.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.ball_device.BallDevice.eject_failed">
-<tt class="descname">eject_failed</tt><big>(</big><em>balls=0</em><big>)</big></dt>
-<dd><p>An eject failed.</p>
-<dl class="docutils">
-<dt>balls <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd>How many balls were attempted to be ejected but failed. Default of
-0 is a placeholder which means all of them failed.</dd>
-</dl>
-<p>Typically this happens when a ball enters the device while its
-num_balls_ejecting variable is &gt; 0. (If the eject was successful, that
-variable would have been reset.)</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.ball_device.BallDevice.enable_eject_event">
-<tt class="descname">enable_eject_event</tt><big>(</big><em>event_name</em>, <em>balls_per_eject=1</em>, <em>total_balls=1</em>, <em>queue=False</em><big>)</big></dt>
-<dd><p>Sets up this ball device to eject when the passed event is called.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>event_name</strong> (<em>str</em>) &#8211; The name of the event you want to call the eject()</li>
-<li><strong>balls_per_eject</strong> (<em>int</em>) &#8211; The number of balls you want to eject each time this event is
-posted.</li>
-<li><strong>total_balls</strong> (<em>int</em>) &#8211; The total number of balls you want this event to eject. Each time
-it&#8217;s posted, balls_per_eject will be ejected, up to the total_balls
-specified here.</li>
-<li><strong>queue</strong> (<em>bool</em>) &#8211; If True, the event can post early (before the device is ready to
-eject) and the eject will happen ASAP. If False, the event will do
-nothing until the device is actually ready to eject.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.ball_device.BallDevice.enable_player_eject">
-<tt class="descname">enable_player_eject</tt><big>(</big><em>balls_per_eject=1</em>, <em>total_balls=1</em><big>)</big></dt>
-<dd><p>Enable the ball device to wait for a player-controlled eject.</p>
-<p>A player-controlled eject is where a device is ready to eject a ball
-(or balls), but it&#8217;s waiting for the player to do hit a button for the
-eject to actually occur. The coil-fired ball launch / plunger is a
-good example of this. Other examples would be the cannons in T2 or
-STTNG, or the free kick in World Cup Soccer 94.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>balls_per_eject</strong> (<em>int</em>) &#8211; How many balls should be ejected each time the player eject event
-occurs.</li>
-<li><strong>total_balls</strong> (<em>int</em>) &#8211; How many balls should be ejected in total.</li>
+<li><strong>stealth</strong> &#8211; Boolean value that controls whether any events will be
+posted based on any ball count change info. If True, results
+will not be posted. If False, they will. Default is False</li>
+<li><strong>confirm_eject</strong> &#8211; Boolean value that specifies whether this count
+should confirm an eject if it finds any missing balls and an
+eject in progress. Default is False.</li>
 </ul>
 </td>
 </tr>
@@ -228,16 +98,38 @@ occurs.</li>
 <dl class="method">
 <dt id="mpf.devices.ball_device.BallDevice.get_status">
 <tt class="descname">get_status</tt><big>(</big><em>request=None</em><big>)</big></dt>
-<dd><p>Pass a value to get that status. Or none to get back a dict of the
-full status.</p>
+<dd><p>Pass a value to get that status item. Or none to get back a dict of
+the full status.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>request</strong> &#8211; <p>A string of what status item you&#8217;d like to request.
+Options include:</p>
+<blockquote>
+<div><ul class="simple">
+<li>num_balls_contained</li>
+<li>flag_eject_in_progress</li>
+<li>num_balls_to_eject</li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.ball_device.BallDevice.initialize">
+<tt class="descname">initialize</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.ball_device.BallDevice.is_full">
 <tt class="descname">is_full</tt><big>(</big><big>)</big></dt>
-<dd><p>Checks to see if this device is &#8220;full&#8221;, meaning it is holding
-either the max number of balls it can hold, or it&#8217;s holding all the
-known balls in the machine.</p>
+<dd><p>Checks to see if this device is full, meaning it is holding either
+the max number of balls it can hold, or it&#8217;s holding all the known balls
+in the machine.</p>
 </dd></dl>
 
 <dl class="method">
@@ -257,6 +149,16 @@ known balls in the machine.</p>
 </tbody>
 </table>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.ball_device.BallDevice.num_balls_desired">
+<tt class="descname">num_balls_desired</tt></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.ball_device.BallDevice.num_balls_ejectable">
+<tt class="descname">num_balls_ejectable</tt></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.ball_device.BallDevice.set_ok_to_eject">
@@ -325,7 +227,7 @@ eject.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.7 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -1,4 +1,4 @@
-"""Mission Pinball Framework plugin that puts a pyglet window on the screen."""
+"""MPF plugin that puts a pyglet window on the screen."""
 
 # lcd.py (contains classes for various playfield devices)
 # Mission Pinball Framework
@@ -7,9 +7,24 @@
 
 # Documentation and more info at http://missionpinball.com/framework
 import logging
-import pyglet
 import version
 import locale
+
+global import_success
+
+try:
+    import pyglet
+    import_success = True
+except:
+    import_success = False
+
+
+def preload_check(machine):
+
+    if import_success:
+        return True
+    else:
+        return False
 
 
 class LCD(object):
@@ -100,6 +115,18 @@ class LCD(object):
                                             anchor_x='left',
                                             anchor_y='bottom')
                 self.looprate.draw()
+
+            if 'mpf_load' in self.machine.config['LCD']['items']:
+                self.mpf_load = pyglet.text.Label('MPF Load: ' +
+                                            str(self.machine.mpf_load) +
+                                            '%',
+                                            font_name='Ariel',
+                                            font_size=12,
+                                            x=200,
+                                            y=2,
+                                            anchor_x='left',
+                                            anchor_y='bottom')
+                self.mpf_load.draw()
 
             if ('player' in self.machine.config['LCD']['items'] and
                     self.current_player):
