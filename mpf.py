@@ -12,6 +12,7 @@ import os
 from optparse import OptionParser
 import errno
 from mpf.system.machine_controller import MachineController
+import version
 
 # Allow command line options to do things
 # We use optparse instead of argpase so python 2.6 works
@@ -53,11 +54,25 @@ parser.add_option("-x", "--nohw",
                   action="store_false", dest="physical_hw", default=True,
                   help="Specifies physical game hardware is not connected")
 
+parser.add_option("--versions",
+                  action="store_true", dest="version", default=False,
+                  help="Shows the MPF version and quits")
+
 (options, args) = parser.parse_args()
 options_dict = vars(options)  # convert the values instance to python dict
 
+# if --version was passed, print the version and quit
+if options_dict['version']:
+    print "Mission Pinball Framework version:", version.__version__
+    quit()
+
 # add the first positional argument into the options dict as the machine path
-options_dict['machinepath'] = args[0]
+try:
+    options_dict['machinepath'] = args[0]
+except:
+    print "Error: You need to specify the path to your machine_files folder "\
+        "for the game you want to run."
+    quit()
 
 # Configure logging. Creates a logfile and logs to the console.
 # Formating options are documented here:
