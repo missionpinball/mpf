@@ -30,7 +30,6 @@ MachineFlow:
     mpf.game.game.Game
 
 Scriptlets:
-    coil_tests.CoilTests
     classic_modern_switcher.ClassicModern
     attract.Attract
     game.Game
@@ -842,8 +841,8 @@ Score Reels:
         confirm: lazy
     score_1p_10:
         coil_inc: player1_10
-        switch_4: score_1p_10_0
-        switch_9: score_1p_10_5
+        switch_0: score_1p_10_0
+        switch_5: score_1p_10_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
@@ -853,7 +852,7 @@ Score Reels:
     score_2p_10k:
         coil_inc: player2_10k
         switch_0: score_2p_10k_0
-        switch_9: score_2p_10k_5
+        switch_5: score_2p_10k_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
@@ -863,7 +862,7 @@ Score Reels:
     score_2p_1k:
         coil_inc: player2_1k
         switch_0: score_2p_1k_0
-        switch_9: score_2p_1k_5
+        switch_5: score_2p_1k_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
@@ -883,7 +882,7 @@ Score Reels:
     score_2p_10:
         coil_inc: player2_10
         switch_0: score_2p_10_0
-        switch_9: score_2p_10_5
+        switch_5: score_2p_10_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
