@@ -42,18 +42,14 @@ class BallController(object):
 
         self._num_balls_live = 0  # do not update this. Use the property
         self._num_balls_desired_live = 0  # do not update. Use the property
+        self._num_balls_known = -999    # do not update. Use the property
 
         self.num_balls_in_transit = 0
-        #Balls currently in transit from one ball device to another
+        # Balls currently in transit from one ball device to another
+        # Not currently implemented
+
         self.num_balls_missing = 0
-        #Balls lost and/or not installed.
-
-        self.num_balls_known = -999
-        #How many balls the machine knows about. Could vary from the number
-        #of balls installed based on how many are *actually* in the machine, or
-        #to compensate for balls that are lost or stuck.
-
-        # todo should we save this in the machine data?
+        # Balls lost and/or not installed.
 
         self.flag_ball_search_in_progress = False
         #True if there's currently a ball search in progress.
@@ -81,7 +77,7 @@ class BallController(object):
         balls = 0
         for device in self.machine.balldevices:
             balls += device.num_balls_contained
-            if balls > self.num_balls_known:
+            if balls > self._num_balls_known:
                 self.num_balls_known = balls
         if balls < 0:
             return -999
@@ -95,6 +91,16 @@ class BallController(object):
 
     @num_balls_live.setter
     def num_balls_live(self, balls):
+        """The number of balls that are actually live (i.e. loose and bouncing
+        around) at this moment.
+
+        This is not necessarily the same as the number of balls in play that the
+        Game object tracks. For example during a game if the player shoots a
+        ball into a ball device, there will be no live balls during that moment
+        even though there is still a ball in play. And if the player tilts,
+        there will be no balls in play but we'll still have balls live until
+        they all roll into the drain.
+        """
 
         prior_count = self._num_balls_live
 
@@ -116,6 +122,11 @@ class BallController(object):
 
     @num_balls_desired_live.setter
     def num_balls_desired_live(self, balls):
+        """How many balls the ball controller will try to keep live. If this
+        number is ever greater than the number live, the ball controller will
+        automatically add more live. If it's less, then the ball controller will
+        not automatically eject a ball if it enters the drain device.
+        """
 
         prior_count = self._num_balls_desired_live
 
@@ -130,6 +141,21 @@ class BallController(object):
         # todo should we ensure that this value never exceed the number of balls
         # known? Or is that a crutch that will obscure programming errors?
         # I think we should do it but then log it as a warning.
+
+    @property
+    def num_balls_known(self):
+        if self.num_balls_contained > self._num_balls_known:
+            self._num_balls_known = self.num_balls_contained
+
+        return self._num_balls_known
+
+    @num_balls_known.setter
+    def num_balls_known(self, balls):
+        """How many balls the machine knows about. Could vary from the number
+        of balls installed based on how many are *actually* in the machine, or
+        to compensate for balls that are lost or stuck.
+        """
+        self._num_balls_known = balls
 
     def reset(self):
         """Resets the BallController.
