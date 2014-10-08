@@ -286,6 +286,7 @@ class HardwarePlatform(Platform):
                         recycle_time=0,
                         debounced=True,
                         drive_now=False):
+
         """Used to write (or update) a hardware rule to the P-ROC.
 
         *Hardware Rules* are used to configure the P-ROC to automatically
@@ -443,7 +444,10 @@ class HardwarePlatform(Platform):
         else:
             self.hw_switch_rules[sw_rule_string] = this_driver
 
-        self.log.debug("Writing HW rule for switch: %s", sw.number)
+        self.log.debug("Writing HW rule for switch: %s, event_type: %s,"
+                       "rule: %s, final_driver: %s, drive now: %s",
+                       sw.number, event_type,
+                       rule, final_driver, drive_now)
         self.proc.switch_update_rule(sw.number, event_type, rule, final_driver,
                                      drive_now)
 
