@@ -46,25 +46,24 @@ class HardwarePlatform(Platform):
 
         self.hw_rules = dict()
 
+        # Set up the connection to the FAST controller
+        self.log.info("Initializing FAST Pinball Controller interface...")
         ports = [(self.machine.config['Fast']['port'],
                  int(self.machine.config['Fast']['baud']))]
         port_assignments = (0, 0, 0)
 
         self.fast = fastpinball.fpOpen(ports, port_assignments)
 
-        # --------- Required to get initial switch state from FAST
-        print "Need to query the controller 10 times to get all default switch"\
-            " states..."
-        # the timer config below is just used for this initial switch read
+        # We need to setup a timer to get the initial switch reads, so we just
+        # do this one at 1 sec now. It will be overwritten later when the
+        # run loop starts
         fastpinball.fpTimerConfig(self.fast, 1000000)
+        fastpinball.fpReadAllSwitches(self.fast)
+
         event = fastpinball.fpGetEventObject()
-        fastpinball.fpReadAllSwitches(self.fast)
-        fastpinball.fpReadAllSwitches(self.fast)
-        for i in range(10):
-            print i+1
-            fastpinball.fpEventPoll(self.fast, event)
-            eventType = fastpinball.fpGetEventType(event)
-        # ---- end requirement ----
+        eventType = fastpinball.fpGetEventType(event)
+        fastpinball.fpEventPoll(self.fast, event)
+        self.log.info("FAST Pinball Controller interface connected")
 
         if 'config_number_format' not in self.machine.config['Fast']:
             self.machine.config['Fast']['config_number_format'] = 'int'
@@ -82,7 +81,7 @@ class HardwarePlatform(Platform):
         self.wpc_switch_map = {
                                'S11':'00', 'S12':'01', 'S13':'02', 'S14':'03',
                                'S15':'04', 'S16':'05', 'S17':'06', 'S18':'07',
-                               'S21':'08', 'S22':'09', 'S23':'11', 'S24':'12',
+                               'S21':'08', 'S22':'09', 'S23':'10', 'S24':'11',
                                'S25':'12', 'S26':'13', 'S27':'14', 'S28':'15',
                                'S31':'16', 'S32':'17', 'S33':'18', 'S34':'19',
                                'S35':'20', 'S36':'21', 'S37':'22', 'S38':'23',
@@ -131,16 +130,16 @@ class HardwarePlatform(Platform):
                                }
 
         self.wpc_driver_map = {
-                               'C01':'01', 'C02':'02', 'C03':'03', 'C04':'04',
-                               'C05':'05', 'C06':'06', 'C07':'07', 'C08':'08',
-                               'C09':'09', 'C10':'10', 'C11':'11', 'C12':'12',
-                               'C13':'13', 'C14':'14', 'C15':'15', 'C16':'16',
-                               'C17':'17', 'C18':'18', 'C19':'19', 'C20':'20',
-                               'C21':'21', 'C22':'22', 'C23':'23', 'C24':'24',
-                               'C25':'25', 'C26':'26', 'C27':'27', 'C28':'28',
-                               'FLRM':'33', 'FLRH':'34', 'FLLM':'35',
-                               'FLLH':'36', 'FURM':'37', 'FURH':'38',
-                               'FULM':'39', 'FULH':'40',
+                               'C01':'00', 'C02':'01', 'C03':'02', 'C04':'03',
+                               'C05':'04', 'C06':'05', 'C07':'06', 'C08':'07',
+                               'C09':'08', 'C10':'09', 'C11':'10', 'C12':'11',
+                               'C13':'12', 'C14':'13', 'C15':'14', 'C16':'15',
+                               'C17':'16', 'C18':'17', 'C19':'18', 'C20':'19',
+                               'C21':'20', 'C22':'21', 'C23':'22', 'C24':'23',
+                               'C25':'24', 'C26':'25', 'C27':'26', 'C28':'27',
+                               'FLRM':'32', 'FLRH':'33', 'FLLM':'34',
+                               'FLLH':'35', 'FURM':'36', 'FURH':'37',
+                               'FULM':'38', 'FULH':'39',
                                }
 
         self.wpc_gi_map = {'G01':'00', 'G02':'01', 'G03':'02', 'G04':'03',
@@ -159,17 +158,65 @@ class HardwarePlatform(Platform):
         if self.machine_type == 'WPC':  # translate switch number to FAST switch
             config['number'] = int(self.wpc_driver_map.get(
                                    config['number_str']))
+            if 'connection' not in config:
+                config['connection'] = 0  # local driver (default for WPC)
+            else:
+                config['connection'] = 1  # network driver
+
         elif self.machine.config['Fast']['config_number_format'] == 'hex':
             config['number'] = int(config['number_str'], 16)
 
-        return FASTDriver(config['number'], self.fast)
+            if 'connection' not in config:
+                config['connection'] = 1  # network driver (default for FAST)
+            else:
+                config['connection'] = 0  # local driver
+
+        # converet the driver number into a tuple which is:
+        # (driver number, connection)
+        config['number'] = (config['number'], config['connection'])
+
+        return FASTDriver(config['number'], self.fast), config['number']
 
     def configure_switch(self, config):
+        """Configures the switch object for a FAST Pinball controller.
+
+        FAST Controllers support two types of switches: local and network. Local
+        switches are switches that are connected to the FAST controller board
+        itself, and network switches are those connected to a FAST I/O board.
+
+        MPF needs to know which type of switch is this is. You can specify the
+        switch's connection type in the config file via the "connection"
+        setting (either 'local' or 'network'.
+
+        If a connection type is not specified, this method will use some
+        intelligence to try to figure out which default should be used.
+
+        If the DriverBoard type is 'fast', then it assumes the default is
+        'network'. If it's anything else (wpc, system11, bally, etc.) then it
+        assumes the connection type is 'local'. Connection types can be mixed
+        and matched.
+        """
+
         if self.machine_type == 'WPC':  # translate switch number to FAST switch
             config['number'] = int(self.wpc_switch_map.get(
                                    config['number_str']))
-        elif self.machine.config['Fast']['config_number_format'] == 'hex':
-            config['number'] = int(config['number_str'], 16)
+            if 'connection' not in config:
+                config['connection'] = 0  # local switch (default for WPC)
+            else:
+                config['connection'] = 1  # network switch
+
+        elif self.machine_type == 'FAST':
+            if 'connection' not in config:
+                config['connection'] = 1  # network switch (default for FAST)
+            else:
+                config['connection'] = 0  # local switch
+
+            if self.machine.config['Fast']['config_number_format'] == 'hex':
+                config['number'] = int(config['number_str'], 16)
+
+        # converet the switch number into a tuple which is:
+        # (switch number, connection)
+        config['number'] = (config['number'], config['connection'])
 
         debounce_ms = 1
         if 'debounce' not in config:
@@ -184,7 +231,8 @@ class HardwarePlatform(Platform):
 
         switch = FASTSwitch(config['number'], config['debounce'], self.fast)
 
-        state = fastpinball.fpReadSwitch(self.fast, config['number'])
+        state = fastpinball.fpReadSwitch(self.fast, config['number'][0],
+                                         config['number'][1])
 
         # Return the switch object and an integer of its current state.
         # 1 = active, 0 = inactive
@@ -205,7 +253,7 @@ class HardwarePlatform(Platform):
         if self.machine_type == 'WPC':  # translate switch number to FAST switch
             config['number'] = int(self.wpc_gi_map.get(config['number_str']))
 
-        return FASTGIString(config['number'], self.fast)
+        return FASTGIString(config['number'], self.fast), config['number']
 
     def configure_matrixlight(self, config):
         if self.machine_type == 'WPC':  # translate switch number to FAST switch
@@ -213,7 +261,7 @@ class HardwarePlatform(Platform):
         elif self.machine.config['Fast']['config_number_format'] == 'hex':
             config['number'] = int(config['number_str'], 16)
 
-        return FASTMatrixLight(config['number'], self.fast)
+        return FASTMatrixLight(config['number'], self.fast), config['number']
 
     def hw_loop(self):
         """Loop code which checks the controller for any events (switch state
@@ -235,17 +283,38 @@ class HardwarePlatform(Platform):
             fastpinball.fpEventPoll(self.fast, fast_events)
             eventType = fastpinball.fpGetEventType(fast_events)
 
+            # eventType options:
+            # 0 = none
+            # 1 = local switch active
+            # 2 = local switch inactive
+            # 3 = network switch active
+            # 4 = network switch inactive
+            # 5 = local switch cache has been updated
+            # 6 = network switch cache has been updated
+            # 7 = timer tick
+
             if eventType == 0:
                 continue
-            elif eventType == 4:  # timer_tick
+
+            elif eventType == 7:  # timer_tick
                 num_loops += 1
                 self.machine.timer_tick()
-            elif eventType == 1:  # switch has gone active
+
+            elif eventType == 1:  # local switch has gone active
                 self.machine.switch_controller.process_switch(state=1,
-                    num=fastpinball.fpGetEventSwitchID(fast_events))
-            elif eventType == 2:  # switch has gone inactive
+                    num=(fastpinball.fpGetEventSwitchID(fast_events), 0))
+
+            elif eventType == 2:  # local switch has gone inactive
                 self.machine.switch_controller.process_switch(state=0,
-                    num=fastpinball.fpGetEventSwitchID(fast_events))
+                    num=(fastpinball.fpGetEventSwitchID(fast_events), 0))
+
+            elif eventType == 3:  # network switch has gone active
+                self.machine.switch_controller.process_switch(state=1,
+                    num=(fastpinball.fpGetEventSwitchID(fast_events), 1))
+
+            elif eventType == 4:  # network switch has gone inactive
+                self.machine.switch_controller.process_switch(state=0,
+                    num=(fastpinball.fpGetEventSwitchID(fast_events), 1))
 
         else:
             if num_loops != 0:
@@ -328,10 +397,21 @@ class HardwarePlatform(Platform):
         off_time = 0
 
         if coil_action_ms == -1:
-            mode = 3
+            if pwm_on and pwm_off:
+                mode = 3  # pwm mode
+                on_time = pwm_on
+                off_time = pwm_off
+            else:
+                mode = 1  # latched mode (coil on solid)
+
         elif 0 < coil_action_ms <= 255:
-            mode = 2
+            mode = 0  # pulse mode
             on_time = pulse_ms
+
+        if sw_activity == 0:  # fire this rule when switch turns off
+            sw_activity = 3
+        elif sw_activity == 1:  # fire this coil when switch turns on
+            sw_activity = 2
 
         self.hw_rules[coil.config['number']] = {'mode': mode,
                                                 'switch': sw.number,
@@ -343,8 +423,16 @@ class HardwarePlatform(Platform):
                        coil.config['number'], mode, sw.number,
                        on_time, off_time)
 
-        fastpinball.fpWriteDriver(self.fast, coil.config['number'], mode,
-                                  sw.number, on_time, off_time)
+        #fastpinball.fpWriteDriver(self.fast, coil.config['number'], mode,
+        #                          sw.number, on_time, off_time)
+        fastpinball.fpWriteDriver(self.fast, coil.number[0],
+                                  mode,   # mode
+                                  sw_activity,   # triggerType
+                                  sw.number[0],   # switch
+                                  on_time,   # on time
+                                  off_time,   # off time
+                                  coil.number[1],  # local or network
+                                  )
 
     def _do_clear_hw_rule(self, sw_num):
         """Clears a hardware rule.
@@ -366,36 +454,73 @@ class HardwarePlatform(Platform):
         self.log.debug("Clearing HW Rule for switch %s", sw_num)
 
         # find the rule(s) based on this switch
-        coils = [k for k, v in self.hw_rules.iteritems() if v == int(sw_num)]
+        coils = [k for k, v in self.hw_rules.iteritems() if v == sw_num]
 
         for coil in coils:
-            fastpinball.fpWriteDriver(self.fast, coil, 0, 0, 0, 0)
+            fastpinball.fpWriteDriver(self.fast, coil[0],
+                                      0,   # mode
+                                      0,   # triggerType
+                                      0,   # switch
+                                      0,   # on time
+                                      0,   # off time
+                                      coil[1],  # local or network
+                                      )
 
 
 class FASTSwitch(object):
+    """
+    fpWriteSwitchConfig params:
+        fp_device (self.fast)
+        switch number (switch number as int)
+        mode (0 = no report, 1 = report on, 2 = report inverted
+        debounce close
+        debounce open
+        sound
+        target (0 = local, 1 = network)
+
+        todo add support for different debounce open and close times
+
+    """
 
     def __init__(self, number, debounce, fast_device):
         self.log = logging.getLogger('FASTSwitch')
         self.fast = fast_device
-        self.number = number
-        self.log.debug("--------------------------------------")
-        self.log.debug("fastpinball.fpWriteSwitchConfig(%s, %s, %s, 0)",
-                       fast_device, number, debounce)
-        fastpinball.fpWriteSwitchConfig(fast_device, number, debounce, 0)
+        self.number = number[0]
+        self.connection = number[1]
+        self.log.debug("fastpinball.fpWriteSwitchConfig(%s, %s, 1, %s, %s, 0, %s)",
+                       fast_device, self.number, debounce, debounce, self.connection)
+        fastpinball.fpWriteSwitchConfig(fast_device, self.number, 1, debounce,
+                                        debounce, 0, self.connection)
 
 
 class FASTDriver(object):
     """ Base class for drivers connected to a FAST Controller.
 
-    fpWriteDriver(device, driver_id, mode, trigger_sw, on_ms, off_ms)
+    old - fpWriteDriver(device, driver_id, mode, trigger_sw, on_ms, off_ms)
 
-    modes:
-        0 = Manual Off
-        1 = Manual On
-        2 = Trigger Pulse
-        3 = Trigger Latched
-        4 = Trigger Delayed
-        5 = PWM
+    fpWriteDriver (
+                   device
+                   id
+                   mode (see below)
+                   triggerType (see below)
+                   triggerSwitch (switch id number)
+                   onTime (in ms)
+                   offTime (in ms)
+                   target (switch target type. 0 = local, 1 = network)
+                   )
+
+        mode options
+            0 = pulsed
+            1 = latched
+            2 = delay
+            3 = pwm
+
+        triggerType options
+            0 = off
+            1 = manual
+            2 = triggered by switch going on
+            3 = triggered by switch going off
+
     """
 
     def __init__(self, number, fast_device):
@@ -406,37 +531,70 @@ class FASTDriver(object):
     def disable(self):
         """Disables (turns off) this driver."""
         self.log.debug('Disabling Driver')
-        self.log.debug('fastpinball.fpWriteDriver(self.fast, %s, 0, 0, 0, 0)',
-                       self.number)
-
-        fastpinball.fpWriteDriver(self.fast, self.number, 0, 0, 0, 0)
+        #self.log.debug('fastpinball.fpWriteDriver(self.fast, %s, 0, 0, 0, 0)',
+        #               self.number)
+        fastpinball.fpWriteDriver(self.fast, self.number[0],
+                                  0,   # mode
+                                  0,   # triggerType
+                                  0,   # switch
+                                  0,   # on time
+                                  0,   # off time
+                                  self.number[1],  # local or network
+                                  )
 
     def enable(self):
         """Enables (turns on) this driver."""
         self.log.debug('Enabling Driver')
-        self.log.debug('fastpinball.fpWriteDriver(self.fast, %s, 0, 0, 0, 0)',
-                       self.number)
-        self.log.debug('fastpinball.fpWriteDriver(self.fast, %s, 1, 0, 0, 0)',
-                       self.number)
-        fastpinball.fpWriteDriver(self.fast, self.number, 0, 0, 0, 0)
-        fastpinball.fpWriteDriver(self.fast, self.number, 1, 0, 0, 0)
-        # todo how do you hold a coil on?
+        #self.log.debug('fastpinball.fpWriteDriver(self.fast, %s, 0, 0, 0, 0)',
+        #               self.number)
+        fastpinball.fpWriteDriver(self.fast, self.number[0],
+                                  1,   # mode
+                                  1,   # triggerType
+                                  0,   # switch
+                                  0,   # on time
+                                  0,   # off time
+                                  self.number[1],  # local or network
+                                  )
+        # todo change hold to pulse with re-ups
 
     def pulse(self, milliseconds=None):
-        """Enables this driver for `milliseconds`.
-
-        ``ValueError`` will be raised if `milliseconds` is outside of the range
-        0-255.
+        """Pulses this driver.
         """
         if not milliseconds in range(256):
             raise ValueError('milliseconds must be in range 0-255.')
         self.log.debug('Pulsing Driver for %sms', milliseconds)
-        self.log.debug('fastpinball.fpWriteDriver(self.fast, %s, , 0, %s, 0)',
-                       self.number, milliseconds)
-        fastpinball.fpWriteDriver(self.fast, self.number, 0, 0, milliseconds, 0)
-        self.log.debug('fastpinball.fpWriteDriver(self.fast, %s, 1, 0, %s, 0)',
-                       self.number, milliseconds)
-        fastpinball.fpWriteDriver(self.fast, self.number, 1, 0, milliseconds, 0)
+        #self.log.debug('fastpinball.fpWriteDriver(self.fast, %s, 1, 0, %s, 0)',
+        #               self.number, milliseconds)
+        fastpinball.fpWriteDriver(self.fast, self.number[0],
+                                  0,   # mode
+                                  1,   # triggerType
+                                  0,   # switch
+                                  milliseconds,   # on time
+                                  0,   # off time
+                                  self.number[1],  # local or network
+                                  )
+
+    def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
+        """Enables this driver in a pwm pattern.
+        """
+
+        if not original_on_ms in range(256):
+            raise ValueError('original_on_ms must be in range 0-255.')
+        if not on_ms in range(256):
+            raise ValueError('on_ms must be in range 0-255.')
+        if not off_ms in range(256):
+            raise ValueError('off_ms must be in range 0-255.')
+
+        self.log.debug("pwm on:%d, off:%d, now:%s", on_ms,
+                       off_ms, now)
+        fastpinball.fpWriteDriver(self.fast, self.number[0],
+                                  3,   # mode
+                                  1,   # triggerType
+                                  0,   # switch
+                                  on_ms,   # on time
+                                  off_ms,   # off time
+                                  self.number[1],  # local or network
+                                  )
 
 
 class FASTGIString(object):
@@ -472,6 +630,7 @@ class FASTMatrixLight(object):
         self.log = logging.getLogger('FASTMatrixLight')
         self.number = number
         self.fast = fast_device
+        print self.number
 
     def off(self):
         """Disables (turns off) this driver."""

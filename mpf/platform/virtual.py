@@ -60,17 +60,17 @@ class HardwarePlatform(Platform):
         return VirtualGI(config['number']), config['number']
 
     def _do_set_hw_rule(self,
-                    sw,
-                    sw_activity,
-                    coil_action_ms,  # 0 = disable, -1 = hold forever
-                    coil=None,
-                    pulse_ms=0,
-                    pwm_on=0,
-                    pwm_off=0,
-                    delay=0,
-                    recycle_time=0,
-                    debounced=True,
-                    drive_now=False):
+                        sw,
+                        sw_activity,
+                        coil_action_ms,  # 0 = disable, -1 = hold forever
+                        coil=None,
+                        pulse_ms=0,
+                        pwm_on=0,
+                        pwm_off=0,
+                        delay=0,
+                        recycle_time=0,
+                        debounced=True,
+                        drive_now=False):
 
         pass
         # todo create switch handlers to fire coils based on these hardware
