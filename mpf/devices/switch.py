@@ -11,9 +11,7 @@ from mpf.system.devices import Device
 
 
 class Switch(Device):
-    """ A switch in a pinball machine.
-
-    """
+    """ A switch in a pinball machine."""
 
     config_section = 'Switches'
     collection = 'switches'
@@ -56,6 +54,7 @@ class Switch(Device):
         self.hw_timestamp = None
 
         self.log.debug("Creating '%s' with config: %s", name, config)
+
         self.hw_switch, self.number, self.hw_state = \
             self.machine.platform.configure_switch(config)
 

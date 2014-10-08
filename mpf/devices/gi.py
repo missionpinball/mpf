@@ -33,7 +33,7 @@ class GI(Device):
         # number into a hardware number, but we need the original number for
         # some things later.
         self.config['number_str'] = str(config['number']).upper()
-        self.hw_driver = self.machine.platform.configure_gi(self.config)
+        self.hw_driver, self.number = self.machine.platform.configure_gi(self.config)
 
         self.registered_handlers = []
 

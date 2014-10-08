@@ -31,18 +31,19 @@ class SwitchController(object):
     def __init__(self, machine):
         self.machine = machine
         self.registered_switches = defaultdict(list)
-        """Dictionary of switches and states that have been registered for
-        callbacks."""
+        # Dictionary of switches and states that have been registered for
+        # callbacks.
+
         self.active_timed_switches = defaultdict(list)
-        """Dictionary of switches that are currently in a state counting ms
-        waiting to notify their handlers. In other words, this is the dict that
-        tracks current switches for things like "do foo() if switch bar is
-        active for 100ms."
-        """
+        # Dictionary of switches that are currently in a state counting ms
+        # waiting to notify their handlers. In other words, this is the dict that
+        # tracks current switches for things like "do foo() if switch bar is
+        # active for 100ms."
+
         self.switches = {}
-        """Dictionary which holds the master list of switches as well as their
-        current states. State here does factor in whether a switch is NO or NC,
-        so 1 = active and 0 = inactive."""
+        # Dictionary which holds the master list of switches as well as their
+        # current states. State here does factor in whether a switch is NO or NC,
+        # so 1 = active and 0 = inactive.
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick, 1000)
@@ -166,17 +167,15 @@ class SwitchController(object):
         obj
 
         """
-        # todo should we add a parameter to specify whether we're sending a
-        # hw state versus a logical state? Might simplify the code for keyboard
-        # and OSC interfaces?
 
         # Find the switch name
-
         if num is not None:
             for switch in self.machine.switches:
                 if switch.number == num:
                     name = switch.name
                     break
+
+        # todo find a better way to do the above...
 
         if not name:
             return

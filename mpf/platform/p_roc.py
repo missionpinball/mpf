@@ -134,7 +134,7 @@ class HardwarePlatform(Platform):
             state['polarity'] = config['polarity']
             proc_driver_object.proc.driver_update_state(state)
 
-        return proc_driver_object
+        return proc_driver_object, config['number']
 
     def configure_switch(self, config):
         """ Configures a P-ROC switch.
@@ -237,11 +237,12 @@ class HardwarePlatform(Platform):
 
     def configure_matrixlight(self, config):
         """Configures a P-ROC matrix light."""
+        # On the P-ROC, matrix lights are drivers
         return self.configure_driver(config, 'light')
 
     def configure_gi(self, config):
         """Configures a P-ROC GI string light."""
-        # The P-ROC treats these the same as lights
+        # On the P-ROC, GI strings are drivers
         return self.configure_driver(config, 'light')
 
     def hw_loop(self):

@@ -39,7 +39,7 @@ class Driver(Device):
         # some things later.
         self.config['number_str'] = str(config['number']).upper()
 
-        self.hw_driver = self.machine.platform.configure_driver(self.config)
+        self.hw_driver, self.number = self.machine.platform.configure_driver(self.config)
         self.log.debug("Creating '%s' with config: %s", name, config)
 
         if 'pulse_ms' not in self.config:

@@ -42,7 +42,7 @@ class HardwarePlatform(Platform):
     def configure_driver(self, config, device_type='coil'):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
-        return VirtualDriver(config['number'])
+        return VirtualDriver(config['number']), config['number']
 
     def configure_switch(self, config):
         switch = VirtualSwitch(config['number'])
@@ -51,13 +51,13 @@ class HardwarePlatform(Platform):
         return switch, config['number'], 0
 
     def configure_matrixlight(self, config):
-        return VirtualMatrixLight(config['number'])
+        return VirtualMatrixLight(config['number']), config['number']
 
     def configure_led(self, config):
         return VirtualLED(config['number'])
 
     def configure_gi(self, config):
-        return VirtualGI(config['number'])
+        return VirtualGI(config['number']), config['number']
 
     def _do_set_hw_rule(self,
                     sw,
