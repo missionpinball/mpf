@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.0.9 documentation</title>
+    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.0.9b documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.9',
+        VERSION:     '0.0.9b',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9b documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -56,15 +56,6 @@ states and posting events to the framework.</p>
 all switch activity in the machine and converting them into events.</p>
 <p>More info:
 <a class="reference external" href="http://missionpinball.com/docs/system-components/switch-controller/">http://missionpinball.com/docs/system-components/switch-controller/</a></p>
-<dl class="attribute">
-<dt id="mpf.system.switch_controller.SwitchController.active_timed_switches">
-<tt class="descname">active_timed_switches</tt><em class="property"> = None</em></dt>
-<dd><p>Dictionary of switches that are currently in a state counting ms
-waiting to notify their handlers. In other words, this is the dict that
-tracks current switches for things like &#8220;do foo() if switch bar is
-active for 100ms.&#8221;</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.add_switch_handler">
 <tt class="descname">add_switch_handler</tt><big>(</big><em>switch_name</em>, <em>callback</em>, <em>state=1</em>, <em>ms=0</em>, <em>return_info=False</em><big>)</big></dt>
@@ -137,7 +128,7 @@ is in the state regardless of how long it&#8217;s been in that state.</p>
 
 <dl class="attribute">
 <dt id="mpf.system.switch_controller.SwitchController.log">
-<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x1cc0c30&gt;</em></dt>
+<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x1cbd650&gt;</em></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -177,13 +168,6 @@ handles NC versus NO switches and translates them to &#8216;active&#8217; versus
 </table>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="mpf.system.switch_controller.SwitchController.registered_switches">
-<tt class="descname">registered_switches</tt><em class="property"> = None</em></dt>
-<dd><p>Dictionary of switches and states that have been registered for
-callbacks.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.remove_switch_handler">
 <tt class="descname">remove_switch_handler</tt><big>(</big><em>switch_name</em>, <em>callback</em>, <em>state=1</em>, <em>ms=0</em><big>)</big></dt>
@@ -204,14 +188,6 @@ last changed state.</p>
 <dt id="mpf.system.switch_controller.SwitchController.set_state">
 <tt class="descname">set_state</tt><big>(</big><em>switch_name</em>, <em>state=1</em><big>)</big></dt>
 <dd><p>Sets the state of a switch.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mpf.system.switch_controller.SwitchController.switches">
-<tt class="descname">switches</tt><em class="property"> = None</em></dt>
-<dd><p>Dictionary which holds the master list of switches as well as their
-current states. State here does factor in whether a switch is NO or NC,
-so 1 = active and 0 = inactive.</p>
 </dd></dl>
 
 </dd></dl>
@@ -255,7 +231,7 @@ so 1 = active and 0 = inactive.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.ball_device module &mdash; Mission Pinball Framework 0.0.9 documentation</title>
+    <title>mpf.devices.ball_device module &mdash; Mission Pinball Framework 0.0.9b documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.9',
+        VERSION:     '0.0.9b',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9b documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -70,6 +70,14 @@ trough, an eject hole, a VUK, a catapult, etc.</p>
 <tt class="descname">configure</tt><big>(</big><em>config=None</em><big>)</big></dt>
 <dd><p>Performs the actual configuration of the ball device based on the
 dictionary that was passed to it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> &#8211; Python dictionary which holds the configuration settings.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -81,15 +89,9 @@ in or balls that have gone out.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>stealth</strong> &#8211; Boolean value that controls whether any events will be
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>stealth</strong> &#8211; Boolean value that controls whether any events will be
 posted based on any ball count change info. If True, results
-will not be posted. If False, they will. Default is False</li>
-<li><strong>confirm_eject</strong> &#8211; Boolean value that specifies whether this count
-should confirm an eject if it finds any missing balls and an
-eject in progress. Default is False.</li>
-</ul>
-</td>
+will not be posted. If False, they will. Default is False.</td>
 </tr>
 </tbody>
 </table>
@@ -98,31 +100,41 @@ eject in progress. Default is False.</li>
 <dl class="method">
 <dt id="mpf.devices.ball_device.BallDevice.get_status">
 <tt class="descname">get_status</tt><big>(</big><em>request=None</em><big>)</big></dt>
-<dd><p>Pass a value to get that status item. Or none to get back a dict of
-the full status.</p>
+<dd><p>Returns a dictionary of current status of this ball device.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>request</strong> &#8211; <p>A string of what status item you&#8217;d like to request.
+Default will return all status items.
 Options include:</p>
 <blockquote>
 <div><ul class="simple">
 <li>num_balls_contained</li>
 <li>flag_eject_in_progress</li>
 <li>num_balls_to_eject</li>
+<li>num_balls_desired</li>
 </ul>
 </div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
+<dt>A dictionary with the following keys:</dt>
+<dd><ul class="first last simple">
+<li>num_balls_contained</li>
+</ul>
+</dd>
+</dl>
+<ul class="simple">
+<li>flag_eject_in_progress</li>
+<li>num_balls_to_eject</li>
+<li>num_balls_desired</li>
+</ul>
 </td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.ball_device.BallDevice.initialize">
-<tt class="descname">initialize</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.ball_device.BallDevice.is_full">
@@ -130,24 +142,18 @@ Options include:</p>
 <dd><p>Checks to see if this device is full, meaning it is holding either
 the max number of balls it can hold, or it&#8217;s holding all the known balls
 in the machine.</p>
+<p>Returns: True or False</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.ball_device.BallDevice.is_ok_to_receive">
 <tt class="descname">is_ok_to_receive</tt><big>(</big><big>)</big></dt>
 <dd><p>Checks whether it&#8217;s ok for this device to receive any balls.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
-<li><strong>int</strong> (<em>the number of balls this device can receive. 0 = full / not able</em>)</li>
-<li><em>to receive.</em></li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
+<dl class="docutils">
+<dt>Returns: An integer value of the number of balls this device can</dt>
+<dd>receive. A return value of 0 means that this device is full and/or
+that it&#8217;s not able to receive any balls at this time.</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -164,6 +170,7 @@ in the machine.</p>
 <dt id="mpf.devices.ball_device.BallDevice.set_ok_to_eject">
 <tt class="descname">set_ok_to_eject</tt><big>(</big><big>)</big></dt>
 <dd><p>Checks whether it&#8217;s ok for this device to eject and sets the flag.</p>
+<p>Returns: True (device is ok to eject) or False.</p>
 </dd></dl>
 
 <dl class="method">
@@ -227,7 +234,7 @@ eject.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

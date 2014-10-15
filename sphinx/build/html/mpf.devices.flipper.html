@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.flipper module &mdash; Mission Pinball Framework 0.0.9 documentation</title>
+    <title>mpf.devices.flipper module &mdash; Mission Pinball Framework 0.0.9b documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.9',
+        VERSION:     '0.0.9b',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9b documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -188,6 +188,25 @@ controls the right flippers and vice-versa.</p>
 <p>This mode is not yet implemented.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="mpf.devices.flipper.Flipper.sw_flip">
+<tt class="descname">sw_flip</tt><big>(</big><big>)</big></dt>
+<dd><p>Activates the flipper via software as if the flipper button was
+pushed.</p>
+<p>This is needed because the real flipper activations are handled in
+hardware, so if you want to flip the flippers with the keyboard or OSC
+interfaces, you have to call this method.</p>
+<p>Note this method will keep this flipper enabled until you call
+sw_release().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.flipper.Flipper.sw_release">
+<tt class="descname">sw_release</tt><big>(</big><big>)</big></dt>
+<dd><p>Deactives the flipper via software as if the flipper button was
+released. See the documentation for sw_flip() for details.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -229,7 +248,7 @@ controls the right flippers and vice-versa.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

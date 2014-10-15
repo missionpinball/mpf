@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Index &mdash; Mission Pinball Framework 0.0.9 documentation</title>
+    <title>Index &mdash; Mission Pinball Framework 0.0.9b documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.9',
+        VERSION:     '0.0.9b',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9b documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -87,10 +87,6 @@
 
       
   <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelController.active_scorereelgroup">active_scorereelgroup (mpf.devices.score_reel.ScoreReelController attribute)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.active_timed_switches">active_timed_switches (mpf.system.switch_controller.SwitchController attribute)</a>
   </dt>
 
       
@@ -145,12 +141,12 @@
   <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReel.advance">advance() (mpf.devices.score_reel.ScoreReel method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.plugins.shots.html#mpf.plugins.shots.Shot.advertise">advertise() (mpf.plugins.shots.Shot method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.are_balls_gathered">are_balls_gathered() (mpf.system.ball_controller.BallController method)</a>
   </dt>
@@ -992,15 +988,9 @@
   </dt>
 
       
-  <dt><a href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice.initialize">initialize() (mpf.devices.ball_device.BallDevice method)</a>
+  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.initialize">initialize() (mpf.devices.score_reel.ScoreReelGroup method)</a>
   </dt>
 
-      <dd><dl>
-        
-  <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelGroup.initialize">(mpf.devices.score_reel.ScoreReelGroup method)</a>
-  </dt>
-
-      </dl></dd>
       
   <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.initialize_hw_states">initialize_hw_states() (mpf.system.switch_controller.SwitchController method)</a>
   </dt>
@@ -1400,6 +1390,10 @@
   </dt>
 
       
+  <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_known">num_balls_known (mpf.system.ball_controller.BallController attribute)</a>
+  </dt>
+
+      
   <dt><a href="mpf.system.ball_controller.html#mpf.system.ball_controller.BallController.num_balls_live">num_balls_live (mpf.system.ball_controller.BallController attribute)</a>
   </dt>
 
@@ -1521,8 +1515,6 @@
   <dt><a href="mpf.system.events.html#mpf.system.events.EventManager.post">post() (mpf.system.events.EventManager method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.plugins.auditor.html#mpf.plugins.auditor.preload_check">preload_check() (in module mpf.plugins.auditor)</a>
   </dt>
@@ -1573,6 +1565,8 @@
   </dt>
 
       </dl></dd>
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.process_coil">process_coil() (mpf.plugins.osc.OSC method)</a>
   </dt>
@@ -1587,6 +1581,10 @@
 
       
   <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.process_event">process_event() (mpf.plugins.osc.OSC method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.plugins.osc.html#mpf.plugins.osc.OSC.process_flipper">process_flipper() (mpf.plugins.osc.OSC method)</a>
   </dt>
 
       
@@ -1680,10 +1678,6 @@
   </dt>
 
       
-  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.registered_switches">registered_switches (mpf.system.switch_controller.SwitchController attribute)</a>
-  </dt>
-
-      
   <dt><a href="mpf.system.show_controller.html#mpf.system.show_controller.Show.reload">reload() (mpf.system.show_controller.Show method)</a>
   </dt>
 
@@ -1769,12 +1763,12 @@
   </dt>
 
       </dl></dd>
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.plugins.info_lights.html#mpf.plugins.info_lights.InfoLights.reset_game_lights">reset_game_lights() (mpf.plugins.info_lights.InfoLights method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="mpf.devices.score_reel.html#mpf.devices.score_reel.ScoreReelController.reset_queue">reset_queue (mpf.devices.score_reel.ScoreReelController attribute)</a>
   </dt>
@@ -2092,7 +2086,15 @@
   </dt>
 
       
+  <dt><a href="mpf.devices.flipper.html#mpf.devices.flipper.Flipper.sw_flip">sw_flip() (mpf.devices.flipper.Flipper method)</a>
+  </dt>
+
+      
   <dt><a href="mpf.system.machine_controller.html#mpf.system.machine_controller.MachineController.sw_optimized_loop">sw_optimized_loop() (mpf.system.machine_controller.MachineController method)</a>
+  </dt>
+
+      
+  <dt><a href="mpf.devices.flipper.html#mpf.devices.flipper.Flipper.sw_release">sw_release() (mpf.devices.flipper.Flipper method)</a>
   </dt>
 
       
@@ -2101,10 +2103,6 @@
 
       
   <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController">SwitchController (class in mpf.system.switch_controller)</a>
-  </dt>
-
-      
-  <dt><a href="mpf.system.switch_controller.html#mpf.system.switch_controller.SwitchController.switches">switches (mpf.system.switch_controller.SwitchController attribute)</a>
   </dt>
 
   </dl></td>
@@ -2384,7 +2382,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

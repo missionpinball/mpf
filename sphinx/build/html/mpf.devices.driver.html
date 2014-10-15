@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.driver module &mdash; Mission Pinball Framework 0.0.9 documentation</title>
+    <title>mpf.devices.driver module &mdash; Mission Pinball Framework 0.0.9b documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.9',
+        VERSION:     '0.0.9b',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.9 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.0.9b documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -54,10 +54,11 @@
 <p>Generic class that holds driver objects.</p>
 <p>A &#8216;driver&#8217; is any device controlled from a driver board which is typically
 the high-voltage stuff like coils and flashers.</p>
-<p>This class exposes the methods you can use on these driver types of
+<p>This class exposes the methods you should use on these driver types of
 devices. Each platform module (i.e. P-ROC, FAST, etc.) subclasses this
-class to actually communicate with the physitcal hardware and perform the
+class to actually communicate with the physical hardware and perform the
 actions.</p>
+<p>Args: Same as the Device parent class</p>
 <dl class="attribute">
 <dt id="mpf.devices.driver.Driver.collection">
 <tt class="descname">collection</tt><em class="property"> = 'coils'</em></dt>
@@ -77,32 +78,33 @@ actions.</p>
 <dl class="method">
 <dt id="mpf.devices.driver.Driver.enable">
 <tt class="descname">enable</tt><big>(</big><big>)</big></dt>
-<dd><p>Enables a coil by holding it &#8216;on&#8217;.</p>
-<p>If this coil is configured with a holdPatter, then this method will use
-that holdPatter to pwm pulse the coil.</p>
-<p>If not, then this method will just enable the coil. Note this type of
-enable is software controlled. It actually sends a pulse() to the coil
-which is 2.5x the machine timer tick HZ rate and keeps on re-upping it
-every tick. This is a safety precaution which will prevent a coil from
-getting stuck &#8216;on&#8217; if something weird happens.</p>
-<p>Also note that as a further safety precaution, if you want to enable()
-this coil without pwm, then you have to add the following option to this
-coil in your machine configuration files:</p>
+<dd><p>Enables a driver by holding it &#8216;on&#8217;.</p>
+<p>If this driver is configured with a holdPatter, then this method will use
+that holdPatter to pwm pulse the driver.</p>
+<p>If not, then this method will just enable the driver. As a safety
+precaution, if you want to enable() this driver without pwm, then you
+have to add the following option to this driver in your machine
+configuration files:</p>
 <p>allow_enable: True</p>
-<p>Note this fancy software hold is not yet implemented.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.driver.Driver.pulse">
-<tt class="descname">pulse</tt><big>(</big><em>milliseconds=None</em><big>)</big></dt>
-<dd><p>Enables this driver.</p>
+<tt class="descname">pulse</tt><big>(</big><em>milliseconds=None</em>, <em>power=1.0</em><big>)</big></dt>
+<dd><p>Pulses this driver.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>milliseconds</strong> (<em>int : optional</em>) &#8211; The number of milliseconds the driver should be enabled for. If no
-value is provided, the driver will be enabled for the value
-specified in the config dictionary.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>milliseconds</strong> &#8211; The number of milliseconds the driver should be
+enabled for. If no value is provided, the driver will be
+enabled for the value specified in the config dictionary.</li>
+<li><strong>power</strong> &#8211; A multiplier that will be applied to the default pulse time,
+typically a float between 0.0 and 1.0. (Note this is only used
+if milliseconds is not specified.)</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
@@ -111,12 +113,50 @@ specified in the config dictionary.</td>
 <dl class="method">
 <dt id="mpf.devices.driver.Driver.pwm">
 <tt class="descname">pwm</tt><big>(</big><em>on_ms</em>, <em>off_ms</em>, <em>orig_on_ms=0</em><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Quickly turns this driver on and off to have the effect of holding
+this driver &#8216;on&#8217; without burning up the coil.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>on_ms</strong> &#8211; Integer of how long this driver is on in the &#8216;on&#8217; portion.</li>
+<li><strong>off_ms</strong> &#8211; Integer of how long this driver is off in the &#8216;off&#8217;
+portion.</li>
+<li><strong>orig_on_ms</strong> &#8211; Integer of how long this driver should be held on
+initially before the on/off pulsing starts.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>For example, to rapidly pulse a driver 1ms and then off 4ms, pass the</dt>
+<dd>values on_ms=1, off_ms=4.</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.driver.Driver.timed_pwm">
 <tt class="descname">timed_pwm</tt><big>(</big><em>on_ms</em>, <em>off_ms</em>, <em>runtime_ms</em><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Quickly pulses a driver on/off for a specified number of
+milliseconds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>on_ms</strong> &#8211; Integer of how long this driver is on in the &#8216;on&#8217; portion.</li>
+<li><strong>off_ms</strong> &#8211; Integer of how long this driver is off in the &#8216;off&#8217;
+portion.</li>
+<li><strong>runtime_ms</strong> &#8211; Integer of the total number of milliseconds this driver
+should pulse on and off for.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </dd></dl>
 
@@ -159,7 +199,7 @@ specified in the config dictionary.</td>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
