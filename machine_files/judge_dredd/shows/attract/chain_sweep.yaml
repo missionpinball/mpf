@@ -1,17 +1,25 @@
 - tocks: 1
   lights:
     ultimateChallenge: ff
+  leds:
+    led1: ff0000
 - tocks: 1
   lights:
     impersonator: ff
+  leds:
+    led1: 00ff00
 - tocks: 1
   lights:
     meltdown: ff
     battleTank: ff
+  leds:
+    led1: 0000ff
 - tocks: 1
   lights:
     safecracker: ff
     sniper: ff
+  leds:
+    led1: 000000
 - tocks: 1
   lights:
     blackout: ff

@@ -274,10 +274,31 @@ class TargetGroup(Device):
         """One of this group's targets changed state. Let's recount them all.
         """
 
+        self.log.info("entering update count for device: %s", self.name)
+
         num_lit = 0
         for target in self.targets:
             if target.lit:
                 num_lit += 1
+
+        self.log.info("current number lit: %s", num_lit)
+        self.log.info("previous number lit: %s", self.num_lit)
+
+        old_lit = self.num_lit
+
+        # Post events for this group based on new lits or unlits
+        if num_lit > old_lit:  # we have a new lit
+            self.log.info("found a new lit")
+            for new_hit in range(num_lit - old_lit):
+                self.machine.events.post(self.device_str + '_' + self.name +
+                                         '_lit_hit')
+
+        elif old_lit > num_lit:  # we have a new unlit
+            self.log.info("found a new unlit")
+            for new_hit in range(old_lit - num_lit):
+                self.machine.events.post(self.device_str + '_' + self.name +
+                                         '_unlit_hit')
+
 
         self.num_lit = num_lit
         self.num_unlit = self.num_targets - self.num_lit

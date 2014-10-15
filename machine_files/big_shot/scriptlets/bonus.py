@@ -87,6 +87,10 @@ class Bonus(Scriptlet):
         self.machine.score.add(self.bonus_value, force=True)
         this_light.off()
 
+        # if this is the 8 ball, also turn off the top 8 ball lane light
+        if this_light.name == 'ball8':
+            self.machine.lights['eightBall500'].off()
+
     def set_bonus_value(self):
         # Figures out what the bonus score value is based on what ball this is
         # and how many balls the game is set to.

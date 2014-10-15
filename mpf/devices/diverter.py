@@ -13,7 +13,10 @@ from mpf.system.timing import Timing
 
 
 class Diverter(Device):
-    """Represents a diverter in a pinball machine."""
+    """Represents a diverter in a pinball machine.
+
+    Args: Same as the Device parent class.
+    """
 
     config_section = 'Diverters'
     collection = 'diverter'
@@ -61,9 +64,9 @@ class Diverter(Device):
     def enable(self):
         """Enables this diverter.
 
-        If an 'activation_switch' is configured, then this method writes a hardware
-        autofire rule to the pinball controller which fires the diverter coil
-        when the switch is activated.
+        If an 'activation_switch' is configured, then this method writes a
+        hardware autofire rule to the pinball controller which fires the
+        diverter coil when the switch is activated.
 
         If no `activation_switch` is specified, then the diverter is activated
         immediately.

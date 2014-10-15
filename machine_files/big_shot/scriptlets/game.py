@@ -25,6 +25,12 @@ class Game(Scriptlet):
         self.machine.events.add_handler('enable_modern_mode',
                                         self.enable_modern_mode)
 
+        # register shows for cool effects in modern mode
+        self.machine.events.add_handler('drop_targets_Solids_lit_hit',
+                                        self.solid_target_hit)  # gabe
+        self.machine.events.add_handler('drop_targets_Stripes_lit_hit',
+                                        self.stripe_target_hit)  # gabe
+
         # set initial classic / modern mode
         if self.machine.classic_mode:
             self.enable_classic_mode()
@@ -34,6 +40,9 @@ class Game(Scriptlet):
         # turn on the GI
         for light in self.machine.lights.items_tagged('GI'):
             light.on()
+
+        # Game Over stays on, so we have to turn it off (Gabe did this)
+        self.machine.lights['gameOver'].off()
 
     def enable_classic_mode(self):
         pass
@@ -48,6 +57,8 @@ class Game(Scriptlet):
         self.machine.events.remove_handler(self.enable_classic_mode)
         self.machine.events.remove_handler(self.enable_modern_mode)
         self.machine.events.remove_handler(self.ball_started)
+        self.machine.events.remove_handler(self.solid_target_hit)  # gabe
+        self.machine.events.remove_handler(self.stripe_target_hit)  # gabe
 
     def player_added(self, **kwargs):
         self.machine.coils['gameCounter'].pulse()
@@ -62,6 +73,13 @@ class Game(Scriptlet):
         # starts
         if not self.machine.ball_controller.num_balls_live:
             self.machine.ball_controller.add_live()
+
+        # Gabe put this in because we need to make sure the 8 ball lights
+        # are turned off when a ball starts. They seem to have a mind of
+        # their own since there's no device attached to them
+
+        self.machine.lights['ball8'].off()
+        self.machine.lights['eightBall500'].off()
 
     def collect_special(self):
         self.machine.coils.knocker.pulse()
@@ -86,3 +104,22 @@ class Game(Scriptlet):
             self.machine.lights['bonus1k'].off()
             self.machine.lights['bonus2k'].off()
             self.machine.lights['bonus3k'].on()
+
+    # methods below do cool things when modern mode is on.
+
+    def solid_target_hit(self):  # gabe
+
+        if not self.machine.classic_mode:
+
+            self.machine.shows['solid_target_hit'].play(repeat=False,
+                                                       tocks_per_sec=25,
+                                                       priority=1001)
+
+    def stripe_target_hit(self):  # gabe
+
+        if not self.machine.classic_mode:
+
+            self.machine.shows['stripe_target_hit'].play(repeat=False,
+                                                       tocks_per_sec=25,
+                                                       priority=1001)
+

@@ -103,7 +103,7 @@ class BallDevice(Device):
         # successful eject.
 
         self.machine.events.add_handler('machine_reset_phase_1',
-                                        self.initialize)
+                                        self._initialize)
 
         self.num_balls_ejecting = 0
         # The number of balls that are currently in the process of being
@@ -125,6 +125,15 @@ class BallDevice(Device):
 
     @num_balls_desired.setter
     def num_balls_desired(self, balls):
+        """Specifies how many balls this device desires to contain.
+
+        Note that trough devices (ball devices tagged with 'trough') always
+        desire to be full, so setting a new value here doesn't actually change
+        a trough's desired ball count. That said, if a trough device receives
+        a desired count value here that's lower than the current number of
+        balls it contains, it will attempt to eject a ball (even though the
+        desired count won't actually change.)
+        """
 
         if 'trough' in self.tags:
             if balls < self.config['ball_capacity']:
@@ -177,6 +186,8 @@ class BallDevice(Device):
         """Performs the actual configuration of the ball device based on the
         dictionary that was passed to it.
 
+        Args:
+            config: Python dictionary which holds the configuration settings.
         """
 
         # Merge in any new changes that were just passed
@@ -199,7 +210,7 @@ class BallDevice(Device):
                                         '_ball_eject_request',
                                         self._eject)
 
-    def initialize(self):
+    def _initialize(self):
         # convert names to objects
 
         if self.config['ball_switches']:
@@ -297,15 +308,23 @@ class BallDevice(Device):
         self.count_balls(stealth=True)
 
     def get_status(self, request=None):
-        """Pass a value to get that status item. Or none to get back a dict of
-        the full status.
+        """Returns a dictionary of current status of this ball device.
 
         Args:
             request: A string of what status item you'd like to request.
+                Default will return all status items.
                 Options include:
                     * num_balls_contained
                     * flag_eject_in_progress
                     * num_balls_to_eject
+                    * num_balls_desired
+
+        Returns:
+            A dictionary with the following keys:
+                 * num_balls_contained
+                * flag_eject_in_progress
+                * num_balls_to_eject
+                * num_balls_desired
         """
         if request == 'num_balls_contained':
             return self.num_balls_contained
@@ -350,10 +369,7 @@ class BallDevice(Device):
         Args:
             stealth: Boolean value that controls whether any events will be
                 posted based on any ball count change info. If True, results
-                will not be posted. If False, they will. Default is False
-            confirm_eject: Boolean value that specifies whether this count
-                should confirm an eject if it finds any missing balls and an
-                eject in progress. Default is False.
+                will not be posted. If False, they will. Default is False.
         """
         self.log.debug("Counting balls")
 
@@ -477,6 +493,9 @@ class BallDevice(Device):
         """Checks to see if this device is full, meaning it is holding either
         the max number of balls it can hold, or it's holding all the known balls
         in the machine.
+
+        Returns: True or False
+
         """
         if self.num_balls_contained == self.ball_capacity:
             return True
@@ -497,6 +516,8 @@ class BallDevice(Device):
 
     def set_ok_to_eject(self):
         """Checks whether it's ok for this device to eject and sets the flag.
+
+        Returns: True (device is ok to eject) or False.
         """
         initial_value = self.flag_ok_to_eject
 
@@ -531,12 +552,9 @@ class BallDevice(Device):
     def is_ok_to_receive(self):
         """Checks whether it's ok for this device to receive any balls.
 
-        Returns
-        -------
-
-        int : the number of balls this device can receive. 0 = full / not able
-        to receive.
-
+        Returns: An integer value of the number of balls this device can
+            receive. A return value of 0 means that this device is full and/or
+            that it's not able to receive any balls at this time.
         """
 
         if self.config['ball_capacity'] - self.num_balls_contained < 0:
@@ -592,7 +610,6 @@ class BallDevice(Device):
         """Stops all activity in a device.
 
         Cancels all pending eject requests. Cancels eject confirmation checks.
-
         """
         self.log.debug("Stopping all activity via stop()")
         self.flag_eject_in_progress = False

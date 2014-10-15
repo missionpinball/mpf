@@ -42,6 +42,16 @@ class Flipper(Device):
         self.no_hold = False
         self.strength = 100
         self.inverted = False
+        self.rules = dict()
+
+        self.rules['a'] = False
+        self.rules['b'] = False
+        self.rules['c'] = False
+        self.rules['d'] = False
+        self.rules['e'] = False
+        self.rules['f'] = False
+        self.rules['h'] = False
+        self.rules['g'] = False
 
         if config:
             self.configure(config)
@@ -219,6 +229,8 @@ class Flipper(Device):
             coil_action_ms=-1,
             debounced=False)
 
+        self.rules['a'] = True
+
     def _enable_flipper_rule_B(self):
         """
         Rule  Type     Coil  Switch  Action
@@ -233,6 +245,8 @@ class Flipper(Device):
             pulse_ms=self.machine.coils[self.config['main_coil']].
                 config['pulse_ms'],
             debounced=False)
+
+        self.rules['b'] = True
 
     def _enable_flipper_rule_C(self):
         """
@@ -250,6 +264,8 @@ class Flipper(Device):
             pwm_off=self.machine.coils[self.config['main_coil']].config['pwm_on'],
             debounced=False)
 
+        self.rules['c'] = True
+
     def _enable_flipper_rule_D(self):
         """
         Rule  Type     Coil  Switch  Action
@@ -262,6 +278,8 @@ class Flipper(Device):
             coil_action_ms=-1,
             debounced=False)
 
+        self.rules['d'] = True
+
     def _enable_flipper_rule_E(self):
         """
         Rule  Type     Coil  Switch  Action
@@ -273,6 +291,8 @@ class Flipper(Device):
             coil_name=self.config['main_coil'],
             coil_action_ms=0,
             debounced=False)
+
+        self.rules['e'] = True
 
     def _enable_flipper_rule_F(self):
         """
@@ -287,6 +307,8 @@ class Flipper(Device):
                 coil_action_ms=0,
                 debounced=False)
 
+        self.rules['f'] = True
+
     def _enable_flipper_rule_G(self):
         """
         Rule  Type     Coil  Switch  Action
@@ -300,6 +322,8 @@ class Flipper(Device):
                 coil_action_ms=0,
                 debounced=False)
 
+        self.rules['g'] = True
+
     def _enable_flipper_rule_H(self):
         """
         Rule  Type     Coil  Switch  Action
@@ -312,6 +336,58 @@ class Flipper(Device):
             coil_action_ms=-1,
             pwm_on=self.machine.coils[self.config['main_coil']].config['pwm_on'],
             pwm_off=self.machine.coils[self.config['main_coil']].config['pwm_off'])
+
+        self.rules['h'] = True
+
+    def sw_flip(self):
+        """Activates the flipper via software as if the flipper button was
+        pushed.
+
+        This is needed because the real flipper activations are handled in
+        hardware, so if you want to flip the flippers with the keyboard or OSC
+        interfaces, you have to call this method.
+
+        Note this method will keep this flipper enabled until you call
+        sw_release().
+        """
+
+        # todo add support for other types of flipper coils
+
+        print "flip"
+
+        # Send the activation switch press to the switch controller
+        self.machine.switch_controller.process_switch(
+            name=self.config['activation_switch'],
+            state=1,
+            logical=True)
+
+        if self.rules['c']:  # pulse/pwm main
+            print "1"
+            print "coil", self.config['main_coil']
+            coil = self.machine.coils[self.config['main_coil']]
+            print "coil object", coil
+            coil.pwm(
+                on_ms=coil.config['pwm_on'],
+                off_ms=coil.config['pwm_off'],
+                orig_on_ms=coil.config['pulse_ms']
+            )
+
+    def sw_release(self):
+        """Deactives the flipper via software as if the flipper button was
+        released. See the documentation for sw_flip() for details.
+        """
+
+        # Send the activation switch release to the switch controller
+        self.machine.switch_controller.process_switch(
+            name=self.config['activation_switch'],
+            state=0,
+            logical=True)
+
+        # disable the flipper coil(s)
+        for coil in self.flipper_coils:
+            self.machine.coils[coil].disable()
+
+
 
 # The MIT License (MIT)
 

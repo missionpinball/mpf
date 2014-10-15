@@ -20,6 +20,7 @@ class AutofireCoil(Device):
 
     Examples of Autofire Coils are pop bumpers, slingshots, and flippers.
 
+    Args: Same as Device.
     """
 
     config_section = 'Autofire Coils'
@@ -48,13 +49,9 @@ class AutofireCoil(Device):
     def configure(self, config=None):
         """Configures an autofire coil.
 
-        Parameters
-        ----------
-
-        config : dictionary
-            The configuration dictionary which contains all the settings this
+        Args:
+            config : A dictionary which contains all the settings this
             coil should be configured with.
-
         """
         if not config:
             self.log.error("No configuration received for AutofireCoil: %s",

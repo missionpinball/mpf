@@ -12,7 +12,9 @@ from mpf.devices.target import Target, TargetGroup
 
 
 class DropTarget(Target):
-    """Represents a single drop target in a pinball machine."""
+    """Represents a single drop target in a pinball machine.
+
+    Args: Same as the Target parent class"""
 
     config_section = 'DropTargets'
     collection = 'drop_targets'
@@ -33,18 +35,6 @@ class DropTarget(Target):
             self.config['reset_coil'] = None
         if 'knockdown_coil' not in self.config:
             self.config['knockdown_coil'] = None
-
-        # let's use some different defaults here since drop targets are
-        # different than other targets:
-
-        '''
-        if ('light_when_unlit' not in self.config and
-                'unlight_when_lit' not in self.config):
-            if self.config['default_state'] == 'unlit':
-                self.config['light_when_unlit'] = True
-                self.config['unlight_when_lit'] = True
-        '''
-
 
         # register for notification of switch state
         # this is in addition to the parent since drop targets track

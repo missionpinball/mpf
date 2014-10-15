@@ -71,8 +71,26 @@ class HardwarePlatform(Platform):
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['Hardware']['DriverBoards'])
-        self.proc = pinproc.PinPROC(self.machine_type)
-        self.proc.reset(1)
+
+        # new way starts below ---------------------
+
+        self.proc = None
+
+        while not self.proc:
+            try:
+                print "trying to connect to P-ROC"
+                self.proc = pinproc.PinPROC(self.machine_type)
+                self.proc.reset(1)
+            except:
+                print "Failed, trying again..."
+
+        # new way ends here -------------------------
+
+
+        # old way is these two lines:
+        # self.proc = pinproc.PinPROC(self.machine_type)
+        # self.proc.reset(1)
+
 
         # Because PDBs can be configured in many different ways, we need to
         # traverse the YAML settings to see how many PDBs are being used.

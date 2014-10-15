@@ -97,6 +97,9 @@ class ShowController(object):
 
     def _run_show(self, show):
         # Internal method which starts a Show
+
+        # todo what happens if we try to run a show that's already running?
+
         show.running = True
         show.ending = False
         show.current_repeat_step = 0
@@ -155,10 +158,12 @@ class ShowController(object):
         # first force the restore of whatever the lights were manually set to
         for light in show.light_states:
             if light.cache['priority'] < priority:
-                light.restore(force=True)
+                light.restore(force=False)
         for led in show.led_states:
             if led.cache['priority'] < priority:
-                led.restore(force=True)
+                led.restore(force=False)
+
+        # todo check that the above is right. Dunno which way force should be.
 
         # now see if there are other shows that have these lights in an active
         # state
@@ -253,7 +258,10 @@ class ShowController(object):
         self.event_queue.add(event)
 
     def _add_to_coil_queue(self, coil, action):
-        # Same goes for coils
+        # action is a tuple
+        # action[0] is string of instruction (pulse, pwm, etc.)
+        # action[1] is details for that instruction:
+            # for pulse, it's a power multiplier
         self.coil_queue.add((coil, action))
 
     def _do_update(self):
@@ -268,8 +276,8 @@ class ShowController(object):
 
     def _fire_coils(self):
         for coil in self.coil_queue:
-            if coil[1] == 'pulse':
-                coil[0].pulse()
+            if coil[1][0] == 'pulse':
+                coil[0].pulse(power=coil[1][1])
         self.coil_queue = set()
 
     def _fire_events(self):
@@ -722,7 +730,24 @@ class Show(object):
                         break
 
                     value = show_actions[step_num]['coils'][coil]
-                    # todo any more processing here?
+
+                    # process the value into a tuple which will be
+                    # value[0] = string of action type (pulse, pwm, etc)
+                    # value[1] = int / float of pulse value
+
+                    # split the value on '-p' to look for a power setting
+                    value = value.split('-p')
+
+                    # if there's no power setting, append 100
+                    if len(value) == 1:
+                        value.append(100)
+
+                    # convert the 0-100 value to 0.0-1.0 float
+                    value[1] = float(value[1]) / 100.0
+
+                    # convert value list into tuple
+                    value = (value[0], value[1])
+
                     coil_actions[this_coil] = value
 
                 step_actions['coils'] = coil_actions
@@ -813,10 +838,11 @@ class Show(object):
 
         Args:
             repeat: Boolean of whether the show repeats when it's done.
-            priority: Integer value of the relative priority of this show. If there's
-            ever a situation where multiple shows want to control the same item,
-            the one with the higher priority will win. ("Higher" means a bigger
-            number, so a show with priority 2 will override a priority 1.)
+            priority: Integer value of the relative priority of this show. If
+            there's ever a situation where multiple shows want to control the
+            same item, the one with the higher priority will win. ("Higher"
+            means a bigger number, so a show with priority 2 will override a
+            priority 1.)
         blend: Boolean which controls whether this show "blends" with lower
             priority shows and scripts. For example, if this show turns a light
             off, but a lower priority show has that light set to blue, then the
@@ -1251,6 +1277,7 @@ class Playlist(object):
             off (False). You can also use *reset* to restart a playlist that's
             currently running.
         """
+
         if not self.running:
             if reset:
                 self.current_step_position = 0
@@ -1285,7 +1312,6 @@ class Playlist(object):
                 settings were, but you can force it True or False if you want
                 here.
         """
-
         self.running = False
 
         for action in self.step_actions:

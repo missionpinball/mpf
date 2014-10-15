@@ -9,7 +9,7 @@
 # https://missionpinball.com/blog/category/big-shot-em-conversion/
 
 Machine:
-    HZ: 30
+    HZ: 60
     Balls Installed: 1
     Min Balls: 0
     Max Balls: 1
@@ -686,11 +686,11 @@ Coils:
     flipperLeftMain: # 0A0
         number: A0-B0-0
         pulse_ms: 50
-        holdPatter: 1-4
+        holdPatter: 1-3
     flipperRightMain: # 0A1
         number: A0-B0-1
-        pulse_ms: 50
-        holdPatter: 1-4
+        pulse_ms: 60
+        holdPatter: 1-3
     gameCounter:
         number: A0-B0-2
         pulse_ms: 10
@@ -812,7 +812,7 @@ Score Reels:
     score_1p_10k:
         coil_inc: player1_10k
         switch_0: score_1p_10k_0
-        switch_9: score_1p_10k_5
+        switch_5: score_1p_10k_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
@@ -822,7 +822,7 @@ Score Reels:
     score_1p_1k:
         coil_inc: player1_1k
         switch_0: score_1p_1k_0
-        switch_9: score_1p_1k_5
+        switch_5: score_1p_1k_5
         rollover: True
         limit_hi: 9
         limit_lo: 0
@@ -1222,7 +1222,7 @@ LogicBlocks:
 
         unlightEightBall:
             events:
-                - collect_special
+                - collect_special, ball_started
             events_when_complete:
                 action_light_ball8_off
                 action_light_eightBall500_off

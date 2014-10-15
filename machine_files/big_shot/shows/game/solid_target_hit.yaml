@@ -1,0 +1,54 @@
+- tocks: 1
+  coils:
+    chime2: pulse
+  lights:
+    ball11: ff
+- tocks: 1
+  lights:
+    ball12: ff
+    ball7: ff
+- tocks: 1
+  coils:
+    chime3: pulse
+  lights:
+    ball4: ff
+    ball8: ff
+    ball13: ff
+- tocks: 1
+  lights: 
+    ball2: ff
+    ball5: ff
+    ball9: ff
+    ball14: ff
+- tocks: 1
+  lights:
+    ball1: ff
+    ball3: ff
+    ball6: ff
+    ball10: ff
+    ball15: ff
+- tocks: 1
+  lights:
+    ball11: 00
+- tocks: 1
+  lights:
+    ball12: 00
+    ball7: 00
+- tocks: 1
+  lights:
+    ball4: 00
+    ball8: 00
+    ball13: 00
+- tocks: 1
+  lights: 
+    ball2: 00
+    ball5: 00
+    ball9: 00
+    ball14: 00
+- tocks: 1
+  lights:
+    ball1: 00
+    ball3: 00
+    ball6: 00
+    ball10: 00
+    ball15: 00

@@ -10,12 +10,12 @@ Machine:
     Max Balls: 6
 
 Hardware:
-    Platform: p_roc
+    Platform: fast
     DriverBoards: wpc
 
 Fast:
-    port: COM5
-    baud: 921600
+    port: COM7
+    baud: 1000000
     config_number_format: = 'hex'
 
 LEDSettings:

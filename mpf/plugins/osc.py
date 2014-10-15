@@ -156,6 +156,8 @@ class OSC(object):
             if data[0] == 1:
                 self.client_mode = 'wpc'
                 self.client_update_all()
+        elif cat.upper() == 'FLIPPER':
+            self.process_flipper(name, data)
         elif self.config['debug_messages']:
             self.log.info("Last incoming OSC message was invalid")
 
@@ -208,6 +210,14 @@ class OSC(object):
     def process_event(self, event, data):
         """Posts an MPF event based on an event received from the OSC client."""
         self.machine.events.post(event)
+
+    def process_flipper(self, flipper, data):
+        """Calls the flipper's sw_flip() or sw_release() event."""
+
+        if data[0] == 1:
+            self.machine.flippers[flipper].sw_flip()
+        else:
+            self.machine.flippers[flipper].sw_release()
 
     def register_switches(self):
         """Adds switch handlers to all switches so the OSC client can receive
@@ -344,21 +354,24 @@ class OSC(object):
                                                     name)
             self.OSC_message.append(data)
 
-            for k, v in self.OSC_clients.iteritems():
+            for k in self.OSC_clients.items():
                 try:
                     if self.config['debug_messages']:
-                            self.log.debug("Sending OSC Message to client:%s: "
+                            self.log.info("Sending OSC Message to client:%s: "
                                            "%s", k, self.OSC_message, )
-                    v.send(self.OSC_message)
+                    k[1].send(self.OSC_message)
 
                 except OSCmodule.OSCClientError:
-                    self.log.debug("OSC client at address %s disconnected",
+                    self.log.info("OSC client at address %s disconnected",
                                    k[0])
                     # todo mark for deletion
                     self.clients_to_delete.append(k)
 
         for client in self.clients_to_delete:
-            del self.OSC_clients[client]
+            print "removing OSC client", client
+            print "current clients", self.OSC_clients
+            if client in self.OSC_clients:
+                del self.OSC_clients[client]
         self.clients_to_delete = []
 
         for client in self.clients_to_add:

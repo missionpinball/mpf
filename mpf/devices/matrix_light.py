@@ -58,8 +58,6 @@ class MatrixLight(Device):
         # First, if this incoming command is at a lower priority than what the
         # light is doing now, we don't proceed
         if priority < self.state['priority'] and not force:
-            if self.name == 'ball1':
-                self.log.info("new priority is lower than current. Returning")
             return
 
         # todo cache support
@@ -80,8 +78,9 @@ class MatrixLight(Device):
 
         self.hw_driver.on(brightness, fade_ms, start_brightness)
 
-    def off(self, fade_ms=0, priority=0, cache=True):
-        self.on(brightness=0, fade_ms=fade_ms, priority=priority, cache=cache)
+    def off(self, fade_ms=0, priority=0, cache=True, force=False):
+        self.on(brightness=0, fade_ms=fade_ms, priority=priority, cache=cache,
+                force=force)
 
     def add_handler(self, callback):
         """Registers a handler to be called when this light changes state."""
@@ -99,11 +98,11 @@ class MatrixLight(Device):
     def restore(self, force=False):
         """Restores the light state from cache."""
 
-        if self.cache['priority'] >= self.state['priority'] or force is True:
+        # if self.cache['priority'] >= self.state['priority'] or force is True:
 
-            self.on(brightness=self.cache['brightness'],
-                    priority=self.cache['priority'],
-                    force=True)
+        self.on(brightness=self.cache['brightness'],
+                priority=self.cache['priority'],
+                force=True)
 
 
 # The MIT License (MIT)

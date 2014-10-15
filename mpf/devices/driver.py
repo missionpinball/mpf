@@ -17,10 +17,12 @@ class Driver(Device):
     A 'driver' is any device controlled from a driver board which is typically
     the high-voltage stuff like coils and flashers.
 
-    This class exposes the methods you can use on these driver types of
+    This class exposes the methods you should use on these driver types of
     devices. Each platform module (i.e. P-ROC, FAST, etc.) subclasses this
-    class to actually communicate with the physitcal hardware and perform the
+    class to actually communicate with the physical hardware and perform the
     actions.
+
+    Args: Same as the Device parent class
 
     """
 
@@ -39,7 +41,8 @@ class Driver(Device):
         # some things later.
         self.config['number_str'] = str(config['number']).upper()
 
-        self.hw_driver, self.number = self.machine.platform.configure_driver(self.config)
+        self.hw_driver, self.number = self.machine.platform.configure_driver(
+                                                                self.config)
         self.log.debug("Creating '%s' with config: %s", name, config)
 
         if 'pulse_ms' not in self.config:
@@ -65,24 +68,17 @@ class Driver(Device):
             self.config['allow_enable'] = False
 
     def enable(self):
-        """Enables a coil by holding it 'on'.
+        """Enables a driver by holding it 'on'.
 
-        If this coil is configured with a holdPatter, then this method will use
-        that holdPatter to pwm pulse the coil.
+        If this driver is configured with a holdPatter, then this method will use
+        that holdPatter to pwm pulse the driver.
 
-        If not, then this method will just enable the coil. Note this type of
-        enable is software controlled. It actually sends a pulse() to the coil
-        which is 2.5x the machine timer tick HZ rate and keeps on re-upping it
-        every tick. This is a safety precaution which will prevent a coil from
-        getting stuck 'on' if something weird happens.
-
-        Also note that as a further safety precaution, if you want to enable()
-        this coil without pwm, then you have to add the following option to this
-        coil in your machine configuration files:
+        If not, then this method will just enable the driver. As a safety
+        precaution, if you want to enable() this driver without pwm, then you
+        have to add the following option to this driver in your machine
+        configuration files:
 
         allow_enable: True
-
-        Note this fancy software hold is not yet implemented.
         """
         if self.config['pwm_on'] and self.config['pwm_off']:
             self.pwm(self.config['pwm_on'], self.config['pwm_off'],
@@ -104,40 +100,63 @@ class Driver(Device):
         self.hw_driver.disable()
         # todo also disable the timer which reenables this
 
-    def pulse(self, milliseconds=None):
-        """ Enables this driver.
+    def pulse(self, milliseconds=None, power=1.0):
+        """ Pulses this driver.
 
-        Parameters
-        ----------
-
-        milliseconds : int : optional
-            The number of milliseconds the driver should be enabled for. If no
-            value is provided, the driver will be enabled for the value
-            specified in the config dictionary.
-
+        Args:
+            milliseconds: The number of milliseconds the driver should be
+                enabled for. If no value is provided, the driver will be
+                enabled for the value specified in the config dictionary.
+            power: A multiplier that will be applied to the default pulse time,
+                typically a float between 0.0 and 1.0. (Note this is only used
+                if milliseconds is not specified.)
         """
         if milliseconds is None:
-            milliseconds = self.config['pulse_ms']
+            milliseconds = int(self.config['pulse_ms']) * power
         elif milliseconds < 1:
             self.log.warning("Received command to pulse  Driver %s for %dms, "
                              "but ms is less than 1, so we're doing nothing.",
                              self.name, milliseconds)
             return
         # todo also disable the timer which reenables this
-        self.log.debug("Pulsing Driver for %dms", milliseconds)
+        self.log.debug("Pulsing Driver for %sms", milliseconds)
         self.hw_driver.pulse(int(milliseconds))
         self.time_last_changed = time.time()
         self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
     def pwm(self, on_ms, off_ms, orig_on_ms=0):
+        """Quickly turns this driver on and off to have the effect of holding
+        this driver 'on' without burning up the coil.
+
+        Args:
+            on_ms: Integer of how long this driver is on in the 'on' portion.
+            off_ms: Integer of how long this driver is off in the 'off'
+                portion.
+            orig_on_ms: Integer of how long this driver should be held on
+                initially before the on/off pulsing starts.
+
+        For example, to rapidly pulse a driver 1ms and then off 4ms, pass the
+            values on_ms=1, off_ms=4.
+
+        """
         self.log.debug("PWM Driver. initial pulse: %s, on: %s, off: %s",
-                       on_ms, off_ms, orig_on_ms)
+                       orig_on_ms, on_ms, off_ms)
         self.hw_driver.pwm(on_ms, off_ms, orig_on_ms)
         self.time_last_changed = time.time()
         self.time_when_done = -1
         # todo also disable the timer which reenables this
 
     def timed_pwm(self, on_ms, off_ms, runtime_ms):
+        """Quickly pulses a driver on/off for a specified number of
+        milliseconds.
+
+        Args:
+            on_ms: Integer of how long this driver is on in the 'on' portion.
+            off_ms: Integer of how long this driver is off in the 'off'
+                portion.
+            runtime_ms: Integer of the total number of milliseconds this driver
+                should pulse on and off for.
+        """
         self.log.debug("Timed PWM Driver. on: %s, off: %s, total ms: %s",
                        on_ms, off_ms, runtime_ms)
         self.hw_driver.pwm(on_ms, off_ms, runtime_ms)

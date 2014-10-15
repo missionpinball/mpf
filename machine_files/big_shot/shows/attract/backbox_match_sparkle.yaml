@@ -1,0 +1,36 @@
+- tocks: 1
+  lights:
+    match00: ff
+    match10: 00
+    match20: 00
+    match30: ff
+    match40: 00
+    match50: 00
+    match60: ff
+    match70: 00
+    match80: 00
+    match90: ff
+- tocks: 1
+  lights:
+    match00: 00
+    match10: ff
+    match20: 00
+    match30: 00
+    match40: ff
+    match50: 00
+    match60: 00
+    match70: ff
+    match80: 00
+    match90: 00
+- tocks: 1
+  lights:
+    match00: 00
+    match10: 00
+    match20: ff
+    match30: 00
+    match40: 00
+    match50: ff
+    match60: 00
+    match70: 00
+    match80: ff
+    match90: 00

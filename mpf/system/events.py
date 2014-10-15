@@ -155,7 +155,7 @@ class EventManager(object):
         """Posts an event which causes all the registered handlers to be
         called.
 
-        Only one event can be 'active' at a time, so if the event
+        Events are processed serially (e.g. one at a time), so if the event
         system is in the process of handling another event, this event is
         added to a queue.
 
@@ -164,23 +164,21 @@ class EventManager(object):
         You can add **kwargs to your handler methods if certain ones don't
         need them.
 
-        There are a few special parameters you can also pass here. (Should we
-        add these to the def statement above? Are we breaking pythonic rules
-        by not??)
-
-        Special keyword arguments include:
-
-        ev_type - if you specify "boolean" as an event type (by passing
-        ev_type='boolean') then this event will stop processing if any
-        handlers return False. Otherwise handlers that return False will have
-        no effect
-
-        callback - this is a method that will be called after the last handler
-        is done
+        Args:
+            event: A string name of the event you're posting. Note that you can
+                post whatever event you want. You don't have to set up anything
+                ahead of time, and if no handlers are registered for the event
+                you post, so be it.
+            ev_type: Optional parameter which specifies the type of event this
+                is. Options include 'boolean', 'queue', 'relay', or None. See
+                the documentation at https://missionpinball.com/docs for
+                details about the different event types.
+            callback: A method which will be called when the final handler is
+                done processing this event.
 
         Note that these two special keywords (ev_type and callback) are
         stripped from the list of keyword arguments that are passed to the
-        handlers. So you can use them here in your post() without handlers that
+        handlers, so you can use them here in your post() without handlers that
         do not expect keywords.
 
         """

@@ -1,0 +1,72 @@
+- tocks: 1
+  lights:
+    match00: 00
+    match10: 00
+    match20: 00
+    match30: 00
+    match40: 00
+    match50: 00
+    match60: 00
+    match70: 00
+    match80: 00
+    match90: 00
+    player1_10k: 00
+    player1: 00
+    match00: ff
+- tocks: 1
+  lights:
+    match10: ff
+- tocks: 1
+  lights:
+    match20: ff
+- tocks: 1
+  lights:
+    match30: ff
+- tocks: 1
+  lights:
+    match40: ff
+- tocks: 1
+  lights:
+    match50: ff
+- tocks: 1
+  lights:
+    match60: ff
+- tocks: 1
+  lights:
+    match70: ff
+- tocks: 1
+  lights:
+    match80: ff
+- tocks: 1
+  lights:
+    match90: ff
+- tocks: 1
+  lights:
+    match00: 00
+- tocks: 1
+  lights:
+    match10: 00
+- tocks: 1
+  lights:
+    match20: 00
+- tocks: 1
+  lights:
+    match30: 00
+- tocks: 1
+  lights:
+    match40: 00
+- tocks: 1
+  lights:
+    match50: 00
+- tocks: 1
+  lights:
+    match60: 00
+- tocks: 1
+  lights:
+    match70: 00
+- tocks: 1
+  lights:
+    match80: 00
+- tocks: 1
+  lights:
+    match90: 00

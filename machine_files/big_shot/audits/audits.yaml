@@ -3,96 +3,98 @@ Events:
   ball_search_begin_phase1: 4
   collect_special: 4
   diverter_rightOutlane_activating: 8
-  drop_targets_Solids_lit_complete: 5
-  drop_targets_Stripes_lit_complete: 1
-  game_ended: 0
-  game_started: 39
-  lighting_special: 4
-  scorereelgroup_player1_resync: 8
-  scorereelgroup_player2_resync: 0
-  tilt: 0
+  drop_targets_Solids_lit_complete: 6
+  drop_targets_Stripes_lit_complete: 3
+  game_ended: 2
+  game_started: 119
+  lighting_special: 7
+  scorereelgroup_player1_resync: 13
+  scorereelgroup_player2_resync: 1
+  tilt: 1
 Player:
   score:
-    average: 0
-    top: []
-    total: 0
+    average: 71840
+    top:
+    - 132180
+    - 11500
+    total: 2
 Shots:
-  dropTarget: 84
-  inlane: 2
-  midLaneLit: 8
-  midLaneRubber: 71
-  outlane: 1
-  popBumper5ball: 17
-  rubberBehindDropTarget: 11
-  slingShot: 68
-  upperEightBallLane: 16
-  upperOuterRollover: 32
+  dropTarget: 140
+  inlane: 7
+  midLaneLit: 11
+  midLaneRubber: 171
+  outlane: 4
+  popBumper5ball: 31
+  rubberBehindDropTarget: 91
+  slingShot: 100
+  upperEightBallLane: 37
+  upperOuterRollover: 88
 Switches:
-  behindSolids: 10
-  behindStripes: 1
+  behindSolids: 48
+  behindStripes: 43
   classic_mode: 1
   coinDoorClosed: 0
   creditWheel_1Plus: 0
   creditWheel_max: 0
   creditWheel_zero: 0
-  drain: 47
-  drainEject: 55
-  drop1: 7
-  drop10: 5
-  drop11: 3
-  drop12: 5
-  drop13: 6
-  drop14: 7
-  drop15: 7
-  drop2: 7
-  drop3: 7
-  drop4: 8
-  drop5: 7
-  drop6: 7
-  drop7: 7
-  drop9: 1
+  drain: 72
+  drainEject: 94
+  drop1: 11
+  drop10: 7
+  drop11: 7
+  drop12: 9
+  drop13: 11
+  drop14: 11
+  drop15: 11
+  drop2: 11
+  drop3: 11
+  drop4: 13
+  drop5: 13
+  drop6: 11
+  drop7: 10
+  drop9: 4
   eightBallHoleEject: 30
-  flipperLeft: 1
-  flipperRight: 6
-  leftInlane: 0
-  leftOutlane: 1
-  ltMidStandup: 11
-  midLtLane: 1
-  midLtRubber: 18
+  flipperLeft: 23
+  flipperRight: 36
+  leftInlane: 1
+  leftOutlane: 3
+  ltMidStandup: 13
+  midLtLane: 4
+  midLtRubber: 90
   midRtLane: 7
-  midRtRubber: 53
-  plungerLane: 31
-  popBumper: 17
-  rightInlane: 2
-  rightOutlane: 0
-  rtMidStandup: 15
-  score_1p_100_0: 103
-  score_1p_100_9: 70
-  score_1p_10_0: 106
-  score_1p_10_5: 5
+  midRtRubber: 81
+  plungerLane: 55
+  popBumper: 31
+  rightInlane: 6
+  rightOutlane: 1
+  rtMidStandup: 23
+  score_1p_100_0: 174
+  score_1p_100_9: 136
+  score_1p_10_0: 134
+  score_1p_10_5: 33
   score_1p_10_9: 31
-  score_1p_10k_0: 16
-  score_1p_10k_5: 0
+  score_1p_10k_0: 22
+  score_1p_10k_5: 6
   score_1p_10k_9: 5
-  score_1p_1k_0: 58
-  score_1p_1k_5: 0
+  score_1p_1k_0: 101
+  score_1p_1k_5: 40
   score_1p_1k_9: 24
-  score_2p_100_0: 6
-  score_2p_100_9: 5
-  score_2p_10_0: 3
-  score_2p_10_5: 0
+  score_2p_100_0: 22
+  score_2p_100_9: 19
+  score_2p_10_0: 9
+  score_2p_10_5: 6
   score_2p_10_9: 2
-  score_2p_10k_0: 6
-  score_2p_10k_5: 0
+  score_2p_10k_0: 8
+  score_2p_10k_5: 2
   score_2p_10k_9: 2
-  score_2p_1k_0: 4
-  score_2p_1k_5: 0
+  score_2p_1k_0: 11
+  score_2p_1k_5: 7
   score_2p_1k_9: 3
   slamTilt: 0
-  slingL: 18
-  slingR: 50
-  startButton: 6
-  tilt: 0
-  topLaneLeft: 21
-  topLaneMid: 16
-  topLaneRight: 11
+  slingL: 32
+  slingR: 68
+  startButton: 9
+  tilt: 8
+  topLaneLeft: 47
+  topLaneMid: 37
+  topLaneRight: 41

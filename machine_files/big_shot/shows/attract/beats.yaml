@@ -1,0 +1,184 @@
+### Maybe play at 8 tps?
+- tocks: 4
+  lights:
+    rtBank1: 00
+    rtBank2: 00
+    ltSling: 00
+    rtSling: 00
+    ltBank1: 00
+    ltBank2: 00
+    popBumper: 00
+    rtBank1: ff
+    rtBank2: ff
+  coils: 
+    rightBankReset1: pulse
+    rightBankReset2: pulse
+- tocks: 2
+  lights:
+    rtBank1: 00
+    rtBank2: 00
+    popBumper: ff
+  coils:
+    popBumper: pulse
+- tocks: 4
+  lights: 
+    popBumper: 00
+    ltBank1: ff
+    ltBank2: ff
+  coils:
+    leftBankReset1: pulse
+    leftBankReset2: pulse
+- tocks: 2
+  lights:
+    ltBank1: 00
+    ltBank2: 00
+    rtBank1: ff
+    rtBank2: ff
+  coils: 
+    rightBankReset1: pulse
+    rightBankReset2: pulse
+- tocks: 4
+  lights:
+    rtBank1: 00
+    rtBank2: 00
+    popBumper: ff
+  coils:
+    popBumper: pulse
+- tocks: 2
+  lights: 
+    popBumper: 00
+    ltBank1: ff
+    ltBank2: ff
+  coils:
+    leftBankReset1: pulse
+    leftBankReset2: pulse
+- tocks: 4
+  lights:
+    ltBank1: 00
+    ltBank2: 00
+    rtBank1: ff
+    rtBank2: ff
+  coils: 
+    rightBankReset1: pulse
+    rightBankReset2: pulse
+- tocks: 2
+  lights:
+    rtBank1: 00
+    rtBank2: 00
+    popBumper: ff
+  coils:
+    popBumper: pulse
+- tocks: 4
+  lights: 
+    popBumper: 00
+    ltBank1: ff
+    ltBank2: ff
+  coils:
+    leftBankReset1: pulse
+    leftBankReset2: pulse
+- tocks: 2
+  lights:
+    ltBank1: 00
+    ltBank2: 00
+    rtBank1: ff
+    rtBank2: ff
+  coils: 
+    rightBankReset1: pulse
+    rightBankReset2: pulse
+- tocks: 4
+  lights:
+    rtBank1: 00
+    rtBank2: 00
+    popBumper: ff
+  coils:
+    popBumper: pulse
+- tocks: 1
+  lights:
+    popBumper: 00
+    ltSling: ff
+  coils:
+    flipperLeftMain: pulse
+- tocks: 1
+  lights:
+    ltSling: 00
+    rtSling: ff
+  coils:
+    flipperRightMain: pulse
+- tocks: 1
+  lights:
+    rtSling: 00
+    ltSling: ff
+  coils:
+    flipperLeftMain: pulse
+- tocks: 1
+  lights:
+    ltSling: 00
+    rtSling: ff
+  coils:
+    flipperRightMain: pulse
+- tocks: 1
+  lights:
+    rtSling: 00
+    ltSling: ff
+  coils:
+    flipperLeftMain: pulse
+- tocks: 1
+  lights:
+    ltSling: 00
+    rtSling: ff
+  coils:
+    flipperRightMain: pulse
+- tocks: 1
+  lights:
+    rtSling: 00
+    ltSling: ff
+  coils:
+    flipperLeftMain: pulse
+- tocks: 1
+  lights:
+    ltSling: 00
+    rtSling: ff
+  coils:
+    flipperRightMain: pulse
+- tocks: 1
+  lights:
+    rtSling: 00
+    ltSling: ff
+  coils:
+    flipperLeftMain: pulse
+- tocks: 1
+  lights:
+    ltSling: 00
+    rtSling: ff
+  coils:
+    flipperRightMain: pulse
+- tocks: 1
+  lights:
+    rtSling: 00
+    ltSling: ff
+  coils:
+    flipperLeftMain: pulse
+- tocks: 1
+  lights:
+    ltSling: 00
+    rtSling: ff
+  coils:
+    flipperRightMain: pulse
+- tocks: 1
+  lights:
+    rtSling: 00
+    ltSling: ff
+  coils:
+    flipperLeftMain: pulse
+- tocks: 1
+  lights:
+    ltSling: 00
+    rtSling: ff
+  coils:
+    flipperRightMain: pulse
+- tocks: 1
+  lights:
+    rtSling: 00
+    ltSling: ff
+  coils:
+    flipperLeftMain: pulse
