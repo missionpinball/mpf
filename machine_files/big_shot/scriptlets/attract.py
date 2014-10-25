@@ -97,8 +97,7 @@ class Attract(Scriptlet):
             repeat=True, tocks_per_sec=5)
         self.machine.shows['mid_lights_bounce'].play(
             repeat=True, tocks_per_sec=5)
-        # self.machine.shows['backbox_match_snake'].play(
-        #    repeat=True, tocks_per_sec=13)
+
         self.modern_playlist.start()
         self.modern_backbox_playlist.start()
 
@@ -112,11 +111,9 @@ class Attract(Scriptlet):
     def enable_classic_mode(self):
         self.machine.shows['classic_overlay'].play(
             repeat=False, hold=True, tocks_per_sec=1, priority=1000)
-        # pass
 
     def enable_modern_mode(self):
         self.machine.shows['classic_overlay'].stop(hold=False, reset=True)
-        # pass
 
     def stop(self):
         self.machine.shows['top_lanes_sweep'].stop()

@@ -395,15 +395,17 @@ class MachineController(object):
         """Enables all the autofire coils in the machine."""
 
         self.log.debug("Enabling autofire coils")
-        for autofire in self.autofires:
-            autofire.enable()
+        if hasattr(self, 'autofires'):
+            for autofire in self.autofires:
+                autofire.enable()
 
     def disable_autofires(self):
         """Disables all the autofire coils in the machine."""
 
         self.log.debug("Disabling autofire coils")
-        for autofire in self.autofires:
-            autofire.disable()
+        if hasattr(self, 'autofires'):
+            for autofire in self.autofires:
+                autofire.disable()
 
     def enable_flippers(self):
         """Enables all the flippers in the machine."""

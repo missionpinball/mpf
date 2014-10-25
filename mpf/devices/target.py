@@ -9,7 +9,6 @@
 import logging
 from mpf.system.devices import Device
 from mpf.system.tasks import DelayManager
-from mpf.system.timing import Timing
 from mpf.system.show_controller import Playlist
 from collections import deque
 
@@ -24,6 +23,13 @@ class Target(Device):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Target.' + name)
+
+        if 'enable_events' not in config:
+            config['enable_events'] = {'ball_started': 0}
+
+        if 'disable_events' not in config:
+            config['disable_events'] = {'ball_ending': 0}
+
         super(Target, self).__init__(machine, name, config, collection)
 
         self.lit = False
@@ -33,13 +39,14 @@ class Target(Device):
         if 'light' not in self.config:
             self.config['light'] = None
         else:
-            # todo figure out if light is LED or matrix light
-            # change this to the object
+            # convert light string to a matrixlight or led object
             try:
                 if self.config['light'] in self.machine.lights:
+                    self.log.debug("Configuring with light: %s", self.config['light'])
                     self.config['light'] = self.machine.lights[self.config['light']]
             except:
                 if self.config['light'] in self.machine.leds:
+                    self.log.debug("Configuring with LED: %s", self.config['light'])
                     self.config['light'] = self.machine.leds[self.config['light']]
 
         if 'light_if_unlit' not in self.config:
@@ -69,9 +76,6 @@ class Target(Device):
                                                           self.hit, 1)
 
         # register for events
-
-        for event in self.config['reset_events']:
-            self.machine.events.add_handler(event, self.reset)
 
         self.machine.events.add_handler('action_target_' + self.name +
                                         '_light', self.light)
@@ -149,7 +153,7 @@ class Target(Device):
         else:
             self.light(stealth)
 
-    def reset(self):
+    def reset(self, *args, **kwargs):
         self.log.debug("Resetting Target. Default state: %s",
                        self.config['default_state'])
         # todo add state param
@@ -222,7 +226,7 @@ class TargetGroup(Device):
                 self.config['rotate_right_events'])
 
         # If no reset events are specified, just self reset when complete
-        if 'reset_events' not in self.config:
+        if not self.config['reset_events']:
             self.config['reset_events'] = {(self.device_str + '_' +
                                            self.name + '_complete'): 0}
         # todo look for config typo where they don't enter a delay time?
@@ -246,8 +250,6 @@ class TargetGroup(Device):
             self.machine.events.add_handler(event, self.rotate, direction='left')
         for event in self.config['rotate_right_events']:
             self.machine.events.add_handler(event, self.rotate, direction='right')
-
-        self.enable_reset_events()
 
     def load_shows(self):
         if self.config['lit_complete_show']:
@@ -299,7 +301,6 @@ class TargetGroup(Device):
                 self.machine.events.post(self.device_str + '_' + self.name +
                                          '_unlit_hit')
 
-
         self.num_lit = num_lit
         self.num_unlit = self.num_targets - self.num_lit
 
@@ -333,40 +334,7 @@ class TargetGroup(Device):
         self.machine.events.post(self.device_str + '_' +
                                  self.name + '_unlit_complete')
 
-    def enable_reset_events(self):
-        """Causes this target to watch for the reset events."""
-
-        for event, delay in self.config['reset_events'].iteritems():
-            self.machine.events.add_handler(event=event,
-                                        handler=self.reset_request,
-                                        ms_delay=Timing.string_to_ms(delay))
-
-    def disable_reset_events(self):
-        """Disables this target group watching for reset events. In other
-        words, if the reset events are posted, this target group will not
-        respond.
-        """
-
-        for event, delay in self.config['reset_events'].iteritems():
-            self.machine.events.remove_handler(method=self.reset_request,
-                                        ms_delay=(Timing.string_to_ms(delay)))
-
-    def reset_request(self, ms_delay=0, **kwargs):
-        """Received a request to reset this target group.
-
-        This method will set a delay to wait for the amount of time specified
-        in the reset delay, then call reset().
-
-        **kwargs since we don't know where this is coming from
-
-        """
-
-        if ms_delay:
-            self.delay.add(self.name + '_target_reset', ms_delay, self.reset)
-        else:
-            self.reset()
-
-    def reset(self):
+    def reset(self, *args, **kwargs):
         """Resets this group of targets."""
         # todo only do this if we have completed targets? Add a force?
         self.log.debug("Resetting target group")
@@ -377,6 +345,8 @@ class TargetGroup(Device):
         self.update_count()
 
         # todo do reset show or script
+
+        # todo add enable and disable methods
 
     def rotate(self, direction='right', move_state=True, steps=1):
 

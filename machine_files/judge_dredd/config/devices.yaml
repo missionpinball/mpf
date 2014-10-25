@@ -78,7 +78,7 @@ DropTargetBanks:
             drop_targets_Judge_complete: 1s
         complete_show: drop_target_complete
 
-Targets:  # Not yet implemented
+Targets:
     QuestionMark:
         switch: mystery
         light: mystery

@@ -98,6 +98,8 @@ class MatrixLight(Device):
     def restore(self, force=False):
         """Restores the light state from cache."""
 
+        # todo revisit force
+
         # if self.cache['priority'] >= self.state['priority'] or force is True:
 
         self.on(brightness=self.cache['brightness'],

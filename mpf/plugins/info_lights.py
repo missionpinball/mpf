@@ -92,6 +92,8 @@ class InfoLights(object):
         if 'game_over' in self.config:
             self.machine.show_controller.stop_script(
                 lightname=self.config['game_over']['light'].name)
+            self.config['game_over']['light'].off()
+            # todo is the above right? Should add hold=False to script?
 
     def player_added(self, player):
         self.log.debug("player_added. player=%s", player)

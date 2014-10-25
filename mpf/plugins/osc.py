@@ -28,6 +28,7 @@ global import_success
 
 try:
     import OSC as OSCmodule
+    socket.gethostbyname(socket.gethostname())
     import_success = True
 except:
     import_success = False

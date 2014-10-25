@@ -36,6 +36,15 @@ class Flipper(Device):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Flipper.' + name)
+
+        if 'enable_events' not in config:
+            config['enable_events'] = {'ball_started': 0}
+
+        if 'disable_events' not in config:
+            config['disable_events'] = {'ball_ending': 0,
+                                        'tilt': 0,
+                                        'slam_tilt': 0}
+
         super(Flipper, self).__init__(machine, name, config, collection)
 
         # todo convert to dict
@@ -88,7 +97,7 @@ class Flipper(Device):
         if self.config['eos_switch']:
             self.flipper_switches.append(self.config['eos_switch'])
 
-    def enable(self):
+    def enable(self, *args, **kwargs):
         """Enables the flipper by writing the necessary hardware rules to the
         hardware controller.
 
@@ -135,6 +144,10 @@ class Flipper(Device):
         rules). Note that this rule is the letter "i", not a numeral 1.
         I. Enable power if button is active and EOS is not active
         """
+
+        # todo disable first to clear any old rules?
+
+        self.log.debug('Enabling')
 
         # Apply the proper hardware rules for our config
 
@@ -203,7 +216,7 @@ class Flipper(Device):
         self.power = percent
         self.enable()
 
-    def disable(self):
+    def disable(self, *args, **kwargs):
         """Disables the flipper.
 
         This method makes it so the cabinet flipper buttons no longer control
@@ -353,8 +366,6 @@ class Flipper(Device):
 
         # todo add support for other types of flipper coils
 
-        print "flip"
-
         # Send the activation switch press to the switch controller
         self.machine.switch_controller.process_switch(
             name=self.config['activation_switch'],
@@ -362,10 +373,7 @@ class Flipper(Device):
             logical=True)
 
         if self.rules['c']:  # pulse/pwm main
-            print "1"
-            print "coil", self.config['main_coil']
             coil = self.machine.coils[self.config['main_coil']]
-            print "coil object", coil
             coil.pwm(
                 on_ms=coil.config['pwm_on'],
                 off_ms=coil.config['pwm_off'],

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.target module &mdash; Mission Pinball Framework 0.0.9b documentation</title>
+    <title>mpf.devices.target module &mdash; Mission Pinball Framework 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.9b',
+        VERSION:     '0.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.9b documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.1.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -76,7 +76,7 @@ rotation.</p>
 
 <dl class="method">
 <dt id="mpf.devices.target.Target.reset">
-<tt class="descname">reset</tt><big>(</big><big>)</big></dt>
+<tt class="descname">reset</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -106,20 +106,6 @@ rotation.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="mpf.devices.target.TargetGroup.disable_reset_events">
-<tt class="descname">disable_reset_events</tt><big>(</big><big>)</big></dt>
-<dd><p>Disables this target group watching for reset events. In other
-words, if the reset events are posted, this target group will not
-respond.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.target.TargetGroup.enable_reset_events">
-<tt class="descname">enable_reset_events</tt><big>(</big><big>)</big></dt>
-<dd><p>Causes this target to watch for the reset events.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="mpf.devices.target.TargetGroup.lit_complete">
 <tt class="descname">lit_complete</tt><big>(</big><big>)</big></dt>
 <dd><p>All the targets in this group are lit.</p>
@@ -132,17 +118,8 @@ respond.</p>
 
 <dl class="method">
 <dt id="mpf.devices.target.TargetGroup.reset">
-<tt class="descname">reset</tt><big>(</big><big>)</big></dt>
+<tt class="descname">reset</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big></dt>
 <dd><p>Resets this group of targets.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.target.TargetGroup.reset_request">
-<tt class="descname">reset_request</tt><big>(</big><em>ms_delay=0</em>, <em>**kwargs</em><big>)</big></dt>
-<dd><p>Received a request to reset this target group.</p>
-<p>This method will set a delay to wait for the amount of time specified
-in the reset delay, then call reset().</p>
-<p><a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs since we don&#8217;t know where this is coming from</p>
 </dd></dl>
 
 <dl class="method">
@@ -203,7 +180,7 @@ in the reset delay, then call reset().</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

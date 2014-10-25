@@ -3,7 +3,7 @@ Events:
   ball_search_begin_phase1: 0
   ball_started: 1
   game_ended: 69
-  game_started: 61
+  game_started: 62
   machine_init_phase_1: 0
   machine_reset: 29
 Player:

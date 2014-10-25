@@ -6,9 +6,9 @@ Events:
   drop_targets_Solids_lit_complete: 6
   drop_targets_Stripes_lit_complete: 3
   game_ended: 2
-  game_started: 119
+  game_started: 134
   lighting_special: 7
-  scorereelgroup_player1_resync: 13
+  scorereelgroup_player1_resync: 21
   scorereelgroup_player2_resync: 1
   tilt: 1
 Player:
@@ -26,8 +26,8 @@ Shots:
   outlane: 4
   popBumper5ball: 31
   rubberBehindDropTarget: 91
-  slingShot: 100
-  upperEightBallLane: 37
+  slingShot: 226
+  upperEightBallLane: 38
   upperOuterRollover: 88
 Switches:
   behindSolids: 48
@@ -68,16 +68,16 @@ Switches:
   rightInlane: 6
   rightOutlane: 1
   rtMidStandup: 23
-  score_1p_100_0: 174
-  score_1p_100_9: 136
-  score_1p_10_0: 134
-  score_1p_10_5: 33
+  score_1p_100_0: 182
+  score_1p_100_9: 152
+  score_1p_10_0: 149
+  score_1p_10_5: 45
   score_1p_10_9: 31
   score_1p_10k_0: 22
   score_1p_10k_5: 6
   score_1p_10k_9: 5
-  score_1p_1k_0: 101
-  score_1p_1k_5: 40
+  score_1p_1k_0: 102
+  score_1p_1k_5: 41
   score_1p_1k_9: 24
   score_2p_100_0: 22
   score_2p_100_9: 19
@@ -91,10 +91,10 @@ Switches:
   score_2p_1k_5: 7
   score_2p_1k_9: 3
   slamTilt: 0
-  slingL: 32
-  slingR: 68
-  startButton: 9
+  slingL: 149
+  slingR: 77
+  startButton: 12
   tilt: 8
   topLaneLeft: 47
-  topLaneMid: 37
+  topLaneMid: 38
   topLaneRight: 41

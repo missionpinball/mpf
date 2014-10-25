@@ -9,6 +9,7 @@
 import logging
 import time
 from collections import defaultdict
+from mpf.system.timing import Timing
 
 
 class Device(object):
@@ -32,7 +33,53 @@ class Device(object):
                 self.label = config['label']  # todo change to multi lang
             # todo more pythonic way, like self.label = blah if blah?
 
-        # Add this instance to our dictionary for this type of device
+        # set event handlers to enable, disable, and reset this device
+        # note that not all devices will use all of these methods
+
+        # these lists of events can be strings or dicts
+
+        if 'enable_events' in self.config:
+            self.log.info('found enable_events: %s', self.config['enable_events'])
+            self.config['enable_events'] = self._event_config_to_dict(
+                self.config['enable_events'])
+            self.log.info('after conversion: %s', self.config['enable_events'])
+        else:
+            self.config['enable_events'] = dict()
+
+        self.log.info('enable_events: %s', self.config['enable_events'])
+
+        for event, delay in self.config['enable_events'].iteritems():
+            self.log.info('creating enable_events')
+            self._create_events(ev_name=event,
+                                ev_type='enable',
+                                delay=delay,
+                                callback=self.enable)
+
+        if 'disable_events' in self.config:
+            self.config['disable_events'] = self._event_config_to_dict(
+                self.config['disable_events'])
+        else:
+            self.config['disable_events'] = dict()
+
+        for event, delay in self.config['disable_events'].iteritems():
+            self._create_events(ev_name=event,
+                                ev_type='disable',
+                                delay=delay,
+                                callback=self.disable)
+
+        if 'reset_events' in self.config:
+            self.config['reset_events'] = self._event_config_to_dict(
+                self.config['reset_events'])
+        else:
+            self.config['reset_events'] = dict()
+
+        for event, delay in self.config['reset_events'].iteritems():
+            self._create_events(ev_name=event,
+                                ev_type='reset',
+                                delay=delay,
+                                callback=self.reset)
+
+        # Add this instance to the collection for this type of device
         if collection != -1:
             # Have to use -1 here instead of None to catch an empty collection
             collection[name] = self
@@ -60,6 +107,67 @@ class Device(object):
         # create the devices
         for device in config:
             cls(machine, device, config[device], collection)
+
+    def _event_config_to_dict(self, config):
+        # processes the enable, disable, and reset events from the config file
+
+        return_dict = dict()
+
+        if type(config) is dict:
+            return config
+        elif type(config) is str:
+            config = self.machine.string_to_list(config)
+
+        # 'if' instead of 'elif' to pick up just-converted str
+        if type(config) is list:
+            for event in config:
+                return_dict[event] = 0
+
+        return return_dict
+
+    def _create_events(self, ev_name, ev_type, delay, callback):
+
+        self.log.debug("Creating %s_event handler for event '%s' with delay "
+                       "'%s' husker", ev_type, ev_name, delay)
+
+        self.machine.events.add_handler(event=ev_name,
+                                    handler=self._action_event_handler,
+                                    callback=callback,
+                                    ms_delay=Timing.string_to_ms(delay))
+
+    def _action_event_handler(self, ms_delay, callback, *args, **kwargs):
+        if ms_delay:
+            # name_target_reset
+            self.delay.add(self.name + '_target_reset', ms_delay, callback)
+        else:
+            callback()
+
+    def enable(self, *args, **kwargs):
+        """Enables the device.
+
+        This method is automatically called when one of the enable_events is
+        posted. This is a placeholder method which does nothing. Implement it
+        in the device subclass if you want to use it for that type of
+        device."""
+        pass
+
+    def disable(self, *args, **kwargs):
+        """Disables the device.
+
+        This method is automatically called when one of the enable_events is
+        posted. This is a placeholder method which does nothing. Implement it
+        in the device subclass if you want to use it for that type of
+        device."""
+        pass
+
+    def reset(self, *args, **kwargs):
+        """Resets the device.
+
+        This method is automatically called when one of the enable_events is
+        posted. This is a placeholder method which does nothing. Implement it
+        in the device subclass if you want to use it for that type of
+        device."""
+        pass
 
 
 class DeviceCollection(dict):

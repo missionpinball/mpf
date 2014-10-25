@@ -113,7 +113,8 @@ class Game(MachineMode):
 
     def setup_midgame_restart(self, tag='start', time='1s', min_ball=0):
         """Allows a long button press to restart the game."""
-
+        pass
+        '''
         self.min_restart_ball = min_ball
 
         for switch in self.machine.switches.items_tagged(tag):
@@ -124,6 +125,7 @@ class Game(MachineMode):
                     state=1,
                     ms=Timing.string_to_ms(time))
             )
+        '''
 
     def _midgame_restart_handler(self, **kwargs):
         if self.player and self.player.vars['ball'] > self.min_restart_ball:
@@ -212,9 +214,6 @@ class Game(MachineMode):
             self.machine.events.add_handler('ball_drain',
                                             self.ball_drained))
 
-        self.machine.enable_autofires()
-        self.machine.enable_flippers()
-
         # todo skillshot
 
         self.log.debug("Game is setting Balls in Play to 1")
@@ -282,11 +281,6 @@ class Game(MachineMode):
 
         self.num_balls_in_play = 0  # todo redundant?
         self.log.debug("Entering Game.ball_ending()")
-
-        self.machine.disable_autofires()
-        self.machine.disable_flippers()
-
-        # todo add config option to allow flipper disabled to be configured.
 
         self.machine.events.post('ball_ending', ev_type='queue',
                                  callback=self._ball_ending_done)

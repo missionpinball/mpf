@@ -342,7 +342,7 @@ class ScoreReelGroup(Device):
         elif not self.valid:
             self.validate()
 
-    def is_desired_valid(self):
+    def is_desired_valid(self, notify_event=False):
         """Tests to see whether the machine thinks the ScoreReelGroup is
         currently showing the desired value. In other words, is the
         ScoreReelGroup "done" moving?
@@ -354,6 +354,10 @@ class ScoreReelGroup(Device):
         for i in range(len(self.reels)):
             if self.reels[i]:
                 if self.assumed_value_list[i] != self.desired_value_list[i]:
+                    if notify_event:
+                        self.machine.events.post('scorereel_' +
+                                                 self.reels[i].name +
+                                                 '_resync')
                     return False
         return True
 
@@ -419,7 +423,7 @@ class ScoreReelGroup(Device):
         # todo if confirm is set to none, should we at least wait until the
         # coils are not energized to validate?
 
-        if not self.is_desired_valid():
+        if not self.is_desired_valid(notify_event=True):
             # FYI each reel will hw check during hw_sync, so if there's a
             # misfire that we can know about then it will be caught here
             self.machine.events.post('scorereelgroup_' + self.name + '_resync')
@@ -906,18 +910,18 @@ class ScoreReel(Device):
             self.config['limit_lo'] = 0
         if 'limit_hi' not in self.config:
             self.config['limit_hi'] = 9
-        if 'repeat_pulse_ms' not in self.config:
-            self.config['repeat_pulse_ms'] = '200ms'
-        if 'hw_confirm_ms' not in self.config:
-            self.config['hw_confirm_ms'] = '300ms'
+        if 'repeat_pulse_time' not in self.config:
+            self.config['repeat_pulse_time'] = '200ms'
+        if 'hw_confirm_time' not in self.config:
+            self.config['hw_confirm_time'] = '300ms'
         if 'confirm' not in self.config:
             self.config['confirm'] = 'lazy'
 
         # Convert times strings to ms ints
-        self.config['repeat_pulse_ms'] = \
-            Timing.string_to_ms(self.config['repeat_pulse_ms'])
-        self.config['hw_confirm_ms'] = \
-            Timing.string_to_ms(self.config['hw_confirm_ms'])
+        self.config['repeat_pulse_time'] = \
+            Timing.string_to_ms(self.config['repeat_pulse_time'])
+        self.config['hw_confirm_time'] = \
+            Timing.string_to_ms(self.config['hw_confirm_time'])
 
         self.rollover_reel_advanced = False
         # True when a rollover pulse has been ordered
@@ -951,6 +955,7 @@ class ScoreReel(Device):
         # Whether this reel is ready to advance. Typically used to make sure
         # it's not trying to re-fire a stuck position.
 
+        self.assumed_value = -999
         self.assumed_value = self.check_hw_switches()
         # The assumed value the machine thinks this reel is showing. A value
         # of -999 indicates that the value is unknown.
@@ -1058,8 +1063,8 @@ class ScoreReel(Device):
         This method also schedules delays to post the following events:
 
         `reel_<name>_pulse_done`: When the coil is done pulsing
-        `reel_<name>_ready`: When the config['repeat_pulse_ms'] time is up
-        `reel_<name>_hw_value: When the config['hw_confirm_ms'] time is up
+        `reel_<name>_ready`: When the config['repeat_pulse_time'] time is up
+        `reel_<name>_hw_value: When the config['hw_confirm_time'] time is up
 
         Args:
             direction (int, optional): If direction is 1, advances the reel
@@ -1123,18 +1128,18 @@ class ScoreReel(Device):
 
                 # set delay to notify when this reel can be fired again
                 self.delay.add('ready_to_fire',
-                               self.config['repeat_pulse_ms'],
+                               self.config['repeat_pulse_time'],
                                self._ready_to_fire)
 
                 self.next_pulse_time = (time.time() +
-                                        (self.config['repeat_pulse_ms'] /
+                                        (self.config['repeat_pulse_time'] /
                                         1000.0))
                 self.log.debug("@@@ New Next pulse ready time: %s",
                                self.next_pulse_time)
 
                 # set delay to check the hw switches
                 self.delay.add('hw_switch_check',
-                               self.config['hw_confirm_ms'],
+                               self.config['hw_confirm_time'],
                                self.check_hw_switches)
 
                 return True
@@ -1178,7 +1183,7 @@ class ScoreReel(Device):
 
         This method is automatically called (via a delay) after the reel
         advances. The delay is based on the config value
-        `self.config['hw_confirm_ms']`.
+        `self.config['hw_confirm_time']`.
 
         TODO: What happens if there are multiple active switches? Currently it
         will return the highest one. Is that ok?
@@ -1190,10 +1195,10 @@ class ScoreReel(Device):
         Returns: The hardware value of the switch, either the position or -999.
             If the reel is not ready, it returns `False`.
         """
-        # check to make sure the 'hw_confirm_ms' time has passed. If not then
+        # check to make sure the 'hw_confirm_time' time has passed. If not then
         # we cannot trust any value we read from the switches
         if (self.machine.coils[self.config['coil_inc']].time_last_changed +
-                (self.config['hw_confirm_ms'] / 1000.0) <= time.time()):
+                (self.config['hw_confirm_time'] / 1000.0) <= time.time()):
             self.log.debug("Checking hw switches to determine reel value")
             value = -999
             for i in range(len(self.value_switches)):
@@ -1205,8 +1210,18 @@ class ScoreReel(Device):
             self.log.debug("+++Setting hw value to: %s", value)
             self.physical_value = value
             self.hw_sync = True
-            if value != -999:  # only change this if we know where we are
+            # only change this if we know where we are or can confirm that
+            # we're not in the right position
+            if value != -999:
                 self.assumed_value = value
+
+            # if value is -999, but we have a switch for the assumed value,
+            # then we're in the wrong position because our hw_value should be
+            # at the assumed value
+            elif (self.assumed_value != -999 and
+                    self.value_switches[self.assumed_value]):
+                self.assumed_value = -999
+
             if not no_event:
                 self.machine.events.post('reel_' + self.name + "_hw_value",
                                          value=value)

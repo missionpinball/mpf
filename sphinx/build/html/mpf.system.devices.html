@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.devices module &mdash; Mission Pinball Framework 0.0.9b documentation</title>
+    <title>mpf.system.devices module &mdash; Mission Pinball Framework 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.9b',
+        VERSION:     '0.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.9b documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.1.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -57,6 +57,26 @@
 <em class="property">static </em><tt class="descname">create_devices</tt><big>(</big><em>collection</em>, <em>config</em>, <em>machine</em><big>)</big></dt>
 <dd></dd></dl>
 
+<dl class="method">
+<dt id="mpf.system.devices.Device.disable">
+<tt class="descname">disable</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Disables the device.</p>
+<p>This method is automatically called when one of the enable_events is
+posted. This is a placeholder method which does nothing. Implement it
+in the device subclass if you want to use it for that type of
+device.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.Device.enable">
+<tt class="descname">enable</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Enables the device.</p>
+<p>This method is automatically called when one of the enable_events is
+posted. This is a placeholder method which does nothing. Implement it
+in the device subclass if you want to use it for that type of
+device.</p>
+</dd></dl>
+
 <dl class="classmethod">
 <dt id="mpf.system.devices.Device.get_config_info">
 <em class="property">classmethod </em><tt class="descname">get_config_info</tt><big>(</big><big>)</big></dt>
@@ -66,6 +86,16 @@
 <dt id="mpf.system.devices.Device.is_used">
 <em class="property">classmethod </em><tt class="descname">is_used</tt><big>(</big><em>config</em><big>)</big></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.Device.reset">
+<tt class="descname">reset</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Resets the device.</p>
+<p>This method is automatically called when one of the enable_events is
+posted. This is a placeholder method which does nothing. Implement it
+in the device subclass if you want to use it for that type of
+device.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -158,7 +188,7 @@ will return an empty list.</td>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -28,6 +28,15 @@ class AutofireCoil(Device):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('AutofireCoil.' + name)
+
+        if 'enable_events' not in config:
+            config['enable_events'] = {'ball_started': 0}
+
+        if 'disable_events' not in config:
+            config['disable_events'] = {'ball_ending': 0,
+                                        'tilt': 0,
+                                        'slam_tilt': 0}
+
         super(AutofireCoil, self).__init__(machine, name, config, collection)
 
         # todo convert to dict
@@ -53,9 +62,10 @@ class AutofireCoil(Device):
             config : A dictionary which contains all the settings this
             coil should be configured with.
         """
-        if not config:
-            self.log.error("No configuration received for AutofireCoil: %s",
-                           self.name)
+
+        # Merge in any new changes that were just passed
+        if config:
+            self.config.update(config)
 
         # Required
         self.coil = config['coil']
@@ -65,43 +75,46 @@ class AutofireCoil(Device):
         # items might have 0 as a legit value, so it makes 'if item:' not work
 
         # Translate 'active' / 'inactive' to hardware open (0) or closed (1)
-        if 'switch activity' in config:
-            self.switch_activity = config['switch_activity']
+        if 'switch activity' in self.config:
+            self.switch_activity = self.config['switch_activity']
 
-        if 'pulse_ms' in config:
-            self.pulse_ms = config['pulse_ms']
+        if 'pulse_ms' in self.config:
+            self.pulse_ms = self.config['pulse_ms']
         else:
-            self.pulse_ms = self.machine.coils[config['coil']].config['pulse_ms']
+            self.pulse_ms = self.machine.coils[self.config['coil']].config['pulse_ms']
 
-        if 'pwm_on_ms' in config:
-            self.pwm_on_ms = config['pwm_on_ms']
+        if 'pwm_on_ms' in self.config:
+            self.pwm_on_ms = self.config['pwm_on_ms']
         else:
-            self.pwm_on_ms = self.machine.coils[config['coil']].config['pwm_on']
+            self.pwm_on_ms = self.machine.coils[self.config['coil']].config['pwm_on']
 
-        if 'pwm_off_ms' in config:
-            self.pwm_off_ms = config['pwm_off_ms']
+        if 'pwm_off_ms' in self.config:
+            self.pwm_off_ms = self.config['pwm_off_ms']
         else:
-            self.pwm_off_ms = self.machine.coils[config['coil']].config['pwm_off']
+            self.pwm_off_ms = self.machine.coils[self.config['coil']].config['pwm_off']
 
-        if 'coil_action_ms' in config:
-            self.coil_action_ms = config['coil_action_ms']
+        if 'coil_action_ms' in self.config:
+            self.coil_action_ms = self.config['coil_action_ms']
         else:
             self.coil_action_ms = self.pulse_ms
 
-        if 'delay' in config:
-            self.delay = config['delay']
+        if 'delay' in self.config:
+            self.delay = self.config['delay']
 
-        if 'recycle_ms' in config:
-            self.recycle_ms = config['recycle_ms']
+        if 'recycle_ms' in self.config:
+            self.recycle_ms = self.config['recycle_ms']
 
-        if 'debounced' in config:
-            self.debounced = config['debounced']
+        if 'debounced' in self.config:
+            self.debounced = self.config['debounced']
 
-        if 'drive_now' in config:
-            self.drive_now = config['drive_now']
+        if 'drive_now' in self.config:
+            self.drive_now = self.config['drive_now']
 
-    def enable(self):
+    def enable(self, *args, **kwargs):
         """Enables the autofire coil rule."""
+
+        # todo disable first to clear any old rules?
+
         self.log.debug("Enabling")
         if not self.coil:
             self.configure()
@@ -118,7 +131,7 @@ class AutofireCoil(Device):
                                        debounced=self.debounced,
                                        drive_now=self.drive_now)
 
-    def disable(self):
+    def disable(self, *args, **kwargs):
         """Disables the autofire coil rule."""
         self.log.debug("Disabling")
         self.machine.platform.clear_hw_rule(self.switch)

@@ -34,16 +34,6 @@ class Diverter(Device):
             self.config['timeout'] = 0
         if 'activation_switch' not in self.config:
             self.config['activation_switch'] = None
-        if 'enable_events' not in self.config:
-            self.config['enable_events'] = None
-        else:
-            self.config['enable_events'] = self.machine.string_to_list(
-                                                self.config['enable_events'])
-        if 'disable_events' not in self.config:
-            self.config['disable_events'] = None
-        else:
-            self.config['disable_events'] = self.machine.string_to_list(
-                                                self.config['disable_events'])
         if 'disable_switch' not in self.config:
             self.config['disable_switch'] = None
         if 'target_when_enabled' not in self.config:

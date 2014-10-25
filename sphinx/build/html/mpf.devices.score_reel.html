@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.score_reel module &mdash; Mission Pinball Framework 0.0.9b documentation</title>
+    <title>mpf.devices.score_reel module &mdash; Mission Pinball Framework 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.9b',
+        VERSION:     '0.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.0.9b documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.1.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -66,8 +66,8 @@ in multiple directions (such as the credit reel).</p>
 down).</p>
 <p>This method also schedules delays to post the following events:</p>
 <p><cite>reel_&lt;name&gt;_pulse_done</cite>: When the coil is done pulsing
-<cite>reel_&lt;name&gt;_ready</cite>: When the config[&#8216;repeat_pulse_ms&#8217;] time is up
-<a href="#id1"><span class="problematic" id="id2">`</span></a>reel_&lt;name&gt;_hw_value: When the config[&#8216;hw_confirm_ms&#8217;] time is up</p>
+<cite>reel_&lt;name&gt;_ready</cite>: When the config[&#8216;repeat_pulse_time&#8217;] time is up
+<a href="#id1"><span class="problematic" id="id2">`</span></a>reel_&lt;name&gt;_hw_value: When the config[&#8216;hw_confirm_time&#8217;] time is up</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -105,7 +105,7 @@ that. Otherwise it sets it to -999. It will also update
 that value unchanged.</p>
 <p>This method is automatically called (via a delay) after the reel
 advances. The delay is based on the config value
-<cite>self.config[&#8216;hw_confirm_ms&#8217;]</cite>.</p>
+<cite>self.config[&#8216;hw_confirm_time&#8217;]</cite>.</p>
 <p>TODO: What happens if there are multiple active switches? Currently it
 will return the highest one. Is that ok?</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -434,7 +434,7 @@ with the lowest reel digit position in list position 0.</td>
 
 <dl class="method">
 <dt id="mpf.devices.score_reel.ScoreReelGroup.is_desired_valid">
-<tt class="descname">is_desired_valid</tt><big>(</big><big>)</big></dt>
+<tt class="descname">is_desired_valid</tt><big>(</big><em>notify_event=False</em><big>)</big></dt>
 <dd><p>Tests to see whether the machine thinks the ScoreReelGroup is
 currently showing the desired value. In other words, is the
 ScoreReelGroup &#8220;done&#8221; moving?</p>
@@ -592,7 +592,7 @@ handler for those events.</td>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.0.9b documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -162,8 +162,11 @@ class LED(Device):
         """Returns the current state of this LED"""
         return self.state
 
-    def restore(self):
+    def restore(self, force=False):
         """Sets this LED to the cached state."""
+
+        # todo revisit force
+
         self.color(color=self.cache['color'],
                    fade_ms=0,
                    brightness_compensation=False,  # cached value includes this

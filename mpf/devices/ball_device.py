@@ -46,8 +46,8 @@ class BallDevice(Device):
             self.config['entrance_switch'] = None
         if 'jam_switch' not in self.config:
             self.config['jam_switch'] = None
-        if 'eject_coil_hold_ms' not in self.config:
-            self.config['eject_coil_hold_ms'] = list()
+        if 'eject_coil_hold_times' not in self.config:
+            self.config['eject_coil_hold_times'] = list()
         if 'confirm_eject_type' not in self.config:
             self.config['confirm_eject_type'] = 'count'  # todo make optional?
         if 'confirm_eject_target' not in self.config:

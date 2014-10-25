@@ -500,13 +500,6 @@ MatrixLights:
     startButton:
         number: L88
 
-LEDs:
-    led0:
-        number: 0-0
-        brightness_compensation: 0.6
-    led1:
-        number: 0-1
-
 GIs:
     gi01:  # lower backglass
         number: G01

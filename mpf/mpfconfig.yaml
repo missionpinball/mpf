@@ -37,7 +37,7 @@ MPF:
         shows: shows
         audits: audits/audits.yaml
     auto_load_shows: True
-    default_pulse_ms: 30
+    default_pulse_ms: 10
     default_debounce_ms: 0  # fast only
 
 # Default settings for machines. All can be overridden
@@ -120,9 +120,9 @@ LogicBlocks:
             events_when_complete: tilt
             multiple_hit_window: 500ms
             enable_events: ball_started
-            disable_events:
+            disable_events: game_ended
             reset_events: ball_ended
-            event_when_complete: tilt
+            events_when_complete: tilt
             restart_on_complete: false
             settle_time: 5s
 

@@ -318,37 +318,10 @@ Switches:
         label:
         tags: balllive
 
-
-# Light numbering format: C-Ax-By-z:R-Am-Bn-p:
-
-# Capital letters are required, lower case letters represent the numbers:
-# For Columns (Source circuits - represented by the 'C')
-# x : Column board address (0-7)
-# y : Column bank address (0 for A, 1 for B)
-# z : Output number (0-7)
-
-# For Rows (Sink circuits - represented by the 'R')
-# m : Row board address (0-7)
-# n : Row bank address (0 for A, 1 for B)
-# p : Output number (0-7)
-
 MatrixLights:
 
 # Backbox
-# Adding some columns
-#    bs1:
-#        number: C-A3-B0-5:R-A3-B1-7
-#        label: Made up light to extend Matrix
-#        tags: bullshit
-#    bs2:
-#        number: C-A3-B0-6:R-A3-B1-7
-#        label: Made up light to extend Matrix
-#        tags: bullshit
-#    bs3:
-#        number: C-A3-B0-7:R-A3-B1-7
-#        label: Made up light to extend Matrix
-#        tags: bullshit
-# Real Lights
+
     player2_1:
         number: C-A3-B0-0:R-A3-B1-0
         label: Player 2, 1s digit
@@ -380,7 +353,7 @@ MatrixLights:
     gameOver:
         number: C-A3-B0-1:R-A3-B1-2
         label: Game Over
-        tags: 
+        tags:
     match10:
         number: C-A3-B0-1:R-A3-B1-3
         label: Match Light 10
@@ -404,7 +377,7 @@ MatrixLights:
     match00:
         number: C-A3-B0-2:R-A3-B1-3
         label: Match Light 00
-        tags: 
+        tags:
     bip2:
         number: C-A3-B0-2:R-A3-B1-4
         label: Ball in play 2
@@ -420,7 +393,7 @@ MatrixLights:
     match80:
         number: C-A3-B0-3:R-A3-B1-2
         label: Match Light 80
-        tags: 
+        tags:
     match20:
         number: C-A3-B0-3:R-A3-B1-3
         label: Match Light 20
@@ -440,7 +413,7 @@ MatrixLights:
     match70:
         number: C-A3-B0-4:R-A3-B1-2
         label: Match light 70
-        tags: 
+        tags:
     match30:
         number: C-A3-B0-4:R-A3-B1-3
         label: Match light 30
@@ -460,7 +433,7 @@ MatrixLights:
     match60:
         number: C-A3-B0-5:R-A3-B1-2
         label: Match light 60
-        tags: 
+        tags:
     ltLeg:
         number: C-A3-B0-5:R-A3-B1-3
         label: Left leg
@@ -468,7 +441,7 @@ MatrixLights:
     bip3:
         number: C-A3-B0-5:R-A3-B1-4
         label: Ball in play 3
-        tags: 
+        tags:
     midBody2:
         number: C-A3-B0-6:R-A3-B1-0
         label: Middle body 2
@@ -480,7 +453,7 @@ MatrixLights:
     match50:
         number: C-A3-B0-6:R-A3-B1-2
         label: Match Light 50
-        tags: 
+        tags:
     ltBody:
         number: C-A3-B0-6:R-A3-B1-3
         label: Left body
@@ -488,7 +461,7 @@ MatrixLights:
     bip5:
         number: C-A3-B0-6:R-A3-B1-4
         label: Ball in play 5
-        tags: 
+        tags:
     guysHair:
         number: C-A3-B0-7:R-A3-B1-0
         label: Guys hair
@@ -500,7 +473,7 @@ MatrixLights:
     tilt:
         number: C-A3-B0-7:R-A3-B1-2
         label: Tilt
-        tags: 
+        tags:
     midBody1:
         number: C-A3-B0-7:R-A3-B1-3
         label: Middle Body 1
@@ -539,12 +512,12 @@ MatrixLights:
         tags: GI
     ball1:
         number: C-A2-B0-0:R-A2-B1-3
-        label: Ball 1 
-        tags: 
+        label: Ball 1
+        tags:
     ball8:
         number: C-A2-B0-0:R-A2-B1-4
         label: Ball 8
-        tags: 
+        tags:
     bonus2k:
         number: C-A2-B0-1:R-A2-B1-0
         label: Bonus 2,000
@@ -555,16 +528,16 @@ MatrixLights:
         tags: GI
     ltBank2:
         number: C-A2-B0-1:R-A2-B1-2
-        label: Top light under left bank of drop targets 
+        label: Top light under left bank of drop targets
         tags: GI
     ball2:
         number: C-A2-B0-1:R-A2-B1-3
         label: Ball 2
-        tags: 
+        tags:
     ball9:
         number: C-A2-B0-1:R-A2-B1-4
         label: Ball 9
-        tags: 
+        tags:
     bonus3k:
         number: C-A2-B0-2:R-A2-B1-0
         label: Bonus 3,000
@@ -572,7 +545,7 @@ MatrixLights:
     rtMid1k:
         number: C-A2-B0-2:R-A2-B1-1
         label: Right middle lane 1,000 light
-        tags: 
+        tags:
     topLtLane:
         number: C-A2-B0-2:R-A2-B1-2
         label: Top Left Lane
@@ -580,7 +553,7 @@ MatrixLights:
     ball3:
         number: C-A2-B0-2:R-A2-B1-3
         label: Ball 3
-        tags: 
+        tags:
     ball10:
         number: C-A2-B0-2:R-A2-B1-4
         label: Ball 10
@@ -600,11 +573,11 @@ MatrixLights:
     ball4:
         number: C-A2-B0-3:R-A2-B1-3
         label: Ball 4
-        tags: 
+        tags:
     ball11:
         number: C-A2-B0-3:R-A2-B1-4
         label: Ball 11
-        tags: 
+        tags:
     ltMidLane:
         number: C-A2-B0-4:R-A2-B1-0
         label: Under left middle lane divider
@@ -816,8 +789,8 @@ Score Reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_ms: 200ms
-        hw_confirm_ms: 300ms
+        repeat_pulse_time: 200ms
+        hw_confirm_time: 300ms
         confirm: lazy
     score_1p_1k:
         coil_inc: player1_1k
@@ -826,8 +799,8 @@ Score Reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_ms: 200ms
-        hw_confirm_ms: 300ms
+        repeat_pulse_time: 200ms
+        hw_confirm_time: 300ms
         confirm: lazy
     score_1p_100:
         coil_inc: player1_100
@@ -836,8 +809,8 @@ Score Reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_ms: 200ms
-        hw_confirm_ms: 300ms
+        repeat_pulse_time: 200ms
+        hw_confirm_time: 300ms
         confirm: lazy
     score_1p_10:
         coil_inc: player1_10
@@ -846,8 +819,8 @@ Score Reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_ms: 200ms
-        hw_confirm_ms: 300ms
+        repeat_pulse_time: 200ms
+        hw_confirm_time: 300ms
         confirm: lazy
     score_2p_10k:
         coil_inc: player2_10k
@@ -856,8 +829,8 @@ Score Reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_ms: 200ms
-        hw_confirm_ms: 300ms
+        repeat_pulse_time: 200ms
+        hw_confirm_time: 300ms
         confirm: lazy
     score_2p_1k:
         coil_inc: player2_1k
@@ -866,8 +839,8 @@ Score Reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_ms: 200ms
-        hw_confirm_ms: 300ms
+        repeat_pulse_time: 200ms
+        hw_confirm_time: 300ms
         confirm: lazy
     score_2p_100:
         coil_inc: player2_100
@@ -876,8 +849,8 @@ Score Reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_ms: 200ms
-        hw_confirm_ms: 300ms
+        repeat_pulse_time: 200ms
+        hw_confirm_time: 300ms
         confirm: lazy
     score_2p_10:
         coil_inc: player2_10
@@ -886,8 +859,8 @@ Score Reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_ms: 200ms
-        hw_confirm_ms: 300ms
+        repeat_pulse_time: 200ms
+        hw_confirm_time: 300ms
         confirm: lazy
     credit_reel:
         coil_inc: creditAdd
@@ -897,8 +870,8 @@ Score Reels:
         rollover: False
         limit_lo: 0
         limit_hi: 12
-        repeat_pulse_ms: 200ms
-        hw_confirm_ms: 300ms
+        repeat_pulse_time: 200ms
+        hw_confirm_time: 300ms
         confirm: lazy
 
 Score Reel Groups:

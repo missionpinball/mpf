@@ -148,7 +148,7 @@ class VirtualDriver(object):
     def future_pulse(self, milliseconds=None, timestamp=0):
         pass
 
-    def patter(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
+    def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
         pass
 
     def pulsed_patter(self, on_ms=10, off_ms=10, run_time=0, now=True):
