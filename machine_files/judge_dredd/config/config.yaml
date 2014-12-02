@@ -1,0 +1,6 @@
+Hardware:
+    Platform: virtual
+    DriverBoards: wpc
+
+Config:
+    - jd.yaml
