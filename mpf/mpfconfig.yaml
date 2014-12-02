@@ -107,29 +107,7 @@ BallSearch:
 Language:
     en
 
-Window:
-    width: 800
-    height: 600
-    title: Mission Pinball Framework
-    resizeable: yes
-    frame: yes
-    fullscreen: no
-    fps: 3
-    quit_on_close: True
-    background_image: mpf/images/mpf_background_800_600.jpg
-    elements:
-        DMD:
-            width: 512
-            height: 128
-            boarder_width: 2
-            boarder_color: 333333
-            h_pos: center
-            v_pos: center
-            pixel_color: ff6600
-            dark_color: 000000
-        LightMap:
-            width: 100
-            height: 400
+
 
 LogicBlocks:
 
@@ -184,10 +162,3 @@ DisplayDefaults:
         background_color: 000000
         text_shade: 15
         background_shade: 0
-
-DMD:
-    physical: True
-    width: 128
-    height: 32
-    shades: 16
-    fps: auto #todo
