@@ -75,7 +75,7 @@ class WindowManager(object):
         if 'fps' not in self.config:
             self.config['fps'] = 3
 
-        if 'backgroun_image' not in self.config:
+        if 'background_image' not in self.config:
             self.config['background_image'] = None
 
         self.secs_per_frame = 1.0 / self.config['fps']
@@ -159,7 +159,6 @@ class WindowManager(object):
 
         # Set the background image
         if self.config['background_image']:
-
             # Is the background image not a bmp?
             if not self.config['background_image'].endswith('bmp'):
                 # If so, can we load non-bitmaps?
