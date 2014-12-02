@@ -77,10 +77,12 @@ class Attract(MachineMode):
         """
         self.start_hold_time = time.time() - self.start_button_pressed_time
 
-        for flipper in self.machine.flippers:
-            if self.machine.switch_controller.is_active(
-                    flipper.config['activation_switch']):
-                self.start_buttons_held.add(flipper.config['activation_switch'])
+        if hasattr(self.machine, 'flippers'):
+
+            for flipper in self.machine.flippers:
+                if self.machine.switch_controller.is_active(
+                        flipper.config['activation_switch']):
+                    self.start_buttons_held.add(flipper.config['activation_switch'])
 
         # todo test for active?
         # todo should this be a decorator?

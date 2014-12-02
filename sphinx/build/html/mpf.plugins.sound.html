@@ -1,0 +1,200 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.plugins.sound module &mdash; Mission Pinball Framework 0.1.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.plugins.sound">
+<span id="mpf-plugins-sound-module"></span><h1>mpf.plugins.sound module</h1>
+<p>MPF plugin for the sound controller.</p>
+<dl class="class">
+<dt id="mpf.plugins.sound.Channel">
+<em class="property">class </em><tt class="descclassname">mpf.plugins.sound.</tt><tt class="descname">Channel</tt></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.plugins.sound.Music">
+<em class="property">class </em><tt class="descclassname">mpf.plugins.sound.</tt><tt class="descname">Music</tt></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.plugins.sound.Sound">
+<em class="property">class </em><tt class="descclassname">mpf.plugins.sound.</tt><tt class="descname">Sound</tt><big>(</big><em>file_name</em>, <em>channel</em>, <em>volume_offset</em>, <em>preload=True</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Parent class for a Sound object in MPF.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>file_name</strong> &#8211; String of the file name and path for the sound file.</li>
+<li><strong>channel</strong> &#8211; not yet implemented</li>
+<li><strong>volume_offset</strong> &#8211; not yet implemented</li>
+<li><strong>preload</strong> &#8211; Boolean which controls whether the sound file will be</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note: This class is very basic now. Much more work to do.</p>
+<dl class="method">
+<dt id="mpf.plugins.sound.Sound.load">
+<tt class="descname">load</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.sound.Sound.play">
+<tt class="descname">play</tt><big>(</big><em>loops=0</em>, <em>priority=0</em>, <em>fade_in=0</em>, <em>channel='auto'</em>, <em>volume_offset=0</em>, <em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.sound.Sound.stop">
+<tt class="descname">stop</tt><big>(</big><em>fade_out=0</em>, <em>reset=True</em>, <em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.sound.Sound.unload">
+<tt class="descname">unload</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.plugins.sound.SoundController">
+<em class="property">class </em><tt class="descclassname">mpf.plugins.sound.</tt><tt class="descname">SoundController</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Parent class for the sound controller which is responsible for all audio,
+sounds, and music in the machine. There is only one of these per machine.</p>
+<dl class="method">
+<dt id="mpf.plugins.sound.SoundController.create_sound_file_map">
+<tt class="descname">create_sound_file_map</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Creates a mapping dictionary of sound file names to sound entries.
+This is done to speed up searching for sounds by filename later.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> &#8211; Python dictionary which holds its configuration.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.sound.SoundController.load">
+<tt class="descname">load</tt><big>(</big><em>file_name</em><big>)</big></dt>
+<dd><p>Creates an MPF sound object from a file name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_name</strong> &#8211; A string of the file name (optionally with path)</td>
+</tr>
+</tbody>
+</table>
+<p>Note: This is very preliminary. Not done yet.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.sound.SoundController.setup_game_sound">
+<tt class="descname">setup_game_sound</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Sets up game sounds from the config file. More work to be done here.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mpf.plugins.sound.preload_check">
+<tt class="descclassname">mpf.plugins.sound.</tt><tt class="descname">preload_check</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd></dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.plugins.sound.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

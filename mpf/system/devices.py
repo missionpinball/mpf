@@ -39,17 +39,12 @@ class Device(object):
         # these lists of events can be strings or dicts
 
         if 'enable_events' in self.config:
-            self.log.info('found enable_events: %s', self.config['enable_events'])
             self.config['enable_events'] = self._event_config_to_dict(
                 self.config['enable_events'])
-            self.log.info('after conversion: %s', self.config['enable_events'])
         else:
             self.config['enable_events'] = dict()
 
-        self.log.info('enable_events: %s', self.config['enable_events'])
-
         for event, delay in self.config['enable_events'].iteritems():
-            self.log.info('creating enable_events')
             self._create_events(ev_name=event,
                                 ev_type='enable',
                                 delay=delay,

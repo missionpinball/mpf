@@ -18,7 +18,7 @@ BallSearch:
 
 Game:
     num_hits_for_valid_playfield: 2
-    Balls per game: 1
+    Balls per game: 3
     Max players per game: 4
     Max extra balls stacked: unlimited
     Max extra balls per game: unlimited
@@ -32,28 +32,14 @@ Scriptlets:
 Plugins:
     shots.ShotController
     keyboard.Keyboard
-    lcd.LCD
     ball_search.BallSearch
     logic_blocks.LogicBlocks
-    osc.OSC
     scoring.ScoreController
     auditor.Auditor
+    info_display.InfoDisplay
+    sound.SoundController
 
-LCD:
+Window:
     width: 800
     height: 600
     title: Judge Dredd
-    items:
-        score
-        player
-        ball
-        version
-        looprate
-        mpf_load
-
-Actions:
-    
-    steps:
-        event1
-        (event2 or event1) and event3
-        

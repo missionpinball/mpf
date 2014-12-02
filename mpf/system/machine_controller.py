@@ -14,6 +14,12 @@ from copy import deepcopy
 import time
 import sys
 
+try:
+    import pygame
+    import pygame.locals
+except ImportError:
+    pass
+
 from mpf.system import *
 from mpf.devices import *
 import version
@@ -30,7 +36,7 @@ class MachineController(object):
         used to launch mpf.py.
     """
     def __init__(self, options):
-        self.log = logging.getLogger("Machine Controller")
+        self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework v%s", version.__version__)
         self.options = options
         self.loop_start_time = 0
@@ -42,6 +48,9 @@ class MachineController(object):
         self.machineflow_index = None
         self.loop_rate = 0.0
         self.mpf_load = 0.0
+        self.pygame = False
+        self.window = None
+        self.machine_path = None  # Path to this machine's folder root
 
         self.plugins = []
         self.scriptlets = []
@@ -54,9 +63,45 @@ class MachineController(object):
         # load the MPF config & machine defaults
         self.load_config_yaml(self.options['mpfconfigfile'])
 
-        # load the machine-specific config
-        self.load_config_yaml(os.path.join(options['machinepath'],
-                                           options['configfile']))
+        # Find the machine_files location. If it starts with a forward or
+        # backward slash, then we assume it's from the mpf root. Otherwise we
+        # assume it's from the subfolder location specified in the
+        # mpfconfigfile location
+
+        if (options['machinepath'].startswith('/') or
+                options['machinepath'].startswith('\\')):
+            machine_path = options['machinepath']
+        else:
+            machine_path = os.path.join(self.config['MPF']['paths']
+                                        ['machine_files'], options['machinepath'])
+
+        self.machine_path = os.path.abspath(machine_path)
+
+        # Add the machine folder to our path so we can import modules from it
+        sys.path.append(self.machine_path)
+
+        self.log.info("Machine folder: %s", machine_path)
+
+        # Now find the config file location. Same as machine_file with the
+        # slash uses to specify an absolute path
+
+        if (options['configfile'].startswith('/') or
+                options['configfile'].startswith('\\')):
+            config_file = options['configfile']
+        else:
+
+            if not options['configfile'].endswith('.yaml'):
+                options['configfile'] += '.yaml'
+
+            config_file = os.path.join(machine_path,
+                                       self.config['MPF']['paths']['config'],
+                                       options['configfile'])
+
+        self.log.info("Base machine config file: %s", config_file)
+
+        # Load the machine-specific config
+        self.load_config_yaml(config_file)
+
         self.platform = self.set_platform()
 
         # Load the system modules
@@ -84,7 +129,7 @@ class MachineController(object):
             self.config['MPF']['device_modules'].split(' '))
         for device_type in self.config['MPF']['device_modules']:
             device_cls = eval(device_type)
-            # Check to see if we have these types devices specific in this
+            # Check to see if we have these types of devices specified in this
             # machine's config file and only load the modules this machine uses.
             if device_cls.is_used(self.config):
                 collection, config = device_cls.get_config_info()
@@ -114,22 +159,20 @@ class MachineController(object):
                     self.log.warning("Plugin: %s failed pre-load check. "
                                      "Skipping.", plugin)
 
-        # Add the machine path to our system path so we can import from it
-        sys.path.append(os.path.abspath(self.options['machinepath']))
-
         # Load Scriptlets
         if 'Scriptlets' in self.config:
             self.config['Scriptlets'] = self.config['Scriptlets'].split(' ')
+
             for scriptlet in self.config['Scriptlets']:
                 i = __import__(self.config['MPF']['paths']['scriptlets'] + '.'
                                + scriptlet.split('.')[0], fromlist=[''])
 
                 self.scriptlets.append(getattr(i, scriptlet.split('.')[1])
-                                     (machine=self,
-                                      name=scriptlet.split('.')[1]))
+                                       (machine=self,
+                                        name=scriptlet.split('.')[1]))
 
-        self.log.debug("Configuring Machine Flow")
         # Configure the Machine Flow
+        self.log.debug("Configuring Machine Flow")
         self.config['MachineFlow'] = self.config['MachineFlow'].split(' ')
         # Convert the MachineFlow config into a list of objects
         i = 0
@@ -391,33 +434,50 @@ class MachineController(object):
                 result[k] = deepcopy(v)
         return result
 
-    def enable_autofires(self):
-        """Enables all the autofire coils in the machine."""
+    def request_pygame(self):
+        """Called by a module to let the system know it would like to use
+        Pygame. We centralize the requests instead of letting each module do
+        their own pygame.init() so we get it in one place and can get everthing
+        initialized in the right order.
 
-        self.log.debug("Enabling autofire coils")
-        if hasattr(self, 'autofires'):
-            for autofire in self.autofires:
-                autofire.enable()
+        Returns: True or False, depending on whether pygame is available or not.
+        """
 
-    def disable_autofires(self):
-        """Disables all the autofire coils in the machine."""
+        if pygame:
+            self.events.add_handler('machine_init_phase3', self._pygame_init)
+            return True
 
-        self.log.debug("Disabling autofire coils")
-        if hasattr(self, 'autofires'):
-            for autofire in self.autofires:
-                autofire.disable()
+        else:
+            return False
 
-    def enable_flippers(self):
-        """Enables all the flippers in the machine."""
-        self.log.debug("Enabling flippers")
-        for flipper in self.flippers:
-            flipper.enable()
+    def _pygame_init(self):
+        # performs the actual pygame initialization
 
-    def disable_flippers(self):
-        """Disables all the flippers in the machine."""
-        self.log.debug("Disabling flippers")
-        for flipper in self.flippers:
-            flipper.disable()
+        if not pygame:
+            self.log.error("Pygame is needed but not available. Please install"
+                           " Pygame and try again.")
+
+        if not self.pygame:
+            self.log.debug("Initializing Pygame")
+            pygame.init()
+            self.pygame = True
+            self.events.post('pygame_initialized')
+
+    def get_window(self):
+        """ Returns a reference to the onscreen display window.
+
+        This method will set up a window if one doesn't exist yet. This method
+        exists because there are several different modules and plugins which
+        may want to use a window, but we don't know which combinations might
+        be used, so we centralize the creation and management of an onscreen
+        window here.
+        """
+
+        if not self.window:
+            self.window_manager = window_manager.WindowManager(self)
+            self.window = self.window_manager.window
+
+        return self.window
 
     def run(self):
         """The main machine run loop."""
@@ -527,7 +587,10 @@ class MachineController(object):
 
     def end_run_loop(self):
         """Causes the main run_loop to end."""
+        self.log.info("Shutting down...")
+        self.events.post('shutdown')
         self.done = True
+
 
 # The MIT License (MIT)
 

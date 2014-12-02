@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/framework
 
-import logging
 import time
 
 
@@ -102,6 +101,9 @@ class Platform(object):
     def hw_loop(self):
         """Called once per game loop to read the platform hardware for any
         changes to any devices."""
+        pass
+
+    def verify_switches(self):
         pass
 
 # The MIT License (MIT)

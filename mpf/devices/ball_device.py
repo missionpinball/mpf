@@ -210,6 +210,12 @@ class BallDevice(Device):
                                         '_ball_eject_request',
                                         self._eject)
 
+        if self.config['feeder_device']:
+            self.machine.events.add_handler('balldevice_' +
+                                            self.config['feeder_device'] +
+                                            '_ball_enter',
+                                            self._ball_added_to_feeder)
+
     def _initialize(self):
         # convert names to objects
 
@@ -450,7 +456,7 @@ class BallDevice(Device):
             # todo add support for virtual balls
 
         if self.num_balls_contained > self.num_balls_desired:
-            self.log.debug("Count_balls() fround more balls than desired. "
+            self.log.debug("Count_balls() found more balls than desired. "
                            "About to call _eject()")
             self._eject()
 
@@ -585,10 +591,12 @@ class BallDevice(Device):
                                    self.config['feeder_device'].name)
                     self.config['feeder_device'].num_balls_desired -=1
                     return True
+                    # todo should this change? Maybe every time a device gets
+                    # a new ball, if it has a target device it should see if
+                    # that device wants it?
                 else:
-                    self.log.debug("Feeder device '%s' is not ok to eject "
-                                   "already or is in the process of ejecting, "
-                                   "so we're doing nothing.",
+                    self.log.debug("Feeder device '%s' is not ok to eject, so "
+                                   "we're doing nothing.",
                                    self.config['feeder_device'].name)
                     return False
             else:
@@ -597,6 +605,11 @@ class BallDevice(Device):
         else:
             self.log.debug("Ball is already staged and ready to go")
             return True
+
+    def _ball_added_to_feeder(self, **kwargs):
+        # a new ball was added to this device's feeder device.
+        if self.num_balls_desired > self.num_balls_contained:
+            self.stage_ball()
 
     def _eject_event_handler(self):
         # We received the event that should eject this ball.

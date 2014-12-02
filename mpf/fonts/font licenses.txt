@@ -1,0 +1,36 @@
+This folder contains system-wide fonts used for MPF displays (both DMD and LCD).
+Individual games can add their own fonts in their machine-specific folders.
+
+License information:
+
+Quadrit.ttf
+
+This font was downloaded from http://www.dafont.com/quadrit.font
+
+The license included with it is as follows:
+
+================================================================================
+Thanks for downloading Pixietype fonts!!
+________________________________________
+
+You may use these fonts for personal and non commercial use only. These fonts
+may be freely redistributed, provided that you do not alter them in any way and
+that you credit Pixietype for this.
+
+These fonts are distributed free and may not be sold or resold for any purposes.
+
+
+Pixietype does not take any responsibility for any damage caused through use of
+these fonts, be it indirect, special, incidental or consequential damages
+(including damages for loss of business, loss of profits, interruption or the
+like).
+
+To use these fonts in Flash, place the text on exact X and Y integers (whole
+numbers). The fonts size must be set at 10 pixels only. Do not use bold or
+italic settings. When publishing, ensure that you set to publish at pixels or
+"match movie" only.
+
+In Photoshop/Fireworks, turn OFF anti-aliasing to make sure no blurring occurs.
+
+visit www.pixitype.com
+================================================================================

@@ -825,7 +825,7 @@ class ScoreReelGroup(Device):
         """Lights up this ScoreReelGroup based on the 'light_tag' in its
         config.
         """
-        self.log.info("Turning on Lights")
+        self.log.debug("Turning on Lights")
         for light in self.machine.lights.items_tagged(
                 self.config['lights_tag']):
             light.on()
@@ -847,7 +847,7 @@ class ScoreReelGroup(Device):
         """Turns off the lights for this ScoreReelGroup based on the
         'light_tag' in its config.
         """
-        self.log.info("Turning off Lights")
+        self.log.debug("Turning off Lights")
         for light in self.machine.lights.items_tagged(
                 self.config['lights_tag']):
             light.off()

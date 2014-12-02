@@ -43,6 +43,14 @@ class LED(Device):
         # some things later.
         self.config['number_str'] = str(config['number']).upper()
 
+        if 'default_color' in self.config:
+            if type(self.config['default_color']) is str:
+                self.config['default_color'] = self.hexstring_to_list(
+                    input_string=self.config['default_color'],
+                    output_length=3)
+        else:
+            self.config['default_color'] = [255, 255, 255]
+
         self.hw_driver = self.machine.platform.configure_led(self.config)
 
         self.fade_in_progress = False
@@ -112,6 +120,8 @@ class LED(Device):
                 applied now
         """
 
+        #print "color", color, self.name
+
         # If the incoming priority is lower that what this LED is at currently
         # ignore this request.
         if priority < self.state['priority'] and not force:
@@ -153,10 +163,28 @@ class LED(Device):
             self.cache['start_color'] = self.cache['color']
             self.cache['start_time'] = time.time()
 
-    def disable(self):
+    def disable(self, fade_ms=0, priority=0, cache=True, force=False):
         """ Disables an LED, including all elements of a multi-color LED.
         """
-        self.color([0.0, 0.0, 0.0], 0, False, -1)
+        self.color(color=[0, 0, 0], fade_ms=fade_ms, priority=priority,
+                   cache=cache, force=force)
+
+    def on(self, brightness=255, fade_ms=0, start_brightness=None,
+           priority=0, cache=True, force=False):
+
+        self.color(color=[self.config['default_color'][0] * brightness / 255.0,
+                          self.config['default_color'][1] * brightness / 255.0,
+                          self.config['default_color'][2] * brightness / 255.0],
+                   fade_ms=fade_ms,
+                   priority=priority,
+                   cache=cache,
+                   force=force)
+
+    def off(self, fade_ms=0, priority=0, cache=True, force=False):
+        self.color(color=[0, 0, 0], fade_ms=fade_ms, priority=priority,
+                   cache=cache, force=force)
+        #print "disabling led for", self.name
+        # todo send args to disable()
 
     def get_state(self):
         """Returns the current state of this LED"""
@@ -232,6 +260,30 @@ class LED(Device):
 
     def _kill_fade(self):
         self.fade_in_progress = False
+
+    def hexstring_to_list(self, input_string, output_length=3):
+        """Takes a string input of hex numbers and returns a list of integers.
+
+        This always groups the hex string in twos, so an input of ffff00 will
+        be returned as [255, 255, 0]
+
+        Args:
+            input_string: A string of incoming hex colors, like ffff00.
+            output_length: Integer value of the number of items you'd like in
+                your returned list. Default is 3. This method will ignore
+                extra characters if the input_string is too long, and it will
+                pad with zeros if the input string is too short.
+
+        Returns:
+            List of integers, like [255, 255, 0]
+        """
+        output = []
+        input_string = str(input_string).zfill(output_length*2)
+
+        for i in xrange(0, len(input_string), 2):  # step through every 2 chars
+            output.append(int(input_string[i:i+2], 16))
+
+        return output[0:output_length:]
 
 # The MIT License (MIT)
 

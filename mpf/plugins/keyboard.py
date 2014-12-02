@@ -16,7 +16,8 @@ import logging
 global import_success
 
 try:
-    import pyglet
+    import pygame
+    import pygame.locals
     import_success = True
 except:
     import_success = False
@@ -38,7 +39,7 @@ class Keyboard(object):
     The Keyboard class gets its settings from the Machine Configuration Files
     in the [keymap] section.
 
-    This module uses a pyglet window to capture the key events.
+    This module uses a Pygame window to capture the key events.
 
     Parameters
     ----------
@@ -57,15 +58,21 @@ class Keyboard(object):
         self.toggle_keys = {}
         self.inverted_keys = []
         self.start_active = []
-        self._setup_window()
+
+        self.machine.request_pygame()
+        self.window = self.machine.get_window()
 
         # register for events
-        self.machine.events.add_handler('timer_tick', self.get_keyboard_events)
         self.machine.events.add_handler('machine_init_phase3',
                                         self.set_initial_states, 100)
 
-        # Setup the key mappings
+        # register event handlers to get key actions from the Pygame window
+        self.machine.window_manager.register_handler(pygame.locals.KEYDOWN,
+                                                     self.process_key_press)
+        self.machine.window_manager.register_handler(pygame.locals.KEYUP,
+                                                     self.process_key_release)
 
+        # Set up the key mappings
         self.log.debug("Setting up the keyboard mappings")
         for k, v in self.machine.config['Keyboard'].iteritems():
             k = str(k)  # k is the value of the key entry in the config
@@ -79,63 +86,71 @@ class Keyboard(object):
             event = v.get('event', None)
             params = v.get('params', None)
             # todo add args processing?
-            # will hold our key entry converted to pyglet key format
-            pyglet_key = ""
-            # the built-up command we'll use to convert pyglet_key to our
+            # will hold our key entry converted to pygame key format
+            pygame_key = ""
+            # the built-up command we'll use to convert pygame_key to our
             # key_code entry
             key_code = ""
 
             # Process the key map entry
-            # convert to everything to uppercase for backwards compatibility
+            # convert to everything to uppercase
             k = k.upper()
 
-            # there's more than one list item, meaning we have a modifier key
-            if len(k) > 1:
-                k = k.split('-')  # convert our key entry into a list
+            # Check to see if there's a dash. That means we have a modifier key
+            if '-' in k:
+                # convert the key entry into a list
+                k = k.split('-')
+
                 # reverse the list order so the base key is always in pos 0
                 k.reverse()
+
                 # stores the added together value of the modifier keys
                 mod_value = 0
                 # loop through the modifier keys and add their values together
                 for i in range((len(k)-1)):
-                    # convert entry to pyglet key code
-                    mod_value += int(eval("pyglet.window.key.MOD_" + k[i+1]))
+                    # convert entry to pygame key code
+                    try:
+                        int(eval("pygame.locals.KMOD_" + k[i+1]))
+                    except:
+                        self.log.warning("Found an invalid keyboard modifier: "
+                                         "%s. Ignoring...", k[i+1])
                 # add the dash back in to separate mod value from the key code
                 key_code = str(mod_value) + "-"
 
-            # convert key entry from the config to a pyglet key code.
+            # convert key entry from the config to a pygame key code.
             # Lots of ifs here to catch all the options
+
             # if it's a single alpha character
             if len(str(k[0])) == 1 and str(k[0]).isalpha():
-                pyglet_key = str(k[0])
+                pygame_key = str(k[0]).lower()
+
             # if it's a single digit
             elif len(str(k[0])) == 1 and str(k[0]).isdigit():
-                pyglet_key = "_" + str(k[0])
+                pygame_key = str(k[0])
+
             # Other single character stuff for backwards compatibility
             elif str(k[0]) == "/":
-                pyglet_key = "SLASH"
+                pygame_key = "SLASH"
             elif str(k[0]) == ".":
-                pyglet_key = "PERIOD"
+                pygame_key = "PERIOD"
             elif str(k[0]) == ",":
-                pyglet_key = "COMMA"
+                pygame_key = "COMMA"
             elif str(k[0]) == "-":
-                pyglet_key = "MINUS"
+                pygame_key = "MINUS"
             elif str(k[0]) == "=":
-                pyglet_key = "EQUAL"
+                pygame_key = "EQUALS"
             elif str(k[0]) == ";":
-                pyglet_key = "SEMICOLON"
+                pygame_key = "SEMICOLON"
+            else:  # Catch all to try anything else that's specified
+                pygame_key = str(k[0])
 
-            # now the catch all to try anything else that's specified.
-            else:
-                pyglet_key = str(k[0])
             try:
-                # we use "try" so it doesn't crash if there's an invalid key
-                # name
-                key_code = key_code + str(eval("pyglet.window.key." +
-                                               str(pyglet_key)))
+                # using "try" so it doesn't crash if there's an invalid key
+                key_code = key_code + str(eval("pygame.locals.K_" +
+                                               str(pygame_key)))
             except:
-                self.log.warning("%s is not a valid pyglet key code. "
-                                 "Skipping this entry", pyglet_key)
+                self.log.warning("%s is not a valid Pygame key code. "
+                                 "Skipping this entry", pygame_key)
 
             if switch_name:  # We're processing a key entry for a switch
 
@@ -202,99 +217,85 @@ class Keyboard(object):
                                                               state=1,
                                                               logical=True)
 
-    def get_keyboard_events(self):
-        """Gets the key events from the pyglet window."""
-        self.machine.window.dispatch_events()
-
-    def _setup_window(self):
-
-        if not hasattr(self.machine, 'window'):
-            self.machine.window = pyglet.window.Window()
-            self.machine.window.width = 200
-            self.machine.window.height = 200
-
-        @self.machine.window.event
-        def on_close():
+    # capture key presses and add them to the event queue
+    def process_key_press(self, symbol, modifiers):
+        if (symbol == pygame.locals.K_c and
+                modifiers & pygame.locals.KMOD_CTRL) or \
+                (symbol == pygame.locals.K_ESCAPE):
+            #self.append_exit_event()
             self.machine.done = True
 
-        @self.machine.window.event
-        # capture key presses and add them to the event queue
-        def on_key_press(symbol, modifiers):
-            if (symbol == pyglet.window.key.C and
-                    modifiers & pyglet.window.key.MOD_CTRL) or \
-                    (symbol == pyglet.window.key.ESCAPE):
-                #self.append_exit_event()
-                self.machine.done = True
-
-            else:
-                key_press = str(symbol)
-                # if a modifier key was pressed along with the regular key,
-                # combine them in the way they're in the key_map
-
-                if modifiers & 8:  # '8' is the plyglet mod value for caps lock
-                    modifiers -= 8  # so we just remove it.
-
-                if modifiers & 16:  # Same for '16' which is for num lock
-                    modifiers -= 16
-
-                if modifiers:
-                    key_press = str(modifiers) + "-" + key_press
-
-                # check our built-up key_press string against the existing
-                # key_map dictionary
-                if key_press in self.toggle_keys:  # is this is a toggle key?
-                    if self.toggle_keys.get(key_press) == 1:
-                        # Switch is currently closed, so open it
-                        self.machine.switch_controller.process_switch(state=0,
-                            name=self.key_map[key_press])
-                        self.toggle_keys[key_press] = 0
-                    else:  # Switch is currently open, so close it
-                        self.toggle_keys[key_press] = 1
-                        self.machine.switch_controller.process_switch(state=1,
-                            name=self.key_map[key_press])
-
-                elif key_press in self.key_map:
-                    # for non-toggle keys, still want to make sure the key is
-                    # valid
-
-                    if self.key_map[key_press] in self.inverted_keys:
-                        self.machine.switch_controller.process_switch(state=0,
-                            name=self.key_map[key_press])
-                    else:
-                        # do we have an event or a switch?
-                        if type(self.key_map[key_press]) == str:
-                            # we have a switch
-                            self.machine.switch_controller.process_switch(
-                                state=1, name=self.key_map[key_press])
-                        elif type(self.key_map[key_press]) == dict:
-                            # we have an event
-                            event_dict = self.key_map[key_press]
-                            self.machine.events.post(str(event_dict['event']),
-                                                     **event_dict['params'])
-
-        @self.machine.window.event
-        def on_key_release(symbol, modifiers):
-            # see the above on_key_press() method for comments on this method
+        else:
             key_press = str(symbol)
+            # if a modifier key was pressed along with the regular key,
+            # combine them in the way they're in the key_map
 
-            if modifiers & 8:  # '8' is the plyglet mod value for caps lock
+            if modifiers & 8:  # '8' is the pyglet mod value for caps lock
                 modifiers -= 8  # so we just remove it.
 
             if modifiers & 16:  # Same for '16' which is for num lock
                 modifiers -= 16
 
+            # todo verify above changes for Pygame
+
             if modifiers:
                 key_press = str(modifiers) + "-" + key_press
 
-            # if our key is valid and not in the toggle_keys dictionary,
-            # process the key up event
-            if key_press in self.key_map and key_press not in self.toggle_keys:
-                if self.key_map[key_press] in self.inverted_keys:
-                    self.machine.switch_controller.process_switch(state=1,
-                        name=self.key_map[key_press])
-                elif type(self.key_map[key_press]) == str:
+            # check our built-up key_press string against the existing
+            # key_map dictionary
+            if key_press in self.toggle_keys:  # is this is a toggle key?
+                if self.toggle_keys.get(key_press) == 1:
+                    # Switch is currently closed, so open it
                     self.machine.switch_controller.process_switch(state=0,
                         name=self.key_map[key_press])
+                    self.toggle_keys[key_press] = 0
+                else:  # Switch is currently open, so close it
+                    self.toggle_keys[key_press] = 1
+                    self.machine.switch_controller.process_switch(state=1,
+                        name=self.key_map[key_press])
+
+            elif key_press in self.key_map:
+                # for non-toggle keys, still want to make sure the key is
+                # valid
+
+                if self.key_map[key_press] in self.inverted_keys:
+                    self.machine.switch_controller.process_switch(state=0,
+                        name=self.key_map[key_press])
+                else:
+                    # do we have an event or a switch?
+                    if type(self.key_map[key_press]) == str:
+                        # we have a switch
+                        self.machine.switch_controller.process_switch(
+                            state=1, name=self.key_map[key_press])
+                    elif type(self.key_map[key_press]) == dict:
+                        # we have an event
+                        event_dict = self.key_map[key_press]
+                        self.machine.events.post(str(event_dict['event']),
+                                                 **event_dict['params'])
+
+    def process_key_release(self, symbol, modifiers):
+        # see the above process_key_press() method for comments on this method
+        key_press = str(symbol)
+
+        if modifiers & 8:  # '8' is the plyglet mod value for caps lock
+            modifiers -= 8  # so we just remove it.
+
+        if modifiers & 16:  # Same for '16' which is for num lock
+            modifiers -= 16
+
+        if modifiers:
+            key_press = str(modifiers) + "-" + key_press
+
+        # if our key is valid and not in the toggle_keys dictionary,
+        # process the key up event
+
+        if key_press in self.key_map and key_press not in self.toggle_keys:
+            if self.key_map[key_press] in self.inverted_keys:
+                self.machine.switch_controller.process_switch(state=1,
+                    name=self.key_map[key_press])
+            elif type(self.key_map[key_press]) == str:
+                self.machine.switch_controller.process_switch(state=0,
+                    name=self.key_map[key_press])
 
 # The MIT License (MIT)
 

@@ -23,10 +23,6 @@ class Switch(Device):
         self.machine = machine
         self.name = name
         self.config = config
-        """The string of the number from the machine configuration file. This is
-        used with some plugins (like OSC) that need to know the original number
-        string before it's translated into a hardware number by the hardware
-        controller."""
         self.state = 0
         """ The logical state of a switch. 1 = active, 0 = inactive. This takes
         into consideration the NC or NO settings for the switch."""

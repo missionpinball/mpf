@@ -9,18 +9,38 @@ Machine:
     Min Balls: 1
     Max Balls: 6
 
-Hardware:
-    Platform: fast
-    DriverBoards: wpc
-
-Fast:
-    port: COM7
-    baud: 1000000
-    config_number_format: = 'hex'
-
-LEDSettings:
-    brightness_compensation: 1.0
-    default_led_fade_ms: 100
+Display:
+    dmd.DMD:
+        width: 128
+        height: 32
+        timing_list: 50, 70, 90, 200
+        color_depth: 4
+        refresh_ratio: 1
+    #virtual_dmd.VirtualDMD:
+    #    width: 128
+    #    height: 32
+    #    color_depth: 4
+    #    refresh_ratio: 10
+    #    color_map:
+    #        0: 000000
+    #        1: 110000
+    #        2: 220000
+    #        3: 330000
+    #        4: 440000
+    #        5: 550000
+    #        6: 660000
+    #        7: 770000
+    #        8: 880000
+    #        9: 990000
+    #        10: aa0000
+    #        11: bb0000
+    #        12: cc0000
+    #        13: dd0000
+    #        14: ee0000
+    #        15: ff0000
+    playfield_lights.PlayfieldLights:
+        width: 205
+        height: 460
 
 Switches:
     # **** Format ****
@@ -156,10 +176,10 @@ Switches:
         number: S44
     slingL: 
         number: S51
-        tags: ballLive
+        tags: ballLive, sling
     slingR: 
         number: S52
-        tags: ballLive
+        tags: ballLive, sling
     captiveBall2:
         number: S53
         tags: ballLive
@@ -281,26 +301,32 @@ Coils:
 
     flipperLwRMain: 
         number: FLRM
+        pulse_ms: 20
     flipperLwRHold: 
         number: FLRH
     flipperLwLMain: 
         number: FLLM
+        pulse_ms: 20
     flipperLwLHold: 
         number: FLLH
     flipperUpRMain: 
         number: FURM
+        pulse_ms: 20
     flipperUpRHold: 
         number: FURH
     flipperUpLMain: 
         number: FULM
+        pulse_ms: 20
     flipperUpLHold: 
         number: FULH
     craneMagnet:
         number: C01
     popperL:
         number: C02
+        pulse_ms: 20
     popperR:
         number: C03
+        pulse_ms: 20
     crane:
         number: C04
     resetDropTarget:
@@ -317,6 +343,7 @@ Coils:
         pulse_ms: 20
     shooterL:
         number: C09
+        pulse_ms: 20
     tripDropTarget:
         number: C10
         tags: ballSearch
@@ -326,6 +353,7 @@ Coils:
         holdPatter: 1-2
     trough:
         number: C13
+        pulse_ms: 20
     slingL: 
         number: C15
         tags: ballSearch
@@ -375,6 +403,8 @@ MatrixLights:
         number: L11
     perp1Red:
         number: L12
+        x: 38
+        y: 208
     perp1Yellow:
         number: L13
     perp1Green:
@@ -383,14 +413,20 @@ MatrixLights:
         number: L15
     perp2Red:
         number: L16
+        x: 95
+        y: 104
     perp2Yellow:
         number: L17
     perp2Green:
         number: L18
     perp4White:
         number: L21
+        x: 155
+        y: 135
     perp4Red:
         number: L22
+        x: 155
+        y: 135
     perp4Yellow:
         number: L23
     perp4Green:
@@ -399,6 +435,8 @@ MatrixLights:
         number: L25
     perp5Red:
         number: L26
+        x: 140
+        y: 245
     perp5Yellow:
         number: L27
     perp5Green:
@@ -413,48 +451,86 @@ MatrixLights:
         number: L34
     lock1:
         number: L35
+        x: 55
+        y: 215
     lock2:
         number: L36
+        x: 52
+        y: 205
     lock3:
         number: L37
+        x: 48
+        y: 192
     buyIn:
         number: L38
     crimeLevel4:
         number: L41
+        x: 121
+        y: 340
     crimeLevel3:
         number: L42
+        x: 108
+        y: 340
     crimeLevel2:
         number: L43
+        x: 93
+        y: 340
     crimeLevel1:
         number: L44
+        x: 80
+        y: 340
     meltdown:
         number: L45
+        x: 117
+        y: 318
     impersonator:
         number: L46
+        x: 100
+        y: 320
     battleTank:
         number: L47
+        x: 81
+        y: 318
     stopMeltdown:
         number: L48
+        x: 156
+        y: 255
     stakeout:
         number: L51
+        x: 152
+        y: 305
     safecracker:
         number: L52
+        x: 124
+        y: 305
     pursuit:
         number: L53
+        x: 48
+        y: 304
     ultimateChallenge:
         number: L54
+        x: 100
+        y: 298
     manhunt:
         number: L55
+        x: 135
+        y: 312
     blackout:
         number: L56
+        x: 65
+        y: 312
     sniper:
         number: L57
+        x: 75
+        y: 305
     pickAPrize:
         number: L58
-    ExtraBall: # This is for both?
+    ExtraBall: # This is for both
         number: L61
     rightStartFeature:
         number: L62
+        x: 135
+        y: 118
     tankCenter:
         number: L63
     awardSniper:
@@ -463,38 +539,68 @@ MatrixLights:
         number: L65
     leftCenterFeature:
         number: L66
+        x: 62
+        y: 230
     tankLeft:
         number: L67
+        x: 40
+        y: 235
     mystery:
         number: L68
+        x: 33
+        y: 262
     dropTargetJ:
         number: L71
+        x: 72
+        y: 176
     dropTargetU:
         number: L72
+        x: 82
+        y: 170
     dropTargetD:
         number: L73
+        x: 92
+        y: 164
     dropTargetG:
         number: L74
+        x: 102
+        y: 156
     dropTargetE:
         number: L75
+        x: 112
+        y: 150
     awardSafecracker:
         number: L76
+        x: 115
+        y: 170
     multiballJackpot:
         number: L77
+        x: 100
+        y: 180
     awardBadImpersonator:
         number: L78
+        x: 88
+        y: 190
     awardStakeout:
         number: L81
     blackoutJackpot:
         number: L82
     drainShield:
         number: L83
+        x: 100
+        y: 380
     judgeAgain:
         number: L84
+        x: 100
+        y: 400
     advanceCrimeLevel:
         number: L85
+        x: 125
+        y: 200
     tankRight:
         number: L86
+        x: 107
+        y: 201
     superGame:
         number: L87
     startButton:

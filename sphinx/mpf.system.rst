@@ -8,6 +8,7 @@ Submodules
 
    mpf.system.ball_controller
    mpf.system.devices
+   mpf.system.display
    mpf.system.events
    mpf.system.machine_controller
    mpf.system.machine_mode
@@ -17,6 +18,7 @@ Submodules
    mpf.system.switch_controller
    mpf.system.tasks
    mpf.system.timing
+   mpf.system.window_manager
 
 Module contents
 ---------------

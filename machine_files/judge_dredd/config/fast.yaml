@@ -1,0 +1,18 @@
+Hardware:
+    Platform: fast
+    DriverBoards: wpc
+
+Fast:
+    port0_name: \\.\COM10
+    port0_baud: 921600
+    port1_name: \\.\COM11
+    port1_baud: 921600
+    port2_name: \\.\COM12
+    port2_baud: 921600
+    main_port: 1
+    led_port: 0
+    dmd_port: 2
+    config_number_format: hex
+
+Config:
+    - jd.yaml

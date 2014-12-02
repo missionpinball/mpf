@@ -35,19 +35,19 @@ class Target(Device):
         self.lit = False
         self.device_str = 'target'
 
+        self.delay = DelayManager()
+
         # set config defaults
         if 'light' not in self.config:
             self.config['light'] = None
-        else:
-            # convert light string to a matrixlight or led object
-            try:
-                if self.config['light'] in self.machine.lights:
-                    self.log.debug("Configuring with light: %s", self.config['light'])
-                    self.config['light'] = self.machine.lights[self.config['light']]
-            except:
-                if self.config['light'] in self.machine.leds:
-                    self.log.debug("Configuring with LED: %s", self.config['light'])
-                    self.config['light'] = self.machine.leds[self.config['light']]
+
+        elif self.config['light'] in self.machine.lights:
+            self.log.debug("Configuring with light: %s", self.config['light'])
+            self.config['light'] = self.machine.lights[self.config['light']]
+
+        elif self.config['light'] in self.machine.leds:
+            self.log.debug("Configuring with LED: %s", self.config['light'])
+            self.config['light'] = self.machine.leds[self.config['light']]
 
         if 'light_if_unlit' not in self.config:
             self.config['light_if_unlit'] = True
@@ -276,27 +276,27 @@ class TargetGroup(Device):
         """One of this group's targets changed state. Let's recount them all.
         """
 
-        self.log.info("entering update count for device: %s", self.name)
+        self.log.debug("entering update count for device: %s", self.name)
 
         num_lit = 0
         for target in self.targets:
             if target.lit:
                 num_lit += 1
 
-        self.log.info("current number lit: %s", num_lit)
-        self.log.info("previous number lit: %s", self.num_lit)
+        self.log.debug("current number lit: %s", num_lit)
+        self.log.debug("previous number lit: %s", self.num_lit)
 
         old_lit = self.num_lit
 
         # Post events for this group based on new lits or unlits
         if num_lit > old_lit:  # we have a new lit
-            self.log.info("found a new lit")
+            self.log.debug("found a new lit")
             for new_hit in range(num_lit - old_lit):
                 self.machine.events.post(self.device_str + '_' + self.name +
                                          '_lit_hit')
 
         elif old_lit > num_lit:  # we have a new unlit
-            self.log.info("found a new unlit")
+            self.log.debug("found a new unlit")
             for new_hit in range(old_lit - num_lit):
                 self.machine.events.post(self.device_str + '_' + self.name +
                                          '_unlit_hit')

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.machine_controller module &mdash; Mission Pinball Framework 0.1.0 documentation</title>
+    <title>mpf.system.machine_controller module &mdash; Mission Pinball Framework 0.1.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1.0',
+        VERSION:     '0.1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1.0 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.1.1 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -108,30 +108,6 @@ dictionary as this:</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.system.machine_controller.MachineController.disable_autofires">
-<tt class="descname">disable_autofires</tt><big>(</big><big>)</big></dt>
-<dd><p>Disables all the autofire coils in the machine.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.machine_controller.MachineController.disable_flippers">
-<tt class="descname">disable_flippers</tt><big>(</big><big>)</big></dt>
-<dd><p>Disables all the flippers in the machine.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.machine_controller.MachineController.enable_autofires">
-<tt class="descname">enable_autofires</tt><big>(</big><big>)</big></dt>
-<dd><p>Enables all the autofire coils in the machine.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.machine_controller.MachineController.enable_flippers">
-<tt class="descname">enable_flippers</tt><big>(</big><big>)</big></dt>
-<dd><p>Enables all the flippers in the machine.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="mpf.system.machine_controller.MachineController.end_run_loop">
 <tt class="descname">end_run_loop</tt><big>(</big><big>)</big></dt>
 <dd><p>Causes the main run_loop to end.</p>
@@ -143,6 +119,17 @@ dictionary as this:</p>
 <dd><p>Advances the machine to the next machine mode as specified in the
 machineflow. Typically this just advances between Attract mode and Game
 mode.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.get_window">
+<tt class="descname">get_window</tt><big>(</big><big>)</big></dt>
+<dd><p>Returns a reference to the onscreen display window.</p>
+<p>This method will set up a window if one doesn&#8217;t exist yet. This method
+exists because there are several different modules and plugins which
+may want to use a window, but we don&#8217;t know which combinations might
+be used, so we centralize the creation and management of an onscreen
+window here.</p>
 </dd></dl>
 
 <dl class="method">
@@ -172,6 +159,16 @@ that worked. (This path is stored in
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_controller.MachineController.request_pygame">
+<tt class="descname">request_pygame</tt><big>(</big><big>)</big></dt>
+<dd><p>Called by a module to let the system know it would like to use
+Pygame. We centralize the requests instead of letting each module do
+their own pygame.init() so we get it in one place and can get everthing
+initialized in the right order.</p>
+<p>Returns: True or False, depending on whether pygame is available or not.</p>
 </dd></dl>
 
 <dl class="method">
@@ -291,7 +288,7 @@ spaces in the string.</td>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

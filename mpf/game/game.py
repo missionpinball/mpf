@@ -146,7 +146,7 @@ class Game(MachineMode):
         self.machine.events.post('game_started')
         self.player_turn_start()
 
-    def player_add_success(self, player):
+    def player_add_success(self, player, **kwargs):
         """Called when a new player is successfully added to the current game
         (including when the first player is added).
 
@@ -483,7 +483,8 @@ class Game(MachineMode):
         else:
             new_player = Player()
             self.player_list.append(new_player)
-            self.machine.events.post('player_add_success', player=new_player)
+            self.machine.events.post('player_add_success', player=new_player,
+                                     num=new_player.vars['number'])
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.

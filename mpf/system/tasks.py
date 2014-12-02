@@ -113,14 +113,14 @@ class DelayManager(object):
     def __del__(self):
         DelayManager.dead_delay_managers.add(self)  # todo I don't like this
 
-    def add(self, name, ms, callback, args=None):
+    def add(self, name, ms, callback, **kwargs):
         """ delay comes in via ms.
         """
-        self.log.debug("---Adding delay. Name: '%s' ms: %s, callback: %s, args: %s",
-                       name, ms, callback, args)
+        self.log.debug("---Adding delay. Name: '%s' ms: %s, callback: %s, kwargs: %s",
+                       name, ms, callback, kwargs)
         self.delays[name] = ({'action_ms': time.time() + (ms / 1000.0),
                               'callback': callback,
-                              'args': args})
+                              'kwargs': kwargs})
 
     def remove(self, name):
         self.log.debug("---Removing delay: '%s'", name)
@@ -140,12 +140,12 @@ class DelayManager(object):
         if delay in self.delays:
             return delay
 
-    def reset(self, name, ms, callback, args=None):
+    def reset(self, name, ms, callback, **kwargs):
         """ Resets a delay, first deleting the old one (if it exists) and then
         adding the delay for the new time.
         """
         self.remove(name)
-        self.add(name, ms, callback, args)
+        self.add(name, ms, callback, **kwargs)
 
     def clear(self):
         self.delays = {}
@@ -160,8 +160,8 @@ class DelayManager(object):
                 this_delay = copy(self.delays[delay])
                 del self.delays[delay]
                 self.log.debug("---Processing delay: %s", this_delay)
-                if this_delay['args']:
-                    this_delay['callback'](this_delay['args'])
+                if this_delay['kwargs']:
+                    this_delay['callback'](**this_delay['kwargs'])
                 else:
                     this_delay['callback']()
 

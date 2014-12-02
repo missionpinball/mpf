@@ -5,4 +5,6 @@ __all__ = ['events',
            'devices',
            'tasks',
            'show_controller',
+           'display',
+           'window_manager'
            ]

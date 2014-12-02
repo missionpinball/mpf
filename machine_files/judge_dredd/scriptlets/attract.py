@@ -12,7 +12,6 @@ class Attract(Scriptlet):
         self.machine.events.add_handler('machineflow_Attract_stop', self.stop)
 
     def start(self):
-
         self.machine.shows['drop_target_sweep'].play(repeat=True,
                                                           tocks_per_sec=5,
                                                           priority=3,
@@ -44,6 +43,9 @@ class Attract(Scriptlet):
 
         for gi in self.machine.gi:
             gi.on()
+
+        #self.machine.platform.verify_switches()
+
 
     def stop(self):
         self.machine.shows['drop_target_sweep'].stop()

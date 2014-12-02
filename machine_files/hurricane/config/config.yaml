@@ -1,0 +1,525 @@
+Machine:
+    HZ: 30
+    Balls Installed: 3
+    Min Balls: 1
+    Max Balls: 3
+
+Hardware:
+    Platform: fast
+    DriverBoards: wpc
+
+Scriptlets:
+    hurricane.Hurricane
+    attract.Attract
+
+Fast:
+    port0_name: COM9
+    port0_baud: 921600
+    main_port: 0
+    led_port: 0
+    dmd_port: 0
+    config_number_format: hex
+
+Display:
+    dmd.DMD:
+        width: 128
+        height: 32
+        timing_list: 50, 70, 90, 200
+        color_depth: 4
+        refresh_ratio: 1
+    virtual_dmd.VirtualDMD:
+        width: 128
+        height: 32
+        color_depth: 4
+        refresh_ratio: 10
+        color_map:
+            0: 000000
+            1: 110000
+            2: 220000
+            3: 330000
+            4: 440000
+            5: 550000
+            6: 660000
+            7: 770000
+            8: 880000
+            9: 990000
+            10: aa0000
+            11: bb0000
+            12: cc0000
+            13: dd0000
+            14: ee0000
+            15: ff0000
+    lcd.LCD:
+        width: 512
+        height: 128
+        resizable: true
+        frame: true
+
+Game:
+    Balls per game: 3
+    Max players per game: 4
+    Restart on long press: False
+    Allow start with loose balls: False
+
+MachineFlow:
+    mpf.game.attract.Attract
+    mpf.game.game.Game
+
+Plugins:
+    osc.OSC
+    logic_blocks.LogicBlocks
+    auditor.Auditor
+    shots.ShotController
+    scoring.ScoreController
+    info_display.InfoDisplay
+
+OSC:
+    machine_ip: auto
+    machine_port: 8000
+    approved_client_ips: any
+    client_port: 9000
+    debug_messages: false
+    client_updates:
+        switches
+        data
+        lights
+
+Coils:
+    backboxMotor:
+        number: C01
+        allow_enable: True
+    droptargetReset:
+        number: C02
+        pulse_ms: 30
+    leftJuggler:
+        number: C04
+        pulse_ms: 10
+    rightJuggler:
+        number: C05
+        pulse_ms: 20
+    ferrisWheels:
+        number: C06
+        allow_enable: True
+    knocker:
+        number: C07
+        pulse_ms: 20
+    outhole:
+        number: C09
+        pulse_ms: 20
+    ballRelease:
+        number: C10
+        pulse_ms: 20
+    leftSlingshot: 
+        number: C11
+        pulse_ms: 20
+    rightSlingshot: 
+        number: C12
+        pulse_ms: 20
+    leftPop:
+        number: C13
+        pulse_ms: 20
+    rightPop:
+        number: C14
+        pulse_ms: 20
+    bottomPop:
+        number: C15
+        pulse_ms: 20
+
+Switches:
+    rightFlipper:
+        number: S11
+    leftFlipper:
+        number: S12
+    start:
+        number: S13
+        tags: start
+    plumbBob:
+        number: S14
+        tags: tilt
+    outhole:
+        number: S15
+    trough1:
+        number: S16
+    trough2:
+        number: S17
+    trough3:
+        number: S18
+    slamTilt:
+        number: S21
+        tags: slam_tilt
+    coinDoorClosed:
+        number: S22
+    ticket:
+        number: S23
+    alwaysClosed:
+        number: S24
+        type: NC
+    rightSlingshot:
+        number: S25
+        tag: right_sling
+    rightInlane:
+        number: S26
+    rightOutlane:
+        number: S27
+    shooterLane:
+        number: S28
+    ferrisWheel:
+        number: S31
+    leftDrop1:
+        number: S33
+    leftDrop2:
+        number: S34
+    leftDrop3:
+        number: S35
+    leftSlingshot:
+        number: S36
+        tags: left_sling
+    leftInlane:
+        number: S37
+    leftOutlane:
+        number: S38
+    rightStandup1:
+        number: S42
+    rightStandup2:
+        number: S43
+    rightStandup3:
+        number: S44
+    rightStandup4:
+        number: S45
+    leftPop:
+        number: S51
+    rightPop:
+        number: S52
+    bottomPop:
+        number: S53
+    dunkTheDummy:
+        number: S55
+    leftJuggler:
+        number: S56
+    rightJuggler:
+        number: S57
+    hurricaneEntry:
+        number: S61
+    hurricaneExit:
+        number: S62
+    cometEntry:
+        number: S63
+    cometExit:
+        number: S64
+    coin1:
+        number: SD1
+    coin2:
+        number: SD2
+    coin3:
+        number: SD3
+    coin4:
+        number: SD4
+    esc:
+        number: SD5
+    down:
+        number: SD6
+    up:
+        number: SD7
+    enter:
+        number: SD8
+
+MatrixLights:
+    clownLeftEye:
+        number: L11
+    clownRightEye:
+        number: L12
+    clownLeftCheek:
+        number: L13
+    clownNose:
+        number: L14
+    clownRightCheek:
+        number: L15
+    clownMouth:
+        number: L16
+    leftOutlane:
+        number: L17
+    leftInlane:
+        number: L18
+    bonus2x:
+        number: L21
+    bonus3x:
+        number: L22
+    bonus4x:
+        number: L23
+    bonus5x:
+        number: L24
+    bonus6x:
+        number: L25
+    leftDrop1:
+        number: L26
+    leftDrop2:
+        number: L27
+    leftDrop3:
+        number: L28
+    palaceP:
+        number: L31
+    palaceA1:
+        number: L32
+    palaceL:
+        number: L33
+    palaceA2:
+        number: L34
+    palaceC:
+        number: L35
+    palaceE:
+        number: L36
+    rightOutlane:
+        number: L37
+    rightInlane:
+        number: L38
+    special:
+        number: L41
+    clownTime:
+        number: L42
+    spotPalace:
+        number: L43
+    skillShot:
+        number: L44
+    hurricaneValue:
+        number: L45
+    hurricane1mil:
+        number: L46
+    hurricane2mil:
+        number: L47
+    hurricane3mil:
+        number: L48
+    lock2:
+        number: L51
+    lock1:
+        number: L52
+    mystery:
+        number: L53
+    jackpot:
+        number: L54
+    playItAgain:
+        number: L55
+    quickScore:
+        number: L56
+    ferrisWheel:
+        number: L57
+    million:
+        number: L58
+    comet50k:
+        number: L61
+    comet100k:
+        number: L62
+    comet200k:
+        number: L63
+    comet300k:
+        number: L64
+    leftPop:
+        number: L65
+    rightPop:
+        number: L66
+    bottomPop:
+        number: L67
+    dunkTheDummy:
+        number: L68
+    allScoresX2:
+        number: L71
+    allScoresX3:
+        number: L72
+    allScoresX5:
+        number: L73
+    palaceClock:
+        number: L74
+    rightStandup4:
+        number: L75
+    rightStandup3:
+        number: L76
+    rightStandup2:
+        number: L77
+    rightStandup1:
+        number: L78
+    juggler1:
+        number: L81
+    juggler2:
+        number: L82
+    juggler3:
+        number: L83
+    juggler4:
+        number: L84
+    flipperLanes:
+        number: L85
+    start:
+        number: L86
+    leftSling:
+        number: L87
+    rightSlot:
+        number: L88
+
+BallDevices:
+    outhole:
+        tags: drain
+        ball_switches: outhole
+        entrance_count_delay: 300ms
+        eject_coil: outhole
+        eject_switch: outhole
+        confirm_eject_type: device
+        confirm_eject_target: trough
+    trough:
+        tags: trough, home
+        ball_switches: trough1, trough2, trough3
+        entrance_count_delay: 300ms
+        feeder_device: outhole
+        eject_coil: ballRelease
+        eject_switch: trough1
+        confirm_eject_type: device
+        confirm_eject_target: plunger
+    plunger:
+        tags: ball_add_live
+        ball_switches: shooterLane
+        entrance_count_delay: 300ms
+        feeder_device: trough
+        confirm_eject_type: playfield
+    leftJuggler:
+        ball_switches: leftJuggler
+        eject_coil: leftJuggler
+        eject_switch: leftJuggler
+        entrance_count_delay: 300ms
+        confirm_eject_type: device
+        confirm_eject_target: rightJuggler
+    rightJuggler:
+        ball_switches: rightJuggler
+        eject_coil: rightJuggler
+        eject_switch: rightJuggler
+        feeder_device: leftJuggler
+        entrance_count_delay: 300ms
+        confirm_eject_type: count
+
+Autofire Coils:
+    leftPop:
+        coil: leftPop
+        switch: leftPop
+    rightPop:
+        coil: rightPop
+        switch: rightPop
+    bottomPop:
+        coil: bottomPop
+        switch: bottomPop
+    leftSlingshot:
+        coil: leftSlingshot
+        switch: leftSlingshot
+    rightSlingshot:
+        coil: rightSlingshot
+        switch: rightSlingshot
+
+DropTargetBanks:
+    leftBank:
+        reset_coils: droptargetReset
+        drop_targets: droptarget1, droptarget2, droptarget3
+        reset_events:
+            ball_starting: 0
+
+DropTargets:
+    droptarget1:
+        switch: leftDrop1
+        light: leftDrop1
+    droptarget2:
+        switch: leftDrop2
+        light: leftDrop2
+    droptarget3:
+        switch: leftDrop3
+        light: leftDrop3
+
+TargetGroups:
+    rightStandups:
+        targets: rightStandup1, rightStandup2, rightStandup3, rightStandup4
+        reset_events: targets_rightStandups_lit_complete
+        enable_events: ball_started
+        disable_events: ball_ending
+    extraBallLanes:
+        targets: leftOutlane, leftInlane, rightInlane, rightOutlane
+        rotate_left_events: sw_left_sling
+        rotate_right_events: sw_right_sling
+        reset_events: targets_extraBallLanes_lit_complete
+        enable_events: ball_started
+        disable_events: ball_ending
+
+Targets:
+    leftOutlane:
+        switch: leftOutlane
+        light: leftOutlane
+    leftInlane:
+        switch: leftInlane
+        light: leftInlane
+    rightInlane:
+        switch: rightInlane
+        light: rightInlane
+    rightOutlane:
+        switch: rightOutlane
+        light: rightOutlane
+    rightStandup1:
+        switch: rightStandup1
+        light: rightStandup1
+    rightStandup2:
+        switch: rightStandup2
+        light: rightStandup2
+    rightStandup3:
+        switch: rightStandup3
+        light: rightStandup3
+    rightStandup4:
+        switch: rightStandup4
+        light: rightStandup4
+
+GIs:
+    backbox1:
+        number: G01
+        tags: gi
+    backbox2:
+        number: G02
+        tags: gi
+    playfield:
+        number: G03
+        tags: gi
+    backbox3:
+        number: G04
+        tags: gi
+    coinDoor:
+        number: G05
+        tags: gi
+    flipperEnable:
+        number: G08
+
+Shots:
+    slingshot:
+        Switch: leftSlingshot, rightSlingshot
+    dunkTheDummy:
+        Switch: dunkTheDummy
+    pop:
+        Switch: leftPop, rightPop, bottomPop
+    ferrisWheel:
+        Switch: ferrisWheel
+    hurricane:
+        Type: Sequence
+        Switches: hurricaneEntry, hurricaneExit
+        Time: 3s
+    comet:
+        Type: Sequence
+        Switches: cometEntry, cometExit
+        Time: 3s
+
+Scoring:
+    shot_slingshot:
+        Score: 4790
+    targets_extraBallLanes_unlit_hit:
+        Score: 7500
+    targets_extraBallLanes_lit_hit:
+        Score: 1000
+    shot_dunkTheDummy:
+        Score: 10000
+    shot_pop:
+        Score: 3050
+    shot_ferrisWheel:
+        Score: 20000
+    shot_comet:
+        Score: 75000
+    shot_hurricane:
+        Score: 100000
+    balldevice_leftJuggler_ball_enter:
+        Score: 38460

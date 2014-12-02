@@ -34,6 +34,12 @@ import sys
 from mpf.system.timing import Timing
 from mpf.system.platform import Platform
 
+try:
+    import pygame
+    import pygame.locals
+except:
+    pass
+
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00
 
@@ -72,7 +78,7 @@ class HardwarePlatform(Platform):
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['Hardware']['DriverBoards'])
 
-        # new way starts below ---------------------
+        # Connect to the P-ROC. Keep trying if it doesn't work the first time.
 
         self.proc = None
 
@@ -84,13 +90,17 @@ class HardwarePlatform(Platform):
             except:
                 print "Failed, trying again..."
 
-        # new way ends here -------------------------
+        # Clear out the default program for the aux port since we might need it
+        # for a 9th column. Details:
+        # http://www.pinballcontrollers.com/forum/index.php?topic=1360
+        commands = []
+        commands += [pinproc.aux_command_disable()]
 
+        for i in range(1, 255):
+            commands += [pinproc.aux_command_jump(0)]
 
-        # old way is these two lines:
-        # self.proc = pinproc.PinPROC(self.machine_type)
-        # self.proc.reset(1)
-
+        self.proc.aux_send_commands(0, commands)
+        # End of the clear out the default program for the aux port.
 
         # Because PDBs can be configured in many different ways, we need to
         # traverse the YAML settings to see how many PDBs are being used.
@@ -115,9 +125,8 @@ class HardwarePlatform(Platform):
         also used for matrix-based lights.
 
         Args:
-            config (dict): A configuration dictionary of settings for the
-                driver.
-            device_type (str): 'coil' or 'switch'
+            config: Dictionary of settings for the driver.
+            device_type: String with value of either 'coil' or 'switch'.
 
         Returns:
             A reference to the PROCDriver object which is the actual object you
@@ -157,41 +166,27 @@ class HardwarePlatform(Platform):
     def configure_switch(self, config):
         """ Configures a P-ROC switch.
 
-        Parameters
-        ----------
-
-        config : dict
-            A configuration dictionary of settings for the switch. In the case
+        Args:
+            config: Dictionary of settings for the switch. In the case
             of the P-ROC, it uses the following:
+            number : The number (or number string) for the switch as specified
+            in the machine configuration file.
+            debounce : Boolean which specifies whether the P-ROC should debounce
+            this switch first before sending open and close notifications to the
+            host computer.
 
-        number : str
-            The number (or number string) for the switch as specified in the
-            machine configuration file.
-
-        debounce : bool
-            Whether the P-ROC should debounce this switch first before sending
-            open and close notifications to the host computer.
-
-        Returns
-        -------
-
-        switch : object
-            A reference to the switch object that was just created.
-
-        proc_num : int
-            The actual hardware switch number the P-ROC uses to refer to this
-            switch. Typically your machine configuration files would specify
-            a switch number like `SD12` or `7/5`. This `proc_num` is an int
-            between 0 and 255.
-
-        state : int
-            The current hardware state of the switch, used to set the initial
-            state state in the machine. A value of 0 means the switch is open,
-            and 1 means it's closed. Note this state is the physical state of
-            the switch, so if you configure the switch to be normally-closed
-            (i.e. "inverted" then your code will have to invert it too.) MPF
-            handles this automatically if the switch type is 'NC'.
-
+        Returns:
+            switch : A reference to the switch object that was just created.
+            proc_num : Integer of the actual hardware switch number the P-ROC
+            uses to refer to this switch. Typically your machine configuration
+            files would specify a switch number like `SD12` or `7/5`. This
+            `proc_num` is an int between 0 and 255. state : An integer of the
+            current hardware state of the switch, used to set the initial state
+            state in the machine. A value of 0 means the switch is open, and 1
+            means it's closed. Note this state is the physical state of the
+            switch, so if you configure the switch to be normally-closed (i.e.
+            "inverted" then your code will have to invert it too.) MPF handles
+            this automatically if the switch type is 'NC'.
         """
 
         if self.machine_type == pinproc.MachineTypePDB:
@@ -245,13 +240,24 @@ class HardwarePlatform(Platform):
         return switch, proc_num, state
 
     def configure_led(self, config):
-        """ Configures a P-ROC direct LED controlled via a PD-LED.
+        """ Configures a P-ROC RGB LED controlled via a PD-LED."""
 
-        This feature is not yet implemented.
-        """
-        # 'yaml_number = number = proc_num
-        #if ('polarity' in item_dict):
-            #item.invert = not item_dict['polarity']
+        # todo add polarity
+
+        # split the number (which comes in as a string like w-x-y-z) into parts
+        config['number'] = config['number_str'].split('-')
+
+        if 'polarity' in config:
+            invert = not config['polarity']
+        else:
+            invert = False
+
+        return PDBLED(board=int(config['number'][0]),
+                      address=[int(config['number'][0]),
+                               int(config['number'][1]),
+                               int(config['number'][2])],
+                      proc_driver=self.proc,
+                      invert=invert)
 
     def configure_matrixlight(self, config):
         """Configures a P-ROC matrix light."""
@@ -262,6 +268,10 @@ class HardwarePlatform(Platform):
         """Configures a P-ROC GI string light."""
         # On the P-ROC, GI strings are drivers
         return self.configure_driver(config, 'light')
+
+    def configure_dmd(self):
+        """Configures a hardware DMD connected to a classic P-ROC."""
+        return PROCDMD(self.machine)
 
     def hw_loop(self):
         """Checks the P-ROC for any events (switch state changes or notification
@@ -279,9 +289,11 @@ class HardwarePlatform(Platform):
             elif event_type == pinproc.EventTypeDMDFrameDisplayed:
                 pass
             elif event_type == pinproc.EventTypeSwitchClosedDebounced:
+                #print "switch closed", event_value
                 self.machine.switch_controller.process_switch(state=1,
                                                               num=event_value)
             elif event_type == pinproc.EventTypeSwitchOpenDebounced:
+                #print "switch open", event_value
                 self.machine.switch_controller.process_switch(state=0,
                                                               num=event_value)
             else:
@@ -516,110 +528,72 @@ class HardwarePlatform(Platform):
         # appropriately.
 
 
-class PROCLED(object):
-    """Represents an LED connected to a PD-LED board.
+class PDBLED(object):
+    """Represents an RGB LED connected to a PD-LED board."""
 
-    This code is not yet implemented.
+    def __init__(self, board, address, proc_driver, invert=False):
+        self.log = logging.getLogger('PDBLED')
+        self.board = board
+        self.address = address
+        self.proc = proc_driver
+        self.invert = invert
 
-    """
+        # todo make sure self.address is a 3-element list
 
-    def __init__(self, machine, name, number):
-        """machine = Game object, name, number = LED name, number from
-        machine.yaml
-        """
-        self.log = logging.getLogger('PROCLED')
-        self.parent = HardwareDirectLED(machine, name, number,
-                                                     platform_driver=self)
-        self.name = name
-        self.number = number
-        self.machine = machine  # todo remove?
-
-        cr_list = number.split('-')  # split the LED number into a list
-        # pull the digit from first list entry to be the board address
-        self.board_addr = int(cr_list[0][1:])
-        self.addrs = []
-        self.current_color = []
-        # Loop through the remaining list entries to populate the color
-        # addresses for that LED
-        for color in cr_list[1:]:
-            self.addrs.append(int(color[1:]))
-            self.current_color.append(0)
-
-        self.log.debug("Creating PD-LED item: %s, board_addr: %s, "
-                         "color_addrs: %s", self.name, self.board_addr,
-                         self.addrs)
+        self.log.debug("Creating PD-LED item: board: %s, "
+                       "RGB outputs: %s", self.board,
+                        self.address)
 
     def color(self, color):
+        """Instantly sets this LED to the color passed.
 
-        # If the number of colors is the same or greater than the number of LED
-        # outputs:
-        if len(color) >= len(self.addrs):
-            for i in range(len(self.addrs)):
-                self.machine.proc.led_color(self.board_addr, self.addrs[i],
-                                         color[i] *
-                                         self.brightness_compensation[i])
-                self.current_color[i] = color[i]
+        Args:
+            color: a 3-item list of integers representing R, G, and B values,
+            0-255 each.
+        """
 
-        else:  # The LED has more outputs than the color we're sending it.
-            for i in range(len(color)):
-                # Write the colors we can, ignore the rest.
-                self.machine.proc.led_color(self.board_addr, self.addrs[i],
-                                         color[i] *
-                                         self.brightness_compensation[i])
-                self.current_color[i] = color[i]
+        #self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
+        #               self.board, self.address, color)
 
-    def fade(self, color, fadetime):
-        # todo have to decide whether we do fadetime in software or hardware
-        # for the PD-LED
+        self.proc.led_color(self.board, self.address[0],
+                            self.normalize_color(color[0]))
+        self.proc.led_color(self.board, self.address[1],
+                            self.normalize_color(color[1]))
+        self.proc.led_color(self.board, self.address[2],
+                            self.normalize_color(color[2]))
 
-        fadetime = int(fadetime/4)
-
-        if len(color) >= len(self.addrs):
-            # if the number of colors is the same or greater than the number
-            # of LED outputs
-
-            for i in range(len(self.addrs)):
-                self.machine.proc.led_fade(self.board_addr,
-                                        self.addrs[i],
-                                        color[i] *
-                                        self.brightness_compensation[i],
-                                        fadetime)
-                self.current_color[i] = color[i]
-
-        else:  # The LED has more outputs than the color we're sending it
-            for i in range(len(color)):
-                # write the colors we can, ignore the rest
-                self.machine.proc.led_fade(self.board_addr,
-                                        self.addrs[i],
-                                        color[i] *
-                                        self.brightness_compensation[i],
-                                        fadetime)
-                self.current_color[i] = color[i]
+    def fade(self, color, fade_ms):
+        # todo
+        # not implemented. For now we'll just immediately set the color
+        self.color(color, fade_ms)
 
     def disable(self):
         """Disables (turns off) this LED instantly. For multi-color LEDs it
         turns all elements off.
         """
 
-        super(disable, self).disable()
-
-        # loop through the count based on the number of LED outputs
-        for i in range(len(self.addrs)):
-            self.machine.proc.led_color(self.board_addr, self.addrs[i], 0)
-            self.current_color[i] = 0
+        self.proc.led_color(self.board, self.address[0],
+                            self.normalize_color(0))
+        self.proc.led_color(self.board, self.address[1],
+                            self.normalize_color(0))
+        self.proc.led_color(self.board, self.address[2],
+                            self.normalize_color(0))
 
     def enable(self):
-        """Enables (turns on) this LED instantly.
-        For multi-color LEDs it turns all elements on.
+        """Enables (turns on) this LED instantly. For multi-color LEDs it turns
+        all elements on.
         """
 
-        super(enable, self).enable()
+        self.color(self.normalize_color(255),
+                   self.normalize_color(255),
+                   self.normalize_color(255)
+                   )
 
-        # loop through the count based on the number of LED outputs
-        for i in range(len(self.addrs)):
-            self.machine.proc.led_color(self.board_addr, self.addrs[i],
-                                     255 * self.brightness_compensation[i])
-            self.current_color[i] = 255
+    def normalize_color(self, color):
+        if self.invert:
+            return 255-color
+        else:
+            return color
 
 
 class PDBSwitch(object):
@@ -1281,6 +1255,33 @@ def decode_pdb_address(addr, aliases=[]):
 
     else:
         raise ValueError('PDB address delimeter (- or /) not found.')
+
+
+class PROCDMD(object):
+
+    def __init__(self, machine):
+        self.machine = machine
+        self.dmd = pinproc.DMDBuffer(128, 32)
+        # size is hardcoded here since 128x32 is all the P-ROC hw supports
+
+        self.machine.events.add_handler('timer_tick', self.tick)
+
+    def update(self, surface):
+
+        pa = pygame.PixelArray(surface)  # temp
+
+        for x_dot in range(pa.shape[0]):
+            for y_dot in range(pa.shape[1]):
+                if pa[x_dot, y_dot] > 15:
+                    if x_dot < 128 and y_dot < 32:
+                        self.dmd.set_dot(x_dot, y_dot, 15)
+                else:
+                    if x_dot < 128 and y_dot < 32:
+                        self.dmd.set_dot(x_dot, y_dot, pa[x_dot, y_dot])
+
+    def tick(self):
+        self.machine.platform.proc.dmd_draw(self.dmd)
+
 
 # The MIT License (MIT)
 

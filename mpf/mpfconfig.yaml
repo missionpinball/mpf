@@ -14,6 +14,7 @@ MPF:
         switch_controller.SwitchController
         ball_controller.BallController
         show_controller.ShowController
+        display.DisplayController
     device_modules:
         driver.Driver
         switch.Switch
@@ -32,10 +33,15 @@ MPF:
         diverter.Diverter
         score_reel.ScoreReel
         score_reel.ScoreReelGroup
+    display_modules:
+        dmd.DMD
     paths:
         scriptlets: scriptlets
         shows: shows
         audits: audits/audits.yaml
+        sounds: sounds
+        machine_files: machine_files
+        config: config
     auto_load_shows: True
     default_pulse_ms: 10
     default_debounce_ms: 0  # fast only
@@ -50,6 +56,10 @@ Machine:
 
 Hardware:
     Platform: virtual
+
+LEDSettings:
+    brightness_compensation: 1.0
+    default_led_fade_ms: 100
 
 Game:
     Balls per game: 3
@@ -97,17 +107,29 @@ BallSearch:
 Language:
     en
 
-LCD:
+Window:
     width: 800
     height: 600
     title: Mission Pinball Framework
-    items:
-        score
-        player
-        ball
-        version
-        title
-        looprate
+    resizeable: yes
+    frame: yes
+    fullscreen: no
+    fps: 3
+    quit_on_close: True
+    background_image: mpf/images/mpf_background_800_600.jpg
+    elements:
+        DMD:
+            width: 512
+            height: 128
+            boarder_width: 2
+            boarder_color: 333333
+            h_pos: center
+            v_pos: center
+            pixel_color: ff6600
+            dark_color: 000000
+        LightMap:
+            width: 100
+            height: 400
 
 LogicBlocks:
 
@@ -131,3 +153,41 @@ LogicBlocks:
             enable_events: game_started
             hits_to_complete: 1
             events_when_complete: slam_tilt
+
+InfoDisplay:
+    game_started:
+        text: GAME STARTED
+        time: 3s
+    machineflow_Attract_start:
+        text: GAME OVER
+    player_add_success:
+        text: PLAYER %num ADDED
+    score_change:
+        text: "%score"
+    tilt_hit:
+        text: WARNING
+    ball_live_added:
+        text: LET'S GO!
+        time: 2s
+
+DisplayDefaults:
+    TextElement:
+        font: None
+        size: 22
+        opaque: true
+        v_align: center
+        h_align: center
+        x: 0
+        y: 0
+        time: 0s
+        text_color: ff0000
+        background_color: 000000
+        text_shade: 15
+        background_shade: 0
+
+DMD:
+    physical: True
+    width: 128
+    height: 32
+    shades: 16
+    fps: auto #todo

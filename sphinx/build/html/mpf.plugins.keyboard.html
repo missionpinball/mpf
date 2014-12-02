@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.plugins.keyboard module &mdash; Mission Pinball Framework 0.1.0 documentation</title>
+    <title>mpf.plugins.keyboard module &mdash; Mission Pinball Framework 0.1.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1.0',
+        VERSION:     '0.1.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1.0 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.1.1 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -57,7 +57,7 @@ switch activity in a pinball machine. This is good for testing purposes
 when you aren&#8217;t sitting at the actual machine.</p>
 <p>The Keyboard class gets its settings from the Machine Configuration Files
 in the [keymap] section.</p>
-<p>This module uses a pyglet window to capture the key events.</p>
+<p>This module uses a Pygame window to capture the key events.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -74,10 +74,14 @@ key constants in <tt class="xref py py-mod docutils literal"><span class="pre">p
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.plugins.keyboard.Keyboard.get_keyboard_events">
-<tt class="descname">get_keyboard_events</tt><big>(</big><big>)</big></dt>
-<dd><p>Gets the key events from the pyglet window.</p>
-</dd></dl>
+<dt id="mpf.plugins.keyboard.Keyboard.process_key_press">
+<tt class="descname">process_key_press</tt><big>(</big><em>symbol</em>, <em>modifiers</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.keyboard.Keyboard.process_key_release">
+<tt class="descname">process_key_release</tt><big>(</big><em>symbol</em>, <em>modifiers</em><big>)</big></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.plugins.keyboard.Keyboard.set_initial_states">
@@ -132,7 +136,7 @@ configured to start active.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

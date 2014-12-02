@@ -1,0 +1,444 @@
+#red
+- tocks: 1
+  leds:
+    semicircle1: ff0000
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle2: ff0000
+    semicircle1: 000000
+- tocks: 1
+  leds:
+    semicircle3: ff0000
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle4: ff0000
+    semicircle3: 000000
+- tocks: 1
+  leds:
+    semicircle5: ff0000
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle6: ff0000
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle7: ff0000
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle8: ff0000
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle9: ff0000
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle10: ff0000
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle9: ff0000
+    semicircle10: 000000
+- tocks: 1
+  leds:
+    semicircle8: ff0000
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle7: ff0000
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle6: ff0000
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle5: ff0000
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle4: ff0000
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle3: ff0000
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle2: ff0000
+    semicircle1: 000000
+
+# orange
+- tocks: 1
+  leds:
+    semicircle1: ff6600
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle2: ff6600
+    semicircle1: 000000
+- tocks: 1
+  leds:
+    semicircle3: ff6600
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle4: ff6600
+    semicircle3: 000000
+- tocks: 1
+  leds:
+    semicircle5: ff6600
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle6: ff6600
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle7: ff6600
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle8: ff6600
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle9: ff6600
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle10: ff6600
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle9: ff6600
+    semicircle10: 000000
+- tocks: 1
+  leds:
+    semicircle8: ff6600
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle7: ff6600
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle6: ff6600
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle5: ff6600
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle4: ff6600
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle3: ff6600
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle2: ff6600
+    semicircle1: 000000
+
+# yellow
+- tocks: 1
+  leds:
+    semicircle1: ffcc00
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle2: ffcc00
+    semicircle1: 000000
+- tocks: 1
+  leds:
+    semicircle3: ffcc00
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle4: ffcc00
+    semicircle3: 000000
+- tocks: 1
+  leds:
+    semicircle5: ffcc00
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle6: ffcc00
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle7: ffcc00
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle8: ffcc00
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle9: ffcc00
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle10: ffcc00
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle9: ffcc00
+    semicircle10: 000000
+- tocks: 1
+  leds:
+    semicircle8: ffcc00
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle7: ffcc00
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle6: ffcc00
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle5: ffcc00
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle4: ffcc00
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle3: ffcc00
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle2: ffcc00
+    semicircle1: 000000
+
+#green
+- tocks: 1
+  leds:
+    semicircle1: 00ff00
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle2: 00ff00
+    semicircle1: 000000
+- tocks: 1
+  leds:
+    semicircle3: 00ff00
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle4: 00ff00
+    semicircle3: 000000
+- tocks: 1
+  leds:
+    semicircle5: 00ff00
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle6: 00ff00
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle7: 00ff00
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle8: 00ff00
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle9: 00ff00
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle10: 00ff00
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle9: 00ff00
+    semicircle10: 000000
+- tocks: 1
+  leds:
+    semicircle8: 00ff00
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle7: 00ff00
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle6: 00ff00
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle5: 00ff00
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle4: 00ff00
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle3: 00ff00
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle2: 00ff00
+    semicircle1: 000000
+
+#blue
+
+- tocks: 1
+  leds:
+    semicircle1: 0000ff
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle2: 0000ff
+    semicircle1: 000000
+- tocks: 1
+  leds:
+    semicircle3: 0000ff
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle4: 0000ff
+    semicircle3: 000000
+- tocks: 1
+  leds:
+    semicircle5: 0000ff
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle6: 0000ff
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle7: 0000ff
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle8: 0000ff
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle9: 0000ff
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle10: 0000ff
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle9: 0000ff
+    semicircle10: 000000
+- tocks: 1
+  leds:
+    semicircle8: 0000ff
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle7: 0000ff
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle6: 0000ff
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle5: 0000ff
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle4: 0000ff
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle3: 0000ff
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle2: 0000ff
+    semicircle1: 000000
+
+#purple
+- tocks: 1
+  leds:
+    semicircle1: ff00aa
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle2: ff00aa
+    semicircle1: 000000
+- tocks: 1
+  leds:
+    semicircle3: ff00aa
+    semicircle2: 000000
+- tocks: 1
+  leds:
+    semicircle4: ff00aa
+    semicircle3: 000000
+- tocks: 1
+  leds:
+    semicircle5: ff00aa
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle6: ff00aa
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle7: ff00aa
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle8: ff00aa
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle9: ff00aa
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle10: ff00aa
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle9: ff00aa
+    semicircle10: 000000
+- tocks: 1
+  leds:
+    semicircle8: ff00aa
+    semicircle9: 000000
+- tocks: 1
+  leds:
+    semicircle7: ff00aa
+    semicircle8: 000000
+- tocks: 1
+  leds:
+    semicircle6: ff00aa
+    semicircle7: 000000
+- tocks: 1
+  leds:
+    semicircle5: ff00aa
+    semicircle6: 000000
+- tocks: 1
+  leds:
+    semicircle4: ff00aa
+    semicircle5: 000000
+- tocks: 1
+  leds:
+    semicircle3: ff00aa
+    semicircle4: 000000
+- tocks: 1
+  leds:
+    semicircle2: ff00aa
+    semicircle1: 000000

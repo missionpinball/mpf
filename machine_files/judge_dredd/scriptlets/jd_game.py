@@ -8,6 +8,7 @@ class JDGame(Scriptlet):
     def on_load(self):
         self.machine.events.add_handler('machineflow_Game_start', self.start)
         self.machine.events.add_handler('machineflow_Game_stop', self.stop)
+        self.machine.events.add_handler('timer_tick', self.tick)
 
     def start(self):
         self.log.debug("Starting JD Game")
@@ -24,3 +25,6 @@ class JDGame(Scriptlet):
     def fireL_switch(self):
         self.machine.ball_controller.add_live()
         self.machine.game.num_balls_in_play += 1
+
+    def tick(self):
+        self.machine.platform.verify_switches()

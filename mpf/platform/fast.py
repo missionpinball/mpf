@@ -12,6 +12,12 @@ import time
 from mpf.system.timing import Timing
 from mpf.system.platform import Platform
 
+try:
+    import pygame
+    import pygame.locals
+except:
+    pass
+
 
 class HardwarePlatform(Platform):
     """Platform class for the FAST hardware controller.
@@ -83,6 +89,8 @@ class HardwarePlatform(Platform):
             quit()
 
         self.fast = fastpinball.fpOpen(ports, port_assignments)
+        self.log.info("Fast Config. Ports: %s, Assignments: %s", ports,
+                       port_assignments)
 
         # We need to setup a timer to get the initial switch reads, so we just
         # do this one at 1 sec now. It will be overwritten later when the
@@ -143,7 +151,7 @@ class HardwarePlatform(Platform):
         self.wpc_light_map = {
                                'L11':'00', 'L12':'01', 'L13':'02', 'L14':'03',
                                'L15':'04', 'L16':'05', 'L17':'06', 'L18':'07',
-                               'L21':'08', 'L22':'09', 'L23':'11', 'L24':'12',
+                               'L21':'08', 'L22':'09', 'L23':'10', 'L24':'11',
                                'L25':'12', 'L26':'13', 'L27':'14', 'L28':'15',
                                'L31':'16', 'L32':'17', 'L33':'18', 'L34':'19',
                                'L35':'20', 'L36':'21', 'L37':'22', 'L38':'23',
@@ -152,7 +160,7 @@ class HardwarePlatform(Platform):
                                'L51':'32', 'L52':'33', 'L53':'34', 'L54':'35',
                                'L55':'36', 'L56':'37', 'L57':'38', 'L58':'39',
                                'L61':'40', 'L62':'41', 'L63':'42', 'L64':'43',
-                               'L65':'44', 'L66':'45', 'L67':'48', 'L68':'49',
+                               'L65':'44', 'L66':'45', 'L67':'46', 'L68':'47',
                                'L71':'48', 'L72':'49', 'L73':'50', 'L74':'51',
                                'L75':'52', 'L76':'53', 'L77':'54', 'L78':'55',
                                'L81':'56', 'L82':'57', 'L83':'58', 'L84':'59',
@@ -175,6 +183,9 @@ class HardwarePlatform(Platform):
         self.wpc_gi_map = {'G01':'00', 'G02':'01', 'G03':'02', 'G04':'03',
                            'G05':'04', 'G06':'05', 'G07':'06', 'G08':'07',
                           }
+
+        # temp until we have a proper reset
+        fastpinball.fpWriteAllRgbs(self.fast, 0, 0, 0)
 
     def timer_initialize(self):
         self.log.debug("Initializing the FAST hardware timer for %sHz",
@@ -255,12 +266,14 @@ class HardwarePlatform(Platform):
 
         if 'debounce_on' not in config:
             if 'default_debounce_on_ms' in self.machine.config['Fast']:
-                config['debounce_on'] = self.machine.config['Fast']['default_debounce_on_ms']
+                config['debounce_on'] = (self.machine.config['Fast']
+                                         ['default_debounce_on_ms'])
             else:
                 config['debounce_on'] = 20
         if 'debounce_off' not in config:
                 if 'default_debounce_off_ms' in self.machine.config['Fast']:
-                    config['debounce_off'] = self.machine.config['Fast']['default_debounce_off_ms']
+                    config['debounce_off'] = (self.machine.config['Fast']
+                                              ['default_debounce_off_ms'])
                 else:
                     config['debounce_off'] = 20
 
@@ -285,6 +298,10 @@ class HardwarePlatform(Platform):
         else:
             config['number'] = str(config['number'])
 
+        # if the config is in hex format, convert it to int
+        if self.machine.config['Fast']['config_number_format'] == 'hex':
+            config['number'] = int(config['number'], 16)
+
         return FASTDirectLED(config['number'], self.fast)
 
     def configure_gi(self, config):
@@ -300,6 +317,14 @@ class HardwarePlatform(Platform):
             config['number'] = int(config['number_str'], 16)
 
         return FASTMatrixLight(config['number'], self.fast), config['number']
+
+    def configure_dmd(self):
+        """Configures a hardware DMD connected to a FAST controller."""
+        if pygame:
+            return FASTDMD(self.machine, self.fast)
+        else:
+            print "fast needs pygame. quitting"  # todo make nicer
+            quit()
 
     def hw_loop(self):
         """Loop code which checks the controller for any events (switch state
@@ -470,6 +495,7 @@ class HardwarePlatform(Platform):
                                   sw.number[0],     # switch
                                   on_time,          # on time
                                   off_time,         # time before can enable again
+                                  0,                # pwm (0 - 32)
                                   coil.number[1],   # local or network
                                   )
         # todo ensure / verify switch & coil are on the same board.
@@ -504,9 +530,34 @@ class HardwarePlatform(Platform):
                                       0,            # switch
                                       0,            # on time
                                       0,            # off time
+                                      0,                # pwm (0 - 32)
                                       coil[1],      # local or network
                                       )
             # todo ensure / verify switch & coil are on the same board.
+
+    def verify_switches(self):
+        """Queries the FAST controller to get the current state of all the
+        switches and then compares that to the state that MPF thinks the
+        switches are in. Throws logging WARNINGs if anything doesn't match.
+
+        This method is notification only. It doesn't fix anything.
+        """
+
+        for switch in self.machine.switches:
+            hw_state = fastpinball.fpReadSwitch(self.fast, switch.number[0],
+                                                switch.number[1])
+
+            sw_state = self.machine.switches[switch.name].state
+
+            if self.machine.switches[switch.name].type == 'NC':
+                sw_state = sw_state ^ 1
+                #print "new sw_state", switch.name, sw_state
+            if sw_state != hw_state:
+                self.log.error("$$$$$$$$$$$$$$$$$$ Switch State Error! Switch: %s, FAST State: %s,"
+                               " MPF State: %s", switch.name, hw_state,
+                               sw_state)
+                #self.machine.switch_controller.process_switch(name=switch.name,
+                #                                              state=hw_state)
 
 
 class FASTSwitch(object):
@@ -554,6 +605,7 @@ class FASTDriver(object):
                    triggerSwitch (switch id number)
                    onTime (in ms)
                    offTime (in ms)
+                   pwm (int from 0 to 32)
                    target (connection type. 0 = local, 1 = network)
                    )
 
@@ -586,6 +638,7 @@ class FASTDriver(object):
                                   0,                # switch
                                   0,                # on time
                                   0,                # off time
+                                  0,                # pwm (0 - 32)
                                   self.number[1],   # local or network
                                   )
 
@@ -599,6 +652,7 @@ class FASTDriver(object):
                                   0,                # switch
                                   0,                # on time
                                   0,                # off time
+                                  0,                # pwm (0 - 32)
                                   self.number[1],   # local or network
                                   )
         # todo change hold to pulse with re-ups
@@ -606,8 +660,7 @@ class FASTDriver(object):
     def pulse(self, milliseconds=None):
         """Pulses this driver.
         """
-        if not milliseconds in range(256):
-            raise ValueError('Milliseconds must be in range 0-255.')
+
         self.log.debug('Pulsing Driver for %sms', milliseconds)
         fastpinball.fpWriteDriver(self.fast,        # fast board
                                   self.number[0],   # driver number
@@ -616,19 +669,13 @@ class FASTDriver(object):
                                   0,                # switch
                                   milliseconds,     # on time
                                   0,                # off time
+                                  0,                # pwm (0 - 32)
                                   self.number[1],   # local or network
                                   )
 
     def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
         """Enables this driver in a pwm pattern.
         """
-
-        if not original_on_ms in range(256):
-            raise ValueError('original_on_ms must be in range 0-255.')
-        if not on_ms in range(256):
-            raise ValueError('on_ms must be in range 0-255.')
-        if not off_ms in range(256):
-            raise ValueError('off_ms must be in range 0-255.')
 
         self.log.debug("pwm on:%d, off:%d, now:%s", on_ms,
                        off_ms, now)
@@ -639,6 +686,7 @@ class FASTDriver(object):
                                   0,                # switch
                                   on_ms,            # on time
                                   off_ms,           # off time
+                                  0,                # pwm (0 - 32)
                                   self.number[1],   # local or network
                                   )
 
@@ -650,24 +698,28 @@ class FASTGIString(object):
         TODO: Need to implement the enable_relay and control which strings are
         dimmable.
         """
-        self.log = logging.getLogger('FASTGILight')
+        self.log = logging.getLogger('FASTGIString.0x' + str(number))
         self.number = number
         self.fast = fast_device
 
     def off(self):
+        self.log.debug("Turning Off GI String")
         fastpinball.fpWriteGiString(self.fast, self.number, 0)
         self.last_time_changed = time.time()
+        fastpinball.fpReadAllSwitches(self.fast)
 
     def on(self, brightness=255, fade_ms=0, start=0):
         if brightness >= 255:
-            fastpinball.fpWriteGiString(self.fast, self.number, 1)
+            self.log.debug("Turning On GI String")
+            fastpinball.fpWriteGiString(self.fast, self.number, 100)
         elif brightness == 0:
             self.off()
         else:
             fastpinball.fpWriteGiString(self.fast, self.number,
-                                        int(brightness/255))
+                                        int(brightness/255.0*100))
 
         self.last_time_changed = time.time()
+        fastpinball.fpReadAllSwitches(self.fast)
 
 
 class FASTMatrixLight(object):
@@ -699,8 +751,8 @@ class FASTDirectLED(object):
 
     def __init__(self, number, fast_device):
         self.log = logging.getLogger('FASTLED')
-        self.number = number
         self.fast = fast_device
+        self.number = number
 
         self.current_color = [0, 0, 0]
 
@@ -710,23 +762,28 @@ class FASTDirectLED(object):
                        self.number)
 
     def color(self, color):
+        """Instantly sets this LED to the color passed.
+
+        Args:
+            color: a 3-item list of integers representing R, G, and B values,
+            0-255 each.
+        """
         # Pad the color with zeros to make sure we have as many colors as
         # elements
         # todo verify this is needed with FAST. It might just work without
 
         color += [0] * (3 - len(color))
 
-        self.log.info("fastpinball.fpWriteRgb(self.fast, %s, %s, %s, %s)",
-                       self.number, color[0], color[1], color[2])
+        #self.log.debug("fastpinball.fpWriteRgb(self.fast, %s, %s, %s, %s)",
+        #               self.number, color[0], color[1], color[2])
 
         fastpinball.fpWriteRgb(self.fast, self.number, color[0], color[1],
                                color[2])
 
-    def fade(self, color, fadetime):
+    def fade(self, color, fade_ms):
         # todo
         # not yet implemented. For now we'll just immediately set the color
-        self.log.debug("Fading LED %s over %sms", self.name, fadetime)
-        self.color(color, fadetime)
+        self.color(color, fade_ms)
 
     def disable(self):
         """Disables (turns off) this LED instantly. For multi-color LEDs it
@@ -735,8 +792,50 @@ class FASTDirectLED(object):
 
         fastpinball.fpWriteRgb(self.fast, self.number, 0, 0, 0)
 
-    def enable(self, brightness_compensation=True):
-        self.color([255, 255, 255], brightness_compensation)
+    def enable(self):
+        self.color([255, 255, 255])
+
+
+class FASTDMD(object):
+
+    def __init__(self, machine, fast_device):
+        self.machine = machine
+        self.fast = fast_device
+
+        print "setting up the fast DMD"
+
+        # Clear the DMD
+        fastpinball.fpClearDmd(self.fast)
+
+        self.dmd_frame = bytearray()
+
+        self.machine.events.add_handler('timer_tick', self.tick)
+
+    def update(self, surface):
+
+        pa = pygame.PixelArray(surface)  # temp
+
+        for y_dot in range(pa.shape[1]):
+            for x_dot in range(pa.shape[0]):
+                if pa[x_dot, y_dot] and x_dot < 128 and y_dot < 32:
+                    self.dmd_frame += bytes(9)
+                else:
+                    self.dmd_frame += bytes(0)
+                #dot_color = pa[x_dot, y_dot] / 16
+
+                #self.dmd_frame += bytes(dot_color)
+
+        del pa
+
+        fastpinball.fpWriteDmd(self.fast, self.dmd_frame)
+
+        self.dmd_frame = bytearray()
+
+
+    def tick(self):
+        pass
+        #fastpinball.fpWriteDmd(self.fast, self.dmd_frame)
+
 
 # The MIT License (MIT)
 

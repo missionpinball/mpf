@@ -59,6 +59,9 @@ class HardwarePlatform(Platform):
     def configure_gi(self, config):
         return VirtualGI(config['number']), config['number']
 
+    def configure_dmd(self):
+        return VirtualDMD(self.machine)
+
     def _do_set_hw_rule(self,
                         sw,
                         sw_activity,
@@ -164,6 +167,15 @@ class VirtualDriver(object):
         pass
 
     def reconfigure(self, polarity):
+        pass
+
+
+class VirtualDMD(object):
+
+    def __init__(self, machine):
+        pass
+
+    def update(self, pixel_array):
         pass
 
 # The MIT License (MIT)

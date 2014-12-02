@@ -10,11 +10,8 @@ states and posting events to the framework.
 # Documentation and more info at http://missionpinball.com/framework
 
 import logging
-import math
 from collections import defaultdict
 import time
-
-from mpf.system.timing import Timing
 
 
 class SwitchController(object):
@@ -133,6 +130,10 @@ class SwitchController(object):
                                             }
                               })
 
+        # todo this method does not set the switch device's state. Either get
+        # rid of it, or move the switch device settings from process_switch()
+        # to here.
+
     def process_switch(self, name=None, state=1, logical=False, num=None,
                        obj=None):
         """Processes a new switch state change.
@@ -169,13 +170,12 @@ class SwitchController(object):
         """
 
         # Find the switch name
+        # todo find a better way to do this ...
         if num is not None:
             for switch in self.machine.switches:
                 if switch.number == num:
                     name = switch.name
                     break
-
-        # todo find a better way to do the above...
 
         if not name:
             return
@@ -183,16 +183,35 @@ class SwitchController(object):
         elif obj:
             name = obj.name
 
-        # flip the incoming state if the switch type is NC and logical = False.
-        if self.machine.switches[name].type == 'NC' and logical is False:
-            state = state ^ 1
+
+
+        # flip the logical & physical states for NC switches
+
+        hw_state = state
+
+        if self.machine.switches[name].type == 'NC':
+
+            if logical:  # NC + logical means hw_state is opposite of state
+                hw_state = hw_state ^ 1
+            else:
+                # NC w/o logical (i.e. hardware state was sent) means logical
+                # state is the opposite
+                state = state ^ 1
+
+        # update the switch device
+        self.machine.switches[name].state = state
+        self.machine.switches[name].hw_state = hw_state
 
         # if the switch is already in this state, then abort
         if self.switches[name]['state'] == state:
+            # todo log this as potential hw error??
+            self.log.warning("Received duplicate switch state. Switch: %s, "
+                             "State: %s", name, state)
             return
 
         self.log.info("<<<<< switch: %s, State:%s >>>>>", name, state)
-        # Update the machine's switch state
+
+        # Update the switch controller's logical state for this switch
         self.set_state(name, state)
 
         # Combine name & state so we can look it up

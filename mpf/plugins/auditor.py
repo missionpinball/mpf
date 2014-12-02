@@ -44,8 +44,11 @@ class Auditor(object):
         # Initializes the auditor. We do this separate from __init__() since
         # we need everything else to be setup first.
 
-        self.filename = os.path.join(self.machine.options['machinepath'],
+        self.filename = os.path.join(self.machine.machine_path,
             self.machine.config['MPF']['paths']['audits'])
+
+        # todo add option for abs path outside of machine root
+
 
         # set config defaults:
         if 'save_events' not in self.config:
@@ -92,9 +95,10 @@ class Auditor(object):
                 self.current_audits['Switches'][switch.name] = 0
 
         # Make sure we have all the shots in our audit dict
-        for shot in self.machine.shots.shots:
-            if shot.name not in self.current_audits['Shots']:
-                self.current_audits['Shots'][shot.name] = 0
+        if hasattr(self.machine, 'shots'):
+            for shot in self.machine.shots.shots:
+                if shot.name not in self.current_audits['Shots']:
+                    self.current_audits['Shots'][shot.name] = 0
 
         # Make sure we have all the player stuff in our audit dict
         if 'player' in self.config['audit']:

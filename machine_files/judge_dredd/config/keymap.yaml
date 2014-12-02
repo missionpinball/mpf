@@ -46,11 +46,27 @@ Keyboard:
         switch: trough6
         toggle: True
         start_active: True
+
+    7:
+        switch: shooterR
+
+    8:
+        switch: fireR
+
     q:
         event: machine_reset
+
+    t:
+        switch: threeBankTargets
 
     p:
         switch: rightRampExit
     
     o:
         switch: topRampExit
+
+    .:
+        switch: slingR
+
+    x:
+        switch: slingL

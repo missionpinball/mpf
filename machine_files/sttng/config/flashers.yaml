@@ -1,0 +1,39 @@
+# Copy into config.yaml when Flasher code is ready
+
+Flashers:
+    jetsFlasher:
+        number: C20
+        label: Jets Flasher
+        tags:
+    rightPopperFlasher:
+        number: C21
+        label: Right VUK Flasher
+        tags:
+    middleRampFlasher:
+        number: C22
+        label: Middle Ramp Flasher
+        tags:
+    shieldsFlasher:
+        number: C23
+        label: Flashers under shields (6 bulbs)
+        tags:
+    autofireFlasher:
+        number: C24
+        label: Return to Duty
+        tags:
+    exitUndergroundFlasher:
+        number: C25
+        label: Left VUK Flasher
+        tags:
+    rightBorgFlasher:
+        number: C26
+        label: Borg Ship Right Flasher
+        tags:
+    leftBorgFlasher:
+        number: C27
+        label: Borg Ship Left Flasher
+        tags:
+    centerBorgFlasher:
+        number: C28
+        label: Borg Ship Center Flasher
+        tags:

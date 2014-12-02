@@ -78,27 +78,6 @@ DropTargetBanks:
             drop_targets_Judge_complete: 1s
         complete_show: drop_target_complete
 
-Targets:
-    QuestionMark:
-        switch: mystery
-        light: mystery
-    AdvanceCrime:
-        switch: threeBankTargets
-        light: advanceCrimeLevel
-    LeftExtraBall:
-        switch: leftScorePost
-        light: ExtraBall
-    RightExtraBall:
-        switch: rightTopPost
-        light: ExtraBall
-
-TargetGroups:
-    pf_standups:
-        targets: QuestionMark, AdvanceCrime, LeftExtraBall, RightExtraBall
-        rotate_left_events: sw_left_flipper
-        rotate_right_events: sw_right_flipper
-        
-
 Diverters:
     deadWorld:
         coil: diverter
@@ -166,6 +145,3 @@ BallDevices:
         eject_coil: popperL
         confirm_eject_type: count
         exit_count_delay: 0.5s
-
-    
-            

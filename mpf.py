@@ -25,7 +25,7 @@ parser.add_option("-C", "--mpfconfigfile",
 
 parser.add_option("-c", "--configfile",
                   action="store", type="string", dest="configfile",
-                  default=os.path.join("config", "config.yaml"),
+                  default="config.yaml",
                   help="Specifies the location of the first machine config "
                   "file")
 

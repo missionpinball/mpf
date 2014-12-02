@@ -91,8 +91,7 @@ class ShowController(object):
 
         # Load all the shows in the machine folder
         if self.machine.config['MPF']['auto_load_shows']:
-            self.load_shows(os.path.join(
-                self.machine.options['machinepath'],
+            self.load_shows(os.path.join(self.machine.machine_path,
                 self.machine.config['MPF']['paths']['shows']))
 
     def _run_show(self, show):
@@ -518,7 +517,7 @@ class ShowController(object):
                 root from where the mpf.py file is running.
         """
 
-        self.log.info("Loading shows from: %s", path)
+        self.log.debug("Loading shows from: %s", path)
         for root, path, files in os.walk(path, followlinks=True):
             for f in files:
                 if f.endswith('.yaml'):
@@ -817,7 +816,7 @@ class Show(object):
         Note this will also stop this show if it's running.
         """
 
-        self.log.info("Reloading show file: %s", self.filename)
+        self.log.debug("Reloading show file: %s", self.filename)
 
         # stop the show if it's running
         self.stop(hold=False, reset=True)
