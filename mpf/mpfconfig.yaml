@@ -132,22 +132,6 @@ LogicBlocks:
             hits_to_complete: 1
             events_when_complete: slam_tilt
 
-InfoDisplay:
-    game_started:
-        text: GAME STARTED
-        time: 3s
-    machineflow_Attract_start:
-        text: GAME OVER
-    player_add_success:
-        text: PLAYER %num ADDED
-    score_change:
-        text: "%score"
-    tilt_hit:
-        text: WARNING
-    ball_live_added:
-        text: LET'S GO!
-        time: 2s
-
 DisplayDefaults:
     TextElement:
         font: None

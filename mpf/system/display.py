@@ -140,7 +140,6 @@ class DisplayController(object):
         centered.
 
         """
-
         self.log.debug("Displaying Text: %s", text)
 
         if not self.surface:
@@ -204,9 +203,9 @@ class DisplayController(object):
             # convert color str to list todo
             pass
 
-        font = pygame.font.Font(fontname, size)
+        #font = pygame.font.Font(fontname, size)
 
-        font = pygame.font.Font('mpf/fonts/Quadrit.ttf', 10)
+        font = pygame.font.Font('mpf/fonts/Quadrit.ttf', size)
 
         surface = font.render(text, False, color)
 

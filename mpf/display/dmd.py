@@ -31,7 +31,7 @@ class DMD(object):
 
     @classmethod
     def is_used(cls, config):
-        # this is weird since config is a defaultdict. todo change this
+        # todo change to try
         if 'DMD' in config or ('Window' in config and 'elements' in config['Window']
                              and 'DMD' in config['Window']['elements']):
             return True
@@ -204,10 +204,13 @@ class DMD(object):
         """Updates the on screen representation of the physical DMD. This
         method automatically scales the surface as needed.
         """
-        pygame.transform.scale(self.physical_surface,
-                               (self.window_config['width'],
-                                self.window_config['height']),
-                               self.screen_surface)
+
+        if self.use_physical:
+
+            pygame.transform.scale(self.physical_surface,
+                                   (self.window_config['width'],
+                                    self.window_config['height']),
+                                   self.screen_surface)
 
     def create_palette(self, dark_color=[0, 0, 0], bright_color=[255, 0, 0],
                        steps=16):

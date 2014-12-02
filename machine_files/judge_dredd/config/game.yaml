@@ -39,13 +39,6 @@ Plugins:
     info_display.InfoDisplay
     sound.SoundController
 
-DMD:
-    physical: True
-    width: 128
-    height: 32
-    shades: 16
-    fps: auto #todo
-
 Window:
     width: 800
     height: 600
@@ -69,3 +62,19 @@ Window:
         LightMap:
             width: 100
             height: 400
+
+InfoDisplay:
+    game_started:
+        text: GAME STARTED
+        time: 3s
+    machineflow_Attract_start:
+        text: GAME OVER
+    player_add_success:
+        text: PLAYER %num ADDED
+    score_change:
+        text: "%score"
+    tilt_hit:
+        text: WARNING
+    ball_live_added:
+        text: LET'S GO!
+        time: 2s
