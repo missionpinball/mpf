@@ -35,7 +35,10 @@ class WindowManager(object):
         self.log = logging.getLogger("Window")
         self.log.debug("Loading the Window Manager")
 
-        self.config = self.machine.config['Window']
+        if 'Window' in self.machine.config:
+            self.config = self.machine.config['Window']
+        else:
+            self.config = dict()
 
         self.registered_handlers = dict()
         self.pygame_allowed_events = list()
@@ -71,6 +74,9 @@ class WindowManager(object):
 
         if 'fps' not in self.config:
             self.config['fps'] = 3
+
+        if 'backgroun_image' not in self.config:
+            self.config['background_image'] = None
 
         self.secs_per_frame = 1.0 / self.config['fps']
 
@@ -181,7 +187,8 @@ class WindowManager(object):
         if self.next_frame_time <= current_time:
 
             # Get the hw_module to update its screen surface
-            self.machine.display.hw_module.update_screen()
+            if self.machine.display.hw_module:
+                self.machine.display.hw_module.update_screen()
 
             for surface in self.window_surfaces:
                 self.surface.blit(surface.surface, (surface.x, surface.y))

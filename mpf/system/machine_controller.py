@@ -9,7 +9,7 @@
 import logging
 import os
 import yaml
-from collections import defaultdict, deque
+from collections import deque
 from copy import deepcopy
 import time
 import sys
@@ -40,7 +40,7 @@ class MachineController(object):
         self.log.info("Mission Pinball Framework v%s", version.__version__)
         self.options = options
         self.loop_start_time = 0
-        self.config = defaultdict(int)  # so we can simplify checking
+        self.config = dict()
         self.physical_hw = options['physical_hw']
         self.switch_events = []
         self.done = False  # The machine run() loop will check this and exit if True
@@ -50,6 +50,7 @@ class MachineController(object):
         self.mpf_load = 0.0
         self.pygame = False
         self.window = None
+        self.display = None
         self.machine_path = None  # Path to this machine's folder root
 
         self.plugins = []
@@ -295,7 +296,7 @@ class MachineController(object):
         # now check if there are any more updates to do.
         # iterate and remove them
         try:
-            if self.config['Config']:
+            if 'Config' in self.config:
                 if config in self.config['Config']:
                     self.config['Config'].remove(config)
                 if self.config['Config']:

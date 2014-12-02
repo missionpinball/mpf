@@ -32,8 +32,8 @@ class DMD(object):
     @classmethod
     def is_used(cls, config):
         # this is weird since config is a defaultdict. todo change this
-        if config['DMD'] or (config['Window'] and config['Window']['elements']
-                             and config['Window']['elements']['DMD']):
+        if 'DMD' in config or ('Window' in config and 'elements' in config['Window']
+                             and 'DMD' in config['Window']['elements']):
             return True
         else:
             return False

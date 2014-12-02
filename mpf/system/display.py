@@ -43,6 +43,7 @@ class DisplayController(object):
         self.delay = DelayManager()
 
         self.surface = None  # The active Pygame display surface
+        self.hw_module = None
 
         self.machine.request_pygame()
 
