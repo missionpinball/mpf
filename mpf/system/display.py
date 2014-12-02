@@ -135,9 +135,10 @@ class DisplayController(object):
             color:
             shade:
 
-        Note: As of now, font, size, and placement settings are ignored. It only
-        has one font and it only displays text in one size, and it's all
-        centered.
+        Note: As of now, font, and placement settings are ignored. It only
+        has one font and it only displays text centered.
+
+        Size works though.
 
         """
         self.log.debug("Displaying Text: %s", text)

@@ -78,3 +78,14 @@ InfoDisplay:
     ball_live_added:
         text: LET'S GO!
         time: 2s
+
+DMD:
+    physical: yes
+    width: 128
+    height: 32
+    shades: 16
+    fps: auto
+
+DisplayDefaults:
+    TextElement:
+        size: 10
