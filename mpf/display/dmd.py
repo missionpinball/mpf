@@ -42,16 +42,22 @@ class DMD(object):
         self.machine = machine
         self.log = logging.getLogger('DMD')
 
+        self.screen_surface = None
+        self.use_physical = False
+        self.use_screen = False
+
         # read in config
         # todo see if the user has manually configured a color map
         # todo if not, then look for the color here
 
         self.config = self.machine.config['DMD']
 
-        if 'DMD' in self.machine.config['Window']['elements']:
-            self.window_config = self.machine.config['Window']['elements']['DMD']
-            self.use_screen = True
-        else:
+        try:
+            if 'DMD' in self.machine.config['Window']['elements']:
+                self.window_config = (
+                    self.machine.config['Window']['elements']['DMD'])
+                self.use_screen = True
+        except:
             self.window_config = dict()
             self.use_screen = False
 
@@ -94,12 +100,15 @@ class DMD(object):
                              "so no DMD will be used.")
             return False
 
-        self.machine.events.add_handler('timer_tick', self._tick)
         self.machine.events.add_handler('pygame_initialized', self._initialize)
 
     def _initialize(self):
         # Internal method which initialized the DMD. This is separate from
         # __init__ because we have to wait until Pygame has been initialized
+
+        if not self.use_screen or not self.use_physical:
+            return
+
         if self.use_screen:
             self._setup_screen()
 
@@ -139,6 +148,8 @@ class DMD(object):
             self.machine.display.set_default_surface(self.physical_surface)
         else:
             self.machine.display.set_default_surface(self.screen_surface)
+
+        self.machine.events.add_handler('timer_tick', self._tick)
 
     def _setup_physical(self):
         # Sets up the physical DMD hardware
