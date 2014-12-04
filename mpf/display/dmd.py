@@ -94,7 +94,7 @@ class DMD(object):
         else:
             self.use_physical = True
 
-        if not self.use_screen and self.use_physical:
+        if not self.use_screen and not self.use_physical:
             self.log.warning("DMD configuration found, but both 'physical' is "
                              "False and no DMD Window elements were found, "
                              "so no DMD will be used.")
@@ -105,9 +105,6 @@ class DMD(object):
     def _initialize(self):
         # Internal method which initialized the DMD. This is separate from
         # __init__ because we have to wait until Pygame has been initialized
-
-        if not self.use_screen or not self.use_physical:
-            return
 
         if self.use_screen:
             self._setup_screen()
