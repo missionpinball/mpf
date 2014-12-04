@@ -1,0 +1,166 @@
+Hardware:
+    Platform: virtual
+    DriverBoards: wpc
+
+Switches:
+    leftFlipperButton:
+        number: 0
+    rightFlipperButton:
+        number: 1
+
+Game:
+    player_controlled_eject_tag: launch
+
+Switches:
+    leftFlipperButton:
+        number: 00
+    rightFlipperButton:
+        number: 01
+    trough1:
+        number: 02
+        type: NC
+    trough2:
+        number: 03
+        type: NC
+    trough3:
+        number: 04
+        type: NC
+    trough4:
+        number: 05
+        type: NC
+    trough5:
+        number: 06
+        type: NC
+    trough6:
+        number: 07
+        type: NC
+    troughJam:
+        number: 08
+        type: NC
+    plungerLane:
+        number: 09
+    start:
+        number: 10
+        tags: start
+    plungerLaunch:
+        number: 11
+        tags: launch
+ 
+Coils:
+    flipperLeftMain: 
+        number: 00
+        pulse_ms: 20
+    flipperLeftHold: 
+        number: 01
+    flipperRightMain: 
+        number: 02
+        pulse_ms: 20
+    flipperRightHold: 
+        number: 03
+    troughEject:
+        number: 04
+        pulse_ms: 20
+    plungerEject:
+        number: 05
+        pulse_ms: 20
+ 
+Flippers:
+    leftFlipper:
+        main_coil: flipperLeftMain
+        hold_coil: flipperLeftHold
+        activation_switch: leftFlipperButton
+    rightFlipper:
+        main_coil: flipperRightMain
+        hold_coil: flipperRightHold
+        activation_switch: rightFlipperButton
+ 
+Keyboard:
+    z:
+        switch: leftFlipperButton
+    /:
+        switch: rightFlipperButton
+    1:
+        switch: trough1
+        toggle: true
+    2:
+        switch: trough2
+        toggle: true
+    3:
+        switch: trough3
+        toggle: true
+    4:
+        switch: trough4
+        toggle: true
+    5:
+        switch: trough5
+        toggle: true
+    6:
+        switch: trough6
+        toggle: true
+    p:
+        switch: plungerLane
+        toggle: true
+    s:
+        switch: start
+    L:
+        switch: plungerLaunch
+ 
+BallDevices:
+    trough:
+        ball_switches: trough1, trough2, trough3, trough4, trough5, trough6, troughJam
+        entrance_count_delay: 300ms
+        eject_coil: troughEject
+        eject_switch: trough1
+        confirm_eject_type: device
+        confirm_eject_target: plunger
+        tags: trough, home, drain
+    plunger:
+        ball_switches: plungerLane
+        entrance_count_delay: 300ms
+        exit_count_delay: 3s
+        eject_switch: plungerLane
+        eject_coil: plungerEject
+        confirm_eject_type: count
+        feeder_device: trough
+        tags: ball_add_live
+
+Plugins:
+    keyboard.Keyboard
+    info_display.InfoDisplay
+
+Window:
+    elements:
+        DMD:
+            width: 512
+            height: 128
+            border_width: 2
+            border_color: 333333
+            h_pos: center
+            v_pos: center
+            pixel_color: ff6600
+            dark_color: 000000
+
+InfoDisplay:
+    game_started:
+        text: GAME STARTED
+        time: 3s
+    machineflow_Attract_start:
+        text: GAME OVER
+    player_add_success:
+        text: PLAYER %num ADDED
+    score_change:
+        text: "%score"
+    ball_live_added:
+        text: BALL LAUNCHED!
+        time: 2s
+
+DMD:
+    physical: yes
+    width: 128
+    height: 32
+    shades: 16
+    fps: auto
+
+DisplayDefaults:
+    TextElement:
+        size: 10

@@ -234,20 +234,20 @@ class WindowSurface(object):
         else:
             self.y = (win_h - h) / 2
 
-        if 'boarder_color' in self.config:
-            self.boarder_color = ShowController.hexstring_to_list(
-                self.config['boarder_color'])
+        if 'border_color' in self.config:
+            self.border_color = ShowController.hexstring_to_list(
+                self.config['border_color'])
         else:
-            self.boarder_color = (255, 255, 255)
+            self.border_color = (255, 255, 255)
 
-        if self.config['boarder_width']:
+        if self.config['border_width']:
             pygame.draw.rect(self.window_manager.surface,
-                             self.boarder_color,
-                             (self.x-self.config['boarder_width'],
-                              self.y-self.config['boarder_width'],
-                              w+(self.config['boarder_width']),
-                              h+(self.config['boarder_width'])),
-                             self.config['boarder_width'])
+                             self.border_color,
+                             (self.x-self.config['border_width'],
+                              self.y-self.config['border_width'],
+                              w+(self.config['border_width']),
+                              h+(self.config['border_width'])),
+                             self.config['border_width'])
 
         # todo do we need a way to remove these?
 

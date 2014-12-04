@@ -53,8 +53,8 @@ Window:
         DMD:
             width: 512
             height: 128
-            boarder_width: 2
-            boarder_color: 333333
+            border_width: 2
+            border_color: 333333
             h_pos: center
             v_pos: center
             pixel_color: ff6600

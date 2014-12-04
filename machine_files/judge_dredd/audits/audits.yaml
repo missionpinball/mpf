@@ -3,7 +3,7 @@ Events:
   ball_search_begin_phase1: 2
   ball_started: 1
   game_ended: 95
-  game_started: 223
+  game_started: 225
   machine_init_phase_1: 0
   machine_reset: 29
 Player:
@@ -25,13 +25,13 @@ Shots:
   AirRaidRamp: 3
   DropTarget: 193
   FullRightOrbit: 7
-  Inlane: 186
+  Inlane: 187
   LeftOrbit: 28
   LeftRamp: 15
   OrangeStandups: 29
   Outlane: 27
   RightRamp: 16
-  Slingshot: 288
+  Slingshot: 290
   WeakRightOrbit: 9
 Switches:
   ShooterLaneL: 26
@@ -56,23 +56,23 @@ Switches:
   enter: 98
   esc: 80
   fireL: 13
-  fireR: 197
-  flipperLwL: 703
-  flipperLwL_EOS: 685
-  flipperLwR: 826
-  flipperLwR_EOS: 821
-  flipperUpL: 647
-  flipperUpL_EOS: 648
-  flipperUpR: 840
-  flipperUpR_EOS: 837
+  fireR: 198
+  flipperLwL: 709
+  flipperLwL_EOS: 691
+  flipperLwR: 827
+  flipperLwR_EOS: 822
+  flipperUpL: 653
+  flipperUpL_EOS: 654
+  flipperUpR: 841
+  flipperUpR_EOS: 838
   globePosition1: 194
   globePosition2: 193
-  inlaneL: 106
+  inlaneL: 107
   inlaneR: 80
   leftRampEnter: 46
   leftRampExit: 19
   leftRampToLock: 9
-  leftRollover: 250
+  leftRollover: 251
   leftScorePost: 74
   magnetOverRing: 0
   mystery: 18
@@ -83,11 +83,11 @@ Switches:
   popperL: 60
   popperR: 35
   rightRampExit: 23
-  rightTopPost: 46
-  shooterR: 224
+  rightTopPost: 47
+  shooterR: 225
   slamTilt: 0
   slingL: 249
-  slingR: 147
+  slingR: 149
   start: 48
   subwayEnter1: 25
   subwayEnter2: 25
@@ -97,11 +97,11 @@ Switches:
   topCenterRollover: 31
   topRampExit: 6
   topRightOpto: 63
-  trough1: 263
-  trough2: 218
-  trough3: 219
-  trough4: 218
-  trough5: 217
-  trough6: 198
-  troughJam: 198
+  trough1: 265
+  trough2: 219
+  trough3: 220
+  trough4: 219
+  trough5: 218
+  trough6: 199
+  troughJam: 199
   up: 0
