@@ -109,8 +109,10 @@ class DMD(object):
         if self.use_screen:
             self._setup_screen()
 
-        if self.use_physical:
-            self._setup_physical()
+        # Set up the physical even if we don't have a physical DMD. Why? Because
+        # the screen DMD needs to know the physical DMDs 'native' settings, like
+        # resolution and shades, so it knows how to render the on screen version
+        self._setup_physical()
 
         # setup the default surface
         if self.use_physical:

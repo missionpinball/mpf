@@ -72,10 +72,9 @@ class InfoDisplay(object):
 
     def _display_text(self, text, priority=0, time=0, **kwargs):
         # Internal method which actually displays the text
-        if '(' in text or ')' in text:
-            for kw in kwargs:
-                if '%' + kw in text:
-                    text = text.replace('%' + kw, str(kwargs[kw]))
+        for kw in kwargs:
+            if '%' + kw in text:
+                text = text.replace('%' + kw, str(kwargs[kw]))
 
         self.machine.display.text(text, priority, time, **kwargs)
 

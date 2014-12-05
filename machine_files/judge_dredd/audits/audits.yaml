@@ -3,7 +3,7 @@ Events:
   ball_search_begin_phase1: 2
   ball_started: 1
   game_ended: 95
-  game_started: 225
+  game_started: 231
   machine_init_phase_1: 0
   machine_reset: 29
 Player:
@@ -23,22 +23,22 @@ Player:
     total: 85
 Shots:
   AirRaidRamp: 3
-  DropTarget: 193
+  DropTarget: 200
   FullRightOrbit: 7
-  Inlane: 187
+  Inlane: 188
   LeftOrbit: 28
   LeftRamp: 15
-  OrangeStandups: 29
-  Outlane: 27
+  OrangeStandups: 30
+  Outlane: 28
   RightRamp: 16
-  Slingshot: 290
+  Slingshot: 299
   WeakRightOrbit: 9
 Switches:
-  ShooterLaneL: 26
+  ShooterLaneL: 27
   alwaysClosed: 0
   buyIn: 0
-  captiveBall1: 33
-  captiveBall2: 18
+  captiveBall1: 35
+  captiveBall2: 19
   captiveBall3: 2
   centerRampExit: 22
   coin1: 0
@@ -49,59 +49,59 @@ Switches:
   craneRelease: 0
   down: 0
   dropTargetD: 15
-  dropTargetE: 75
-  dropTargetG: 66
-  dropTargetJ: 62
-  dropTargetU: 70
+  dropTargetE: 77
+  dropTargetG: 68
+  dropTargetJ: 64
+  dropTargetU: 71
   enter: 98
   esc: 80
   fireL: 13
-  fireR: 198
-  flipperLwL: 709
-  flipperLwL_EOS: 691
-  flipperLwR: 827
-  flipperLwR_EOS: 822
-  flipperUpL: 653
-  flipperUpL_EOS: 654
-  flipperUpR: 841
-  flipperUpR_EOS: 838
+  fireR: 203
+  flipperLwL: 727
+  flipperLwL_EOS: 706
+  flipperLwR: 844
+  flipperLwR_EOS: 839
+  flipperUpL: 669
+  flipperUpL_EOS: 670
+  flipperUpR: 858
+  flipperUpR_EOS: 855
   globePosition1: 194
   globePosition2: 193
-  inlaneL: 107
+  inlaneL: 108
   inlaneR: 80
   leftRampEnter: 46
   leftRampExit: 19
   leftRampToLock: 9
-  leftRollover: 251
-  leftScorePost: 74
+  leftRollover: 256
+  leftScorePost: 75
   magnetOverRing: 0
-  mystery: 18
+  mystery: 19
   outerInlaneR: 57
-  outlaneL: 32
+  outlaneL: 33
   outlaneR: 9
   plumbBob: 9
   popperL: 60
   popperR: 35
   rightRampExit: 23
-  rightTopPost: 47
-  shooterR: 225
+  rightTopPost: 49
+  shooterR: 230
   slamTilt: 0
-  slingL: 249
-  slingR: 149
+  slingL: 254
+  slingR: 153
   start: 48
   subwayEnter1: 25
   subwayEnter2: 25
   superGame: 0
-  threeBankTargets: 40
+  threeBankTargets: 41
   ticketDispenser: 0
   topCenterRollover: 31
   topRampExit: 6
-  topRightOpto: 63
-  trough1: 265
-  trough2: 219
-  trough3: 220
-  trough4: 219
-  trough5: 218
-  trough6: 199
-  troughJam: 199
+  topRightOpto: 65
+  trough1: 272
+  trough2: 224
+  trough3: 225
+  trough4: 224
+  trough5: 223
+  trough6: 204
+  troughJam: 204
   up: 0

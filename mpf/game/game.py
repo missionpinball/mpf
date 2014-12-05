@@ -219,7 +219,8 @@ class Game(MachineMode):
         self.log.debug("Game is setting Balls in Play to 1")
         self.num_balls_in_play = 1
 
-        self.machine.events.post('ball_started')
+        self.machine.events.post('ball_started', ball=self.player.vars['ball'],
+                                 player=self.player.vars['number'])
 
         self.machine.ball_controller.stage_ball('ball_add_live')
 
