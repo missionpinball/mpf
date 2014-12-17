@@ -74,6 +74,13 @@ class Keyboard(object):
 
         # Set up the key mappings
         self.log.debug("Setting up the keyboard mappings")
+
+        if 'Keyboard' not in self.machine.config:
+            return
+            # Even if there are no keys configured, we still want to use this
+            # module if it's in the plugins list since it allows the player to
+            # use the Esc key to quit MPF.
+
         for k, v in self.machine.config['Keyboard'].iteritems():
             k = str(k)  # k is the value of the key entry in the config
             switch_name = v.get('switch', None)
@@ -230,13 +237,16 @@ class Keyboard(object):
             # if a modifier key was pressed along with the regular key,
             # combine them in the way they're in the key_map
 
-            if modifiers & 8:  # '8' is the pyglet mod value for caps lock
-                modifiers -= 8  # so we just remove it.
+            # First remove modifiers we want to ignore
 
-            if modifiers & 16:  # Same for '16' which is for num lock
-                modifiers -= 16
+            if modifiers & pygame.locals.K_SCROLLOCK:
+                modifiers -= pygame.locals.K_SCROLLOCK
 
-            # todo verify above changes for Pygame
+            if modifiers & pygame.locals.K_NUMLOCK:
+                modifiers -= pygame.locals.K_NUMLOCK
+
+            if modifiers & pygame.locals.K_CAPSLOCK:
+                modifiers -= pygame.locals.K_CAPSLOCK
 
             if modifiers:
                 key_press = str(modifiers) + "-" + key_press
