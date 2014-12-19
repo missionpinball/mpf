@@ -30,35 +30,25 @@ class EventManager(object):
         changing priorities of existing handlers. Also it's good to know that
         you can safely add a handler over and over.
 
-        Parameters
-        ----------
+        Args:
+            event: String name of the event you're adding a handler for. Since
+                events are text strings, they don't have to be pre-defined.
+            handler: The method that will be called when the event is fired.
+            priority: An arbitrary integer value that defines what order the
+                handlers will be called in. The default is 1, so if you have a
+                handler that you want to be called first, add it here with a
+                priority of 2. (Or 3 or 10 or 100000.) The numbers don't matter.
+                They're called from highest to lowest. (i.e. priority 100 is
+                called before priority 1.)
+            **kwargs: Any any additional keyword/argument pairs entered here will
+                be attached to the handler and called whenever that handler is
+                called. Note these are in addition to kwargs that could be
+                passed as part of the event post. If there's a conflict, the
+                event-level ones will win.
 
-        event : string
-            Name of the event you're adding a handler for. Since events are
-            text strings, they don't have to be pre-defined.
-
-        handler : string
-            The method that will be called when the event is fired.
-
-        priority : int
-            An arbitrary integer value that defines what order the handlers
-            will be called in. The default is 1, so if you have a handler that
-            you want to be called first, add it here with a priority of 2. (Or
-            3 or 10 or 100000.) The numbers don't matter. They're called from
-            highest to lowest. (i.e. priority 100 is called before priority 1.)
-
-        kwargs : kwargs
-            A list of any additional keyword arg pairs that will be attached to
-            the handler and called whenever that handler is called. Note these
-            are in addition to kwargs that could be passed as part of the
-            event post. If there's a conflict, the event-level ones will take
-            win.
-
-        Returns
-        -------
-        handler : object reference
-            Returns a reference to the handler which you can use to create a
-            list to easily remove these in the future.
+        Returns:
+            A reference to the handler which you can use to create a list to
+            easily remove these in the future.
 
         For example:
         ``handler_list.append(events.add_handler('ev', self.test))``
@@ -133,16 +123,11 @@ class EventManager(object):
         """Checks to see if any handlers are registered for the event name that
         is passed.
 
-        Parameters
-        ----------
+        Args:
+            event_name : The string name of the event you want to check
 
-        event_name : str
-            The name of the event you want to check
-
-        Returns
-        -------
-
-        True or False
+        Returns:
+            True or False
 
         """
 
@@ -239,7 +224,7 @@ class EventManager(object):
                 # use slice above so we don't process new handlers that came
                 # in while we were processing previous handlers
 
-                # merge the posts kwargs with the registered handler's kwargs
+                # merge the post's kwargs with the registered handler's kwargs
                 # in case of conflict, posts kwargs will win
                 merged_kwargs = dict(handler[2].items() + kwargs.items())
 
@@ -257,7 +242,7 @@ class EventManager(object):
                 if (ev_type == 'boolean' or ev_type == 'queue') and \
                         result is False:
 
-                    # add a False result so our handlers no something failed
+                    # add a False result so our handlers know something failed
                     kwargs['ev_result'] = False
 
                     if self.debug and event != 'timer_tick':
@@ -297,7 +282,10 @@ class EventManager(object):
                     # if our last handler returned something, add it to kwargs
                     kwargs['ev_result'] = result
 
-                callback(**kwargs)
+                if kwargs:
+                    callback(**kwargs)
+                else:
+                    callback()
 
         # Finally see if we have any more events to process
         self._do_next()
