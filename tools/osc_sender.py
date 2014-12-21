@@ -25,9 +25,9 @@ parser.add_option("-s", "--server",
                   help="OSC Server IP address. Default auto grabs the local IP.")
 
 parser.add_option("-p", "--port",
-                  action="store", type="string", dest="server_port",
+                  action="store", type="int", dest="server_port",
                   default=server_port,
-                  help="The MPF framework config file. Default is 8000")
+                  help="OSC Server Port. Default is 8000")
 
 parser.add_option("-t", "--toggle",
                   action="store_true", dest="toggle",
