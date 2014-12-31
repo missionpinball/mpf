@@ -1,6 +1,23 @@
-Hardware:
-    Platform: virtual
-    DriverBoards: wpc
+Scriptlets:
+    attract.Attract
+    deadworld.Deadworld
+    jd_game.JDGame
+
+Plugins:
+    - shots.ShotController
+    - keyboard.Keyboard
+    - ball_search.BallSearch
+    - logic_blocks.LogicBlocks
+    - scoring.ScoreController
+    - auditor.Auditor
+    - sound.SoundController
 
 Config:
-    - jd.yaml
+    - assets.yaml
+    - ball_search.yaml
+    - dmd.yaml
+    - game_logic.yaml
+    - hardware.yaml
+    - languages.yaml
+    - sound.yaml
+    - window.yaml

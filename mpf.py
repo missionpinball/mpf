@@ -4,14 +4,14 @@
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 import logging
 from datetime import datetime
 import socket
 import os
 from optparse import OptionParser
 import errno
-from mpf.system.machine_controller import MachineController
+from mpf.system.machine import MachineController
 import version
 
 # Allow command line options to do things
@@ -86,7 +86,6 @@ except OSError as exception:
 
 logging.basicConfig(level=options.loglevel,
                     format='%(asctime)s : %(name)s : %(message)s',
-                    #datefmt='%H:%M:%S',
                     filename=options.logfile,
                     filemode='w')
 

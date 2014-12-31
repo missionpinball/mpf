@@ -33,12 +33,11 @@ MachineFlow:
     mpf.game.game.Game
 
 Plugins:
-    osc.OSC
-    logic_blocks.LogicBlocks
-    auditor.Auditor
-    info_display.InfoDisplay
-    shots.ShotController
-    scoring.ScoreController
+    - osc.OSC
+    - logic_blocks.LogicBlocks
+    - auditor.Auditor
+    - shots.ShotController
+    - scoring.ScoreController
 
 OSC:
     machine_ip: auto

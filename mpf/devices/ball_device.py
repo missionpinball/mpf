@@ -4,7 +4,7 @@
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 from mpf.system.tasks import DelayManager
@@ -50,12 +50,14 @@ class BallDevice(Device):
             self.config['eject_coil_hold_times'] = list()
         if 'confirm_eject_type' not in self.config:
             self.config['confirm_eject_type'] = 'count'  # todo make optional?
-        if 'confirm_eject_target' not in self.config:
-            self.config['confirm_eject_target'] = None
+        if 'target_device' not in self.config:
+            self.config['target_device'] = None
+        if 'confirm_eject_switch' not in self.config:
+            self.config['confirm_eject_switch'] = None
+        if 'confirm_eject_event' not in self.config:
+            self.config['confirm_eject_event'] = None
         if 'balls_per_eject' not in self.config:
             self.config['balls_per_eject'] = 1
-        if 'feeder_device' not in self.config:
-            self.config['feeder_device'] = None
         if 'max_eject_attempts' not in self.config:
             self.config['max_eject_attempts'] = 0
 
@@ -63,6 +65,8 @@ class BallDevice(Device):
         if 'ball_switches' in self.config:
             self.config['ball_switches'] = self.machine.string_to_list(
                 self.config['ball_switches'])
+        else:
+            self.config['ball_switches'] = []
 
         if 'ball_capacity' not in self.config:
             self.config['ball_capacity'] = len(self.config['ball_switches'])
@@ -165,22 +169,24 @@ class BallDevice(Device):
         # Compare balls desired to balls contained to see if we have to act
 
         if ball_change > 0:  # We need more balls
-            self.stage_ball()
+            self._request_ball()
 
-        elif ball_change < 0:
+        elif ball_change < 0:  # We have too many balls
             self.log.debug("num_balls_desired() found this device has too many "
                            "balls. About to call _eject()")
             self._eject()
+        else:  # We have the desired number of balls
+            self._cancel_request_ball()
+
+    @property
+    def num_balls_requested(self):
+        return self._num_balls_desired - self.num_balls_contained
 
     @property
     def num_balls_ejectable(self):
-        balls = self.num_balls_contained
+        return self.num_balls_contained
 
-        if self.config['feeder_device']:
-            balls += (self.machine.balldevices[self.config['feeder_device']].
-                      num_balls_ejectable)
-
-        return balls
+        # todo look at upstream devices?
 
     def configure(self, config=None):
         """Performs the actual configuration of the ball device based on the
@@ -210,12 +216,6 @@ class BallDevice(Device):
                                         '_ball_eject_request',
                                         self._eject)
 
-        if self.config['feeder_device']:
-            self.machine.events.add_handler('balldevice_' +
-                                            self.config['feeder_device'] +
-                                            '_ball_enter',
-                                            self._ball_added_to_feeder)
-
     def _initialize(self):
         # convert names to objects
 
@@ -240,19 +240,14 @@ class BallDevice(Device):
             self.config['jam_switch'] = (
                 self.machine.switches[self.config['jam_switch']])
 
-        if self.config['confirm_eject_type'] == 'device' and (
-                self.config['confirm_eject_target']):
-            self.config['confirm_eject_target'] = (
-                self.machine.balldevices[self.config['confirm_eject_target']])
-
         if self.config['confirm_eject_type'] == 'switch' and (
                 self.config['confirm_eject_target']):
-            self.config['confirm_eject_target'] = (
-                self.machine.switches[self.config['confirm_eject_target']])
+            self.config['confirm_eject_switch'] = (
+                self.machine.switches[self.config['confirm_eject_switch']])
 
-        if self.config['feeder_device']:
-            self.config['feeder_device'] = (
-                self.machine.balldevices[self.config['feeder_device']])
+        if self.config['target_device']:
+            self.config['target_device'] = (
+                self.machine.balldevices[self.config['target_device']])
 
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
@@ -281,7 +276,7 @@ class BallDevice(Device):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=self.config['jam_switch'].name, state=1, ms=0,
                 callback=self._jam_switch_handler)
-            # todo do I also need to add inactive and make a smarter
+            # todo do we also need to add inactive and make a smarter
             # handler?
 
         # Configure switch handlers for entrance switch activity
@@ -289,7 +284,7 @@ class BallDevice(Device):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=self.config['entrance_switch'].name, state=1, ms=0,
                 callback=self._entrance_switch_handler)
-            # todo do I also need to add inactive and make a smarter
+            # todo do we also need to add inactive and make a smarter
             # handler?
 
         # if this device's target is another device, register for notification
@@ -298,17 +293,17 @@ class BallDevice(Device):
 
         if self.config['confirm_eject_type'] == 'device':
             self.machine.events.add_handler('balldevice_' +
-                                        self.config['confirm_eject_target'].name
+                                        self.config['target_device'].name
                                         + '_ball_eject_success',
                                         self.count_balls)
 
-        # If this device has a feeder, register for notification of the feeder
-        # becoming ok to eject.
-        if self.config['feeder_device']:
+        # if the target is a ball device, register for notification of that
+        # device requesting balls
+        if self.config['target_device']:
             self.machine.events.add_handler('balldevice_' +
-                                            self.config['feeder_device'].name
-                                            + '_ok_to_eject',
-                                            self.count_balls)
+                                            self.config['target_device'].name
+                                            + '_ball_request',
+                                            self._target_requests_ball)
 
         # Get an initial ball count
         self.count_balls(stealth=True)
@@ -486,6 +481,11 @@ class BallDevice(Device):
                 # todo I don't like this. Change big shot and remove
                 # or maybe pass tags along with the event post?
 
+        # check to see if our target device wants a ball
+        if self.config['target_device'] and (
+                self.config['target_device'].num_balls_requested > 0):
+            self.num_balls_desired -= 1
+
     def _balls_missing(self, balls):
         # Called when ball_count finds that balls are missing from this device
 
@@ -520,6 +520,13 @@ class BallDevice(Device):
         self.log.debug("Ball device %s jam switch hit. New count: %s",
                        self.name, self.num_jam_sw_count)
 
+    def _entrance_switch_handler(self):
+        # A ball has triggered this device's entrance switch
+
+        if not self.config['ball_switches']:
+            self.num_balls_contained += 1
+            self._balls_added(1)
+
     def set_ok_to_eject(self):
         """Checks whether it's ok for this device to eject and sets the flag.
 
@@ -540,7 +547,7 @@ class BallDevice(Device):
 
         # Are we ejecting into a device, and if so, does it have capacity?
         if self.config['confirm_eject_type'] == 'device':
-            if not self.config['confirm_eject_target'].is_ok_to_receive():
+            if not self.config['target_device'].is_ok_to_receive():
                 self.flag_ok_to_eject = False
 
         if self.flag_ok_to_eject:
@@ -565,51 +572,41 @@ class BallDevice(Device):
 
         if self.config['ball_capacity'] - self.num_balls_contained < 0:
             self.log.warning("Device reporting more balls contained than its "
-                           "capacity.")
+                             "capacity.")
 
         return self.config['ball_capacity'] - self.num_balls_contained
 
-    def stage_ball(self):
-        """Used to make sure the device has a ball 'staged' and ready to
-        eject.
-        """
-        self.log.debug("In stage_ball. EIP: %s", self.flag_eject_in_progress)
+    def _request_ball(self, balls=1):
+        # Posts the even to announce that this device would like a ball.
 
         if self.flag_eject_in_progress:
-            self.log.debug("Received request to stage ball, but we can't since "
-                          "there's an eject in progress.")
+            self.log.debug("Received request to request a ball, but we can't "
+                           "since there's an eject in progress.")
             return
 
-        self.log.debug("Staging Ball")
-        if not self.flag_ok_to_eject:
-            self.log.debug("No ball ready to eject")
-            if self.config['feeder_device']:
-                # get a ball from the feeder device
-                # if feeder is trying to eject, then do nothing.
-                if self.config['feeder_device'].flag_ok_to_eject:
-                    self.log.debug("Requesting ball from feeder device: '%s'",
-                                   self.config['feeder_device'].name)
-                    self.config['feeder_device'].num_balls_desired -=1
-                    return True
-                    # todo should this change? Maybe every time a device gets
-                    # a new ball, if it has a target device it should see if
-                    # that device wants it?
-                else:
-                    self.log.debug("Feeder device '%s' is not ok to eject, so "
-                                   "we're doing nothing.",
-                                   self.config['feeder_device'].name)
-                    return False
-            else:
-                self.log.warning("No feeder device! Stage failed!")
-                return False
-        else:
-            self.log.debug("Ball is already staged and ready to go")
-            return True
+        if not self.is_ok_to_receive():
+            self.log.debug("Received request to request a ball, but we can't "
+                           "since it's not ok to receive.")
+            return
 
-    def _ball_added_to_feeder(self, **kwargs):
-        # a new ball was added to this device's feeder device.
-        if self.num_balls_desired > self.num_balls_contained:
-            self.stage_ball()
+        self.log.debug("Requesting Ball(s). Balls=%s", balls)
+
+        self.machine.events.post('balldevice_' + self.name + '_ball_request',
+                                 balls=balls)
+
+        # todo will we ever get here if we don't need a ball?
+
+    def _cancel_request_ball(self):
+        self.machine.events.post('balldevice_' + self.name +
+                                 'cancel_ball_request')
+
+    def _target_requests_ball(self, balls):
+        # This device's target device just requested a ball
+
+        if self.num_balls_contained:
+            self._eject(balls)
+        else:
+            self._request_ball(balls)
 
     def _eject_event_handler(self):
         # We received the event that should eject this ball.
@@ -617,7 +614,7 @@ class BallDevice(Device):
         self.num_balls_desired -= 1
 
         if not self.flag_ok_to_eject:
-            self.stage_ball()
+            self._request_ball()
 
     def stop(self):
         """Stops all activity in a device.
@@ -632,8 +629,10 @@ class BallDevice(Device):
         self._cancel_eject_confirmation()
         self.count_balls()  # need this since we're canceling the eject conf
 
-    def _eject(self):
+    def _eject(self, balls=1):
         # Performs the actual eject attempts and sets up eject confirmations
+
+        # todo Should we do something with the balls arg?
 
         self.log.debug("Entering _eject()")
 
@@ -653,10 +652,7 @@ class BallDevice(Device):
             return False  # Don't want to get in the way of a current eject
 
         if not self.flag_ok_to_eject:  # todo do we still need this?
-            self.stage_ball()
-                # Todo how do we automatically get a ball from a feeder device?
-                # for add_ball_live, if we don't have a ball then get one from
-                # the feeder
+            self._request_ball()
             self.log.debug("Ok to eject flag not set. Aborting eject")
             return
 
@@ -700,29 +696,29 @@ class BallDevice(Device):
 
         if self.config['confirm_eject_type'] == 'device':
             self.log.debug("Will confirm eject via ball entry into '%s'",
-                          self.config['confirm_eject_target'].name)
+                          self.config['target_device'].name)
             # watch for ball entry event on that device
             # Note this must be higher priority than the failed eject handler
             self.machine.events.add_handler(
-                'balldevice_' + self.config['confirm_eject_target'].name +
+                'balldevice_' + self.config['target_device'].name +
                 '_ball_enter', self._eject_success, 2)
 
         elif self.config['confirm_eject_type'] == 'switch':
             self.log.debug("Will confirm eject via activation of switch '%s'",
-                           self.config['confirm_eject_target'].name)
+                           self.config['confirm_eject_switch'].name)
             # watch for that switch to activate momentarily
             # todo add support for a timed switch here
             self.machine.switch_controller.add_switch_handler(
-                switch_name=self.config['confirm_eject_target'].name,
+                switch_name=self.config['confirm_eject_switch'].name,
                 callback=self._eject_success,
                 state=1, ms=0)
 
         elif self.config['confirm_eject_type'] == 'event':
             self.log.debug("Will confirm eject via posting of event '%s'",
-                          self.config['confirm_eject_target'].name)
+                          self.config['confirm_eject_event'])
             # watch for that event
             self.machine.events.add_handler(
-                self.config['confirm_eject_target'].name, self._eject_success)
+                self.config['confirm_eject_event'], self._eject_success)
 
         elif self.config['confirm_eject_type'] == 'playfield':
             # This option is only used with 'playfield' when no balls are live

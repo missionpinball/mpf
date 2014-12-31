@@ -1,6 +1,6 @@
 """ Template file for a new device driver."""
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 
 # Search this file for 'YourNewDevice' and replace with your device name
 

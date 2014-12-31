@@ -5,7 +5,7 @@
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 
 # This code requires pyOSC, https://trac.v2.nl/wiki/pyOSC
 # It was written for pyOSC 0.3.5b build 5394,
@@ -244,12 +244,12 @@ class OSC(object):
         self.machine.events.add_handler('ball_started', self.update_ball)
         self.machine.events.add_handler('score_change', self.update_score)
 
-    def update_player(self):
+    def update_player(self, **kwargs):
         self.update_score()
         self.client_send_OSC_message("data", "player",
                                      self.machine.game.player.vars['number'])
 
-    def update_ball(self):
+    def update_ball(self, **kwargs):
         self.client_send_OSC_message("data", "ball",
                                      self.machine.game.player.vars['ball'])
 
@@ -367,10 +367,9 @@ class OSC(object):
                                    k[0])
                     # todo mark for deletion
                     self.clients_to_delete.append(k)
+                    break
 
         for client in self.clients_to_delete:
-            print "removing OSC client", client
-            print "current clients", self.OSC_clients
             if client in self.OSC_clients:
                 del self.OSC_clients[client]
         self.clients_to_delete = []

@@ -4,7 +4,7 @@
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import os
@@ -41,9 +41,14 @@ class SoundController(object):
         self.log = logging.getLogger('Sound')
         self.machine = machine
 
+        if 'Sound' not in self.machine.config:
+            return  # todo move to preload_check()
+
+
         self.machine.request_pygame()
 
         self.machine.events.add_handler('pygame_initialized', self._initialize)
+
 
         # Get the pygame pre-initiaiization audio requests in
         # 0 is the 'auto' setting for all of these
@@ -81,7 +86,7 @@ class SoundController(object):
         sound_path = os.path.join(self.machine.machine_path,
                                   self.machine.config['MPF']['paths']['sounds'])
 
-        self.log.debug("Loading sound files from: %s", sound_path)
+        self.log.info("Loading sound files from: %s", sound_path)
 
         self.machine.sounds = dict()
         self.sound_file_map = dict()
@@ -110,10 +115,10 @@ class SoundController(object):
             self.log.warning("No sound files found.")
 
         # Set up game sounds
-        if 'GameSounds' in self.machine.config:
-            for gamesound in self.machine.config['GameSounds']:
+        if 'SoundPlayer' in self.machine.config:
+            for gamesound in self.machine.config['SoundPlayer']:
                 self.log.debug("Configuring GameSound '%s'", gamesound)
-                self.setup_game_sound(self.machine.config['GameSounds'][gamesound])
+                self.setup_game_sound(self.machine.config['SoundPlayer'][gamesound])
 
     def create_sound_file_map(self, config):
         """Creates a mapping dictionary of sound file names to sound entries.
@@ -144,7 +149,7 @@ class SoundController(object):
 
         """
 
-        self.log.debug("Loading sound file: %s", file_name)
+        self.log.info("Loading sound file: %s", file_name)
 
         config = dict()
 

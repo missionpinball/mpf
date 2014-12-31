@@ -1,9 +1,9 @@
 __all__ = [
-           'modules',
            'platform',
            'system',
            'game',
-           'version'
+           'version',
+           'window'
           ]
 
 from version import __version__

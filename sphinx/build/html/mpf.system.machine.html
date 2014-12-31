@@ -1,0 +1,371 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.machine module &mdash; Mission Pinball Framework 0.1.2 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1.2 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.machine">
+<span id="mpf-system-machine-module"></span><h1>mpf.system.machine module</h1>
+<p>The main machine object for the Mission Pinball Framework.</p>
+<dl class="class">
+<dt id="mpf.system.machine.MachineController">
+<em class="property">class </em><tt class="descclassname">mpf.system.machine.</tt><tt class="descname">MachineController</tt><big>(</big><em>options</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for the Machine Controller object.</p>
+<p>The machine controller is the main entity of the entire framework. It&#8217;s the
+main part that&#8217;s in charge and makes things happen.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>options</strong> &#8211; Dictionary of options the machine controller uses to configure
+itself.</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.options">
+<tt class="descname">options</tt></dt>
+<dd><p>A dictionary of options built from the command line options
+used to launch mpf.py.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.config">
+<tt class="descname">config</tt></dt>
+<dd><p>A dictionary of machine&#8217;s configuration settings, merged from
+various sources.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.physical_hw">
+<tt class="descname">physical_hw</tt></dt>
+<dd><p>Boolean as to whether there is physical pinball controller
+hardware attached.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.done">
+<tt class="descname">done</tt></dt>
+<dd><p>Boolean. Set to True and MPF exits.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.machineflow_index">
+<tt class="descname">machineflow_index</tt></dt>
+<dd><p>What machineflow position the machine is currently in.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.machine_path">
+<tt class="descname">machine_path</tt></dt>
+<dd><p>The root path of this machine_files folder</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.pygame">
+<tt class="descname">pygame</tt></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.display">
+<tt class="descname">display</tt></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.plugins">
+<tt class="descname">plugins</tt></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.scriptlets">
+<tt class="descname">scriptlets</tt></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.tilted">
+<tt class="descname">tilted</tt></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.platform">
+<tt class="descname">platform</tt></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.machine.MachineController.events">
+<tt class="descname">events</tt></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.dict_merge">
+<tt class="descname">dict_merge</tt><big>(</big><em>a</em>, <em>b</em>, <em>combine_lists=True</em><big>)</big></dt>
+<dd><p>Recursively merges dictionaries.</p>
+<p>Used to merge dictionaries of dictionaries, like when we&#8217;re merging
+together the machine configuration files. This method is called
+recursively as it finds sub-dictionaries.</p>
+<p>For example, in the traditional python dictionary
+update() methods, if a dictionary key exists in the original and
+merging-in dictionary, the new value will overwrite the old value.</p>
+<p>Consider the following example:</p>
+<p>Original dictionary:
+<cite>config[&#8216;foo&#8217;][&#8216;bar&#8217;] = 1</cite></p>
+<p>New dictionary we&#8217;re merging in:
+<cite>config[&#8216;foo&#8217;][&#8216;other_bar&#8217;] = 2</cite></p>
+<p>Default python dictionary update() method would have the updated
+dictionary as this:</p>
+<p><cite>{&#8216;foo&#8217;: {&#8216;other_bar&#8217;: 2}}</cite></p>
+<p>This happens because the original dictionary which had the single key
+<cite>bar</cite> was overwritten by a new dictionary which has a single key
+<cite>other_bar</cite>.)</p>
+<p>But really we want this:</p>
+<p><cite>{&#8216;foo&#8217;: {&#8216;bar&#8217;: 1, &#8216;other_bar&#8217;: 2}}</cite></p>
+<p>This code was based on this:
+<a class="reference external" href="https://www.xormedia.com/recursively-merge-dictionaries-in-python/">https://www.xormedia.com/recursively-merge-dictionaries-in-python/</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>a</strong> (<em>dict</em>) &#8211; The first dictionary</li>
+<li><strong>b</strong> &#8211; The second dictionary</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The merged dictionaries.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.end_run_loop">
+<tt class="descname">end_run_loop</tt><big>(</big><big>)</big></dt>
+<dd><p>Causes the main run_loop to end.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.flow_advance">
+<tt class="descname">flow_advance</tt><big>(</big><em>position=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Advances the machine to the next machine mode as specified in the
+machineflow. Typically this just advances between Attract mode and Game
+mode.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.get_window">
+<tt class="descname">get_window</tt><big>(</big><big>)</big></dt>
+<dd><p>Returns a reference to the onscreen display window.</p>
+<p>This method will set up a window if one doesn&#8217;t exist yet. This method
+exists because there are several different modules and plugins which
+may want to use a window, but we don&#8217;t know which combinations might
+be used, so we centralize the creation and management of an onscreen
+window here.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.load_config_yaml">
+<tt class="descname">load_config_yaml</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Merges config updates into the self.config dictionary.</p>
+<p>This method does what we call a &#8220;deep merge&#8221; which means it merges
+together subdictionaries instead of overwriting them. See the
+documentation for <cite>meth:dict_merge</cite> for a description of how this
+works.</p>
+<p>At this point this method loads YAML files, but it would be simple to
+load them from JSON, XML, INI, or existing python dictionaires.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> (<em>dict or str</em>) &#8211; <p>The settings to deep merge into the config
+dictionary. If <cite>config</cite> is a dict, then it will merge those
+settings in. If it&#8217;s a string, it will try to find a file with
+that name and open it to read in the settings.</p>
+<p>Also, if config is a string, it will first try to open it as a
+file directly (including any path that&#8217;s there). If that
+doesn&#8217;t work, it will try to open the file using the last path
+that worked. (This path is stored in
+<cite>self.config[&#8216;Config_path&#8217;]</cite>.)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.request_pygame">
+<tt class="descname">request_pygame</tt><big>(</big><big>)</big></dt>
+<dd><p>Called by a module to let the system know it would like to use
+Pygame. We centralize the requests instead of letting each module do
+their own pygame.init() so we get it in one place and can get everthing
+initialized in the right order.</p>
+<p>Returns: True or False, depending on whether pygame is available or not.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.reset">
+<tt class="descname">reset</tt><big>(</big><big>)</big></dt>
+<dd><p>Resets the machine.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.run">
+<tt class="descname">run</tt><big>(</big><big>)</big></dt>
+<dd><p>The main machine run loop.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.set_platform">
+<tt class="descname">set_platform</tt><big>(</big><big>)</big></dt>
+<dd><p>Sets the hardware platform based on the &#8220;Platform&#8221; item in the
+configuration dictionary. Looks for a module of that name in the
+/platform directory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.string_to_class">
+<tt class="descname">string_to_class</tt><big>(</big><em>class_string</em><big>)</big></dt>
+<dd><p>Converts a string like mpf.system.events.EventManager into a python
+class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>class_string</strong> (<em>str</em>) &#8211; The input string</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A reference to the python class object</td>
+</tr>
+</tbody>
+</table>
+<p>This function came from here:
+<a class="reference external" href="http://stackoverflow.com/questions/452969/">http://stackoverflow.com/questions/452969/</a>
+does-python-have-an-equivalent-to-java-class-forname</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.string_to_list">
+<tt class="descname">string_to_list</tt><big>(</big><em>string</em><big>)</big></dt>
+<dd><p>Converts a comma-separated and/or space-separated string into a
+python list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string</strong> &#8211; The string you&#8217;d like to convert.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A python list object containing whatever was between commas and/or
+spaces in the string.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.sw_data_loop">
+<tt class="descname">sw_data_loop</tt><big>(</big><big>)</big></dt>
+<dd><p>This is the main game run loop.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.sw_optimized_loop">
+<tt class="descname">sw_optimized_loop</tt><big>(</big><big>)</big></dt>
+<dd><p>The optimized version of the main game run loop.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.timer_tick">
+<tt class="descname">timer_tick</tt><big>(</big><big>)</big></dt>
+<dd><p>Called by the platform each machine tick based on self.HZ</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.machine.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

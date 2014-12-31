@@ -1,5 +1,5 @@
 """Contains the drivers and interface code for pinball machines which
-use the Multimorphic R-ROC or P3-ROC hardware controllers.
+use the Multimorphic R-ROC hardware controllers.
 
 This code can be used with P-ROC driver boards, or with Stern SAM, Stern
 Whitestar, Williams WPC, or Williams WPC95  driver boards.
@@ -23,7 +23,7 @@ http://www.pinballcontrollers.com/forum/index.php?board=10.0
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import pinproc  # If this fails it's because you don't have pypinproc.
@@ -47,12 +47,13 @@ proc_pdb_bus_addr = 0xC00
 class HardwarePlatform(Platform):
     """Platform class for the P-ROC or P3-ROC hardware controller.
 
-    Parameters
-    ----------
+    Args:
+        machine: The MachineController instance.
 
-    machine : int
-        A reference to the MachineController instance
-
+    Attributes:
+        machine: The MachineController instance.
+        proc: The P-ROC pinproc.PinPROC device.
+        machine_type: Constant of the pinproc.MachineType
     """
 
     def __init__(self, machine):
@@ -271,7 +272,7 @@ class HardwarePlatform(Platform):
 
     def configure_dmd(self):
         """Configures a hardware DMD connected to a classic P-ROC."""
-        return PROCDMD(self.machine)
+        return PROCDMD(self.proc, self.machine)
 
     def hw_loop(self):
         """Checks the P-ROC for any events (switch state changes or notification
@@ -912,8 +913,26 @@ class PDBConfig(object):
 
         self.proc = proc
 
-        # Grab globals from the config data
-        self.get_globals(config)
+        # Set config defaults
+        if 'P_ROC' in config and 'lamp_matrix_strobe_time' \
+                in config['P_ROC']:
+            self.lamp_matrix_strobe_time = int(config['P_ROC']
+                                               ['lamp_matrix_strobe_time'])
+        else:
+            self.lamp_matrix_strobe_time = 100
+
+        if 'P_ROC' in config and 'watchdog_time' \
+                in config['P_ROC']:
+            self.watchdog_time = int(config['P_ROC']
+                                           ['watchdog_time'])
+        else:
+            self.watchdog_time = 1000
+
+        if 'P_ROC' in config and 'use_watchdog' \
+                in config['P_ROC']:
+            self.use_watchdog = config['P_ROC']['use_watchdog']
+        else:
+            self.use_watchdog = True
 
         # Initialize some lists for data collecting
         coil_bank_list = []
@@ -1104,27 +1123,6 @@ class PDBConfig(object):
 
             proc.driver_update_state(state)
 
-    def get_globals(self, config):
-        if 'PRDriverGlobals' in config and 'lamp_matrix_strobe_time' \
-                in config['PRDriverGlobals']:
-            self.lamp_matrix_strobe_time = int(config['PRDriverGlobals']
-                                               ['lamp_matrix_strobe_time'])
-        else:
-            self.lamp_matrix_strobe_time = 100
-
-        if 'PRDriverGlobals' in config and 'watchdog_time' \
-                in config['PRDriverGlobals']:
-            self.watchdog_time = int(config['PRDriverGlobals']
-                                           ['watchdog_time'])
-        else:
-            self.watchdog_time = 1000
-
-        if 'PRDriverGlobals' in config and 'use_watchdog' \
-                in config['PRDriverGlobals']:
-            self.use_watchdog = bool(config['PRDriverGlobals']['use_watchdog'])
-        else:
-            self.use_watchdog = True
-
     def configure_globals(self, proc, lamp_source_bank_list, enable=True):
 
         if enable:
@@ -1258,26 +1256,40 @@ def decode_pdb_address(addr, aliases=[]):
 
 
 class PROCDMD(object):
+    """Parent class for a physical DMD attached to a P-ROC.
 
-    def __init__(self, machine):
+    Args:
+        proc: Reference to the MachineController's proc attribute.
+        machine: Reference to the MachineController
+
+    Attributes:
+        dmd: Rerence to the P-ROC's DMD buffer.
+
+    """
+
+    def __init__(self, proc, machine):
+        self.proc = proc
         self.machine = machine
         self.dmd = pinproc.DMDBuffer(128, 32)
         # size is hardcoded here since 128x32 is all the P-ROC hw supports
+
+        # dmd_timing defaults should be 250, 400, 180, 800
+
+        if 'P_ROC' in self.machine.config and (
+            'dmd_timing_cycles' in self.machine.config['P_ROC']):
+
+            dmd_timing = self.machine.string_to_list(
+                self.machine.config['P_ROC']['dmd_timing_cycles'])
+
+            dmd_timing = [int(i) for i in dmd_timing]
+
+            self.proc.dmd_update_config(high_cycles=dmd_timing)
 
         self.machine.events.add_handler('timer_tick', self.tick)
 
     def update(self, surface):
 
-        pa = pygame.PixelArray(surface)  # temp
-
-        for x_dot in range(pa.shape[0]):
-            for y_dot in range(pa.shape[1]):
-                if pa[x_dot, y_dot] > 15:
-                    if x_dot < 128 and y_dot < 32:
-                        self.dmd.set_dot(x_dot, y_dot, 15)
-                else:
-                    if x_dot < 128 and y_dot < 32:
-                        self.dmd.set_dot(x_dot, y_dot, pa[x_dot, y_dot])
+        self.dmd.set_data(pygame.image.tostring(surface, 'P'))
 
     def tick(self):
         self.machine.platform.proc.dmd_draw(self.dmd)

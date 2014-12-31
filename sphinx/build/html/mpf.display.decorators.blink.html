@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.display.decorators.blink module &mdash; Mission Pinball Framework 0.1.2 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.1.2 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.display.decorators.blink">
+<span id="mpf-display-decorators-blink-module"></span><h1>mpf.display.decorators.blink module</h1>
+<p>Blink Decorator.</p>
+<dl class="class">
+<dt id="mpf.display.decorators.blink.Blink">
+<em class="property">class </em><tt class="descclassname">mpf.display.decorators.blink.</tt><tt class="descname">Blink</tt><big>(</big><em>parent_element</em>, <em>on_secs=0.2</em>, <em>off_secs=0.2</em>, <em>repeats=-1</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.display.html#mpf.system.display.Decorator" title="mpf.system.display.Decorator"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.display.Decorator</span></tt></a></p>
+<p>Blink decorator which causes the element its applied to to blink on and
+off.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>parent_element</strong> &#8211; The DisplayElement object this decorator is applied to.</li>
+<li><strong>on_secs</strong> &#8211; The number of seconds for the &#8220;on&#8221; portion of the blinking.
+Default is 0.2.</li>
+<li><strong>off_secs</strong> &#8211; The number of seconds for the &#8220;off&#8221; porition of the blinking.
+Default is 0.2.</li>
+<li><strong>repeats</strong> &#8211; The number of times you&#8217;d like this element to blink. A value
+of -1 means it will repeat forever.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mpf.display.decorators.blink.Blink.parent_element">
+<tt class="descname">parent_element</tt></dt>
+<dd><p>The DisplayElement object this decorator is applied to.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.display.decorators.blink.Blink.on_secs">
+<tt class="descname">on_secs</tt></dt>
+<dd><p>The number of seconds for the &#8220;on&#8221; portion of the blinking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.display.decorators.blink.Blink.off_secs">
+<tt class="descname">off_secs</tt></dt>
+<dd><p>The number of seconds for the &#8220;off&#8221; porition of the blinking.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.display.decorators.blink.Blink.repeats">
+<tt class="descname">repeats</tt></dt>
+<dd><p>The number of remaining blinks this element will do. A value
+of -1 means it will repeat forever.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.display.decorators.blink.Blink.dirty">
+<tt class="descname">dirty</tt></dt>
+<dd><p>Boolean which specifies whether this decorator needs to apply
+an update to the parent_elemnet in this frame.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.display.decorators.blink.Blink.current_state">
+<tt class="descname">current_state</tt></dt>
+<dd><p>1 means this decorator is in the &#8220;on&#8221; phase of a blink,
+0 means it&#8217;s in the &#8220;off&#8221; phase of a blink.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.display.decorators.blink.Blink.next_action_time">
+<tt class="descname">next_action_time</tt></dt>
+<dd><p>Real-world time of when the next state change of this
+decorator will be.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">dirty</tt></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.display.decorators.blink.Blink.update">
+<tt class="descname">update</tt><big>(</big><big>)</big></dt>
+<dd><p>Updates the parent_element if it&#8217;s time to blink. Can safely be
+called often.</p>
+<dl class="docutils">
+<dt>Returns: True if this decorator made a change to the element that has to</dt>
+<dd>be re-blitted. False if no change.</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.display.decorators.blink.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

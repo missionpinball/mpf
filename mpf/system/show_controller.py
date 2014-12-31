@@ -4,13 +4,14 @@
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import yaml
 import weakref
 import time
 import os
+import uuid
 
 
 class ShowController(object):
@@ -69,14 +70,14 @@ class ShowController(object):
         # priority
         # fadeend - (optional) realtime of when the fade should end
         self.current_time = time.time()
-        # we use a common system time for the entire light system so that every
+        # we use a common system time for the entire show system so that every
         # "current_time" of a single update cycle is the same everywhere. This
         # ensures that multiple shows, scripts, and commands start in-sync
         # regardless of any processing lag.
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick)
-        self.machine.events.add_handler('machine_init_phase2',
+        self.machine.events.add_handler('machine_init_phase3',
                                         self._initialize)
 
     def _initialize(self):
@@ -93,6 +94,48 @@ class ShowController(object):
         if self.machine.config['MPF']['auto_load_shows']:
             self.load_shows(os.path.join(self.machine.machine_path,
                 self.machine.config['MPF']['paths']['shows']))
+
+        # Configure events to stop, play, pause, etc. shows
+        self.machine.events.add_handler('action_play_show', self.play_show)
+        self.machine.events.add_handler('action_stop_show', self.stop_show)
+
+        # Read in ShowPlayer settings from the config file.
+        if 'ShowPlayer' in self.machine.config:
+            self.process_shows_from_config(self.machine.config['ShowPlayer'])
+
+    def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
+                  tocks_per_sec=30, start_location=None, num_repeats=0,
+                  **kwargs):
+
+        if show in self.machine.shows:
+            self.machine.shows[show].play(repeat=repeat, priority=priority,
+                                          blend=blend, hold=hold,
+                                          tocks_per_sec=tocks_per_sec,
+                                          start_location=start_location,
+                                          num_repeats=num_repeats)
+
+    def stop_show(self, show, reset=True, hold=True, **kwargs):
+        if show in self.machine.shows:
+            self.machine.shows[show].stop(reset=reset, hold=hold)
+
+    def process_shows_from_config(self, config):
+
+        for event, settings in config.iteritems():
+            if type(settings) is dict:
+                self.add_show_player_show(event, settings)
+            elif type(settings) is list:
+                for entry in settings:
+                    self.add_show_player_show(event, entry)
+
+    def add_show_player_show(self, event, settings):
+
+        if 'action' in settings and settings['action'] == 'stop':
+            self.machine.events.add_handler(event, self.stop_show,
+                                            **settings)
+
+        else:  # action = 'play'
+            self.machine.events.add_handler(event, self.play_show,
+                                            **settings)
 
     def _run_show(self, show):
         # Internal method which starts a Show
@@ -116,6 +159,10 @@ class ShowController(object):
 
         if not show.hold:
             self.restore_lower_lights(show=show)
+
+            # todo
+            # loop through displays.
+            # if you find last_slide, remove it
 
         if reset:
             show.current_location = 0
@@ -584,6 +631,9 @@ class Show(object):
         actions (list): List of Show actions which are passed directly
             instead of read from a yaml file
 
+    Attributes:
+        # todo
+
     If you pass *filename*, it will process the actions based on that file.
     Otherwise it will look for the actions from the list passed via *actions*.
     Either *filename* or *actions* is required.
@@ -622,6 +672,7 @@ class Show(object):
 
         self.light_states = {}
         self.led_states = {}
+        self.last_slide = None
 
         if filename:
             self._load(filename)
@@ -802,6 +853,14 @@ class Show(object):
 
                 step_actions['leds'] = led_actions
 
+            # SlidePlayer
+            if ('display' in show_actions[step_num] and
+                    show_actions[step_num]['display']):
+
+                step_actions['display'] = (
+                    self.machine.display.slidebuilder.preprocess_settings(
+                    show_actions[step_num]['display']))
+
             self.show_actions.append(step_actions)
 
         # count how many total locations are in the show. We need this later
@@ -825,7 +884,7 @@ class Show(object):
         self._load(self.filename)
 
     def play(self, repeat=False, priority=0, blend=False, hold=False,
-             tocks_per_sec=32, start_location=None, callback=None,
+             tocks_per_sec=30, start_location=None, callback=None,
              num_repeats=0):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
@@ -838,38 +897,39 @@ class Show(object):
         Args:
             repeat: Boolean of whether the show repeats when it's done.
             priority: Integer value of the relative priority of this show. If
-            there's ever a situation where multiple shows want to control the
-            same item, the one with the higher priority will win. ("Higher"
-            means a bigger number, so a show with priority 2 will override a
-            priority 1.)
-        blend: Boolean which controls whether this show "blends" with lower
-            priority shows and scripts. For example, if this show turns a light
-            off, but a lower priority show has that light set to blue, then the
-            light will "show through" as blue while it's off here. If you don't
-            want that behavior, set blend to be False. Then off here will be off
-            for sure (unless there's a higher priority show or command that turns
-            the light on). Note that not all item types blend. (You can't blend a
-            coil or event, for example.)
-        hold: Boolean which controls whether the lights or LEDs remain in their
-            final show state when the show ends.
-        tocks_per_sec: Integer of how fast your show runs ("Playback speed," in
-            other words.) Your Show files specify action times in terms of
-            'tocks', like "make this light red for 3 tocks, then off for 4
-            tocks, then a different light on for 6 tocks. When you play a show,
-            you specify how many tocks per second you want it to play. Default
-            is 32, but you might even want tocks_per_sec of only 1 or 2 if your
-            show doesn't need to move than fast. Note this does not affect fade
-            rates. So you can have tocks_per_sec of 1 but still have lights fade
-            on and off at whatever rate you want. Also the term "tocks" was
-            chosen so as not to confuse it with "ticks" which is used by the
-            machine run loop.
-        start_location: Integer of which position in the show file the show
-            should start in. Usually this is 0 but it's nice to start part way
-            through. Also used for restarting shows that you paused.
-        callback: A callback function that is invoked when the show is stopped.
-        num_repeats: Integer of how many times you want this show to repeat
-            before stopping. A value of 0 means that it repeats indefinitely.
-            Note this only works if you also have repeat=True.
+                there's ever a situation where multiple shows want to control
+                the same item, the one with the higher priority will win.
+                ("Higher" means a bigger number, so a show with priority 2 will
+                override a priority 1.)
+            blend: Boolean which controls whether this show "blends" with lower
+                priority shows and scripts. For example, if this show turns a
+                light off, but a lower priority show has that light set to blue,
+                then the light will "show through" as blue while it's off here.
+                If you don't want that behavior, set blend to be False. Then off
+                here will be off for sure (unless there's a higher priority show
+                or command that turns the light on). Note that not all item
+                types blend. (You can't blend a coil or event, for example.)
+            hold: Boolean which controls whether the lights or LEDs remain in
+                their final show state when the show ends.
+            tocks_per_sec: Integer of how fast your show runs ("Playback speed,"
+                in other words.) Your Show files specify action times in terms
+                of 'tocks', like "make this light red for 3 tocks, then off for
+                4 tocks, then a different light on for 6 tocks. When you play a
+                show, you specify how many tocks per second you want it to play.
+                Default is 30, but you might even want tocks_per_sec of only 1
+                or 2 if your show doesn't need to move than fast. Note this does
+                not affect fade rates. So you can have tocks_per_sec of 1 but
+                still have lights fade on and off at whatever rate you want.
+                Also the term "tocks" was chosen so as not to confuse it with
+                "ticks" which is used by the machine run loop.
+            start_location: Integer of which position in the show file the show
+                should start in. Usually this is 0 but it's nice to start part
+                way through. Also used for restarting shows that you paused.
+            callback: A callback function that is invoked when the show is
+                stopped.
+            num_repeats: Integer of how many times you want this show to repeat
+                before stopping. A value of 0 means that it repeats
+                indefinitely. Note this only works if you also have repeat=True.
 
         Example usage from a game:
 
@@ -1041,6 +1101,14 @@ class Show(object):
                         coil = coil_obj,
                         action = coil_action)
 
+            elif item_type == 'display':
+
+                self.last_slide = (
+                    self.machine.display.slidebuilder.build_slide(item_dict,
+                    priority=self.priority))
+
+                # todo make it so they don't all have the same name?
+
         # increment this show's current_location pointer and handle repeats
 
         # if we're at the end of the show
@@ -1101,7 +1169,7 @@ class Playlist(object):
     for a few seconds, then another, etc.
 
     Args:
-        machine: The main machine_controller object
+        machine: The main MachineController object
 
     Each step in a playlist can contain more than one :class:`Show`. This
     is useful if you have a lot of little shows for different areas of the

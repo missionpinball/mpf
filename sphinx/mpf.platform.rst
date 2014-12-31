@@ -7,6 +7,7 @@ Submodules
 .. toctree::
 
    mpf.platform.fast
+   mpf.platform.p3_roc
    mpf.platform.p_roc
    mpf.platform.virtual
 

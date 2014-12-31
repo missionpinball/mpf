@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.show_controller module &mdash; Mission Pinball Framework 0.1.1 documentation</title>
+    <title>mpf.system.show_controller module &mdash; Mission Pinball Framework 0.1.2 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1.1',
+        VERSION:     '0.1.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.1.2 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -58,7 +58,7 @@ for a few seconds, then another, etc.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> &#8211; The main machine_controller object</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> &#8211; The main MachineController object</td>
 </tr>
 </tbody>
 </table>
@@ -240,6 +240,11 @@ instead of read from a yaml file</li>
 </tr>
 </tbody>
 </table>
+<dl class="attribute">
+<dt>
+<tt class="descname"># todo</tt></dt>
+<dd></dd></dl>
+
 <p>If you pass <em>filename</em>, it will process the actions based on that file.
 Otherwise it will look for the actions from the list passed via <em>actions</em>.
 Either <em>filename</em> or <em>actions</em> is required.</p>
@@ -267,7 +272,7 @@ because we also need to update self.secs_per_tock.</p>
 
 <dl class="method">
 <dt id="mpf.system.show_controller.Show.play">
-<tt class="descname">play</tt><big>(</big><em>repeat=False</em>, <em>priority=0</em>, <em>blend=False</em>, <em>hold=False</em>, <em>tocks_per_sec=32</em>, <em>start_location=None</em>, <em>callback=None</em>, <em>num_repeats=0</em><big>)</big></dt>
+<tt class="descname">play</tt><big>(</big><em>repeat=False</em>, <em>priority=0</em>, <em>blend=False</em>, <em>hold=False</em>, <em>tocks_per_sec=30</em>, <em>start_location=None</em>, <em>callback=None</em>, <em>num_repeats=0</em><big>)</big></dt>
 <dd><p>Plays a Show. There are many parameters you can use here which
 affect how the show is played. This includes things like the playback
 speed, priority, whether this show blends with others, etc. These are
@@ -281,43 +286,45 @@ how you play the show.)</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>repeat</strong> &#8211; Boolean of whether the show repeats when it&#8217;s done.</li>
-<li><strong>priority</strong> &#8211; Integer value of the relative priority of this show. If</li>
+<li><strong>priority</strong> &#8211; Integer value of the relative priority of this show. If
+there&#8217;s ever a situation where multiple shows want to control
+the same item, the one with the higher priority will win.
+(&#8220;Higher&#8221; means a bigger number, so a show with priority 2 will
+override a priority 1.)</li>
+<li><strong>blend</strong> &#8211; Boolean which controls whether this show &#8220;blends&#8221; with lower
+priority shows and scripts. For example, if this show turns a
+light off, but a lower priority show has that light set to blue,
+then the light will &#8220;show through&#8221; as blue while it&#8217;s off here.
+If you don&#8217;t want that behavior, set blend to be False. Then off
+here will be off for sure (unless there&#8217;s a higher priority show
+or command that turns the light on). Note that not all item
+types blend. (You can&#8217;t blend a coil or event, for example.)</li>
+<li><strong>hold</strong> &#8211; Boolean which controls whether the lights or LEDs remain in
+their final show state when the show ends.</li>
+<li><strong>tocks_per_sec</strong> &#8211; Integer of how fast your show runs (&#8220;Playback speed,&#8221;
+in other words.) Your Show files specify action times in terms
+of &#8216;tocks&#8217;, like &#8220;make this light red for 3 tocks, then off for
+4 tocks, then a different light on for 6 tocks. When you play a
+show, you specify how many tocks per second you want it to play.
+Default is 30, but you might even want tocks_per_sec of only 1
+or 2 if your show doesn&#8217;t need to move than fast. Note this does
+not affect fade rates. So you can have tocks_per_sec of 1 but
+still have lights fade on and off at whatever rate you want.
+Also the term &#8220;tocks&#8221; was chosen so as not to confuse it with
+&#8220;ticks&#8221; which is used by the machine run loop.</li>
+<li><strong>start_location</strong> &#8211; Integer of which position in the show file the show
+should start in. Usually this is 0 but it&#8217;s nice to start part
+way through. Also used for restarting shows that you paused.</li>
+<li><strong>callback</strong> &#8211; A callback function that is invoked when the show is
+stopped.</li>
+<li><strong>num_repeats</strong> &#8211; Integer of how many times you want this show to repeat
+before stopping. A value of 0 means that it repeats
+indefinitely. Note this only works if you also have repeat=True.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
-<dl class="docutils">
-<dt>blend: Boolean which controls whether this show &#8220;blends&#8221; with lower</dt>
-<dd>priority shows and scripts. For example, if this show turns a light
-off, but a lower priority show has that light set to blue, then the
-light will &#8220;show through&#8221; as blue while it&#8217;s off here. If you don&#8217;t
-want that behavior, set blend to be False. Then off here will be off
-for sure (unless there&#8217;s a higher priority show or command that turns
-the light on). Note that not all item types blend. (You can&#8217;t blend a
-coil or event, for example.)</dd>
-<dt>hold: Boolean which controls whether the lights or LEDs remain in their</dt>
-<dd>final show state when the show ends.</dd>
-<dt>tocks_per_sec: Integer of how fast your show runs (&#8220;Playback speed,&#8221; in</dt>
-<dd>other words.) Your Show files specify action times in terms of
-&#8216;tocks&#8217;, like &#8220;make this light red for 3 tocks, then off for 4
-tocks, then a different light on for 6 tocks. When you play a show,
-you specify how many tocks per second you want it to play. Default
-is 32, but you might even want tocks_per_sec of only 1 or 2 if your
-show doesn&#8217;t need to move than fast. Note this does not affect fade
-rates. So you can have tocks_per_sec of 1 but still have lights fade
-on and off at whatever rate you want. Also the term &#8220;tocks&#8221; was
-chosen so as not to confuse it with &#8220;ticks&#8221; which is used by the
-machine run loop.</dd>
-<dt>start_location: Integer of which position in the show file the show</dt>
-<dd>should start in. Usually this is 0 but it&#8217;s nice to start part way
-through. Also used for restarting shows that you paused.</dd>
-</dl>
-<p>callback: A callback function that is invoked when the show is stopped.
-num_repeats: Integer of how many times you want this show to repeat</p>
-<blockquote>
-<div>before stopping. A value of 0 means that it repeats indefinitely.
-Note this only works if you also have repeat=True.</div></blockquote>
 <p>Example usage from a game:</p>
 <dl class="docutils">
 <dt>Load the show: (Note the MPF has a config option to automatically load</dt>
@@ -410,6 +417,11 @@ Shows, etc. There should be only one per machine.</p>
 </tr>
 </tbody>
 </table>
+<dl class="method">
+<dt id="mpf.system.show_controller.ShowController.add_show_player_show">
+<tt class="descname">add_show_player_show</tt><big>(</big><em>event</em>, <em>settings</em><big>)</big></dt>
+<dd></dd></dl>
+
 <dl class="staticmethod">
 <dt id="mpf.system.show_controller.ShowController.hexstring_to_int">
 <em class="property">static </em><tt class="descname">hexstring_to_int</tt><big>(</big><em>inputstring</em>, <em>maxvalue=255</em><big>)</big></dt>
@@ -478,6 +490,16 @@ root from where the mpf.py file is running.</td>
 </tbody>
 </table>
 </dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.show_controller.ShowController.play_show">
+<tt class="descname">play_show</tt><big>(</big><em>show</em>, <em>repeat=False</em>, <em>priority=0</em>, <em>blend=False</em>, <em>hold=False</em>, <em>tocks_per_sec=30</em>, <em>start_location=None</em>, <em>num_repeats=0</em>, <em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.show_controller.ShowController.process_shows_from_config">
+<tt class="descname">process_shows_from_config</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.show_controller.ShowController.restore_lower_lights">
@@ -641,6 +663,11 @@ everything.</p>
 </div></blockquote>
 </dd></dl>
 
+<dl class="method">
+<dt id="mpf.system.show_controller.ShowController.stop_show">
+<tt class="descname">stop_show</tt><big>(</big><em>show</em>, <em>reset=True</em>, <em>hold=True</em>, <em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </div>
@@ -682,7 +709,7 @@ everything.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

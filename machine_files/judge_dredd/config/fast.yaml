@@ -1,6 +1,5 @@
 Hardware:
     Platform: fast
-    DriverBoards: wpc
 
 Fast:
     port0_name: \\.\COM10
@@ -15,4 +14,4 @@ Fast:
     config_number_format: hex
 
 Config:
-    - jd.yaml
+    - config.yaml

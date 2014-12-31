@@ -11,7 +11,7 @@ Note that in the Mission Pinball Framework, a distinction is made between a
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 from mpf.system.machine_mode import MachineMode
@@ -228,6 +228,7 @@ class Game(MachineMode):
 
     def player_eject_request(self):
         self.log.debug("Received player eject request")
+        self.machine.events.post('player_eject_request')
         self.machine.ball_controller.add_live()
         # what happens if it can't and the player hits the button again? todo
 

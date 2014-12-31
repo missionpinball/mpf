@@ -13,8 +13,9 @@ MPF:
         events.EventManager
         switch_controller.SwitchController
         ball_controller.BallController
-        show_controller.ShowController
+        language.Language
         display.DisplayController
+        show_controller.ShowController
     device_modules:
         driver.Driver
         switch.Switch
@@ -34,7 +35,19 @@ MPF:
         score_reel.ScoreReel
         score_reel.ScoreReelGroup
     display_modules:
-        dmd.DMD
+        elements:
+            text.Text
+            virtual_dmd.VirtualDMD
+            image.Image
+            animation.Animation
+            shape.Shape
+        modules:
+            dmd.DMD
+        transitions:
+            move_out: move_out.MoveOut
+            move_in: move_in.MoveIn
+        decorators:
+            blink: blink.Blink
     paths:
         scriptlets: scriptlets
         shows: shows
@@ -42,6 +55,9 @@ MPF:
         sounds: sounds
         machine_files: machine_files
         config: config
+        fonts: fonts
+        images: images
+        animations: animations
     auto_load_shows: True
     default_pulse_ms: 10
     default_debounce_ms: 0  # fast only
@@ -57,13 +73,18 @@ Machine:
 Hardware:
     Platform: virtual
 
+P_ROC:
+    lamp_matrix_strobe_time: 100
+    watchdog_time: 1000
+    use_watchdog: True
+
 LEDSettings:
     brightness_compensation: 1.0
     default_led_fade_ms: 100
 
 Game:
     Balls per game: 3
-    Max players per game: 2
+    Max players per game: 4
 
 MachineFlow:
     mpf.game.attract.Attract
@@ -104,9 +125,6 @@ BallSearch:
     Secs between ball search coils: .15
     If ball search fails: Keep Looking
 
-Language:
-    en
-
 LogicBlocks:
 
     HitCounters:
@@ -131,16 +149,50 @@ LogicBlocks:
             events_when_complete: slam_tilt
 
 DisplayDefaults:
-    TextElement:
-        font: None
+    Text:
+        font: default
         size: 10
-        opaque: true
-        v_align: center
-        h_align: center
+        opaque: false
+        v_pos: center
+        h_pos: center
         x: 0
         y: 0
         time: 0s
-        text_color: ff0000
+        text_color: ffffff
         background_color: 000000
         text_shade: 15
         background_shade: 0
+        antialias: False
+        
+
+Fonts:
+    default:
+        file: Quadrit.ttf
+        size: 10
+        crop_top: 2
+        crop_bottom: 5
+    space title huge:
+        file: DEADJIM.TTF
+        size: 29
+        antialias: yes
+        crop_top: 3
+        crop_bottom: 3
+    space title:
+        file: DEADJIM.TTF
+        size: 21
+        antialias: yes
+        crop_top: 2
+        crop_bottom: 3
+    medium:
+        file: pixelmix.ttf
+        size: 8
+        crop_top: 1
+        crop_bottom: 1
+    small:
+        file: smallest_pixel-7.ttf
+        size: 9
+        crop_top: 2
+        crop_bottom: 3
+    tall title:
+       file: big_noodle_titling.ttf
+       size: 20

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.diverter module &mdash; Mission Pinball Framework 0.1.1 documentation</title>
+    <title>mpf.devices.diverter module &mdash; Mission Pinball Framework 0.1.2 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1.1',
+        VERSION:     '0.1.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.1.2 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -56,7 +56,7 @@
 <dl class="method">
 <dt id="mpf.devices.diverter.Diverter.activate">
 <tt class="descname">activate</tt><big>(</big><big>)</big></dt>
-<dd><p>Physically activates this diverter.</p>
+<dd><p>Physically activates this diverter&#8217;s coil.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -72,12 +72,12 @@
 <dl class="method">
 <dt id="mpf.devices.diverter.Diverter.deactivate">
 <tt class="descname">deactivate</tt><big>(</big><big>)</big></dt>
-<dd><p>Physically deactivates this diverter.</p>
+<dd><p>Physically deactivates this diverter&#8217;s coil.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.diverter.Diverter.disable">
-<tt class="descname">disable</tt><big>(</big><em>deactivate=True</em>, <em>**kwargs</em><big>)</big></dt>
+<tt class="descname">disable</tt><big>(</big><em>auto=False</em>, <em>**kwargs</em><big>)</big></dt>
 <dd><p>Disables this diverter.</p>
 <p>This method will remove the hardware rule if this diverter is activated
 via a hardware switch.</p>
@@ -85,8 +85,9 @@ via a hardware switch.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>deactivate</strong> &#8211; <p>A boolean value which specifies whether this diverter
-should be immediately deactived.</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>auto</strong> &#8211; <p>Boolean value which is used to indicate whether this
+diverter disabled itself automatically. This is passed to the
+event which is posted.</p>
 <blockquote>
 <div>whatever event the game programmer specifies in their machine
 configuration file, so we don&#8217;t know what event that might be
@@ -95,6 +96,12 @@ or whether it has random kwargs attached to it.</div></blockquote>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.diverter.Diverter.disable_auto_activation">
+<tt class="descname">disable_auto_activation</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables the auto-activation of this diverter</p>
 </dd></dl>
 
 <dl class="method">
@@ -112,13 +119,30 @@ for this diverter.</p>
 
 <dl class="method">
 <dt id="mpf.devices.diverter.Diverter.enable">
-<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<tt class="descname">enable</tt><big>(</big><em>auto=False</em>, <em>**kwargs</em><big>)</big></dt>
 <dd><p>Enables this diverter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>auto</strong> &#8211; Boolean value which is used to indicate whether this
+diverter enabled itself automatically. This is passed to the
+event which is posted.</td>
+</tr>
+</tbody>
+</table>
 <p>If an &#8216;activation_switch&#8217; is configured, then this method writes a
 hardware autofire rule to the pinball controller which fires the
 diverter coil when the switch is activated.</p>
 <p>If no <cite>activation_switch</cite> is specified, then the diverter is activated
 immediately.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.diverter.Diverter.enable_auto_activation">
+<tt class="descname">enable_auto_activation</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables the auto-activation of this diverter, which means it will
+enable and disable itself based on the state of its target devices.</p>
 </dd></dl>
 
 <dl class="method">
@@ -139,9 +163,16 @@ deactivation switch is activated.</p>
 
 <dl class="method">
 <dt id="mpf.devices.diverter.Diverter.schedule_disable">
-<tt class="descname">schedule_disable</tt><big>(</big><big>)</big></dt>
-<dd><p>Schedules a delay to deactivate this diverter based on the configured
-timeout.</p>
+<tt class="descname">schedule_disable</tt><big>(</big><em>time=None</em><big>)</big></dt>
+<dd><p>Schedules a delay to deactivate this diverter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time</strong> &#8211; The MPF string time of how long you&#8217;d like the delay before</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -185,7 +216,7 @@ timeout.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

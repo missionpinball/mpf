@@ -6,7 +6,7 @@
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 
@@ -38,7 +38,7 @@ class Player(object):
         self.vars['ball'] = 0
         self.vars['score'] = 0
         self.vars['extra_balls'] = 0
-        self.vars['extra_balls_total_this_game'] = 0
+        self.vars['extra_balls_total'] = 0
         self.vars['index'] = Player.total_players - 1
         self.vars['number'] = Player.total_players
 

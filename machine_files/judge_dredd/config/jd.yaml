@@ -1,8 +1,0 @@
-Config:
-    - machine.yaml
-    - devices.yaml
-    - game.yaml
-    - textstrings.yaml
-    - keymap.yaml
-    - shots.yaml
-    - sound.yaml

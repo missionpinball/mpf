@@ -1,69 +1,63 @@
 Hardware:
-    Platform: virtual
+    Platform: p_roc
     DriverBoards: wpc
-
-Switches:
-    leftFlipperButton:
-        number: 0
-    rightFlipperButton:
-        number: 1
 
 Game:
     player_controlled_eject_tag: launch
 
 Switches:
     leftFlipperButton:
-        number: 00
+        number: SF4
     rightFlipperButton:
-        number: 01
+        number: SF6
     trough1:
-        number: 02
+        number: S81
         type: NC
     trough2:
-        number: 03
+        number: S82
         type: NC
     trough3:
-        number: 04
+        number: S83
         type: NC
     trough4:
-        number: 05
+        number: S84
         type: NC
     trough5:
-        number: 06
+        number: S85
         type: NC
     trough6:
-        number: 07
+        number: S86
         type: NC
     troughJam:
-        number: 08
+        number: S87
         type: NC
     plungerLane:
-        number: 09
+        number: S41
     start:
-        number: 10
+        number: S13
         tags: start
     plungerLaunch:
-        number: 11
+        number: S12
         tags: launch
- 
+
 Coils:
     flipperLeftMain: 
-        number: 00
+        number: FLLM
         pulse_ms: 20
     flipperLeftHold: 
-        number: 01
+        number: FLLH
     flipperRightMain: 
-        number: 02
+        number: FLRM
         pulse_ms: 20
     flipperRightHold: 
-        number: 03
+        number: FLRH
     troughEject:
-        number: 04
+        number: C13
         pulse_ms: 20
     plungerEject:
-        number: 05
+        number: C08
         pulse_ms: 20
- 
+
 Flippers:
     leftFlipper:
         main_coil: flipperLeftMain
@@ -73,7 +67,10 @@ Flippers:
         main_coil: flipperRightMain
         hold_coil: flipperRightHold
         activation_switch: rightFlipperButton
- 
+
+Plugins:
+    - keyboard.Keyboard
+
 Keyboard:
     z:
         switch: leftFlipperButton
@@ -104,15 +101,16 @@ Keyboard:
         switch: start
     L:
         switch: plungerLaunch
- 
+    
+
 BallDevices:
     trough:
         ball_switches: trough1, trough2, trough3, trough4, trough5, trough6, troughJam
         entrance_count_delay: 300ms
         eject_coil: troughEject
-        eject_switch: trough1
+        eject_switch: trough6
         confirm_eject_type: device
-        confirm_eject_target: plunger
+        target_device: plunger
         tags: trough, home, drain
     plunger:
         ball_switches: plungerLane
@@ -121,46 +119,54 @@ BallDevices:
         eject_switch: plungerLane
         eject_coil: plungerEject
         confirm_eject_type: count
-        feeder_device: trough
         tags: ball_add_live
-
-Plugins:
-    keyboard.Keyboard
-    info_display.InfoDisplay
-
-Window:
-    elements:
-        DMD:
-            width: 512
-            height: 128
-            border_width: 2
-            border_color: 333333
-            h_pos: center
-            v_pos: center
-            pixel_color: ff6600
-            dark_color: 000000
-
-InfoDisplay:
-    game_started:
-        text: GAME STARTED
-        time: 3s
-    machineflow_Attract_start:
-        text: GAME OVER
-    player_add_success:
-        text: PLAYER %num ADDED
-    score_change:
-        text: "%score"
-    ball_live_added:
-        text: BALL LAUNCHED!
-        time: 2s
 
 DMD:
     physical: yes
     width: 128
     height: 32
-    shades: 16
-    fps: auto
 
-DisplayDefaults:
-    TextElement:
-        size: 10
+Window:
+    title: My Awesome Game!
+    elements:
+        onscreen_dmd:
+            type: VirtualDMD
+            width: 512
+            height: 128
+            h_pos: center
+            v_pos: center
+            pixel_color: ff6600
+            dark_color: 220000
+            pixel_spacing: 1
+        dmd_frame:
+            type: Shape
+            shape: box
+            width: 516
+            height: 132
+            color: aaaaaa
+            thickness: 2
+        Title:
+            type: Text
+            font: tall title
+            text: MY AWESOME GAME
+            h_pos: center
+            v_pos: top
+            y: 60
+            size: 100
+            antialias: yes
+            layer: 1
+            color: ee9900
+
+SlidePlayer:
+    machineflow_Attract_start:
+        type: Text
+        text: PRESS START
+    ball_live_added:
+        type: Text
+        text: BALL LIVE!
+    ball_started:
+        type: Text
+        text: PLAYER %player BALL %ball
+    player_add_success:
+        type: Text
+        text: PLAYER %num ADDED

@@ -1,6 +1,6 @@
 Hardware:
     Platform: p_roc
-    DriverBoards: wpc
 
 Config:
-    - jd.yaml
+    - config.yaml
+    - window.yaml

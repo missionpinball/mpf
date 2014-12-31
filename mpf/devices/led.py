@@ -4,7 +4,7 @@
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import time
@@ -120,8 +120,6 @@ class LED(Device):
                 applied now
         """
 
-        #print "color", color, self.name
-
         # If the incoming priority is lower that what this LED is at currently
         # ignore this request.
         if priority < self.state['priority'] and not force:
@@ -183,7 +181,6 @@ class LED(Device):
     def off(self, fade_ms=0, priority=0, cache=True, force=False):
         self.color(color=[0, 0, 0], fade_ms=fade_ms, priority=priority,
                    cache=cache, force=force)
-        #print "disabling led for", self.name
         # todo send args to disable()
 
     def get_state(self):

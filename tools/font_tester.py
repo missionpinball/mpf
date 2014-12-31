@@ -72,7 +72,7 @@ dark_color = (34, 17, 0)                  # R, G, B colors of the 'off' pixels
 pixel_spacing = 2                         # Pixel spacing between dots
 loop_ms = 100                             # How many ms it waits per cycle
 font_bg_color = (0, 200, 0)               # R, G, B color of the CTRL+B box
-max_chars = 10                            # How many characters are displayed
+max_chars = 20                            # How many characters are displayed
 snapshot_folder = "font_snapshots"        # Path of the CTRL+S screenshots
 prefer_uncompressed_snapshots = False     # Do you want uncompressed BMPs?
 snapshot_flash_brightness = 255           # Color of the snapshot flash
@@ -327,7 +327,7 @@ def screen_snap():
     if prefer_uncompressed_snapshots or not pygame.image.get_extended():
         filename += '.bmp'
     else:
-        filename += '.jpg'
+        filename += '.png'
 
     filename = os.path.join(snapshot_folder, filename)
 

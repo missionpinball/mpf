@@ -9,7 +9,7 @@ This plugin is not yet finished and doesn't work yet.
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/framework
+# Documentation and more info at http://missionpinball.com/mpf
 
 
 def preload_check(machine):

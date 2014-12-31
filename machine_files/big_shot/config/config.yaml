@@ -36,15 +36,15 @@ Scriptlets:
     bonus.Bonus
 
 Plugins:
-    keyboard.Keyboard
-    lcd.LCD
-    osc.OSC
-    auditor.Auditor
-    logic_blocks.LogicBlocks
-    auditor.Auditor
-    info_lights.InfoLights
-    shots.ShotController
-    scoring.ScoreController
+    - keyboard.Keyboard
+    - lcd.LCD
+    - osc.OSC
+    - auditor.Auditor
+    - logic_blocks.LogicBlocks
+    - auditor.Auditor
+    - info_lights.InfoLights
+    - shots.ShotController
+    - scoring.ScoreController
 
 LCD:
     width: 800

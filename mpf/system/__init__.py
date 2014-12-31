@@ -6,5 +6,6 @@ __all__ = ['events',
            'tasks',
            'show_controller',
            'display',
-           'window_manager'
+           'window',
+           'language'
            ]

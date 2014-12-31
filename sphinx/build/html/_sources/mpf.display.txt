@@ -1,14 +1,15 @@
 mpf.display package
 ===================
 
-Submodules
-----------
+Subpackages
+-----------
 
 .. toctree::
 
-   mpf.display.console
-   mpf.display.dmd
-   mpf.display.playfield_lights
+    mpf.display.decorators
+    mpf.display.elements
+    mpf.display.modules
+    mpf.display.transitions
 
 Module contents
 ---------------

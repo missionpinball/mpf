@@ -10,7 +10,8 @@ Submodules
    mpf.system.devices
    mpf.system.display
    mpf.system.events
-   mpf.system.machine_controller
+   mpf.system.language
+   mpf.system.machine
    mpf.system.machine_mode
    mpf.system.platform
    mpf.system.scriptlet
@@ -18,7 +19,7 @@ Submodules
    mpf.system.switch_controller
    mpf.system.tasks
    mpf.system.timing
-   mpf.system.window_manager
+   mpf.system.window
 
 Module contents
 ---------------

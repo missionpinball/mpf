@@ -9,7 +9,6 @@ Submodules
    mpf.plugins.auditor
    mpf.plugins.ball_save
    mpf.plugins.ball_search
-   mpf.plugins.info_display
    mpf.plugins.info_lights
    mpf.plugins.keyboard
    mpf.plugins.logic_blocks
