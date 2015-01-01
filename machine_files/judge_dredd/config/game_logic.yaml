@@ -1,0 +1,178 @@
+Game:
+    num_hits_for_valid_playfield: 2
+    Balls per game: 3
+    Max players per game: 4
+    Max extra balls stacked: unlimited
+    Max extra balls per game: unlimited
+    player_controlled_eject_tag: right_eject
+
+ShowPlayer:
+    machineflow_Attract_start:
+      - show: drop_target_sweep
+        repeat: yes
+        tocks_per_sec: 5
+      - show: chain_sweep
+        repeat: yes
+        tocks_per_sec: 8
+      - show: flipper_area_flash
+        repeat: yes
+        tocks_per_sec: 4
+      - show: lock_sweep
+        repeat: yes
+        tocks_per_sec: 5
+      - show: crime_sweep
+        repeat: yes
+        tocks_per_sec: 5
+      - show: perp_sweep
+        repeat: yes
+        tocks_per_sec: 3
+      - show: random_blinking
+        repeat: yes
+        tocks_per_sec: 4
+      - show: attract_display
+        repeat: yes
+        tocks_per_sec: 1
+
+    machineflow_Attract_stop:
+      - show: drop_target_sweep
+        action: stop
+      - show: chain_sweep
+        action: stop
+      - show: flipper_area_flash
+        action: stop
+      - show: lock_sweep
+        action: stop
+      - show: crime_sweep
+        action: stop
+      - show: perp_sweep
+        action: stop
+      - show: random_blinking
+        action: stop
+      - show: attract_display
+        action: stop
+
+Shots:
+    RightRamp:
+        Switch: rightRampExit
+    LeftRamp:
+        Type: Sequence
+        Switches: leftRampEnter, leftRampExit
+        Time: 3s
+    LeftOrbit:
+        Type: Sequence
+        Switches: leftRollover, topRightOpto
+        Time: 3s
+    WeakRightOrbit:
+        Type: Sequence
+        Switches: topRightOpto, topCenterRollover
+        Time: 3s
+    FullRightOrbit:
+        Type: Sequence
+        Switches: topRightOpto, leftRollover
+        Time: 3s
+    AirRaidRamp:
+        Switch: topRampExit
+    OrangeStandups:
+        Switch: threeBankTargets
+    Slingshot:
+        Switch: slingR, slingL
+    Inlane:
+        Switch: inlaneL, inlaneR, outerInlaneR
+    Outlane:
+        Switch: outlaneR, outlaneL
+    DropTarget:
+        Switch: dropTargetJ, dropTargetU, dropTargetD, dropTargetG, dropTargetE
+
+Scoring:
+    shot_RightRamp:
+        Score: 8000
+    shot_LeftRamp:
+        Score: 7000
+    shot_LeftOrbit:
+        Score: 6000
+    shot_WeakRightOrbit:
+        Score: 11000
+    shot_FullRightOrbit:
+        Score:  6500
+    shot_AirRaidRamp:
+        Score: 10000
+    shot_OrangeStandups:
+        Score: 2500
+    shot_Slingshot:
+        Score: 210
+    shot_Inlane:
+        Score: 1070
+    shot_Outlane:
+        Score: 930
+    shot_DropTarget:
+        Score: 1000
+    drop_targets_Judge_complete:
+        Score: 10000
+    standups_pf_standups_complete:
+        Score: 5000
+
+SoundPlayer:
+    pluger_lane_ball_start:
+        sound: intro_loop
+        start_events: ball_starting
+        stop_events: ball_live_added
+        duration:
+        loops: -1
+        priority:
+        fade_in: 0
+        fade_out: 0
+        channel: music
+        volume_offset: 0
+    ball_launch_motorcycle:
+        sound: ball_launch_motorcycle
+        start_events: balldevice_shooterLaneR_ball_eject_attempt
+    slingshot:
+        sound: slingshot
+        start_events: shot_Slingshot
+    main_loop:
+        sound: main_loop
+        start_events: player_eject_request
+        loops: -1
+        stop_events: ball_ending
+
+SlidePlayer:
+    score_change:
+      - type: Text
+        text: "%score"
+        number_grouping: true
+      - type: Text
+        text: (PLAYER) %number%
+        v_pos: bottom
+        h_pos: left
+        font: small
+      - type: Text
+        text: (BALL) %ball%
+        v_pos: bottom
+        h_pos: right
+        font: small
+    tilt_hit:
+        type: Text
+        text: WARNING
+    ball_live_added:
+        type: Text
+        text: LET'S GO!
+        time: 2s
+    ball_started:
+      - type: Text
+        text: "00"
+      - type: Text
+        text: (PLAYER) %player
+        v_pos: bottom
+        h_pos: left
+        font: small
+      - type: Text
+        text: (BALL) %ball
+        v_pos: bottom
+        h_pos: right
+        font: small
+        transition:
+            type: move_in
+            direction: top
+    balldevice_deadworld_ball_enter:
+        type: Text
+        text: "BALLS LOCKED: %balls"

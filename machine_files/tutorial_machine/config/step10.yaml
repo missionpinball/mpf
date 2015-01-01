@@ -1,0 +1,129 @@
+# Config file for Step 4 of our step-by-step tutorial.
+# https://missionpinball.com/docs/tutorial/
+
+# WARNING: This is for a Judge Dredd machine controlled by a P-ROC. Do not use
+# this file with your own hardware unless you change the coil and switch
+# numbers to match your actual hardware!
+
+Hardware:
+    Platform: p_roc
+    DriverBoards: wpc
+
+Game:
+    player_controlled_eject_tag: launch
+
+Switches:
+    leftFlipperButton:
+        number: SF4
+    rightFlipperButton:
+        number: SF6
+    trough1:
+        number: S81
+        type: NC
+    trough2:
+        number: S82
+        type: NC
+    trough3:
+        number: S83
+        type: NC
+    trough4:
+        number: S84
+        type: NC
+    trough5:
+        number: S85
+        type: NC
+    trough6:
+        number: S86
+        type: NC
+    troughJam:
+        number: S87
+        type: NC
+    plungerLane:
+        number: S41
+    start:
+        number: S13
+        tags: start
+    plungerLaunch:
+        number: S12
+        tags: launch
+
+Coils:
+    flipperLeftMain: 
+        number: FLLM
+        pulse_ms: 20
+    flipperLeftHold: 
+        number: FLLH
+    flipperRightMain: 
+        number: FLRM
+        pulse_ms: 20
+    flipperRightHold: 
+        number: FLRH
+    troughEject:
+        number: C13
+        pulse_ms: 20
+    plungerEject:
+        number: C08
+        pulse_ms: 20
+
+Flippers:
+    leftFlipper:
+        main_coil: flipperLeftMain
+        hold_coil: flipperLeftHold
+        activation_switch: leftFlipperButton
+    rightFlipper:
+        main_coil: flipperRightMain
+        hold_coil: flipperRightHold
+        activation_switch: rightFlipperButton
+
+Plugins:
+    - keyboard.Keyboard
+
+Keyboard:
+    z:
+        switch: leftFlipperButton
+    /:
+        switch: rightFlipperButton
+    1:
+        switch: trough1
+        toggle: true
+    2:
+        switch: trough2
+        toggle: true
+    3:
+        switch: trough3
+        toggle: true
+    4:
+        switch: trough4
+        toggle: true
+    5:
+        switch: trough5
+        toggle: true
+    6:
+        switch: trough6
+        toggle: true
+    p:
+        switch: plungerLane
+        toggle: true
+    s:
+        switch: start
+    L:
+        switch: plungerLaunch
+    
+
+BallDevices:
+    trough:
+        ball_switches: trough1, trough2, trough3, trough4, trough5, trough6, troughJam
+        entrance_count_delay: 300ms
+        eject_coil: troughEject
+        eject_switch: trough6
+        confirm_eject_type: device
+        target_device: plunger
+        tags: trough, home, drain
+    plunger:
+        ball_switches: plungerLane
+        entrance_count_delay: 300ms
+        exit_count_delay: 3s
+        eject_switch: plungerLane
+        eject_coil: plungerEject
+        confirm_eject_type: count
+        tags: ball_add_live

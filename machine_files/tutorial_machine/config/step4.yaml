@@ -1,0 +1,38 @@
+# Config file for Step 4 of our step-by-step tutorial.
+# https://missionpinball.com/docs/tutorial/
+
+# WARNING: This is for a Judge Dredd machine controlled by a P-ROC. Do not use
+# this file with your own hardware unless you change the coil and switch
+# numbers to match your actual hardware!
+
+Hardware:
+    Platform: p_roc
+    DriverBoards: wpc
+
+Switches:
+    leftFlipperButton:
+        number: SF4
+    rightFlipperButton:
+        number: SF6
+
+Coils:
+    flipperLeftMain: 
+        number: FLLM
+    flipperLeftHold: 
+        number: FLLH
+    flipperRightMain: 
+        number: FLRM
+    flipperRightHold: 
+        number: FLRH
+
+Flippers:
+    leftFlipper:
+        main_coil: flipperLeftMain
+        hold_coil: flipperLeftHold
+        activation_switch: leftFlipperButton
+        enable_events: machine_reset_phase_3
+    rightFlipper:
+        main_coil: flipperRightMain
+        hold_coil: flipperRightHold
+        activation_switch: rightFlipperButton
+        enable_events: machine_reset_phase_3

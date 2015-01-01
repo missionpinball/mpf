@@ -1,0 +1,10 @@
+BallSearch:
+    Secs until ball search start: 10
+    Secs between ball search rounds: 3
+    Secs between ball search coils: .15
+    Total search time: 20
+    If ball search fails: continue
+
+    Phase 1 secs: 10
+    Phase 2 secs: 10
+    Missing balls on startup: ignore # search, halt #todo

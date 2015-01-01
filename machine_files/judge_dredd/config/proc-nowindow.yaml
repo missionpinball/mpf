@@ -1,0 +1,5 @@
+Hardware:
+    Platform: p_roc
+
+Config:
+    - jd.yaml

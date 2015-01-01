@@ -1,0 +1,16 @@
+LanguageStrings:
+    French:
+        PRESS START: APPUYEZ SUR START
+        FREE PLAY: JEU GRATUIT
+        PLAYER: JOUEUR
+        BALL: BALLE
+    German:
+        PRESS START: START DRUEKEN
+        FREE PLAY: FREISPIEL
+        PLAYER: SPIELER
+        BALL: BALL
+
+Languages:
+    English
+    German
+    French
