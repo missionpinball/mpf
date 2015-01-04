@@ -17,7 +17,7 @@ Keyboard:
 
     z:
         switch: flipperLwL
-    /:
+    slash:
         switch: flipperLwR
     s:
         switch: start

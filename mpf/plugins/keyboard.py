@@ -157,7 +157,7 @@ class Keyboard(object):
             try:
                 # using "try" so it doesn't crash if there's an invalid key
                 key_code += str(eval("pygame.locals.K_" +
-                                               str(pygame_key)))
+                                               str(pygame_key).upper()))
             except:
                 self.log.warning("%s is not a valid Pygame key code. "
                                  "Skipping this entry", pygame_key)
