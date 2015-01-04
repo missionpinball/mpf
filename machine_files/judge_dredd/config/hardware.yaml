@@ -9,6 +9,9 @@ Machine:
     Min Balls: 1
     Max Balls: 6
 
+Hardware:
+    DriverBoards: wpc
+
 Switches:
     flipperLwR_EOS:
         number: SF1

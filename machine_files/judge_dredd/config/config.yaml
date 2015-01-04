@@ -1,7 +1,6 @@
 Scriptlets:
     attract.Attract
     deadworld.Deadworld
-    jd_game.JDGame
 
 Plugins:
     - shots.ShotController
