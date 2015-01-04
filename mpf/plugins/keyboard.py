@@ -1,5 +1,5 @@
 """MPF pluging which allows a computer keyboard to be used to activate switches
-for MPF Python games.
+and post events.
 
 """
 # keyboard.py
@@ -41,11 +41,8 @@ class Keyboard(object):
 
     This module uses a Pygame window to capture the key events.
 
-    Parameters
-    ----------
-
-    machine : :class:`MachineController`
-        A reference to the instance of the MachineController object.
+    Args:
+        machine: The main machine object.
 
     """
 
@@ -100,64 +97,72 @@ class Keyboard(object):
             key_code = ""
 
             # Process the key map entry
-            # convert to everything to uppercase
-            k = k.upper()
+            k = k.upper()  # convert to everything to uppercase
+            k = k.split('-')
 
-            # Check to see if there's a dash. That means we have a modifier key
-            if '-' in k:
-                # convert the key entry into a list
-                k = k.split('-')
+            # There are lots of different modifier key values, and they really
+            # vary depending on the platform. So rather than stripping out ones
+            # we don't need, we're going to only look for the ones we can use:
+            # SHIFT, ALT, CTRL, and META
 
-                # reverse the list order so the base key is always in pos 0
-                k.reverse()
+            mod_value = 0 # stores the added together value of the mod keys
 
-                # stores the added together value of the modifier keys
-                mod_value = 0
-                # loop through the modifier keys and add their values together
-                for i in range((len(k)-1)):
-                    # convert entry to pygame key code
-                    try:
-                        int(eval("pygame.locals.KMOD_" + k[i+1]))
-                    except:
-                        self.log.warning("Found an invalid keyboard modifier: "
-                                         "%s. Ignoring...", k[i+1])
-                # add the dash back in to separate mod value from the key code
+            # loop through the modifier keys and add their values together
+            for i in k[:-1]:
+                if i.upper() == 'SHIFT':
+                    mod_value += pygame.locals.KMOD_SHIFT
+
+                elif i.upper() == 'ALT':
+                    mod_value += pygame.locals.KMOD_ALT
+
+                elif i.upper() == 'CTRL':
+                    mod_value += pygame.locals.KMOD_CTRL
+
+                elif i.upper() == 'META':
+                    mod_value += pygame.locals.KMOD_META
+
+                else:
+                    self.log.warning("Found an invalid keyboard modifier: "
+                                     "%s. Ignoring...", i)
+
+            if mod_value:
                 key_code = str(mod_value) + "-"
 
-            # convert key entry from the config to a pygame key code.
-            # Lots of ifs here to catch all the options
+            # Convert key entry from the config to a pygame key code.
 
-            # if it's a single alpha character
-            if len(str(k[0])) == 1 and str(k[0]).isalpha():
-                pygame_key = str(k[0]).lower()
+            # If it's a single alpha character
+            if str(k[-1]).isalpha():
+                pygame_key = str(k[-1]).lower()
 
-            # if it's a single digit
-            elif len(str(k[0])) == 1 and str(k[0]).isdigit():
-                pygame_key = str(k[0])
+            # If it's a single digit
+            elif (k[-1]).isdigit():
+                pygame_key = str(k[-1])
 
-            # Other single character stuff for backwards compatibility
-            elif str(k[0]) == "/":
+            # Other single character stuff
+            elif str(k[-1]) == "/":
                 pygame_key = "SLASH"
-            elif str(k[0]) == ".":
+            elif str(k[-1]) == ".":
                 pygame_key = "PERIOD"
-            elif str(k[0]) == ",":
+            elif str(k[-1]) == ",":
                 pygame_key = "COMMA"
-            elif str(k[0]) == "-":
+            elif str(k[-1]) == "-":
                 pygame_key = "MINUS"
-            elif str(k[0]) == "=":
+            elif str(k[-1]) == "=":
                 pygame_key = "EQUALS"
-            elif str(k[0]) == ";":
+            elif str(k[-1]) == ";":
                 pygame_key = "SEMICOLON"
             else:  # Catch all to try anything else that's specified
-                pygame_key = str(k[0])
+                pygame_key = str(k[-1])
 
             try:
                 # using "try" so it doesn't crash if there's an invalid key
-                key_code = key_code + str(eval("pygame.locals.K_" +
+                key_code += str(eval("pygame.locals.K_" +
                                                str(pygame_key)))
             except:
                 self.log.warning("%s is not a valid Pygame key code. "
                                  "Skipping this entry", pygame_key)
+
+            # Now that we have the key code, what happens when it's pressed?
 
             if switch_name:  # We're processing a key entry for a switch
 
@@ -170,8 +175,8 @@ class Keyboard(object):
 
                 if invert:
                     self.inverted_keys.append(switch_name)
-                # Finally it's time to add the new pyglet code / switch number
-                # pair to the key map
+
+                # Add the new Pygane  code / switch number pair to the key map
                 self.add_key_map(str(key_code), switch_name, toggle_key,
                                  start_active, invert)
 
@@ -184,8 +189,26 @@ class Keyboard(object):
 
     def add_key_map(self, key, switch_name=None, toggle_key=False,
                     start_active=False, invert=False, event_dict=None):
-        """Maps the given *key* to *switch_name*, where *key* is one of the
-        key constants in :mod:`pygame.locals`."""
+        """Adds an entry to the key_map which is used to see what to do when
+        key events are received.
+
+        Args:
+            key: The built-up string of the key combination which optionally
+                includes modifier keys.
+            switch_name: String name of the switch this key combination is tied
+                to.
+            toggle_key: Boolean as to whether this key should be a toggle key.
+                (i.e. push on / push off).
+            start_active: Boolean as to whether this switch should start active.
+                This setting is ignored when a physical pinball machine is
+                connected. Default is False.
+            invert: Boolean as to whether this key combination should be
+                inverted. (Key down = switch inactive, key up = switch active.)
+                Default is False.
+            event_dict: Dictionary of events with parameters that will be posted
+                when this key combination is pressed. Default is None.
+
+        """
         # todo add event processing
         if isinstance(key, basestring):
             # deletes any random zeros that come through as modifiers
@@ -209,7 +232,8 @@ class Keyboard(object):
 
     def set_initial_states(self):
         """Sets the initial states of all the switches by activating switches
-        configured to start active.
+        configured to start active. This method does not work if a physical
+        pinball machine is attached. (Since that would be really confusing.)
 
         """
         # don't set the initial state if we have physical hw
@@ -224,32 +248,22 @@ class Keyboard(object):
                                                               state=1,
                                                               logical=True)
 
-    # capture key presses and add them to the event queue
     def process_key_press(self, symbol, modifiers):
+        """Processes a key press (key down) event by setting the switch and/or
+        posting the event to MPF.
+
+        Args:
+            symbol: The Pygame symbol of the key that was just pressed.
+            modifiers: The Pygame modifier value for any modifier keys that were
+                active along with this key event.
+        """
         if (symbol == pygame.locals.K_c and
                 modifiers & pygame.locals.KMOD_CTRL) or \
                 (symbol == pygame.locals.K_ESCAPE):
-            #self.append_exit_event()
             self.machine.done = True
 
         else:
-            key_press = str(symbol)
-            # if a modifier key was pressed along with the regular key,
-            # combine them in the way they're in the key_map
-
-            # First remove modifiers we want to ignore
-
-            if modifiers & pygame.locals.K_SCROLLOCK:
-                modifiers -= pygame.locals.K_SCROLLOCK
-
-            if modifiers & pygame.locals.K_NUMLOCK:
-                modifiers -= pygame.locals.K_NUMLOCK
-
-            if modifiers & pygame.locals.K_CAPSLOCK:
-                modifiers -= pygame.locals.K_CAPSLOCK
-
-            if modifiers:
-                key_press = str(modifiers) + "-" + key_press
+            key_press = self.get_key_press_string(symbol, modifiers)
 
             # check our built-up key_press string against the existing
             # key_map dictionary
@@ -284,17 +298,16 @@ class Keyboard(object):
                                                  **event_dict['params'])
 
     def process_key_release(self, symbol, modifiers):
-        # see the above process_key_press() method for comments on this method
-        key_press = str(symbol)
+        """Processes a key release (key up) event by setting the switch and/or
+        posting the event to MPF.
 
-        if modifiers & 8:  # '8' is the plyglet mod value for caps lock
-            modifiers -= 8  # so we just remove it.
+        Args:
+            symbol: The Pygame symbol of the key that was just released.
+            modifiers: The Pygame modifier value for any modifier keys that were
+                active along with this key event.
 
-        if modifiers & 16:  # Same for '16' which is for num lock
-            modifiers -= 16
-
-        if modifiers:
-            key_press = str(modifiers) + "-" + key_press
+        """
+        key_press = self.get_key_press_string(symbol, modifiers)
 
         # if our key is valid and not in the toggle_keys dictionary,
         # process the key up event
@@ -306,6 +319,39 @@ class Keyboard(object):
             elif type(self.key_map[key_press]) == str:
                 self.machine.switch_controller.process_switch(state=0,
                     name=self.key_map[key_press])
+
+    def get_key_press_string(self, symbol, modifiers):
+        """Converts a Pygame key symbol with modifiers into the string format
+        that MPF uses in its internal key map.
+
+        Args:
+            symbol: The Pygame symbol of the key.
+            modifiers: The Pygame modifier value for any modifier keys that were
+                active along with this key event.
+
+        Returns: A string in the proper format MPF uses.
+        """
+
+        key_press = str(symbol)
+
+        filtered_mod_keys = 0
+
+        if modifiers & pygame.locals.KMOD_SHIFT:
+            filtered_mod_keys += pygame.locals.KMOD_SHIFT
+
+        if modifiers & pygame.locals.KMOD_CTRL:
+            filtered_mod_keys += pygame.locals.KMOD_CTRL
+
+        if modifiers & pygame.locals.KMOD_ALT:
+            filtered_mod_keys += pygame.locals.KMOD_ALT
+
+        if modifiers & pygame.locals.KMOD_META:
+            filtered_mod_keys += pygame.locals.KMOD_META
+
+        if filtered_mod_keys:
+            key_press = str(filtered_mod_keys) + "-" + key_press
+
+        return key_press
 
 # The MIT License (MIT)
 

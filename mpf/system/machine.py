@@ -476,7 +476,7 @@ class MachineController(object):
                            " Pygame and try again.")
 
         if not self.pygame:
-            self.log.debug("Initializing Pygame")
+            self.log.debug("Initializing Pygame, version %s", pygame.version.ver)
             pygame.init()
             self.pygame = True
             self.events.post('pygame_initialized')
