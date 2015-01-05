@@ -78,6 +78,15 @@ class MachineController(object):
         # are complex and affect many devices and plugins, it's simpler across
         # the board to have it as a machine attribute.
 
+
+        # Get the Python version for the log
+        python_version = sys.version_info
+        self.log.info("Python version: %s.%s.%s", python_version[0],
+                      python_version[1], python_version[2])
+        self.log.info("Platform: %s", sys.platform)
+        self.log.info("Python executable location: %s", sys.executable)
+        self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
+
         # load the MPF config & machine defaults
         self.load_config_yaml(self.options['mpfconfigfile'])
 

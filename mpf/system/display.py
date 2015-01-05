@@ -173,8 +173,10 @@ class DisplayController(object):
 
     def _load_images(self):
         if 'Images' in self.machine.config:
-            for image in self.machine.config['Images']:
 
+            for image in self.machine.config['Images']:
+                self.log.debug("Loading image: %s",
+                               self.machine.config['Images'][image]['file'])
                 if 'alpha_color' in self.machine.config['Images'][image]:
                     alpha_color = (self.machine.config['Images'][image]
                                    ['alpha_color'])
@@ -1576,7 +1578,6 @@ class SlideBuilder(object):
                     if '%' + kw in settings['text']:
                         settings['text'] = settings['text'].replace(
                             '%' + kw, str(text_variables[kw]))
-
         element_type = settings.pop('type')
 
         element = slide.add_element(element_type, **settings)
