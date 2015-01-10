@@ -254,9 +254,9 @@ class HardwarePlatform(Platform):
             invert = False
 
         return PDBLED(board=int(config['number'][0]),
-                      address=[int(config['number'][0]),
-                               int(config['number'][1]),
-                               int(config['number'][2])],
+                      address=[int(config['number'][1]),
+                               int(config['number'][2]),
+                               int(config['number'][3])],
                       proc_driver=self.proc,
                       invert=invert)
 

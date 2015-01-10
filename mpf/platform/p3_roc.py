@@ -256,9 +256,9 @@ class HardwarePlatform(Platform):
             invert = False
 
         return PDBLED(board=int(config['number'][0]),
-                      address=[int(config['number'][0]),
-                               int(config['number'][1]),
-                               int(config['number'][2])],
+                      address=[int(config['number'][1]),
+                               int(config['number'][2]),
+                               int(config['number'][3])],
                       proc_driver=self.proc,
                       invert=invert)
 
@@ -558,8 +558,8 @@ class PDBLED(object):
             0-255 each.
         """
 
-        #self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
-        #               self.board, self.address, color)
+        self.log.info("Setting Color. Board: %s, Address: %s, Color: %s",
+                       self.board, self.address, color)
 
         self.proc.led_color(self.board, self.address[0],
                             self.normalize_color(color[0]))
