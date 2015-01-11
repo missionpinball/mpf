@@ -274,7 +274,7 @@ class Flipper(Device):
             pulse_ms=self.machine.coils[self.config['main_coil']].
                 config['pulse_ms'],
             pwm_on=self.machine.coils[self.config['main_coil']].config['pwm_on'],
-            pwm_off=self.machine.coils[self.config['main_coil']].config['pwm_on'],
+            pwm_off=self.machine.coils[self.config['main_coil']].config['pwm_off'],
             debounced=False)
 
         self.rules['c'] = True
