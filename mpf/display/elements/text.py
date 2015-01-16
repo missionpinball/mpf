@@ -50,7 +50,6 @@ class Text(DisplayElement):
         kwargs['color'] = self.adjusted_color
         kwargs['bg_color'] = self.adjusted_bg_color
 
-
         if 'number_grouping' in kwargs and kwargs['number_grouping']:
 
         # todo this only works for ints

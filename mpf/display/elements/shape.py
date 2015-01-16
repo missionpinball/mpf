@@ -98,7 +98,8 @@ class Shape(DisplayElement):
 
     def line(self, start_x, start_y, end_x, end_y, thickness):
 
-        self.create_element_surface(width, height)
+        self.create_element_surface(abs(start_x - end_x),
+                                    abs(start_y - end_y))
 
         pygame.draw.line(self.element_surface, self.adjusted_color,
                          (start_x, start_y), (end_x, end_y), thickness)

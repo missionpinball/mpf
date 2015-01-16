@@ -121,8 +121,7 @@ SoundPlayer:
         priority:
         fade_in: 0
         fade_out: 0
-        channel: music
-        volume_offset: 0
+        volume: 1
     ball_launch_motorcycle:
         sound: ball_launch_motorcycle
         start_events: balldevice_shooterLaneR_ball_eject_attempt
@@ -176,3 +175,6 @@ SlidePlayer:
     balldevice_deadworld_ball_enter:
         type: Text
         text: "BALLS LOCKED: %balls"
+    volume_change:
+        type: Text
+        text: "VOLUME: %display_volume"

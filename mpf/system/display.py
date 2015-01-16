@@ -85,7 +85,7 @@ class DisplayController(object):
                                         self._load_images)
         self.machine.events.add_handler('pygame_initialized',
                                         self._load_animations)
-        self.machine.events.add_handler('machine_init_phase1',
+        self.machine.events.add_handler('pygame_initialized',
                                         self._load_slidebuilder)
 
         self.machine.request_pygame()
@@ -118,6 +118,8 @@ class DisplayController(object):
 
         # Register for events
         self.machine.events.add_handler('action_show_slide', self.show_slide)
+
+        self.slidebuilder = SlideBuilder(self.machine)
 
     def _load_display_modules(self):
         # Load the display modules as specified in the config files
@@ -207,8 +209,6 @@ class DisplayController(object):
                     alpha_color)
 
     def _load_slidebuilder(self):
-
-        self.slidebuilder = SlideBuilder(self.machine)
 
         if 'SlidePlayer' in self.machine.config:
 
@@ -1561,6 +1561,7 @@ class SlideBuilder(object):
 
         # Process any text
         if 'text' in settings:
+            settings['text'] = str(settings['text'])
 
             # Are there any variables to replace on the fly?
             if '%' in settings['text']:

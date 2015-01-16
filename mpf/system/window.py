@@ -54,9 +54,6 @@ class WindowManager(MPFDisplay):
         else:
             self.config = dict()
 
-        self.registered_handlers = dict()
-        self.pygame_allowed_events = list()
-
         self.slides = dict()
         self.current_slide = None
 
@@ -107,27 +104,6 @@ class WindowManager(MPFDisplay):
             self.current_slide.add_element(
                 dmd_object=self.machine.display.hw_module, **this_element)
 
-    def register_handler(self, event, handler):
-        """Registers a method to be a handler for a certain type of Pygame
-        event.
-
-        Args:
-            event: A string of the Pygame event name you're registering this
-            handler for.
-            handler: A method that will be called when this Pygame event is
-            posted.
-        """
-        if event not in self.registered_handlers:
-            self.registered_handlers[event] = set()
-
-        self.registered_handlers[event].add(handler)
-        self.pygame_allowed_events.append(event)
-
-        self.log.debug("Adding Window event handler. Event:%s, Handler:%s",
-                       event, handler)
-
-        pygame.event.set_allowed(self.pygame_allowed_events)
-
     def _setup_window(self):
         # Sets up the Pygame window based on the settings in the config file.
 
@@ -151,16 +127,9 @@ class WindowManager(MPFDisplay):
         pygame.display.set_caption(self.config['title'])
 
     def update(self):
-        """Called from a timer based on this display's fps settings. Updates
-        the display and collects key and mouse events.
+        """Updates the display. Called from a timer based on this display's fps
+        settings.
         """
-
-        # Get key & mouse events
-        for event in pygame.event.get():
-            if event.type in self.registered_handlers:
-                for handler in self.registered_handlers[event.type]:
-                    handler(event.key, event.mod)
-                    # todo change above to kwargs?
 
         super(WindowManager, self).update()
 

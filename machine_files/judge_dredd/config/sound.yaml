@@ -1,20 +1,22 @@
-Sound:
-    channels:
+SoundSystem:
+    tracks:
         voice:
-            volume_offset: 0
+            volume: 1
             priority: 2
+            simultaneous_sounds: 1
+            preload: no
         sfx:
-            volume_offset: 0
+            volume: 1
             priority: 1
-            ducking: -5
-        music:
-            volume_offset: 0
-            priority: 0
-            ducking: -10
-            type: streaming
+            preload: no
+            simultaneous_sounds: 3
+    stream:
+        name: music
+        priority: 0
+        
 
-    buffer: 256
-    #bits: 16  # negative for signed
-    #frequency: 22050
-    initial_volume: 50
+    buffer: 512
+    frequency: 44100
+    channels: 1
+    initial_volume: 1
     volume_steps: 20

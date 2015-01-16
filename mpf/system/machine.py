@@ -73,6 +73,9 @@ class MachineController(object):
         self.plugins = []
         self.scriptlets = []
 
+        self.registered_pygame_handlers = dict()
+        self.pygame_allowed_events = list()
+
         self.tilted = False
         # Technically 'tilted' should be an attribute of game, but since tilts
         # are complex and affect many devices and plugins, it's simpler across
@@ -483,11 +486,17 @@ class MachineController(object):
         if not pygame:
             self.log.error("Pygame is needed but not available. Please install"
                            " Pygame and try again.")
+            quit()
 
         if not self.pygame:
             self.log.debug("Initializing Pygame, version %s", pygame.version.ver)
+
             pygame.init()
             self.pygame = True
+
+            self.events.add_handler('timer_tick', self.get_pygame_events,
+                                    priority=1000)
+
             self.events.post('pygame_initialized')
 
     def get_window(self):
@@ -505,6 +514,41 @@ class MachineController(object):
             self.window = self.window_manager.window
 
         return self.window
+
+    def register_pygame_handler(self, event, handler):
+        """Registers a method to be a handler for a certain type of Pygame
+        event.
+
+        Args:
+            event: A string of the Pygame event name you're registering this
+            handler for.
+            handler: A method that will be called when this Pygame event is
+            posted.
+        """
+        if event not in self.registered_pygame_handlers:
+            self.registered_pygame_handlers[event] = set()
+
+        self.registered_pygame_handlers[event].add(handler)
+        self.pygame_allowed_events.append(event)
+
+        self.log.debug("Adding Window event handler. Event:%s, Handler:%s",
+                       event, handler)
+
+        pygame.event.set_allowed(self.pygame_allowed_events)
+
+    def get_pygame_events(self):
+        """Gets (and dispatches) Pygame events. Automatically called every
+        machine loop via the timer_tick event.
+        """
+        for event in pygame.event.get():
+            if event.type in self.registered_pygame_handlers:
+                for handler in self.registered_pygame_handlers[event.type]:
+
+                    if (event.type == pygame.KEYDOWN or
+                            event.type == pygame.KEYUP):
+                        handler(event.key, event.mod)
+                    else:
+                        handler()
 
     def run(self):
         """The main machine run loop."""
@@ -535,12 +579,19 @@ class MachineController(object):
 
         secs_per_tick = timing.Timing.secs_per_tick
 
+        self.platform.next_tick_time = time.time()
+
         try:
             while self.done is False:
                 self.platform.hw_loop()
+
                 if self.platform.next_tick_time <= time.time():  # todo change this
                     self.timer_tick()
                     self.platform.next_tick_time += secs_per_tick
+                    #sleep = (self.platform.next_tick_time - time.time()) / 1000.0
+                    #if sleep > 0:
+                    #    print sleep
+                    #    time.sleep(sleep)
                     loops += 1
         except KeyboardInterrupt:
             pass

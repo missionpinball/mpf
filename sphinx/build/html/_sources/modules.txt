@@ -6,6 +6,4 @@
 
    mpf
    mpf
-   procswitchtest
-   test_blit
    version

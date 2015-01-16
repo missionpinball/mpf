@@ -64,10 +64,10 @@ class Keyboard(object):
                                         self.set_initial_states, 100)
 
         # register event handlers to get key actions from the Pygame window
-        self.machine.window_manager.register_handler(pygame.locals.KEYDOWN,
-                                                     self.process_key_press)
-        self.machine.window_manager.register_handler(pygame.locals.KEYUP,
-                                                     self.process_key_release)
+        self.machine.register_pygame_handler(pygame.locals.KEYDOWN,
+                                             self.process_key_press)
+        self.machine.register_pygame_handler(pygame.locals.KEYUP,
+                                             self.process_key_release)
 
         # Set up the key mappings
         self.log.debug("Setting up the keyboard mappings")

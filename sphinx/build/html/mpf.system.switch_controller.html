@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.1.2 documentation</title>
+    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.13 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1.2',
+        VERSION:     '0.13',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1.2 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.13 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -128,8 +128,19 @@ is in the state regardless of how long it&#8217;s been in that state.</p>
 
 <dl class="attribute">
 <dt id="mpf.system.switch_controller.SwitchController.log">
-<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x265e3b0&gt;</em></dt>
+<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x1647630&gt;</em></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.log_active_switches">
+<tt class="descname">log_active_switches</tt><big>(</big><big>)</big></dt>
+<dd><p>Writes out entries to the log file of all switches that are
+currently active.</p>
+<p>This is used to set the &#8220;initial&#8221; switch states of standalone testing
+tools, like our log file playback utility, but it might be useful in
+other scenarios when weird things are happening.</p>
+<p>This method dumps these events with logging level &#8220;INFO.&#8221;</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.switch_controller.SwitchController.ms_since_change">
@@ -231,7 +242,7 @@ last changed state.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

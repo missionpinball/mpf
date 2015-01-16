@@ -49,6 +49,9 @@ class SwitchController(object):
                                         1000)
                                         # priority 1000 so this fires first
 
+        self.machine.events.add_handler('machine_reset_phase_3',
+                                        self.log_active_switches)
+
     def initialize_hw_states(self):
         """Reads and processes the hardware states of the physical switches.
 
@@ -367,6 +370,26 @@ class SwitchController(object):
         entry_val = {'ms': ms, 'callback': callback, 'return_info': True}
         if entry_val in self.registered_switches[entry_key]:
             self.registered_switches[entry_key].remove(entry_val)
+
+    def log_active_switches(self):
+        """Writes out entries to the log file of all switches that are
+        currently active.
+
+        This is used to set the "initial" switch states of standalone testing
+        tools, like our log file playback utility, but it might be useful in
+        other scenarios when weird things are happening.
+
+        This method dumps these events with logging level "INFO."
+
+        """
+
+        self.log.info("Dumping current active switches")
+
+        for k, v in self.switches.iteritems():
+            if v['state']:
+                self.log.info("Active Switch|%s",k)
+
+
 
     def _post_switch_events(self, switch_name, state):
         """Posts the game events based on this switch changing state. """

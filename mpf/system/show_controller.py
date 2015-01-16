@@ -1025,6 +1025,7 @@ class Show(object):
         self.secs_per_tock = 1/float(tocks_per_sec)
 
     def _advance(self):
+
         # Internal method which advances the show to the next step
         if self.ending:
             self.machine.show_controller._end_show(self)

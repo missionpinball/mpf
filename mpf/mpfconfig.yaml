@@ -34,6 +34,7 @@ MPF:
         diverter.Diverter
         score_reel.ScoreReel
         score_reel.ScoreReelGroup
+        flasher.Flasher
     display_modules:
         elements:
             text.Text
@@ -163,7 +164,6 @@ DisplayDefaults:
         text_shade: 15
         background_shade: 0
         antialias: False
-        
 
 Fonts:
     default:
@@ -196,3 +196,7 @@ Fonts:
     tall title:
        file: big_noodle_titling.ttf
        size: 20
+
+TextStrings:
+    volume_zero: OFF
+    volume_max: MAX

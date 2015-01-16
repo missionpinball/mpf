@@ -2,22 +2,10 @@
 # https://missionpinball.com/docs/configuration-file-reference/
 
 Keyboard:
-    
-# key is which key on the keyboard
-# key options include modifiers plus a dash, like:
-# shift-x
-# ctrl-x
-# shift-ctrl-x
-
-# options are key/value pairs
-# switch - the name of the switch device in your game
-# event - the name of the event in the framework which will fire
-# toggle - True/False - turns this into a "push on, push off" switch
-# invert - inverts the key, so key down is inactive and key up is active
 
     z:
         switch: flipperLwL
-    slash:
+    /:
         switch: flipperLwR
     s:
         switch: start
@@ -70,3 +58,11 @@ Keyboard:
 
     x:
         switch: slingL
+    up:
+        event: action_set_volume
+        params:
+            change: .05
+    down:
+        event: action_set_volume
+        params:
+            change: "-.05"

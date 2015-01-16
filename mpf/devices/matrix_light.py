@@ -59,8 +59,6 @@ class MatrixLight(Device):
         if 'y' in config:
             self.y = config['y']
 
-
-
         # register for action events
         self.machine.events.add_handler('action_light_' + self.name + '_on',
                                         self.on)
@@ -69,6 +67,25 @@ class MatrixLight(Device):
 
     def on(self, brightness=255, fade_ms=0, start_brightness=None,
            priority=0, cache=True, force=False):
+        """Turns on this matrix light.
+
+        Args:
+            brightness: How bright this light should be, as an int between 0
+                and 255. 0 is off. 255 is full on. Note that intermediary
+                values are not yet implemented, so 0 is off, anything from
+                1-255 is full on.
+            fade_ms: Not yet implemented
+            start_brightness: Not yet implemented.
+            priority: The priority of the incoming request. If this priority is
+                lower than the current cached priority, this on command will
+                have no effect. (Unless force=True)
+            cache: Boolean as to whether this light should cache these new
+                settings. This cache can be used for the light to "go back" to
+                it's previous state. Default is True.
+            force: Whether the light should be forced to go to the new state,
+                regardless of the incoming and current priority. Default is
+                False.
+        """
 
         # First, if this incoming command is at a lower priority than what the
         # light is doing now, we don't proceed
@@ -96,6 +113,20 @@ class MatrixLight(Device):
     def off(self, fade_ms=0, priority=0, cache=True, force=False):
         self.on(brightness=0, fade_ms=fade_ms, priority=priority, cache=cache,
                 force=force)
+        """Turns this light off.
+
+        Args:
+            fade_ms: Not yet implemented
+            priority: The priority of the incoming request. If this priority is
+                lower than the current cached priority, this on command will
+                have no effect. (Unless force=True)
+            cache: Boolean as to whether this light should cache these new
+                settings. This cache can be used for the light to "go back" to
+                it's previous state. Default is True.
+            force: Whether the light should be forced to go to the new state,
+                regardless of the incoming and current priority. Default is
+                False.
+        """
 
     def add_handler(self, callback):
         """Registers a handler to be called when this light changes state."""

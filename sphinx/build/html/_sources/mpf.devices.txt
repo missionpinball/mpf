@@ -11,6 +11,7 @@ Submodules
    mpf.devices.diverter
    mpf.devices.driver
    mpf.devices.drop_target
+   mpf.devices.flasher
    mpf.devices.flipper
    mpf.devices.gi
    mpf.devices.led

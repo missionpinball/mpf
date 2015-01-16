@@ -77,6 +77,11 @@ class Game(MachineMode):
         self.registered_event_handlers.append(
             self.machine.events.add_handler('sw_start',
                                             self.request_player_add))
+
+        self.registered_event_handlers.append(
+            self.machine.events.add_handler('game_started',
+                                            self.player_turn_start))
+
         self.registered_event_handlers.append(
             self.machine.events.add_handler('ball_ended',
                                             self.ball_ended))
@@ -144,7 +149,6 @@ class Game(MachineMode):
         # it here.
           # if this fails we're in limbo.
         self.machine.events.post('game_started')
-        self.player_turn_start()
 
     def player_add_success(self, player, **kwargs):
         """Called when a new player is successfully added to the current game

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.machine module &mdash; Mission Pinball Framework 0.1.2 documentation</title>
+    <title>mpf.system.machine module &mdash; Mission Pinball Framework 0.13 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1.2',
+        VERSION:     '0.13',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.1.2 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.13 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -194,6 +194,13 @@ mode.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.system.machine.MachineController.get_pygame_events">
+<tt class="descname">get_pygame_events</tt><big>(</big><big>)</big></dt>
+<dd><p>Gets (and dispatches) Pygame events. Automatically called every
+machine loop via the timer_tick event.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="mpf.system.machine.MachineController.get_window">
 <tt class="descname">get_window</tt><big>(</big><big>)</big></dt>
 <dd><p>Returns a reference to the onscreen display window.</p>
@@ -227,6 +234,25 @@ file directly (including any path that&#8217;s there). If that
 doesn&#8217;t work, it will try to open the file using the last path
 that worked. (This path is stored in
 <cite>self.config[&#8216;Config_path&#8217;]</cite>.)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine.MachineController.register_pygame_handler">
+<tt class="descname">register_pygame_handler</tt><big>(</big><em>event</em>, <em>handler</em><big>)</big></dt>
+<dd><p>Registers a method to be a handler for a certain type of Pygame
+event.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> &#8211; A string of the Pygame event name you&#8217;re registering this</li>
+<li><strong>handler</strong> &#8211; A method that will be called when this Pygame event is</li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -360,7 +386,7 @@ spaces in the string.</td>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.1.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

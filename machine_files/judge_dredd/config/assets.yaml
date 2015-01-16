@@ -15,15 +15,23 @@ Animations:
         alpha_color: 15
 
 Sounds:
-    intro_loop:
-        channel: music
-        volume_offset: 0
-        file: waiting to plunge loop.ogg
-        preload: True
-    slingshot:
-        channel: sfx
-        file: slingshot.ogg
-    ball_launch_motorcycle:
-        file: ball launch motorcycle.ogg
-    main_loop:
-        file: main song loop.ogg
+    music:
+        intro_loop:
+            volume: 1
+            file: waiting to plunge loop.ogg
+            preload: True
+    
+    sfx:
+        slingshot:
+            file: slingshot.ogg
+            priority: 0
+            max_queue_time: 100ms
+            preload: yes
+        ball_launch_motorcycle:
+            file: ball launch motorcycle.ogg
+        main_loop:
+            file: main song loop.ogg
+    
+    voice:
+        
+

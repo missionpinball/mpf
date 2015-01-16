@@ -177,7 +177,6 @@ class Diverter(Device):
                                             '_disabling',
                                             self.disable, auto=True)
 
-
     def disable_auto_activation(self):
         """Disables the auto-activation of this diverter"""
 

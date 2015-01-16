@@ -13,13 +13,6 @@ Subpackages
     mpf.plugins
     mpf.system
 
-Submodules
-----------
-
-.. toctree::
-
-   mpf.fasttest
-
 Module contents
 ---------------
 

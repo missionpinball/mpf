@@ -598,7 +598,7 @@ class BallDevice(Device):
 
     def _cancel_request_ball(self):
         self.machine.events.post('balldevice_' + self.name +
-                                 'cancel_ball_request')
+                                 '_cancel_ball_request')
 
     def _target_requests_ball(self, balls):
         # This device's target device just requested a ball

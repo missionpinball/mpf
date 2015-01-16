@@ -8,17 +8,20 @@ class Deadworld(Scriptlet):
     def on_load(self):
         self.machine.events.add_handler('machineflow_Game_start', self.start)
         self.machine.events.add_handler('machineflow_Game_stop', self.stop)
-        self.machine.events.add_handler('ball_ending', self.disable_lock)
-        self.machine.events.add_handler('balldevice_deadworld_ball_enter',
-                                        self.ball_locked)
+
 
     def start(self):
         self.log.debug("Starting Deadworld")
         self.machine.events.add_handler('shot_LeftRamp', self.enable_lock)
+        self.machine.events.add_handler('ball_ending', self.disable_lock)
+        self.machine.events.add_handler('balldevice_deadworld_ball_enter',
+                                        self.ball_locked)
 
     def stop(self):
         self.log.debug("Stopping Deadworld")
         self.machine.events.remove_handler(self.enable_lock)
+        self.machine.events.remove_handler(self.disable_lock)
+        self.machine.events.remove_handler(self.ball_locked)
         self.stop_globe()
 
     def enable_lock(self):
@@ -40,4 +43,3 @@ class Deadworld(Scriptlet):
 
     def stop_globe(self):
         self.machine.coils.globeMotor.disable()
-

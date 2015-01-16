@@ -1,5 +1,5 @@
 """ Contains the LED parent classes. """
-# leds.py
+# led.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -119,6 +119,10 @@ class LED(Device):
                 If the priority is negative, it will force this color to be
                 applied now
         """
+
+        #self.log.info('Color: %s Fade: %s BC: %s P: %s, Cache: %s. Force: %s',
+        #              color, fade_ms, brightness_compensation, priority, cache,
+        #              force)
 
         # If the incoming priority is lower that what this LED is at currently
         # ignore this request.

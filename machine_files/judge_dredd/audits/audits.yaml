@@ -3,7 +3,7 @@ Events:
   ball_search_begin_phase1: 6
   ball_started: 1
   game_ended: 105
-  game_started: 448
+  game_started: 475
   machine_init_phase_1: 0
   machine_reset: 29
 Player:
@@ -22,19 +22,19 @@ Player:
     - 36980
     total: 95
 Shots:
-  AirRaidRamp: 3
-  DropTarget: 280
+  AirRaidRamp: 4
+  DropTarget: 286
   FullRightOrbit: 14
-  Inlane: 236
+  Inlane: 242
   LeftOrbit: 39
-  LeftRamp: 29
-  OrangeStandups: 47
-  Outlane: 38
-  RightRamp: 18
-  Slingshot: 400
+  LeftRamp: 31
+  OrangeStandups: 49
+  Outlane: 39
+  RightRamp: 19
+  Slingshot: 404
   WeakRightOrbit: 12
 Switches:
-  ShooterLaneL: 34
+  ShooterLaneL: 35
   alwaysClosed: 0
   buyIn: 0
   captiveBall1: 36
@@ -49,59 +49,59 @@ Switches:
   craneRelease: 0
   down: 0
   dropTargetD: 15
-  dropTargetE: 98
+  dropTargetE: 99
   dropTargetG: 87
-  dropTargetJ: 85
-  dropTargetU: 90
+  dropTargetJ: 88
+  dropTargetU: 92
   enter: 98
   esc: 80
   fireL: 14
-  fireR: 251
-  flipperLwL: 975
-  flipperLwL_EOS: 936
-  flipperLwR: 1140
-  flipperLwR_EOS: 1134
-  flipperUpL: 907
-  flipperUpL_EOS: 907
-  flipperUpR: 1154
-  flipperUpR_EOS: 1150
-  globePosition1: 318
-  globePosition2: 317
-  inlaneL: 129
-  inlaneR: 94
-  leftRampEnter: 78
-  leftRampExit: 33
-  leftRampToLock: 15
-  leftRollover: 329
+  fireR: 253
+  flipperLwL: 992
+  flipperLwL_EOS: 953
+  flipperLwR: 1161
+  flipperLwR_EOS: 1155
+  flipperUpL: 925
+  flipperUpL_EOS: 925
+  flipperUpR: 1176
+  flipperUpR_EOS: 1172
+  globePosition1: 326
+  globePosition2: 325
+  inlaneL: 132
+  inlaneR: 96
+  leftRampEnter: 82
+  leftRampExit: 35
+  leftRampToLock: 17
+  leftRollover: 333
   leftScorePost: 96
   magnetOverRing: 0
   mystery: 21
-  outerInlaneR: 70
-  outlaneL: 41
+  outerInlaneR: 71
+  outlaneL: 42
   outlaneR: 11
   plumbBob: 9
   popperL: 85
-  popperR: 42
-  rightRampExit: 25
-  rightTopPost: 70
-  shooterR: 293
+  popperR: 44
+  rightRampExit: 26
+  rightTopPost: 72
+  shooterR: 297
   slamTilt: 0
-  slingL: 315
-  slingR: 193
+  slingL: 317
+  slingR: 195
   start: 49
   subwayEnter1: 30
   subwayEnter2: 30
   superGame: 0
-  threeBankTargets: 58
+  threeBankTargets: 60
   ticketDispenser: 0
   topCenterRollover: 37
-  topRampExit: 6
+  topRampExit: 7
   topRightOpto: 89
-  trough1: 326
-  trough2: 280
-  trough3: 285
-  trough4: 287
-  trough5: 287
-  trough6: 267
-  troughJam: 267
+  trough1: 328
+  trough2: 282
+  trough3: 288
+  trough4: 291
+  trough5: 291
+  trough6: 271
+  troughJam: 271
   up: 0

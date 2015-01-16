@@ -18,7 +18,7 @@
     layer: 1
     repeat: True
   - type: Text
-    text: TEXT OVER ANIMATION
+    text: 2
     color: 0000ff
     layer: 2
     shade: 0
