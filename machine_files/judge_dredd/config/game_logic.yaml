@@ -158,16 +158,11 @@ SlidePlayer:
         time: 2s
     ball_started:
       - type: Text
-        text: "00"
-      - type: Text
         text: (PLAYER) %player
-        v_pos: bottom
-        h_pos: left
-        font: small
       - type: Text
         text: (BALL) %ball
         v_pos: bottom
-        h_pos: right
+        h_pos: center
         font: small
         transition:
             type: move_in
