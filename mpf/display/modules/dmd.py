@@ -299,7 +299,6 @@ class DMD(MPFDisplay):
             print "The physical setting here needs to be 'No' in this case."
             quit()
 
-
     def _initialize(self):
         # Internal method which initialized the DMD. This is separate from
         # __init__ because we have to wait until Pygame has been initialized

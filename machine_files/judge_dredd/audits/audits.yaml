@@ -2,37 +2,37 @@ Events:
   ball_search_begin: 0
   ball_search_begin_phase1: 6
   ball_started: 1
-  game_ended: 105
-  game_started: 475
+  game_ended: 108
+  game_started: 482
   machine_init_phase_1: 0
   machine_reset: 29
 Player:
   score:
-    average: 13142
+    average: 14029
     top:
     - 71130
     - 60320
     - 59840
+    - 56050
     - 52240
+    - 51540
     - 50190
     - 47490
     - 44750
     - 41390
-    - 39350
-    - 36980
-    total: 95
+    total: 98
 Shots:
   AirRaidRamp: 4
-  DropTarget: 286
-  FullRightOrbit: 14
-  Inlane: 242
-  LeftOrbit: 39
-  LeftRamp: 31
-  OrangeStandups: 49
-  Outlane: 39
-  RightRamp: 19
-  Slingshot: 404
-  WeakRightOrbit: 12
+  DropTarget: 304
+  FullRightOrbit: 17
+  Inlane: 253
+  LeftOrbit: 44
+  LeftRamp: 33
+  OrangeStandups: 54
+  Outlane: 42
+  RightRamp: 20
+  Slingshot: 422
+  WeakRightOrbit: 15
 Switches:
   ShooterLaneL: 35
   alwaysClosed: 0
@@ -40,7 +40,7 @@ Switches:
   captiveBall1: 36
   captiveBall2: 20
   captiveBall3: 2
-  centerRampExit: 34
+  centerRampExit: 35
   coin1: 0
   coin2: 0
   coin3: 0
@@ -49,59 +49,59 @@ Switches:
   craneRelease: 0
   down: 0
   dropTargetD: 15
-  dropTargetE: 99
-  dropTargetG: 87
-  dropTargetJ: 88
-  dropTargetU: 92
+  dropTargetE: 104
+  dropTargetG: 90
+  dropTargetJ: 93
+  dropTargetU: 97
   enter: 98
   esc: 80
   fireL: 14
-  fireR: 253
-  flipperLwL: 992
-  flipperLwL_EOS: 953
-  flipperLwR: 1161
-  flipperLwR_EOS: 1155
-  flipperUpL: 925
-  flipperUpL_EOS: 925
-  flipperUpR: 1176
-  flipperUpR_EOS: 1172
-  globePosition1: 326
-  globePosition2: 325
-  inlaneL: 132
-  inlaneR: 96
-  leftRampEnter: 82
-  leftRampExit: 35
-  leftRampToLock: 17
-  leftRollover: 333
-  leftScorePost: 96
+  fireR: 263
+  flipperLwL: 1054
+  flipperLwL_EOS: 1015
+  flipperLwR: 1234
+  flipperLwR_EOS: 1227
+  flipperUpL: 985
+  flipperUpL_EOS: 985
+  flipperUpR: 1248
+  flipperUpR_EOS: 1244
+  globePosition1: 345
+  globePosition2: 344
+  inlaneL: 137
+  inlaneR: 100
+  leftRampEnter: 87
+  leftRampExit: 37
+  leftRampToLock: 18
+  leftRollover: 352
+  leftScorePost: 101
   magnetOverRing: 0
   mystery: 21
-  outerInlaneR: 71
-  outlaneL: 42
-  outlaneR: 11
+  outerInlaneR: 73
+  outlaneL: 44
+  outlaneR: 12
   plumbBob: 9
   popperL: 85
-  popperR: 44
-  rightRampExit: 26
-  rightTopPost: 72
-  shooterR: 297
+  popperR: 45
+  rightRampExit: 27
+  rightTopPost: 74
+  shooterR: 308
   slamTilt: 0
-  slingL: 317
-  slingR: 195
+  slingL: 327
+  slingR: 203
   start: 49
   subwayEnter1: 30
   subwayEnter2: 30
   superGame: 0
-  threeBankTargets: 60
+  threeBankTargets: 65
   ticketDispenser: 0
-  topCenterRollover: 37
+  topCenterRollover: 42
   topRampExit: 7
-  topRightOpto: 89
-  trough1: 328
-  trough2: 282
-  trough3: 288
-  trough4: 291
-  trough5: 291
-  trough6: 271
-  troughJam: 271
+  topRightOpto: 97
+  trough1: 339
+  trough2: 293
+  trough3: 299
+  trough4: 302
+  trough5: 302
+  trough6: 282
+  troughJam: 282
   up: 0

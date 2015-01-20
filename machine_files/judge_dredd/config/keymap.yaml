@@ -41,9 +41,6 @@ Keyboard:
     8:
         switch: fireR
 
-    q:
-        event: machine_reset
-
     t:
         switch: threeBankTargets
 

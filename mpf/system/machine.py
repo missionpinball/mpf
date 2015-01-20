@@ -593,6 +593,7 @@ class MachineController(object):
                     #    print sleep
                     #    time.sleep(sleep)
                     loops += 1
+
         except KeyboardInterrupt:
             pass
 

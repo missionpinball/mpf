@@ -1585,8 +1585,6 @@ class SlideBuilder(object):
 
         if 'decorators' in settings:
 
-
-
             if type(settings['decorators']) is dict:  # We have settings
 
                 decorator_class = eval('mpf.display.decorators.' +

@@ -20,6 +20,8 @@ Sounds:
             volume: 1
             file: waiting to plunge loop.ogg
             preload: True
+        main_loop:
+            file: main song loop.ogg
     
     sfx:
         slingshot:
@@ -29,9 +31,7 @@ Sounds:
             preload: yes
         ball_launch_motorcycle:
             file: ball launch motorcycle.ogg
-        main_loop:
-            file: main song loop.ogg
-    
+
     voice:
         
 

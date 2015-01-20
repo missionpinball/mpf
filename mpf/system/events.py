@@ -220,7 +220,6 @@ class EventManager(object):
                 kwargs['queue'] = queue
 
             for handler in self.registered_handlers[event][:]:
-
                 # use slice above so we don't process new handlers that came
                 # in while we were processing previous handlers
 
@@ -238,7 +237,7 @@ class EventManager(object):
                 result = handler[0](**merged_kwargs)
 
                 # If whatever handler we called returns False, we stop
-                # processing the remaining handlers for bool or queue events
+                # processing the remaining handlers for boolean or queue events
                 if (ev_type == 'boolean' or ev_type == 'queue') and \
                         result is False:
 
@@ -250,8 +249,8 @@ class EventManager(object):
 
                     break
 
-                elif ev_type == 'relay':
-                    kwargs = result
+                elif ev_type == 'relay' and type(result) is dict:
+                    kwargs.update(result)
 
             self.current_event = None
             self.busy = False

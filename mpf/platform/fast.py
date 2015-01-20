@@ -393,6 +393,9 @@ class HardwarePlatform(Platform):
                 self.machine.switch_controller.process_switch(state=0,
                     num=(fastpinball.fpGetEventSwitchID(fast_events), 1))
 
+            #if num_loops % 60 == 0:
+            #        print num_loops / (time.time() - loop_start_time)
+
         else:
             if num_loops != 0:
                 self.log.info("Hardware loop speed: %sHz",

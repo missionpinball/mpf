@@ -830,11 +830,12 @@ class Show(object):
                         elif len(value) > 4:
                             value = value[0:4]
 
+                    fade=0
+
                     if type(value) is str:
                         if '-f' in value:
                             fade = value.split('-f')
-                        else:
-                            fade = 0
+
 
                     # convert our color of hexes to a list of ints
                     value = ShowController.hexstring_to_list(value)
