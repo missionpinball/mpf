@@ -41,11 +41,13 @@ class Target(Device):
         if 'light' not in self.config:
             self.config['light'] = None
 
-        elif self.config['light'] in self.machine.lights:
+        elif (hasattr(self.machine, 'lights') and
+              self.config['light'] in self.machine.lights):
             self.log.debug("Configuring with light: %s", self.config['light'])
             self.config['light'] = self.machine.lights[self.config['light']]
 
-        elif self.config['light'] in self.machine.leds:
+        elif (hasattr(self.machine, 'leds') and
+              self.config['light'] in self.machine.leds):
             self.log.debug("Configuring with LED: %s", self.config['light'])
             self.config['light'] = self.machine.leds[self.config['light']]
 
