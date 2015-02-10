@@ -1,4 +1,4 @@
-# Config file for Step 4 of our step-by-step tutorial.
+# Config file for Step 9 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
 
 # WARNING: This is for a Judge Dredd machine controlled by a P-ROC. Do not use
@@ -46,6 +46,9 @@ Switches:
     plungerLaunch:
         number: S12
         tags: launch
+    leftRollover:
+        number: S33
+        tags: playfield_active
 
 Coils:
     flipperLeftMain: 
@@ -110,6 +113,8 @@ Keyboard:
         switch: start
     L:
         switch: plungerLaunch
+    q:
+        switch: leftRollover
     
 
 BallDevices:
@@ -117,15 +122,13 @@ BallDevices:
         ball_switches: trough1, trough2, trough3, trough4, trough5, trough6, troughJam
         entrance_count_delay: 300ms
         eject_coil: troughEject
-        eject_switch: trough6
-        confirm_eject_type: device
-        target_device: plunger
+        confirm_eject_type: target
+        eject_targets: plunger
         tags: trough, home, drain
     plunger:
         ball_switches: plungerLane
         entrance_count_delay: 300ms
         exit_count_delay: 3s
-        eject_switch: plungerLane
         eject_coil: plungerEject
         confirm_eject_type: count
         tags: ball_add_live

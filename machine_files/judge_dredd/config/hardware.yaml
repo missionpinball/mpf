@@ -63,13 +63,13 @@ Switches:
         number: S15
     outlaneL:
         number: S16
-        tags: ballLive
+        tags: playfield_active
     inlaneL:
         number: S17
-        tags: ballLive
+        tags: playfield_active
     threeBankTargets:
         number: S18
-        tags: ballLive
+        tags: playfield_active
     slamTilt:
         number: S21
         tags: slamTilt
@@ -81,13 +81,13 @@ Switches:
         number: S24
     rightTopPost:
         number: S25
-        tags: ballLive
+        tags: playfield_active
     captiveBall1:
         number: S26
-        tags: ballLive
+        tags: playfield_active
     mystery:
         number: S27
-        tags: ballLive
+        tags: playfield_active
 #    ballOnMagnet:
 #        number: S28
     buyIn:
@@ -97,60 +97,60 @@ Switches:
  #       type: 'NC'
     leftRollover:
         number: S33
-        tags: ballLive
+        tags: playfield_active
     inlaneR:
         number: S34
-        tags: ballLive
+        tags: playfield_active
     topCenterRollover:
         number: S35
-        tags: ballLive
+        tags: playfield_active
     leftScorePost:
         number: S36
-        tags: ballLive
+        tags: playfield_active
     subwayEnter1:
         number: S37
-        tags: ballLive
+        tags: playfield_active
     subwayEnter2:
         number: S38
     shooterR:
         number: S41
     outlaneR:
         number: S42
-        tags: ballLive
+        tags: playfield_active
     outerInlaneR:
         number: S43
-        tags: ballLive
+        tags: playfield_active
     superGame:
         number: S44
     slingL: 
         number: S51
-        tags: ballLive, sling
+        tags: playfield_active, sling
     slingR: 
         number: S52
-        tags: ballLive, sling
+        tags: playfield_active, sling
     captiveBall2:
         number: S53
-        tags: ballLive
+        tags: playfield_active
     dropTargetJ:
         number: S54
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     dropTargetU:
         number: S55
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     dropTargetD:
         number: S56
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     dropTargetG:
         number: S57
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     dropTargetE:
         number: S58
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     globePosition1: 
         number: S61
         type: 'NO' # Manual says NC
@@ -160,45 +160,45 @@ Switches:
     leftRampToLock:
         number: S63
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     leftRampExit:
         number: S64
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     centerRampExit:
         number: S66
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     leftRampEnter:
         number: S67
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     captiveBall3:
         number: S68
-        tags: ballLive
+        tags: playfield_active
     magnetOverRing:
         number: S71
         type: 'NO' # Manual says NC
     topRightOpto:
         number: S72
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     popperL:
         number: S73
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     popperR:
         number: S74
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     topRampExit:
         number: S75
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     rightRampExit:
         number: S76
         type: 'NC'
-        tags: ballLive
+        tags: playfield_active
     globePosition2:
         number: S77
         type: 'NO' # Manual says NC
@@ -629,18 +629,14 @@ DropTargetBanks:
 
 Diverters:
     deadWorld:
-        coil: diverter
+        activation_coil: diverter
         type: hold
-        timeout: 3s
-        activation_switch: leftRampEnter
+        activation_time: 3s
+        activation_switches: leftRampEnter
         enable_events: shot_LeftRamp
         disable_events: ball_ending
-        disable_switch: leftRampToLock
-        target_when_active:
-            type: ball_device
-            name: deadworld
-        auto_activate: true
-        
+        deactivation_switches: leftRampToLock
+        targets_when_active: deadworld
 
 BallDevices:
 
@@ -648,13 +644,12 @@ BallDevices:
         tags: trough, home, drain
         label: Main Trough
         ball_switches: trough1, trough2, trough3, trough4, trough5, trough6, troughJam
-        ball_capacity: 6
         entrance_count_delay: 0.5s
         eject_coil: trough
         eject_switch: trough6
-        exit_count_delay: 2s
-        confirm_eject_type: device
-        target_device: shooterLaneR
+        confirm_eject_type: target
+        eject_targets: shooterLaneR
+        jam_switch: troughJam
 
     shooterLaneR:
         tags: ball_add_live

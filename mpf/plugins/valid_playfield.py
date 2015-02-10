@@ -41,7 +41,7 @@ class ValidPlayfield(object):
         """Sets up the valid playfield checking."""
 
         self.hits_so_far = 0
-        self.machine.events.add_handler("sw_ballLive",
+        self.machine.events.add_handler("sw_playfield_active",
                                         self.live_hit)
         # Watch for a ball drain event so we can intercept it
         self.machine.events.add_handler("ball_drain",
@@ -73,8 +73,7 @@ class ValidPlayfield(object):
         # have to get a new ball launched. So we're going to stealth & auto
         # add new ball(s) into play.
 
-        self.machine.events.post('ball_add_live_request', balls=balls,
-                                 stealth=True, auto=True)
+        self.machine.playfield.add_ball()
         # Todo should we specify the device here?
 
         # Since the playfield is not valid, we 'take' all the balls here so
@@ -96,8 +95,8 @@ class ValidPlayfield(object):
         # todo add this into ball ending
 
         self.log.debug("Removing the valid playfield checking")
-        self.machine.events.remove("sw_ballLive", self.live_hit)
-        self.machine.events.remove("sw_ballLive", self.drain)
+        self.machine.events.remove("sw_playfield_active", self.live_hit)
+        self.machine.events.remove("sw_playfield_active", self.drain)
 
 # The MIT License (MIT)
 

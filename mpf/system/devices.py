@@ -19,7 +19,7 @@ class Device(object):
     def __init__(self, machine, name, config=None, collection=-1):
         self.machine = machine
         self.name = name
-        self.tags = []
+        self.tags = list()
         self.label = None
         self.config = defaultdict(lambda: None, config)
 
@@ -183,7 +183,7 @@ class DeviceCollection(dict):
             elif type(attr) == int:
                 self.number(number=attr)
         except KeyError:
-            raise KeyError('Error: No hardware device defined for:', attr)
+            raise KeyError('Error: No device exists with the name:', attr)
 
         # todo there's something that's not working here that I need to figure
         # out. An example like this will fail:
@@ -196,6 +196,9 @@ class DeviceCollection(dict):
     def __iter__(self):
         for item in self.itervalues():
             yield item
+
+        # todo add an exception here if this isn't found?
+
 
     def items_tagged(self, tag):
         """Returns of list of device objects which have a certain tag.

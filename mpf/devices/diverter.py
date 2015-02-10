@@ -27,33 +27,85 @@ class Diverter(Device):
 
         self.delay = DelayManager()
 
+        # Attributes
+        self.active = False
+        self.enabled = False
+        #self.remaining_activations = -1
+
         # configure defaults:
         if 'type' not in self.config:
             self.config['type'] = 'pulse'  # default to pulse to not fry coils
-        if 'timeout' not in self.config:
-            self.config['timeout'] = 0
-        if 'auto_activate' not in self.config:
-            self.config['auto_activate'] = True
-        if 'activation_switch' not in self.config:
-            self.config['activation_switch'] = None
-        if 'activation_switch' not in self.config:
-            self.config['activation_switch'] = None
-        if 'disable_switch' not in self.config:
-            self.config['disable_switch'] = None
+        if 'activation_time' not in self.config:
+            self.config['activation_time'] = 0
+        if 'activation_switches' in self.config:
+            self.config['activation_switches'] = self.machine.string_to_list(
+                self.config['activation_switches'])
+        else:
+            self.config['activation_switches'] = list()
 
-        if 'target_when_active' not in self.config:
-            self.config['target_when_active'] = None
+        if 'disable_switches' in self.config:
+            self.config['disable_switches'] = self.machine.string_to_list(
+                self.config['disable_switches'])
+        else:
+            self.config['disable_switches'] = list()
 
-        if 'target_when_inactive' not in self.config:
-            self.config['target_when_inactive'] = None
+        if 'deactivation_switches' in self.config:
+            self.config['deactivation_switches'] = self.machine.string_to_list(
+                self.config['deactivation_switches'])
+        else:
+            self.config['deactivation_switches'] = list()
 
-        if self.config['auto_activate'] and (
-                self.config['target_when_active'] or
-                self.config['target_when_inactive']):
-            self.enable_auto_activation()
+        if 'activation_coil' in self.config:
+            self.config['activation_coil'] = (
+                self.machine.coils[self.config['activation_coil']])
 
-        # convert the timeout to ms
-        self.config['timeout'] = Timing.string_to_ms(self.config['timeout'])
+        if 'deactivation_coil' in self.config:
+            self.config['deactivation_coil'] = (
+                self.machine.coils[self.config['deactivation_coil']])
+        else:
+            self.config['deactivation_coil'] = None
+
+        if 'targets_when_active' in self.config:
+            self.config['targets_when_active'] = self.machine.string_to_list(
+                self.config['targets_when_active'])
+        else:
+            self.config['targets_when_active'] = ['playfield']
+
+        if 'targets_when_inactive' in self.config:
+            self.config['targets_when_inactive'] = self.machine.string_to_list(
+                self.config['targets_when_inactive'])
+        else:
+            self.config['targets_when_inactive'] = ['playfield']
+
+        if 'feeder_devices' in self.config:
+            self.config['feeder_devices'] = self.machine.string_to_list(
+                self.config['feeder_devices'])
+        else:
+            self.config['feeder_devices'] = list()
+
+        # Create a list of ball device objects when active and inactive. We need
+        # this because ball eject attempts pass the target device as an object
+        # rather than by name.
+
+        self.config['active_objects'] = list()
+        self.config['inactive_objects'] = list()
+
+        for target_device in self.config['targets_when_active']:
+            if target_device == 'playfield':
+                self.config['active_objects'].append('playfield')
+            else:
+                self.config['active_objects'].append(
+                    self.machine.balldevices[target_device])
+
+        for target_device in self.config['targets_when_inactive']:
+            if target_device == 'playfield':
+                self.config['inactive_objects'].append('playfield')
+            else:
+                self.config['inactive_objects'].append(
+                    self.machine.balldevices[target_device])
+
+        # convert the activation_time to ms
+        self.config['activation_time'] = Timing.string_to_ms(self.config['activation_time'])
 
         # register for events
         for event in self.config['enable_events']:
@@ -62,34 +114,50 @@ class Diverter(Device):
         for event in self.config['disable_events']:
             self.machine.events.add_handler(event, self.disable)
 
-    def enable(self, auto=False, **kwargs):
+        # register for feeder device eject events
+        for feeder_device in self.config['feeder_devices']:
+            self.machine.events.add_handler('balldevice_' + feeder_device +
+                                            '_ball_eject_attempt',
+                                            self._feeder_eject_attempt)
+
+        # register for deactivation switches
+        for switch in self.config['deactivation_switches']:
+            self.machine.switch_controller.add_switch_handler(
+                switch, self.deactivate)
+
+        # register for disable switches:
+        for switch in self.config['disable_switches']:
+            self.machine.switch_controller.add_switch_handler(
+                switch, self.disable)
+
+    def enable(self, auto=False, activations=-1, **kwargs):
         """Enables this diverter.
 
         Args:
             auto: Boolean value which is used to indicate whether this
                 diverter enabled itself automatically. This is passed to the
                 event which is posted.
+            activations: Integer of how many times you'd like this diverter to
+                activate before it will automatically disable itself. Default is
+                -1 which is unlimited.
 
-        If an 'activation_switch' is configured, then this method writes a
+        If an 'activation_switches' is configured, then this method writes a
         hardware autofire rule to the pinball controller which fires the
         diverter coil when the switch is activated.
 
-        If no `activation_switch` is specified, then the diverter is activated
+        If no `activation_switches` is specified, then the diverter is activated
         immediately.
         """
+
+        self.enabled = True
 
         self.machine.events.post('diverter_' + self.name + '_enabling',
                                  auto=auto)
 
-        if self.config['activation_switch']:
-            self.enable_hw_switch()
+        if self.config['activation_switches']:
+            self.enable_hw_switches()
         else:
             self.activate()
-
-        if self.config['disable_switch']:
-            self.machine.switch_controller.add_switch_handler(
-                self.config['disable_switch'],
-                self.disable)
 
     def disable(self, auto=False, **kwargs):
         """Disables this diverter.
@@ -107,102 +175,78 @@ class Diverter(Device):
                 or whether it has random kwargs attached to it.
         """
 
+        self.enabled = False
+
         self.machine.events.post('diverter_' + self.name + '_disabling',
                                  auto=auto)
 
         self.log.debug("Disabling Diverter")
-        if self.config['activation_switch']:
+        if self.config['activation_switches']:
             self.disable_hw_switch()
         else:
             self.deactivate()
 
     def activate(self):
         """Physically activates this diverter's coil."""
-
         self.log.debug("Activating Diverter")
+
+        self.active = True
+
+        #if self.remaining_activations > 0:
+        #    self.remaining_activations -= 1
+
         self.machine.events.post('diverter_' + self.name + '_activating')
         if self.config['type'] == 'pulse':
-            self.machine.coils[self.config['coil']].pulse()
+            self.config['activation_coil'].pulse()
         elif self.config['type'] == 'hold':
-            self.machine.coils[self.config['coil']].enable()
-            self.schedule_disable()
+            self.config['activation_coil'].enable()
+            self.schedule_deactivation()
 
     def deactivate(self):
-        """Physically deactivates this diverter's coil."""
-        self.log.debug("Deactivating Diverter")
-        self.machine.events.post('diverter_' + self.name + '_deactivating')
-        self.machine.coils[self.config['coil']].disable()
+        """Deactivates this diverter.
 
-    def enable_auto_activation(self):
-        """Enables the auto-activation of this diverter, which means it will
-        enable and disable itself based on the state of its target devices.
+        This method will disable the activation_coil, and (optionally) if it's
+        configured with a deactivation coil, it will pulse it.
+
         """
+        self.log.debug("Deactivating Diverter")
 
-        self.config['auto_activate'] = True
+        self.active = False
 
-        if self.config['target_when_active'] == 'ball_device':
-            self.machine.events.add_handler('balldevice_' +
-                                            self.config['target_when_active'] +
-                                            '_ball_request', self.enable,
-                                            auto=True)
-            self.machine.events.add_handler('balldevice_' +
-                                            self.config['target_when_active'] +
-                                            '_cancel_ball_request',
-                                            self.disable, auto=True)
-        elif self.config['target_when_active'] == 'diverter':
-            self.machine.events.add_handler('diverter_' +
-                                            self.config['target_when_active'] +
-                                            '_enabling', self.enable, auto=True)
-            self.machine.events.add_handler('diverter_' +
-                                            self.config['target_when_active'] +
-                                            '_disabling',
-                                            self.enable, auto=True)
+        self.machine.events.post('diverter_' + self.name + '_deactivating')
+        self.config['activation_coil'].disable()
 
-        if self.config['target_when_inactive'] == 'ball_device':
-            self.machine.events.add_handler('balldevice_' +
-                                            self.config['target_when_inactive']
-                                            + '_ball_request', self.disable,
-                                            auto=True)
-            self.machine.events.add_handler('balldevice_' +
-                                            self.config['target_when_inactive']
-                                            + '_cancel_ball_request',
-                                            self.enable, auto=True)
-        elif self.config['target_when_inactive'] == 'diverter':
-            self.machine.events.add_handler('diverter_' +
-                                            self.config['target_when_active'] +
-                                            '_enabling', self.disable,
-                                            auto=True)
-            self.machine.events.add_handler('diverter_' +
-                                            self.config['target_when_active'] +
-                                            '_disabling',
-                                            self.disable, auto=True)
+        if self.config['deactivation_coil']:
+            self.config['deactivation_coil'].pulse()
 
-    def disable_auto_activation(self):
-        """Disables the auto-activation of this diverter"""
+        #if self.remaining_activations != 0:
+        #    self.enable()
+            # todo this will be weird if the diverter is enabled without a hw
+            # switch.. wonder if we should check for that here?
 
-    def schedule_disable(self, time=None):
+    def schedule_deactivation(self, time=None):
         """Schedules a delay to deactivate this diverter.
 
         Args:
             time: The MPF string time of how long you'd like the delay before
-            deactivating the diverter. Default is None which means it uses the
-            'timeout' setting configured for this diverter. If there is no
-            'timeout' setting and no delay is passed, it will disable the
-            diverter immediately.
+                deactivating the diverter. Default is None which means it uses
+                the 'activation_time' setting configured for this diverter. If there is
+                no 'activation_time' setting and no delay is passed, it will disable the
+                diverter immediately.
         """
 
         if time is not None:
             delay = Timing.string_to_ms(time)
 
-        elif self.config['timeout']:
-            delay = self.config['timeout']
+        elif self.config['activation_time']:
+            delay = self.config['activation_time']
 
         if delay:
             self.delay.add('disable_held_coil', delay, self.disable_held_coil)
         else:
             self.disable_held_coil()
 
-    def enable_hw_switch(self):
+    def enable_hw_switches(self):
         """Enables the hardware switch rule which causes this diverter to
         activate when the switch is hit.
 
@@ -210,57 +254,85 @@ class Diverter(Device):
         want the diverter to phsyically activate until the ramp entry switch is
         activated.
 
-        If this diverter is configured with a timeout, this method will also
+        If this diverter is configured with a activation_time, this method will also
         set switch handlers which will set a delay to deactivate the diverter
-        once the activation timeout expires.
+        once the activation activation_time expires.
 
         If this diverter is configured with a deactivation switch, this method
         will set up the switch handlers to deactivate the diverter when the
         deactivation switch is activated.
         """
         self.log.debug("Enabling Diverter for hw switch: %s",
-                       self.config['activation_switch'])
+                       self.config['activation_switches'])
 
         if self.config['type'] == 'hold':
 
-            self.machine.platform.set_hw_rule(
-                sw_name=self.config['activation_switch'],
-                sw_activity='active',
-                coil_name=self.config['coil'],
-                coil_action_ms=-1,
-                pulse_ms=self.machine.coils[self.config['coil']].config['pulse_ms'],
-                pwm_on=self.machine.coils[self.config['coil']].config['pwm_on'],
-                pwm_off=self.machine.coils[self.config['coil']].config['pwm_off'],
-                debounced=False)
+            for switch in self.config['activation_switches']:
 
-            # If there's a timeout then we need to watch for the hw switch to
-            # be activated so we can disable the diverter
+                self.machine.platform.set_hw_rule(
+                    sw_name=switch,
+                    sw_activity='active',
+                    coil_name=self.config['activation_coil'].name,
+                    coil_action_ms=-1,
+                    pulse_ms=self.config['activation_coil'].config['pulse_ms'],
+                    pwm_on=self.config['activation_coil'].config['pwm_on'],
+                    pwm_off=self.config['activation_coil'].config['pwm_off'],
+                    debounced=False)
 
-            if self.config['timeout']:
-                self.machine.switch_controller.add_switch_handler(
-                    self.config['activation_switch'],
-                    self.schedule_disable)
+                # If there's a activation_time then we need to watch for the hw switch to
+                # be activated so we can disable the diverter
+
+                if self.config['activation_time']:
+                    self.machine.switch_controller.add_switch_handler(
+                        switch,
+                        self.schedule_deactivation)
 
         elif self.config['type'] == 'pulse':
 
-            self.machine.platform.set_hw_rule(
-                sw_name=self.config['activation_switch'],
-                sw_activity='active',
-                coil_name=self.config['coil'],
-                coil_action_ms=1,
-                pulse_ms=self.machine.coils[self.config['main_coil']].config['pulse_ms'],
-                debounced=False)
+            for switch in self.config['activation_switches']:
+
+                self.machine.platform.set_hw_rule(
+                    sw_name=switch,
+                    sw_activity='active',
+                    coil_name=self.config['activation_coil'].name,
+                    coil_action_ms=self.config['activation_coil'].config['pulse_ms'],
+                    pulse_ms=self.config['activation_coil'].config['pulse_ms'],
+                    debounced=False)
 
     def disable_hw_switch(self):
         """Removes the hardware rule to disable the hardware activation switch
         for this diverter.
         """
-        self.machine.platform.clear_hw_rule(self.config['activation_switch'])
+
+        for switch in self.config['activation_switches']:
+            self.machine.platform.clear_hw_rule(switch)
+
+        # todo this should not clear all the rules for this switch
 
     def disable_held_coil(self):
         """Physically disables the coil holding this diverter open."""
-        self.machine.coils[self.config['coil']].disable()
+        self.config['activation_coil'].disable()
 
+    def _feeder_eject_attempt(self, target, **kwargs):
+        # Event handler which is called when one of this diverter's feeder
+        # devices attempts to eject a ball. This is what allows this diverter
+        # to get itself in the right position to send the ball to where it needs
+        # to go.
+
+        # Since the 'target' kwarg is going to be an object, not a name, we need
+        # to figure out if this object is one of the targets of this diverter.
+
+        self.log.debug("Feeder device eject attempt for target: %s", target)
+
+        if target in self.config['active_objects']:
+            self.log.debug("Enabling diverter since eject target is on the "
+                           "active target list")
+            self.enable()
+
+        elif target in self.config['inactive_objects']:
+            self.log.debug("Enabling diverter since eject target is on the "
+                           "inactive target list")
+            self.disable()
 
 # The MIT License (MIT)
 

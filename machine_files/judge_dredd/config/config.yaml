@@ -1,6 +1,7 @@
 Scriptlets:
     attract.Attract
     deadworld.Deadworld
+    add_a_ball.AddABall
 
 Plugins:
     - shots.ShotController

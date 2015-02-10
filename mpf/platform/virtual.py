@@ -24,6 +24,7 @@ class HardwarePlatform(Platform):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring machine for virtual hardware.")
+        self.machine.physical_hw = False
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -48,7 +49,13 @@ class HardwarePlatform(Platform):
         switch = VirtualSwitch(config['number'])
         # Return the switch object, the hardare number, and an integer of its
         # current state. (1 = active, 0 = inactive)
-        return switch, config['number'], 0
+
+        state = 0
+
+        if 'type' in config and config['type'] == 'NC':
+            state = 1  # for NC switches, the default "inactive" state is 1.
+
+        return switch, config['number'], state
 
     def configure_matrixlight(self, config):
         return VirtualMatrixLight(config['number']), config['number']

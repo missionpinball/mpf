@@ -165,7 +165,6 @@ class Keyboard(object):
                 self.log.warning("'%s' is not a valid Pygame key code. "
                                  "Skipping...", pygame_key)
 
-
             # Now that we have the key code, what happens when it's pressed?
 
             if switch_name:  # We're processing a key entry for a switch
@@ -246,8 +245,6 @@ class Keyboard(object):
                 self.log.debug("Setting initial state of switch '%s' to "
                                "active", switch_name)
 
-                # Use set_state() instead of process_switch() so this mimics
-                # the physical hw process.
                 self.machine.switch_controller.process_switch(name=switch_name,
                                                               state=1,
                                                               logical=True)

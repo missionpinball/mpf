@@ -86,8 +86,8 @@ class Attract(MachineMode):
 
         # todo test for active?
         # todo should this be a decorator?
-        self.machine.events.post('request_to_start_game', ev_type='boolean',
-                                 callback=self.result_of_start_request)
+        self.machine.events.post_boolean('request_to_start_game',
+                                         callback=self.result_of_start_request)
 
     def result_of_start_request(self, ev_result=True):
         """Called after the *request_to_start_game* event is posted.

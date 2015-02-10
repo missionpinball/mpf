@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.diverter module &mdash; Mission Pinball Framework 0.13 documentation</title>
+    <title>mpf.devices.diverter module &mdash; Mission Pinball Framework 0.14 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.13',
+        VERSION:     '0.14',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.13 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.14 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.14 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -72,7 +72,9 @@
 <dl class="method">
 <dt id="mpf.devices.diverter.Diverter.deactivate">
 <tt class="descname">deactivate</tt><big>(</big><big>)</big></dt>
-<dd><p>Physically deactivates this diverter&#8217;s coil.</p>
+<dd><p>Deactivates this diverter.</p>
+<p>This method will disable the activation_coil, and (optionally) if it&#8217;s
+configured with a deactivation coil, it will pulse it.</p>
 </dd></dl>
 
 <dl class="method">
@@ -99,12 +101,6 @@ or whether it has random kwargs attached to it.</div></blockquote>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.devices.diverter.Diverter.disable_auto_activation">
-<tt class="descname">disable_auto_activation</tt><big>(</big><big>)</big></dt>
-<dd><p>Disables the auto-activation of this diverter</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="mpf.devices.diverter.Diverter.disable_held_coil">
 <tt class="descname">disable_held_coil</tt><big>(</big><big>)</big></dt>
 <dd><p>Physically disables the coil holding this diverter open.</p>
@@ -119,57 +115,60 @@ for this diverter.</p>
 
 <dl class="method">
 <dt id="mpf.devices.diverter.Diverter.enable">
-<tt class="descname">enable</tt><big>(</big><em>auto=False</em>, <em>**kwargs</em><big>)</big></dt>
+<tt class="descname">enable</tt><big>(</big><em>auto=False</em>, <em>activations=-1</em>, <em>**kwargs</em><big>)</big></dt>
 <dd><p>Enables this diverter.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>auto</strong> &#8211; Boolean value which is used to indicate whether this
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>auto</strong> &#8211; Boolean value which is used to indicate whether this
 diverter enabled itself automatically. This is passed to the
-event which is posted.</td>
+event which is posted.</li>
+<li><strong>activations</strong> &#8211; Integer of how many times you&#8217;d like this diverter to
+activate before it will automatically disable itself. Default is
+-1 which is unlimited.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
-<p>If an &#8216;activation_switch&#8217; is configured, then this method writes a
+<p>If an &#8216;activation_switches&#8217; is configured, then this method writes a
 hardware autofire rule to the pinball controller which fires the
 diverter coil when the switch is activated.</p>
-<p>If no <cite>activation_switch</cite> is specified, then the diverter is activated
+<p>If no <cite>activation_switches</cite> is specified, then the diverter is activated
 immediately.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.devices.diverter.Diverter.enable_auto_activation">
-<tt class="descname">enable_auto_activation</tt><big>(</big><big>)</big></dt>
-<dd><p>Enables the auto-activation of this diverter, which means it will
-enable and disable itself based on the state of its target devices.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.devices.diverter.Diverter.enable_hw_switch">
-<tt class="descname">enable_hw_switch</tt><big>(</big><big>)</big></dt>
+<dt id="mpf.devices.diverter.Diverter.enable_hw_switches">
+<tt class="descname">enable_hw_switches</tt><big>(</big><big>)</big></dt>
 <dd><p>Enables the hardware switch rule which causes this diverter to
 activate when the switch is hit.</p>
 <p>This is typically used for diverters on loops and ramps where you don&#8217;t
 want the diverter to phsyically activate until the ramp entry switch is
 activated.</p>
-<p>If this diverter is configured with a timeout, this method will also
-set switch handlers which will set a delay to deactivate the diverter
-once the activation timeout expires.</p>
+<p>If this diverter is configured with a activation_time, this method will
+also set switch handlers which will set a delay to deactivate the
+diverter once the activation activation_time expires.</p>
 <p>If this diverter is configured with a deactivation switch, this method
 will set up the switch handlers to deactivate the diverter when the
 deactivation switch is activated.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.devices.diverter.Diverter.schedule_disable">
-<tt class="descname">schedule_disable</tt><big>(</big><em>time=None</em><big>)</big></dt>
+<dt id="mpf.devices.diverter.Diverter.schedule_deactivation">
+<tt class="descname">schedule_deactivation</tt><big>(</big><em>time=None</em><big>)</big></dt>
 <dd><p>Schedules a delay to deactivate this diverter.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time</strong> &#8211; The MPF string time of how long you&#8217;d like the delay before</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time</strong> &#8211; The MPF string time of how long you&#8217;d like the delay before
+deactivating the diverter. Default is None which means it uses
+the &#8216;activation_time&#8217; setting configured for this diverter. If
+there is no &#8216;activation_time&#8217; setting and no delay is passed,
+it will disable the diverter immediately.</td>
 </tr>
 </tbody>
 </table>
@@ -216,7 +215,7 @@ deactivation switch is activated.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.14 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

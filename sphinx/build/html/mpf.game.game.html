@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.13 documentation</title>
+    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.14 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.13',
+        VERSION:     '0.14',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.13 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.14 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.14 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -58,14 +58,6 @@ manages an the game in a pinball machine.</p>
 <p>Base class that runs an active game on a pinball machine.</p>
 <p>Responsible for creating players, starting and ending balls, rotating to
 the next player, etc.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> (<tt class="xref py py-class docutils literal"><span class="pre">MachineController</span></tt>) &#8211; A reference to the instance of the MachineController object.</td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="mpf.game.game.Game.award_extra_ball">
 <tt class="descname">award_extra_ball</tt><big>(</big><em>num=1</em>, <em>force=False</em><big>)</big></dt>
@@ -118,17 +110,6 @@ though that&#8217;s temporary as we&#8217;ll move those into config file options
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.game.game.Game.ball_live_count_change">
-<tt class="descname">ball_live_count_change</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.game.game.Game.ball_saved">
-<tt class="descname">ball_saved</tt><big>(</big><big>)</big></dt>
-<dd><p>Called when a ball is saved.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="mpf.game.game.Game.ball_started">
 <tt class="descname">ball_started</tt><big>(</big><em>ev_result=True</em><big>)</big></dt>
 <dd></dd></dl>
@@ -177,11 +158,6 @@ so our game is officially &#8216;started&#8217;.</p>
 (including when the first player is added).</p>
 <p>If this is the first player, calls <a class="reference internal" href="#mpf.game.game.Game.player_turn_start" title="mpf.game.game.Game.player_turn_start"><tt class="xref py py-meth docutils literal"><span class="pre">player_turn_start()</span></tt></a>.</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="mpf.game.game.Game.player_eject_request">
-<tt class="descname">player_eject_request</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.game.game.Game.player_rotate">
@@ -301,7 +277,7 @@ object as a <em>player</em> kwarg.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.14 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

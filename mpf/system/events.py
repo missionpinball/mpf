@@ -136,37 +136,134 @@ class EventManager(object):
         else:
             return False
 
-    def post(self, event, **kwargs):
+    def post(self, event, callback=None, **kwargs):
         """Posts an event which causes all the registered handlers to be
         called.
 
         Events are processed serially (e.g. one at a time), so if the event
         system is in the process of handling another event, this event is
-        added to a queue.
+        added to a queue and processed after the current event is done.
 
-        You can specify as many keyword arguments as you want which will be
-        pass to each handler. (Just make sure your handlers are expecting them.
-        You can add **kwargs to your handler methods if certain ones don't
-        need them.
+        You can control the order the handlers will be called by optionally
+        specifying a priority when the handlers were registed. (Higher priority
+        values will be processed first.)
 
         Args:
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
                 you post, so be it.
-            ev_type: Optional parameter which specifies the type of event this
-                is. Options include 'boolean', 'queue', 'relay', or None. See
-                the documentation at https://missionpinball.com/docs for
-                details about the different event types.
-            callback: A method which will be called when the final handler is
-                done processing this event.
-
-        Note that these two special keywords (ev_type and callback) are
-        stripped from the list of keyword arguments that are passed to the
-        handlers, so you can use them here in your post() without handlers that
-        do not expect keywords.
+            callback: An optional method which will be called when the final
+                handler is done processing this event. Default is None.
+            **kwargs: One or more options keyword/value pairs that will be
+                passed to each handler. (Just make sure your handlers are
+                expecting them. You can add **kwargs to your handler methods if
+                certain ones don't need them.)
 
         """
+
+        self._post(event, ev_type=None, callback=callback, **kwargs)
+
+    def post_boolean(self, event, callback=None, **kwargs):
+        """Posts an boolean event which causes all the registered handlers to
+        be called one-by-one. Boolean events differ from regular events in that
+        if any handler returns False, the remaining handlers will not be
+        called.
+
+        Events are processed serially (e.g. one at a time), so if the event
+        system is in the process of handling another event, this event is
+        added to a queue and processed after the current event is done.
+
+        You can control the order the handlers will be called by optionally
+        specifying a priority when the handlers were registed. (Higher priority
+        values will be processed first.)
+
+        Args:
+            event: A string name of the event you're posting. Note that you can
+                post whatever event you want. You don't have to set up anything
+                ahead of time, and if no handlers are registered for the event
+                you post, so be it.
+            callback: An optional method which will be called when the final
+                handler is done processing this event. Default is None. If
+                any handler returns False and cancels this boolean event, the
+                callback will still be called, but a new kwarg ev_result=False
+                will be passed to it.
+            **kwargs: One or more options keyword/value pairs that will be
+                passed to each handler. (Just make sure your handlers are
+                expecting them. You can add **kwargs to your handler methods if
+                certain ones don't need them.)
+
+        """
+        self._post(event, ev_type='boolean', callback=callback, **kwargs)
+
+    def post_queue(self, event, callback, **kwargs):
+        """Posts a queue event which causes all the registered handlers to be
+        called.
+
+        Queue events differ from standard events in that individual handlers
+        are given the option to register a "wait", and the callback will not be
+        called until any handler(s) that registered a wait will have to release
+        that wait. Once all the handlers release their waits, the callback is
+        called.
+
+        Events are processed serially (e.g. one at a time), so if the event
+        system is in the process of handling another event, this event is
+        added to a queue and processed after the current event is done.
+
+        You can control the order the handlers will be called by optionally
+        specifying a priority when the handlers were registed. (Higher priority
+        values will be processed first.)
+
+        Args:
+            event: A string name of the event you're posting. Note that you can
+                post whatever event you want. You don't have to set up anything
+                ahead of time, and if no handlers are registered for the event
+                you post, so be it.
+            callback: The method which will be called when the final
+                handler is done processing this event and any handlers that
+                registered waits have cleared their waits.
+            **kwargs: One or more options keyword/value pairs that will be
+                passed to each handler. (Just make sure your handlers are
+                expecting them. You can add **kwargs to your handler methods if
+                certain ones don't need them.)
+
+        """
+        self._post(event, ev_type='queue', callback=callback, **kwargs)
+
+    def post_relay(self, event, callback=None, **kwargs):
+        """Posts a relay event which causes all the registered handlers to be
+        called.
+
+        Relay events differ from standard events in that the resulting kwargs
+        from one handler are passed to the next handler. (In other words,
+        stanard events mean that all the handlers get the same initial kwargs,
+        whereas relay events "relay" the resulting kwargs from one handler to
+        the next.)
+
+        Events are processed serially (e.g. one at a time), so if the event
+        system is in the process of handling another event, this event is
+        added to a queue and processed after the current event is done.
+
+        You can control the order the handlers will be called by optionally
+        specifying a priority when the handlers were registed. (Higher priority
+        values will be processed first.)
+
+        Args:
+            event: A string name of the event you're posting. Note that you can
+                post whatever event you want. You don't have to set up anything
+                ahead of time, and if no handlers are registered for the event
+                you post, so be it.
+            callback: The method which will be called when the final handler is
+                done processing this event. Default is None.
+            **kwargs: One or more options keyword/value pairs that will be
+                passed to each handler. (Just make sure your handlers are
+                expecting them. You can add **kwargs to your handler methods if
+                certain ones don't need them.)
+
+        """
+        self._post(event, ev_type='relay', callback=callback, **kwargs)
+
+    def _post(self, event, ev_type, callback, **kwargs):
         if self.debug and event != 'timer_tick':
             # Use friendly_kwargs so the logger shows a "friendly" name of the
             # callback handler instead of the bound method object reference.
@@ -174,20 +271,20 @@ class EventManager(object):
             if 'callback' in kwargs:
                 friendly_kwargs['callback'] = \
                     (str(kwargs['callback']).split(' '))[2]
-            self.log.debug("^^^^ Posted event '%s' with args: %s", event,
+            self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
+                           "Args: %s", event, ev_type, callback,
                            friendly_kwargs)
         if not self.busy:
-            self._do_event(event, **kwargs)
+            self._process_event(event, ev_type, callback, **kwargs)
         else:
 
             self.log.debug("XXXX Event '%s' is in progress. Added to the "
                            "queue.", self.current_event)
-            self.queue.append((event, kwargs))
 
-    def _do_event(self, event, **kwargs):
+            self.queue.append((event, ev_type, callback, kwargs))
+
+    def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
-        callback = None
-        ev_type = None
         result = None
         queue = None
         if self.debug and event != 'timer_tick':
@@ -196,21 +293,11 @@ class EventManager(object):
             if 'callback' in kwargs:
                 friendly_kwargs['callback'] = \
                     (str(kwargs['callback']).split(' '))[2]
-            self.log.debug("^^^^ Processing event '%s' with args: %s", event,
+            self.log.debug("^^^^ Processing event '%s'. Type: %s, Callback: %s,"
+                           " Args: %s", event, ev_type, callback,
                            friendly_kwargs)
 
-        # if our kwargs include ev_type or callback, we want to pull them
-        # out of the kwargs we send to all the registered handlers:
-        if 'ev_type' in kwargs:
-            ev_type = kwargs['ev_type']
-            del kwargs['ev_type']
-
-        if 'callback' in kwargs:
-            callback = kwargs['callback']
-            del kwargs['callback']
-
-        # Now let's call the handlers one-by-one, including any remaining
-        # kwargs
+        # Now let's call the handlers one-by-one, including any kwargs
         if event in self.registered_handlers:
             self.busy = True
             self.current_event = event
@@ -238,10 +325,10 @@ class EventManager(object):
 
                 # If whatever handler we called returns False, we stop
                 # processing the remaining handlers for boolean or queue events
-                if (ev_type == 'boolean' or ev_type == 'queue') and \
-                        result is False:
+                if ((ev_type == 'boolean' or ev_type == 'queue') and
+                        result is False):
 
-                    # add a False result so our handlers know something failed
+                    # add a False result so our callbacl knows something failed
                     kwargs['ev_result'] = False
 
                     if self.debug and event != 'timer_tick':
@@ -255,8 +342,8 @@ class EventManager(object):
             self.current_event = None
             self.busy = False
         if self.debug and event != 'timer_tick':
-            self.log.debug("vvvv Finished event '%s' with args: %s",
-                           event, kwargs)
+            self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
+                           "Args: %s", event, ev_type, callback, kwargs)
 
         # If that event had a callback, let's call it now. We'll also
         # send the result if it's False. Note this means our callback has to
@@ -270,21 +357,16 @@ class EventManager(object):
             queue = None
             del kwargs['queue']  # ditch this since we don't need it now
 
-        if callback:
-            if not queue:
-                # if we have a queue kwarg from before, strip it since we only
-                # needed it to setup the queue
-                if kwargs and 'queue' in kwargs:
-                    del kwargs['queue']
+        if callback and not queue:
 
-                if result:
-                    # if our last handler returned something, add it to kwargs
-                    kwargs['ev_result'] = result
+            if result:
+                # if our last handler returned something, add it to kwargs
+                kwargs['ev_result'] = result
 
-                if kwargs:
-                    callback(**kwargs)
-                else:
-                    callback()
+            if kwargs:
+                callback(**kwargs)
+            else:
+                callback()
 
         # Finally see if we have any more events to process
         self._do_next()
@@ -294,7 +376,10 @@ class EventManager(object):
         # that need to be processed, and then processes them.
         if len(self.queue) > 0:
             event = self.queue.popleft()
-            self._do_event(event[0], **event[1])
+            self._process_event(event=event[0],
+                                ev_type=event[1],
+                                callback=event[2],
+                                **event[3])
 
 
 class QueuedEvent(object):

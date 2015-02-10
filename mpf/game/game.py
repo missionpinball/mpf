@@ -25,12 +25,6 @@ class Game(MachineMode):
     Responsible for creating players, starting and ending balls, rotating to
     the next player, etc.
 
-    Parameters
-    ----------
-
-    machine : :class:`MachineController`
-        A reference to the instance of the MachineController object.
-
     """
 
     def __init__(self, machine, name):
@@ -54,23 +48,12 @@ class Game(MachineMode):
         self.player = None  # This is the current player
         self.player_list = []
         self.machine.game = self
-
         self.num_balls_in_play = 0
-
-        self.machine.tilted = False
-
-        # Ball Save - todo might move these
-        self.flag_ball_save_active = False
-        self.flag_ball_save_multiple_saves = False
-        self.flag_ball_save_paused = False
-        self.timer_ball_save = 0
+        self.tilted = False
 
         # todo register for request_to_start_game so you can deny it, or allow
         # it with a long press
 
-        self.registered_event_handlers.append(
-            self.machine.events.add_handler('ball_add_live',
-                                            self.ball_live_count_change))
         self.registered_event_handlers.append(
             self.machine.events.add_handler('player_add_success',
                                             self.player_add_success))
@@ -95,13 +78,6 @@ class Game(MachineMode):
             self.machine.events.add_handler('slam_tilt',
                                             self.slam_tilt, priority=1000))
 
-        if 'player_controlled_eject_tag' in self.machine.config['Game']:
-            self.registered_event_handlers.append(
-                self.machine.events.add_handler('sw_' +
-                                                self.machine.config['Game']
-                                                ['player_controlled_eject_tag'],
-                                                self.player_eject_request))
-
         if ('Restart on long press' in self.machine.config['Game'] and
                 self.machine.config['Game']['Restart on long press']):
             self.setup_midgame_restart()
@@ -109,8 +85,8 @@ class Game(MachineMode):
         # Add our first player
         self.request_player_add()
 
-        self.machine.events.post('game_starting', ev_type='queue',
-                                 callback=self.game_started, game=self)
+        self.machine.events.post_queue('game_starting',
+                                       callback=self.game_started, game=self)
 
     def stop(self):
         self.machine.game = None
@@ -190,10 +166,10 @@ class Game(MachineMode):
         self.log.debug("***************************************************")
         self.log.debug("***************************************************")
 
-        self.machine.tilted = False
+        self.tilted = False
 
-        self.machine.events.post('ball_starting', ev_type='queue',
-                                 callback=self.ball_started)
+        self.machine.events.post_queue('ball_starting',
+                                       callback=self.ball_started)
 
     def ball_started(self, ev_result=True):
         self.log.debug("Game Machine Mode ball_started()")
@@ -212,13 +188,8 @@ class Game(MachineMode):
         # register handlers to watch for ball drain and live ball removed
 
         self.registered_event_handlers.append(
-            self.machine.events.add_handler('ball_remove_live',
-                                            self.ball_live_count_change))
-        self.registered_event_handlers.append(
             self.machine.events.add_handler('ball_drain',
                                             self.ball_drained))
-
-        # todo skillshot
 
         self.log.debug("Game is setting Balls in Play to 1")
         self.num_balls_in_play = 1
@@ -226,20 +197,7 @@ class Game(MachineMode):
         self.machine.events.post('ball_started', ball=self.player.vars['ball'],
                                  player=self.player.vars['number'])
 
-        self.machine.ball_controller.stage_ball('ball_add_live')
-
-        # todo register for notification of ball added live?
-
-    def player_eject_request(self):
-        self.log.debug("Received player eject request")
-        self.machine.events.post('player_eject_request')
-        self.machine.ball_controller.add_live()
-        # what happens if it can't and the player hits the button again? todo
-
-    def ball_live_count_change(self):
-        self.log.debug("Received ball live count change")
-        # the number of live balls has changed
-        pass
+        self.machine.playfield.add_ball(player_controlled=True)
 
     def ball_drained(self, balls=0):
         self.log.debug("Entering Game.ball_drained()")
@@ -275,7 +233,6 @@ class Game(MachineMode):
 
         # remove the handlers that were looking for ball drain since they'll
         # be re-added on next ball start
-        self.machine.events.remove_handler(self.ball_live_count_change)
         self.machine.events.remove_handler(self.ball_drained)
 
         # todo should clean up the above since they are removed from the
@@ -288,8 +245,8 @@ class Game(MachineMode):
         self.num_balls_in_play = 0  # todo redundant?
         self.log.debug("Entering Game.ball_ending()")
 
-        self.machine.events.post('ball_ending', ev_type='queue',
-                                 callback=self._ball_ending_done)
+        self.machine.events.post_queue('ball_ending',
+                                       callback=self._ball_ending_done)
 
     def _ball_ending_done(self, **kwargs):
         # Callback for when the ball_ending queue is clear. All this does is
@@ -336,8 +293,8 @@ class Game(MachineMode):
 
         """
         self.log.debug("Entering Game.game_ending()")
-        self.machine.events.post('game_ending', ev_type='queue',
-                                 callback=self._game_ending_done)
+        self.machine.events.post_queue('game_ending',
+                                       callback=self._game_ending_done)
 
     def _game_ending_done(self, **kwargs):
         # Callback for when the game_ending queue is clear. All this does is
@@ -379,10 +336,6 @@ class Game(MachineMode):
             self.player.vars['extra_balls'] -= 1
         self.ball_starting()
 
-    def ball_saved(self):
-        """Called when a ball is saved."""
-        pass
-
     def tilt(self):
         """Called when the 'tilt' event is posted indicated the ball has tilted.
         """
@@ -390,9 +343,8 @@ class Game(MachineMode):
         # todo add support to catch if the player tilts during ball ending?
 
         self.log.debug("Processing Ball Tilt")
-        self.machine.tilted = True
+        self.tilted = True
 
-        self.machine.ball_controller.set_live_count(0)
         self.num_balls_in_play = 0
 
         self.machine.events.add_handler('ball_ending',
@@ -478,8 +430,8 @@ class Game(MachineMode):
             self.log.debug("Current ball is after Ball 1. Cannot add player.")
             return False
 
-        self.machine.events.post('player_add_request', ev_type='boolean',
-                                 callback=self._player_add)
+        self.machine.events.post_boolean('player_add_request',
+                                         callback=self._player_add)
 
     def _player_add(self, ev_result=True):
         # This is the callback from our request player add event.

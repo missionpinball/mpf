@@ -60,7 +60,7 @@ class MachineController(object):
         self.loop_start_time = 0
         self.config = dict()
         self.physical_hw = options['physical_hw']
-        self.switch_events = []
+        self.switch_events = list()
         self.done = False
         self.machineflow_index = None
         self.loop_rate = 0.0
@@ -70,17 +70,11 @@ class MachineController(object):
         self.display = None
         self.machine_path = None  # Path to this machine's folder root
 
-        self.plugins = []
-        self.scriptlets = []
+        self.plugins = list()
+        self.scriptlets = list()
 
         self.registered_pygame_handlers = dict()
         self.pygame_allowed_events = list()
-
-        self.tilted = False
-        # Technically 'tilted' should be an attribute of game, but since tilts
-        # are complex and affect many devices and plugins, it's simpler across
-        # the board to have it as a machine attribute.
-
 
         # Get the Python version for the log
         python_version = sys.version_info
@@ -103,7 +97,8 @@ class MachineController(object):
             machine_path = options['machinepath']
         else:
             machine_path = os.path.join(self.config['MPF']['paths']
-                                        ['machine_files'], options['machinepath'])
+                                        ['machine_files'],
+                                        options['machinepath'])
 
         self.machine_path = os.path.abspath(machine_path)
 
@@ -163,8 +158,11 @@ class MachineController(object):
             # machine's config file and only load the modules this machine uses.
             if device_cls.is_used(self.config):
                 collection, config = device_cls.get_config_info()
+
                 # create the collection
                 exec('self.' + collection + '=devices.DeviceCollection()')
+
+                # Create this device
                 devices.Device.create_devices(device_cls,
                                               eval('self.' + collection),
                                               self.config[config],

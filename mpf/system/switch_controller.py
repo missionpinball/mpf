@@ -145,30 +145,30 @@ class SwitchController(object):
         switch changes state. It's also used by the "other" modules that
         activate switches, including the keyboard and OSC interfaces.
 
-        Default is to pass in a name, but you can also pass a switch based on
-        its number or a reference to the switch object.
-
         State 0 means the switch changed from active to inactive, and 1 means
         it changed from inactive to active. (The hardware & platform code
         handles NC versus NO switches and translates them to 'active' versus
         'inactive'.)
 
-        Parameters
-        ----------
+        Args:
+            name: The string name of the switch. This is optional if you specify
+                the switch via the 'num' or 'obj' parameters.
+            state: The state of the switch you're processing, 1 is active, 0 is
+                inactive.
+            logical: Boolean which specifies whether the 'state' argument
+                represents the "physical" or "logical" state of the switch. If
+                True, a 1 means this switch is active and a 0 means it's
+                inactive, regardless of the NC/NO configuration of the switch.
+                If False, then the state paramenter passed will be inverted if
+                the switch is configured to be an 'NC' type. Typically the
+                hardware will send switch states in their raw (logical=False)
+                states, but other interfaces like the keyboard and OSC will use
+                logical=True.
+            num: The hardware number of the switch.
+            obj: The switch object.
 
-        name
-
-        state
-
-        logical : bool
-        Specifies whether we have the "logical" state of the switch or not.
-        This is post NC/NO inversion processing. Typically the hardware will
-        send switch states in their raw (logical=False) states, but other
-        interfaces like the keyboard and OSC will use the (logical=True).
-
-        num
-
-        obj
+        Note that there are three different paramter options to specify the
+        switch: 'name', 'num', and 'obj'. You only need to pass one of them.
 
         """
 
@@ -180,13 +180,15 @@ class SwitchController(object):
                     name = switch.name
                     break
 
-        if not name:
-            return
-
         elif obj:
             name = obj.name
 
-
+        if name and not self.machine.switches[name]:
+            print "Received process_switch command but can't find the switch"
+            print "switch name:", name
+            print "switch num:", num
+            print "switch object:", obj
+            quit()
 
         # flip the logical & physical states for NC switches
 

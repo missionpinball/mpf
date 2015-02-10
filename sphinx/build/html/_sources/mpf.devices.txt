@@ -17,6 +17,7 @@ Submodules
    mpf.devices.led
    mpf.devices.matrix_light
    mpf.devices.new_device_template
+   mpf.devices.playfield
    mpf.devices.rollover
    mpf.devices.score_reel
    mpf.devices.switch

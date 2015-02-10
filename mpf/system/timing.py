@@ -73,11 +73,16 @@ class Timing(object):
 
         200ms
         2s
+        None
 
-        If no "s" or "ms" is provided, we assume "milliseconds"
+        If no "s" or "ms" is provided, this method assumes "milliseconds."
 
-        returns an integer 200 or 2000, respectively
+        If time is 'None' or a string of 'None', this method returns 0.
+
+        Returns: An integer. The examples listed above 200, 2000 and 0,
+            respectively
         """
+
         time = str(time).upper()
 
         if time.endswith("MS") or time.endswith("MSEC"):
@@ -88,9 +93,12 @@ class Timing(object):
             time = ''.join(i for i in time if not i.isalpha())
             return int(float(time) * 1000)
 
+        elif not time or time == 'NONE':
+            return 0
+
         else:
             time = ''.join(i for i in time if not i.isalpha())
-            return float(time)
+            return int(time)
 
     @staticmethod
     def int_to_pwm(ratio, length):

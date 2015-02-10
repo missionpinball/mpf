@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.events module &mdash; Mission Pinball Framework 0.13 documentation</title>
+    <title>mpf.system.events module &mdash; Mission Pinball Framework 0.14 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.13',
+        VERSION:     '0.14',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.13 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.14 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.14 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -114,16 +114,15 @@ is passed.</p>
 
 <dl class="method">
 <dt id="mpf.system.events.EventManager.post">
-<tt class="descname">post</tt><big>(</big><em>event</em>, <em>**kwargs</em><big>)</big></dt>
+<tt class="descname">post</tt><big>(</big><em>event</em>, <em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
 <dd><p>Posts an event which causes all the registered handlers to be
 called.</p>
 <p>Events are processed serially (e.g. one at a time), so if the event
 system is in the process of handling another event, this event is
-added to a queue.</p>
-<p>You can specify as many keyword arguments as you want which will be
-pass to each handler. (Just make sure your handlers are expecting them.
-You can add <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs to your handler methods if certain ones don&#8217;t
-need them.</p>
+added to a queue and processed after the current event is done.</p>
+<p>You can control the order the handlers will be called by optionally
+specifying a priority when the handlers were registed. (Higher priority
+values will be processed first.)</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -133,21 +132,136 @@ need them.</p>
 post whatever event you want. You don&#8217;t have to set up anything
 ahead of time, and if no handlers are registered for the event
 you post, so be it.</li>
-<li><strong>ev_type</strong> &#8211; Optional parameter which specifies the type of event this
-is. Options include &#8216;boolean&#8217;, &#8216;queue&#8217;, &#8216;relay&#8217;, or None. See
-the documentation at <a class="reference external" href="https://missionpinball.com/docs">https://missionpinball.com/docs</a> for
-details about the different event types.</li>
-<li><strong>callback</strong> &#8211; A method which will be called when the final handler is
-done processing this event.</li>
+<li><strong>callback</strong> &#8211; <p>An optional method which will be called when the final
+handler is done processing this event. Default is None.</p>
+<blockquote>
+<div>passed to each handler. (Just make sure your handlers are
+expecting them. You can add <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs to your handler methods if
+certain ones don&#8217;t need them.)</div></blockquote>
+</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
-<p>Note that these two special keywords (ev_type and callback) are
-stripped from the list of keyword arguments that are passed to the
-handlers, so you can use them here in your post() without handlers that
-do not expect keywords.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.post_boolean">
+<tt class="descname">post_boolean</tt><big>(</big><em>event</em>, <em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Posts an boolean event which causes all the registered handlers to
+be called one-by-one. Boolean events differ from regular events in that
+if any handler returns False, the remaining handlers will not be
+called.</p>
+<p>Events are processed serially (e.g. one at a time), so if the event
+system is in the process of handling another event, this event is
+added to a queue and processed after the current event is done.</p>
+<p>You can control the order the handlers will be called by optionally
+specifying a priority when the handlers were registed. (Higher priority
+values will be processed first.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> &#8211; A string name of the event you&#8217;re posting. Note that you can
+post whatever event you want. You don&#8217;t have to set up anything
+ahead of time, and if no handlers are registered for the event
+you post, so be it.</li>
+<li><strong>callback</strong> &#8211; <p>An optional method which will be called when the final
+handler is done processing this event. Default is None. If
+any handler returns False and cancels this boolean event, the
+callback will still be called, but a new kwarg ev_result=False
+will be passed to it.</p>
+<blockquote>
+<div>passed to each handler. (Just make sure your handlers are
+expecting them. You can add <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs to your handler methods if
+certain ones don&#8217;t need them.)</div></blockquote>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.post_queue">
+<tt class="descname">post_queue</tt><big>(</big><em>event</em>, <em>callback</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Posts a queue event which causes all the registered handlers to be
+called.</p>
+<p>Queue events differ from standard events in that individual handlers
+are given the option to register a &#8220;wait&#8221;, and the callback will not be
+called until any handler(s) that registered a wait will have to release
+that wait. Once all the handlers release their waits, the callback is
+called.</p>
+<p>Events are processed serially (e.g. one at a time), so if the event
+system is in the process of handling another event, this event is
+added to a queue and processed after the current event is done.</p>
+<p>You can control the order the handlers will be called by optionally
+specifying a priority when the handlers were registed. (Higher priority
+values will be processed first.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> &#8211; A string name of the event you&#8217;re posting. Note that you can
+post whatever event you want. You don&#8217;t have to set up anything
+ahead of time, and if no handlers are registered for the event
+you post, so be it.</li>
+<li><strong>callback</strong> &#8211; <p>The method which will be called when the final
+handler is done processing this event and any handlers that
+registered waits have cleared their waits.</p>
+<blockquote>
+<div>passed to each handler. (Just make sure your handlers are
+expecting them. You can add <a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs to your handler methods if
+certain ones don&#8217;t need them.)</div></blockquote>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.post_relay">
+<tt class="descname">post_relay</tt><big>(</big><em>event</em>, <em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Posts a relay event which causes all the registered handlers to be
+called.</p>
+<p>Relay events differ from standard events in that the resulting kwargs
+from one handler are passed to the next handler. (In other words,
+stanard events mean that all the handlers get the same initial kwargs,
+whereas relay events &#8220;relay&#8221; the resulting kwargs from one handler to
+the next.)</p>
+<p>Events are processed serially (e.g. one at a time), so if the event
+system is in the process of handling another event, this event is
+added to a queue and processed after the current event is done.</p>
+<p>You can control the order the handlers will be called by optionally
+specifying a priority when the handlers were registed. (Higher priority
+values will be processed first.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> &#8211; A string name of the event you&#8217;re posting. Note that you can
+post whatever event you want. You don&#8217;t have to set up anything
+ahead of time, and if no handlers are registered for the event
+you post, so be it.</li>
+<li><strong>callback</strong> &#8211; <p>The method which will be called when the final handler is
+done processing this event. Default is None.</p>
+<blockquote>
+<div>passed to each handler. (Just make sure your handlers are
+expecting them. You can add <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs to your handler methods if
+certain ones don&#8217;t need them.)</div></blockquote>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -245,7 +359,7 @@ for a description of how queue events work.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.14 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

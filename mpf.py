@@ -106,6 +106,8 @@ logging.getLogger('').addHandler(console)
 def main():
     machine = MachineController(options_dict)
     machine.run()
+    print "mpf quiting from main"
+    quit()
 
 if __name__ == '__main__':
     main()

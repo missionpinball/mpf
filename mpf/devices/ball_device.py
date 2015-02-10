@@ -7,6 +7,9 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
+from collections import deque
+import time
+
 from mpf.system.tasks import DelayManager
 from mpf.system.devices import Device
 from mpf.system.timing import Timing
@@ -15,7 +18,7 @@ from mpf.system.timing import Timing
 class BallDevice(Device):
     """Base class for a 'Ball Device' in a pinball machine.
 
-    A ball device  is anything that can hold one or more balls, such as a
+    A ball device is anything that can hold one or more balls, such as a
     trough, an eject hole, a VUK, a catapult, etc.
 
     Args: Same as Device.
@@ -31,9 +34,6 @@ class BallDevice(Device):
         self.delay = DelayManager()
 
         # set our config defaults
-
-        if 'ball_switches' not in self.config:
-            self.config['ball_switches'] = None
         if 'exit_count_delay' not in self.config:
             self.config['exit_count_delay'] = ".5s"  # todo make optional
         if 'entrance_count_delay' not in self.config:
@@ -50,8 +50,18 @@ class BallDevice(Device):
             self.config['eject_coil_hold_times'] = list()
         if 'confirm_eject_type' not in self.config:
             self.config['confirm_eject_type'] = 'count'  # todo make optional?
-        if 'target_device' not in self.config:
-            self.config['target_device'] = None
+        if 'eject_targets' not in self.config:
+            self.config['eject_targets'] = ['playfield']
+        else:
+            self.config['eject_targets'] = self.machine.string_to_list(
+                self.config['eject_targets'])
+
+        if 'eject_timeouts' not in self.config:
+            self.config['eject_timeouts'] = list()
+        else:
+            self.config['eject_timeouts'] = self.machine.string_to_list(
+                self.config['eject_timeouts'])
+
         if 'confirm_eject_switch' not in self.config:
             self.config['confirm_eject_switch'] = None
         if 'confirm_eject_event' not in self.config:
@@ -61,7 +71,6 @@ class BallDevice(Device):
         if 'max_eject_attempts' not in self.config:
             self.config['max_eject_attempts'] = 0
 
-        # figure out the ball capacity
         if 'ball_switches' in self.config:
             self.config['ball_switches'] = self.machine.string_to_list(
                 self.config['ball_switches'])
@@ -71,19 +80,18 @@ class BallDevice(Device):
         if 'ball_capacity' not in self.config:
             self.config['ball_capacity'] = len(self.config['ball_switches'])
 
+        if 'debug' not in self.config:
+            self.config['debug'] = False
+
         # initialize variables
 
         self.num_balls_contained = -999
         # Number of balls currently contained (held) in this device.
         # -999 indicates no count has taken place yet.
 
-        # Set initial desired ball count.
-        # Warning, do not change _num_balls_desired, rather use the
-        # num_balls_desired (no leading underscore) setter
-        if 'trough' in self.tags:
-            self._num_balls_desired = self.config['ball_capacity']
-        else:
-            self._num_balls_desired = 0
+        self.eject_queue = deque()
+        # Queue of the list of eject targets (ball devices) for the balls this
+        # device is trying to eject.
 
         self.num_eject_attempts = 0
         # Counter of how many attempts to eject the current ball this device
@@ -91,18 +99,17 @@ class BallDevice(Device):
         # todo make it eventually give up. :)
         # todo log attemps more than one?
 
-        self.flag_ok_to_eject = False
-        # Flag that indicates whether this device can eject a ball. (Based on
-        # number of balls contained, whether there's a receiving device with
-        # room, etc.
+        self.eject_in_progress_target = None
+        # The ball device this device is currently trying to eject to
 
-        self.flag_eject_in_progress = False
+        self.num_balls_requested = 0
+        # The number of balls this device is in the process of trying to get.
 
         self.flag_valid = False
         # Set once we pass the settling time of our switches. If a count comes
         # in while the valid flag is not set, we will get a count result of -999
 
-        self.num_jam_sw_count = 0
+        self.num_jam_switch_count = 0
         # How many times the jam switch has been activated since the last
         # successful eject.
 
@@ -122,65 +129,6 @@ class BallDevice(Device):
 
         # Now configure the device
         self.configure()
-
-    @property
-    def num_balls_desired(self):
-        return self._num_balls_desired
-
-    @num_balls_desired.setter
-    def num_balls_desired(self, balls):
-        """Specifies how many balls this device desires to contain.
-
-        Note that trough devices (ball devices tagged with 'trough') always
-        desire to be full, so setting a new value here doesn't actually change
-        a trough's desired ball count. That said, if a trough device receives
-        a desired count value here that's lower than the current number of
-        balls it contains, it will attempt to eject a ball (even though the
-        desired count won't actually change.)
-        """
-
-        if 'trough' in self.tags:
-            if balls < self.config['ball_capacity']:
-                self.log.debug("About to call _eject() from trough due to "
-                               "num_balls_desired count change which asked for "
-                               "fewer balls than capacity")
-                # troughs are special
-                self._eject()
-            return
-
-        self.log.debug("Received request to change desired balls to %s", balls)
-
-        # Make sure we set a valid desired value
-        if balls <= self.config['ball_capacity']:
-            self._num_balls_desired = balls
-        else:
-            self._num_balls_desired = self.config['ball_capacity']
-
-        self.log.debug("Setting desired balls to %s", self._num_balls_desired)
-
-        # Return if contained is -999. Pick it up on next count?
-        if self.num_balls_contained == -999:
-            return
-
-        # What's our ball change?
-        ball_change = self._num_balls_desired - self.num_balls_contained
-        self.log.debug("Ball change to get to desired count: %s", ball_change)
-
-        # Compare balls desired to balls contained to see if we have to act
-
-        if ball_change > 0:  # We need more balls
-            self._request_ball()
-
-        elif ball_change < 0:  # We have too many balls
-            self.log.debug("num_balls_desired() found this device has too many "
-                           "balls. About to call _eject()")
-            self._eject()
-        else:  # We have the desired number of balls
-            self._cancel_request_ball()
-
-    @property
-    def num_balls_requested(self):
-        return self._num_balls_desired - self.num_balls_contained
 
     @property
     def num_balls_ejectable(self):
@@ -212,9 +160,12 @@ class BallDevice(Device):
                 Timing.string_to_ms(self.config['entrance_count_delay'])
 
         # Register for events
+
+        # Look for eject requests for this device
         self.machine.events.add_handler('balldevice_' + self.name +
                                         '_ball_eject_request',
-                                        self._eject)
+                                        self.eject)
+        # todo change event name to action_balldevice_name_eject_request
 
     def _initialize(self):
         # convert names to objects
@@ -245,9 +196,25 @@ class BallDevice(Device):
             self.config['confirm_eject_switch'] = (
                 self.machine.switches[self.config['confirm_eject_switch']])
 
-        if self.config['target_device']:
-            self.config['target_device'] = (
-                self.machine.balldevices[self.config['target_device']])
+        if self.config['eject_targets']:
+            for i in range(len(self.config['eject_targets'])):
+                self.config['eject_targets'][i] = (
+                    self.machine.balldevices[self.config['eject_targets'][i]])
+
+        # make sure the eject timeouts list matches the length of the eject targets
+        if (len(self.config['eject_timeouts']) <
+                len(self.config['eject_targets'])):
+            self.config['eject_timeouts'] += [None] * (
+                len(self.config['eject_targets']) -
+                len(self.config['eject_timeouts']))
+
+        timeouts_list = self.config['eject_timeouts']
+        self.config['eject_timeouts'] = dict()
+
+        for i in range(len(self.config['eject_targets'])):
+            self.config['eject_timeouts'][self.config['eject_targets'][i]] = (
+                Timing.string_to_ms(timeouts_list[i]))
+        # End code to create timeouts list -------------------------------------
 
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
@@ -287,23 +254,21 @@ class BallDevice(Device):
             # todo do we also need to add inactive and make a smarter
             # handler?
 
-        # if this device's target is another device, register for notification
-        # of that device's successful eject so this device can set its ok to
-        # eject flag and stage a ball if needed.
-
-        if self.config['confirm_eject_type'] == 'device':
+        # Configure event handlers to watch for target device status changes
+        for target in self.config['eject_targets']:
+            # Target device is requesting a ball
             self.machine.events.add_handler('balldevice_' +
-                                        self.config['target_device'].name
-                                        + '_ball_eject_success',
-                                        self.count_balls)
-
-        # if the target is a ball device, register for notification of that
-        # device requesting balls
-        if self.config['target_device']:
-            self.machine.events.add_handler('balldevice_' +
-                                            self.config['target_device'].name
+                                            target.name
                                             + '_ball_request',
-                                            self._target_requests_ball)
+                                            self.eject,
+                                            target=target,
+                                            get_ball=True)
+
+            # Target device is now able to receive a ball
+            self.machine.events.add_handler('balldevice_' +
+                                            target.name
+                                            + '_ok_to_receive',
+                                            self._do_eject)
 
         # Get an initial ball count
         self.count_balls(stealth=True)
@@ -316,48 +281,50 @@ class BallDevice(Device):
                 Default will return all status items.
                 Options include:
                     * num_balls_contained
-                    * flag_eject_in_progress
-                    * num_balls_to_eject
-                    * num_balls_desired
+                    * eject_in_progress_target
+                    * eject_queue
 
         Returns:
             A dictionary with the following keys:
-                 * num_balls_contained
-                * flag_eject_in_progress
-                * num_balls_to_eject
-                * num_balls_desired
+                * num_balls_contained
+                * eject_in_progress_target
+                * eject_queue
         """
         if request == 'num_balls_contained':
             return self.num_balls_contained
-        elif request == 'flag_eject_in_progress':
-            return self.flag_eject_in_progress
-        elif request == 'num_balls_to_eject':
-            return self.num_balls_to_eject,
-        elif request == 'num_balls_desired':
-            return self.num_balls_desired
+        elif request == 'eject_in_progress_target':
+            return self.eject_in_progress_target
+        elif request == 'eject_queue':
+            return self.eject_queue,
         else:
             return {'num_balls_contained': self.num_balls_contained,
-                    'flag_eject_in_progress': self.flag_eject_in_progress,
-                    'num_balls_to_eject': self.num_balls_to_eject,
-                    'num_balls_desired': self.num_balls_desired
+                    'eject_in_progress_target': self.eject_in_progress_target,
+                    'eject_queue': self.eject_queue,
                     }
 
     def status_dump(self):
         """Dumps the full current status of the device to the log."""
 
+        if self.eject_in_progress_target:
+            eject_name = self.eject_in_progress_target.name
+        else:
+            eject_name = 'None'
+
         self.log.debug("+-----------------------------------------+")
         self.log.debug("| num_balls_contained: %s                  |",
                        self.num_balls_contained)
-        self.log.debug("| flag_eject_in_progress: %s            |",
-                       self.flag_eject_in_progress)
-        self.log.debug("| flag_ok_to_eject: %s                  |",
-                       self.flag_ok_to_eject)
-        self.log.debug("| num_jam_sw_count: %s                     |",
-                       self.num_jam_sw_count)
-        self.log.debug("| num_balls_desired: %s                    |",
-                       self.num_balls_desired)
+        self.log.debug("| eject_in_progress_target: %s",
+                       eject_name)
+        self.log.debug("| num_balls_ejecting: %s                   |",
+                       self.num_balls_ejecting)
+        self.log.debug("| num_jam_switch_count: %s                     |",
+                       self.num_jam_switch_count)
         self.log.debug("| num_eject_attempts: %s                   |",
                        self.num_eject_attempts)
+        self.log.debug("| num_balls_requested: %s                  |",
+                       self.num_balls_requested)
+        self.log.debug("| eject queue: %s",
+                       self.eject_queue)
         self.log.debug("+-----------------------------------------+")
 
     def _invalidate(self):
@@ -414,9 +381,9 @@ class BallDevice(Device):
 
             # Figure out if we gained or lost any balls since last count?
             if previous_balls == -999:  # This is the first time count
-                # No "real" change since we didn't know previous value
-                self.log.debug("Previous count was invalid. Don't know if we "
+                self.log.debug("This is a first time count. Don't know if we "
                               "gained or lost anything.")
+                # No "real" change since we didn't know previous value
                 ball_change = 0
             else:
                 ball_change = ball_count - previous_balls
@@ -425,7 +392,7 @@ class BallDevice(Device):
             # If we were waiting for a count-based eject confirmation, let's
             # confirm it now
             if (not ball_change and self.flag_confirm_eject_via_count and
-                    self.flag_eject_in_progress):
+                    self.eject_in_progress_target):
                 self._eject_success()
                 # todo I think this is ok with `not ball_change`. If ball_change
                 # is positive that means the ball fell back in or a new one came
@@ -434,7 +401,6 @@ class BallDevice(Device):
                 # ropes. If ball_change is negative then I don't know what the
                 # heck happened.
 
-            self.set_ok_to_eject()
             self.status_dump()
 
             if ball_change > 0:
@@ -450,41 +416,65 @@ class BallDevice(Device):
                 self.num_balls_contained = 0
             # todo add support for virtual balls
 
-        if self.num_balls_contained > self.num_balls_desired:
-            self.log.debug("Count_balls() found more balls than desired. "
-                           "About to call _eject()")
-            self._eject()
-
         return self.num_balls_contained
 
     def _balls_added(self, balls):
         # Called when ball_count finds new balls in this device
-        if self.flag_eject_in_progress:
-            self._eject_failed()
-            if 'drain' in self.tags:
-                self.log.debug("About to call _eject() because we got a new ball"
-                               "in a drain device while the EIP flag was set.")
-                self._eject()  # drains are special
-                # todo I think we need to change this. What happens if a ball
-                # drains before we get the eject confirmation? We'll try to
-                # eject another. Wonder if we should change our target to not
-                # ok to receive? Meh, that won't work because if we truly
-                # have an eject failure then it won't restart. We need to set a
-                # delay to reset the target device if it doesn't receive a ball.
 
-        else:
-        # No ejects in progress, so we assume this is a valid new ball?
-            self.machine.events.post('balldevice_' + self.name +
-                                     '_ball_enter', balls=balls)
-            for tag in self.tags:
-                self.machine.events.post('sw_' + tag)
-                # todo I don't like this. Change big shot and remove
-                # or maybe pass tags along with the event post?
+        # If this device received a new ball while a current eject was in
+        # progress, let's try to figure out whether an actual new ball entered
+        # or whether the current ball it was trying to eject fell back in.
+        # Note we can only do this for devices that have a jam switch.
 
-        # check to see if our target device wants a ball
-        if self.config['target_device'] and (
-                self.config['target_device'].num_balls_requested > 0):
-            self.num_balls_desired -= 1
+        if (self.eject_in_progress_target and self.config['jam_switch'] and
+                self.num_jam_switch_count > 1):
+            # If the jam switch count is more than 1, we assume the ball it was
+            # trying to eject fell back in.
+            self.log.debug("Jam switch count: %s. Assuming eject failed.",
+                           self.num_jam_switch_count)
+            self.eject_failed()
+            return
+
+        elif ((self.eject_in_progress_target and self.config['jam_switch'] and
+                self.num_jam_switch_count == 1) or
+                not self.eject_in_progress_target):
+            # If there's an eject in progress with a jam switch count of only 1,
+            # or no eject in progress, we assume this was a valid new ball.
+
+
+            # If this device is not expecting any balls, we assuming this one
+            # came from the playfield. Post this event so the playfield can keep
+            # track of how many balls are out.
+            if not self.num_balls_requested:
+                self.machine.events.post('balldevice_captured_from_playfield',
+                                         balls=balls)
+
+            # Post the relay event as other handlers might be looking for to act
+            # on the ball entering this device.
+            self.machine.events.post_relay('balldevice_' + self.name +
+                                           '_ball_enter',
+                                            balls=balls,
+                                            callback=self._balls_added_callback)
+
+    def _balls_added_callback(self, balls, **kwargs):
+        # Callback event for the balldevice_<name>_ball_enter relay event
+
+        # If we still have balls here, that means that no one claimed them, so
+        # essentially they're "stuck." So we just eject them... unless this
+        # device is tagged 'trough' in which case we let it keep them.
+        if balls and 'trough' not in self.tags:
+            self.eject(balls)
+
+        self.log.debug("In the balls added callback")
+        self.log.debug("Eject queue: %s", self.eject_queue)
+
+        #todo we should call the ball controller in case it wants to eject a
+        # ball from a different device?
+
+        if self.eject_queue:
+            self.log.debug("A ball was added and we have an eject_queue, so "
+                           "we're going to process that eject now.")
+            self._do_eject()
 
     def _balls_missing(self, balls):
         # Called when ball_count finds that balls are missing from this device
@@ -516,9 +506,9 @@ class BallDevice(Device):
         # This method is typically used with trough devices to figure out if
         # balls fell back in.
 
-        self.num_jam_sw_count += 1
+        self.num_jam_switch_count += 1
         self.log.debug("Ball device %s jam switch hit. New count: %s",
-                       self.name, self.num_jam_sw_count)
+                       self.name, self.num_jam_switch_count)
 
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch
@@ -527,48 +517,18 @@ class BallDevice(Device):
             self.num_balls_contained += 1
             self._balls_added(1)
 
-    def set_ok_to_eject(self):
-        """Checks whether it's ok for this device to eject and sets the flag.
-
-        Returns: True (device is ok to eject) or False.
-        """
-        initial_value = self.flag_ok_to_eject
-
-        self.flag_ok_to_eject = True
-
-        # Now let's look for a reason for this not to be true
-
-        if self.config['eject_switch']:  # do we have an eject switch?
-            if self.machine.switch_controller.is_inactive(
-                    self.config['eject_switch'].name):  # is it inactive?
-                self.flag_ok_to_eject = False
-        elif not self.num_balls_contained:  # If not, do we have a ball?
-            self.flag_ok_to_eject = False
-
-        # Are we ejecting into a device, and if so, does it have capacity?
-        if self.config['confirm_eject_type'] == 'device':
-            if not self.config['target_device'].is_ok_to_receive():
-                self.flag_ok_to_eject = False
-
-        if self.flag_ok_to_eject:
-
-            if not initial_value:
-                # We were not ok and now we are, so let's post an event of that
-                self.machine.events.post('balldevice_' + self.name +
-                                         '_ok_to_eject')
-
-            return True
-
-        else:
-            return False
-
-    def is_ok_to_receive(self):
-        """Checks whether it's ok for this device to receive any balls.
-
-        Returns: An integer value of the number of balls this device can
+    def get_additional_ball_capacity(self):
+        """Returns an integer value of the number of balls this device can
             receive. A return value of 0 means that this device is full and/or
-            that it's not able to receive any balls at this time.
+            that it's not able to receive any balls at this time due to a
+            current eject_in_progress.
         """
+
+        if self.num_balls_ejecting:
+            # This device is in the process of ejecting a ball, so it shouldn't
+            # receive any now.
+
+            return 0
 
         if self.config['ball_capacity'] - self.num_balls_contained < 0:
             self.log.warning("Device reporting more balls contained than its "
@@ -576,45 +536,89 @@ class BallDevice(Device):
 
         return self.config['ball_capacity'] - self.num_balls_contained
 
-    def _request_ball(self, balls=1):
-        # Posts the even to announce that this device would like a ball.
+    def request_ball(self, balls=1):
+        """Request that one or more balls is added to this device.
 
-        if self.flag_eject_in_progress:
+        Args:
+            balls: Integer of the number of balls that should be added to this
+                device. A value of -1 will cause this device to try to fill
+                itself.
+
+        Note that a device will never request more balls than it can hold. Also,
+        only devices that are fed by other ball devices (or a combination of
+        ball devices and diverters) can make this request. e.g. if this device
+        is fed from the playfield, then this request won't work.
+        """
+
+        self.log.debug("In request_ball. balls: %s", balls)
+
+        if self.eject_in_progress_target:
             self.log.debug("Received request to request a ball, but we can't "
                            "since there's an eject in progress.")
-            return
+            return False
 
-        if not self.is_ok_to_receive():
+        if not self.get_additional_ball_capacity():
             self.log.debug("Received request to request a ball, but we can't "
                            "since it's not ok to receive.")
-            return
+            return False
+
+        # How many balls are we requesting?
+        remaining_capacity = (self.config['ball_capacity'] -
+                              self.num_balls_contained -
+                              self.num_balls_requested)
+
+        if remaining_capacity < 0:
+            remaining_capacity = 0
+
+        # Figure out how many balls we can request
+        if balls == -1 or balls > remaining_capacity:
+            balls = remaining_capacity
+
+        if not balls:
+            return 0
+
+        self.num_balls_requested += balls
 
         self.log.debug("Requesting Ball(s). Balls=%s", balls)
+
+        # set event handler to watch for receiving a ball
+        self.machine.events.add_handler('balldevice_' + self.name +
+                                        '_ball_enter',
+                                        self._requested_ball_received)
 
         self.machine.events.post('balldevice_' + self.name + '_ball_request',
                                  balls=balls)
 
-        # todo will we ever get here if we don't need a ball?
+        return balls
+
+    def _requested_ball_received(self, balls):
+        # Responds to its own balldevice_<name>_ball_enter relay event
+        # We do this since we need something to act on the balls being received,
+        # otherwise it would think they were unexpected and eject them.
+
+        # Figure out how many of the new balls were requested
+        unexpected_balls = balls - self.num_balls_requested
+        if unexpected_balls < 0:
+            unexpected_balls = 0
+
+        # Figure out how many outstanding ball requests we have
+        self.num_balls_requested -= balls
+
+        if self.num_balls_requested <= 0:
+            self.num_balls_requested = 0
+            self.machine.events.remove_handler(self._requested_ball_received)
+
+        return {'balls': unexpected_balls}
 
     def _cancel_request_ball(self):
         self.machine.events.post('balldevice_' + self.name +
                                  '_cancel_ball_request')
 
-    def _target_requests_ball(self, balls):
-        # This device's target device just requested a ball
-
-        if self.num_balls_contained:
-            self._eject(balls)
-        else:
-            self._request_ball(balls)
-
     def _eject_event_handler(self):
         # We received the event that should eject this ball.
 
-        self.num_balls_desired -= 1
-
-        if not self.flag_ok_to_eject:
-            self._request_ball()
+        if not self.num_balls_contained:
+            self.request_ball()
 
     def stop(self):
         """Stops all activity in a device.
@@ -622,86 +626,208 @@ class BallDevice(Device):
         Cancels all pending eject requests. Cancels eject confirmation checks.
         """
         self.log.debug("Stopping all activity via stop()")
-        self.flag_eject_in_progress = False
-        self.num_balls_to_eject = 0
-        self.num_jam_sw_count = 0
+        self.eject_in_progress_target = None
+        self.eject_queue = deque()
+        self.num_jam_switch_count = 0
+
+        # todo jan19 anything to add here?
 
         self._cancel_eject_confirmation()
         self.count_balls()  # need this since we're canceling the eject conf
 
-    def _eject(self, balls=1):
-        # Performs the actual eject attempts and sets up eject confirmations
+    def eject(self, balls=1, target=None, timeout=0, get_ball=False):
+        """Ejects one or more balls from the device.
 
-        # todo Should we do something with the balls arg?
+        Args:
+            balls: Integer of the number of balls to eject. Default is 1. Pass
+                a value of -1 to eject all the balls.
+            target: Optional target that should receive the ejected ball(s),
+                either a string name of the ball device or a ball device
+                object. Default is None which means this device will eject this
+                ball to the first entry in the eject_targets list.
+            get_ball: Boolean as to whether this device should attempt to get
+                a ball to eject if it doesn't have one. Default is False.
 
-        self.log.debug("Entering _eject()")
+        Note that if this device's 'balls_per_eject' configuration is more than
+        1, then it will eject the nearest number of balls it can.
+        """
+
+        # Figure out the eject target
+
+        if not target:
+            target = self.config['eject_targets'][0]
+
+        elif type(target) is str:
+            target = self.machine.balldevices[target]
+
+        self.log.debug("Received request to eject %s ball(s) to target '%s'",
+                       balls, target.name)
 
         if not self.config['eject_coil']:
-            self.log.debug("This device has no eject coil, there's nothing to do"
-                          " here. We assume this is a manual plunger and wait "
-                          "for the player to eject the ball.")
+            self.log.debug("This device has no eject coil, there's nothing to "
+                           "do here. We assume this is a manual plunger and "
+                           "wait for the player to eject the ball.")
             return
 
-        if (self.num_balls_contained <= self.num_balls_desired and
-                'trough' not in self.tags):
-            self.log.debug("Fewer balls contained than desired. Aborting eject")
-            return False
+        # Set the timeout for this eject
+        if not timeout:
+            timeout = self.config['eject_timeouts'][target]
 
-        if self.flag_eject_in_progress:
-            self.log.debug("Eject flag in progress. Aborting eject")
+        # Set the number of balls to eject
+
+        balls_to_eject = balls
+
+        if balls == -1:
+            balls_to_eject = self.num_balls_contained
+
+        if balls_to_eject > self.num_balls_contained and not get_ball:
+            balls_to_eject = self.num_balls_contained
+
+        # Add one entry to the eject queue for each ball that's ejecting
+        self.log.debug('Adding %s ball(s) to the eject_queue.', balls_to_eject)
+        for i in range(balls_to_eject):
+            self.eject_queue.append((target, timeout))
+
+        self._do_eject()
+
+    def _do_eject(self, **kwargs):
+        # Performs the actual eject attempts and sets up eject confirmations
+        # **kwargs just because this method is registered for various events
+        # which might pass them.
+
+        self.log.debug("Entering _do_eject(). Current in progress target: %s. "
+                       "Eject queue: %s",
+                       self.eject_in_progress_target, self.eject_queue)
+
+        if self.eject_in_progress_target:
+            self.log.debug("Current eject in progress with target: %s. Aborting"
+                           " eject.", self.eject_in_progress_target)
             return False  # Don't want to get in the way of a current eject
 
-        if not self.flag_ok_to_eject:  # todo do we still need this?
-            self._request_ball()
-            self.log.debug("Ok to eject flag not set. Aborting eject")
-            return
+        if not self.num_balls_contained and not self.num_balls_requested:
+            self.log.debug("Don't have any balls. Requesting one.")
+            self.request_ball()
+            # Once the ball is delivered then the presence of the eject_queue
+            # will re-start this _do_eject() process
+            return False
 
-        else:
-            self.log.debug("Proceeding with the eject")
-            self.flag_eject_in_progress = True
-            self.num_eject_attempts += 1
+        elif self.eject_queue and self.num_balls_contained:
+            self.log.debug("We have an eject queue: %s", self.eject_queue)
 
-            if self.config['jam_switch']:
-                self.num_jam_sw_count = 0
-                if self.machine.switch_controller.is_active(
-                        self.config['jam_switch'].name):
-                    self.num_jam_sw_count += 1
-                    # catches if the ball is blocking the switch to
-                    # begin with, todo we have to get smart here
+            target = self.eject_queue[0][0]  # first item, first part of tuple
 
-            self._setup_eject_confirmation()
+            if not target.get_additional_ball_capacity():
+                self.log.debug("Target device '%s' is not able to receive now. "
+                               "Aborting eject. Will retry when target can "
+                               "receive.", target.name)
+                return False
 
-            if self.config['balls_per_eject'] == 1:
-                self.num_balls_contained -= 1
-                self.num_balls_ejecting = 1
+            # todo should we try to find another target in the queue that is
+            # ready?
+
             else:
-                self.num_balls_ejecting = self.num_balls_contained
-                self.num_balls_contained = 0
+                self.log.debug("Proceeding with the eject")
 
-            self.machine.events.post('balldevice_' + self.name +
-                                     '_ball_eject_attempt',
-                                     balls=self.num_balls_ejecting)
-            # todo if the event queue is busy, this event will be
-            # queued, yet the coil pulse happens now. Is that ok?
+                self.log.debug("Setting eject_in_progress_target, timeout")
+                self.eject_in_progress_target, timeout = (
+                    self.eject_queue.popleft())
 
-            self.config['eject_coil'].pulse()
-            # todo add support for hold coils with var. release times
+                self.num_eject_attempts += 1
 
-    def _setup_eject_confirmation(self, style=None):
+                if self.config['jam_switch']:
+                    self.num_jam_switch_count = 0
+                    if self.machine.switch_controller.is_active(
+                            self.config['jam_switch'].name):
+                        self.num_jam_switch_count += 1
+                        # catches if the ball is blocking the switch to
+                        # begin with, todo we have to get smart here
+
+                if self.config['balls_per_eject'] == 1:
+                    self.num_balls_ejecting = 1
+                else:
+                    self.num_balls_ejecting = self.num_balls_contained
+
+                self.machine.events.post('balldevice_' + self.name +
+                                         '_ball_eject_attempt',
+                                         balls=self.num_balls_ejecting,
+                                         target=self.eject_in_progress_target,
+                                         timeout=timeout,
+                                         callback=self._fire_eject_coil)
+                # Fire the coil via a callback in case there are events in the
+                # queue. This ensures that the coil pulse happens when this
+                # event is posted instead of firing right away.
+
+    def _eject_status(self):
+        if self.config['debug']:
+
+            self.log.info("DEBUG: Eject duration: %ss. Target: %s",
+                          round(time.time() - self.eject_start_time, 2),
+                          self.eject_in_progress_target.name)
+
+    def _fire_eject_coil(self, target, timeout=None, **kwargs):
+
+        self._setup_eject_confirmation(self.eject_in_progress_target, timeout)
+
+        self.num_balls_contained -= self.num_balls_ejecting
+
+        self.log.debug("Firing eject coil. num_balls_ejecting: %s. New "
+                       "num_balls_contained: %s.",
+                       self.num_balls_ejecting, self.num_balls_contained)
+
+        self.config['eject_coil'].pulse()
+            # todo add support for hold coils with variable release times
+
+    def _setup_eject_confirmation(self, target=None, timeout=0):
         # Called after an eject request to confirm the eject. The exact method
-        # of confirmation depends on how this ball device has been configured.
+        # of confirmation depends on how this ball device has been configured
+        # and what target it's ejecting to
+
+        # args are target device and timeout in ms
+
         self.log.debug("Setting up eject confirmation.")
+
+        if self.config['debug']:
+            self.eject_start_time = time.time()
+            self.log.info("DEBUG: Eject start time: %s", self.eject_start_time)
+            self.machine.events.add_handler('timer_tick', self._eject_status)
 
         self.flag_confirm_eject_via_count = False
 
-        if self.config['confirm_eject_type'] == 'device':
-            self.log.debug("Will confirm eject via ball entry into '%s'",
-                          self.config['target_device'].name)
-            # watch for ball entry event on that device
+        if (self.config['confirm_eject_type'] == 'playfield' or
+            target == self.machine.balldevices['playfield']):
+
+            if self.machine.playfield.ok_to_confirm_ball_via_playfield_switch():
+                self.log.debug("Will confirm eject when a playfield switch is "
+                               "hit")
+                self.machine.events.add_handler('sw_playfield_active',
+                                                self._eject_success)
+            else:
+                self.log.debug("Will confirm eject via recount of ball "
+                               "switches.")
+                self.flag_confirm_eject_via_count = True
+
+        elif self.config['confirm_eject_type'] == 'target':
+
+            if not target:
+                self.log.error("we got an eject confirmation request with no "
+                               "target. This shouldn't happen. Post to the "
+                               "forum if you see this.")
+                quit()
+
+            if timeout:
+                # set up the delay to check for the failed the eject
+                self.delay.add(name='target_eject_confirmation_timeout',
+                               ms=timeout,
+                               callback=self.eject_failed)
+
+            self.log.debug("Will confirm eject via ball entry into '%s' with a "
+                           "confirmation timeout of %sms", target.name, timeout)
+
+            # watch for ball entry event on the target device
             # Note this must be higher priority than the failed eject handler
             self.machine.events.add_handler(
-                'balldevice_' + self.config['target_device'].name +
-                '_ball_enter', self._eject_success, 2)
+                'balldevice_' + target.name +
+                '_ball_enter', self._eject_success, priority=1000)
 
         elif self.config['confirm_eject_type'] == 'switch':
             self.log.debug("Will confirm eject via activation of switch '%s'",
@@ -720,17 +846,6 @@ class BallDevice(Device):
             self.machine.events.add_handler(
                 self.config['confirm_eject_event'], self._eject_success)
 
-        elif self.config['confirm_eject_type'] == 'playfield':
-            # This option is only used with 'playfield' when no balls are live
-
-            if not self.machine.ball_controller.num_balls_live:
-                self.log.debug("Will confirm eject when a playfield switch is hit")
-                self.machine.events.add_handler('sw_ballLive',
-                                                self._eject_success)
-            else:
-                self.log.debug("Will confirm eject via recount of ball switches.")
-                self.flag_confirm_eject_via_count = True
-
         elif self.config['confirm_eject_type'] == 'count':
             # todo I think we need to set a delay to recount? Because if the
             # ball re-enters in less time than the exit delay, then the switch
@@ -747,62 +862,132 @@ class BallDevice(Device):
 
     def _cancel_eject_confirmation(self):
         self.log.debug("Canceling eject confirmations")
-        self.flag_eject_in_progress = False
+        self.eject_in_progress_target = None
+        self.num_eject_attempts = 0
+
         # Remove any event watching for success
         self.machine.events.remove_handler(self._eject_success)
 
         # Remove any switch handlers
         if self.config['confirm_eject_type'] == 'switch':
             self.machine.switch_controller.remove_switch_handler(
-                switch_name=self.config['confirm_eject_target'].name,
+                switch_name=self.config['confirm_eject_switch'].name,
                 callback=self._eject_success,
                 state=1, ms=0)
+
+        # Remove any delays that were watching for failures
+        self.delay.remove('target_eject_confirmation_timeout')
 
     def _eject_success(self, **kwargs):
         # We got an eject success for this device.
         # **kwargs because there are many ways to get here, some with kwargs and
         # some without. Also, since there are many ways we can get here, let's
         # first make sure we actually had an eject in progress
-        self.log.debug("In _eject_success. EIP: %s", self.flag_eject_in_progress)
+
+        self.log.debug("In _eject_success. Eject target: %s",
+                       self.eject_in_progress_target)
+
+        if self.config['debug']:
+            self.log.info("DEBUG: Eject duration: %ss",
+                          time.time() - self.eject_start_time)
+            self.machine.events.remove_handler(self._eject_status)
+
+        # Reset flags for next time
         self.flag_confirm_eject_via_count = False
-        if self.flag_eject_in_progress:
+        self.flag_pending_playfield_confirmation = False
+
+        if self.eject_in_progress_target:
             self.log.debug("Confirmed successful eject")
 
-            self.num_jam_sw_count = 0
+            # Creat a temp attribute here so the real one is None when the
+            # event is posted.
+            eject_target = self.eject_in_progress_target
+            self.num_jam_switch_count = 0
             self.num_eject_attempts = 0
-            self.flag_eject_in_progress = False
+            self.eject_in_progress_target = None
             balls_ejected = self.num_balls_ejecting
             self.num_balls_ejecting = 0
-            self.set_ok_to_eject()
 
             # todo cancel post eject check delay
 
             self.machine.events.post('balldevice_' + self.name +
                                      '_ball_eject_success',
-                                     balls=balls_ejected)
+                                     balls=balls_ejected,
+                                     target=eject_target)
 
-        else:
-            self.log.warning("We got to '_eject_success' but no eject was in "
+        else:  # this should never happen
+            self.log.warning("We got to '_eject_success()' but no eject was in "
                              "progress. Just FYI that something's weird.")
-            # this should never happen
 
         self._cancel_eject_confirmation()
 
-        self.count_balls()  # picks up any remaining balls we should eject
+        if self.eject_queue:
+            self._do_eject()
 
-    def _eject_failed(self, balls=0):
+    def eject_failed(self, retry=True, force_retry=False):
+        """Marks the current eject in progress as 'failed.'
+
+        Note this is not typically a method that would be called manually. It's
+        called automatically based on ejects timing out or balls falling back
+        into devices while they're in the process of ejecting. But you can call
+        it manually if you want to if you have some other way of knowing that
+        the eject failed that the system can't figure out on it's own.
+
+        Args:
+            retry: Boolean as to whether this eject should be retried. If True,
+                the ball device will retry the eject again as long as the
+                'max_eject_attempts' has not been exceeded. Default is True.
+            force_retry: Boolean that forces a retry even if the
+                'max_eject_attempts' has been exceeded. Default is False.
+
+        """
 
         self.log.debug("Eject Failed")
-        self.machine.events.post('balldevice_' + self.name +
-                                     '_ball_eject_failed')
 
-        # todo audit the number of failed ejects for this device
+        # Put the current target back in the queue so we can try again
+        # This sets up the timeout back to the default. Wonder if we should
+        # add some intelligence to make this longer or shorter?
+        self.eject_queue.appendleft((self.eject_in_progress_target,
+            self.config['eject_timeouts'][self.eject_in_progress_target]))
+
+        # Reset the stuff that showed a current eject in progress
+        self.eject_in_progress_target = None
+        self.num_balls_ejecting = 0
+        self.num_eject_attempts += 1
+
+        if self.config['debug']:
+            self.log.info("DEBUG: Eject duration: %ss",
+                          time.time() - self.eject_start_time)
+
+        self.machine.events.post('balldevice_' + self.name +
+                                 '_ball_eject_failed',
+                                 num_attempts=self.num_eject_attempts)
 
         self._cancel_eject_confirmation()
 
-        # do we do anything here? Switch handlers should pick this up
+        if (retry and (not self.config['max_eject_attempts'] or
+                self.num_eject_attempts < self.config['max_eject_attempts'])):
+            self._do_eject()
 
-        # todo increase our attempt count? meh, switch handler can do that too.
+        elif force_retry:
+            self._do_eject()
+
+        else:
+            self._eject_permanently_failed()
+
+    def _eject_permanently_failed(self):
+        self.log.warning("Eject failed %s times. Permanently giving up.",
+                         self.config['max_eject_attempts'])
+        self.machine.events.post('balldevice_' + self.name +
+                                 'ball_eject_permanent_failure')
+
+    def _ok_to_receive(self):
+        # Post an event announcing that it's ok for this device to receive a
+        # ball
+
+        self.machine.events.post('balldevice_' + self.name +
+                                 '_ok_to_receive',
+                                 balls=self.get_additional_ball_capacity())
 
 
 # The MIT License (MIT)

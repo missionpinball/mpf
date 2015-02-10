@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.13 documentation</title>
+    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.14 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.13',
+        VERSION:     '0.14',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.13 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.14 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.14 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -128,7 +128,7 @@ is in the state regardless of how long it&#8217;s been in that state.</p>
 
 <dl class="attribute">
 <dt id="mpf.system.switch_controller.SwitchController.log">
-<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x1647630&gt;</em></dt>
+<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x25e1270&gt;</em></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -156,8 +156,6 @@ last changed state.</p>
 <p>This is the method that is called by the platform driver whenever a
 switch changes state. It&#8217;s also used by the &#8220;other&#8221; modules that
 activate switches, including the keyboard and OSC interfaces.</p>
-<p>Default is to pass in a name, but you can also pass a switch based on
-its number or a reference to the switch object.</p>
 <p>State 0 means the switch changed from active to inactive, and 1 means
 it changed from inactive to active. (The hardware &amp; platform code
 handles NC versus NO switches and translates them to &#8216;active&#8217; versus
@@ -167,16 +165,28 @@ handles NC versus NO switches and translates them to &#8216;active&#8217; versus
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>logical</strong> (<em>bool</em>) &#8211; </li>
-<li><strong>whether we have the &#8220;logical&#8221; state of the switch or not.</strong> (<em>Specifies</em>) &#8211; </li>
-<li><strong>is post NC/NO inversion processing. Typically the hardware will</strong> (<em>This</em>) &#8211; </li>
-<li><strong>switch states in their raw (logical=False) states, but other</strong> (<em>send</em>) &#8211; </li>
-<li><strong>obj</strong> &#8211; </li>
+<li><strong>name</strong> &#8211; The string name of the switch. This is optional if you specify
+the switch via the &#8216;num&#8217; or &#8216;obj&#8217; parameters.</li>
+<li><strong>state</strong> &#8211; The state of the switch you&#8217;re processing, 1 is active, 0 is
+inactive.</li>
+<li><strong>logical</strong> &#8211; Boolean which specifies whether the &#8216;state&#8217; argument
+represents the &#8220;physical&#8221; or &#8220;logical&#8221; state of the switch. If
+True, a 1 means this switch is active and a 0 means it&#8217;s
+inactive, regardless of the NC/NO configuration of the switch.
+If False, then the state paramenter passed will be inverted if
+the switch is configured to be an &#8216;NC&#8217; type. Typically the
+hardware will send switch states in their raw (logical=False)
+states, but other interfaces like the keyboard and OSC will use
+logical=True.</li>
+<li><strong>num</strong> &#8211; The hardware number of the switch.</li>
+<li><strong>obj</strong> &#8211; The switch object.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
+<p>Note that there are three different paramter options to specify the
+switch: &#8216;name&#8217;, &#8216;num&#8217;, and &#8216;obj&#8217;. You only need to pass one of them.</p>
 </dd></dl>
 
 <dl class="method">
@@ -242,7 +252,7 @@ last changed state.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.14 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

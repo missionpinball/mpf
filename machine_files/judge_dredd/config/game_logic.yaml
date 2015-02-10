@@ -1,9 +1,6 @@
 Game:
-    num_hits_for_valid_playfield: 2
     Balls per game: 3
     Max players per game: 4
-    Max extra balls stacked: unlimited
-    Max extra balls per game: unlimited
     player_controlled_eject_tag: right_eject
 
 ShowPlayer:

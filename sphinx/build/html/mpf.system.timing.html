@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.timing module &mdash; Mission Pinball Framework 0.13 documentation</title>
+    <title>mpf.system.timing module &mdash; Mission Pinball Framework 0.14 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.13',
+        VERSION:     '0.14',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.13 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.14 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.14 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -140,9 +140,14 @@ percentage into the corresponding pwm mask.</p>
 <dd><p>Converts a string of real-world time into int of ms. Example
 inputs:</p>
 <p>200ms
-2s</p>
-<p>If no &#8220;s&#8221; or &#8220;ms&#8221; is provided, we assume &#8220;milliseconds&#8221;</p>
-<p>returns an integer 200 or 2000, respectively</p>
+2s
+None</p>
+<p>If no &#8220;s&#8221; or &#8220;ms&#8221; is provided, this method assumes &#8220;milliseconds.&#8221;</p>
+<p>If time is &#8216;None&#8217; or a string of &#8216;None&#8217;, this method returns 0.</p>
+<dl class="docutils">
+<dt>Returns: An integer. The examples listed above 200, 2000 and 0,</dt>
+<dd>respectively</dd>
+</dl>
 </dd></dl>
 
 <dl class="staticmethod">
@@ -201,7 +206,7 @@ inputs:</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.13 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.14 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
