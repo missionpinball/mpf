@@ -8,10 +8,10 @@
 
 import logging
 import yaml
-import weakref
 import time
 import os
-import uuid
+
+from mpf.system.assets import Asset, AssetManager
 
 
 class ShowController(object):
@@ -27,8 +27,6 @@ class ShowController(object):
     def __init__(self, machine):
         self.log = logging.getLogger("ShowController")
         self.machine = machine
-        self.registered_shows = []
-        self.machine.shows = dict()  # Holds english names which map to shows
 
         self.light_queue = []
         self.led_queue = []
@@ -39,10 +37,13 @@ class ShowController(object):
         self.led_update_list = []
 
         self.running_shows = []
+
         self.light_priorities = {}  # dictionary which tracks the priorities of
         # whatever last set each light in the machine
+
         self.initialized = False  # We need to run some stuff once but we can't
         # do it here since this loads before our light machine items are created
+
         self.queue = []  # contains list of dics for things that need to be
         # serviced in the future, including: (not all are always used)
         # lightname
@@ -53,6 +54,7 @@ class ShowController(object):
         # color
         # playlist
         # action_time
+
         self.active_scripts = []  # list of active scripts that have been
         # converted to Shows. We need this to facilitate removing shows when
         # they're done, since programmers don't use a name for scripts like
@@ -61,6 +63,7 @@ class ShowController(object):
         # lightname - the light the script is applied to
         # priority - what priority the script was running at
         # show - the associated Show object for that script
+
         self.manual_commands = []  # list that holds the last states of any
         # lights that were set manually. We keep track of this so we can restore
         # lower priority lights when shows end or need to be blended.
@@ -69,6 +72,7 @@ class ShowController(object):
         # color - the current color *or* fade destination color
         # priority
         # fadeend - (optional) realtime of when the fade should end
+
         self.current_time = time.time()
         # we use a common system time for the entire show system so that every
         # "current_time" of a single update cycle is the same everywhere. This
@@ -77,8 +81,23 @@ class ShowController(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick)
-        self.machine.events.add_handler('machine_init_phase3',
+        self.machine.events.add_handler('machine_init_phase_4',
                                         self._initialize)
+
+        # Tell the mode controller that it should look for ShowPlayer items in
+        # modes.
+        self.machine.modes.register_start_method(self.process_shows_from_config,
+                                                 'ShowPlayer')
+
+        # Create the show AssetManager
+        AssetManager(
+            machine=self.machine,
+            config_section='Shows',
+            path_string='shows',
+            asset_class=Show,
+            asset_attribute='shows',
+            file_extensions=('yaml')
+            )
 
     def _initialize(self):
         # Sets up everything that has to be instantiated first
@@ -90,16 +109,6 @@ class ShowController(object):
                 self.light_priorities[light.name] = 0
             self.initialized = True
 
-        # Load all the shows in the machine folder
-        if self.machine.config['MPF']['auto_load_shows']:
-            self.load_shows(os.path.join(self.machine.machine_path,
-                self.machine.config['MPF']['paths']['shows']))
-
-        # Configure events to stop, play, pause, etc. shows
-        self.machine.events.add_handler('action_play_show', self.play_show)
-        self.machine.events.add_handler('action_stop_show', self.stop_show)
-
-        # Read in ShowPlayer settings from the config file.
         if 'ShowPlayer' in self.machine.config:
             self.process_shows_from_config(self.machine.config['ShowPlayer'])
 
@@ -118,24 +127,35 @@ class ShowController(object):
         if show in self.machine.shows:
             self.machine.shows[show].stop(reset=reset, hold=hold)
 
-    def process_shows_from_config(self, config):
+    def process_shows_from_config(self, config, mode_path=None, priority=0):
+        self.log.debug("Processing ShowPlayer configuration")
+
+        key_list = list()
 
         for event, settings in config.iteritems():
             if type(settings) is dict:
-                self.add_show_player_show(event, settings)
+                key_list.append(self.add_show_player_show(event, settings))
             elif type(settings) is list:
                 for entry in settings:
-                    self.add_show_player_show(event, entry)
+                    key_list.append(self.add_show_player_show(event, entry))
+
+        return self.unload_show_player_shows, key_list
+
+    def unload_show_player_shows(self, key_list):
+        self.log.debug("Removing ShowPlayer events")
+        self.machine.events.remove_handlers_by_keys(key_list)
 
     def add_show_player_show(self, event, settings):
 
         if 'action' in settings and settings['action'] == 'stop':
-            self.machine.events.add_handler(event, self.stop_show,
-                                            **settings)
+            key = self.machine.events.add_handler(event, self.stop_show,
+                                                  **settings)
 
         else:  # action = 'play'
-            self.machine.events.add_handler(event, self.play_show,
-                                            **settings)
+            key = self.machine.events.add_handler(event, self.play_show,
+                                                  **settings)
+
+        return key
 
     def _run_show(self, show):
         # Internal method which starts a Show
@@ -620,30 +640,10 @@ class ShowController(object):
         return return_int
 
 
-class Show(object):
-    """Represents a Show which is a sequential list of lights, colors, and
-    timings that can be played back. Individual shows can be started, stopped,
-    reset, etc. Shows can be played at any speed, sped up, slowed down, etc.
+class Show(Asset):
 
-    Args:
-        machine: The main machine object.
-        filename: File (and path) of the Show's yaml file
-        actions (list): List of Show actions which are passed directly
-            instead of read from a yaml file
+    def _initialize_asset(self):
 
-    Attributes:
-        # todo
-
-    If you pass *filename*, it will process the actions based on that file.
-    Otherwise it will look for the actions from the list passed via *actions*.
-    Either *filename* or *actions* is required.
-
-    """
-
-    def __init__(self, machine, filename=None, actions=None):
-        super(Show, self).__init__()
-        self.log = logging.getLogger("Show")
-        self.machine = machine
         self.tocks_per_sec = 30  # how many steps per second this show runs at
         # you can safely read this value to determine the current playback rate
         # But don't update it directly to change the speed of a running show.
@@ -660,7 +660,7 @@ class Show(object):
         self.running = False  # is this show running currently?
         self.blend = False  # when an light is off in this show, should it allow
         # lower priority lights to show through?
-        self.show_actions = list()  # show commands from the show yaml file
+
         self.current_location = 0  # index of which step (tock) a running show is
         self.last_action_time = 0.0  # when the last action happened
         self.total_locations = 0  # total number of action locations
@@ -668,41 +668,23 @@ class Show(object):
         self.next_action_time = 0  # time of when the next action happens
         self.callback = None  # if the show should call something when it ends
         # naturally. (Not invoked if show is manually stopped)
-        self.filename = filename  # We store this to allow for reloads later
 
         self.light_states = {}
         self.led_states = {}
         self.last_slide = None
 
-        if filename:
-            self._load(filename)
-        elif actions:
-            self._process(actions)
-        else:
-            self.log.warning("Couldn't set up Show as we didn't receive a file "
-                             "or action list as input!")
-            return False  # todo make sure we process this for auto loaded shows
+        self.loaded = False
+        self.notify_when_loaded = set()
+        self.loaded_callbacks = list()
+        self.show_actions = list()
 
-    def _load(self, filename):
-        # Loads a Show yaml file from disk
-        self.log.debug("Loading Show: %s", filename)
+    def _load(self, callback):
 
-        show_actions = yaml.load(open(filename, 'r'))   # temp
+        self.show_actions = list()
 
-        self._process(show_actions)
+        self.asset_manager.log.debug("Loading Show %s", self.file_name)
+        show_actions = self.load_show_from_disk()
 
-    def _process(self, show_actions):
-        # Process a new show's actions. This is a separate method from
-        # load so we can also use it to process new shows that we load in
-        # ways other than from show files from disk. (e.g. from scripts.)
-
-        self.log.debug("Parsing...")
-
-        # add this show to show contoller's list of registered shows
-        # use a weakref so garbage collection will del it if we delete the show
-        self.machine.show_controller.registered_shows.append(weakref.proxy(self))
-
-        # process each step in the show
         for step_num in range(len(show_actions)):
             step_actions = dict()
 
@@ -713,7 +695,7 @@ class Show(object):
 
             if len(show_actions[step_num]) == 1:  # 1 because it still has tocks
 
-                self.show_actions[-1]['tocks'] += step_actions['tocks']
+                show_actions[-1]['tocks'] += step_actions['tocks']
                 continue
 
             # Lights
@@ -724,14 +706,23 @@ class Show(object):
 
                 for light in show_actions[step_num]['lights']:
 
-                    try:
-                        this_light = self.machine.lights[light]
-                    except:
-                        # this light name is invalid
-                        self.log.warning("WARNING: Found invalid light name"
-                                         " '%s' in show. Skipping...",
-                                         light)
-                        break
+                    if 'tag|' in light:
+                        tag = light.split('tag|')[1]
+
+                        light_list = self.machine.lights.items_tagged(tag)
+                    else:
+                        light_list = [light]
+
+                    # convert light strings to objects
+                    light_object_list = list()
+
+                    for i in light_list:
+                        try:
+                            light_object_list.append(self.machine.lights[i])
+                        except:
+                            # this light name is invalid
+                            self.asset_manager.log.warning("Found invalid "
+                                "light name '%s' in show. Skipping...", light)
 
                     value = show_actions[step_num]['lights'][light]
 
@@ -743,12 +734,12 @@ class Show(object):
                     if type(value) is int and value > 255:
                         value = 255
 
-                    #show_actions[step_num]['lights'][light] = value
-                    light_actions[this_light] = value
+                    for light_object in light_object_list:
+                        light_actions[light_object] = value
 
-                    # make sure this light is in self.light_states
-                    if this_light not in self.light_states:
-                        self.light_states[this_light] = 0
+                        # make sure this light is in self.light_states
+                        if light_object not in self.light_states:
+                            self.light_states[light_object] = 0
 
                 step_actions['lights'] = light_actions
 
@@ -774,7 +765,7 @@ class Show(object):
                         this_coil = self.machine.coils[coil]
                     except:
                         # this coil name is invalid
-                        self.log.warning("WARNING: Found invalid coil name"
+                        self.asset_manager.log.warning("WARNING: Found invalid coil name"
                                          " '%s' in show. Skipping...",
                                          coil)
                         break
@@ -810,14 +801,32 @@ class Show(object):
 
                 for led in show_actions[step_num]['leds']:
 
-                    try:
-                        this_led = self.machine.leds[led]
-                    except:
-                        # this light name is invalid
-                        self.log.warning("WARNING: Found invalid led name"
-                                         " '%s' in show. Skipping...",
-                                         led)
-                        break
+
+
+
+                    if 'tag|' in led:
+                        tag = led.split('tag|')[1]
+
+                        led_list = self.machine.leds.items_tagged(tag)
+                    else:
+                        led_list = [led]
+
+                    # convert light strings to objects
+                    led_object_list = list()
+
+                    for i in led_list:
+                        try:
+                            led_object_list.append(self.machine.led[i])
+                        except:
+                            # this light name is invalid
+                            self.asset_manager.log.warning("Found invalid "
+                                "led name '%s' in show. Skipping...", led)
+
+
+
+
+
+
 
                     value = show_actions[step_num]['leds'][led]
 
@@ -830,27 +839,27 @@ class Show(object):
                         elif len(value) > 4:
                             value = value[0:4]
 
-                    fade=0
+                    fade = 0
 
                     if type(value) is str:
                         if '-f' in value:
                             fade = value.split('-f')
 
-
                     # convert our color of hexes to a list of ints
                     value = ShowController.hexstring_to_list(value)
                     value.append(fade)
 
-                    led_actions[this_led] = value
+                    for led_object in led_object_list:
+                        led_actions[led_object] = value
 
-                    # make sure this led is in self.led_states
-                    if this_led not in self.led_states:
-                        self.led_states[this_led] = {
-                            'current_color': [0, 0, 0],
-                            'destination_color': [0, 0, 0],
-                            'start_color': [0, 0, 0],
-                            'fade_start': 0,
-                            'fade_end': 0}
+                        # make sure this led is in self.led_states
+                        if led_object not in self.led_states:
+                            self.led_states[led_object] = {
+                                'current_color': [0, 0, 0],
+                                'destination_color': [0, 0, 0],
+                                'start_color': [0, 0, 0],
+                                'fade_start': 0,
+                                'fade_end': 0}
 
                 step_actions['leds'] = led_actions
 
@@ -868,21 +877,16 @@ class Show(object):
         # so we can know when we're at the end of a show
         self.total_locations = len(self.show_actions)
 
-    def reload(self):
-        """Reloads this show from disk. This is nice for testing so you can
-        assign a button to just reload this show so you can test out changes
-        without having to constantly stop and start the game.
+        self.loaded = True
 
-        Note this will also stop this show if it's running.
-        """
+        if callback:
+            callback()
 
-        self.log.debug("Reloading show file: %s", self.filename)
+        self._asset_loaded()
+        # why do we need this and the one above?
 
-        # stop the show if it's running
-        self.stop(hold=False, reset=True)
-
-        # reload the show from disk
-        self._load(self.filename)
+    def _unload(self):
+        self.show_actions = None
 
     def play(self, repeat=False, priority=0, blend=False, hold=False,
              tocks_per_sec=30, start_location=None, callback=None,
@@ -931,39 +935,21 @@ class Show(object):
             num_repeats: Integer of how many times you want this show to repeat
                 before stopping. A value of 0 means that it repeats
                 indefinitely. Note this only works if you also have repeat=True.
-
-        Example usage from a game:
-
-        Load the show: (Note the MPF has a config option to automatically load
-            all shows, which by default is True.
-            self.show1 = lights.Show(self.machine,
-            "Shows\\show1.yaml")
-
-        Play the show:
-            self.show1.play(repeat=True, tocks_per_sec=10, priority=3)
-
-        Stop the show:
-            self.show1.stop()
-
-        Play the show again, but twice as fast as before
-            self.show1.play(repeat=True, tocks_per_sec=20, priority=3)
-
-        Play the show so it only repeats twice and then stops itself
-            self.show1.play(repeat=True, tocks_per_sec=20, priority=3,
-                            num_repeats=True)
-
-        Play two shows at once:
-            self.show1.play(repeat=True, tocks_per_sec=20, priority=3)
-            self.show2.play(repeat=True, tocks_per_sec=5, priority=3)
-
-        Play two shows at once, but have one be a higher priority meaning it
-        will "win" if both shows want to control the same light at the same
-        time:
-            self.show1.play(repeat=True, tocks_per_sec=20, priority=4)
-            self.show2.play(repeat=True, tocks_per_sec=5, priority=3)
-
-        etc.
         """
+
+        if not self.loaded:
+            self.add_loaded_callback(self.play,
+                                    repeat=repeat,
+                                    priority=priority,
+                                    blend=blend,
+                                    hold=hold,
+                                    tocks_per_sec=tocks_per_sec,
+                                    start_location=start_location,
+                                    callback=callback,
+                                    num_repeats=num_repeats)
+            self.load()
+            return False
+
         self.repeat = repeat
         self.priority = int(priority)
         self.blend = blend
@@ -979,6 +965,32 @@ class Show(object):
             self.current_location = start_location
 
         self.machine.show_controller._run_show(self)
+
+    def load_show_from_disk(self):
+
+        # todo add exception handling
+        # create central yaml loader, or, even better, config loader
+
+        show_actions = yaml.load(open(self.file_name, 'r'))
+
+        return show_actions
+
+    def add_loaded_callback(self, loaded_callback, **kwargs):
+        self.asset_manager.log.info("Adding a loaded callback: %s, %s", loaded_callback, kwargs)
+        for c, k in self.loaded_callbacks:
+            if c == loaded_callback and k == kwargs:
+                return False
+
+        self.loaded_callbacks.append((loaded_callback, kwargs))
+        return True
+
+    def _asset_loaded(self):
+        self.asset_manager.log.info("Show is now loaded. Processing loaded_callbacks... %s",
+                                    self.loaded_callbacks)
+        for callback, kwargs in self.loaded_callbacks:
+            callback(**kwargs)
+
+        self.loaded_callbacks = list()
 
     def stop(self, reset=True, hold=None):
         """Stops a Show.
@@ -1497,7 +1509,7 @@ class Playlist(object):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

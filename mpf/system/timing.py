@@ -7,7 +7,6 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-from math import ceil
 import time
 
 
@@ -28,6 +27,8 @@ class Timing(object):
     def __init__(self, machine):
 
         self.timers = set()
+        self.timers_to_remove = set()
+        self.timers_to_add = set()
         self.log = logging.getLogger("Timing")
         self.machine = machine
 
@@ -41,10 +42,10 @@ class Timing(object):
 
     def add(self, timer):
         timer.wakeup = time.time() + timer.frequency
-        self.timers.add(timer)
+        self.timers_to_add.add(timer)
 
     def remove(self, timer):
-        self.timers.remove(timer)
+        self.timers_to_remove.add(timer)
 
     def timer_tick(self):
         global tick
@@ -57,6 +58,19 @@ class Timing(object):
                     timer.wakeup += timer.frequency
                 else:
                     timer.wakeup = None
+
+        while self.timers_to_remove:
+            timer = self.timers_to_remove.pop()
+            print "checking if timer is in self.timers  ", timer.callback
+            if timer in self.timers:
+                print "removing  ", timer.callback
+                self.timers.remove(timer)
+
+        for timer in self.timers_to_add:
+            self.timers.add(timer)
+        self.timers_to_add = set()
+
+
 
     @staticmethod
     def secs(s):
@@ -159,9 +173,10 @@ class Timer(object):
     def call(self):
         self.callback(*self.args)
 
+
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

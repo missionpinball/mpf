@@ -12,33 +12,110 @@ import logging
 
 
 class Player(object):
-    """ Base class for a player in a pinball game. One instance of this class
-    type is created for each player.
+    """ Base class for a player. One instance of this class is created for each
+    player.
 
-    This class is responsible for tracking per-player variables via a
-    dictionary called :attr:`vars`. Several defaults are provided which the
-    framework uses,  and you can extend it on your own.
+    The Game class maintains a "player" attribute which always points to the
+    current player. You can access this via game.player. (Or
+    self.machine.game.player).
+
+    This class is responsible for tracking per-player variables. There are
+    several ways they can be used:
+
+    player.ball = 0 (sets the player's 'ball' value to 0)
+    print player.ball (prints the value of the player's 'ball' value)
+
+    If the value of a variable is requested but that variable doesn't exist,
+    that variable will automatically be created (and returned) with a value of
+    0.
+
+    Every time a player variable is changed, an MPF is posted with the name
+    "player_<name>". That event will have three parameters posted along with it:
+
+    * value (the new value)
+    * prev_value (the old value before it was updated)
+    * change (the change in the value)
+
+    For the 'change' parameter, it will attempt to subtract the old value from
+    the new value. If that works, it will return the result as the change. If it
+    doesn't work (like if you're not storing numbers in this variable), then
+    the change paramter will be True if the new value is different and False if
+    the value didn't change.
+
+    Some examples:
+
+    player.score = 0
+
+    Event posted:
+    'player_score' with Args: value=0, change=0, prev_value=0
+
+    player.score += 500
+
+    Event posted:
+    'player_score' with Args: value=500, change=500, prev_value=0
+
+    player.score = 1200
+
+    Event posted:
+    'player_score' with Args: value=1200, change=700, prev_value=500
 
     """
 
     total_players = 0  # might not use this here
     """Tracks the the number of players in the game (starting with 1)."""
 
-    def __init__(self):
-        """ Creates a new player object. Doesn't take an parameters.
+    def __getattr__(self, name):
+        if name in self.vars:
+            return self.vars[name]
+        else:
+            self.vars[name] = 0
+            return 0
 
+    def __setattr__(self, name, value):
+        prev_value = 0
+        if name in self.vars:
+            prev_value = self.vars[name]
+        self.vars[name] = value
+
+        try:
+            change = value-prev_value
+        except:
+            if prev_value != value:
+                change = True
+            else:
+                change = False
+
+        self.log.debug("Setting '%s' to: %s, (prior: %s, change: %s)",
+                       name, self.vars[name], prev_value, change)
+        self.machine.events.post('player_' + name,
+                                 value=self.vars[name],
+                                 prev_value=prev_value,
+                                 change=change)
+
+    def __getitem__(self, name):
+        return self.__getattr__(name)
+
+    def __setitem__(self, name, value):
+        self.__setattr__(name, value)
+
+    def __iter__(self):
+        for name, value in self.vars.iteritems():
+            yield name, value
+
+    def __init__(self, machine):
+        """Player object contructor:
+
+        Args:
+            machine: Machine controller
         """
-        self.log = logging.getLogger("Player")
-        self.vars = {}  # todo default dic?
-        self.index = Player.total_players  # player index starting with 0
+        # use self.__dict__ below since __setattr__ would make these player vars
+        self.__dict__['log'] = logging.getLogger("Player")
+        self.__dict__['machine'] = machine
+        self.__dict__['vars'] = dict()
 
         Player.total_players += 1
 
         # initialize player vars
-        self.vars['ball'] = 0
-        self.vars['score'] = 0
-        self.vars['extra_balls'] = 0
-        self.vars['extra_balls_total'] = 0
         self.vars['index'] = Player.total_players - 1
         self.vars['number'] = Player.total_players
 
@@ -47,11 +124,9 @@ class Player(object):
 
     # todo method to dump the player vars to disk?
 
-    # todo nice methods to read or update player vars?
-
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -8,7 +8,6 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import pygame
-import pygame.locals
 
 from mpf.system.display import DisplayElement
 
@@ -37,7 +36,7 @@ class Text(DisplayElement):
     def __init__(self, slide, machine, text, x=None, y=None, h_pos=None,
                  v_pos=None, layer=0, **kwargs):
 
-        super(Text, self).__init__(slide)
+        super(Text, self).__init__(slide, x, y, h_pos, v_pos, layer)
 
         # todo move these defaults to mpfconfing.yaml
         self.text = ''
@@ -62,6 +61,9 @@ class Text(DisplayElement):
             for item in number_list:
                 grouped_item = self.group_digits(item)
                 text = text.replace(str(item), grouped_item)
+
+        if 'double_zeros' in kwargs and kwargs['double_zeros']:
+            text = self.double_zeros(text)
 
         # Are we set up for multi-language>
         if self.language:
@@ -137,9 +139,27 @@ class Text(DisplayElement):
 
         return prefix + return_string
 
+    def double_zeros(self, number):
+        """Formats a number so if it's zero then it returns a string of "00".
+
+        Args:
+            number: The input value as int or string.
+
+        Returns: String "00" if the input is 0. Otherwise returns whatever it
+            received unchanged.
+        """
+
+        if number == 0 or number == "0":
+            return "00"
+        else:
+            return number
+
+display_element_class = Text
+create_asset_manager = False
+
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

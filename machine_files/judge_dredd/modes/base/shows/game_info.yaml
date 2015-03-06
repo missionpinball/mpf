@@ -1,0 +1,10 @@
+- tocks: 1
+  display:
+    - type: Text
+      font: tall title
+      text: PLAYER %number%
+- tocks: 1
+  display:
+    - type: Text
+      font: tall title
+      text: BALL %ball%

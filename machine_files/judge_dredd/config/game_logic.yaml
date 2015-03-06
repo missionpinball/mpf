@@ -1,7 +1,12 @@
 Game:
-    Balls per game: 3
+    Balls per game: 2
     Max players per game: 4
     player_controlled_eject_tag: right_eject
+
+Modes:
+    - skillshot
+    - base
+    - both_ramps_made
 
 ShowPlayer:
     machineflow_Attract_start:
@@ -80,93 +85,8 @@ Shots:
     DropTarget:
         Switch: dropTargetJ, dropTargetU, dropTargetD, dropTargetG, dropTargetE
 
-Scoring:
-    shot_RightRamp:
-        Score: 8000
-    shot_LeftRamp:
-        Score: 7000
-    shot_LeftOrbit:
-        Score: 6000
-    shot_WeakRightOrbit:
-        Score: 11000
-    shot_FullRightOrbit:
-        Score:  6500
-    shot_AirRaidRamp:
-        Score: 10000
-    shot_OrangeStandups:
-        Score: 2500
-    shot_Slingshot:
-        Score: 210
-    shot_Inlane:
-        Score: 1070
-    shot_Outlane:
-        Score: 930
-    shot_DropTarget:
-        Score: 1000
-    drop_targets_Judge_complete:
-        Score: 10000
-    standups_pf_standups_complete:
-        Score: 5000
-
-SoundPlayer:
-    pluger_lane_ball_start:
-        sound: intro_loop
-        start_events: ball_starting
-        stop_events: ball_live_added
-        duration:
-        loops: -1
-        priority:
-        fade_in: 0
-        fade_out: 0
-        volume: 1
-    ball_launch_motorcycle:
-        sound: ball_launch_motorcycle
-        start_events: balldevice_shooterLaneR_ball_eject_attempt
-    slingshot:
-        sound: slingshot
-        start_events: shot_Slingshot
-    main_loop:
-        sound: main_loop
-        start_events: player_eject_request
-        loops: -1
-        stop_events: ball_ending
-
 SlidePlayer:
-    score_change:
-      - type: Text
-        text: "%score"
-        number_grouping: true
-      - type: Text
-        text: (PLAYER) %number%
-        v_pos: bottom
-        h_pos: left
-        font: small
-      - type: Text
-        text: (BALL) %ball%
-        v_pos: bottom
-        h_pos: right
-        font: small
-    tilt_hit:
-        type: Text
-        text: WARNING
-    ball_live_added:
-        type: Text
-        text: LET'S GO!
-        time: 2s
-    ball_started:
-      - type: Text
-        text: (PLAYER) %player
-      - type: Text
-        text: (BALL) %ball
-        v_pos: bottom
-        h_pos: center
-        font: small
-        transition:
-            type: move_in
-            direction: top
-    balldevice_deadworld_ball_enter:
-        type: Text
-        text: "BALLS LOCKED: %balls"
     volume_change:
         type: Text
         text: "VOLUME: %display_volume"
+

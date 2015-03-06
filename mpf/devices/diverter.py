@@ -207,7 +207,6 @@ class Diverter(Device):
 
         This method will disable the activation_coil, and (optionally) if it's
         configured with a deactivation coil, it will pulse it.
-
         """
         self.log.debug("Deactivating Diverter")
 
@@ -230,9 +229,9 @@ class Diverter(Device):
         Args:
             time: The MPF string time of how long you'd like the delay before
                 deactivating the diverter. Default is None which means it uses
-                the 'activation_time' setting configured for this diverter. If there is
-                no 'activation_time' setting and no delay is passed, it will disable the
-                diverter immediately.
+                the 'activation_time' setting configured for this diverter. If
+                there is no 'activation_time' setting and no delay is passed,
+                it will disable the diverter immediately.
         """
 
         if time is not None:
@@ -254,9 +253,9 @@ class Diverter(Device):
         want the diverter to phsyically activate until the ramp entry switch is
         activated.
 
-        If this diverter is configured with a activation_time, this method will also
-        set switch handlers which will set a delay to deactivate the diverter
-        once the activation activation_time expires.
+        If this diverter is configured with a activation_time, this method will
+        also set switch handlers which will set a delay to deactivate the
+        diverter once the activation activation_time expires.
 
         If this diverter is configured with a deactivation switch, this method
         will set up the switch handlers to deactivate the diverter when the
@@ -279,8 +278,8 @@ class Diverter(Device):
                     pwm_off=self.config['activation_coil'].config['pwm_off'],
                     debounced=False)
 
-                # If there's a activation_time then we need to watch for the hw switch to
-                # be activated so we can disable the diverter
+                # If there's a activation_time then we need to watch for the hw
+                # switch to be activated so we can disable the diverter
 
                 if self.config['activation_time']:
                     self.machine.switch_controller.add_switch_handler(
@@ -336,7 +335,7 @@ class Diverter(Device):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

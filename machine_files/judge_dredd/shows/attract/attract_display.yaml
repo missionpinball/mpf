@@ -18,15 +18,29 @@
     layer: 1
     repeat: True
   - type: Text
-    text: 2
+    text: TEXT OVER ANIMATION
     color: 0000ff
     layer: 2
     shade: 0
-    transition:
-      type: move_out
-      direction: top
+    #transition:
+    #  type: move_out
+    #  direction: top
 
-- tocks: 3
+#- tocks: 3
+#  display:
+#  - type: Image
+#    image: scribble
+#    #transition:
+#    #  type: move_in
+#    #  direction: left
+#    layer: 2
+#  - type: Text
+#    text: TEXT UNDER IMAGE
+#    color: 00ff00
+#    layer: 1
+#    shade: 8
+
+- tocks: 30
   display:
     - type: Text
       text: "(PRESS START)"
@@ -100,36 +114,13 @@
     shade: 9
     layer: 1
 
-- tocks: 3
-  display:
-  - type: Image
-    image: scribble
-    transition:
-      type: move_in
-      direction: left
-    layer: 2
-  - type: Text
-    text: TEXT UNDER IMAGE
-    color: 00ff00
-    layer: 1
-    shade: 8
 
 
 
 
 
-- tocks: 3
-  display:
-  - type: Image
-    image: p_roc
-    layer: 1
-    transition:
-      type: move_in
-      direction: left
-  - type: Text
-    text: UNDER IMAGE
-    layer: 0
-    shade: 8
+
+
 
 - tocks: 3
   display:

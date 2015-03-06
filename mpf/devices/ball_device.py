@@ -33,7 +33,7 @@ class BallDevice(Device):
 
         self.delay = DelayManager()
 
-        # set our config defaults
+        # set config defaults
         if 'exit_count_delay' not in self.config:
             self.config['exit_count_delay'] = ".5s"  # todo make optional
         if 'entrance_count_delay' not in self.config:
@@ -85,9 +85,8 @@ class BallDevice(Device):
 
         # initialize variables
 
-        self.num_balls_contained = -999
-        # Number of balls currently contained (held) in this device.
-        # -999 indicates no count has taken place yet.
+        self.balls = 0
+        # Number of balls currently contained (held) in this device..
 
         self.eject_queue = deque()
         # Queue of the list of eject targets (ball devices) for the balls this
@@ -96,7 +95,6 @@ class BallDevice(Device):
         self.num_eject_attempts = 0
         # Counter of how many attempts to eject the current ball this device
         # has tried. Eventually it will give up.
-        # todo make it eventually give up. :)
         # todo log attemps more than one?
 
         self.eject_in_progress_target = None
@@ -104,10 +102,6 @@ class BallDevice(Device):
 
         self.num_balls_requested = 0
         # The number of balls this device is in the process of trying to get.
-
-        self.flag_valid = False
-        # Set once we pass the settling time of our switches. If a count comes
-        # in while the valid flag is not set, we will get a count result of -999
 
         self.num_jam_switch_count = 0
         # How many times the jam switch has been activated since the last
@@ -118,7 +112,7 @@ class BallDevice(Device):
 
         self.num_balls_ejecting = 0
         # The number of balls that are currently in the process of being
-        # ejected. This is either 0, 1, or whatever the num_balls_contained was
+        # ejected. This is either 0, 1, or whatever the balls was
         # for devices that eject all their balls at once.
 
         self.flag_confirm_eject_via_count = False
@@ -127,14 +121,17 @@ class BallDevice(Device):
         # since sometimes other eject methods will have to "fall back" on count
         #-based confirmations.
 
+        self.valid = False
+        self.need_first_time_count = True
+
         # Now configure the device
         self.configure()
 
     @property
     def num_balls_ejectable(self):
-        return self.num_balls_contained
+        return self.balls
 
-        # todo look at upstream devices?
+        # todo look at upstream devices
 
     def configure(self, config=None):
         """Performs the actual configuration of the ball device based on the
@@ -280,24 +277,24 @@ class BallDevice(Device):
             request: A string of what status item you'd like to request.
                 Default will return all status items.
                 Options include:
-                    * num_balls_contained
+                    * balls
                     * eject_in_progress_target
                     * eject_queue
 
         Returns:
             A dictionary with the following keys:
-                * num_balls_contained
+                * balls
                 * eject_in_progress_target
                 * eject_queue
         """
-        if request == 'num_balls_contained':
-            return self.num_balls_contained
+        if request == 'balls':
+            return self.balls
         elif request == 'eject_in_progress_target':
             return self.eject_in_progress_target
         elif request == 'eject_queue':
             return self.eject_queue,
         else:
-            return {'num_balls_contained': self.num_balls_contained,
+            return {'balls': self.balls,
                     'eject_in_progress_target': self.eject_in_progress_target,
                     'eject_queue': self.eject_queue,
                     }
@@ -311,8 +308,8 @@ class BallDevice(Device):
             eject_name = 'None'
 
         self.log.debug("+-----------------------------------------+")
-        self.log.debug("| num_balls_contained: %s                  |",
-                       self.num_balls_contained)
+        self.log.debug("| balls: %s                  |",
+                       self.balls)
         self.log.debug("| eject_in_progress_target: %s",
                        eject_name)
         self.log.debug("| num_balls_ejecting: %s                   |",
@@ -338,21 +335,18 @@ class BallDevice(Device):
             stealth: Boolean value that controls whether any events will be
                 posted based on any ball count change info. If True, results
                 will not be posted. If False, they will. Default is False.
+            **kwargs: Catches unexpected args since this method is used as an
+                event handler.
         """
         self.log.debug("Counting balls")
 
         self.valid = True
 
-        if self.num_balls_contained < 0 and self.num_balls_contained != -999:
-            self.log.warning("Number of balls contained is negative (%s).",
-                           self.num_balls_contained)
-            # This should never happen
-
         if self.config['ball_switches']:
 
             ball_count = 0
             ball_change = 0
-            previous_balls = self.num_balls_contained
+            previous_balls = self.balls
             self.log.debug("Previous number of balls: %s", previous_balls)
 
             for switch in self.config['ball_switches']:
@@ -377,10 +371,10 @@ class BallDevice(Device):
                     return previous_balls
 
             self.log.debug("Counted %s balls", ball_count)
-            self.num_balls_contained = ball_count
+            self.balls = ball_count
 
             # Figure out if we gained or lost any balls since last count?
-            if previous_balls == -999:  # This is the first time count
+            if self.need_first_time_count:
                 self.log.debug("This is a first time count. Don't know if we "
                               "gained or lost anything.")
                 # No "real" change since we didn't know previous value
@@ -412,11 +406,19 @@ class BallDevice(Device):
             self.log.debug("Received request to count balls, but we don't have"
                            " any ball switches. So we're just returning the"
                            " old count.")
-            if self.num_balls_contained == -999:
-                self.num_balls_contained = 0
+            if self.need_first_time_count:
+                self.balls = 0
             # todo add support for virtual balls
 
-        return self.num_balls_contained
+        self.need_first_time_count = False
+
+        if self.balls < 0:
+            self.balls = 0
+            self.log.warning("Number of balls contained is negative (%s).",
+                             self.balls)
+            # This should never happen
+
+        return self.balls
 
     def _balls_added(self, balls):
         # Called when ball_count finds new balls in this device
@@ -493,10 +495,9 @@ class BallDevice(Device):
         Returns: True or False
 
         """
-        if self.num_balls_contained == self.ball_capacity:
+        if self.balls == self.ball_capacity:
             return True
-        elif self.num_balls_contained == \
-                self.machine.ball_controller.num_balls_known:
+        elif self.balls == self.machine.ball_controller.num_balls_known:
             return True
         else:
             return False
@@ -514,7 +515,7 @@ class BallDevice(Device):
         # A ball has triggered this device's entrance switch
 
         if not self.config['ball_switches']:
-            self.num_balls_contained += 1
+            self.balls += 1
             self._balls_added(1)
 
     def get_additional_ball_capacity(self):
@@ -530,11 +531,11 @@ class BallDevice(Device):
 
             return 0
 
-        if self.config['ball_capacity'] - self.num_balls_contained < 0:
+        if self.config['ball_capacity'] - self.balls < 0:
             self.log.warning("Device reporting more balls contained than its "
                              "capacity.")
 
-        return self.config['ball_capacity'] - self.num_balls_contained
+        return self.config['ball_capacity'] - self.balls
 
     def request_ball(self, balls=1):
         """Request that one or more balls is added to this device.
@@ -564,7 +565,7 @@ class BallDevice(Device):
 
         # How many balls are we requesting?
         remaining_capacity = (self.config['ball_capacity'] -
-                              self.num_balls_contained -
+                              self.balls -
                               self.num_balls_requested)
 
         if remaining_capacity < 0:
@@ -617,11 +618,11 @@ class BallDevice(Device):
     def _eject_event_handler(self):
         # We received the event that should eject this ball.
 
-        if not self.num_balls_contained:
+        if not self.balls:
             self.request_ball()
 
     def stop(self):
-        """Stops all activity in a device.
+        """Stops all activity in this device.
 
         Cancels all pending eject requests. Cancels eject confirmation checks.
         """
@@ -639,8 +640,7 @@ class BallDevice(Device):
         """Ejects one or more balls from the device.
 
         Args:
-            balls: Integer of the number of balls to eject. Default is 1. Pass
-                a value of -1 to eject all the balls.
+            balls: Integer of the number of balls to eject. Default is 1.
             target: Optional target that should receive the ejected ball(s),
                 either a string name of the ball device or a ball device
                 object. Default is None which means this device will eject this
@@ -653,6 +653,11 @@ class BallDevice(Device):
         """
 
         # Figure out the eject target
+
+        if balls < 1:
+            self.log.warning("Received request to eject %s balls, which doesn't"
+                             " make sense. Ignoring...")
+            return False
 
         if not target:
             target = self.config['eject_targets'][0]
@@ -677,11 +682,8 @@ class BallDevice(Device):
 
         balls_to_eject = balls
 
-        if balls == -1:
-            balls_to_eject = self.num_balls_contained
-
-        if balls_to_eject > self.num_balls_contained and not get_ball:
-            balls_to_eject = self.num_balls_contained
+        if balls_to_eject > self.balls and not get_ball:
+            balls_to_eject = self.balls
 
         # Add one entry to the eject queue for each ball that's ejecting
         self.log.debug('Adding %s ball(s) to the eject_queue.', balls_to_eject)
@@ -689,6 +691,13 @@ class BallDevice(Device):
             self.eject_queue.append((target, timeout))
 
         self._do_eject()
+
+    def eject_all(self, target=None):
+        print "ejecting all", self.name, self.balls
+        if self.balls > 0:
+            self.eject(balls=self.balls, target=target)
+        else:
+            return False
 
     def _do_eject(self, **kwargs):
         # Performs the actual eject attempts and sets up eject confirmations
@@ -704,14 +713,14 @@ class BallDevice(Device):
                            " eject.", self.eject_in_progress_target)
             return False  # Don't want to get in the way of a current eject
 
-        if not self.num_balls_contained and not self.num_balls_requested:
+        if not self.balls and not self.num_balls_requested:
             self.log.debug("Don't have any balls. Requesting one.")
             self.request_ball()
             # Once the ball is delivered then the presence of the eject_queue
             # will re-start this _do_eject() process
             return False
 
-        elif self.eject_queue and self.num_balls_contained:
+        elif self.eject_queue and self.balls:
             self.log.debug("We have an eject queue: %s", self.eject_queue)
 
             target = self.eject_queue[0][0]  # first item, first part of tuple
@@ -745,7 +754,7 @@ class BallDevice(Device):
                 if self.config['balls_per_eject'] == 1:
                     self.num_balls_ejecting = 1
                 else:
-                    self.num_balls_ejecting = self.num_balls_contained
+                    self.num_balls_ejecting = self.balls
 
                 self.machine.events.post('balldevice_' + self.name +
                                          '_ball_eject_attempt',
@@ -768,11 +777,11 @@ class BallDevice(Device):
 
         self._setup_eject_confirmation(self.eject_in_progress_target, timeout)
 
-        self.num_balls_contained -= self.num_balls_ejecting
+        self.balls -= self.num_balls_ejecting
 
         self.log.debug("Firing eject coil. num_balls_ejecting: %s. New "
-                       "num_balls_contained: %s.",
-                       self.num_balls_ejecting, self.num_balls_contained)
+                       "balls: %s.",
+                       self.num_balls_ejecting, self.balls)
 
         self.config['eject_coil'].pulse()
             # todo add support for hold coils with variable release times
@@ -812,7 +821,9 @@ class BallDevice(Device):
                 self.log.error("we got an eject confirmation request with no "
                                "target. This shouldn't happen. Post to the "
                                "forum if you see this.")
-                quit()
+                raise Exception("we got an eject confirmation request with no "
+                               "target. This shouldn't happen. Post to the "
+                               "forum if you see this.")
 
             if timeout:
                 # set up the delay to check for the failed the eject
@@ -992,7 +1003,7 @@ class BallDevice(Device):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -11,8 +11,10 @@ import socket
 import os
 from optparse import OptionParser
 import errno
-from mpf.system.machine import MachineController
 import version
+import sys
+
+from mpf.system.machine import MachineController
 
 # Allow command line options to do things
 # We use optparse instead of argpase so python 2.6 works
@@ -64,7 +66,7 @@ options_dict = vars(options)  # convert the values instance to python dict
 # if --version was passed, print the version and quit
 if options_dict['version']:
     print "Mission Pinball Framework version:", version.__version__
-    quit()
+    sys.exit()
 
 # add the first positional argument into the options dict as the machine path
 try:
@@ -72,7 +74,7 @@ try:
 except:
     print "Error: You need to specify the path to your machine_files folder "\
         "for the game you want to run."
-    quit()
+    sys.exit()
 
 # Configure logging. Creates a logfile and logs to the console.
 # Formating options are documented here:
@@ -106,15 +108,15 @@ logging.getLogger('').addHandler(console)
 def main():
     machine = MachineController(options_dict)
     machine.run()
-    print "mpf quiting from main"
-    quit()
+    print "MPF exiting from main()"
+    sys.exit()
 
 if __name__ == '__main__':
     main()
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -245,7 +245,7 @@ class TargetGroup(Device):
                 self.update_count)
 
         # need to wait until after the show controller is loaded
-        self.machine.events.add_handler('machine_init_phase2', self.load_shows)
+        self.machine.events.add_handler('machine_init_phase_2', self.load_shows)
 
         # watch for rotation events
         for event in self.config['rotate_left_events']:
@@ -384,7 +384,7 @@ class TargetGroup(Device):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

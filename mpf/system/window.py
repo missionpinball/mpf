@@ -80,6 +80,9 @@ class WindowManager(MPFDisplay):
 
         self._setup_window()
 
+        self.machine.events.add_handler('machine_init_phase_5',
+                                        self._load_window_elements)
+
         # Block all Pygame events from being reported. We'll selectively enable
         # them one-by-one as event handlers are registered.
         pygame.event.set_allowed(None)
@@ -87,7 +90,7 @@ class WindowManager(MPFDisplay):
     def _initialize(self):
         super(WindowManager, self)._initialize()
 
-        self._load_window_elements()
+        #self._load_window_elements()
 
     def _load_window_elements(self):
         # Loads the window elements from the config
@@ -95,14 +98,21 @@ class WindowManager(MPFDisplay):
         if 'elements' not in self.config:
             return
 
-        for element in self.config['elements']:
-            this_element = self.config['elements'][element]
-            if 'type' in this_element:
-                this_element['element_type'] = this_element.pop('type')
+        self.machine.display.slidebuilder.build_slide(
+            settings=self.config['elements'],
+            display='Window',
+            slide_name='default',
+            priority=0)
 
-            # create a new element
-            self.current_slide.add_element(
-                dmd_object=self.machine.display.hw_module, **this_element)
+
+        #for element in self.config['elements']:
+        #    this_element = self.config['elements'][element]
+        #    if 'type' in this_element:
+        #        this_element['element_type'] = this_element.pop('type')
+        #
+        #    # create a new element
+        #    self.current_slide.add_element(
+        #        dmd_object=self.machine.display.hw_module, **this_element)
 
     def _setup_window(self):
         # Sets up the Pygame window based on the settings in the config file.
@@ -140,7 +150,7 @@ class WindowManager(MPFDisplay):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -53,7 +53,7 @@ class Shape(DisplayElement):
     def __init__(self, slide, machine, shape, x=None, y=None, h_pos=None,
                  v_pos=None, layer=0, **kwargs):
 
-        super(Shape, self).__init__(slide)
+        super(Shape, self).__init__(slide, x, y, h_pos, v_pos, layer)
 
         self.slide = slide
         self.shape = shape
@@ -78,10 +78,8 @@ class Shape(DisplayElement):
                       end_y=kwargs['height'],
                       thickness=kwargs['thickness'])
         else:
-            # invalid shape
-            pass
-            print "invalid shape", shape
-            quit()
+            self.machine.log.critical("Invalid shape: ", shape)
+            raise Exception()
 
         # todo change to arg
         self.element_surface.set_colorkey((0, 0, 0))
@@ -104,9 +102,12 @@ class Shape(DisplayElement):
         pygame.draw.line(self.element_surface, self.adjusted_color,
                          (start_x, start_y), (end_x, end_y), thickness)
 
+display_element_class = Shape
+create_asset_manager = False
+
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

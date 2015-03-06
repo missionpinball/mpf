@@ -11,8 +11,7 @@ Window:
     quit_on_close: True
     elements:
 
-        onscreen_DMD:
-            type: VirtualDMD
+          - type: VirtualDMD
             width: 512
             height: 128
             h_pos: center
@@ -20,10 +19,9 @@ Window:
             pixel_color: ff5500
             dark_color: 220000
             layer: 1
-            pixel_spacing: 1
+            pixel_spacing: 2
 
-        Title:
-            type: Text
+          - type: Text
             font: tall title
             text: JUDGE DREDD
             h_pos: right
@@ -42,16 +40,20 @@ Window:
         #    y: 0
         #    layer: 0
 
-        DMD_Frame:
-            type: Shape
+          - type: Shape
             shape: box
-            width: 516
-            height: 132
+            width: 514
+            height: 130
             layer: 2
             thickness: 2
             v_pos: center
             h_pos: center
-            color: aaaaaa
+            color: 00ff00
+
+          #- type: Movie
+          #  movie: torches
+          #  repeat: True
+          #  layer: 0
 
 Config:
     - keymap.yaml

@@ -1,0 +1,146 @@
+Mode:
+    start_events: ball_starting
+    priority: 100
+
+Scoring:
+    shot_RightRamp:
+        Score: 8000
+    shot_LeftRamp:
+        Score: 7000
+    shot_LeftOrbit:
+        Score: 6000
+    shot_WeakRightOrbit:
+        Score: 11000
+    shot_FullRightOrbit:
+        Score:  6500
+    shot_AirRaidRamp:
+        Score: 10000
+    shot_OrangeStandups:
+        Score: 2500
+    shot_Slingshot:
+        Score: 210
+    shot_Inlane:
+        Score: 1070
+    shot_Outlane:
+        Score: 930
+    shot_DropTarget:
+        Score: 1000
+    drop_targets_Judge_complete:
+        Score: 10000
+    standups_pf_standups_complete:
+        Score: 5000
+
+SlidePlayer:
+    player_score:
+      - type: Text
+        text: "%value"
+        number_grouping: true
+        v_pos: center
+      - type: Text
+        text: (PLAYER) %number%
+        v_pos: bottom
+        h_pos: left
+        font: small
+      - type: Text
+        text: (BALL) %ball%
+        v_pos: bottom
+        h_pos: right
+        font: small
+    tilt_hit:
+        type: Text
+        text: WARNING
+    ball_live_added:
+        type: Text
+        text: LET'S GO!
+        time: 2s
+    mode_base_started:
+      - type: Text
+        text: "%score%"
+        number_grouping: true
+        double_zeros: true
+        v_pos: center
+        transition:
+            type: move_in
+            direction: top
+      - type: Text
+        text: (PLAYER) %number%
+        v_pos: bottom
+        h_pos: left
+        font: small
+      - type: Text
+        text: (BALL) %ball%
+        v_pos: bottom
+        h_pos: right
+        font: small
+
+
+      #- type: Image
+      #  image: purple_circle
+      #  y: 172
+      #  x: 838
+      #  layer: 3
+      #- type: Image
+      #  image: purple_circle
+      #  y: 172
+      #  x: 435
+      #  layer: 3
+    balldevice_deadworld_ball_enter:
+        type: Text
+        text: "BALLS LOCKED: %balls"
+
+Sounds:
+    intro_loop:
+        volume: 1
+        file: waiting to plunge loop.ogg
+    main_loop:
+        file: main song loop.ogg
+    slingshot_hit:
+        file: slingshot.ogg
+        priority: 0
+        max_queue_time: 100ms
+        load: preload
+    ball_launch_motorcycle:
+        file: ball launch motorcycle.ogg
+
+SoundPlayer:
+    pluger_lane_ball_start:
+        sound: intro_loop
+        start_events: mode_base_started
+        stop_events: ball_live_added
+        duration:
+        loops: -1
+        priority:
+        fade_in: 0
+        fade_out: 0
+        volume: 1
+    ball_launch_motorcycle:
+        sound: ball_launch_motorcycle
+        start_events: balldevice_shooterLaneR_ball_eject_attempt
+    slingshot_hit:
+        sound: slingshot_hit
+        start_events: shot_Slingshot
+    main_loop:
+        sound: main_loop
+        start_events: player_eject_request
+        loops: -1
+        stop_events: ball_ending
+
+ShowPlayer:
+    #mode_base_started:
+    #  - show: game_info
+    #    repeat: yes
+    #    tocks_per_sec: 1
+    player_score:
+      - show: game_info
+        action: stop
+
+LogicBlocks:
+    Accruals:
+        both_ramps_made:
+            events: shot_RightRamp, shot_LeftRamp
+            events_when_complete: both_ramps_made
+            disable_events: both_ramps_made
+    Counters:
+        total_ramps:
+            count_events: shot_RightRamp, shot_LeftRamp
+            

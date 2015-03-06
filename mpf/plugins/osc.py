@@ -81,7 +81,7 @@ class OSC(object):
             self.wpc = False
 
         # register for events
-        self.machine.events.add_handler('machine_init_phase3', self.start)
+        self.machine.events.add_handler('machine_init_phase_4', self.start)
 
     def start(self):
         """Starts the OSC server."""
@@ -247,16 +247,16 @@ class OSC(object):
     def update_player(self, **kwargs):
         self.update_score()
         self.client_send_OSC_message("data", "player",
-                                     self.machine.game.player.vars['number'])
+                                     self.machine.game.player['number'])
 
     def update_ball(self, **kwargs):
         self.client_send_OSC_message("data", "ball",
-                                     self.machine.game.player.vars['ball'])
+                                     self.machine.game.player['ball'])
 
     def update_score(self, **kwargs):
         self.client_send_OSC_message("data", "score",
                                      locale.format("%d",
-                                     self.machine.game.player.vars['score'],
+                                     self.machine.game.player['score'],
                                      grouping=True))
 
     def update_audits(self, event, data):
@@ -392,7 +392,7 @@ class OSC(object):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

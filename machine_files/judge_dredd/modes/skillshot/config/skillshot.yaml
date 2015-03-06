@@ -1,0 +1,46 @@
+Mode:
+    name: skillshot
+    start_events: ball_starting
+    stop_events: timer_mode_timer_complete 
+    code: skillshot.SkillShot
+    priority: 300
+
+LogicBlocks:
+    Counters:
+        xyz_sling:
+            count_events: sw_sling
+            hits_to_complete: 5
+    Trackers:
+        souvenir_count:
+            start_value: 0
+            max_value: 15
+            control_events:
+              - event: sovenir_collected
+                action: add
+                value: 1
+              - ball_end:
+                action: jump # add, subtract, jump, start, stop, pause
+                value: 0
+        ramps_this_ball:
+            start_value: 0
+            reset_events: ball_end
+            control_events:
+              - event: shot_ramp
+                action: add
+                value: 1
+
+Timers:
+    mode_timer:
+        start_events: balldevice_playfield_ball_enter
+        start_value: 5
+        start_paused: yes
+        end_value: 0
+        direction: down # up or down
+        tick_interval: 1.5s
+        control_events:
+          #- event: sw_pop
+          #  action: pause # add, subtract, jump, start, stop, pause, set_tick_interval, change_tick_interval
+          #  value: 2s
+          - event: balldevice_playfield_ball_enter
+            action: start
+

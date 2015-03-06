@@ -1,0 +1,31 @@
+# Attract mode Scriptlet for Judge Dredd
+
+from mpf.system.scriptlet import Scriptlet
+from mpf.system.show_controller import Show
+
+import pygame  # temp
+
+
+class Attract(Scriptlet):
+
+    def on_load(self):
+
+        self.machine.events.add_handler('machineflow_Attract_start', self.start)
+        self.machine.events.add_handler('machineflow_Attract_stop', self.stop)
+        self.machine.events.add_handler('timer_tick', self.tick)
+
+    def start(self):
+        self.pos = 461
+        self.pf = self.machine.display.displays[1].surface
+
+    def tick(self):
+        step = -10
+        self.pf.fill((0, 0, 0))
+        pygame.draw.rect(self.pf, (255, 255, 255), (0, self.pos, 205, 460), 0)
+        self.pos += step
+        if self.pos < 0:
+            self.pos = 461
+
+    def stop(self):
+        pass
+
