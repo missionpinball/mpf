@@ -61,16 +61,12 @@ class Timing(object):
 
         while self.timers_to_remove:
             timer = self.timers_to_remove.pop()
-            print "checking if timer is in self.timers  ", timer.callback
             if timer in self.timers:
-                print "removing  ", timer.callback
                 self.timers.remove(timer)
 
         for timer in self.timers_to_add:
             self.timers.add(timer)
         self.timers_to_add = set()
-
-
 
     @staticmethod
     def secs(s):

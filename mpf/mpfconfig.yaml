@@ -139,20 +139,14 @@ LogicBlocks:
         tilt:
             count_events: sw_tilt
             event_when_hit: tilt_hit
-            hits_to_complete: 3
+            count_complete_value: 3
             events_when_complete: tilt
             multiple_hit_window: 500ms
-            enable_events: ball_started
-            disable_events: game_ended
-            reset_events: ball_ended
-            events_when_complete: tilt
-            restart_on_complete: false
-            settle_time: 5s
+            reset_each_ball: yes
 
         slam_tilt:
             count_events: sw_slamTilt
-            enable_events: game_started
-            hits_to_complete: 1
+            count_complete_value: 1
             events_when_complete: slam_tilt
 
 DisplayDefaults:

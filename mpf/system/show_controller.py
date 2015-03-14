@@ -116,7 +116,13 @@ class ShowController(object):
                   tocks_per_sec=30, start_location=None, num_repeats=0,
                   **kwargs):
 
+        if 'show_priority' in kwargs:
+            priority += kwargs['show_priority']
+
         if show in self.machine.shows:
+
+            if 'stop_key' in kwargs:
+                self.machine.shows[show].stop_key = kwargs['stop_key']
             self.machine.shows[show].play(repeat=repeat, priority=priority,
                                           blend=blend, hold=hold,
                                           tocks_per_sec=tocks_per_sec,
@@ -124,28 +130,51 @@ class ShowController(object):
                                           num_repeats=num_repeats)
 
     def stop_show(self, show, reset=True, hold=True, **kwargs):
+
         if show in self.machine.shows:
             self.machine.shows[show].stop(reset=reset, hold=hold)
 
-    def process_shows_from_config(self, config, mode_path=None, priority=0):
-        self.log.debug("Processing ShowPlayer configuration")
+    def stop_shows_by_key(self, key):
+        for show in self.running_shows:
+            if show.stop_key == key:
+                show.stop()
+
+    def process_shows_from_config(self, config, mode=None, priority=0):
+        self.log.debug("Processing ShowPlayer configuration. Priority: %s",
+                       priority)
 
         key_list = list()
 
         for event, settings in config.iteritems():
             if type(settings) is dict:
+                settings['priority'] = priority
+                settings['stop_key'] = mode
                 key_list.append(self.add_show_player_show(event, settings))
             elif type(settings) is list:
                 for entry in settings:
+                    entry['priority'] = priority
+                    entry['stop_key'] = mode
                     key_list.append(self.add_show_player_show(event, entry))
 
-        return self.unload_show_player_shows, key_list
+        return self.unload_show_player_shows, (key_list, mode)
 
-    def unload_show_player_shows(self, key_list):
+    def unload_show_player_shows(self, removal_tuple):
+
+        key_list, show_key = removal_tuple
+
         self.log.debug("Removing ShowPlayer events")
         self.machine.events.remove_handlers_by_keys(key_list)
 
+        if show_key:
+            self.stop_shows_by_key(show_key)
+
     def add_show_player_show(self, event, settings):
+
+        if 'priority' in settings:
+            settings['show_priority'] = settings['priority']
+
+        if 'hold' not in settings:
+            settings['hold'] = False
 
         if 'action' in settings and settings['action'] == 'stop':
             key = self.machine.events.add_handler(event, self.stop_show,
@@ -180,9 +209,10 @@ class ShowController(object):
         if not show.hold:
             self.restore_lower_lights(show=show)
 
-            # todo
-            # loop through displays.
-            # if you find last_slide, remove it
+            for key in show.slide_removal_keys:
+                self.machine.display.remove_slides(key)
+
+            show.slide_removal_keys = set()
 
         if reset:
             show.current_location = 0
@@ -672,6 +702,8 @@ class Show(Asset):
         self.light_states = {}
         self.led_states = {}
         self.last_slide = None
+        self.slide_removal_keys = set()
+        self.stop_key = None
 
         self.loaded = False
         self.notify_when_loaded = set()
@@ -821,12 +853,6 @@ class Show(Asset):
                             # this light name is invalid
                             self.asset_manager.log.warning("Found invalid "
                                 "led name '%s' in show. Skipping...", led)
-
-
-
-
-
-
 
                     value = show_actions[step_num]['leds'][led]
 
@@ -1007,6 +1033,7 @@ class Show(Asset):
                 show setting was when you played it, but you can force it to
                 hold or not with True or False here.
         """
+
         if self.running:
             if hold:
                 self.hold = True
@@ -1014,9 +1041,6 @@ class Show(Asset):
                 self.hold = False
 
             self.machine.show_controller._end_show(self, reset)
-
-        elif not hold:  # will trigger on hold false or none
-            self.machine.show_controller.restore_lower_lights(show=self)
 
     def change_speed(self, tocks_per_sec=1):
         """Changes the playback speed of a running Show.
@@ -1120,6 +1144,8 @@ class Show(Asset):
                 self.last_slide = (
                     self.machine.display.slidebuilder.build_slide(item_dict,
                     priority=self.priority))
+
+                self.slide_removal_keys.add(self.last_slide.removal_key)
 
                 # todo make it so they don't all have the same name?
 

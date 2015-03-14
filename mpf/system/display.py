@@ -218,6 +218,12 @@ class DisplayController(object):
                                transition=transition_type,
                                **transition_settings)
 
+    def remove_slides(self, removal_key):
+
+        for display_obj in self.displays.values():
+            display_obj.remove_slides_by_key(removal_key)
+
+
 
 class MPFDisplay(object):
     """Parent class for a display device. (e.g. DMD, on screen display,
@@ -296,7 +302,7 @@ class MPFDisplay(object):
         self.machine.timing.add(
             Timer(self.update, frequency=1/float(self.config['fps'])))
 
-    def add_slide(self, name, priority=0, persist=False):
+    def add_slide(self, name, priority=0, persist=False, removal_key=None):
         """Creates a new slide and adds it to the list of slides for this
         display.
 
@@ -313,9 +319,16 @@ class MPFDisplay(object):
         """
 
         self.slides[name] = Slide(mpfdisplay=self, name=name, priority=priority,
-                                  persist=persist, machine=self.machine)
+                                  persist=persist, machine=self.machine,
+                                  removal_key=removal_key)
 
         return self.slides[name]
+
+    def remove_slides_by_key(self, removal_key):
+
+        for slide_obj in self.slides.values():
+            if slide_obj.removal_key == removal_key:
+                slide_obj.remove()
 
     def transition(self, new_slide, transition=None, **kwargs):
         """Transitions this display to a new slide.
@@ -381,13 +394,17 @@ class MPFDisplay(object):
         self.set_current_slide(slide=self.transition_dest_slide)
         self.transition_object = None
 
-    def set_current_slide(self, name=None, slide=None):
+    def set_current_slide(self, name=None, slide=None, force=False):
         """Tells the display to instantly set the current slide to the slide
         you pass.
 
         Args:
             name: The string name of the slide you want to make current.
             slide: The slide object you want to make current.
+            force: Boolean to force the slide you're passing to show even if
+                it's a lower priority than what's currently showing. In general
+                you shouldn't use this. It only exists so MPF can cleanly remove
+                higher priority slides if they're killed while active.
 
         Note: You only need to pass one parameter, either the slide name or the
         slide object itself. If you pass both, it will use teh slide object.
@@ -405,8 +422,6 @@ class MPFDisplay(object):
 
         """
 
-        self.log.debug('Setting current slide to: %s', name)
-
         old_slide = None
 
         if self.current_slide:
@@ -415,12 +430,20 @@ class MPFDisplay(object):
 
         if slide:
             new_slide = slide
-        else:
+        elif name:
             new_slide = self.slides[name]
+        else:
+            # we don't have a new slide. Change the current slide to priority
+            # 0 so it can be killed by anything that comes next.
+            self.current_slide.priority = 0
+            return
+
+        self.log.debug('Setting current slide to: %s', new_slide.name)
 
         if new_slide is old_slide:
             return
-        elif old_slide and new_slide.priority < old_slide.priority:
+        elif (not force and old_slide and
+                new_slide.priority < old_slide.priority):
             self.log.debug('New slide has a lower priority (%s) than the '
                            'existing slide (%s). Not showing new slide.',
                            new_slide.priority, old_slide.priority)
@@ -434,7 +457,27 @@ class MPFDisplay(object):
             new_slide.add_ready_callback(self.set_current_slide, slide=new_slide)
         else:
             self.current_slide = new_slide
+            self.current_slide.update()
             self.current_slide.active = True
+
+    def show_current_active_slide(self):
+
+        self.set_current_slide(slide=self.get_highest_priority_slide(),
+                               force=True)
+
+    def get_highest_priority_slide(self):
+
+        max_value = 0
+        current_slide = None
+
+        for slide_name, slide_obj in self.slides.iteritems():
+            if slide_obj.priority >= max_value:
+                max_value = slide_obj.priority
+                current_slide = slide_obj
+
+        return current_slide
+
+
 
     def update(self):
         """Updates the contents of the current slide. This method can safely
@@ -820,14 +863,17 @@ class Slide(object):
     """
 
     def __init__(self, mpfdisplay, machine, name=None, priority=0,
-                 persist=False):
+                 persist=False, removal_key=None):
 
         self.log = logging.getLogger('Slide')
+
         self.mpfdisplay = mpfdisplay
         self.machine = machine
         self.name = name
-
         self.priority = priority
+        self.persist = persist
+        self.removal_key = removal_key
+
         self.elements = list()
         self.pending_elements = set()
         """Elements which have related assets that are still loading in a
@@ -852,7 +898,6 @@ class Slide(object):
         self.surface = pygame.Surface.copy(self.mpfdisplay.surface)
 
         self.active = False
-        self.persist = False
 
     def ready(self):
 
@@ -1088,6 +1133,12 @@ class Slide(object):
                            'existing slide (%s). Not showing new slide.',
                            self.priority,
                            self.mpfdisplay.current_slide.priority)
+
+    def remove(self):
+
+        del self.mpfdisplay.slides[self.name]
+
+        self.mpfdisplay.show_current_active_slide()
 
 
 class Transition(Slide):
@@ -1334,7 +1385,7 @@ class SlideBuilder(object):
         self.machine.modes.register_start_method(self.process_config,
                                                  'SlidePlayer')
 
-    def process_config(self, config, mode_path=None, priority=0):
+    def process_config(self, config, mode=None, priority=0):
         self.log.debug("Processing SlideBuilder configuration. Base priority: "
                        "%s", priority)
 
@@ -1342,11 +1393,13 @@ class SlideBuilder(object):
 
         for event, settings in config.iteritems():
                 settings = self.preprocess_settings(settings, priority)
+                settings[0]['removal_key'] = mode
+                # todo maybe a better way to add the removal key?
 
                 key_list.append(self.machine.events.add_handler(
                                 event,
                                 self.build_slide,
-                                settings[0]['slide_priority'],
+                                #settings[0]['slide_priority'],
                                 settings=settings))
 
                 # todo is it right to pass the priority to the event handler?
@@ -1357,11 +1410,17 @@ class SlideBuilder(object):
                 # Or is that ok in case the higher one ends so the lower one is
                 # there to show through?
 
-        return self.unload_slide_events, key_list
+        return self.unload_slide_events, (key_list, mode)
 
-    def unload_slide_events(self, key_list):
+    def unload_slide_events(self, removal_tuple):
+
+        key_list, slide_key = removal_tuple
+
         self.log.debug("Removing SlideBuilder events")
         self.machine.events.remove_handlers_by_keys(key_list)
+
+        if slide_key:
+            self.machine.display.remove_slides(slide_key)
 
     def preprocess_settings(self, settings, base_priority=0):
         """Takes an unstructured list of SlidePlayer settings and processed them
@@ -1386,6 +1445,20 @@ class SlideBuilder(object):
 
         """
 
+        # This is a stupid band-aid because when modes load their slideplayer
+        # settings are already processed. I don't know why though, but I don't
+        # have time to track it down now. $50 to anyone who figures out why!!!
+
+        # Settings can be a list of dicts or just a dict. (Preprocessing is what
+        # turns a dict into a list, though I don't know how sometimes items are
+        # getting the preprocessed entry in their dict but they're not a list???
+        # todo
+
+        if type(settings) is list and 'preprocessed' in settings[0]:
+            return settings
+        elif type(settings) is dict and 'preprocessed' in settings:
+            return [settings]
+
         processed_settings = list()
 
         if type(settings) is dict:
@@ -1402,6 +1475,9 @@ class SlideBuilder(object):
             # Create a slide name based on the event name if one isn't specified
             if 'slide_name' in element:
                 first_settings['slide_name'] = element.pop('slide_name')
+
+            if 'removal_key' in element:
+                first_settings['removal_key'] = element.pop('removal_key')
 
             # If the config doesn't specify whether this slide should be made
             # active when this event is called, set a default value of True
@@ -1430,6 +1506,9 @@ class SlideBuilder(object):
 
         if 'slide_priority' not in first_settings:
             first_settings['slide_priority'] = base_priority
+
+        if 'removal_key' not in first_settings:
+            first_settings['removal_key'] = None
 
         # Now add back in the items that need to be in the first element
         processed_settings[0].update(first_settings)
@@ -1464,6 +1543,7 @@ class SlideBuilder(object):
 
         if not 'preprocessed' in settings[0]:
             settings = self.preprocess_settings(settings)
+
         if display:
             display = self.machine.display.displays[display]
         elif 'display' in settings[0]:
@@ -1490,7 +1570,8 @@ class SlideBuilder(object):
             if priority is None:
                 priority = settings[0]['slide_priority']
 
-            slide = display.add_slide(name=slide_name, priority=priority)
+            slide = display.add_slide(name=slide_name, priority=priority,
+                                      removal_key=settings[0]['removal_key'])
 
         # loop through and add the elements
         for element in settings:

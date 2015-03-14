@@ -233,7 +233,7 @@ class AssetManager(object):
 
         return config
 
-    def load_assets(self, config, load_key=None, **kwargs):
+    def load_assets(self, config, mode=None, load_key=None, **kwargs):
         # actually loads assets from a config file. Assumes that they've
         # aleady been registered.
 

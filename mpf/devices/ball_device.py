@@ -693,7 +693,7 @@ class BallDevice(Device):
         self._do_eject()
 
     def eject_all(self, target=None):
-        print "ejecting all", self.name, self.balls
+        self.log.debug("Ejecting all balls")
         if self.balls > 0:
             self.eject(balls=self.balls, target=target)
         else:

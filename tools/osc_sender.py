@@ -7,9 +7,11 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import OSC
+import sys
 from optparse import OptionParser
 import socket
+
+import OSC
 
 server_ip = socket.gethostbyname(socket.gethostname())
 server_port = 8000
@@ -41,7 +43,7 @@ options = vars(options)
 if len(args) != 2:
     print "Error: This tool requires two command-line arguments: OSC address & data"
     print "Example usage: python osc_sender.py /sw/shooter 1"
-    quit()
+    sys.exit()
 else:
     address, data = args
 
@@ -63,7 +65,7 @@ if not options['toggle']:
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

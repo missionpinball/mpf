@@ -66,7 +66,7 @@ class LogicBlocks(object):
             # we're iterating over
             block.player_turn_stop()
 
-    def process_config(self, config, priority=0, enable=True):
+    def process_config(self, config, priority=0, mode=None, enable=True):
         self.log.debug("Processing LogicBlock configuration.")
 
         blocks_added = self.create_logic_blocks(config=config,
@@ -149,7 +149,7 @@ class LogicBlock(object):
 
         if 'events_when_complete' not in self.config:
             self.config['events_when_complete'] = ([
-                'hitcounter_' + self.name + '_complete'])
+                'logicblock_' + self.name + '_complete'])
         else:
             self.config['events_when_complete'] = self.machine.string_to_list(
                 self.config['events_when_complete'])
@@ -275,22 +275,17 @@ class Counter(LogicBlock):
             self.config['event_when_hit'] = ('hitcounter_' + self.name +
                                              '_hit')
 
-        if 'hits_to_complete' not in self.config:
-            self.config['hits_to_complete'] = None
+        if 'count_complete_value' not in self.config:
+            self.config['count_complete_value'] = None
 
         if 'multiple_hit_window' not in self.config:
             self.config['multiple_hit_window'] = None
         else:
             self.config['multiple_hit_window'] = Timing.string_to_ms(
                 self.config['multiple_hit_window'])
-        if 'settle_time' not in self.config:
-            self.config['settle_time'] = None
-        else:
-            self.config['settle_time'] = Timing.string_to_ms(
-                self.config['settle_time'])
 
         if 'player_variable' not in self.config:
-            self.config['player_variable'] = self.name + '_hits'
+            self.config['player_variable'] = self.name + '_count'
 
         if 'count_interval' not in self.config:
             self.config['count_interval'] = 1
@@ -338,21 +333,21 @@ class Counter(LogicBlock):
             self.log.debug("Processing Count change. Total: %s",
                            self.player[self.config['player_variable']])
 
-            if self.config['hits_to_complete'] is not None:
+            if self.config['count_complete_value'] is not None:
 
                 if (self.config['direction'] == 'up' and
                         self.player[self.config['player_variable']] >=
-                        self.config['hits_to_complete']):
+                        self.config['count_complete_value']):
                     self.complete()
 
                 elif (self.config['direction'] == 'down' and
                         self.player[self.config['player_variable']] <=
-                        self.config['hits_to_complete']):
+                        self.config['count_complete_value']):
                     self.complete()
 
             if self.config['event_when_hit']:
                 self.machine.events.post(self.config['event_when_hit'],
-                    hits=self.player[self.config['player_variable']])
+                    count=self.player[self.config['player_variable']])
 
             if self.config['multiple_hit_window']:
                 self.log.debug("Beginning Ignore Hits")

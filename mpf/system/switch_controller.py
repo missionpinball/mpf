@@ -190,19 +190,18 @@ class SwitchController(object):
             name = obj.name
 
         if name and not self.machine.switches[name]:
-            self.log.critical("Received process_switch command but can't find "
+            self.log.warning("Received process_switch command but can't find "
                               "the switch. Name: %s, Num: %s, Obj: %s", name,
                               num, obj)
-            raise Exception("Received process_switch command but can't find the"
-                            " switch. Name: %s, Num: %s, Obj: %s", name, num,
-                            obj)
+            # Removed the Exception below since it's kind of annoying to have
+            # MPF halt every time a non-configured switch is hit.
+            #raise Exception("Received process_switch command but can't find the"
+            #                " switch. Name: %s, Num: %s, Obj: %s", name, num,
+            #                obj)
 
         # flip the logical & physical states for NC switches
-
         hw_state = state
-
         if self.machine.switches[name].type == 'NC':
-
             if logical:  # NC + logical means hw_state is opposite of state
                 hw_state = hw_state ^ 1
             else:

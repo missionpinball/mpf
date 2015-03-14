@@ -13,8 +13,6 @@ Plugins:
     - sound.SoundController
 
 Config:
-    - assets.yaml
-    - ball_search.yaml
     - dmd.yaml
     - game_logic.yaml
     - hardware.yaml

@@ -1,5 +1,5 @@
 Game:
-    Balls per game: 2
+    Balls per game: 3
     Max players per game: 4
     player_controlled_eject_tag: right_eject
 

@@ -21,8 +21,6 @@ class Movie(Asset):
 
     def _load(self, callback):
 
-        self.asset_manager.log.critical("+++++Movie asset _loading (start)")
-
         try:
             self.movie_object = pygame.movie.Movie(self.file_name)
         except pygame.error:
@@ -31,17 +29,10 @@ class Movie(Asset):
         except:
             raise Exception()
 
-        self.asset_manager.log.critical(self.movie_object)
-        self.asset_manager.log.critical(callback)
-
         self.movie_surface = pygame.Surface((self.movie_object.get_size()))
         self.movie_object.set_display(self.movie_surface)
 
         self.loaded = True
-
-        self.asset_manager.log.critical("+++++Movie asset _loading (end)")
-        self.asset_manager.log.critical("Movie asset _load callback: %s",
-                                        callback)
 
         if callback:
             callback()

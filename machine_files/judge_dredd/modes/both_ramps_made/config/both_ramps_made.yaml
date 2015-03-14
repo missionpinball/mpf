@@ -2,11 +2,6 @@ Mode:
     start_events: both_ramps_made
     stop_events: ball_ending
     priority: 200
-    type: timed
-    timer_secs: 30
-    timer_start_events:
-    timer_pause_events:
-    timer_start_paused: No
 
 Scoring:
     shot_RightRamp:

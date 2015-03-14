@@ -8,10 +8,12 @@
 
 import os
 import sys
+from optparse import OptionParser
+
 import pygame
 import pygame.locals
 
-from optparse import OptionParser
+
 
 # CONFIGURATION SETTINGS: You can change these if you want
 # ------------------------------------------------------------------------------
@@ -279,7 +281,7 @@ def surface_to_dmd(surface):
                 print "caluculated ratio", pixel_weight / 255.0
                 print "calculated value", pixel_weight / 255.0 * shades
                 print "rounded", round(pixel_weight / 255.0 * shades)
-                quit()
+                sys.exit()
             '''
 
     return new_pa.surface
@@ -395,7 +397,7 @@ def setup_file_list(image_string):
 
     else:
         print "ERROR: Parameter passed isn't a valid path or file name."
-        quit()
+        sys.exit()
 
     # Find all the images in this folder and add them to the list
     for item in os.walk(image_path):
@@ -423,7 +425,7 @@ def main():
 
     if len(args) != 1:
         print "Error. This tool requires a image filename as a command line parameter"
-        quit()
+        sys.exit()
     else:
         setup_file_list(args[0])
 
@@ -445,7 +447,7 @@ def main():
 
     update_screen()
 
-    while True:
+    while 1:
         main_loop()
 
 if __name__ == "__main__":
@@ -454,7 +456,7 @@ if __name__ == "__main__":
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -289,6 +289,7 @@ class Mode(object):
                 self.stop_methods.append(
                     item.method(config=self.config[item.config_section],
                                 priority=self.priority,
+                                mode=self,
                                 **item.kwargs))
 
         self.start_timers()
@@ -394,7 +395,7 @@ class ModeTimer(object):
         self.start_value = 0
         self.timer_secs = 0
         self.end_value = 0
-        self.direction = 'down'
+        self.direction = 'up'
         self.tick_secs = 1
         self.timer = None
         self.event_keys = set()

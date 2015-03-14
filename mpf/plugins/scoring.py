@@ -44,7 +44,7 @@ class ScoreController(object):
         # modes.
         self.machine.modes.register_start_method(self.process_config, 'Scoring')
 
-    def process_config(self, config, priority=0):
+    def process_config(self, config, mode=None, priority=0):
         # config is Scoring subsection of config dict
 
         self.log.debug("Processing Scoring configuration. Base Priority: %s",

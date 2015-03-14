@@ -1,10 +1,10 @@
 Events:
   ball_search_begin_phase1: 0
-  game_ended: 13
-  game_started: 88
+  game_ended: 19
+  game_started: 154
 Player:
   score:
-    average: 5610
+    average: 4157
     top:
     - 23490
     - 18480
@@ -12,22 +12,22 @@ Player:
     - 3630
     - 3490
     - 2280
+    - 2120
     - 1910
     - 1630
     - 1490
-    - 1350
-    total: 14
+    total: 20
 Shots:
   AirRaidRamp: 1
   DropTarget: 32
   FullRightOrbit: 2
-  Inlane: 33
+  Inlane: 36
   LeftOrbit: 3
   LeftRamp: 0
   OrangeStandups: 3
-  Outlane: 5
+  Outlane: 6
   RightRamp: 1
-  Slingshot: 76
+  Slingshot: 109
   WeakRightOrbit: 2
 Switches:
   ShooterLaneL: 2
@@ -52,7 +52,7 @@ Switches:
   enter: 0
   esc: 0
   fireL: 2
-  fireR: 51
+  fireR: 75
   flipperLwL: 106
   flipperLwL_EOS: 97
   flipperLwR: 115
@@ -63,27 +63,27 @@ Switches:
   flipperUpR_EOS: 116
   globePosition1: 0
   globePosition2: 0
-  inlaneL: 22
-  inlaneR: 3
+  inlaneL: 23
+  inlaneR: 5
   leftRampEnter: 0
   leftRampExit: 0
   leftRampToLock: 0
-  leftRollover: 51
+  leftRollover: 72
   leftScorePost: 4
   magnetOverRing: 0
   mystery: 0
   outerInlaneR: 8
   outlaneL: 4
-  outlaneR: 1
+  outlaneR: 2
   plumbBob: 0
   popperL: 4
   popperR: 10
   rightRampExit: 1
   rightTopPost: 9
-  shooterR: 56
+  shooterR: 80
   slamTilt: 0
-  slingL: 62
-  slingR: 14
+  slingL: 93
+  slingR: 16
   start: 3
   subwayEnter1: 2
   subwayEnter2: 2
@@ -93,11 +93,11 @@ Switches:
   topCenterRollover: 5
   topRampExit: 1
   topRightOpto: 11
-  trough1: 57
-  trough2: 47
-  trough3: 49
-  trough4: 49
-  trough5: 49
-  trough6: 49
-  troughJam: 49
+  trough1: 88
+  trough2: 68
+  trough3: 70
+  trough4: 70
+  trough5: 70
+  trough6: 70
+  troughJam: 70
   up: 0

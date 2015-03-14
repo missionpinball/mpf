@@ -168,7 +168,7 @@ class SoundController(object):
         self.tracks[name] = Track(self.machine, name, self.pygame_channels,
                                   config)
 
-    def register_sound_events(self, config, priority=0):
+    def register_sound_events(self, config, mode=None, priority=0):
         # config is SoundPlayer subection of config dict
 
         self.log.debug("Processing SoundPlayer configuration. Base Priority: "

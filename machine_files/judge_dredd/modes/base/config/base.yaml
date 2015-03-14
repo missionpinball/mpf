@@ -126,13 +126,10 @@ SoundPlayer:
         stop_events: ball_ending
 
 ShowPlayer:
-    #mode_base_started:
-    #  - show: game_info
-    #    repeat: yes
-    #    tocks_per_sec: 1
-    player_score:
+    mode_base_started:
       - show: game_info
-        action: stop
+        repeat: yes
+        tocks_per_sec: 1
 
 LogicBlocks:
     Accruals:
