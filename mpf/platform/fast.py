@@ -94,9 +94,9 @@ class HardwarePlatform(Platform):
                                 self.machine.config['Fast']['dmd_port'])
 
         else:
-            self.log.error("Error in fast config. Entries needed for main_port"
-                           " and led_port and dmd_port.")
-            quit()
+            self.log.critical("Error in fast config. Entries needed for "
+                              "main_port and led_port and dmd_port.")
+            raise Exception()
 
         self.fast = fastpinball.fpOpen(ports, port_assignments)
 
@@ -337,8 +337,8 @@ class HardwarePlatform(Platform):
         if pygame:
             return FASTDMD(self.machine, self.fast)
         else:
-            print "fast needs pygame. quitting"  # todo make nicer
-            quit()
+            self.log.critical("The FAST platform needs pygame. Quitting.")
+            raise Exception()
 
     def hw_loop(self):
         """Loop code which checks the controller for any events (switch state
@@ -830,7 +830,7 @@ class FASTDMD(object):
 # Oringal code on which this module was based:
 # Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

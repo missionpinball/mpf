@@ -250,7 +250,7 @@ Coils:
         number: C01
     popperL:
         number: C02
-        pulse_ms: 20
+        pulse_ms: 25
     popperR:
         number: C03
         pulse_ms: 20
@@ -284,9 +284,11 @@ Coils:
     slingL: 
         number: C15
         tags: ballSearch
+        pulse_ms: 20
     slingR: 
         number: C16
         tags: ballSearch
+        pulse_ms: 20
     flasherFire:
         number: C17
     flasherFear:

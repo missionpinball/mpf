@@ -1,4 +1,5 @@
-"""MPF plugin for the sound controller."""
+"""MPF plugin for sounds. Includes SoundController, Channel, Sound, Track, and
+StreamTrack parent classes."""
 # sound.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
@@ -7,10 +8,12 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import os
 import time
-import threading
 import Queue
+import uuid
+import copy
+
+from mpf.system.assets import Asset, AssetManager
 
 global import_success
 
@@ -28,8 +31,6 @@ def preload_check(machine):
         return True
     else:
         return False
-
-    # todo add check for Sound in config?
 
 
 class SoundController(object):
@@ -49,13 +50,14 @@ class SoundController(object):
             self.config = dict()
             return  # todo move to preload_check()
 
+        self.log.debug("Loading the Sound Controller")
+
         self.machine.sound = self
         self.config = self.machine.config['SoundSystem']
-
         self.tracks = dict()  # k = track name, v = track obj
         self.stream_track = None
         self.pygame_channels = list()
-
+        self.sound_events = dict()
         self.volume = 1.0
 
         if 'volume_steps' not in self.config:
@@ -67,8 +69,6 @@ class SoundController(object):
         self.set_volume(volume=self.volume)
 
         self.machine.request_pygame()
-
-        self.machine.events.add_handler('pygame_initialized', self._initialize)
 
         # Get the pygame pre-initiaiization audio requests in
         # 0 is the 'auto' setting for all of these
@@ -94,6 +94,15 @@ class SoundController(object):
 
         # Register events
         self.machine.events.add_handler('action_set_volume', self.set_volume)
+        self.machine.events.add_handler('pygame_initialized', self._initialize)
+
+        if 'SoundPlayer' in self.machine.config:
+            self.machine.events.add_handler('machine_init_phase_5',
+                self.register_sound_events,
+                config=self.machine.config['SoundPlayer'])
+
+        self.machine.modes.register_start_method(self.register_sound_events,
+                                                 'SoundPlayer')
 
     def _initialize(self):
         # Initialize the sound controller. Not done in __init__() because we
@@ -135,47 +144,14 @@ class SoundController(object):
 
             self.stream_track = StreamTrack(self.machine, self.config)
 
-        # Load sounds
-        self._load_sounds()
-        self._setup_soundplayer()
-
-    def _load_sounds(self):
-        # Loads the sound files by loading everything it finds on disk. It will
-        # also look for (optional) associated configuration options for each
-        # file. Sound files on disk are in subfolders by track.
-
-        sound_path = os.path.join(self.machine.machine_path,
-                                  self.machine.config['MPF']['paths']['sounds'])
-
-        self.log.info("Loading sound files from: %s", sound_path)
-
-        self.machine.sounds = dict()
-        self.sound_file_map = dict()
-
-        if 'Sounds' in self.machine.config:
-            self.sound_file_map = self.create_sound_file_map(
-                                                self.machine.config['Sounds'])
-
-        found_a_sound = False  # tracks whether we found any sounds at all
-
-        for root, path, files in os.walk(sound_path, followlinks=True):
-            found_a_sound = True
-            for f in files:
-                if f.endswith('.ogg') or f.endswith('.wav'):
-                    # todo should probably not hardcode that
-                    file_name = os.path.join(root, f)
-                    self.load(file_name)
-
-        if not found_a_sound:
-            self.log.warning("No sound files found.")
-
-    def _setup_soundplayer(self):
-        # Sets up sounds that are played automatically via the SoundPlayer entry
-        # in the config file.
-        if 'SoundPlayer' in self.machine.config:
-            for gamesound in self.machine.config['SoundPlayer']:
-                self.log.debug("Configuring SoundPlayer '%s'", gamesound)
-                self.setup_game_sound(self.machine.config['SoundPlayer'][gamesound])
+        # Create the sound AssetManager
+        AssetManager(
+            machine=self.machine,
+            config_section=config_section,
+            path_string=(self.machine.config['MPF']['paths'][path_string]),
+            asset_class=asset_class,
+            asset_attribute=asset_attribute,
+            file_extensions=file_extensions)
 
     def create_track(self, name, config=None):
         """ Creates a new MPF track add registers in the central track list.
@@ -192,74 +168,34 @@ class SoundController(object):
         self.tracks[name] = Track(self.machine, name, self.pygame_channels,
                                   config)
 
-    def create_sound_file_map(self, config):
-        """Creates a mapping dictionary of sound file names to sound entries.
-        This is done to speed up searching for sounds by filename later.
+    def register_sound_events(self, config, mode=None, priority=0):
+        # config is SoundPlayer subection of config dict
 
-        Args:
-            config: Python dictionary which holds its configuration.
-        """
+        self.log.debug("Processing SoundPlayer configuration. Base Priority: "
+                       "%s", priority)
+        self.log.debug("config: %s", config)
 
-        self.log.debug("Creating the sound file mapping dictionary")
+        key_list = list()
 
-        sound_map = dict()
+        for entry_name in config:
+            if 'block' not in config[entry_name]:
+                config[entry_name]['block'] = False
 
-        for track, sounds in config.iteritems():
-            if sounds:
-                for k, v in sounds.iteritems():
-                    sound_map[v['file']] = (track, k)
+            block = config[entry_name].pop('block')
 
-        self.log.debug("Sound file mapping dictionary is complete")
+            key_list.append(self.register_sound_event(config=config[entry_name],
+                                                      priority=priority,
+                                                      block=block))
 
-        return sound_map
+        return self.unregister_sound_events, key_list
 
-    def load(self, file_name):
-        """Creates an MPF sound object from a file name.
+    def unregister_sound_events(self, key_list):
 
-        Args:
-            file_name: A string of the file name (optionally with path)
+        self.log.debug("Unloading SoundPlayer events")
+        for key in key_list:
+            self.unregister_sound_event(key)
 
-        Note: This is very preliminary. Not done yet.
-
-        """
-        self.log.info("Loading sound file: %s", file_name)
-        track = os.path.basename(os.path.split(file_name)[0])
-
-        config = dict()
-
-        short_name = os.path.split(file_name)[1]
-
-        # todo change the track name so it's the first subfolder under the root
-        # sounds folder, rather than just the last folder.
-
-        # do we have a configuration for this file?
-        if short_name in self.sound_file_map:
-            name = self.sound_file_map[short_name][1]
-            track = self.sound_file_map[short_name][0]
-            config = self.machine.config['Sounds'][track][name]
-
-        else:
-            name = short_name.split('.')[0]
-
-        if 'track' in config:
-            track = config['track']
-
-        if track in self.tracks:
-            track = self.tracks[track]
-        elif track == self.stream_track.name:
-            track = self.stream_track
-
-        if 'volume' not in config:
-            config['volume'] = 1
-        elif config['volume'] > 2:
-            config['volume'] = 2
-
-        self.machine.sounds[name] = Sound(name=name,
-                                          file_name=file_name,
-                                          track=track,
-                                          config=config)
-
-    def setup_game_sound(self, config):
+    def register_sound_event(self, config, priority=0, block=False):
         """Sets up game sounds from the config file.
 
         Args:
@@ -268,8 +204,26 @@ class SoundController(object):
 
         if 'sound' not in config:
             return False
-        else:
+        elif type(config['sound']) is str:
             config['sound'] = self.machine.sounds[config['sound']]
+        # this is kind of weird because once the sound has been registered, the
+        # sound will still be converted from the string to the object. This is
+        # an unintended side effect of passing around a dict, but I guess it's
+        # ok? We just have to check to make sure we have a string before we
+        # try to convert it to an object. If not, the conversion has already
+        # been done.
+
+        if 'start_events' not in config:
+            config['start_events'] = list()
+        else:
+            config['start_events'] = self.machine.string_to_list(
+                config['start_events'])
+
+        if 'stop_events' not in config:
+            config['stop_events'] = list()
+        else:
+            config['stop_events'] = self.machine.string_to_list(
+                config['stop_events'])
 
         if 'duration' not in config or config['duration'] is None:
             config['duration'] = None
@@ -294,20 +248,93 @@ class SoundController(object):
         elif config['volume'] > 2:
             config['volume'] = 2
 
-        if 'start_events' in config and config['start_events'] is not None:
-            for event in self.machine.string_to_list(config['start_events']):
-                self.machine.events.add_handler(event,
-                                        config['sound'].play,
-                                        loops=config['loops'],
-                                        priority=config['priority'],
-                                        fade_in=config['fade_in'],
-                                        volume=config['volume'])
+        config['key'] = uuid.uuid4()
 
-        if 'stop_events' in config and config['stop_events'] is not None:
-            for event in self.machine.string_to_list(config['stop_events']):
-                self.machine.events.add_handler(event,
-                                                config['sound'].stop,
-                                                fade_out=config['fade_out'])
+        #config['event_keys'] = set()
+
+        for event in config['start_events']:
+            settings = copy.copy(config)
+
+            settings.pop('start_events')
+            settings.pop('stop_events')
+
+            if event not in self.sound_events:
+                    self.sound_events[event] = list()
+                    self.machine.events.add_handler(event,
+                                                    self._sound_event_callback,
+                                                    event_name=event)
+
+            kwargs = dict()  # temp
+
+            sound_event_entry = dict()
+
+            sound_event_entry['settings'] = settings
+            sound_event_entry['kwargs'] = kwargs
+            sound_event_entry['priority'] = priority
+            sound_event_entry['block'] = block
+            sound_event_entry['type'] = 'start'
+
+            self.sound_events[event].append(sound_event_entry)
+
+        for event in config['stop_events']:
+
+            settings = copy.copy(config)
+
+            settings.pop('start_events')
+            settings.pop('stop_events')
+
+            if event not in self.sound_events:
+                    self.sound_events[event] = list()
+                    self.machine.events.add_handler(event,
+                                                    self._sound_event_callback,
+                                                    event_name=event)
+
+            kwargs = dict()  # temp
+
+            sound_event_entry = dict()
+
+            sound_event_entry['settings'] = settings
+            sound_event_entry['kwargs'] = kwargs
+            sound_event_entry['priority'] = priority
+            sound_event_entry['block'] = block
+            sound_event_entry['type'] = 'stop'
+
+            self.sound_events[event].append(sound_event_entry)
+
+            # todo sort by priority
+
+        return config['key']
+
+    def unregister_sound_event(self, key):
+        for event in self.sound_events.keys():
+            for entry in self.sound_events[event][:]:
+                if entry['settings']['key'] == key:
+                    self.sound_events[event].remove(entry)
+
+                if not self.sound_events[event]:
+                    self.machine.events.remove_handler_by_event(event,
+                        self._sound_event_callback)
+                    del self.sound_events[event]
+
+    def _sound_event_callback(self, event_name, **kwargs):
+
+        # Loop through all the sound events for this event
+
+        if event_name not in self.sound_events:
+            self.log.critical("got sound callback but did not find event?")
+            raise Exception()
+
+        sound_list = self.sound_events[event_name]
+
+        for sound in sound_list:
+
+            sound_obj = sound['settings']['sound']
+            kwargs = sound['settings']
+
+            if sound['type'] == 'start':
+                sound_obj.play(**kwargs)
+            elif sound['type'] == 'stop':
+                sound_obj.stop(**kwargs)
 
     def set_volume(self, volume=None, change=None, **kwargs):
         """Sets the overall volume of the sound system.
@@ -365,8 +392,6 @@ class SoundController(object):
                           self.stream_track.volume *
                           self.stream_track.current_sound.config['volume'])
             pygame.mixer.music.set_volume(new_volume)
-
-
 
         self.machine.events.post('volume_change', volume=self.volume,
                                  change=old_volume-self.volume,
@@ -550,6 +575,7 @@ class StreamTrack(object):
     def __init__(self, machine, config):
 
         self.log = logging.getLogger('Streaming Channel')
+        self.log.debug("Creating Stream Track with config: %s", config)
         self.machine_sound = machine.sound
 
         self.config = config
@@ -706,37 +732,23 @@ class Channel(object):
         self.pygame_channel.play(sound.sound_object, loops)
 
 
-class Sound(object):
-    """Parent class for a Sound object in MPF.
+class Sound(Asset):
 
-    Args:
-        file_name: String of the file name and path for the sound file.
-        track: not yet implemented
-        volume:
-        preload: Boolean which controls whether the sound file will be
-        preloaded into memory. This makes it so the sound can be played
-        instantly, but with a penalty of memory usage to store the file.
+    def _initialize_asset(self):
 
-    Note: This class is very basic now. Much more work to do.
-    """
+        if self.config['track'] in self.machine.sound.tracks:
+            self.track = self.machine.sound.tracks[self.config['track']]
 
-    def __init__(self, name, file_name, track, config):
-        self.name = name
-        self.file_name = file_name
-        self.track = track
-        self.config = config
+        elif self.config['track'] == self.machine.sound.stream_track.name:
+            self.track = self.machine.sound.stream_track
+        else:
+            self.asset_manager.log.critical("Music track not found: %s",
+                                            self.config['track'])
+            raise Exception()
+
         self.sound_object = None
         self.priority = 0
         self.expiration_time = None
-        self.tags = list()
-
-        # if this sound doesn't have a preload setting, pull the default from
-        # the track
-        if 'preload' not in self.config:
-            self.config['preload'] = self.track.config['preload']
-
-        if 'tags' in self.config:  # todo
-            self.tags = self.config['tags']  # todo verify this
 
         if 'volume' not in self.config:
             self.config['volume'] = 1
@@ -762,14 +774,20 @@ class Sound(object):
         if 'end_time' not in self.config:  # todo
             self.config['end_time'] = None
 
-        if 'unload_events' not in self.config:  # todo
-            self.config['unload_events'] = None
+    def _load(self, callback):
+        try:
+            self.sound_object = pygame.mixer.Sound(self.file_name)
+        except pygame.error:
+            self.asset_manager.log.error("Pygame Error for file %s. '%s'",
+                                         self.file_name, pygame.get_error())
 
-        if 'load_events' not in self.config:  # todo
-            self.config['load_events'] = None
+        self.loaded = True
 
-        if self.config['preload']:  # todo
-            self.load()
+        if callback:
+            callback()
+
+    def _unload(self):
+        self.sound_object = None
 
     def play(self, loops=0, priority=0, fade_in=0, volume=1, **kwargs):
         """Plays this sound.
@@ -807,39 +825,18 @@ class Sound(object):
         pass
         # todo
 
-    def load(self):
-        """Loads this sound file from disk into memory.
 
-        A sound in MPF must be loaded before it can be played. If you set
-        preload to True when this sound was created, this method will be called
-        then. If not, then this method is automatically called when the sound
-        is played.
-
-        This message creates a new thread to load the sound in the background
-        so MPF doesn't hang while the sound file is being loaded.
-        """
-        loader = threading.Thread(name='loader', target=self._load_thread)
-        loader.daemon = True
-        loader.start()
-
-    def unload(self):
-        """Unloads this sound file from memory.
-
-        This method does not destroy this sound object, rather, it only frees
-        up the memory that the actual sound file was using. You can still play
-        this sound even after you unload the sound file, either by manually
-        calling the load() method or by just playing it (where the load()
-        method will be called manually.)
-        """
-        self.sound_object = None
-
-    def _load_thread(self):
-        self.sound_object = pygame.mixer.Sound(self.file_name)
-
+asset_class = Sound
+asset_attribute = 'sounds'  # self.machine.<asset_attribute>
+#display_element_class = ImageDisplayElement
+create_asset_manager = True
+path_string = 'sounds'
+config_section = 'Sounds'
+file_extensions = ('ogg', 'wav')
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

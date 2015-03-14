@@ -12,7 +12,7 @@ FontManager, and SlideBuilder."""
 import logging
 import uuid
 import time
-import os  # used for reading files. Might move this?
+import os
 
 try:
     import pygame
@@ -24,7 +24,8 @@ except:
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing, Timer
 from mpf.system.show_controller import ShowController
-import mpf.display.transitions  # Really used even though Pyflakes says no
+from mpf.system.assets import AssetManager
+import mpf.display.transitions
 
 
 class DisplayController(object):
@@ -34,27 +35,6 @@ class DisplayController(object):
 
     Args:
         machine: The main MachineController object.
-
-    Attributes:
-        machine: The main MachineController object.
-        hw_module: Reference to the active display hardware MPFDisplay instance.
-        fonts: Reference to the Fon Module
-        dmd_palette: An 8-bit Pygame palette MPF uses for the DMD.
-        transitions: Dictionary of transitions available. Keys are the
-            transition name, values are tuples of the transition's module and
-            class.
-        display_elements: Dictionary of registered display elements. Keys are
-            the names of available display elements, values are the imported
-            classes which new display elements of that type can subclass.
-        displays: Dictionary of displays. Key is the display name, value is the
-            associated MPFDisplay object.
-        default_display: A reference to the default MPFDisplay object which is
-            used if a display name is not specified.
-        images: Dictionary of registered display images. Key is the string name
-            for the image, value is the Pygame surface for this image.
-        animations: Dictionary of registered animations. Key is the string name
-            of the animation, value is a list of Pygame surfaces.
-
     """
 
     def __init__(self, machine):
@@ -67,29 +47,9 @@ class DisplayController(object):
         self.hw_module = None
         self.fonts = None
 
-        if 'Window' in self.machine.config:
-            self.machine.events.add_handler('machine_init_phase2',
-                                        self.machine.get_window, priority=1000)
-
-        self.machine.events.add_handler('machine_init_phase1',
-                                        self._load_display_modules)
-        self.machine.events.add_handler('machine_init_phase1',
-                                        self._load_display_elements)
-        self.machine.events.add_handler('machine_init_phase1',
-                                        self._load_fonts)
-        self.machine.events.add_handler('machine_init_phase1',
-                                        self._load_transitions)
-        self.machine.events.add_handler('machine_init_phase1',
-                                        self._load_decorators)
-        self.machine.events.add_handler('pygame_initialized',
-                                        self._load_images)
-        self.machine.events.add_handler('pygame_initialized',
-                                        self._load_animations)
-        self.machine.events.add_handler('pygame_initialized',
-                                        self._load_slidebuilder)
-
         self.machine.request_pygame()
 
+        # todo move this? Should be in the DMD module?
         self.dmd_palette = [(0, 0, 0),
                             (1, 0, 0),
                             (2, 0, 0),
@@ -113,13 +73,35 @@ class DisplayController(object):
 
         self.displays = dict()
         self.default_display = None
-        self.images = dict()
-        self.animations = dict()
+        self.slidebuilder = SlideBuilder(self.machine)
 
         # Register for events
+        if 'Window' in self.machine.config:
+            self.machine.events.add_handler('machine_init_phase_2',
+                                            self.machine.get_window,
+                                            priority=1000)
+
+        self.machine.events.add_handler('machine_init_phase_1',
+                                        self._load_display_modules)
+        self.machine.events.add_handler('machine_init_phase_1',
+                                        self._load_display_element_modules)
+        self.machine.events.add_handler('machine_init_phase_1',
+                                        self._load_fonts)
+        self.machine.events.add_handler('machine_init_phase_1',
+                                        self._load_transitions)
+        self.machine.events.add_handler('machine_init_phase_1',
+                                        self._load_decorators)
         self.machine.events.add_handler('action_show_slide', self.show_slide)
 
-        self.slidebuilder = SlideBuilder(self.machine)
+        if 'SlidePlayer' in self.machine.config:
+            self.machine.events.add_handler('pygame_initialized',
+                self._load_slidebuilder_config)
+
+    def _load_slidebuilder_config(self):
+        # This has to be a separate method since slidebuilder.process config
+        # returns an unloader method so we can't use it as an event handler
+        self.slidebuilder.process_config(
+            self.machine.config['SlidePlayer'], priority=0)
 
     def _load_display_modules(self):
         # Load the display modules as specified in the config files
@@ -137,15 +119,27 @@ class DisplayController(object):
                 self.hw_module = getattr(i, module.split('.')[1])(self.machine)
                 return  # we only support one type of hw_module at a time
 
-    def _load_display_elements(self):
-        self.display_elements = dict()
+    def _load_display_element_modules(self):
 
-        self.machine.config['MPF']['display_modules']['elements'] = (
-            self.machine.config['MPF']['display_modules']['elements'].split(' '))
-        for element in self.machine.config['MPF']['display_modules']['elements']:
-            i = __import__('mpf.display.elements.' + element.split('.')[0],
-                           fromlist=[''])
-            self.display_elements[element.split('.')[1]] = i
+        # adds the available display elements to the list
+        # creates asset managers for display assets that need them
+
+        for module in (
+                self.machine.config['MPF']['display_modules']['elements']):
+
+            display_element_module = __import__('mpf.display.elements.' + module,
+                                                fromlist=[''])
+            self.display_elements[module] = display_element_module
+
+            if display_element_module.create_asset_manager:
+                AssetManager(
+                    machine=self.machine,
+                    config_section=display_element_module.config_section,
+                    path_string=(self.machine.config['MPF']['paths']
+                                  [display_element_module.path_string]),
+                    asset_class=display_element_module.asset_class,
+                    asset_attribute=display_element_module.asset_attribute,
+                    file_extensions=display_element_module.file_extensions)
 
     def _load_fonts(self):
         if 'Fonts' not in self.machine.config:
@@ -155,7 +149,11 @@ class DisplayController(object):
 
     def _load_transitions(self):
         # This is tricky because we don't want to import them, rather, we just
-        # want to list them.
+        # want to create a list of them.
+
+        # todo this could be cleaned up by adding module attributes which point
+        # to the classes in the module
+
         for k, v in (self.machine.config['MPF']['display_modules']
                      ['transitions'].iteritems()):
             __import__('mpf.display.transitions.' + v.split('.')[0])
@@ -166,6 +164,10 @@ class DisplayController(object):
     def _load_decorators(self):
         # This is tricky because we don't want to import them, rather, we just
         # want to list them.
+
+        # todo this could be cleaned up by adding module attributes which point
+        # to the classes in the module
+
         for k, v in (self.machine.config['MPF']['display_modules']
                      ['decorators'].iteritems()):
             __import__('mpf.display.decorators.' + v.split('.')[0])
@@ -173,60 +175,14 @@ class DisplayController(object):
             cls = v.split('.')[1]
             self.decorators[k] = (module, cls)
 
-    def _load_images(self):
-        if 'Images' in self.machine.config:
-
-            for image in self.machine.config['Images']:
-                self.log.debug("Loading image: %s",
-                               self.machine.config['Images'][image]['file'])
-                if 'alpha_color' in self.machine.config['Images'][image]:
-                    alpha_color = (self.machine.config['Images'][image]
-                                   ['alpha_color'])
-                else:
-                    alpha_color = None
-
-                if 'target' in self.machine.config['Images'][image]:
-                    target = self.machine.config['Images'][image]['target']
-                else:
-                    target = None
-
-                self.load_image(image,
-                                self.machine.config['Images'][image]['file'],
-                                alpha_color, target)
-
-    def _load_animations(self):
-        if 'Animations' in self.machine.config:
-            for animation in self.machine.config['Animations']:
-
-                if 'alpha_color' in self.machine.config['Animations'][animation]:
-                    alpha_color = (self.machine.config['Animations'][animation]
-                                   ['alpha_color'])
-                else:
-                    alpha_color = None
-
-                self.load_animation(animation,
-                    self.machine.config['Animations'][animation]['file'],
-                    alpha_color)
-
-    def _load_slidebuilder(self):
-
-        if 'SlidePlayer' in self.machine.config:
-
-            for event, settings in (self.machine.config['SlidePlayer'].
-                                    iteritems()):
-                settings = self.slidebuilder.preprocess_settings(settings)
-                self.machine.events.add_handler(event,
-                                                self.slidebuilder.build_slide,
-                                                settings=settings)
-
     def set_default_display(self, display_name):
         """Sets the default display.
 
         Args:
-            display_name: String name of the display you'd like to set to be the
-                default.
+            display_name: String name of the display you'd like to set to be
+                the default.
 
-        Returns: Nothing on success, False on failure.
+        Returns: None on success, False on failure.
 
         """
 
@@ -235,183 +191,6 @@ class DisplayController(object):
 
         else:
             return False
-
-    def load_image(self, name, file_name, alpha_color=None, target=None):
-        """Loads an image from disk and makes it available as a registered
-        image in the game.
-
-        Args:
-            name: A string of the name you'd like to refer to this image as in
-                the game.
-            file_name: The path and file name of where this file is coming
-                from, based on the MPF root.
-            alpha_color: An optional color that will be used as the alpha
-                transparency index for this image.
-        """
-
-        # todo:
-        # depth
-        # w, h
-        # load from image file
-
-        file_name = self.locate_image_file(file_name)
-
-        if not file_name:
-            return False
-
-        if file_name.endswith('.dmd'):
-            image_surface = mpf.display.modules.dmd.load_dmd_file(
-                file_name=file_name,
-                palette=self.dmd_palette,
-                alpha_color=alpha_color)
-            self.images[name] = image_surface[0]
-
-        elif file_name:  # we have a regular graphics file
-            image_surface = pygame.image.load(file_name)
-
-            if target == 'dmd':
-                # This image will be shown on the DMD, so we need to convert its
-                # surface to the DMD format
-                image_surface = mpf.display.modules.dmd.surface_to_dmd(
-                    surface=image_surface,
-                    alpha_color=alpha_color)
-                # todo add shades here if we ever support values other than 16
-
-            self.images[name] = image_surface
-
-
-    def load_animation(self, name, file_name, alpha_color=None):
-        """Loads an animation from disk and makes it available as a registered
-        animation in the game.
-
-        Args:
-            name: A string of the name you'd like to refer to this animation as
-                in the game.
-            file_name: The path and file name of where this file is coming
-                from, based on the MPF root.
-            alpha_color: An optional color that will be used as the alpha
-                transparency index for this animation.
-        """
-
-        # todo:
-        # depth
-        # w, h
-        # load from image file
-
-        file_name = self.locate_animation_file(file_name)
-
-        if not file_name:
-            return False
-
-        if file_name.endswith('.dmd'):
-            surface_list = mpf.display.modules.dmd.load_dmd_file(file_name,
-                self.dmd_palette, alpha_color)
-        else:
-            pass
-
-        # todo add the alpha
-
-        self.animations[name] = surface_list
-
-    def add_image(self, name, surface):
-        """Adds an image to the DisplayController.images library so it can be
-        referenced by name later.
-
-        Args:
-            name: String name you want to refer to this image as.
-            surface: Pygame surface which represents this image.
-
-        This method saves the surface in memory, so your original object can be
-        deleted. (Though Python's garbage collector won't actually destroy the
-        surface since you have a reference to it here.)
-
-        """
-        self.images[name] = surface
-
-    def add_animation(self, name, surface_list):
-        """Adds an animation to the DisplayController.animations dictionary.
-
-        Args:
-            name: String name you want to refer to this animation as.
-            surface_list: Python list of Pygame surfaces, one for each frame of
-                the animation.
-
-        """
-        self.animations[name] = surface_list
-
-    def save_image(self, surface, filename):
-        """ Saves an image to disk.
-
-        This menthod is not yet imlpemented.
-
-        """
-        image_string = pygame.image.tostring(surface, 'P')
-        from_surface = pygame.image.fromstring(image_string, (128, 32), 'P')
-
-    def save_image_to_dmd(self):
-        """ Saves an image to disk in the DMD file format.
-
-        This menthod is not yet imlpemented.
-
-        """
-        pass
-
-    def locate_image_file(self, file_name):
-        """Takes a file name and tries to find it on disk. First it
-        checks the machine_folder images folder to see if there's a machine-
-        specific image, then it tries the MPF system images folder.
-
-        Args:
-            file_name: String of the file name
-
-        Returns: String of the full path (path + file name) of the image.
-        """
-
-        if not file_name:
-            return
-
-        full_path = os.path.join(self.machine.machine_path,
-                                 self.machine.config['MPF']['paths']['images'],
-                                 file_name)
-        if os.path.isfile(full_path):
-            return full_path
-        else:
-            full_path = os.path.join('mpf/images', file_name)
-            if os.path.isfile(full_path):
-                return full_path
-            else:
-                self.log.warning("Could not locate image file '%s'.", file_name)
-                return None
-
-    def locate_animation_file(self, file_name):
-        """Takes a file name and tries to find it on disk. First it
-        checks the machine_folder animations folder to see if there's a machine-
-        specific animation, then it tries the MPF system animation folder.
-
-        Args:
-            file_name: String of the file name
-
-        Returns: String of the full path (path + file name) of the animation.
-        """
-
-        # todo should probably combine all these locate file methods.
-
-        if not file_name:
-            return
-
-        full_path = os.path.join(self.machine.machine_path,
-                                 self.machine.config['MPF']['paths']['animations'],
-                                 file_name)
-        if os.path.isfile(full_path):
-            return full_path
-        else:
-            full_path = os.path.join('mpf/animations', file_name)
-            if os.path.isfile(full_path):
-                return full_path
-            else:
-                self.log.warning("Could not locate animation file '%s'.",
-                                 file_name)
-                return None
 
     def show_slide(self, slide, display=None, **kwargs):
         """ Shows a slide. This method assumes the slide exists for this display
@@ -438,6 +217,12 @@ class DisplayController(object):
             display.transition(new_slide=display.slides[slide],
                                transition=transition_type,
                                **transition_settings)
+
+    def remove_slides(self, removal_key):
+
+        for display_obj in self.displays.values():
+            display_obj.remove_slides_by_key(removal_key)
+
 
 
 class MPFDisplay(object):
@@ -517,7 +302,7 @@ class MPFDisplay(object):
         self.machine.timing.add(
             Timer(self.update, frequency=1/float(self.config['fps'])))
 
-    def add_slide(self, name, priority=0, persist=False):
+    def add_slide(self, name, priority=0, persist=False, removal_key=None):
         """Creates a new slide and adds it to the list of slides for this
         display.
 
@@ -534,9 +319,16 @@ class MPFDisplay(object):
         """
 
         self.slides[name] = Slide(mpfdisplay=self, name=name, priority=priority,
-                                  persist=persist, machine=self.machine)
+                                  persist=persist, machine=self.machine,
+                                  removal_key=removal_key)
 
         return self.slides[name]
+
+    def remove_slides_by_key(self, removal_key):
+
+        for slide_obj in self.slides.values():
+            if slide_obj.removal_key == removal_key:
+                slide_obj.remove()
 
     def transition(self, new_slide, transition=None, **kwargs):
         """Transitions this display to a new slide.
@@ -561,14 +353,21 @@ class MPFDisplay(object):
             slide which the transition uses to actually perform the transition.
         """
 
+        if not new_slide.ready():
+
+            kwargs['transition'] = transition
+            new_slide.add_ready_callback(self.transition, new_slide=new_slide,
+                                         **kwargs)
+            return self.current_slide
+
         if new_slide.priority >= self.current_slide.priority:
 
             if transition:
 
                 self.transition_dest_slide = new_slide
-                transistion_class = eval('mpf.display.transitions.' + transition +
+                transition_class = eval('mpf.display.transitions.' + transition +
                                          '.' + self.transitions[transition][1])
-                self.transition_slide = transistion_class(mpfdisplay=self,
+                self.transition_slide = transition_class(mpfdisplay=self,
                                                 machine=self.machine,
                                                 slide_a=self.current_slide,
                                                 slide_b=self.transition_dest_slide,
@@ -595,13 +394,17 @@ class MPFDisplay(object):
         self.set_current_slide(slide=self.transition_dest_slide)
         self.transition_object = None
 
-    def set_current_slide(self, name=None, slide=None):
+    def set_current_slide(self, name=None, slide=None, force=False):
         """Tells the display to instantly set the current slide to the slide
         you pass.
 
         Args:
             name: The string name of the slide you want to make current.
             slide: The slide object you want to make current.
+            force: Boolean to force the slide you're passing to show even if
+                it's a lower priority than what's currently showing. In general
+                you shouldn't use this. It only exists so MPF can cleanly remove
+                higher priority slides if they're killed while active.
 
         Note: You only need to pass one parameter, either the slide name or the
         slide object itself. If you pass both, it will use teh slide object.
@@ -627,20 +430,54 @@ class MPFDisplay(object):
 
         if slide:
             new_slide = slide
-        else:
+        elif name:
             new_slide = self.slides[name]
+        else:
+            # we don't have a new slide. Change the current slide to priority
+            # 0 so it can be killed by anything that comes next.
+            self.current_slide.priority = 0
+            return
+
+        self.log.debug('Setting current slide to: %s', new_slide.name)
 
         if new_slide is old_slide:
             return
-        elif old_slide and new_slide.priority < old_slide.priority:
+        elif (not force and old_slide and
+                new_slide.priority < old_slide.priority):
+            self.log.debug('New slide has a lower priority (%s) than the '
+                           'existing slide (%s). Not showing new slide.',
+                           new_slide.priority, old_slide.priority)
             return
 
         if old_slide and not old_slide.persist and old_slide in self.slides:
             # Not all slides are in self.slides, e.g. temp transition ones
             del self.slides[old_slide.name]
 
-        self.current_slide = new_slide
-        self.current_slide.active = True
+        if not new_slide.ready():
+            new_slide.add_ready_callback(self.set_current_slide, slide=new_slide)
+        else:
+            self.current_slide = new_slide
+            self.current_slide.update()
+            self.current_slide.active = True
+
+    def show_current_active_slide(self):
+
+        self.set_current_slide(slide=self.get_highest_priority_slide(),
+                               force=True)
+
+    def get_highest_priority_slide(self):
+
+        max_value = 0
+        current_slide = None
+
+        for slide_name, slide_obj in self.slides.iteritems():
+            if slide_obj.priority >= max_value:
+                max_value = slide_obj.priority
+                current_slide = slide_obj
+
+        return current_slide
+
+
 
     def update(self):
         """Updates the contents of the current slide. This method can safely
@@ -657,7 +494,7 @@ class DisplayElement(object):
     """Parent class for all display elements.
 
     Display Elements are objects that are placed onto a slide. Examples of
-    display elements include Text, Image, Shape, Animation, etc.
+    display elements include Text, Image, Shape, Animation, Movie, etc.
 
     Attributes:
         dirty: Boolean as to whether this element is dirty. True means that
@@ -676,16 +513,31 @@ class DisplayElement(object):
             display element.
         rect: The Pygame Rect object which defines this elements's size and
             position on the parent slide.
+        x: The horizontal position offset for the placement of this element.
+        y: The vertical position offset for the placement of this element.
+        h_pos: The horizontal anchor.
+        v_pos: The vertical anchor.
 
     """
 
-    def __init__(self, slide):
+    def __init__(self, slide, x, y, h_pos, v_pos, layer):
 
         self.decorators = list()
         self.dirty = True
         self.rect = None
         self.slide = slide
         self._opacity = 255
+        self.name = None
+        self.loadable_asset = False
+        self.notify_when_loaded = set()
+
+        self.x = x
+        self.y = y
+        self.h_pos = h_pos
+        self.v_pos = v_pos
+        self.layer = layer
+
+        self.ready = True
 
         # be sure to call set_position() in your __init__ if you subclass this
 
@@ -712,6 +564,25 @@ class DisplayElement(object):
         elif self.opacity == 255:
             return self.element_surface
 
+    def _notify_when_loaded(self, callback):
+
+        self.log = logging.getLogger('DisplayElement')
+        self.log.critical("+++++ display.de._notify_when_loaded(). loaded: %s"
+                          "callback: %s", self.loaded, callback)
+
+        if self.loaded:
+            callback(self)
+        else:
+            self.notify_when_loaded.add(callback)
+
+    def _asset_loaded(self):
+
+        self.log = logging.getLogger('DisplayElement')
+        self.log.critical("+++++ display.de._asset_loaded(). notify_when_loaded"
+                          "list: %s", self.notify_when_loaded)
+
+        for callback in self.notify_when_loaded:
+            callback(self)
 
     def update(self):
         """Called when the display wants to update itself. Updates this
@@ -856,7 +727,7 @@ class DisplayElement(object):
 
         return self.slide.get_subsurface(rect, self.layer)
 
-        # todo right now this always generates a new image. Need to cache this
+        # todo right now this always generates a new surface. Need to cache this
         # like track dirty rects or something so it can just return it as is if
         # nothing below it changed.
 
@@ -992,15 +863,25 @@ class Slide(object):
     """
 
     def __init__(self, mpfdisplay, machine, name=None, priority=0,
-                 persist=False):
+                 persist=False, removal_key=None):
 
         self.log = logging.getLogger('Slide')
+
         self.mpfdisplay = mpfdisplay
         self.machine = machine
         self.name = name
-
         self.priority = priority
+        self.persist = persist
+        self.removal_key = removal_key
+
         self.elements = list()
+        self.pending_elements = set()
+        """Elements which have related assets that are still loading in a
+        background thread."""
+
+        self.ready_callbacks = list()
+        """List of callback/kwarg tuples which will be called when all the
+        elements of this slide are ready to be shown."""
 
         # todo make priority a property with a setter that will show/hide the
         # slide if needed when it changes?
@@ -1017,15 +898,49 @@ class Slide(object):
         self.surface = pygame.Surface.copy(self.mpfdisplay.surface)
 
         self.active = False
-        self.persist = False
+
+    def ready(self):
+
+        if not self.pending_elements:
+            self.log.info("Checking if slide is ready... Yes!")
+            return True
+        else:
+            self.log.info("Checking if slide is ready... No!")
+            return False
+
+    def add_ready_callback(self, callback, **kwargs):
+        self.log.info("Adding a ready callback: %s, %s", callback, kwargs)
+        for c, k in self.ready_callbacks:
+            if c == callback:
+                return False
+
+        self.ready_callbacks.append((callback, kwargs))
+        return True
+
+    def _process_ready_callbacks(self):
+        self.log.info("Slide is now ready. Processing ready_callbacks... %s",
+                      self.ready_callbacks)
+        for callback, kwargs in self.ready_callbacks:
+            callback(**kwargs)
+
+        self.ready_callbacks = list()
 
     def update(self):
         """Updates this slide by calling each display element's update() method,
         and blits the results if there's an update.
         """
 
+        if self.pending_elements:
+            return
+
+        force_dirty = False
+
         for element in self.elements:
+
             if element.update():
+                self.surface.blit(element.surface, element.rect)
+                force_dirty = True
+            elif force_dirty:
                 self.surface.blit(element.surface, element.rect)
 
     def get_subsurface(self, rect, layer=0):
@@ -1119,17 +1034,28 @@ class Slide(object):
             y: y position of the upper left corner of this element on the slide.
         """
 
-        self.log.debug("Adding %s element to slide %s.%s", element_type,
+        element_type = element_type.lower()
+
+        self.log.info("Adding '%s' element to slide %s.%s", element_type,
                        self.mpfdisplay.name, self.name)
 
-        element = getattr(self.machine.display.display_elements[
-            element_type], element_type)(slide=self,
-                                         machine=self.machine,
-                                         x=x,
-                                         y=y,
-                                         h_pos=h_pos,
-                                         v_pos=v_pos,
-                                         **kwargs)
+        element_class = (self.machine.display.display_elements[element_type].
+                         display_element_class)
+
+        element = element_class(slide=self,
+                                machine=self.machine,
+                                x=x,
+                                y=y,
+                                h_pos=h_pos,
+                                v_pos=v_pos,
+                                name=name,
+                                **kwargs)
+
+        if not element.ready:
+            self.log.info("Element is not ready. Adding to pending elements list. %s",
+                          element)
+            self.pending_elements.add(element)
+            element.notify_when_loaded.add(self._element_asset_loaded)
 
         self.elements.append(element)
 
@@ -1138,9 +1064,39 @@ class Slide(object):
         # therefore "under" the higher layer elements
         self.elements.sort(key=lambda x: int(x.layer))
 
-        #self.dirty = True
-
         return element
+
+    def _element_asset_loaded(self, element):
+        self.log.info("_element_asset_loaded")
+        self.pending_elements.discard(element)
+
+        if not self.pending_elements:
+            self._process_ready_callbacks()
+
+    def remove_element(self, name):
+        """Removes a display element from the slide.
+
+        Args:
+            name: String name of the display element you want to remove.
+        """
+
+        self.log.debug('Removing %s element from slide %s.%s', name,
+                       self.mpfdisplay.name, self.name)
+
+        mark_dirty = False
+
+        # Reverse so we can mark any elements below this as dirty
+        for element in reversed(self.elements):
+            if element.name == name:
+                self.elements.remove(element)
+                mark_dirty = True
+            elif mark_dirty:
+                element.dirty = True
+
+        # If we wanted to optimize more, we could only mark the Rect of the
+        # element that was removed as dirty, but meh. If we do that we should
+        # probably instead create some kind of dirty rect handler since we
+        # could use it in other places too.
 
     def clear(self):
         """Removes all elements from the slide and resets the slide to all
@@ -1159,13 +1115,30 @@ class Slide(object):
         higher than the existing slide.
         """
 
+        self.log.critical("+++++ Slide.show. Ready: %s", self.ready())
 
-        if self.mpfdisplay.current_slide and (
+        if not self.ready():
+            self.log.critical("+++++ Slide.show. Adding ready_callback")
+            self.add_ready_callback(self.show)
+
+        elif (self.mpfdisplay.current_slide and
                 self.mpfdisplay.current_slide.priority <= self.priority):
 
-            self.log.debug('Showing slide: %s', self.name)
+            self.log.debug('Showing slide at priority: %s. Slide name: %s',
+                           self.priority, self.name)
             self.active = True
             self.mpfdisplay.set_current_slide(slide=self)
+        else:
+            self.log.debug('New slide has a lower priority (%s) than the '
+                           'existing slide (%s). Not showing new slide.',
+                           self.priority,
+                           self.mpfdisplay.current_slide.priority)
+
+    def remove(self):
+
+        del self.mpfdisplay.slides[self.name]
+
+        self.mpfdisplay.show_current_active_slide()
 
 
 class Transition(Slide):
@@ -1196,6 +1169,7 @@ class Transition(Slide):
 
         self.slide_a = slide_a
         self.slide_b = slide_b
+        self.priority = slide_b.priority
         self.duration = Timing.string_to_secs(duration)
 
         # Need to make sure both the slides have rendered in case they're new
@@ -1208,6 +1182,11 @@ class Transition(Slide):
         # mark both slides as active
         self.slide_a.active = True
         self.slide_b.active = True
+
+        # todo if an element is not loaded on the B slide when this transition
+        # is called, it will crash. Need to probably not call transition
+        # directly and switch to some kind of loader method for it that can
+        # delay this as needed.
 
     def update(self):
         """Called to update the slide with the latest transition animation.
@@ -1396,24 +1375,61 @@ class SlideBuilder(object):
         self.log = logging.getLogger('SlidePlayer')
         self.machine = machine
 
-        if 'SlidePlayer' in self.machine.config:
-            self.config = self.machine.config['SlidePlayer']
-        else:
-            self.config = dict()
-
         if self.machine.language:
             self.language = self.machine.language
         else:
             self.language = None
 
-        # Set up the event registrations for each entry
+        # Tell the mode controller that it should look for SlidePlayer items in
+        # modes.
+        self.machine.modes.register_start_method(self.process_config,
+                                                 'SlidePlayer')
 
-    def preprocess_settings(self, settings):
+    def process_config(self, config, mode=None, priority=0):
+        self.log.debug("Processing SlideBuilder configuration. Base priority: "
+                       "%s", priority)
+
+        key_list = list()
+
+        for event, settings in config.iteritems():
+                settings = self.preprocess_settings(settings, priority)
+                settings[0]['removal_key'] = mode
+                # todo maybe a better way to add the removal key?
+
+                key_list.append(self.machine.events.add_handler(
+                                event,
+                                self.build_slide,
+                                #settings[0]['slide_priority'],
+                                settings=settings))
+
+                # todo is it right to pass the priority to the event handler?
+                # if we have two slideplayer entries for the same event, how
+                # do we ensure that only the highest one is built? Sure, only
+                # the highest one will be shown, but we don't want to waste time
+                # building lower slides that will never be shown. I think?
+                # Or is that ok in case the higher one ends so the lower one is
+                # there to show through?
+
+        return self.unload_slide_events, (key_list, mode)
+
+    def unload_slide_events(self, removal_tuple):
+
+        key_list, slide_key = removal_tuple
+
+        self.log.debug("Removing SlideBuilder events")
+        self.machine.events.remove_handlers_by_keys(key_list)
+
+        if slide_key:
+            self.machine.display.remove_slides(slide_key)
+
+    def preprocess_settings(self, settings, base_priority=0):
         """Takes an unstructured list of SlidePlayer settings and processed them
         so they can be displayed.
 
         Args:
             settings: A list of dictionary of SlidePlayer settings for a slide.
+            base_priority: An integer that will be added to slide's priority
+                from the config settings.
 
         Returns: A python list with all the settings in the right places.
 
@@ -1429,6 +1445,20 @@ class SlideBuilder(object):
 
         """
 
+        # This is a stupid band-aid because when modes load their slideplayer
+        # settings are already processed. I don't know why though, but I don't
+        # have time to track it down now. $50 to anyone who figures out why!!!
+
+        # Settings can be a list of dicts or just a dict. (Preprocessing is what
+        # turns a dict into a list, though I don't know how sometimes items are
+        # getting the preprocessed entry in their dict but they're not a list???
+        # todo
+
+        if type(settings) is list and 'preprocessed' in settings[0]:
+            return settings
+        elif type(settings) is dict and 'preprocessed' in settings:
+            return [settings]
+
         processed_settings = list()
 
         if type(settings) is dict:
@@ -1438,7 +1468,7 @@ class SlideBuilder(object):
         first_settings = dict()
 
         # Drop this key into the settings so we know they've been preprocessed.
-        first_settings['preprossed'] = True
+        first_settings['preprocessed'] = True
 
         for element in settings:
 
@@ -1446,10 +1476,14 @@ class SlideBuilder(object):
             if 'slide_name' in element:
                 first_settings['slide_name'] = element.pop('slide_name')
 
+            if 'removal_key' in element:
+                first_settings['removal_key'] = element.pop('removal_key')
+
             # If the config doesn't specify whether this slide should be made
             # active when this event is called, set a default value of True
             if 'slide_priority' in element:
-                first_settings['slide_priority'] = element.pop('slide_priority')
+                first_settings['slide_priority'] = (
+                    element.pop('slide_priority') + base_priority)
 
             # If a 'clear_slide' setting isn't specified, set a default of True
             if 'clear_slide' in element:
@@ -1465,7 +1499,16 @@ class SlideBuilder(object):
             if 'transition' in element:
                 last_settings['transition'] = element.pop('transition')
 
+            if 'name' not in element:
+                element['name'] = None
+
             processed_settings.append(element)
+
+        if 'slide_priority' not in first_settings:
+            first_settings['slide_priority'] = base_priority
+
+        if 'removal_key' not in first_settings:
+            first_settings['removal_key'] = None
 
         # Now add back in the items that need to be in the first element
         processed_settings[0].update(first_settings)
@@ -1498,18 +1541,16 @@ class SlideBuilder(object):
 
         """
 
-        if not 'preprocessed' in settings:
+        if not 'preprocessed' in settings[0]:
             settings = self.preprocess_settings(settings)
 
         if display:
             display = self.machine.display.displays[display]
-        elif 'display' in settings:
+        elif 'display' in settings[0]:
             display = settings[0]['display']
             display = self.machine.display.displays[display]
         else:
             display = self.machine.display.default_display
-
-
 
         # Figure out which slide we're dealing with
         if not slide_name:
@@ -1519,20 +1560,18 @@ class SlideBuilder(object):
                 slide_name = str(uuid.uuid4())
 
         # Does this slide name already exist for this display?
+
         if slide_name in display.slides:  # Found existing slide
             slide = display.slides[slide_name]
-            if settings[0]['clear_slide']:
+            if 'clear_slide' in settings[0] and settings[0]['clear_slide']:
                 slide.clear()
         else:  # Need to create a new slide
-
             # What priority?
             if priority is None:
-                if 'slide_priority' in settings[0]:
-                    priority = settings[0]['slide_priority']
-                else:
-                    priority = 0
+                priority = settings[0]['slide_priority']
 
-            slide = display.add_slide(name=slide_name, priority=priority)
+            slide = display.add_slide(name=slide_name, priority=priority,
+                                      removal_key=settings[0]['removal_key'])
 
         # loop through and add the elements
         for element in settings:
@@ -1563,23 +1602,24 @@ class SlideBuilder(object):
         if 'text' in settings:
             settings['text'] = str(settings['text'])
 
-            # Are there any variables to replace on the fly?
+            # Are there any text variables to replace on the fly?
+            # todo should this go here?
             if '%' in settings['text']:
 
-                # first check for player vars
+                # first check for player vars (%var_name%)
                 if self.machine.game and self.machine.game.player:
-                    for var in self.machine.game.player.vars:
-                        if '%' + var + '%' in settings['text']:
+                    for name, value in self.machine.game.player:
+                        if '%' + name + '%' in settings['text']:
                             settings['text'] = settings['text'].replace(
-                                '%' + var + '%',
-                                str(self.machine.game.player.vars[var]))
+                                '%' + name + '%', str(value))
 
                 # now check for single % which means event kwargs
                 for kw in text_variables:
                     if '%' + kw in settings['text']:
                         settings['text'] = settings['text'].replace(
                             '%' + kw, str(text_variables[kw]))
-        element_type = settings.pop('type')
+
+        element_type = settings.pop('type').lower()
 
         element = slide.add_element(element_type, **settings)
 
@@ -1599,15 +1639,15 @@ class SlideBuilder(object):
 
                 for decorator in settings['decorators']:
                     decorator_class = eval('mpf.display.decorators.' +
-                    decorator['type'] + '.' +
-                    self.machine.display.decorators[decorator['type']][1])
+                        decorator['type'] + '.' +
+                        self.machine.display.decorators[decorator['type']][1])
 
                 element.attach_decorator(decorator_class(element, **decorator))
 
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

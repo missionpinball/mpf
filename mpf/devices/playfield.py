@@ -7,6 +7,7 @@ a pinball machine."""
 
 import logging
 from collections import defaultdict
+import sys
 
 from mpf.devices.ball_device import BallDevice
 from mpf.system.tasks import DelayManager
@@ -31,7 +32,7 @@ class Playfield(BallDevice):
         collection_object = getattr(self.machine, collection)[name] = self
 
         # Attributes
-        self._num_balls_contained = 0
+        self._balls = 0
         self.num_balls_requested = 0
 
         # Set up event handlers
@@ -59,17 +60,13 @@ class Playfield(BallDevice):
                                         self.playfield_switch_hit)
 
     @property
-    def num_balls_contained(self):
-        return 0
-
-    @property
     def balls(self):
-        return self._num_balls_contained
+        return self._balls
 
     @balls.setter
     def balls(self, balls):
 
-        prior_balls = self._num_balls_contained
+        prior_balls = self._balls
         ball_change = balls - prior_balls
 
         if ball_change:
@@ -77,19 +74,19 @@ class Playfield(BallDevice):
                            "%s", prior_balls, balls, ball_change)
 
         if balls > 0:
-            self._num_balls_contained = balls
-            self.ball_search_schedule()
+            self._balls = balls
+            #self.ball_search_schedule()
         elif balls == 0:
-            self._num_balls_contained = 0
-            self.ball_search_disable()
+            self._balls = 0
+            #self.ball_search_disable()
         else:
             self.log.warning("Playfield balls went to %s. Resetting to 0, but "
                              "FYI that something's weird", balls)
-            self._num_balls_contained = 0
-            self.ball_search_disable()
+            self._balls = 0
+            #self.ball_search_disable()
 
         self.log.debug("New Ball Count: %s. (Prior count: %s)",
-                       self._num_balls_contained, prior_balls)
+                       self._balls, prior_balls)
 
         if ball_change > 0:
             self.machine.events.post_relay('balldevice_' + self.name +
@@ -100,9 +97,20 @@ class Playfield(BallDevice):
                                      balls=balls, change=ball_change)
 
     def count_balls(self, **kwargs):
+        """Used to count the number of balls that are contained in a ball
+        device. Since this is the playfield device, this method always returns
+        zero.
+
+        Returns: 0
+        """
         return 0
 
     def get_additional_ball_capacity(self):
+        """Used to find out how many more balls this device can hold. Since this
+        is the playfield device, this method always returns 999.
+
+        Returns: 999
+        """
         return 999
 
     def add_ball(self, balls=1, source_name=None, source_device=None,
@@ -130,9 +138,10 @@ class Playfield(BallDevice):
         """
 
         if balls < 1:
-            self.log.info("Received request to add %s balls, which doesn't make"
-                          "sense. Quitting...")
-            quit()
+            self.log.error("Received request to add %s balls, which doesn't "
+                           "make sense. Quitting...")
+            raise Exception("Received request to add %s balls, which doesn't "
+                            "make sense. Quitting...")
 
         # Figure out which device we'll get a ball from
 
@@ -146,10 +155,12 @@ class Playfield(BallDevice):
                 break
 
         if not source_device:
-            self.log.error("Received request to add a ball to the playfield, "
+            self.log.critical("Received request to add a ball to the playfield, "
                            "but no source device was passed and no ball devices"
                            "are tagged with 'ball_add_live'. Cannot add a ball.")
-            quit()
+            raise Exception("Received request to add a ball to the playfield, "
+                           "but no source device was passed and no ball devices"
+                           "are tagged with 'ball_add_live'. Cannot add a ball.")
 
         self.log.debug("Received request to add %s ball(s). Source device: %s. "
                        "Player controlled: %s", balls, source_device.name,
@@ -197,7 +208,7 @@ class Playfield(BallDevice):
 
         if 'player_controlled_eject_tag' in self.machine.config['Game']:
 
-            if not device.num_balls_contained:
+            if not device.balls:
                 device.request_ball(balls=balls)
 
             self.machine.events.add_handler('sw_' +
@@ -206,10 +217,20 @@ class Playfield(BallDevice):
                                             self.player_eject_request,
                                             balls=balls, device=device)
         else:
-            self.log.error("Received request to set up player-controlled eject,"
-                           "But there is no 'player_controlled_eject_tag in the"
-                            "config file. Exiting.")
-            quit()
+            self.log.critical("Received request to set up player-controlled "
+                              "eject, but there is no "
+                              "'player_controlled_eject_tag in the config file."
+                              "Exiting.")
+            raise Exception("Received request to set up player-controlled "
+                              "eject, but there is no "
+                              "'player_controlled_eject_tag in the config file."
+                              "Exiting.")
+
+    def remove_player_controlled_eject(self):
+        """Removed the player-controlled eject so a player hitting a switch
+        no longer calls the device(s) to eject a ball.
+        """
+        self.machine.events.remove_handler(self.player_eject_request)
 
     def player_eject_request(self, balls, device):
         """A player has hit a switch tagged with the player_eject_request_tag.
@@ -224,14 +245,14 @@ class Playfield(BallDevice):
         device.eject(balls, target=self)
 
     def playfield_switch_hit(self):
-        """A switch tagged with 'playfield_active' was just hit, indicating that there
-        is at least one ball on the playfield.
+        """A switch tagged with 'playfield_active' was just hit, indicating that
+        there is at least one ball on the playfield.
         """
         if not self.balls:
 
             if not self.num_balls_requested:
-                self.log.debug("PF switch hit with no balls expected. Setting pf "
-                               "balls to 1.")
+                self.log.debug("PF switch hit with no balls expected. Setting "
+                               "pf balls to 1.")
                 self.balls = 1
                 self.machine.events.post('Unexpected_ball_on_playfield')
 
@@ -263,9 +284,13 @@ class Playfield(BallDevice):
             self.num_balls_requested -= balls
 
             if self.num_balls_requested < 0:
-                self.log.info("num_balls_requested is %s, which doesn't make "
-                              "sense. Quitting...", self.num_balls_requested)
-                quit()
+                self.log.critical("num_balls_requested is %s, which doesn't "
+                                  "make sense. Quitting...",
+                                  self.num_balls_requested)
+                raise Exception("num_balls_requested is %s, which doesn't make "
+                                "sense. Quitting...", self.num_balls_requested)
+
+            self.remove_player_controlled_eject()
 
     def ok_to_confirm_ball_via_playfield_switch(self):
         """Used to check whether it's ok for a ball device which ejects to the
@@ -306,19 +331,18 @@ class Playfield(BallDevice):
                 self.flag_no_ball_search is False. Default is False
 
         """
-        pass  # we'll use the below code later when we finish ball search
-        #if self.machine.config['BallSearch']:
-        #    if not self.flag_no_ball_search or force is True:
-        #        if secs is not None:
-        #            start_ms = secs * 1000
-        #        else:
-        #            start_ms = (self.machine.config['BallSearch']
-        #                ['Secs until ball search start'] * 1000)
-        #        self.log.debug("Scheduling a ball search for %s secs from now",
-        #                       start_ms / 1000.0)
-        #        self.delay.reset("ball_search_start",
-        #                         ms=start_ms,
-        #                         callback=self.ball_search_begin)
+        if self.machine.config['BallSearch']:
+            if not self.flag_no_ball_search or force is True:
+                if secs is not None:
+                    start_ms = secs * 1000
+                else:
+                    start_ms = (self.machine.config['BallSearch']
+                        ['Secs until ball search start'] * 1000)
+                self.log.debug("Scheduling a ball search for %s secs from now",
+                               start_ms / 1000.0)
+                self.delay.reset("ball_search_start",
+                                 ms=start_ms,
+                                 callback=self.ball_search_begin)
 
     def ball_search_disable(self):
         """Disables ball search.
@@ -336,7 +360,7 @@ class Playfield(BallDevice):
         if not self.flag_no_ball_search:
             self.log.debug("Received request to start ball search")
             # ball search should only start if we have uncontained balls
-            if self.num_balls_live or force:
+            if self.balls or force:
                 # todo add audit
                 self.flag_ball_search_in_progress = True
                 self.machine.events.post("ball_search_begin_phase1")
@@ -362,9 +386,9 @@ class Playfield(BallDevice):
 
     def ball_lost(self):
         """Mark a ball as lost"""
-        self.num_balls_known = self.num_balls_contained
+        self.num_balls_known = self.balls
         self.num_balls_missing = self.machine.config['Machine']\
-            ['Balls Installed'] - self.num_balls_contained
+            ['Balls Installed'] - self.balls
         self.num_balls_live = 0
         # since desired count doesn't change, this will relaunch them
         self.log.debug("Ball(s) Marked Lost. Known: %s, Missing: %s",
@@ -393,7 +417,7 @@ class Playfield(BallDevice):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

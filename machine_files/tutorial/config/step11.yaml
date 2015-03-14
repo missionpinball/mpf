@@ -139,33 +139,30 @@ DMD:
 Window:
     title: My Awesome Game!
     elements:
-        onscreen_dmd:
-            type: VirtualDMD
-            width: 512
-            height: 128
-            h_pos: center
-            v_pos: center
-            pixel_color: ff6600
-            dark_color: 220000
-            pixel_spacing: 1
-        dmd_frame:
-            type: Shape
-            shape: box
-            width: 516
-            height: 132
-            color: aaaaaa
-            thickness: 2
-        Title:
-            type: Text
-            font: tall title
-            text: MY AWESOME GAME
-            h_pos: center
-            v_pos: top
-            y: 60
-            size: 100
-            antialias: yes
-            layer: 1
-            color: ee9900
+      - type: VirtualDMD
+        width: 512
+        height: 128
+        h_pos: center
+        v_pos: center
+        pixel_color: ff6600
+        dark_color: 220000
+        pixel_spacing: 1
+      - type: Shape
+        shape: box
+        width: 516
+        height: 132
+        color: aaaaaa
+        thickness: 2
+      - type: Text
+        font: tall title
+        text: MY AWESOME GAME
+        h_pos: center
+        v_pos: top
+        y: 60
+        size: 100
+        antialias: yes
+        layer: 1
+        color: ee9900
 
 SlidePlayer:
     machineflow_Attract_start:

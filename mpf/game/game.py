@@ -16,7 +16,6 @@ Note that in the Mission Pinball Framework, a distinction is made between a
 import logging
 from mpf.system.machine_mode import MachineMode
 from mpf.game.player import Player
-from mpf.system.timing import Timing
 
 
 class Game(MachineMode):
@@ -109,7 +108,7 @@ class Game(MachineMode):
         '''
 
     def _midgame_restart_handler(self, **kwargs):
-        if self.player and self.player.vars['ball'] > self.min_restart_ball:
+        if self.player and self.player.ball > self.min_restart_ball:
             self.log.debug("------Restarting game via long button press------")
             self.machine.flow_advance(1)
 
@@ -155,13 +154,13 @@ class Game(MachineMode):
         opportunity to do things before the ball actually starts. Once that
         event is clear, this method calls :meth:`ball_started`.
         """
-        self.log.debug("ball_starting for Ball %s", self.player.vars['ball'])
+        self.log.debug("ball_starting for Ball %s", self.player.ball)
         self.log.debug("***************************************************")
         self.log.debug("***************************************************")
         self.log.debug("**                                               **")
         self.log.debug("**    Player: %s    Ball: %s   Score: %s",
-                       self.player.vars['number'], self.player.vars['ball'],
-                       self.player.vars['score'])
+                       self.player.number, self.player.ball,
+                       self.player.score)
         self.log.debug("**                                               **")
         self.log.debug("***************************************************")
         self.log.debug("***************************************************")
@@ -183,7 +182,7 @@ class Game(MachineMode):
             # todo what happens if this fails? I mean it shouldn't, but if
             # any ball_starting handler returns False, it will fail and we'll
             # be in limbo?
-        self.log.debug("ball_started for Ball %s", self.player.vars['ball'])
+        self.log.debug("ball_started for Ball %s", self.player.ball)
 
         # register handlers to watch for ball drain and live ball removed
 
@@ -194,8 +193,8 @@ class Game(MachineMode):
         self.log.debug("Game is setting Balls in Play to 1")
         self.num_balls_in_play = 1
 
-        self.machine.events.post('ball_started', ball=self.player.vars['ball'],
-                                 player=self.player.vars['number'])
+        self.machine.events.post('ball_started', ball=self.player.ball,
+                                 player=self.player.number)
 
         self.machine.playfield.add_ball(player_controlled=True)
 
@@ -271,13 +270,12 @@ class Game(MachineMode):
         if ev_result is False:
             return
 
-        if self.player.vars['extra_balls']:
+        if self.player.extra_balls:
             self.shoot_again()
             return
 
-        if self.player.vars['ball'] == self.machine.config['Game']\
-                ['Balls per game'] and \
-                self.player.vars['number'] == Player.total_players:
+        if (self.player.ball == self.machine.config['Game']['Balls per game']
+                and self.player.number == Player.total_players):
             self.game_ending()
         else:
             self.player_rotate()
@@ -325,15 +323,15 @@ class Game(MachineMode):
         TODO: The limit checking is not yet implemented
         """
         self.log.debug("Entering Game.award_extra_ball()")
-        self.player.vars['extra_balls'] += num
+        self.player.extra_balls += num
         self.machine.events.post('extra_ball_awarded')
         # todo add the limit checking
 
     def shoot_again(self):
         """Called when the same player should shoot again."""
-        self.log.debug("Player %s Shoot Again", self.player.vars['index'] + 1)
-        if self.player.vars['extra_balls'] > 0:
-            self.player.vars['extra_balls'] -= 1
+        self.log.debug("Player %s Shoot Again", self.player.index + 1)
+        if self.player.extra_balls > 0:
+            self.player.extra_balls -= 1
         self.ball_starting()
 
     def tilt(self):
@@ -426,7 +424,7 @@ class Game(MachineMode):
             self.log.debug("Game is at max players. Cannot add another.")
             return False
 
-        if self.player and self.player.vars['ball'] > 1:  # todo config setting
+        if self.player and self.player.ball > 1:  # todo config setting
             self.log.debug("Current ball is after Ball 1. Cannot add player.")
             return False
 
@@ -439,10 +437,10 @@ class Game(MachineMode):
         if ev_result is False:
             self.log.debug("Request to add player has been denied.")
         else:
-            new_player = Player()
+            new_player = Player(self.machine)
             self.player_list.append(new_player)
             self.machine.events.post('player_add_success', player=new_player,
-                                     num=new_player.vars['number'])
+                                     num=new_player.number)
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.
@@ -458,9 +456,9 @@ class Game(MachineMode):
         if not self.player:
             self.player_rotate()
 
-        self.machine.events.post('player_turn_start')
+        self.machine.events.post('player_turn_start', player=self.player)
 
-        self.player.vars['ball'] += 1
+        self.player.ball += 1
         self.ball_starting()  # todo is this ok to jump right into?
         # todo wonder if we should do player_turn_start as boolean? meh..
 
@@ -487,16 +485,17 @@ class Game(MachineMode):
 
         else:
 
-            if self.player.vars['number'] < Player.total_players:
-                self.player = self.player_list[self.player.vars['number']]
+            self.machine.events.post('player_turn_stop', player=self.player)
+
+            if self.player.number < Player.total_players:
+                self.player = self.player_list[self.player.number]
                 # Note the above line is kind of confusing but it works because
                 # the current player number is always 1 more than the index.
                 # i.e. "Player 1" has an index of 0, etc. So using the current
                 # player number as the next player's index works out.
             else:
                 self.player = self.player_list[0]
-        self.log.debug("Player rotate: Now up is Player %s",
-                       self.player.vars['number'])
+        self.log.debug("Player rotate: Now up is Player %s", self.player.number)
 
 
 
@@ -507,7 +506,7 @@ class Game(MachineMode):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

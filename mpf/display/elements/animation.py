@@ -6,16 +6,70 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import pygame
-import pygame.locals
 import logging
 import time
 
 from mpf.system.display import DisplayElement
-from mpf.system.show_controller import ShowController
+import mpf.display.modules.dmd
+from mpf.system.assets import Asset
+
+dmd_palette = [(0, 0, 0),
+            (1, 0, 0),
+            (2, 0, 0),
+            (3, 0, 0),
+            (4, 0, 0),
+            (5, 0, 0),
+            (6, 0, 0),
+            (7, 0, 0),
+            (8, 0, 0),
+            (9, 0, 0),
+            (10, 0, 0),
+            (11, 0, 0),
+            (12, 0, 0),
+            (13, 0, 0),
+            (14, 0, 0),
+            (15, 0, 0)] * 16
 
 
-class Animation(DisplayElement):
+class Animation(Asset):
+
+    def _initialize_asset(self):
+
+        if 'alpha_color' in self.config:
+            self.alpha_color = (self.config['alpha_color'])
+        else:
+            self.alpha_color = None
+
+        self.surface_list = None
+
+    def _load(self, callback):
+
+        # todo:
+        # depth
+        # w, h
+        # load from image file
+
+        if self.file_name.endswith('.dmd'):
+            self.surface_list = mpf.display.modules.dmd.load_dmd_file(
+                self.file_name,
+                dmd_palette,
+                self.alpha_color)
+
+        else:
+            pass
+            # add other animation formats
+
+        # todo add the alpha
+
+        self.loaded = True
+        if callback:
+            callback()
+
+    def _unload(self):
+        self.surface_list = None
+
+
+class AnimationDisplayElement(DisplayElement):
     """Represents an animation display element.
 
     Args:
@@ -47,7 +101,8 @@ class Animation(DisplayElement):
         v_pos: The vertical anchor.
 
     Note: Full documentation on the use of the x, y, h_pos, and v_pos arguments
-    can be found at: https://missionpinball.com/docs/displays/display-elements/positioning/
+    can be found at:
+    https://missionpinball.com/docs/displays/display-elements/positioning/
 
     """
 
@@ -56,17 +111,23 @@ class Animation(DisplayElement):
                  play_now=True, x=None, y=None, h_pos=None,
                  v_pos=None, layer=0, **kwargs):
 
-        super(Animation, self).__init__(slide)
+        super(AnimationDisplayElement, self).__init__(slide, x, y, h_pos, v_pos,
+                                                      layer)
 
         self.log = logging.getLogger('Animation.' + animation)
 
-        if animation in machine.display.animations:
-            self.surface_list = machine.display.animations[animation]
+        self.loadable_asset = True
+        self.machine = machine
+
+        if animation not in machine.animations:
+            self.log.critical("Received a request to add an animation, but "
+                              "the name '%s' doesn't exist in in the list of "
+                              "registered animations.", animation)
+            raise Exception("Received a request to add an animation, but "
+                              "the name '%s' doesn't exist in in the list of "
+                              "registered animations.", animation)
         else:
-            self.log.error("Received a request to create an animation, but "
-                           "the name '%s' doesn't existin in the list of "
-                           "registered animations.", animation)
-            quit()
+            self.animation = machine.animations[animation]
 
         self.current_frame = start_frame
         self.fps = 0
@@ -76,16 +137,29 @@ class Animation(DisplayElement):
         self.secs_per_frame = 0
         self.next_frame_time = 0
         self.last_frame_time = 0
-        self.total_frames = len(self.surface_list)
-        self.element_surface = self.surface_list[self.current_frame]
-
         self.set_fps(fps)
-
         self.layer = layer
-        self.set_position(x, y, h_pos, v_pos)
+
+        if self.animation.loaded:
+            self._asset_loaded()
+        else:
+            self.ready = False
+            self.animation.load(callback=self._asset_loaded)
 
         if play_now:
             self.play()
+        # todo need to make it so that play() won't start until this all the
+        # elements in this slide are ready to go
+
+    def _asset_loaded(self):
+
+        self.surface_list = self.animation.surface_list
+        self.total_frames = len(self.surface_list)
+        self.element_surface = self.surface_list[self.current_frame]
+        self.set_position(self.x, self.y, self.h_pos, self.v_pos)
+        self.ready = True
+
+        super(AnimationDisplayElement, self)._asset_loaded()
 
     def set_fps(self, fps):
         """Sets the fps (frames per second) that this animation should play at.
@@ -131,13 +205,13 @@ class Animation(DisplayElement):
         """Stops this animation.
 
         Args:
-            repeat: True/False as to whether this animation should be reset to
+            reset: True/False as to whether this animation should be reset to
             its first frame so it starts at the beginning the next time its
             played. Default is False.
         """
 
-        if repeat:
-            self.repeat = True
+        if reset:
+            self.current_frame = 0
 
         self.playing = False
         self.next_frame_time = 0
@@ -267,10 +341,18 @@ class Animation(DisplayElement):
 
         return False
 
+asset_class = Animation
+asset_attribute = 'animations'  # self.machine.<asset_attribute>
+display_element_class = AnimationDisplayElement
+create_asset_manager = True
+path_string = 'animations'
+config_section = 'Animations'
+file_extensions = ('dmd')
+
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

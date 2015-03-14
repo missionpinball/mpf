@@ -6,15 +6,19 @@ tracking."""
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/mpf
+
 import logging
+import uuid
 
 
 def preload_check(machine):
 
-    if 'Scoring' in machine.config and machine.config['Scoring']:
-        return True
-    else:
-        return False
+    #if 'Scoring' in machine.config and machine.config['Scoring']:
+    #    return True
+    #else:
+    #    return False
+
+    return True
 
 
 class ScoreController(object):
@@ -30,20 +34,50 @@ class ScoreController(object):
         self.machine = machine
         self.machine.score = self
         self.log = logging.getLogger("Score")
-        self.log.debug("Loading the ScoreController")
-        self.score_events = {}
+        self.log.debug("Loading the Score Controller")
+        self.score_events = dict()
 
         if 'Scoring' in self.machine.config:
-            self.log.debug("Configuring the Score Controller")
-            for score_event in self.machine.config['Scoring']:
+            self.process_config(self.machine.config['Scoring'])
 
-                points = self.machine.config['Scoring'][score_event]['Score']
+        # Tell the mode controller that it should look for scoring items in
+        # modes.
+        self.machine.modes.register_start_method(self.process_config, 'Scoring')
 
-                self.register_score_event(score_event, points)
-        else:
-            self.log.debug("No shot configuration found. Skipping...")
+    def process_config(self, config, mode=None, priority=0):
+        # config is Scoring subsection of config dict
 
-    def register_score_event(self, event_name, points):
+        self.log.debug("Processing Scoring configuration. Base Priority: %s",
+                       priority)
+
+        key_list = list()
+
+        for score_event in config:
+
+            if 'Score' in config[score_event] and config[score_event]['Score']:
+                points = config[score_event]['Score']
+
+            if 'Block' in config[score_event] and config[score_event]['Block']:
+                block = True
+            else:
+                block = False
+
+            key_list.append(self.register_score_event(score_event, points,
+                                                      priority, block))
+
+        return self.unload_score_events, key_list
+
+    def unload_score_events(self, key_list):
+        """Unloads and removes several score events at once.
+
+        Args:
+            key_list: A list of keys of the score events you want to remove.
+        """
+        self.log.debug("Unloading scoring events")
+        for key in key_list:
+            self.unregister_score_event(key)
+
+    def register_score_event(self, event_name, points, priority=0, block=False):
         """Used to register a score event which adds to a player's score when
         a certain event is posted.
 
@@ -53,13 +87,77 @@ class ScoreController(object):
             points : The integer number of points that should be added or
                 subtracted to the current player's score when this event is
                 posted.
+            priority: Integer priority which is used in conjunction with block.
+            block: Boolean which specifies whether this event should block lower
+                priority events. If True, lower priority events will not score
+                as long as this event is registered. If False then lower
+                priority events will score as normal.
+
+        Returns: A "key" which can be used to later unregister this event via
+            the 'unregister_score_event' method.
         """
         self.log.debug("Registering score event '%s' with: %s", event_name,
                        points)
-        self.score_events[event_name] = int(points)
 
-        self.machine.events.add_handler(event_name, self._score_event_callback,
-                                        1, scoring_event=event_name)
+        if event_name not in self.score_events:
+            self.score_events[event_name] = list()
+
+        score_entry_dict = dict()
+        score_entry_dict['points'] = int(points)
+        score_entry_dict['priority'] = priority
+        score_entry_dict['score_entry_key'] = uuid.uuid4()
+
+        if block:
+            score_entry_dict['block'] = priority
+        else:
+            score_entry_dict['block'] = None
+
+        score_entry_dict['event_key'] = self.machine.events.add_handler(
+            event=event_name,
+            handler=self._score_event_callback,
+            score_priority=priority,
+            score_event=event_name,
+            score_entry_key=score_entry_dict['score_entry_key'],
+            block=block)
+
+        self.score_events[event_name].append(score_entry_dict)
+
+        # Sort the list so the highest priority entries are first
+        self.score_events[event_name] = (
+            sorted(self.score_events[event_name],
+                   key=lambda k: k['priority'],
+                   reverse=True))
+
+        return score_entry_dict['score_entry_key']
+
+    def unregister_score_event(self, score_entry_key):
+        """Removes a score event.
+
+        Args:
+            score_entry_key: The key of the score event to remove. This is the
+                key that's returned by the 'register_score_event()' method.
+        """
+
+        event_key = None
+
+        for event, score_entry_list in self.score_events.iteritems():
+
+            for score_entry_dict in score_entry_list:
+                if score_entry_dict['score_entry_key'] == score_entry_key:
+                    event_key = score_entry_dict['event_key']
+                    self.log.debug("Removing score event '%s' for '%s' points",
+                                   event, score_entry_dict['points'])
+                    self.score_events[event].remove(score_entry_dict)
+                    break
+            else:
+                continue
+            break
+
+        if not self.score_events[event]:
+            del self.score_events[event]
+
+        if event_key:
+            self.machine.events.remove_handler_by_key(event_key)
 
     def add(self, points, force=False):
         """Adds to the current player's score.
@@ -79,22 +177,44 @@ class ScoreController(object):
             if not force:
                 return
 
-        self.machine.game.player.vars['score'] += int(points)
-        self.log.debug("Current player's score: %s",
-                       self.machine.game.player.vars['score'])
-        self.machine.events.post('score_change', change=points,
-                                 score=self.machine.game.player.vars['score'])
+        self.machine.game.player.score += int(points)
 
-    def _score_event_callback(self, scoring_event, **kwargs):
+    def _score_event_callback(self, score_event, score_entry_key,
+                              score_priority, block, **kwargs):
         # Processes the scoring events
+
+        # todo
+        # look at the event that came in and get its priority
+        # see if there are any other registered handlers at a higher
+        # priority with block enabled
+        # if so, do nothing. If not, do the score
+
         if self.machine.game and self.machine.game.num_balls_in_play:
-            self.log.debug("Score Event '%s', Increasing score by %s",
-                           scoring_event, self.score_events[scoring_event])
-            self.add(self.score_events[scoring_event])
+
+            # try because it's possible this score entry was removed between
+            # the time the event was posted and it was processed
+            #try:
+
+            # Loop through all the score events for this event
+            for score_event_dict in self.score_events[score_event]:
+                # If it finds one with 'block', and the priority of the
+                # block is higher than the current priority, don't process
+                if (score_event_dict['block'] and
+                        score_event_dict['priority'] >
+                        score_priority):
+                    return
+
+                if score_event_dict['score_entry_key'] == score_entry_key:
+
+                    self.log.debug("Score Event increasing score by %s",
+                                   score_event_dict['points'])
+                    self.add(score_event_dict['points'])
+            #except:
+            #    pass
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

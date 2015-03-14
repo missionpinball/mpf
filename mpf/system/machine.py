@@ -66,12 +66,15 @@ class MachineController(object):
         self.loop_rate = 0.0
         self.mpf_load = 0.0
         self.pygame = False
+        self.pygame_requested = False
         self.window = None
         self.display = None
         self.machine_path = None  # Path to this machine's folder root
 
         self.plugins = list()
         self.scriptlets = list()
+        self.game_modes = list()
+        self.asset_managers = dict()
 
         self.registered_pygame_handlers = dict()
         self.pygame_allowed_events = list()
@@ -85,7 +88,8 @@ class MachineController(object):
         self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
 
         # load the MPF config & machine defaults
-        self.load_config_yaml(self.options['mpfconfigfile'])
+        self.config = self.load_config_yaml(config=self.config,
+            yaml_file=self.options['mpfconfigfile'])
 
         # Find the machine_files location. If it starts with a forward or
         # backward slash, then we assume it's from the mpf root. Otherwise we
@@ -125,7 +129,8 @@ class MachineController(object):
         self.log.info("Base machine config file: %s", config_file)
 
         # Load the machine-specific config
-        self.load_config_yaml(config_file)
+        self.config = self.load_config_yaml(config=self.config,
+                                            yaml_file=config_file)
 
         self.platform = self.set_platform()
 
@@ -147,7 +152,7 @@ class MachineController(object):
         self.events.add_handler('machine_reset_phase_3', self.flow_advance,
                                 position=0)
 
-        self.events.post("machine_init_phase1")
+        self.events.post("machine_init_phase_1")
 
         # Load the device modules
         self.config['MPF']['device_modules'] = (
@@ -169,7 +174,7 @@ class MachineController(object):
                                               self
                                               )
 
-        self.events.post("machine_init_phase2")
+        self.events.post("machine_init_phase_2")
 
         # Load plugins
         if 'Plugins' in self.config:
@@ -188,6 +193,8 @@ class MachineController(object):
                 else:
                     self.log.warning("Plugin: %s failed pre-load check. "
                                      "Skipping.", plugin)
+
+        self.events.post("machine_init_phase_3")
 
         # Load Scriptlets
         if 'Scriptlets' in self.config:
@@ -214,7 +221,8 @@ class MachineController(object):
         # register event handlers
         self.events.add_handler('machineflow_advance', self.flow_advance)
 
-        self.events.post("machine_init_phase3")
+        self.events.post("machine_init_phase_4")
+        self.events.post("machine_init_phase_5")
 
         self.reset()
 
@@ -262,45 +270,65 @@ class MachineController(object):
         # Now start the new machine mode
         self.config['MachineFlow'][self.machineflow_index].start(**kwargs)
 
-    def load_config_yaml(self, config):
-        """Merges config updates into the self.config dictionary.
+    def load_config_yaml(self, config=None, yaml_file=None,
+                         new_config_dict=None):
+        """Merges a new config dictionary into an existing one.
 
         This method does what we call a "deep merge" which means it merges
         together subdictionaries instead of overwriting them. See the
         documentation for `meth:dict_merge` for a description of how this
         works.
 
+        If the config dictionary you're merging in also contains links to
+        additional config files, it will also merge those in.
+
         At this point this method loads YAML files, but it would be simple to
         load them from JSON, XML, INI, or existing python dictionaires.
 
         Args:
-            config (dict or str) : The settings to deep merge into the config
-                dictionary. If `config` is a dict, then it will merge those
-                settings in. If it's a string, it will try to find a file with
-                that name and open it to read in the settings.
+            config: The optional current version of the config dictionary that
+                you're building up. If you don't pass a dictionary, this method
+                will create one.
+            yaml_file: A YAML file containing the settings to deep merge into
+                the config dictionary. This method will try to find a file
+                with that name and open it to read in the settings. It will
+                first try to open it as a file directly (including any path
+                that's there). If that doesn't work, it will try to open the
+                file using the last path that worked. (This path is stored in
+                `config['Config_path']`.)
+            new_config_dict: A dictionary of settings to merge into the config
+                dictionary.
 
-                Also, if config is a string, it will first try to open it as a
-                file directly (including any path that's there). If that
-                doesn't work, it will try to open the file using the last path
-                that worked. (This path is stored in
-                `self.config['Config_path']`.)
+        Note that you only need to specify a yaml_file or new_config_dictionary,
+        not both.
+
+        Returns: Python dictionary which is your source with all the new config
+            options merged in.
+
         """
+
+        if not config:
+            config = dict()
+
         new_updates = dict()
 
-        if type(config) == dict:
-            new_updates = config
-        else:  # Maybe 'config' is a file?
-            if os.path.isfile(config):
-                config_location = config
+        # If we were passed a config dict, load from there
+        if type(new_config_dict) == dict:
+            new_updates = new_config_dict
+
+        # If not, do we have a yaml_file?
+        elif yaml_file:
+            if os.path.isfile(yaml_file):
+                config_location = yaml_file
                 # Pull out the path in case we need it later
-                self.config['Config_path'] = os.path.split(config)[0]
-            elif os.path.isfile(os.path.join(self.config['Config_path'],
-                                             config)):
-                config_location = os.path.join(self.config['Config_path'],
-                                               config)
+                config['Config_path'] = os.path.split(yaml_file)[0]
+            elif os.path.isfile(os.path.join(config['Config_path'],
+                                             yaml_file)):
+                config_location = os.path.join(config['Config_path'],
+                                               yaml_file)
             else:
-                self.log.error("Couldn't find config file: %s.", config)
-                quit()
+                self.log.critical("Couldn't find config file: %s.", yaml_file)
+                raise Exception("Couldn't find config file: %s.", yaml_file)
 
         if config_location:
             try:
@@ -310,28 +338,37 @@ class MachineController(object):
             except yaml.YAMLError, exc:
                 if hasattr(exc, 'problem_mark'):
                     mark = exc.problem_mark
-                    self.log.error("Error found in config file %s. Line %s, "
-                                   "Position %s", config_location, mark.line+1,
-                                   mark.column+1)
-                    quit()
+                    self.log.critical("Error found in config file %s. Line %s, "
+                                      "Position %s", config_location,
+                                      mark.line+1, mark.column+1)
+                    raise Exception("Error found in config file %s. Line %s, "
+                                    "Position %s", config_location,
+                                    mark.line+1, mark.column+1)
             except:
-                self.log.warning("Couldn't load config from file: %s", config)
-                quit()
+                self.log.critical("Couldn't load config from file: %s",
+                                  yaml_file)
+                raise Exception("Couldn't load config from file: %s",
+                                  yaml_file)
 
-        self.config = self.dict_merge(self.config, new_updates)
+        config = self.dict_merge(config, new_updates)
 
         # now check if there are any more updates to do.
         # iterate and remove them
+
         try:
-            if 'Config' in self.config:
-                if config in self.config['Config']:
-                    self.config['Config'].remove(config)
-                if self.config['Config']:
-                    self.load_config_yaml(self.config['Config'][0])
+            if 'Config' in config:
+                if yaml_file in config['Config']:
+                    config['Config'].remove(yaml_file)
+                if config['Config']:
+                    config = self.load_config_yaml(config=config,
+                                                   yaml_file=config['Config'][0])
         except:
-            self.log.info("No configuration file found, or config file is empty"
-                          ". But congrats! Your game works! :)")
-            quit()
+            self.log.critical("No configuration file found, or config file is "
+                              "empty. But congrats! Your game works! :)")
+            raise Exception("No configuration file found, or config file is "
+                            "empty. But congrats! Your game works! :)")
+
+        return config
 
     def set_platform(self):
         """ Sets the hardware platform based on the "Platform" item in the
@@ -356,8 +393,8 @@ class MachineController(object):
                 hardware_platform = __import__('mpf.platform.%s' %
                                    self.config['Hardware']['Platform'],
                                    fromlist=["HardwarePlatform"])
-                quit()  # No point in continuing if we error here
-
+                raise Exception("Error importing platform module: %s",
+                                self.config['Hardware']['Platform'])
         else:
             from mpf.platform.virtual import HardwarePlatform
             return HardwarePlatform(self)
@@ -471,8 +508,9 @@ class MachineController(object):
         Returns: True or False, depending on whether pygame is available or not.
         """
 
-        if pygame:
-            self.events.add_handler('machine_init_phase3', self._pygame_init)
+        if pygame and not self.pygame_requested:
+            self.events.add_handler('machine_init_phase_3', self._pygame_init)
+            self.pygame_requested = True
             return True
 
         else:
@@ -482,12 +520,14 @@ class MachineController(object):
         # performs the actual pygame initialization
 
         if not pygame:
-            self.log.error("Pygame is needed but not available. Please install"
-                           " Pygame and try again.")
-            quit()
+            self.log.critical("Pygame is needed but not available. Please "
+                              "install Pygame and try again.")
+            raise Exception("Pygame is needed but not available. Please install"
+                            " Pygame and try again.")
 
         if not self.pygame:
-            self.log.debug("Initializing Pygame, version %s", pygame.version.ver)
+            self.log.debug("Initializing Pygame, version %s",
+                           pygame.version.ver)
 
             pygame.init()
             self.pygame = True
@@ -595,6 +635,9 @@ class MachineController(object):
         except KeyboardInterrupt:
             pass
 
+        if self.pygame:
+            pygame.quit()
+
         self.log.info("Target loop rate: %s Hz", timing.Timing.HZ)
         self.log.info("Actual loop rate: %s Hz",
                       loops / (time.time() - start_time))
@@ -655,6 +698,9 @@ class MachineController(object):
         except KeyboardInterrupt:
             pass
 
+        if self.pygame:
+            pygame.quit()
+
         self.log.info("Hardware load percent: %s", self.loop_rate)
         self.log.info("MPF load percent: %s", self.mpf_load)
 
@@ -678,7 +724,7 @@ class MachineController(object):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

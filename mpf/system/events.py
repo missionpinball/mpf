@@ -8,6 +8,7 @@
 
 import logging
 from collections import deque
+import uuid
 
 
 class EventManager(object):
@@ -40,15 +41,15 @@ class EventManager(object):
                 priority of 2. (Or 3 or 10 or 100000.) The numbers don't matter.
                 They're called from highest to lowest. (i.e. priority 100 is
                 called before priority 1.)
-            **kwargs: Any any additional keyword/argument pairs entered here will
-                be attached to the handler and called whenever that handler is
-                called. Note these are in addition to kwargs that could be
+            **kwargs: Any any additional keyword/argument pairs entered here
+                will be attached to the handler and called whenever that handler
+                is called. Note these are in addition to kwargs that could be
                 passed as part of the event post. If there's a conflict, the
                 event-level ones will win.
 
         Returns:
-            A reference to the handler which you can use to create a list to
-            easily remove these in the future.
+            A guid reference to the handler which you can use to create a list
+            to easily remove these in the future.
 
         For example:
         ``handler_list.append(events.add_handler('ev', self.test))``
@@ -58,26 +59,17 @@ class EventManager(object):
         ``events.remove_handler(handler)``
 
         """
+
         # Add an entry for this event if it's not there already
         if not event in self.registered_handlers:
             self.registered_handlers[event] = []
 
-        # An event 'handler' in our case is a tuple with three elements:
-        # the handler method, the priority, and the dict of kwargs.
+        key = uuid.uuid4()
 
-        # Check to see if this handler is already registered for this event.
-        # If we don't have kwargs, then we'll look for just the handler meth.
-        # If we have kwargs, we'll look for that combination
+        # An event 'handler' in our case is a tuple with 4 elements:
+        # the handler method, priority, dict of kwargs, & uuid key
 
-        # If so, remove it
-        # We use the slice of the full list [:] to make a copy so we can
-        # delete from the original while iterating
-        for rh in self.registered_handlers[event][:]:  # rh = registered hndlr
-            if rh[0] == handler and rh[2] == kwargs:
-                self.registered_handlers[event].remove(rh)
-
-        # Now add it
-        self.registered_handlers[event].append((handler, priority, kwargs))
+        self.registered_handlers[event].append((handler, priority, kwargs, key))
         self.log.debug("Registered %s as a handler for '%s', priority: %s",
                        (str(handler).split(' '))[2], event, priority)
 
@@ -86,38 +78,119 @@ class EventManager(object):
         # event post.
         self.registered_handlers[event].sort(key=lambda x: x[1], reverse=True)
 
-        return handler
+        return key
 
-    def remove_handler(self, method, match_kwargs=True, **kwargs):
-        """Removes an event handler.
+    def replace_handler(self, event, handler, priority=1, **kwargs):
+        """Checks to see if a handler (optionally with kwargs) is registered for
+        an event and replaces it if so.
+
+        Args:
+            event: The event you want to check to see if this handler is
+                registered for.
+            handler: The method of the handler you want to check.
+            priority: Optional priority of the new handler that will be
+                registered.
+            **kwargs: The kwargs you want to check and the kwatgs that will be
+                registered with the new handler.
+
+        If you don't pass kwargs, this method will just look for the handler and
+        event combination. If you do pass kwargs, it will make sure they match
+        before replacing the existing entry.
+
+        If this method doesn't find a match, it will still add the new handler.
+        """
+
+        # Check to see if this handler is already registered for this event.
+        # If we don't have kwargs, then we'll look for just the handler meth.
+        # If we have kwargs, we'll look for that combination. If it finds it,
+        # remove it.
+
+        if event in self.registered_handlers:
+            if kwargs:
+            # slice the full list [:] to make a copy so we can delete from the
+            # original while iterating
+                for rh in self.registered_handlers[event][:]:
+                    if rh[0] == handler and rh[2] == kwargs:
+                        self.registered_handlers[event].remove(rh)
+            else:
+                for rh in self.registered_handlers[event][:]:
+                    if rh[0] == handler:
+                        self.registered_handlers[event].remove(rh)
+
+        self.add_handler(self, event, handler, priority, **kwargs)
+
+    def remove_handler(self, method):
+        """Removes an event handler from all events a method is registered to
+        handle.
 
         Args:
             method : The method whose handlers you want to remove.
-            match_kwargs: Boolean if False, removes all handlers for that method
-                regardless of the kwargs. If True (default) only removes the
-                handler if the kwargs you just passed match what's registered.
-            **kwargs: The kwargs of the handler you want to remove if
-                parameter `match_kwargs` is True
         """
 
         for event, handler_list in self.registered_handlers.iteritems():
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[0] == method:
-                    if not match_kwargs:
-                        handler_list.remove(handler_tup)
-                        self.log.debug("Removing method %s from event %s",
-                                       (str(method).split(' '))[2], event)
-                    elif handler_tup[2] == kwargs:
-                        handler_list.remove(handler_tup)
-                        self.log.debug("Removing method %s from event %s",
-                                       (str(method).split(' '))[2], event)
+                    handler_list.remove(handler_tup)
+                    self.log.debug("Removing method %s from event %s",
+                                   (str(method).split(' '))[2], event)
 
-        # If this is the last handler for an event, remove that event
-        for k in self.registered_handlers.keys():
-            if not self.registered_handlers[k]:  # if value is empty list
-                del self.registered_handlers[k]
+        self._remove_event_if_empty(event)
+
+    def remove_handler_by_event(self, event, handler):
+        """Removes the handler you pass from the event you pass.
+
+        Args:
+            event: The name of the event you want to remove the handler from.
+            handler: The handler method you want to remove.
+
+        Note that keyword arguments for the handler are not taken into
+        consideration. In other words, this method only removes the registered
+        handler / event combination, regardless of whether the keyword
+        arguments match or not.
+        """
+
+        if event in self.registered_handlers:
+            for handler_tup in self.registered_handlers[event][:]:
+                if handler_tup[0] == handler:
+                    self.registered_handlers[event].remove(handler_tup)
+                    self.log.debug("Removing method %s from event %s",
+                                   (str(handler).split(' '))[2], event)
+
+        self._remove_event_if_empty(event)
+
+    def remove_handler_by_key(self, key):
+        """Removes a registered event handler by key.
+
+        Args:
+            key: The key of the handler you want to remove
+        """
+
+        for event, handler_list in self.registered_handlers.iteritems():
+            for handler_tup in handler_list[:]:  # copy via slice
+                if handler_tup[3] == key:
+                    handler_list.remove(handler_tup)
+                    self.log.debug("Removing method %s from event %s",
+                                   (str(handler_tup[0]).split(' '))[2], event)
+
+        self._remove_event_if_empty(event)
+
+    def remove_handlers_by_keys(self, key_list):
+        """Removes multiple event handlers based on a passed list of keys
+
+        Args:
+            key_list: A list of keys of the handlers you want to remove
+        """
+        for key in key_list:
+            self.remove_handler_by_key(key)
+
+    def _remove_event_if_empty(self, event):
+        # Checks to see if the event doesn't have any more registered handlers,
+        # removes it if so.
+
+        if not self.registered_handlers[event]:  # if value is empty list
+                del self.registered_handlers[event]
                 self.log.debug("Removing event %s since there are no more"
-                               " handlers registered for it", k)
+                               " handlers registered for it", event)
 
     def does_event_exist(self, event_name):
         """Checks to see if any handlers are registered for the event name that
@@ -280,8 +353,13 @@ class EventManager(object):
 
             self.log.debug("XXXX Event '%s' is in progress. Added to the "
                            "queue.", self.current_event)
-
             self.queue.append((event, ev_type, callback, kwargs))
+
+            self.log.debug("============= EVENT QUEUE ========================")
+            for event in self.queue:
+                self.log.debug("%s, %s, %s, %s", event[0], event[1], event[2],
+                               event[3])
+            self.log.debug("==================================================")
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
@@ -316,9 +394,10 @@ class EventManager(object):
 
                 # log if debug is enabled and this event is not the timer tick
                 if self.debug and event != 'timer_tick':
-                    self.log.debug("%s responding to event '%s' with args %s",
-                                   (str(handler[0]).split(' '))[2], event,
-                                   kwargs)
+                    self.log.debug("%s (priority: %s) responding to event '%s' "
+                                   "with args %s",
+                                   (str(handler[0]).split(' '))[2], handler[1],
+                                   event, merged_kwargs)
 
                 # call the handler and save the results
                 result = handler[0](**merged_kwargs)
@@ -425,7 +504,7 @@ class QueuedEvent(object):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -65,7 +65,7 @@ class InfoLights(object):
                 v['light'].off()
 
         # turn on this current ball's light
-        ball_light = 'ball_' + str(self.machine.game.player.vars['ball'])
+        ball_light = 'ball_' + str(self.machine.game.player.ball)
         if ball_light in self.config:
             self.config[ball_light]['light'].on()
 
@@ -97,7 +97,7 @@ class InfoLights(object):
 
     def player_added(self, player):
         self.log.debug("player_added. player=%s", player)
-        player_str = 'player_' + str(player.vars['number'])
+        player_str = 'player_' + str(player.number)
         self.log.debug("player_str: %s", player_str)
         if player_str in self.config:
             self.config[player_str]['light'].on()
@@ -115,7 +115,7 @@ class InfoLights(object):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

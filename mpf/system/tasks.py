@@ -6,7 +6,6 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-from mpf.system.timing import Timing
 from copy import copy
 import time
 
@@ -179,7 +178,7 @@ class DelayManager(object):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

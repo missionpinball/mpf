@@ -38,7 +38,7 @@ class Auditor(object):
         """
 
         self.config = self.machine.config['Auditor']
-        self.machine.events.add_handler('machine_init_phase3', self._initialize)
+        self.machine.events.add_handler('machine_init_phase_4', self._initialize)
 
     def _initialize(self):
         # Initializes the auditor. We do this separate from __init__() since
@@ -154,14 +154,14 @@ class Auditor(object):
 
                 self.current_audits['Player'][item]['top'] = \
                     self._merge_into_top_list(
-                        player.vars[item],
+                        player[item],
                         self.current_audits['Player'][item]['top'],
                         self.config['num_player_top_records'])
 
                 self.current_audits['Player'][item]['average'] = (
                     ((self.current_audits['Player'][item]['total'] *
                       self.current_audits['Player'][item]['average']) +
-                     self.machine.game.player.vars[item]) /
+                     self.machine.game.player[item]) /
                     (self.current_audits['Player'][item]['total'] + 1))
 
                 self.current_audits['Player'][item]['total'] += 1
@@ -268,7 +268,7 @@ class Auditor(object):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

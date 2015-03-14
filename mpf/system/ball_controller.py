@@ -33,15 +33,7 @@ class BallController(object):
 
         self.machine.playfield = None  # Configured in machine_init_phase_2
 
-        # Property Attributes
-        # self.num_balls_contained
-        # self.num_balls_known
-
-        self._num_balls_known = -999 # do not update. Use the property
-
-        self.num_balls_in_transit = 0
-        # Balls currently in transit from one ball device to another
-        # Not currently implemented
+        self._num_balls_known = -999
 
         self.num_balls_missing = 0
         # Balls lost and/or not installed.
@@ -51,14 +43,14 @@ class BallController(object):
                                         self.request_to_start_game)
         self.machine.events.add_handler('machine_reset_phase_2',
                                         self._initialize)
-        self.machine.events.add_handler('machine_init_phase2',
+        self.machine.events.add_handler('machine_init_phase_2',
                                         self.create_playfield_device)
 
     @property
-    def num_balls_contained(self):
+    def balls(self):
         balls = 0
         for device in self.machine.balldevices:
-            balls += device.num_balls_contained
+            balls += device.balls
             if balls > self._num_balls_known:
                 self.num_balls_known = balls
         if balls < 0:
@@ -69,8 +61,8 @@ class BallController(object):
 
     @property
     def num_balls_known(self):
-        if self.num_balls_contained > self._num_balls_known:
-            self._num_balls_known = self.num_balls_contained
+        if self.balls > self._num_balls_known:
+            self._num_balls_known = self.balls
 
         return self._num_balls_known
 
@@ -99,7 +91,7 @@ class BallController(object):
         if not hasattr(self.machine, 'balldevices'):
             return
 
-        self.num_balls_known = self.num_balls_contained
+        self.num_balls_known = self.balls
 
         for device in self.machine.balldevices:
             if 'drain' in device.tags:  # device is used to drain balls from pf
@@ -120,9 +112,9 @@ class BallController(object):
         """
         self.log.debug("Received request to start game.")
         self.log.debug("Balls contained: %s, Min balls needed: %s",
-                       self.num_balls_contained,
+                       self.balls,
                        self.machine.config['Machine']['Min Balls'])
-        if self.num_balls_contained < self.machine.config['Machine']['Min Balls']:
+        if self.balls < self.machine.config['Machine']['Min Balls']:
             self.log.debug("BallController denies game start. Not enough balls")
             return False
 
@@ -132,7 +124,7 @@ class BallController(object):
         elif not self.are_balls_gathered(['home', 'trough']):
             self.gather_balls('home')
             self.log.debug("BallController denies game start. Balls are not in"
-                          " their home positions.")
+                           " their home positions.")
             return False
 
     def are_balls_gathered(self, target=['home', 'trough']):
@@ -166,7 +158,7 @@ class BallController(object):
             return True
 
         for device in devices:
-            count += device.get_status('num_balls_contained')
+            count += device.get_status('balls')
 
         if count == self.machine.ball_controller.num_balls_known:
             self.log.debug("Yes, all balls are gathered")
@@ -203,15 +195,15 @@ class BallController(object):
             self.log.debug("Gathering all balls to devices tagged '%s'",
                            target)
             for device in self.machine.balldevices:
-                if target not in device.tags and device.num_balls_contained:
-                    device.eject(-1)
+                if target not in device.tags and device.balls > 0:
+                    device.eject_all()
 
         elif antitarget:
             self.log.debug("Emptying balls from devices tagged '%s'",
                            antitarget)
             for device in self.machine.devices:
-                if target in device.tags and device.num_balls_contained:
-                    device.eject(balls=device.num_balls_contained)
+                if target in device.tags and device.balls > 0:
+                    device.eject(balls=device.balls)
 
     def _ball_drained_handler(self, balls):
         self.machine.events.post_relay('ball_drain',
@@ -232,7 +224,7 @@ class BallController(object):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

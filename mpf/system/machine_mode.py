@@ -33,8 +33,8 @@ class MachineMode(object):
         self.task = None
         self.name = name
         self.delays = DelayManager()
-        self.registered_event_handlers = []
-        self.registered_switch_handlers = []
+        self.registered_event_handlers = list()
+        self.registered_switch_handlers = list()
 
     def start(self):
         """Starts this machine mode. """
@@ -48,14 +48,15 @@ class MachineMode(object):
 
         self.log.debug("Stopping...")
         self.ative = False
+
         # clear delays
         self.log.debug("Removing scheduled delays")
         self.delays.clear()
 
         # deregister event handlers
         self.log.debug("Removing event handlers")
-        for handler in self.registered_event_handlers:
-            self.machine.events.remove_handler(handler)
+        self.machine.events.remove_handlers_by_keys(self.registered_event_handlers)
+        self.registered_event_handlers = list()
 
         # deregister switch handlers
         self.log.debug("Removing switch handlers")
@@ -65,6 +66,7 @@ class MachineMode(object):
                 callback=handler['callback'],
                 state=handler['state'],
                 ms=handler['ms'])
+        self.registered_switch_handlers = list()
 
         self.log.debug("Stopped")
         self.machine.events.post('machineflow_' + self.name + '_stop')
@@ -79,7 +81,7 @@ class MachineMode(object):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

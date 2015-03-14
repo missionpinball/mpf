@@ -7,5 +7,7 @@ __all__ = ['events',
            'show_controller',
            'display',
            'window',
-           'language'
+           'language',
+           'modes',
+           'assets',
            ]

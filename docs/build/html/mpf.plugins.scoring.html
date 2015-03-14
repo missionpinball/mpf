@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.plugins.scoring module &mdash; Mission Pinball Framework 0.15 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.15',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.15 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.plugins.scoring">
+<span id="mpf-plugins-scoring-module"></span><h1>mpf.plugins.scoring module</h1>
+<p>MPF plugin for a score controller which handles all scoring and bonus
+tracking.</p>
+<dl class="class">
+<dt id="mpf.plugins.scoring.ScoreController">
+<em class="property">class </em><tt class="descclassname">mpf.plugins.scoring.</tt><tt class="descname">ScoreController</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.plugins.scoring.ScoreController.add">
+<tt class="descname">add</tt><big>(</big><em>points</em>, <em>force=False</em><big>)</big></dt>
+<dd><p>Adds to the current player&#8217;s score.</p>
+<p>Use this method instead of changing the value of the player attribute
+directly because this method will post the scoring events that other
+modules use for effects and stuff.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>points</strong> &#8211; Integer of points to add to the current player&#8217;s score.
+Note this value can also be negative to subtract points from
+their score.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.scoring.ScoreController.process_config">
+<tt class="descname">process_config</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>priority=0</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.scoring.ScoreController.register_score_event">
+<tt class="descname">register_score_event</tt><big>(</big><em>event_name</em>, <em>points</em>, <em>priority=0</em>, <em>block=False</em><big>)</big></dt>
+<dd><p>Used to register a score event which adds to a player&#8217;s score when
+a certain event is posted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event_name</strong> &#8211; The string name of the event that should cause a score
+change to take place.</li>
+<li><strong>points</strong> &#8211; The integer number of points that should be added or
+subtracted to the current player&#8217;s score when this event is
+posted.</li>
+<li><strong>priority</strong> &#8211; Integer priority which is used in conjunction with block.</li>
+<li><strong>block</strong> &#8211; Boolean which specifies whether this event should block lower
+priority events. If True, lower priority events will not score
+as long as this event is registered. If False then lower
+priority events will score as normal.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns: A &#8220;key&#8221; which can be used to later unregister this event via</dt>
+<dd>the &#8216;unregister_score_event&#8217; method.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.scoring.ScoreController.unload_score_events">
+<tt class="descname">unload_score_events</tt><big>(</big><em>key_list</em><big>)</big></dt>
+<dd><p>Unloads and removes several score events at once.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key_list</strong> &#8211; A list of keys of the score events you want to remove.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.scoring.ScoreController.unregister_score_event">
+<tt class="descname">unregister_score_event</tt><big>(</big><em>score_entry_key</em><big>)</big></dt>
+<dd><p>Removes a score event.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>score_entry_key</strong> &#8211; The key of the score event to remove. This is the
+key that&#8217;s returned by the &#8216;register_score_event()&#8217; method.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mpf.plugins.scoring.preload_check">
+<tt class="descclassname">mpf.plugins.scoring.</tt><tt class="descname">preload_check</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd></dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.plugins.scoring.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

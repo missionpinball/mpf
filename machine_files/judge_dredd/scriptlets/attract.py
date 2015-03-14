@@ -1,8 +1,6 @@
 # Attract mode Scriptlet for Judge Dredd
 
 from mpf.system.scriptlet import Scriptlet
-from mpf.system.show_controller import Show
-
 
 class Attract(Scriptlet):
 
@@ -12,8 +10,5 @@ class Attract(Scriptlet):
 
     def start(self):
 
-
         for gi in self.machine.gi:
             gi.on()
-
-        #self.machine.platform.verify_switches()

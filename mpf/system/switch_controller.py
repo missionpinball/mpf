@@ -12,7 +12,7 @@ states and posting events to the framework.
 import logging
 from collections import defaultdict
 import time
-
+import sys
 
 class SwitchController(object):
     """Base class for the switch controller, which is responsible for receiving
@@ -44,7 +44,7 @@ class SwitchController(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick, 1000)
-        self.machine.events.add_handler('machine_init_phase2',
+        self.machine.events.add_handler('machine_init_phase_2',
                                         self.initialize_hw_states,
                                         1000)
                                         # priority 1000 so this fires first
@@ -57,12 +57,12 @@ class SwitchController(object):
 
         We can't do this in __init__() because we need the switch controller to
         be setup first before we set up the hw switches. This method is
-        called via an event handler which listens for `machine_init_phase2`.
+        called via an event handler which listens for `machine_init_phase_2`.
         """
 
         self.log.debug("Syncing the logical and physical switch states.")
         for switch in self.machine.switches:
-            self.set_state(switch.name, switch.state)
+            self.set_state(switch.name, switch.state, reset_time=True)
 
     def is_state(self, switch_name, state, ms=0):
         """Queries whether a switch is in a given state and (optionally)
@@ -126,10 +126,16 @@ class SwitchController(object):
 
         return time.time() - self.switches[switch_name]['time']
 
-    def set_state(self, switch_name, state=1):
+    def set_state(self, switch_name, state=1, reset_time=False):
         """Sets the state of a switch."""
+
+        if reset_time:
+            timestamp = 1
+        else:
+            timestamp = time.time()
+
         self.switches.update({switch_name: {'state': state,
-                                            'time': time.time()
+                                            'time': timestamp
                                             }
                               })
 
@@ -184,18 +190,18 @@ class SwitchController(object):
             name = obj.name
 
         if name and not self.machine.switches[name]:
-            print "Received process_switch command but can't find the switch"
-            print "switch name:", name
-            print "switch num:", num
-            print "switch object:", obj
-            quit()
+            self.log.warning("Received process_switch command but can't find "
+                              "the switch. Name: %s, Num: %s, Obj: %s", name,
+                              num, obj)
+            # Removed the Exception below since it's kind of annoying to have
+            # MPF halt every time a non-configured switch is hit.
+            #raise Exception("Received process_switch command but can't find the"
+            #                " switch. Name: %s, Num: %s, Obj: %s", name, num,
+            #                obj)
 
         # flip the logical & physical states for NC switches
-
         hw_state = state
-
         if self.machine.switches[name].type == 'NC':
-
             if logical:  # NC + logical means hw_state is opposite of state
                 hw_state = hw_state ^ 1
             else:
@@ -244,6 +250,7 @@ class SwitchController(object):
                     # This entry doesn't have a timed delay, so do the action
                     # now
                     if entry['return_info']:
+
                         entry['callback'](switch_name=name, state=state, ms=0)
                     else:
                         entry['callback']()
@@ -267,31 +274,29 @@ class SwitchController(object):
                            return_info=False):
         """Register a handler to take action on some switch event.
 
-        Parameters
-        ----------
+        Args:
 
-        switch_name : str
-            The name of the switch you're adding this handler for.
 
-        callback : method
-            The method you want called when this switch handler fires.
+            switch_name: String name of the switch you're adding this handler
+                for.
 
-        state : int
-            The state transition you want to callback to be triggered on.
-            Default is 1 which means it's called when the switch goes from
-            inactive to active, but you can also use 0 which means your
-            callback will be called when the switch becomes inactive
+            callback: The method you want called when this switch handler fires.
 
-        ms : int
-            If you specify a 'ms' parameter, the handler won't be called until
-            the witch is in that state for that many milliseconds (rounded up
-            to the nearst machine timer tick).
+            state: Integer of the state transition you want to callback to be
+                triggered on. Default is 1 which means it's called when the
+                switch goes from inactive to active, but you can also use 0
+                which means your callback will be called when the switch becomes
+                inactive
 
-        return_info : bool
-            If True, the switch controller will pass the parameters of the
-            switch handler as arguments to the callback, including switch_name,
-            state, and ms. If False (default), it just calls the callback with
-            no parameters.
+            ms: Integer. If you specify a 'ms' parameter, the handler won't be
+                called until the witch is in that state for that many
+                milliseconds (rounded up to the nearst machine timer tick).
+
+            return_info: If True, the switch controller will pass the
+                parameters of the switch handler as arguments to the callback,
+                including switch_name, state, and ms. If False (default), it
+                just calls the callback with no parameters.
+
 
         You can mix & match entries for the same switch here.
         """
@@ -391,8 +396,6 @@ class SwitchController(object):
             if v['state']:
                 self.log.info("Active Switch|%s",k)
 
-
-
     def _post_switch_events(self, switch_name, state):
         """Posts the game events based on this switch changing state. """
 
@@ -402,6 +405,7 @@ class SwitchController(object):
         if state == 1:
 
             for tag in self.machine.switches[switch_name].tags:
+
                 self.machine.events.post('sw_' + tag)
 
         # the following events all fire the moment a switch becomes inactive
@@ -433,7 +437,7 @@ class SwitchController(object):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

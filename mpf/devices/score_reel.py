@@ -91,21 +91,21 @@ class ScoreReelController(object):
             self.map_new_score_reel_group()
 
         self.active_scorereelgroup = self.player_to_scorereel_map[
-            self.machine.game.player.vars['index']]
+            self.machine.game.player.index]
 
         self.log.debug("Mapping Player %s to ScoreReelGroup '%s'",
-                       self.machine.game.player.vars['number'],
+                       self.machine.game.player.number,
                        self.active_scorereelgroup.name)
 
         # Make sure this score reel group is showing the right score
         self.log.debug("Current player's score: %s",
-                       self.machine.game.player.vars['score'])
+                       self.machine.game.player.score)
         self.log.debug("Score displayed on reels: %s",
                        self.active_scorereelgroup.assumed_value_int)
         if (self.active_scorereelgroup.assumed_value_int !=
-                self.machine.game.player.vars['score']):
+                self.machine.game.player.score):
             self.active_scorereelgroup.set_value(
-                self.machine.game.player.vars['score'])
+                self.machine.game.player.score)
 
         # light up this group
         for group in self.machine.score_reel_groups:
@@ -118,7 +118,7 @@ class ScoreReelController(object):
 
         # do we have a reel group tagged for this player?
         for reel_group in self.machine.score_reel_groups.items_tagged(
-                "player" + str(self.machine.game.player.vars['number'])):
+                "player" + str(self.machine.game.player.number)):
             self.player_to_scorereel_map.append(reel_group)
             self.log.debug("Found a mapping to add: %s", reel_group.name)
             return
@@ -210,6 +210,8 @@ class ScoreReelGroup(Device):
         self.wait_for_valid_queue = None
         self.valid = True  # Confirmed reels are showing the right values
         self.lit = False  # This group has its lights on
+        self.unlight_on_resync_key = None
+        self.light_on_valid_key = None
 
         self.reels = []
         # A list of individual ScoreReel objects that make up this
@@ -280,7 +282,7 @@ class ScoreReelGroup(Device):
         # ---- temp chimes code end --------------------------------
 
         # register for events
-        self.machine.events.add_handler('machine_init_phase2',
+        self.machine.events.add_handler('machine_init_phase_2',
                                         self.initialize)
 
         self.machine.events.add_handler('timer_tick', self.tick)
@@ -416,7 +418,7 @@ class ScoreReelGroup(Device):
 
         try:
             self.log.debug("Player's Score: %s",
-                           self.machine.game.player.vars['score'])
+                           self.machine.game.player.score)
         except:
             pass
 
@@ -691,7 +693,7 @@ class ScoreReelGroup(Device):
             self.log.debug("Reels (assumed): %s", self.assumed_value_int)
             try:
                 self.log.debug("Score: %s",
-                               self.machine.game.player.vars['score'])
+                               self.machine.game.player.score)
             except:
                 pass
             self.machine.events.post('reel_' + reel.name + "_advance")
@@ -835,13 +837,13 @@ class ScoreReelGroup(Device):
         # Watch for these reels going out of sync so we can turn off the lights
         # while they're resyncing
 
-        self.machine.events.add_handler('scorereelgroup_' + self.name +
-                                        '_resync', self.unlight,
-                                        relight_on_valid=True)
+        self.unlight_on_resync_key = self.machine.events.add_handler(
+            'scorereelgroup_' + self.name + '_resync',
+            self.unlight,
+            relight_on_valid=True)
 
         if relight_on_valid:
-            self.machine.events.remove_handler(self.light,
-                                               relight_on_valid=True)
+            self.machine.events.remove_handler_by_key(self.light_on_valid_key)
 
     def unlight(self, relight_on_valid=False, **kwargs):
         """Turns off the lights for this ScoreReelGroup based on the
@@ -855,12 +857,12 @@ class ScoreReelGroup(Device):
         self.lit = False
 
         if relight_on_valid:
-            self.machine.events.add_handler('scorereelgroup_' + self.name +
-                                            '_valid', self.light,
-                                            relight_on_valid=True)
+            self.light_on_valid_key = self.machine.events.add_handler(
+                'scorereelgroup_' + self.name + '_valid',
+                self.light,
+                relight_on_valid=True)
         else:
-            self.machine.events.remove_handler(self.unlight,
-                                               relight_on_valid=True)
+            self.machine.events.remove_handler_by_key(self.unlight_on_resync_key)
 
     def _ball_ending(self, queue=None):
         # We need to hook the ball_ending event in case the ball ends while the
@@ -1271,7 +1273,7 @@ class ScoreReel(Device):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -50,33 +50,38 @@ def load_dmd_file(file_name, palette=None, alpha_color=None,
     # This code to read DMD files is based on the following:
     # https://github.com/preble/pyprocgame/blob/master/procgame/dmd/animation.py#L267-L280
 
-    with open(file_name, 'rb') as f:
-        f.seek(0, os.SEEK_END)  # Go to the end of the file to get its length
-        file_length = f.tell()
-        f.seek(4)  # Skip over the 4 byte DMD header.
 
-        frame_count = struct.unpack("I", f.read(4))[0]
-        width = struct.unpack("I", f.read(4))[0]
-        height = struct.unpack("I", f.read(4))[0]
+    try:
+        with open(file_name, 'rb') as f:
+            f.seek(0, os.SEEK_END)  # Go to the end of the file to get its length
+            file_length = f.tell()
+            f.seek(4)  # Skip over the 4 byte DMD header.
 
-        if file_length != 16 + width * height * frame_count:
-            print "File size inconsistent with header information."
+            frame_count = struct.unpack("I", f.read(4))[0]
+            width = struct.unpack("I", f.read(4))[0]
+            height = struct.unpack("I", f.read(4))[0]
 
-        for frame_index in range(frame_count):
-            frame_string = f.read(width * height)
+            if file_length != 16 + width * height * frame_count:
+                print "File size inconsistent with header information."
 
-            surface = pygame.image.fromstring(frame_string,
-                                              (width, height), 'P')
+            for frame_index in range(frame_count):
+                frame_string = f.read(width * height)
 
-            if palette:
-                surface.set_palette(palette)
+                surface = pygame.image.fromstring(frame_string,
+                                                  (width, height), 'P')
 
-            if alpha_color is not None:
-                surface.set_colorkey((alpha_color, 0, 0))
+                if palette:
+                    surface.set_palette(palette)
 
-            surface_list.append(surface)
+                if alpha_color is not None:
+                    surface.set_colorkey((alpha_color, 0, 0))
 
-    return surface_list
+                surface_list.append(surface)
+
+        return surface_list
+
+    except:
+        raise Exception()
 
 
 def surface_to_dmd(surface, shades=16, alpha_color=None,
@@ -293,11 +298,12 @@ class DMD(MPFDisplay):
             self.physical_dmd = self.machine.platform.configure_dmd()
 
         if self.color_dmd and self.use_physical:
-            print "ERROR: You can't use a physical traditonal DMD as a color DMD."
-            print "If you want an LCD screen to be a color DMD, then that is "
-            print "done with the Window Manager."
-            print "The physical setting here needs to be 'No' in this case."
-            quit()
+            self.log.critical("You can't use a physical traditonal DMD as a "
+                              "color DMD. If you want an LCD screen to be a "
+                              "color DMD, then that is done with the Window "
+                              "Manager. The physical setting here needs to be "
+                              "'No' in this case.")
+            raise Exception()
 
     def _initialize(self):
         # Internal method which initialized the DMD. This is separate from
@@ -324,7 +330,7 @@ class DMD(MPFDisplay):
 
 # The MIT License (MIT)
 
-# Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

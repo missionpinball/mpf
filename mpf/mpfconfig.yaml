@@ -14,8 +14,10 @@ MPF:
         switch_controller.SwitchController
         ball_controller.BallController
         language.Language
+        modes.ModeController
         display.DisplayController
         show_controller.ShowController
+
     device_modules:
         driver.Driver
         switch.Switch
@@ -35,13 +37,15 @@ MPF:
         score_reel.ScoreReel
         score_reel.ScoreReelGroup
         flasher.Flasher
+
     display_modules:
         elements:
-            text.Text
-            virtual_dmd.VirtualDMD
-            image.Image
-            animation.Animation
-            shape.Shape
+            - text
+            - virtualdmd
+            - image
+            - animation
+            - shape
+            - movie
         modules:
             dmd.DMD
         transitions:
@@ -59,6 +63,8 @@ MPF:
         fonts: fonts
         images: images
         animations: animations
+        movies: movies
+        modes: modes
     auto_load_shows: True
     default_pulse_ms: 10
     default_debounce_ms: 0  # fast only
@@ -128,25 +134,19 @@ BallSearch:
 
 LogicBlocks:
 
-    HitCounters:
+    Counters:
 
         tilt:
-            trigger_events: sw_tilt
+            count_events: sw_tilt
             event_when_hit: tilt_hit
-            hits_to_complete: 3
+            count_complete_value: 3
             events_when_complete: tilt
             multiple_hit_window: 500ms
-            enable_events: ball_started
-            disable_events: game_ended
-            reset_events: ball_ended
-            events_when_complete: tilt
-            restart_on_complete: false
-            settle_time: 5s
+            reset_each_ball: yes
 
         slam_tilt:
-            trigger_events: sw_slamTilt
-            enable_events: game_started
-            hits_to_complete: 1
+            count_events: sw_slamTilt
+            count_complete_value: 1
             events_when_complete: slam_tilt
 
 DisplayDefaults:
@@ -170,7 +170,7 @@ Fonts:
         file: Quadrit.ttf
         size: 10
         crop_top: 2
-        crop_bottom: 5
+        crop_bottom: 3
     space title huge:
         file: DEADJIM.TTF
         size: 29
@@ -200,3 +200,38 @@ Fonts:
 TextStrings:
     volume_zero: OFF
     volume_max: MAX
+
+AssetDefaults:
+    Images:
+        default:
+            load: preload
+        screen:
+            target: screen
+        dmd:
+            target: dmd
+    Animations:
+        default:
+            load: preload
+            target: dmd
+        screen:
+            load: preload
+            target: screen
+    Sounds:
+        default:
+            track: sfx
+            load: preload
+        voice:
+            track: voice
+            load: preload
+        sfx:
+            track: sfx
+            load: preload
+        music:
+            track: music
+            load: preload
+    Shows:
+        default:
+            load: preload
+    Movies:
+        default:
+            load: preload
