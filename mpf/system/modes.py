@@ -238,7 +238,7 @@ class Mode(object):
             for event in config['start_events']:
                 self.machine.events.add_handler(event, self.start)
 
-        # register mode stop events
+       # register mode stop events
         if 'stop_events' in config:
             for event in config['stop_events']:
                 self.machine.events.add_handler(event, self.stop)
@@ -322,6 +322,10 @@ class Mode(object):
 
         self.kill_timers()
 
+        # self.machine.events.remove_handler(self.stop)
+        # todo is this ok here? Or should we only remove ones that we know this
+        # mode added?
+
         self.machine.events.post_queue(event='mode_' + self.name + '_stopping',
                                        callback=self._stopped)
 
@@ -391,9 +395,9 @@ class ModeTimer(object):
         self.name = name
         self.config = config
 
-        self.running = True
+        self.running = False
         self.start_value = 0
-        self.timer_secs = 0
+        self.ticks = 0
         self.end_value = 0
         self.direction = 'up'
         self.tick_secs = 1
@@ -401,19 +405,13 @@ class ModeTimer(object):
         self.event_keys = set()
         self.delay = DelayManager()
 
-        if 'start_events' in self.config:
-            self.config['start_events'] = self.machine.string_to_list(
-                self.config['start_events'])
-        else:
-            self.config['start_events'] = list()
-
         if 'start_value' in self.config:
             self.start_value = self.config['start_value']
         else:
             self.start_value = 0
 
-        if 'start_paused' in self.config and self.config['start_paused']:
-            self.running = False
+        if 'start_running' in self.config and self.config['start_running']:
+            self.running = True
 
         if 'end_value' in self.config:
             self.end_value = self.config['end_value']
@@ -430,7 +428,7 @@ class ModeTimer(object):
         if 'tick_interval' in self.config:
             self.tick_secs = Timing.string_to_secs(self.config['tick_interval'])
 
-        self.timer_secs = self.start_value
+        self.ticks = self.start_value
 
         self.setup_control_events(self.config['control_events'])
 
@@ -487,7 +485,7 @@ class ModeTimer(object):
         self.create_timer()
 
         self.machine.events.post('timer_' + self.name + '_started',
-                                 secs_remaining=self.timer_secs)
+                                 ticks_remaining=self.ticks)
 
     def stop(self, **kwargs):
         self.delay.remove('pause')
@@ -496,7 +494,7 @@ class ModeTimer(object):
         self.remove_timer()
 
         self.machine.events.post('timer_' + self.name + '_stopped',
-                                 secs=self.timer_secs)
+                                 ticks=self.ticks)
 
     def pause(self, timer_value=0, **kwargs):
         self.running = False
@@ -506,7 +504,7 @@ class ModeTimer(object):
         if pause_secs > 0:
             self.delay.add('pause', pause_secs, self.start)
             self.machine.events.post('timer_' + self.name + '_paused',
-                                     secs=self.timer_secs,
+                                     ticks=self.ticks,
                                      pause_secs=pause_secs)
         else:
             self.stop()
@@ -518,41 +516,41 @@ class ModeTimer(object):
 
     def timer_tick(self):
         if self.direction == 'down':
-            self.timer_secs -= 1
+            self.ticks -= 1
         else:
-            self.timer_secs += 1
+            self.ticks += 1
 
         if not self.check_for_done():
             self.machine.events.post('timer_' + self.name + '_tick',
-                                     secs=self.timer_secs)
+                                     ticks=self.ticks)
 
     def add_time(self, timer_value, **kwargs):
-        secs_added = timer_value
+        ticks_added = timer_value
 
-        self.timer_secs += secs_added
+        self.ticks += ticks_added
 
         self.machine.events.post('timer_' + self.name + '_time_added',
-                                 secs=self.timer_secs,
-                                 secs_added=secs_added)
+                                 ticks=self.ticks,
+                                 ticks_added=ticks_added)
 
         self.check_for_done()
 
     def subtract_time(self, timer_value, **kwargs):
-        secs_subtracted = timer_value
+        ticks_subtracted = timer_value
 
-        self.timer_secs -= secs_subtracted
+        self.ticks -= ticks_subtracted
 
         self.machine.events.post('timer_' + self.name + '_time_subtracted',
-                                 secs=self.timer_secs,
-                                 secs_subtracted=secs_subtracted)
+                                 ticks=self.ticks,
+                                 ticks_subtracted=ticks_subtracted)
 
         self.check_for_done()
 
     def check_for_done(self):
-        if self.direction == 'up' and self.timer_secs >= self.end_value:
+        if self.direction == 'up' and self.ticks >= self.end_value:
             self.timer_complete()
             return True
-        elif self.timer_secs <= self.end_value:
+        elif self.ticks <= self.end_value:
             self.timer_complete()
             return True
 
@@ -578,7 +576,7 @@ class ModeTimer(object):
         self.create_timer()
 
     def set_current_time(self, timer_value, **kwargs):
-        self.timer_secs = timer_value
+        self.ticks = timer_value
 
     def kill(self):
         self.stop()

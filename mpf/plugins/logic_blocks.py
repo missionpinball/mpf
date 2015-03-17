@@ -272,7 +272,7 @@ class Counter(LogicBlock):
                 self.config['count_events'])
 
         if 'event_when_hit' not in self.config:
-            self.config['event_when_hit'] = ('hitcounter_' + self.name +
+            self.config['event_when_hit'] = ('counter_' + self.name +
                                              '_hit')
 
         if 'count_complete_value' not in self.config:
@@ -303,12 +303,14 @@ class Counter(LogicBlock):
         if 'starting_count' not in self.config:
             self.config['starting_count'] = 0
 
-        self.player[self.config['player_variable']] = 0
+        self.player[self.config['player_variable']] = (
+            self.config['starting_count'])
 
     def enable(self, **kwargs):
         """Enables this counter. Automatically called when one of the
         'enable_event's is posted. Can also manually be called.
         """
+
         super(Counter, self).enable(**kwargs)
         self.machine.events.remove_handler(self.hit)  # prevents multiples
 

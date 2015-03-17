@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.language module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.15.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.language">
+<span id="mpf-system-language-module"></span><h1>mpf.system.language module</h1>
+<p>Contains the parent class for MPF&#8217;s Language module.</p>
+<dl class="class">
+<dt id="mpf.system.language.Language">
+<em class="property">class </em><tt class="descclassname">mpf.system.language.</tt><tt class="descname">Language</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>MPF module which handles text, audio, and video replacement of objects
+for multi-language environments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> &#8211; The main machine object</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="mpf.system.language.Language.get_language">
+<tt class="descname">get_language</tt><big>(</big><big>)</big></dt>
+<dd><p>Returns the string name of the current language.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.language.Language.get_text">
+<tt class="descname">get_text</tt><big>(</big><em>text</em>, <em>language</em><big>)</big></dt>
+<dd><p>Returns a translated text string for a specific language string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>text</strong> &#8211; The text string you&#8217;d like to get the replacement for.</li>
+<li><strong>language</strong> &#8211; The language you&#8217;d like to lookup for the replacement.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If the specific text string and language combination doesn&#8217;t exist in
+the translation file, the original string is returned.</p>
+<p>The string lookup is case-sensitive.</p>
+<p>This method is similar to text(), except this method doesn&#8217;t strip out
+the parentheses. (i.e. it&#8217;s just used to look up what&#8217;s &#8220;inside&#8221; the
+parentheses.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.language.Language.set_language">
+<tt class="descname">set_language</tt><big>(</big><em>language_string</em><big>)</big></dt>
+<dd><p>Sets the current language based on the string passed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>language_string</strong> &#8211; The string name of the language you want to set the
+machine to.</td>
+</tr>
+</tbody>
+</table>
+<p>Language strings can be whatever you want, based on how you define them
+in your config file. It can be an actual language, like English or
+French, or it can simply be alternate assets, like &#8220;Kid-Friendly&#8221; versus
+&#8220;Mature.&#8221;</p>
+<p>This language change is instant, and you can safely call it often.
+Change languages for each player in the same game, or even in the middle
+of a ball!</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.language.Language.text">
+<tt class="descname">text</tt><big>(</big><em>text</em><big>)</big></dt>
+<dd><p>Translates a text string (or part of a text string) based on the
+current language setting.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>text</strong> &#8211; The string of text you want to translate.</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: A translated string.</p>
+<p>The incoming text string is searched for text within parentheses, and
+each of those segments is looked up for replacement. You can wrap the
+entire string in parentheses, or just part of it, or multiple parts.</p>
+<p>A new, translated string is returned with the parentheses removed. If
+a translation is not found in the current language&#8217;s translation
+strings, the original text is returned.</p>
+<p>The string lookup is case-sensitive since different languages have
+different rules around casing.</p>
+<p>It is not possible to display text with parentheses in it since this
+method will remove them. If this is something you need, contact us and
+we can add that feature.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.language.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

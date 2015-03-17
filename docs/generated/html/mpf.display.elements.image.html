@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.display.elements.image module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.15.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.display.elements.image">
+<span id="mpf-display-elements-image-module"></span><h1>mpf.display.elements.image module</h1>
+<p>Image class which is a DisplayElement which shows images on the display.</p>
+<dl class="class">
+<dt id="mpf.display.elements.image.Image">
+<em class="property">class </em><tt class="descclassname">mpf.display.elements.image.</tt><tt class="descname">Image</tt><big>(</big><em>machine</em>, <em>config</em>, <em>file_name</em>, <em>asset_manager</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.assets.html#mpf.system.assets.Asset" title="mpf.system.assets.Asset"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.assets.Asset</span></tt></a></p>
+<dl class="method">
+<dt id="mpf.display.elements.image.Image.save_image">
+<tt class="descname">save_image</tt><big>(</big><em>surface</em>, <em>filename</em><big>)</big></dt>
+<dd><p>Saves an image to disk.</p>
+<p>This menthod is not yet imlpemented.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.display.elements.image.Image.save_image_to_dmd">
+<tt class="descname">save_image_to_dmd</tt><big>(</big><big>)</big></dt>
+<dd><p>Saves an image to disk in the DMD file format.</p>
+<p>This menthod is not yet imlpemented.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.display.elements.image.ImageDisplayElement">
+<em class="property">class </em><tt class="descclassname">mpf.display.elements.image.</tt><tt class="descname">ImageDisplayElement</tt><big>(</big><em>slide</em>, <em>machine</em>, <em>image</em>, <em>width=None</em>, <em>height=None</em>, <em>x=None</em>, <em>y=None</em>, <em>h_pos=None</em>, <em>v_pos=None</em>, <em>layer=0</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.display.html#mpf.system.display.DisplayElement" title="mpf.system.display.DisplayElement"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.display.DisplayElement</span></tt></a></p>
+<p>Represents an image display element.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>slide</strong> &#8211; The Slide object this image is being added to.</li>
+<li><strong>machine</strong> &#8211; The main machine object.</li>
+<li><strong>image</strong> &#8211; The name of the registered image element you&#8217;d like to show</li>
+<li><strong>width</strong> &#8211; The width of the image. A value of None means that it
+will display at its native width.</li>
+<li><strong>height</strong> &#8211; The height of the image. A value of None means that it
+will display at its native height.</li>
+<li><strong>x</strong> &#8211; The horizontal position offset for the placement of this element.</li>
+<li><strong>y</strong> &#8211; The vertical position offset for the placement of this element.</li>
+<li><strong>h_pos</strong> &#8211; The horizontal anchor.</li>
+<li><strong>v_pos</strong> &#8211; The vertical anchor.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note: Full documentation on the use of the x, y, h_pos, and v_pos arguments
+can be found at: <a class="reference external" href="https://missionpinball.com/docs/displays/display-elements/positioning/">https://missionpinball.com/docs/displays/display-elements/positioning/</a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.display.elements.image.asset_class">
+<tt class="descclassname">mpf.display.elements.image.</tt><tt class="descname">asset_class</tt></dt>
+<dd><p>alias of <a class="reference internal" href="#mpf.display.elements.image.Image" title="mpf.display.elements.image.Image"><tt class="xref py py-class docutils literal"><span class="pre">Image</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.display.elements.image.display_element_class">
+<tt class="descclassname">mpf.display.elements.image.</tt><tt class="descname">display_element_class</tt></dt>
+<dd><p>alias of <a class="reference internal" href="#mpf.display.elements.image.ImageDisplayElement" title="mpf.display.elements.image.ImageDisplayElement"><tt class="xref py py-class docutils literal"><span class="pre">ImageDisplayElement</span></tt></a></p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.display.elements.image.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

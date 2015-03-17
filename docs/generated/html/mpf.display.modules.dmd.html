@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.display.modules.dmd module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.15.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.display.modules.dmd">
+<span id="mpf-display-modules-dmd-module"></span><h1>mpf.display.modules.dmd module</h1>
+<p>Contains the parent class for the DMD MPFDisplay module as well as some
+module-level functions related to using DMD files.</p>
+<dl class="class">
+<dt id="mpf.display.modules.dmd.DMD">
+<em class="property">class </em><tt class="descclassname">mpf.display.modules.dmd.</tt><tt class="descname">DMD</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.display.html#mpf.system.display.MPFDisplay" title="mpf.system.display.MPFDisplay"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.display.MPFDisplay</span></tt></a></p>
+<p>Base class for a traditional dot matrix display (DMD) in a pinball
+machine. This class is used to control a physical DMD connected via the
+14-pin header on the controller.</p>
+<p>Note that if you want to control a &#8220;color DMD&#8221;, that is done via the Window
+display, not this DMD class. However if you would like to display a
+rendering of a traditional DMD in your on screen window, then you use this
+class to create the DMD display object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> &#8211; A reference to the main machine controller object.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="mpf.display.modules.dmd.DMD.update">
+<tt class="descname">update</tt><big>(</big><big>)</big></dt>
+<dd><p>Automatically called based on a timer when the display should update.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mpf.display.modules.dmd.create_palette">
+<tt class="descclassname">mpf.display.modules.dmd.</tt><tt class="descname">create_palette</tt><big>(</big><em>bright_color=(255</em>, <em>0</em>, <em>0)</em>, <em>dark_color=(0</em>, <em>0</em>, <em>0)</em>, <em>steps=16</em><big>)</big></dt>
+<dd><p>Creates a Pygame palette based on the colors passed to it. This method
+is typically used to generate the &#8220;on screen&#8221; color representations for a
+DMD.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>bright_color</strong> &#8211; A list or tuple of three integers (0-255 each) which
+represents the RGB values of a fully bright (full &#8220;on&#8221;) color of a
+pixel. Default is (255, 0, 0) (red).</li>
+<li><strong>dark_color</strong> &#8211; A list or tuple of three integers (0-255 each) which
+represents the RGB values of the dark (or &#8220;off&#8221;) color of a pixel.
+Default is (0, 0, 0) (black).</li>
+<li><strong>steps</strong> &#8211; An integer which is the number of steps (or shades) in the
+palette. Typical values are 2 (1-bit color), 4 (2-bit color), or 16
+(4-bit color). Default is 16.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns: A Pygame palette which is a list of three-item lists. The first</dt>
+<dd>item will always be the dark_color, and the last item will always
+be the bright_color. The values in between are the steps.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mpf.display.modules.dmd.is_used">
+<tt class="descclassname">mpf.display.modules.dmd.</tt><tt class="descname">is_used</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Checks a config dictionary to see if this display module should be used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> &#8211; A python dictionary</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: Boolean as to whether the sections the DMD class needs are present.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mpf.display.modules.dmd.load_dmd_file">
+<tt class="descclassname">mpf.display.modules.dmd.</tt><tt class="descname">load_dmd_file</tt><big>(</big><em>file_name</em>, <em>palette=None</em>, <em>alpha_color=None</em>, <em>alpha_pixels=False</em><big>)</big></dt>
+<dd><p>Loads a .DMD file from disk and returns a Pygame surface compatible with
+MPF&#8217;s DMD display system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>file_name</strong> &#8211; A string of the file name (with path) of the file to load.</li>
+<li><strong>palette</strong> &#8211; Optional Python list in the Pygame palette format.</li>
+<li><strong>alpha_color</strong> &#8211; <p>Whether one of the colors of this rendered DMD should be
+transparent. Default is None, which means this DMD file will have
+no transparencies.</p>
+<blockquote>
+<div>created with pixel-level alpha channels. Default is False.</div></blockquote>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns: A list of Pygame surfaces. Single-frame DMD files (i.e. static</dt>
+<dd>images) result in a single-element list. Multi-frame DMD files (i.e.
+animations) result in one list element with a Pygame surface for each
+frame.</dd>
+</dl>
+<p>This .DMD format is open source DMD file format originally created for
+Pyprocgame by Gerry Stellenberg and Adam Preble. Support for it in MPF is
+included with permission.</p>
+<p>Details of the file format are here:
+# <a class="reference external" href="http://pyprocgame.pindev.org/ref/dmd.html?highlight=dmd#dmd-format">http://pyprocgame.pindev.org/ref/dmd.html?highlight=dmd#dmd-format</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mpf.display.modules.dmd.surface_to_dmd">
+<tt class="descclassname">mpf.display.modules.dmd.</tt><tt class="descname">surface_to_dmd</tt><big>(</big><em>surface</em>, <em>shades=16</em>, <em>alpha_color=None</em>, <em>weights=(0.299</em>, <em>0.587</em>, <em>0.114)</em><big>)</big></dt>
+<dd><p>Converts a 24-bit RGB Pygame surface to surface that&#8217;s compatible with
+DMD displays in MPF.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>surface</strong> &#8211; The 24-bit Pygame surface you&#8217;re converting</li>
+<li><strong>shades</strong> &#8211; How many shades (brightness levels) you want in the new DMD
+surface. Default is 16.</li>
+<li><strong>alpha_color</strong> &#8211; The pixel value that should be used as an alpha value. (In
+other words, pixels of this color will be transparent.) Default is
+None.</li>
+<li><strong>weights</strong> &#8211; A tuple of the relative weights of the R, G, and B channels
+that will be used to convert the 24-bit surface to the new surface.
+Default is (.299, .587, .114)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: An 8-bit Pygame surface ready to display on the DMD.</p>
+<p>DMDs in pinball machines are single color with (usually) 16 different
+shades. So essentially what this method does is convert a 24-bit surface
+with millions of colors to a grayscale surface with 16 shades of gray.
+Since humans perceive different hues to be different intensities, this
+forumula uses relative weights to ensure that the conversion is as accurate
+as possible.</p>
+<p>More information on this conversion process, and the reason we chose the
+default weights we did, is here:
+<a class="reference external" href="http://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems">http://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems</a></p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.display.modules.dmd.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
