@@ -565,22 +565,12 @@ class DisplayElement(object):
             return self.element_surface
 
     def _notify_when_loaded(self, callback):
-
-        self.log = logging.getLogger('DisplayElement')
-        self.log.critical("+++++ display.de._notify_when_loaded(). loaded: %s"
-                          "callback: %s", self.loaded, callback)
-
         if self.loaded:
             callback(self)
         else:
             self.notify_when_loaded.add(callback)
 
     def _asset_loaded(self):
-
-        self.log = logging.getLogger('DisplayElement')
-        self.log.critical("+++++ display.de._asset_loaded(). notify_when_loaded"
-                          "list: %s", self.notify_when_loaded)
-
         for callback in self.notify_when_loaded:
             callback(self)
 
@@ -902,14 +892,14 @@ class Slide(object):
     def ready(self):
 
         if not self.pending_elements:
-            self.log.info("Checking if slide is ready... Yes!")
+            self.log.debug("Checking if slide is ready... Yes!")
             return True
         else:
-            self.log.info("Checking if slide is ready... No!")
+            self.log.debug("Checking if slide is ready... No!")
             return False
 
     def add_ready_callback(self, callback, **kwargs):
-        self.log.info("Adding a ready callback: %s, %s", callback, kwargs)
+        self.log.debug("Adding a ready callback: %s, %s", callback, kwargs)
         for c, k in self.ready_callbacks:
             if c == callback:
                 return False
@@ -918,7 +908,7 @@ class Slide(object):
         return True
 
     def _process_ready_callbacks(self):
-        self.log.info("Slide is now ready. Processing ready_callbacks... %s",
+        self.log.debug("Slide is now ready. Processing ready_callbacks... %s",
                       self.ready_callbacks)
         for callback, kwargs in self.ready_callbacks:
             callback(**kwargs)
@@ -1036,7 +1026,7 @@ class Slide(object):
 
         element_type = element_type.lower()
 
-        self.log.info("Adding '%s' element to slide %s.%s", element_type,
+        self.log.debug("Adding '%s' element to slide %s.%s", element_type,
                        self.mpfdisplay.name, self.name)
 
         element_class = (self.machine.display.display_elements[element_type].
@@ -1052,7 +1042,7 @@ class Slide(object):
                                 **kwargs)
 
         if not element.ready:
-            self.log.info("Element is not ready. Adding to pending elements list. %s",
+            self.log.debug("Element is not ready. Adding to pending elements list. %s",
                           element)
             self.pending_elements.add(element)
             element.notify_when_loaded.add(self._element_asset_loaded)
@@ -1067,7 +1057,7 @@ class Slide(object):
         return element
 
     def _element_asset_loaded(self, element):
-        self.log.info("_element_asset_loaded")
+        self.log.debug("_element_asset_loaded")
         self.pending_elements.discard(element)
 
         if not self.pending_elements:
@@ -1115,10 +1105,7 @@ class Slide(object):
         higher than the existing slide.
         """
 
-        self.log.critical("+++++ Slide.show. Ready: %s", self.ready())
-
         if not self.ready():
-            self.log.critical("+++++ Slide.show. Adding ready_callback")
             self.add_ready_callback(self.show)
 
         elif (self.mpfdisplay.current_slide and

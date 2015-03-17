@@ -72,40 +72,13 @@ SlidePlayer:
         v_pos: bottom
         h_pos: right
         font: small
-
-
-      #- type: Image
-      #  image: purple_circle
-      #  y: 172
-      #  x: 838
-      #  layer: 3
-      #- type: Image
-      #  image: purple_circle
-      #  y: 172
-      #  x: 435
-      #  layer: 3
     balldevice_deadworld_ball_enter:
         type: Text
         text: "BALLS LOCKED: %balls"
 
-Sounds:
-    intro_loop:
-        volume: 1
-        file: waiting to plunge loop.ogg
-    main_loop:
-        file: main song loop.ogg
-    slingshot_hit:
-        file: slingshot.ogg
-        priority: 0
-        max_queue_time: 100ms
-        load: preload
-    ball_launch_motorcycle:
-        file: ball launch motorcycle.ogg
-
 SoundPlayer:
-    pluger_lane_ball_start:
-        sound: intro_loop
-        start_events: mode_base_started
+    mode_base_started:
+        sound: waiting to plunge loop
         stop_events: ball_live_added
         duration:
         loops: -1
@@ -113,17 +86,10 @@ SoundPlayer:
         fade_in: 0
         fade_out: 0
         volume: 1
-    ball_launch_motorcycle:
-        sound: ball_launch_motorcycle
-        start_events: balldevice_shooterLaneR_ball_eject_attempt
-    slingshot_hit:
-        sound: slingshot_hit
-        start_events: shot_Slingshot
-    main_loop:
-        sound: main_loop
-        start_events: player_eject_request
-        loops: -1
-        stop_events: ball_ending
+    balldevice_shooterLaneR_ball_eject_attempt:
+        sound: ball launch motorcycle
+    shot_Slingshot:
+        sound: slingshot
 
 ShowPlayer:
     mode_base_started:

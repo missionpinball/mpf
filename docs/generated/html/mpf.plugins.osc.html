@@ -1,0 +1,251 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.plugins.osc module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.15.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.plugins.osc">
+<span id="mpf-plugins-osc-module"></span><h1>mpf.plugins.osc module</h1>
+<p>MPF plugin allows a machine to be controlled by an OSC client.</p>
+<dl class="class">
+<dt id="mpf.plugins.osc.OSC">
+<em class="property">class </em><tt class="descclassname">mpf.plugins.osc.</tt><tt class="descname">OSC</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.client_send_OSC_message">
+<tt class="descname">client_send_OSC_message</tt><big>(</big><em>category</em>, <em>name</em>, <em>data</em><big>)</big></dt>
+<dd><p>Sends an OSC message to the client to update it
+Parameters:
+category - type of update, sw, coil, lamp, led, etc.
+name - the name of the object we&#8217;re updating
+data - the data we&#8217;re sending</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.client_update_all">
+<tt class="descname">client_update_all</tt><big>(</big><big>)</big></dt>
+<dd><p>Update the OSC client.
+Good for when it switches to a new tab or connects a new client</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.client_update_all_switches">
+<tt class="descname">client_update_all_switches</tt><big>(</big><big>)</big></dt>
+<dd><p>Updates all the switch states on the OSC client.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.client_update_light">
+<tt class="descname">client_update_light</tt><big>(</big><em>light_name</em>, <em>brightness</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.client_update_switch">
+<tt class="descname">client_update_switch</tt><big>(</big><em>switch_name</em>, <em>ms</em>, <em>state</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.found_new_OSC_client">
+<tt class="descname">found_new_OSC_client</tt><big>(</big><em>address</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.process_coil">
+<tt class="descname">process_coil</tt><big>(</big><em>coil</em>, <em>data</em><big>)</big></dt>
+<dd><p>Processes a coil event received from the OSC client.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.process_config">
+<tt class="descname">process_config</tt><big>(</big><em>event</em>, <em>data</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.process_event">
+<tt class="descname">process_event</tt><big>(</big><em>event</em>, <em>data</em><big>)</big></dt>
+<dd><p>Posts an MPF event based on an event received from the OSC client.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.process_flipper">
+<tt class="descname">process_flipper</tt><big>(</big><em>flipper</em>, <em>data</em><big>)</big></dt>
+<dd><p>Calls the flipper&#8217;s sw_flip() or sw_release() event.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.process_light">
+<tt class="descname">process_light</tt><big>(</big><em>light</em>, <em>data</em><big>)</big></dt>
+<dd><p>Processes a light event received from the OSC client.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.process_message">
+<tt class="descname">process_message</tt><big>(</big><em>addr</em>, <em>tags</em>, <em>data</em>, <em>client_address</em><big>)</big></dt>
+<dd><p>Receives OSC messages and acts on them.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.process_switch">
+<tt class="descname">process_switch</tt><big>(</big><em>switch</em>, <em>data</em><big>)</big></dt>
+<dd><p>Processes a switch event received from the OSC client.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.register_data">
+<tt class="descname">register_data</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.register_lights">
+<tt class="descname">register_lights</tt><big>(</big><big>)</big></dt>
+<dd><p>Adds handlers to all lights so the OSC client can receive
+updates.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.register_switches">
+<tt class="descname">register_switches</tt><big>(</big><big>)</big></dt>
+<dd><p>Adds switch handlers to all switches so the OSC client can receive
+updates.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.setup_OSC_client">
+<tt class="descname">setup_OSC_client</tt><big>(</big><em>address</em><big>)</big></dt>
+<dd><p>Setup a new OSC client</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.start">
+<tt class="descname">start</tt><big>(</big><big>)</big></dt>
+<dd><p>Starts the OSC server.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big></dt>
+<dd><p>Stops the OSC server.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.update_audits">
+<tt class="descname">update_audits</tt><big>(</big><em>event</em>, <em>data</em><big>)</big></dt>
+<dd><p>Sends audit data to the OSC client.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.update_ball">
+<tt class="descname">update_ball</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.update_config">
+<tt class="descname">update_config</tt><big>(</big><em>event</em>, <em>data</em><big>)</big></dt>
+<dd><p>Sends config data to the OSC client.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.update_player">
+<tt class="descname">update_player</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.osc.OSC.update_score">
+<tt class="descname">update_score</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mpf.plugins.osc.preload_check">
+<tt class="descclassname">mpf.plugins.osc.</tt><tt class="descname">preload_check</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd></dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.plugins.osc.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

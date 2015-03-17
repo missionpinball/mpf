@@ -74,6 +74,7 @@ Keyboard:
     1:
         switch: trough1
         toggle: true
+        start_active: true
     2:
         switch: trough2
         toggle: true

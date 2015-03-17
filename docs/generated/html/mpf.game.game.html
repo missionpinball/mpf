@@ -1,0 +1,288 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.15.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.game.game">
+<span id="mpf-game-game-module"></span><h1>mpf.game.game module</h1>
+<p>Contains the Game class which is the Machine Mode that actually runs and
+manages an the game in a pinball machine.</p>
+<p>Note that in the Mission Pinball Framework, a distinction is made between a
+<em>game</em> and a <em>machine</em>. A <em>game</em> refers to a game in progress, whereas a
+<em>machine</em> is the physical pinball machine.</p>
+<dl class="class">
+<dt id="mpf.game.game.Game">
+<em class="property">class </em><tt class="descclassname">mpf.game.game.</tt><tt class="descname">Game</tt><big>(</big><em>machine</em>, <em>name</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.machine_mode.html#mpf.system.machine_mode.MachineMode" title="mpf.system.machine_mode.MachineMode"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.machine_mode.MachineMode</span></tt></a></p>
+<p>Base class that runs an active game on a pinball machine.</p>
+<p>Responsible for creating players, starting and ending balls, rotating to
+the next player, etc.</p>
+<dl class="method">
+<dt id="mpf.game.game.Game.award_extra_ball">
+<tt class="descname">award_extra_ball</tt><big>(</big><em>num=1</em>, <em>force=False</em><big>)</big></dt>
+<dd><p>Awards the player an extra ball.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num</strong> &#8211; Integer of the  number of extra balls to award. Default is 1.</li>
+<li><strong>force</strong> &#8211; Boolean which allows you to force the extra ball even if it
+means the player would go above the max extra balls specified
+in the config files. Default is False.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>TODO: The limit checking is not yet implemented</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.ball_drained">
+<tt class="descname">ball_drained</tt><big>(</big><em>balls=0</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.ball_ended">
+<tt class="descname">ball_ended</tt><big>(</big><em>ev_result=True</em><big>)</big></dt>
+<dd><p>Called when the ball has successfully ended.</p>
+<p>This method is called after all the registered handlers of the queue
+event <em>ball_ended</em> finish. (So typically this means that animations
+have finished, etc.)</p>
+<p>This method also decides if the same player should shoot again (if
+there&#8217;s an extra ball) or whether the machine controller should rotate
+to the next player. It will also end the game if all players and balls
+are done.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.ball_ending">
+<tt class="descname">ball_ending</tt><big>(</big><big>)</big></dt>
+<dd><p>Starts the ball ending process.</p>
+<p>This method posts the queue event <em>ball_ending</em>, giving other modules
+an opportunity to finish up whatever they need to do before the ball
+ends. Once all the registered handlers for that event have finished,
+this method calls <a class="reference internal" href="#mpf.game.game.Game.ball_ended" title="mpf.game.game.Game.ball_ended"><tt class="xref py py-meth docutils literal"><span class="pre">ball_ended()</span></tt></a>.</p>
+<p>Currently this method also disables the autofire coils and flippers,
+though that&#8217;s temporary as we&#8217;ll move those into config file options.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.ball_started">
+<tt class="descname">ball_started</tt><big>(</big><em>ev_result=True</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.ball_starting">
+<tt class="descname">ball_starting</tt><big>(</big><big>)</big></dt>
+<dd><p>Called when a new ball is starting.</p>
+<p>Note this method is called for each ball that starts, even if it&#8217;s
+after a Shoot Again scenario for the same player.</p>
+<p>Posts a queue event called <em>ball_starting</em>, giving other modules the
+opportunity to do things before the ball actually starts. Once that
+event is clear, this method calls <a class="reference internal" href="#mpf.game.game.Game.ball_started" title="mpf.game.game.Game.ball_started"><tt class="xref py py-meth docutils literal"><span class="pre">ball_started()</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.game_ended">
+<tt class="descname">game_ended</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
+<dd><p>Actually ends the game once the <em>game_ending</em> event is clear.</p>
+<p>Eventually this method will do lots of things. For now it just
+advances the machine flow which ends the <a class="reference internal" href="#mpf.game.game.Game" title="mpf.game.game.Game"><tt class="xref py py-class docutils literal"><span class="pre">Game</span></tt></a> mode and starts the
+<tt class="xref py py-class docutils literal"><span class="pre">Attract</span></tt> mode.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.game_ending">
+<tt class="descname">game_ending</tt><big>(</big><big>)</big></dt>
+<dd><p>Called when the game decides it should end.</p>
+<p>This method posts the queue event <em>game_ending</em>, giving other modules
+an opportunity to finish up whatever they need to do before the game
+ends. Once all the registered handlers for that event have finished,
+this method calls <tt class="xref py py-meth docutils literal"><span class="pre">game_end()</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.game_started">
+<tt class="descname">game_started</tt><big>(</big><em>ev_result=True</em>, <em>game=None</em><big>)</big></dt>
+<dd><p>All the modules that needed to do something on game start are done,
+so our game is officially &#8216;started&#8217;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.player_add_success">
+<tt class="descname">player_add_success</tt><big>(</big><em>player</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Called when a new player is successfully added to the current game
+(including when the first player is added).</p>
+<p>If this is the first player, calls <a class="reference internal" href="#mpf.game.game.Game.player_turn_start" title="mpf.game.game.Game.player_turn_start"><tt class="xref py py-meth docutils literal"><span class="pre">player_turn_start()</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.player_rotate">
+<tt class="descname">player_rotate</tt><big>(</big><em>player_num=None</em><big>)</big></dt>
+<dd><p>Rotates the game to the next player.</p>
+<p>This method is called after a player&#8217;s turn is over, so it&#8217;s even used
+in single-player games between balls.</p>
+<p>All it does really is set <tt class="xref py py-attr docutils literal"><span class="pre">player</span></tt> to the next player&#8217;s number.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>player_num</strong> (<em>int</em>) &#8211; Lets you specify which player you want to rotate to. If None, it
+just rotates to the next player in order.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.player_turn_start">
+<tt class="descname">player_turn_start</tt><big>(</big><big>)</big></dt>
+<dd><p>Called at the beginning of a player&#8217;s turn.</p>
+<p>Note this method is only called when a new player is first up. So if
+the same player shoots again due to an extra ball, this method is not
+called again.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.request_player_add">
+<tt class="descname">request_player_add</tt><big>(</big><big>)</big></dt>
+<dd><p>Called by any module that wants to add a player to an active game.</p>
+<p>This method contains the logic to verify whether it&#8217;s ok to add a
+player. (For example, the game must be on ball 1 and the current
+number of players must be less than the max number allowed.)</p>
+<p>Assuming this method believes it&#8217;s ok to add a player, it posts the
+boolean event <em>player_add_request</em> to give other modules the opportunity
+to deny it. (For example, a credits module might deny the request if
+there are not enough credits in the machine.)</p>
+<p>If <em>player_add_request</em> comes back True, the event
+<em>player_add_success</em> is posted with a reference to the new player
+object as a <em>player</em> kwarg.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.setup_midgame_restart">
+<tt class="descname">setup_midgame_restart</tt><big>(</big><em>tag='start'</em>, <em>time='1s'</em>, <em>min_ball=0</em><big>)</big></dt>
+<dd><p>Allows a long button press to restart the game.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.shoot_again">
+<tt class="descname">shoot_again</tt><big>(</big><big>)</big></dt>
+<dd><p>Called when the same player should shoot again.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.slam_tilt">
+<tt class="descname">slam_tilt</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.start">
+<tt class="descname">start</tt><big>(</big><em>buttons=None</em>, <em>hold_time=None</em><big>)</big></dt>
+<dd><p>Automatically called when the <em>Game</em> machine mode becomes active.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.tilt">
+<tt class="descname">tilt</tt><big>(</big><big>)</big></dt>
+<dd><p>Called when the &#8216;tilt&#8217; event is posted indicated the ball has tilted.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.game.game.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
