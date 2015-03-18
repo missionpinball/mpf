@@ -1,0 +1,506 @@
+Machine:
+    HZ: 30
+    Balls Installed: 1
+    Min Balls: 0
+    Max Balls: 1
+
+Hardware:
+    Platform: fast
+    DriverBoards: fast
+
+Fast:
+    port0_name: \\.\COM10
+    port0_baud: 921600
+    port1_name: \\.\COM11
+    port1_baud: 921600
+    port2_name: \\.\COM12
+    port2_baud: 921600
+    main_port: 1
+    led_port: 0
+    dmd_port: 2
+    config_number_format: hex
+
+Game:
+    Balls per game: 3
+    Max players per game: 4
+
+MachineFlow:
+    mpf.game.attract.Attract
+    mpf.game.game.Game
+
+Plugins:
+    - osc.OSC
+    - logic_blocks.LogicBlocks
+    - auditor.Auditor
+    - shots.ShotController
+    - scoring.ScoreController
+    - keyboard.Keyboard
+    - sound.SoundController
+
+OSC:
+    machine_ip: auto
+    machine_port: 8000
+    approved_client_ips: any
+    client_port: 9000
+    debug_messages: false
+    client_updates:
+        switches
+        data
+
+Switches:
+    leftPop:
+        number: 2c
+    rightPop:
+        number: 2b
+    bottomPop:
+        number: 2d
+    leftOutlane:
+        number: b
+    rightOutlane:
+        number: c
+    leftInlane:
+        number: d
+    rightInlane:
+        number: e
+    leftFlipper:
+        number: 0
+        tags: left_flipper
+    rightFlipper:
+        number: 2
+        tags: right_flipper
+    start:
+        tags: start
+        number: 3
+    rightSling:
+        number: 4
+    leftSling:
+        number: 1
+    ballLock:
+        number: 6
+    trough:
+        number: 7
+    topLaneLeft:
+        number: 20
+    topLaneMiddle:
+        number: 21
+    topLaneRight:
+        number: 22
+    spinner:
+        number: 23
+    leftOrbit:
+        number: 24
+    standupTopLeft:
+        number: 25
+    standupMidLeft2:
+        number: 26
+    standupMidLeft1:
+        number: 27
+    standupMiddle:
+        number: 28
+    standupMidRight2:
+        number: 29
+    standupMidRight1:
+        number: 2a
+
+Coils:
+    leftPop:
+        number: 8
+        pulse_ms: 20
+    rightPop:
+        number: 9
+        pulse_ms: 20
+    bottomPop:
+        number: 10
+        pulse_ms: 20
+    leftFlipperMain:
+        number: 0
+        pulse_ms: 30
+    leftFlipperHold:
+        number: 1
+    rightFlipperMain:
+        number: 2
+        pulse_ms: 30
+    rightFlipperHold:
+        number: 3
+    rightSling:
+        number: 4
+        pulse_ms: 9
+    leftSling:
+        number: 5
+        pulse_ms: 9
+    ballLock:
+        number: 6
+        pulse_ms: 20
+    trough:
+        number: 7
+        pulse_ms: 40
+
+LEDs:
+    leftOrbit:
+        number: 0
+    leftUpperStandup:
+        number: 1
+    upperLaneLeft:
+        number: 2
+    upperRolloverLeft:
+        number: 3
+    upperLaneMiddle:
+        number: 4
+    upperRolloverMiddle:
+        number: 5
+    upperLaneRight:
+        number: 6
+    upperRolloverRight:
+        number: 7
+    locklaneTop:
+        number: 8
+    locklane1:
+        number: 9
+    locklane2:
+        number: a
+    locklane3:
+        number: b
+    locklane4:
+        number: c
+    locklane5:
+        number: d
+    semicircle10:
+        number: e
+    righttarget1:
+        number: f
+    righttarget2:
+        number: 10
+    centerRow5:
+        number: 11
+    centerRow4:
+        number: 12
+    centerRow3:
+        number: 13
+    centerRowRed:
+        number: 14
+    centerRow2:
+        number: 15
+    centerRow1:
+        number: 16
+    spinnerArrow:
+        number: 17
+    lefttarget2:
+        number: 18
+    lefttarget1:
+        number: 19
+    leftoutlane:
+        number: 1a
+    semicircle1:
+        number: 1b
+    semicircle2:
+        number: 1c
+    semicircle3:
+        number: 1d
+    semicircle4:
+        number: 1e
+    semicircle5:
+        number: 1f
+    shootAgain:
+        number: 20
+    semicircle_above:
+        number: 21
+    semicircle6:
+        number: 22
+    semicircle7:
+        number: 23
+    semicircle8:
+        number: 24
+    semicircle9:
+        number: 25
+    leftoutlane:
+        number: 26
+
+BallDevices:
+    trough:
+        tags: trough, home, drain, ball_add_live
+        ball_switches: trough
+        entrance_count_delay: 200ms
+        exit_count_delay: 1s
+        eject_coil: trough
+        eject_switch: trough
+        confirm_eject_type: count    
+    
+    ballLock:
+        ball_switches: ballLock
+        entrance_count_delay: 200ms
+        exit_count_delay: 1s
+        eject_coil: ballLock
+        eject_switch: ballLock
+        confirm_eject_type: count
+
+Flippers:
+    Left:
+        main_coil: leftFlipperMain
+        hold_coil: leftFlipperHold
+        activation_switch: leftFlipper
+    Right:
+        main_coil: rightFlipperMain
+        hold_coil: rightFlipperHold
+        activation_switch: rightFlipper
+
+Autofire Coils:
+    leftPop:
+        coil: leftPop
+        switch: leftPop
+    rightPop:
+        coil: rightPop
+        switch: rightPop
+    bottomPop:
+        coil: bottomPop
+        switch: bottomPop
+    leftSling:
+        coil: leftSling
+        switch: leftSling
+    rightSling:
+        coil: rightSling
+        switch: rightSling
+
+Targets:
+    laneLeft:
+        switch: topLaneLeft
+        light: upperLaneLeft
+    laneMiddle:
+        switch: topLaneMiddle
+        light: upperLaneMiddle
+    laneRight:
+        switch: topLaneRight
+        light: upperLaneRight
+    left1:
+        light: lefttarget1
+        switch: standupMidLeft1
+    left2:
+        light: lefttarget2
+        switch: standupMidLeft2
+    right1:
+        light: righttarget1
+        switch: standupMidRight1
+    right2:
+        light: righttarget2
+        switch: standupMidRight2
+    middle:
+        light: centerRowRed
+        switch: standupMiddle
+    upperLeft:
+        switch: standupTopLeft
+        light: leftUpperStandup
+    spinner:
+        light: spinnerArrow
+        switch: spinner
+        reset_events:
+            target_spinner_unlit_hit: 30ms
+
+TargetGroups:
+    upperLanes:
+        targets: laneLeft, laneMiddle, laneRight
+        rotate_left_events: sw_left_flipper
+        rotate_right_events: sw_right_flipper
+        reset_events: targets_upperLanes_lit_complete
+
+Shots:
+    pops:
+        Switch: leftPop, rightPop, bottomPop
+    slings:
+        Switch: leftSling, rightSling
+
+Scoring:
+    targets_upperLanes_lit_complete:
+        Score: 5000
+    targets_upperLanes_lit_hit:
+        Score: 100
+    targets_upperLanes_unlit_hit:
+        Score: 1000
+    shot_pops:
+        Score: 150
+    shot_slings:
+        Score: 10
+    balldevice_ballLock_ball_enter:
+        Score: 2500
+    target_right1_lit:
+        Score: 50
+    target_right2_lit:
+        Score: 50
+    target_left1_lit:
+        Score: 50
+    target_left2_lit:
+        Score: 50
+    target_middle_lit:
+        Score: 50
+    target_upperLeft_lit:
+        Score: 50
+    target_right1_unlit:
+        Score: 50
+    target_right2_unlit:
+        Score: 250
+    target_left1_unlit:
+        Score: 250
+    target_left2_unlit:
+        Score: 250
+    target_middle_unlit:
+        Score: 250
+    target_upperLeft_unlit:
+        Score: 250
+
+DMD:
+    physical: yes
+    width: 128
+    height: 32
+    shades: 16
+    fps: auto
+
+Window:
+    width: 800
+    height: 600
+    title: FAST Pinball Portable Machine
+    resizable: yes
+    frame: yes
+    fullscreen: no
+    fps: auto
+    quit_on_close: True
+    elements:
+      - type: VirtualDMD
+        width: 512
+        height: 128
+        h_pos: center
+        v_pos: center
+        pixel_color: ff5500
+        dark_color: 220000
+        layer: 1
+        pixel_spacing: 1
+
+      - type: Text
+        font: tall title
+        text: FAST PINBALL
+        h_pos: right
+        v_pos: bottom
+        y: -10
+        x: -20
+        size: 60
+        antialias: yes
+        layer: 1
+        color: ff0000
+
+      - type: Shape
+        shape: box
+        width: 516
+        height: 132
+        layer: 2
+        thickness: 2
+        v_pos: center
+        h_pos: center
+        color: aaaaaa
+
+Keyboard:
+
+    z:
+        switch: leftFlipper
+    /:
+        switch: rightFlipper
+    s:
+        switch: start
+    1:
+        switch: trough
+        toggle: True
+        start_active: True
+
+    .:
+        switch: rightSling
+
+    x:
+        switch: leftSling
+    up:
+        event: action_set_volume
+        params:
+            change: .05
+    down:
+        event: action_set_volume
+        params:
+            change: "-.05"
+
+    l:
+        switch: standupMidLeft1
+
+SlidePlayer:
+    score_change:
+      - type: Text
+        text: "%score"
+        number_grouping: true
+      - type: Text
+        text: PLAYER %number%
+        v_pos: bottom
+        h_pos: left
+        font: small
+      - type: Text
+        text: BALL %ball%
+        v_pos: bottom
+        h_pos: right
+        font: small
+    ball_started:
+      - type: Text
+        text: "%score%"
+      - type: Text
+        text: PLAYER %player
+        v_pos: bottom
+        h_pos: left
+        font: small
+      - type: Text
+        text: BALL %ball
+        v_pos: bottom
+        h_pos: right
+        font: small
+        transition:
+            type: move_in
+            direction: top
+    balldevice_deadworld_ball_enter:
+        type: Text
+        text: "BALLS LOCKED: %balls"
+    volume_change:
+        type: Text
+        text: "VOLUME: %display_volume"
+
+ShowPlayer:
+    machineflow_Attract_start:
+      - show: semi_circle_rainbow
+        repeat: yes
+        tocks_per_sec: 15
+      - show: kit
+        repeat: yes
+        tocks_per_sec: 10
+      - show: ball_lock_lane
+        repeat: yes
+        tocks_per_sec: 5
+#      - show: top_lanes
+#        repeat: yes
+#        tocks_per_sec: 11
+      - show: attract_display
+        repeat: yes
+        tocks_per_sec: 1
+    machineflow_Attract_stop:
+      - show: semi_circle_rainbow
+        action: stop
+      - show: kit
+        action: stop
+      - show: ball_lock_lane
+        action: stop
+#      - show: top_lanes
+#        action: stop
+      - show: attract_display
+        action: stop
+
+Animations:
+    rolling_ball:
+        file: rolling_ball.dmd
+        alpha_color: 15
+
+Images:
+    scribble:
+        file: scribble.bmp
+        alpha_color: 0
+        target: dmd
+    mpf_logo:
+        file: mission_pinball_flag_dmd.png
+        target: dmd

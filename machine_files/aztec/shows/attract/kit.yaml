@@ -1,0 +1,32 @@
+- tocks: 1
+  leds:
+    centerRow1: ff0000
+    centerRow2: 000000
+- tocks: 1
+  leds:
+    centerRow2: ff0000
+    centerRow1: 000000
+- tocks: 1
+  leds:
+    centerRow3: ff0000
+    centerRow2: 000000
+- tocks: 1
+  leds:
+    centerRow4: ff0000
+    centerRow3: 000000
+- tocks: 1
+  leds:
+    centerRow5: ff0000
+    centerRow4: 000000
+- tocks: 1
+  leds:
+    centerRow4: ff0000
+    centerRow5: 000000
+- tocks: 1
+  leds:
+    centerRow3: ff0000
+    centerRow4: 000000
+- tocks: 1
+  leds:
+    centerRow2: ff0000
+    centerRow3: 000000
