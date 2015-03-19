@@ -86,6 +86,9 @@ class ModeController(object):
     def ball_ending(self, queue):
         # unloads all the active modes, like when the ball ends
 
+        if not self.active_modes:
+            return()
+
         self.queue = queue
         self.queue.wait()
         self.mode_stop_count = 0
