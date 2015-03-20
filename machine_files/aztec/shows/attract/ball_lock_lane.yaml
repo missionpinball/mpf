@@ -1,0 +1,36 @@
+- tocks: 1
+  leds:
+    locklane5: 0000ff
+- tocks: 1
+  leds:
+    locklane4: 0000ff
+- tocks: 1
+  leds:
+    locklane3: 0000ff
+- tocks: 1
+  leds:
+    locklane2: 0000ff
+- tocks: 1
+  leds:
+    locklane1: 0000ff
+- tocks: 5
+  leds:
+    locklaneTop: ff0000
+- tocks: 1
+  leds:
+    locklane5: 000000
+- tocks: 1
+  leds:
+    locklane4: 000000
+- tocks: 1
+  leds:
+    locklane3: 000000
+- tocks: 1
+  leds:
+    locklane2: 000000
+- tocks: 1
+  leds:
+    locklane1: 000000
+- tocks: 1
+  leds:
+    locklaneTop: 00

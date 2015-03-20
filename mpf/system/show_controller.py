@@ -833,9 +833,6 @@ class Show(Asset):
 
                 for led in show_actions[step_num]['leds']:
 
-
-
-
                     if 'tag|' in led:
                         tag = led.split('tag|')[1]
 
@@ -843,12 +840,12 @@ class Show(Asset):
                     else:
                         led_list = [led]
 
-                    # convert light strings to objects
+                    # convert led strings to objects
                     led_object_list = list()
 
                     for i in led_list:
                         try:
-                            led_object_list.append(self.machine.led[i])
+                            led_object_list.append(self.machine.leds[i])
                         except:
                             # this light name is invalid
                             self.asset_manager.log.warning("Found invalid "

@@ -38,6 +38,8 @@ class LED(Device):
         self.log = logging.getLogger('LED.' + name)
         super(LED, self).__init__(machine, name, config, collection)
 
+        self.log.debug("Creating '%s' with config: %s", name, config)
+
         # We save out number_str since the platform driver will convert the
         # number into a hardware number, but we need the original number for
         # some things later.
