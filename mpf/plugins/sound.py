@@ -320,11 +320,15 @@ class SoundController(object):
 
         # Loop through all the sound events for this event
 
+        print "***** sound callback *****"
+
         if event_name not in self.sound_events:
             self.log.critical("got sound callback but did not find event?")
             raise Exception()
 
         sound_list = self.sound_events[event_name]
+
+        print "sound list", sound_list
 
         for sound in sound_list:
 
@@ -506,6 +510,10 @@ class Track(object):
                 self.queue_sound(sound, priority=priority, exp_time=exp_time,
                                  **settings)
 
+    def stop(self, sound):
+        sound.sound_object.stop()
+
+
     def queue_sound(self, sound, priority, exp_time=None, **settings):
         """Adds a sound to the queue to be played when a Pygame channel becomes
         free.
@@ -618,7 +626,7 @@ class StreamTrack(object):
 
         pygame.mixer.music.play(settings['loops'])
 
-    def stop(self):
+    def stop(self, sound=None):
         """Stops the playing sound and resets the current position to the
         beginning.
         """
@@ -735,7 +743,6 @@ class Channel(object):
 class Sound(Asset):
 
     def _initialize_asset(self):
-
         if self.config['track'] in self.machine.sound.tracks:
             self.track = self.machine.sound.tracks[self.config['track']]
 
@@ -822,8 +829,10 @@ class Sound(Asset):
             **kwargs: Catch all since this method might be used as an event
                 callback which could include random kwargs.
         """
-        pass
-        # todo
+
+        #self.sound_object.stop()
+
+        self.track.stop(self)
 
 
 asset_class = Sound

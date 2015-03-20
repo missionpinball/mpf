@@ -57,7 +57,11 @@ class ShotController(object):
         if 'Shots' in self.machine.config:
             self.process_config(self.machine.config['Shots'])
 
-    def process_config(self, config, priority=0):
+        # Tell the mode controller that it should look for shot items in
+        # modes.
+        self.machine.modes.register_start_method(self.process_config, 'Shots')
+
+    def process_config(self, config, mode=None, priority=0):
         # config is localized to "Shots"
 
         self.log.debug("Configuring  Shots")
