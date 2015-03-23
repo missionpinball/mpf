@@ -948,7 +948,8 @@ class Slide(object):
         """
 
         surface = pygame.Surface(rect.size, depth=self.depth)
-        surface.set_palette(self.palette)
+        if surface.get_bytesize() == 1:
+            surface.set_palette(self.palette)
 
         for element in self.elements:
             if element.layer >= layer:
