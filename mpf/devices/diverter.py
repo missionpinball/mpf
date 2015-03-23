@@ -19,7 +19,7 @@ class Diverter(Device):
     """
 
     config_section = 'Diverters'
-    collection = 'diverter'
+    collection = 'diverters'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Diverter.' + name)
