@@ -654,12 +654,12 @@ class ShowController(object):
 
         for step in script:
             if step.get('fade', None):
-                color = str(step['color']) + "-f" + str(step['time'])
+                color = str(step['color']) + "-f" + str(step['tocks'])
             else:
                 color = str(step['color'])
 
             color_dic = {lightname: color}
-            current_action = {'tocks': step['time'],
+            current_action = {'tocks': step['tocks'],
                               'lights': color_dic}
             show_actions.append(current_action)
         show = None
