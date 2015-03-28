@@ -665,7 +665,7 @@ class ShowController(object):
         show = None
         show = Show(machine=self.machine, config=None, file_name=None,
                     asset_manager=self.asset_manager, actions=show_actions)
-        show_obj = show.play(repeat=repeat, tocks_per_sec=tps,
+        show = show.play(repeat=repeat, tocks_per_sec=tps,
                              priority=priority, blend=blend,
                              num_repeats=num_repeats, callback=callback)
 
@@ -673,7 +673,7 @@ class ShowController(object):
                                     'priority': priority,
                                     'show': show})
 
-        return show_obj
+        return show
 
     def stop_script(self, lightname=None, priority=0, show=None, **kwargs):
         """Stops and remove an light script.
