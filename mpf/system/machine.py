@@ -14,6 +14,12 @@ from copy import deepcopy
 import time
 import sys
 
+try:
+    import pygame
+    import pygame.locals
+except ImportError:
+    pass
+
 from mpf.system import *
 from mpf.devices import *
 import version
@@ -39,6 +45,7 @@ class MachineController(object):
         done: Boolean. Set to True and MPF exits.
         machineflow_index: What machineflow position the machine is currently in.
         machine_path: The root path of this machine_files folder
+        pygame:
         display:
         plugins:
         scriptlets:
@@ -58,12 +65,19 @@ class MachineController(object):
         self.machineflow_index = None
         self.loop_rate = 0.0
         self.mpf_load = 0.0
+        self.pygame = False
+        self.pygame_requested = False
+        self.window = None
+        self.display = None
         self.machine_path = None  # Path to this machine's folder root
 
         self.plugins = list()
         self.scriptlets = list()
         self.game_modes = list()
         self.asset_managers = dict()
+
+        self.registered_pygame_handlers = dict()
+        self.pygame_allowed_events = list()
 
         # Get the Python version for the log
         python_version = sys.version_info
@@ -485,6 +499,95 @@ class MachineController(object):
                 result[k] = deepcopy(v)
         return result
 
+    def request_pygame(self):
+        """Called by a module to let the system know it would like to use
+        Pygame. We centralize the requests instead of letting each module do
+        their own pygame.init() so we get it in one place and can get everthing
+        initialized in the right order.
+
+        Returns: True or False, depending on whether pygame is available or not.
+        """
+
+        if pygame and not self.pygame_requested:
+            self.events.add_handler('machine_init_phase_3', self._pygame_init)
+            self.pygame_requested = True
+            return True
+
+        else:
+            return False
+
+    def _pygame_init(self):
+        # performs the actual pygame initialization
+
+        if not pygame:
+            self.log.critical("Pygame is needed but not available. Please "
+                              "install Pygame and try again.")
+            raise Exception("Pygame is needed but not available. Please install"
+                            " Pygame and try again.")
+
+        if not self.pygame:
+            self.log.debug("Initializing Pygame, version %s",
+                           pygame.version.ver)
+
+            pygame.init()
+            self.pygame = True
+
+            self.events.add_handler('timer_tick', self.get_pygame_events,
+                                    priority=1000)
+
+            self.events.post('pygame_initialized')
+
+    def get_window(self):
+        """ Returns a reference to the onscreen display window.
+
+        This method will set up a window if one doesn't exist yet. This method
+        exists because there are several different modules and plugins which
+        may want to use a window, but we don't know which combinations might
+        be used, so we centralize the creation and management of an onscreen
+        window here.
+        """
+
+        if not self.window:
+            self.window_manager = window.WindowManager(self)
+            self.window = self.window_manager.window
+
+        return self.window
+
+    def register_pygame_handler(self, event, handler):
+        """Registers a method to be a handler for a certain type of Pygame
+        event.
+
+        Args:
+            event: A string of the Pygame event name you're registering this
+            handler for.
+            handler: A method that will be called when this Pygame event is
+            posted.
+        """
+        if event not in self.registered_pygame_handlers:
+            self.registered_pygame_handlers[event] = set()
+
+        self.registered_pygame_handlers[event].add(handler)
+        self.pygame_allowed_events.append(event)
+
+        self.log.debug("Adding Window event handler. Event:%s, Handler:%s",
+                       event, handler)
+
+        pygame.event.set_allowed(self.pygame_allowed_events)
+
+    def get_pygame_events(self):
+        """Gets (and dispatches) Pygame events. Automatically called every
+        machine loop via the timer_tick event.
+        """
+        for event in pygame.event.get():
+            if event.type in self.registered_pygame_handlers:
+                for handler in self.registered_pygame_handlers[event.type]:
+
+                    if (event.type == pygame.KEYDOWN or
+                            event.type == pygame.KEYUP):
+                        handler(event.key, event.mod)
+                    else:
+                        handler()
+
     def run(self):
         """The main machine run loop."""
         self.log.debug("Starting the main machine run loop.")
@@ -531,6 +634,9 @@ class MachineController(object):
 
         except KeyboardInterrupt:
             pass
+
+        if self.pygame:
+            pygame.quit()
 
         self.log.info("Target loop rate: %s Hz", timing.Timing.HZ)
         self.log.info("Actual loop rate: %s Hz",
@@ -591,6 +697,9 @@ class MachineController(object):
 
         except KeyboardInterrupt:
             pass
+
+        if self.pygame:
+            pygame.quit()
 
         self.log.info("Hardware load percent: %s", self.loop_rate)
         self.log.info("MPF load percent: %s", self.mpf_load)
