@@ -11,6 +11,7 @@ import logging
 
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
+from mpf.system.config import Config
 
 
 def preload_check(machine):
@@ -31,8 +32,7 @@ class LogicBlocks(object):
         self.machine.modes.register_start_method(self.process_config,
                                                  'LogicBlocks')
 
-        # If there's a base-level logic block config, process them when the game
-        # starts
+        # Process game-wide (i.e. not in modes) logic blocks
         self.machine.events.add_handler('player_add_success',
                                         self.create_player_logic_blocks)
         self.machine.events.add_handler('player_turn_start',
@@ -41,7 +41,16 @@ class LogicBlocks(object):
                                         self.player_turn_stop)
 
     def create_player_logic_blocks(self, player, **kwargs):
+        """Creates the game-wide logic blocks for this player.
 
+        Args:
+            player: The player object.
+            **kwargs: Does nothing. Just here to allow this method to be called
+                via an event handler.
+
+        Note that this method is automatically added as a handler to the
+        'player_add_success' event.
+        """
         player.logic_blocks = set()
 
         if 'LogicBlocks' in self.machine.config:
@@ -54,7 +63,7 @@ class LogicBlocks(object):
         self.log.debug("Processing player_turn_start")
 
         for block in player.logic_blocks:
-            block.player_turn_start()
+            block.create_control_events()
 
     def player_turn_stop(self, player):
 
@@ -72,6 +81,11 @@ class LogicBlocks(object):
         blocks_added = self.create_logic_blocks(config=config,
                                                 player=self.machine.game.player,
                                                 enable=enable)
+
+        if mode:
+            for block in blocks_added:
+                block.create_control_events()
+
 
         return self.unload_logic_blocks, blocks_added
 
@@ -124,52 +138,41 @@ class LogicBlock(object):
         self.machine = machine
         self.name = name
         self.player = player
-        self.config = config
+        #self.config = config
         self.handler_keys = set()
 
         self.enabled = False
 
-        if 'enable_events' not in self.config:
-            self.config['enable_events'] = list()
-        else:
-            self.config['enable_events'] = self.machine.string_to_list(
-                self.config['enable_events'])
+        config_spec = '''
+                    enable_events: list|None
+                    disable_events: list|None
+                    reset_events: list|None
+                    restart_on_complete: boolean|False
+                    disable_on_complete: boolean|True
+                    '''
 
-        if 'disable_events' not in self.config:
-            self.config['disable_events'] = list()
-        else:
-            self.config['disable_events'] = self.machine.string_to_list(
-                self.config['disable_events'])
+        self.config = Config.process_config(config_spec=config_spec,
+                                            source=config)
 
-        if 'reset_events' not in self.config:
-            self.config['reset_events'] = list()
-        else:
-            self.config['reset_events'] = self.machine.string_to_list(
-                self.config['reset_events'])
-
-        if 'events_when_complete' not in self.config:
+        if 'events_when_complete' not in config:
             self.config['events_when_complete'] = ([
                 'logicblock_' + self.name + '_complete'])
         else:
-            self.config['events_when_complete'] = self.machine.string_to_list(
-                self.config['events_when_complete'])
+            self.config['events_when_complete'] = Config.string_to_list(
+                config['events_when_complete'])
 
-        if 'restart_on_complete' not in self.config:
-            self.config['restart_on_complete'] = False
-
-        if 'disable_on_complete' not in self.config:
-            self.config['disable_on_complete'] = True
-
-        if 'reset_each_ball' in self.config and self.config['reset_each_ball']:
+        if 'reset_each_ball' in config and config['reset_each_ball']:
             if 'ball_starting' not in self.config['reset_events']:
                 self.config['reset_events'].append('ball_starting')
 
     def __str__(self):
         return self.name
 
-    def player_turn_start(self):
+    def create_control_events(self):
 
-        self.log.debug("in player_turn_start")
+        # todo need to run this when a mode start creates a logic block
+
+        self.log.debug("in create_control_events")
 
         # If this logic block is enabled, keep it enabled
         # If it's not enabled, enable it if there are no other enable events
@@ -260,48 +263,39 @@ class Counter(LogicBlock):
 
         self.delay = DelayManager()
 
-        #self.num_hits = 0
         self.ignore_hits = False
         self.hit_value = -1
 
-        if 'count_events' not in self.config:
-            self.log.critical("No count_events found for this logic block")
-            raise Exception()
-        else:
-            self.config['count_events'] = self.machine.string_to_list(
-                self.config['count_events'])
+        config_spec = '''
+                        count_events: list|None
+                        count_complete_value: int|0
+                        multiple_hit_window: ms|0
+                        count_interval: int|1
+                        direction: string|up
+                        starting_count: int|0
+                      '''
+
+        self.log.info('```config_spec %s', config_spec)
+        self.log.info('```source %s', config)
+        self.log.info('```target %s', self.config)
+
+        self.config = Config.process_config(config_spec=config_spec,
+                                            source=self.config)
+        self.log.info('```post processed %s', self.config)
 
         if 'event_when_hit' not in self.config:
             self.config['event_when_hit'] = ('counter_' + self.name +
                                              '_hit')
 
-        if 'count_complete_value' not in self.config:
-            self.config['count_complete_value'] = None
-
-        if 'multiple_hit_window' not in self.config:
-            self.config['multiple_hit_window'] = None
-        else:
-            self.config['multiple_hit_window'] = Timing.string_to_ms(
-                self.config['multiple_hit_window'])
-
         if 'player_variable' not in self.config:
             self.config['player_variable'] = self.name + '_count'
 
-        if 'count_interval' not in self.config:
-            self.config['count_interval'] = 1
-
         self.hit_value = self.config['count_interval']
-
-        if 'direction' not in self.config:
-            self.config['direction'] = 'up'
 
         if self.config['direction'] == 'down' and self.hit_value > 0:
             self.hit_value *= -1
         elif self.config['direction'] == 'up' and self.hit_value < 0:
             self.hit_value *= -1
-
-        if 'starting_count' not in self.config:
-            self.config['starting_count'] = 0
 
         self.player[self.config['player_variable']] = (
             self.config['starting_count'])
@@ -378,25 +372,19 @@ class Accrual(LogicBlock):
 
         super(Accrual, self).__init__(machine, name, player, config)
 
-        #self.status = list()
+        config_spec = '''
+                        events: list_of_lists
+                      '''
 
-        # make sure the events entry is a list of lists
-        if 'events' in self.config and type(self.config['events']) is list:
-            for entry_num in range(len(self.config['events'])):
-                self.config['events'][entry_num] = (
-                    self.machine.string_to_list(self.config['events']
-                                                [entry_num]))
-        elif 'events' in self.config and type(self.config['events']) is str:
-            temp_list = self.machine.string_to_list(self.config['events'])
-            self.config['events'] = list()
-            for entry_num in temp_list:
-                self.config['events'].append([entry_num])
+        self.config = Config.process_config(config_spec=config_spec,
+                                            source=self.config)
 
-        if 'player_variable' not in self.config:
+        if 'player_variable' not in config:
             self.config['player_variable'] = self.name + '_status'
 
         # populate status list
-        self.player[self.config['player_variable']] = [False] * len(self.config['events'])
+        self.player[self.config['player_variable']] = (
+            [False] * len(self.config['events']))
 
     def enable(self, **kwargs):
         """Enables this accrual. Automatically called when one of the
@@ -441,16 +429,14 @@ class Sequence(LogicBlock):
 
         super(Sequence, self).__init__(machine, name, player, config)
 
-        #self.current_step = 1
+        config_spec = '''
+                        events: list_of_lists
+                      '''
 
-        # make sure the events entry is a list of lists
-        if 'events' in self.config and type(self.config['events']) is list:
-            for entry_num in range(len(self.config['events'])):
-                self.config['events'][entry_num] = (
-                    self.machine.string_to_list(self.config['events']
-                                                [entry_num]))
+        self.config = Config.process_config(config_spec=config_spec,
+                                            source=self.config)
 
-        if 'player_variable' not in self.config:
+        if 'player_variable' not in config:
                 self.config['player_variable'] = self.name + '_step'
 
         self.player[self.config['player_variable']] = 1
@@ -463,7 +449,8 @@ class Sequence(LogicBlock):
         if step:
             self.player[self.config['player_variable']] = step
 
-        if self.player[self.config['player_variable']] >= len(self.config['events']):
+        if self.player[self.config['player_variable']] >= (
+                len(self.config['events'])):
             # hmm.. we're enabling, but we're done. So now what?
             self.log.warning("Received request to enable at step %s, but this "
                              " Sequence only has %s step(s). Marking complete",
@@ -472,8 +459,10 @@ class Sequence(LogicBlock):
             return
 
         self.enabled = True
+
         # add the handlers for the current step
-        for event in self.config['events'][self.player[self.config['player_variable']]]:
+        for event in (self.config['events']
+                      [self.player[self.config['player_variable']]]):
             self.machine.events.add_handler(event, self.hit)
 
     def hit(self, **kwargs):
@@ -487,11 +476,13 @@ class Sequence(LogicBlock):
 
         self.player[self.config['player_variable']] += 1
 
-        if self.player[self.config['player_variable']] >= len(self.config['events']):
+        if self.player[self.config['player_variable']] >= (
+            len(self.config['events'])):
             self.complete()
         else:
             # add the handlers for the new current step
-            for event in self.config['events'][self.player[self.config['player_variable']]]:
+            for event in (self.config['events']
+                          [self.player[self.config['player_variable']]]):
                 self.machine.events.add_handler(event, self.hit)
 
 

@@ -20,7 +20,7 @@ class SocketClient(object):
 
         self.client_socket = None
         self.server_name = 'localhost'
-        self.server_port = 5050
+        self.server_port = 5051
         self.config = None
 
         if 'SocketServer' in self.machine.config:
@@ -102,6 +102,8 @@ class SocketClient(object):
         Args:
             message: String of the message to send.
         """
+
+        self.log.info("SOCKET SENDING: %s", message)
 
         prepped_message = message + '\n'
 

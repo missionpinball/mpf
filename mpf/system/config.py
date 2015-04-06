@@ -1,7 +1,21 @@
+"""Contains the Config class with utility configuration methods"""
+
+# config.py
+# Mission Pinball Framework
+# Written by Brian Madden & Gabe Knuth
+# Released under the MIT License. (See license info at the end of this file.)
+
+# Documentation and more info at http://missionpinball.com/mpf
+import logging
 import os
+import sys
 
 import yaml
 from copy import deepcopy
+
+from mpf.system.timing import Timing
+
+log = logging.getLogger('ConfigProcessor')
 
 class Config(object):
 
@@ -63,28 +77,23 @@ class Config(object):
                 config_location = os.path.join(config['Config_path'],
                                                yaml_file)
             else:
-                #self.log.critical("Couldn't find config file: %s.", yaml_file)
-                raise Exception("Couldn't find config file: %s.", yaml_file)
+                log.critical("Couldn't find file: %s.", yaml_file)
+                sys.exit()
 
         if config_location:
             try:
-                #self.log.info("Loading configuration from file: %s",
-                #              config_location)
+                log.info("Loading configuration from file: %s", config_location)
                 new_updates = yaml.load(open(config_location, 'r'))
             except yaml.YAMLError, exc:
                 if hasattr(exc, 'problem_mark'):
                     mark = exc.problem_mark
-                    #self.log.critical("Error found in config file %s. Line %s, "
-                    #                  "Position %s", config_location,
-                    #                  mark.line+1, mark.column+1)
-                    raise Exception("Error found in config file %s. Line %s, "
-                                    "Position %s", config_location,
-                                    mark.line+1, mark.column+1)
+                    log.critical("Error found in config file %s. Line %s, "
+                                 "Position %s", config_location, mark.line+1,
+                                 mark.column+1)
+                    sys.exit()
             except:
-                #self.log.critical("Couldn't load config from file: %s",
-                #                  yaml_file)
-                raise Exception("Couldn't load config from file: %s",
-                                  yaml_file)
+                log.critical("Couldn't load from file: %s", yaml_file)
+                sys.exit()
 
         config = Config.dict_merge(config, new_updates)
 
@@ -99,49 +108,54 @@ class Config(object):
                     config = load_config_yaml(config=config,
                                               yaml_file=config['Config'][0])
         except:
-            #self.log.critical("No configuration file found, or config file is "
-            #                  "empty. But congrats! Your game works! :)")
-            raise Exception("No configuration file found, or config file is "
-                            "empty. But congrats! Your game works! :)")
+            log.critical("No configuration file found, or config file is "
+                              "empty. But congrats! Your game works! :)")
+            sys.exit()
 
         return config
 
     @staticmethod
-    def process_config(config_spec, source_config):
+    def process_config(config_spec, source, target=None):
         config_spec = yaml.load(config_spec)
-        processed_config = dict()
+        processed_config = source
 
         for k in config_spec.keys():
-
-            print "checking", k
-
-            if k in source_config:
-                print "found it"
+            if k in source:
                 processed_config[k] = Config.validate_config_item(
-                    config_spec[k], source_config[k])
+                    config_spec[k], source[k])
             else:
-                print "couldn't find it"
+                log.debug('Processing default settings for key "%s:"', k)
                 processed_config[k] = Config.validate_config_item(
-                    config_spec[k], None)
+                    config_spec[k])
 
-            print
-            print processed_config
+        if target:
+            processed_config = Config.dict_merge(target, processed_config)
 
         return processed_config
 
     @staticmethod
-    def validate_config_item(spec, item):
+    def validate_config_item(spec, item='item not in config!@#'):
 
-        print "validate", spec, item
+        default = 'default required!@#'
 
-        if '|' in spec:
+        if '|' in spec: # list|none
             item_type, default = spec.split('|')
-        else:
-            item_type = spec
-            default = None
+            # item_type = list, default = none
+            if type(default) is str and default.lower() == 'none':
+                default = None
+        else:  #int
+            item_type = spec  # item_type: int
+            #default = no default!@#
 
-        if not item:
-            item = default
+        if item == 'item not in config!@#':
+            if default == 'default required!@#':
+                log.error('Required setting missing from config file. Run with '
+                          'verbose logging and look for the last '
+                          'ConfigProcessor entry above this line to see where '
+                          'the problem is.')
+                sys.exit()
+            else:
+                item = default
 
         if item_type == 'list':
             return Config.string_to_list(item)
@@ -155,6 +169,10 @@ class Config(object):
             return bool(item)
         elif item_type == 'ms':
             return Timing.string_to_ms(item)
+        elif item_type == 'secs':
+            return Timing.string_to_secs(item)
+        elif item_type == 'list_of_lists':
+            return Config.list_of_lists(item)
 
     @staticmethod
     def dict_merge(a, b, combine_lists=True):
@@ -202,6 +220,8 @@ class Config(object):
         Returns:
             The merged dictionaries.
         """
+        log.info("Dict Merge incoming A %s", a)
+        log.info("Dict Merge incoming B %s", b)
         if not isinstance(b, dict):
             return b
         result = deepcopy(a)
@@ -212,6 +232,7 @@ class Config(object):
                 result[k].extend(v)
             else:
                 result[k] = deepcopy(v)
+        log.info("Dict Merge result: %s", result)
         return result
 
     @staticmethod
@@ -227,12 +248,55 @@ class Config(object):
             spaces in the string.
         """
         if type(string) is str:
-            return string.replace(',', ' ').split()
+            # Convert commas to spaces, then split the string into a list
+            new_list = string.replace(',', ' ').split()
+            # Look for string values of "None" and convert them to Nonetypes.
+            for index, value in enumerate(new_list):
+                if type(value) is str and value.lower() == 'none':
+                    new_list[index] = None
+            return new_list
+
         elif type(string) is list:
-            # if it's already a list, do nothing
-            return string
+            return string  # If it's already a list, do nothing
+
         elif string is None:
-            return []
+            return []  # If it's None, make it into an empty list
         else:
             # if we're passed anything else, just make it into a list
             return [string]
+
+    @staticmethod
+    def list_of_lists(incoming_string):
+        """ Converts an incoming string or list into a list of lists. """
+        final_list = list()
+
+        if type(incoming_string) is str:
+            final_list = Config.string_to_list(incoming_string)
+
+        else:
+            for item in incoming_string:
+                final_list.append(Config.string_to_list(item))
+
+        return final_list
+
+# The MIT License (MIT)
+
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.

@@ -338,7 +338,11 @@ class Asset(object):
         self._initialize_asset()
 
     def __str__(self):
-        return self.file_name
+
+        if self.file_name:
+            return self.file_name
+        else:
+            return "Dynamically created show"
 
     def load(self, callback=None):
         self.asset_manager.load_asset(self, callback)

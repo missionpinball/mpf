@@ -7,8 +7,9 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 from collections import defaultdict
-from mpf.system.timing import Timing
 
+from mpf.system.timing import Timing
+from mpf.system.config import Config
 
 class Device(object):
     """ Generic parent class of for every hardware object in a pinball machine.
@@ -24,7 +25,7 @@ class Device(object):
         if config:
             self.config.update(config)
             if 'tags' in config:
-                self.tags = self.machine.string_to_list(config['tags'])
+                self.tags = Config.string_to_list(config['tags'])
 
             if 'label' in config:
                 self.label = config['label']  # todo change to multi lang
@@ -111,7 +112,7 @@ class Device(object):
         if type(config) is dict:
             return config
         elif type(config) is str:
-            config = self.machine.string_to_list(config)
+            config = Config.string_to_list(config)
 
         # 'if' instead of 'elif' to pick up just-converted str
         if type(config) is list:

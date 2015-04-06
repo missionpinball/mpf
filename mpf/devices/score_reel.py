@@ -8,10 +8,12 @@
 
 import logging
 import time
+
 from collections import deque
 from mpf.system.devices import Device
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
+from mpf.system.config import Config
 
 # Known limitations of this module:
 # Assumes all score reels include a zero value
@@ -246,7 +248,7 @@ class ScoreReelGroup(Device):
         self.jump_in_progress = False
         # Boolean attribute that is True when a jump advance is in progress.
 
-        self.config['reels'] = self.machine.string_to_list(
+        self.config['reels'] = Config.string_to_list(
             self.config['reels'])
 
         if 'max simultaneous coils' not in self.config:
@@ -269,7 +271,7 @@ class ScoreReelGroup(Device):
         # ---- temp chimes code. todo move this --------------------
         if self.config['chimes']:
 
-            self.config['chimes'] = self.machine.string_to_list(
+            self.config['chimes'] = Config.string_to_list(
                 self.config['chimes'])
 
             self.config['chimes'].reverse()

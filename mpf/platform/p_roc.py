@@ -33,6 +33,7 @@ import sys
 
 from mpf.system.timing import Timing
 from mpf.system.platform import Platform
+from mpf.system.config import Config
 
 try:
     import pygame
@@ -1278,7 +1279,7 @@ class PROCDMD(object):
         if 'P_ROC' in self.machine.config and (
             'dmd_timing_cycles' in self.machine.config['P_ROC']):
 
-            dmd_timing = self.machine.string_to_list(
+            dmd_timing = Config.string_to_list(
                 self.machine.config['P_ROC']['dmd_timing_cycles'])
 
             dmd_timing = [int(i) for i in dmd_timing]

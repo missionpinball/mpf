@@ -7,9 +7,10 @@ to 'shots' in the game."""
 
 # Documentation and more info at http://missionpinball.com/mpf
 import logging
+
 from mpf.system.timing import Timing
 from mpf.system.tasks import DelayManager
-
+from mpf.system.config import Config
 
 # todo reset shots on ball start?
 
@@ -162,7 +163,7 @@ class StandardShot(Shot):
         """Enables the shot."""
         super(StandardShot, self).enable()
 
-        for switch in self.machine.string_to_list(self.config['Switch']):
+        for switch in Config.string_to_list(self.config['Switch']):
             self.machine.switch_controller.add_switch_handler(
                 switch, self._switch_handler, return_info=True)
 
@@ -170,7 +171,7 @@ class StandardShot(Shot):
         """Disables the shot."""
         super(StandardShot, self).disable()
 
-        for switch in self.machine.string_to_list(self.config['Switch']):
+        for switch in Config.string_to_list(self.config['Switch']):
             self.machine.switch_controller.remove_switch_handler(
                 switch, self._switch_handler)
 
@@ -202,7 +203,7 @@ class SequenceShot(Shot):
         # convert our switches config to a list
         if 'Switches' in self.config:
             self.config['Switches'] = \
-                self.machine.string_to_list(self.config['Switches'])
+                Config.string_to_list(self.config['Switches'])
 
         # convert our timout to ms
         if 'Time' in self.config:

@@ -13,7 +13,7 @@ import time
 from mpf.system.tasks import DelayManager
 from mpf.system.devices import Device
 from mpf.system.timing import Timing
-
+from mpf.system.config import Config
 
 class BallDevice(Device):
     """Base class for a 'Ball Device' in a pinball machine.
@@ -53,13 +53,13 @@ class BallDevice(Device):
         if 'eject_targets' not in self.config:
             self.config['eject_targets'] = ['playfield']
         else:
-            self.config['eject_targets'] = self.machine.string_to_list(
+            self.config['eject_targets'] = Config.string_to_list(
                 self.config['eject_targets'])
 
         if 'eject_timeouts' not in self.config:
             self.config['eject_timeouts'] = list()
         else:
-            self.config['eject_timeouts'] = self.machine.string_to_list(
+            self.config['eject_timeouts'] = Config.string_to_list(
                 self.config['eject_timeouts'])
 
         if 'confirm_eject_switch' not in self.config:
@@ -72,7 +72,7 @@ class BallDevice(Device):
             self.config['max_eject_attempts'] = 0
 
         if 'ball_switches' in self.config:
-            self.config['ball_switches'] = self.machine.string_to_list(
+            self.config['ball_switches'] = Config.string_to_list(
                 self.config['ball_switches'])
         else:
             self.config['ball_switches'] = []

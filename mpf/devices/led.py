@@ -11,7 +11,7 @@ import time
 
 from mpf.system.devices import Device
 from mpf.system.tasks import Task
-
+from mpf.system.config import Config
 
 class LED(Device):
     """ Represents an light connected to an new-style interface board.
@@ -82,7 +82,7 @@ class LED(Device):
         else:
             # make sure our config string is a list
             self.config['brightness_compensation'] = (
-                self.machine.string_to_list(
+                Config.string_to_list(
                     self.config['brightness_compensation']))
             # if there's only one value in the list, use it for all the elements
             if len(self.config['brightness_compensation']) == 1:

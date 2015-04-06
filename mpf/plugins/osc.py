@@ -48,17 +48,25 @@ class OSC(object):
 
         self.log = logging.getLogger('OSC')
         self.machine = machine
-        self.config = self.machine.config['OSC']
+
+        config_spec = '''
+                        client_port: int|8000
+                        debug_messages: boolean|False
+
+        '''
+
+        self.config = self.machine.config(config_spec,
+                                          self.machine.config['OSC'])
 
         if self.config['machine_ip'].upper() == 'AUTO':
             self.config['machine_ip'] = socket.gethostbyname(
                                                         socket.gethostname())
 
-        if 'client_port' not in self.config:
-            self.config['client_port'] = 8000
-
-        if 'debug_messages' not in self.config:
-                self.config['debug_messages'] = False
+        #if 'client_port' not in self.config:
+        #    self.config['client_port'] = 8000
+        #
+        #if 'debug_messages' not in self.config:
+        #        self.config['debug_messages'] = False
 
         if 'client_updates' in self.config:
             self.config['client_updates'] = self.config['client_updates'].split(

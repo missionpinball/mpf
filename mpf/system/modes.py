@@ -13,12 +13,19 @@ from collections import namedtuple
 
 from mpf.system.timing import Timing, Timer
 from mpf.system.tasks import DelayManager
+from mpf.system.config import Config
 
 RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs',
                           verbose=False)
 """RemotedMethod is used by other modules that want to register a method to
 be called on mode_start or mode_stop.
 """
+
+
+# todo
+# override player var
+# override event strings
+
 
 
 class ModeController(object):
@@ -69,7 +76,7 @@ class ModeController(object):
                                         mode_string,
                                         'config',
                                         mode_string + '.yaml')
-        config = self.machine.load_config_yaml(yaml_file=mode_config_file)
+        config = Config.load_config_yaml(yaml_file=mode_config_file)
 
         if 'code' in config['Mode']:
 
@@ -188,6 +195,9 @@ class Mode(object):
         self.timers = dict()
         self.start_callback = None
         self.stop_callback = None
+        self.event_handlers = set()
+        self.player = None
+        '''Reference to the current player object.'''
 
         if 'Mode' in self.config:
             self.configure_mode_settings(config['Mode'])
@@ -225,13 +235,13 @@ class Mode(object):
             config['priority'] = 0
 
         if 'start_events' in config:
-            config['start_events'] = self.machine.string_to_list(
+            config['start_events'] = Config.string_to_list(
                 config['start_events'])
         else:
             config['start_events'] = list()
 
         if 'stop_events' in config:
-            config['stop_events'] = self.machine.string_to_list(
+            config['stop_events'] = Config.string_to_list(
                 config['stop_events'])
         else:
             config['stop_events'] = list()
@@ -240,11 +250,6 @@ class Mode(object):
         if 'start_events' in config:
             for event in config['start_events']:
                 self.machine.events.add_handler(event, self.start)
-
-       # register mode stop events
-        if 'stop_events' in config:
-            for event in config['stop_events']:
-                self.machine.events.add_handler(event, self.stop)
 
         self.config['Mode'] = config
 
@@ -266,12 +271,24 @@ class Mode(object):
         if self.active:
             return
 
+        self.player = self.machine.game.player
+
         if type(priority) is int:
             self.priority = priority
         else:
             self.priority = self.config['Mode']['priority']
 
         self.log.info('Mode Starting. Priority: %s', self.priority)
+
+        # register mode stop events
+        self.log.info("1")
+        self.log.info(self.config['Mode'])
+        if 'stop_events' in self.config['Mode']:
+            self.log.info("2")
+            for event in self.config['Mode']['stop_events']:
+                self.log.info("3 %s", event)
+                self.add_mode_event_handler(event, self.stop)
+                self.log.info("4")
 
         self.start_callback = callback
 
@@ -297,9 +314,11 @@ class Mode(object):
 
         self.start_timers()
 
-        self.machine.events.post('mode_' + self.name + '_started')
+        self.machine.events.post('mode_' + self.name + '_started',
+                                 callback=self._mode_started_callback)
 
-        self.mode_start()  # change to callback
+    def _mode_started_callback(self, **kwargs):
+        self.mode_start()
 
         if self.start_callback:
             self.start_callback()
@@ -320,6 +339,8 @@ class Mode(object):
             return
 
         self.log.info('Mode Stopping.')
+
+        self._remove_mode_event_handlers()
 
         self.stop_callback = callback
 
@@ -344,20 +365,65 @@ class Mode(object):
 
         self.stop_methods = list()
 
-        self.machine.events.post('mode_' + self.name + '_stopped')
+        self.machine.events.post('mode_' + self.name + '_stopped',
+                                 callback=self._mode_stopped_callback)
 
-        self.mode_stop()  # change to callback
+    def _mode_stopped_callback(self, **kwargs):
+        self.mode_stop()
 
         if self.stop_callback:
             self.stop_callback()
+
+        self.player = self.machine.game.player
+
+    def add_mode_event_handler(self, event, handler, priority=1, **kwargs):
+        """Registers an event handler which is automatically removed when this
+        mode stops.
+
+        Args:
+            event: String name of the event you're adding a handler for. Since
+                events are text strings, they don't have to be pre-defined.
+            handler: The method that will be called when the event is fired.
+            priority: An arbitrary integer value that defines what order the
+                handlers will be called in. The default is 1, so if you have a
+                handler that you want to be called first, add it here with a
+                priority of 2. (Or 3 or 10 or 100000.) The numbers don't matter.
+                They're called from highest to lowest. (i.e. priority 100 is
+                called before priority 1.)
+            **kwargs: Any any additional keyword/argument pairs entered here
+                will be attached to the handler and called whenever that handler
+                is called. Note these are in addition to kwargs that could be
+                passed as part of the event post. If there's a conflict, the
+                event-level ones will win.
+
+        Returns:
+            A GUID reference to the handler which you can use to later remove
+            the handler via ``remove_handler_by_key``. Though you don't need to
+            remove the handler since the whole point of this method is they're
+            automatically removed when the mode stops.
+
+        Note that if you do add a handler via this method and then remove it
+        manually, that's ok too.
+        """
+
+        key = self.machine.events.add_handler(event, handler, priority, **kwargs)
+
+        self.event_handlers.add(key)
+
+        return key
+
+    def _remove_mode_event_handlers(self):
+        for key in self.event_handlers:
+            self.machine.events.remove_handler_by_key(key)
+        self.event_handlers = set()
 
     def setup_timers(self):
         # config is localized
 
         for timer, settings in self.config['Timers'].iteritems():
 
-            self.timers[timer] = ModeTimer(machine=self.machine, name=timer,
-                                           config=settings)
+            self.timers[timer] = ModeTimer(machine=self.machine, mode=self,
+                                           name=timer, config=settings)
 
         return self.kill_timers
 
@@ -393,20 +459,26 @@ class Mode(object):
 
 class ModeTimer(object):
 
-    def __init__(self, machine, name, config):
+    def __init__(self, machine, mode, name, config):
         self.machine = machine
+        self.mode = mode
         self.name = name
         self.config = config
 
+        self.tick_var = self.mode.name + '_' + self.name + '_tick'
+        self.mode.player[self.tick_var] = 0
+
         self.running = False
         self.start_value = 0
-        self.ticks = 0
+        self._ticks = 0
         self.end_value = 0
+        self.max_value = None
         self.direction = 'up'
         self.tick_secs = 1
         self.timer = None
         self.event_keys = set()
         self.delay = DelayManager()
+
 
         if 'start_value' in self.config:
             self.start_value = self.config['start_value']
@@ -431,7 +503,10 @@ class ModeTimer(object):
         if 'tick_interval' in self.config:
             self.tick_secs = Timing.string_to_secs(self.config['tick_interval'])
 
-        self.ticks = self.start_value
+        if 'max_value' in self.config:
+            self.max_value = self.config['max_value']
+
+        self.mode.player[self.tick_var] = self.start_value
 
         self.setup_control_events(self.config['control_events'])
 
@@ -488,7 +563,7 @@ class ModeTimer(object):
         self.create_timer()
 
         self.machine.events.post('timer_' + self.name + '_started',
-                                 ticks_remaining=self.ticks)
+                                 ticks_remaining=self.mode.player[self.tick_var])
 
     def stop(self, **kwargs):
         self.delay.remove('pause')
@@ -497,20 +572,20 @@ class ModeTimer(object):
         self.remove_timer()
 
         self.machine.events.post('timer_' + self.name + '_stopped',
-                                 ticks=self.ticks)
+                                 ticks=self.mode.player[self.tick_var])
 
     def pause(self, timer_value=0, **kwargs):
         self.running = False
 
         pause_secs = timer_value
 
+        self.remove_timer()
+        self.machine.events.post('timer_' + self.name + '_paused',
+                                     ticks=self.mode.player[self.tick_var],
+                                     pause_secs=pause_secs)
+
         if pause_secs > 0:
             self.delay.add('pause', pause_secs, self.start)
-            self.machine.events.post('timer_' + self.name + '_paused',
-                                     ticks=self.ticks,
-                                     pause_secs=pause_secs)
-        else:
-            self.stop()
 
     def timer_complete(self):
         self.stop()
@@ -519,21 +594,27 @@ class ModeTimer(object):
 
     def timer_tick(self):
         if self.direction == 'down':
-            self.ticks -= 1
+            self.mode.player[self.tick_var] -= 1
         else:
-            self.ticks += 1
+            self.mode.player[self.tick_var] += 1
 
         if not self.check_for_done():
             self.machine.events.post('timer_' + self.name + '_tick',
-                                     ticks=self.ticks)
+                                     ticks=self.mode.player[self.tick_var])
 
     def add_time(self, timer_value, **kwargs):
         ticks_added = timer_value
 
-        self.ticks += ticks_added
+        new_value = self.mode.player[self.tick_var] + ticks_added
+
+        if self.max_value and new_value > self.max_value:
+            new_value = self.max_value
+
+        self.mode.player[self.tick_var] = new_value
+        ticks_added = new_value - timer_value
 
         self.machine.events.post('timer_' + self.name + '_time_added',
-                                 ticks=self.ticks,
+                                 ticks=self.mode.player[self.tick_var],
                                  ticks_added=ticks_added)
 
         self.check_for_done()
@@ -541,19 +622,19 @@ class ModeTimer(object):
     def subtract_time(self, timer_value, **kwargs):
         ticks_subtracted = timer_value
 
-        self.ticks -= ticks_subtracted
+        self.mode.player[self.tick_var] -= ticks_subtracted
 
         self.machine.events.post('timer_' + self.name + '_time_subtracted',
-                                 ticks=self.ticks,
+                                 ticks=self.mode.player[self.tick_var],
                                  ticks_subtracted=ticks_subtracted)
 
         self.check_for_done()
 
     def check_for_done(self):
-        if self.direction == 'up' and self.ticks >= self.end_value:
+        if self.direction == 'up' and self.mode.player[self.tick_var] >= self.end_value:
             self.timer_complete()
             return True
-        elif self.ticks <= self.end_value:
+        elif self.mode.player[self.tick_var] <= self.end_value:
             self.timer_complete()
             return True
 
@@ -579,7 +660,10 @@ class ModeTimer(object):
         self.create_timer()
 
     def set_current_time(self, timer_value, **kwargs):
-        self.ticks = timer_value
+        self.mode.player[self.tick_var] = timer_value
+
+        if self.max_value and self.mode.player[self.tick_var] > self.max_value:
+            self.mode.player[self.tick_var] = self.max_value
 
     def kill(self):
         self.stop()

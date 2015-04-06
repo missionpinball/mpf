@@ -9,7 +9,7 @@
 import logging
 
 from mpf.devices.target import Target, TargetGroup
-
+from mpf.system.config import Config
 
 class DropTarget(Target):
     """Represents a single drop target in a pinball machine.
@@ -95,7 +95,7 @@ class DropTargetBank(TargetGroup):
             self.config['reset_events'] = None
 
         if 'reset_coils' in self.config:
-            self.config['reset_coils'] = self.machine.string_to_list(
+            self.config['reset_coils'] = Config.string_to_list(
                                                 self.config['reset_coils'])
 
         # can't read the switches until the switch controller is set up
