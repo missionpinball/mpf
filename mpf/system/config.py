@@ -105,7 +105,7 @@ class Config(object):
                 if yaml_file in config['Config']:
                     config['Config'].remove(yaml_file)
                 if config['Config']:
-                    config = load_config_yaml(config=config,
+                    config = Config.load_config_yaml(config=config,
                                               yaml_file=config['Config'][0])
         except:
             log.critical("No configuration file found, or config file is "
@@ -220,8 +220,8 @@ class Config(object):
         Returns:
             The merged dictionaries.
         """
-        log.info("Dict Merge incoming A %s", a)
-        log.info("Dict Merge incoming B %s", b)
+        #log.info("Dict Merge incoming A %s", a)
+        #log.info("Dict Merge incoming B %s", b)
         if not isinstance(b, dict):
             return b
         result = deepcopy(a)
@@ -232,7 +232,7 @@ class Config(object):
                 result[k].extend(v)
             else:
                 result[k] = deepcopy(v)
-        log.info("Dict Merge result: %s", result)
+        #log.info("Dict Merge result: %s", result)
         return result
 
     @staticmethod
