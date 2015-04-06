@@ -14,6 +14,7 @@ import uuid
 import copy
 
 from mpf.system.assets import Asset, AssetManager
+from mpf.system.timing import Timing
 
 global import_success
 
@@ -624,7 +625,7 @@ class StreamTrack(object):
         if 'loops' not in settings:
             settings['loops'] = 1
 
-        pygame.mixer.music.play(settings['loops'])
+        pygame.mixer.music.play(settings['loops'], sound.config['start_time'])
 
     def stop(self, sound=None):
         """Stops the playing sound and resets the current position to the
@@ -775,8 +776,8 @@ class Sound(Asset):
         if 'loops' not in self.config:  # todo
             self.config['loops'] = None
 
-        if 'start_time' not in self.config:  # todo
-            self.config['start_time'] = None
+        self.config['start_time'] = Timing.string_to_secs(
+                self.config.get('start_time'))
 
         if 'end_time' not in self.config:  # todo
             self.config['end_time'] = None
