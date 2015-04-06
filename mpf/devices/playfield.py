@@ -414,6 +414,11 @@ class Playfield(BallDevice):
                        self.num_balls_known, self.num_balls_missing)
         self.ball_update_all_counts()  # is this necessary? todo
 
+    def eject(self, *args, **kwargs):
+        pass
+
+    def eject_all(self, *args, **kwargs):
+        pass
 
 # The MIT License (MIT)
 
