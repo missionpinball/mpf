@@ -374,7 +374,7 @@ class Mode(object):
         if self.stop_callback:
             self.stop_callback()
 
-        self.player = self.machine.game.player
+        self.player = None
 
     def add_mode_event_handler(self, event, handler, priority=1, **kwargs):
         """Registers an event handler which is automatically removed when this
