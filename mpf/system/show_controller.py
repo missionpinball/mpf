@@ -662,10 +662,10 @@ class ShowController(object):
             current_action = {'tocks': step['tocks'],
                               'lights': color_dic}
             show_actions.append(current_action)
-        show = None
+
         show = Show(machine=self.machine, config=None, file_name=None,
                     asset_manager=self.asset_manager, actions=show_actions)
-        show = show.play(repeat=repeat, tocks_per_sec=tps,
+        show.play(repeat=repeat, tocks_per_sec=tps,
                              priority=priority, blend=blend,
                              num_repeats=num_repeats, callback=callback)
 
