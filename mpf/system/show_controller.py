@@ -12,6 +12,7 @@ import time
 import os
 
 from mpf.system.assets import Asset, AssetManager
+from mpf.system.config import Config
 
 
 class ShowController(object):
@@ -933,7 +934,7 @@ class Show(Asset):
             if ('events' in show_actions[step_num] and
                     show_actions[step_num]['events']):
 
-                event_list = (self.machine.string_to_list(
+                event_list = (Config.machine.string_to_list(
                     show_actions[step_num]['events']))
 
                 step_actions['events'] = event_list
