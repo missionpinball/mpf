@@ -218,12 +218,12 @@ class SoundController(object):
         if 'start_events' not in config:
             config['start_events'] = list()
         else:
-            config['start_events'] = Config(config['start_events'])
+            config['start_events'] = Config.string_to_list(config['start_events'])
 
         if 'stop_events' not in config:
             config['stop_events'] = list()
         else:
-            config['stop_events'] = Config(config['stop_events'])
+            config['stop_events'] = Config.string_to_list(config['stop_events'])
 
         if 'duration' not in config or config['duration'] is None:
             config['duration'] = None
