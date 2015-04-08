@@ -1,0 +1,112 @@
+Mode:
+    start_events: ball_starting
+    priority: 100
+
+SlidePlayer:
+    player_score:
+      - type: Text
+        text: "%value"
+        number_grouping: true
+        v_pos: center
+      - type: Text
+        text: PLAYER %number%
+        v_pos: bottom
+        h_pos: left
+        font: small
+      - type: Text
+        text: BALL %ball%
+        v_pos: bottom
+        h_pos: right
+        font: small
+
+    mode_base_started:
+      - type: Text
+        text: "%score%"
+        number_grouping: true
+        double_zeros: true
+        v_pos: center
+      - type: Text
+        text: PLAYER %number%
+        v_pos: bottom
+        h_pos: left
+        font: small
+      - type: Text
+        text: BALL %ball%
+        v_pos: bottom
+        h_pos: right
+        font: small
+
+Scoring:
+    shot_left_orbit:
+        Score: 1000000
+    shot_left_ramp:
+        Score: 1000000
+    shot_side_ramp:
+        Score: 2000000
+    shot_right_ramp:
+        Score: 1000000
+    shot_right_orbit:
+        Score: 1500000
+    shot_center_ramp:
+        Score: 250000
+    sw_slingshot:
+        Score: 5170
+    sw_jet:
+        Score: 75020
+    sw_outlane:
+        Score: 24440
+    sw_inlane:
+        Score: 47650
+    targets_standups_lit_hit:
+        Score: 10000
+    targets_standups_unlit_hit:
+        Score: 50000
+    targets_standups_lit_complete:
+        Score: 100000
+    targets_rollover_lanes_lit_hit:
+        Score: 5000
+    targets_rollover_lanes_unlit_hit:
+        Score: 45000
+    targets_rollover_lanes_lit_complete:
+        Score: 375000
+    sw_small_car_crash:
+        Score: 25000
+    sw_big_car_crash:
+        Score: 11000
+    balldevice_lower_vuk_ball_enter:
+        Score: 475000
+    balldevice_upper_vuk_ball_enter:
+        Score: 110000
+    balldevice_retina_hole_ball_enter:
+        Score: 225000
+
+SoundPlayer:
+    waiting to plunge loop:
+        sound: waiting to plunge loop
+        start_events: mode_base_started
+        stop_events: sw_plunger
+        loops: -1
+    background music:
+        start_events: sw_plunger
+        stop_events: mode_base_stopping
+        sound: base background music
+        loops: -1
+        volume: 0.5
+    ramp 1 fx:
+        start_events: sw_ramp_1
+        sound: ramp 1
+    ramp 2 fx:
+        start_events: sw_ramp_2
+        sound: ramp 2
+    standup lit:
+        start_events: targets_standups_lit_hit
+        sound: standup hit lit
+    standup unlit:
+        start_events: targets_standups_unlit_hit
+        sound: standup hit unlit
+    little metal:
+        start_events: sw_slingshot
+        sound: little metal
+    jets:
+        start_events: sw_jet
+        sound: medium metal
