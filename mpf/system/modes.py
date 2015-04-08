@@ -268,7 +268,10 @@ class Mode(object):
         mode starts in the mode_start method which will be called automatically.
         """
 
-        if self.active:
+        if self.active or not self.machine.game.player:
+            # Only start the mode if it's not already started and there's an
+            # active player.
+            self.log.debug('Mode Start Aborted')
             return
 
         self.player = self.machine.game.player
@@ -281,14 +284,9 @@ class Mode(object):
         self.log.info('Mode Starting. Priority: %s', self.priority)
 
         # register mode stop events
-        self.log.info("1")
-        self.log.info(self.config['Mode'])
         if 'stop_events' in self.config['Mode']:
-            self.log.info("2")
             for event in self.config['Mode']['stop_events']:
-                self.log.info("3 %s", event)
                 self.add_mode_event_handler(event, self.stop)
-                self.log.info("4")
 
         self.start_callback = callback
 
