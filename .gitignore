@@ -1,2 +1,3 @@
 *.pyc
 /logs
+/media_controller/logs

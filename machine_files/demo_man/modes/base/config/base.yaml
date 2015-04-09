@@ -19,7 +19,7 @@ SlidePlayer:
         h_pos: right
         font: small
 
-    mode_base_started:
+    mode_base_start:
       - type: Text
         text: "%score%"
         number_grouping: true

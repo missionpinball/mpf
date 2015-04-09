@@ -1,13 +1,12 @@
-# Demo Man config file for MPF 0.16
+# Demo Man config file for MPF 0.17
 
 Plugins:
     - shots.ShotController
-    - keyboard.Keyboard
     - ball_search.BallSearch
     - logic_blocks.LogicBlocks
     - scoring.ScoreController
     - auditor.Auditor
-    - sound.SoundController
+    - bcp.BCP
 
 Machine:
     HZ: 30
@@ -1053,10 +1052,12 @@ Keyboard:
     switch: s_left_slingshot
 
 ShowPlayer:
-  machineflow_Attract_start:
+  mode_attract_start:
     - show: attract_dmd_loop
       repeat: yes
       tocks_per_sec: 1
+
+  machineflow_Attract_start:
     - show: multiball_sweep
       repeat: yes
       tocks_per_sec: 10
@@ -1094,9 +1095,11 @@ ShowPlayer:
       repeat: yes
       tocks_per_sec: 8
 
-  machineflow_Attract_stop:
+  mode_attract_stop:
     - show: attract_dmd_loop
       action: stop
+
+  machineflow_Attract_stop:
     - show: multiball_sweep
       action: stop
     - show: random_flashing

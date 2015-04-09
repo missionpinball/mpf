@@ -10,11 +10,11 @@ import pygame
 import pygame.locals
 import time
 
-from mpf.system.display import Decorator
+from core.display import Decorator
 
 
 class Blink(Decorator):
-    """Blink decorator which causes the element it's applied to to blink on and
+    """Blink decorator which causes the element its applied to to blink on and
     off.
 
     Args:
@@ -33,7 +33,7 @@ class Blink(Decorator):
         repeats: The number of remaining blinks this element will do. A value
             of -1 means it will repeat forever.
         dirty: Boolean which specifies whether this decorator needs to apply
-            an update to the parent_element in this frame.
+            an update to the parent_elemnet in this frame.
         current_state: 1 means this decorator is in the "on" phase of a blink,
             0 means it's in the "off" phase of a blink.
         next_action_time: Real-world time of when the next state change of this

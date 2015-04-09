@@ -12,7 +12,7 @@ import struct
 import pygame  # todo make it so this doesn't crash if pygame is not available
 import logging
 
-from mpf.system.display import MPFDisplay
+from core.display import MPFDisplay
 
 
 def load_dmd_file(file_name, palette=None, alpha_color=None,
@@ -293,17 +293,17 @@ class DMD(MPFDisplay):
             self.color_dmd = True
             self.depth = 24
 
-        if not self.color_dmd and self.use_physical:
-            # Get a pointer to the physical DMD controller
-            self.physical_dmd = self.machine.platform.configure_dmd()
-
-        if self.color_dmd and self.use_physical:
-            self.log.critical("You can't use a physical traditonal DMD as a "
-                              "color DMD. If you want an LCD screen to be a "
-                              "color DMD, then that is done with the Window "
-                              "Manager. The physical setting here needs to be "
-                              "'No' in this case.")
-            raise Exception()
+        #if not self.color_dmd and self.use_physical:
+        #    # Get a pointer to the physical DMD controller
+        #    self.physical_dmd = self.machine.platform.configure_dmd()
+        #
+        #if self.color_dmd and self.use_physical:
+        #    self.log.critical("You can't use a physical traditonal DMD as a "
+        #                      "color DMD. If you want an LCD screen to be a "
+        #                      "color DMD, then that is done with the Window "
+        #                      "Manager. The physical setting here needs to be "
+        #                      "'No' in this case.")
+        #    raise Exception()
 
     def _initialize(self):
         # Internal method which initialized the DMD. This is separate from
@@ -325,8 +325,8 @@ class DMD(MPFDisplay):
         # tick, or maintain a counter of the buffer so we can fill / flush it
         # with our clean image
 
-        if self.use_physical:
-            self.physical_dmd.update(self.current_slide.surface)
+        #if self.use_physical:
+        #    self.physical_dmd.update(self.current_slide.surface)
 
 # The MIT License (MIT)
 

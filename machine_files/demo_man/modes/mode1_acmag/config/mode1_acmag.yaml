@@ -25,7 +25,7 @@ SlidePlayer:
             off_secs: .3
 
 LightPlayer:
-    mode_mode1_acmag_started:
+    mode_mode1_acmag_start:
         lights: l_left_ramp_arrow
         script: flash
         tocks_per_sec: 4

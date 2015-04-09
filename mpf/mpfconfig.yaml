@@ -13,9 +13,7 @@ MPF:
         events.EventManager
         switch_controller.SwitchController
         ball_controller.BallController
-        language.Language
         modes.ModeController
-        display.DisplayController
         show_controller.ShowController
 
     device_modules:
@@ -38,34 +36,13 @@ MPF:
         score_reel.ScoreReelGroup
         flasher.Flasher
 
-    display_modules:
-        elements:
-            - text
-            - virtualdmd
-            - image
-            - animation
-            - shape
-            - movie
-        modules:
-            dmd.DMD
-        transitions:
-            move_out: move_out.MoveOut
-            move_in: move_in.MoveIn
-        decorators:
-            blink: blink.Blink
     paths:
         scriptlets: scriptlets
         shows: shows
         audits: audits/audits.yaml
-        sounds: sounds
         machine_files: machine_files
         config: config
-        fonts: fonts
-        images: images
-        animations: animations
-        movies: movies
         modes: modes
-    auto_load_shows: True
     default_pulse_ms: 10
     default_debounce_ms: 0  # fast only
 
@@ -235,3 +212,31 @@ AssetDefaults:
     Movies:
         default:
             load: preload
+
+BCP_connections:
+    local_display:
+        host: localhost
+        port: 5051
+
+BCP_events:
+    ball_started:
+        command: ball_start
+        params:
+            player: "%player"
+            ball: "%ball"
+    ball_ending:
+        command: ball_end
+
+    machineflow_Attract_start:
+        command: mode_start
+        params:
+            name: attract
+    machineflow_Attract_stop:
+        command: mode_stop
+        params:
+            name: attract
+
+    game_starting:
+        command: game_start
+    game_ended:
+        command: game_end

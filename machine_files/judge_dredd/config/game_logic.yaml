@@ -31,6 +31,7 @@ ShowPlayer:
       - show: random_blinking
         repeat: yes
         tocks_per_sec: 4
+    mode_attract_start:
       - show: attract_display
         repeat: yes
         tocks_per_sec: 1
@@ -50,6 +51,8 @@ ShowPlayer:
         action: stop
       - show: random_blinking
         action: stop
+    
+    mode_attract_stop:
       - show: attract_display
         action: stop
 

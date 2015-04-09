@@ -9,9 +9,9 @@
 import logging
 import time
 
-from mpf.system.display import DisplayElement
-import mpf.display.modules.dmd
-from mpf.system.assets import Asset
+from core.display import DisplayElement
+import display_modules.dmd
+from core.assets import Asset
 
 dmd_palette = [(0, 0, 0),
             (1, 0, 0),
@@ -50,7 +50,7 @@ class Animation(Asset):
         # load from image file
 
         if self.file_name.endswith('.dmd'):
-            self.surface_list = mpf.display.modules.dmd.load_dmd_file(
+            self.surface_list = display_modules.dmd.load_dmd_file(
                 self.file_name,
                 dmd_palette,
                 self.alpha_color)

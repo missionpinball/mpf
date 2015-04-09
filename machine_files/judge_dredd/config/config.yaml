@@ -5,12 +5,11 @@ Scriptlets:
 
 Plugins:
     - shots.ShotController
-    - keyboard.Keyboard
     - ball_search.BallSearch
     - logic_blocks.LogicBlocks
     - scoring.ScoreController
     - auditor.Auditor
-    - sound.SoundController
+    - bcp.BCP
 
 Config:
     - dmd.yaml

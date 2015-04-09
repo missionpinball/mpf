@@ -24,8 +24,9 @@ except:
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing, Timer
 from mpf.system.show_controller import ShowController
-from mpf.system.assets import AssetManager
-import mpf.display.transitions
+from core.assets import AssetManager
+import decorators
+import transitions
 
 
 class DisplayController(object):
@@ -77,19 +78,19 @@ class DisplayController(object):
 
         # Register for events
         if 'Window' in self.machine.config:
-            self.machine.events.add_handler('machine_init_phase_2',
+            self.machine.events.add_handler('mc_init_phase_2',
                                             self.machine.get_window,
                                             priority=1000)
 
-        self.machine.events.add_handler('machine_init_phase_1',
+        self.machine.events.add_handler('mc_init_phase_1',
                                         self._load_display_modules)
-        self.machine.events.add_handler('machine_init_phase_1',
+        self.machine.events.add_handler('mc_init_phase_1',
                                         self._load_display_element_modules)
-        self.machine.events.add_handler('machine_init_phase_1',
+        self.machine.events.add_handler('mc_init_phase_1',
                                         self._load_fonts)
-        self.machine.events.add_handler('machine_init_phase_1',
+        self.machine.events.add_handler('mc_init_phase_1',
                                         self._load_transitions)
-        self.machine.events.add_handler('machine_init_phase_1',
+        self.machine.events.add_handler('mc_init_phase_1',
                                         self._load_decorators)
         self.machine.events.add_handler('action_show_slide', self.show_slide)
 
@@ -108,11 +109,11 @@ class DisplayController(object):
 
         # todo this could be cleaned up a bit
 
-        self.machine.config['MPF']['display_modules']['modules'] = (
-            self.machine.config['MPF']['display_modules']['modules'].split(' '))
+        self.machine.config['MediaController']['display_modules']['modules'] = (
+            self.machine.config['MediaController']['display_modules']['modules'].split(' '))
 
-        for module in self.machine.config['MPF']['display_modules']['modules']:
-            i = __import__('mpf.display.modules.' + module.split('.')[0],
+        for module in self.machine.config['MediaController']['display_modules']['modules']:
+            i = __import__('display_modules.' + module.split('.')[0],
                            fromlist=[''])
 
             if i.is_used(self.machine.config):
@@ -125,9 +126,9 @@ class DisplayController(object):
         # creates asset managers for display assets that need them
 
         for module in (
-                self.machine.config['MPF']['display_modules']['elements']):
+                self.machine.config['MediaController']['display_modules']['elements']):
 
-            display_element_module = __import__('mpf.display.elements.' + module,
+            display_element_module = __import__('elements.' + module,
                                                 fromlist=[''])
             self.display_elements[module] = display_element_module
 
@@ -135,7 +136,7 @@ class DisplayController(object):
                 AssetManager(
                     machine=self.machine,
                     config_section=display_element_module.config_section,
-                    path_string=(self.machine.config['MPF']['paths']
+                    path_string=(self.machine.config['MediaController']['paths']
                                   [display_element_module.path_string]),
                     asset_class=display_element_module.asset_class,
                     asset_attribute=display_element_module.asset_attribute,
@@ -154,10 +155,10 @@ class DisplayController(object):
         # todo this could be cleaned up by adding module attributes which point
         # to the classes in the module
 
-        for k, v in (self.machine.config['MPF']['display_modules']
+        for k, v in (self.machine.config['MediaController']['display_modules']
                      ['transitions'].iteritems()):
-            __import__('mpf.display.transitions.' + v.split('.')[0])
-            module = eval('mpf.display.transitions.' + v.split('.')[0])
+            __import__('transitions.' + v.split('.')[0])
+            module = eval('transitions.' + v.split('.')[0])
             cls = v.split('.')[1]
             self.transitions[k] = (module, cls)
 
@@ -168,10 +169,10 @@ class DisplayController(object):
         # todo this could be cleaned up by adding module attributes which point
         # to the classes in the module
 
-        for k, v in (self.machine.config['MPF']['display_modules']
+        for k, v in (self.machine.config['MediaController']['display_modules']
                      ['decorators'].iteritems()):
-            __import__('mpf.display.decorators.' + v.split('.')[0])
-            module = eval('mpf.display.decorators.' + v.split('.')[0])
+            __import__('decorators.' + v.split('.')[0])
+            module = eval('decorators.' + v.split('.')[0])
             cls = v.split('.')[1]
             self.decorators[k] = (module, cls)
 
@@ -222,7 +223,6 @@ class DisplayController(object):
 
         for display_obj in self.displays.values():
             display_obj.remove_slides_by_key(removal_key)
-
 
 
 class MPFDisplay(object):
@@ -302,8 +302,7 @@ class MPFDisplay(object):
         self.machine.timing.add(
             Timer(self.update, frequency=1/float(self.config['fps'])))
 
-    def add_slide(self, name, priority=0, persist=False, removal_key=None,
-                  expire_ms=0):
+    def add_slide(self, name, priority=0, persist=False, removal_key=None):
         """Creates a new slide and adds it to the list of slides for this
         display.
 
@@ -314,10 +313,6 @@ class MPFDisplay(object):
                 priority of the display's current slide.
             presist: Boolean as to whether this slide should be saved when it
                 is no longer being shown.
-            removal_key: Unique identifier that can be used later to remove this
-                slide.
-            expire_ms: Integer of ms that will cause this slide to automatically
-                remove itself. The timer doesn't start until the slide is shown.
 
         Returns: Reference to the new slide object that was just created.
 
@@ -325,23 +320,11 @@ class MPFDisplay(object):
 
         self.slides[name] = Slide(mpfdisplay=self, name=name, priority=priority,
                                   persist=persist, machine=self.machine,
-                                  removal_key=removal_key,
-                                  expire_ms=expire_ms)
+                                  removal_key=removal_key)
 
         return self.slides[name]
 
     def remove_slides_by_key(self, removal_key):
-        """Removes any slides with the removal key passed.
-
-        Args:
-            removal_key: Key for the slides you want to remove.
-
-        Removing an active slide will automatically cause the next highest
-        priority slide to be shown.
-
-        You can safely call this method even if the removal key doesn't match
-        any slides.
-        """
 
         for slide_obj in self.slides.values():
             if slide_obj.removal_key == removal_key:
@@ -382,7 +365,8 @@ class MPFDisplay(object):
             if transition:
 
                 self.transition_dest_slide = new_slide
-                transition_class = eval('mpf.display.transitions.' + transition +
+
+                transition_class = eval('transitions.' + transition +
                                          '.' + self.transitions[transition][1])
                 self.transition_slide = transition_class(mpfdisplay=self,
                                                 machine=self.machine,
@@ -429,7 +413,8 @@ class MPFDisplay(object):
         If the new slide is not equal or higher priority than the current_slide,
         this method will do nothing.
 
-        You can safely pass the existing current_slide which will have no effect.
+        You can safely pass the existing current_slide which will have no
+        effect.
 
         This method will destroy the old slide unless that slide's `persist`
         attribute is True.
@@ -476,7 +461,6 @@ class MPFDisplay(object):
             self.current_slide = new_slide
             self.current_slide.update()
             self.current_slide.active = True
-            new_slide.schedule_removal()
 
     def show_current_active_slide(self):
 
@@ -494,8 +478,6 @@ class MPFDisplay(object):
                 current_slide = slide_obj
 
         return current_slide
-
-
 
     def update(self):
         """Updates the contents of the current slide. This method can safely
@@ -868,14 +850,10 @@ class Slide(object):
         height: Height of this slide, in pixels.
         depth: Integer value of the color depth, either 8 or 24.
         palette: The Pygame palette this slide uses. (8-bit only)
-        removal_key: Unique identifier that can be used later to remove this
-            slide.
-        expire_ms: Integer of ms that will cause this slide to automatically
-            remove itself. The timer doesn't start until the slide is shown.
     """
 
     def __init__(self, mpfdisplay, machine, name=None, priority=0,
-                 persist=False, removal_key=None, expire_ms=0):
+                 persist=False, removal_key=None):
 
         self.log = logging.getLogger('Slide')
 
@@ -885,7 +863,6 @@ class Slide(object):
         self.priority = priority
         self.persist = persist
         self.removal_key = removal_key
-        self.expire_ms = expire_ms
 
         self.elements = list()
         self.pending_elements = set()
@@ -1145,30 +1122,10 @@ class Slide(object):
                            self.priority,
                            self.mpfdisplay.current_slide.priority)
 
-        self.schedule_removal()
-
-    def schedule_removal(self, removal_time=None):
-        """Schedules this slide to automatically be removed.
-
-        Args:
-            removal_time: MPF time string of when this slide should be removed.
-                If no time is specified, the slide's existing removal time is
-                used. If the slide has no existing time, the slide will not be
-                removed.
-        """
-        if removal_time:
-            self.expire_ms = Timing.string_to_ms(removal_time)
-
-        if self.expire_ms:
-            self.machine.display.delay.add(name=self.name + '_expiration',
-                                           ms=self.expire_ms,
-                                           callback=self.remove)
-
     def remove(self):
-        """Removes the slide. If this slide is active, the next-highest priority
-        slide will automatically be shown.
-        """
+
         del self.mpfdisplay.slides[self.name]
+
         self.mpfdisplay.show_current_active_slide()
 
 
@@ -1377,17 +1334,17 @@ class FontManager(object):
             return
 
         full_path = os.path.join(self.machine.machine_path,
-                                 self.machine.config['MPF']['paths']['fonts'],
+                                 self.machine.config['MediaController']['paths']['fonts'],
                                  file_name)
         if os.path.isfile(full_path):
             return full_path
         else:
-            full_path = os.path.join('mpf/fonts', file_name)
+            full_path = os.path.join('fonts', file_name)
             if os.path.isfile(full_path):
                 return full_path
             else:
-                self.log.warning("Could not locate font file '%'. Default font"
-                                 "will be used instead.")
+                self.log.warning("Could not locate font file '%s'. Default font"
+                                 "will be used instead.", file_name)
 
 
 class SlideBuilder(object):
@@ -1413,8 +1370,9 @@ class SlideBuilder(object):
 
         # Tell the mode controller that it should look for SlidePlayer items in
         # modes.
-        self.machine.modes.register_start_method(self.process_config,
-                                                 'SlidePlayer')
+        #self.machine.modes.register_start_method(self.process_config,
+        #                                         'SlidePlayer')
+        # 329
 
     def process_config(self, config, mode=None, priority=0):
         self.log.debug("Processing SlideBuilder configuration. Base priority: "
@@ -1533,12 +1491,6 @@ class SlideBuilder(object):
             if 'name' not in element:
                 element['name'] = None
 
-            if 'expire' in element:
-                first_settings['expire'] = Timing.string_to_ms(
-                    element.pop('expire'))
-            else:
-                first_settings['expire'] = 0
-
             processed_settings.append(element)
 
         if 'slide_priority' not in first_settings:
@@ -1596,12 +1548,8 @@ class SlideBuilder(object):
             else:
                 slide_name = str(uuid.uuid4())
 
-        # Does this slide need to auto clear itself?
-        if 'expire' not in settings[0]:
-            settings[0]['expire']
-
-
         # Does this slide name already exist for this display?
+
         if slide_name in display.slides:  # Found existing slide
             slide = display.slides[slide_name]
             if 'clear_slide' in settings[0] and settings[0]['clear_slide']:
@@ -1612,8 +1560,7 @@ class SlideBuilder(object):
                 priority = settings[0]['slide_priority']
 
             slide = display.add_slide(name=slide_name, priority=priority,
-                                      removal_key=settings[0]['removal_key'],
-                                      expire_ms=settings[0]['expire'])
+                                      removal_key=settings[0]['removal_key'])
 
         # loop through and add the elements
         for element in settings:
@@ -1669,7 +1616,7 @@ class SlideBuilder(object):
 
             if type(settings['decorators']) is dict:  # We have settings
 
-                decorator_class = eval('mpf.display.decorators.' +
+                decorator_class = eval('decorators.' +
                     settings['decorators']['type'] + '.' +
                     self.machine.display.decorators[
                     settings['decorators']['type']][1])
@@ -1680,7 +1627,7 @@ class SlideBuilder(object):
             elif type(settings['decorators']) is list:
 
                 for decorator in settings['decorators']:
-                    decorator_class = eval('mpf.display.decorators.' +
+                    decorator_class = eval('decorators.' +
                         decorator['type'] + '.' +
                         self.machine.display.decorators[decorator['type']][1])
 

@@ -1,22 +1,22 @@
-"""Contains the MoveOut transition class."""
-# move_out.py
+"""Contains the MoveIn transition class."""
+# move_in.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/mpf
 
+
 import time
 import pygame
 
 
 from mpf.system.timing import Timing
-from mpf.system.display import Transition
+from core.display import Transition
 
 
-class MoveOut(Transition):
-    """Move Out Transition. The current slide moves out, revealing the new slide
-        underneath.
+class MoveIn(Transition):
+    """Move In Transition. The new slide moves in on top of the current slide.
 
     Args:
         mpfdisplay: The MPFDIsplay this transition is applying to.
@@ -24,8 +24,8 @@ class MoveOut(Transition):
         slide_a: Slide object representing the existing (current) slide.
         slide_b: Slide object representing the incoming (new) slide.
         duration: MPF time string of the how long this transition should take.
-        direction: String which defines which direction the current slide will
-            move out. Options are 'top', 'bottom', 'left' and 'right'
+        direction: String which defines which direction the new slide will come
+            in from. Options are 'top', 'bottom', 'left' and 'right'
         **kwargs: Not used but needed because there might be extra kwargs
             depending on how this transition is called.
 
@@ -37,52 +37,45 @@ class MoveOut(Transition):
 
         self.name = 'Slide_Transition_' + slide_a.name + '_' + slide_b.name
 
-        super(MoveOut, self).__init__(mpfdisplay, machine, slide_a, slide_b,
-                                      duration, **kwargs)
+        super(MoveIn, self).__init__(mpfdisplay, machine, slide_a, slide_b,
+                                     duration, **kwargs)
 
-        self.slide_a_end_y = 0
-        self.slide_a_end_x = 0
+        self.slide_b_start_x = 0
+        self.slide_b_start_y = 0
 
-        # calculate the ending slide_a position
+        # calculate the original slide_b position
         if direction == 'top':
-            self.slide_a_end_y = -self.slide_a.surface.get_height()
+            self.slide_b_start_y = -self.slide_a.surface.get_height()
         elif direction == 'bottom':
-            self.slide_a_end_y = self.slide_a.surface.get_height()
+            self.slide_b_start_y = self.slide_a.surface.get_height()
         elif direction == 'left':
-            self.slide_a_end_x = -self.slide_a.surface.get_width()
+            self.slide_b_start_x = -self.slide_a.surface.get_width()
         elif direction == 'right':
-            self.slide_a_end_x = self.slide_a.surface.get_width()
+            self.slide_b_start_x = self.slide_a.surface.get_width()
 
-        self.slide_a_current_x = 0
-        self.slide_a_current_y = 0
+        self.slide_b_current_x = self.slide_b_start_x
+        self.slide_b_current_y = self.slide_b_start_y
 
     def update(self):
         """Called each display loop to update the slide positions."""
 
-        super(MoveOut, self).update()
+        super(MoveIn, self).update()
 
         # figure out which direction is non-zero and move it towards zero
+        if self.slide_b_current_x:
+            self.slide_b_current_x = int(
+                self.slide_b_start_x * (1 - self.percent))
 
-        if ((self.slide_a_end_x > 0 and
-                self.slide_a_current_x < self.slide_a_end_x) or
-               (self.slide_a_end_x < 0 and
-                self.slide_a_current_x > self.slide_a_end_x)):
-            self.slide_a_current_x = int(
-                self.slide_a_end_x * (self.percent))
+        if self.slide_b_current_y:
+            self.slide_b_current_y = int(
+                self.slide_b_start_y * (1 - self.percent))
 
-        if ((self.slide_a_end_y > 0 and
-                self.slide_a_current_y < self.slide_a_end_y) or
-               (self.slide_a_end_y < 0 and
-                self.slide_a_current_y > self.slide_a_end_y)):
-            self.slide_a_current_y = int(
-                self.slide_a_end_y * (self.percent))
+        # blit slide_a as the background
+        self.surface.blit(self.slide_a.surface, (0, 0))
 
-        # blit slide_b as the background
-        self.surface.blit(self.slide_b.surface, (0, 0))
-
-        # blit slide_a on top of it
-        self.surface.blit(self.slide_a.surface,
-                          (self.slide_a_current_x, self.slide_a_current_y))
+        # blit slide_b on top of it
+        self.surface.blit(self.slide_b.surface,
+                          (self.slide_b_current_x, self.slide_b_current_y))
 
 # The MIT License (MIT)
 

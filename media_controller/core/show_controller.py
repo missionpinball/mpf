@@ -11,15 +11,15 @@ import yaml
 import time
 import os
 
-from mpf.system.assets import Asset, AssetManager
+from core.assets import Asset, AssetManager
 from mpf.system.config import Config
 
 class ShowController(object):
     """Manages all the shows in a pinball machine.
 
-    'Shows' are coordinated light, flasher, coil, event, audio, and DMD effects.
-    The ShowController handles priorities, restores, running and stopping
-    Shows, etc. There should be only one per machine.
+    'Shows' are coordinated display & event sequences. The ShowController
+    handles priorities, restores, running and stopping Shows, etc. There should
+    be only one per machine.
 
     Args:
         machine: Parent machine object.
@@ -28,20 +28,9 @@ class ShowController(object):
         self.log = logging.getLogger("ShowController")
         self.machine = machine
 
-        self.light_queue = []
-        self.led_queue = []
         self.event_queue = set()
-        self.coil_queue = set()
-
-        self.light_scripts = dict()
-
-        self.light_update_list = []
-        self.led_update_list = []
 
         self.running_shows = []
-
-        self.light_priorities = {}  # dictionary which tracks the priorities of
-        # whatever last set each light in the machine
 
         self.initialized = False  # We need to run some stuff once but we can't
         # do it here since this loads before our light machine items are created
@@ -83,22 +72,8 @@ class ShowController(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick)
-        self.machine.events.add_handler('machine_init_phase_4',
+        self.machine.events.add_handler('mc_init_phase_4',
                                         self._initialize)
-
-        # Tell the mode controller that it should look for ShowPlayer items in
-        # modes.
-        self.machine.modes.register_start_method(self.process_shows_from_config,
-                                                 'ShowPlayer')
-
-        # Tell the mode controller that it should look for LightPlayer items in
-        # modes.
-        self.machine.modes.register_start_method(self.process_lightplayer_from_config,
-                                                 'LightPlayer')
-
-        # Create scripts from config
-        self.machine.modes.register_start_method(self.create_scripts_from_config,
-                                                 'LightScipts')
 
         # Create the show AssetManager
         self.asset_manager = AssetManager(
@@ -113,21 +88,8 @@ class ShowController(object):
     def _initialize(self):
         # Sets up everything that has to be instantiated first
 
-        # We do this in case there are no lights configured, we still want MPF
-        # to work.
-        if hasattr(self.machine, 'lights'):
-            for light in self.machine.lights:
-                self.light_priorities[light.name] = 0
-            self.initialized = True
-
-        if 'LightScripts' in self.machine.config:
-            self.create_scripts_from_config(self.machine.config['LightScripts'])
-
         if 'ShowPlayer' in self.machine.config:
             self.process_shows_from_config(self.machine.config['ShowPlayer'])
-
-        if 'LightPlayer' in self.machine.config:
-            self.process_lightplayer_from_config(self.machine.config['LightPlayer'])
 
     def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
                   tocks_per_sec=30, start_location=None, num_repeats=0,
@@ -136,8 +98,9 @@ class ShowController(object):
         if 'show_priority' in kwargs:
             priority += kwargs['show_priority']
 
-        if show in self.machine.shows:
+        print self.machine.shows
 
+        if show in self.machine.shows:
             if 'stop_key' in kwargs:
                 self.machine.shows[show].stop_key = kwargs['stop_key']
             self.machine.shows[show].play(repeat=repeat, priority=priority,
@@ -163,12 +126,6 @@ class ShowController(object):
             if show.stop_key == key:
                 show.stop()
 
-    def create_scripts_from_config(self, config, mode=None, priority=0):
-        # config here is localized to LightScripts:
-
-        for k, v in config.iteritems():
-            self.light_scripts[k] = v
-
     def process_shows_from_config(self, config, mode=None, priority=0):
         self.log.debug("Processing ShowPlayer configuration. Priority: %s",
                        priority)
@@ -187,107 +144,6 @@ class ShowController(object):
                     key_list.append(self.add_show_player_show(event, entry))
 
         return self.unload_show_player_shows, (key_list, mode)
-
-    def process_lightplayer_from_config(self, config, mode=None, priority=0):
-        self.log.debug("Processing LightPlayer configuration. Priority: %s",
-                       priority)
-
-        key_list = list()
-
-        for event_name, actions in config.iteritems():
-            if type(actions) is not list:
-                actions = [actions]
-
-            for this_action in actions:
-
-                this_action['show'] = self.create_show_from_script(
-                    script=self.light_scripts[this_action['script']],
-                    lights = this_action.get('lights', None),
-                    leds = this_action.get('leds', None),
-                    light_tags = this_action.get('light_tags', None),
-                    led_tags = this_action.get('led_tags', None))
-
-                this_action['priority'] = priority
-                this_action['stop_key'] = mode
-                key_list.append(self.add_show_player_show(event_name,
-                                                          this_action))
-
-        return self.unload_show_player_shows, (key_list, mode)
-
-    def add_lightplayer_show(self, event, settings):
-
-        #if 'priority' in settings:
-        #    settings['show_priority'] = settings['priority']
-        #
-        #if 'hold' not in settings:
-        #    settings['hold'] = False
-
-        if 'action' in settings and settings['action'] == 'stop':
-            key = self.machine.events.add_handler(event, self.stop_script,
-                                                  **settings)
-
-        else:  # action = 'play'
-            key = self.machine.events.add_handler(event, self.run_script,
-                                                  **settings)
-
-        return key
-
-
-    def create_show_from_script(self, script, lights=None, leds=None,
-                                light_tags=None, led_tags=None):
-
-        if type(script) is not list:
-            script = [script]
-
-        action_list = list()
-
-        for step in script:
-
-            this_step = dict()
-            this_step['tocks'] = step['tocks']
-
-            if lights:
-                this_step['lights'] = dict()
-                if type(lights) is not list:
-                    lights = [lights]
-
-                for light in lights:
-                    this_step['lights'][light] = step['color']
-
-            if leds:
-                this_step['leds'] = dict()
-                if type(leds) is not list:
-                    leds = [leds]
-
-                for led in leds:
-                    this_step['leds'][led] = step['color']
-
-            if light_tags:
-
-                if 'lights' not in this_step:
-                    this_step['lights'] = dict()
-
-                if type(light_tags) is not list:
-                    light_tags = [light_tags]
-
-                for tag in light_tags:
-                    this_step['lights']['tag|' + tag] = step['color']
-
-            if led_tags:
-
-                if 'leds' not in this_step:
-                    this_step['leds'] = dict()
-
-                if type(led_tags) is not list:
-                    led_tags = [led_tags]
-
-                for tag in led_tags:
-                    this_step['leds']['tag|' + tag] = step['color']
-
-            action_list.append(this_step)
-
-        return Show(machine=self.machine, config=None, file_name=None,
-                    asset_manager=self.asset_manager, actions=action_list)
 
     def unload_show_player_shows(self, removal_tuple):
 
@@ -338,12 +194,10 @@ class ShowController(object):
             show.running = False
 
         if not show.hold:
-            self.restore_lower_lights(show=show)
+            for key in show.slide_removal_keys:
+                self.machine.display.remove_slides(key)
 
-            #for key in show.slide_removal_keys:
-            #    self.machine.display.remove_slides(key)
-
-            #show.slide_removal_keys = set()
+            show.slide_removal_keys = set()
 
         if reset:
             show.current_location = 0
@@ -361,45 +215,6 @@ class ShowController(object):
 
         if show.callback:
             show.callback()
-
-    def restore_lower_lights(self, show=None, priority=0):
-        """Restores the lights and LEDs from lower priority shows under this
-        show.
-
-        This is only useful if this show is stopped, because otherwise this show
-        will just immediately override these restored settings.
-
-        Args:
-            show: The show which will set the priority of the lights you want to
-                restore.
-            priority: An iteger value of the lights you want to restore.
-
-        In both cases it will only restore lights below the priority you pass,
-        skipping ones that are at the same value.
-        """
-
-        # set the priority we're working with.
-        if show:
-            priority = show.priority
-
-        # first force the restore of whatever the lights were manually set to
-        for light in show.light_states:
-            if light.cache['priority'] < priority:
-                light.restore(force=False)
-        for led in show.led_states:
-            if led.cache['priority'] < priority:
-                led.restore(force=False)
-
-        # todo check that the above is right. Dunno which way force should be.
-
-        # now see if there are other shows that have these lights in an active
-        # state
-        for other_show in self.running_shows:
-            if other_show.priority < priority:
-                other_show.resync()
-
-        # todo the above code could be better. It could only order the restores
-        # for the lights and leds that were in this show that just ended?
 
     def _tick(self):
         #Runs once per machine loop and services any light updates that are
@@ -435,18 +250,7 @@ class ShowController(object):
         for item in queue_copy:
             if item['action_time'] <= self.current_time:
                 # If the queue is for a fade, we ignore the current color
-                if item.get('fadeend', None):
-                    self._add_to_update_list({'lightname': item['lightname'],
-                                             'priority': item['priority'],
-                                             'blend': item.get('blend', None),
-                                             'fadeend': item.get('fadeend', None),
-                                             'dest_color': item.get('dest_color',
-                                                                    None)})
-                elif item.get('color', None):
-                    self._add_to_update_list({'lightname': item['lightname'],
-                                             'priority': item['priority'],
-                                             'color': item.get('color', None)})
-                elif item.get('playlist', None):
+                if item.get('playlist', None):
                     item['playlist']._advance()
 
                 # We have to check again since one of these advances could have
@@ -456,278 +260,18 @@ class ShowController(object):
 
         self._do_update()
 
-    def _add_to_light_update_list(self, light, brightness, priority, blend):
-        # Adds an update to our update list, with intelligence that if the list
-        # already contains an update for this lightname at the same or lower
-        # priority, it deletes that one since there's not sense sending a light
-        # command that will be immediately overridden by a higher one.
-        for item in self.light_update_list:
-            if item['light'] == light and item['priority'] <= priority:
-                self.light_update_list.remove(item)
-        self.light_update_list.append({'light': light,
-                                       'brightness': brightness,
-                                       'priority': priority,
-                                       'blend': blend})  # remove blend?
-
-    def _add_to_led_update_list(self, led, color, fade_ms, priority, blend):
-        # See comment from above method
-        for item in self.led_update_list:
-            if item['led'] == led and item['priority'] <= priority:
-                self.led_update_list.remove(item)
-        self.led_update_list.append({'led': led,
-                                     'color': color,
-                                     'fade_ms': fade_ms,
-                                     'priority': priority,
-                                     'blend': blend})
-
     def _add_to_event_queue(self, event):
         # Since events don't blend, this is easy
         self.event_queue.add(event)
 
-    def _add_to_coil_queue(self, coil, action):
-        # action is a tuple
-        # action[0] is string of instruction (pulse, pwm, etc.)
-        # action[1] is details for that instruction:
-            # for pulse, it's a power multiplier
-        self.coil_queue.add((coil, action))
-
     def _do_update(self):
-        if self.light_update_list:
-            self._update_lights()
-        if self.led_update_list:
-            self._update_leds()
-        if self.coil_queue:
-            self._fire_coils()
         if self.event_queue:
             self._fire_events()
-
-    def _fire_coils(self):
-        for coil in self.coil_queue:
-            if coil[1][0] == 'pulse':
-                coil[0].pulse(power=coil[1][1])
-        self.coil_queue = set()
 
     def _fire_events(self):
         for event in self.event_queue:
             self.machine.events.post(event)
         self.event_queue = set()
-
-    def _update_lights(self):
-        # Updates all the lights in the machine with whatever's in
-        # self.light_update_list. Updates with priority, so if the light is
-        # doing something at a higher priority, it won't have an effect
-
-        for item in self.light_update_list:
-            item['light'].on(brightness=item['brightness'],
-                             priority=item['priority'],
-                             cache=False)
-
-        self.light_update_list = []
-
-    def _update_leds(self):
-        # Updates the LEDs in the machine with whatever's in the update_list.
-
-        # The update_list is a list of dictionaries w/the following k/v pairs:
-        #   led
-        #   color
-        #   fade_ms
-        #   priority
-        #   blend
-
-        for item in self.led_update_list:
-            # Only perform the update if the priority is higher than whatever
-            # touched that led last.
-            if item['priority'] >= item['led'].state['priority']:
-
-                # Now we're doing the actual update.
-
-                item['led'].color(item['color'], item['fade_ms'],
-                                  item['priority'], item['blend'])
-
-        self.led_update_list = []
-
-    def run_script(self, lightname, script, priority=0, repeat=True,
-                   blend=False, tps=1000, num_repeats=0, callback=None, **kwargs):
-        """Runs a light script. Scripts are similar to Shows, except they
-        only apply to single lights and you can "attach" any script to any
-        light. Scripts are used anytime you want an light to have more than one
-        action. A simple example would be a flash an light. You would make a
-        script that turned it on (with your color), then off, repeating
-        forever.
-
-        Scripts could be more complex, like cycling through multiple colors,
-        blinking out secret messages in Morse code, etc.
-
-        Interally we actually just take a script and dynamically convert it
-        into a Show (that just happens to only be for a single light), so
-        we can have all the other Show-like features, including playback
-        speed, repeats, blends, callbacks, etc.
-
-        Args:
-            lightname: The name of the light for this script to control.
-            script: A list of dictionaries of script commands. (See below)
-                priority': The priority the light in this script should operate
-                at.
-            repeat (bool): Whether the script repeats (loops).
-            blend (bool): Whether the script should blend the light colors with
-                lower prioirty things. todo
-            tps (int): Tocks per second. todo
-            num_repeats (int): How many times this script should repeat before
-                ending. A value of 0 indicates it will repeat forever. Also
-                requires *repeat=True*. 'callback': A callback function that is
-                called when the script is stopped. todo update
-
-        Returns:
-            :class:`Show` object. Since running a script just sets up and
-            runs a regular Show, run_script returns the Show object.
-            In most cases you won't need this, but it's nice if you want to
-            know exactly which Show was created by this script so you can
-            stop it later. (See the examples below for usage.)
-
-        The script is a list of dictionaries, with each list item being a
-        sequential instruction, and the dictionary defining what you want to
-        do at that step. Dictionary items for each step are:
-
-            color: The hex color for the light
-            time: How long (in ms) you want the light to be at that color
-            fade: True/False. Whether you want that light to fade to the color
-                (using the *time* above), or whether you want it to switch to
-                that color instantly.
-
-        Example usage:
-
-        Here's how you would use the script to flash an RGB light between red
-        and off:
-
-            self.flash_red = []
-            self.flash_red.append({"color": "ff0000", "time": 100})
-            self.flash_red.append({"color": "000000", "time": 100})
-            self.machine.show_controller.run_script("light1", self.flash_red,
-                                                     "4", blend=True)
-
-        Once the "flash_red" script is defined as self.flash_red, you can use
-        it anytime for any light. So if you want to flash two lights red, it
-        would be:
-
-            self.machine.show_controller.run_script("light1", self.flash_red,
-                                                     "4", blend=True)
-            self.machine.show_controller.run_script("light2", self.flash_red,
-                                                     "4", blend=True)
-
-        Most likely you would define your scripts once when the game loads and
-        then call them as needed.
-
-        You can also make more complex scripts. For example, here's a script
-        which smoothly cycles an RGB light through all colors of the rainbow:
-
-            self.rainbow = []
-            self.rainbow.append({'color': 'ff0000', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': 'ff7700', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': 'ffcc00', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': '00ff00', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': '0000ff', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': 'ff00ff', 'time': 400, 'fade': True})
-
-        If you have single color lights, your *color* entries in your script
-        would only contain a single hex value for the intensity of that light.
-        For example, a script to flash a single-color light on-and-off (which
-        you can apply to any light):
-
-            self.flash = []
-            self.flash.append({"color": "ff", "time": 100})
-            self.flash.append({"color": "00", "time": 100})
-
-        If you'd like to save a reference to the :class:`Show` that's
-        created by this script, call it like this:
-
-            self.blah = self.machine.show_controller.run_script("light2",
-                                                        self.flash_red, "4")
-        """
-
-        # convert the steps from the script list that was passed into the
-        # format that's used in an Show
-
-        show_actions = []
-
-        for step in script:
-            if step.get('fade', None):
-                color = str(step['color']) + "-f" + str(step['tocks'])
-            else:
-                color = str(step['color'])
-
-            color_dic = {lightname: color}
-            current_action = {'tocks': step['tocks'],
-                              'lights': color_dic}
-            show_actions.append(current_action)
-
-        show = Show(machine=self.machine, config=None, file_name=None,
-                    asset_manager=self.asset_manager, actions=show_actions)
-        show.play(repeat=repeat, tocks_per_sec=tps,
-                             priority=priority, blend=blend,
-                             num_repeats=num_repeats, callback=callback)
-
-        self.active_scripts.append({'lightname': lightname,
-                                    'priority': priority,
-                                    'show': show})
-
-        return show
-
-    def stop_script(self, lightname=None, priority=0, show=None, **kwargs):
-        """Stops and remove an light script.
-
-        Rarameters:
-
-            'lightname': The light(s) with the script you want to stop.
-            'priority': The priority of the script(s) you want to stop.
-            'show': The show object associated with a script you want to stop.
-
-        In a practical sense there are several ways you can use this
-        stop_script method:
-
-            - Specify *lightname* only to stop (and remove) all active
-              Shows created from scripts for that lightname, regardless of
-              priority.
-            - Specify *priority* only to stop (and remove) all active
-              Shows based on scripts running at that priority for all
-              lights.
-            - Specify *lightname* and *priority* to stop (and remove) all
-              active Shows for that lightname at the specific priority you
-              passed.
-            - Specify a *show* object to stop and remove that specific show.
-            - If you call stop_script() without passing it anything, it will
-            remove all the lightsshows started from all scripts. This is useful
-            for things like end of ball or tilt where you just want to kill
-            everything.
-        """
-
-        # Make a copy of the active scripts object since we're potentially
-        # deleting from it while we're also iterating through it. We have to
-        # use list() here since if we just write a=b then they would both
-        # point to the same place and that wouldn't solve the problem.
-        active_scripts_copy = list(self.active_scripts)
-
-        if show:
-            for entry in active_scripts_copy:
-                if entry['show'] == show:
-                    self._end_show(show)
-        elif lightname and priority:
-            for entry in active_scripts_copy:
-                if (entry['lightname'] == lightname and
-                        entry['priority'] == priority):
-                    self._end_show(entry['show'])
-        elif lightname:
-            for entry in active_scripts_copy:
-                if entry['lightname'] == lightname:
-                    self._end_show(entry['show'])
-        elif priority:
-            for entry in active_scripts_copy:
-                if entry['priority'] == priority:
-                    self._end_show(entry['show'])
-        else:
-            for entry in active_scripts_copy:
-                self._end_show(entry['show'])
-
-        # todo callback?
 
     def load_shows(self, path):
         """Automatically loads all the light shows in a path.
@@ -755,51 +299,6 @@ class ShowController(object):
                     fullpath = os.path.join(root, f)
                     self.machine.shows[str(os.path.splitext(f)[0])] = \
                         Show(self.machine, fullpath)
-
-    @staticmethod
-    def hexstring_to_list(input_string, output_length=3):
-        """Takes a string input of hex numbers and returns a list of integers.
-
-        This always groups the hex string in twos, so an input of ffff00 will
-        be returned as [255, 255, 0]
-
-        Args:
-            input_string: A string of incoming hex colors, like ffff00.
-            output_length: Integer value of the number of items you'd like in
-                your returned list. Default is 3. This method will ignore
-                extra characters if the input_string is too long, and it will
-                pad with zeros if the input string is too short.
-
-        Returns:
-            List of integers, like [255, 255, 0]
-        """
-        output = []
-        input_string = str(input_string).zfill(output_length*2)
-
-        for i in xrange(0, len(input_string), 2):  # step through every 2 chars
-            output.append(int(input_string[i:i+2], 16))
-
-        return output[0:output_length:]
-
-    @staticmethod
-    def hexstring_to_int(inputstring, maxvalue=255):
-        """Takes a string input of hex numbers and an integer.
-
-        Args:
-            input_string: A string of incoming hex colors, like ffff00.
-            maxvalue: Integer of the max value you'd like to return. Default is
-                255. (This is the real value of why this method exists.)
-
-        Returns:
-            Integer representation of the hex string.
-        """
-
-        return_int = int(inputstring, 16)
-
-        if return_int > maxvalue:
-            return_int = maxvalue
-
-        return return_int
 
 
 class Show(Asset):
@@ -880,51 +379,6 @@ class Show(Asset):
                 show_actions[-1]['tocks'] += step_actions['tocks']
                 continue
 
-            # Lights
-            if ('lights' in show_actions[step_num] and
-                    show_actions[step_num]['lights']):
-
-                light_actions = dict()
-
-                for light in show_actions[step_num]['lights']:
-
-                    if 'tag|' in light:
-                        tag = light.split('tag|')[1]
-
-                        light_list = self.machine.lights.items_tagged(tag)
-                    else:
-                        light_list = [light]
-
-                    # convert light strings to objects
-                    light_object_list = list()
-
-                    for i in light_list:
-                        try:
-                            light_object_list.append(self.machine.lights[i])
-                        except:
-                            # this light name is invalid
-                            self.asset_manager.log.warning("Found invalid "
-                                "light name '%s' in show. Skipping...", light)
-
-                    value = show_actions[step_num]['lights'][light]
-
-                    # convert / ensure lights are single ints
-                    if type(value) is str:
-                        value = ShowController.hexstring_to_int(
-                            show_actions[step_num]['lights'][light])
-
-                    if type(value) is int and value > 255:
-                        value = 255
-
-                    for light_object in light_object_list:
-                        light_actions[light_object] = value
-
-                        # make sure this light is in self.light_states
-                        if light_object not in self.light_states:
-                            self.light_states[light_object] = 0
-
-                step_actions['lights'] = light_actions
-
             # Events
             # make sure events is a list of strings
             if ('events' in show_actions[step_num] and
@@ -935,114 +389,13 @@ class Show(Asset):
 
                 step_actions['events'] = event_list
 
-            #Coils
-            if ('coils' in show_actions[step_num] and
-                    show_actions[step_num]['coils']):
+            # SlidePlayer
+            if ('display' in show_actions[step_num] and
+                    show_actions[step_num]['display']):
 
-                coil_actions = dict()
-
-                for coil in show_actions[step_num]['coils']:
-
-                    try:
-                        this_coil = self.machine.coils[coil]
-                    except:
-                        # this coil name is invalid
-                        self.asset_manager.log.warning("WARNING: Found invalid coil name"
-                                         " '%s' in show. Skipping...",
-                                         coil)
-                        break
-
-                    value = show_actions[step_num]['coils'][coil]
-
-                    # process the value into a tuple which will be
-                    # value[0] = string of action type (pulse, pwm, etc)
-                    # value[1] = int / float of pulse value
-
-                    # split the value on '-p' to look for a power setting
-                    value = value.split('-p')
-
-                    # if there's no power setting, append 100
-                    if len(value) == 1:
-                        value.append(100)
-
-                    # convert the 0-100 value to 0.0-1.0 float
-                    value[1] = float(value[1]) / 100.0
-
-                    # convert value list into tuple
-                    value = (value[0], value[1])
-
-                    coil_actions[this_coil] = value
-
-                step_actions['coils'] = coil_actions
-
-            # LEDs
-            if ('leds' in show_actions[step_num] and
-                    show_actions[step_num]['leds']):
-
-                led_actions = dict()
-
-                for led in show_actions[step_num]['leds']:
-
-                    if 'tag|' in led:
-                        tag = led.split('tag|')[1]
-
-                        led_list = self.machine.leds.items_tagged(tag)
-                    else:
-                        led_list = [led]
-
-                    # convert led strings to objects
-                    led_object_list = list()
-
-                    for i in led_list:
-                        try:
-                            led_object_list.append(self.machine.leds[i])
-                        except:
-                            # this light name is invalid
-                            self.asset_manager.log.warning("Found invalid "
-                                "led name '%s' in show. Skipping...", led)
-
-                    value = show_actions[step_num]['leds'][led]
-
-                    # ensure led is list is of 4 ints: [r, g, b, fade_tocks]
-                    if type(value) is list:
-                        # ensure our list is exactly 4 items
-                        if len(value) < 4:
-                            # pad to 4 with zeros
-                            value.extend([0] * (4 - len(value)))
-                        elif len(value) > 4:
-                            value = value[0:4]
-
-                    fade = 0
-
-                    if type(value) is str:
-                        if '-f' in value:
-                            fade = value.split('-f')
-
-                    # convert our color of hexes to a list of ints
-                    value = ShowController.hexstring_to_list(value)
-                    value.append(fade)
-
-                    for led_object in led_object_list:
-                        led_actions[led_object] = value
-
-                        # make sure this led is in self.led_states
-                        if led_object not in self.led_states:
-                            self.led_states[led_object] = {
-                                'current_color': [0, 0, 0],
-                                'destination_color': [0, 0, 0],
-                                'start_color': [0, 0, 0],
-                                'fade_start': 0,
-                                'fade_end': 0}
-
-                step_actions['leds'] = led_actions
-
-            ## SlidePlayer
-            #if ('display' in show_actions[step_num] and
-            #        show_actions[step_num]['display']):
-            #
-            #    step_actions['display'] = (
-            #        self.machine.display.slidebuilder.preprocess_settings(
-            #        show_actions[step_num]['display']))
+                step_actions['display'] = (
+                    self.machine.display.slidebuilder.preprocess_settings(
+                    show_actions[step_num]['display']))
 
             self.show_actions.append(step_actions)
 
@@ -1233,66 +586,18 @@ class Show(Asset):
         for item_type, item_dict in (self.show_actions[self.current_location].
                                      iteritems()):
 
-            if item_type == 'lights':
-
-                for light_obj, brightness in item_dict.iteritems():
-
-                    self.machine.show_controller._add_to_light_update_list(
-                        light=light_obj,
-                        brightness=brightness,
-                        priority=self.priority,
-                        blend=self.blend)
-
-                    # update the current state
-                    self.light_states[light_obj] = brightness
-
-            elif item_type == 'leds':
-
-                current_time = time.time()
-
-                for led_obj, led_dict in item_dict.iteritems():
-
-                    self.machine.show_controller._add_to_led_update_list(
-                        led=led_obj,
-                        color=[led_dict[0], led_dict[1], led_dict[2]],
-                        fade_ms=led_dict[3] * self.tocks_per_sec,
-                        priority=self.priority,
-                        blend=self.blend)
-
-                    # update the current state
-
-                    # grab the old current color
-                    prev_color = [led_dict[0], led_dict[1], led_dict[2]]
-
-                    self.led_states[led_obj] = {
-                            'current_color': prev_color,
-                            # todo need to calculate this for a restore
-                            'destination_color': [led_dict[0], led_dict[1],
-                                                  led_dict[2]],
-                            'start_color': prev_color,
-                            'fade_start': current_time,
-                            'fade_end': current_time + (led_dict[3] *
-                                                        self.tocks_per_sec)}
-
-            elif item_type == 'events':
+            if item_type == 'events':
 
                 for event in item_dict:  # item_dict is actually a list here
                     self.machine.show_controller._add_to_event_queue(event)
 
-            elif item_type == 'coils':
+            elif item_type == 'display':
 
-                for coil_obj, coil_action in item_dict.iteritems():
-                    self.machine.show_controller._add_to_coil_queue(
-                        coil = coil_obj,
-                        action = coil_action)
+                self.last_slide = (
+                    self.machine.display.slidebuilder.build_slide(item_dict,
+                    priority=self.priority))
 
-            #elif item_type == 'display':
-            #
-            #    self.last_slide = (
-            #        self.machine.display.slidebuilder.build_slide(item_dict,
-            #        priority=self.priority))
-            #
-            #    self.slide_removal_keys.add(self.last_slide.removal_key)
+                self.slide_removal_keys.add(self.last_slide.removal_key)
 
                 # todo make it so they don't all have the same name?
 
@@ -1325,28 +630,6 @@ class Show(Asset):
         # loop, then let's just break out of the loop
         if action_loop_count == self.total_locations:
             return
-
-    def resync(self):
-        """Causes this show to do a one-time update to resync all the LEDs and
-        lights in the show with where they should be now. This is used when a
-        higher priority show stops so lower priority shows can put all the
-        lights back to how they want them.
-        """
-
-        for light_obj, brightness in self.light_states.iteritems():
-            self.machine.show_controller._add_to_light_update_list(
-                light=light_obj,
-                brightness=brightness,
-                priority=self.priority,
-                blend=self.blend)
-
-        for led_obj, led_dict in self.led_states.iteritems():
-            self.machine.show_controller._add_to_led_update_list(
-                led=led_obj,
-                color=led_dict['current_color'],
-                fade_ms=0,
-                priority=self.priority,
-                blend=self.blend)
 
 
 class Playlist(object):

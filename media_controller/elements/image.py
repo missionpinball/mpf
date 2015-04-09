@@ -9,9 +9,9 @@
 import pygame
 import pygame.locals
 
-from mpf.system.display import DisplayElement
-from mpf.system.assets import Asset
-import mpf.display.modules.dmd
+from core.display import DisplayElement
+import display_modules.dmd
+from core.assets import Asset
 
 dmd_palette = [(0, 0, 0),
                     (1, 0, 0),
@@ -67,7 +67,7 @@ class Image(Asset):
     def _load(self, callback):
 
         if self.file_name.endswith('.dmd'):
-            self.image_surface = mpf.display.modules.dmd.load_dmd_file(
+            self.image_surface = mpf.display_modules.dmd.load_dmd_file(
                 file_name=self.file_name,
                 palette=dmd_palette,
                 alpha_color=self.alpha_color)
@@ -87,7 +87,7 @@ class Image(Asset):
             if self.target == 'dmd':
                 # This image will be shown on the DMD, so we need to convert its
                 # surface to the DMD format
-                self.image_surface = mpf.display.modules.dmd.surface_to_dmd(
+                self.image_surface = display_modules.dmd.surface_to_dmd(
                     surface=self.image_surface,
                     alpha_color=self.alpha_color)
                 # todo add shades here if we ever support values other than 16

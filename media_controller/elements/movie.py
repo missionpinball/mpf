@@ -9,8 +9,8 @@
 import pygame
 import pygame.locals
 
-from mpf.system.display import DisplayElement
-from mpf.system.assets import Asset
+from core.display import DisplayElement
+from core.assets import Asset
 
 
 class Movie(Asset):
