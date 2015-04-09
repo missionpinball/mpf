@@ -88,7 +88,7 @@ SoundPlayer:
         loops: -1
     background music:
         start_events: sw_plunger
-        stop_events: mode_base_stopping
+        stop_events: mode_base_stopping, balldevice_elevator_ball_enter
         sound: base background music
         loops: -1
         volume: 0.5

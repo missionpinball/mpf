@@ -1,4 +1,4 @@
-# Demo Man config file for MPF 0.15.2
+# Demo Man config file for MPF 0.16
 
 Plugins:
     - shots.ShotController
@@ -29,6 +29,8 @@ Game:
 
 Modes:
   - base
+  - claw_lit_for_major_mode
+  - mode1_acmag
 
 Scriptlets:
     attract.Attract
@@ -363,7 +365,7 @@ Switches:
     s_claw_start_acmag:
         number: s85
         label:
-        tags: playfield_active
+        tags: playfield_active, acmag
     s_upper_left_flipper_gate:
         number: s86
         label:
@@ -661,6 +663,8 @@ Coils:
         number: c05
         label:
         tags:
+        holdPatter: 2-9
+        pulse_ms: 30
     #name:
     #    number: c06
     #    label:
@@ -883,18 +887,16 @@ BallDevices:
     eject_coil: c_top_popper
 
   elevator:
-    ball_switches: s_elevator_index
-
-  #claw:
+    ball_switches: s_elevator_hold
 
 Diverters:
   diverter:
     activation_coil: c_diverter_power
-    type: pwm
+    type: hold
     activation_time: 3s
     activation_switches: s_right_ramp_enter
-    deactivation_switches: s_elevator_index
-    #targets_when_active: claw
+    deactivation_switches: s_elevator_hold
+    targets_when_active: elevator
 
 Autofire Coils:
   left_slingshot:
@@ -1145,3 +1147,16 @@ Shots:
         Time: 3s
     center_ramp:
         Switch: s_center_ramp
+
+LightScripts:
+    flash:
+        - tocks: 1
+          color: ff
+        - tocks: 1
+          color: 0
+    on:
+        - tocks: 1
+          color: ff
+    off:
+        - tocks: 1
+          color: 0

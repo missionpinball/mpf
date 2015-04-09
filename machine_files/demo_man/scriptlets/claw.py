@@ -11,6 +11,8 @@ class Claw(Scriptlet):
         if self.machine.switch_controller.is_active('s_elevator_hold'):
             self.get_ball()
 
+        self.machine.events.add_handler('light_claw', self.light_claw)
+
     def enable(self):
         self.machine.switch_controller.add_switch_handler(
             's_flipper_lower_left', self.move_left)
@@ -102,3 +104,7 @@ class Claw(Scriptlet):
 
     def stop_elevator(self):
         self.machine.coils['c_elevator_motor'].disable()
+
+    def light_claw(self):
+        #self.machine.balldevices['elevator'].request_ball()
+        self.machine.diverters['diverter'].enable()
