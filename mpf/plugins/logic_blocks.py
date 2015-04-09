@@ -275,13 +275,13 @@ class Counter(LogicBlock):
                         starting_count: int|0
                       '''
 
-        self.log.info('```config_spec %s', config_spec)
-        self.log.info('```source %s', config)
-        self.log.info('```target %s', self.config)
+        #self.log.info('```config_spec %s', config_spec)
+        #self.log.info('```source %s', config)
+        #self.log.info('```target %s', self.config)
 
         self.config = Config.process_config(config_spec=config_spec,
                                             source=self.config)
-        self.log.info('```post processed %s', self.config)
+        #self.log.info('```post processed %s', self.config)
 
         if 'event_when_hit' not in self.config:
             self.config['event_when_hit'] = ('counter_' + self.name +
