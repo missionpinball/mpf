@@ -476,6 +476,7 @@ class MPFDisplay(object):
             self.current_slide = new_slide
             self.current_slide.update()
             self.current_slide.active = True
+            new_slide.schedule_removal()
 
     def show_current_active_slide(self):
 
@@ -1144,15 +1145,30 @@ class Slide(object):
                            self.priority,
                            self.mpfdisplay.current_slide.priority)
 
+        self.schedule_removal()
+
+    def schedule_removal(self, removal_time=None):
+        """Schedules this slide to automatically be removed.
+
+        Args:
+            removal_time: MPF time string of when this slide should be removed.
+                If no time is specified, the slide's existing removal time is
+                used. If the slide has no existing time, the slide will not be
+                removed.
+        """
+        if removal_time:
+            self.expire_ms = Timing.string_to_ms(removal_time)
+
         if self.expire_ms:
             self.machine.display.delay.add(name=self.name + '_expiration',
                                            ms=self.expire_ms,
                                            callback=self.remove)
 
     def remove(self):
-
+        """Removes the slide. If this slide is active, the next-highest priority
+        slide will automatically be shown.
+        """
         del self.mpfdisplay.slides[self.name]
-
         self.mpfdisplay.show_current_active_slide()
 
 
