@@ -40,7 +40,6 @@ SlidePlayer:
       - type: text
         text: PLAYER %num ADDED
         expire: 2s
-        priority: 1
 
 Scoring:
     shot_left_orbit:

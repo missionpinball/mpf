@@ -29,18 +29,18 @@ class LogicBlocks(object):
 
         # Tell the mode controller that it should look for LogicBlock items in
         # modes.
-        self.machine.modes.register_start_method(self.process_config,
+        self.machine.modes.register_start_method(self._process_config,
                                                  'LogicBlocks')
 
         # Process game-wide (i.e. not in modes) logic blocks
         self.machine.events.add_handler('player_add_success',
-                                        self.create_player_logic_blocks)
+                                        self._create_player_logic_blocks)
         self.machine.events.add_handler('player_turn_start',
-                                        self.player_turn_start)
+                                        self._player_turn_start)
         self.machine.events.add_handler('player_turn_stop',
-                                        self.player_turn_stop)
+                                        self._player_turn_stop)
 
-    def create_player_logic_blocks(self, player, **kwargs):
+    def _create_player_logic_blocks(self, player, **kwargs):
         """Creates the game-wide logic blocks for this player.
 
         Args:
@@ -54,42 +54,40 @@ class LogicBlocks(object):
         player.logic_blocks = set()
 
         if 'LogicBlocks' in self.machine.config:
-            self.create_logic_blocks(config=self.machine.config['LogicBlocks'],
+            self._create_logic_blocks(config=self.machine.config['LogicBlocks'],
                                      player=player,
                                      enable=False)
 
-    def player_turn_start(self, player):
+    def _player_turn_start(self, player):
 
         self.log.debug("Processing player_turn_start")
 
         for block in player.logic_blocks:
-            block.create_control_events()
+            block._create_control_events()
 
-    def player_turn_stop(self, player):
+    def _player_turn_stop(self, player):
 
-        self.log.debug("Processing player_turn_stop")
         self.log.debug("Player logic blocks: %s", player.logic_blocks)
 
         for block in player.logic_blocks.copy():
             # copy since each logic block will remove itself from the list
             # we're iterating over
-            block.player_turn_stop()
+            block._player_turn_stop()
 
-    def process_config(self, config, priority=0, mode=None, enable=True):
+    def _process_config(self, config, priority=0, mode=None, enable=True):
         self.log.debug("Processing LogicBlock configuration.")
 
-        blocks_added = self.create_logic_blocks(config=config,
+        blocks_added = self._create_logic_blocks(config=config,
                                                 player=self.machine.game.player,
                                                 enable=enable)
 
         if mode:
             for block in blocks_added:
-                block.create_control_events()
+                block._create_control_events()
 
+        return self._unload_logic_blocks, blocks_added
 
-        return self.unload_logic_blocks, blocks_added
-
-    def create_logic_blocks(self, config, player, enable=True):
+    def _create_logic_blocks(self, config, player, enable=True):
         # config is localized for LogicBlock
 
         blocks_added = set()
@@ -122,8 +120,7 @@ class LogicBlocks(object):
 
         return blocks_added
 
-    def unload_logic_blocks(self, block_list):
-
+    def _unload_logic_blocks(self, block_list):
         self.log.debug("Unloading Logic Blocks")
 
         for block in block_list:
@@ -138,7 +135,6 @@ class LogicBlock(object):
         self.machine = machine
         self.name = name
         self.player = player
-        #self.config = config
         self.handler_keys = set()
 
         self.enabled = False
@@ -168,11 +164,9 @@ class LogicBlock(object):
     def __str__(self):
         return self.name
 
-    def create_control_events(self):
+    def _create_control_events(self):
 
         # todo need to run this when a mode start creates a logic block
-
-        self.log.debug("in create_control_events")
 
         # If this logic block is enabled, keep it enabled
         # If it's not enabled, enable it if there are no other enable events
@@ -192,18 +186,18 @@ class LogicBlock(object):
             self.handler_keys.add(
                 self.machine.events.add_handler(event, self.reset))
 
-    def remove_all_event_handlers(self):
+    def _remove_all_event_handlers(self):
         for key in self.handler_keys:
             self.machine.events.remove_handler_by_key(key)
 
         self.handler_keys = set()
 
-    def player_turn_stop(self):
-        self.remove_all_event_handlers()
+    def _player_turn_stop(self):
+        self._remove_all_event_handlers()
 
     def unload(self):
         self.disable()
-        self.remove_all_event_handlers()
+        self._remove_all_event_handlers()
         self.machine.game.player.logic_blocks.remove(self)
 
     def enable(self, **kwargs):
@@ -229,6 +223,10 @@ class LogicBlock(object):
         self.log.debug("Resetting")
 
     def complete(self):
+        """Marks this logic block as complete. Posts the 'events_when_complete'
+        events and optionally restarts this logic block or disables it,
+        depending on this block's configuration settings.
+        """
         self.log.debug("Complete")
         if self.config['events_when_complete']:
             for event in self.config['events_when_complete']:
@@ -275,13 +273,8 @@ class Counter(LogicBlock):
                         starting_count: int|0
                       '''
 
-        #self.log.info('```config_spec %s', config_spec)
-        #self.log.info('```source %s', config)
-        #self.log.info('```target %s', self.config)
-
         self.config = Config.process_config(config_spec=config_spec,
                                             source=self.config)
-        #self.log.info('```post processed %s', self.config)
 
         if 'event_when_hit' not in self.config:
             self.config['event_when_hit'] = ('counter_' + self.name +
@@ -402,19 +395,27 @@ class Accrual(LogicBlock):
         """Resets the hit progress towards completion"""
         super(Accrual, self).reset(**kwargs)
 
-        self.player[self.config['player_variable']] = [False] * len(self.config['events'])
-        self.log.debug("Status: %s", self.player[self.config['player_variable']])
+        self.player[self.config['player_variable']] = (
+            [False] * len(self.config['events']))
+        self.log.debug("Status: %s",
+                       self.player[self.config['player_variable']])
 
     def hit(self, step, **kwargs):
         """Increases the hit progress towards completion. Automatically called
         when one of the `count_events` is posted. Can also manually be
         called.
+
+        Args:
+            step: Integer of the step number (0 indexed) that was just hit.
+
         """
         self.log.debug("Processing hit for step: %s", step)
         self.player[self.config['player_variable']][step] = True
-        self.log.debug("Status: %s", self.player[self.config['player_variable']])
+        self.log.debug("Status: %s",
+                       self.player[self.config['player_variable']])
 
-        if self.player[self.config['player_variable']].count(True) == len(self.player[self.config['player_variable']]):
+        if (self.player[self.config['player_variable']].count(True) ==
+                len(self.player[self.config['player_variable']])):
             self.complete()
 
 
@@ -444,6 +445,10 @@ class Sequence(LogicBlock):
     def enable(self, step=0, **kwargs):
         """Enables this Sequence. Automatically called when one of the
         'enable_events' is posted. Can also manually be called.
+
+        Args:
+            step: Step number this logic block will be at when it's enabled.
+                Default is 0.
         """
         self.log.debug("Enabling")
         if step:

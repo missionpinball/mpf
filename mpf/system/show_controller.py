@@ -237,9 +237,6 @@ class ShowController(object):
     def create_show_from_script(self, script, lights=None, leds=None,
                                 light_tags=None, led_tags=None):
 
-        print "create show from script"
-        print "script", script
-
         if type(script) is not list:
             script = [script]
 

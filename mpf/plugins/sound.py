@@ -320,15 +320,11 @@ class SoundController(object):
 
         # Loop through all the sound events for this event
 
-        print "***** sound callback *****"
-
         if event_name not in self.sound_events:
             self.log.critical("got sound callback but did not find event?")
             raise Exception()
 
         sound_list = self.sound_events[event_name]
-
-        print "sound list", sound_list
 
         for sound in sound_list:
 
@@ -732,7 +728,7 @@ class Channel(object):
                   sound.config['volume'] *
                   self.machine_sound.volume)
 
-        self.log.info("Playing Sound: %s Vol: %s", sound.file_name, volume)
+        self.log.debug("Playing Sound: %s Vol: %s", sound.file_name, volume)
 
         # set the sound's current volume
         sound.sound_object.set_volume(volume)

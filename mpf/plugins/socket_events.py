@@ -71,7 +71,7 @@ class SocketClient(object):
 
     def stop_client(self):
         """Stops and shuts down the socket client."""
-        self.log.info("Stopping socket client")
+        self.log.debug("Stopping socket client")
         self.client_socket.close()
         self.client_socket = None
 
@@ -103,7 +103,7 @@ class SocketClient(object):
             message: String of the message to send.
         """
 
-        self.log.info("SOCKET SENDING: %s", message)
+        self.log.debug("SOCKET SENDING: %s", message)
 
         prepped_message = message + '\n'
 
