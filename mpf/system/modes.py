@@ -591,6 +591,11 @@ class ModeTimer(object):
         self.machine.events.post('timer_' + self.name + '_complete')
 
     def timer_tick(self):
+
+        if not self.running:
+            self.remove_timer()
+            return
+
         if self.direction == 'down':
             self.mode.player[self.tick_var] -= 1
         else:
@@ -629,7 +634,8 @@ class ModeTimer(object):
         self.check_for_done()
 
     def check_for_done(self):
-        if self.direction == 'up' and self.mode.player[self.tick_var] >= self.end_value:
+        if (self.direction == 'up' and
+                self.mode.player[self.tick_var] >= self.end_value):
             self.timer_complete()
             return True
         elif self.mode.player[self.tick_var] <= self.end_value:
