@@ -271,7 +271,7 @@ class Config(object):
         final_list = list()
 
         if type(incoming_string) is str:
-            final_list = Config.string_to_list(incoming_string)
+            final_list = [Config.string_to_list(incoming_string)]
 
         else:
             for item in incoming_string:
