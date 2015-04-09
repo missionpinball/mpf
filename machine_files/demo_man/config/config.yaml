@@ -10,7 +10,7 @@ Plugins:
     - sound.SoundController
 
 Machine:
-    HZ: 60
+    HZ: 30
     Balls Installed: 6
     Min Balls: 1
     Max Balls: 6
