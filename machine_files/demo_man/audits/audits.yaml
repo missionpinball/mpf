@@ -1,7 +1,7 @@
 Events:
   ball_search_begin_phase1: 0
   game_ended: 22
-  game_started: 96
+  game_started: 102
 Player:
   score:
     average: 7756563

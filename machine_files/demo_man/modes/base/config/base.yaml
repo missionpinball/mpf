@@ -36,6 +36,12 @@ SlidePlayer:
         h_pos: right
         font: small
 
+    player_add_success:
+      - type: text
+        text: PLAYER %num ADDED
+        expire: 2s
+        priority: 1
+
 Scoring:
     shot_left_orbit:
         Score: 1000000
