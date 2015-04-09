@@ -302,7 +302,8 @@ class MPFDisplay(object):
         self.machine.timing.add(
             Timer(self.update, frequency=1/float(self.config['fps'])))
 
-    def add_slide(self, name, priority=0, persist=False, removal_key=None):
+    def add_slide(self, name, priority=0, persist=False, removal_key=None,
+                  expire_ms=0):
         """Creates a new slide and adds it to the list of slides for this
         display.
 
@@ -313,6 +314,10 @@ class MPFDisplay(object):
                 priority of the display's current slide.
             presist: Boolean as to whether this slide should be saved when it
                 is no longer being shown.
+            removal_key: Unique identifier that can be used later to remove this
+                slide.
+            expire_ms: Integer of ms that will cause this slide to automatically
+                remove itself. The timer doesn't start until the slide is shown.
 
         Returns: Reference to the new slide object that was just created.
 
@@ -320,11 +325,23 @@ class MPFDisplay(object):
 
         self.slides[name] = Slide(mpfdisplay=self, name=name, priority=priority,
                                   persist=persist, machine=self.machine,
-                                  removal_key=removal_key)
+                                  removal_key=removal_key,
+                                  expire_ms=expire_ms)
 
         return self.slides[name]
 
     def remove_slides_by_key(self, removal_key):
+        """Removes any slides with the removal key passed.
+
+        Args:
+            removal_key: Key for the slides you want to remove.
+
+        Removing an active slide will automatically cause the next highest
+        priority slide to be shown.
+
+        You can safely call this method even if the removal key doesn't match
+        any slides.
+        """
 
         for slide_obj in self.slides.values():
             if slide_obj.removal_key == removal_key:
@@ -850,10 +867,14 @@ class Slide(object):
         height: Height of this slide, in pixels.
         depth: Integer value of the color depth, either 8 or 24.
         palette: The Pygame palette this slide uses. (8-bit only)
+        removal_key: Unique identifier that can be used later to remove this
+            slide.
+        expire_ms: Integer of ms that will cause this slide to automatically
+            remove itself. The timer doesn't start until the slide is shown.
     """
 
     def __init__(self, mpfdisplay, machine, name=None, priority=0,
-                 persist=False, removal_key=None):
+                 persist=False, removal_key=None, expire_ms=0):
 
         self.log = logging.getLogger('Slide')
 
@@ -863,6 +884,7 @@ class Slide(object):
         self.priority = priority
         self.persist = persist
         self.removal_key = removal_key
+        self.expire_ms = expire_ms
 
         self.elements = list()
         self.pending_elements = set()
@@ -1121,6 +1143,11 @@ class Slide(object):
                            'existing slide (%s). Not showing new slide.',
                            self.priority,
                            self.mpfdisplay.current_slide.priority)
+
+        if self.expire_ms:
+            self.machine.display.delay.add(name=self.name + '_expiration',
+                                           ms=self.expire_ms,
+                                           callback=self.remove)
 
     def remove(self):
 
@@ -1490,6 +1517,12 @@ class SlideBuilder(object):
             if 'name' not in element:
                 element['name'] = None
 
+            if 'expire' in element:
+                first_settings['expire'] = Timing.string_to_ms(
+                    element.pop('expire'))
+            else:
+                first_settings['expire'] = 0
+
             processed_settings.append(element)
 
         if 'slide_priority' not in first_settings:
@@ -1547,8 +1580,12 @@ class SlideBuilder(object):
             else:
                 slide_name = str(uuid.uuid4())
 
-        # Does this slide name already exist for this display?
+        # Does this slide need to auto clear itself?
+        if 'expire' not in settings[0]:
+            settings[0]['expire']
 
+
+        # Does this slide name already exist for this display?
         if slide_name in display.slides:  # Found existing slide
             slide = display.slides[slide_name]
             if 'clear_slide' in settings[0] and settings[0]['clear_slide']:
@@ -1559,7 +1596,8 @@ class SlideBuilder(object):
                 priority = settings[0]['slide_priority']
 
             slide = display.add_slide(name=slide_name, priority=priority,
-                                      removal_key=settings[0]['removal_key'])
+                                      removal_key=settings[0]['removal_key'],
+                                      expire_ms=settings[0]['expire'])
 
         # loop through and add the elements
         for element in settings:

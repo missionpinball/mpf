@@ -17,6 +17,7 @@ from mpf.system.timing import Timing
 
 log = logging.getLogger('ConfigProcessor')
 
+
 class Config(object):
 
     @staticmethod
