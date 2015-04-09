@@ -1,0 +1,18 @@
+- tocks: 1
+  lights:
+    l_side_ramp_jackpot: ff
+    l_center_ramp_jackpot: ff
+    l_underground_jackpot: ff
+- tocks: 3
+  lights:
+    l_side_ramp_arrow: ff
+    l_underground_arrow: ff
+    l_center_ramp_arrow: ff
+- tocks: 1
+  lights:
+    l_side_ramp_jackpot: 0
+    l_center_ramp_jackpot: 0
+    l_underground_jackpot: 0
+    l_side_ramp_arrow: 0
+    l_underground_arrow: 0
+    l_center_ramp_arrow: 0

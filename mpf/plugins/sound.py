@@ -14,6 +14,8 @@ import uuid
 import copy
 
 from mpf.system.assets import Asset, AssetManager
+from mpf.system.timing import Timing
+from mpf.system.config import Config
 
 global import_success
 
@@ -216,14 +218,12 @@ class SoundController(object):
         if 'start_events' not in config:
             config['start_events'] = list()
         else:
-            config['start_events'] = self.machine.string_to_list(
-                config['start_events'])
+            config['start_events'] = Config.string_to_list(config['start_events'])
 
         if 'stop_events' not in config:
             config['stop_events'] = list()
         else:
-            config['stop_events'] = self.machine.string_to_list(
-                config['stop_events'])
+            config['stop_events'] = Config.string_to_list(config['stop_events'])
 
         if 'duration' not in config or config['duration'] is None:
             config['duration'] = None
@@ -506,6 +506,10 @@ class Track(object):
                 self.queue_sound(sound, priority=priority, exp_time=exp_time,
                                  **settings)
 
+    def stop(self, sound):
+        sound.sound_object.stop()
+
+
     def queue_sound(self, sound, priority, exp_time=None, **settings):
         """Adds a sound to the queue to be played when a Pygame channel becomes
         free.
@@ -616,9 +620,9 @@ class StreamTrack(object):
         if 'loops' not in settings:
             settings['loops'] = 1
 
-        pygame.mixer.music.play(settings['loops'])
+        pygame.mixer.music.play(settings['loops'], sound.config['start_time'])
 
-    def stop(self):
+    def stop(self, sound=None):
         """Stops the playing sound and resets the current position to the
         beginning.
         """
@@ -724,7 +728,7 @@ class Channel(object):
                   sound.config['volume'] *
                   self.machine_sound.volume)
 
-        self.log.info("Playing Sound: %s Vol: %s", sound.file_name, volume)
+        self.log.debug("Playing Sound: %s Vol: %s", sound.file_name, volume)
 
         # set the sound's current volume
         sound.sound_object.set_volume(volume)
@@ -735,7 +739,6 @@ class Channel(object):
 class Sound(Asset):
 
     def _initialize_asset(self):
-
         if self.config['track'] in self.machine.sound.tracks:
             self.track = self.machine.sound.tracks[self.config['track']]
 
@@ -768,8 +771,8 @@ class Sound(Asset):
         if 'loops' not in self.config:  # todo
             self.config['loops'] = None
 
-        if 'start_time' not in self.config:  # todo
-            self.config['start_time'] = None
+        self.config['start_time'] = Timing.string_to_secs(
+                self.config.get('start_time'))
 
         if 'end_time' not in self.config:  # todo
             self.config['end_time'] = None
@@ -822,8 +825,10 @@ class Sound(Asset):
             **kwargs: Catch all since this method might be used as an event
                 callback which could include random kwargs.
         """
-        pass
-        # todo
+
+        #self.sound_object.stop()
+
+        self.track.stop(self)
 
 
 asset_class = Sound

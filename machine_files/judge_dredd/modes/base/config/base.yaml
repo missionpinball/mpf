@@ -77,8 +77,9 @@ SlidePlayer:
         text: "BALLS LOCKED: %balls"
 
 SoundPlayer:
-    mode_base_started:
+    waiting to plunge loop:
         sound: waiting to plunge loop
+        start_events: mode_base_started
         stop_events: ball_live_added
         duration:
         loops: -1
@@ -86,10 +87,12 @@ SoundPlayer:
         fade_in: 0
         fade_out: 0
         volume: 1
-    balldevice_shooterLaneR_ball_eject_attempt:
+    ball launch:
         sound: ball launch motorcycle
-    shot_Slingshot:
+        start_events: balldevice_shooterLaneR_ball_eject_attempt
+    sling:
         sound: slingshot
+        start_events: shot_Slingshot
 
 ShowPlayer:
     mode_base_started:
@@ -106,4 +109,3 @@ LogicBlocks:
     Counters:
         total_ramps:
             count_events: shot_RightRamp, shot_LeftRamp
-            

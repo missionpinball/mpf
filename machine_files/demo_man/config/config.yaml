@@ -1,0 +1,1162 @@
+# Demo Man config file for MPF 0.16
+
+Plugins:
+    - shots.ShotController
+    - keyboard.Keyboard
+    - ball_search.BallSearch
+    - logic_blocks.LogicBlocks
+    - scoring.ScoreController
+    - auditor.Auditor
+    - sound.SoundController
+
+Machine:
+    HZ: 30
+    Balls Installed: 6
+    Min Balls: 1
+    Max Balls: 6
+
+Hardware:
+    DriverBoards: wpc
+    Platform: p_roc
+
+MPF:
+  default_pulse_ms: 20
+
+Game:
+    Balls per game: 3
+    Max players per game: 4
+    player_controlled_eject_tag: plunger
+
+Modes:
+  - base
+  - claw_lit_for_major_mode
+  - mode1_acmag
+
+Scriptlets:
+    attract.Attract
+    claw.Claw
+
+Switches:
+# Fliptronics
+    s_flipper_lower_right_eos:
+        number: sf1
+        tags:
+        label:
+    s_flipper_lower_right:
+        number: sf2
+        tags:
+        label:
+        tags: right_flipper
+    s_flipper_lower_left_eos:
+        number: sf3
+        tags:
+        label:
+    s_flipper_lower_left:
+        number: sf4
+        tags:
+        label:
+        tags: left_flipper
+    s_flipper_upper_left_eos:
+        number: sf5
+        tags:
+        label:
+    s_flipper_upper_left:
+        number: sf6
+        tags:
+        label:
+    s_flipper_upper_right_eos:
+        number: sf7
+        tags:
+        label:
+    s_flipper_upper_right:
+        number: sf8
+        tags:
+        label:
+
+# Direct
+    s_left_coin:
+        number: sd1
+        tags:
+        label:
+    s_center_coin:
+        number: sd2
+        tags:
+        label:
+    s_right_coin:
+        number: sd3
+        tags:
+        label:
+    s_fourth_coin:
+        number: sd4
+        tags:
+        label:
+    s_esc:
+        number: sd5
+        tags:
+        label:
+    s_down:
+        number: sd6
+        tags:
+        label:
+    s_up:
+        number: sd7
+        tags:
+        label:
+    s_enter:
+        number: sd8
+        tags:
+        label:
+
+# Matrix
+    s_ball_launch:
+        number: s11
+        label:
+        tags: plunger
+    s_left_handle_button:
+        number: s12
+        label:
+        tags:
+    s_start:
+        number: s13
+        label:
+        tags: start
+    s_plumb_bob:
+        number: s14
+        label:
+        tags: tilt
+    s_left_outlane:
+        number: s15
+        label:
+        tags: playfield_active, outlane
+    s_left_inlane:
+        number: s16
+        label:
+        tags: playfield_active, inlane
+    s_right_inlane:
+        number: s17
+        label:
+        tags: playfield_active, inlane
+    s_right_outlane:
+        number: s18
+        label:
+        tags: playfield_active, outlane
+    s_slam_tilt:
+        number: s21
+        label:
+        tags: slamtilt
+    s_coin_door_closed:
+        number: s22
+        label:
+        tags:
+    s_buy_in:
+        number: s23
+        label:
+        tags:
+    s_always_closed:
+        number: s24
+        label:
+        tags:
+    s_claw_position_1:
+        number: s25
+        label:
+        tags:
+        type: NC
+    s_claw_position_2:
+        number: s26
+        label:
+        tags:
+        type: NC
+    s_shooter_lane:
+        number: s27
+        label:
+        tags:
+    #name:
+    #    number: s28
+    #    label:
+    #    tags:
+    s_trough_1:
+        number: s31
+        label:
+        tags:
+        type: NC
+    s_trough_2:
+        number: s32
+        label:
+        tags:
+        type: NC
+    s_trough_3:
+        number: s33
+        label:
+        tags:
+        type: NC
+    s_trough_4:
+        number: s34
+        label:
+        tags:
+        type: NC
+    s_trough_5:
+        number: s35
+        label:
+        tags:
+        type: NC
+    s_trough_jam:
+        number: s36
+        label:
+        tags:
+        type: NC
+    #name:
+    #    number: s37
+    #    label:
+    #    tags:
+    s_standup_5:
+        number: s38
+        label:
+        tags: playfield_active
+    s_left_slingshot:
+        number: s41
+        label:
+        tags: playfield_active, slingshot
+    s_right_slingshot:
+        number: s42
+        label:
+        tags: playfield_active, slingshot
+    s_left_jet:
+        number: s43
+        label:
+        tags: playfield_active, jet
+    s_top_slingshot:
+        number: s44
+        label:
+        tags:  playfield_active, jet
+    s_right_jet:
+        number: s45
+        label:
+        tags:  playfield_active, jet
+    s_right_ramp_enter:
+        number: s46
+        label:
+        tags:  playfield_active, ramp_1_enter
+    s_right_ramp_exit:
+        number: s47
+        label:
+        tags:  playfield_active
+    s_right_freeway:
+        number: s48
+        label:
+        tags:  playfield_active
+    s_left_ramp_enter:
+        number: s51
+        label:
+        tags:  playfield_active, ramp_1_enter
+    s_left_ramp_exit:
+        number: s52
+        label:
+        tags:  playfield_active
+    s_center_ramp:
+        number: s53
+        label:
+        tags:  playfield_active
+    s_upper_rebound:
+        number: s54
+        label:
+        tags: playfield_active
+    s_left_loop:
+        number: s55
+        label:
+        tags: playfield_active
+    s_standup_2:
+        number: s56
+        label:
+        tags: playfield_active
+    s_standup_3:
+        number: s57
+        label:
+        tags: playfield_active
+    s_standup_4:
+        number: s58
+        label:
+        tags: playfield_active
+    s_side_ramp_enter:
+        number: s61
+        label:
+        tags: playfield_active, ramp_2_enter
+    s_side_ramp_exit:
+        number: s62
+        label:
+        tags: playfield_active
+    s_left_rollover:
+        number: s63
+        label:
+        tags: playfield_active
+    s_center_rollover:
+        number: s64
+        label:
+        tags: playfield_active
+    s_right_rollover:
+        number: s65
+        label:
+        tags: playfield_active
+    s_eject:
+        number: s66
+        label:
+        tags: playfield_active
+    s_elevator_index:
+        number: s67
+        label:
+        tags:
+        type: NC
+    #name:
+    #    number: s68
+    #    label:
+    #    tags:
+    s_car_chase_1:
+        number: s71
+        label:
+        tags: playfield_active, small_car_crash
+        type: NC
+    s_car_chase_2:
+        number: s72
+        label:
+        tags: playfield_active, big_car_crash
+        type: NC
+    s_top_popper:
+        number: s73
+        label:
+        tags:
+        type: NC
+    s_elevator_hold:
+        number: s74
+        label:
+        tags:
+        type: NC
+    #name:
+    #    number: s75
+    #    label:
+    #    tags:
+    s_bottom_popper:
+        number: s76
+        label:
+        tags:
+        type: NC
+    s_eyeball_standup:
+        number: s77
+        label:
+        tags: playfield_active
+    s_standup_1:
+        number: s78
+        label:
+        tags: playfield_active
+    s_claw_capture_simon:
+        number: s81
+        label:
+        tags: playfield_active
+    s_claw_super_jets:
+        number: s82
+        label:
+        tags: playfield_active
+    s_claw_prison_break:
+        number: s83
+        label:
+        tags: playfield_active
+    s_claw_lock_freeze:
+        number: s84
+        label:
+        tags: playfield_active
+    s_claw_start_acmag:
+        number: s85
+        label:
+        tags: playfield_active, acmag
+    s_upper_left_flipper_gate:
+        number: s86
+        label:
+        tags: playfield_active
+    s_car_chase_standup:
+        number: s87
+        label:
+        tags: playfield_active
+    s_lower_rebound:
+        number: s88
+        label:
+        tags: playfield_active
+
+MatrixLights:
+
+    l_ball_save:
+        number: l11
+        label:
+        tags:
+    l_fortress_multiball:
+        number: l12
+        label:
+        tags:
+    l_museum_multiball:
+        number: l13
+        label:
+        tags:
+    l_cryoprison_multiball:
+        number: l14
+        label:
+        tags:
+    l_wasteland_multiball:
+        number: l15
+        label:
+        tags:
+    l_shoot_again:
+        number: l16
+        label:
+        tags:
+    l_access_claw:
+        number: l17
+        label:
+        tags:
+    l_left_ramp_explode:
+        number: l18
+        label:
+        tags:
+    l_right_ramp_jackpot:
+        number: l21
+        label:
+        tags:
+    l_right_loop_explode:
+        number: l22
+        label:
+        tags:
+    l_light_quick_freeze:
+        number: l23
+        label:
+        tags:
+    l_freeze_4:
+        number: l24
+        label:
+        tags:
+    l_claw_ready:
+        number: l25
+        label:
+        tags:
+    l_freeze_3:
+        number: l26
+        label:
+        tags:
+    l_freeze_2:
+        number: l27
+        label:
+        tags:
+    l_freeze_1:
+        number: l28
+        label:
+        tags:
+    l_right_loop_jackpot:
+        number: l31
+        label:
+        tags:
+    l_standup_5:
+        number: l32
+        label:
+        tags:
+    l_right_ramp_arrow:
+        number: l33
+        label:
+        tags:
+    l_left_ramp_jackpot:
+        number: l34
+        label:
+        tags:
+    l_left_loop_jackpot:
+        number: l35
+        label:
+        tags:
+    l_car_crash_top:
+        number: l36
+        label:
+        tags:
+    l_standup_1:
+        number: l37
+        label:
+        tags:
+    l_car_crash_center:
+        number: l38
+        label:
+        tags:
+    l_right_ramp_explode:
+        number: l41
+        label:
+        tags:
+    l_right_ramp_car_chase:
+        number: l42
+        label:
+        tags:
+    l_quick_freeze:
+        number: l43
+        label:
+        tags:
+    l_left_ramp_car_chase:
+        number: l44
+        label:
+        tags:
+    l_extra_ball:
+        number: l45
+        label:
+        tags:
+    l_start_multiball:
+        number: l46
+        label:
+        tags:
+    l_car_crash_bottom:
+        number: l47
+        label:
+        tags:
+    l_left_loop_explode:
+        number: l48
+        label:
+        tags:
+    l_underground_arrow:
+        number: l51
+        label:
+        tags:
+    l_underground_jackpot:
+        number: l52
+        label:
+        tags:
+    l_standup_2:
+        number: l53
+        label:
+        tags:
+    l_left_ramp_arrow:
+        number: l54
+        label:
+        tags:
+    l_side_ramp_jackpot:
+        number: l55
+        label:
+        tags:
+    l_side_ramp_arrow:
+        number: l56
+        label:
+        tags:
+    l_left_loop_arrow:
+        number: l57
+        label:
+        tags:
+    l_center_ramp_jackpot:
+        number: l58
+        label:
+        tags:
+    l_claw_capture_simon:
+        number: l61
+        label:
+        tags:
+    l_claw_super_jets:
+        number: l62
+        label:
+        tags:
+    l_claw_prison_break:
+        number: l63
+        label:
+        tags:
+    l_claw_lock_freeze:
+        number: l64
+        label:
+        tags:
+    l_claw_start_acmag:
+        number: l65
+        label:
+        tags:
+    l_left_rollover:
+        number: l66
+        label:
+        tags:
+    l_middle_rollover:
+        number: l67
+        label:
+        tags:
+    l_right_rollover:
+        number: l68
+        label:
+        tags:
+    l_super_jackpot:
+        number: l71
+        label:
+        tags:
+    l_computer:
+        number: l72
+        label:
+        tags:
+    l_demo_time:
+        number: l73
+        label:
+        tags:
+    #name:
+    #    number: l74
+    #    label:
+    #    tags:
+    #name:
+    #    number: l75
+    #    label:
+    #    tags:
+    l_standup_4:
+        number: l76
+        label:
+        tags:
+    l_standup_3:
+        number: l77
+        label:
+        tags:
+    l_retina_scan:
+        number: l78
+        label:
+        tags:
+    l_center_ramp_middle:
+        number: l81
+        label:
+        tags:
+    l_center_ramp_outer:
+        number: l82
+        label:
+        tags:
+    l_center_ramp_inner:
+        number: l83
+        label:
+        tags:
+    l_center_ramp_arrow:
+        number: l84
+        label:
+        tags:
+    l_right_loop_arrow:
+        number: l85
+        label:
+        tags:
+    l_buy_in:
+        number: l86
+        label:
+        tags:
+    l_ball_launch:
+        number: l87
+        label:
+        tags:
+    l_start:
+        number: l88
+        label:
+        tags:
+
+Coils:
+    c_trough_eject:
+        number: c01
+        label:
+        tags:
+        pulse_ms: 25
+    c_bottom_popper:
+        number: c02
+        label:
+        tags:
+        pulse_ms: 25
+    c_plunger_lane:
+        number: c03
+        label:
+        tags:
+        pulse_ms: 25
+    c_top_popper:
+        number: c04
+        label:
+        tags:
+        pulse_ms: 30
+    c_diverter_power:
+        number: c05
+        label:
+        tags:
+        holdPatter: 2-9
+        pulse_ms: 30
+    #name:
+    #    number: c06
+    #    label:
+    #    tags:
+    c_knocker:
+        number: c07
+        label:
+        tags:
+    #name:
+    #    number: c08
+    #    label:
+    #    tags:
+    c_left_slingshot:
+        number: c09
+        label:
+        tags:
+    c_right_slingshot:
+        number: c10
+        label:
+        tags:
+    c_left_jet_bumper:
+        number: c11
+        label:
+        tags:
+    c_top_slingshot:
+        number: c12
+        label:
+        tags:
+    c_right_jet_bumper:
+        number: c13
+        label:
+        tags:
+    c_retina_eject:
+        number: c14
+        label:
+        tags:
+    c_diverter_hold:
+        number: c15
+        label:
+        tags:
+        allow_enable: true
+    #name:
+    #    number: c16
+    #    label:
+    #    tags:
+    c_elevator_motor:
+        number: c18
+        label:
+        tags:
+        allow_enable: true
+    c_claw_motor_left:
+        number: c19
+        label:
+        tags:
+        allow_enable: true
+    c_claw_motor_right:
+        number: c20
+        label:
+        tags:
+        allow_enable: true
+
+# Fliptronics coils
+    c_flipper_left_main:
+        number: fllm
+        label:
+        tags:
+        pulse_ms: 30
+    c_flipper_left_hold:
+        number: fllh
+        label:
+        tags:
+    c_flipper_right_main:
+        number: flrm
+        label:
+        tags:
+        pulse_ms: 30
+    c_flipper_right_hold:
+        number: flrh
+        label:
+        tags:
+    c_flipper_upper_main:
+        number: fulm
+        label:
+        tags:
+        pulse_ms: 30
+    c_flipper_upper_hold:
+        number: fulh
+        label:
+        tags:
+    c_claw_magnet:
+        number: furm
+        label:
+        tags:
+        allow_enable: yes
+    #name:
+    #    number: furh
+    #    label:
+    #    tags:
+
+Flashers:
+    f_claw:
+        number: c17
+        label:
+        tags:
+    f_jets:
+        number: c21
+        label:
+        tags:
+    f_side_ramp:
+        number: c22
+        label:
+        tags:
+    f_left_ramp_upper:
+        number: c23
+        label:
+        tags:
+    f_left_ramp_lower:
+        number: c24
+        label:
+        tags:
+    f_car_chase_center:
+        number: c25
+        label:
+        tags:
+    f_car_chase_lower:
+        number: c26
+        label:
+        tags:
+    f_right_ramp:
+        number: c27
+        label:
+        tags:
+    f_eject:
+        number: c28
+        label:
+        tags:
+    f_car_chase_upper:
+        number: c37
+        label:
+        tags:
+    f_lower_rebound:
+        number: c38
+        label:
+        tags:
+    f_eyeball:
+        number: c39
+        label:
+        tags:
+    f_center_ramp:
+        number: c40
+        label:
+        tags:
+    f_elevator_2:
+        number: c41
+        label:
+        tags:
+    f_elevator_1:
+        number: c42
+        label:
+        tags:
+    f_diverter:
+        number: c43
+        label:
+        tags:
+    f_right_ramp_upper:
+        number: c44
+        label:
+        tags:
+
+GIs:
+    gi_back_panel:
+        number: g01
+        label:
+        tags:
+    gi_upper_right:
+        number: g02
+        label:
+        tags:
+    gi_upper_left:
+        number: g03
+        label:
+        tags:
+    gi_lower_right:
+        number: g04
+        label:
+        tags:
+    gi_lower_left:
+        number: g05
+        label:
+        tags:
+    #gi06:
+    #    number: g06
+    #    label:
+    #    tags:
+
+BallDevices:
+  trough:
+    tags: trough, home, drain
+    ball_switches: s_trough_1, s_trough_2, s_trough_3, s_trough_4, s_trough_5, s_trough_jam
+    eject_coil: c_trough_eject
+    confirm_eject_type: target
+    eject_targets: shooter_lane
+    jam_switch: s_trough_jam
+
+  shooter_lane:
+    tags: ball_add_live
+    ball_switches: s_shooter_lane
+    eject_coil: c_plunger_lane
+
+  retina_hole:
+    ball_switches: s_eject
+    eject_coil: c_retina_eject
+
+  lower_vuk:
+    ball_switches: s_bottom_popper
+    eject_coil: c_bottom_popper
+
+  upper_vuk:
+    ball_switches: s_top_popper
+    eject_coil: c_top_popper
+
+  elevator:
+    ball_switches: s_elevator_hold
+
+Diverters:
+  diverter:
+    activation_coil: c_diverter_power
+    type: hold
+    activation_time: 3s
+    activation_switches: s_right_ramp_enter
+    deactivation_switches: s_elevator_hold
+    targets_when_active: elevator
+
+Autofire Coils:
+  left_slingshot:
+    coil: c_left_slingshot
+    switch: s_left_slingshot
+  right_slingshot:
+    coil: c_right_slingshot
+    switch: s_right_slingshot
+  upper_slingshot:
+    coil: c_top_slingshot
+    switch: s_top_slingshot
+  left_jet:
+    coil: c_left_jet_bumper
+    switch: s_left_jet
+  right_jet:
+    coil: c_right_jet_bumper
+    switch: s_right_jet
+
+Flippers:
+  lower_left:
+    main_coil: c_flipper_left_main
+    hold_coil: c_flipper_left_hold
+    activation_switch: s_flipper_lower_left
+  lower_right:
+    main_coil: c_flipper_right_main
+    hold_coil: c_flipper_right_hold
+    activation_switch: s_flipper_lower_right
+  upper_left:
+    main_coil: c_flipper_upper_main
+    hold_coil: c_flipper_upper_hold
+    activation_switch: s_flipper_lower_left
+
+Targets:
+  left_lane:
+    switch: s_left_rollover
+    light: l_left_rollover
+  middle_lane:
+    switch: s_center_rollover
+    light: l_middle_rollover
+  right_lane:
+    switch: s_right_rollover
+    light: l_right_rollover
+  standup_1:
+    switch: s_standup_1
+    light: l_standup_1
+  standup_2:
+    switch: s_standup_2
+    light: l_standup_2
+  standup_3:
+    switch: s_standup_3
+    light: l_standup_3
+  standup_4:
+    switch: s_standup_4
+    light: l_standup_4
+  standup_5:
+    switch: s_standup_5
+    light: l_standup_5
+
+TargetGroups:
+  rollover_lanes:
+    targets: left_lane, middle_lane, right_lane
+    rotate_left_events: sw_left_flipper
+    rotate_right_events: sw_right_flipper
+  standups:
+    targets: standup_1, standup_2, standup_3, standup_4, standup_5
+
+SoundSystem:
+    tracks:
+        voice:
+            volume: 1
+            priority: 2
+            simultaneous_sounds: 1
+            preload: no
+        sfx:
+            volume: 1
+            priority: 1
+            preload: no
+            simultaneous_sounds: 3
+    stream:
+        name: music
+        priority: 0
+
+
+    buffer: 512
+    frequency: 44100
+    channels: 1
+    initial_volume: 1
+    volume_steps: 20
+
+DMD:
+    physical: yes
+    width: 128
+    height: 32
+    shades: 16
+    fps: auto
+
+
+Window:
+    width: 800
+    height: 600
+    title: Mission Pinball Framework - Demo Man
+    resizable: yes
+    frame: yes
+    fullscreen: no
+    fps: auto
+    quit_on_close: True
+    elements:
+
+    - type: VirtualDMD
+      width: 512
+      height: 128
+      h_pos: center
+      v_pos: center
+      pixel_color: ff5500
+      dark_color: 220000
+      layer: 1
+      pixel_spacing: 2
+
+    - type: Text
+      font: tall title
+      text: DEMO MAN
+      h_pos: right
+      v_pos: bottom
+      y: -10
+      x: -20
+      size: 60
+      antialias: yes
+      layer: 1
+      color: ff0000
+
+    - type: Shape
+      shape: box
+      width: 514
+      height: 130
+      layer: 2
+      thickness: 2
+      v_pos: center
+      h_pos: center
+      color: 5555ff
+
+Keyboard:
+  s:
+    switch: s_start
+  l:
+    switch: s_ball_launch
+  1:
+    switch: s_trough_1
+    toggle: yes
+    start_active: yes
+  8:
+    switch: s_shooter_lane
+    toggle: yes
+  x:
+    switch: s_left_slingshot
+
+ShowPlayer:
+  machineflow_Attract_start:
+    - show: attract_dmd_loop
+      repeat: yes
+      tocks_per_sec: 1
+    - show: multiball_sweep
+      repeat: yes
+      tocks_per_sec: 10
+    - show: random_flashing
+      repeat: yes
+      tocks_per_sec: 6
+    - show: freeze_sweep
+      repeat: yes
+      tocks_per_sec: 9
+    - show: car_crash_sweep
+      repeat: yes
+      tocks_per_sec: 7
+    - show: middle_circle_sweep
+      repeat: yes
+      tocks_per_sec: 12
+    - show: right_orbit_sweep
+      repeat: yes
+      tocks_per_sec: 12
+    - show: standup_sweep
+      repeat: yes
+      tocks_per_sec: 5
+    - show: center_red_sweep
+      repeat: yes
+      tocks_per_sec: 4
+    - show: center_ramp_sweep
+      repeat: yes
+      tocks_per_sec: 7
+    - show: top_lanes_sweep
+      repeat: yes
+      tocks_per_sec: 4
+    - show: claw_cycle
+      repeat: yes
+      tocks_per_sec: 9
+    - show: inlane_alternate
+      repeat: yes
+      tocks_per_sec: 8
+
+  machineflow_Attract_stop:
+    - show: attract_dmd_loop
+      action: stop
+    - show: multiball_sweep
+      action: stop
+    - show: random_flashing
+      action: stop
+    - show: freeze_sweep
+      action: stop
+    - show: car_crash_sweep
+      action: stop
+    - show: middle_circle_sweep
+      action: stop
+    - show: right_orbit_sweep
+      action: stop
+    - show: standup_sweep
+      action: stop
+    - show: center_red_sweep
+      action: stop
+    - show: center_ramp_sweep
+      action: stop
+    - show: top_lanes_sweep
+      action: stop
+    - show: claw_cycle
+      action: stop
+      hold: false
+    - show: inlane_alternate
+      action: stop
+      hold: false
+
+Shots:
+    left_orbit:
+        Type: Sequence
+        Switches: s_upper_left_flipper_gate, s_left_loop
+        Time: 3s
+    left_ramp:
+        Type: Sequence
+        Switches: s_left_ramp_enter, s_left_ramp_exit
+        Time: 3s
+    side_ramp:
+        Type: Sequence
+        Switches: s_side_ramp_enter, s_side_ramp_exit
+        Time: 3s
+    right_ramp:
+        Type: Sequence
+        Switches: s_right_ramp_enter, s_right_ramp_exit
+        Time: 3s
+    right_orbit:
+        Type: Sequence
+        Switches: s_right_freeway, s_left_loop, s_upper_left_flipper_gate,
+        Time: 3s
+    center_ramp:
+        Switch: s_center_ramp
+
+LightScripts:
+    flash:
+        - tocks: 1
+          color: ff
+        - tocks: 1
+          color: 0
+    on:
+        - tocks: 1
+          color: ff
+    off:
+        - tocks: 1
+          color: 0

@@ -1,0 +1,26 @@
+Mode:
+    start_events: ball_starting
+    stop_events: timer_mode_timer_complete 
+    priority: 300
+
+Timers:
+    mode_timer:
+        start_events: balldevice_playfield_ball_enter
+        start_value: 5
+        start_paused: yes
+        end_value: 0
+        direction: down # up or down
+        tick_interval: 1.5s
+        control_events:
+          - event: balldevice_playfield_ball_enter
+            action: start
+
+SlidePlayer:
+    mode_skillshot_started:
+        type: text
+        text: SKILLSHOT
+        decorators:
+            type: blink
+            repeats: -1
+            on_secs: .5
+            off_secs: .5

@@ -7,10 +7,11 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
+
 from mpf.system.devices import Device
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
-
+from mpf.system.config import Config
 
 class Diverter(Device):
     """Represents a diverter in a pinball machine.
@@ -19,7 +20,7 @@ class Diverter(Device):
     """
 
     config_section = 'Diverters'
-    collection = 'diverter'
+    collection = 'diverters'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Diverter.' + name)
@@ -38,19 +39,19 @@ class Diverter(Device):
         if 'activation_time' not in self.config:
             self.config['activation_time'] = 0
         if 'activation_switches' in self.config:
-            self.config['activation_switches'] = self.machine.string_to_list(
+            self.config['activation_switches'] = Config.string_to_list(
                 self.config['activation_switches'])
         else:
             self.config['activation_switches'] = list()
 
         if 'disable_switches' in self.config:
-            self.config['disable_switches'] = self.machine.string_to_list(
+            self.config['disable_switches'] = Config.string_to_list(
                 self.config['disable_switches'])
         else:
             self.config['disable_switches'] = list()
 
         if 'deactivation_switches' in self.config:
-            self.config['deactivation_switches'] = self.machine.string_to_list(
+            self.config['deactivation_switches'] = Config.string_to_list(
                 self.config['deactivation_switches'])
         else:
             self.config['deactivation_switches'] = list()
@@ -66,19 +67,19 @@ class Diverter(Device):
             self.config['deactivation_coil'] = None
 
         if 'targets_when_active' in self.config:
-            self.config['targets_when_active'] = self.machine.string_to_list(
+            self.config['targets_when_active'] = Config.string_to_list(
                 self.config['targets_when_active'])
         else:
             self.config['targets_when_active'] = ['playfield']
 
         if 'targets_when_inactive' in self.config:
-            self.config['targets_when_inactive'] = self.machine.string_to_list(
+            self.config['targets_when_inactive'] = Config.string_to_list(
                 self.config['targets_when_inactive'])
         else:
             self.config['targets_when_inactive'] = ['playfield']
 
         if 'feeder_devices' in self.config:
-            self.config['feeder_devices'] = self.machine.string_to_list(
+            self.config['feeder_devices'] = Config.string_to_list(
                 self.config['feeder_devices'])
         else:
             self.config['feeder_devices'] = list()

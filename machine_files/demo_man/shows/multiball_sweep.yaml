@@ -1,0 +1,24 @@
+- tocks: 1
+  lights:
+    l_fortress_multiball: ff
+- tocks: 1
+  lights:
+    l_museum_multiball: ff
+- tocks: 1
+  lights:
+    l_wasteland_multiball: ff
+- tocks: 1
+  lights:
+    l_cryoprison_multiball: ff
+- tocks: 1
+  lights:
+    l_fortress_multiball: 00
+- tocks: 1
+  lights:
+    l_museum_multiball: 00
+- tocks: 1
+  lights:
+    l_wasteland_multiball: 00
+- tocks: 1
+  lights:
+    l_cryoprison_multiball: 00

@@ -648,7 +648,6 @@ BallDevices:
         ball_switches: trough1, trough2, trough3, trough4, trough5, trough6, troughJam
         entrance_count_delay: 0.5s
         eject_coil: trough
-        eject_switch: trough6
         confirm_eject_type: target
         eject_targets: shooterLaneR
         jam_switch: troughJam
@@ -657,7 +656,6 @@ BallDevices:
         tags: ball_add_live
         label: Right Plunger Lane
         ball_switches: shooterR
-        eject_switch: shooterR
         entrance_count_delay: 0.3s
         eject_coil: shooterR
         confirm_eject_type: playfield
@@ -665,7 +663,6 @@ BallDevices:
     shooterLaneL:
         label: Left Plunger Lane
         ball_switches: ShooterLaneL
-        eject_switch: ShooterLaneL
         entrance_count_delay: 0.3s
         eject_coil: shooterL
         confirm_eject_type: count
@@ -674,7 +671,6 @@ BallDevices:
     SniperVUK:
         label: Sniper Tower VUK
         ball_switches: popperR
-        eject_switch: popperR
         entrance_count_delay: 0.3s
         eject_coil: popperR
         confirm_eject_type: count
@@ -683,7 +679,6 @@ BallDevices:
     HallOfJusticeVUK:
         label: Hall of Justice VUK
         ball_switches: popperL
-        eject_switch: popperL
         entrance_count_delay: 0.3s
         eject_coil: popperL
         confirm_eject_type: count

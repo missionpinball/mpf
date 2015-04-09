@@ -12,6 +12,7 @@ import os
 import yaml
 import errno
 
+from mpf.system.config import Config
 
 def preload_check(machine):
 
@@ -37,33 +38,29 @@ class Auditor(object):
         disable() methods.
         """
 
-        self.config = self.machine.config['Auditor']
+        #self.config = self.machine.config['Auditor']
         self.machine.events.add_handler('machine_init_phase_4', self._initialize)
 
     def _initialize(self):
         # Initializes the auditor. We do this separate from __init__() since
         # we need everything else to be setup first.
 
+        config = '''
+                    save_events: list|ball_ended
+                    audit: list|None
+                    events: list|None
+                    player: list|None
+                    num_player_top_records: int|10
+                    '''
+
+        self.config = Config.process_config(config,
+                                                  self.machine.config['Auditor'])
+
+
         self.filename = os.path.join(self.machine.machine_path,
             self.machine.config['MPF']['paths']['audits'])
 
         # todo add option for abs path outside of machine root
-
-
-        # set config defaults:
-        if 'save_events' not in self.config:
-            self.config['save_events'] = ['ball_ended']
-        else:
-            self.config['save_events'] = self.machine.string_to_list(
-                self.config['save_events'])
-
-        if 'events' in self.config:
-            self.config['events'] = self.machine.string_to_list(
-                self.config['events'])
-
-        if 'player' in self.config:
-            self.config['player'] = self.machine.string_to_list(
-                self.config['player'])
 
         self.current_audits = self.load_from_disk(self.filename)
 

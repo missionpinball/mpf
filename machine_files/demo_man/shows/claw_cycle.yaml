@@ -1,0 +1,39 @@
+- tocks: 1
+  lights:
+    l_claw_start_acmag: ff
+    l_claw_lock_freeze: 0
+
+- tocks: 1
+  lights:
+    l_claw_lock_freeze: ff
+    l_claw_start_acmag: 0
+
+- tocks: 1
+  lights:
+    l_claw_prison_break: ff
+    l_claw_lock_freeze: 0
+
+- tocks: 1
+  lights:
+    l_claw_super_jets: ff
+    l_claw_prison_break: 0
+
+- tocks: 1
+  lights:
+    l_claw_capture_simon: ff
+    l_claw_super_jets: 0
+
+- tocks: 1
+  lights:
+    l_claw_super_jets: ff
+    l_claw_capture_simon: 0
+
+- tocks: 1
+  lights:
+    l_claw_prison_break: ff
+    l_claw_super_jets: 0
+
+- tocks: 1
+  lights:
+    l_claw_lock_freeze: ff
+    l_claw_prison_break: 0

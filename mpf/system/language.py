@@ -9,6 +9,7 @@
 import logging
 import re
 
+from mpf.system.config import Config
 
 class Language(object):
     """MPF module which handles text, audio, and video replacement of objects
@@ -35,7 +36,7 @@ class Language(object):
     def _configure(self):
         self.config = self.machine.config['Languages']
         self.machine.language = self
-        self.languages = self.machine.string_to_list(
+        self.languages = Config.string_to_list(
             self.machine.config['Languages'])
 
         # Set the default language to the first entry in the list

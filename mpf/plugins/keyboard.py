@@ -261,7 +261,7 @@ class Keyboard(object):
         if (symbol == pygame.locals.K_c and
                 modifiers & pygame.locals.KMOD_CTRL) or \
                 (symbol == pygame.locals.K_ESCAPE):
-            self.machine.done = True
+            self.machine.end_run_loop()
 
         else:
             key_press = self.get_key_press_string(symbol, modifiers)

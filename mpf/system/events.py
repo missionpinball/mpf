@@ -48,8 +48,8 @@ class EventManager(object):
                 event-level ones will win.
 
         Returns:
-            A guid reference to the handler which you can use to create a list
-            to easily remove these in the future.
+            A GUID reference to the handler which you can use to later remove
+            the handler via ``remove_handler_by_key``.
 
         For example:
         ``handler_list.append(events.add_handler('ev', self.test))``
@@ -355,7 +355,7 @@ class EventManager(object):
                            "queue.", self.current_event)
             self.queue.append((event, ev_type, callback, kwargs))
 
-            self.log.debug("============= EVENT QUEUE ========================")
+            self.log.debug("================== ACTIVE EVENTS ==================")
             for event in self.queue:
                 self.log.debug("%s, %s, %s, %s", event[0], event[1], event[2],
                                event[3])

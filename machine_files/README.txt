@@ -14,21 +14,14 @@ of these files. For example, the Judge Dredd sample machine is not Judge Dredd
 per se, rather it is new code unrelated to Judge Dredd which can run on a Judge
 Dredd pinball machine.
 
-
-big_shot
+demo_man
 ========
-From our 1974 Gottlieb Big Shot EM-to-SS conversion.
-
-
-hurricane
-=========
-Williams Hurricane, just a basic config that was built in a few hours.
-
+Williams Demolition Man, the current dev machine for the Mission Pinball Framework
+project.
 
 judge_dredd
 ===========
-Williams Judge Dredd, the current dev machine for the Mission Pinball Framework
-project.
+Williams Judge Dredd, the previous dev machine for MPF up through version 0.15
 
 
 new_machine_template
@@ -36,12 +29,12 @@ new_machine_template
 A template folder structure you can use as the basis for your own machines.
 
 
-Aztec
+aztec
 =====
 Basic config for the "portable" machine created by Aaron Davis. It's based on a
 Williams 1976 Aztec.
 
 
-sttng
-=====
-Williams Star Trek: The Next Generation.
+tutorial
+========
+Contains the companion configuration files for each step in our step-by-step tutorial.

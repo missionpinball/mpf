@@ -12,6 +12,7 @@ import time
 import os
 
 from mpf.system.assets import Asset, AssetManager
+from mpf.system.config import Config
 
 
 class ShowController(object):
@@ -32,6 +33,8 @@ class ShowController(object):
         self.led_queue = []
         self.event_queue = set()
         self.coil_queue = set()
+
+        self.light_scripts = dict()
 
         self.light_update_list = []
         self.led_update_list = []
@@ -89,15 +92,24 @@ class ShowController(object):
         self.machine.modes.register_start_method(self.process_shows_from_config,
                                                  'ShowPlayer')
 
+        # Tell the mode controller that it should look for LightPlayer items in
+        # modes.
+        self.machine.modes.register_start_method(self.process_lightplayer_from_config,
+                                                 'LightPlayer')
+
+        # Create scripts from config
+        self.machine.modes.register_start_method(self.create_scripts_from_config,
+                                                 'LightScipts')
+
         # Create the show AssetManager
-        AssetManager(
-            machine=self.machine,
-            config_section='Shows',
-            path_string='shows',
-            asset_class=Show,
-            asset_attribute='shows',
-            file_extensions=('yaml')
-            )
+        self.asset_manager = AssetManager(
+                                          machine=self.machine,
+                                          config_section='Shows',
+                                          path_string='shows',
+                                          asset_class=Show,
+                                          asset_attribute='shows',
+                                          file_extensions=('yaml')
+                                          )
 
     def _initialize(self):
         # Sets up everything that has to be instantiated first
@@ -109,8 +121,14 @@ class ShowController(object):
                 self.light_priorities[light.name] = 0
             self.initialized = True
 
+        if 'LightScripts' in self.machine.config:
+            self.create_scripts_from_config(self.machine.config['LightScripts'])
+
         if 'ShowPlayer' in self.machine.config:
             self.process_shows_from_config(self.machine.config['ShowPlayer'])
+
+        if 'LightPlayer' in self.machine.config:
+            self.process_lightplayer_from_config(self.machine.config['LightPlayer'])
 
     def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
                   tocks_per_sec=30, start_location=None, num_repeats=0,
@@ -129,6 +147,13 @@ class ShowController(object):
                                           start_location=start_location,
                                           num_repeats=num_repeats)
 
+        else:  # assume it's a show object?
+            if 'stop_key' in kwargs:
+                show.stop_key = kwargs['stop_key']
+            show.play(repeat=repeat, priority=priority, blend=blend, hold=hold,
+                      tocks_per_sec=tocks_per_sec,
+                      start_location=start_location, num_repeats=num_repeats)
+
     def stop_show(self, show, reset=True, hold=True, **kwargs):
 
         if show in self.machine.shows:
@@ -138,6 +163,12 @@ class ShowController(object):
         for show in self.running_shows:
             if show.stop_key == key:
                 show.stop()
+
+    def create_scripts_from_config(self, config, mode=None, priority=0):
+        # config here is localized to LightScripts:
+
+        for k, v in config.iteritems():
+            self.light_scripts[k] = v
 
     def process_shows_from_config(self, config, mode=None, priority=0):
         self.log.debug("Processing ShowPlayer configuration. Priority: %s",
@@ -157,6 +188,107 @@ class ShowController(object):
                     key_list.append(self.add_show_player_show(event, entry))
 
         return self.unload_show_player_shows, (key_list, mode)
+
+    def process_lightplayer_from_config(self, config, mode=None, priority=0):
+        self.log.debug("Processing LightPlayer configuration. Priority: %s",
+                       priority)
+
+        key_list = list()
+
+        for event_name, actions in config.iteritems():
+            if type(actions) is not list:
+                actions = [actions]
+
+            for this_action in actions:
+
+                this_action['show'] = self.create_show_from_script(
+                    script=self.light_scripts[this_action['script']],
+                    lights = this_action.get('lights', None),
+                    leds = this_action.get('leds', None),
+                    light_tags = this_action.get('light_tags', None),
+                    led_tags = this_action.get('led_tags', None))
+
+                this_action['priority'] = priority
+                this_action['stop_key'] = mode
+                key_list.append(self.add_show_player_show(event_name,
+                                                          this_action))
+
+        return self.unload_show_player_shows, (key_list, mode)
+
+    def add_lightplayer_show(self, event, settings):
+
+        #if 'priority' in settings:
+        #    settings['show_priority'] = settings['priority']
+        #
+        #if 'hold' not in settings:
+        #    settings['hold'] = False
+
+        if 'action' in settings and settings['action'] == 'stop':
+            key = self.machine.events.add_handler(event, self.stop_script,
+                                                  **settings)
+
+        else:  # action = 'play'
+            key = self.machine.events.add_handler(event, self.run_script,
+                                                  **settings)
+
+        return key
+
+
+    def create_show_from_script(self, script, lights=None, leds=None,
+                                light_tags=None, led_tags=None):
+
+        if type(script) is not list:
+            script = [script]
+
+        action_list = list()
+
+        for step in script:
+
+            this_step = dict()
+            this_step['tocks'] = step['tocks']
+
+            if lights:
+                this_step['lights'] = dict()
+                if type(lights) is not list:
+                    lights = [lights]
+
+                for light in lights:
+                    this_step['lights'][light] = step['color']
+
+            if leds:
+                this_step['leds'] = dict()
+                if type(leds) is not list:
+                    leds = [leds]
+
+                for led in leds:
+                    this_step['leds'][led] = step['color']
+
+            if light_tags:
+
+                if 'lights' not in this_step:
+                    this_step['lights'] = dict()
+
+                if type(light_tags) is not list:
+                    light_tags = [light_tags]
+
+                for tag in light_tags:
+                    this_step['lights']['tag|' + tag] = step['color']
+
+            if led_tags:
+
+                if 'leds' not in this_step:
+                    this_step['leds'] = dict()
+
+                if type(led_tags) is not list:
+                    led_tags = [led_tags]
+
+                for tag in led_tags:
+                    this_step['leds']['tag|' + tag] = step['color']
+
+            action_list.append(this_step)
+
+        return Show(machine=self.machine, config=None, file_name=None,
+                    asset_manager=self.asset_manager, actions=action_list)
 
     def unload_show_player_shows(self, removal_tuple):
 
@@ -416,7 +548,7 @@ class ShowController(object):
         self.led_update_list = []
 
     def run_script(self, lightname, script, priority=0, repeat=True,
-                   blend=False, tps=1000, num_repeats=0, callback=None):
+                   blend=False, tps=1000, num_repeats=0, callback=None, **kwargs):
         """Runs a light script. Scripts are similar to Shows, except they
         only apply to single lights and you can "attach" any script to any
         light. Scripts are used anytime you want an light to have more than one
@@ -520,17 +652,18 @@ class ShowController(object):
 
         for step in script:
             if step.get('fade', None):
-                color = str(step['color']) + "-f" + str(step['time'])
+                color = str(step['color']) + "-f" + str(step['tocks'])
             else:
                 color = str(step['color'])
 
             color_dic = {lightname: color}
-            current_action = {'tocks': step['time'],
+            current_action = {'tocks': step['tocks'],
                               'lights': color_dic}
             show_actions.append(current_action)
-        show = None
-        show = Show(self.machine, actions=show_actions)
-        show_obj = show.play(repeat=repeat, tocks_per_sec=tps,
+
+        show = Show(machine=self.machine, config=None, file_name=None,
+                    asset_manager=self.asset_manager, actions=show_actions)
+        show.play(repeat=repeat, tocks_per_sec=tps,
                              priority=priority, blend=blend,
                              num_repeats=num_repeats, callback=callback)
 
@@ -538,9 +671,9 @@ class ShowController(object):
                                     'priority': priority,
                                     'show': show})
 
-        return show_obj
+        return show
 
-    def stop_script(self, lightname=None, priority=0, show=None):
+    def stop_script(self, lightname=None, priority=0, show=None, **kwargs):
         """Stops and remove an light script.
 
         Rarameters:
@@ -672,6 +805,22 @@ class ShowController(object):
 
 class Show(Asset):
 
+    def __init__(self, machine, config, file_name, asset_manager, actions=None):
+        if not actions:
+            super(Show, self).__init__(machine, config, file_name, asset_manager)
+        else:
+            self.machine = machine
+            self.config = config
+            self.file_name = file_name
+            self.asset_manager = asset_manager
+
+
+            self._initialize_asset()
+            #self.loaded = True
+            #self.show_actions = actions
+            #self._asset_loaded()
+            self._load(callback=None, show_actions=actions)
+
     def _initialize_asset(self):
 
         self.tocks_per_sec = 30  # how many steps per second this show runs at
@@ -710,12 +859,14 @@ class Show(Asset):
         self.loaded_callbacks = list()
         self.show_actions = list()
 
-    def _load(self, callback):
+    def _load(self, callback, show_actions=None):
 
         self.show_actions = list()
 
         self.asset_manager.log.debug("Loading Show %s", self.file_name)
-        show_actions = self.load_show_from_disk()
+
+        if not show_actions:
+            show_actions = self.load_show_from_disk()
 
         for step_num in range(len(show_actions)):
             step_actions = dict()
@@ -780,7 +931,7 @@ class Show(Asset):
             if ('events' in show_actions[step_num] and
                     show_actions[step_num]['events']):
 
-                event_list = (self.machine.string_to_list(
+                event_list = (Config.string_to_list(
                     show_actions[step_num]['events']))
 
                 step_actions['events'] = event_list

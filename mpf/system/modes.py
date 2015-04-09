@@ -13,6 +13,7 @@ from collections import namedtuple
 
 from mpf.system.timing import Timing, Timer
 from mpf.system.tasks import DelayManager
+from mpf.system.config import Config
 
 RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs',
                           verbose=False)
@@ -21,7 +22,17 @@ be called on mode_start or mode_stop.
 """
 
 
+# todo
+# override player var
+# override event strings
+
+
+
 class ModeController(object):
+    """Parent class for the Mode Controller. There is one instance of this in
+    MPF and it's responsible for loading, unloading, and managing all game
+    modes.
+    """
 
     def __init__(self, machine):
         self.machine = machine
@@ -39,20 +50,19 @@ class ModeController(object):
 
         if 'Modes' in self.machine.config:
             self.machine.events.add_handler('machine_init_phase_4',
-                                            self.load_modes)
+                                            self._load_modes)
 
-        self.machine.events.add_handler('ball_ending', self.ball_ending,
+        self.machine.events.add_handler('ball_ending', self._ball_ending,
                                         priority=0)
 
-    def load_modes(self):
-        """Loads the modes from the Modes: section of the machine configuration
-        file.
-        """
+    def _load_modes(self):
+        #Loads the modes from the Modes: section of the machine configuration
+        #file.
 
         for mode in self.machine.config['Modes']:
-            self.machine.game_modes.append(self.load_mode(mode))
+            self.machine.game_modes.append(self._load_mode(mode))
 
-    def load_mode(self, mode_string):
+    def _load_mode(self, mode_string):
         """Loads a mode, reads in its config, and creates the Mode object.
 
         Args:
@@ -62,18 +72,16 @@ class ModeController(object):
         self.log.info('Processing mode: %s', mode_string)
 
         mode_path = os.path.join(self.machine.machine_path,
-                                 self.machine.config['MPF']['paths']['modes'],
-                                 mode_string)
+            self.machine.config['MPF']['paths']['modes'], mode_string)
         mode_config_file = os.path.join(self.machine.machine_path,
-                                        self.machine.config['MPF']['paths']['modes'],
-                                        mode_string,
-                                        'config',
-                                        mode_string + '.yaml')
-        config = self.machine.load_config_yaml(yaml_file=mode_config_file)
+            self.machine.config['MPF']['paths']['modes'], mode_string, 'config',
+            mode_string + '.yaml')
+        config = Config.load_config_yaml(yaml_file=mode_config_file)
 
         if 'code' in config['Mode']:
 
-            import_str = 'modes.' + mode_string + '.code.' + config['Mode']['code'].split('.')[0]
+            import_str = ('modes.' + mode_string + '.code.' +
+                          config['Mode']['code'].split('.')[0])
             i = __import__(import_str, fromlist=[''])
             mode_object = getattr(i, config['Mode']['code'].split('.')[1])(
                 self.machine, config, mode_string, mode_path)
@@ -83,7 +91,7 @@ class ModeController(object):
 
         return mode_object
 
-    def ball_ending(self, queue):
+    def _ball_ending(self, queue):
         # unloads all the active modes, like when the ball ends
 
         if not self.active_modes:
@@ -122,8 +130,7 @@ class ModeController(object):
         initialized.
         """
         self.loader_methods.append(RemoteMethod(method=load_method,
-                                                config_section=config_section_name,
-                                                kwargs=kwargs))
+            config_section=config_section_name, kwargs=kwargs))
 
     def register_start_method(self, start_method, config_section_name=None,
                               **kwargs):
@@ -143,8 +150,7 @@ class ModeController(object):
         started.
         """
         self.start_methods.append(RemoteMethod(method=start_method,
-                                               config_section=config_section_name,
-                                               kwargs=kwargs))
+            config_section=config_section_name, kwargs=kwargs))
 
     def _active_change(self, mode, active):
         # called when a mode goes active or inactive
@@ -188,6 +194,9 @@ class Mode(object):
         self.timers = dict()
         self.start_callback = None
         self.stop_callback = None
+        self.event_handlers = set()
+        self.player = None
+        '''Reference to the current player object.'''
 
         if 'Mode' in self.config:
             self.configure_mode_settings(config['Mode'])
@@ -202,7 +211,8 @@ class Mode(object):
 
         # Call registered remote loader methods
         for item in self.machine.modes.loader_methods:
-            if item.config_section in self.config and self.config[item.config_section]:
+            if (item.config_section in self.config and
+                    self.config[item.config_section]):
                 item.method(config=self.config[item.config_section],
                             mode_path=self.path,
                             **item.kwargs)
@@ -220,18 +230,21 @@ class Mode(object):
             self.machine.modes._active_change(self, self._active)
 
     def configure_mode_settings(self, config):
+        """Processes this mode's configuration settings from a config
+        dictionary.
+        """
 
         if not ('priority' in config and type(config['priority']) is int):
             config['priority'] = 0
 
         if 'start_events' in config:
-            config['start_events'] = self.machine.string_to_list(
+            config['start_events'] = Config.string_to_list(
                 config['start_events'])
         else:
             config['start_events'] = list()
 
         if 'stop_events' in config:
-            config['stop_events'] = self.machine.string_to_list(
+            config['stop_events'] = Config.string_to_list(
                 config['stop_events'])
         else:
             config['stop_events'] = list()
@@ -240,11 +253,6 @@ class Mode(object):
         if 'start_events' in config:
             for event in config['start_events']:
                 self.machine.events.add_handler(event, self.start)
-
-       # register mode stop events
-        if 'stop_events' in config:
-            for event in config['stop_events']:
-                self.machine.events.add_handler(event, self.stop)
 
         self.config['Mode'] = config
 
@@ -258,13 +266,19 @@ class Mode(object):
             **kwargs: Catch-all since this mode might start from events with
                 who-knows-what keyword arguments.
 
-        Warning: Do not override this method. If you want to write your own mode
-        code by subclassing Mode, put whatever code you want to run when this
-        mode starts in the mode_start method which will be called automatically.
+        Warning: You can safely call this method, but do not override it in your
+        mode code. If you want to write your own mode code by subclassing Mode,
+        put whatever code you want to run when this mode starts in the
+        mode_start method which will be called automatically.
         """
 
-        if self.active:
+        if self.active or not self.machine.game.player:
+            # Only start the mode if it's not already started and there's an
+            # active player.
+            self.log.debug('Mode Start Aborted')
             return
+
+        self.player = self.machine.game.player
 
         if type(priority) is int:
             self.priority = priority
@@ -273,15 +287,21 @@ class Mode(object):
 
         self.log.info('Mode Starting. Priority: %s', self.priority)
 
+        # register mode stop events
+        if 'stop_events' in self.config['Mode']:
+            for event in self.config['Mode']['stop_events']:
+                self.add_mode_event_handler(event, self.stop)
+
         self.start_callback = callback
 
         if 'Timers' in self.config:
-            self.setup_timers()
+            self._setup_timers()
 
         self.machine.events.post_queue(event='mode_' + self.name + '_starting',
                                        callback=self._started)
 
     def _started(self):
+        # Called after the mode_<name>_starting queue event has finished.
 
         self.log.info('Mode Started. Priority: %s', self.priority)
 
@@ -295,11 +315,14 @@ class Mode(object):
                                 mode=self,
                                 **item.kwargs))
 
-        self.start_timers()
+        self._start_timers()
 
-        self.machine.events.post('mode_' + self.name + '_started')
+        self.machine.events.post('mode_' + self.name + '_started',
+                                 callback=self._mode_started_callback)
 
-        self.mode_start()  # change to callback
+    def _mode_started_callback(self, **kwargs):
+        # Called after the mode_<name>_started queue event has finished.
+        self.mode_start()
 
         if self.start_callback:
             self.start_callback()
@@ -311,19 +334,22 @@ class Mode(object):
             **kwargs: Catch-all since this mode might start from events with
                 who-knows-what keyword arguments.
 
-        Warning: Do not override this method. If you want to write your own mode
-        code by subclassing Mode, put whatever code you want to run when this
-        mode stops in the mode_stop method which will be called automatically.
+        Warning: You can safely call this method, but do not override it in your
+        mode code. If you want to write your own mode code by subclassing Mode,
+        put whatever code you want to run when this mode stops in the
+        mode_stop method which will be called automatically.
         """
 
         if not self.active:
             return
 
-        self.log.info('Mode Stopping.')
+        self.log.debug('Mode Stopping.')
+
+        self._remove_mode_event_handlers()
 
         self.stop_callback = callback
 
-        self.kill_timers()
+        self._kill_timers()
 
         # self.machine.events.remove_handler(self.stop)
         # todo is this ok here? Or should we only remove ones that we know this
@@ -334,7 +360,7 @@ class Mode(object):
 
     def _stopped(self):
 
-        self.log.info('Mode Stopped.')
+        self.log.debug('Mode Stopped.')
 
         self.priority = 0
         self.active = False
@@ -344,29 +370,79 @@ class Mode(object):
 
         self.stop_methods = list()
 
-        self.machine.events.post('mode_' + self.name + '_stopped')
+        self.machine.events.post('mode_' + self.name + '_stopped',
+                                 callback=self._mode_stopped_callback)
 
-        self.mode_stop()  # change to callback
+    def _mode_stopped_callback(self, **kwargs):
+        self.mode_stop()
 
         if self.stop_callback:
             self.stop_callback()
 
-    def setup_timers(self):
+        self.player = None
+
+    def add_mode_event_handler(self, event, handler, priority=1, **kwargs):
+        """Registers an event handler which is automatically removed when this
+        mode stops.
+
+        This method is similar to the Event Manager's add_handler() method,
+        except this method automatically unregisters the handlers when the mode
+        ends.
+
+        Args:
+            event: String name of the event you're adding a handler for. Since
+                events are text strings, they don't have to be pre-defined.
+            handler: The method that will be called when the event is fired.
+            priority: An arbitrary integer value that defines what order the
+                handlers will be called in. The default is 1, so if you have a
+                handler that you want to be called first, add it here with a
+                priority of 2. (Or 3 or 10 or 100000.) The numbers don't matter.
+                They're called from highest to lowest. (i.e. priority 100 is
+                called before priority 1.)
+            **kwargs: Any any additional keyword/argument pairs entered here
+                will be attached to the handler and called whenever that handler
+                is called. Note these are in addition to kwargs that could be
+                passed as part of the event post. If there's a conflict, the
+                event-level ones will win.
+
+        Returns:
+            A GUID reference to the handler which you can use to later remove
+            the handler via ``remove_handler_by_key``. Though you don't need to
+            remove the handler since the whole point of this method is they're
+            automatically removed when the mode stops.
+
+        Note that if you do add a handler via this method and then remove it
+        manually, that's ok too.
+        """
+
+        key = self.machine.events.add_handler(event, handler, priority,
+                                              **kwargs)
+
+        self.event_handlers.add(key)
+
+        return key
+
+    def _remove_mode_event_handlers(self):
+        for key in self.event_handlers:
+            self.machine.events.remove_handler_by_key(key)
+        self.event_handlers = set()
+
+    def _setup_timers(self):
         # config is localized
 
         for timer, settings in self.config['Timers'].iteritems():
 
-            self.timers[timer] = ModeTimer(machine=self.machine, name=timer,
-                                           config=settings)
+            self.timers[timer] = ModeTimer(machine=self.machine, mode=self,
+                                           name=timer, config=settings)
 
-        return self.kill_timers
+        return self._kill_timers
 
-    def start_timers(self):
+    def _start_timers(self):
         for timer in self.timers.values():
             if timer.running:
                 timer.start()
 
-    def kill_timers(self, ):
+    def _kill_timers(self, ):
         for timer in self.timers.values():
             timer.kill()
 
@@ -392,16 +468,31 @@ class Mode(object):
 
 
 class ModeTimer(object):
+    """Parent class for a mode timer.
 
-    def __init__(self, machine, name, config):
+    Args:
+        machine: The main MPF MachineController object.
+        mode: The parent mode object that this timer belongs to.
+        name: The string name of this timer.
+        config: A Python dictionary which contains the configuration settings
+            for this timer.
+
+    """
+
+    def __init__(self, machine, mode, name, config):
         self.machine = machine
+        self.mode = mode
         self.name = name
         self.config = config
 
+        self.tick_var = self.mode.name + '_' + self.name + '_tick'
+        self.mode.player[self.tick_var] = 0
+
         self.running = False
         self.start_value = 0
-        self.ticks = 0
+        self._ticks = 0
         self.end_value = 0
+        self.max_value = None
         self.direction = 'up'
         self.tick_secs = 1
         self.timer = None
@@ -431,11 +522,14 @@ class ModeTimer(object):
         if 'tick_interval' in self.config:
             self.tick_secs = Timing.string_to_secs(self.config['tick_interval'])
 
-        self.ticks = self.start_value
+        if 'max_value' in self.config:
+            self.max_value = self.config['max_value']
 
-        self.setup_control_events(self.config['control_events'])
+        self.mode.player[self.tick_var] = self.start_value
 
-    def setup_control_events(self, event_list):
+        self._setup_control_events(self.config['control_events'])
+
+    def _setup_control_events(self, event_list):
 
         kwargs = None
 
@@ -477,113 +571,235 @@ class ModeTimer(object):
                 self.event_keys.add(self.machine.events.add_handler(
                                     entry['event'], handler))
 
-    def remove_control_events(self):
+    def _remove_control_events(self):
         for key in self.event_keys:
             self.machine.events.remove_handler_by_key(key)
 
     def start(self, **kwargs):
+        """Starts this timer based on the starting value that's already been
+        configured. Use set_current_time() if you want to set the starting time
+        value.
+
+        Args:
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
+
         self.running = True
 
         self.delay.remove('pause')
         self.create_timer()
 
         self.machine.events.post('timer_' + self.name + '_started',
-                                 ticks_remaining=self.ticks)
+            ticks_remaining=self.mode.player[self.tick_var])
 
     def stop(self, **kwargs):
+        """Stops the timer and posts the 'timer_<name>_stopped' event.
+
+        Args:
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
+
         self.delay.remove('pause')
 
         self.running = False
-        self.remove_timer()
+        self._remove_system_timer()
 
         self.machine.events.post('timer_' + self.name + '_stopped',
-                                 ticks=self.ticks)
+                                 ticks=self.mode.player[self.tick_var])
 
     def pause(self, timer_value=0, **kwargs):
+        """Pauses the timer and posts the 'timer_<name>_paused' event
+
+        Args:
+            timer_value: How many seconds you want to pause the timer for. Note
+                that this pause time is real-world seconds and does not take
+                into consideration this timer's tick interval.
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
+
         self.running = False
 
         pause_secs = timer_value
 
+        self._remove_system_timer()
+        self.machine.events.post('timer_' + self.name + '_paused',
+                                     ticks=self.mode.player[self.tick_var],
+                                     pause_secs=pause_secs)
+
         if pause_secs > 0:
             self.delay.add('pause', pause_secs, self.start)
-            self.machine.events.post('timer_' + self.name + '_paused',
-                                     ticks=self.ticks,
-                                     pause_secs=pause_secs)
-        else:
-            self.stop()
 
     def timer_complete(self):
+        """Automatically called when this timer completes. Posts the
+        'timer_<name>_complete' event. Can be manually called to mark this timer
+        as complete.
+
+        Args:
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
+
         self.stop()
 
         self.machine.events.post('timer_' + self.name + '_complete')
 
-    def timer_tick(self):
-        if self.direction == 'down':
-            self.ticks -= 1
-        else:
-            self.ticks += 1
+    def _timer_tick(self):
+        # Automatically called by the sytem timer each tick
 
-        if not self.check_for_done():
+        if not self.running:
+            self._remove_system_timer()
+            return
+
+        if self.direction == 'down':
+            self.mode.player[self.tick_var] -= 1
+        else:
+            self.mode.player[self.tick_var] += 1
+
+        if not self._check_for_done():
             self.machine.events.post('timer_' + self.name + '_tick',
-                                     ticks=self.ticks)
+                                     ticks=self.mode.player[self.tick_var])
 
     def add_time(self, timer_value, **kwargs):
+        """Adds ticks to this timer.
+
+        Args:
+            Args:
+            timer_value: The number of ticks you want to add to this timer's
+                current value.
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
+
         ticks_added = timer_value
 
-        self.ticks += ticks_added
+        new_value = self.mode.player[self.tick_var] + ticks_added
+
+        if self.max_value and new_value > self.max_value:
+            new_value = self.max_value
+
+        self.mode.player[self.tick_var] = new_value
+        ticks_added = new_value - timer_value
 
         self.machine.events.post('timer_' + self.name + '_time_added',
-                                 ticks=self.ticks,
+                                 ticks=self.mode.player[self.tick_var],
                                  ticks_added=ticks_added)
 
-        self.check_for_done()
+        self._check_for_done()
 
     def subtract_time(self, timer_value, **kwargs):
+        """Subracts ticks from this timer.
+
+        Args:
+            timer_value: The numebr of ticks you want to subtract from this
+                timer's current value.
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
+
         ticks_subtracted = timer_value
 
-        self.ticks -= ticks_subtracted
+        self.mode.player[self.tick_var] -= ticks_subtracted
 
         self.machine.events.post('timer_' + self.name + '_time_subtracted',
-                                 ticks=self.ticks,
+                                 ticks=self.mode.player[self.tick_var],
                                  ticks_subtracted=ticks_subtracted)
 
-        self.check_for_done()
+        self._check_for_done()
 
-    def check_for_done(self):
-        if self.direction == 'up' and self.ticks >= self.end_value:
+    def _check_for_done(self):
+        # Checks to see if this timer is done. Automatically called anytime the
+        # timer's value changes.
+        if (self.direction == 'up' and
+                self.mode.player[self.tick_var] >= self.end_value):
             self.timer_complete()
             return True
-        elif self.ticks <= self.end_value:
+        elif self.mode.player[self.tick_var] <= self.end_value:
             self.timer_complete()
             return True
 
         return False
 
-    def create_timer(self):
-
-        self.remove_timer()
-        self.timer = Timer(callback=self.timer_tick, frequency=self.tick_secs)
+    def _create_system_timer(self):
+        # Creates the system timer which drives this mode timer's tick method.
+        self._remove_system_timer()
+        self.timer = Timer(callback=self._timer_tick, frequency=self.tick_secs)
         self.machine.timing.add(self.timer)
 
-    def remove_timer(self):
+    def _remove_system_timer(self):
+        # Removes the system timer associated with this mode timer.
         if self.timer:
             self.machine.timing.remove(self.timer)
             self.timer = None
 
     def change_tick_interval(self, change=0.0, **kwargs):
+        """Changes the interval for each "tick" of this timer.
+
+        Args:
+            change: Float or int of the change you want to make to this timer's
+                tick rate. Note this value is added to the current tick
+                interval. To set an absolute value, use the set_tick_interval()
+                method. To shorten the tick rate, use a negative value.
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
+
         self.tick_secs *= change
-        self.create_timer()
+        self._create_system_timer()
 
     def set_tick_interval(self, timer_value, **kwargs):
-        self.tick_secs = timer_value
-        self.create_timer()
+        """Sets the number of seconds between ticks for this timer. This is an
+        absolute setting. To apply a change to the current value, use the
+        change_tick_interval() method.
+
+        Args:
+            timer_value: The new number of seconds between each tick of this
+                timer. This value should always be positive.
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
+
+        self.tick_secs = abs(timer_value)
+        self._create_system_timer()
 
     def set_current_time(self, timer_value, **kwargs):
-        self.ticks = timer_value
+        """Sets the current amount of time of this timer. This value is
+        expressed in "ticks" since the interval per tick can be something other
+        than 1 second).
+
+        Args:
+            timer_value: Integer of the current value you want this timer to be.
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
+
+        self.mode.player[self.tick_var] = int(timer_value)
+
+        if self.max_value and self.mode.player[self.tick_var] > self.max_value:
+            self.mode.player[self.tick_var] = self.max_value
 
     def kill(self):
+        """Stops this timer and also removes all the control events.
+
+        Args:
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
+
         self.stop()
-        self.remove_control_events()
+        self._remove_control_events()
 
 
 # The MIT License (MIT)

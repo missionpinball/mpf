@@ -7,11 +7,12 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
+
 from mpf.system.devices import Device
 from mpf.system.tasks import DelayManager
 from mpf.system.show_controller import Playlist
 from collections import deque
-
+from mpf.system.config import Config
 
 class Target(Device):
 
@@ -61,7 +62,7 @@ class Target(Device):
             self.config['default_state'] = 'unlit'
 
         if 'reset_events' in self.config:
-            self.config['reset_events'] = self.machine.string_to_list(
+            self.config['reset_events'] = Config.string_to_list(
                 self.config['reset_events'])
         else:
             self.config['reset_events'] = [None]
@@ -196,7 +197,7 @@ class TargetGroup(Device):
         self.targets = list()
 
         # make sure our target list is a list
-        self.config[self.device_str] = self.machine.string_to_list(
+        self.config[self.device_str] = Config.string_to_list(
             self.config[self.device_str])
 
         # create our list of objects
@@ -218,13 +219,13 @@ class TargetGroup(Device):
         if 'rotate_left_events' not in self.config:
             self.config['rotate_left_events'] = list()
         else:
-            self.config['rotate_left_events'] = self.machine.string_to_list(
+            self.config['rotate_left_events'] = Config.string_to_list(
                 self.config['rotate_left_events'])
 
         if 'rotate_right_events' not in self.config:
             self.config['rotate_right_events'] = list()
         else:
-            self.config['rotate_right_events'] = self.machine.string_to_list(
+            self.config['rotate_right_events'] = Config.string_to_list(
                 self.config['rotate_right_events'])
 
         # If no reset events are specified, just self reset when complete
