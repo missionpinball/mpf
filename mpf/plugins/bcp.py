@@ -20,14 +20,24 @@ Done
 hello?version=xxx
 error
 goodbye
-game_start
-game_end
-mode_start?name=xxx&priority=xxx
-mode_stop?name=xxx
-player_add?player=x (x is the player number that was just added)
+
+attract_start
+attract_stop
+
+player_add?player=x
+player_turn_start?player=x
+player_variable?name=x&value=x&prev_value=x&change=x
+player_score?value=x&prev_value=x&change=x
+
 ball_start?player=x&ball=x
 ball_end
-player_<var>?value=xxx&prev_value=xxx&change=xxx
+
+game_start
+game_end
+
+mode_start?name=xxx&priority=xxx
+mode_stop?name=xxx
+
 
 
 # to ignore commands
@@ -37,7 +47,6 @@ auto resume
 
 
 
-player_added?total_players=x
 
 Player vars
 ===========
@@ -45,11 +54,6 @@ Player vars
 shot
 
 event
-
-hello
-goodbye
-
-error
 
 set
 get
@@ -72,6 +76,7 @@ import urllib
 import urlparse
 from distutils.version import LooseVersion
 from Queue import Queue
+import copy
 
 from mpf.game.player import Player
 from mpf.system.config import Config
@@ -128,12 +133,16 @@ class BCP(object):
 
         self.setup_bcp_connections()
         self.filter_player_events = True
+        self.send_player_vars = False
 
         if 'event_map' in self.config:
             self.bcp_events = self.config['event_map']
             self.process_bcp_events()
 
-        if 'player_variables' in self.config:
+        if ('player_variables' in self.config and
+                self.config['player_variables']):
+
+            self.send_player_vars = True
 
             if (type(self.config['player_variables']) is str and
                     self.config['player_variables'] == '__all__'):
@@ -143,7 +152,7 @@ class BCP(object):
                 self.config['player_variables'] = (
                     Config.string_to_list(self.config['player_variables']))
 
-            self._setup_player_monitor()
+        self._setup_player_monitor()
 
 
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
@@ -172,9 +181,10 @@ class BCP(object):
             self.send('player_score', value=value, prev_value=prev_value,
                       change=change)
 
-        elif (not self.filter_player_events or
-              name in self.config['player_variables']):
-            self.send(bcp_command='player_' + name,
+        elif self.send_player_vars and (not self.filter_player_events or
+                name in self.config['player_variables']):
+            self.send(bcp_command='player_variable',
+                      name=name,
                       value=value,
                       prev_value=prev_value,
                       change=change)
@@ -197,6 +207,9 @@ class BCP(object):
 
     def _bcp_event_callback(self, command, params=None, **kwargs):
         if params:
+
+            params = copy.deepcopy(params)
+
             for param, value in params.iteritems():
 
                 # Are there any text variables to replace on the fly?

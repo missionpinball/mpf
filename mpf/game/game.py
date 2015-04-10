@@ -462,11 +462,14 @@ class Game(MachineMode):
         if not self.player:
             self.player_rotate()
 
-        self.machine.events.post('player_turn_start', player=self.player)
+        self.machine.events.post('player_turn_start', player=self.player,
+                                 number=self.player.number,
+                                 callback=self._player_turn_started)
+
+    def _player_turn_started(self, **kwargs):
 
         self.player.ball += 1
-        self.ball_starting()  # todo is this ok to jump right into?
-        # todo wonder if we should do player_turn_start as boolean? meh..
+        self.ball_starting()
 
     def player_rotate(self, player_num=None):
         """Rotates the game to the next player.
@@ -491,7 +494,8 @@ class Game(MachineMode):
 
         else:
 
-            self.machine.events.post('player_turn_stop', player=self.player)
+            self.machine.events.post('player_turn_stop', player=self.player,
+                                     number=self.player.number)
 
             if self.player.number < Player.total_players:
                 self.player = self.player_list[self.player.number]

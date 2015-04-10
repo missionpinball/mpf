@@ -11,6 +11,7 @@ import logging
 import uuid
 
 import mpf.media_controller.decorators
+from mpf.system.timing import Timing
 
 
 class SlideBuilder(object):
@@ -157,6 +158,12 @@ class SlideBuilder(object):
             if 'name' not in element:
                 element['name'] = None
 
+            if 'expire' in element:
+                first_settings['expire'] = Timing.string_to_ms(
+                    element.pop('expire'))
+            else:
+                first_settings['expire'] = 0
+
             processed_settings.append(element)
 
         if 'slide_priority' not in first_settings:
@@ -214,6 +221,11 @@ class SlideBuilder(object):
             else:
                 slide_name = str(uuid.uuid4())
 
+        # Does this slide need to auto clear itself?
+        if 'expire' not in settings[0]:
+            settings[0]['expire']
+
+
         # Does this slide name already exist for this display?
 
         if slide_name in display.slides:  # Found existing slide
@@ -226,7 +238,8 @@ class SlideBuilder(object):
                 priority = settings[0]['slide_priority']
 
             slide = display.add_slide(name=slide_name, priority=priority,
-                                      removal_key=settings[0]['removal_key'])
+                                      removal_key=settings[0]['removal_key'],
+                                      expire_ms=settings[0]['expire'])
 
         # loop through and add the elements
         for element in settings:

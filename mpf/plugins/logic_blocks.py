@@ -58,14 +58,14 @@ class LogicBlocks(object):
                                      player=player,
                                      enable=False)
 
-    def _player_turn_start(self, player):
+    def _player_turn_start(self, player, **kwargs):
 
         self.log.debug("Processing player_turn_start")
 
         for block in player.logic_blocks:
             block._create_control_events()
 
-    def _player_turn_stop(self, player):
+    def _player_turn_stop(self, player, **kwargs):
 
         self.log.debug("Player logic blocks: %s", player.logic_blocks)
 

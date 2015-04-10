@@ -75,6 +75,7 @@ class MediaController(object):
 
         self.bcp_commands = {'hello': self.bcp_hello,
                              'goodbye': self.bcp_goodbye,
+                             'reset': self.bcp_reset,
                              'mode_start': self.bcp_mode_start,
                              'mode_stop': self.bcp_mode_stop,
                              'error': self.bcp_error,
@@ -85,7 +86,9 @@ class MediaController(object):
                              'player_added': self.bcp_player_add,
                              'player_variable': self.bcp_player_variable,
                              'player_score': self.bcp_player_score,
-                             'attract_start': self.bcp_attract_start
+                             'player_turn_start': self.bcp_player_turn_start,
+                             'attract_start': self.bcp_attract_start,
+                             'attract_stop': self.bcp_attract_stop
                             }
 
         # load the MPF config & machine defaults
@@ -249,15 +252,6 @@ class MediaController(object):
                     else:
                         handler()
 
-    def player_add(self):
-        new_player = Player(self)
-        self.player_list.append(new_player)
-        self.events.post('player_add_success', num=new_player.number)
-
-    def player_turn_start(self, player):
-        self.player = self.player_list[player-1]
-
-
     def process_command(self, bcp_command, **kwargs):
         self.log.info("Processing command: %s %s", bcp_command, kwargs)
 
@@ -398,7 +392,7 @@ class MediaController(object):
         self.events.post('ball_ended', **kwargs)
 
     def bcp_game_start(self, **kargs):
-        self.player_turn_start(player=1)
+        self.bcp_player_turn_start(player=1)
         self.events.post('game_started', **kargs)
 
     def bcp_game_end(self, **kwargs):
@@ -406,7 +400,10 @@ class MediaController(object):
         self.events.post('game_ended', **kwargs)
 
     def bcp_player_add(self, number, **kwargs):
-        self.player_add()
+        new_player = Player(self)
+        self.player_list.append(new_player)
+        new_player.score = 0
+
         self.events.post('player_add_success', num=number)
 
     def bcp_player_variable(self, name, value, prev_value, change, **kwargs):
@@ -414,20 +411,24 @@ class MediaController(object):
         if self.player:
             self.player[name] = value
 
-        #self.events.post('player_' + name, value=value, prev_value=prev_value,
-        #                 change=change)
-
     def bcp_player_score(self, value, prev_value, change, **kwargs):
 
         if self.player:
-            self.player['score'] = value
-
-        #self.events.post('player_score', value=value, prev_value=prev_value,
-        #                 change=change)
-
+            self.player['score'] = int(value)
 
     def bcp_attract_start(self, **kwargs):
         self.events.post('machineflow_Attract_start')
+
+    def bcp_attract_stop(self, **kwargs):
+        self.events.post('machineflow_Attract_stop')
+
+    def bcp_player_turn_start(self, player, **kwargs):
+        self.player = self.player_list[int(player)-1]
+
+    def bcp_reset(self, **kwargs):
+        self.player = None
+        self.player_list = list()
+
 
 
 class BCPServer(threading.Thread):
@@ -436,7 +437,7 @@ class BCPServer(threading.Thread):
 
         threading.Thread.__init__(self)
         self.mc = mc
-        self.log = logging.getLogger('Socket Queue')
+        self.log = logging.getLogger('BCP')
         self.queue = receiving_queue
         self.sending_queue = sending_queue
         self.connection = None

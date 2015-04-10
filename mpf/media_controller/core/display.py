@@ -316,7 +316,8 @@ class MPFDisplay(object):
         self.machine.timing.add(
             Timer(self.update, frequency=1/float(self.config['fps'])))
 
-    def add_slide(self, name, priority=0, persist=False, removal_key=None):
+    def add_slide(self, name, priority=0, persist=False, removal_key=None,
+                  expire_ms=0):
         """Creates a new slide and adds it to the list of slides for this
         display.
 
@@ -327,6 +328,10 @@ class MPFDisplay(object):
                 priority of the display's current slide.
             presist: Boolean as to whether this slide should be saved when it
                 is no longer being shown.
+            removal_key: Unique identifier that can be used later to remove this
+                slide.
+            expire_ms: Integer of ms that will cause this slide to automatically
+                remove itself. The timer doesn't start until the slide is shown.
 
         Returns: Reference to the new slide object that was just created.
 
@@ -334,11 +339,23 @@ class MPFDisplay(object):
 
         self.slides[name] = Slide(mpfdisplay=self, name=name, priority=priority,
                                   persist=persist, machine=self.machine,
-                                  removal_key=removal_key)
+                                  removal_key=removal_key,
+                                  expire_ms=expire_ms)
 
         return self.slides[name]
 
     def remove_slides_by_key(self, removal_key):
+        """Removes any slides with the removal key passed.
+
+        Args:
+            removal_key: Key for the slides you want to remove.
+
+        Removing an active slide will automatically cause the next highest
+        priority slide to be shown.
+
+        You can safely call this method even if the removal key doesn't match
+        any slides.
+        """
 
         for slide_obj in self.slides.values():
             if slide_obj.removal_key == removal_key:
@@ -478,6 +495,7 @@ class MPFDisplay(object):
             self.current_slide = new_slide
             self.current_slide.update()
             self.current_slide.active = True
+            new_slide.schedule_removal()
 
     def show_current_active_slide(self):
 
@@ -870,10 +888,14 @@ class Slide(object):
         height: Height of this slide, in pixels.
         depth: Integer value of the color depth, either 8 or 24.
         palette: The Pygame palette this slide uses. (8-bit only)
+        removal_key: Unique identifier that can be used later to remove this
+            slide.
+        expire_ms: Integer of ms that will cause this slide to automatically
+            remove itself. The timer doesn't start until the slide is shown.
     """
 
     def __init__(self, mpfdisplay, machine, name=None, priority=0,
-                 persist=False, removal_key=None):
+                 persist=False, removal_key=None, expire_ms=0):
 
         self.log = logging.getLogger('Slide')
 
@@ -883,7 +905,7 @@ class Slide(object):
         self.priority = priority
         self.persist = persist
         self.removal_key = removal_key
-        self.dirty = True
+        self.expire_ms = expire_ms
 
         self.elements = list()
         self.pending_elements = set()
@@ -1143,8 +1165,29 @@ class Slide(object):
                            self.priority,
                            self.mpfdisplay.current_slide.priority)
 
-    def remove(self):
+        self.schedule_removal()
 
+    def schedule_removal(self, removal_time=None):
+        """Schedules this slide to automatically be removed.
+
+        Args:
+            removal_time: MPF time string of when this slide should be removed.
+                If no time is specified, the slide's existing removal time is
+                used. If the slide has no existing time, the slide will not be
+                removed.
+        """
+        if removal_time:
+            self.expire_ms = Timing.string_to_ms(removal_time)
+
+        if self.expire_ms:
+            self.machine.display.delay.add(name=self.name + '_expiration',
+                                           ms=self.expire_ms,
+                                           callback=self.remove)
+
+    def remove(self):
+        """Removes the slide. If this slide is active, the next-highest priority
+        slide will automatically be shown.
+        """
         del self.mpfdisplay.slides[self.name]
 
         self.mpfdisplay.show_current_active_slide()

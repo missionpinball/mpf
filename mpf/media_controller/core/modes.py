@@ -275,8 +275,6 @@ class Mode(object):
 
         self.log.debug('Mode Stop.')
 
-        self._remove_mode_event_handlers()
-
         self.priority = 0
         self.active = False
 

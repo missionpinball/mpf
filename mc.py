@@ -25,7 +25,8 @@ parser = OptionParser()
 
 parser.add_option("-C", "--mcconfigfile",
                   action="store", type="string", dest="mcconfigfile",
-                  default=os.path.join("mpf", "media_controller", "mcconfig.yaml"),
+                  default=os.path.join("mpf", "media_controller",
+                                       "mcconfig.yaml"),
                   help="The MPF framework config file")
 
 parser.add_option("-c", "--configfile",
@@ -37,7 +38,7 @@ parser.add_option("-c", "--configfile",
 parser.add_option("-l", "--logfile",
                   action="store", type="string", dest="logfile",
                   default=os.path.join("logs", datetime.now().strftime(
-                  "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
+                  "%Y-%m-%d-%H-%M-%S-mc-" + socket.gethostname() + ".log")),
                   help="Specifies the name (and path) of the log file")
 
 parser.add_option("-v", "--verbose",
