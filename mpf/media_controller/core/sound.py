@@ -13,7 +13,7 @@ import Queue
 import uuid
 import copy
 
-from core.assets import Asset, AssetManager
+from mpf.media_controller.core.assets import Asset, AssetManager
 from mpf.system.config import Config
 
 global import_success

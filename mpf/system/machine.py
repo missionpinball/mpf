@@ -59,6 +59,7 @@ class MachineController(object):
         self.loop_rate = 0.0
         self.mpf_load = 0.0
         self.machine_path = None  # Path to this machine's folder root
+        self.monitors = dict()
 
         self.plugins = list()
         self.scriptlets = list()
@@ -305,6 +306,29 @@ class MachineController(object):
         for comp in parts[1:]:
             m = getattr(m, comp)
         return m
+
+    def register_monitor(self, monitor_class, monitor):
+        """Registers a callback that will be called any time any player variable
+        changes.
+
+        The callback will be called with several paramters:
+
+        name: The name of the player variable that changed
+        value: The new value of the player variable
+        prev_value: The previous value of the player variable
+        change: The numeric amount the value changed, or if it can't be
+            calculated, boolean True
+
+        """
+
+        if monitor_class not in self.monitors:
+            self.add_monitor_class(monitor_class)
+
+        self.monitors[monitor_class].add(monitor)
+
+    def add_monitor_class(self, monitor_class):
+        if monitor_class not in self.monitors:
+            self.monitors[monitor_class] = set()
 
     def run(self):
         """The main machine run loop."""

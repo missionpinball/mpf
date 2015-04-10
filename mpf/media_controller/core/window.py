@@ -19,7 +19,7 @@ except ImportError:
 import version
 
 from mpf.system.timing import Timing
-from core.display import MPFDisplay
+from mpf.media_controller.core.display import MPFDisplay
 
 
 class WindowManager(MPFDisplay):

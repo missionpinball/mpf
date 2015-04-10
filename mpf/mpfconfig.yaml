@@ -213,30 +213,37 @@ AssetDefaults:
         default:
             load: preload
 
-BCP_connections:
-    local_display:
-        host: localhost
-        port: 5051
+BCP:
+    connections:
+        local_display:
+            host: localhost
+            port: 5050
 
-BCP_events:
-    ball_started:
-        command: ball_start
-        params:
-            player: "%player"
-            ball: "%ball"
-    ball_ending:
-        command: ball_end
-
-    machineflow_Attract_start:
-        command: mode_start
-        params:
-            name: attract
-    machineflow_Attract_stop:
-        command: mode_stop
-        params:
-            name: attract
-
-    game_starting:
-        command: game_start
-    game_ended:
-        command: game_end
+    event_map:
+        ball_started:
+            command: ball_start
+            params:
+                player: "%player"
+                ball: "%ball"
+        ball_ending:
+            command: ball_end
+    
+        machineflow_Attract_start:
+            command: attract_start
+        machineflow_Attract_stop:
+            command: attract_stop
+            params:
+                name: attract
+    
+        game_starting:
+            command: game_start
+        game_ended:
+            command: game_end
+        
+        player_add_success:
+            command: player_added
+            params:
+                number: "%num"
+    
+    player_variables:
+        __all__

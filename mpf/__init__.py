@@ -3,7 +3,8 @@ __all__ = [
            'system',
            'game',
            'version',
-           'window'
+           'window',
+           'media_controller'
           ]
 
 from version import __version__

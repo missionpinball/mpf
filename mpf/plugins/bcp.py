@@ -17,15 +17,17 @@
 '''
 Done
 ====
-hello
+hello?version=xxx
 error
+goodbye
 game_start
 game_end
-attract_start
-attract_end
+mode_start?name=xxx&priority=xxx
+mode_stop?name=xxx
 player_add?player=x (x is the player number that was just added)
 ball_start?player=x&ball=x
 ball_end
+player_<var>?value=xxx&prev_value=xxx&change=xxx
 
 
 # to ignore commands
@@ -33,33 +35,12 @@ commands and param names are case-insensitive
 id is up to 32 chars for shows, ball, etc.
 auto resume
 
-game_start
-game_end
-attract_start
-attract_stop
-
-machinemode_start
-machinemode_stop
 
 
 player_added?total_players=x
 
 Player vars
 ===========
-player_<var_name>?value=xxx&prev_value=xxx&change=xxx
-
-
-player variable
-
-mode starting
-mode started
-mode stopping
-mode stopped
-
-show starting
-show started
-show stopping
-show stopped
 
 shot
 
@@ -74,11 +55,6 @@ set
 get
 
 reset
-
-ball starting
-ball started
-ball ending
-ball ended
 
 timer started
 timer paused
@@ -97,7 +73,10 @@ import urlparse
 from distutils.version import LooseVersion
 from Queue import Queue
 
-__bcp_version_info__ = ('1', '0alpha')
+from mpf.game.player import Player
+from mpf.system.config import Config
+
+__bcp_version_info__ = ('1', '0')
 __bcp_version__ = '.'.join(__bcp_version_info__)
 
 
@@ -129,29 +108,43 @@ def encode_command_string(bcp_command, **kwargs):
 class BCP(object):
 
     def __init__(self, machine):
-        if 'BCP_connections' not in machine.config:
+        if ('BCP' not in machine.config or
+                'connections' not in machine.config['BCP']):
             return
 
         self.log = logging.getLogger('BCP')
         self.machine = machine
 
+        self.config = machine.config['BCP']
         self.receive_queue = Queue()
         self.bcp_events = dict()
-        self.connection_config = self.machine.config['BCP_connections']
+        self.connection_config = self.config['connections']
         self.bcp_clients = list()
 
-        self.bcp_receive_commands = {
-                                    'error': self.bcp_error,
-                                    'switch': self.bcp_switch,
-                                    'dmd_frame': self.bcp_dmd_frame
-
-                                    }
+        self.bcp_receive_commands = {'error': self.bcp_error,
+                                     'switch': self.bcp_switch,
+                                     'dmd_frame': self.bcp_dmd_frame
+                                     }
 
         self.setup_bcp_connections()
+        self.filter_player_events = True
 
-        if 'BCP_events' in self.machine.config:
-            self.bcp_events = self.machine.config['BCP_events']
+        if 'event_map' in self.config:
+            self.bcp_events = self.config['event_map']
             self.process_bcp_events()
+
+        if 'player_variables' in self.config:
+
+            if (type(self.config['player_variables']) is str and
+                    self.config['player_variables'] == '__all__'):
+                self.filter_player_events = False
+
+            else:
+                self.config['player_variables'] = (
+                    Config.string_to_list(self.config['player_variables']))
+
+            self._setup_player_monitor()
+
 
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
 
@@ -162,12 +155,29 @@ class BCP(object):
             if 'host' not in settings:
                 break
             elif 'port' not in settings:
-                settings['port'] = self.machine.config['BCP']['port']
+                settings['port'] = 5050
 
             self.bcp_clients.append(BCPClient(self.machine, name,
                                               settings['host'],
                                               settings['port'],
                                               self.receive_queue))
+
+    def _setup_player_monitor(self):
+        Player.monitor_enabled = True
+        self.machine.register_monitor('player', self._player_var_change)
+
+    def _player_var_change(self, name, value, prev_value, change):
+
+        if name == 'score':
+            self.send('player_score', value=value, prev_value=prev_value,
+                      change=change)
+
+        elif (not self.filter_player_events or
+              name in self.config['player_variables']):
+            self.send(bcp_command='player_' + name,
+                      value=value,
+                      prev_value=prev_value,
+                      change=change)
 
     def process_bcp_events(self):
         """Processes the BCP Events from the config."""

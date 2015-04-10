@@ -11,8 +11,8 @@ import logging
 # todo make it so this doesn't crash if pygame is not available
 
 from mpf.system.show_controller import ShowController
-from core.display import DisplayElement
-import display_modules.dmd
+from mpf.media_controller.core.display import DisplayElement
+import mpf.media_controller.display_modules.dmd
 
 
 class VirtualDMD(DisplayElement):
@@ -89,7 +89,7 @@ class VirtualDMD(DisplayElement):
             # This needs to match the source DMD or it could get weird
             self.config['shades'] = self.dmd_object.config['shades']
 
-            self.palette = display_modules.dmd.create_palette(
+            self.palette = mpf.media_controller.display_modules.dmd.create_palette(
                 bright_color=self.config['pixel_color'],
                 dark_color=self.config['dark_color'],
                 steps=self.config['shades'])

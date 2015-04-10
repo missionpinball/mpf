@@ -1,13 +1,15 @@
 MediaController:
     modules:
 
+        modes.ModeController
         language.Language
         display.DisplayController
         show_controller.ShowController
         keyboard.Keyboard
         sound.SoundController
+        
     
-    port: 5051
+    port: 5050
 
     display_modules:
         elements:

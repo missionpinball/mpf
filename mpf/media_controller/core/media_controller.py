@@ -25,16 +25,17 @@ from Queue import Queue
 
 import pygame
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-from core import *
+from mpf.media_controller.core import *
+
 from mpf.system.config import Config
 from mpf.system.events import EventManager
 from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
+from mpf.game.player import Player
 import mpf.plugins.bcp as bcp
 import version
 
-__bcp_version_info__ = ('1', '0alpha')
+__bcp_version_info__ = ('1', '0')
 __bcp_version__ = '.'.join(__bcp_version_info__)
 
 
@@ -68,9 +69,11 @@ class MediaController(object):
         self.socket_thread = None
         self.queue = Queue()
         self.sending_queue = Queue()
+        self.game_modes = dict()
+        self.player_list = list()
+        self.player = None
 
-        self.bcp_commands = {
-                             'hello': self.bcp_hello,
+        self.bcp_commands = {'hello': self.bcp_hello,
                              'goodbye': self.bcp_goodbye,
                              'mode_start': self.bcp_mode_start,
                              'mode_stop': self.bcp_mode_stop,
@@ -78,7 +81,11 @@ class MediaController(object):
                              'ball_start': self.bcp_ball_start,
                              'ball_end': self.bcp_ball_end,
                              'game_start': self.bcp_game_start,
-                             'game_end': self.bcp_game_end
+                             'game_end': self.bcp_game_end,
+                             'player_added': self.bcp_player_add,
+                             'player_variable': self.bcp_player_variable,
+                             'player_score': self.bcp_player_score,
+                             'attract_start': self.bcp_attract_start
                             }
 
         # load the MPF config & machine defaults
@@ -94,9 +101,9 @@ class MediaController(object):
                 options['machinepath'].startswith('\\')):
             machine_path = options['machinepath']
         else:
-            machine_path = os.path.join('..',
-                self.config['MediaController']['paths']['machine_files'],
-                options['machinepath'])
+            machine_path = os.path.join(self.config['MediaController']['paths']
+                                        ['machine_files'],
+                                        options['machinepath'])
 
         self.machine_path = os.path.abspath(machine_path)
 
@@ -117,7 +124,8 @@ class MediaController(object):
                 options['configfile'] += '.yaml'
 
             config_file = os.path.join(self.machine_path,
-                                       self.config['MediaController']['paths']['config'],
+                                       self.config['MediaController']['paths']
+                                       ['config'],
                                        options['configfile'])
 
         self.log.info("Base machine config file: %s", config_file)
@@ -241,6 +249,15 @@ class MediaController(object):
                     else:
                         handler()
 
+    def player_add(self):
+        new_player = Player(self)
+        self.player_list.append(new_player)
+        self.events.post('player_add_success', num=new_player.number)
+
+    def player_turn_start(self, player):
+        self.player = self.player_list[player-1]
+
+
     def process_command(self, bcp_command, **kwargs):
         self.log.info("Processing command: %s %s", bcp_command, kwargs)
 
@@ -262,7 +279,7 @@ class MediaController(object):
             callback()
 
     def timer_init(self):
-        self.HZ = 60
+        self.HZ = 30
         self.next_tick_time = time.time()
         self.secs_per_tick = 1.0 / self.HZ
 
@@ -289,7 +306,7 @@ class MediaController(object):
 
         try:
             while self.done is False:
-                #self.platform.hw_loop()
+                time.sleep(0.001)
 
                 self.get_from_queue()
 
@@ -320,16 +337,23 @@ class MediaController(object):
         self.socket_thread.start()
 
     def get_from_queue(self):
-        command = None
-        try:
-            command = self.queue.get(False)
 
-        except:
-            pass
-
-        if command:
-            cmd, kwargs = bcp.decode_command_string(command)
+        #command = None
+        while not self.queue.empty():
+            cmd, kwargs = bcp.decode_command_string(self.queue.get(False))
             self.process_command(cmd, **kwargs)
+
+
+
+        # try:
+        #     command = self.queue.get(False)
+        #
+        # except:
+        #     pass
+        #
+        # if command:
+        #     cmd, kwargs = bcp.decode_command_string(command)
+        #     self.process_command(cmd, **kwargs)
 
     def bcp_hello(self, **kwargs):
         try:
@@ -344,34 +368,66 @@ class MediaController(object):
     def bcp_goodbye(self, **kwargs):
         pass
 
-    def bcp_mode_start(self, name=None, **kwargs):
+    def bcp_mode_start(self, name=None, priority=0, **kwargs):
         if not name:
             return
             #todo raise error
 
-        self.events.post('mode_' + name.lower() + '_start', **kwargs)
+        #self.events.post('mode_' + name.lower() + '_start', **kwargs)
+
+        if name in self.game_modes:
+            self.game_modes[name].start(priority=priority)
 
     def bcp_mode_stop(self, name, **kwargs):
         if not name:
             return
             #todo raise error
 
-        self.events.post('mode_' + name.lower() + '_stop', **kwargs)
+        if name in self.game_modes:
+            self.game_modes[name].stop()
+
+        #self.events.post('mode_' + name.lower() + '_stop', **kwargs)
 
     def bcp_error(self, **kwargs):
         print "Received error command from client"
 
     def bcp_ball_start(self, **kwargs):
-        self.events.post('ball_start', **kwargs)
+        self.events.post('ball_started', **kwargs)
 
     def bcp_ball_end(self, **kwargs):
-        self.events.post('ball_end', **kwargs)
+        self.events.post('ball_ended', **kwargs)
 
     def bcp_game_start(self, **kargs):
-        self.events.post('game_start', **kargs)
+        self.player_turn_start(player=1)
+        self.events.post('game_started', **kargs)
 
     def bcp_game_end(self, **kwargs):
-        self.events.post('game_end', **kwargs)
+        self.player = None
+        self.events.post('game_ended', **kwargs)
+
+    def bcp_player_add(self, number, **kwargs):
+        self.player_add()
+        self.events.post('player_add_success', num=number)
+
+    def bcp_player_variable(self, name, value, prev_value, change, **kwargs):
+
+        if self.player:
+            self.player[name] = value
+
+        #self.events.post('player_' + name, value=value, prev_value=prev_value,
+        #                 change=change)
+
+    def bcp_player_score(self, value, prev_value, change, **kwargs):
+
+        if self.player:
+            self.player['score'] = value
+
+        #self.events.post('player_score', value=value, prev_value=prev_value,
+        #                 change=change)
+
+
+    def bcp_attract_start(self, **kwargs):
+        self.events.post('machineflow_Attract_start')
 
 
 class BCPServer(threading.Thread):
@@ -396,7 +452,7 @@ class BCPServer(threading.Thread):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        server_address = ('localhost', 5051)
+        server_address = ('localhost', 5050)
         self.log.info('Starting up on %s port %s' % server_address)
 
         try:

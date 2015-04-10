@@ -64,6 +64,11 @@ class Player(object):
     total_players = 0  # might not use this here
     """Tracks the the number of players in the game (starting with 1)."""
 
+    monitor_enabled = False
+    """Class attribute which specifies whether any monitors have been registered
+    to track player variable changes.
+    """
+
     def __getattr__(self, name):
         if name in self.vars:
             return self.vars[name]
@@ -79,18 +84,25 @@ class Player(object):
 
         try:
             change = value-prev_value
-        except:
+        except TypeError:
             if prev_value != value:
                 change = True
             else:
                 change = False
 
-        self.log.debug("Setting '%s' to: %s, (prior: %s, change: %s)",
-                       name, self.vars[name], prev_value, change)
-        self.machine.events.post('player_' + name,
-                                 value=self.vars[name],
-                                 prev_value=prev_value,
-                                 change=change)
+        if change:
+
+            self.log.debug("Setting '%s' to: %s, (prior: %s, change: %s)",
+                           name, self.vars[name], prev_value, change)
+            self.machine.events.post('player_' + name,
+                                     value=self.vars[name],
+                                     prev_value=prev_value,
+                                     change=change)
+
+        if Player.monitor_enabled:
+            for callback in self.machine.monitors['player']:
+                callback(name=name, value=self.vars[name],
+                         prev_value=prev_value, change=change)
 
     def __getitem__(self, name):
         return self.__getattr__(name)

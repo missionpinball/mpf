@@ -20,7 +20,7 @@ class SocketClient(object):
 
         self.client_socket = None
         self.server_name = 'localhost'
-        self.server_port = 5051
+        self.server_port = 5050
         self.config = None
 
         if 'SocketServer' in self.machine.config:

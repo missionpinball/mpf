@@ -11,7 +11,7 @@ import yaml
 import time
 import os
 
-from core.assets import Asset, AssetManager
+from mpf.media_controller.core.assets import Asset, AssetManager
 from mpf.system.config import Config
 
 class ShowController(object):

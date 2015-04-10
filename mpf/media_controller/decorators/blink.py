@@ -10,7 +10,7 @@ import pygame
 import pygame.locals
 import time
 
-from core.display import Decorator
+from mpf.media_controller.core.display import Decorator
 
 
 class Blink(Decorator):

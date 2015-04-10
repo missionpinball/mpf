@@ -12,7 +12,7 @@ import struct
 import pygame  # todo make it so this doesn't crash if pygame is not available
 import logging
 
-from core.display import MPFDisplay
+from mpf.media_controller.core.display import MPFDisplay
 
 
 def load_dmd_file(file_name, palette=None, alpha_color=None,
@@ -244,6 +244,8 @@ class DMD(MPFDisplay):
             self.config = dict()
 
         self.log = logging.getLogger('DMD')
+        #super(DMD, self).__init__(machine, self.config)
+        MPFDisplay.__init__(self, machine, self.config)
 
         self.use_physical = False
         self.depth = 8
@@ -278,7 +280,6 @@ class DMD(MPFDisplay):
             (14, 0, 0),
             (15, 0, 0)] * 16
 
-        super(DMD, self).__init__(machine, self.config)
         self.name = 'DMD'
 
         if 'shades' not in self.config:

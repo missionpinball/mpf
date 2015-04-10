@@ -1,6 +1,7 @@
 """Contains the parent classes for MPF's display system, including the
-DisplayController, MPFDisplay, DisplayElement, Slide, Transition, Decorator,
-FontManager, and SlideBuilder."""
+DisplayController, MPFDisplay, DisplayElement, Slide, Transition, and
+Decorator.
+"""
 
 # display.py
 # Mission Pinball Framework
@@ -24,9 +25,11 @@ except:
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing, Timer
 from mpf.system.show_controller import ShowController
-from core.assets import AssetManager
-import decorators
-import transitions
+from mpf.media_controller.core.assets import AssetManager
+from mpf.media_controller.core.font_manager import FontManager
+from mpf.media_controller.core.slide_builder import SlideBuilder
+import mpf.media_controller.decorators
+import mpf.media_controller.transitions
 
 
 class DisplayController(object):
@@ -110,11 +113,13 @@ class DisplayController(object):
         # todo this could be cleaned up a bit
 
         self.machine.config['MediaController']['display_modules']['modules'] = (
-            self.machine.config['MediaController']['display_modules']['modules'].split(' '))
+            self.machine.config['MediaController']['display_modules']
+            ['modules'].split(' '))
 
-        for module in self.machine.config['MediaController']['display_modules']['modules']:
-            i = __import__('display_modules.' + module.split('.')[0],
-                           fromlist=[''])
+        for module in (self.machine.config['MediaController']['display_modules']
+                       ['modules']):
+            i = __import__('mpf.media_controller.display_modules.' +
+                           module.split('.')[0], fromlist=[''])
 
             if i.is_used(self.machine.config):
                 self.hw_module = getattr(i, module.split('.')[1])(self.machine)
@@ -125,11 +130,11 @@ class DisplayController(object):
         # adds the available display elements to the list
         # creates asset managers for display assets that need them
 
-        for module in (
-                self.machine.config['MediaController']['display_modules']['elements']):
+        for module in (self.machine.config['MediaController']['display_modules']
+                       ['elements']):
 
-            display_element_module = __import__('elements.' + module,
-                                                fromlist=[''])
+            display_element_module = __import__('mpf.media_controller.elements.'
+                                                + module, fromlist=[''])
             self.display_elements[module] = display_element_module
 
             if display_element_module.create_asset_manager:
@@ -157,8 +162,8 @@ class DisplayController(object):
 
         for k, v in (self.machine.config['MediaController']['display_modules']
                      ['transitions'].iteritems()):
-            __import__('transitions.' + v.split('.')[0])
-            module = eval('transitions.' + v.split('.')[0])
+            __import__('mpf.media_controller.transitions.' + v.split('.')[0])
+            module = eval('mpf.media_controller.transitions.' + v.split('.')[0])
             cls = v.split('.')[1]
             self.transitions[k] = (module, cls)
 
@@ -171,8 +176,8 @@ class DisplayController(object):
 
         for k, v in (self.machine.config['MediaController']['display_modules']
                      ['decorators'].iteritems()):
-            __import__('decorators.' + v.split('.')[0])
-            module = eval('decorators.' + v.split('.')[0])
+            __import__('mpf.media_controller.decorators.' + v.split('.')[0])
+            module = eval('mpf.media_controller.decorators.' + v.split('.')[0])
             cls = v.split('.')[1]
             self.decorators[k] = (module, cls)
 
@@ -251,6 +256,8 @@ class MPFDisplay(object):
     def __init__(self, machine, config=None):
         self.machine = machine
 
+        self.log = logging.getLogger('MPFDisplay')
+
         if config:
             self.config = config
         else:
@@ -273,6 +280,12 @@ class MPFDisplay(object):
         self.current_slide = None
         self.flag_active_transition = False
         self.transitions = self.machine.display.transitions
+        self.surface = None
+        self.depth = None
+        self.palette = None
+        self.transition_dest_slide = None
+        self.transition_slide = None
+        self.transition_object = None
 
         self.name = 'MPFDisplay'
 
@@ -282,8 +295,9 @@ class MPFDisplay(object):
         self.machine.events.add_handler('pygame_initialized', self._initialize)
 
     def _initialize(self):
-        # Internal method which initializes this display. This is separate from
-        # __init__ because we have to wait until Pygame has been initialized
+        """Internal method which initializes this display. This is separate from
+        # __init__ because we have to wait until Pygame has been initialized.
+        """
 
         # Create a default surface for this display
         self.surface = pygame.Surface((self.width, self.height),
@@ -366,13 +380,15 @@ class MPFDisplay(object):
 
                 self.transition_dest_slide = new_slide
 
-                transition_class = eval('transitions.' + transition +
-                                         '.' + self.transitions[transition][1])
-                self.transition_slide = transition_class(mpfdisplay=self,
-                                                machine=self.machine,
-                                                slide_a=self.current_slide,
-                                                slide_b=self.transition_dest_slide,
-                                                **kwargs)
+                transition_class = eval('mpf.media_controller.transitions.' +
+                                        transition + '.' +
+                                        self.transitions[transition][1])
+                self.transition_slide = (
+                    transition_class(mpfdisplay=self,
+                                     machine=self.machine,
+                                     slide_a=self.current_slide,
+                                     slide_b=self.transition_dest_slide,
+                                     **kwargs))
                 self.flag_active_transition = True
 
                 return self.transition_slide
@@ -456,7 +472,8 @@ class MPFDisplay(object):
             del self.slides[old_slide.name]
 
         if not new_slide.ready():
-            new_slide.add_ready_callback(self.set_current_slide, slide=new_slide)
+            new_slide.add_ready_callback(self.set_current_slide,
+                                         slide=new_slide)
         else:
             self.current_slide = new_slide
             self.current_slide.update()
@@ -472,7 +489,7 @@ class MPFDisplay(object):
         max_value = 0
         current_slide = None
 
-        for slide_name, slide_obj in self.slides.iteritems():
+        for _, slide_obj in self.slides.iteritems():
             if slide_obj.priority >= max_value:
                 max_value = slide_obj.priority
                 current_slide = slide_obj
@@ -530,12 +547,15 @@ class DisplayElement(object):
         self.name = None
         self.loadable_asset = False
         self.notify_when_loaded = set()
+        self.loaded = False
 
         self.x = x
         self.y = y
         self.h_pos = h_pos
         self.v_pos = v_pos
         self.layer = layer
+        self.adjusted_color = None
+        self.adjusted_bg_color = None
 
         self.ready = True
 
@@ -863,6 +883,7 @@ class Slide(object):
         self.priority = priority
         self.persist = persist
         self.removal_key = removal_key
+        self.dirty = True
 
         self.elements = list()
         self.pending_elements = set()
@@ -900,7 +921,7 @@ class Slide(object):
 
     def add_ready_callback(self, callback, **kwargs):
         self.log.debug("Adding a ready callback: %s, %s", callback, kwargs)
-        for c, k in self.ready_callbacks:
+        for c, _ in self.ready_callbacks:
             if c == callback:
                 return False
 
@@ -909,7 +930,7 @@ class Slide(object):
 
     def _process_ready_callbacks(self):
         self.log.debug("Slide is now ready. Processing ready_callbacks... %s",
-                      self.ready_callbacks)
+                       self.ready_callbacks)
         for callback, kwargs in self.ready_callbacks:
             callback(**kwargs)
 
@@ -1043,8 +1064,8 @@ class Slide(object):
                                 **kwargs)
 
         if not element.ready:
-            self.log.debug("Element is not ready. Adding to pending elements list. %s",
-                          element)
+            self.log.debug("Element is not ready. Adding to pending elements "
+                           "list. %s", element)
             self.pending_elements.add(element)
             element.notify_when_loaded.add(self._element_asset_loaded)
 
@@ -1212,426 +1233,6 @@ class Decorator(object):
     def unload(self):
         """Removes this decorator from the parent element."""
         self.parent_element.decorators.remove(self)
-
-
-class FontManager(object):
-    """Parent class of the Font Manager.
-
-    Args:
-        machine: The MachineController.
-        config: Dictionary of the font configuration.
-
-    Attributes:
-        font_cache: Dictionary of Pygame font rendering objects.
-
-    """
-
-    def __init__(self, machine, config):
-
-        self.log = logging.getLogger('Fonts')
-
-        self.machine = machine
-        self.config = config
-        self.font_cache = dict()
-
-        # todo add setting to preload them?
-        # todo add setting to fail if font/size combo not found
-
-    def render(self, text, font='default', antialias=False, size=None,
-               color=None, bg_color=None, alpha_color=None,
-               alpha_channel=None, **kwargs):
-
-
-        font_obj = self.get_font(font, size)
-
-        if bg_color is not None:
-            surface = font_obj.render(text, antialias, color, bg_color)
-        else:
-            surface = font_obj.render(text, antialias, color)
-
-        # if alpha, do something to the surface # todo
-
-        # crop the surface
-        start_y = 0
-        end_y = surface.get_height()
-
-        if 'crop_top' in self.config[font]:
-            start_y = self.config[font]['crop_top']
-
-        if 'crop_bottom' in self.config[font]:
-            end_y -= (self.config[font]['crop_bottom'] + start_y)
-
-        return surface.subsurface((0, start_y, surface.get_width(), end_y))
-
-    def add_to_cache(self, font, size, font_obj):
-        """Adds a Pygame font object to the font cache.
-
-        Args:
-            font_name: String of what you want to refer to this font as.
-            size: Actual size this font object renders at.
-            font_obj: The Pygame font object that will be cached.
-
-        """
-        try:
-            size = int(size)
-        except:
-            size = 0
-
-        if font not in self.font_cache:
-            self.font_cache[font] = dict()
-
-        if size not in self.font_cache[font]:
-            self.font_cache[font][size] = font_obj
-
-    def get_font(self, font=None, size=None, cache=True):
-        """Returns a Pygame font rendering object for a given font name and
-        size. Checks cache first and then falls back to disk. Optionally caches
-        new font objects for reuse.
-
-        Args:
-            name: String name of the font requested.
-            size: Integer of the MPF size of the font you want.
-            cache: Boolean as to whether the ront rendering object that's
-                created should be cached.
-
-        Returns: A Pygame font rendering object.
-
-        """
-
-        if font in self.font_cache and size in self.font_cache[font]:
-            return self.font_cache[font][size]
-
-        else:
-            if font in self.config:
-
-                if not size:
-                    size = self.config[font]['size']
-
-                font_file = self.locate_font_file(self.config[font]['file'])
-
-                self.log.debug("Loading font '%s' at size %s.", font, size)
-
-                # todo load the file first to make sure it's valid
-                font_obj = pygame.font.Font(font_file, size)
-
-                if cache:
-                    self.add_to_cache(font, size, font_obj)
-
-            return font_obj
-
-    def locate_font_file(self, file_name):
-        """Takes a file name and tries to find the font file on disk. First it
-        checks the machine_folder fonts folder to see if there's a machine-
-        specific font, then it tries the MPF system fonts folder.
-
-        Args:
-            file_name: String of the font file name
-
-        Returns: String of the full path (path + file name) of the font.
-        """
-
-        if not file_name:
-            return
-
-        full_path = os.path.join(self.machine.machine_path,
-                                 self.machine.config['MediaController']['paths']['fonts'],
-                                 file_name)
-        if os.path.isfile(full_path):
-            return full_path
-        else:
-            full_path = os.path.join('fonts', file_name)
-            if os.path.isfile(full_path):
-                return full_path
-            else:
-                self.log.warning("Could not locate font file '%s'. Default font"
-                                 "will be used instead.", file_name)
-
-
-class SlideBuilder(object):
-    """Parent class for SlideBuilder objects which are things you configure via
-    the machine config files that let you display text messages based on game
-    events. You can use this to show game status, players, scores, etc. Any
-    setting that is available via the text method of the display controller is
-    available here, including positioning, fonts, size, delays, etc.
-
-    Args:
-        machine: The main machine object.
-
-    """
-
-    def __init__(self, machine):
-        self.log = logging.getLogger('SlidePlayer')
-        self.machine = machine
-
-        if self.machine.language:
-            self.language = self.machine.language
-        else:
-            self.language = None
-
-        # Tell the mode controller that it should look for SlidePlayer items in
-        # modes.
-        #self.machine.modes.register_start_method(self.process_config,
-        #                                         'SlidePlayer')
-        # 329
-
-    def process_config(self, config, mode=None, priority=0):
-        self.log.debug("Processing SlideBuilder configuration. Base priority: "
-                       "%s", priority)
-
-        key_list = list()
-
-        for event, settings in config.iteritems():
-                settings = self.preprocess_settings(settings, priority)
-                settings[0]['removal_key'] = mode
-                # todo maybe a better way to add the removal key?
-
-                key_list.append(self.machine.events.add_handler(
-                                event,
-                                self.build_slide,
-                                #settings[0]['slide_priority'],
-                                settings=settings))
-
-                # todo is it right to pass the priority to the event handler?
-                # if we have two slideplayer entries for the same event, how
-                # do we ensure that only the highest one is built? Sure, only
-                # the highest one will be shown, but we don't want to waste time
-                # building lower slides that will never be shown. I think?
-                # Or is that ok in case the higher one ends so the lower one is
-                # there to show through?
-
-        return self.unload_slide_events, (key_list, mode)
-
-    def unload_slide_events(self, removal_tuple):
-
-        key_list, slide_key = removal_tuple
-
-        self.log.debug("Removing SlideBuilder events")
-        self.machine.events.remove_handlers_by_keys(key_list)
-
-        if slide_key:
-            self.machine.display.remove_slides(slide_key)
-
-    def preprocess_settings(self, settings, base_priority=0):
-        """Takes an unstructured list of SlidePlayer settings and processed them
-        so they can be displayed.
-
-        Args:
-            settings: A list of dictionary of SlidePlayer settings for a slide.
-            base_priority: An integer that will be added to slide's priority
-                from the config settings.
-
-        Returns: A python list with all the settings in the right places.
-
-        This method does a bunch of things, like making sure all the needed
-        values are there, and moving certain things to the first and last
-        elements when there are multiple elements used on one slide. (For
-        example, if one of the elements wants to clear the slide, it has to
-        happen first. If there's a transition, it has to happen last after the
-        slide is built, etc.
-
-        The returned settings list can be safely called with the by display()
-        with the preprocessed=True flag.
-
-        """
-
-        # This is a stupid band-aid because when modes load their slideplayer
-        # settings are already processed. I don't know why though, but I don't
-        # have time to track it down now. $50 to anyone who figures out why!!!
-
-        # Settings can be a list of dicts or just a dict. (Preprocessing is what
-        # turns a dict into a list, though I don't know how sometimes items are
-        # getting the preprocessed entry in their dict but they're not a list???
-        # todo
-
-        if type(settings) is list and 'preprocessed' in settings[0]:
-            return settings
-        elif type(settings) is dict and 'preprocessed' in settings:
-            return [settings]
-
-        processed_settings = list()
-
-        if type(settings) is dict:
-            settings = [settings]
-
-        last_settings = dict()
-        first_settings = dict()
-
-        # Drop this key into the settings so we know they've been preprocessed.
-        first_settings['preprocessed'] = True
-
-        for element in settings:
-
-            # Create a slide name based on the event name if one isn't specified
-            if 'slide_name' in element:
-                first_settings['slide_name'] = element.pop('slide_name')
-
-            if 'removal_key' in element:
-                first_settings['removal_key'] = element.pop('removal_key')
-
-            # If the config doesn't specify whether this slide should be made
-            # active when this event is called, set a default value of True
-            if 'slide_priority' in element:
-                first_settings['slide_priority'] = (
-                    element.pop('slide_priority') + base_priority)
-
-            # If a 'clear_slide' setting isn't specified, set a default of True
-            if 'clear_slide' in element:
-                first_settings['clear_slide'] = element.pop('clear_slide')
-
-            # If a 'persist_slide' setting isn't specified, set default of False
-            if 'persist_slide' in element:
-                first_settings['persist_slide'] = element.pop('persist_slide')
-
-            if 'display' in element:
-                first_settings['display'] = element.pop('display')
-
-            if 'transition' in element:
-                last_settings['transition'] = element.pop('transition')
-
-            if 'name' not in element:
-                element['name'] = None
-
-            processed_settings.append(element)
-
-        if 'slide_priority' not in first_settings:
-            first_settings['slide_priority'] = base_priority
-
-        if 'removal_key' not in first_settings:
-            first_settings['removal_key'] = None
-
-        # Now add back in the items that need to be in the first element
-        processed_settings[0].update(first_settings)
-
-        # And add the settings we need to the last entry
-        processed_settings[-1].update(last_settings)
-
-        return processed_settings
-
-    def build_slide(self, settings, display=None, slide_name=None,
-                    priority=None, **kwargs):
-        """Buils a slide from a SlideBuilder set of keyword arguments.
-
-        Args:
-            settings: Python dictionary of settings for this slide. This
-                includes settings for the various Display Elements as well as
-                any transition.
-            display: String name of the display this slide is being built for.
-            slide_name: String name of the slide that's being built. If this
-                slide exists, the elements here will be added to that slide. If
-                it doesn't exist, a new slide will be created. If no slide name
-                is passed, a new slide will be created and given a UUID4 name.
-            priority: Integer of the priority of this slide.
-            **kwargs: Catch all since this method is often registered as a
-                callback for events which means there could be random event
-                keyword argument pairs attached.
-
-        Returns: Slide object from the slide it built (whether or not it's
-            showing now).
-
-        """
-
-        if not 'preprocessed' in settings[0]:
-            settings = self.preprocess_settings(settings)
-
-        if display:
-            display = self.machine.display.displays[display]
-        elif 'display' in settings[0]:
-            display = settings[0]['display']
-            display = self.machine.display.displays[display]
-        else:
-            display = self.machine.display.default_display
-
-        # Figure out which slide we're dealing with
-        if not slide_name:
-            if 'slide_name' in settings[0]:
-                slide_name = settings[0]['slide_name']
-            else:
-                slide_name = str(uuid.uuid4())
-
-        # Does this slide name already exist for this display?
-
-        if slide_name in display.slides:  # Found existing slide
-            slide = display.slides[slide_name]
-            if 'clear_slide' in settings[0] and settings[0]['clear_slide']:
-                slide.clear()
-        else:  # Need to create a new slide
-            # What priority?
-            if priority is None:
-                priority = settings[0]['slide_priority']
-
-            slide = display.add_slide(name=slide_name, priority=priority,
-                                      removal_key=settings[0]['removal_key'])
-
-        # loop through and add the elements
-        for element in settings:
-            self._add_element(slide, text_variables=kwargs, **element)
-
-        # do the transition
-        if 'transition' in settings[-1]:
-            if type(settings[-1]['transition']) is dict:  # We have settings
-                slide = display.transition(new_slide=slide,
-                                           transition=settings[-1]
-                                           ['transition']['type'],
-                                           **settings[-1]['transition'])
-            else:  # no transition settings, just use defaults
-                slide = display.transition(new_slide=slide,
-                                           transition=settings[-1]
-                                           ['transition'])
-            slide.show()
-
-        else:
-            slide.show()
-
-        return slide
-
-    def _add_element(self, slide, text_variables, **settings):
-        # Internal method which actually adds the element to the slide
-
-        # Process any text
-        if 'text' in settings:
-            settings['text'] = str(settings['text'])
-
-            # Are there any text variables to replace on the fly?
-            # todo should this go here?
-            if '%' in settings['text']:
-
-                # first check for player vars (%var_name%)
-                if self.machine.game and self.machine.game.player:
-                    for name, value in self.machine.game.player:
-                        if '%' + name + '%' in settings['text']:
-                            settings['text'] = settings['text'].replace(
-                                '%' + name + '%', str(value))
-
-                # now check for single % which means event kwargs
-                for kw in text_variables:
-                    if '%' + kw in settings['text']:
-                        settings['text'] = settings['text'].replace(
-                            '%' + kw, str(text_variables[kw]))
-
-        element_type = settings.pop('type').lower()
-
-        element = slide.add_element(element_type, **settings)
-
-        if 'decorators' in settings:
-
-            if type(settings['decorators']) is dict:  # We have settings
-
-                decorator_class = eval('decorators.' +
-                    settings['decorators']['type'] + '.' +
-                    self.machine.display.decorators[
-                    settings['decorators']['type']][1])
-
-                element.attach_decorator(decorator_class(element,
-                                                    **settings['decorators']))
-
-            elif type(settings['decorators']) is list:
-
-                for decorator in settings['decorators']:
-                    decorator_class = eval('decorators.' +
-                        decorator['type'] + '.' +
-                        self.machine.display.decorators[decorator['type']][1])
-
-                element.attach_decorator(decorator_class(element, **decorator))
 
 
 # The MIT License (MIT)

@@ -29,6 +29,10 @@ class Game(MachineMode):
     def __init__(self, machine, name):
         super(Game, self).__init__(machine, name)
         self.log = logging.getLogger("Game")
+        self.player = None
+        self.player_list = list()
+        self.num_balls_in_play = 0
+        self.tilted = False
 
         self.machine.game = None
 
@@ -45,7 +49,7 @@ class Game(MachineMode):
         # Intialize variables
         Player.total_players = 0
         self.player = None  # This is the current player
-        self.player_list = []
+        self.player_list = list()
         self.machine.game = self
         self.num_balls_in_play = 0
         self.tilted = False
@@ -133,6 +137,8 @@ class Game(MachineMode):
         """
         self.log.info("Player added successfully. Total players: %s",
                       Player.total_players)
+
+
 
     """
       _____                       __ _

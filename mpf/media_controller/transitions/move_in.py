@@ -12,7 +12,7 @@ import pygame
 
 
 from mpf.system.timing import Timing
-from core.display import Transition
+from mpf.media_controller.core.display import Transition
 
 
 class MoveIn(Transition):

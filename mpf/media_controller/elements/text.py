@@ -9,7 +9,7 @@
 
 import pygame
 
-from core.display import DisplayElement
+from mpf.media_controller.core.display import DisplayElement
 
 
 class Text(DisplayElement):

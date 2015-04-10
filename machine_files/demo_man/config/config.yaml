@@ -1044,7 +1044,6 @@ Keyboard:
   1:
     switch: s_trough_1
     toggle: yes
-    start_active: yes
   8:
     switch: s_shooter_lane
     toggle: yes
@@ -1052,12 +1051,10 @@ Keyboard:
     switch: s_left_slingshot
 
 ShowPlayer:
-  mode_attract_start:
+  machineflow_Attract_start:
     - show: attract_dmd_loop
       repeat: yes
       tocks_per_sec: 1
-
-  machineflow_Attract_start:
     - show: multiball_sweep
       repeat: yes
       tocks_per_sec: 10
@@ -1095,11 +1092,9 @@ ShowPlayer:
       repeat: yes
       tocks_per_sec: 8
 
-  mode_attract_stop:
+  machineflow_Attract_stop:
     - show: attract_dmd_loop
       action: stop
-
-  machineflow_Attract_stop:
     - show: multiball_sweep
       action: stop
     - show: random_flashing

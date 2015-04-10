@@ -17,7 +17,7 @@ import errno
 import version
 import sys
 
-from core.media_controller import MediaController
+from mpf.media_controller.core.media_controller import MediaController
 
 # Allow command line options to do things
 # We use optparse instead of argpase so python 2.6 works
@@ -25,8 +25,7 @@ parser = OptionParser()
 
 parser.add_option("-C", "--mcconfigfile",
                   action="store", type="string", dest="mcconfigfile",
-                  #default=os.path.join("mpf", "mcconfig.yaml"),
-                  default="mcconfig.yaml",
+                  default=os.path.join("mpf", "media_controller", "mcconfig.yaml"),
                   help="The MPF framework config file")
 
 parser.add_option("-c", "--configfile",

@@ -10,7 +10,7 @@ screen."""
 import pygame
 import pygame.locals
 
-from core.display import DisplayElement
+from mpf.media_controller.core.display import DisplayElement
 
 
 class Shape(DisplayElement):
