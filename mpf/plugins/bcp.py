@@ -91,23 +91,53 @@ def preload_check(machine):
 
 def decode_command_string(bcp_string):
     bcp_command = urlparse.urlsplit(bcp_string)
-    kwargs = dict()
-    if bcp_command.query:
-        incoming_kwargs = urlparse.parse_qs(urllib.unquote(bcp_command.query))
-        for name, value in incoming_kwargs.iteritems():
-            kwargs[name] = value[0]
+    print "**** decode input", bcp_string
+    try:
+        kwargs = urlparse.parse_qs(bcp_command.query)
 
+    except AttributeError:
+        kwargs = dict()
+
+    for k, v in kwargs.iteritems():
+        print k, v
+        kwargs[k] = urllib.unquote(v[0])
+
+    #if :
+    #    kwargs
+    #    incoming_kwargs = urlparse.parse_qs(urllib.unquote(bcp_command.query))
+    #    for name, value in incoming_kwargs.iteritems():
+    #        kwargs[name] = value[0]
+
+    print "**** decode output", bcp_command.path, kwargs
     return bcp_command.path, kwargs
 
 
 def encode_command_string(bcp_command, **kwargs):
-    if kwargs:
+
+    print "**** encode input", bcp_command, kwargs
+
+    #try:
+    #    for k, v in kwargs.iteritems():
+    #        v = v
+    #
+    #except AttributeError:
+    #    kwargs = dict()
+
+    try:
         kwargs = urllib.urlencode(kwargs)
-        kwargs = urllib.quote(kwargs, '=')
-    else:
+
+    except TypeError:
         kwargs = None
 
+    print "**** encode output", urlparse.urlunparse((None, None, bcp_command, None, kwargs, None))
+
     return urlparse.urlunparse((None, None, bcp_command, None, kwargs, None))
+
+    #if kwargs:
+    #    kwargs = urllib.urlencode(kwargs)
+    #    kwargs = urllib.quote(kwargs, '=')
+    #else:
+    #    kwargs = None
 
 
 class BCP(object):
@@ -153,7 +183,6 @@ class BCP(object):
                     Config.string_to_list(self.config['player_variables']))
 
         self._setup_player_monitor()
-
 
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
 
@@ -242,7 +271,6 @@ class BCP(object):
             callback()
 
     def get_bcp_messages(self):
-
         while not self.receive_queue.empty():
             cmd, kwargs = self.receive_queue.get(False)
 
