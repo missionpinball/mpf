@@ -158,7 +158,7 @@ class BCP(object):
 
         self.bcp_receive_commands = {'error': self.bcp_error,
                                      'switch': self.bcp_switch,
-                                     'dmd_frame': self.bcp_dmd_frame
+                                     'dmd_frame': self.bcp_dmd_frame,
                                      }
 
         self.setup_bcp_connections()
@@ -185,6 +185,9 @@ class BCP(object):
         self._setup_player_monitor()
 
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
+        self.machine.events.add_handler('game_starting', self.bcp_game_start)
+        self.machine.events.add_handler('player_add_success',
+                                        self.bcp_player_added)
 
         self.machine.modes.register_start_method(self.bcp_mode_start, 'Mode')
 
@@ -309,6 +312,13 @@ class BCP(object):
     def bcp_dmd_frame(self):
         pass
 
+    def bcp_game_start(self, **kwargs):
+        self.send('game_start')
+        self.send('player_added', number=1)
+
+    def bcp_player_added(self, player, num):
+        if num > 1:
+            self.send('player_added', number=num)
 
 
 class BCPClient(object):
@@ -387,7 +397,7 @@ class BCPClient(object):
             self.setup_client()
 
             try:
-                self.client_socket.sendall(prepped_message + '\n')
+                self.client_socket.sendall(message + '\n')
             except:
                 self.log.error("Unable to send '%s' to BCP server", message)
 

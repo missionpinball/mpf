@@ -392,6 +392,7 @@ class MediaController(object):
         self.events.post('ball_ended', **kwargs)
 
     def bcp_game_start(self, **kargs):
+        self.bcp_player_add(number=1)
         self.bcp_player_turn_start(player=1)
         self.events.post('game_started', **kargs)
 
@@ -400,11 +401,15 @@ class MediaController(object):
         self.events.post('game_ended', **kwargs)
 
     def bcp_player_add(self, number, **kwargs):
-        new_player = Player(self)
-        self.player_list.append(new_player)
-        new_player.score = 0
+        print "player add"
 
-        self.events.post('player_add_success', num=number)
+        if number > len(self.player_list):
+            new_player = Player(self)
+            self.player_list.append(new_player)
+            new_player.score = 0
+            print "new player list", self.player_list
+
+            self.events.post('player_add_success', num=number)
 
     def bcp_player_variable(self, name, value, prev_value, change, **kwargs):
 
@@ -423,7 +428,15 @@ class MediaController(object):
         self.events.post('machineflow_Attract_stop')
 
     def bcp_player_turn_start(self, player, **kwargs):
-        self.player = self.player_list[int(player)-1]
+
+        print "player turn start"
+        print "player list", self.player_list
+        print "incoming player", player
+
+        if ((self.player and self.player.number != player) or
+                not self.player):
+
+            self.player = self.player_list[int(player)-1]
 
     def bcp_reset(self, **kwargs):
         self.player = None
