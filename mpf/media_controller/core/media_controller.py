@@ -265,7 +265,6 @@ class MediaController(object):
             self.send('error', message='invalid command', command=bcp_command)
 
     def send(self, bcp_command, callback=None, **kwargs):
-        #print "send()", bcp.encode_command_string(bcp_command, **kwargs)
         self.sending_queue.put(bcp.encode_command_string(bcp_command,
                                                           **kwargs))
 
@@ -383,7 +382,7 @@ class MediaController(object):
         #self.events.post('mode_' + name.lower() + '_stop', **kwargs)
 
     def bcp_error(self, **kwargs):
-        print "Received error command from client"
+        self.log.warning('Received error command from client')
 
     def bcp_ball_start(self, **kwargs):
         self.events.post('ball_started', **kwargs)
@@ -401,13 +400,11 @@ class MediaController(object):
         self.events.post('game_ended', **kwargs)
 
     def bcp_player_add(self, number, **kwargs):
-        print "player add"
 
         if number > len(self.player_list):
             new_player = Player(self)
             self.player_list.append(new_player)
             new_player.score = 0
-            print "new player list", self.player_list
 
             self.events.post('player_add_success', num=number)
 
@@ -429,10 +426,6 @@ class MediaController(object):
 
     def bcp_player_turn_start(self, player, **kwargs):
 
-        print "player turn start"
-        print "player list", self.player_list
-        print "incoming player", player
-
         if ((self.player and self.player.number != player) or
                 not self.player):
 
@@ -441,7 +434,6 @@ class MediaController(object):
     def bcp_reset(self, **kwargs):
         self.player = None
         self.player_list = list()
-
 
 
 class BCPServer(threading.Thread):
@@ -472,7 +464,7 @@ class BCPServer(threading.Thread):
         try:
             self.socket.bind(server_address)
         except IOError:
-            print "Socket IOError"
+            self.log.critical('Socket bind IOError')
             raise
 
         self.socket.listen(1)
@@ -500,7 +492,7 @@ class BCPServer(threading.Thread):
                             if cmd:
                                 self.handle_command(cmd)
                     else:
-                        print 'no more data from', client_address
+                        # no more data
                         break
 
             except:

@@ -12,7 +12,8 @@ states and posting events to the framework.
 import logging
 from collections import defaultdict
 import time
-import sys
+#import sys
+
 
 class SwitchController(object):
     """Base class for the switch controller, which is responsible for receiving

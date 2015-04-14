@@ -1,7 +1,7 @@
 Events:
   ball_search_begin_phase1: 0
   game_ended: 23
-  game_started: 144
+  game_started: 161
 Player:
   score:
     average: 7579564
@@ -26,7 +26,7 @@ Shots:
   side_ramp: 9
 Switches:
   s_always_closed: 0
-  s_ball_launch: 109
+  s_ball_launch: 117
   s_bottom_popper: 57
   s_buy_in: 0
   s_car_chase_1: 65
@@ -68,19 +68,19 @@ Switches:
   s_left_ramp_enter: 198
   s_left_ramp_exit: 74
   s_left_rollover: 23
-  s_left_slingshot: 110
+  s_left_slingshot: 143
   s_lower_rebound: 33
   s_plumb_bob: 4
   s_right_coin: 0
   s_right_freeway: 61
-  s_right_inlane: 86
+  s_right_inlane: 98
   s_right_jet: 94
   s_right_outlane: 5
   s_right_ramp_enter: 111
   s_right_ramp_exit: 16
   s_right_rollover: 11
   s_right_slingshot: 57
-  s_shooter_lane: 129
+  s_shooter_lane: 143
   s_side_ramp_enter: 24
   s_side_ramp_exit: 11
   s_slam_tilt: 0
@@ -89,10 +89,10 @@ Switches:
   s_standup_3: 40
   s_standup_4: 38
   s_standup_5: 28
-  s_start: 7
+  s_start: 18
   s_top_popper: 16
   s_top_slingshot: 249
-  s_trough_1: 119
+  s_trough_1: 133
   s_trough_2: 133
   s_trough_3: 101
   s_trough_4: 89

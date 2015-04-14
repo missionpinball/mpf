@@ -102,8 +102,8 @@ class SoundController(object):
                 self.register_sound_events,
                 config=self.machine.config['SoundPlayer'])
 
-        #self.machine.modes.register_start_method(self.register_sound_events,
-        #                                         'SoundPlayer')
+        self.machine.modes.register_start_method(self.register_sound_events,
+                                                 'SoundPlayer')
 
     def _initialize(self):
         # Initialize the sound controller. Not done in __init__() because we
@@ -321,15 +321,11 @@ class SoundController(object):
 
         # Loop through all the sound events for this event
 
-        print "***** sound callback *****"
-
         if event_name not in self.sound_events:
             self.log.critical("got sound callback but did not find event?")
             raise Exception()
 
         sound_list = self.sound_events[event_name]
-
-        print "sound list", sound_list
 
         for sound in sound_list:
 

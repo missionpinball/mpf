@@ -46,10 +46,19 @@ id is up to 32 chars for shows, ball, etc.
 auto resume
 
 
+Default events sent to BCP
+anything with devices?
+anything with shots?
+anything with score?
 
 
-Player vars
-===========
+notify?shot_xxx
+
+how does shot blocking work with the MC? Seems like the way MPF does it
+isn't really compatible? Move shots to 
+
+config?volume=1&volume_steps=20
+config?language=english
 
 shot
 
@@ -66,6 +75,7 @@ timer tick
 timer cancel
 timer complete
 
+MC requests MPF to send switch states
 
 '''
 
@@ -90,8 +100,7 @@ def preload_check(machine):
 
 
 def decode_command_string(bcp_string):
-    bcp_command = urlparse.urlsplit(bcp_string)
-    print "**** decode input", bcp_string
+    bcp_command = urlparse.urlsplit(bcp_string.lower())
     try:
         kwargs = urlparse.parse_qs(bcp_command.query)
 
@@ -99,45 +108,27 @@ def decode_command_string(bcp_string):
         kwargs = dict()
 
     for k, v in kwargs.iteritems():
-        print k, v
         kwargs[k] = urllib.unquote(v[0])
 
-    #if :
-    #    kwargs
-    #    incoming_kwargs = urlparse.parse_qs(urllib.unquote(bcp_command.query))
-    #    for name, value in incoming_kwargs.iteritems():
-    #        kwargs[name] = value[0]
-
-    print "**** decode output", bcp_command.path, kwargs
     return bcp_command.path, kwargs
 
 
 def encode_command_string(bcp_command, **kwargs):
 
-    print "**** encode input", bcp_command, kwargs
-
-    #try:
-    #    for k, v in kwargs.iteritems():
-    #        v = v
-    #
-    #except AttributeError:
-    #    kwargs = dict()
+    scrubbed_kwargs = dict()
 
     try:
-        kwargs = urllib.urlencode(kwargs)
 
-    except TypeError:
-        kwargs = None
+        for k, v in kwargs.iteritems():
+            scrubbed_kwargs[k.lower()] = str(v).lower()
 
-    print "**** encode output", urlparse.urlunparse((None, None, bcp_command, None, kwargs, None))
+        scrubbed_kwargs = urllib.urlencode(kwargs)
 
-    return urlparse.urlunparse((None, None, bcp_command, None, kwargs, None))
+    except TypeError, AttributeError:
+        pass
 
-    #if kwargs:
-    #    kwargs = urllib.urlencode(kwargs)
-    #    kwargs = urllib.quote(kwargs, '=')
-    #else:
-    #    kwargs = None
+    return urlparse.urlunparse((None, None, bcp_command.lower(), None,
+                                scrubbed_kwargs, None))
 
 
 class BCP(object):
@@ -221,6 +212,10 @@ class BCP(object):
                       prev_value=prev_value,
                       change=change)
 
+    def _setup_shot_monitor(self):
+        pass
+
+
     def process_bcp_events(self):
         """Processes the BCP Events from the config."""
         # config is localized to BCPEvents
@@ -294,7 +289,8 @@ class BCP(object):
             client.stop()
 
     def bcp_error(self, **kwargs):
-        print "bcp_error", kwargs
+        self.log.warning('Received Error command from host with parameters: %s',
+                         kwargs)
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
         self.send('mode_start', name=mode.name, priority=priority)
@@ -411,7 +407,6 @@ class BCPClient(object):
                         # do an initial processing here for connection-specific
                         # commands, including hello, goodbye
                         cmd, kwargs = decode_command_string(message)
-                        print "***", cmd, kwargs
 
                         if cmd in self.bcp_commands:
                             self.bcp_commands[cmd](**kwargs)
@@ -419,7 +414,7 @@ class BCPClient(object):
                             self.queue.put((cmd, kwargs))
 
     def bcp_hello(self, **kwargs):
-        print "bcp_hello", kwargs
+        self.log.info('Received BCP Hello from host with kwargs: %a', kwargs)
 
     def bcp_goodbye(self):
         pass

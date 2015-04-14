@@ -98,8 +98,6 @@ class ShowController(object):
         if 'show_priority' in kwargs:
             priority += kwargs['show_priority']
 
-        print self.machine.shows
-
         if show in self.machine.shows:
             if 'stop_key' in kwargs:
                 self.machine.shows[show].stop_key = kwargs['stop_key']

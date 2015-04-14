@@ -305,21 +305,8 @@ class EventManager(object):
 
     def post_relay(self, event, callback=None, **kwargs):
         """Posts a relay event which causes all the registered handlers to be
-        called.
-
-        Relay events differ from standard events in that the resulting kwargs
-        from one handler are passed to the next handler. (In other words,
-        stanard events mean that all the handlers get the same initial kwargs,
-        whereas relay events "relay" the resulting kwargs from one handler to
-        the next.)
-
-        Events are processed serially (e.g. one at a time), so if the event
-        system is in the process of handling another event, this event is
-        added to a queue and processed after the current event is done.
-
-        You can control the order the handlers will be called by optionally
-        specifying a priority when the handlers were registed. (Higher priority
-        values will be processed first.)
+        called. A dictionary can be passed from handler-to-handler and modified
+        as needed.
 
         Args:
             event: A string name of the event you're posting. Note that you can
@@ -332,6 +319,20 @@ class EventManager(object):
                 passed to each handler. (Just make sure your handlers are
                 expecting them. You can add **kwargs to your handler methods if
                 certain ones don't need them.)
+
+        Events are processed serially (e.g. one at a time), so if the event
+        system is in the process of handling another event, this event is
+        added to a queue and processed after the current event is done.
+
+        You can control the order the handlers will be called by optionally
+        specifying a priority when the handlers were registed. (Higher priority
+        values will be processed first.)
+
+        Relay events differ from standard events in that the resulting kwargs
+        from one handler are passed to the next handler. (In other words,
+        stanard events mean that all the handlers get the same initial kwargs,
+        whereas relay events "relay" the resulting kwargs from one handler to
+        the next.)
 
         """
         self._post(event, ev_type='relay', callback=callback, **kwargs)

@@ -1,6 +1,6 @@
 """MPF plugin for an auditor which records switch events, high scores, shots,
 etc."""
-# devices.py
+# auditor.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -14,8 +14,8 @@ import errno
 
 from mpf.system.config import Config
 
-def preload_check(machine):
 
+def preload_check(machine):
     return True
 
 

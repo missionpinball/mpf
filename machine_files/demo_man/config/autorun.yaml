@@ -1,0 +1,61 @@
+Config:
+    - config.yaml
+
+Plugins:
+    - switch_player.SwitchPlayer
+
+SwitchPlayer:
+    start_event: machine_reset_phase_3
+    start_delay: 1s
+    steps:
+      - time: 100ms
+        switch: s_trough_1
+        action: activate
+      - time: 600ms
+        switch: s_start
+        action: hit
+      - time: 100ms
+        switch: s_trough_1
+        action: deactivate
+      - time: 1s
+        switch: s_shooter_lane
+        action: activate
+      - time: 1s
+        switch: s_ball_launch
+        action: hit
+      - time: 100ms
+        switch: s_shooter_lane
+        action: deactivate
+      - time: 1s
+        switch: s_right_inlane
+        action: hit
+      - time: 500ms
+        switch: s_start
+        action: hit
+      - time: 2.5s
+        switch: s_trough_1
+        action: activate
+      - time: 1s
+        switch: s_trough_1
+        action: deactivate
+      - time: 1s
+        switch: s_shooter_lane
+        action: activate
+      - time: 1s
+        switch: s_ball_launch
+        action: hit
+      - time: 100ms
+        switch: s_shooter_lane
+        action: deactivate
+      - time: 200ms
+        switch: s_right_inlane
+        action: hit
+      - time: 200ms
+        switch: s_right_inlane
+        action: hit
+      - time: 200ms
+        switch: s_right_inlane
+        action: hit
+      - time: 2.5s
+        switch: s_trough_1
+        action: activate
