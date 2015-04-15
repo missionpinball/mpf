@@ -13,6 +13,7 @@ import yaml
 import errno
 
 from mpf.system.config import Config
+from mpf.plugins.shots import Shot
 
 
 def preload_check(machine):
@@ -54,8 +55,7 @@ class Auditor(object):
                     '''
 
         self.config = Config.process_config(config,
-                                                  self.machine.config['Auditor'])
-
+                                            self.machine.config['Auditor'])
 
         self.filename = os.path.join(self.machine.machine_path,
             self.machine.config['MPF']['paths']['audits'])
@@ -112,6 +112,10 @@ class Auditor(object):
         if 'player' in self.config['audit']:
             self.machine.events.add_handler('game_ending', self.audit_player)
 
+        # Enable the shots monitor
+        Shot.monitor_enabled = True
+        self.machine.register_monitor('shots', self.audit_shot)
+
     def audit(self, audit_class, event, **kwargs):
         """Called to log an auditable event.
 
@@ -126,6 +130,9 @@ class Auditor(object):
 
     def audit_switch(self, switch_name, state, ms):
         self.audit('Switches', switch_name)
+
+    def audit_shot(self, name):
+        self.audit('Shots', name)
 
     def audit_event(self, eventname, **kwargs):
         """Registered as an event handlers to log an event to the audit log.

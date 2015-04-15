@@ -38,7 +38,8 @@ game_end
 mode_start?name=xxx&priority=xxx
 mode_stop?name=xxx
 
-
+show_play?name=xxx&foo=bar
+show_stop?name=xxx
 
 # to ignore commands
 commands and param names are case-insensitive
@@ -55,14 +56,14 @@ anything with score?
 notify?shot_xxx
 
 how does shot blocking work with the MC? Seems like the way MPF does it
-isn't really compatible? Move shots to 
+isn't really compatible? Move shots to
 
 config?volume=1&volume_steps=20
 config?language=english
 
-shot
 
-event
+
+trigger
 
 set
 get
@@ -90,6 +91,8 @@ import copy
 
 from mpf.game.player import Player
 from mpf.system.config import Config
+#from mpf.plugins.shots import Shot
+from mpf.system.light_controller import LightController
 
 __bcp_version_info__ = ('1', '0')
 __bcp_version__ = '.'.join(__bcp_version_info__)
@@ -174,6 +177,7 @@ class BCP(object):
                     Config.string_to_list(self.config['player_variables']))
 
         self._setup_player_monitor()
+        #self._setup_shot_monitor()
 
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
         self.machine.events.add_handler('game_starting', self.bcp_game_start)
@@ -181,6 +185,12 @@ class BCP(object):
                                         self.bcp_player_added)
 
         self.machine.modes.register_start_method(self.bcp_mode_start, 'Mode')
+        self.machine.modes.register_start_method(self.process_shows_from_config,
+                                                 'ShowPlayer')
+
+        if 'ShowPlayer' in self.machine.config:
+            self.process_shows_from_config(self.machine.config['ShowPlayer'])
+
 
     def setup_bcp_connections(self):
         for name, settings in self.connection_config.iteritems():
@@ -212,9 +222,13 @@ class BCP(object):
                       prev_value=prev_value,
                       change=change)
 
-    def _setup_shot_monitor(self):
-        pass
+    #def _setup_shot_monitor(self):
+    #    Shot.monitor_enabled = True
+    #    self.machine.register_monitor('shots', self._shot_made)
 
+    def _setup_show_monitor(self):
+        LightController.monitor_enabled = True
+        self.machine.register_monitor('shows', self._show)
 
     def process_bcp_events(self):
         """Processes the BCP Events from the config."""
@@ -315,6 +329,65 @@ class BCP(object):
     def bcp_player_added(self, player, num):
         if num > 1:
             self.send('player_added', number=num)
+
+    #def _shot_made(self, name):
+    #    self.send('shot', name=name)
+
+    def bcp_show_play(self, show, **kwargs):
+        self.send('show_play', name=show, **kwargs)
+
+    def bcp_show_stop(self, show, **kwargs):
+        self.send('show_stop', name=show, **kwargs)
+
+    def process_shows_from_config(self, config, mode=None, priority=0):
+        self.log.debug("Processing ShowPlayer configuration. Priority: %s",
+                       priority)
+
+        key_list = list()
+
+        for event, settings in config.iteritems():
+            if type(settings) is dict:
+                settings['priority'] = priority
+                settings['stop_key'] = mode
+                key_list.append(self.add_show_player_show(event, settings))
+            elif type(settings) is list:
+                for entry in settings:
+                    entry['priority'] = priority
+                    entry['stop_key'] = mode
+                    key_list.append(self.add_show_player_show(event, entry))
+
+        return self.unload_show_player_shows, (key_list, mode)
+
+    def unload_show_player_shows(self, removal_tuple):
+
+        key_list, show_key = removal_tuple
+
+        self.log.debug("Removing ShowPlayer events")
+        self.machine.events.remove_handlers_by_keys(key_list)
+
+        if show_key:
+            self.stop_shows_by_key(show_key)
+
+    def add_show_player_show(self, event, settings):
+
+        if 'priority' in settings:
+            settings['show_priority'] = settings['priority']
+
+        if 'hold' not in settings:
+            settings['hold'] = False
+
+        if 'action' in settings and settings['action'] == 'stop':
+            key = self.machine.events.add_handler(event, self.bcp_show_stop,
+                                                  **settings)
+
+        else:  # action = 'play'
+            key = self.machine.events.add_handler(event, self.bcp_show_play,
+                                                  **settings)
+
+        return key
+
+
+
 
 
 class BCPClient(object):

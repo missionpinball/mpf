@@ -14,7 +14,7 @@ MPF:
         switch_controller.SwitchController
         ball_controller.BallController
         modes.ModeController
-        show_controller.ShowController
+        light_controller.LightController
 
     device_modules:
         driver.Driver

@@ -88,7 +88,10 @@ class MediaController(object):
                              'player_score': self.bcp_player_score,
                              'player_turn_start': self.bcp_player_turn_start,
                              'attract_start': self.bcp_attract_start,
-                             'attract_stop': self.bcp_attract_stop
+                             'attract_stop': self.bcp_attract_stop,
+                             #'shot': self.bcp_shot
+                             'show_play': self.bcp_show_play,
+                             'show_stop': self.bcp_show_stop
                             }
 
         # load the MPF config & machine defaults
@@ -330,23 +333,9 @@ class MediaController(object):
         self.socket_thread.start()
 
     def get_from_queue(self):
-
-        #command = None
         while not self.queue.empty():
             cmd, kwargs = bcp.decode_command_string(self.queue.get(False))
             self.process_command(cmd, **kwargs)
-
-
-
-        # try:
-        #     command = self.queue.get(False)
-        #
-        # except:
-        #     pass
-        #
-        # if command:
-        #     cmd, kwargs = bcp.decode_command_string(command)
-        #     self.process_command(cmd, **kwargs)
 
     def bcp_hello(self, **kwargs):
         try:
@@ -378,8 +367,6 @@ class MediaController(object):
 
         if name in self.game_modes:
             self.game_modes[name].stop()
-
-        #self.events.post('mode_' + name.lower() + '_stop', **kwargs)
 
     def bcp_error(self, **kwargs):
         self.log.warning('Received error command from client')
@@ -434,6 +421,16 @@ class MediaController(object):
     def bcp_reset(self, **kwargs):
         self.player = None
         self.player_list = list()
+
+    #def bcp_shot(self, name, **kwargs):
+    #    self.events.post('shot_' + name)
+
+    def bcp_show_play(self, name, priority=0, **kwargs):
+        self.show_controller.play_show(show=name, priority=int(priority),
+                                       **kwargs)
+
+    def bcp_show_stop(self, name, **kwargs):
+        self.show_controller.stop_show(show=name, **kwargs)
 
 
 class BCPServer(threading.Thread):

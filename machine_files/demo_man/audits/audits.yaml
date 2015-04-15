@@ -1,7 +1,7 @@
 Events:
   ball_search_begin_phase1: 0
   game_ended: 23
-  game_started: 161
+  game_started: 183
 Player:
   score:
     average: 7579564
@@ -19,14 +19,14 @@ Player:
     total: 23
 Shots:
   center_ramp: 77
-  left_orbit: 33
+  left_orbit: 40
   left_ramp: 34
   right_orbit: 37
   right_ramp: 11
   side_ramp: 9
 Switches:
   s_always_closed: 0
-  s_ball_launch: 117
+  s_ball_launch: 129
   s_bottom_popper: 57
   s_buy_in: 0
   s_car_chase_1: 65
@@ -63,7 +63,7 @@ Switches:
   s_left_handle_button: 0
   s_left_inlane: 97
   s_left_jet: 30
-  s_left_loop: 176
+  s_left_loop: 182
   s_left_outlane: 10
   s_left_ramp_enter: 198
   s_left_ramp_exit: 74
@@ -73,14 +73,14 @@ Switches:
   s_plumb_bob: 4
   s_right_coin: 0
   s_right_freeway: 61
-  s_right_inlane: 98
+  s_right_inlane: 118
   s_right_jet: 94
   s_right_outlane: 5
   s_right_ramp_enter: 111
   s_right_ramp_exit: 16
   s_right_rollover: 11
   s_right_slingshot: 57
-  s_shooter_lane: 143
+  s_shooter_lane: 155
   s_side_ramp_enter: 24
   s_side_ramp_exit: 11
   s_slam_tilt: 0
@@ -89,15 +89,15 @@ Switches:
   s_standup_3: 40
   s_standup_4: 38
   s_standup_5: 28
-  s_start: 18
+  s_start: 26
   s_top_popper: 16
   s_top_slingshot: 249
-  s_trough_1: 133
+  s_trough_1: 145
   s_trough_2: 133
   s_trough_3: 101
   s_trough_4: 89
   s_trough_5: 90
   s_trough_jam: 94
   s_up: 0
-  s_upper_left_flipper_gate: 206
+  s_upper_left_flipper_gate: 212
   s_upper_rebound: 23

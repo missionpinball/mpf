@@ -90,6 +90,11 @@ class ShotController(object):
 
 class Shot(object):
 
+    monitor_enabled = False
+    """Class attribute which specifies whether any monitors have been registered
+    to track shots.
+    """
+
     def __init__(self, machine, name, config, priority=0):
         """Parent class that all shots are based on.
 
@@ -97,6 +102,9 @@ class Shot(object):
             machine: The MachineController object
             name: String name of this shot.
             config: Dictionary that holds the configuration for this shot.
+            priority: Integer priority for this shot, used in conjunction with
+                the 'block' setting to block lower priority handlers from
+                respsonding to this shot.
         """
         self.log = logging.getLogger('Shot.' + name)
         self.log.debug("Creating shot")
@@ -113,15 +121,23 @@ class Shot(object):
         self.block_event = None
 
     def _block_handler(self, **kwargs):
+        # Callback handler used to block this shot
         self.log.debug("Blocking Shot")
         return False
 
     def shot_made(self):
+        """Called when this shot was successfully made."""
         self.machine.events.post_boolean('shot_' + self.name)
-        if self.machine.auditor.enabled:
-            self.machine.auditor.audit('Shots', self.name)
+
+        if Shot.monitor_enabled:
+            for callback in self.machine.monitors['shots']:
+                callback(name=self.name)
 
     def enable(self):
+        """Enables this shot.
+
+        Shots are enabled by default when they're created.
+        """
         self.log.debug("Enabling")
 
         if 'block' in self.config and self.config['block']:
@@ -133,6 +149,11 @@ class Shot(object):
         self.enabled = True
 
     def disable(self):
+        """Disables this shot.
+
+        When a shot is disabled, it doesn't track switches or progress and
+        doesn't post events when the shot is made.
+        """
         self.log.debug("Disabling")
 
         if self.block_event:
@@ -153,6 +174,7 @@ class StandardShot(Shot):
             machine: The MachineController object
             name: String name of this shot.
             config: Dictionary that holds the configuration for this shot.
+            priority: Integer priority for this shot.
 
         """
         super(StandardShot, self).__init__(machine, name, config, priority)

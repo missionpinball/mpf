@@ -116,3 +116,7 @@ SoundPlayer:
     jets:
         start_events: sw_jet
         sound: medium metal
+
+ShowPlayer:
+    shot_left_orbit:
+        show: left orbit
