@@ -284,6 +284,10 @@ class MediaController(object):
         if callback:
             callback()
 
+    def send_dmd_frame(self, data):
+        dmd_string = 'dmd_frame?' + data
+        self.sending_queue.put(dmd_string)
+
     def timer_init(self):
         self.HZ = 30
         self.next_tick_time = time.time()
@@ -555,11 +559,17 @@ class BCPServer(threading.Thread):
         """
         while not self.done:
             msg = self.sending_queue.get()
-            self.log.info('>>>>>>>>>>>>>> Sending "%s"', msg)
+
+            if not msg.startswith('dmd_frame'):
+                self.log.info('>>>>>>>>>>>>>> Sending "%s"', msg)
+
             try:
                 self.connection.sendall(msg + '\n')
-            except AttributeError:
+            except (AttributeError, socket.error):
+                #self.done = True
                 pass
+                # Do we just keep on trying, waiting until a new client
+                # connects?
 
         self.socket.close()
         self.socket = None

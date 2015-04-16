@@ -326,8 +326,10 @@ class DMD(MPFDisplay):
         # tick, or maintain a counter of the buffer so we can fill / flush it
         # with our clean image
 
-        #if self.use_physical:
-        #    self.physical_dmd.update(self.current_slide.surface)
+        if self.use_physical:
+            self.machine.send_dmd_frame(
+                pygame.image.tostring(self.current_slide.surface, 'P'))
+
 
 # The MIT License (MIT)
 

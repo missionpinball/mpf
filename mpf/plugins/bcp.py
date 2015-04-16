@@ -132,9 +132,11 @@ class BCP(object):
 
         self.bcp_receive_commands = {'error': self.bcp_receive_error,
                                      'switch': self.bcp_receive_switch,
-                                     'dmd_frame': self.bcp_receive_dmd_frame,
+                                     #'dmd_frame': self.bcp_receive_dmd_frame,
                                      'trigger': self.bcp_receive_trigger
                                     }
+
+        self.dmd = self.machine.platform.configure_dmd()
 
         self.setup_bcp_connections()
         self.filter_player_events = True
@@ -170,6 +172,8 @@ class BCP(object):
 
         self.machine.modes.register_start_method(self.bcp_mode_start, 'Mode')
         self.machine.modes.register_load_method(self.register_trigger_events)
+
+
 
     def setup_bcp_connections(self):
         for name, settings in self.connection_config.iteritems():
@@ -332,8 +336,8 @@ class BCP(object):
                                                       state=int(kwargs['state']),
                                                       logical=True)
 
-    def bcp_receive_dmd_frame(self):
-        pass
+    def bcp_receive_dmd_frame(self, data):
+        self.dmd.update(data)
 
     def bcp_game_start(self, **kwargs):
         """Sends the BCP 'game_start' and 'player_added?number=1' commands to
@@ -508,21 +512,55 @@ class BCPClient(object):
 
         This method is run as a thread.
         """
-        while self.socket:
-            data = self.socket.recv(255)
-            if data:
-                messages = data.split("\n")
-                for message in messages:
-                    if message:
-                        # do an initial processing here for connection-specific
-                        # commands, including hello, goodbye
-                        self.log.info('<<<<<<<<<<<<<< Received "%s"', message)
-                        cmd, kwargs = decode_command_string(message)
 
-                        if cmd in self.bcp_commands:
-                            self.bcp_commands[cmd](**kwargs)
-                        else:
-                            self.receive_queue.put((cmd, kwargs))
+        # Implementation note. Sockets don't necessarily receive the entire
+        # message in one socket.recv() call. BCP separates messages based on the
+        # '\n' character. So we have to split the incoming messages by \n, but
+        # if there is any leftover we have to save it and add whatever we get
+        # on the next recv() read to it. So that's what all this craziness is
+        # here.
+
+        fragment = ''  # used to save a partial incoming message
+
+        while self.socket:
+            data = self.socket.recv(4096)
+            if data:
+
+                # if there's an existing fragment, join our new data to it
+                if fragment:
+                    data = fragment + data
+
+                # if we still don't have \n, it's still a fragment
+                if '\n' not in data:
+                    fragment = data
+
+                # we have at least one \n in our data
+                else:
+                    messages = data.split("\n")
+
+                    # if the \n is not the last char...
+                    if messages[-1:]:
+                        # save whatever was after the last \n to a new fragment
+                        fragment = messages[-1:][0]
+                        # trim that last fragment from our messages list
+                        messages = messages[:-1]
+
+                    # now process the remaining complete messages
+                    for message in messages:
+                        if message:
+                            if message.startswith('dmd_frame'):
+                                #if len(message[10:]) == 4096:
+                                self.machine.bcp.dmd.update(message[10:])
+
+                            else:
+                                self.log.info('<<<<<<<<<<<<<< Received "%s"',
+                                              message)
+                                cmd, kwargs = decode_command_string(message)
+
+                                if cmd in self.bcp_commands:
+                                    self.bcp_commands[cmd](**kwargs)
+                                else:
+                                    self.receive_queue.put((cmd, kwargs))
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
