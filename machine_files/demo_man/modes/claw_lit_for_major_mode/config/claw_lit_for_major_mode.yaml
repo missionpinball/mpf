@@ -4,7 +4,7 @@ Mode:
     priority: 200
 
 LightPlayer:
-    mode_claw_lit_for_major_mode_start:
+    mode_claw_lit_for_major_mode_started:
         lights: l_claw_ready
         script: flash
         tocks_per_sec: 4
