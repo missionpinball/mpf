@@ -139,14 +139,12 @@ class Config(object):
 
         default = 'default required!@#'
 
-        if '|' in spec: # list|none
+        if '|' in spec:
             item_type, default = spec.split('|')
-            # item_type = list, default = none
             if type(default) is str and default.lower() == 'none':
                 default = None
-        else:  #int
-            item_type = spec  # item_type: int
-            #default = no default!@#
+        else:
+            item_type = spec
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
@@ -167,7 +165,10 @@ class Config(object):
         elif item_type == 'string':
             return str(item)
         elif item_type == 'boolean':
-            return bool(item)
+            if type(item) is bool:
+                return item
+            else:
+                return item.lower() in ('yes', 'true')
         elif item_type == 'ms':
             return Timing.string_to_ms(item)
         elif item_type == 'secs':

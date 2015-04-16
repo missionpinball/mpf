@@ -42,6 +42,41 @@ SlidePlayer:
         expire: 2s
         priority: 1
 
+SoundPlayer:
+    waiting to plunge loop:
+        sound: waiting to plunge loop
+        start_events: mode_base_started
+        stop_events: sw_plunger
+        loops: -1
+    background music:
+        start_events: sw_plunger
+        stop_events: mode_base_stopping, balldevice_elevator_ball_enter
+        sound: base background music
+        loops: -1
+        volume: 0.5
+    ramp 1 fx:
+        start_events: sw_ramp_1
+        sound: ramp 1
+    ramp 2 fx:
+        start_events: sw_ramp_2
+        sound: ramp 2
+    standup lit:
+        start_events: targets_standups_lit_hit
+        sound: standup hit lit
+    standup unlit:
+        start_events: targets_standups_unlit_hit
+        sound: standup hit unlit
+    little metal:
+        start_events: sw_slingshot
+        sound: little metal
+    jets:
+        start_events: sw_jet
+        sound: medium metal
+
+ShowPlayer:
+    shot_left_orbit:
+        show: left orbit
+
 Scoring:
     shot_left_orbit:
         Score: 1000000
@@ -86,37 +121,3 @@ Scoring:
     balldevice_retina_hole_ball_enter:
         Score: 225000
 
-SoundPlayer:
-    waiting to plunge loop:
-        sound: waiting to plunge loop
-        start_events: mode_base_started
-        stop_events: sw_plunger
-        loops: -1
-    background music:
-        start_events: sw_plunger
-        stop_events: mode_base_stopping, balldevice_elevator_ball_enter
-        sound: base background music
-        loops: -1
-        volume: 0.5
-    ramp 1 fx:
-        start_events: sw_ramp_1
-        sound: ramp 1
-    ramp 2 fx:
-        start_events: sw_ramp_2
-        sound: ramp 2
-    standup lit:
-        start_events: targets_standups_lit_hit
-        sound: standup hit lit
-    standup unlit:
-        start_events: targets_standups_unlit_hit
-        sound: standup hit unlit
-    little metal:
-        start_events: sw_slingshot
-        sound: little metal
-    jets:
-        start_events: sw_jet
-        sound: medium metal
-
-ShowPlayer:
-    shot_left_orbit:
-        show: left orbit

@@ -83,6 +83,9 @@ class ShowController(object):
         if 'show_priority' in kwargs:
             priority += int(kwargs['show_priority'])
 
+        print "show", show
+        print "self.machine.shows", self.machine.shows
+
         if show in self.machine.shows:
             if 'stop_key' in kwargs:
                 self.machine.shows[show].stop_key = kwargs['stop_key']
@@ -92,12 +95,14 @@ class ShowController(object):
                                           start_location=start_location,
                                           num_repeats=num_repeats)
 
-        else:  # assume it's a show object?
+        elif isinstance(show, Show):
             if 'stop_key' in kwargs:
                 show.stop_key = kwargs['stop_key']
             show.play(repeat=repeat, priority=priority, blend=blend, hold=hold,
                       tocks_per_sec=tocks_per_sec,
                       start_location=start_location, num_repeats=num_repeats)
+        else:  # no show by that name to stop
+            pass
 
     def stop_show(self, show, reset=True, hold=True, **kwargs):
 

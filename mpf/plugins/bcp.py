@@ -88,6 +88,7 @@ import urlparse
 from distutils.version import LooseVersion
 from Queue import Queue
 import copy
+#import errno
 
 from mpf.game.player import Player
 from mpf.system.config import Config
@@ -103,7 +104,7 @@ def preload_check(machine):
 
 
 def decode_command_string(bcp_string):
-    bcp_command = urlparse.urlsplit(bcp_string.lower())
+    bcp_command = urlparse.urlsplit(bcp_string.lower().decode('utf-8'))
     try:
         kwargs = urlparse.parse_qs(bcp_command.query)
 
@@ -115,23 +116,21 @@ def decode_command_string(bcp_string):
 
     return bcp_command.path, kwargs
 
-
 def encode_command_string(bcp_command, **kwargs):
 
     scrubbed_kwargs = dict()
 
     try:
-
         for k, v in kwargs.iteritems():
             scrubbed_kwargs[k.lower()] = str(v).lower()
 
         scrubbed_kwargs = urllib.urlencode(kwargs)
 
-    except TypeError, AttributeError:
+    except (TypeError, AttributeError):
         pass
 
-    return urlparse.urlunparse((None, None, bcp_command.lower(), None,
-                                scrubbed_kwargs, None))
+    return unicode(urlparse.urlunparse((None, None, bcp_command.lower(), None,
+                                        scrubbed_kwargs, None)), 'utf-8')
 
 
 class BCP(object):
@@ -141,8 +140,11 @@ class BCP(object):
                 'connections' not in machine.config['BCP']):
             return
 
+        self.mc_launcher(None)
+
         self.log = logging.getLogger('BCP')
         self.machine = machine
+        self.machine.bcp = self
 
         self.config = machine.config['BCP']
         self.receive_queue = Queue()
@@ -153,7 +155,7 @@ class BCP(object):
         self.bcp_receive_commands = {'error': self.bcp_error,
                                      'switch': self.bcp_switch,
                                      'dmd_frame': self.bcp_dmd_frame,
-                                     }
+                                    }
 
         self.setup_bcp_connections()
         self.filter_player_events = True
@@ -177,7 +179,6 @@ class BCP(object):
                     Config.string_to_list(self.config['player_variables']))
 
         self._setup_player_monitor()
-        #self._setup_shot_monitor()
 
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
         self.machine.events.add_handler('game_starting', self.bcp_game_start)
@@ -185,24 +186,26 @@ class BCP(object):
                                         self.bcp_player_added)
 
         self.machine.modes.register_start_method(self.bcp_mode_start, 'Mode')
-        self.machine.modes.register_start_method(self.process_shows_from_config,
-                                                 'ShowPlayer')
+        # self.machine.modes.register_start_method(self.process_shows_from_config,
+        #                                          'ShowPlayer')
 
-        if 'ShowPlayer' in self.machine.config:
-            self.process_shows_from_config(self.machine.config['ShowPlayer'])
+        # if 'ShowPlayer' in self.machine.config:
+        #     self.process_shows_from_config(self.machine.config['ShowPlayer'])
 
 
     def setup_bcp_connections(self):
         for name, settings in self.connection_config.iteritems():
             if 'host' not in settings:
                 break
-            elif 'port' not in settings:
-                settings['port'] = 5050
 
             self.bcp_clients.append(BCPClient(self.machine, name,
-                                              settings['host'],
-                                              settings['port'],
-                                              self.receive_queue))
+                                              settings, self.receive_queue))
+
+    def remove_bcp_connection(self, bcp_client):
+        try:
+            self.bcp_clients.remove(self)
+        except ValueError:
+            pass
 
     def _setup_player_monitor(self):
         Player.monitor_enabled = True
@@ -221,10 +224,6 @@ class BCP(object):
                       value=value,
                       prev_value=prev_value,
                       change=change)
-
-    #def _setup_shot_monitor(self):
-    #    Shot.monitor_enabled = True
-    #    self.machine.register_monitor('shots', self._shot_made)
 
     def _setup_show_monitor(self):
         LightController.monitor_enabled = True
@@ -299,6 +298,7 @@ class BCP(object):
                           command=cmd)
 
     def shutdown(self):
+        """ Prepares the BCP clients for MPF shutdown."""
         for client in self.bcp_clients:
             client.stop()
 
@@ -307,14 +307,21 @@ class BCP(object):
                          kwargs)
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
+        """Sends BCP 'mode_start' to the connected BCP hosts and schedules
+        automatic sending of 'mode_stop' when the mode stops.
+        """
         self.send('mode_start', name=mode.name, priority=priority)
 
         return self.bcp_mode_stop, mode.name
 
     def bcp_mode_stop(self, name, **kwargs):
+        """Sends BCP 'mode_stop' to the connected BCP hosts."""
         self.send('mode_stop', name=name)
 
     def bcp_switch(self, **kwargs):
+        """Processes an incoming switch state change request from a remote BCP
+        host.
+        """
         self.machine.switch_controller.process_switch(name=kwargs['name'],
                                                       state=int(kwargs['state']),
                                                       logical=True)
@@ -323,76 +330,85 @@ class BCP(object):
         pass
 
     def bcp_game_start(self, **kwargs):
+        """Sends the BCP 'game_start' and 'player_added?number=1' commands to
+        the remote BCP hosts.
+        """
         self.send('game_start')
         self.send('player_added', number=1)
 
     def bcp_player_added(self, player, num):
+        """Sends BCP 'player_added' to the connected BCP hosts."""
         if num > 1:
             self.send('player_added', number=num)
 
-    #def _shot_made(self, name):
-    #    self.send('shot', name=name)
+    def bcp_trigger(self, name, **kwargs):
+        """Sends BCP 'trigger' to the connected BCP hosts."""
+        self.send('trigger', name=name, **kwargs)
 
-    def bcp_show_play(self, show, **kwargs):
-        self.send('show_play', name=show, **kwargs)
+    # def process_shows_from_config(self, config, mode=None, priority=0):
+    #     """Processes the "ShowPlayer:" entries from a configuration
+    #     dictionary.
+    #     """
+    #     self.log.debug("Processing ShowPlayer configuration. Priority: %s",
+    #                    priority)
+    #
+    #     key_list = list()
+    #
+    #     for event, settings in config.iteritems():
+    #         if type(settings) is dict:
+    #             settings['priority'] = priority
+    #             settings['stop_key'] = mode
+    #             key_list.append(self.add_show_player_show(event, settings))
+    #         elif type(settings) is list:
+    #             for entry in settings:
+    #                 entry['priority'] = priority
+    #                 entry['stop_key'] = mode
+    #                 key_list.append(self.add_show_player_show(event, entry))
+    #
+    #     return self.unload_show_player_shows, (key_list, mode)
+    #
+    # def unload_show_player_shows(self, removal_tuple):
+    #     """Removes ShowPlayer configurations."""
+    #
+    #     key_list, show_key = removal_tuple
+    #
+    #     self.log.debug("Removing ShowPlayer events")
+    #     self.machine.events.remove_handlers_by_keys(key_list)
+    #
+    #     if show_key:
+    #         self.stop_shows_by_key(show_key)
+    #
+    # def add_show_player_show(self, event, settings):
+    #
+    #     if 'priority' in settings:
+    #         settings['show_priority'] = settings['priority']
+    #
+    #     if 'hold' not in settings:
+    #         settings['hold'] = False
+    #
+    #     if 'action' in settings and settings['action'] == 'stop':
+    #         key = self.machine.events.add_handler(event, self.bcp_show_stop,
+    #                                               **settings)
+    #
+    #     else:  # action = 'play'
+    #         key = self.machine.events.add_handler(event, self.bcp_show_play,
+    #                                               **settings)
+    #
+    #     return key
 
-    def bcp_show_stop(self, show, **kwargs):
-        self.send('show_stop', name=show, **kwargs)
+    def mc_launcher(self, config):
+        pass
 
-    def process_shows_from_config(self, config, mode=None, priority=0):
-        self.log.debug("Processing ShowPlayer configuration. Priority: %s",
-                       priority)
-
-        key_list = list()
-
-        for event, settings in config.iteritems():
-            if type(settings) is dict:
-                settings['priority'] = priority
-                settings['stop_key'] = mode
-                key_list.append(self.add_show_player_show(event, settings))
-            elif type(settings) is list:
-                for entry in settings:
-                    entry['priority'] = priority
-                    entry['stop_key'] = mode
-                    key_list.append(self.add_show_player_show(event, entry))
-
-        return self.unload_show_player_shows, (key_list, mode)
-
-    def unload_show_player_shows(self, removal_tuple):
-
-        key_list, show_key = removal_tuple
-
-        self.log.debug("Removing ShowPlayer events")
-        self.machine.events.remove_handlers_by_keys(key_list)
-
-        if show_key:
-            self.stop_shows_by_key(show_key)
-
-    def add_show_player_show(self, event, settings):
-
-        if 'priority' in settings:
-            settings['show_priority'] = settings['priority']
-
-        if 'hold' not in settings:
-            settings['hold'] = False
-
-        if 'action' in settings and settings['action'] == 'stop':
-            key = self.machine.events.add_handler(event, self.bcp_show_stop,
-                                                  **settings)
-
-        else:  # action = 'play'
-            key = self.machine.events.add_handler(event, self.bcp_show_play,
-                                                  **settings)
-
-        return key
-
-
-
-
+        import subprocess, time
+        subprocess.Popen(['python', 'mc.py', 'demo_man', '-v'],
+            stdout=None,
+            stderr=None,
+            stdin=None)
+        time.sleep(4)
 
 class BCPClient(object):
 
-    def __init__(self, machine, name, host, port, queue):
+    def __init__(self, machine, name, config, receive_queue):
         """Sets up a BCP socket client.
 
         Args:
@@ -400,55 +416,105 @@ class BCPClient(object):
             port: Integer of the port name.
         """
 
+        self.log = logging.getLogger('BCPClient.' + name)
+
         self.machine = machine
         self.name = name
-        self.server_name = host
-        self.server_port = port
-        self.queue = queue
+        self.receive_queue = receive_queue
 
+        config_spec = '''
+                        host: string
+                        port: int|5050
+                        connection_attempts: int|-1
+                        require_connection: boolean|False
+                        '''
+
+        self.config = Config.process_config(config_spec, config)
+
+        self.sending_queue = Queue()
         self.receive_thread = None
+        self.sending_thread = None
+        self.socket = None
+        self.connection_attempts = 0
+        self.attempt_socket_connection = True
+        self.send_goodbye = True
 
-        self.client_socket = None
-
-        self.log = logging.getLogger('BCPClient.' + self.name)
-
-        self.bcp_commands = {
-                             'hello': self.bcp_hello,
-                             'goodbye': self.bcp_goodbye,
+        self.bcp_commands = {'hello': self.receive_hello,
+                             'goodbye': self.receive_goodbye,
                             }
 
-        self.setup_client()
+        self.setup_client_socket()
 
-    def send_hello(self):
-        self.send('hello?version=' + __bcp_version__)
+    def setup_client_socket(self):
 
-    def send_goodbye(self):
-        self.send('goodbye')
+        self.connection_attempts += 1
+        if (self.config['connection_attempts'] == -1 or
+                self.connection_attempts < self.config['connection_attempts']):
 
-    def setup_client(self):
-        try:
-            self.client_socket = socket.socket(socket.AF_INET,
-                                               socket.SOCK_STREAM)
-            self.client_socket.connect((self.server_name, self.server_port))
+            self.log.debug("Attempting socket connection. Attempt: %s, Max: %s",
+                           self.connection_attempts,
+                           self.config['connection_attempts'])
+
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+            try:
+                self.socket.connect((self.config['host'], self.config['port']))
+                self.log.info("Connected to remote BCP host %s:%s",
+                              self.config['host'], self.config['port'])
+                self.connection_attempts = 0
+
+            except socket.error, v:
+                self.socket = None
+                self.log.info("Failed to connect to remote BCP host %s:%s. "
+                              "Error: %s", self.config['host'],
+                              self.config['port'], v)
+                if self.config['require_connection']:
+                    self.log.critical("BCP connection 'require_connection' "
+                                      "setting is True. Unable to continue.")
+                    self.machine.done = True
+
+            if self.create_socket_threads():
+                self.send_hello()
+
+        else:
+            self.attempt_socket_connection = False
+            self.log.debug("Max socket connection attempts reached. Giving up")
+
+    def create_socket_threads(self):
+        """Creates and starts the sending and receiving threads for the BCP
+        socket.
+
+        Returns:
+            True if the socket exists and the threads were started. False if
+            not.
+        """
+
+        if self.socket:
 
             self.receive_thread = threading.Thread(target=self.receive_loop)
             self.receive_thread.daemon = True
             self.receive_thread.start()
 
-            self.send_hello()
+            self.sending_thread = threading.Thread(target=self.sending_loop)
+            self.sending_thread.daemon = True
+            self.sending_thread.start()
 
-        except IOError:
-            self.log.error('Could not connect to remote BCP server. %s:%s',
-                           self.server_name, self.server_port)
+            return True
+
+        else:
+            return False
 
     def stop(self):
         """Stops and shuts down the socket client."""
         self.log.info("Stopping socket client")
 
-        self.send('goodbye')
+        if self.socket:
+            if self.send_goodbye:
+                self.send('goodbye')
 
-        self.client_socket.close()
-        self.client_socket = None
+            self.socket.close()
+            self.socket = None  # Socket threads will exit on this
 
     def send(self, message):
         """Sends a message to the BCP host.
@@ -457,40 +523,72 @@ class BCPClient(object):
             message: String of the message to send.
         """
 
-        try:
-            self.client_socket.sendall(message + '\n')
-            self.log.info('>>>>>>>>>>>>>> Sending "%s"', message)
+        if not self.socket and self.attempt_socket_connection:
+            self.setup_client_socket()
 
-        except IOError:
-            # maybe we got disconnected? Attempt to connect and send.
-            self.setup_client()
-
-            try:
-                self.client_socket.sendall(message + '\n')
-            except:
-                self.log.error("Unable to send '%s' to BCP server", message)
+        self.sending_queue.put(message)
 
     def receive_loop(self):
-        while True:
-            data = self.client_socket.recv(255)
+        """Receive loop which reads incoming data, assembles commands, and puts
+        them onto the receive queue.
+
+        This method is run as a thread.
+        """
+        while self.socket:
+            data = self.socket.recv(255)
             if data:
-                messages = data.decode("utf-8").split("\n");
+                messages = data.split("\n")
                 for message in messages:
                     if message:
                         # do an initial processing here for connection-specific
                         # commands, including hello, goodbye
+                        self.log.info('<<<<<<<<<<<<<< Received "%s"', message)
                         cmd, kwargs = decode_command_string(message)
 
                         if cmd in self.bcp_commands:
                             self.bcp_commands[cmd](**kwargs)
                         else:
-                            self.queue.put((cmd, kwargs))
+                            self.receive_queue.put((cmd, kwargs))
 
-    def bcp_hello(self, **kwargs):
-        self.log.info('Received BCP Hello from host with kwargs: %a', kwargs)
+    def sending_loop(self):
+        """Sending loop which transmits data from the sending queue to the
+        remote socket.
 
-    def bcp_goodbye(self):
-        pass
+        This method is run as a thread.
+        """
+        while self.socket:
+            message = self.sending_queue.get()
+
+            try:
+                self.log.info('>>>>>>>>>>>>>> Sending "%s"', message)
+                self.socket.sendall(message + '\n')
+
+            except (IOError, AttributeError):
+                # MPF is probably in the process of shutting down
+                pass
+
+
+    def receive_hello(self, **kwargs):
+        """Processes incoming BCP 'hello' command."""
+        self.log.info('Received BCP Hello from host with kwargs: %s', kwargs)
+
+    def receive_goodbye(self):
+        """Processes incoming BCP 'goodbye' command."""
+        self.send_goodbye = False
+        self.stop()
+        self.machine.bcp.remove_bcp_connection(self)
+
+        if self.config['require_connection']:
+            self.machine.bcp.shutdown()
+            self.machine.done = True
+
+    def send_hello(self):
+        """Sends BCP 'hello' command."""
+        self.send('hello?version=' + __bcp_version__)
+
+    def send_goodbye(self):
+        """Sends BCP 'goodbye' command."""
+        self.send('goodbye')
 
 
 # The MIT License (MIT)
