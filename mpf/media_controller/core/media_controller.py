@@ -49,7 +49,6 @@ class MediaController(object):
         self.log.info("Backbox Control Protocol Version %s",
                       version.__version__)
 
-        # Get the Python version for the log
         python_version = sys.version_info
         self.log.info("Python version: %s.%s.%s", python_version[0],
                       python_version[1], python_version[2])
@@ -79,7 +78,7 @@ class MediaController(object):
 
         self.bcp_commands = {'hello': self.bcp_hello,
                              'goodbye': self.bcp_goodbye,
-                             'reset': self.bcp_reset,
+                             'reset': self.reset,
                              'mode_start': self.bcp_mode_start,
                              'mode_stop': self.bcp_mode_stop,
                              'error': self.bcp_error,
@@ -175,9 +174,7 @@ class MediaController(object):
         self.events.post("mc_init_phase_4")
         self.events.post("mc_init_phase_5")
 
-        self.events.post('mc_reset_phase_1')
-        self.events.post('mc_reset_phase_2')
-        self.events.post('mc_reset_phase_3')
+        self.reset()
 
     def get_window(self):
         """ Returns a reference to the onscreen display window.
@@ -330,11 +327,17 @@ class MediaController(object):
             self.log.info("Actual loop rate: %s Hz",
                           loops / (time.time() - start_time))
 
-
-
         except KeyboardInterrupt:
-            print "kb interrupt"
             self.shutdown()
+
+    def reset(self, **kwargs):
+        """Processes an incoming BCP 'reset' command."""
+        self.player = None
+        self.player_list = list()
+
+        self.events.post('mc_reset_phase_1')
+        self.events.post('mc_reset_phase_2')
+        self.events.post('mc_reset_phase_3')
 
     def shutdown(self):
         """Shuts down and exits the media controller.
@@ -461,16 +464,8 @@ class MediaController(object):
 
             self.player = self.player_list[int(player)-1]
 
-    def bcp_reset(self, **kwargs):
-        """Processes an incoming BCP 'reset' command."""
-        self.player = None
-        self.player_list = list()
-
     def bcp_trigger(self, name, **kwargs):
         """Processes an incoming BCP 'trigger' command."""
-
-
-
 
         blocked_event_prefixes = ('player_',
                                   'machinemode_',

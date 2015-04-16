@@ -115,7 +115,8 @@ class BallController(object):
                        self.balls,
                        self.machine.config['Machine']['Min Balls'])
         if self.balls < self.machine.config['Machine']['Min Balls']:
-            self.log.debug("BallController denies game start. Not enough balls")
+            self.log.warning("BallController denies game start. Not enough "
+                             "balls")
             return False
 
         if self.machine.config['Game']['Allow start with loose balls']:
@@ -123,8 +124,8 @@ class BallController(object):
 
         elif not self.are_balls_gathered(['home', 'trough']):
             self.gather_balls('home')
-            self.log.debug("BallController denies game start. Balls are not in"
-                           " their home positions.")
+            self.log.warning("BallController denies game start. Balls are not "
+                             "in their home positions.")
             return False
 
     def are_balls_gathered(self, target=['home', 'trough']):
