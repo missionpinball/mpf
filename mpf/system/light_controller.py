@@ -179,28 +179,10 @@ class LightController(object):
 
                 this_action['priority'] = priority
                 this_action['stop_key'] = mode
-                key_list.append(self.add_show_player_show(event_name,
+                key_list.append(self.add_light_player_show(event_name,
                                                           this_action))
 
         return self.unload_lightplayer_shows, (key_list, mode)
-
-    #def add_lightplayer_show(self, event, settings):
-    #
-    #    #if 'priority' in settings:
-    #    #    settings['show_priority'] = settings['priority']
-    #    #
-    #    #if 'hold' not in settings:
-    #    #    settings['hold'] = False
-    #
-    #    if 'action' in settings and settings['action'] == 'stop':
-    #        key = self.machine.events.add_handler(event, self.stop_script,
-    #                                              **settings)
-    #
-    #    else:  # action = 'play'
-    #        key = self.machine.events.add_handler(event, self.run_script,
-    #                                              **settings)
-    #
-    #    return key
 
     def create_show_from_script(self, script, lights=None, leds=None,
                                 light_tags=None, led_tags=None):
@@ -267,7 +249,7 @@ class LightController(object):
         if show_key:
             self.stop_shows_by_key(show_key)
 
-    def add_show_player_show(self, event, settings):
+    def add_light_player_show(self, event, settings):
         if 'priority' in settings:
             settings['show_priority'] = settings['priority']
 
