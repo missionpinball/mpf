@@ -219,11 +219,11 @@ BCP:
             host: localhost
             port: 5050
             connection_attempts: 5
-            require_connection: yes
+            require_connection: no
 
     launcher:
         command: "python mc.py %machine% -v"
-        wait_time: 3s
+        wait_time: 4s
 
     event_map:
         ball_started:

@@ -93,8 +93,7 @@ class MediaController(object):
                              'player_turn_start': self.bcp_player_turn_start,
                              'attract_start': self.bcp_attract_start,
                              'attract_stop': self.bcp_attract_stop,
-                             'show_play': self.bcp_show_play,
-                             'show_stop': self.bcp_show_stop
+                             'trigger': self.bcp_trigger,
                             }
 
 
@@ -467,14 +466,26 @@ class MediaController(object):
         self.player = None
         self.player_list = list()
 
-    def bcp_show_play(self, name, priority=0, **kwargs):
-        """Processes an incoming BCP 'show_play' command."""
-        self.show_controller.play_show(show=name, priority=int(priority),
-                                       **kwargs)
+    def bcp_trigger(self, name, **kwargs):
+        """Processes an incoming BCP 'trigger' command."""
 
-    def bcp_show_stop(self, name, **kwargs):
-        """Processes an incoming BCP 'show_stop' command."""
-        self.show_controller.stop_show(show=name, **kwargs)
+
+
+
+        blocked_event_prefixes = ('player_',
+                                  'machinemode_',
+                                 )
+
+        blocked_events = ('ball_started',
+                          'ball_ended',
+                          'game_started',
+                          'game_ended',
+                         )
+
+        if not (name.startswith(blocked_event_prefixes) and
+                name in blocked_events):
+
+            self.events.post(name, **kwargs)
 
 
 class BCPServer(threading.Thread):

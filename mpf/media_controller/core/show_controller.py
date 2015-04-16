@@ -63,8 +63,8 @@ class ShowController(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick)
-        #self.machine.events.add_handler('mc_init_phase_4',
-        #                                self._initialize)
+        self.machine.events.add_handler('mc_init_phase_4',
+                                        self._initialize)
 
         # Create the show AssetManager
         self.asset_manager = AssetManager(
@@ -76,15 +76,18 @@ class ShowController(object):
                                           file_extensions=('yaml')
                                           )
 
+    def _initialize(self):
+        # Sets up everything that has to be instantiated first
+
+        if 'ShowPlayer' in self.machine.config:
+            self.process_shows_from_config(self.machine.config['ShowPlayer'])
+
     def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
                   tocks_per_sec=30, start_location=None, num_repeats=0,
                   **kwargs):
 
         if 'show_priority' in kwargs:
             priority += int(kwargs['show_priority'])
-
-        print "show", show
-        print "self.machine.shows", self.machine.shows
 
         if show in self.machine.shows:
             if 'stop_key' in kwargs:
@@ -113,6 +116,53 @@ class ShowController(object):
         for show in self.running_shows:
             if show.stop_key == key:
                 show.stop()
+
+    def process_shows_from_config(self, config, mode=None, priority=0):
+        self.log.debug("Processing ShowPlayer configuration. Priority: %s",
+                       priority)
+
+        key_list = list()
+
+        for event, settings in config.iteritems():
+            if type(settings) is dict:
+                settings['priority'] = priority
+                settings['stop_key'] = mode
+                key_list.append(self.add_show_player_show(event, settings))
+            elif type(settings) is list:
+                for entry in settings:
+                    entry['priority'] = priority
+                    entry['stop_key'] = mode
+                    key_list.append(self.add_show_player_show(event, entry))
+
+        return self.unload_show_player_shows, (key_list, mode)
+
+    def unload_show_player_shows(self, removal_tuple):
+
+        key_list, show_key = removal_tuple
+
+        self.log.debug("Removing ShowPlayer events")
+        self.machine.events.remove_handlers_by_keys(key_list)
+
+        if show_key:
+            self.stop_shows_by_key(show_key)
+
+    def add_show_player_show(self, event, settings):
+
+        if 'priority' in settings:
+            settings['show_priority'] = settings['priority']
+
+        if 'hold' not in settings:
+            settings['hold'] = False
+
+        if 'action' in settings and settings['action'] == 'stop':
+            key = self.machine.events.add_handler(event, self.stop_show,
+                                                  **settings)
+
+        else:  # action = 'play'
+            key = self.machine.events.add_handler(event, self.play_show,
+                                                  **settings)
+
+        return key
 
     def _run_show(self, show):
         # Internal method which starts a Show

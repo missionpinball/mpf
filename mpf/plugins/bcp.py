@@ -140,7 +140,7 @@ class BCP(object):
                 'connections' not in machine.config['BCP']):
             return
 
-        self.mc_launcher(None)
+        #self.mc_launcher(None)
 
         self.log = logging.getLogger('BCP')
         self.machine = machine
@@ -160,6 +160,7 @@ class BCP(object):
         self.setup_bcp_connections()
         self.filter_player_events = True
         self.send_player_vars = False
+        self.trigger_events = set()
 
         if 'event_map' in self.config:
             self.bcp_events = self.config['event_map']
@@ -179,6 +180,7 @@ class BCP(object):
                     Config.string_to_list(self.config['player_variables']))
 
         self._setup_player_monitor()
+        self.register_trigger_events(self.machine.config)
 
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
         self.machine.events.add_handler('game_starting', self.bcp_game_start)
@@ -186,12 +188,7 @@ class BCP(object):
                                         self.bcp_player_added)
 
         self.machine.modes.register_start_method(self.bcp_mode_start, 'Mode')
-        # self.machine.modes.register_start_method(self.process_shows_from_config,
-        #                                          'ShowPlayer')
-
-        # if 'ShowPlayer' in self.machine.config:
-        #     self.process_shows_from_config(self.machine.config['ShowPlayer'])
-
+        self.machine.modes.register_load_method(self.register_trigger_events)
 
     def setup_bcp_connections(self):
         for name, settings in self.connection_config.iteritems():
@@ -225,9 +222,9 @@ class BCP(object):
                       prev_value=prev_value,
                       change=change)
 
-    def _setup_show_monitor(self):
-        LightController.monitor_enabled = True
-        self.machine.register_monitor('shows', self._show)
+    # def _setup_show_monitor(self):
+    #     LightController.monitor_enabled = True
+    #     self.machine.register_monitor('shows', self._show)
 
     def process_bcp_events(self):
         """Processes the BCP Events from the config."""
@@ -271,6 +268,36 @@ class BCP(object):
 
         else:
             self.send(command)
+
+    def register_trigger_events(self, config, **kwargs):
+
+        if 'ShowPlayer' in config:
+            for event in config['ShowPlayer'].keys():
+                self.register_trigger(event)
+
+        if 'SlidePlayer' in config:
+            for event in config['SlidePlayer'].keys():
+                self.register_trigger(event)
+
+        if 'SoundPlayer' in config:
+            for k, v in config['SoundPlayer'].iteritems():
+
+                if 'start_events' in v:
+                    for event in v['start_events']:
+                        self.register_trigger(event)
+                if 'stop_events' in v:
+                    for event in v['stop_events']:
+                        self.register_trigger(event)
+
+    def register_trigger(self, event):
+
+        if event not in self.trigger_events:
+
+            self.machine.events.add_handler(event, handler=self.send,
+                                            bcp_command='trigger',
+                                            name=event)
+            self.trigger_events.add(event)
+
 
     def send(self, bcp_command, callback=None, **kwargs):
         bcp_string = encode_command_string(bcp_command, **kwargs)
