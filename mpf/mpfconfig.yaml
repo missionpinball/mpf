@@ -14,7 +14,7 @@ MPF:
         switch_controller.SwitchController
         ball_controller.BallController
         modes.ModeController
-        show_controller.ShowController
+        light_controller.LightController
 
     device_modules:
         driver.Driver
@@ -218,6 +218,12 @@ BCP:
         local_display:
             host: localhost
             port: 5050
+            connection_attempts: 5
+            require_connection: no
+
+    launcher:
+        command: "python mc.py %machine% -v"
+        wait_time: 4s
 
     event_map:
         ball_started:

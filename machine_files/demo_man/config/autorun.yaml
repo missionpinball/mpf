@@ -27,6 +27,12 @@ SwitchPlayer:
         switch: s_shooter_lane
         action: deactivate
       - time: 1s
+        switch: s_upper_left_flipper_gate
+        action: hit
+      - time: 1s
+        switch: s_left_loop
+        action: hit
+      - time: 1s
         switch: s_right_inlane
         action: hit
       - time: 500ms

@@ -10,6 +10,7 @@ MediaController:
         
     
     port: 5050
+    exit_on_disconnect: yes
 
     display_modules:
         elements:

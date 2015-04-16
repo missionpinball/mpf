@@ -24,7 +24,7 @@ except:
 
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing, Timer
-from mpf.system.show_controller import ShowController
+from mpf.system.light_controller import LightController
 from mpf.media_controller.core.assets import AssetManager
 from mpf.media_controller.core.font_manager import FontManager
 from mpf.media_controller.core.slide_builder import SlideBuilder
@@ -839,14 +839,14 @@ class DisplayElement(object):
 
         else:  # 24-bit
             if 'color' in kwargs:
-                color_list = ShowController.hexstring_to_list(kwargs['color'])
+                color_list = LightController.hexstring_to_list(kwargs['color'])
                 self.adjusted_color = (color_list[0], color_list[1],
                                        color_list[2])
             else:
                 self.adjusted_color = (255, 255, 255)  # todo default config
 
             if 'bg_color' in kwargs:
-                color_list = ShowController.hexstring_to_list(kwargs['color'])
+                color_list = LightController.hexstring_to_list(kwargs['color'])
                 self.adjusted_bg_color = (color_list[0], color_list[1],
                                           color_list[2])
             else:

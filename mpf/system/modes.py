@@ -211,10 +211,14 @@ class Mode(object):
 
         # Call registered remote loader methods
         for item in self.machine.modes.loader_methods:
-            if (item.config_section in self.config and
+            if (item.config_section and
+                    item.config_section in self.config and
                     self.config[item.config_section]):
                 item.method(config=self.config[item.config_section],
                             mode_path=self.path,
+                            **item.kwargs)
+            elif not item.config_section:
+                item.method(config=self.config, mode_path=self.path,
                             **item.kwargs)
 
         self.mode_init()

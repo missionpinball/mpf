@@ -10,9 +10,10 @@ import logging
 
 from mpf.system.devices import Device
 from mpf.system.tasks import DelayManager
-from mpf.system.show_controller import Playlist
+from mpf.system.light_controller import Playlist
 from collections import deque
 from mpf.system.config import Config
+
 
 class Target(Device):
 

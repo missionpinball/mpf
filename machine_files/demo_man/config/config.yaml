@@ -1050,11 +1050,18 @@ Keyboard:
   x:
     switch: s_left_slingshot
 
+
 ShowPlayer:
   machineflow_Attract_start:
     - show: attract_dmd_loop
       repeat: yes
       tocks_per_sec: 1
+  machineflow_Attract_stop:
+    - show: attract_dmd_loop
+      action: stop
+
+LightPlayer:
+  machineflow_Attract_start:
     - show: multiball_sweep
       repeat: yes
       tocks_per_sec: 10
@@ -1093,8 +1100,6 @@ ShowPlayer:
       tocks_per_sec: 8
 
   machineflow_Attract_stop:
-    - show: attract_dmd_loop
-      action: stop
     - show: multiball_sweep
       action: stop
     - show: random_flashing
