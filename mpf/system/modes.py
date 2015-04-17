@@ -589,7 +589,7 @@ class ModeTimer(object):
         self.running = True
 
         self.delay.remove('pause')
-        self.create_timer()
+        self._create_system_timer()
 
         self.machine.events.post('timer_' + self.name + '_started',
             ticks_remaining=self.mode.player[self.tick_var])
