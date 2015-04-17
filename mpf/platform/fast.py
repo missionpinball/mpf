@@ -808,8 +808,6 @@ class FASTDMD(object):
         self.machine = machine
         self.fast = fast_device
 
-        print "setting up the fast DMD"
-
         # Clear the DMD
         fastpinball.fpClearDmd(self.fast)
 

@@ -21,6 +21,7 @@ attract_start
 attract_stop
 ball_start?player=x&ball=x
 ball_end
+dmd_frame
 error
 game_start
 game_end

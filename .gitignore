@@ -1,3 +1,3 @@
 *.pyc
 /logs
-/mpf/media_controller/logs
+/machine_files/*/audits/

@@ -27,11 +27,6 @@ class Task(object):
     NewTasks = set()
 
     def __init__(self, callback, args=None, name=None, sleep=0):
-        """Initialization of a task.
-
-        The task is defined by a callable function and a list of arguments,
-        which denotes how the task is first called.
-        """
         self.callback = callback
         self.args = args
         self.wakeup = None
@@ -42,12 +37,12 @@ class Task(object):
             self.wakeup = time.time() + sleep
 
     def restart(self):
-        """Restart a task."""
+        """Restarts the task."""
         self.wakeup = None
         self.gen = None
 
     def stop(self):
-        """Stop a task.
+        """Stops the task.
 
         This causes it not to run any longer, by removing it from the task set
         and then deleting it."""
@@ -58,17 +53,14 @@ class Task(object):
 
     @staticmethod
     def Create(callback, args=tuple(), sleep=0):
-        """Create a new task and insert it into the runnable set."""
+        """Creates a new task and insert it into the runnable set."""
         task = Task(callback=callback, args=args, sleep=sleep)
         Task.NewTasks.add(task)
         return task
 
     @staticmethod
     def timer_tick():
-        """Scan all tasks now and run those that are ready.
-
-        'now' is the tick number, not a time.time(). Just FYI
-        """
+        """Scans all tasks now and run those that are ready."""
         dead_tasks = []
         for task in Task.Tasks:
             if not task.wakeup or task.wakeup <= time.time():
@@ -93,6 +85,7 @@ class Task(object):
 
 
 class DelayManager(object):
+    """Parent class for a delay manager which can manage multiple delays."""
 
     delay_managers = set()
     dead_delay_managers = set()
@@ -113,23 +106,46 @@ class DelayManager(object):
         DelayManager.dead_delay_managers.add(self)  # todo I don't like this
 
     def add(self, name, ms, callback, **kwargs):
-        """ delay comes in via ms.
+        """Adds a delay.
+
+        Args:
+            name: String name of this delay. This name is arbitrary and only
+                used to identify the delay later if you want to remove or change
+                it.
+            ms: Int of the number of milliseconds you want this delay to be for.
+                Note that the resolution of this time is based on your
+                machine's tick rate. The callback will be called on the
+                first machine tick *after* the delay time has expired. For
+                example, if you have a machine tick rate of 30Hz, that's 33.33ms
+                per tick. So if you set a delay for 40ms, the actual delay will
+                be 66.66ms since that's the next tick time after the delay ends.
+            callback: The method that is called when this delay ends.
+            **kwargs: Any other (optional) kwarg pairs you pass will be
+                passed along as kwargs to the callback method.
         """
-        self.log.debug("---Adding delay. Name: '%s' ms: %s, callback: %s, kwargs: %s",
-                       name, ms, callback, kwargs)
+        self.log.debug("Adding delay. Name: '%s' ms: %s, callback: %s, "
+                       "kwargs: %s", name, ms, callback, kwargs)
         self.delays[name] = ({'action_ms': time.time() + (ms / 1000.0),
                               'callback': callback,
                               'kwargs': kwargs})
 
     def remove(self, name):
-        self.log.debug("---Removing delay: '%s'", name)
+        """Removes a delay. (i.e. prevents the callback from being fired and
+        cancels the delay.)
+
+        Args:
+            name: String name of the delay you want to remove. If there is no
+                delay with this name, that's ok. Nothing happens.
+        """
+
+        self.log.debug("Removing delay: '%s'", name)
         try:
             del self.delays[name]
         except:
             pass
 
     def check(self, delay):
-        """ Checks to see if a delay exists.
+        """Checks to see if a delay exists.
 
         Args:
             delay: A string of the delay you're checking for.
@@ -140,17 +156,21 @@ class DelayManager(object):
             return delay
 
     def reset(self, name, ms, callback, **kwargs):
-        """ Resets a delay, first deleting the old one (if it exists) and then
-        adding the delay for the new time.
+        """Resets a delay, first deleting the old one (if it exists) and then
+        adding new delay with the new settings.
+
+        Args:
+            same as add()
         """
         self.remove(name)
         self.add(name, ms, callback, **kwargs)
 
     def clear(self):
+        """Removes (clears) all the delays associated with this DelayManager."""
         self.delays = {}
 
-    def process_delays(self):
-        """ Processes any delays that should fire now """
+    def _process_delays(self):
+        # Processes any delays that should fire now
         for delay in self.delays.keys():
             if self.delays[delay]['action_ms'] <= time.time():
                 # Delete the delay first in case the processing of it adds a
@@ -172,7 +192,7 @@ class DelayManager(object):
         while DelayManager.delay_managers:
             i = DelayManager.delay_managers.pop()
             if i not in DelayManager.dead_delay_managers:
-                i.process_delays()
+                i._process_delays()
                 live_delay_managers.add(i)
         DelayManager.delay_managers = live_delay_managers
 
