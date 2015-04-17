@@ -817,9 +817,9 @@ class FASTDMD(object):
 
         self.machine.events.add_handler('timer_tick', self.tick)
 
-    def update(self, surface):
+    def update(self, data):
 
-        fastpinball.fpWriteDmd(self.fast, bytearray(pygame.image.tostring(surface, 'P')))
+        fastpinball.fpWriteDmd(self.fast, bytearray(data)))
 
     def tick(self):
         pass

@@ -1288,9 +1288,11 @@ class PROCDMD(object):
 
         self.machine.events.add_handler('timer_tick', self.tick)
 
-    def update(self, surface):
+    # def update(self, surface):
+    #     self.dmd.set_data(pygame.image.tostring(surface, 'P'))
 
-        self.dmd.set_data(pygame.image.tostring(surface, 'P'))
+    def update(self, data):
+        self.dmd.set_data(data)
 
     def tick(self):
         self.machine.platform.proc.dmd_draw(self.dmd)
