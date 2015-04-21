@@ -196,7 +196,11 @@ class Game(MachineMode):
         self.machine.events.post('ball_started', ball=self.player.ball,
                                  player=self.player.number)
 
-        self.machine.playfield.add_ball(player_controlled=True)
+        try:
+            self.machine.playfield.add_ball(trigger_event='sw_' +
+                self.machine.config['Game']['player_controlled_eject_tag'])
+        except KeyError:
+            self.machine.playfield.add_ball()
 
     def ball_drained(self, balls=0):
         self.log.debug("Entering Game.ball_drained()")
