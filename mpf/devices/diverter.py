@@ -13,6 +13,7 @@ from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 from mpf.system.config import Config
 
+
 class Diverter(Device):
     """Represents a diverter in a pinball machine.
 
@@ -31,7 +32,6 @@ class Diverter(Device):
         # Attributes
         self.active = False
         self.enabled = False
-        #self.remaining_activations = -1
 
         # configure defaults:
         if 'type' not in self.config:

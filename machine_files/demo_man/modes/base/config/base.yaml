@@ -120,10 +120,3 @@ Scoring:
         Score: 110000
     balldevice_retina_hole_ball_enter:
         Score: 225000
-
-Triggers:
-    sw_plunger:
-        bcp_name: plunged
-        params:
-            how_many: 1
-            this_many: 2
