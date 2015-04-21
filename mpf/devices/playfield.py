@@ -114,7 +114,7 @@ class Playfield(BallDevice):
         return 999
 
     def add_ball(self, balls=1, source_name=None, source_device=None,
-                 player_controlled=False):
+                 trigger_event=None):
 
         """Adds live ball(s) to the playfield.
 
@@ -124,10 +124,9 @@ class Playfield(BallDevice):
                 add the ball(s) from.
             source_device: Optional ball device object you'd like to add the
                 ball(s) from.
-            player_controlled: Boolean which specifies whether the player needs
-                to hit a button to cause the source device to eject a ball.
-                (i.e. when the player has to hit the 'launch' button to eject a
-                ball from the plunger lane.) Default is False.
+            trigger_event: The optional name of an event that MPF will wait for
+                before adding the ball into play. Typically used with player-
+                controlled eject tag events.
 
         Note that both source_name and source_device args are included to give
         you two options for specifying the source of the ball(s) to be added.
@@ -156,15 +155,17 @@ class Playfield(BallDevice):
 
         if not source_device:
             self.log.critical("Received request to add a ball to the playfield, "
-                           "but no source device was passed and no ball devices"
-                           "are tagged with 'ball_add_live'. Cannot add a ball.")
+                              "but no source device was passed and no ball "
+                              "devices are tagged with 'ball_add_live'. Cannot "
+                              "add a ball.")
             raise Exception("Received request to add a ball to the playfield, "
-                           "but no source device was passed and no ball devices"
-                           "are tagged with 'ball_add_live'. Cannot add a ball.")
+                            "but no source device was passed and no ball "
+                            "devices are tagged with 'ball_add_live'. Cannot "
+                            "add a ball.")
 
         self.log.debug("Received request to add %s ball(s). Source device: %s. "
-                       "Player controlled: %s", balls, source_device.name,
-                       player_controlled)
+                       "Wait for event: %s", balls, source_device.name,
+                       trigger_event)
 
         # If we don't have a coil that's fired by the player, and we our source
         # device has the ability to eject, then we do the eject now.
@@ -181,50 +182,33 @@ class Playfield(BallDevice):
         # eject now since there's no player_controlled tag and the device has an
         # eject coil.
 
-        if not player_controlled and source_device.config['eject_coil']:
+        if not trigger_event and source_device.config['eject_coil']:
             source_device.eject(balls=balls, target=self, get_ball=True)
 
         else:
-            # We have a player-controlled eject. Set up the event handler to
-            # watch for it.
-            self.setup_player_controlled_eject(balls, device)
+            self.setup_player_controlled_eject(balls, device, trigger_event)
 
-            #todo add support to pass a switch for this
-
-    def setup_player_controlled_eject(self, balls, device):
-        """Used to set up a player-controlled eject from a ball device which
-        will eject a ball to the playfield.
+    def setup_player_controlled_eject(self, balls, device, trigger_event):
+        """Used to set up an eject from a ball device which will eject a ball to
+        the playfield.
 
         Args:
             balls: Integer of the number of balls this device should eject.
             device: The ball device object that will eject the ball(s) when a
                 switch with the player-controlled eject tag is hit.
+            trigger_event: The name of the MPF event that will trigger the
+                eject.
 
         When this method it called, MPF will set up an event handler to look for
-        a switch hit from a switch with the tag specified in the
-        Game: player_controlled_eject_tag: setting in your config file. If you
-        don't have that setting in your config file, MPF will quit.
+        the trigger_event.
         """
 
-        if 'player_controlled_eject_tag' in self.machine.config['Game']:
+        if not device.balls:
+            device.request_ball(balls=balls)
 
-            if not device.balls:
-                device.request_ball(balls=balls)
-
-            self.machine.events.add_handler('sw_' +
-                                            self.machine.config['Game']
-                                            ['player_controlled_eject_tag'],
-                                            self.player_eject_request,
-                                            balls=balls, device=device)
-        else:
-            self.log.critical("Received request to set up player-controlled "
-                              "eject, but there is no "
-                              "'player_controlled_eject_tag in the config file."
-                              "Exiting.")
-            raise Exception("Received request to set up player-controlled "
-                              "eject, but there is no "
-                              "'player_controlled_eject_tag in the config file."
-                              "Exiting.")
+        self.machine.events.add_handler(trigger_event,
+                                        self.player_eject_request,
+                                        balls=balls, device=device)
 
     def remove_player_controlled_eject(self):
         """Removed the player-controlled eject so a player hitting a switch
