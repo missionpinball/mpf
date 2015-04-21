@@ -1157,10 +1157,10 @@ LightScripts:
           color: ff
         - tocks: 1
           color: 0
-    on:
+    "on":
         - tocks: 1
           color: ff
-    off:
+    "off":
         - tocks: 1
           color: 0
 
