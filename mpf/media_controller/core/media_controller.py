@@ -93,6 +93,7 @@ class MediaController(object):
                              'attract_start': self.bcp_attract_start,
                              'attract_stop': self.bcp_attract_stop,
                              'trigger': self.bcp_trigger,
+                             'switch': self.bcp_switch
                             }
 
 
@@ -486,6 +487,12 @@ class MediaController(object):
 
             self.events.post(name, **kwargs)
 
+    def bcp_switch(self, name, state, **kwargs):
+        if int(state):
+            self.events.post('switch_' + name + '_active')
+        else:
+            self.events.post('switch_' + name + '_inactive')
+
 
 class BCPServer(threading.Thread):
 
@@ -587,7 +594,6 @@ class BCPServer(threading.Thread):
     def process_received_message(self, message):
         self.log.info('<<<<<<<<<<<<<< Received "%s"', message)
         self.receive_queue.put(message)
-
 
 
 # The MIT License (MIT)

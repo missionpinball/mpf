@@ -84,7 +84,7 @@ class BCP(object):
         hello?version=xxx
         mode_start?name=xxx&priority=xxx
         mode_stop?name=xxx
-        player_add?player=x
+        player_added?number=x
         player_score?value=x&prev_value=x&change=x
         player_turn_start?player=x
         player_variable?name=x&value=x&prev_value=x&change=x
@@ -457,6 +457,29 @@ class BCP(object):
 
         else:
             self.machine.events.post(event='trigger_' + name, **kwargs)
+
+    def enable_bcp_switch(self, name):
+        self.machine.switch_controller.add_switch_handler(switch_name=name,
+            callback=self._switch_sender_callback, state=1, return_info=True)
+        self.machine.switch_controller.add_switch_handler(switch_name=name,
+            callback=self._switch_sender_callback, state=0, return_info=True)
+
+    def enable_bcp_switches(self, tag):
+        for switch in self.machine.switches.items_tagged(tag):
+            self.enable_bcp_switch(switch)
+
+    def disable_bcp_switch(self, name):
+        self.machine.switch_controller.remove_switch_handler(switch_name=name,
+            callback=self._switch_sender_callback, state=1)
+        self.machine.switch_controller.remove_switch_handler(switch_name=name,
+            callback=self._switch_sender_callback, state=0)
+
+    def disable_bcp_switches(self, tag):
+        for switch in self.machine.switches.items_tagged(tag):
+            self.disable_bcp_switch(switch)
+
+    def _switch_sender_callback(self, switch_name, state, ms):
+        self.send('switch', name=switch_name, state=state)
 
 
 class BCPClient(object):

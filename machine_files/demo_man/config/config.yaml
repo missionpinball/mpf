@@ -43,7 +43,7 @@ Switches:
         label:
     s_flipper_lower_right:
         number: sf2
-        tags:
+        tags: player
         label:
         tags: right_flipper
     s_flipper_lower_left_eos:
@@ -52,7 +52,7 @@ Switches:
         label:
     s_flipper_lower_left:
         number: sf4
-        tags:
+        tags: player
         label:
         tags: left_flipper
     s_flipper_upper_left_eos:
@@ -61,7 +61,7 @@ Switches:
         label:
     s_flipper_upper_left:
         number: sf6
-        tags:
+        tags: player
         label:
     s_flipper_upper_right_eos:
         number: sf7
@@ -69,7 +69,7 @@ Switches:
         label:
     s_flipper_upper_right:
         number: sf8
-        tags:
+        tags: player
         label:
 
 # Direct
@@ -110,15 +110,15 @@ Switches:
     s_ball_launch:
         number: s11
         label:
-        tags: plunger
+        tags: plunger, player
     s_left_handle_button:
         number: s12
         label:
-        tags:
+        tags: player
     s_start:
         number: s13
         label:
-        tags: start
+        tags: start, player
     s_plumb_bob:
         number: s14
         label:
