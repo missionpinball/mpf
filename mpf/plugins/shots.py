@@ -65,7 +65,7 @@ class ShotController(object):
     def process_config(self, config, mode=None, priority=0):
         # config is localized to "Shots"
 
-        self.log.debug("Configuring  Shots")
+        self.log.debug("Configuring Shots")
 
         shot_list = list()
 
