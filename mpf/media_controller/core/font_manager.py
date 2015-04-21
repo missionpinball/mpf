@@ -26,7 +26,7 @@ class FontManager(object):
 
     def __init__(self, machine, config):
 
-        self.log = logging.getLogger('Fonts')
+        self.log = logging.getLogger('fonts')
 
         self.machine = machine
         self.config = config
@@ -132,7 +132,7 @@ class FontManager(object):
             return
 
         full_path = os.path.join(self.machine.machine_path,
-                                 self.machine.config['MediaController']['paths']
+                                 self.machine.config['mediacontroller']['paths']
                                  ['fonts'],
                                  file_name)
         if os.path.isfile(full_path):

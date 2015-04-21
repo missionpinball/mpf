@@ -171,7 +171,7 @@ asset_attribute = 'images'  # self.machine.<asset_attribute>
 display_element_class = ImageDisplayElement
 create_asset_manager = True
 path_string = 'images'
-config_section = 'Images'
+config_section = 'images'
 file_extensions = ('png', 'jpg', 'jpeg', 'bmp', 'dmd')
 
 

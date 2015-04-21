@@ -346,7 +346,7 @@ asset_attribute = 'animations'  # self.machine.<asset_attribute>
 display_element_class = AnimationDisplayElement
 create_asset_manager = True
 path_string = 'animations'
-config_section = 'Animations'
+config_section = 'animations'
 file_extensions = ('dmd')
 
 

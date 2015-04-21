@@ -55,7 +55,7 @@ class HardwarePlatform(Platform):
         self.features['variable_debounce_time'] = True  # todo
         self.features['hw_enable_auto_disable'] = True
         # Make the platform features available to everyone
-        self.machine.config['Platform'] = self.features
+        self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
         self.hw_rules = dict()
@@ -65,33 +65,33 @@ class HardwarePlatform(Platform):
 
         ports = list()
 
-        if ('port0_name' in self.machine.config['Fast'] and
-                'port0_baud' in self.machine.config['Fast']):
+        if ('port0_name' in self.machine.config['fast'] and
+                'port0_baud' in self.machine.config['fast']):
 
-            ports.append((self.machine.config['Fast']['port0_name'],
-                          self.machine.config['Fast']['port0_baud']))
+            ports.append((self.machine.config['fast']['port0_name'],
+                          self.machine.config['fast']['port0_baud']))
 
-        if ('port1_name' in self.machine.config['Fast'] and
-                'port1_baud' in self.machine.config['Fast']):
+        if ('port1_name' in self.machine.config['fast'] and
+                'port1_baud' in self.machine.config['fast']):
 
-            ports.append((self.machine.config['Fast']['port1_name'],
-                          self.machine.config['Fast']['port1_baud']))
+            ports.append((self.machine.config['fast']['port1_name'],
+                          self.machine.config['fast']['port1_baud']))
 
-        if ('port2_name' in self.machine.config['Fast'] and
-                'port2_baud' in self.machine.config['Fast']):
+        if ('port2_name' in self.machine.config['fast'] and
+                'port2_baud' in self.machine.config['fast']):
 
-            ports.append((self.machine.config['Fast']['port2_name'],
-                          self.machine.config['Fast']['port2_baud']))
+            ports.append((self.machine.config['fast']['port2_name'],
+                          self.machine.config['fast']['port2_baud']))
 
         self.log.debug("FAST Ports: %s", ports)
 
-        if ('main_port' in self.machine.config['Fast'] and
-                'led_port' in self.machine.config['Fast'] and
-                'dmd_port' in self.machine.config['Fast']):
+        if ('main_port' in self.machine.config['fast'] and
+                'led_port' in self.machine.config['fast'] and
+                'dmd_port' in self.machine.config['fast']):
 
-            port_assignments = (self.machine.config['Fast']['main_port'],
-                                self.machine.config['Fast']['led_port'],
-                                self.machine.config['Fast']['dmd_port'])
+            port_assignments = (self.machine.config['fast']['main_port'],
+                                self.machine.config['fast']['led_port'],
+                                self.machine.config['fast']['dmd_port'])
 
         else:
             self.log.critical("Error in fast config. Entries needed for "
@@ -113,11 +113,11 @@ class HardwarePlatform(Platform):
         fastpinball.fpGetEventType(event)
         fastpinball.fpEventPoll(self.fast, event)
 
-        if 'config_number_format' not in self.machine.config['Fast']:
-            self.machine.config['Fast']['config_number_format'] = 'int'
+        if 'config_number_format' not in self.machine.config['fast']:
+            self.machine.config['fast']['config_number_format'] = 'int'
 
         self.machine_type = (
-            self.machine.config['Hardware']['DriverBoards'].upper())
+            self.machine.config['hardware']['driverboards'].upper())
 
         if self.machine_type == 'WPC':
             self.log.debug("Configuring the FAST Controller for WPC driver "
@@ -222,7 +222,7 @@ class HardwarePlatform(Platform):
         # If we have fast driver boards, we need to make sure we have ints
         elif self.machine_type == 'FAST':
 
-            if self.machine.config['Fast']['config_number_format'] == 'hex':
+            if self.machine.config['fast']['config_number_format'] == 'hex':
                 config['number'] = int(config['number_str'], 16)
 
             # Now figure out the connection type
@@ -271,7 +271,7 @@ class HardwarePlatform(Platform):
             else:
                 config['connection'] = 0  # local switch
 
-            if self.machine.config['Fast']['config_number_format'] == 'hex':
+            if self.machine.config['fast']['config_number_format'] == 'hex':
                 config['number'] = int(config['number_str'], 16)
 
         # converet the switch number into a tuple which is:
@@ -279,14 +279,14 @@ class HardwarePlatform(Platform):
         config['number'] = (config['number'], config['connection'])
 
         if 'debounce_on' not in config:
-            if 'default_debounce_on_ms' in self.machine.config['Fast']:
-                config['debounce_on'] = (self.machine.config['Fast']
+            if 'default_debounce_on_ms' in self.machine.config['fast']:
+                config['debounce_on'] = (self.machine.config['fast']
                                          ['default_debounce_on_ms'])
             else:
                 config['debounce_on'] = 20
         if 'debounce_off' not in config:
-                if 'default_debounce_off_ms' in self.machine.config['Fast']:
-                    config['debounce_off'] = (self.machine.config['Fast']
+                if 'default_debounce_off_ms' in self.machine.config['fast']:
+                    config['debounce_off'] = (self.machine.config['fast']
                                               ['default_debounce_off_ms'])
                 else:
                     config['debounce_off'] = 20
@@ -313,7 +313,7 @@ class HardwarePlatform(Platform):
             config['number'] = str(config['number'])
 
         # if the config is in hex format, convert it to int
-        if self.machine.config['Fast']['config_number_format'] == 'hex':
+        if self.machine.config['fast']['config_number_format'] == 'hex':
             config['number'] = int(config['number'], 16)
 
         return FASTDirectLED(config['number'], self.fast)
@@ -327,7 +327,7 @@ class HardwarePlatform(Platform):
     def configure_matrixlight(self, config):
         if self.machine_type == 'WPC':  # translate switch number to FAST switch
             config['number'] = int(self.wpc_light_map.get(config['number_str']))
-        elif self.machine.config['Fast']['config_number_format'] == 'hex':
+        elif self.machine.config['fast']['config_number_format'] == 'hex':
             config['number'] = int(config['number_str'], 16)
 
         return FASTMatrixLight(config['number'], self.fast), config['number']

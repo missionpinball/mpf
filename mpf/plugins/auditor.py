@@ -39,7 +39,7 @@ class Auditor(object):
         disable() methods.
         """
 
-        #self.config = self.machine.config['Auditor']
+        #self.config = self.machine.config['auditor']
         self.machine.events.add_handler('machine_init_phase_4', self._initialize)
 
     def _initialize(self):
@@ -55,10 +55,10 @@ class Auditor(object):
                     '''
 
         self.config = Config.process_config(config,
-                                            self.machine.config['Auditor'])
+                                            self.machine.config['auditor'])
 
         self.filename = os.path.join(self.machine.machine_path,
-            self.machine.config['MPF']['paths']['audits'])
+            self.machine.config['mpf']['paths']['audits'])
 
         # todo add option for abs path outside of machine root
 
@@ -71,12 +71,12 @@ class Auditor(object):
 
         # Make sure we have all the sections we need in our audit dict
         if ('shots' in self.config['audit'] and
-                'Shots' not in self.current_audits):
-            self.current_audits['Shots'] = dict()
+                'shots' not in self.current_audits):
+            self.current_audits['shots'] = dict()
 
         if ('switches' in self.config['audit'] and
-                'Switches' not in self.current_audits):
-            self.current_audits['Switches'] = dict()
+                'switches' not in self.current_audits):
+            self.current_audits['switches'] = dict()
 
         if ('events' in self.config['audit'] and
                 'Events' not in self.current_audits):
@@ -88,14 +88,14 @@ class Auditor(object):
 
         # Make sure we have all the switches in our audit dict
         for switch in self.machine.switches:
-            if switch.name not in self.current_audits['Switches']:
-                self.current_audits['Switches'][switch.name] = 0
+            if switch.name not in self.current_audits['switches']:
+                self.current_audits['switches'][switch.name] = 0
 
         # Make sure we have all the shots in our audit dict
         if hasattr(self.machine, 'shots'):
             for shot in self.machine.shots.shots:
-                if shot.name not in self.current_audits['Shots']:
-                    self.current_audits['Shots'][shot.name] = 0
+                if shot.name not in self.current_audits['shots']:
+                    self.current_audits['shots'][shot.name] = 0
 
         # Make sure we have all the player stuff in our audit dict
         if 'player' in self.config['audit']:
@@ -129,10 +129,10 @@ class Auditor(object):
         self.current_audits[audit_class][event] += 1
 
     def audit_switch(self, switch_name, state, ms):
-        self.audit('Switches', switch_name)
+        self.audit('switches', switch_name)
 
     def audit_shot(self, name):
-        self.audit('Shots', name)
+        self.audit('shots', name)
 
     def audit_event(self, eventname, **kwargs):
         """Registered as an event handlers to log an event to the audit log.

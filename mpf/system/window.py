@@ -35,8 +35,8 @@ class WindowManager(MPFDisplay):
         # move some of this to parent class
 
 
-        if 'Window' in machine.config:
-            self.config = machine.config['Window']
+        if 'window' in machine.config:
+            self.config = machine.config['window']
         else:
             self.config = dict()
 
@@ -44,13 +44,13 @@ class WindowManager(MPFDisplay):
         self.palette = None
 
         super(WindowManager, self).__init__(machine, self.config)
-        self.name = 'Window'
+        self.name = 'window'
 
         self.log = logging.getLogger("Window")
         self.log.debug("Loading the Window Manager")
 
-        if 'Window' in self.machine.config:
-            self.config = self.machine.config['Window']
+        if 'window' in self.machine.config:
+            self.config = self.machine.config['window']
         else:
             self.config = dict()
 
@@ -100,7 +100,7 @@ class WindowManager(MPFDisplay):
 
         self.machine.display.slidebuilder.build_slide(
             settings=self.config['elements'],
-            display='Window',
+            display='window',
             slide_name='default',
             priority=0)
 

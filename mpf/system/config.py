@@ -60,31 +60,35 @@ class Config(object):
 
         if not config:
             config = dict()
+        else:
+            config = Config.keys_to_lower(config)
 
         new_updates = dict()
 
         # If we were passed a config dict, load from there
         if type(new_config_dict) == dict:
-            new_updates = new_config_dict
+            new_updates = Config.keys_to_lower(new_config_dict)
 
         # If not, do we have a yaml_file?
         elif yaml_file:
             if os.path.isfile(yaml_file):
                 config_location = yaml_file
                 # Pull out the path in case we need it later
-                config['Config_path'] = os.path.split(yaml_file)[0]
-            elif os.path.isfile(os.path.join(config['Config_path'],
+                config['config_path'] = os.path.split(yaml_file)[0]
+            elif os.path.isfile(os.path.join(config['config_path'],
                                              yaml_file)):
-                config_location = os.path.join(config['Config_path'],
+                config_location = os.path.join(config['config_path'],
                                                yaml_file)
             else:
                 log.critical("Couldn't find file: %s.", yaml_file)
                 sys.exit()
 
         if config_location:
+
             try:
                 log.info("Loading configuration from file: %s", config_location)
-                new_updates = yaml.load(open(config_location, 'r'))
+                new_updates = Config.keys_to_lower(yaml.load(open(
+                                                   config_location, 'r')))
             except yaml.YAMLError, exc:
                 if hasattr(exc, 'problem_mark'):
                     mark = exc.problem_mark
@@ -101,19 +105,28 @@ class Config(object):
         # now check if there are any more updates to do.
         # iterate and remove them
 
-        try:
-            if 'Config' in config:
-                if yaml_file in config['Config']:
-                    config['Config'].remove(yaml_file)
-                if config['Config']:
-                    config = Config.load_config_yaml(config=config,
-                                              yaml_file=config['Config'][0])
-        except:
-            log.critical("No configuration file found, or config file is "
-                              "empty. But congrats! Your game works! :)")
-            sys.exit()
+        # try:
+        if 'config' in config:
+            if yaml_file in config['config']:
+                config['config'].remove(yaml_file)
+            if config['config']:
+                config = Config.load_config_yaml(config=config,
+                                          yaml_file=config['config'][0])
+        # except:
+        #     log.critical("No configuration file found, or config file is empty."
+        #                  " But congrats! Your game works! :)")
+        #     sys.exit()
 
         return config
+
+    @staticmethod
+    def keys_to_lower(source_dict):
+
+        for k in source_dict.keys():
+            if type(source_dict[k]) is dict:
+                source_dict[k] = Config.keys_to_lower(source_dict[k])
+
+        return dict((str(k).lower(), v) for k, v in source_dict.iteritems())
 
     @staticmethod
     def process_config(config_spec, source, target=None):

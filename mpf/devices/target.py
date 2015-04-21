@@ -17,7 +17,7 @@ from mpf.system.config import Config
 
 class Target(Device):
 
-    config_section = 'Targets'
+    config_section = 'targets'
     collection = 'targets'
 
     # todo need to add complete show and complete script
@@ -170,7 +170,7 @@ class Target(Device):
 
 class TargetGroup(Device):
 
-    config_section = 'TargetGroups'
+    config_section = 'targetgroups'
     collection = 'target_groups'
 
     # todo need to add complete_scripts

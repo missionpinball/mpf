@@ -48,7 +48,7 @@ class OSC(object):
 
     def __init__(self, machine):
 
-        self.log = logging.getLogger('OSC')
+        self.log = logging.getLogger('osc')
         self.machine = machine
 
         config_spec = '''
@@ -58,7 +58,7 @@ class OSC(object):
         '''
 
         self.config = Config.process_config(config_spec,
-                                          self.machine.config['OSC'])
+                                          self.machine.config['osc'])
 
         if self.config['machine_ip'].upper() == 'AUTO':
             self.config['machine_ip'] = socket.gethostbyname(
@@ -85,7 +85,7 @@ class OSC(object):
         self.clients_to_add = list()
 
         # If this machine uses WPC driver boards then we can drive devices by #
-        if self.machine.config['Hardware']['DriverBoards'][0:3] == 'wpc':
+        if self.machine.config['hardware']['driverboards'][0:3] == 'wpc':
             self.wpc = True
         else:
             self.wpc = False

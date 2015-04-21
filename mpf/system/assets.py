@@ -67,7 +67,7 @@ class AssetManager(object):
                 settings that will be used for the specific asset. (Note this
                 is not needed for all assets, as any asset file found not in the
                 config dictionary will be set up with the folder it was found
-                in's AssetDefaults settings.)
+                in's assetdefaults settings.)
             path: A full system path to the root folder that will be searched
                 for assetsk. This should *not* include the asset-specific path
                 string. If omitted, only the machine's root folder will be
@@ -153,16 +153,16 @@ class AssetManager(object):
                          load_key='preload')
 
     def setup_defaults(self, config):
-        """Processed the `AssetDefaults` section of the machine config files."""
+        """Processed the `assetdefaults` section of the machine config files."""
 
         default_config_dict = dict()
 
-        if 'AssetDefaults' in config and config['AssetDefaults']:
+        if 'assetdefaults' in config and config['assetdefaults']:
 
-            if (self.config_section in config['AssetDefaults'] and
-                config['AssetDefaults'][self.config_section]):
+            if (self.config_section in config['assetdefaults'] and
+                config['assetdefaults'][self.config_section]):
 
-                this_config = config['AssetDefaults'][self.config_section]
+                this_config = config['assetdefaults'][self.config_section]
 
                 # set the default
                 default_config_dict['default'] = this_config.pop('default')

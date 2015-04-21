@@ -38,7 +38,7 @@ class SlideBuilder(object):
         # Tell the mode controller that it should look for SlidePlayer items in
         # modes.
         self.machine.modes.register_start_method(self.process_config,
-                                                 'SlidePlayer')
+                                                 'slideplayer')
 
 
     def process_config(self, config, mode=None, priority=0):

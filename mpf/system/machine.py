@@ -87,7 +87,7 @@ class MachineController(object):
                 options['machinepath'].startswith('\\')):
             machine_path = options['machinepath']
         else:
-            machine_path = os.path.join(self.config['MPF']['paths']
+            machine_path = os.path.join(self.config['mpf']['paths']
                                         ['machine_files'],
                                         options['machinepath'])
 
@@ -110,7 +110,7 @@ class MachineController(object):
                 options['configfile'] += '.yaml'
 
             config_file = os.path.join(machine_path,
-                                       self.config['MPF']['paths']['config'],
+                                       self.config['mpf']['paths']['config'],
                                        options['configfile'])
 
         self.log.info("Base machine config file: %s", config_file)
@@ -122,9 +122,9 @@ class MachineController(object):
         self.platform = self.set_platform()
 
         # Load the system modules
-        self.config['MPF']['system_modules'] = (
-            self.config['MPF']['system_modules'].split(' '))
-        for module in self.config['MPF']['system_modules']:
+        self.config['mpf']['system_modules'] = (
+            self.config['mpf']['system_modules'].split(' '))
+        for module in self.config['mpf']['system_modules']:
             self.log.info("Loading system module: %s", module)
             module_parts = module.split('.')
             exec('self.' + module_parts[0] + '=' + module + '(self)')
@@ -142,9 +142,9 @@ class MachineController(object):
         self.events.post("machine_init_phase_1")
 
         # Load the device modules
-        self.config['MPF']['device_modules'] = (
-            self.config['MPF']['device_modules'].split(' '))
-        for device_type in self.config['MPF']['device_modules']:
+        self.config['mpf']['device_modules'] = (
+            self.config['mpf']['device_modules'].split(' '))
+        for device_type in self.config['mpf']['device_modules']:
             device_cls = eval(device_type)
             # Check to see if we have these types of devices specified in this
             # machine's config file and only load the modules this machine uses.
@@ -164,12 +164,12 @@ class MachineController(object):
         self.events.post("machine_init_phase_2")
 
         # Load plugins
-        if 'Plugins' in self.config:
+        if 'plugins' in self.config:
 
-            if type(self.config['Plugins']) is str:
-                self.config['Plugins'] = self.config['Plugins'].split(' ')
+            if type(self.config['plugins']) is str:
+                self.config['plugins'] = self.config['plugins'].split(' ')
 
-            for plugin in self.config['Plugins']:
+            for plugin in self.config['plugins']:
                 self.log.info("Checking Plugin: %s", plugin)
                 i = __import__('mpf.plugins.' + plugin.split('.')[0],
                                fromlist=[''])
@@ -184,11 +184,11 @@ class MachineController(object):
         self.events.post("machine_init_phase_3")
 
         # Load Scriptlets
-        if 'Scriptlets' in self.config:
-            self.config['Scriptlets'] = self.config['Scriptlets'].split(' ')
+        if 'scriptlets' in self.config:
+            self.config['scriptlets'] = self.config['scriptlets'].split(' ')
 
-            for scriptlet in self.config['Scriptlets']:
-                i = __import__(self.config['MPF']['paths']['scriptlets'] + '.'
+            for scriptlet in self.config['scriptlets']:
+                i = __import__(self.config['mpf']['paths']['scriptlets'] + '.'
                                + scriptlet.split('.')[0], fromlist=[''])
 
                 self.scriptlets.append(getattr(i, scriptlet.split('.')[1])
@@ -197,12 +197,12 @@ class MachineController(object):
 
         # Configure the Machine Flow
         self.log.debug("Configuring Machine Flow")
-        self.config['MachineFlow'] = self.config['MachineFlow'].split(' ')
+        self.config['machineflow'] = self.config['machineflow'].split(' ')
         # Convert the MachineFlow config into a list of objects
         i = 0
-        for machine_mode in self.config['MachineFlow']:
+        for machine_mode in self.config['machineflow']:
             name = machine_mode.split('.')[-1:]
-            self.config['MachineFlow'][i] = self.string_to_class(machine_mode)(
+            self.config['machineflow'][i] = self.string_to_class(machine_mode)(
                                                                  self, name[0])
             i += 1
         # register event handlers
@@ -237,13 +237,13 @@ class MachineController(object):
 
         # If there's a current machineflow position, stop that mode
         if self.machineflow_index is not None:
-            self.config['MachineFlow'][self.machineflow_index].stop()
+            self.config['machineflow'][self.machineflow_index].stop()
         else:
             self.machineflow_index = 0
 
         # Now find the new position and start it:
         if position is None:  # A specific position was not passed, so just advance
-            if self.machineflow_index >= len(self.config['MachineFlow']) - 1:
+            if self.machineflow_index >= len(self.config['machineflow']) - 1:
                 self.machineflow_index = 0
             else:
                 self.machineflow_index += 1
@@ -255,7 +255,7 @@ class MachineController(object):
                        self.machineflow_index)
 
         # Now start the new machine mode
-        self.config['MachineFlow'][self.machineflow_index].start(**kwargs)
+        self.config['machineflow'][self.machineflow_index].start(**kwargs)
 
     def set_platform(self):
         """ Sets the hardware platform based on the "Platform" item in the
@@ -266,7 +266,7 @@ class MachineController(object):
         if self.physical_hw:
             try:
                 hardware_platform = __import__('mpf.platform.%s' %
-                                   self.config['Hardware']['Platform'],
+                                   self.config['hardware']['platform'],
                                    fromlist=["HardwarePlatform"])
                 # above line has an effect similar to:
                 # from mpf.platform.<platform_name> import HardwarePlatform
@@ -274,14 +274,14 @@ class MachineController(object):
 
             except ImportError:
                 self.log.error("Error importing platform module: %s",
-                               self.config['Hardware']['Platform'])
+                               self.config['hardware']['platform'])
                 # do it again so the error shows up in the console. I forget
                 # why we use 'try' here?
                 hardware_platform = __import__('mpf.platform.%s' %
-                                   self.config['Hardware']['Platform'],
+                                   self.config['hardware']['platform'],
                                    fromlist=["HardwarePlatform"])
                 raise Exception("Error importing platform module: %s",
-                                self.config['Hardware']['Platform'])
+                                self.config['hardware']['platform'])
         else:
             from mpf.platform.virtual import HardwarePlatform
             return HardwarePlatform(self)
@@ -339,8 +339,8 @@ class MachineController(object):
         if self.platform.features['hw_timer']:
             self.platform.hw_loop()
         else:
-            if 'Enable Loop Data' in self.config['Machine'] and (
-                    self.config['Machine']['Enable Loop Data']):
+            if 'Enable Loop Data' in self.config['machine'] and (
+                    self.config['machine']['Enable Loop Data']):
                 self.sw_data_loop()
             else:
                 self.sw_optimized_loop()

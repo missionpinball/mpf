@@ -18,7 +18,7 @@ from mpf.system.config import Config
 class LightController(object):
     """Manages all the shows in a pinball machine.
 
-    'Shows' are coordinated light, flasher, coil, event, audio, and DMD effects.
+    'shows' are coordinated light, flasher, coil, event, audio, and DMD effects.
     The LightController handles priorities, restores, running and stopping
     Shows, etc. There should be only one per machine.
 
@@ -82,16 +82,16 @@ class LightController(object):
         # Tell the mode controller that it should look for LightPlayer items in
         # modes.
         self.machine.modes.register_start_method(self.process_lightplayer_from_config,
-                                                 'LightPlayer')
+                                                 'lightplayer')
 
         # Create scripts from config
         self.machine.modes.register_start_method(self.create_scripts_from_config,
-                                                 'LightScipts')
+                                                 'lightscipts')
 
         # Create the show AssetManager
         self.asset_manager = AssetManager(
                                           machine=self.machine,
-                                          config_section='Shows',
+                                          config_section='shows',
                                           path_string='shows',
                                           asset_class=Show,
                                           asset_attribute='shows',
@@ -108,11 +108,12 @@ class LightController(object):
                 self.light_priorities[light.name] = 0
             self.initialized = True
 
-        if 'LightScripts' in self.machine.config:
-            self.create_scripts_from_config(self.machine.config['LightScripts'])
+        if 'lightscripts' in self.machine.config:
+            self.create_scripts_from_config(self.machine.config['lightscripts'])
 
-        if 'LightPlayer' in self.machine.config:
-            self.process_lightplayer_from_config(self.machine.config['LightPlayer'])
+        if 'lightplayer' in self.machine.config:
+            self.process_lightplayer_from_config(
+                self.machine.config['lightplayer'])
 
     def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
                   tocks_per_sec=30, start_location=None, num_repeats=0,
@@ -155,7 +156,7 @@ class LightController(object):
             self.light_scripts[k] = v
 
     def process_lightplayer_from_config(self, config, mode=None, priority=0):
-        # config is localized to 'LightPlayer'
+        # config is localized to 'lightplayer'
         self.log.debug("Processing LightPlayer configuration. Priority: %s",
                        priority)
 

@@ -37,7 +37,7 @@ class HardwarePlatform(Platform):
         self.features['hw_enable_auto_disable'] = False
 
         # Make the platform features available to everyone
-        self.machine.config['Platform'] = self.features
+        self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
     def configure_driver(self, config, device_type='coil'):

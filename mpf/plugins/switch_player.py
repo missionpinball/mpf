@@ -21,9 +21,9 @@ def preload_check(machine):
 class SwitchPlayer(object):
 
     def __init__(self, machine):
-        self.log = logging.getLogger('SwitchPlayer')
+        self.log = logging.getLogger('switchplayer')
 
-        if 'SwitchPlayer' not in machine.config:
+        if 'switchplayer' not in machine.config:
             return
 
         self.machine = machine
@@ -36,7 +36,7 @@ class SwitchPlayer(object):
                         '''
 
         self.config = Config.process_config(config_spec,
-                                            self.machine.config['SwitchPlayer'])
+                                            self.machine.config['switchplayer'])
 
         self.machine.events.add_handler(self.config['start_event'],
                                         self._start_event_callback)

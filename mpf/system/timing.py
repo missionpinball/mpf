@@ -32,8 +32,8 @@ class Timing(object):
         self.log = logging.getLogger("Timing")
         self.machine = machine
 
-        if 'HZ' in self.machine.config['Machine']:
-            Timing.HZ = self.machine.config['Machine']['HZ']
+        if 'hz' in self.machine.config['machine']:
+            Timing.HZ = self.machine.config['machine']['hz']
         else:
             Timing.HZ = 50
 

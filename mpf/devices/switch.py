@@ -13,7 +13,7 @@ from mpf.system.devices import Device
 class Switch(Device):
     """ A switch in a pinball machine."""
 
-    config_section = 'Switches'
+    config_section = 'switches'
     collection = 'switches'
 
     def __init__(self, machine, name, config, collection=None):

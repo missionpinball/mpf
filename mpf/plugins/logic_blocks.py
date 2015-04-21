@@ -30,7 +30,7 @@ class LogicBlocks(object):
         # Tell the mode controller that it should look for LogicBlock items in
         # modes.
         self.machine.modes.register_start_method(self._process_config,
-                                                 'LogicBlocks')
+                                                 'logicblocks')
 
         # Process game-wide (i.e. not in modes) logic blocks
         self.machine.events.add_handler('player_add_success',
@@ -53,8 +53,8 @@ class LogicBlocks(object):
         """
         player.logic_blocks = set()
 
-        if 'LogicBlocks' in self.machine.config:
-            self._create_logic_blocks(config=self.machine.config['LogicBlocks'],
+        if 'logicblocks' in self.machine.config:
+            self._create_logic_blocks(config=self.machine.config['logicblocks'],
                                      player=player,
                                      enable=False)
 
@@ -92,22 +92,22 @@ class LogicBlocks(object):
 
         blocks_added = set()
 
-        if 'Counters' in config:
-            for item in config['Counters']:
+        if 'counters' in config:
+            for item in config['counters']:
                 block = Counter(self.machine, item, player,
-                                   config['Counters'][item])
+                                   config['counters'][item])
                 blocks_added.add(block)
 
         if 'Accruals' in config:
-            for item in config['Accruals']:
+            for item in config['accruals']:
                 block = Accrual(self.machine, item, player,
-                                config['Accruals'][item])
+                                config['accruals'][item])
                 blocks_added.add(block)
 
-        if 'Sequences' in config:
-            for item in config['Sequences']:
+        if 'sequences' in config:
+            for item in config['sequences']:
                 block = Sequence(self.machine, item, player,
-                                 config['Accruals'][item])
+                                 config['accruals'][item])
                 blocks_added.add(block)
 
         # Enable any logic blocks that do not have specific enable events

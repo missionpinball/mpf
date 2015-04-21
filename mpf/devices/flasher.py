@@ -14,7 +14,7 @@ class Flasher(Device):
     """Generic class that holds flasher objects.
     """
 
-    config_section = 'Flashers'
+    config_section = 'flashers'
     collection = 'flashers'
 
     def __init__(self, machine, name, config, collection=None):

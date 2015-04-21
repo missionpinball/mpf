@@ -44,7 +44,7 @@ class Keyboard(object):
     """
 
     def __init__(self, mc):
-        self.log = logging.getLogger('Keyboard')
+        self.log = logging.getLogger('keyboard')
         self.mc = mc
 
         self.keyboard_events = []
@@ -69,13 +69,13 @@ class Keyboard(object):
         # Set up the key mappings
         self.log.debug("Setting up the keyboard mappings")
 
-        if 'Keyboard' not in self.mc.config:
+        if 'keyboard' not in self.mc.config:
             return
             # Even if there are no keys configured, we still want to use this
             # module if it's in the plugins list since it allows the player to
             # use the Esc key to quit MPF.
 
-        for k, v in self.mc.config['Keyboard'].iteritems():
+        for k, v in self.mc.config['keyboard'].iteritems():
             k = str(k)  # k is the value of the key entry in the config
             switch_name = v.get('switch', None)
             # set whether a key is the push on / push off type
