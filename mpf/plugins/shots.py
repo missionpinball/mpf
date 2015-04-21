@@ -17,7 +17,7 @@ from mpf.system.config import Config
 
 def preload_check(machine):
 
-    #if 'Shots' in machine.config and machine.config['Shots']:
+    #if 'shots' in machine.config and machine.config['shots']:
     #    return True
     #else:
     #    return False
@@ -55,12 +55,12 @@ class ShotController(object):
         self.log.debug("Loading the ShotController")
         self.shots = []
 
-        if 'Shots' in self.machine.config:
-            self.process_config(self.machine.config['Shots'])
+        if 'shots' in self.machine.config:
+            self.process_config(self.machine.config['shots'])
 
         # Tell the mode controller that it should look for shot items in
         # modes.
-        self.machine.modes.register_start_method(self.process_config, 'Shots')
+        self.machine.modes.register_start_method(self.process_config, 'shots')
 
     def process_config(self, config, mode=None, priority=0):
         # config is localized to "Shots"
@@ -71,7 +71,8 @@ class ShotController(object):
 
         for shot in config:
 
-            if ('Type' in config[shot] and config[shot]['Type'] == 'Sequence'):
+            if ('type' in config[shot] and
+                    config[shot]['type'].lower() == 'sequence'):
                 shot_list.append(SequenceShot(self.machine, shot, config[shot],
                                               priority))
             else:
@@ -185,7 +186,9 @@ class StandardShot(Shot):
         """Enables the shot."""
         super(StandardShot, self).enable()
 
-        for switch in Config.string_to_list(self.config['Switch']):
+        print self.name
+        print self.config
+        for switch in Config.string_to_list(self.config['switch']):
             self.machine.switch_controller.add_switch_handler(
                 switch, self._switch_handler, return_info=True)
 
@@ -193,7 +196,7 @@ class StandardShot(Shot):
         """Disables the shot."""
         super(StandardShot, self).disable()
 
-        for switch in Config.string_to_list(self.config['Switch']):
+        for switch in Config.string_to_list(self.config['switch']):
             self.machine.switch_controller.remove_switch_handler(
                 switch, self._switch_handler)
 
@@ -223,15 +226,15 @@ class SequenceShot(Shot):
         """Tracks how far along through this sequence the current shot is."""
 
         # convert our switches config to a list
-        if 'Switches' in self.config:
-            self.config['Switches'] = \
-                Config.string_to_list(self.config['Switches'])
+        if 'switches' in self.config:
+            self.config['switches'] = \
+                Config.string_to_list(self.config['switches'])
 
         # convert our timout to ms
-        if 'Time' in self.config:
-            self.config['Time'] = Timing.string_to_ms(self.config['Time'])
+        if 'time' in self.config:
+            self.config['time'] = Timing.string_to_ms(self.config['time'])
         else:
-            self.config['Time'] = 0
+            self.config['time'] = 0
 
         self.active_delay = False
 
@@ -244,7 +247,7 @@ class SequenceShot(Shot):
         super(SequenceShot, self).enable()
 
         # create the switch handlers
-        for switch in self.config['Switches']:
+        for switch in self.config['switches']:
             self.machine.switch_controller.add_switch_handler(
                 switch, self._switch_handler, return_info=True)
         self.progress_index = 0
@@ -255,25 +258,25 @@ class SequenceShot(Shot):
 
         super(SequenceShot, self).disable()
 
-        for switch in self.config['Switches']:
+        for switch in self.config['switches']:
             self.machine.switch_controller.remove_switch_handler(
                 switch, self.switch_handler)
         self.progress_index = 0
 
     def _switch_handler(self, switch_name, state, ms):
         # does this current switch meet the next switch in the progress index?
-        if switch_name == self.config['Switches'][self.progress_index]:
+        if switch_name == self.config['switches'][self.progress_index]:
 
             # are we at the end?
-            if self.progress_index == len(self.config['Switches']) - 1:
+            if self.progress_index == len(self.config['switches']) - 1:
                 self.confirm_shot()
             else:
                 # does this shot specific a time limit?
-                if self.config['Time']:
+                if self.config['time']:
                     # do we need to set a delay?
                     if not self.active_delay:
                         self.delay.reset(name='shot_timer',
-                                         ms=self.config['Time'],
+                                         ms=self.config['time'],
                                          callback=self.reset)
                         self.active_delay = True
 

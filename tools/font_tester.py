@@ -226,7 +226,7 @@ def update_screen():
     x = (dmd_size[0] - text_surface.get_width()) / 2
     y = ((dmd_size[1] - text_surface.get_height()) / 2) + y_offset
 
-    # put that text on our 'DMD' surface in the way it will be in MPF
+    # put that text on our 'dmd' surface in the way it will be in MPF
 
     dmd_surface = pygame.Surface((dmd_size))
 

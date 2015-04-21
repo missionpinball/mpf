@@ -13,7 +13,7 @@ import uuid
 
 def preload_check(machine):
 
-    #if 'Scoring' in machine.config and machine.config['Scoring']:
+    #if 'scoring' in machine.config and machine.config['scoring']:
     #    return True
     #else:
     #    return False
@@ -37,12 +37,12 @@ class ScoreController(object):
         self.log.debug("Loading the Score Controller")
         self.score_events = dict()
 
-        if 'Scoring' in self.machine.config:
-            self.process_config(self.machine.config['Scoring'])
+        if 'scoring' in self.machine.config:
+            self.process_config(self.machine.config['scoring'])
 
         # Tell the mode controller that it should look for scoring items in
         # modes.
-        self.machine.modes.register_start_method(self.process_config, 'Scoring')
+        self.machine.modes.register_start_method(self.process_config, 'scoring')
 
     def process_config(self, config, mode=None, priority=0):
         # config is Scoring subsection of config dict
@@ -54,10 +54,10 @@ class ScoreController(object):
 
         for score_event in config:
 
-            if 'Score' in config[score_event] and config[score_event]['Score']:
-                points = config[score_event]['Score']
+            if 'score' in config[score_event] and config[score_event]['score']:
+                points = config[score_event]['score']
 
-            if 'Block' in config[score_event] and config[score_event]['Block']:
+            if 'block' in config[score_event] and config[score_event]['block']:
                 block = True
             else:
                 block = False

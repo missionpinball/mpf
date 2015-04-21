@@ -11,7 +11,7 @@ LightPlayer:
         repeat: yes
     balldevice_elevator_ball_enter:
         lights: l_claw_ready
-        script: off
+        script: "off"
 
 LogicBlocks:
     Accruals:

@@ -23,16 +23,16 @@ class LED(Device):
 
     """
 
-    config_section = 'LEDs'
+    config_section = 'leds'
     collection = 'leds'
 
     @classmethod
     def device_class_init(cls, machine):
-        if 'brightness_compensation' in machine.config['Hardware']:
-            machine.config['Hardware']['brightness_compensation'] = (
-                float(machine.config['Hardware']['brightness_compensation']))
+        if 'brightness_compensation' in machine.config['hardware']:
+            machine.config['hardware']['brightness_compensation'] = (
+                float(machine.config['hardware']['brightness_compensation']))
         else:
-            machine.config['Hardware']['brightness_compensation'] = 1.0
+            machine.config['hardware']['brightness_compensation'] = 1.0
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('LED.' + name)
@@ -137,8 +137,8 @@ class LED(Device):
         if fade_ms is None:
             if self.config['fade_ms'] is not None:
                 fade_ms = self.config['fade_ms']
-            elif self.machine.config['LEDSettings']:
-                fade_ms = (self.machine.config['LEDSettings']
+            elif self.machine.config['ledsettings']:
+                fade_ms = (self.machine.config['ledsettings']
                            ['default_led_fade_ms'])
             # potentional optimization make this not conditional
 
@@ -215,7 +215,7 @@ class LED(Device):
             The brightness-compensated 3-item color list of ints
         """
 
-        global_settings = self.machine.config['LEDSettings']
+        global_settings = self.machine.config['ledsettings']
 
         color[0] = (int(color[0] *
                     self.config['brightness_compensation'][0] *

@@ -31,7 +31,7 @@ class Flipper(Device):
         collection: A reference to the collection list this device will be added
         to.
     """
-    config_section = 'Flippers'
+    config_section = 'flippers'
     collection = 'flippers'
 
     def __init__(self, machine, name, config, collection=None):
@@ -107,7 +107,7 @@ class Flipper(Device):
         which we've implemented below. Keeps it easy to understand. :)
 
         Note there's a platform feature saved at:
-        self.machine.config['Platform']['hw_enable_auto_disable']. If True, it
+        self.machine.config['platform']['hw_enable_auto_disable']. If True, it
         means that the platform hardware rules will automatically disable a coil
         that has been enabled when the trigger switch is disabled. If False, it
         means the hardware platform needs its own rule to disable the coil when
@@ -312,7 +312,7 @@ class Flipper(Device):
         Rule  Type     Coil  Switch  Action
         F.    Disable  Main  Button  inactive
         """
-        if not self.machine.config['Platform']['hw_enable_auto_disable']:
+        if not self.machine.config['platform']['hw_enable_auto_disable']:
             self.machine.platform.set_hw_rule(
                 sw_name=self.config['activation_switch'],
                 sw_activity='inactive',
@@ -327,7 +327,7 @@ class Flipper(Device):
         Rule  Type     Coil  Switch  Action
         G.    Disable  Hold  Button  inactive
         """
-        if not self.machine.config['Platform']['hw_enable_auto_disable']:
+        if not self.machine.config['platform']['hw_enable_auto_disable']:
             self.machine.platform.set_hw_rule(
                 sw_name=self.config['activation_switch'],
                 sw_activity='inactive',

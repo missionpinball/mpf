@@ -19,7 +19,7 @@ class GI(Device):
 
     """
 
-    config_section = 'GIs'
+    config_section = 'gis'
     collection = 'gi'
 
     #todo need to get the handler stuff out of each of these I think and into

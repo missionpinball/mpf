@@ -11,6 +11,7 @@ from collections import defaultdict
 from mpf.system.timing import Timing
 from mpf.system.config import Config
 
+
 class Device(object):
     """ Generic parent class of for every hardware object in a pinball machine.
 

@@ -12,7 +12,7 @@ import logging
 
 def preload_check(machine):
 
-    if 'InfoLights' in machine.config:
+    if 'infolights' in machine.config:
         return True
     else:
         return False
@@ -21,9 +21,9 @@ def preload_check(machine):
 class InfoLights(object):
 
     def __init__(self, machine):
-        self.log = logging.getLogger('InfoLights')
+        self.log = logging.getLogger('infolights')
         self.machine = machine
-        self.config = self.machine.config['InfoLights']
+        self.config = self.machine.config['infolights']
 
         self.flash = [
             {'color': 'ff', 'time': 1},

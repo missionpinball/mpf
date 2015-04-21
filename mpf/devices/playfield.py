@@ -315,13 +315,13 @@ class Playfield(BallDevice):
                 self.flag_no_ball_search is False. Default is False
 
         """
-        if self.machine.config['BallSearch']:
+        if self.machine.config['ballsearch']:
             if not self.flag_no_ball_search or force is True:
                 if secs is not None:
                     start_ms = secs * 1000
                 else:
-                    start_ms = (self.machine.config['BallSearch']
-                        ['Secs until ball search start'] * 1000)
+                    start_ms = (self.machine.config['ballsearch']
+                        ['secs until ball search start'] * 1000)
                 self.log.debug("Scheduling a ball search for %s secs from now",
                                start_ms / 1000.0)
                 self.delay.reset("ball_search_start",
@@ -371,8 +371,8 @@ class Playfield(BallDevice):
     def ball_lost(self):
         """Mark a ball as lost"""
         self.num_balls_known = self.balls
-        self.num_balls_missing = self.machine.config['Machine']\
-            ['Balls Installed'] - self.balls
+        self.num_balls_missing = self.machine.config['machine']\
+            ['balls installed'] - self.balls
         self.num_balls_live = 0
         # since desired count doesn't change, this will relaunch them
         self.log.debug("Ball(s) Marked Lost. Known: %s, Missing: %s",

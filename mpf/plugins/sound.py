@@ -48,14 +48,14 @@ class SoundController(object):
         self.log = logging.getLogger('SoundController')
         self.machine = machine
 
-        if 'SoundSystem' not in self.machine.config:
+        if 'soundsystem' not in self.machine.config:
             self.config = dict()
             return  # todo move to preload_check()
 
         self.log.debug("Loading the Sound Controller")
 
         self.machine.sound = self
-        self.config = self.machine.config['SoundSystem']
+        self.config = self.machine.config['soundsystem']
         self.tracks = dict()  # k = track name, v = track obj
         self.stream_track = None
         self.pygame_channels = list()
@@ -98,13 +98,13 @@ class SoundController(object):
         self.machine.events.add_handler('action_set_volume', self.set_volume)
         self.machine.events.add_handler('pygame_initialized', self._initialize)
 
-        if 'SoundPlayer' in self.machine.config:
+        if 'soundplayer' in self.machine.config:
             self.machine.events.add_handler('machine_init_phase_5',
                 self.register_sound_events,
-                config=self.machine.config['SoundPlayer'])
+                config=self.machine.config['soundplayer'])
 
         self.machine.modes.register_start_method(self.register_sound_events,
-                                                 'SoundPlayer')
+                                                 'soundplayer')
 
     def _initialize(self):
         # Initialize the sound controller. Not done in __init__() because we
@@ -150,7 +150,7 @@ class SoundController(object):
         AssetManager(
             machine=self.machine,
             config_section=config_section,
-            path_string=(self.machine.config['MPF']['paths'][path_string]),
+            path_string=(self.machine.config['mpf']['paths'][path_string]),
             asset_class=asset_class,
             asset_attribute=asset_attribute,
             file_extensions=file_extensions)
@@ -836,7 +836,7 @@ asset_attribute = 'sounds'  # self.machine.<asset_attribute>
 #display_element_class = ImageDisplayElement
 create_asset_manager = True
 path_string = 'sounds'
-config_section = 'Sounds'
+config_section = 'sounds'
 file_extensions = ('ogg', 'wav')
 
 # The MIT License (MIT)

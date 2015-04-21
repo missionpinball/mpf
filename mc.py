@@ -110,7 +110,7 @@ logging.getLogger('').addHandler(console)
 def main():
     mc = MediaController(options_dict)
     mc.run()
-    print("MC exiting from main()")
+    logging.info("MC run loop ended. <sigh>")
     sys.exit()
 
 if __name__ == '__main__':

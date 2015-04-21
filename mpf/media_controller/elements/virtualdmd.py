@@ -36,8 +36,8 @@ class VirtualDMD(DisplayElement):
     @classmethod
     def is_used(cls, config):
         # todo change to try
-        if ('Window' in config and 'elements' in config['Window']
-                and 'VirtualDMD' in config['Window']['elements']):
+        if ('window' in config and 'elements' in config['window']
+                and 'VirtualDMD' in config['window']['elements']):
             return True
         else:
             return False
@@ -61,7 +61,7 @@ class VirtualDMD(DisplayElement):
         super(VirtualDMD, self).__init__(slide, x, y, h_pos, v_pos, layer)
 
         if not dmd_object:
-            self.dmd_object = machine.display.displays['DMD']
+            self.dmd_object = machine.display.displays['dmd']
         else:
             self.dmd_object = dmd_object
 

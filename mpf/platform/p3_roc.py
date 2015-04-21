@@ -72,11 +72,11 @@ class HardwarePlatform(Platform):
         # todo need to add differences between patter and pulsed_patter
 
         # Make the platform features available to everyone
-        self.machine.config['Platform'] = self.features
+        self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
         self.machine_type = pinproc.normalize_machine_type(
-            self.machine.config['Hardware']['DriverBoards'])
+            self.machine.config['hardware']['driverboards'])
 
         # Connect to the P-ROC. Keep trying if it doesn't work the first time.
 
@@ -934,17 +934,17 @@ class PDBConfig(object):
                 self.aliases.append(alias)
 
         # Make a list of unique coil banks
-        for name in config['Coils']:
-            item_dict = config['Coils'][name]
+        for name in config['coils']:
+            item_dict = config['coils'][name]
             coil = PDBCoil(self, str(item_dict['number']))
             if coil.bank() not in coil_bank_list:
                 coil_bank_list.append(coil.bank())
 
         # Make a list of unique lamp source banks.  The P-ROC only supports 2.
         # TODO: What should be done if 2 is exceeded?
-        if 'MatrixLights' in config:
-            for name in config['MatrixLights']:
-                item_dict = config['MatrixLights'][name]
+        if 'matrixlights' in config:
+            for name in config['matrixlights']:
+                item_dict = config['matrixlights'][name]
                 lamp = PDBLight(self, str(item_dict['number']))
 
                 # Catalog PDB banks

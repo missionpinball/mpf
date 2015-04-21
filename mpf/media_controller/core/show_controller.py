@@ -17,7 +17,7 @@ from mpf.system.config import Config
 class ShowController(object):
     """Manages all the shows in a pinball machine.
 
-    'Shows' are coordinated display & event sequences. The ShowController
+    'shows' are coordinated display & event sequences. The ShowController
     handles priorities, restores, running and stopping Shows, etc. There should
     be only one per machine.
 
@@ -69,7 +69,7 @@ class ShowController(object):
         # Create the show AssetManager
         self.asset_manager = AssetManager(
                                           machine=self.machine,
-                                          config_section='Shows',
+                                          config_section='shows',
                                           path_string='shows',
                                           asset_class=Show,
                                           asset_attribute='shows',
@@ -79,8 +79,8 @@ class ShowController(object):
     def _initialize(self):
         # Sets up everything that has to be instantiated first
 
-        if 'ShowPlayer' in self.machine.config:
-            self.process_shows_from_config(self.machine.config['ShowPlayer'])
+        if 'showplayer' in self.machine.config:
+            self.process_shows_from_config(self.machine.config['showplayer'])
 
     def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
                   tocks_per_sec=30, start_location=None, num_repeats=0,

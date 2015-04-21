@@ -100,8 +100,8 @@ class BallController(object):
                                                 self._ball_drained_handler)
 
         # todo
-        if 'Allow start with loose balls' not in self.machine.config['Game']:
-            self.machine.config['Game']['Allow start with loose balls'] = False
+        if 'Allow start with loose balls' not in self.machine.config['game']:
+            self.machine.config['game']['Allow start with loose balls'] = False
 
     def request_to_start_game(self):
         """Method registered for the *request_to_start_game* event.
@@ -113,13 +113,13 @@ class BallController(object):
         self.log.debug("Received request to start game.")
         self.log.debug("Balls contained: %s, Min balls needed: %s",
                        self.balls,
-                       self.machine.config['Machine']['Min Balls'])
-        if self.balls < self.machine.config['Machine']['Min Balls']:
+                       self.machine.config['machine']['min balls'])
+        if self.balls < self.machine.config['machine']['min balls']:
             self.log.warning("BallController denies game start. Not enough "
                              "balls")
             return False
 
-        if self.machine.config['Game']['Allow start with loose balls']:
+        if self.machine.config['game']['Allow start with loose balls']:
             return
 
         elif not self.are_balls_gathered(['home', 'trough']):

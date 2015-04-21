@@ -110,7 +110,7 @@ class MediaController(object):
                 options['machinepath'].startswith('\\')):
             machine_path = options['machinepath']
         else:
-            machine_path = os.path.join(self.config['MediaController']['paths']
+            machine_path = os.path.join(self.config['mediacontroller']['paths']
                                         ['machine_files'],
                                         options['machinepath'])
 
@@ -133,7 +133,7 @@ class MediaController(object):
                 options['configfile'] += '.yaml'
 
             config_file = os.path.join(self.machine_path,
-                                       self.config['MediaController']['paths']
+                                       self.config['mediacontroller']['paths']
                                        ['config'],
                                        options['configfile'])
 
@@ -148,17 +148,17 @@ class MediaController(object):
                         port: int|5050
                         '''
 
-        self.config['MediaController'] = (
+        self.config['mediacontroller'] = (
             Config.process_config(mediacontroller_config_spec,
-                                  self.config['MediaController']))
+                                  self.config['mediacontroller']))
 
         self.events = EventManager(self)
         self.timing = Timing(self)
 
         # Load the media controller modules
-        self.config['MediaController']['modules'] = (
-            self.config['MediaController']['modules'].split(' '))
-        for module in self.config['MediaController']['modules']:
+        self.config['mediacontroller']['modules'] = (
+            self.config['mediacontroller']['modules'].split(' '))
+        for module in self.config['mediacontroller']['modules']:
             self.log.info("Loading module: %s", module)
             module_parts = module.split('.')
             exec('self.' + module_parts[0] + '=' + module + '(self)')
@@ -385,7 +385,7 @@ class MediaController(object):
 
     def bcp_goodbye(self, **kwargs):
         """Processes an incoming BCP 'goodbye' command."""
-        if self.config['MediaController']['exit_on_disconnect']:
+        if self.config['mediacontroller']['exit_on_disconnect']:
             self.socket_thread.sending_thread.stop()
             sys.exit()
 
@@ -493,7 +493,7 @@ class BCPServer(threading.Thread):
 
         threading.Thread.__init__(self)
         self.mc = mc
-        self.log = logging.getLogger('BCP')
+        self.log = logging.getLogger('bcp')
         self.receive_queue = receiving_queue
         self.sending_queue = sending_queue
         self.connection = None
@@ -535,21 +535,29 @@ class BCPServer(threading.Thread):
 
             # Receive the data in small chunks and retransmit it
             while True:
-                data = self.connection.recv(4096)
-                if data:
-                    commands = data.split("\n")
-                    for cmd in commands:
-                        if cmd:
-                            self.process_received_message(cmd)
-                else:
-                    # no more data
-                    break
+                try:
+                    data = self.connection.recv(4096)
+                    if data:
+                        commands = data.split("\n")
+                        for cmd in commands:
+                            if cmd:
+                                self.process_received_message(cmd)
+                    else:
+                        # no more data
+                        break
+
+                except:
+                    if self.mc.config['mediacontroller'] ['exit_on_disconnect']:
+                        self.mc.shutdown()
+                    else:
+                        break
 
     def stop(self):
         """ Stops and shuts down the BCP server."""
-        print "socket thread stop"
-        self.sending_queue.put('goodbye')
-        self.done = True
+        if not self.done:
+            self.log.info("Socket thread stopping.")
+            self.sending_queue.put('goodbye')
+            self.done = True
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the

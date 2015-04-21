@@ -81,8 +81,8 @@ class Game(MachineMode):
             self.machine.events.add_handler('slam_tilt',
                                             self.slam_tilt, priority=1000))
 
-        if ('Restart on long press' in self.machine.config['Game'] and
-                self.machine.config['Game']['Restart on long press']):
+        if ('Restart on long press' in self.machine.config['game'] and
+                self.machine.config['game']['Restart on long press']):
             self.setup_midgame_restart()
 
         # Add our first player
@@ -204,7 +204,7 @@ class Game(MachineMode):
 
         try:
             self.machine.playfield.add_ball(trigger_event='sw_' +
-                self.machine.config['Game']['player_controlled_eject_tag'])
+                self.machine.config['game']['player_controlled_eject_tag'])
         except KeyError:
             self.machine.playfield.add_ball()
 
@@ -284,7 +284,7 @@ class Game(MachineMode):
             self.shoot_again()
             return
 
-        if (self.player.ball == self.machine.config['Game']['Balls per game']
+        if (self.player.ball == self.machine.config['game']['balls per game']
                 and self.player.number == Player.total_players):
             self.game_ending()
         else:
@@ -429,8 +429,8 @@ class Game(MachineMode):
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
 
-        if len(self.player_list) >= self.machine.config['Game']\
-                ['Max players per game']:
+        if len(self.player_list) >= self.machine.config['game']\
+                ['max players per game']:
             self.log.debug("Game is at max players. Cannot add another.")
             return False
 

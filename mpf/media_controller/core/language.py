@@ -29,15 +29,15 @@ class Language(object):
         self.current_language = None
 
         # See if there's a Languages section in the config and it's not empty
-        if 'Languages' in self.machine.config and (
-                self.machine.config['Languages']):
+        if 'languages' in self.machine.config and (
+                self.machine.config['languages']):
             self._configure()
 
     def _configure(self):
-        self.config = self.machine.config['Languages']
+        self.config = self.machine.config['languages']
         self.machine.language = self
         self.languages = Config.string_to_list(
-            self.machine.config['Languages'])
+            self.machine.config['languages'])
 
         # Set the default language to the first entry in the list
         self.set_language(self.languages[0])
@@ -104,10 +104,10 @@ class Language(object):
                 text_string = replacement_string[1:-1]
                 modified_string = text_string
 
-                if (self.current_language in self.machine.config['LanguageStrings']
-                        and text_string in self.machine.config['LanguageStrings']
+                if (self.current_language in self.machine.config['languagestrings']
+                        and text_string in self.machine.config['languagestrings']
                         [self.current_language]):
-                    modified_string = (self.machine.config['LanguageStrings']
+                    modified_string = (self.machine.config['languagestrings']
                         [self.current_language][text_string])
 
                 text = text.replace(replacement_string, modified_string)

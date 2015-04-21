@@ -45,7 +45,7 @@ class BallSearch(object):
     """
 
     def __init__(self, machine):
-        self.log = logging.getLogger('BallSearch')
+        self.log = logging.getLogger('ballsearch')
         self.machine = machine
         self.active = False
 
@@ -78,10 +78,10 @@ class BallSearch(object):
         while self.active:
             for coil in self.ball_search_coils:
                 self.pop_coil(coil)
-                yield Timing.secs(self.machine.config['BallSearch']\
-                    ['Secs between ball search coils'])
-            yield Timing.secs(self.machine.config['BallSearch']\
-                    ['Secs between ball search rounds'])
+                yield Timing.secs(self.machine.config['ballsearch']\
+                    ['secs between ball search coils'])
+            yield Timing.secs(self.machine.config['ballsearch']\
+                    ['secs between ball search rounds'])
         # todo do we have to deal with switches that might be hit due to these
         # coils firing?
         # todo should the above code also look for self.active?

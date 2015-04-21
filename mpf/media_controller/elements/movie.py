@@ -155,5 +155,5 @@ asset_attribute = 'movies'  # self.machine.<asset_attribute>
 display_element_class = MovieDisplayElement
 create_asset_manager = True
 path_string = 'movies'
-config_section = 'Movies'
+config_section = 'movies'
 file_extensions = ('mpg', 'mpeg')

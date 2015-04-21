@@ -26,7 +26,7 @@ class FontManager(object):
 
     def __init__(self, machine, config):
 
-        self.log = logging.getLogger('Fonts')
+        self.log = logging.getLogger('fonts')
 
         self.machine = machine
         self.config = config
@@ -38,7 +38,6 @@ class FontManager(object):
     def render(self, text, font='default', antialias=False, size=None,
                color=None, bg_color=None, alpha_color=None,
                alpha_channel=None, **kwargs):
-
 
         font_obj = self.get_font(font, size)
 
@@ -109,8 +108,11 @@ class FontManager(object):
 
                 self.log.debug("Loading font '%s' at size %s.", font, size)
 
-                # todo load the file first to make sure it's valid
-                font_obj = pygame.font.Font(font_file, size)
+                try:
+                    font_obj = pygame.font.Font(font_file, size)
+                except:
+                    self.log.warning("Error loading font '%s'", font)
+                    return
 
                 if cache:
                     self.add_to_cache(font, size, font_obj)
@@ -132,7 +134,7 @@ class FontManager(object):
             return
 
         full_path = os.path.join(self.machine.machine_path,
-                                 self.machine.config['MediaController']['paths']
+                                 self.machine.config['mediacontroller']['paths']
                                  ['fonts'],
                                  file_name)
         if os.path.isfile(full_path):

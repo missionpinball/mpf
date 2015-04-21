@@ -40,7 +40,7 @@ class ModeController(object):
         self.loader_methods = list()
         self.start_methods = list()
 
-        if 'Modes' in self.machine.config:
+        if 'modes' in self.machine.config:
             self.machine.events.add_handler('mc_init_phase_4',
                                             self._load_modes)
 
@@ -48,7 +48,7 @@ class ModeController(object):
         #Loads the modes from the Modes: section of the machine configuration
         #file.
 
-        for mode in self.machine.config['Modes']:
+        for mode in self.machine.config['modes']:
             self.machine.game_modes[mode] = self._load_mode(mode)
 
     def _load_mode(self, mode_string):
@@ -61,18 +61,18 @@ class ModeController(object):
         self.log.info('Processing mode: %s', mode_string)
 
         mode_path = os.path.join(self.machine.machine_path,
-            self.machine.config['MediaController']['paths']['modes'], mode_string)
+            self.machine.config['mediacontroller']['paths']['modes'], mode_string)
         mode_config_file = os.path.join(self.machine.machine_path,
-            self.machine.config['MediaController']['paths']['modes'],
+            self.machine.config['mediacontroller']['paths']['modes'],
             mode_string, 'config', mode_string + '.yaml')
         config = Config.load_config_yaml(yaml_file=mode_config_file)
 
-        if 'code' in config['Mode']:
+        if 'code' in config['mode']:
 
             import_str = ('modes.' + mode_string + '.code.' +
-                          config['Mode']['code'].split('.')[0])
+                          config['mode']['code'].split('.')[0])
             i = __import__(import_str, fromlist=[''])
-            mode_object = getattr(i, config['Mode']['code'].split('.')[1])(
+            mode_object = getattr(i, config['mode']['code'].split('.')[1])(
                 self.machine, config, mode_string, mode_path)
 
         else:
@@ -164,8 +164,8 @@ class Mode(object):
         self.stop_callback = None
         self.event_handlers = set()
 
-        if 'Mode' in self.config:
-            self.configure_mode_settings(config['Mode'])
+        if 'mode' in self.config:
+            self.configure_mode_settings(config['mode'])
 
         for asset_manager in self.machine.asset_managers.values():
 
@@ -218,7 +218,7 @@ class Mode(object):
             for event in config['start_events']:
                 self.machine.events.add_handler(event, self.start)
 
-        self.config['Mode'] = config
+        self.config['mode'] = config
 
     def start(self, priority=None, callback=None, **kwargs):
         """Starts this mode.
@@ -239,13 +239,13 @@ class Mode(object):
         if type(priority) is int:
             self.priority = priority
         else:
-            self.priority = self.config['Mode']['priority']
+            self.priority = self.config['mode']['priority']
 
         self.log.info('Mode Start. Priority: %s', self.priority)
 
         # register mode stop events
-        if 'stop_events' in self.config['Mode']:
-            for event in self.config['Mode']['stop_events']:
+        if 'stop_events' in self.config['mode']:
+            for event in self.config['mode']['stop_events']:
                 self.add_mode_event_handler(event, self.stop)
 
         self.active = True

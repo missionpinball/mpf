@@ -217,7 +217,7 @@ def is_used(config):
     """
 
     # todo change to try
-    if 'DMD' in config:
+    if 'dmd' in config:
         return True
     else:
         return False
@@ -238,12 +238,12 @@ class DMD(MPFDisplay):
     """
 
     def __init__(self, machine):
-        if 'DMD' in machine.config:
-            self.config = machine.config['DMD']
+        if 'dmd' in machine.config:
+            self.config = machine.config['dmd']
         else:
             self.config = dict()
 
-        self.log = logging.getLogger('DMD')
+        self.log = logging.getLogger('dmd')
         #super(DMD, self).__init__(machine, self.config)
         MPFDisplay.__init__(self, machine, self.config)
 
@@ -280,7 +280,7 @@ class DMD(MPFDisplay):
             (14, 0, 0),
             (15, 0, 0)] * 16
 
-        self.name = 'DMD'
+        self.name = 'dmd'
 
         if 'shades' not in self.config:
             self.config['shades'] = 16

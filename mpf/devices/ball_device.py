@@ -24,7 +24,7 @@ class BallDevice(Device):
     Args: Same as Device.
     """
 
-    config_section = 'BallDevices'
+    config_section = 'balldevices'
     collection = 'balldevices'
 
     def __init__(self, machine, name, config, collection=None):

@@ -23,7 +23,7 @@ class AutofireCoil(Device):
     Args: Same as Device.
     """
 
-    config_section = 'Autofire Coils'
+    config_section = 'autofire coils'
     collection = 'autofires'
 
     def __init__(self, machine, name, config, collection=None):

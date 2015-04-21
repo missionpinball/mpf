@@ -116,15 +116,15 @@ class BCP(object):
     '''
 
     def __init__(self, machine):
-        if ('BCP' not in machine.config or
-                'connections' not in machine.config['BCP']):
+        if ('bcp' not in machine.config or
+                'connections' not in machine.config['bcp']):
             return
 
-        self.log = logging.getLogger('BCP')
+        self.log = logging.getLogger('bcp')
         self.machine = machine
         self.machine.bcp = self
 
-        self.config = machine.config['BCP']
+        self.config = machine.config['bcp']
         self.receive_queue = Queue()
         self.bcp_events = dict()
         self.connection_config = self.config['connections']
@@ -165,7 +165,7 @@ class BCP(object):
         self.register_mpfmc_trigger_events(self.machine.config)
 
         try:
-            self.register_triggers(self.machine.config['Triggers'])
+            self.register_triggers(self.machine.config['triggers'])
         except KeyError:
             pass
 
@@ -176,9 +176,9 @@ class BCP(object):
         self.machine.events.add_handler('machine_reset_phase_1',
                                         self.bcp_reset)
 
-        self.machine.modes.register_start_method(self.bcp_mode_start, 'Mode')
+        self.machine.modes.register_start_method(self.bcp_mode_start, 'mode')
         self.machine.modes.register_start_method(self.register_triggers,
-                                                 'Triggers')
+                                                 'triggers')
         self.machine.modes.register_load_method(
             self.register_mpfmc_trigger_events)
 
@@ -253,7 +253,8 @@ class BCP(object):
                     if self.machine.game and self.machine.game.player:
                         for name, val in self.machine.game.player:
                             if '%' + name + '%' in value:
-                                value = value.replace('%' + name + '%', str(val))
+                                value = value.replace('%' + name + '%',
+                                                      str(val))
 
                     # now check for single % which means event kwargs
                     for name, val in kwargs.iteritems():
@@ -270,19 +271,19 @@ class BCP(object):
         self.log.debug("Registering Trigger Events")
 
         try:
-            for event in config['ShowPlayer'].keys():
+            for event in config['showplayer'].keys():
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for event in config['SlidePlayer'].keys():
+            for event in config['slideplayer'].keys():
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for k, v in config['SoundPlayer'].iteritems():
+            for k, v in config['soundplayer'].iteritems():
                 if 'start_events' in v:
                     for event in Config.string_to_list(v['start_events']):
                         self.create_trigger_event(event)
@@ -597,7 +598,13 @@ class BCPClient(object):
         fragment = ''  # used to save a partial incoming message
 
         while self.socket:
-            data = self.socket.recv(4096)
+
+            try:
+                data = self.socket.recv(4096)
+            except:
+                self.socket = None
+                data = None
+
             if data:
 
                 # if there's an existing fragment, join our new data to it

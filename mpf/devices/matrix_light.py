@@ -19,7 +19,7 @@ class MatrixLight(Device):
 
     """
 
-    config_section = 'MatrixLights'
+    config_section = 'matrixlights'
     collection = 'lights'
 
     #todo need to get the handler stuff out of each of these I think and into

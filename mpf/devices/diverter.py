@@ -19,7 +19,7 @@ class Diverter(Device):
     Args: Same as the Device parent class.
     """
 
-    config_section = 'Diverters'
+    config_section = 'diverters'
     collection = 'diverters'
 
     def __init__(self, machine, name, config, collection=None):
