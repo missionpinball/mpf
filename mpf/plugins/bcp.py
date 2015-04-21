@@ -598,7 +598,13 @@ class BCPClient(object):
         fragment = ''  # used to save a partial incoming message
 
         while self.socket:
-            data = self.socket.recv(4096)
+
+            try:
+                data = self.socket.recv(4096)
+            except:
+                self.socket = None
+                data = None
+
             if data:
 
                 # if there's an existing fragment, join our new data to it

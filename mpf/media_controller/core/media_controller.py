@@ -535,21 +535,29 @@ class BCPServer(threading.Thread):
 
             # Receive the data in small chunks and retransmit it
             while True:
-                data = self.connection.recv(4096)
-                if data:
-                    commands = data.split("\n")
-                    for cmd in commands:
-                        if cmd:
-                            self.process_received_message(cmd)
-                else:
-                    # no more data
-                    break
+                try:
+                    data = self.connection.recv(4096)
+                    if data:
+                        commands = data.split("\n")
+                        for cmd in commands:
+                            if cmd:
+                                self.process_received_message(cmd)
+                    else:
+                        # no more data
+                        break
+
+                except:
+                    if self.mc.config['mediacontroller'] ['exit_on_disconnect']:
+                        self.mc.shutdown()
+                    else:
+                        break
 
     def stop(self):
         """ Stops and shuts down the BCP server."""
-        print "socket thread stop"
-        self.sending_queue.put('goodbye')
-        self.done = True
+        if not self.done:
+            self.log.info("Socket thread stopping.")
+            self.sending_queue.put('goodbye')
+            self.done = True
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the

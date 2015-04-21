@@ -39,7 +39,6 @@ class FontManager(object):
                color=None, bg_color=None, alpha_color=None,
                alpha_channel=None, **kwargs):
 
-
         font_obj = self.get_font(font, size)
 
         if bg_color is not None:
@@ -109,8 +108,11 @@ class FontManager(object):
 
                 self.log.debug("Loading font '%s' at size %s.", font, size)
 
-                # todo load the file first to make sure it's valid
-                font_obj = pygame.font.Font(font_file, size)
+                try:
+                    font_obj = pygame.font.Font(font_file, size)
+                except:
+                    self.log.warning("Error loading font '%s'", font)
+                    return
 
                 if cache:
                     self.add_to_cache(font, size, font_obj)
