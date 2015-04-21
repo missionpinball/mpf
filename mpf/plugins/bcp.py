@@ -13,66 +13,16 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-# todo
-'''
-Done
-====
-attract_start
-attract_stop
-ball_start?player=x&ball=x
-ball_end
-dmd_frame
-error
-game_start
-game_end
-goodbye
-hello?version=xxx
-mode_start?name=xxx&priority=xxx
-mode_stop?name=xxx
-player_add?player=x
-player_score?value=x&prev_value=x&change=x
-player_turn_start?player=x
-player_variable?name=x&value=x&prev_value=x&change=x
-switch?name=x&state=x
-trigger?name=xxx
-====
-
-# to ignore commands
-commands and param names are case-insensitive
-id is up to 32 chars for shows, ball, etc.
-auto resume
-
-config?volume=1&volume_steps=20
-config?language=english
-
-set
-get
-
-reset
-
-timer started
-timer paused
-timer tick
-timer cancel
-timer complete
-
-MC requests MPF to send switch states
-
-'''
-
 import logging
 import socket
 import threading
 import urllib
 import urlparse
-from distutils.version import LooseVersion
 from Queue import Queue
 import copy
-#import errno
 
 from mpf.game.player import Player
 from mpf.system.config import Config
-from mpf.system.light_controller import LightController
 
 __bcp_version_info__ = ('1', '0')
 __bcp_version__ = '.'.join(__bcp_version_info__)
@@ -95,6 +45,7 @@ def decode_command_string(bcp_string):
 
     return bcp_command.path, kwargs
 
+
 def encode_command_string(bcp_command, **kwargs):
 
     scrubbed_kwargs = dict()
@@ -113,13 +64,61 @@ def encode_command_string(bcp_command, **kwargs):
 
 
 class BCP(object):
+    '''The parent class for the BCP client.
+
+    This class can support connections with multiple remote hosts at the same
+    time using multiple instances of the BCPClient class.
+
+    Args:
+        machine: A reference to the main MPF machine object.
+
+    The following BCP commands are currently implemented:
+        attract_start
+        attract_stop
+        ball_start?player=x&ball=x
+        ball_end
+        error
+        game_start
+        game_end
+        goodbye
+        hello?version=xxx
+        mode_start?name=xxx&priority=xxx
+        mode_stop?name=xxx
+        player_add?player=x
+        player_score?value=x&prev_value=x&change=x
+        player_turn_start?player=x
+        player_variable?name=x&value=x&prev_value=x&change=x
+        switch?name=x&state=x
+        trigger?name=xxx
+
+    Todo:
+        # to ignore commands
+        commands and param names are case-insensitive
+        id is up to 32 chars for shows, ball, etc.
+        auto resume
+
+        config?volume=1&volume_steps=20
+        config?language=english
+
+        set
+        get
+
+        reset
+
+        timer started
+        timer paused
+        timer tick
+        timer cancel
+        timer complete
+
+        MC requests MPF to send switch states
+
+    '''
 
     def __init__(self, machine):
         if ('BCP' not in machine.config or
                 'connections' not in machine.config['BCP']):
             return
-
-        # self.mc_launcher(None)
 
         self.log = logging.getLogger('BCP')
         self.machine = machine
@@ -133,20 +132,21 @@ class BCP(object):
 
         self.bcp_receive_commands = {'error': self.bcp_receive_error,
                                      'switch': self.bcp_receive_switch,
-                                     #'dmd_frame': self.bcp_receive_dmd_frame,
                                      'trigger': self.bcp_receive_trigger
                                     }
 
         self.dmd = self.machine.platform.configure_dmd()
 
-        self.setup_bcp_connections()
+        self._setup_bcp_connections()
         self.filter_player_events = True
         self.send_player_vars = False
-        self.trigger_events = set()
+        self.mpfmc_trigger_events = set()
 
-        if 'event_map' in self.config:
+        try:
             self.bcp_events = self.config['event_map']
             self.process_bcp_events()
+        except KeyError:
+            pass
 
         if ('player_variables' in self.config and
                 self.config['player_variables']):
@@ -162,7 +162,12 @@ class BCP(object):
                     Config.string_to_list(self.config['player_variables']))
 
         self._setup_player_monitor()
-        self.register_trigger_events(self.machine.config)
+        self.register_mpfmc_trigger_events(self.machine.config)
+
+        try:
+            self.register_triggers(self.machine.config['Triggers'])
+        except KeyError:
+            pass
 
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
         self.machine.events.add_handler('game_starting', self.bcp_game_start)
@@ -172,11 +177,12 @@ class BCP(object):
                                         self.bcp_reset)
 
         self.machine.modes.register_start_method(self.bcp_mode_start, 'Mode')
-        self.machine.modes.register_load_method(self.register_trigger_events)
+        self.machine.modes.register_start_method(self.register_triggers,
+                                                 'Triggers')
+        self.machine.modes.register_load_method(
+            self.register_mpfmc_trigger_events)
 
-
-
-    def setup_bcp_connections(self):
+    def _setup_bcp_connections(self):
         for name, settings in self.connection_config.iteritems():
             if 'host' not in settings:
                 break
@@ -185,6 +191,13 @@ class BCP(object):
                                               settings, self.receive_queue))
 
     def remove_bcp_connection(self, bcp_client):
+        """Removes a BCP connection to a remote BCP host.
+
+        Args:
+            bcp_client: A reference to the BCPClient instance you want to
+                remove.
+
+        """
         try:
             self.bcp_clients.remove(self)
         except ValueError:
@@ -200,7 +213,8 @@ class BCP(object):
             self.send('player_score', value=value, prev_value=prev_value,
                       change=change)
 
-        elif self.send_player_vars and (not self.filter_player_events or
+        elif self.send_player_vars and (
+                not self.filter_player_events or
                 name in self.config['player_variables']):
             self.send(bcp_command='player_variable',
                       name=name,
@@ -251,36 +265,96 @@ class BCP(object):
         else:
             self.send(command)
 
-    def register_trigger_events(self, config, **kwargs):
+    def register_mpfmc_trigger_events(self, config, **kwargs):
 
-        if 'ShowPlayer' in config:
+        self.log.debug("Registering Trigger Events")
+
+        try:
             for event in config['ShowPlayer'].keys():
-                self.register_trigger(event)
+                self.create_trigger_event(event)
+        except KeyError:
+            pass
 
-        if 'SlidePlayer' in config:
+        try:
             for event in config['SlidePlayer'].keys():
-                self.register_trigger(event)
+                self.create_trigger_event(event)
+        except KeyError:
+            pass
 
-        if 'SoundPlayer' in config:
+        try:
             for k, v in config['SoundPlayer'].iteritems():
-
                 if 'start_events' in v:
                     for event in Config.string_to_list(v['start_events']):
-                        self.register_trigger(event)
+                        self.create_trigger_event(event)
                 if 'stop_events' in v:
                     for event in Config.string_to_list(v['stop_events']):
-                        self.register_trigger(event)
+                        self.create_trigger_event(event)
+        except KeyError:
+            pass
 
-    def register_trigger(self, event):
+    def create_trigger_event(self, event):
+        """Registers a BCP trigger based on an MPF event.
 
-        if event not in self.trigger_events:
+        Args:
+            event: String name of the event you're registering this trigger for.
+
+        The BCP trigger will be registered with the same name as the MPF event.
+        For example, if you pass the event "foo_event", the BCP command that
+        will be sent when that event is posted will be trigger?name=foo_event.
+
+        """
+
+        if event not in self.mpfmc_trigger_events:
 
             self.machine.events.add_handler(event, handler=self.send,
                                             bcp_command='trigger',
                                             name=event)
-            self.trigger_events.add(event)
+            self.mpfmc_trigger_events.add(event)
+
+    def register_triggers(self, config, priority, mode):
+        # config is localized to 'Trigger'
+
+        event_list = list()
+
+        for event, settings in config.iteritems():
+
+            params = dict()
+
+            try:
+                params = copy.deepcopy(settings['params'])
+            except KeyError:
+                pass
+
+            try:
+                event_list.append(self.machine.events.add_handler(
+                    event, handler=self.send, bcp_command='trigger',
+                    name=settings['bcp_name'], **params))
+            except KeyError:
+                self.log.warning("Could not create trigger event for '%s'. "
+                                 "Settings: %s",
+                                 event, settings)
+
+        return self.machine.events.remove_handlers_by_keys, event_list
 
     def send(self, bcp_command, callback=None, **kwargs):
+        """Sends a BCP message.
+
+        Args:
+            bcp_command: String name of the BCP command that will be sent.
+            callback: An optional callback method that will be called as soon as
+                the BCP command is sent.
+            **kwargs: Optional kwarg pairs that will be sent as parameters along
+                with the BCP command.
+
+        Example:
+            If you call this method like this:
+                send('trigger', ball=1, string'hello')
+
+            The BCP command that will be sent will be this:
+                trigger?ball=1&string=hello
+
+        """
+
         bcp_string = encode_command_string(bcp_command, **kwargs)
 
         for client in self.bcp_clients:
@@ -306,11 +380,19 @@ class BCP(object):
                           command=cmd)
 
     def shutdown(self):
-        """ Prepares the BCP clients for MPF shutdown."""
+        """Prepares the BCP clients for MPF shutdown."""
         for client in self.bcp_clients:
             client.stop()
 
     def bcp_receive_error(self, **kwargs):
+        """A remote BCP host has sent a BCP error message, indicating that a
+        command from MPF was not recognized.
+
+        This method only posts a warning to the log. It doesn't do anything else
+        at this point.
+
+        """
+
         self.log.warning('Received Error command from host with parameters: %s',
                          kwargs)
 
@@ -327,6 +409,7 @@ class BCP(object):
         self.send('mode_stop', name=name)
 
     def bcp_reset(self):
+        """Sends the 'reset' command to the remote BCP host."""
         self.send('reset')
 
     def bcp_receive_switch(self, **kwargs):
@@ -338,6 +421,9 @@ class BCP(object):
                                                       logical=True)
 
     def bcp_receive_dmd_frame(self, data):
+        """Called when the BCP client receives a new DMD frame from the remote
+        BCP host. This method forwards the frame to the physical DMD.
+        """
         self.dmd.update(data)
 
     def bcp_game_start(self, **kwargs):
@@ -371,19 +457,6 @@ class BCP(object):
         else:
             self.machine.events.post(event='trigger_' + name, **kwargs)
 
-
-    # def mc_launcher(self, config):
-    #     pass
-    #
-    #     import subprocess, time
-    #     subprocess.Popen(['python mc.py demo_man -v'],
-    #         stdout=None,
-    #         stderr=None,
-    #         stdin=None,
-    #         shell=True
-    #         )
-    #
-    #     time.sleep(4)
 
 class BCPClient(object):
 
@@ -514,12 +587,12 @@ class BCPClient(object):
         This method is run as a thread.
         """
 
-        # Implementation note. Sockets don't necessarily receive the entire
+        # Implementation note: Sockets don't necessarily receive the entire
         # message in one socket.recv() call. BCP separates messages based on the
         # '\n' character. So we have to split the incoming messages by \n, but
-        # if there is any leftover we have to save it and add whatever we get
-        # on the next recv() read to it. So that's what all this craziness is
-        # here.
+        # if there are any leftover characters we have to save them and add them
+        # whatever we get on the next recv() read to it. So that's what all this
+        # craziness is here.
 
         fragment = ''  # used to save a partial incoming message
 
@@ -550,7 +623,9 @@ class BCPClient(object):
                     for message in messages:
                         if message:
                             if message.startswith('dmd_frame'):
-                                #if len(message[10:]) == 4096:
+                                # If we received a dmd_frame command, we process
+                                # them here immediately since they're a special
+                                # case.
                                 self.machine.bcp.dmd.update(message[10:])
 
                             else:
@@ -579,7 +654,6 @@ class BCPClient(object):
             except (IOError, AttributeError):
                 # MPF is probably in the process of shutting down
                 pass
-
 
     def receive_hello(self, **kwargs):
         """Processes incoming BCP 'hello' command."""
