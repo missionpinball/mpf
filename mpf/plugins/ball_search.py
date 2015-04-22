@@ -16,11 +16,6 @@ from mpf.system.tasks import Task
 from mpf.system.timing import Timing
 
 
-def preload_check(machine):
-
-    return True
-
-
 class BallSearch(object):
     """Base class which implements the ball search functionality.
 
@@ -111,6 +106,10 @@ class BallSearch(object):
             coil.pulse()
             self.log.debug("Ball Search is pulsing coil %s", coil.name)
         '''
+
+
+plugin_class = BallSearch
+
 
 # The MIT License (MIT)
 

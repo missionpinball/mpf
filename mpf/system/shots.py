@@ -176,8 +176,6 @@ class StandardShot(Shot):
         """Enables the shot."""
         super(StandardShot, self).enable()
 
-        print self.name
-        print self.config
         for switch in Config.string_to_list(self.config['switch']):
             self.machine.switch_controller.add_switch_handler(
                 switch, self._switch_handler, return_info=True)

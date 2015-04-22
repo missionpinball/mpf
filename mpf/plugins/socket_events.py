@@ -8,9 +8,6 @@
 import logging
 import socket
 
-def preload_check(machine):
-    return True
-
 
 class SocketClient(object):
 
@@ -18,16 +15,18 @@ class SocketClient(object):
         self.log = logging.getLogger('SocketEvents')
         self.machine = machine
 
+        if 'socketserver' not in self.machine.config:
+            return
+
         self.client_socket = None
         self.server_name = 'localhost'
         self.server_port = 5050
         self.config = None
 
-        if 'SocketServer' in self.machine.config:
-            if 'host' in self.machine.config['SocketServer']:
-                self.server_name = self.machine.config['SocketServer']['host']
-            if 'port' in self.machine.config['SocketServer']:
-                self.server_port = self.machine.config['SocketServer']['port']
+        if 'host' in self.machine.config['socketserver']:
+            self.server_name = self.machine.config['socketserver']['host']
+        if 'port' in self.machine.config['socketserver']:
+            self.server_port = self.machine.config['socketserver']['port']
 
         self.setup_client(self.server_name, self.server_port)
 
@@ -36,8 +35,7 @@ class SocketClient(object):
         if not self.client_socket:
             return
 
-        if 'SocketEvents' in self.machine.config:
-            self.process_config(self.machine.config['SocketEvents'])
+        self.process_config(self.machine.config['socketserver'])
 
     def process_config(self, config):
         """Processes the SocketEvents from the config.
@@ -119,6 +117,10 @@ class SocketClient(object):
             except:
                 self.log.error('Unable to send %s to remote socket server',
                                prepped_message)
+
+
+plugin_class = SocketClient
+
 
 # The MIT License (MIT)
 

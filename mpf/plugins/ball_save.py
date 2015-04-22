@@ -12,11 +12,6 @@ This plugin is not yet finished and doesn't work yet.
 # Documentation and more info at http://missionpinball.com/mpf
 
 
-def preload_check(machine):
-
-    return True
-
-
 class BallSave(object):
     """Base class which implements a ball saver instance. You can use this
     as-is, enhance it, or replace it altogether.
@@ -61,9 +56,11 @@ class BallSave(object):
                         new_balls -= 1
                         self.num_balls_to_save -= 1
 
-
-
         return {'balls': balls}
+
+
+plugin_class = BallSave
+
 
 # The MIT License (MIT)
 
