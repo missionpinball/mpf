@@ -12,7 +12,8 @@ states and posting events to the framework.
 import logging
 from collections import defaultdict
 import time
-#import sys
+
+from mpf.system.config import Config
 
 
 class SwitchController(object):
@@ -61,8 +62,22 @@ class SwitchController(object):
         called via an event handler which listens for `machine_init_phase_2`.
         """
 
+        start_active = list()
+
+        if not self.machine.physical_hw:
+
+            try:
+                start_active = Config.string_to_list(self.machine.config
+                    ['virtual platform start active switches'])
+            except KeyError:
+                pass
+
         self.log.debug("Syncing the logical and physical switch states.")
         for switch in self.machine.switches:
+
+            if switch.name in start_active:
+                switch.state = 1
+
             self.set_state(switch.name, switch.state, reset_time=True)
 
     def is_state(self, switch_name, state, ms=0):
@@ -276,7 +291,6 @@ class SwitchController(object):
         """Register a handler to take action on some switch event.
 
         Args:
-
 
             switch_name: String name of the switch you're adding this handler
                 for.

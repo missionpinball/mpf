@@ -2,6 +2,7 @@
 
 from mpf.system.scriptlet import Scriptlet
 
+
 class Attract(Scriptlet):
 
     def on_load(self):
@@ -14,7 +15,11 @@ class Attract(Scriptlet):
         for gi in self.machine.gi:
             gi.on()
 
+        self.machine.bcp.enable_bcp_switches('player')
+
     def stop(self):
 
         for light in self.machine.lights:
             light.off()
+
+        self.machine.bcp.disable_bcp_switches('player')

@@ -98,7 +98,7 @@ class LogicBlocks(object):
                                    config['counters'][item])
                 blocks_added.add(block)
 
-        if 'Accruals' in config:
+        if 'accruals' in config:
             for item in config['accruals']:
                 block = Accrual(self.machine, item, player,
                                 config['accruals'][item])

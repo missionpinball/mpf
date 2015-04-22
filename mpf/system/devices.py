@@ -123,7 +123,6 @@ class Device(object):
         return return_dict
 
     def _create_events(self, ev_name, ev_type, delay, callback):
-
         self.log.debug("Creating %s_event handler for event '%s' with delay "
                        "'%s' husker", ev_type, ev_name, delay)
 
@@ -237,7 +236,6 @@ class DeviceCollection(dict):
         for name, obj in self.iteritems():
             if obj.number == number:
                 return self[name]
-
 
 
 # The MIT License (MIT)

@@ -93,8 +93,11 @@ class MediaController(object):
                              'attract_start': self.bcp_attract_start,
                              'attract_stop': self.bcp_attract_stop,
                              'trigger': self.bcp_trigger,
+                             'switch': self.bcp_switch,
+                             'get': self.bcp_get,
+                             'set': self.bcp_set,
+                             'config': self.bcp_config
                             }
-
 
         # load the MPF config & machine defaults
         self.config = (
@@ -175,6 +178,15 @@ class MediaController(object):
         self.events.post("mc_init_phase_5")
 
         self.reset()
+
+    def reset(self, **kwargs):
+        """Processes an incoming BCP 'reset' command."""
+        self.player = None
+        self.player_list = list()
+
+        self.events.post('mc_reset_phase_1')
+        self.events.post('mc_reset_phase_2')
+        self.events.post('mc_reset_phase_3')
 
     def get_window(self):
         """ Returns a reference to the onscreen display window.
@@ -285,6 +297,11 @@ class MediaController(object):
             callback()
 
     def send_dmd_frame(self, data):
+        """Sends a DMD frame to the BCP client.
+
+        Args:
+            data: A 4096-length raw byte string.
+        """
         dmd_string = 'dmd_frame?' + data
         self.sending_queue.put(dmd_string)
 
@@ -333,15 +350,6 @@ class MediaController(object):
 
         except KeyboardInterrupt:
             self.shutdown()
-
-    def reset(self, **kwargs):
-        """Processes an incoming BCP 'reset' command."""
-        self.player = None
-        self.player_list = list()
-
-        self.events.post('mc_reset_phase_1')
-        self.events.post('mc_reset_phase_2')
-        self.events.post('mc_reset_phase_3')
 
     def shutdown(self):
         """Shuts down and exits the media controller.
@@ -486,6 +494,41 @@ class MediaController(object):
 
             self.events.post(name, **kwargs)
 
+    def bcp_switch(self, name, state, **kwargs):
+        """Processes an incoming BCP 'switch' command."""
+        if int(state):
+            self.events.post('switch_' + name + '_active')
+        else:
+            self.events.post('switch_' + name + '_inactive')
+
+    def bcp_get(self, **kwargs):
+        """Processes an incoming BCP 'get' command.
+
+        Note that this media controller doesn't implement the 'get' command at
+        this time, but it's included here for completeness since the 'get'
+        command is part of the BCP 1.0 specification so we don't want to return
+        an error if we receive an incoming 'get' command.
+
+        """
+        pass
+
+    def bcp_set(self, **kwargs):
+        """Processes an incoming BCP 'set' command.
+
+        Note that this media controller doesn't implement the 'set' command at
+        this time, but it's included here for completeness since the 'set'
+        command is part of the BCP 1.0 specification so we don't want to return
+        an error if we receive an incoming 'set' command.
+
+        """
+        pass
+
+    def bcp_config(self, **kwargs):
+        """Processes an incoming BCP 'config' command.
+
+        """
+        pass
+
 
 class BCPServer(threading.Thread):
 
@@ -557,6 +600,7 @@ class BCPServer(threading.Thread):
         if not self.done:
             self.log.info("Socket thread stopping.")
             self.sending_queue.put('goodbye')
+            time.sleep(1)  # give it a chance to send goodbye before quitting
             self.done = True
 
     def sending_loop(self):
@@ -587,7 +631,6 @@ class BCPServer(threading.Thread):
     def process_received_message(self, message):
         self.log.info('<<<<<<<<<<<<<< Received "%s"', message)
         self.receive_queue.put(message)
-
 
 
 # The MIT License (MIT)

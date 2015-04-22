@@ -349,13 +349,16 @@ class HardwarePlatform(Platform):
 
         self.log.debug("Starting the hardware loop")
 
-        loop_start_time = time.time() - .01
+        loop_start_time = time.time()
         num_loops = 0
 
         while self.machine.done is False:
 
-            self.machine.loop_rate = int(num_loops /
-                                         (time.time() - loop_start_time))
+            try:
+                self.machine.loop_rate = int(num_loops /
+                                             (time.time() - loop_start_time))
+            except ZeroDivisionError:
+                self.machine.loop_rate = 0
 
             fastpinball.fpEventPoll(self.fast, fast_events)
             eventType = fastpinball.fpGetEventType(fast_events)
@@ -392,9 +395,6 @@ class HardwarePlatform(Platform):
             elif eventType == fastpinball.FP_EVENT_TYPE_NETWORK_SWITCH_INACTIVE:
                 self.machine.switch_controller.process_switch(state=0,
                     num=(fastpinball.fpGetEventSwitchID(fast_events), 1))
-
-            #if num_loops % 60 == 0:
-            #        print num_loops / (time.time() - loop_start_time)
 
         else:
             if num_loops != 0:

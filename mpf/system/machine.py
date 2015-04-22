@@ -378,8 +378,12 @@ class MachineController(object):
             pass
 
         self.log.info("Target loop rate: %s Hz", timing.Timing.HZ)
-        self.log.info("Actual loop rate: %s Hz",
-                      loops / (time.time() - start_time))
+
+        try:
+            self.log.info("Actual loop rate: %s Hz",
+                          loops / (time.time() - start_time))
+        except ZeroDivisionError:
+            self.log.info("Actual loop rate: 0 Hz")
 
     def sw_data_loop(self):
         """ This is the main game run loop.

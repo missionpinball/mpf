@@ -249,3 +249,11 @@ BCP:
 #        __all__
         ball
         extra_balls
+
+Volume:
+    tracks:
+        overall: 20
+        voice: 20
+        sfx: 20
+        music: 20
+    steps: 20

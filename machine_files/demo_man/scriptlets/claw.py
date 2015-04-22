@@ -2,6 +2,7 @@
 
 from mpf.system.scriptlet import Scriptlet
 
+
 class Claw(Scriptlet):
 
     def on_load(self):
@@ -72,13 +73,13 @@ class Claw(Scriptlet):
                 self.machine.switch_controller.is_active('s_claw_position_1')):
             # move right, drop when switch 1 opens
             self.machine.switch_controller.add_switch_handler(
-            's_claw_position_1', self.release, state=0)
+                's_claw_position_1', self.release, state=0)
 
         elif (self.machine.switch_controller.is_active('s_claw_position_1') and
                 self.machine.switch_controller.is_inactive('s_claw_position_2')):
             # move left, drop when switch 2 closes
             self.machine.switch_controller.add_switch_handler(
-            's_claw_position_2', self.release)
+                's_claw_position_2', self.release)
 
         else:
             self.release()
@@ -89,7 +90,7 @@ class Claw(Scriptlet):
             self.move_right()
 
             self.machine.switch_controller.add_switch_handler(
-            's_claw_position_1', self.do_pickup)
+                's_claw_position_1', self.do_pickup)
         else:
             self.do_pickup()
 
