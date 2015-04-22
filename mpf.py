@@ -66,6 +66,7 @@ options_dict = vars(options)  # convert the values instance to python dict
 # if --version was passed, print the version and quit
 if options_dict['version']:
     print "Mission Pinball Framework version:", version.__version__
+    print "Requires Config File version:", version.__config_version__
     sys.exit()
 
 # add the first positional argument into the options dict as the machine path

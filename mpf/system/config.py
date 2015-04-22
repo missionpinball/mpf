@@ -14,6 +14,7 @@ import yaml
 from copy import deepcopy
 
 from mpf.system.timing import Timing
+import version
 
 log = logging.getLogger('ConfigProcessor')
 
@@ -72,6 +73,7 @@ class Config(object):
         # If not, do we have a yaml_file?
         elif yaml_file:
             if os.path.isfile(yaml_file):
+                Config.check_config_file_version(yaml_file)
                 config_location = yaml_file
                 # Pull out the path in case we need it later
                 config['config_path'] = os.path.split(yaml_file)[0]
@@ -105,19 +107,37 @@ class Config(object):
         # now check if there are any more updates to do.
         # iterate and remove them
 
-        # try:
-        if 'config' in config:
-            if yaml_file in config['config']:
-                config['config'].remove(yaml_file)
-            if config['config']:
-                config = Config.load_config_yaml(config=config,
-                                          yaml_file=config['config'][0])
-        # except:
-        #     log.critical("No configuration file found, or config file is empty."
-        #                  " But congrats! Your game works! :)")
-        #     sys.exit()
+        try:
+            if 'config' in config:
+                if yaml_file in config['config']:
+                    config['config'].remove(yaml_file)
+                if config['config']:
+                    config = Config.load_config_yaml(config=config,
+                                              yaml_file=config['config'][0])
+        except:
+            log.critical("No configuration file found, or config file is empty."
+                         " But congrats! MPF works! :)")
+            sys.exit()
 
         return config
+
+    @staticmethod
+    def check_config_file_version(file_location):
+        with open(file_location) as f:
+            file_version = f.readline().split('config_version=')[-1:][0]
+
+            try:
+                file_version = int(file_version)
+            except ValueError:
+                file_version = 0
+
+            if file_version < int(version.__config_version__):
+                log.warning("Config file %s is version %s. MPF %s requires "
+                            "version %s", file_location, file_version,
+                            version.__version__, version.__config_version__)
+                return False
+            else:
+                return True
 
     @staticmethod
     def keys_to_lower(source_dict):

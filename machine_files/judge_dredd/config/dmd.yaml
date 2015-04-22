@@ -1,3 +1,4 @@
+# config_version=1
 DMD:
     physical: yes
     width: 128

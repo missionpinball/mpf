@@ -1,6 +1,7 @@
+# config_version=1
 # Demo Man config file for MPF 0.17
 
-Plugins:
+DisabledPlugins:
     - ball_search.BallSearch
     - auditor.Auditor
 

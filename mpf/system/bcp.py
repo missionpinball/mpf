@@ -23,9 +23,7 @@ import copy
 
 from mpf.game.player import Player
 from mpf.system.config import Config
-
-__bcp_version_info__ = ('1', '0')
-__bcp_version__ = '.'.join(__bcp_version_info__)
+import version
 
 
 def decode_command_string(bcp_string):
@@ -134,9 +132,8 @@ class BCP(object):
                 'connections' not in machine.config['bcp']):
             return
 
-        self.log = logging.getLogger('bcp')
+        self.log = logging.getLogger('BCP')
         self.machine = machine
-        #self.machine.bcp = self
 
         self.config = machine.config['bcp']
         self.receive_queue = Queue()
@@ -153,7 +150,6 @@ class BCP(object):
 
         self.dmd = self.machine.platform.configure_dmd()
 
-        self._setup_bcp_connections()
         self.filter_player_events = True
         self.send_player_vars = False
         self.mpfmc_trigger_events = set()
@@ -192,6 +188,8 @@ class BCP(object):
         except KeyError:
             pass
 
+        self.machine.events.add_handler('machine_init_phase_2',
+                                        self._setup_bcp_connections)
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
         self.machine.events.add_handler('game_starting', self.bcp_game_start)
         self.machine.events.add_handler('player_add_success',
@@ -204,6 +202,7 @@ class BCP(object):
                                         self.enable_volume_keys)
         self.machine.events.add_handler('disable_volume_keys',
                                         self.disable_volume_keys)
+
 
         self.machine.modes.register_start_method(self.bcp_mode_start, 'mode')
         self.machine.modes.register_start_method(self.register_triggers,
@@ -702,6 +701,7 @@ class BCPClient(object):
         """
 
         self.log = logging.getLogger('BCPClient.' + name)
+        self.log.info('Setting up BCP Client')
 
         self.machine = machine
         self.name = name
@@ -910,7 +910,7 @@ class BCPClient(object):
 
     def send_hello(self):
         """Sends BCP 'hello' command."""
-        self.send('hello?version=' + __bcp_version__)
+        self.send('hello?version=' + version.__bcp_version__)
 
     def send_goodbye(self):
         """Sends BCP 'goodbye' command."""

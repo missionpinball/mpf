@@ -1,3 +1,4 @@
+# config_version=1
 # This file contains confinguration options for the MPF itself, including
 # default settings for your pinball machines.
 
@@ -39,6 +40,15 @@ MPF:
         score_reel.ScoreReel
         score_reel.ScoreReelGroup
         flasher.Flasher
+    
+    plugins:
+        auditor
+        ball_save
+        ball_search
+        info_lights
+        osc
+        socket_events
+        switch_player
 
     paths:
         scriptlets: scriptlets

@@ -35,9 +35,6 @@ from mpf.game.player import Player
 import mpf.system.bcp as bcp
 import version
 
-__bcp_version_info__ = ('1', '0')
-__bcp_version__ = '.'.join(__bcp_version_info__)
-
 
 class MediaController(object):
 
@@ -47,7 +44,9 @@ class MediaController(object):
         self.log = logging.getLogger("MediaController")
         self.log.info("Media Controller Version %s", version.__version__)
         self.log.info("Backbox Control Protocol Version %s",
-                      version.__version__)
+                      version.__bcp_version__)
+        self.log.info("Config File Version %s",
+                      version.__config_version__)
 
         python_version = sys.version_info
         self.log.info("Python version: %s.%s.%s", python_version[0],
@@ -384,8 +383,9 @@ class MediaController(object):
     def bcp_hello(self, **kwargs):
         """Processes an incoming BCP 'hello' command."""
         try:
-            if LooseVersion(kwargs['version']) == LooseVersion(__bcp_version__):
-                self.send('hello', version=__bcp_version__)
+            if LooseVersion(kwargs['version']) == (
+                    LooseVersion(version.__bcp_version__)):
+                self.send('hello', version=version.__bcp_version__)
             else:
                 self.send('hello', version='unknown protocol version')
         except:
