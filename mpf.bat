@@ -1,9 +1,9 @@
+@echo off
+
 rem Windows batch file to launch both MPF and the Media Controller at the same
 rem time. You can pass command line options and args, like this:
 
 rem mpf your_machine -x -v -V
-
-@echo off
 
 start "Media Controller" cmd /k python mc.py %*
 start "MPF" cmd /k python mpf.py %*
