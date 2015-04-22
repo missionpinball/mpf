@@ -1,12 +1,8 @@
 # Demo Man config file for MPF 0.17
 
 Plugins:
-    - shots.ShotController
     - ball_search.BallSearch
-    - logic_blocks.LogicBlocks
-    - scoring.ScoreController
     - auditor.Auditor
-    - bcp.BCP
 
 Machine:
     HZ: 30

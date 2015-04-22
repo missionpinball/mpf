@@ -28,10 +28,6 @@ __bcp_version_info__ = ('1', '0')
 __bcp_version__ = '.'.join(__bcp_version_info__)
 
 
-def preload_check(machine):
-    return True
-
-
 def decode_command_string(bcp_string):
     """Decodes a BCP command string into separate command and paramter parts.
 
@@ -46,7 +42,8 @@ def decode_command_string(bcp_string):
         Output: ('trigger', {'name': 'hello', 'foo': 'foo bar'})
 
     """
-    bcp_command = urlparse.urlsplit(bcp_string.lower().decode('utf-8'))
+    #bcp_command = urlparse.urlsplit(bcp_string.lower().decode('utf-8'))
+    bcp_command = urlparse.urlsplit(bcp_string.lower())
     try:
         kwargs = urlparse.parse_qs(bcp_command.query)
 
@@ -139,7 +136,7 @@ class BCP(object):
 
         self.log = logging.getLogger('bcp')
         self.machine = machine
-        self.machine.bcp = self
+        #self.machine.bcp = self
 
         self.config = machine.config['bcp']
         self.receive_queue = Queue()

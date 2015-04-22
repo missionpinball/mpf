@@ -10,12 +10,7 @@
 import logging
 
 from mpf.system.tasks import DelayManager
-from mpf.system.timing import Timing
 from mpf.system.config import Config
-
-
-def preload_check(machine):
-    return True
 
 
 class LogicBlocks(object):

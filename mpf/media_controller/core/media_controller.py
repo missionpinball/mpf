@@ -32,7 +32,7 @@ from mpf.system.events import EventManager
 from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
 from mpf.game.player import Player
-import mpf.plugins.bcp as bcp
+import mpf.system.bcp as bcp
 import version
 
 __bcp_version_info__ = ('1', '0')
