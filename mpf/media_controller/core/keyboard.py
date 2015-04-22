@@ -51,14 +51,9 @@ class Keyboard(object):
         self.key_map = {}
         self.toggle_keys = {}
         self.inverted_keys = []
-        self.start_active = []
 
         self.mc.request_pygame()
         self.window = self.mc.get_window()
-
-        # register for events
-        self.mc.events.add_handler('mc_init_phase_4',
-                                        self.set_initial_states, 100)
 
         # register event handlers to get key actions from the Pygame window
         self.mc.register_pygame_handler(pygame.locals.KEYDOWN,
@@ -80,8 +75,6 @@ class Keyboard(object):
             switch_name = v.get('switch', None)
             # set whether a key is the push on / push off type
             toggle_key = v.get('toggle', None)
-            # set whether a toggle key starts
-            start_active = v.get('start_active', None)
             # todo convert to True from true or TRUE
             invert = v.get('invert', None)
             event = v.get('event', None)
@@ -171,17 +164,14 @@ class Keyboard(object):
 
                 # Add the new Pygane  code / switch number pair to the key map
                 self.add_key_map(str(key_code), switch_name, toggle_key,
-                                 start_active, invert)
-
-                if start_active:
-                    self.start_active.append(switch_name)
+                                 invert)
 
             elif event:  # we're processing an entry for an event
                 event_dict = {'event': event, 'params': params}
                 self.add_key_map(str(key_code), event_dict=event_dict)
 
     def add_key_map(self, key, switch_name=None, toggle_key=False,
-                    start_active=False, invert=False, event_dict=None):
+                    invert=False, event_dict=None):
         """Adds an entry to the key_map which is used to see what to do when
         key events are received.
 
@@ -192,9 +182,6 @@ class Keyboard(object):
                 to.
             toggle_key: Boolean as to whether this key should be a toggle key.
                 (i.e. push on / push off).
-            start_active: Boolean as to whether this switch should start active.
-                This setting is ignored when a physical pinball machine is
-                connected. Default is False.
             invert: Boolean as to whether this key combination should be
                 inverted. (Key down = switch inactive, key up = switch active.)
                 Default is False.
@@ -214,26 +201,10 @@ class Keyboard(object):
 
         if toggle_key:
             key = str(key)
-            if start_active:
-                # if the initial switch stated should be active, set it
-                self.toggle_keys[key] = 1
-            else:
-                self.toggle_keys[key] = 0
+            self.toggle_keys[key] = 0
 
             if invert:
                 self.toggle_keys[key] = self.toggle_keys[key] ^ 1
-
-    def set_initial_states(self):
-        """Sets the initial states of all the switches by activating switches
-        configured to start active. This method does not work if a physical
-        pinball machine is attached. (Since that would be really confusing.)
-
-        """
-        for switch_name in self.start_active:
-            self.log.debug("Sending initial state of switch '%s' to "
-                           "active", switch_name)
-
-            self.send_switch(name=switch_name, state=1)
 
     def process_key_press(self, symbol, modifiers):
         """Processes a key press (key down) event by setting the switch and/or
