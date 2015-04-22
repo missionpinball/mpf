@@ -75,19 +75,21 @@ def encode_command_string(bcp_command, **kwargs):
         Output: trigger?name=hello&foo=bar
 
     """
-    scrubbed_kwargs = dict()
+    kwarg_string = ''
 
     try:
         for k, v in kwargs.iteritems():
-            scrubbed_kwargs[k.lower()] = str(v).lower()
 
-        scrubbed_kwargs = urllib.urlencode(kwargs)
+            kwarg_string += (urllib.quote(k.lower(), '') + '=' +
+                             urllib.quote(str(v).lower(), '') + '&')
+
+        kwarg_string = kwarg_string[:-1]
 
     except (TypeError, AttributeError):
         pass
 
     return unicode(urlparse.urlunparse((None, None, bcp_command.lower(), None,
-                                        scrubbed_kwargs, None)), 'utf-8')
+                                        kwarg_string, None)), 'utf-8')
 
 
 class BCP(object):
@@ -565,13 +567,13 @@ class BCP(object):
         for k, v in config['tracks'].iteritems():
             self.track_volumes[k] = v
 
-    def increase_volume(self, track='overall', **kwargs):
+    def increase_volume(self, track='master', **kwargs):
         """Sends a command to the remote BCP host to increase the volume of a
         track by 1 unit.
 
         Args:
             track: The string name of the track you want to increase the volume
-                on. Default is 'overall'.
+                on. Default is 'master'.
             **kwargs: Ignored. Included in case this method is used as a
                 callback for an event which has other kwargs.
 
@@ -588,13 +590,13 @@ class BCP(object):
             self.log.warning('Received volume increase request for unknown '
                              'track "%s"', track)
 
-    def decrease_volume(self, track='overall', **kwargs):
+    def decrease_volume(self, track='master', **kwargs):
         """Sends a command to the remote BCP host to decrease the volume of a
         track by 1 unit.
 
         Args:
             track: The string name of the track you want to decrease the volume
-                on. Default is 'overall'.
+                on. Default is 'master'.
             **kwargs: Ignored. Included in case this method is used as a
                 callback for an event which has other kwargs.
 
@@ -611,7 +613,7 @@ class BCP(object):
                              'track "%s"', track)
 
     def enable_volume_keys(self, up_tag='volume_up', down_tag='volume_down'):
-        """Enables switch handlers to change the overall system volume based on
+        """Enables switch handlers to change the master system volume based on
         switch tags.
 
         Args:
@@ -637,7 +639,7 @@ class BCP(object):
 
     def disable_volume_keys(self, up_tag='volume_up', down_tag='volume_down'):
         """Disables switch handlers so that the switches no longer affect the
-        overall system volume.
+        master system volume.
 
         Args:
             up_tag: String of a switch tag name of the switches that will no
@@ -656,7 +658,7 @@ class BCP(object):
 
         self.volume_control_enabled = False
 
-    def set_volume(self, volume, track='overall', **kwargs):
+    def set_volume(self, volume, track='master', **kwargs):
         """Sends a command to the remote BCP host to set the volume of a track
         to the value specified.
 
@@ -665,7 +667,7 @@ class BCP(object):
                 configuration in your config file. Values outside this range are
                 ignored.
             track: The string name of the track you want to set the volume on.
-                Default is 'overall'.
+                Default is 'master'.
             **kwargs: Ignored. Included in case this method is used as a
                 callback for an event which has other kwargs.
 

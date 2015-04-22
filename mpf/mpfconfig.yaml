@@ -252,7 +252,7 @@ BCP:
 
 Volume:
     tracks:
-        overall: 20
+        master: 20
         voice: 20
         sfx: 20
         music: 20
