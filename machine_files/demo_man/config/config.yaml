@@ -1176,3 +1176,9 @@ LightScripts:
         - tocks: 1
           color: 0
 
+SlidePlayer:
+    volume_change:
+        type: Text
+        text: "VOLUME: %display_volume"
+        expire: 2s
+        slide_priority: 10000

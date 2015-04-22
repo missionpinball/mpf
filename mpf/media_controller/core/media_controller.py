@@ -528,11 +528,24 @@ class MediaController(object):
         """Processes an incoming BCP 'config' command.
 
         """
-        pass
+        for k, v in kwargs.iteritems():
+            if k.startswith('volume_'):
+                self.bcp_set_volume(track=k.split('volume_')[1], value=v)
 
     def bcp_timer(self, name, action, **kwargs):
 
         self.events.post('timer_' + name + '_' + action, **kwargs)
+
+    def bcp_set_volume(self, track, value):
+
+        if track == 'master':
+            self.sound.set_volume(value)
+
+        #if track in self.sound.tracks:
+            #self.sound.tracks[track]
+
+            # todo add per-track volume support to sound system
+
 
 
 class BCPServer(threading.Thread):
