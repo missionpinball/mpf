@@ -64,6 +64,8 @@ class Attract(MachineMode):
                 self.machine.balldevices.items_tagged('home')):
             self.machine.ball_controller.gather_balls('home')
 
+        self.machine.events.post('enable_volume_keys')
+
     def start_button_pressed(self):
         self.start_button_pressed_time = time.time()
 

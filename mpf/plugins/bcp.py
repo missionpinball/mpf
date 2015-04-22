@@ -33,6 +33,19 @@ def preload_check(machine):
 
 
 def decode_command_string(bcp_string):
+    """Decodes a BCP command string into separate command and paramter parts.
+
+    Args:
+        bcp_string: The incoming UTF-8, URL encoded BCP command string.
+
+    Returns:
+        A tuple of the command string and a dictionary of kwarg pairs.
+
+    Example:
+        Input: trigger?name=hello&foo=foo%20bar
+        Output: ('trigger', {'name': 'hello', 'foo': 'foo bar'})
+
+    """
     bcp_command = urlparse.urlsplit(bcp_string.lower().decode('utf-8'))
     try:
         kwargs = urlparse.parse_qs(bcp_command.query)
@@ -47,7 +60,21 @@ def decode_command_string(bcp_string):
 
 
 def encode_command_string(bcp_command, **kwargs):
+    """Encodes a BCP command and kwargs into a valid BCP command string.
 
+    Args:
+        bcp_command: String of the BCP command name.
+        **kwargs: Optional pair(s) of kwargs which will be appended to the
+            command.
+
+    Returns:
+        A string.
+
+    Example:
+        Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'bar'})
+        Output: trigger?name=hello&foo=bar
+
+    """
     scrubbed_kwargs = dict()
 
     try:
@@ -64,7 +91,7 @@ def encode_command_string(bcp_command, **kwargs):
 
 
 class BCP(object):
-    '''The parent class for the BCP client.
+    """The parent class for the BCP client.
 
     This class can support connections with multiple remote hosts at the same
     time using multiple instances of the BCPClient class.
@@ -80,6 +107,7 @@ class BCP(object):
         error
         game_start
         game_end
+        get
         goodbye
         hello?version=xxx
         mode_start?name=xxx&priority=xxx
@@ -88,22 +116,14 @@ class BCP(object):
         player_score?value=x&prev_value=x&change=x
         player_turn_start?player=x
         player_variable?name=x&value=x&prev_value=x&change=x
+        set
         switch?name=x&state=x
         trigger?name=xxx
 
-    Todo:
-        # to ignore commands
-        commands and param names are case-insensitive
-        id is up to 32 chars for shows, ball, etc.
-        auto resume
 
+    Todo:
         config?volume=1&volume_steps=20
         config?language=english
-
-        set
-        get
-
-        reset
 
         timer started
         timer paused
@@ -111,9 +131,7 @@ class BCP(object):
         timer cancel
         timer complete
 
-        MC requests MPF to send switch states
-
-    '''
+    """
 
     def __init__(self, machine):
         if ('bcp' not in machine.config or
@@ -132,7 +150,9 @@ class BCP(object):
 
         self.bcp_receive_commands = {'error': self.bcp_receive_error,
                                      'switch': self.bcp_receive_switch,
-                                     'trigger': self.bcp_receive_trigger
+                                     'trigger': self.bcp_receive_trigger,
+                                     'get': self.bcp_receive_get,
+                                     'set': self.bcp_receive_set
                                     }
 
         self.dmd = self.machine.platform.configure_dmd()
@@ -141,12 +161,19 @@ class BCP(object):
         self.filter_player_events = True
         self.send_player_vars = False
         self.mpfmc_trigger_events = set()
+        self.track_volumes = dict()
+        self.volume_control_enabled = False
 
         try:
             self.bcp_events = self.config['event_map']
             self.process_bcp_events()
         except KeyError:
             pass
+
+        try:
+            self._setup_track_volumes(self.machine.config['volume'])
+        except KeyError:
+            self.log.warning("No 'Volume:' section in config file")
 
         if ('player_variables' in self.config and
                 self.config['player_variables']):
@@ -175,6 +202,12 @@ class BCP(object):
                                         self.bcp_player_added)
         self.machine.events.add_handler('machine_reset_phase_1',
                                         self.bcp_reset)
+        self.machine.events.add_handler('increase_volume', self.increase_volume)
+        self.machine.events.add_handler('decrease_volume', self.decrease_volume)
+        self.machine.events.add_handler('enable_volume_keys',
+                                        self.enable_volume_keys)
+        self.machine.events.add_handler('disable_volume_keys',
+                                        self.disable_volume_keys)
 
         self.machine.modes.register_start_method(self.bcp_mode_start, 'mode')
         self.machine.modes.register_start_method(self.register_triggers,
@@ -397,6 +430,28 @@ class BCP(object):
         self.log.warning('Received Error command from host with parameters: %s',
                          kwargs)
 
+    def bcp_receive_get(self, **kwargs):
+        """Processes an incoming BCP 'get' command.
+
+        Note that this media controller doesn't implement the 'get' command at
+        this time, but it's included here for completeness since the 'get'
+        command is part of the BCP 1.0 specification so we don't want to return
+        an error if we receive an incoming 'get' command.
+
+        """
+        pass
+
+    def bcp_receive_set(self, **kwargs):
+        """Processes an incoming BCP 'set' command.
+
+        Note that this media controller doesn't implement the 'set' command at
+        this time, but it's included here for completeness since the 'set'
+        command is part of the BCP 1.0 specification so we don't want to return
+        an error if we receive an incoming 'set' command.
+
+        """
+        pass
+
     def bcp_mode_start(self, config, priority, mode, **kwargs):
         """Sends BCP 'mode_start' to the connected BCP hosts and schedules
         automatic sending of 'mode_stop' when the mode stops.
@@ -459,27 +514,184 @@ class BCP(object):
             self.machine.events.post(event='trigger_' + name, **kwargs)
 
     def enable_bcp_switch(self, name):
+        """Enables sending BCP switch commands when this switch changes state.
+
+        Args:
+            name: string name of the switch
+
+        """
         self.machine.switch_controller.add_switch_handler(switch_name=name,
             callback=self._switch_sender_callback, state=1, return_info=True)
         self.machine.switch_controller.add_switch_handler(switch_name=name,
             callback=self._switch_sender_callback, state=0, return_info=True)
 
     def enable_bcp_switches(self, tag):
+        """Enables sending BCP switch commands when a switch with a certain tag
+        changes state.
+
+        Args:
+            tag: string name of the tag for the switches you want to start
+                sending
+
+        """
         for switch in self.machine.switches.items_tagged(tag):
             self.enable_bcp_switch(switch)
 
     def disable_bcp_switch(self, name):
+        """Disables sending BCP switch commands when this switch changes state.
+
+        Args:
+            name: string name of the switch
+
+        """
         self.machine.switch_controller.remove_switch_handler(switch_name=name,
             callback=self._switch_sender_callback, state=1)
         self.machine.switch_controller.remove_switch_handler(switch_name=name,
             callback=self._switch_sender_callback, state=0)
 
     def disable_bcp_switches(self, tag):
+        """Disables sending BCP switch commands when a switch with a certain tag
+        changes state.
+
+        Args:
+            tag: string name of the tag for the switches you want to stop
+                sending
+        """
         for switch in self.machine.switches.items_tagged(tag):
             self.disable_bcp_switch(switch)
 
     def _switch_sender_callback(self, switch_name, state, ms):
         self.send('switch', name=switch_name, state=state)
+
+    def _setup_track_volumes(self, config):
+        # config is localized to 'Volume'
+        for k, v in config['tracks'].iteritems():
+            self.track_volumes[k] = v
+
+    def increase_volume(self, track='overall', **kwargs):
+        """Sends a command to the remote BCP host to increase the volume of a
+        track by 1 unit.
+
+        Args:
+            track: The string name of the track you want to increase the volume
+                on. Default is 'overall'.
+            **kwargs: Ignored. Included in case this method is used as a
+                callback for an event which has other kwargs.
+
+        The max value of the volume for a track is set in the Volume: Steps:
+        entry in the config file. If this increase causes the volume to go above
+        the max value, the increase is ignored.
+
+        """
+
+        try:
+            self.track_volumes[track] += 1
+            self.set_volume(self.track_volumes[track], track)
+        except KeyError:
+            self.log.warning('Received volume increase request for unknown '
+                             'track "%s"', track)
+
+    def decrease_volume(self, track='overall', **kwargs):
+        """Sends a command to the remote BCP host to decrease the volume of a
+        track by 1 unit.
+
+        Args:
+            track: The string name of the track you want to decrease the volume
+                on. Default is 'overall'.
+            **kwargs: Ignored. Included in case this method is used as a
+                callback for an event which has other kwargs.
+
+        If this decrease causes the volume to go below zero, the decrease is
+        ignored.
+
+        """
+
+        try:
+            self.track_volumes[track] -= 1
+            self.set_volume(self.track_volumes[track], track)
+        except KeyError:
+            self.log.warning('Received volume decrease request for unknown '
+                             'track "%s"', track)
+
+    def enable_volume_keys(self, up_tag='volume_up', down_tag='volume_down'):
+        """Enables switch handlers to change the overall system volume based on
+        switch tags.
+
+        Args:
+            up_tag: String of a switch tag name that will be used to set which
+                switch(es), when activated, increase the volume.
+            down_tag: String of a switch tag name that will be used to set which
+                switch(es), when activated, decrease the volume.
+
+        """
+
+        if self.volume_control_enabled:
+            return
+
+        for switch in self.machine.switches.items_tagged(up_tag):
+            self.machine.switch_controller.add_switch_handler(switch.name,
+                self.increase_volume)
+
+        for switch in self.machine.switches.items_tagged(down_tag):
+            self.machine.switch_controller.add_switch_handler(switch.name,
+                self.decrease_volume)
+
+        self.volume_control_enabled = True
+
+    def disable_volume_keys(self, up_tag='volume_up', down_tag='volume_down'):
+        """Disables switch handlers so that the switches no longer affect the
+        overall system volume.
+
+        Args:
+            up_tag: String of a switch tag name of the switches that will no
+                longer be used to increase the volume.
+            down_tag: String of a switch tag name of the switches that will no
+                longer be used to decrease the volume.
+
+        """
+        for switch in self.machine.switches.items_tagged(up_tag):
+            self.machine.switch_controller.remove_switch_handler(switch.name,
+                self.increase_volume)
+
+        for switch in self.machine.switches.items_tagged(down_tag):
+            self.machine.switch_controller.remove_switch_handler(switch.name,
+                self.decrease_volume)
+
+        self.volume_control_enabled = False
+
+    def set_volume(self, volume, track='overall', **kwargs):
+        """Sends a command to the remote BCP host to set the volume of a track
+        to the value specified.
+
+        Args:
+            volume: Int of the volume level. Valid range is 0 to the "steps"
+                configuration in your config file. Values outside this range are
+                ignored.
+            track: The string name of the track you want to set the volume on.
+                Default is 'overall'.
+            **kwargs: Ignored. Included in case this method is used as a
+                callback for an event which has other kwargs.
+
+        """
+
+        try:
+            volume = int(volume)
+        except ValueError:
+            self.log.warning("Received invalid volume setting: '%s'", volume)
+            return
+
+        try:
+            if volume > self.machine.config['volume']['steps']:
+                volume = self.machine.config['volume']['steps']
+            elif volume < 0:
+                volume = 0
+
+            self.track_volumes[track] = volume
+            volume_float = round(volume/float(self.machine.config['volume']
+                                              ['steps']), 2)
+            self.send('config', volume=volume_float)
+        except KeyError:
+            self.log.warning('Received volume for unknown track "%s"', track)
 
 
 class BCPClient(object):

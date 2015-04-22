@@ -81,9 +81,11 @@ class Game(MachineMode):
             self.machine.events.add_handler('slam_tilt',
                                             self.slam_tilt, priority=1000))
 
-        if ('Restart on long press' in self.machine.config['game'] and
-                self.machine.config['game']['Restart on long press']):
+        if ('restart on long press' in self.machine.config['game'] and
+                self.machine.config['game']['restart on long press']):
             self.setup_midgame_restart()
+
+        self.machine.events.post('enable_volume_keys')
 
         # Add our first player
         self.request_player_add()
