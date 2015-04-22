@@ -96,7 +96,8 @@ class MediaController(object):
                              'switch': self.bcp_switch,
                              'get': self.bcp_get,
                              'set': self.bcp_set,
-                             'config': self.bcp_config
+                             'config': self.bcp_config,
+                             'timer': self.bcp_timer
                             }
 
         # load the MPF config & machine defaults
@@ -528,6 +529,10 @@ class MediaController(object):
 
         """
         pass
+
+    def bcp_timer(self, name, action, **kwargs):
+
+        self.events.post('timer_' + name + '_' + action, **kwargs)
 
 
 class BCPServer(threading.Thread):

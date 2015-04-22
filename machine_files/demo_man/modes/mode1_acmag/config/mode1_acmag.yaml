@@ -9,6 +9,7 @@ Timers:
         end_value: 0
         direction: down
         start_running: true
+        bcp: true
 
 SlidePlayer:
     timer_mode_countdown_tick:
