@@ -2,6 +2,7 @@
 
 from mpf.system.scriptlet import Scriptlet
 
+
 class Attract(Scriptlet):
 
     def on_load(self):

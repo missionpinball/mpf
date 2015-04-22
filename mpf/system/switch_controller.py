@@ -292,7 +292,6 @@ class SwitchController(object):
 
         Args:
 
-
             switch_name: String name of the switch you're adding this handler
                 for.
 
