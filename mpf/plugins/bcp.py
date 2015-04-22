@@ -104,6 +104,7 @@ class BCP(object):
         attract_stop
         ball_start?player=x&ball=x
         ball_end
+        config?volume=0.5
         error
         game_start
         game_end
@@ -120,11 +121,7 @@ class BCP(object):
         switch?name=x&state=x
         trigger?name=xxx
 
-
     Todo:
-        config?volume=1&volume_steps=20
-        config?language=english
-
         timer started
         timer paused
         timer tick
@@ -689,7 +686,8 @@ class BCP(object):
             self.track_volumes[track] = volume
             volume_float = round(volume/float(self.machine.config['volume']
                                               ['steps']), 2)
-            self.send('config', volume=volume_float)
+            kwargs = {'volume_' + track: volume_float}
+            self.send('config', **kwargs)
         except KeyError:
             self.log.warning('Received volume for unknown track "%s"', track)
 
