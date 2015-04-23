@@ -500,6 +500,7 @@ class ModeTimer(object):
         self.direction = 'up'
         self.tick_secs = 1
         self.timer = None
+        self.bcp = False
         self.event_keys = set()
         self.delay = DelayManager()
 
@@ -528,6 +529,9 @@ class ModeTimer(object):
 
         if 'max_value' in self.config:
             self.max_value = self.config['max_value']
+
+        if 'bcp' in self.config and self.config['bcp']:
+            self.bcp = True
 
         self.mode.player[self.tick_var] = self.start_value
 
@@ -596,7 +600,11 @@ class ModeTimer(object):
         self._create_system_timer()
 
         self.machine.events.post('timer_' + self.name + '_started',
-            ticks_remaining=self.mode.player[self.tick_var])
+                                 ticks=self.mode.player[self.tick_var])
+
+        if self.bcp:
+            self.machine.bcp.send('timer', name=self.name, action='started',
+                                  ticks=self.mode.player[self.tick_var])
 
     def stop(self, **kwargs):
         """Stops the timer and posts the 'timer_<name>_stopped' event.
@@ -614,6 +622,10 @@ class ModeTimer(object):
 
         self.machine.events.post('timer_' + self.name + '_stopped',
                                  ticks=self.mode.player[self.tick_var])
+
+        if self.bcp:
+            self.machine.bcp.send('timer', name=self.name, action='stopped',
+                                  ticks=self.mode.player[self.tick_var])
 
     def pause(self, timer_value=0, **kwargs):
         """Pauses the timer and posts the 'timer_<name>_paused' event
@@ -633,8 +645,10 @@ class ModeTimer(object):
 
         self._remove_system_timer()
         self.machine.events.post('timer_' + self.name + '_paused',
-                                     ticks=self.mode.player[self.tick_var],
-                                     pause_secs=pause_secs)
+                                 ticks=self.mode.player[self.tick_var])
+        if self.bcp:
+            self.machine.bcp.send('timer', name=self.name, action='paused',
+                                  ticks=self.mode.player[self.tick_var])
 
         if pause_secs > 0:
             self.delay.add('pause', pause_secs, self.start)
@@ -652,7 +666,12 @@ class ModeTimer(object):
 
         self.stop()
 
-        self.machine.events.post('timer_' + self.name + '_complete')
+        self.machine.events.post('timer_' + self.name + '_complete',
+                                 ticks=self.mode.player[self.tick_var])
+
+        if self.bcp:
+            self.machine.bcp.send('timer', name=self.name, action='complete',
+                                  ticks=self.mode.player[self.tick_var])
 
     def _timer_tick(self):
         # Automatically called by the sytem timer each tick
@@ -669,6 +688,10 @@ class ModeTimer(object):
         if not self._check_for_done():
             self.machine.events.post('timer_' + self.name + '_tick',
                                      ticks=self.mode.player[self.tick_var])
+
+            if self.bcp:
+                self.machine.bcp.send('timer', name=self.name, action='tick',
+                                      ticks=self.mode.player[self.tick_var])
 
     def add_time(self, timer_value, **kwargs):
         """Adds ticks to this timer.
@@ -696,6 +719,11 @@ class ModeTimer(object):
                                  ticks=self.mode.player[self.tick_var],
                                  ticks_added=ticks_added)
 
+        if self.bcp:
+            self.machine.bcp.send('timer', name=self.name, action='time_added',
+                                  ticks=self.mode.player[self.tick_var],
+                                  ticks_added=ticks_added)
+
         self._check_for_done()
 
     def subtract_time(self, timer_value, **kwargs):
@@ -716,6 +744,12 @@ class ModeTimer(object):
         self.machine.events.post('timer_' + self.name + '_time_subtracted',
                                  ticks=self.mode.player[self.tick_var],
                                  ticks_subtracted=ticks_subtracted)
+
+        if self.bcp:
+            self.machine.bcp.send('timer', name=self.name,
+                                  action='time_subtracted',
+                                  ticks=self.mode.player[self.tick_var],
+                                  ticks_subtracted=ticks_added)
 
         self._check_for_done()
 

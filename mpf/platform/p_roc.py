@@ -52,7 +52,7 @@ class HardwarePlatform(Platform):
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P-ROC Platform')
-        self.log.debug("Configuring machine for P-ROC hardware.")
+        self.log.debug("Configuring machine for P-ROC hardware")
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -76,13 +76,16 @@ class HardwarePlatform(Platform):
 
         self.proc = None
 
+        self.log("Connecting to P-ROC")
+
         while not self.proc:
             try:
-                print "trying to connect to P-ROC"
                 self.proc = pinproc.PinPROC(self.machine_type)
                 self.proc.reset(1)
-            except:
-                print "Failed, trying again..."
+            except IOError:
+                print "Retrying..."
+
+        self.log("Succefully connected to P-ROC")
 
         # Clear out the default program for the aux port since we might need it
         # for a 9th column. Details:
@@ -102,11 +105,11 @@ class HardwarePlatform(Platform):
         # Only then can we relate the YAML coil/light #'s to P-ROC numbers for
         # the collections.
         if self.machine_type == pinproc.MachineTypePDB:
-            self.log.debug("Configuring P-ROC for PDBs (P-ROC driver boards).")
+            self.log.debug("Configuring P-ROC for PDBs (P-ROC driver boards)")
             self.pdbconfig = PDBConfig(self.proc, self.machine.config)
 
         else:
-            self.log.debug("Configuring P-ROC for OEM driver boards.")
+            self.log.debug("Configuring P-ROC for OEM driver boards")
 
         self.polarity = self.machine_type == pinproc.MachineTypeSternWhitestar\
             or self.machine_type == pinproc.MachineTypeSternSAM\

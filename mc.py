@@ -72,6 +72,7 @@ options_dict = vars(options)  # convert the values instance to python dict
 if options_dict['version']:
     print("Mission Pinball Framework Media Controller Version:",
           version.__version__)
+    print("Requires config file version:", version.__config_version__)
     print("Backbox Control Protocol (BCP) Version:", version.__bcp_version__)
     sys.exit()
 

@@ -36,17 +36,16 @@ except:
     import_success = False
 
 
-def preload_check(machine):
-
-    if import_success:
-        return True
-    else:
-        return False
-
-
 class OSC(object):
 
     def __init__(self, machine):
+
+        if not import_success:
+            self.machine.log.error('OSC plugin requires PyOSC which does not '
+                                   'appear to be installed. OSC will not be '
+                                   'available')
+            return
+
 
         self.log = logging.getLogger('osc')
         self.machine = machine
@@ -399,6 +398,10 @@ class OSC(object):
                                            self.config['client_port']))
         if address in self.clients_to_add:
             self.clients_to_add.remove(address)
+
+
+plugin_class = OSC
+
 
 # The MIT License (MIT)
 

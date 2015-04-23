@@ -1,3 +1,4 @@
+# config_version=1
 # This file contains confinguration options for the MPF itself, including
 # default settings for your pinball machines.
 
@@ -15,6 +16,10 @@ MPF:
         ball_controller.BallController
         modes.ModeController
         light_controller.LightController
+        bcp.BCP
+        shots.ShotController
+        logic_blocks.LogicBlocks
+        scoring.ScoreController
 
     device_modules:
         driver.Driver
@@ -35,6 +40,15 @@ MPF:
         score_reel.ScoreReel
         score_reel.ScoreReelGroup
         flasher.Flasher
+    
+    plugins:
+        auditor
+        ball_save
+        ball_search
+        info_lights
+        osc
+        socket_events
+        switch_player
 
     paths:
         scriptlets: scriptlets
@@ -252,7 +266,7 @@ BCP:
 
 Volume:
     tracks:
-        overall: 20
+        master: 20
         voice: 20
         sfx: 20
         music: 20

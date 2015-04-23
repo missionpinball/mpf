@@ -357,7 +357,7 @@ class SoundController(object):
         old_volume = self.volume
 
         if volume:
-            self.volume = volume
+            self.volume = float(volume)
         elif change:
             self.volume += float(change)
 
@@ -509,7 +509,6 @@ class Track(object):
 
     def stop(self, sound):
         sound.sound_object.stop()
-
 
     def queue_sound(self, sound, priority, exp_time=None, **settings):
         """Adds a sound to the queue to be played when a Pygame channel becomes

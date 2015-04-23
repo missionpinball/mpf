@@ -8,7 +8,7 @@ a pinball machine."""
 import logging
 
 from mpf.system.tasks import DelayManager
-from mpf.system.devices import Device, DeviceCollection
+from mpf.system.devices import DeviceCollection
 from mpf.devices.playfield import Playfield
 
 

@@ -1,3 +1,4 @@
+# config_version=1
 Mode:
     start_events: start_mode1_acmag
     end_events: timer_mode_countdown_complete
@@ -9,6 +10,7 @@ Timers:
         end_value: 0
         direction: down
         start_running: true
+        bcp: true
 
 SlidePlayer:
     timer_mode_countdown_tick:

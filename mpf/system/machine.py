@@ -14,7 +14,6 @@ import sys
 
 from mpf.system import *
 from mpf.devices import *
-from mpf.system.timing import Timing
 from mpf.system.config import Config
 import version
 
@@ -47,92 +46,30 @@ class MachineController(object):
         events:
     """
     def __init__(self, options):
+        self.options = options
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework v%s", version.__version__)
-        self.options = options
+        self.log_system_info()
+
         self.loop_start_time = 0
-        self.config = dict()
         self.physical_hw = options['physical_hw']
-        self.switch_events = list()
         self.done = False
         self.machineflow_index = None
         self.loop_rate = 0.0
         self.mpf_load = 0.0
         self.machine_path = None  # Path to this machine's folder root
         self.monitors = dict()
-
         self.plugins = list()
         self.scriptlets = list()
         self.game_modes = list()
         self.asset_managers = dict()
 
-        # Get the Python version for the log
-        python_version = sys.version_info
-        self.log.info("Python version: %s.%s.%s", python_version[0],
-                      python_version[1], python_version[2])
-        self.log.info("Platform: %s", sys.platform)
-        self.log.info("Python executable location: %s", sys.executable)
-        self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
-
-        # load the MPF config & machine defaults
-        self.config = Config.load_config_yaml(config=self.config,
-            yaml_file=self.options['mpfconfigfile'])
-
-        # Find the machine_files location. If it starts with a forward or
-        # backward slash, then we assume it's from the mpf root. Otherwise we
-        # assume it's from the subfolder location specified in the
-        # mpfconfigfile location
-
-        if (options['machinepath'].startswith('/') or
-                options['machinepath'].startswith('\\')):
-            machine_path = options['machinepath']
-        else:
-            machine_path = os.path.join(self.config['mpf']['paths']
-                                        ['machine_files'],
-                                        options['machinepath'])
-
-        self.machine_path = os.path.abspath(machine_path)
-
-        # Add the machine folder to our path so we can import modules from it
-        sys.path.append(self.machine_path)
-
-        self.log.info("Machine folder: %s", machine_path)
-
-        # Now find the config file location. Same as machine_file with the
-        # slash uses to specify an absolute path
-
-        if (options['configfile'].startswith('/') or
-                options['configfile'].startswith('\\')):
-            config_file = options['configfile']
-        else:
-
-            if not options['configfile'].endswith('.yaml'):
-                options['configfile'] += '.yaml'
-
-            config_file = os.path.join(machine_path,
-                                       self.config['mpf']['paths']['config'],
-                                       options['configfile'])
-
-        self.log.info("Base machine config file: %s", config_file)
-
-        # Load the machine-specific config
-        self.config = Config.load_config_yaml(config=self.config,
-                                            yaml_file=config_file)
+        self.config = dict()
+        self._load_config()
 
         self.platform = self.set_platform()
 
-        # Load the system modules
-        self.config['mpf']['system_modules'] = (
-            self.config['mpf']['system_modules'].split(' '))
-        for module in self.config['mpf']['system_modules']:
-            self.log.info("Loading system module: %s", module)
-            module_parts = module.split('.')
-            exec('self.' + module_parts[0] + '=' + module + '(self)')
-
-            # todo there's probably a more pythonic way to do this, and I know
-            # exec() is supposedly unsafe, but meh, if you have access to put
-            # malicious files in the system folder then you have access to this
-            # code too.
+        self._load_system_modules()
 
         self.events.add_handler('action_shutdown', self.end_run_loop)
         self.events.add_handler('sw_shutdown', self.end_run_loop)
@@ -140,60 +77,11 @@ class MachineController(object):
                                 position=0)
 
         self.events.post("machine_init_phase_1")
-
-        # Load the device modules
-        self.config['mpf']['device_modules'] = (
-            self.config['mpf']['device_modules'].split(' '))
-        for device_type in self.config['mpf']['device_modules']:
-            device_cls = eval(device_type)
-            # Check to see if we have these types of devices specified in this
-            # machine's config file and only load the modules this machine uses.
-            if device_cls.is_used(self.config):
-                collection, config = device_cls.get_config_info()
-
-                # create the collection
-                exec('self.' + collection + '=devices.DeviceCollection()')
-
-                # Create this device
-                devices.Device.create_devices(device_cls,
-                                              eval('self.' + collection),
-                                              self.config[config],
-                                              self
-                                              )
-
+        self._load_device_modules()
         self.events.post("machine_init_phase_2")
-
-        # Load plugins
-        if 'plugins' in self.config:
-
-            if type(self.config['plugins']) is str:
-                self.config['plugins'] = self.config['plugins'].split(' ')
-
-            for plugin in self.config['plugins']:
-                self.log.info("Checking Plugin: %s", plugin)
-                i = __import__('mpf.plugins.' + plugin.split('.')[0],
-                               fromlist=[''])
-                if i.preload_check(self):
-                    self.log.info("Plugin: %s passes pre-load check. "
-                                  "Loading...", plugin)
-                    self.plugins.append(getattr(i, plugin.split('.')[1])(self))
-                else:
-                    self.log.warning("Plugin: %s failed pre-load check. "
-                                     "Skipping.", plugin)
-
+        self._load_plugins()
         self.events.post("machine_init_phase_3")
-
-        # Load Scriptlets
-        if 'scriptlets' in self.config:
-            self.config['scriptlets'] = self.config['scriptlets'].split(' ')
-
-            for scriptlet in self.config['scriptlets']:
-                i = __import__(self.config['mpf']['paths']['scriptlets'] + '.'
-                               + scriptlet.split('.')[0], fromlist=[''])
-
-                self.scriptlets.append(getattr(i, scriptlet.split('.')[1])
-                                       (machine=self,
-                                        name=scriptlet.split('.')[1]))
+        self._load_scriptlets()
 
         # Configure the Machine Flow
         self.log.debug("Configuring Machine Flow")
@@ -213,18 +101,137 @@ class MachineController(object):
 
         self.reset()
 
+    def _load_config(self):
+
+        self.config = dict()
+
+        # load the MPF config & machine defaults
+        self.config = Config.load_config_yaml(config=self.config,
+            yaml_file=self.options['mpfconfigfile'])
+
+        # Find the machine_files location. If it starts with a forward or
+        # backward slash, then we assume it's from the mpf root. Otherwise we
+        # assume it's from the subfolder location specified in the
+        # mpfconfigfile location
+
+        if (self.options['machinepath'].startswith('/') or
+                self.options['machinepath'].startswith('\\')):
+            machine_path = self.options['machinepath']
+        else:
+            machine_path = os.path.join(self.config['mpf']['paths']
+                                        ['machine_files'],
+                                        self.options['machinepath'])
+
+        self.machine_path = os.path.abspath(machine_path)
+
+        # Add the machine folder to our path so we can import modules from it
+        sys.path.append(self.machine_path)
+
+        self.log.info("Machine folder: %s", machine_path)
+
+        # Now find the config file location. Same as machine_file with the
+        # slash uses to specify an absolute path
+
+        if (self.options['configfile'].startswith('/') or
+                self.options['configfile'].startswith('\\')):
+            config_file = self.options['configfile']
+        else:
+
+            if not self.options['configfile'].endswith('.yaml'):
+                self.options['configfile'] += '.yaml'
+
+            config_file = os.path.join(machine_path,
+                                       self.config['mpf']['paths']['config'],
+                                       self.options['configfile'])
+
+        self.log.info("Base machine config file: %s", config_file)
+
+        # Load the machine-specific config
+        self.config = Config.load_config_yaml(config=self.config,
+                                            yaml_file=config_file)
+
+    def log_system_info(self):
+        """Dumps information about the Python installation to the log.
+
+        Information includes Python version, Python executable, platform, and
+        system architecture.
+
+        """
+        python_version = sys.version_info
+        self.log.info("Python version: %s.%s.%s", python_version[0],
+                      python_version[1], python_version[2])
+        self.log.info("Platform: %s", sys.platform)
+        self.log.info("Python executable location: %s", sys.executable)
+        self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
+
+    def _load_device_modules(self):
+        self.config['mpf']['device_modules'] = (
+            self.config['mpf']['device_modules'].split(' '))
+        for device_type in self.config['mpf']['device_modules']:
+            device_cls = eval(device_type)
+            # Check to see if we have these types of devices specified in this
+            # machine's config file and only load the modules this machine uses.
+            if device_cls.is_used(self.config):
+                collection, config = device_cls.get_config_info()
+
+                # create the collection
+                exec('self.' + collection + '=devices.DeviceCollection()')
+
+                # Create this device
+                devices.Device.create_devices(device_cls,
+                                              eval('self.' + collection),
+                                              self.config[config],
+                                              self
+                                              )
+
+    def _load_system_modules(self):
+        self.config['mpf']['system_modules'] = (
+            self.config['mpf']['system_modules'].split(' '))
+        for module in self.config['mpf']['system_modules']:
+            self.log.info("Loading system module: %s", module)
+            module_parts = module.split('.')
+            exec('self.' + module_parts[0] + '=' + module + '(self)')
+
+            # todo there's probably a more pythonic way to do this, and I know
+            # exec() is supposedly unsafe, but meh, if you have access to put
+            # malicious files in the system folder then you have access to this
+            # code too.
+
+    def _load_plugins(self):
+        for plugin in Config.string_to_list(
+                self.config['mpf']['plugins']):
+            i = __import__('mpf.plugins.' + plugin, fromlist=[''])
+            self.plugins.append(i.plugin_class(self))
+
+    def _load_scriptlets(self):
+        if 'scriptlets' in self.config:
+            self.config['scriptlets'] = self.config['scriptlets'].split(' ')
+
+            for scriptlet in self.config['scriptlets']:
+                i = __import__(self.config['mpf']['paths']['scriptlets'] + '.'
+                               + scriptlet.split('.')[0], fromlist=[''])
+
+                self.scriptlets.append(getattr(i, scriptlet.split('.')[1])
+                                       (machine=self,
+                                        name=scriptlet.split('.')[1]))
+
+    def _prepare_to_reset(self):
+        pass
+
+        # wipe all event handlers
+
     def reset(self):
-        """Resets the machine."""
+        """Resets the machine.
+
+        This method is safe to call. It essentially sets up everything from
+        scratch without reloading the config files and assets from disk. This
+        method is called after a game ends and before attract mode begins.
+
+        """
         self.events.post('machine_reset_phase_1')
         self.events.post('machine_reset_phase_2')
         self.events.post('machine_reset_phase_3')
-        # Do we want to reset all timers here? todo
-        # do we post an event when we do this? Really this should re-read
-        # the config and stuff, right? Maybe we destroy all of our objects
-        # even and recreate them?
-
-        # after our reset is over, we start the machineflow
-        #self.flow_advance(0)
+        self.log.info("Reset Complete")
 
     def flow_advance(self, position=None, **kwargs):
         """Advances the machine to the next machine mode as specified in the
@@ -332,7 +339,7 @@ class MachineController(object):
 
     def run(self):
         """The main machine run loop."""
-        self.log.debug("Starting the main machine run loop.")
+        self.log.debug("Starting the main run loop.")
 
         self.platform.timer_initialize()
 
@@ -389,7 +396,7 @@ class MachineController(object):
         """ This is the main game run loop.
 
         """
-        # todo currently this just runs as fast as it can. Should I have it
+        # todo currently this just runs as fast as it can. Should it
         # sleep while waiting for the next timer tick?
 
         self.log.debug("Starting the software loop")

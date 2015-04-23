@@ -32,11 +32,8 @@ from mpf.system.events import EventManager
 from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
 from mpf.game.player import Player
-import mpf.plugins.bcp as bcp
+import mpf.system.bcp as bcp
 import version
-
-__bcp_version_info__ = ('1', '0')
-__bcp_version__ = '.'.join(__bcp_version_info__)
 
 
 class MediaController(object):
@@ -47,7 +44,9 @@ class MediaController(object):
         self.log = logging.getLogger("MediaController")
         self.log.info("Media Controller Version %s", version.__version__)
         self.log.info("Backbox Control Protocol Version %s",
-                      version.__version__)
+                      version.__bcp_version__)
+        self.log.info("Config File Version %s",
+                      version.__config_version__)
 
         python_version = sys.version_info
         self.log.info("Python version: %s.%s.%s", python_version[0],
@@ -96,7 +95,8 @@ class MediaController(object):
                              'switch': self.bcp_switch,
                              'get': self.bcp_get,
                              'set': self.bcp_set,
-                             'config': self.bcp_config
+                             'config': self.bcp_config,
+                             'timer': self.bcp_timer
                             }
 
         # load the MPF config & machine defaults
@@ -277,22 +277,28 @@ class MediaController(object):
                     else:
                         handler()
 
-    def process_command(self, bcp_command, **kwargs):
+    def _process_command(self, bcp_command, **kwargs):
         self.log.info("Processing command: %s %s", bcp_command, kwargs)
 
-        # todo convert to try. Haven't done it yet though because I couldn't
-        # figure out how to make it not swallow exceptions and it was getting
-        # annoying to troubleshoot
-        if bcp_command in self.bcp_commands:
+        try:
             self.bcp_commands[bcp_command](**kwargs)
-        else:
+        except KeyError:
             self.log.warning("Received invalid BCP command: %s", bcp_command)
             self.send('error', message='invalid command', command=bcp_command)
 
     def send(self, bcp_command, callback=None, **kwargs):
+        """Sends a BCP command to the connected pinball controller.
+
+        Args:
+            bcp_command: String of the BCP command name.
+            callback: Optional callback method that will be called when the
+                command is sent.
+            **kwargs: Optional additional kwargs will be added to the BCP
+                command string.
+
+        """
         self.sending_queue.put(bcp.encode_command_string(bcp_command,
                                                           **kwargs))
-
         if callback:
             callback()
 
@@ -305,7 +311,7 @@ class MediaController(object):
         dmd_string = 'dmd_frame?' + data
         self.sending_queue.put(dmd_string)
 
-    def timer_init(self):
+    def _timer_init(self):
         self.HZ = 30
         self.next_tick_time = time.time()
         self.secs_per_tick = 1.0 / self.HZ
@@ -318,8 +324,8 @@ class MediaController(object):
         DelayManager.timer_tick()
 
     def run(self):
-        """Main media controller run loop."""
-        self.timer_init()
+        """Main run loop."""
+        self._timer_init()
 
         self.log.info("Starting the run loop at %sHz", self.HZ)
 
@@ -364,6 +370,7 @@ class MediaController(object):
             pygame.quit()
 
     def socket_thread_stopped(self):
+        """Notifies the media controller that the socket thread has stopped."""
         self.done = True
 
     def start_socket_thread(self):
@@ -378,13 +385,14 @@ class MediaController(object):
         while not self.receive_queue.empty():
             cmd, kwargs = bcp.decode_command_string(
                 self.receive_queue.get(False))
-            self.process_command(cmd, **kwargs)
+            self._process_command(cmd, **kwargs)
 
     def bcp_hello(self, **kwargs):
         """Processes an incoming BCP 'hello' command."""
         try:
-            if LooseVersion(kwargs['version']) == LooseVersion(__bcp_version__):
-                self.send('hello', version=__bcp_version__)
+            if LooseVersion(kwargs['version']) == (
+                    LooseVersion(version.__bcp_version__)):
+                self.send('hello', version=version.__bcp_version__)
             else:
                 self.send('hello', version='unknown protocol version')
         except:
@@ -524,13 +532,48 @@ class MediaController(object):
         pass
 
     def bcp_config(self, **kwargs):
-        """Processes an incoming BCP 'config' command.
+        """Processes an incoming BCP 'config' command."""
+        for k, v in kwargs.iteritems():
+            if k.startswith('volume_'):
+                self.bcp_set_volume(track=k.split('volume_')[1], value=v)
+
+    def bcp_timer(self, name, action, **kwargs):
+        """Processes an incoming BCP 'config' command."""
+
+        self.events.post('timer_' + name + '_' + action, **kwargs)
+
+    def bcp_set_volume(self, track, value):
+        """Sets the volume based on an incoming BCP 'config' command.
+
+        Args:
+            track: String name of the track the volume will set.
+            value: Float between 0 and 1 which represents the volume level to
+                set.
+
+        Note: At this time only the master volume can be set with this method.
 
         """
-        pass
+
+        if track == 'master':
+            self.sound.set_volume(value)
+
+        #if track in self.sound.tracks:
+            #self.sound.tracks[track]
+
+            # todo add per-track volume support to sound system
 
 
 class BCPServer(threading.Thread):
+    """Parent class for the BCP Server thread.
+
+    Args:
+        mc: A reference to the main MediaController instance.
+        receiving_queue: A shared Queue() object which holds incoming BCP
+            commands.
+        sending_queue: A shared Queue() object which holds outgoing BCP
+            commands.
+
+    """
 
     def __init__(self, mc, receiving_queue, sending_queue):
 
@@ -550,6 +593,14 @@ class BCPServer(threading.Thread):
         self.sending_thread.start()
 
     def setup_server_socket(self, interface='localhost', port=5050):
+        """Sets up the socket listener.
+
+        Args:
+            interface: String name of which interface this socket will listen
+                on.
+            port: Integer TCP port number the socket will listen on.
+
+        """
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -564,6 +615,7 @@ class BCPServer(threading.Thread):
         self.socket.listen(1)
 
     def run(self):
+        """The socket thread's run loop."""
 
         while True:
             self.log.info("Waiting for a connection...")
@@ -629,6 +681,12 @@ class BCPServer(threading.Thread):
         self.mc.socket_thread_stopped()
 
     def process_received_message(self, message):
+        """Puts a received BCP message into the receiving queue.
+
+        Args:
+            message: The incoming BCP message
+
+        """
         self.log.info('<<<<<<<<<<<<<< Received "%s"', message)
         self.receive_queue.put(message)
 

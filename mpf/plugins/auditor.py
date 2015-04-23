@@ -16,10 +16,6 @@ from mpf.system.config import Config
 from mpf.plugins.shots import Shot
 
 
-def preload_check(machine):
-    return True
-
-
 class Auditor(object):
 
     def __init__(self, machine):
@@ -28,6 +24,10 @@ class Auditor(object):
         Args:
             machine: A refence to the machine controller object.
         """
+
+        if 'auditor' not in machine.config:
+            return
+
         self.log = logging.getLogger('Auditor')
         self.machine = machine
 
@@ -39,7 +39,6 @@ class Auditor(object):
         disable() methods.
         """
 
-        #self.config = self.machine.config['auditor']
         self.machine.events.add_handler('machine_init_phase_4', self._initialize)
 
     def _initialize(self):
@@ -79,12 +78,12 @@ class Auditor(object):
             self.current_audits['switches'] = dict()
 
         if ('events' in self.config['audit'] and
-                'Events' not in self.current_audits):
-            self.current_audits['Events'] = dict()
+                'events' not in self.current_audits):
+            self.current_audits['events'] = dict()
 
         if ('player' in self.config['audit'] and
-                'Player' not in self.current_audits):
-            self.current_audits['Player'] = dict()
+                'player' not in self.current_audits):
+            self.current_audits['player'] = dict()
 
         # Make sure we have all the switches in our audit dict
         for switch in self.machine.switches:
@@ -100,11 +99,11 @@ class Auditor(object):
         # Make sure we have all the player stuff in our audit dict
         if 'player' in self.config['audit']:
             for item in self.config['player']:
-                if item not in self.current_audits['Player']:
-                    self.current_audits['Player'][item] = dict()
-                    self.current_audits['Player'][item]['top'] = list()
-                    self.current_audits['Player'][item]['average'] = 0
-                    self.current_audits['Player'][item]['total'] = 0
+                if item not in self.current_audits['player']:
+                    self.current_audits['player'][item] = dict()
+                    self.current_audits['player'][item]['top'] = list()
+                    self.current_audits['player'][item]['average'] = 0
+                    self.current_audits['player'][item]['total'] = 0
 
         # Register for the events the auditor needs to do its job
         self.machine.events.add_handler('game_starting', self.enable)
@@ -143,7 +142,7 @@ class Auditor(object):
                 kwargs.
         """
 
-        self.current_audits['Events'][eventname] += 1
+        self.current_audits['events'][eventname] += 1
 
     def audit_player(self, **kwargs):
         """Called to write player data to the audit log. Typically this is only
@@ -156,19 +155,19 @@ class Auditor(object):
         for item in self.config['player']:
             for player in self.machine.game.player_list:
 
-                self.current_audits['Player'][item]['top'] = \
+                self.current_audits['player'][item]['top'] = \
                     self._merge_into_top_list(
                         player[item],
-                        self.current_audits['Player'][item]['top'],
+                        self.current_audits['player'][item]['top'],
                         self.config['num_player_top_records'])
 
-                self.current_audits['Player'][item]['average'] = (
-                    ((self.current_audits['Player'][item]['total'] *
-                      self.current_audits['Player'][item]['average']) +
+                self.current_audits['player'][item]['average'] = (
+                    ((self.current_audits['player'][item]['total'] *
+                      self.current_audits['player'][item]['average']) +
                      self.machine.game.player[item]) /
-                    (self.current_audits['Player'][item]['total'] + 1))
+                    (self.current_audits['player'][item]['total'] + 1))
 
-                self.current_audits['Player'][item]['total'] += 1
+                self.current_audits['player'][item]['total'] += 1
 
     def _merge_into_top_list(self, new_item, current_list, num_items):
         # takes a list of top integers and a new item and merges the new item
@@ -240,8 +239,8 @@ class Auditor(object):
                                                 self.audit_event,
                                                 eventname=event)
                 # Make sure we have an entry in our audit file for this event
-                if event not in self.current_audits['Events']:
-                    self.current_audits['Events'][event] = 0
+                if event not in self.current_audits['events']:
+                    self.current_audits['events'][event] = 0
 
         for event in self.config['save_events']:
             self.machine.events.add_handler(event,
@@ -268,6 +267,9 @@ class Auditor(object):
             if 'no_audit' not in switch.tags:
                 self.machine.switch_controller.remove_switch_handler(
                     switch.name, self.audit_switch, 1, 0)
+
+
+plugin_class = Auditor
 
 
 # The MIT License (MIT)

@@ -23,13 +23,7 @@ import copy
 
 from mpf.game.player import Player
 from mpf.system.config import Config
-
-__bcp_version_info__ = ('1', '0')
-__bcp_version__ = '.'.join(__bcp_version_info__)
-
-
-def preload_check(machine):
-    return True
+import version
 
 
 def decode_command_string(bcp_string):
@@ -46,7 +40,8 @@ def decode_command_string(bcp_string):
         Output: ('trigger', {'name': 'hello', 'foo': 'foo bar'})
 
     """
-    bcp_command = urlparse.urlsplit(bcp_string.lower().decode('utf-8'))
+    #bcp_command = urlparse.urlsplit(bcp_string.lower().decode('utf-8'))
+    bcp_command = urlparse.urlsplit(bcp_string.lower())
     try:
         kwargs = urlparse.parse_qs(bcp_command.query)
 
@@ -75,19 +70,21 @@ def encode_command_string(bcp_command, **kwargs):
         Output: trigger?name=hello&foo=bar
 
     """
-    scrubbed_kwargs = dict()
+    kwarg_string = ''
 
     try:
         for k, v in kwargs.iteritems():
-            scrubbed_kwargs[k.lower()] = str(v).lower()
 
-        scrubbed_kwargs = urllib.urlencode(kwargs)
+            kwarg_string += (urllib.quote(k.lower(), '') + '=' +
+                             urllib.quote(str(v).lower(), '') + '&')
+
+        kwarg_string = kwarg_string[:-1]
 
     except (TypeError, AttributeError):
         pass
 
     return unicode(urlparse.urlunparse((None, None, bcp_command.lower(), None,
-                                        scrubbed_kwargs, None)), 'utf-8')
+                                        kwarg_string, None)), 'utf-8')
 
 
 class BCP(object):
@@ -119,14 +116,8 @@ class BCP(object):
         player_variable?name=x&value=x&prev_value=x&change=x
         set
         switch?name=x&state=x
+        timer
         trigger?name=xxx
-
-    Todo:
-        timer started
-        timer paused
-        timer tick
-        timer cancel
-        timer complete
 
     """
 
@@ -135,9 +126,8 @@ class BCP(object):
                 'connections' not in machine.config['bcp']):
             return
 
-        self.log = logging.getLogger('bcp')
+        self.log = logging.getLogger('BCP')
         self.machine = machine
-        self.machine.bcp = self
 
         self.config = machine.config['bcp']
         self.receive_queue = Queue()
@@ -154,7 +144,6 @@ class BCP(object):
 
         self.dmd = self.machine.platform.configure_dmd()
 
-        self._setup_bcp_connections()
         self.filter_player_events = True
         self.send_player_vars = False
         self.mpfmc_trigger_events = set()
@@ -193,6 +182,8 @@ class BCP(object):
         except KeyError:
             pass
 
+        self.machine.events.add_handler('machine_init_phase_2',
+                                        self._setup_bcp_connections)
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
         self.machine.events.add_handler('game_starting', self.bcp_game_start)
         self.machine.events.add_handler('player_add_success',
@@ -205,6 +196,7 @@ class BCP(object):
                                         self.enable_volume_keys)
         self.machine.events.add_handler('disable_volume_keys',
                                         self.disable_volume_keys)
+
 
         self.machine.modes.register_start_method(self.bcp_mode_start, 'mode')
         self.machine.modes.register_start_method(self.register_triggers,
@@ -297,6 +289,17 @@ class BCP(object):
             self.send(command)
 
     def register_mpfmc_trigger_events(self, config, **kwargs):
+        """Scans an MPF config file and creates trigger events for the config
+        settings that need them.
+
+        Args:
+            config: An MPF config dictionary (can be the machine-wide or a mode-
+                specific one).
+            **kwargs: Not used. Included to catch any additional kwargs that may
+                be associted with this method being registered as an event
+                handler.
+
+        """
 
         self.log.debug("Registering Trigger Events")
 
@@ -343,6 +346,17 @@ class BCP(object):
             self.mpfmc_trigger_events.add(event)
 
     def register_triggers(self, config, priority, mode):
+        """Sets up trigger events based on a 'Triggers:' section of a config
+        dictionary.
+
+        Args:
+            config: A python config dictionary.
+            priority: (not used) Included since this method is called as part of
+                a mode start which passed this parameter.
+            mode: (not used) Included since this method is called as part of
+                a mode start which passed this parameter.
+
+        """
         # config is localized to 'Trigger'
 
         event_list = list()
@@ -395,6 +409,9 @@ class BCP(object):
             callback()
 
     def get_bcp_messages(self):
+        """Retrieves and processes new BCP messages from the receiving queue.
+
+        """
         while not self.receive_queue.empty():
             cmd, kwargs = self.receive_queue.get(False)
 
@@ -565,13 +582,13 @@ class BCP(object):
         for k, v in config['tracks'].iteritems():
             self.track_volumes[k] = v
 
-    def increase_volume(self, track='overall', **kwargs):
+    def increase_volume(self, track='master', **kwargs):
         """Sends a command to the remote BCP host to increase the volume of a
         track by 1 unit.
 
         Args:
             track: The string name of the track you want to increase the volume
-                on. Default is 'overall'.
+                on. Default is 'master'.
             **kwargs: Ignored. Included in case this method is used as a
                 callback for an event which has other kwargs.
 
@@ -588,13 +605,13 @@ class BCP(object):
             self.log.warning('Received volume increase request for unknown '
                              'track "%s"', track)
 
-    def decrease_volume(self, track='overall', **kwargs):
+    def decrease_volume(self, track='master', **kwargs):
         """Sends a command to the remote BCP host to decrease the volume of a
         track by 1 unit.
 
         Args:
             track: The string name of the track you want to decrease the volume
-                on. Default is 'overall'.
+                on. Default is 'master'.
             **kwargs: Ignored. Included in case this method is used as a
                 callback for an event which has other kwargs.
 
@@ -611,7 +628,7 @@ class BCP(object):
                              'track "%s"', track)
 
     def enable_volume_keys(self, up_tag='volume_up', down_tag='volume_down'):
-        """Enables switch handlers to change the overall system volume based on
+        """Enables switch handlers to change the master system volume based on
         switch tags.
 
         Args:
@@ -637,7 +654,7 @@ class BCP(object):
 
     def disable_volume_keys(self, up_tag='volume_up', down_tag='volume_down'):
         """Disables switch handlers so that the switches no longer affect the
-        overall system volume.
+        master system volume.
 
         Args:
             up_tag: String of a switch tag name of the switches that will no
@@ -656,7 +673,7 @@ class BCP(object):
 
         self.volume_control_enabled = False
 
-    def set_volume(self, volume, track='overall', **kwargs):
+    def set_volume(self, volume, track='master', **kwargs):
         """Sends a command to the remote BCP host to set the volume of a track
         to the value specified.
 
@@ -665,7 +682,7 @@ class BCP(object):
                 configuration in your config file. Values outside this range are
                 ignored.
             track: The string name of the track you want to set the volume on.
-                Default is 'overall'.
+                Default is 'master'.
             **kwargs: Ignored. Included in case this method is used as a
                 callback for an event which has other kwargs.
 
@@ -693,16 +710,22 @@ class BCP(object):
 
 
 class BCPClient(object):
+    """Parent class for a BCP client socket. (There can be multiple of these to
+    connect to multiple BCP media controllers simultaneously.)
+
+    Args:
+        machine: The main MachineController object.
+        name: String name this client.
+        config: A dictionary containing the configuration for this client.
+        receive_queue: The shared Queue() object that holds incoming BCP
+            messages.
+
+    """
 
     def __init__(self, machine, name, config, receive_queue):
-        """Sets up a BCP socket client.
-
-        Args:
-            host: String of the host name.
-            port: Integer of the port name.
-        """
 
         self.log = logging.getLogger('BCPClient.' + name)
+        self.log.info('Setting up BCP Client')
 
         self.machine = machine
         self.name = name
@@ -732,6 +755,7 @@ class BCPClient(object):
         self.setup_client_socket()
 
     def setup_client_socket(self):
+        """Sets up the client socket."""
 
         self.connection_attempts += 1
         if (self.config['connection_attempts'] == -1 or
@@ -911,7 +935,7 @@ class BCPClient(object):
 
     def send_hello(self):
         """Sends BCP 'hello' command."""
-        self.send('hello?version=' + __bcp_version__)
+        self.send('hello?version=' + version.__bcp_version__)
 
     def send_goodbye(self):
         """Sends BCP 'goodbye' command."""

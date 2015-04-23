@@ -1,3 +1,4 @@
+# config_version=1
 Game:
     Balls per game: 3
     Max players per game: 4

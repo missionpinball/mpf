@@ -12,17 +12,7 @@ from mpf.system.timing import Timing
 from mpf.system.tasks import DelayManager
 from mpf.system.config import Config
 
-# todo reset shots on ball start?
-
-
-def preload_check(machine):
-
-    #if 'shots' in machine.config and machine.config['shots']:
-    #    return True
-    #else:
-    #    return False
-
-    return True
+# todo verify shots are reset on ball start
 
 
 class ShotController(object):
@@ -186,8 +176,6 @@ class StandardShot(Shot):
         """Enables the shot."""
         super(StandardShot, self).enable()
 
-        print self.name
-        print self.config
         for switch in Config.string_to_list(self.config['switch']):
             self.machine.switch_controller.add_switch_handler(
                 switch, self._switch_handler, return_info=True)

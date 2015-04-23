@@ -10,20 +10,16 @@ EM machine"""
 import logging
 
 
-def preload_check(machine):
-
-    if 'infolights' in machine.config:
-        return True
-    else:
-        return False
-
-
 class InfoLights(object):
 
     def __init__(self, machine):
         self.log = logging.getLogger('infolights')
         self.machine = machine
-        self.config = self.machine.config['infolights']
+
+        try:
+            self.config = self.machine.config['infolights']
+        except KeyError:
+            return
 
         self.flash = [
             {'color': 'ff', 'time': 1},
@@ -112,6 +108,10 @@ class InfoLights(object):
         match_str = 'match_' + str(match)
         if match_str in self.config:
             self.config[match_str]['light'].on()
+
+
+plugin_class = InfoLights
+
 
 # The MIT License (MIT)
 

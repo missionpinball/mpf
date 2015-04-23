@@ -1,3 +1,4 @@
+# config_version=1
 Mode:
     start_events: ball_starting
     end_events: start_mode1_acmag

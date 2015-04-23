@@ -14,10 +14,6 @@ from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 
 
-def preload_check(machine):
-    return True
-
-
 class SwitchPlayer(object):
 
     def __init__(self, machine):
@@ -45,8 +41,6 @@ class SwitchPlayer(object):
         self.start_delay = self.config['start_delay']
 
     def _start_event_callback(self):
-
-        print self.step_list
 
         if ('time' in self.step_list[self.current_step] and
                 self.step_list[self.current_step]['time'] > 0):
@@ -96,6 +90,7 @@ class SwitchPlayer(object):
                     logical=True)
 
 
+plugin_class = SwitchPlayer
 
 # The MIT License (MIT)
 

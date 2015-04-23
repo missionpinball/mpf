@@ -1,12 +1,9 @@
+# config_version=1
 # Demo Man config file for MPF 0.17
 
-Plugins:
-    - shots.ShotController
+DisabledPlugins:
     - ball_search.BallSearch
-    - logic_blocks.LogicBlocks
-    - scoring.ScoreController
     - auditor.Auditor
-    - bcp.BCP
 
 Machine:
     HZ: 30
@@ -1176,3 +1173,9 @@ LightScripts:
         - tocks: 1
           color: 0
 
+SlidePlayer:
+    volume_change:
+        type: Text
+        text: "VOLUME: %display_volume"
+        expire: 2s
+        slide_priority: 10000

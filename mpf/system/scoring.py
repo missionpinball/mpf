@@ -11,16 +11,6 @@ import logging
 import uuid
 
 
-def preload_check(machine):
-
-    #if 'scoring' in machine.config and machine.config['scoring']:
-    #    return True
-    #else:
-    #    return False
-
-    return True
-
-
 class ScoreController(object):
 
     def __init__(self, machine):
