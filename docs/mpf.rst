@@ -7,8 +7,8 @@ Subpackages
 .. toctree::
 
     mpf.devices
-    mpf.display
     mpf.game
+    mpf.media_controller
     mpf.platform
     mpf.plugins
     mpf.system
