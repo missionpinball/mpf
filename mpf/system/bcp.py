@@ -116,14 +116,8 @@ class BCP(object):
         player_variable?name=x&value=x&prev_value=x&change=x
         set
         switch?name=x&state=x
+        timer
         trigger?name=xxx
-
-    Todo:
-        timer started
-        timer paused
-        timer tick
-        timer cancel
-        timer complete
 
     """
 
@@ -295,6 +289,17 @@ class BCP(object):
             self.send(command)
 
     def register_mpfmc_trigger_events(self, config, **kwargs):
+        """Scans an MPF config file and creates trigger events for the config
+        settings that need them.
+
+        Args:
+            config: An MPF config dictionary (can be the machine-wide or a mode-
+                specific one).
+            **kwargs: Not used. Included to catch any additional kwargs that may
+                be associted with this method being registered as an event
+                handler.
+
+        """
 
         self.log.debug("Registering Trigger Events")
 
@@ -341,6 +346,17 @@ class BCP(object):
             self.mpfmc_trigger_events.add(event)
 
     def register_triggers(self, config, priority, mode):
+        """Sets up trigger events based on a 'Triggers:' section of a config
+        dictionary.
+
+        Args:
+            config: A python config dictionary.
+            priority: (not used) Included since this method is called as part of
+                a mode start which passed this parameter.
+            mode: (not used) Included since this method is called as part of
+                a mode start which passed this parameter.
+
+        """
         # config is localized to 'Trigger'
 
         event_list = list()
@@ -393,6 +409,9 @@ class BCP(object):
             callback()
 
     def get_bcp_messages(self):
+        """Retrieves and processes new BCP messages from the receiving queue.
+
+        """
         while not self.receive_queue.empty():
             cmd, kwargs = self.receive_queue.get(False)
 
@@ -691,14 +710,19 @@ class BCP(object):
 
 
 class BCPClient(object):
+    """Parent class for a BCP client socket. (There can be multiple of these to
+    connect to multiple BCP media controllers simultaneously.)
+
+    Args:
+        machine: The main MachineController object.
+        name: String name this client.
+        config: A dictionary containing the configuration for this client.
+        receive_queue: The shared Queue() object that holds incoming BCP
+            messages.
+
+    """
 
     def __init__(self, machine, name, config, receive_queue):
-        """Sets up a BCP socket client.
-
-        Args:
-            host: String of the host name.
-            port: Integer of the port name.
-        """
 
         self.log = logging.getLogger('BCPClient.' + name)
         self.log.info('Setting up BCP Client')
@@ -731,6 +755,7 @@ class BCPClient(object):
         self.setup_client_socket()
 
     def setup_client_socket(self):
+        """Sets up the client socket."""
 
         self.connection_attempts += 1
         if (self.config['connection_attempts'] == -1 or
