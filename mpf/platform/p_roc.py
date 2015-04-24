@@ -89,7 +89,7 @@ class HardwarePlatform(Platform):
 
         self.proc = None
 
-        self.log("Connecting to P-ROC")
+        self.log.info("Connecting to P-ROC")
 
         while not self.proc:
             try:
@@ -98,7 +98,7 @@ class HardwarePlatform(Platform):
             except IOError:
                 print "Retrying..."
 
-        self.log("Succefully connected to P-ROC")
+        self.log.info("Succefully connected to P-ROC")
 
         # Clear out the default program for the aux port since we might need it
         # for a 9th column. Details:
