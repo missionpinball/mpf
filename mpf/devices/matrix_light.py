@@ -37,7 +37,8 @@ class MatrixLight(Device):
         # some things later.
         self.config['number_str'] = str(config['number']).upper()
 
-        self.hw_driver, self.number = self.machine.platform.configure_matrixlight(self.config)
+        self.hw_driver, self.number = (
+            self.machine.platform.configure_matrixlight(self.config))
 
         self.registered_handlers = []
 
