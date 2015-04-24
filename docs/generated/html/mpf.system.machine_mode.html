@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.machine_mode module &mdash; Mission Pinball Framework 0.17 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.17',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.17 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.17 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.machine_mode">
+<span id="mpf-system-machine-mode-module"></span><h1>mpf.system.machine_mode module</h1>
+<dl class="class">
+<dt id="mpf.system.machine_mode.MachineMode">
+<em class="property">class </em><tt class="descclassname">mpf.system.machine_mode.</tt><tt class="descname">MachineMode</tt><big>(</big><em>machine</em>, <em>name</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A machine mode represents as special modes, the idea is there&#8217;s only
+one at a time.</p>
+<p>You can specify an order so that when one ends, the next one starts.</p>
+<p class="rubric">Examples</p>
+<p><a href="#id1"><span class="problematic" id="id2">*</span></a>Attract
+<a href="#id3"><span class="problematic" id="id4">*</span></a>Game
+<a href="#id5"><span class="problematic" id="id6">*</span></a>Match
+<a href="#id7"><span class="problematic" id="id8">*</span></a>Highscore Entry
+<a href="#id9"><span class="problematic" id="id10">*</span></a>Service</p>
+<p>The idea is the machine modes will control the buttons since they do
+different things in different modes. (&#8220;Buttons&#8221; versus &#8220;Switches&#8221; in this
+case. Buttons are things that players can control, like coin switches,
+control panel buttons, flippers, start, plunge, etc.)</p>
+<dl class="method">
+<dt id="mpf.system.machine_mode.MachineMode.start">
+<tt class="descname">start</tt><big>(</big><big>)</big></dt>
+<dd><p>Starts this machine mode.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_mode.MachineMode.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big></dt>
+<dd><p>Stops this machine mode.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.machine_mode.MachineMode.tick">
+<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
+<dd><p>Most likely you&#8217;ll just copy this entire method to your mode
+subclass. No need for super().</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.machine_mode.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.17 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

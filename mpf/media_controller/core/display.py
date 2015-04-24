@@ -1060,12 +1060,15 @@ class Slide(object):
 
         Returns:
             An element dictionary, which includes:
-            name: String name of the element.
-            element: The newly-created display element object.
-            layer: Integer of the relative layer of this element on the
-                slide.
-            x: x position of the upper left corner of this element on the slide.
-            y: y position of the upper left corner of this element on the slide.
+                name: String name of the element.
+                element: The newly-created display element object.
+                layer: Integer of the relative layer of this element on the
+                    slide.
+                x: x position of the upper left corner of this element on the
+                    slide.
+                y: y position of the upper left corner of this element on the
+                    slide.
+
         """
 
         element_type = element_type.lower()
@@ -1188,7 +1191,10 @@ class Slide(object):
         """Removes the slide. If this slide is active, the next-highest priority
         slide will automatically be shown.
         """
-        del self.mpfdisplay.slides[self.name]
+        try:
+            del self.mpfdisplay.slides[self.name]
+        except KeyError:
+            pass
 
         self.mpfdisplay.show_current_active_slide()
 

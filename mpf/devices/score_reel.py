@@ -1068,7 +1068,7 @@ class ScoreReel(Device):
 
         `reel_<name>_pulse_done`: When the coil is done pulsing
         `reel_<name>_ready`: When the config['repeat_pulse_time'] time is up
-        `reel_<name>_hw_value: When the config['hw_confirm_time'] time is up
+        `reel_<name>_hw_value`: When the config['hw_confirm_time'] time is up
 
         Args:
             direction (int, optional): If direction is 1, advances the reel

@@ -15,6 +15,7 @@ from mpf.system.devices import Device
 from mpf.system.timing import Timing
 from mpf.system.config import Config
 
+
 class BallDevice(Device):
     """Base class for a 'Ball Device' in a pinball machine.
 
@@ -277,9 +278,9 @@ class BallDevice(Device):
             request: A string of what status item you'd like to request.
                 Default will return all status items.
                 Options include:
-                    * balls
-                    * eject_in_progress_target
-                    * eject_queue
+                * balls
+                * eject_in_progress_target
+                * eject_queue
 
         Returns:
             A dictionary with the following keys:
