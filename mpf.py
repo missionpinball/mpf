@@ -88,7 +88,7 @@ except OSError as exception:
         raise
 
 logging.basicConfig(level=options.loglevel,
-                    format='%(asctime)s : %(name)s : %(message)s',
+                    format='%(asctime)s : %(levelname)s : %(name)s : %(message)s',
                     filename=options.logfile,
                     filemode='w')
 
