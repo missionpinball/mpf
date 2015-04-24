@@ -1,0 +1,186 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.media_controller.core.font_manager module &mdash; Mission Pinball Framework 0.17 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.17',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.17 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.17 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.media_controller.core.font_manager">
+<span id="mpf-media-controller-core-font-manager-module"></span><h1>mpf.media_controller.core.font_manager module</h1>
+<p>Contains the parent classes for MPF&#8217;s FontManager.</p>
+<dl class="class">
+<dt id="mpf.media_controller.core.font_manager.FontManager">
+<em class="property">class </em><tt class="descclassname">mpf.media_controller.core.font_manager.</tt><tt class="descname">FontManager</tt><big>(</big><em>machine</em>, <em>config</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Parent class of the Font Manager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>machine</strong> &#8211; The MachineController.</li>
+<li><strong>config</strong> &#8211; Dictionary of the font configuration.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mpf.media_controller.core.font_manager.FontManager.font_cache">
+<tt class="descname">font_cache</tt></dt>
+<dd><p>Dictionary of Pygame font rendering objects.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.font_manager.FontManager.add_to_cache">
+<tt class="descname">add_to_cache</tt><big>(</big><em>font</em>, <em>size</em>, <em>font_obj</em><big>)</big></dt>
+<dd><p>Adds a Pygame font object to the font cache.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>font_name</strong> &#8211; String of what you want to refer to this font as.</li>
+<li><strong>size</strong> &#8211; Actual size this font object renders at.</li>
+<li><strong>font_obj</strong> &#8211; The Pygame font object that will be cached.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.font_manager.FontManager.get_font">
+<tt class="descname">get_font</tt><big>(</big><em>font=None</em>, <em>size=None</em>, <em>cache=True</em><big>)</big></dt>
+<dd><p>Returns a Pygame font rendering object for a given font name and
+size. Checks cache first and then falls back to disk. Optionally caches
+new font objects for reuse.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; String name of the font requested.</li>
+<li><strong>size</strong> &#8211; Integer of the MPF size of the font you want.</li>
+<li><strong>cache</strong> &#8211; Boolean as to whether the ront rendering object that&#8217;s
+created should be cached.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: A Pygame font rendering object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.font_manager.FontManager.locate_font_file">
+<tt class="descname">locate_font_file</tt><big>(</big><em>file_name</em><big>)</big></dt>
+<dd><p>Takes a file name and tries to find the font file on disk. First it
+checks the machine_folder fonts folder to see if there&#8217;s a machine-
+specific font, then it tries the MPF system fonts folder.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_name</strong> &#8211; String of the font file name</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: String of the full path (path + file name) of the font.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.font_manager.FontManager.render">
+<tt class="descname">render</tt><big>(</big><em>text</em>, <em>font='default'</em>, <em>antialias=False</em>, <em>size=None</em>, <em>color=None</em>, <em>bg_color=None</em>, <em>alpha_color=None</em>, <em>alpha_channel=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.media_controller.core.font_manager.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.17 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

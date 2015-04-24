@@ -1,0 +1,260 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.devices.flipper module &mdash; Mission Pinball Framework 0.17 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.17',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.17 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.17 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.devices.flipper">
+<span id="mpf-devices-flipper-module"></span><h1>mpf.devices.flipper module</h1>
+<p>Contains the base class for flippers.</p>
+<dl class="class">
+<dt id="mpf.devices.flipper.Flipper">
+<em class="property">class </em><tt class="descclassname">mpf.devices.flipper.</tt><tt class="descname">Flipper</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
+<p>Represents a flipper in a pinball machine. Subclass of Device.</p>
+<p>Contains several methods for actions that can be performed on this flipper,
+like <a class="reference internal" href="#mpf.devices.flipper.Flipper.enable" title="mpf.devices.flipper.Flipper.enable"><tt class="xref py py-meth docutils literal"><span class="pre">enable()</span></tt></a>, <a class="reference internal" href="#mpf.devices.flipper.Flipper.disable" title="mpf.devices.flipper.Flipper.disable"><tt class="xref py py-meth docutils literal"><span class="pre">disable()</span></tt></a>, etc.</p>
+<p>Flippers have several options, including player buttons, EOS swtiches,
+multiple coil options (pulsing, hold coils, etc.)</p>
+<p>More details: <a class="reference external" href="http://missionpinball.com/docs/devices/flippers/">http://missionpinball.com/docs/devices/flippers/</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>machine</strong> &#8211; A reference to the machine controller instance.</li>
+<li><strong>name</strong> &#8211; A string of the name you&#8217;ll refer to this flipper object as.</li>
+<li><strong>config</strong> &#8211; A dictionary that holds the configuration values which specify
+how this flipper should be configured. If this is None, it will use
+the system config settings that were read in from the config files
+when the machine was reset.</li>
+<li><strong>collection</strong> &#8211; A reference to the collection list this device will be added</li>
+<li><strong>to.</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mpf.devices.flipper.Flipper.collection">
+<tt class="descname">collection</tt><em class="property"> = 'flippers'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.flipper.Flipper.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'flippers'</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.flipper.Flipper.configure">
+<tt class="descname">configure</tt><big>(</big><em>config=None</em><big>)</big></dt>
+<dd><p>Configures the flipper device.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> &#8211; A dictionary that holds the configuration values which
+specify how this flipper should be configured. If this is None,
+it will use the system config settings that were read in from
+the config files when the machine was reset.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.flipper.Flipper.disable">
+<tt class="descname">disable</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Disables the flipper.</p>
+<p>This method makes it so the cabinet flipper buttons no longer control
+the flippers. Used when no game is active and when the player has
+tilted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.flipper.Flipper.enable">
+<tt class="descname">enable</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Enables the flipper by writing the necessary hardware rules to the
+hardware controller.</p>
+<p>The hardware rules for coils can be kind of complex given all the
+options, so we&#8217;ve mapped all the options out here. We literally have
+methods to enable the various rules based on the rule letters here,
+which we&#8217;ve implemented below. Keeps it easy to understand. :)</p>
+<p>Note there&#8217;s a platform feature saved at:
+self.machine.config[&#8216;platform&#8217;][&#8216;hw_enable_auto_disable&#8217;]. If True, it
+means that the platform hardware rules will automatically disable a coil
+that has been enabled when the trigger switch is disabled. If False, it
+means the hardware platform needs its own rule to disable the coil when
+the switch is disabled. Methods F and G below check for that feature
+setting and will not be applied to the hardware if it&#8217;s True.</p>
+<p>Two coils, using EOS switch to indicate the end of the power stroke:
+Rule  Type     Coil  Switch  Action
+A.    Enable   Main  Button  active
+D.    Enable   Hold  Button  active
+E.    Disable  Main  EOS     active
+F.    Disable  Main  Button  inactive
+G.    Disable  Hold  Button  inactive</p>
+<p>One coil, using EOS switch
+Rule  Type     Coil  Switch  Action
+A.    Enable   Main  Button  active
+H.    PWM      Main  EOS     active
+F.    Disable  Main  Button  inactive</p>
+<p>Two coils, not using EOS switch:
+Rule  Type     Coil  Switch  Action
+B.    Pulse    Main  Button  active
+D.    Enable   Hold  Button  active
+F.    Disable  Main  Button  inactive
+G.    Disable  Hold  Button  inactive</p>
+<p>One coil, not using EOS switch
+Rule  Type       Coil  Switch  Action
+C.    Pulse/PWM  Main  button  active
+F.    Disable    Main  button  inactive</p>
+<p>Use EOS switch for safety (for platforms that support mutiple switch
+rules). Note that this rule is the letter &#8220;i&#8221;, not a numeral 1.
+I. Enable power if button is active and EOS is not active</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.flipper.Flipper.enable_no_hold">
+<tt class="descname">enable_no_hold</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables the flippers in &#8216;no hold&#8217; mode.</p>
+<p>No Hold is a novelty mode where the flippers to not stay up even when
+the buttons are held in.</p>
+<p>This mode is not yet implemented.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.flipper.Flipper.enable_partial_power">
+<tt class="descname">enable_partial_power</tt><big>(</big><em>percent</em><big>)</big></dt>
+<dd><p>Enables flippers which operated at less than full power.</p>
+<p>This is a novelty mode, like &#8220;weak flippers&#8221; from the Wizard of Oz.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>percent</strong> &#8211; A floating point value between 0 and 1.0 which represents the
+percentage of power the flippers will be enabled at.</td>
+</tr>
+</tbody>
+</table>
+<p>This mode is not yet implemented.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mpf.devices.flipper.Flipper.invert">
+<em class="property">classmethod </em><tt class="descname">invert</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables inverted flippers.</p>
+<p>Inverted flippers is a novelty mode where the left flipper button
+controls the right flippers and vice-versa.</p>
+<p>This mode is not yet implemented.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.flipper.Flipper.sw_flip">
+<tt class="descname">sw_flip</tt><big>(</big><big>)</big></dt>
+<dd><p>Activates the flipper via software as if the flipper button was
+pushed.</p>
+<p>This is needed because the real flipper activations are handled in
+hardware, so if you want to flip the flippers with the keyboard or OSC
+interfaces, you have to call this method.</p>
+<p>Note this method will keep this flipper enabled until you call
+sw_release().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.flipper.Flipper.sw_release">
+<tt class="descname">sw_release</tt><big>(</big><big>)</big></dt>
+<dd><p>Deactives the flipper via software as if the flipper button was
+released. See the documentation for sw_flip() for details.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.devices.flipper.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.17 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

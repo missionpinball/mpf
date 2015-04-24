@@ -1,0 +1,228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.devices.diverter module &mdash; Mission Pinball Framework 0.17 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.17',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.17 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.17 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.devices.diverter">
+<span id="mpf-devices-diverter-module"></span><h1>mpf.devices.diverter module</h1>
+<p>Parent contains the base class for diverter devices.</p>
+<dl class="class">
+<dt id="mpf.devices.diverter.Diverter">
+<em class="property">class </em><tt class="descclassname">mpf.devices.diverter.</tt><tt class="descname">Diverter</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
+<p>Represents a diverter in a pinball machine.</p>
+<p>Args: Same as the Device parent class.</p>
+<dl class="method">
+<dt id="mpf.devices.diverter.Diverter.activate">
+<tt class="descname">activate</tt><big>(</big><big>)</big></dt>
+<dd><p>Physically activates this diverter&#8217;s coil.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.diverter.Diverter.collection">
+<tt class="descname">collection</tt><em class="property"> = 'diverters'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.diverter.Diverter.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'diverters'</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.diverter.Diverter.deactivate">
+<tt class="descname">deactivate</tt><big>(</big><big>)</big></dt>
+<dd><p>Deactivates this diverter.</p>
+<p>This method will disable the activation_coil, and (optionally) if it&#8217;s
+configured with a deactivation coil, it will pulse it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.diverter.Diverter.disable">
+<tt class="descname">disable</tt><big>(</big><em>auto=False</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Disables this diverter.</p>
+<p>This method will remove the hardware rule if this diverter is activated
+via a hardware switch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>auto</strong> &#8211; Boolean value which is used to indicate whether this
+diverter disabled itself automatically. This is passed to the
+event which is posted.</li>
+<li><strong>**kwargs</strong> &#8211; This is here because this disable method is called by
+whatever event the game programmer specifies in their machine
+configuration file, so we don&#8217;t know what event that might be
+or whether it has random kwargs attached to it.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.diverter.Diverter.disable_held_coil">
+<tt class="descname">disable_held_coil</tt><big>(</big><big>)</big></dt>
+<dd><p>Physically disables the coil holding this diverter open.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.diverter.Diverter.disable_hw_switch">
+<tt class="descname">disable_hw_switch</tt><big>(</big><big>)</big></dt>
+<dd><p>Removes the hardware rule to disable the hardware activation switch
+for this diverter.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.diverter.Diverter.enable">
+<tt class="descname">enable</tt><big>(</big><em>auto=False</em>, <em>activations=-1</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Enables this diverter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>auto</strong> &#8211; Boolean value which is used to indicate whether this
+diverter enabled itself automatically. This is passed to the
+event which is posted.</li>
+<li><strong>activations</strong> &#8211; Integer of how many times you&#8217;d like this diverter to
+activate before it will automatically disable itself. Default is
+-1 which is unlimited.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If an &#8216;activation_switches&#8217; is configured, then this method writes a
+hardware autofire rule to the pinball controller which fires the
+diverter coil when the switch is activated.</p>
+<p>If no <cite>activation_switches</cite> is specified, then the diverter is activated
+immediately.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.diverter.Diverter.enable_hw_switches">
+<tt class="descname">enable_hw_switches</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables the hardware switch rule which causes this diverter to
+activate when the switch is hit.</p>
+<p>This is typically used for diverters on loops and ramps where you don&#8217;t
+want the diverter to phsyically activate until the ramp entry switch is
+activated.</p>
+<p>If this diverter is configured with a activation_time, this method will
+also set switch handlers which will set a delay to deactivate the
+diverter once the activation activation_time expires.</p>
+<p>If this diverter is configured with a deactivation switch, this method
+will set up the switch handlers to deactivate the diverter when the
+deactivation switch is activated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.diverter.Diverter.schedule_deactivation">
+<tt class="descname">schedule_deactivation</tt><big>(</big><em>time=None</em><big>)</big></dt>
+<dd><p>Schedules a delay to deactivate this diverter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time</strong> &#8211; The MPF string time of how long you&#8217;d like the delay before
+deactivating the diverter. Default is None which means it uses
+the &#8216;activation_time&#8217; setting configured for this diverter. If
+there is no &#8216;activation_time&#8217; setting and no delay is passed,
+it will disable the diverter immediately.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.devices.diverter.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.17 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

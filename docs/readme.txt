@@ -3,7 +3,7 @@ build/html folder. Open index.html in a browser to view it. (Note the search
 functionality is Javascript-based, so you can use it even if you're accessing
 the files locally.)
 
-The Sphinx documentation only includes the module reference. Full MPF
+The Sphinx documentation only includes the API Reference. Full MPF
 documentation is available online at http://missionpinball.com/docs.
 
 If you extend the framework and want to re-generate your own documentation,
@@ -18,3 +18,19 @@ We also originally used the sphinx-apidoc package to generate the .rst files.
 
 Finally, if you do extend the framework, please share your changes with us so we
 can incorporate them! Email us at brian@missionpinball.com.
+
+How this documentation was generated. (Or how to generate your own
+documentation.):
+
+Install Sphinx & napolean:
+
+> pip install sphinx
+> pip install sphinxcontrib-napoleon
+
+(Note on Mac/Linux you may need to run these with sudo.)
+
+> Change to the /docs folder
+> sphinx-apidoc -o . .. -f --separate
+> make html
+
+(Note there's a shell script called update.sh that performs these last 2 steps.)
