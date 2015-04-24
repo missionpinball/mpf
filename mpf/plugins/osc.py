@@ -39,13 +39,12 @@ except:
 class OSC(object):
 
     def __init__(self, machine):
-
+        return
         if not import_success:
-            self.machine.log.error('OSC plugin requires PyOSC which does not '
-                                   'appear to be installed. OSC will not be '
-                                   'available')
+            self.machine.log.info('OSC plugin requires PyOSC which does not '
+                                  'appear to be installed. No prob, but FYI '
+                                  'that the OSC will not be available.')
             return
-
 
         self.log = logging.getLogger('osc')
         self.machine = machine
@@ -53,8 +52,7 @@ class OSC(object):
         config_spec = '''
                         client_port: int|8000
                         debug_messages: boolean|False
-
-        '''
+                        '''
 
         self.config = Config.process_config(config_spec,
                                           self.machine.config['osc'])
@@ -62,12 +60,6 @@ class OSC(object):
         if self.config['machine_ip'].upper() == 'AUTO':
             self.config['machine_ip'] = socket.gethostbyname(
                                                         socket.gethostname())
-
-        #if 'client_port' not in self.config:
-        #    self.config['client_port'] = 8000
-        #
-        #if 'debug_messages' not in self.config:
-        #        self.config['debug_messages'] = False
 
         if 'client_updates' in self.config:
             self.config['client_updates'] = self.config['client_updates'].split(
@@ -245,8 +237,12 @@ class OSC(object):
     def register_lights(self):
         """Adds handlers to all lights so the OSC client can receive
         updates."""
-        for light in self.machine.lights:
-            light.add_handler(self.client_update_light)
+
+        try:
+            for light in self.machine.lights:
+                light.add_handler(self.client_update_light)
+        except AttributeError:
+            pass
 
     def register_data(self):
         self.machine.events.add_handler('player_turn_start', self.update_player)
