@@ -39,11 +39,17 @@ except:
 class OSC(object):
 
     def __init__(self, machine):
-        return
+
+        if 'osc' not in self.machine.config:
+            self.machine.log.debug('"OSC:" section not found in the machine '
+                                   'configuration, so the OSC plugin will not '
+                                   'be used.')
+            return
+
         if not import_success:
-            self.machine.log.info('OSC plugin requires PyOSC which does not '
-                                  'appear to be installed. No prob, but FYI '
-                                  'that the OSC will not be available.')
+            self.machine.log.warning('OSC plugin requires PyOSC which does not '
+                                     'appear to be installed. No prob, but FYI '
+                                     'that the OSC will not be available.')
             return
 
         self.log = logging.getLogger('osc')

@@ -19,6 +19,9 @@ class InfoLights(object):
         try:
             self.config = self.machine.config['infolights']
         except KeyError:
+            self.machine.log.debug('"infolights:" section not found in machine '
+                                   'configuration, so the Info Lights plugin '
+                                   'will not be used.')
             return
 
         self.flash = [
