@@ -1,9 +1,5 @@
 # config_version=1
-# Demo Man config file for MPF 0.17
-
-DisabledPlugins:
-    - ball_search.BallSearch
-    - auditor.Auditor
+# Demo Man
 
 Machine:
     HZ: 30
@@ -983,7 +979,6 @@ SoundSystem:
         name: music
         priority: 0
 
-
     buffer: 512
     frequency: 44100
     channels: 1
@@ -996,7 +991,6 @@ DMD:
     height: 32
     shades: 16
     fps: auto
-
 
 Window:
     width: 800
