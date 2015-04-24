@@ -26,9 +26,15 @@ http://www.pinballcontrollers.com/forum/index.php?board=10.0
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import pinproc  # If this fails it's because you don't have pypinproc.
 import re
 import time
+import sys
+
+try:
+    import pinproc
+    pinproc_imported = True
+except:
+    pinproc_imported = False
 
 from mpf.system.platform import Platform
 from mpf.system.config import Config
@@ -38,7 +44,7 @@ proc_pdb_bus_addr = 0xC00
 
 
 class HardwarePlatform(Platform):
-    """Platform class for the P-ROC or P3-ROC hardware controller.
+    """Platform class for the P-ROC hardware controller.
 
     Args:
         machine: The MachineController instance.
@@ -53,6 +59,13 @@ class HardwarePlatform(Platform):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P-ROC Platform')
         self.log.debug("Configuring machine for P-ROC hardware")
+
+        if not pinproc_imported:
+            self.log.error('Could not import "pinproc". Most likely you do not '
+                           'have libpinproc and/or pypinproc installed. You can'
+                           'run MPF in software-only "virtual" mode by using '
+                           'the -x command like option for now instead.')
+            sys.exit()
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -1123,8 +1136,8 @@ class PDBConfig(object):
 
         if enable:
             self.log.debug("Configuring PDB Driver Globals:  polarity = %s  "
-                             "matrix column index 0 = %d  matrix column index "
-                             "1 = %d", True, lamp_source_bank_list[0],
+                           "matrix column index 0 = %d  matrix column index "
+                           "1 = %d", True, lamp_source_bank_list[0],
                              lamp_source_bank_list[1]);
         proc.driver_update_global_config(enable,  # Don't enable outputs yet
                                          True,  # Polarity

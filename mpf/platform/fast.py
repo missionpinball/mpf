@@ -15,19 +15,17 @@ https://github.com/fastpinball/libfastpinball
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import fastpinball
 import time
-import array
+import sys
 
 from mpf.system.timing import Timing
 from mpf.system.platform import Platform
 
 try:
-    import pygame
-    import pygame.locals
+    import fastpinball
+    fastpinball_imported = True
 except:
-    pass
-
+    fastpinball_imported = False
 
 class HardwarePlatform(Platform):
     """Platform class for the FAST hardware controller.
@@ -44,6 +42,13 @@ class HardwarePlatform(Platform):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('FAST Platform')
         self.log.debug("Configuring machine for FAST hardware.")
+
+        if not fastpinball_imported:
+            self.log.error('Could not import "fastpinball". Most likely you do '
+                           'not have libfastpinball installed. You can run MPF '
+                           'in software-only "virtual" mode by using the -x '
+                           'command like option for now instead.')
+            sys.exit()
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -817,7 +822,7 @@ class FASTDMD(object):
 
     def update(self, data):
 
-        fastpinball.fpWriteDmd(self.fast, bytearray(data)))
+        fastpinball.fpWriteDmd(self.fast, bytearray(data))
 
     def tick(self):
         pass
