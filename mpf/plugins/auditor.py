@@ -13,7 +13,7 @@ import yaml
 import errno
 
 from mpf.system.config import Config
-from mpf.plugins.shots import Shot
+from mpf.system.shots import Shot
 
 
 class Auditor(object):
