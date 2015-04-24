@@ -19,7 +19,10 @@ class SwitchPlayer(object):
     def __init__(self, machine):
         self.log = logging.getLogger('switchplayer')
 
-        if 'switchplayer' not in machine.config:
+        if 'switchplayer' not in self.machine.config:
+            self.machine.log.debug('"switchplayer:" section not found in '
+                                   'machine configuration, so the Switch Player'
+                                   'plugin will not be used.')
             return
 
         self.machine = machine

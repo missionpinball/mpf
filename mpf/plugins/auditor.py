@@ -25,7 +25,10 @@ class Auditor(object):
             machine: A refence to the machine controller object.
         """
 
-        if 'auditor' not in machine.config:
+        if 'auditor' not in self.machine.config:
+            self.machine.log.debug('"Auditor:" section not found in machine '
+                                   'configuration, so the auditor will not be '
+                                   'used.')
             return
 
         self.log = logging.getLogger('Auditor')
