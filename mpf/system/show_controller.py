@@ -58,15 +58,6 @@ class ShowController(object):
         # playlist
         # action_time
 
-        self.active_scripts = []  # list of active scripts that have been
-        # converted to Shows. We need this to facilitate removing shows when
-        # they're done, since programmers don't use a name for scripts like
-        # they do with shows. active_scripts is a list of dictionaries, with
-        # the following k/v pairs:
-        # lightname - the light the script is applied to
-        # priority - what priority the script was running at
-        # show - the associated Show object for that script
-
         self.manual_commands = []  # list that holds the last states of any
         # lights that were set manually. We keep track of this so we can restore
         # lower priority lights when shows end or need to be blended.
@@ -203,10 +194,10 @@ class ShowController(object):
 
                 this_action['show'] = self.create_show_from_script(
                     script=self.light_scripts[this_action['script']],
-                    lights = this_action.get('lights', None),
-                    leds = this_action.get('leds', None),
-                    light_tags = this_action.get('light_tags', None),
-                    led_tags = this_action.get('led_tags', None))
+                    lights=this_action.get('lights', None),
+                    leds=this_action.get('leds', None),
+                    light_tags=this_action.get('light_tags', None),
+                    led_tags=this_action.get('led_tags', None))
 
                 this_action['priority'] = priority
                 this_action['stop_key'] = mode
@@ -232,7 +223,6 @@ class ShowController(object):
                                                   **settings)
 
         return key
-
 
     def create_show_from_script(self, script, lights=None, leds=None,
                                 light_tags=None, led_tags=None):
@@ -348,17 +338,6 @@ class ShowController(object):
 
         if reset:
             show.current_location = 0
-
-        # if this show that's ending was from a script, remove it from the
-        # active_scripts list
-
-        # Make a copy of the active scripts object since we're potentially
-        # deleting from it while we're also iterating through it.
-        active_scripts_copy = list(self.active_scripts)
-
-        for entry in active_scripts_copy:
-            if entry['show'] == show:
-                self.active_scripts.remove(entry)
 
         if show.callback:
             show.callback()
@@ -547,14 +526,41 @@ class ShowController(object):
 
         self.led_update_list = []
 
-    def run_script(self, lightname, script, priority=0, repeat=True,
-                   blend=False, tps=1000, num_repeats=0, callback=None, **kwargs):
-        """Runs a light script. Scripts are similar to Shows, except they
-        only apply to single lights and you can "attach" any script to any
-        light. Scripts are used anytime you want an light to have more than one
-        action. A simple example would be a flash an light. You would make a
-        script that turned it on (with your color), then off, repeating
-        forever.
+    def run_script(self, script, lights=None, leds=None, priority=0,
+                   repeat=True, blend=False, tps=1, num_repeats=0,
+                   callback=None, **kwargs):
+        """Runs a light script.
+
+        Args:
+            script: A list of dictionaries of script commands. (See below)
+            lights: A light name or list of lights this script will be applied
+                to.
+            leds: An LED name or a list of LEDs this script will be applied to.
+            priority: The priority the light in this script should operate
+                at.
+            repeat (bool): Whether the script repeats (loops).
+            blend (bool): Whether the script should blend the light colors with
+                lower prioirty things. todo
+            tps (int): Tocks per second, which is how fast this script will be
+                played back.
+            num_repeats (int): How many times this script should repeat before
+                ending. A value of 0 indicates it will repeat forever. Also
+                requires *repeat=True*. 'callback': A callback function that is
+                called when the script is stopped.
+            callback: A method that will be called when this script stops.
+
+        Returns:
+            :class:`Show` object. Since running a script just sets up and
+            runs a regular Show, run_script returns the Show object.
+            In most cases you won't need this, but it's nice if you want to
+            know exactly which Show was created by this script so you can
+            stop it later. (See the examples below for usage.)
+
+        Scripts are similar to Shows, except they only apply to single lights
+        and you can "attach" any script to any light. Scripts are used anytime
+        you want an light to have more than one action. A simple example would
+        be a flash an light. You would make a script that turned it on (with
+        your color), then off, repeating forever.
 
         Scripts could be more complex, like cycling through multiple colors,
         blinking out secret messages in Morse code, etc.
@@ -563,27 +569,6 @@ class ShowController(object):
         into a Show (that just happens to only be for a single light), so
         we can have all the other Show-like features, including playback
         speed, repeats, blends, callbacks, etc.
-
-        Args:
-            lightname: The name of the light for this script to control.
-            script: A list of dictionaries of script commands. (See below)
-                priority': The priority the light in this script should operate
-                at.
-            repeat (bool): Whether the script repeats (loops).
-            blend (bool): Whether the script should blend the light colors with
-                lower prioirty things. todo
-            tps (int): Tocks per second. todo
-            num_repeats (int): How many times this script should repeat before
-                ending. A value of 0 indicates it will repeat forever. Also
-                requires *repeat=True*. 'callback': A callback function that is
-                called when the script is stopped. todo update
-
-        Returns:
-            :class:`Show` object. Since running a script just sets up and
-            runs a regular Show, run_script returns the Show object.
-            In most cases you won't need this, but it's nice if you want to
-            know exactly which Show was created by this script so you can
-            stop it later. (See the examples below for usage.)
 
         The script is a list of dictionaries, with each list item being a
         sequential instruction, and the dictionary defining what you want to
@@ -601,19 +586,21 @@ class ShowController(object):
         and off:
 
             self.flash_red = []
-            self.flash_red.append({"color": "ff0000", "time": 100})
-            self.flash_red.append({"color": "000000", "time": 100})
-            self.machine.show_controller.run_script("light1", self.flash_red,
-                                                     "4", blend=True)
+            self.flash_red.append({"color": 'ff0000', 'tocks': 1})
+            self.flash_red.append({"color": '000000', 'tocks': 1})
+            self.machine.show_controller.run_script(script=self.flash_red,
+                                                    lights='light1',
+                                                    priority=4,
+                                                    blend=True)
 
         Once the "flash_red" script is defined as self.flash_red, you can use
-        it anytime for any light. So if you want to flash two lights red, it
-        would be:
+        it anytime for any light or LED. You can also define lights as a list,
+        like this:
 
-            self.machine.show_controller.run_script("light1", self.flash_red,
-                                                     "4", blend=True)
-            self.machine.show_controller.run_script("light2", self.flash_red,
-                                                     "4", blend=True)
+            self.machine.show_controller.run_script(script=self.flash_red,
+                                                    lights=['light1', 'light2'],
+                                                    priority=4,
+                                                    blend=True)
 
         Most likely you would define your scripts once when the game loads and
         then call them as needed.
@@ -622,12 +609,12 @@ class ShowController(object):
         which smoothly cycles an RGB light through all colors of the rainbow:
 
             self.rainbow = []
-            self.rainbow.append({'color': 'ff0000', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': 'ff7700', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': 'ffcc00', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': '00ff00', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': '0000ff', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': 'ff00ff', 'time': 400, 'fade': True})
+            self.rainbow.append({'color': 'ff0000', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': 'ff7700', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': 'ffcc00', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': '00ff00', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': '0000ff', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': 'ff00ff', 'tocks': 1, 'fade': True})
 
         If you have single color lights, your *color* entries in your script
         would only contain a single hex value for the intensity of that light.
@@ -635,20 +622,27 @@ class ShowController(object):
         you can apply to any light):
 
             self.flash = []
-            self.flash.append({"color": "ff", "time": 100})
-            self.flash.append({"color": "00", "time": 100})
+            self.flash.append({"color": "ff", "tocks": 1})
+            self.flash.append({"color": "00", "tocks": 1})
 
         If you'd like to save a reference to the :class:`Show` that's
         created by this script, call it like this:
 
             self.blah = self.machine.show_controller.run_script("light2",
-                                                        self.flash_red, "4")
+                                                        self.flash_red, "4",
+                                                        tps=2)
         """
 
         # convert the steps from the script list that was passed into the
-        # format that's used in an Show
+        # format that's used in a show
 
         show_actions = []
+
+        if type(lights) is str:
+            lights = [lights]
+
+        if type(leds) is str:
+            leds = [leds]
 
         for step in script:
             if step.get('fade', None):
@@ -656,79 +650,25 @@ class ShowController(object):
             else:
                 color = str(step['color'])
 
-            color_dic = {lightname: color}
-            current_action = {'tocks': step['tocks'],
-                              'lights': color_dic}
+            current_action = {'tocks': step['tocks']}
+
+            if lights:
+                for light in lights:
+                    current_action['lights'][light] = color
+
+            if leds:
+                for led in leds:
+                    current_action['leds'][led] = color
+
             show_actions.append(current_action)
 
         show = Show(machine=self.machine, config=None, file_name=None,
                     asset_manager=self.asset_manager, actions=show_actions)
         show.play(repeat=repeat, tocks_per_sec=tps,
-                             priority=priority, blend=blend,
-                             num_repeats=num_repeats, callback=callback)
-
-        self.active_scripts.append({'lightname': lightname,
-                                    'priority': priority,
-                                    'show': show})
+                  priority=priority, blend=blend,
+                  num_repeats=num_repeats, callback=callback)
 
         return show
-
-    def stop_script(self, lightname=None, priority=0, show=None, **kwargs):
-        """Stops and remove an light script.
-
-        Rarameters:
-
-            'lightname': The light(s) with the script you want to stop.
-            'priority': The priority of the script(s) you want to stop.
-            'show': The show object associated with a script you want to stop.
-
-        In a practical sense there are several ways you can use this
-        stop_script method:
-
-            - Specify *lightname* only to stop (and remove) all active
-              Shows created from scripts for that lightname, regardless of
-              priority.
-            - Specify *priority* only to stop (and remove) all active
-              Shows based on scripts running at that priority for all
-              lights.
-            - Specify *lightname* and *priority* to stop (and remove) all
-              active Shows for that lightname at the specific priority you
-              passed.
-            - Specify a *show* object to stop and remove that specific show.
-            - If you call stop_script() without passing it anything, it will
-            remove all the lightsshows started from all scripts. This is useful
-            for things like end of ball or tilt where you just want to kill
-            everything.
-        """
-
-        # Make a copy of the active scripts object since we're potentially
-        # deleting from it while we're also iterating through it. We have to
-        # use list() here since if we just write a=b then they would both
-        # point to the same place and that wouldn't solve the problem.
-        active_scripts_copy = list(self.active_scripts)
-
-        if show:
-            for entry in active_scripts_copy:
-                if entry['show'] == show:
-                    self._end_show(show)
-        elif lightname and priority:
-            for entry in active_scripts_copy:
-                if (entry['lightname'] == lightname and
-                        entry['priority'] == priority):
-                    self._end_show(entry['show'])
-        elif lightname:
-            for entry in active_scripts_copy:
-                if entry['lightname'] == lightname:
-                    self._end_show(entry['show'])
-        elif priority:
-            for entry in active_scripts_copy:
-                if entry['priority'] == priority:
-                    self._end_show(entry['show'])
-        else:
-            for entry in active_scripts_copy:
-                self._end_show(entry['show'])
-
-        # todo callback?
 
     def load_shows(self, path):
         """Automatically loads all the light shows in a path.
