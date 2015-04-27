@@ -278,7 +278,7 @@ class MediaController(object):
                         handler()
 
     def _process_command(self, bcp_command, **kwargs):
-        self.log.info("Processing command: %s %s", bcp_command, kwargs)
+        self.log.debug("Processing command: %s %s", bcp_command, kwargs)
 
         try:
             self.bcp_commands[bcp_command](**kwargs)
@@ -642,7 +642,7 @@ class BCPServer(threading.Thread):
                         break
 
                 except:
-                    if self.mc.config['mediacontroller'] ['exit_on_disconnect']:
+                    if self.mc.config['mediacontroller']['exit_on_disconnect']:
                         self.mc.shutdown()
                     else:
                         break
@@ -665,7 +665,7 @@ class BCPServer(threading.Thread):
             msg = self.sending_queue.get()
 
             if not msg.startswith('dmd_frame'):
-                self.log.info('>>>>>>>>>>>>>> Sending "%s"', msg)
+                self.log.debug('Sending "%s"', msg)
 
             try:
                 self.connection.sendall(msg + '\n')
@@ -687,7 +687,7 @@ class BCPServer(threading.Thread):
             message: The incoming BCP message
 
         """
-        self.log.info('<<<<<<<<<<<<<< Received "%s"', message)
+        self.log.debug('Received "%s"', message)
         self.receive_queue.put(message)
 
 
