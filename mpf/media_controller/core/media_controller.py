@@ -579,7 +579,7 @@ class BCPServer(threading.Thread):
 
         threading.Thread.__init__(self)
         self.mc = mc
-        self.log = logging.getLogger('bcp')
+        self.log = logging.getLogger('BCP')
         self.receive_queue = receiving_queue
         self.sending_queue = sending_queue
         self.connection = None
