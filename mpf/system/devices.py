@@ -181,7 +181,7 @@ class DeviceCollection(dict):
         try:
             # If we were passed a name of an item
             if type(attr) == str:
-                return self[attr]
+                return self[attr.lower()]
             elif type(attr) == int:
                 self.number(number=attr)
         except KeyError:
@@ -194,6 +194,15 @@ class DeviceCollection(dict):
         # None, and we can't call this DeviceCollection on None. Maybe make
         # default dict return some non-None as its default which we can catch
         # here?
+
+    def __setitem__(self, key, value):
+        super(DeviceCollection, self).__setitem__(key.lower(), value)
+
+    def __getitem__(self, key):
+        return super(DeviceCollection, self).__getitem__(key.lower())
+
+    def __contains__(self, key):
+        return super(DeviceCollection, self).__contains__(key.lower())
 
     def __iter__(self):
         for item in self.itervalues():
@@ -226,7 +235,7 @@ class DeviceCollection(dict):
             True or False, depending on whether the name is a valid device or
             not.
         """
-        if name in self.itervalues():
+        if name.lower() in self.itervalues():
             return True
         else:
             return False
