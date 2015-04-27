@@ -63,10 +63,12 @@ MPF:
 # Default settings for machines. All can be overridden
 
 Machine:
-    HZ: 30
     Balls Installed: 1
     Min Balls: 1
     Max Balls: 10
+
+timing:
+    hz: 30
 
 Hardware:
     Platform: virtual

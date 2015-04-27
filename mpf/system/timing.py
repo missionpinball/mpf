@@ -32,10 +32,10 @@ class Timing(object):
         self.log = logging.getLogger("Timing")
         self.machine = machine
 
-        if 'hz' in self.machine.config['machine']:
-            Timing.HZ = self.machine.config['machine']['hz']
-        else:
-            Timing.HZ = 50
+        try:
+            Timing.HZ = self.machine.config['timing']['hz']
+        except KeyError:
+            Timing.HZ = 30
 
         self.log.info("Configuring system Timing for %sHz", Timing.HZ)
         Timing.secs_per_tick = 1 / float(Timing.HZ)

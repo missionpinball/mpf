@@ -415,7 +415,7 @@ class BCP(object):
         while not self.receive_queue.empty():
             cmd, kwargs = self.receive_queue.get(False)
 
-            self.log.info("Processing command: %s %s", cmd, kwargs)
+            self.log.debug("Processing command: %s %s", cmd, kwargs)
 
             # todo convert to try. Haven't done it yet though because I couldn't
             # figure out how to make it not swallow exceptions and it was
@@ -776,9 +776,9 @@ class BCPClient(object):
 
             except socket.error, v:
                 self.socket = None
-                self.log.info("Failed to connect to remote BCP host %s:%s. "
-                              "Error: %s", self.config['host'],
-                              self.config['port'], v)
+                self.log.warning("Failed to connect to remote BCP host %s:%s. "
+                                 "Error: %s", self.config['host'],
+                                 self.config['port'], v)
                 if self.config['require_connection']:
                     self.log.critical("BCP connection 'require_connection' "
                                       "setting is True. Unable to continue.")
@@ -893,7 +893,7 @@ class BCPClient(object):
                                 self.machine.bcp.dmd.update(message[10:])
 
                             else:
-                                self.log.info('<<<<<<<<<<<<<< Received "%s"',
+                                self.log.debug('Received "%s"',
                                               message)
                                 cmd, kwargs = decode_command_string(message)
 
@@ -912,7 +912,7 @@ class BCPClient(object):
             message = self.sending_queue.get()
 
             try:
-                self.log.info('>>>>>>>>>>>>>> Sending "%s"', message)
+                self.log.debug('Sending "%s"', message)
                 self.socket.sendall(message + '\n')
 
             except (IOError, AttributeError):

@@ -33,4 +33,4 @@ Install Sphinx & napolean:
 > sphinx-apidoc -o . .. -f --separate
 > make html
 
-(Note there's a shell script called update.sh that performs these last 2 steps.)
+Note there's a shell script called "update" that performs these last 2 steps.

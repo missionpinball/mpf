@@ -27,6 +27,7 @@ try:
 except:
     fastpinball_imported = False
 
+
 class HardwarePlatform(Platform):
     """Platform class for the FAST hardware controller.
 
@@ -95,8 +96,8 @@ class HardwarePlatform(Platform):
                 'dmd_port' in self.machine.config['fast']):
 
             port_assignments = (self.machine.config['fast']['main_port'],
-                                self.machine.config['fast']['led_port'],
-                                self.machine.config['fast']['dmd_port'])
+                                self.machine.config['fast']['dmd_port'],
+                                self.machine.config['fast']['led_port'])
 
         else:
             self.log.critical("Error in fast config. Entries needed for "
