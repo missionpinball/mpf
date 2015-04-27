@@ -8,7 +8,6 @@ MediaController:
         show_controller.ShowController
         keyboard.Keyboard
         sound.SoundController
-        
     
     port: 5050
     exit_on_disconnect: yes
@@ -38,6 +37,9 @@ MediaController:
         animations: animations
         movies: movies
         modes: modes
+
+timing:
+    hz: 30
 
 DisplayDefaults:
     Text:
