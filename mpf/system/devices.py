@@ -124,7 +124,7 @@ class Device(object):
 
     def _create_events(self, ev_name, ev_type, delay, callback):
         self.log.debug("Creating %s_event handler for event '%s' with delay "
-                       "'%s' husker", ev_type, ev_name, delay)
+                       "'%s'", ev_type, ev_name, delay)
 
         self.machine.events.add_handler(event=ev_name,
                                     handler=self._action_event_handler,

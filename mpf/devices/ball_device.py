@@ -785,7 +785,7 @@ class BallDevice(Device):
                        self.num_balls_ejecting, self.balls)
 
         self.config['eject_coil'].pulse()
-            # todo add support for hold coils with variable release times
+        # todo add support for hold coils with variable release times
 
     def _setup_eject_confirmation(self, target=None, timeout=0):
         # Called after an eject request to confirm the eject. The exact method
@@ -803,20 +803,7 @@ class BallDevice(Device):
 
         self.flag_confirm_eject_via_count = False
 
-        if (self.config['confirm_eject_type'] == 'playfield' or
-            target == self.machine.balldevices['playfield']):
-
-            if self.machine.playfield.ok_to_confirm_ball_via_playfield_switch():
-                self.log.debug("Will confirm eject when a playfield switch is "
-                               "hit")
-                self.machine.events.add_handler('sw_playfield_active',
-                                                self._eject_success)
-            else:
-                self.log.debug("Will confirm eject via recount of ball "
-                               "switches.")
-                self.flag_confirm_eject_via_count = True
-
-        elif self.config['confirm_eject_type'] == 'target':
+        if self.config['confirm_eject_type'] == 'target':
 
             if not target:
                 self.log.error("we got an eject confirmation request with no "
@@ -864,6 +851,19 @@ class BallDevice(Device):
             # handler won't have time to reregister it.
             self.log.debug("Will confirm eject via recount of ball switches.")
             self.flag_confirm_eject_via_count = True
+
+        elif (self.config['confirm_eject_type'] == 'playfield' or
+                target == self.machine.balldevices['playfield']):
+
+            if self.machine.playfield.ok_to_confirm_ball_via_playfield_switch():
+                self.log.debug("Will confirm eject when a playfield switch is "
+                               "hit")
+                self.machine.events.add_handler('sw_playfield_active',
+                                                self._eject_success)
+            else:
+                self.log.debug("Will confirm eject via recount of ball "
+                               "switches.")
+                self.flag_confirm_eject_via_count = True
 
         else:
             # If there's no confirm eject type specified, then we'll just
