@@ -80,16 +80,16 @@ class ShowController(object):
 
         # Tell the mode controller that it should look for ShowPlayer items in
         # modes.
-        self.machine.modes.register_start_method(self.process_shows_from_config,
+        self.machine.modes.register_start_method(self.process_showplayer,
                                                  'ShowPlayer')
 
         # Tell the mode controller that it should look for LightPlayer items in
         # modes.
-        self.machine.modes.register_start_method(self.process_lightplayer_from_config,
+        self.machine.modes.register_start_method(self.process_lightplayer,
                                                  'LightPlayer')
 
         # Create scripts from config
-        self.machine.modes.register_start_method(self.create_scripts_from_config,
+        self.machine.modes.register_start_method(self.process_lightscripts,
                                                  'LightScipts')
 
         # Create the show AssetManager
@@ -113,13 +113,13 @@ class ShowController(object):
             self.initialized = True
 
         if 'LightScripts' in self.machine.config:
-            self.create_scripts_from_config(self.machine.config['LightScripts'])
+            self.process_lightscripts(self.machine.config['LightScripts'])
 
         if 'ShowPlayer' in self.machine.config:
-            self.process_shows_from_config(self.machine.config['ShowPlayer'])
+            self.process_showplayer(self.machine.config['ShowPlayer'])
 
         if 'LightPlayer' in self.machine.config:
-            self.process_lightplayer_from_config(self.machine.config['LightPlayer'])
+            self.process_lightplayer(self.machine.config['LightPlayer'])
 
     def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
                   tocks_per_sec=30, start_location=None, num_repeats=0,
@@ -155,13 +155,13 @@ class ShowController(object):
             if show.stop_key == key:
                 show.stop()
 
-    def create_scripts_from_config(self, config, mode=None, priority=0):
+    def process_lightscripts(self, config, mode=None, priority=0):
         # config here is localized to LightScripts:
 
         for k, v in config.iteritems():
             self.light_scripts[k] = v
 
-    def process_shows_from_config(self, config, mode=None, priority=0):
+    def process_showplayer(self, config, mode=None, priority=0):
         self.log.debug("Processing ShowPlayer configuration. Priority: %s",
                        priority)
 
@@ -171,16 +171,16 @@ class ShowController(object):
             if type(settings) is dict:
                 settings['priority'] = priority
                 settings['stop_key'] = mode
-                key_list.append(self.add_show_player_show(event, settings))
+                key_list.append(self.add_showplayer_show(event, settings))
             elif type(settings) is list:
                 for entry in settings:
                     entry['priority'] = priority
                     entry['stop_key'] = mode
-                    key_list.append(self.add_show_player_show(event, entry))
+                    key_list.append(self.add_showplayer_show(event, entry))
 
-        return self.unload_show_player_shows, (key_list, mode)
+        return self.unload_showplayer_shows, (key_list, mode)
 
-    def process_lightplayer_from_config(self, config, mode=None, priority=0):
+    def process_lightplayer(self, config, mode=None, priority=0):
         self.log.debug("Processing LightPlayer configuration. Priority: %s",
                        priority)
 
@@ -201,10 +201,10 @@ class ShowController(object):
 
                 this_action['priority'] = priority
                 this_action['stop_key'] = mode
-                key_list.append(self.add_show_player_show(event_name,
-                                                          this_action))
+                key_list.append(self.add_showplayer_show(event_name,
+                                                         this_action))
 
-        return self.unload_show_player_shows, (key_list, mode)
+        return self.unload_showplayer_shows, (key_list, mode)
 
     def add_lightplayer_show(self, event, settings):
 
@@ -280,7 +280,7 @@ class ShowController(object):
         return Show(machine=self.machine, config=None, file_name=None,
                     asset_manager=self.asset_manager, actions=action_list)
 
-    def unload_show_player_shows(self, removal_tuple):
+    def unload_showplayer_shows(self, removal_tuple):
 
         key_list, show_key = removal_tuple
 
@@ -290,7 +290,10 @@ class ShowController(object):
         if show_key:
             self.stop_shows_by_key(show_key)
 
-    def add_show_player_show(self, event, settings):
+    def add_showplayer_show(self, event, settings):
+
+        self.log.debug("Adding 'showplayer' show. Event: %s, Settings: %s",
+                       event, settings)
 
         if 'priority' in settings:
             settings['show_priority'] = settings['priority']
@@ -451,6 +454,7 @@ class ShowController(object):
 
     def _add_to_led_update_list(self, led, color, fade_ms, priority, blend):
         # See comment from above method
+
         for item in self.led_update_list:
             if item['led'] == led and item['priority'] <= priority:
                 self.led_update_list.remove(item)
@@ -521,8 +525,10 @@ class ShowController(object):
 
                 # Now we're doing the actual update.
 
-                item['led'].color(item['color'], item['fade_ms'],
-                                  item['priority'], item['blend'])
+                item['led'].color(color=item['color'],
+                                  fade_ms=item['fade_ms'],
+                                  priority=item['priority'],
+                                  blend=item['blend'])
 
         self.led_update_list = []
 
@@ -653,11 +659,14 @@ class ShowController(object):
             current_action = {'tocks': step['tocks']}
 
             if lights:
-                for light in lights:
+                current_action['leds'] = dict()
+                for light in Config.string_to_list(lights):
                     current_action['lights'][light] = color
 
             if leds:
-                for led in leds:
+
+                current_action['leds'] = dict()
+                for led in Config.string_to_list(leds):
                     current_action['leds'][led] = color
 
             show_actions.append(current_action)
