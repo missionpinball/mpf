@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.plugins.sound module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    <title>mpf.plugins.sound module &mdash; Mission Pinball Framework 0.16.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.1',
+        VERSION:     '0.16.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.16.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -75,7 +75,11 @@ tied to an MPF Track.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sound</strong> &#8211; The sound object to play.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sound</strong> &#8211; The sound object to play.</li>
+<li><strong>**settings</strong> &#8211; Additional settings for this sound&#8217;s playback.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
@@ -112,11 +116,10 @@ happens if the track this sound is playing on is playing the
 max simultaneous sounds.</li>
 <li><strong>fade_in</strong> &#8211; MPF time string for how long this sound should fade in
 when it starts.</li>
-<li><strong>volume</strong> &#8211; <p>Volume for this sound as a float between 0.0 and 1.0. Zero
-is mute, 1 is full volume, anything in between is in between.</p>
-<blockquote>
-<div>callback which could include random kwargs.</div></blockquote>
-</li>
+<li><strong>volume</strong> &#8211; Volume for this sound as a float between 0.0 and 1.0. Zero
+is mute, 1 is full volume, anything in between is in between.</li>
+<li><strong>**kwargs</strong> &#8211; Catch all since this method might be used as an event
+callback which could include random kwargs.</li>
 </ul>
 </td>
 </tr>
@@ -135,11 +138,10 @@ is mute, 1 is full volume, anything in between is in between.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>fade_out</strong> &#8211; MPF time string for how long this sound will fade out as
 it stops.</li>
-<li><strong>reset</strong> &#8211; <p>Boolean for whether this sound should reset its playback
-position to the beginning. Default is True.</p>
-<blockquote>
-<div>callback which could include random kwargs.</div></blockquote>
-</li>
+<li><strong>reset</strong> &#8211; Boolean for whether this sound should reset its playback
+position to the beginning. Default is True.</li>
+<li><strong>**kwargs</strong> &#8211; Catch all since this method might be used as an event
+callback which could include random kwargs.</li>
 </ul>
 </td>
 </tr>
@@ -296,7 +298,11 @@ playback can be resumed from the same point via the unpause() method.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sound</strong> &#8211; The MPF sound object to play.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sound</strong> &#8211; The MPF sound object to play.</li>
+<li><strong>**settings</strong> &#8211; Additional settings for this sound&#8217;s playback.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
@@ -307,7 +313,7 @@ stop the current sound.</p>
 
 <dl class="method">
 <dt id="mpf.plugins.sound.StreamTrack.stop">
-<tt class="descname">stop</tt><big>(</big><big>)</big></dt>
+<tt class="descname">stop</tt><big>(</big><em>sound=None</em><big>)</big></dt>
 <dd><p>Stops the playing sound and resets the current position to the
 beginning.</p>
 </dd></dl>
@@ -411,6 +417,7 @@ free.</p>
 <li><strong>priority</strong> &#8211; The priority of this sound.</li>
 <li><strong>exp_time</strong> &#8211; Real world time of when this sound will expire. (It will
 not play if the queue is freed up after it expires.)</li>
+<li><strong>**settings</strong> &#8211; Additional settings for this sound&#8217;s playback.</li>
 </ul>
 </td>
 </tr>
@@ -420,6 +427,11 @@ not play if the queue is freed up after it expires.)</li>
 queue based on its priority, so highest-priority sounds are played
 first.</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="mpf.plugins.sound.Track.stop">
+<tt class="descname">stop</tt><big>(</big><em>sound</em><big>)</big></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -473,12 +485,12 @@ first.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2015, Brian Madden, Gabe Knuth.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

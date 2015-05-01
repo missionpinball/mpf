@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.show_controller module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    <title>mpf.system.show_controller module &mdash; Mission Pinball Framework 0.16.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.1',
+        VERSION:     '0.16.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.16.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -221,7 +221,7 @@ here.</li>
 
 <dl class="class">
 <dt id="mpf.system.show_controller.Show">
-<em class="property">class </em><tt class="descclassname">mpf.system.show_controller.</tt><tt class="descname">Show</tt><big>(</big><em>machine</em>, <em>config</em>, <em>file_name</em>, <em>asset_manager</em><big>)</big></dt>
+<em class="property">class </em><tt class="descclassname">mpf.system.show_controller.</tt><tt class="descname">Show</tt><big>(</big><em>machine</em>, <em>config</em>, <em>file_name</em>, <em>asset_manager</em>, <em>actions=None</em><big>)</big></dt>
 <dd><p>Bases: <a class="reference internal" href="mpf.system.assets.html#mpf.system.assets.Asset" title="mpf.system.assets.Asset"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.assets.Asset</span></tt></a></p>
 <dl class="method">
 <dt id="mpf.system.show_controller.Show.add_loaded_callback">
@@ -365,8 +365,18 @@ Shows, etc. There should be only one per machine.</p>
 </tbody>
 </table>
 <dl class="method">
-<dt id="mpf.system.show_controller.ShowController.add_show_player_show">
-<tt class="descname">add_show_player_show</tt><big>(</big><em>event</em>, <em>settings</em><big>)</big></dt>
+<dt id="mpf.system.show_controller.ShowController.add_lightplayer_show">
+<tt class="descname">add_lightplayer_show</tt><big>(</big><em>event</em>, <em>settings</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.show_controller.ShowController.add_showplayer_show">
+<tt class="descname">add_showplayer_show</tt><big>(</big><em>event</em>, <em>settings</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.show_controller.ShowController.create_show_from_script">
+<tt class="descname">create_show_from_script</tt><big>(</big><em>script</em>, <em>lights=None</em>, <em>leds=None</em>, <em>light_tags=None</em>, <em>led_tags=None</em><big>)</big></dt>
 <dd></dd></dl>
 
 <dl class="staticmethod">
@@ -444,8 +454,18 @@ root from where the mpf.py file is running.</td>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="mpf.system.show_controller.ShowController.process_shows_from_config">
-<tt class="descname">process_shows_from_config</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>priority=0</em><big>)</big></dt>
+<dt id="mpf.system.show_controller.ShowController.process_lightplayer">
+<tt class="descname">process_lightplayer</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>priority=0</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.show_controller.ShowController.process_lightscripts">
+<tt class="descname">process_lightscripts</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>priority=0</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.show_controller.ShowController.process_showplayer">
+<tt class="descname">process_showplayer</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>priority=0</em><big>)</big></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -474,48 +494,55 @@ skipping ones that are at the same value.</p>
 
 <dl class="method">
 <dt id="mpf.system.show_controller.ShowController.run_script">
-<tt class="descname">run_script</tt><big>(</big><em>lightname</em>, <em>script</em>, <em>priority=0</em>, <em>repeat=True</em>, <em>blend=False</em>, <em>tps=1000</em>, <em>num_repeats=0</em>, <em>callback=None</em><big>)</big></dt>
-<dd><p>Runs a light script. Scripts are similar to Shows, except they
-only apply to single lights and you can &#8220;attach&#8221; any script to any
-light. Scripts are used anytime you want an light to have more than one
-action. A simple example would be a flash an light. You would make a
-script that turned it on (with your color), then off, repeating
-forever.</p>
-<p>Scripts could be more complex, like cycling through multiple colors,
-blinking out secret messages in Morse code, etc.</p>
-<p>Interally we actually just take a script and dynamically convert it
-into a Show (that just happens to only be for a single light), so
-we can have all the other Show-like features, including playback
-speed, repeats, blends, callbacks, etc.</p>
+<tt class="descname">run_script</tt><big>(</big><em>script</em>, <em>lights=None</em>, <em>leds=None</em>, <em>priority=0</em>, <em>repeat=True</em>, <em>blend=False</em>, <em>tps=1</em>, <em>num_repeats=0</em>, <em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Runs a light script.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>lightname</strong> &#8211; The name of the light for this script to control.</li>
-<li><strong>script</strong> &#8211; A list of dictionaries of script commands. (See below)
-priority&#8217;: The priority the light in this script should operate
+<li><strong>script</strong> &#8211; A list of dictionaries of script commands. (See below)</li>
+<li><strong>lights</strong> &#8211; A light name or list of lights this script will be applied
+to.</li>
+<li><strong>leds</strong> &#8211; An LED name or a list of LEDs this script will be applied to.</li>
+<li><strong>priority</strong> &#8211; The priority the light in this script should operate
 at.</li>
 <li><strong>repeat</strong> (<em>bool</em>) &#8211; Whether the script repeats (loops).</li>
 <li><strong>blend</strong> (<em>bool</em>) &#8211; Whether the script should blend the light colors with
 lower prioirty things. todo</li>
-<li><strong>tps</strong> (<em>int</em>) &#8211; Tocks per second. todo</li>
+<li><strong>tps</strong> (<em>int</em>) &#8211; Tocks per second, which is how fast this script will be
+played back.</li>
 <li><strong>num_repeats</strong> (<em>int</em>) &#8211; How many times this script should repeat before
 ending. A value of 0 indicates it will repeat forever. Also
 requires <em>repeat=True</em>. &#8216;callback&#8217;: A callback function that is
-called when the script is stopped. todo update</li>
+called when the script is stopped.</li>
+<li><strong>callback</strong> &#8211; A method that will be called when this script stops.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#mpf.system.show_controller.Show" title="mpf.system.show_controller.Show"><tt class="xref py py-class docutils literal"><span class="pre">Show</span></tt></a> object. Since running a script just sets up and
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><cite>Show</cite> object. Since running a script just sets up and
 runs a regular Show, run_script returns the Show object.
 In most cases you won&#8217;t need this, but it&#8217;s nice if you want to
 know exactly which Show was created by this script so you can
 stop it later. (See the examples below for usage.)</p>
 </td>
 </tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">:class</p>
+</td>
+</tr>
 </tbody>
 </table>
+<p>Scripts are similar to Shows, except they only apply to single lights
+and you can &#8220;attach&#8221; any script to any light. Scripts are used anytime
+you want an light to have more than one action. A simple example would
+be a flash an light. You would make a script that turned it on (with
+your color), then off, repeating forever.</p>
+<p>Scripts could be more complex, like cycling through multiple colors,
+blinking out secret messages in Morse code, etc.</p>
+<p>Interally we actually just take a script and dynamically convert it
+into a Show (that just happens to only be for a single light), so
+we can have all the other Show-like features, including playback
+speed, repeats, blends, callbacks, etc.</p>
 <p>The script is a list of dictionaries, with each list item being a
 sequential instruction, and the dictionary defining what you want to
 do at that step. Dictionary items for each step are:</p>
@@ -532,21 +559,23 @@ that color instantly.</div></blockquote>
 and off:</p>
 <blockquote>
 <div><p>self.flash_red = []
-self.flash_red.append({&#8220;color&#8221;: &#8220;ff0000&#8221;, &#8220;time&#8221;: 100})
-self.flash_red.append({&#8220;color&#8221;: &#8220;000000&#8221;, &#8220;time&#8221;: 100})
-self.machine.show_controller.run_script(&#8220;light1&#8221;, self.flash_red,</p>
+self.flash_red.append({&#8220;color&#8221;: &#8216;ff0000&#8217;, &#8216;tocks&#8217;: 1})
+self.flash_red.append({&#8220;color&#8221;: &#8216;000000&#8217;, &#8216;tocks&#8217;: 1})
+self.machine.show_controller.run_script(script=self.flash_red,</p>
 <blockquote>
-<div>&#8220;4&#8221;, blend=True)</div></blockquote>
+<div>lights=&#8217;light1&#8217;,
+priority=4,
+blend=True)</div></blockquote>
 </div></blockquote>
 <p>Once the &#8220;flash_red&#8221; script is defined as self.flash_red, you can use
-it anytime for any light. So if you want to flash two lights red, it
-would be:</p>
+it anytime for any light or LED. You can also define lights as a list,
+like this:</p>
 <blockquote>
 <div><dl class="docutils">
-<dt>self.machine.show_controller.run_script(&#8220;light1&#8221;, self.flash_red,</dt>
-<dd>&#8220;4&#8221;, blend=True)</dd>
-<dt>self.machine.show_controller.run_script(&#8220;light2&#8221;, self.flash_red,</dt>
-<dd>&#8220;4&#8221;, blend=True)</dd>
+<dt>self.machine.show_controller.run_script(script=self.flash_red,</dt>
+<dd>lights=[&#8216;light1&#8217;, &#8216;light2&#8217;],
+priority=4,
+blend=True)</dd>
 </dl>
 </div></blockquote>
 <p>Most likely you would define your scripts once when the game loads and
@@ -555,58 +584,28 @@ then call them as needed.</p>
 which smoothly cycles an RGB light through all colors of the rainbow:</p>
 <blockquote>
 <div>self.rainbow = []
-self.rainbow.append({&#8216;color&#8217;: &#8216;ff0000&#8217;, &#8216;time&#8217;: 400, &#8216;fade&#8217;: True})
-self.rainbow.append({&#8216;color&#8217;: &#8216;ff7700&#8217;, &#8216;time&#8217;: 400, &#8216;fade&#8217;: True})
-self.rainbow.append({&#8216;color&#8217;: &#8216;ffcc00&#8217;, &#8216;time&#8217;: 400, &#8216;fade&#8217;: True})
-self.rainbow.append({&#8216;color&#8217;: &#8216;00ff00&#8217;, &#8216;time&#8217;: 400, &#8216;fade&#8217;: True})
-self.rainbow.append({&#8216;color&#8217;: &#8216;0000ff&#8217;, &#8216;time&#8217;: 400, &#8216;fade&#8217;: True})
-self.rainbow.append({&#8216;color&#8217;: &#8216;ff00ff&#8217;, &#8216;time&#8217;: 400, &#8216;fade&#8217;: True})</div></blockquote>
+self.rainbow.append({&#8216;color&#8217;: &#8216;ff0000&#8217;, &#8216;tocks&#8217;: 1, &#8216;fade&#8217;: True})
+self.rainbow.append({&#8216;color&#8217;: &#8216;ff7700&#8217;, &#8216;tocks&#8217;: 1, &#8216;fade&#8217;: True})
+self.rainbow.append({&#8216;color&#8217;: &#8216;ffcc00&#8217;, &#8216;tocks&#8217;: 1, &#8216;fade&#8217;: True})
+self.rainbow.append({&#8216;color&#8217;: &#8216;00ff00&#8217;, &#8216;tocks&#8217;: 1, &#8216;fade&#8217;: True})
+self.rainbow.append({&#8216;color&#8217;: &#8216;0000ff&#8217;, &#8216;tocks&#8217;: 1, &#8216;fade&#8217;: True})
+self.rainbow.append({&#8216;color&#8217;: &#8216;ff00ff&#8217;, &#8216;tocks&#8217;: 1, &#8216;fade&#8217;: True})</div></blockquote>
 <p>If you have single color lights, your <em>color</em> entries in your script
 would only contain a single hex value for the intensity of that light.
 For example, a script to flash a single-color light on-and-off (which
 you can apply to any light):</p>
 <blockquote>
 <div>self.flash = []
-self.flash.append({&#8220;color&#8221;: &#8220;ff&#8221;, &#8220;time&#8221;: 100})
-self.flash.append({&#8220;color&#8221;: &#8220;00&#8221;, &#8220;time&#8221;: 100})</div></blockquote>
+self.flash.append({&#8220;color&#8221;: &#8220;ff&#8221;, &#8220;tocks&#8221;: 1})
+self.flash.append({&#8220;color&#8221;: &#8220;00&#8221;, &#8220;tocks&#8221;: 1})</div></blockquote>
 <p>If you&#8217;d like to save a reference to the <a class="reference internal" href="#mpf.system.show_controller.Show" title="mpf.system.show_controller.Show"><tt class="xref py py-class docutils literal"><span class="pre">Show</span></tt></a> that&#8217;s
 created by this script, call it like this:</p>
 <blockquote>
 <div><dl class="docutils">
 <dt>self.blah = self.machine.show_controller.run_script(&#8220;light2&#8221;,</dt>
-<dd>self.flash_red, &#8220;4&#8221;)</dd>
+<dd>self.flash_red, &#8220;4&#8221;,
+tps=2)</dd>
 </dl>
-</div></blockquote>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpf.system.show_controller.ShowController.stop_script">
-<tt class="descname">stop_script</tt><big>(</big><em>lightname=None</em>, <em>priority=0</em>, <em>show=None</em><big>)</big></dt>
-<dd><p>Stops and remove an light script.</p>
-<p>Rarameters:</p>
-<blockquote>
-<div>&#8216;lightname&#8217;: The light(s) with the script you want to stop.
-&#8216;priority&#8217;: The priority of the script(s) you want to stop.
-&#8216;show&#8217;: The show object associated with a script you want to stop.</div></blockquote>
-<p>In a practical sense there are several ways you can use this
-stop_script method:</p>
-<blockquote>
-<div><ul class="simple">
-<li>Specify <em>lightname</em> only to stop (and remove) all active
-Shows created from scripts for that lightname, regardless of
-priority.</li>
-<li>Specify <em>priority</em> only to stop (and remove) all active
-Shows based on scripts running at that priority for all
-lights.</li>
-<li>Specify <em>lightname</em> and <em>priority</em> to stop (and remove) all
-active Shows for that lightname at the specific priority you
-passed.</li>
-<li>Specify a <em>show</em> object to stop and remove that specific show.</li>
-<li>If you call stop_script() without passing it anything, it will</li>
-</ul>
-<p>remove all the lightsshows started from all scripts. This is useful
-for things like end of ball or tilt where you just want to kill
-everything.</p>
 </div></blockquote>
 </dd></dl>
 
@@ -621,8 +620,8 @@ everything.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="mpf.system.show_controller.ShowController.unload_show_player_shows">
-<tt class="descname">unload_show_player_shows</tt><big>(</big><em>removal_tuple</em><big>)</big></dt>
+<dt id="mpf.system.show_controller.ShowController.unload_showplayer_shows">
+<tt class="descname">unload_showplayer_shows</tt><big>(</big><em>removal_tuple</em><big>)</big></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -666,12 +665,12 @@ everything.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2015, Brian Madden, Gabe Knuth.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

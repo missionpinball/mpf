@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.plugins.auditor module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    <title>mpf.plugins.auditor module &mdash; Mission Pinball Framework 0.16.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.1',
+        VERSION:     '0.16.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.16.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -62,9 +62,10 @@ etc.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>audit_class</strong> &#8211; A string of the section we want this event to be</li>
-<li><strong>event</strong> &#8211; <p>A string name of the event we&#8217;re auditing.</p>
-<p>might include random kwargs.</p>
-</li>
+<li><strong>to.</strong> (<em>logged</em>) &#8211; </li>
+<li><strong>event</strong> &#8211; A string name of the event we&#8217;re auditing.</li>
+<li><strong>**kawargs</strong> &#8211; Not used, but included since some of the audit events
+might include random kwargs.</li>
 </ul>
 </td>
 </tr>
@@ -80,8 +81,10 @@ etc.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>eventname</strong> &#8211; <p>The string name of the event.</p>
-<p>kwargs.</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>eventname</strong> &#8211; The string name of the event.</li>
+<li><strong>not used, but included since some types of events include</strong> (<em>**kwargs,</em>) &#8211; kwargs.</li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -93,8 +96,14 @@ etc.</p>
 <tt class="descname">audit_player</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
 <dd><p>Called to write player data to the audit log. Typically this is only
 called at the end of a game.</p>
-<blockquote>
-<div>kwargs.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>not used, but included since some types of events include</strong> (<em>**kwargs,</em>) &#8211; kwargs.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -204,12 +213,12 @@ disable() methods.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2015, Brian Madden, Gabe Knuth.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

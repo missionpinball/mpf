@@ -8,6 +8,7 @@ Submodules
 
    mpf.system.assets
    mpf.system.ball_controller
+   mpf.system.config
    mpf.system.devices
    mpf.system.display
    mpf.system.events

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.playfield module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    <title>mpf.devices.playfield module &mdash; Mission Pinball Framework 0.16.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.1',
+        VERSION:     '0.16.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.16.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -54,7 +54,7 @@ a pinball machine.</p>
 <dd><p>Bases: <a class="reference internal" href="mpf.devices.ball_device.html#mpf.devices.ball_device.BallDevice" title="mpf.devices.ball_device.BallDevice"><tt class="xref py py-class docutils literal"><span class="pre">mpf.devices.ball_device.BallDevice</span></tt></a></p>
 <dl class="method">
 <dt id="mpf.devices.playfield.Playfield.add_ball">
-<tt class="descname">add_ball</tt><big>(</big><em>balls=1</em>, <em>source_name=None</em>, <em>source_device=None</em>, <em>player_controlled=False</em><big>)</big></dt>
+<tt class="descname">add_ball</tt><big>(</big><em>balls=1</em>, <em>source_name=None</em>, <em>source_device=None</em>, <em>trigger_event=None</em><big>)</big></dt>
 <dd><p>Adds live ball(s) to the playfield.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -66,10 +66,9 @@ a pinball machine.</p>
 add the ball(s) from.</li>
 <li><strong>source_device</strong> &#8211; Optional ball device object you&#8217;d like to add the
 ball(s) from.</li>
-<li><strong>player_controlled</strong> &#8211; Boolean which specifies whether the player needs
-to hit a button to cause the source device to eject a ball.
-(i.e. when the player has to hit the &#8216;launch&#8217; button to eject a
-ball from the plunger lane.) Default is False.</li>
+<li><strong>trigger_event</strong> &#8211; The optional name of an event that MPF will wait for
+before adding the ball into play. Typically used with player-
+controlled eject tag events.</li>
 </ul>
 </td>
 </tr>
@@ -170,6 +169,16 @@ zero.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.devices.playfield.Playfield.eject">
+<tt class="descname">eject</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.playfield.Playfield.eject_all">
+<tt class="descname">eject_all</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="mpf.devices.playfield.Playfield.get_additional_ball_capacity">
 <tt class="descname">get_additional_ball_capacity</tt><big>(</big><big>)</big></dt>
 <dd><p>Used to find out how many more balls this device can hold. Since this
@@ -225,9 +234,9 @@ no longer calls the device(s) to eject a ball.</p>
 
 <dl class="method">
 <dt id="mpf.devices.playfield.Playfield.setup_player_controlled_eject">
-<tt class="descname">setup_player_controlled_eject</tt><big>(</big><em>balls</em>, <em>device</em><big>)</big></dt>
-<dd><p>Used to set up a player-controlled eject from a ball device which
-will eject a ball to the playfield.</p>
+<tt class="descname">setup_player_controlled_eject</tt><big>(</big><em>balls</em>, <em>device</em>, <em>trigger_event</em><big>)</big></dt>
+<dd><p>Used to set up an eject from a ball device which will eject a ball to
+the playfield.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -236,15 +245,15 @@ will eject a ball to the playfield.</p>
 <li><strong>balls</strong> &#8211; Integer of the number of balls this device should eject.</li>
 <li><strong>device</strong> &#8211; The ball device object that will eject the ball(s) when a
 switch with the player-controlled eject tag is hit.</li>
+<li><strong>trigger_event</strong> &#8211; The name of the MPF event that will trigger the
+eject.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
 <p>When this method it called, MPF will set up an event handler to look for
-a switch hit from a switch with the tag specified in the
-Game: player_controlled_eject_tag: setting in your config file. If you
-don&#8217;t have that setting in your config file, MPF will quit.</p>
+the trigger_event.</p>
 </dd></dl>
 
 </dd></dl>
@@ -288,12 +297,12 @@ don&#8217;t have that setting in your config file, MPF will quit.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2015, Brian Madden, Gabe Knuth.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.events module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    <title>mpf.system.events module &mdash; Mission Pinball Framework 0.16.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.1',
+        VERSION:     '0.16.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.16.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -67,23 +67,22 @@ you can safely add a handler over and over.</p>
 <li><strong>event</strong> &#8211; String name of the event you&#8217;re adding a handler for. Since
 events are text strings, they don&#8217;t have to be pre-defined.</li>
 <li><strong>handler</strong> &#8211; The method that will be called when the event is fired.</li>
-<li><strong>priority</strong> &#8211; <p>An arbitrary integer value that defines what order the
+<li><strong>priority</strong> &#8211; An arbitrary integer value that defines what order the
 handlers will be called in. The default is 1, so if you have a
 handler that you want to be called first, add it here with a
 priority of 2. (Or 3 or 10 or 100000.) The numbers don&#8217;t matter.
 They&#8217;re called from highest to lowest. (i.e. priority 100 is
-called before priority 1.)</p>
-<blockquote>
-<div>will be attached to the handler and called whenever that handler
+called before priority 1.)</li>
+<li><strong>**kwargs</strong> &#8211; Any any additional keyword/argument pairs entered here
+will be attached to the handler and called whenever that handler
 is called. Note these are in addition to kwargs that could be
 passed as part of the event post. If there&#8217;s a conflict, the
-event-level ones will win.</div></blockquote>
-</li>
+event-level ones will win.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A guid reference to the handler which you can use to create a list
-to easily remove these in the future.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A GUID reference to the handler which you can use to later remove
+the handler via <tt class="docutils literal"><span class="pre">remove_handler_by_key</span></tt>.</p>
 </td>
 </tr>
 </tbody>
@@ -132,13 +131,12 @@ values will be processed first.)</p>
 post whatever event you want. You don&#8217;t have to set up anything
 ahead of time, and if no handlers are registered for the event
 you post, so be it.</li>
-<li><strong>callback</strong> &#8211; <p>An optional method which will be called when the final
-handler is done processing this event. Default is None.</p>
-<blockquote>
-<div>passed to each handler. (Just make sure your handlers are
+<li><strong>callback</strong> &#8211; An optional method which will be called when the final
+handler is done processing this event. Default is None.</li>
+<li><strong>**kwargs</strong> &#8211; One or more options keyword/value pairs that will be
+passed to each handler. (Just make sure your handlers are
 expecting them. You can add <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs to your handler methods if
-certain ones don&#8217;t need them.)</div></blockquote>
-</li>
+certain ones don&#8217;t need them.)</li>
 </ul>
 </td>
 </tr>
@@ -168,16 +166,15 @@ values will be processed first.)</p>
 post whatever event you want. You don&#8217;t have to set up anything
 ahead of time, and if no handlers are registered for the event
 you post, so be it.</li>
-<li><strong>callback</strong> &#8211; <p>An optional method which will be called when the final
+<li><strong>callback</strong> &#8211; An optional method which will be called when the final
 handler is done processing this event. Default is None. If
 any handler returns False and cancels this boolean event, the
 callback will still be called, but a new kwarg ev_result=False
-will be passed to it.</p>
-<blockquote>
-<div>passed to each handler. (Just make sure your handlers are
+will be passed to it.</li>
+<li><strong>**kwargs</strong> &#8211; One or more options keyword/value pairs that will be
+passed to each handler. (Just make sure your handlers are
 expecting them. You can add <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs to your handler methods if
-certain ones don&#8217;t need them.)</div></blockquote>
-</li>
+certain ones don&#8217;t need them.)</li>
 </ul>
 </td>
 </tr>
@@ -210,14 +207,13 @@ values will be processed first.)</p>
 post whatever event you want. You don&#8217;t have to set up anything
 ahead of time, and if no handlers are registered for the event
 you post, so be it.</li>
-<li><strong>callback</strong> &#8211; <p>The method which will be called when the final
+<li><strong>callback</strong> &#8211; The method which will be called when the final
 handler is done processing this event and any handlers that
-registered waits have cleared their waits.</p>
-<blockquote>
-<div>passed to each handler. (Just make sure your handlers are
+registered waits have cleared their waits.</li>
+<li><strong>**kwargs</strong> &#8211; One or more options keyword/value pairs that will be
+passed to each handler. (Just make sure your handlers are
 expecting them. You can add <a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs to your handler methods if
-certain ones don&#8217;t need them.)</div></blockquote>
-</li>
+certain ones don&#8217;t need them.)</li>
 </ul>
 </td>
 </tr>
@@ -250,13 +246,12 @@ values will be processed first.)</p>
 post whatever event you want. You don&#8217;t have to set up anything
 ahead of time, and if no handlers are registered for the event
 you post, so be it.</li>
-<li><strong>callback</strong> &#8211; <p>The method which will be called when the final handler is
-done processing this event. Default is None.</p>
-<blockquote>
-<div>passed to each handler. (Just make sure your handlers are
+<li><strong>callback</strong> &#8211; The method which will be called when the final handler is
+done processing this event. Default is None.</li>
+<li><strong>**kwargs</strong> &#8211; One or more options keyword/value pairs that will be
+passed to each handler. (Just make sure your handlers are
 expecting them. You can add <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs to your handler methods if
-certain ones don&#8217;t need them.)</div></blockquote>
-</li>
+certain ones don&#8217;t need them.)</li>
 </ul>
 </td>
 </tr>
@@ -342,11 +337,10 @@ an event and replaces it if so.</p>
 <li><strong>event</strong> &#8211; The event you want to check to see if this handler is
 registered for.</li>
 <li><strong>handler</strong> &#8211; The method of the handler you want to check.</li>
-<li><strong>priority</strong> &#8211; <p>Optional priority of the new handler that will be
-registered.</p>
-<blockquote>
-<div>registered with the new handler.</div></blockquote>
-</li>
+<li><strong>priority</strong> &#8211; Optional priority of the new handler that will be
+registered.</li>
+<li><strong>**kwargs</strong> &#8211; The kwargs you want to check and the kwatgs that will be
+registered with the new handler.</li>
 </ul>
 </td>
 </tr>
@@ -430,12 +424,12 @@ for a description of how queue events work.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2015, Brian Madden, Gabe Knuth.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

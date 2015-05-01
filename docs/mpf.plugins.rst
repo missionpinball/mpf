@@ -15,6 +15,7 @@ Submodules
    mpf.plugins.osc
    mpf.plugins.scoring
    mpf.plugins.shots
+   mpf.plugins.socket_events
    mpf.plugins.sound
    mpf.plugins.valid_playfield
 
