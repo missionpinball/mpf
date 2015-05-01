@@ -486,19 +486,60 @@ class LightController(object):
 
                 # Now we're doing the actual update.
 
-                item['led'].color(item['color'], item['fade_ms'],
-                                  item['priority'], item['blend'])
+                if item['led'].debug_logging:
+                    item['led'].log.info("Applying update to LED from the Show "
+                                         "Controller")
+
+                item['led'].color(color=item['color'],
+                                  fade_ms=item['fade_ms'],
+                                  priority=item['priority'],
+                                  blend=item['blend'])
+
+            elif item['led'].debug_logging:
+                item['led'].log.info("Show Controller has an update for this "
+                                     "LED, but the update is priority %s while "
+                                     "the current priority of the LED is %s. "
+                                     "The update will not be applied.",
+                                     item['priority'],
+                                     item['led'].state['priority'])
 
         self.led_update_list = []
 
-    def run_script(self, lightname, script, priority=0, repeat=True,
-                   blend=False, tps=1000, num_repeats=0, callback=None, **kwargs):
-        """Runs a light script. Scripts are similar to Shows, except they
-        only apply to single lights and you can "attach" any script to any
-        light. Scripts are used anytime you want an light to have more than one
-        action. A simple example would be a flash an light. You would make a
-        script that turned it on (with your color), then off, repeating
-        forever.
+    def run_script(self, script, lights=None, leds=None, priority=0,
+                   repeat=True, blend=False, tps=1, num_repeats=0,
+                   callback=None, **kwargs):
+        """Runs a light script.
+
+        Args:
+            script: A list of dictionaries of script commands. (See below)
+            lights: A light name or list of lights this script will be applied
+                to.
+            leds: An LED name or a list of LEDs this script will be applied to.
+            priority: The priority the light in this script should operate
+                at.
+            repeat (bool): Whether the script repeats (loops).
+            blend (bool): Whether the script should blend the light colors with
+                lower prioirty things. todo
+            tps (int): Tocks per second, which is how fast this script will be
+                played back.
+            num_repeats (int): How many times this script should repeat before
+                ending. A value of 0 indicates it will repeat forever. Also
+                requires *repeat=True*. 'callback': A callback function that is
+                called when the script is stopped.
+            callback: A method that will be called when this script stops.
+
+        Returns:
+            :class:`Show` object. Since running a script just sets up and
+            runs a regular Show, run_script returns the Show object.
+            In most cases you won't need this, but it's nice if you want to
+            know exactly which Show was created by this script so you can
+            stop it later. (See the examples below for usage.)
+
+        Scripts are similar to Shows, except they only apply to single lights
+        and you can "attach" any script to any light. Scripts are used anytime
+        you want an light to have more than one action. A simple example would
+        be a flash an light. You would make a script that turned it on (with
+        your color), then off, repeating forever.
 
         Scripts could be more complex, like cycling through multiple colors,
         blinking out secret messages in Morse code, etc.
@@ -507,27 +548,6 @@ class LightController(object):
         into a Show (that just happens to only be for a single light), so
         we can have all the other Show-like features, including playback
         speed, repeats, blends, callbacks, etc.
-
-        Args:
-            lightname: The name of the light for this script to control.
-            script: A list of dictionaries of script commands. (See below)
-                priority': The priority the light in this script should operate
-                at.
-            repeat (bool): Whether the script repeats (loops).
-            blend (bool): Whether the script should blend the light colors with
-                lower prioirty things. todo
-            tps (int): Tocks per second. todo
-            num_repeats (int): How many times this script should repeat before
-                ending. A value of 0 indicates it will repeat forever. Also
-                requires *repeat=True*. 'callback': A callback function that is
-                called when the script is stopped. todo update
-
-        Returns:
-            :class:`Show` object. Since running a script just sets up and
-            runs a regular Show, run_script returns the Show object.
-            In most cases you won't need this, but it's nice if you want to
-            know exactly which Show was created by this script so you can
-            stop it later. (See the examples below for usage.)
 
         The script is a list of dictionaries, with each list item being a
         sequential instruction, and the dictionary defining what you want to
@@ -545,19 +565,21 @@ class LightController(object):
         and off:
 
             self.flash_red = []
-            self.flash_red.append({"color": "ff0000", "time": 100})
-            self.flash_red.append({"color": "000000", "time": 100})
-            self.machine.light_controller.run_script("light1", self.flash_red,
-                                                     "4", blend=True)
+            self.flash_red.append({"color": 'ff0000', 'tocks': 1})
+            self.flash_red.append({"color": '000000', 'tocks': 1})
+            self.machine.show_controller.run_script(script=self.flash_red,
+                                                    lights='light1',
+                                                    priority=4,
+                                                    blend=True)
 
         Once the "flash_red" script is defined as self.flash_red, you can use
-        it anytime for any light. So if you want to flash two lights red, it
-        would be:
+        it anytime for any light or LED. You can also define lights as a list,
+        like this:
 
-            self.machine.light_controller.run_script("light1", self.flash_red,
-                                                     "4", blend=True)
-            self.machine.light_controller.run_script("light2", self.flash_red,
-                                                     "4", blend=True)
+            self.machine.show_controller.run_script(script=self.flash_red,
+                                                    lights=['light1', 'light2'],
+                                                    priority=4,
+                                                    blend=True)
 
         Most likely you would define your scripts once when the game loads and
         then call them as needed.
@@ -566,12 +588,12 @@ class LightController(object):
         which smoothly cycles an RGB light through all colors of the rainbow:
 
             self.rainbow = []
-            self.rainbow.append({'color': 'ff0000', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': 'ff7700', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': 'ffcc00', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': '00ff00', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': '0000ff', 'time': 400, 'fade': True})
-            self.rainbow.append({'color': 'ff00ff', 'time': 400, 'fade': True})
+            self.rainbow.append({'color': 'ff0000', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': 'ff7700', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': 'ffcc00', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': '00ff00', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': '0000ff', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': 'ff00ff', 'tocks': 1, 'fade': True})
 
         If you have single color lights, your *color* entries in your script
         would only contain a single hex value for the intensity of that light.
@@ -579,20 +601,27 @@ class LightController(object):
         you can apply to any light):
 
             self.flash = []
-            self.flash.append({"color": "ff", "time": 100})
-            self.flash.append({"color": "00", "time": 100})
+            self.flash.append({"color": "ff", "tocks": 1})
+            self.flash.append({"color": "00", "tocks": 1})
 
         If you'd like to save a reference to the :class:`Show` that's
         created by this script, call it like this:
 
-            self.blah = self.machine.light_controller.run_script("light2",
-                                                        self.flash_red, "4")
-        """
+            self.blah = self.machine.show_controller.run_script("light2",
+                                                        self.flash_red, "4",
+                                                        tps=2)
+         """
 
         # convert the steps from the script list that was passed into the
         # format that's used in an Show
 
         show_actions = []
+
+        if type(lights) is str:
+            lights = [lights]
+
+        if type(leds) is str:
+            leds = [leds]
 
         for step in script:
             if step.get('fade', None):
@@ -600,18 +629,28 @@ class LightController(object):
             else:
                 color = str(step['color'])
 
-            color_dic = {lightname: color}
-            current_action = {'tocks': step['tocks'],
-                              'lights': color_dic}
+            current_action = {'tocks': step['tocks']}
+
+            if lights:
+                current_action['leds'] = dict()
+                for light in Config.string_to_list(lights):
+                    current_action['lights'][light] = color
+
+            if leds:
+
+                current_action['leds'] = dict()
+                for led in Config.string_to_list(leds):
+                    current_action['leds'][led] = color
+
             show_actions.append(current_action)
 
         show = Show(machine=self.machine, config=None, file_name=None,
                     asset_manager=self.asset_manager, actions=show_actions)
-        show.play(repeat=repeat, tocks_per_sec=tps,
-                             priority=priority, blend=blend,
-                             num_repeats=num_repeats, callback=callback)
+        show.play(repeat=repeat, tocks_per_sec=tps, priority=priority,
+                  blend=blend, num_repeats=num_repeats, callback=callback)
 
-        self.active_scripts.append({'lightname': lightname,
+        self.active_scripts.append({'lights': lights,
+                                    'leds': leds,
                                     'priority': priority,
                                     'show': show})
 
