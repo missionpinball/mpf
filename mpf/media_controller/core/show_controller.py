@@ -496,7 +496,8 @@ class Show(Asset):
         return show_actions
 
     def add_loaded_callback(self, loaded_callback, **kwargs):
-        self.asset_manager.log.info("Adding a loaded callback: %s, %s", loaded_callback, kwargs)
+        self.asset_manager.log.debug("Adding a loaded callback: %s, %s",
+                                     loaded_callback, kwargs)
         for c, k in self.loaded_callbacks:
             if c == loaded_callback and k == kwargs:
                 return False
@@ -505,8 +506,9 @@ class Show(Asset):
         return True
 
     def _asset_loaded(self):
-        self.asset_manager.log.info("Show is now loaded. Processing loaded_callbacks... %s",
-                                    self.loaded_callbacks)
+        self.asset_manager.log.debug("Show is now loaded. Processing "
+                                     "loaded_callbacks... %s",
+                                     self.loaded_callbacks)
         for callback, kwargs in self.loaded_callbacks:
             callback(**kwargs)
 
