@@ -21,6 +21,7 @@ class Device(object):
         self.name = name
         self.tags = list()
         self.label = None
+        self.debug_logging = False
         self.config = defaultdict(lambda: None, config)
 
         if config:
@@ -31,6 +32,10 @@ class Device(object):
             if 'label' in config:
                 self.label = config['label']  # todo change to multi lang
             # todo more pythonic way, like self.label = blah if blah?
+
+            if 'debug_logging' in config and config['debug_logging']:
+                self.debug_logging = True
+                self.log.info("Enabling debug_logging for this device")
 
         # set event handlers to enable, disable, and reset this device
         # note that not all devices will use all of these methods

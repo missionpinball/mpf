@@ -140,18 +140,6 @@ class Game(MachineMode):
         self.log.info("Player added successfully. Total players: %s",
                       Player.total_players)
 
-
-
-    """
-      _____                       __ _
-     / ____|                     / _| |
-    | |  __  __ _ _ __ ___   ___| |_| | _____      __
-    | | |_ |/ _` | '_ ` _ \ / _ \  _| |/ _ \ \ /\ / /
-    | |__| | (_| | | | | | |  __/ | | | (_) \ V  V /
-     \_____|\__,_|_| |_| |_|\___|_| |_|\___/ \_/\_/
-
-    """
-
     def ball_starting(self):
         """Called when a new ball is starting.
 
