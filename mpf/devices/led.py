@@ -13,6 +13,7 @@ from mpf.system.devices import Device
 from mpf.system.tasks import Task
 from mpf.system.config import Config
 
+
 class LED(Device):
     """ Represents an light connected to an new-style interface board.
     Typically this is an LED.
@@ -65,6 +66,7 @@ class LED(Device):
                         'priority': 0,
                         'destination_color': [0.0, 0.0, 0.0],
                         'destination_time': 0.0,
+                        'start_color': [0.0, 0.0, 0.0],
                         'start_time': 0.0
                      }
 
@@ -103,7 +105,7 @@ class LED(Device):
         self.current_color = []  # one item for each element, 0-255
 
     def color(self, color, fade_ms=None, brightness_compensation=True,
-              priority=0, cache=True, force=False):
+              priority=0, cache=True, force=False, blend=False):
         """Sets this LED to the color passed.
 
         Args:
@@ -120,16 +122,41 @@ class LED(Device):
                 this incoming color request will have no effect. Default is 0.
                 If the priority is negative, it will force this color to be
                 applied now
+            cache:
+            force:
+            blend:
         """
 
         #self.log.info('Color: %s Fade: %s BC: %s P: %s, Cache: %s. Force: %s',
         #              color, fade_ms, brightness_compensation, priority, cache,
         #              force)
 
+        if self.debug_logging:
+            self.log.info("+------Received new color command---------")
+            self.log.info("| color: %s", color)
+            self.log.info("| priority: %s", priority)
+            self.log.info("| cache: %s", cache)
+            self.log.info("| force: %s", force)
+            self.log.info("| fade_ms: %s", fade_ms)
+            self.log.info("| blend: %s", blend)
+            self.log.info("| brightness_compensation: %s",
+                          brightness_compensation)
+            self.log.info("+-----------------------------------------")
+
         # If the incoming priority is lower that what this LED is at currently
         # ignore this request.
         if priority < self.state['priority'] and not force:
+
+            if self.debug_logging:
+                self.log.info("Incoming color priority: %s. Current priority: "
+                              " %s. Not applying update.", priority,
+                              self.state['priority'])
             return
+
+        elif self.debug_logging:
+            self.log.info("Incoming color priority: %s. Current priority: "
+                          " %s. Processing new command.", priority,
+                          self.state['priority'])
 
         if brightness_compensation:
             color = self.compensate(color)
@@ -166,6 +193,19 @@ class LED(Device):
             self.cache['destination_time']
             self.cache['start_color'] = self.cache['color']
             self.cache['start_time'] = time.time()
+
+        if self.debug_logging:
+            self.log.info("+---------------New State-----------------")
+            self.log.info("| color: %s", self.state['color'])
+            self.log.info("| priority: %s", self.state['priority'])
+            self.log.info("| destination_color: %s",
+                          self.state['destination_color'])
+            self.log.info("| destination_time: %s",
+                          self.state['destination_time'])
+            self.log.info("| start_color: %s", self.state['start_color'])
+            self.log.info("| start_time: %s", self.state['start_time'])
+            self.log.info("+-----------------------------------------")
+            self.log.info("==========================================")
 
     def disable(self, fade_ms=0, priority=0, cache=True, force=False):
         """ Disables an LED, including all elements of a multi-color LED.
