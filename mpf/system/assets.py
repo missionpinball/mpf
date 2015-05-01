@@ -82,7 +82,7 @@ class AssetManager(object):
 
         root_path = os.path.join(path, self.path_string)
 
-        self.log.info("Processing assets from base folder: %s", root_path)
+        self.log.info("Processing assets from folder: %s", root_path)
 
         for path, _, files in os.walk(root_path, followlinks=True):
 
@@ -121,7 +121,7 @@ class AssetManager(object):
 
                 config[name] = built_up_config
 
-                self.log.info("Registering Asset: %s, File: %s, Default Group:"
+                self.log.debug("Registering Asset: %s, File: %s, Default Group:"
                               " %s, Final Config: %s", name, file_name,
                               default_string, built_up_config)
 
@@ -136,7 +136,7 @@ class AssetManager(object):
         also load the asset file into memory.
         """
 
-        self.log.info("Registering machine-wide %s", self.config_section)
+        self.log.debug("Registering machine-wide %s", self.config_section)
 
         if self.config_section in self.machine.config:
             config = self.machine.config[self.config_section]
@@ -146,7 +146,7 @@ class AssetManager(object):
         self.machine.config[self.config_section] = self.register_assets(
             config=config)
 
-        self.log.info("Loading machine-wide 'preload' %s", self.config_section)
+        self.log.debug("Loading machine-wide 'preload' %s", self.config_section)
 
         # Load preload systemwide assets
         self.load_assets(self.machine.config[self.config_section],
@@ -259,7 +259,7 @@ class AssetManager(object):
 
     def unload_assets(self, asset_set):
         for asset in asset_set:
-            self.log.info("Unloading asset: %s", asset.file_name)
+            self.log.debug("Unloading asset: %s", asset.file_name)
             asset.unload()
 
     def load_asset(self, asset, callback, priority=10):
@@ -315,12 +315,12 @@ class AssetLoader(threading.Thread):
 
         while 1:
             asset = self.queue.get()
-            self.log.info("Loading Asset: '%s'. Callback: %s", asset[1],
+            self.log.debug("Loading Asset: '%s'. Callback: %s", asset[1],
                           asset[2])
 
             if not asset[1].loaded:
                 asset[1]._load(asset[2])
-                self.log.info("Asset Finished Loading: %s", asset[1])
+                self.log.debug("Asset Finished Loading: %s", asset[1])
             else:
                 self.log.error("Received request to load %s, but it's already"
                                " loaded", asset[1])

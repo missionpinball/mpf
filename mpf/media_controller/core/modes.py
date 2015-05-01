@@ -243,11 +243,6 @@ class Mode(object):
 
         self.log.info('Mode Start. Priority: %s', self.priority)
 
-        # register mode stop events
-        if 'stop_events' in self.config['mode']:
-            for event in self.config['mode']['stop_events']:
-                self.add_mode_event_handler(event, self.stop)
-
         self.active = True
 
         for item in self.machine.modes.start_methods:

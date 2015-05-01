@@ -166,9 +166,6 @@ class LightController(object):
             self.stop_script(key, reset=reset, hold=hold)
 
     def stop_shows_by_key(self, key):
-        print "stop shows by key"
-        print "key", key
-        print "running shows", self.running_show_keys
         try:
             self.running_show_keys[key].stop()
         except KeyError:
@@ -295,7 +292,6 @@ class LightController(object):
 
         for show in shows:
             show.stop()
-
 
     def add_lightplayer_show(self, event, settings):
         if 'priority' in settings:
@@ -1187,17 +1183,6 @@ class Show(Asset):
                 show setting was when you played it, but you can force it to
                 hold or not with True or False here.
         """
-
-        print
-        print
-        print
-
-        print "stopping show", self.file_name
-        print "running?", self.running
-        print
-        print
-        print
-
 
         if self.running:
             if hold:

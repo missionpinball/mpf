@@ -27,7 +27,6 @@ be called on mode_start or mode_stop.
 # override event strings
 
 
-
 class ModeController(object):
     """Parent class for the Mode Controller. There is one instance of this in
     MPF and it's responsible for loading, unloading, and managing all game
@@ -370,7 +369,10 @@ class Mode(object):
         self.active = False
 
         for item in self.stop_methods:
-            item[0](item[1])
+            try:
+                item[0](item[1])
+            except TypeError:
+                pass
 
         self.stop_methods = list()
 
@@ -666,12 +668,12 @@ class ModeTimer(object):
 
         self.stop()
 
-        self.machine.events.post('timer_' + self.name + '_complete',
-                                 ticks=self.mode.player[self.tick_var])
-
-        if self.bcp:
+        if self.bcp:  # must be before the event post in case it stops the mode
             self.machine.bcp.send('timer', name=self.name, action='complete',
                                   ticks=self.mode.player[self.tick_var])
+
+        self.machine.events.post('timer_' + self.name + '_complete',
+                                 ticks=self.mode.player[self.tick_var])
 
     def _timer_tick(self):
         # Automatically called by the sytem timer each tick

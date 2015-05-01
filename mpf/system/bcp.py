@@ -725,7 +725,7 @@ class BCPClient(object):
     def __init__(self, machine, name, config, receive_queue):
 
         self.log = logging.getLogger('BCPClient.' + name)
-        self.log.info('Setting up BCP Client')
+        self.log.info('Setting up BCP Client...')
 
         self.machine = machine
         self.name = name
@@ -921,7 +921,7 @@ class BCPClient(object):
 
     def receive_hello(self, **kwargs):
         """Processes incoming BCP 'hello' command."""
-        self.log.info('Received BCP Hello from host with kwargs: %s', kwargs)
+        self.log.debug('Received BCP Hello from host with kwargs: %s', kwargs)
 
     def receive_goodbye(self):
         """Processes incoming BCP 'goodbye' command."""
