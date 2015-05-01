@@ -1,135 +1,162 @@
+#config_version=1
+
 # Config file for Step 9 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
 
-# WARNING: This is for a Judge Dredd machine controlled by a P-ROC. Do not use
-# this file with your own hardware unless you change the coil and switch
+# WARNING: This is for a Demolition Man machine controlled by a P-ROC. Do not
+# use this file with your own hardware unless you change the coil and switch
 # numbers to match your actual hardware!
 
 Hardware:
     Platform: p_roc
     DriverBoards: wpc
 
-Game:
-    player_controlled_eject_tag: launch
-
-Switches:
-    leftFlipperButton:
+switches:
+    s_left_flipper:
         number: SF4
-    rightFlipperButton:
-        number: SF6
-    trough1:
-        number: S81
+    s_right_flipper:
+        number: SF2
+    s_trough1:
+        number: s31
+        label:
+        tags:
         type: NC
-    trough2:
-        number: S82
+    s_trough2:
+        number: s32
+        label:
+        tags:
         type: NC
-    trough3:
-        number: S83
+    s_trough3:
+        number: s33
+        label:
+        tags:
         type: NC
-    trough4:
-        number: S84
+    s_trough4:
+        number: s34
+        label:
+        tags:
         type: NC
-    trough5:
-        number: S85
+    s_trough5:
+        number: s35
+        label:
+        tags:
         type: NC
-    trough6:
-        number: S86
+    s_trough_jam:
+        number: s36
+        label:
+        tags:
         type: NC
-    troughJam:
-        number: S87
-        type: NC
-    plungerLane:
-        number: S41
-    start:
-        number: S13
-        tags: start
-    plungerLaunch:
-        number: S12
-        tags: launch
-    leftRollover:
-        number: S33
-        tags: playfield_active
+    s_plunger_lane:
+        number: s27
 
-Coils:
-    flipperLeftMain: 
+coils:
+    c_flipper_left_main: 
         number: FLLM
-        pulse_ms: 20
-    flipperLeftHold: 
+        pulse_ms: 25
+    c_flipper_left_hold: 
         number: FLLH
-    flipperRightMain: 
+    c_flipper_right_main: 
         number: FLRM
-        pulse_ms: 20
-    flipperRightHold: 
+        pulse_ms: 25
+    c_flipper_right_hold: 
         number: FLRH
-    troughEject:
-        number: C13
-        pulse_ms: 20
-    plungerEject:
-        number: C08
-        pulse_ms: 20
+    c_trough_eject:
+        number: c01
+        pulse_ms: 25
 
-Flippers:
-    leftFlipper:
-        main_coil: flipperLeftMain
-        hold_coil: flipperLeftHold
-        activation_switch: leftFlipperButton
+flippers:
+    left_flipper:
+        main_coil: c_flipper_left_main
+        hold_coil: c_flipper_left_hold
+        activation_switch: s_left_flipper
         enable_events: machine_reset_phase_3
-    rightFlipper:
-        main_coil: flipperRightMain
-        hold_coil: flipperRightHold
-        activation_switch: rightFlipperButton
+    right_flipper:
+        main_coil: c_flipper_right_main
+        hold_coil: c_flipper_right_hold
+        activation_switch: s_right_flipper
         enable_events: machine_reset_phase_3
 
-Plugins:
-    - keyboard.Keyboard
+dmd:
+    physical: yes
+    width: 128
+    height: 32
 
-Keyboard:
+window:
+    elements:
+      - type: virtualdmd
+        width: 512
+        height: 128
+        h_pos: center
+        v_pos: center
+        pixel_color: ff6600
+        dark_color: 220000
+        pixel_spacing: 1
+      - type: shape
+        shape: box
+        width: 516
+        height: 132
+        color: aaaaaa
+        thickness: 2
+      - type: text
+        font: tall title
+        text: MY AWESOME GAME
+        h_pos: center
+        v_pos: top
+        y: 60
+        size: 100
+        antialias: yes
+        layer: 1
+        color: ee9900
+
+slideplayer:
+    machineflow_attract_start:
+        type: text
+        text: PRESS START
+
+keyboard:
     z:
-        switch: leftFlipperButton
+        switch: s_left_flipper
     /:
-        switch: rightFlipperButton
+        switch: s_right_flipper
     1:
-        switch: trough1
+        switch: s_trough1
         toggle: true
-        start_active: true
     2:
-        switch: trough2
+        switch: s_trough2
         toggle: true
     3:
-        switch: trough3
+        switch: s_trough3
         toggle: true
     4:
-        switch: trough4
+        switch: s_trough4
         toggle: true
     5:
-        switch: trough5
-        toggle: true
-    6:
-        switch: trough6
+        switch: s_trough5
         toggle: true
     p:
-        switch: plungerLane
+        switch: s_plunger_lane
         toggle: true
-    s:
-        switch: start
-    L:
-        switch: plungerLaunch
-    q:
-        switch: leftRollover
-    
 
-BallDevices:
-    trough:
-        ball_switches: trough1, trough2, trough3, trough4, trough5, trough6, troughJam
-        entrance_count_delay: 300ms
-        eject_coil: troughEject
-        confirm_eject_type: target
-        eject_targets: plunger
-        tags: trough, home, drain
-    plunger:
-        ball_switches: plungerLane
-        entrance_count_delay: 300ms
-        exit_count_delay: 3s
-        eject_coil: plungerEject
-        confirm_eject_type: count
-        tags: ball_add_live
+balldevices:
+  bd_trough:
+    tags: trough, home, drain
+    ball_switches: s_trough1, s_trough2, s_trough3, s_trough4, s_trough5, s_trough_jam
+    eject_coil: c_trough_eject
+    confirm_eject_type: target
+    entrance_count_delay: 300ms
+    jam_switch: s_trough_jam
+    eject_targets: bd_plunger
+  bd_plunger:
+    ball_switches: s_plunger_lane
+    entrance_count_delay: 300ms
+    exit_count_delay: 3s
+    eject_coil: c_plunger_eject
+    confirm_eject_type: count
+    tags: ball_add_live
+
+virtual platform start active switches:
+    s_trough1
+    s_trough2
+    s_trough3
+    s_trough4
+    s_trough5
