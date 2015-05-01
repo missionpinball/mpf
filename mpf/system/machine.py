@@ -172,7 +172,10 @@ class MachineController(object):
             # Check to see if we have these types of devices specified in this
             # machine's config file and only load the modules this machine uses.
             if device_cls.is_used(self.config):
+
                 collection, config = device_cls.get_config_info()
+
+                self.log.info("Loading '%s' devices", collection)
 
                 # create the collection
                 exec('self.' + collection + '=devices.DeviceCollection()')
@@ -188,7 +191,7 @@ class MachineController(object):
         self.config['mpf']['system_modules'] = (
             self.config['mpf']['system_modules'].split(' '))
         for module in self.config['mpf']['system_modules']:
-            self.log.info("Loading system module: %s", module)
+            self.log.info("Loading '%s' system module", module)
             module_parts = module.split('.')
             exec('self.' + module_parts[0] + '=' + module + '(self)')
 
@@ -200,6 +203,9 @@ class MachineController(object):
     def _load_plugins(self):
         for plugin in Config.string_to_list(
                 self.config['mpf']['plugins']):
+
+            self.log.info("Loading '%s' plugin", plugin)
+
             i = __import__('mpf.plugins.' + plugin, fromlist=[''])
             self.plugins.append(i.plugin_class(self))
 
@@ -208,6 +214,9 @@ class MachineController(object):
             self.config['scriptlets'] = self.config['scriptlets'].split(' ')
 
             for scriptlet in self.config['scriptlets']:
+
+                self.log.info("Loading '%s' scriptlet", scriptlet)
+
                 i = __import__(self.config['mpf']['paths']['scriptlets'] + '.'
                                + scriptlet.split('.')[0], fromlist=[''])
 

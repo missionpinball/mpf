@@ -48,10 +48,13 @@ class BallController(object):
 
     @property
     def balls(self):
+        self.log.debug("Counting Balls")
         balls = 0
         for device in self.machine.balldevices:
+            self.log.debug("Found %s ball(s) in %s", device.balls, device.name)
             balls += device.balls
             if balls > self._num_balls_known:
+                self.log.debug("Setting known balls to %s", balls)
                 self.num_balls_known = balls
         if balls < 0:
             return -999
@@ -160,12 +163,16 @@ class BallController(object):
 
         for device in devices:
             count += device.get_status('balls')
+            self.log.debug('Found %s ball(s) in %s. Found %s total',
+                           device.get_status('balls'), device.name, count)
 
         if count == self.machine.ball_controller.num_balls_known:
             self.log.debug("Yes, all balls are gathered")
             return True
         else:
-            self.log.debug("No, all balls are not gathered")
+            self.log.debug("No, all balls are not gathered. Total balls: %s. "
+                           "Balls in tagged devices: %s", count,
+                           self.machine.ball_controller.num_balls_known)
             return False
 
     def gather_balls(self, target='home', antitarget=None):
