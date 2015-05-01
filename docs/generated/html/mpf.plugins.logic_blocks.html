@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.plugins.logic_blocks module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    <title>mpf.plugins.logic_blocks module &mdash; Mission Pinball Framework 0.16.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.1',
+        VERSION:     '0.16.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.16.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -66,6 +66,14 @@ a goal, with the steps being able to happen in any order.</p>
 <dd><p>Increases the hit progress towards completion. Automatically called
 when one of the <cite>count_events</cite> is posted. Can also manually be
 called.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>step</strong> &#8211; Integer of the step number (0 indexed) that was just hit.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -125,7 +133,10 @@ time expires. Can safely be manually called.</p>
 <dl class="method">
 <dt id="mpf.plugins.logic_blocks.LogicBlock.complete">
 <tt class="descname">complete</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Marks this logic block as complete. Posts the &#8216;events_when_complete&#8217;
+events and optionally restarts this logic block or disables it,
+depending on this block&#8217;s configuration settings.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.plugins.logic_blocks.LogicBlock.disable">
@@ -140,21 +151,6 @@ disable_event events is posted. Can also manually be called.</p>
 <dd><p>Enables this logic block. Automatically called when one of the
 enable_event events is posted. Can also manually be called.</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="mpf.plugins.logic_blocks.LogicBlock.player_turn_start">
-<tt class="descname">player_turn_start</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.plugins.logic_blocks.LogicBlock.player_turn_stop">
-<tt class="descname">player_turn_stop</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.plugins.logic_blocks.LogicBlock.remove_all_event_handlers">
-<tt class="descname">remove_all_event_handlers</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.plugins.logic_blocks.LogicBlock.reset">
@@ -176,36 +172,6 @@ Can also be manually called.</p>
 <em class="property">class </em><tt class="descclassname">mpf.plugins.logic_blocks.</tt><tt class="descname">LogicBlocks</tt><big>(</big><em>machine</em><big>)</big></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>LogicBlock Manager.</p>
-<dl class="method">
-<dt id="mpf.plugins.logic_blocks.LogicBlocks.create_logic_blocks">
-<tt class="descname">create_logic_blocks</tt><big>(</big><em>config</em>, <em>player</em>, <em>enable=True</em><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.plugins.logic_blocks.LogicBlocks.create_player_logic_blocks">
-<tt class="descname">create_player_logic_blocks</tt><big>(</big><em>player</em>, <em>**kwargs</em><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.plugins.logic_blocks.LogicBlocks.player_turn_start">
-<tt class="descname">player_turn_start</tt><big>(</big><em>player</em><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.plugins.logic_blocks.LogicBlocks.player_turn_stop">
-<tt class="descname">player_turn_stop</tt><big>(</big><em>player</em><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.plugins.logic_blocks.LogicBlocks.process_config">
-<tt class="descname">process_config</tt><big>(</big><em>config</em>, <em>priority=0</em>, <em>mode=None</em>, <em>enable=True</em><big>)</big></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpf.plugins.logic_blocks.LogicBlocks.unload_logic_blocks">
-<tt class="descname">unload_logic_blocks</tt><big>(</big><em>block_list</em><big>)</big></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="class">
@@ -219,6 +185,15 @@ a goal, with the steps having to happen in order.</p>
 <tt class="descname">enable</tt><big>(</big><em>step=0</em>, <em>**kwargs</em><big>)</big></dt>
 <dd><p>Enables this Sequence. Automatically called when one of the
 &#8216;enable_events&#8217; is posted. Can also manually be called.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>step</strong> &#8211; Step number this logic block will be at when it&#8217;s enabled.
+Default is 0.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -275,12 +250,12 @@ called.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2015, Brian Madden, Gabe Knuth.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

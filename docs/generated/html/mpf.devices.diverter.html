@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.diverter module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    <title>mpf.devices.diverter module &mdash; Mission Pinball Framework 0.16.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.1',
+        VERSION:     '0.16.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.16.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -61,7 +61,7 @@
 
 <dl class="attribute">
 <dt id="mpf.devices.diverter.Diverter.collection">
-<tt class="descname">collection</tt><em class="property"> = 'diverter'</em></dt>
+<tt class="descname">collection</tt><em class="property"> = 'diverters'</em></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -87,13 +87,15 @@ via a hardware switch.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>auto</strong> &#8211; <p>Boolean value which is used to indicate whether this
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>auto</strong> &#8211; Boolean value which is used to indicate whether this
 diverter disabled itself automatically. This is passed to the
-event which is posted.</p>
-<blockquote>
-<div>whatever event the game programmer specifies in their machine
+event which is posted.</li>
+<li><strong>**kwargs</strong> &#8211; This is here because this disable method is called by
+whatever event the game programmer specifies in their machine
 configuration file, so we don&#8217;t know what event that might be
-or whether it has random kwargs attached to it.</div></blockquote>
+or whether it has random kwargs attached to it.</li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -215,12 +217,12 @@ it will disable the diverter immediately.</td>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2015, Brian Madden, Gabe Knuth.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

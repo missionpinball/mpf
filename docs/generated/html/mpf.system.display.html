@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.display module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    <title>mpf.system.display module &mdash; Mission Pinball Framework 0.16.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.1',
+        VERSION:     '0.16.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.16.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -109,10 +109,10 @@ already.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>slide</strong> &#8211; The Slide object you want to show.</li>
-<li><strong>display</strong> &#8211; <p>The name of the display you&#8217;d like to show this slide on.</p>
-<p>transition. See the documentation on the SlideBuilder for all
-the options.</p>
-</li>
+<li><strong>display</strong> &#8211; The name of the display you&#8217;d like to show this slide on.</li>
+<li><strong>**kwargs</strong> &#8211; Optional dictionary of settings which could add a
+transition. See the documentation on the SlideBuilder for all
+the options.</li>
 </ul>
 </td>
 </tr>
@@ -209,9 +209,16 @@ position on the parent slide.</p>
 <tt class="descname">adjust_colors</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
 <dd><p>Takes a settings dictionary and converts the object and background
 colors into a format Pygame can use.</p>
-<blockquote>
-<div>key / value pairs this method uses are shade, bg_shade, color,
-and bg_color.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> &#8211; A settings dictionary for this display element. Specific
+key / value pairs this method uses are shade, bg_shade, color,
+and bg_color.</td>
+</tr>
+</tbody>
+</table>
 <p>This method sets the adjusted_color and adjusted_bg_color attributes.</p>
 </dd></dl>
 
@@ -557,7 +564,7 @@ taking place on this display.</p>
 
 <dl class="method">
 <dt id="mpf.system.display.MPFDisplay.add_slide">
-<tt class="descname">add_slide</tt><big>(</big><em>name</em>, <em>priority=0</em>, <em>persist=False</em>, <em>removal_key=None</em><big>)</big></dt>
+<tt class="descname">add_slide</tt><big>(</big><em>name</em>, <em>priority=0</em>, <em>persist=False</em>, <em>removal_key=None</em>, <em>expire_ms=0</em><big>)</big></dt>
 <dd><p>Creates a new slide and adds it to the list of slides for this
 display.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -571,6 +578,10 @@ can only be shown if they are equal or higher priority than the
 priority of the display&#8217;s current slide.</li>
 <li><strong>presist</strong> &#8211; Boolean as to whether this slide should be saved when it
 is no longer being shown.</li>
+<li><strong>removal_key</strong> &#8211; Unique identifier that can be used later to remove this
+slide.</li>
+<li><strong>expire_ms</strong> &#8211; Integer of ms that will cause this slide to automatically
+remove itself. The timer doesn&#8217;t start until the slide is shown.</li>
 </ul>
 </td>
 </tr>
@@ -593,7 +604,20 @@ is no longer being shown.</li>
 <dl class="method">
 <dt id="mpf.system.display.MPFDisplay.remove_slides_by_key">
 <tt class="descname">remove_slides_by_key</tt><big>(</big><em>removal_key</em><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Removes any slides with the removal key passed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>removal_key</strong> &#8211; Key for the slides you want to remove.</td>
+</tr>
+</tbody>
+</table>
+<p>Removing an active slide will automatically cause the next highest
+priority slide to be shown.</p>
+<p>You can safely call this method even if the removal key doesn&#8217;t match
+any slides.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.display.MPFDisplay.set_current_slide">
@@ -643,14 +667,13 @@ attribute is True.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>new_slide</strong> &#8211; Reference to the Slide object you&#8217;d like to transition
 to.</li>
-<li><strong>tranisition</strong> &#8211; <p>String name of the transition type you&#8217;d like to use.
+<li><strong>tranisition</strong> &#8211; String name of the transition type you&#8217;d like to use.
 Note if this is <cite>None</cite>, it just switches to the new slide
-instantly. (i.e. No transition.)</p>
-<blockquote>
-<div>transition. See the documentation for each transition type, as
+instantly. (i.e. No transition.)</li>
+<li><strong>**kwargs</strong> &#8211; Optional key/value pairs which control settings for the
+transition. See the documentation for each transition type, as
 there are lots of different settings and they&#8217;re all different
-depending on the type of transition.</div></blockquote>
-</li>
+depending on the type of transition.</li>
 </ul>
 </td>
 </tr>
@@ -687,7 +710,7 @@ be called frequently.</p>
 
 <dl class="class">
 <dt id="mpf.system.display.Slide">
-<em class="property">class </em><tt class="descclassname">mpf.system.display.</tt><tt class="descname">Slide</tt><big>(</big><em>mpfdisplay</em>, <em>machine</em>, <em>name=None</em>, <em>priority=0</em>, <em>persist=False</em>, <em>removal_key=None</em><big>)</big></dt>
+<em class="property">class </em><tt class="descclassname">mpf.system.display.</tt><tt class="descname">Slide</tt><big>(</big><em>mpfdisplay</em>, <em>machine</em>, <em>name=None</em>, <em>priority=0</em>, <em>persist=False</em>, <em>removal_key=None</em>, <em>expire_ms=0</em><big>)</big></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Parent class for a Slide object.</p>
 <p>MPF uses the concept of &#8220;slides&#8221; (think PowerPoint) as a collection of
@@ -778,6 +801,20 @@ as soon as it&#8217;s no longer active.</p>
 <dd><p>The Pygame palette this slide uses. (8-bit only)</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="mpf.system.display.Slide.removal_key">
+<tt class="descname">removal_key</tt></dt>
+<dd><p>Unique identifier that can be used later to remove this
+slide.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.display.Slide.expire_ms">
+<tt class="descname">expire_ms</tt></dt>
+<dd><p>Integer of ms that will cause this slide to automatically
+remove itself. The timer doesn&#8217;t start until the slide is shown.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="mpf.system.display.Slide.add_element">
 <tt class="descname">add_element</tt><big>(</big><em>element_type</em>, <em>name=None</em>, <em>x=None</em>, <em>y=None</em>, <em>h_pos=None</em>, <em>v_pos=None</em>, <em>**kwargs</em><big>)</big></dt>
@@ -796,14 +833,13 @@ percentage. See the documentation for the calc_position method
 for details.</li>
 <li><strong>y</strong> &#8211; &#8216;y&#8217; position or offset, like x above.</li>
 <li><strong>h_pos</strong> &#8211; Relative horizontal position: left, center, or right.</li>
-<li><strong>v_pos</strong> &#8211; <p>Relative verical position: top, center, or bottom.</p>
-<p>adding.</p>
-</li>
+<li><strong>v_pos</strong> &#8211; Relative verical position: top, center, or bottom.</li>
+<li><strong>**kwargs</strong> &#8211; A list of key/value settings for the element you&#8217;re
+adding.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>An element dictionary, which includes:
-name: String name of the element.
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><p>name: String name of the element.
 element: The newly-created display element object.
 layer: Integer of the relative layer of this element on the</p>
 <blockquote>
@@ -812,6 +848,9 @@ layer: Integer of the relative layer of this element on the</p>
 <p>x: x position of the upper left corner of this element on the slide.
 y: y position of the upper left corner of this element on the slide.</p>
 </p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">An element dictionary, which includes</p>
 </td>
 </tr>
 </tbody>
@@ -898,7 +937,9 @@ elements of this slide are ready to be shown.</p>
 <dl class="method">
 <dt id="mpf.system.display.Slide.remove">
 <tt class="descname">remove</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Removes the slide. If this slide is active, the next-highest priority
+slide will automatically be shown.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.display.Slide.remove_element">
@@ -909,6 +950,23 @@ elements of this slide are ready to be shown.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; String name of the display element you want to remove.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.display.Slide.schedule_removal">
+<tt class="descname">schedule_removal</tt><big>(</big><em>removal_time=None</em><big>)</big></dt>
+<dd><p>Schedules this slide to automatically be removed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>removal_time</strong> &#8211; MPF time string of when this slide should be removed.
+If no time is specified, the slide&#8217;s existing removal time is
+used. If the slide has no existing time, the slide will not be
+removed.</td>
 </tr>
 </tbody>
 </table>
@@ -967,10 +1025,10 @@ any transition.</li>
 slide exists, the elements here will be added to that slide. If
 it doesn&#8217;t exist, a new slide will be created. If no slide name
 is passed, a new slide will be created and given a UUID4 name.</li>
-<li><strong>priority</strong> &#8211; <p>Integer of the priority of this slide.</p>
-<p>callback for events which means there could be random event
-keyword argument pairs attached.</p>
-</li>
+<li><strong>priority</strong> &#8211; Integer of the priority of this slide.</li>
+<li><strong>**kwargs</strong> &#8211; Catch all since this method is often registered as a
+callback for events which means there could be random event
+keyword argument pairs attached.</li>
 </ul>
 </td>
 </tr>
@@ -1037,11 +1095,10 @@ with the preprocessed=True flag.</p>
 <li><strong>machine</strong> &#8211; The main MachineController object.</li>
 <li><strong>slide_a</strong> &#8211; The current (outgoing) Slide.</li>
 <li><strong>slide_b</strong> &#8211; The new (incoming) Slide.</li>
-<li><strong>duration</strong> &#8211; <p>MPF timing string for how long this transition will take.
-Default is 1 second.</p>
-<blockquote>
-<div>transitions are different and have different settings.)</div></blockquote>
-</li>
+<li><strong>duration</strong> &#8211; MPF timing string for how long this transition will take.
+Default is 1 second.</li>
+<li><strong>**kwargs</strong> &#8211; Any additional key/value settings for this transition. (All
+transitions are different and have different settings.)</li>
 </ul>
 </td>
 </tr>
@@ -1132,12 +1189,12 @@ transition class is a special type of slide.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2015, Brian Madden, Gabe Knuth.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>

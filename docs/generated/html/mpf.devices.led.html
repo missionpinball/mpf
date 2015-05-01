@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.led module &mdash; Mission Pinball Framework 0.15.1 documentation</title>
+    <title>mpf.devices.led module &mdash; Mission Pinball Framework 0.16.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.15.1',
+        VERSION:     '0.16.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.15.1 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.16.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -63,7 +63,7 @@ single element (single color), or three element (RGB), though dual element
 
 <dl class="method">
 <dt id="mpf.devices.led.LED.color">
-<tt class="descname">color</tt><big>(</big><em>color</em>, <em>fade_ms=None</em>, <em>brightness_compensation=True</em>, <em>priority=0</em>, <em>cache=True</em>, <em>force=False</em><big>)</big></dt>
+<tt class="descname">color</tt><big>(</big><em>color</em>, <em>fade_ms=None</em>, <em>brightness_compensation=True</em>, <em>priority=0</em>, <em>cache=True</em>, <em>force=False</em>, <em>blend=False</em><big>)</big></dt>
 <dd><p>Sets this LED to the color passed.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -80,9 +80,13 @@ LED will be light using the current brightness compensation.
 Default is True.</li>
 <li><strong>priority</strong> &#8211; Arbitrary integer value of the priority of this request.
 If the incoming priority is lower than the current priority,
-this incoming color request will have no effect. Default is 0.
-If the priority is negative, it will force this color to be
-applied now</li>
+this incoming color request will have no effect. Default is 0.</li>
+<li><strong>cache</strong> &#8211; Boolean which controls whether this new color command will
+update the LED&#8217;s cache. Default is True.</li>
+<li><strong>force</strong> &#8211; Boolean which will force this new color command to be applied
+to the LED, regardless of the incoming or current priority.
+Default is True.</li>
+<li><strong>blend</strong> &#8211; Not yet implemented.</li>
 </ul>
 </td>
 </tr>
@@ -212,12 +216,12 @@ pad with zeros if the input string is too short.</li>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.15.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.16.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2015, Brian Madden, Gabe Knuth.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
     </div>
   </body>
 </html>
