@@ -35,57 +35,55 @@ class LightController(object):
         self.event_queue = set()
         self.coil_queue = set()
 
-        self.light_scripts = dict()
+        self.registered_light_scripts = dict()
 
         self.light_update_list = []
         self.led_update_list = []
 
         self.running_shows = []
 
-        self.light_priorities = {}  # dictionary which tracks the priorities of
-        # whatever last set each light in the machine
+        self.initialized = False
 
-        self.initialized = False  # We need to run some stuff once but we can't
-        # do it here since this loads before our light machine items are created
+        self.queue = []
+        """A list of dicts which contains things that need to be serviced in the
+        future, including: (ot all are always used)
+            * lightname
+            * priority
+            * blend
+            * fadeend
+            * dest_color
+            * color
+            * playlist
+            * action_time
+        """
 
-        self.queue = []  # contains list of dics for things that need to be
-        # serviced in the future, including: (not all are always used)
-        # lightname
-        # priority
-        # blend
-        # fadeend
-        # dest_color
-        # color
-        # playlist
-        # action_time
-
-        self.active_scripts = []  # list of active scripts that have been
-        # converted to Shows. We need this to facilitate removing shows when
-        # they're done, since programmers don't use a name for scripts like
-        # they do with shows. active_scripts is a list of dictionaries, with
-        # the following k/v pairs:
-        # lightname - the light the script is applied to
-        # priority - what priority the script was running at
-        # show - the associated Show object for that script
+        self.running_show_keys = dict()
+        """Dict of active light shows that were created from scripts. This is
+        useful for stopping shows later. Keys are based on the 'key' parameter
+        specified when a script was run, values are references to the show
+        object.
+        """
 
         self.current_time = time.time()
-        # we use a common system time for the entire show system so that every
-        # "current_time" of a single update cycle is the same everywhere. This
-        # ensures that multiple shows, scripts, and commands start in-sync
-        # regardless of any processing lag.
+        """
+        The light controller uses a common system time for the entire show system so that every
+        "current_time" of a single update cycle is the same everywhere. This
+        ensures that multiple shows, scripts, and commands start in-sync
+        regardless of any processing lag.
+        """
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick)
-        self.machine.events.add_handler('machine_init_phase_4',
+        self.machine.events.add_handler('machine_init_phase_5',
                                         self._initialize)
 
         # Tell the mode controller that it should look for LightPlayer items in
         # modes.
-        self.machine.modes.register_start_method(self.process_lightplayer_from_config,
+        self.machine.modes.register_start_method(self.process_lightplayer,
                                                  'lightplayer')
 
         # Create scripts from config
-        self.machine.modes.register_start_method(self.create_scripts_from_config,
+        self.machine.modes.register_start_method(self.process_lightscripts,
                                                  'lightscipts')
 
         # Create the show AssetManager
@@ -101,31 +99,47 @@ class LightController(object):
     def _initialize(self):
         # Sets up everything that has to be instantiated first
 
-        # We do this in case there are no lights configured, we still want MPF
-        # to work.
-        if hasattr(self.machine, 'lights'):
-            for light in self.machine.lights:
-                self.light_priorities[light.name] = 0
-            self.initialized = True
-
         if 'lightscripts' in self.machine.config:
-            self.create_scripts_from_config(self.machine.config['lightscripts'])
+            self.process_lightscripts(self.machine.config['lightscripts'])
 
         if 'lightplayer' in self.machine.config:
-            self.process_lightplayer_from_config(
-                self.machine.config['lightplayer'])
+            self.process_lightplayer(self.machine.config['lightplayer'])
 
     def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
                   tocks_per_sec=30, start_location=None, num_repeats=0,
-                  **kwargs):
+                  key=None, **kwargs):
+        """Plays a light show.
+
+        Args:
+            show: Either the string name of a registered show or a direct
+                reference to the show object you want to play.
+            repeat: Boolean which specifies whether this show will repeat (i.e.
+                "loop") after it reaches the end.
+            priority: The priority this show will play at.
+            blend: Boolean which controls whether lights or LEDs that are "off"
+                in this show will allow the lights to be on if they're on in
+                lower priority shows.
+            hold: Boolean which controls whether the any lights that are on in
+                the last step in the show will stay on when the show ends.
+            tocks_per_sec: Integer of how fast the show will be played in tocks
+                per second.
+            start_location: Integer of what location (step) of the show you want
+                it to start playing at. Default of None means that the show will
+                start whenever it's currently set to.
+            num_repeats: How many times you'd like the show to repeat. Must be
+                used with repeat=True. Default of 0 means it will repeat
+                forever.
+            key: Optional string name of a key that can be used to later to
+                identify this show. Typically this is used with shows created
+                from scripts.
+            **kwargs: Unused. Included in case this method is used as an event
+                handler which might contain random keywords.
+        """
 
         if 'show_priority' in kwargs:
             priority += kwargs['show_priority']
 
         if show in self.machine.shows:
-
-            if 'stop_key' in kwargs:
-                self.machine.shows[show].stop_key = kwargs['stop_key']
             self.machine.shows[show].play(repeat=repeat, priority=priority,
                                           blend=blend, hold=hold,
                                           tocks_per_sec=tocks_per_sec,
@@ -133,63 +147,105 @@ class LightController(object):
                                           num_repeats=num_repeats)
 
         else:  # assume it's a show object?
-            if 'stop_key' in kwargs:
-                show.stop_key = kwargs['stop_key']
             show.play(repeat=repeat, priority=priority, blend=blend, hold=hold,
                       tocks_per_sec=tocks_per_sec,
                       start_location=start_location, num_repeats=num_repeats)
 
-    def stop_show(self, show, reset=True, hold=True, **kwargs):
+        if key:
+            self.running_show_keys[key] = show
 
-        if show in self.machine.shows:
-            self.machine.shows[show].stop(reset=reset, hold=hold)
+    def stop_show(self, show=None, reset=True, hold=False, key=None, **kwargs):
+
+        try:
+            show.stop(reset=reset, hold=hold)
+        except AttributeError:
+            if show in self.machine.shows:
+                self.machine.shows[show].stop(reset=reset, hold=hold)
+
+        if key:
+            self.stop_script(key, reset=reset, hold=hold)
 
     def stop_shows_by_key(self, key):
-        for show in self.running_shows:
-            if show.stop_key == key:
-                show.stop()
+        print "stop shows by key"
+        print "key", key
+        print "running shows", self.running_show_keys
+        try:
+            self.running_show_keys[key].stop()
+        except KeyError:
+            pass
 
-    def create_scripts_from_config(self, config, mode=None, priority=0):
+    def stop_shows_by_keys(self, keys):
+        for key in keys:
+            self.stop_shows_by_key(key)
+
+    def process_lightscripts(self, config, mode=None, priority=0):
         # config here is localized to LightScripts:
 
         for k, v in config.iteritems():
-            self.light_scripts[k] = v
+            self.registered_light_scripts[k] = v
 
-    def process_lightplayer_from_config(self, config, mode=None, priority=0):
+    def process_lightplayer(self, config, mode=None, priority=0):
         # config is localized to 'lightplayer'
         self.log.debug("Processing LightPlayer configuration. Priority: %s",
                        priority)
 
-        key_list = list()
+        event_keys = set()
+        shows = set()
 
         for event_name, actions in config.iteritems():
             if type(actions) is not list:
-                actions = [actions]
+                actions = Config.string_to_list(actions)
 
             for this_action in actions:
 
-                # if we don't have a 'show' entry, then create one real quick
-                # based on the other settings
+                # if we don't have a 'show' entry, assume we have a 'script'
+                # entry along with light/led names/tags.
+
                 if 'script' in this_action:
                     this_action['show'] = self.create_show_from_script(
-                        script=self.light_scripts[this_action['script']],
+                        script=self.registered_light_scripts[this_action['script']],
                         lights=this_action.get('lights', None),
                         leds=this_action.get('leds', None),
                         light_tags=this_action.get('light_tags', None),
-                        led_tags=this_action.get('led_tags', None))
+                        led_tags=this_action.get('led_tags', None),
+                        key=this_action.get('key', None))
+
+                elif 'show' in this_action:
+                    this_action['show'] = self.machine.shows[this_action['show']]
 
                 this_action['priority'] = priority
-                this_action['stop_key'] = mode
-                key_list.append(self.add_light_player_show(event_name,
-                                                          this_action))
 
-        return self.unload_lightplayer_shows, (key_list, mode)
+                event_keys.add(self.add_lightplayer_show(event_name,
+                                                         this_action))
+
+                try:  # if this entry is to stop a script, there will be no show
+                    shows.add(this_action['show'])
+                except KeyError:
+                    pass
+
+        return self.unload_lightplayer_shows, (event_keys, shows)
 
     def create_show_from_script(self, script, lights=None, leds=None,
-                                light_tags=None, led_tags=None):
+                                light_tags=None, led_tags=None, key=None):
+        """Creates a light show from a script.
+
+        Args:
+            script: Python dictionary in MPF light script format
+            lights: String or iterable of multiples strings of the matrix lights
+                that will be included in this show.
+            leds: String or iterable of multiples strings of the LEDs that will
+                be included in this show.
+            light_tags: String or iterable of multiples strings of tags of
+                matrix lights that specify which lights will be in this show.
+            led_tags: String or iterable of multiples strings of tags of
+                LEDs that specify which lights will be in this show.
+            key: Object (typically string) that will be used to stop the show
+                created by this list later.
+
+        """
 
         if type(script) is not list:
-            script = [script]
+            script = Config.string_to_list(script)
 
         action_list = list()
 
@@ -200,18 +256,14 @@ class LightController(object):
 
             if lights:
                 this_step['lights'] = dict()
-                if type(lights) is not list:
-                    lights = [lights]
 
-                for light in lights:
+                for light in Config.string_to_list(lights):
                     this_step['lights'][light] = step['color']
 
             if leds:
                 this_step['leds'] = dict()
-                if type(leds) is not list:
-                    leds = [leds]
 
-                for led in leds:
+                for led in Config.string_to_list(leds):
                     this_step['leds'][led] = step['color']
 
             if light_tags:
@@ -219,10 +271,7 @@ class LightController(object):
                 if 'lights' not in this_step:
                     this_step['lights'] = dict()
 
-                if type(light_tags) is not list:
-                    light_tags = [light_tags]
-
-                for tag in light_tags:
+                for tag in Config.string_to_list(light_tags):
                     this_step['lights']['tag|' + tag] = step['color']
 
             if led_tags:
@@ -230,10 +279,7 @@ class LightController(object):
                 if 'leds' not in this_step:
                     this_step['leds'] = dict()
 
-                if type(led_tags) is not list:
-                    led_tags = [led_tags]
-
-                for tag in led_tags:
+                for tag in Config.string_to_list(led_tags):
                     this_step['leds']['tag|' + tag] = step['color']
 
             action_list.append(this_step)
@@ -242,15 +288,16 @@ class LightController(object):
                     asset_manager=self.asset_manager, actions=action_list)
 
     def unload_lightplayer_shows(self, removal_tuple):
-        key_list, show_key = removal_tuple
+        event_keys, shows = removal_tuple
 
-        self.log.debug("Removing ShowPlayer events")
-        self.machine.events.remove_handlers_by_keys(key_list)
+        self.log.debug("Removing LightPlayer events & stopping shows")
+        self.machine.events.remove_handlers_by_keys(event_keys)
 
-        if show_key:
-            self.stop_shows_by_key(show_key)
+        for show in shows:
+            show.stop()
+            
 
-    def add_light_player_show(self, event, settings):
+    def add_lightplayer_show(self, event, settings):
         if 'priority' in settings:
             settings['show_priority'] = settings['priority']
 
@@ -258,14 +305,30 @@ class LightController(object):
             settings['hold'] = False
 
         if 'action' in settings and settings['action'] == 'stop':
-            key = self.machine.events.add_handler(event, self.stop_show,
-                                                  **settings)
+
+            if 'script' in settings:
+
+                if 'key' in settings:
+                    event_key = self.machine.events.add_handler(event,
+                                                                self.stop_script,
+                                                                **settings)
+
+                else:
+                    self.log.error('Cannot add light show stop action since a '
+                                   '"script" value was specified but a "key" '
+                                   'value was not. Event name: %s', event)
+                    return
+
+            else:  # we have a show name specified
+                event_key = self.machine.events.add_handler(event,
+                                                            self.stop_show,
+                                                            **settings)
 
         else:  # action = 'play'
-            key = self.machine.events.add_handler(event, self.play_show,
-                                                  **settings)
+            event_key = self.machine.events.add_handler(event, self.play_show,
+                                                        **settings)
 
-        return key
+        return event_key
 
     def _run_show(self, show):
         # Internal method which starts a Show
@@ -294,15 +357,13 @@ class LightController(object):
             show.current_location = 0
 
         # if this show that's ending was from a script, remove it from the
-        # active_scripts list
+        # running_show_keys dict
 
-        # Make a copy of the active scripts object since we're potentially
-        # deleting from it while we're also iterating through it.
-        active_scripts_copy = list(self.active_scripts)
+        keys_to_remove = [key for key, value in self.running_show_keys.iteritems()
+                          if value == show]
 
-        for entry in active_scripts_copy:
-            if entry['show'] == show:
-                self.active_scripts.remove(entry)
+        for key in keys_to_remove:
+            del self.running_show_keys[key]
 
         if show.callback:
             show.callback()
@@ -507,7 +568,7 @@ class LightController(object):
 
     def run_script(self, script, lights=None, leds=None, priority=0,
                    repeat=True, blend=False, tps=1, num_repeats=0,
-                   callback=None, **kwargs):
+                   callback=None, key=None, **kwargs):
         """Runs a light script.
 
         Args:
@@ -527,6 +588,9 @@ class LightController(object):
                 requires *repeat=True*. 'callback': A callback function that is
                 called when the script is stopped.
             callback: A method that will be called when this script stops.
+            key: A key that can be used to later stop the light show this script
+                creates. Typically a unique string. If it's not passed, it will
+                either be the first light name or the first LED name.
 
         Returns:
             :class:`Show` object. Since running a script just sets up and
@@ -623,6 +687,15 @@ class LightController(object):
         if type(leds) is str:
             leds = [leds]
 
+        if not key:
+            try:
+                key = lights[0]
+            except TypeError:
+                try:
+                    key = leds[0]
+                except TypeError:
+                    return
+
         for step in script:
             if step.get('fade', None):
                 color = str(step['color']) + "-f" + str(step['tocks'])
@@ -649,69 +722,25 @@ class LightController(object):
         show.play(repeat=repeat, tocks_per_sec=tps, priority=priority,
                   blend=blend, num_repeats=num_repeats, callback=callback)
 
-        self.active_scripts.append({'lights': lights,
-                                    'leds': leds,
-                                    'priority': priority,
-                                    'show': show})
+        self.running_show_keys[key] = show
 
         return show
 
-    def stop_script(self, lightname=None, priority=0, show=None, **kwargs):
-        """Stops and remove an light script.
+    def stop_script(self, key, **kwargs):
+        """Stops and removes the light show that was created by a light script.
 
-        Rarameters:
+        Args:
+            key: The key that was specified in run_script().
+            **kwargs: Not used, included in case this method is called via an
+                event handler that might contain other random paramters.
 
-            'lightname': The light(s) with the script you want to stop.
-            'priority': The priority of the script(s) you want to stop.
-            'show': The show object associated with a script you want to stop.
-
-        In a practical sense there are several ways you can use this
-        stop_script method:
-
-            - Specify *lightname* only to stop (and remove) all active
-              Shows created from scripts for that lightname, regardless of
-              priority.
-            - Specify *priority* only to stop (and remove) all active
-              Shows based on scripts running at that priority for all
-              lights.
-            - Specify *lightname* and *priority* to stop (and remove) all
-              active Shows for that lightname at the specific priority you
-              passed.
-            - Specify a *show* object to stop and remove that specific show.
-            - If you call stop_script() without passing it anything, it will
-            remove all the lightsshows started from all scripts. This is useful
-            for things like end of ball or tilt where you just want to kill
-            everything.
         """
 
-        # Make a copy of the active scripts object since we're potentially
-        # deleting from it while we're also iterating through it. We have to
-        # use list() here since if we just write a=b then they would both
-        # point to the same place and that wouldn't solve the problem.
-        active_scripts_copy = list(self.active_scripts)
-
-        if show:
-            for entry in active_scripts_copy:
-                if entry['show'] == show:
-                    self._end_show(show)
-        elif lightname and priority:
-            for entry in active_scripts_copy:
-                if (entry['lightname'] == lightname and
-                        entry['priority'] == priority):
-                    self._end_show(entry['show'])
-        elif lightname:
-            for entry in active_scripts_copy:
-                if entry['lightname'] == lightname:
-                    self._end_show(entry['show'])
-        elif priority:
-            for entry in active_scripts_copy:
-                if entry['priority'] == priority:
-                    self._end_show(entry['show'])
-        else:
-            for entry in active_scripts_copy:
-                self._end_show(entry['show'])
-
-        # todo callback?
+        try:
+            self.stop_show(show=self.running_show_keys[key], **kwargs)
+            del self.running_show_keys[key]
+        except KeyError:
+            pass
 
     def load_shows(self, path):
         """Automatically loads all the light shows in a path.
@@ -730,7 +759,7 @@ class LightController(object):
                 root from where the mpf.py file is running.
         """
 
-        self.log.debug("Loading shows from: %s", path)
+        self.log.debug("Loading light shows from: %s", path)
         for root, path, files in os.walk(path, followlinks=True):
             for f in files:
                 if f.endswith('.yaml'):
@@ -1020,14 +1049,6 @@ class Show(Asset):
 
                 step_actions['leds'] = led_actions
 
-            ## SlidePlayer
-            #if ('display' in show_actions[step_num] and
-            #        show_actions[step_num]['display']):
-            #
-            #    step_actions['display'] = (
-            #        self.machine.display.slidebuilder.preprocess_settings(
-            #        show_actions[step_num]['display']))
-
             self.show_actions.append(step_actions)
 
         # count how many total locations are in the show. We need this later
@@ -1133,7 +1154,8 @@ class Show(Asset):
         return show_actions
 
     def add_loaded_callback(self, loaded_callback, **kwargs):
-        self.asset_manager.log.info("Adding a loaded callback: %s, %s", loaded_callback, kwargs)
+        self.asset_manager.log.debug("Adding a loaded callback: %s, %s",
+                                    loaded_callback, kwargs)
         for c, k in self.loaded_callbacks:
             if c == loaded_callback and k == kwargs:
                 return False
@@ -1142,15 +1164,16 @@ class Show(Asset):
         return True
 
     def _asset_loaded(self):
-        self.asset_manager.log.info("Show is now loaded. Processing loaded_callbacks... %s",
-                                    self.loaded_callbacks)
+        self.asset_manager.log.debug("Show is now loaded. Processing "
+                                     "loaded_callbacks... %s",
+                                     self.loaded_callbacks)
         for callback, kwargs in self.loaded_callbacks:
             callback(**kwargs)
 
         self.loaded_callbacks = list()
 
     def stop(self, reset=True, hold=None):
-        """Stops a Show.
+        """Stops the Light Show.
 
         Note you can also use this method to clear a stopped show's held lights
         and LEDs by passing hold=False.
@@ -1165,10 +1188,21 @@ class Show(Asset):
                 hold or not with True or False here.
         """
 
+        print
+        print
+        print
+
+        print "stopping show", self.file_name
+        print "running?", self.running
+        print
+        print
+        print
+
+
         if self.running:
             if hold:
                 self.hold = True
-            elif hold is False:  # if it's None we do nothing
+            elif hold is False:  # if it's None we don't assume False
                 self.hold = False
 
             self.machine.light_controller._end_show(self, reset)
