@@ -120,11 +120,12 @@ class LED(Device):
             priority: Arbitrary integer value of the priority of this request.
                 If the incoming priority is lower than the current priority,
                 this incoming color request will have no effect. Default is 0.
-                If the priority is negative, it will force this color to be
-                applied now
-            cache:
-            force:
-            blend:
+            cache: Boolean which controls whether this new color command will
+                update the LED's cache. Default is True.
+            force: Boolean which will force this new color command to be applied
+                to the LED, regardless of the incoming or current priority.
+                Default is True.
+            blend: Not yet implemented.
         """
 
         #self.log.info('Color: %s Fade: %s BC: %s P: %s, Cache: %s. Force: %s',
