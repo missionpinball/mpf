@@ -1,18 +1,19 @@
 # config_version=1
 Mode:
     start_events: ball_starting
-    end_events: start_mode1_acmag
+    stop_events: start_mode1_acmag
     priority: 200
 
 LightPlayer:
     mode_claw_lit_for_major_mode_started:
-        lights: l_claw_ready
+        lights: l_claw_ready, l_right_ramp_arrow
         script: flash
+        key: claw_lit
         tocks_per_sec: 4
         repeat: yes
     balldevice_elevator_ball_enter:
-        lights: l_claw_ready
-        script: "off"
+        key: claw_lit
+        action: stop
 
 LogicBlocks:
     Accruals:

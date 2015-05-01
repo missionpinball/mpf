@@ -1,47 +1,42 @@
+#config_version=1
+
 # Config file for Step 5 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
 
-# WARNING: This is for a Judge Dredd machine controlled by a P-ROC. Do not use
-# this file with your own hardware unless you change the coil and switch
+# WARNING: This is for a Demolition Man machine controlled by a P-ROC. Do not
+# use this file with your own hardware unless you change the coil and switch
 # numbers to match your actual hardware!
 
 Hardware:
     Platform: p_roc
     DriverBoards: wpc
 
-Switches:
-    leftFlipperButton:
+switches:
+    s_left_flipper:
         number: SF4
-    rightFlipperButton:
-        number: SF6
+    s_right_flipper:
+        number: SF2
 
-Coils:
-    flipperLeftMain: 
+coils:
+    c_flipper_left_main: 
         number: FLLM
-    flipperLeftHold: 
+        pulse_ms: 25
+    c_flipper_left_hold: 
         number: FLLH
-    flipperRightMain: 
+    c_flipper_right_main: 
         number: FLRM
-    flipperRightHold: 
+        pulse_ms: 25
+    c_flipper_right_hold: 
         number: FLRH
 
-Flippers:
-    leftFlipper:
-        main_coil: flipperLeftMain
-        hold_coil: flipperLeftHold
-        activation_switch: leftFlipperButton
+flippers:
+    left_flipper:
+        main_coil: c_flipper_left_main
+        hold_coil: c_flipper_left_hold
+        activation_switch: s_left_flipper
         enable_events: machine_reset_phase_3
-    rightFlipper:
-        main_coil: flipperRightMain
-        hold_coil: flipperRightHold
-        activation_switch: rightFlipperButton
+    right_flipper:
+        main_coil: c_flipper_right_main
+        hold_coil: c_flipper_right_hold
+        activation_switch: s_right_flipper
         enable_events: machine_reset_phase_3
-
-Plugins:
-    - keyboard.Keyboard
-
-Keyboard:
-    z:
-        switch: leftFlipperButton
-    /:
-        switch: rightFlipperButton
