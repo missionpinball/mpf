@@ -525,10 +525,22 @@ class ShowController(object):
 
                 # Now we're doing the actual update.
 
+                if item['led'].debug_logging:
+                    item['led'].log.info("Applying update to LED from the Show "
+                                         "Controller")
+
                 item['led'].color(color=item['color'],
                                   fade_ms=item['fade_ms'],
                                   priority=item['priority'],
                                   blend=item['blend'])
+
+            elif item['led'].debug_logging:
+                item['led'].log.info("Show Controller has an update for this "
+                                     "LED, but the update is priority %s while "
+                                     "the current priority of the LED is %s. "
+                                     "The update will not be applied.",
+                                     item['priority'],
+                                     item['led'].state['priority'])
 
         self.led_update_list = []
 
