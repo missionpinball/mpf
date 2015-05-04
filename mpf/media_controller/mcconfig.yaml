@@ -1,5 +1,5 @@
 # config_version=1
-nediacontroller:
+mediacontroller:
     modules:
 
         modes.ModeController
