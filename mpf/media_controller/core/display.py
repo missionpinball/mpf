@@ -1073,6 +1073,11 @@ class Slide(object):
 
         element_type = element_type.lower()
 
+        try:
+            name = name.lower()
+        except AttributeError:
+            pass
+
         self.log.debug("Adding '%s' element to slide %s.%s", element_type,
                        self.mpfdisplay.name, self.name)
 

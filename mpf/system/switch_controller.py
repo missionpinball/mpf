@@ -13,7 +13,7 @@ import logging
 from collections import defaultdict
 import time
 
-from mpf.system.config import Config
+from mpf.system.config import Config, CaseInsensitiveDict
 
 
 class SwitchController(object):
@@ -39,7 +39,7 @@ class SwitchController(object):
         # tracks current switches for things like "do foo() if switch bar is
         # active for 100ms."
 
-        self.switches = {}
+        self.switches = CaseInsensitiveDict()
         # Dictionary which holds the master list of switches as well as their
         # current states. State here does factor in whether a switch is NO or NC,
         # so 1 = active and 0 = inactive.
@@ -67,8 +67,8 @@ class SwitchController(object):
         if not self.machine.physical_hw:
 
             try:
-                start_active = Config.string_to_list(self.machine.config
-                    ['virtual platform start active switches'])
+                start_active = Config.string_to_lowercase_list(
+                    self.machine.config['virtual platform start active switches'])
             except KeyError:
                 pass
 
@@ -217,6 +217,7 @@ class SwitchController(object):
 
         # flip the logical & physical states for NC switches
         hw_state = state
+
         if self.machine.switches[name].type == 'NC':
             if logical:  # NC + logical means hw_state is opposite of state
                 hw_state = hw_state ^ 1
@@ -315,6 +316,7 @@ class SwitchController(object):
 
         You can mix & match entries for the same switch here.
         """
+
         # todo add support for other parameters to the callback?
 
         self.log.debug("Registering switch handler: %s, %s, state: %s, ms: %s"

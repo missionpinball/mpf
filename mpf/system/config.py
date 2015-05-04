@@ -19,6 +19,20 @@ import version
 log = logging.getLogger('ConfigProcessor')
 
 
+class CaseInsensitiveDict(dict):
+    def __setitem__(self, key, value):
+        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
+
+    def __getitem__(self, key):
+        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
+
+    def __contains__(self, key):
+        return super(CaseInsensitiveDict, self).__contains__(key.lower())
+
+    def __del__(self, key):
+        return super(CaseInsensitiveDict, self).__del__(key.lower())
+
+
 class Config(object):
 
     @staticmethod
@@ -299,6 +313,15 @@ class Config(object):
         else:
             # if we're passed anything else, just make it into a list
             return [string]
+
+    @staticmethod
+    def string_to_lowercase_list(string):
+        new_list = Config.string_to_list(string)
+
+        new_list = [x.lower() for x in new_list]
+
+        return new_list
+
 
     @staticmethod
     def list_of_lists(incoming_string):

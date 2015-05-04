@@ -6,8 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
-
 import pygame
 import pygame.locals
 
@@ -138,18 +136,15 @@ class ImageDisplayElement(DisplayElement):
         super(ImageDisplayElement, self).__init__(slide, x, y, h_pos, v_pos,
                                                   layer)
 
-        self.log = logging.getLogger('ImageDE.' + image)
-
         self.loadable_asset = True
         self.machine = machine
 
+        image = image.lower()
+
         if image not in machine.images:
-            self.log.critical("Received a request to add an image, but "
-                              "the name '%s' doesn't exist in in the list of "
-                              "registered images.", image)
-            raise Exception("Received a request to add an image, but "
-                             "the name '%s' doesn't exist in in the list of "
-                             "registered images.", image)
+            raise Exception("Received a request to add an image, but the name "+
+                            image + " doesn't exist in in the list of "
+                            "registered images.")
         else:
             self.image = machine.images[image]
 

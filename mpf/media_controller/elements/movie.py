@@ -79,13 +79,12 @@ class MovieDisplayElement(DisplayElement):
         self.loadable_asset = True
         self.machine = machine
 
+        movie = movie.lower()
+
         if movie not in machine.movies:
-            self.log.critical("Received a request to add a movie, but "
-                              "the name '%s' doesn't exist in in the list of "
-                              "registered movies.", movie)
-            raise Exception("Received a request to add a movie, but "
-                              "the name '%s' doesn't exist in in the list of "
-                              "registered movies.", movie)
+            raise Exception("Received a request to add a movie, but the name " +
+                            movie + " doesn't exist in in the list of "
+                            "registered movies.")
         else:
             self.movie = machine.movies[movie]
 
