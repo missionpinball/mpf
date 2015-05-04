@@ -12,7 +12,9 @@ states and posting events to the framework.
 import logging
 from collections import defaultdict
 import time
-import sys
+
+from mpf.system.config import Config, CaseInsensitiveDict
+
 
 class SwitchController(object):
     """Base class for the switch controller, which is responsible for receiving
@@ -37,14 +39,14 @@ class SwitchController(object):
         # tracks current switches for things like "do foo() if switch bar is
         # active for 100ms."
 
-        self.switches = {}
+        self.switches = CaseInsensitiveDict()
         # Dictionary which holds the master list of switches as well as their
         # current states. State here does factor in whether a switch is NO or NC,
         # so 1 = active and 0 = inactive.
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick, 1000)
-        self.machine.events.add_handler('machine_init_phase_2',
+        self.machine.events.add_handler('init_phase_2',
                                         self.initialize_hw_states,
                                         1000)
                                         # priority 1000 so this fires first
@@ -57,11 +59,25 @@ class SwitchController(object):
 
         We can't do this in __init__() because we need the switch controller to
         be setup first before we set up the hw switches. This method is
-        called via an event handler which listens for `machine_init_phase_2`.
+        called via an event handler which listens for `init_phase_2`.
         """
+
+        start_active = list()
+
+        if not self.machine.physical_hw:
+
+            try:
+                start_active = Config.string_to_lowercase_list(
+                    self.machine.config['virtual platform start active switches'])
+            except KeyError:
+                pass
 
         self.log.debug("Syncing the logical and physical switch states.")
         for switch in self.machine.switches:
+
+            if switch.name in start_active:
+                switch.state = 1
+
             self.set_state(switch.name, switch.state, reset_time=True)
 
     def is_state(self, switch_name, state, ms=0):
@@ -201,6 +217,7 @@ class SwitchController(object):
 
         # flip the logical & physical states for NC switches
         hw_state = state
+
         if self.machine.switches[name].type == 'NC':
             if logical:  # NC + logical means hw_state is opposite of state
                 hw_state = hw_state ^ 1
@@ -276,7 +293,6 @@ class SwitchController(object):
 
         Args:
 
-
             switch_name: String name of the switch you're adding this handler
                 for.
 
@@ -300,6 +316,7 @@ class SwitchController(object):
 
         You can mix & match entries for the same switch here.
         """
+
         # todo add support for other parameters to the callback?
 
         self.log.debug("Registering switch handler: %s, %s, state: %s, ms: %s"

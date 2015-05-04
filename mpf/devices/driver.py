@@ -26,7 +26,7 @@ class Driver(Device):
 
     """
 
-    config_section = 'Coils'
+    config_section = 'coils'
     collection = 'coils'
 
     def __init__(self, machine, name, config, collection=None):
@@ -52,7 +52,7 @@ class Driver(Device):
             # Otherwise we'll use the system default for pulse_ms
             else:
                 self.config['pulse_ms'] = \
-                    self.machine.config['MPF']['default_pulse_ms']
+                    self.machine.config['mpf']['default_pulse_ms']
 
         if 'holdPatter' in self.config:
             self.config['pwm_on'] = int(config['holdPatter'].split('-')[0])

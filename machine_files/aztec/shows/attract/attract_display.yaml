@@ -1,7 +1,7 @@
 - tocks: 5
   display:
     type: Image
-    image: mpf_logo
+    image: mission_pinball_flag_dmd
     transition:
       type: move_in
       direction: top

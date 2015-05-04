@@ -1,3 +1,5 @@
+# config_version=1
+
 Machine:
     HZ: 30
     Balls Installed: 1
@@ -23,29 +25,6 @@ Fast:
 Game:
     Balls per game: 3
     Max players per game: 4
-
-MachineFlow:
-    mpf.game.attract.Attract
-    mpf.game.game.Game
-
-Plugins:
-    - osc.OSC
-    - logic_blocks.LogicBlocks
-    - auditor.Auditor
-    - shots.ShotController
-    - scoring.ScoreController
-    - keyboard.Keyboard
-    - sound.SoundController
-
-OSC:
-    machine_ip: auto
-    machine_port: 8000
-    approved_client_ips: any
-    client_port: 9000
-    debug_messages: false
-    client_updates:
-        switches
-        data
 
 Switches:
     leftPop:
@@ -222,7 +201,6 @@ BallDevices:
         entrance_count_delay: 200ms
         exit_count_delay: 1s
         eject_coil: trough
-        eject_switch: trough
         confirm_eject_type: count    
     
     ballLock:
@@ -230,7 +208,6 @@ BallDevices:
         entrance_count_delay: 200ms
         exit_count_delay: 1s
         eject_coil: ballLock
-        eject_switch: ballLock
         confirm_eject_type: count
 
 Flippers:
@@ -394,6 +371,9 @@ Window:
         h_pos: center
         color: aaaaaa
 
+Virtual Platform Start Active Switches:
+    trough
+
 Keyboard:
 
     z:
@@ -405,7 +385,6 @@ Keyboard:
     1:
         switch: trough
         toggle: True
-        start_active: True
 
     .:
         switch: rightSling
@@ -490,17 +469,3 @@ ShowPlayer:
 #        action: stop
       - show: attract_display
         action: stop
-
-Animations:
-    rolling_ball:
-        file: rolling_ball.dmd
-        alpha_color: 15
-
-Images:
-    scribble:
-        file: scribble.bmp
-        alpha_color: 0
-        target: dmd
-    mpf_logo:
-        file: mission_pinball_flag_dmd.png
-        target: dmd

@@ -1,3 +1,4 @@
+# config_version=1
 # This file contains confinguration options for the MPF itself, including
 # default settings for your pinball machines.
 
@@ -7,16 +8,18 @@
 
 # Configuration for the MPF framework itself
 
-MPF:
+mpf:
     system_modules:  # order is important here
         timing.Timing
         events.EventManager
         switch_controller.SwitchController
         ball_controller.BallController
-        language.Language
         modes.ModeController
-        display.DisplayController
-        show_controller.ShowController
+        light_controller.LightController
+        bcp.BCP
+        shots.ShotController
+        logic_blocks.LogicBlocks
+        scoring.ScoreController
 
     device_modules:
         driver.Driver
@@ -37,78 +40,57 @@ MPF:
         score_reel.ScoreReel
         score_reel.ScoreReelGroup
         flasher.Flasher
+    
+    plugins:
+        auditor
+        ball_save
+        ball_search
+        info_lights
+        osc
+        socket_events
+        switch_player
 
-    display_modules:
-        elements:
-            - text
-            - virtualdmd
-            - image
-            - animation
-            - shape
-            - movie
-        modules:
-            dmd.DMD
-        transitions:
-            move_out: move_out.MoveOut
-            move_in: move_in.MoveIn
-        decorators:
-            blink: blink.Blink
     paths:
         scriptlets: scriptlets
         shows: shows
         audits: audits/audits.yaml
-        sounds: sounds
         machine_files: machine_files
         config: config
-        fonts: fonts
-        images: images
-        animations: animations
-        movies: movies
         modes: modes
-    auto_load_shows: True
     default_pulse_ms: 10
     default_debounce_ms: 0  # fast only
 
 # Default settings for machines. All can be overridden
 
-Machine:
-    HZ: 30
+machine:
     Balls Installed: 1
     Min Balls: 1
     Max Balls: 10
 
-Hardware:
+timing:
+    hz: 30
+
+hardware:
     Platform: virtual
 
-P_ROC:
+p_roc:
     lamp_matrix_strobe_time: 100
     watchdog_time: 1000
     use_watchdog: True
 
-LEDSettings:
+ledsettings:
     brightness_compensation: 1.0
     default_led_fade_ms: 100
 
-Game:
+game:
     Balls per game: 3
     Max players per game: 4
 
-MachineFlow:
+machineflow:
     mpf.game.attract.Attract
     mpf.game.game.Game
 
-OSC:
-    machine_ip: auto
-    machine_port: 8000
-    approved_client_ips: any
-    client_port: 9000
-    debug_messages: false
-    client_updates:
-        switches
-        lights
-        data
-
-Auditor:
+auditor:
     save_events:
         game_started
         ball_ended
@@ -126,15 +108,15 @@ Auditor:
     player:
         score
 
-BallSearch:
+ballsearch:
     Secs until ball search start: 10
     Secs between ball search rounds: 3
     Secs between ball search coils: .15
     If ball search fails: Keep Looking
 
-LogicBlocks:
+logicblocks:
 
-    Counters:
+    counters:
 
         tilt:
             count_events: sw_tilt
@@ -149,8 +131,8 @@ LogicBlocks:
             count_complete_value: 1
             events_when_complete: slam_tilt
 
-DisplayDefaults:
-    Text:
+displaydefaults:
+    text:
         font: default
         size: 10
         opaque: false
@@ -165,7 +147,7 @@ DisplayDefaults:
         background_shade: 0
         antialias: False
 
-Fonts:
+fonts:
     default:
         file: Quadrit.ttf
         size: 10
@@ -197,41 +179,56 @@ Fonts:
        file: big_noodle_titling.ttf
        size: 20
 
-TextStrings:
+textstrings:
     volume_zero: OFF
     volume_max: MAX
 
-AssetDefaults:
-    Images:
+assetdefaults:
+    shows:
         default:
             load: preload
-        screen:
-            target: screen
-        dmd:
-            target: dmd
-    Animations:
-        default:
-            load: preload
-            target: dmd
-        screen:
-            load: preload
-            target: screen
-    Sounds:
-        default:
-            track: sfx
-            load: preload
-        voice:
-            track: voice
-            load: preload
-        sfx:
-            track: sfx
-            load: preload
-        music:
-            track: music
-            load: preload
-    Shows:
-        default:
-            load: preload
-    Movies:
-        default:
-            load: preload
+
+bcp:
+    connections:
+        local_display:
+            host: localhost
+            port: 5050
+            connection_attempts: 5
+            require_connection: no
+
+    event_map:
+        ball_started:
+            command: ball_start
+            params:
+                player: "%player"
+                ball: "%ball"
+
+        ball_ending:
+            command: ball_end
+
+        machineflow_Attract_start:
+            command: attract_start
+
+        machineflow_Attract_stop:
+            command: attract_stop
+
+        game_ended:
+            command: game_end
+
+        player_turn_start:
+            command: player_turn_start
+            params:
+                player: "%number"
+    
+    player_variables:
+#        __all__
+        ball
+        extra_balls
+
+volume:
+    tracks:
+        master: 20
+        voice: 20
+        sfx: 20
+        music: 20
+    steps: 20

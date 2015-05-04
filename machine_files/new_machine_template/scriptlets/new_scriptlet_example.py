@@ -34,7 +34,7 @@ class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever yo
         self.log.debug("This is a debug-level log entry")
 
         # you can access machine configuration options via self.machine.config:
-        print self.machine.config['Game']['Balls per game']
+        print self.machine.config['game']['balls per game']
 
         # feel free to add your own entries to the machine configuration files,
         # like: self.machine.config['YourScriptlet']['Your Setting']

@@ -12,15 +12,8 @@ from collections import deque
 import time
 import sys
 
-try:
-    import pygame
-    import pygame.locals
-except ImportError:
-    pass
-
 from mpf.system import *
 from mpf.devices import *
-from mpf.system.timing import Timing
 from mpf.system.config import Config
 import version
 
@@ -45,7 +38,6 @@ class MachineController(object):
         done: Boolean. Set to True and MPF exits.
         machineflow_index: What machineflow position the machine is currently in.
         machine_path: The root path of this machine_files folder
-        pygame:
         display:
         plugins:
         scriptlets:
@@ -54,38 +46,64 @@ class MachineController(object):
         events:
     """
     def __init__(self, options):
+        self.options = options
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework v%s", version.__version__)
-        self.options = options
+        self.log_system_info()
+
         self.loop_start_time = 0
-        self.config = dict()
         self.physical_hw = options['physical_hw']
-        self.switch_events = list()
         self.done = False
         self.machineflow_index = None
         self.loop_rate = 0.0
         self.mpf_load = 0.0
-        self.pygame = False
-        self.pygame_requested = False
-        self.window = None
-        self.display = None
         self.machine_path = None  # Path to this machine's folder root
-
+        self.monitors = dict()
         self.plugins = list()
         self.scriptlets = list()
         self.game_modes = list()
         self.asset_managers = dict()
 
-        self.registered_pygame_handlers = dict()
-        self.pygame_allowed_events = list()
+        self.config = dict()
+        self._load_config()
 
-        # Get the Python version for the log
-        python_version = sys.version_info
-        self.log.info("Python version: %s.%s.%s", python_version[0],
-                      python_version[1], python_version[2])
-        self.log.info("Platform: %s", sys.platform)
-        self.log.info("Python executable location: %s", sys.executable)
-        self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
+        self.platform = self.set_platform()
+
+        self._load_system_modules()
+
+        self.events.add_handler('action_shutdown', self.end_run_loop)
+        self.events.add_handler('sw_shutdown', self.end_run_loop)
+        self.events.add_handler('machine_reset_phase_3', self.flow_advance,
+                                position=0)
+
+        self.events.post("init_phase_1")
+        self._load_device_modules()
+        self.events.post("init_phase_2")
+        self._load_plugins()
+        self.events.post("init_phase_3")
+        self._load_scriptlets()
+
+        # Configure the Machine Flow
+        self.log.debug("Configuring Machine Flow")
+        self.config['machineflow'] = self.config['machineflow'].split(' ')
+        # Convert the MachineFlow config into a list of objects
+        i = 0
+        for machine_mode in self.config['machineflow']:
+            name = machine_mode.split('.')[-1:]
+            self.config['machineflow'][i] = self.string_to_class(machine_mode)(
+                                                                 self, name[0])
+            i += 1
+        # register event handlers
+        self.events.add_handler('machineflow_advance', self.flow_advance)
+
+        self.events.post("init_phase_4")
+        self.events.post("init_phase_5")
+
+        self.reset()
+
+    def _load_config(self):
+
+        self.config = dict()
 
         # load the MPF config & machine defaults
         self.config = Config.load_config_yaml(config=self.config,
@@ -96,13 +114,13 @@ class MachineController(object):
         # assume it's from the subfolder location specified in the
         # mpfconfigfile location
 
-        if (options['machinepath'].startswith('/') or
-                options['machinepath'].startswith('\\')):
-            machine_path = options['machinepath']
+        if (self.options['machinepath'].startswith('/') or
+                self.options['machinepath'].startswith('\\')):
+            machine_path = self.options['machinepath']
         else:
-            machine_path = os.path.join(self.config['MPF']['paths']
+            machine_path = os.path.join(self.config['mpf']['paths']
                                         ['machine_files'],
-                                        options['machinepath'])
+                                        self.options['machinepath'])
 
         self.machine_path = os.path.abspath(machine_path)
 
@@ -114,17 +132,17 @@ class MachineController(object):
         # Now find the config file location. Same as machine_file with the
         # slash uses to specify an absolute path
 
-        if (options['configfile'].startswith('/') or
-                options['configfile'].startswith('\\')):
-            config_file = options['configfile']
+        if (self.options['configfile'].startswith('/') or
+                self.options['configfile'].startswith('\\')):
+            config_file = self.options['configfile']
         else:
 
-            if not options['configfile'].endswith('.yaml'):
-                options['configfile'] += '.yaml'
+            if not self.options['configfile'].endswith('.yaml'):
+                self.options['configfile'] += '.yaml'
 
             config_file = os.path.join(machine_path,
-                                       self.config['MPF']['paths']['config'],
-                                       options['configfile'])
+                                       self.config['mpf']['paths']['config'],
+                                       self.options['configfile'])
 
         self.log.info("Base machine config file: %s", config_file)
 
@@ -132,37 +150,32 @@ class MachineController(object):
         self.config = Config.load_config_yaml(config=self.config,
                                             yaml_file=config_file)
 
-        self.platform = self.set_platform()
+    def log_system_info(self):
+        """Dumps information about the Python installation to the log.
 
-        # Load the system modules
-        self.config['MPF']['system_modules'] = (
-            self.config['MPF']['system_modules'].split(' '))
-        for module in self.config['MPF']['system_modules']:
-            self.log.info("Loading system module: %s", module)
-            module_parts = module.split('.')
-            exec('self.' + module_parts[0] + '=' + module + '(self)')
+        Information includes Python version, Python executable, platform, and
+        system architecture.
 
-            # todo there's probably a more pythonic way to do this, and I know
-            # exec() is supposedly unsafe, but meh, if you have access to put
-            # malicious files in the system folder then you have access to this
-            # code too.
+        """
+        python_version = sys.version_info
+        self.log.info("Python version: %s.%s.%s", python_version[0],
+                      python_version[1], python_version[2])
+        self.log.info("Platform: %s", sys.platform)
+        self.log.info("Python executable location: %s", sys.executable)
+        self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
 
-        self.events.add_handler('action_shutdown', self.end_run_loop)
-        self.events.add_handler('sw_shutdown', self.end_run_loop)
-        self.events.add_handler('machine_reset_phase_3', self.flow_advance,
-                                position=0)
-
-        self.events.post("machine_init_phase_1")
-
-        # Load the device modules
-        self.config['MPF']['device_modules'] = (
-            self.config['MPF']['device_modules'].split(' '))
-        for device_type in self.config['MPF']['device_modules']:
+    def _load_device_modules(self):
+        self.config['mpf']['device_modules'] = (
+            self.config['mpf']['device_modules'].split(' '))
+        for device_type in self.config['mpf']['device_modules']:
             device_cls = eval(device_type)
             # Check to see if we have these types of devices specified in this
             # machine's config file and only load the modules this machine uses.
             if device_cls.is_used(self.config):
+
                 collection, config = device_cls.get_config_info()
+
+                self.log.info("Loading '%s' devices", collection)
 
                 # create the collection
                 exec('self.' + collection + '=devices.DeviceCollection()')
@@ -174,70 +187,60 @@ class MachineController(object):
                                               self
                                               )
 
-        self.events.post("machine_init_phase_2")
+    def _load_system_modules(self):
+        self.config['mpf']['system_modules'] = (
+            self.config['mpf']['system_modules'].split(' '))
+        for module in self.config['mpf']['system_modules']:
+            self.log.info("Loading '%s' system module", module)
+            module_parts = module.split('.')
+            exec('self.' + module_parts[0] + '=' + module + '(self)')
 
-        # Load plugins
-        if 'Plugins' in self.config:
+            # todo there's probably a more pythonic way to do this, and I know
+            # exec() is supposedly unsafe, but meh, if you have access to put
+            # malicious files in the system folder then you have access to this
+            # code too.
 
-            if type(self.config['Plugins']) is str:
-                self.config['Plugins'] = self.config['Plugins'].split(' ')
+    def _load_plugins(self):
+        for plugin in Config.string_to_list(
+                self.config['mpf']['plugins']):
 
-            for plugin in self.config['Plugins']:
-                self.log.info("Checking Plugin: %s", plugin)
-                i = __import__('mpf.plugins.' + plugin.split('.')[0],
-                               fromlist=[''])
-                if i.preload_check(self):
-                    self.log.info("Plugin: %s passes pre-load check. "
-                                  "Loading...", plugin)
-                    self.plugins.append(getattr(i, plugin.split('.')[1])(self))
-                else:
-                    self.log.warning("Plugin: %s failed pre-load check. "
-                                     "Skipping.", plugin)
+            self.log.info("Loading '%s' plugin", plugin)
 
-        self.events.post("machine_init_phase_3")
+            i = __import__('mpf.plugins.' + plugin, fromlist=[''])
+            self.plugins.append(i.plugin_class(self))
 
-        # Load Scriptlets
-        if 'Scriptlets' in self.config:
-            self.config['Scriptlets'] = self.config['Scriptlets'].split(' ')
+    def _load_scriptlets(self):
+        if 'scriptlets' in self.config:
+            self.config['scriptlets'] = self.config['scriptlets'].split(' ')
 
-            for scriptlet in self.config['Scriptlets']:
-                i = __import__(self.config['MPF']['paths']['scriptlets'] + '.'
+            for scriptlet in self.config['scriptlets']:
+
+                self.log.info("Loading '%s' scriptlet", scriptlet)
+
+                i = __import__(self.config['mpf']['paths']['scriptlets'] + '.'
                                + scriptlet.split('.')[0], fromlist=[''])
 
                 self.scriptlets.append(getattr(i, scriptlet.split('.')[1])
                                        (machine=self,
                                         name=scriptlet.split('.')[1]))
 
-        # Configure the Machine Flow
-        self.log.debug("Configuring Machine Flow")
-        self.config['MachineFlow'] = self.config['MachineFlow'].split(' ')
-        # Convert the MachineFlow config into a list of objects
-        i = 0
-        for machine_mode in self.config['MachineFlow']:
-            name = machine_mode.split('.')[-1:]
-            self.config['MachineFlow'][i] = self.string_to_class(machine_mode)(
-                                                                 self, name[0])
-            i += 1
-        # register event handlers
-        self.events.add_handler('machineflow_advance', self.flow_advance)
+    def _prepare_to_reset(self):
+        pass
 
-        self.events.post("machine_init_phase_4")
-        self.events.post("machine_init_phase_5")
-
-        self.reset()
+        # wipe all event handlers
 
     def reset(self):
-        """Resets the machine."""
+        """Resets the machine.
+
+        This method is safe to call. It essentially sets up everything from
+        scratch without reloading the config files and assets from disk. This
+        method is called after a game ends and before attract mode begins.
+
+        """
         self.events.post('machine_reset_phase_1')
         self.events.post('machine_reset_phase_2')
         self.events.post('machine_reset_phase_3')
-        # Do we want to reset all timers here? todo
-        # do we post an event when we do this? Really this should re-read
-        # the config and stuff, right? Maybe we destroy all of our objects
-        # even and recreate them?
-
-        # after our reset is over, we start the machineflow
-        #self.flow_advance(0)
+        self.log.info("Reset Complete")
 
     def flow_advance(self, position=None, **kwargs):
         """Advances the machine to the next machine mode as specified in the
@@ -250,13 +253,13 @@ class MachineController(object):
 
         # If there's a current machineflow position, stop that mode
         if self.machineflow_index is not None:
-            self.config['MachineFlow'][self.machineflow_index].stop()
+            self.config['machineflow'][self.machineflow_index].stop()
         else:
             self.machineflow_index = 0
 
         # Now find the new position and start it:
         if position is None:  # A specific position was not passed, so just advance
-            if self.machineflow_index >= len(self.config['MachineFlow']) - 1:
+            if self.machineflow_index >= len(self.config['machineflow']) - 1:
                 self.machineflow_index = 0
             else:
                 self.machineflow_index += 1
@@ -268,7 +271,7 @@ class MachineController(object):
                        self.machineflow_index)
 
         # Now start the new machine mode
-        self.config['MachineFlow'][self.machineflow_index].start(**kwargs)
+        self.config['machineflow'][self.machineflow_index].start(**kwargs)
 
     def set_platform(self):
         """ Sets the hardware platform based on the "Platform" item in the
@@ -279,7 +282,7 @@ class MachineController(object):
         if self.physical_hw:
             try:
                 hardware_platform = __import__('mpf.platform.%s' %
-                                   self.config['Hardware']['Platform'],
+                                   self.config['hardware']['platform'],
                                    fromlist=["HardwarePlatform"])
                 # above line has an effect similar to:
                 # from mpf.platform.<platform_name> import HardwarePlatform
@@ -287,14 +290,14 @@ class MachineController(object):
 
             except ImportError:
                 self.log.error("Error importing platform module: %s",
-                               self.config['Hardware']['Platform'])
+                               self.config['hardware']['platform'])
                 # do it again so the error shows up in the console. I forget
                 # why we use 'try' here?
                 hardware_platform = __import__('mpf.platform.%s' %
-                                   self.config['Hardware']['Platform'],
+                                   self.config['hardware']['platform'],
                                    fromlist=["HardwarePlatform"])
                 raise Exception("Error importing platform module: %s",
-                                self.config['Hardware']['Platform'])
+                                self.config['hardware']['platform'])
         else:
             from mpf.platform.virtual import HardwarePlatform
             return HardwarePlatform(self)
@@ -320,106 +323,40 @@ class MachineController(object):
             m = getattr(m, comp)
         return m
 
-    def request_pygame(self):
-        """Called by a module to let the system know it would like to use
-        Pygame. We centralize the requests instead of letting each module do
-        their own pygame.init() so we get it in one place and can get everthing
-        initialized in the right order.
+    def register_monitor(self, monitor_class, monitor):
+        """Registers a callback that will be called any time any player variable
+        changes.
 
-        Returns: True or False, depending on whether pygame is available or not.
+        The callback will be called with several paramters:
+
+        name: The name of the player variable that changed
+        value: The new value of the player variable
+        prev_value: The previous value of the player variable
+        change: The numeric amount the value changed, or if it can't be
+            calculated, boolean True
+
         """
 
-        if pygame and not self.pygame_requested:
-            self.events.add_handler('machine_init_phase_3', self._pygame_init)
-            self.pygame_requested = True
-            return True
+        if monitor_class not in self.monitors:
+            self.add_monitor_class(monitor_class)
 
-        else:
-            return False
+        self.monitors[monitor_class].add(monitor)
 
-    def _pygame_init(self):
-        # performs the actual pygame initialization
-
-        if not pygame:
-            self.log.critical("Pygame is needed but not available. Please "
-                              "install Pygame and try again.")
-            raise Exception("Pygame is needed but not available. Please install"
-                            " Pygame and try again.")
-
-        if not self.pygame:
-            self.log.debug("Initializing Pygame, version %s",
-                           pygame.version.ver)
-
-            pygame.init()
-            self.pygame = True
-
-            self.events.add_handler('timer_tick', self.get_pygame_events,
-                                    priority=1000)
-
-            self.events.post('pygame_initialized')
-
-    def get_window(self):
-        """ Returns a reference to the onscreen display window.
-
-        This method will set up a window if one doesn't exist yet. This method
-        exists because there are several different modules and plugins which
-        may want to use a window, but we don't know which combinations might
-        be used, so we centralize the creation and management of an onscreen
-        window here.
-        """
-
-        if not self.window:
-            self.window_manager = window.WindowManager(self)
-            self.window = self.window_manager.window
-
-        return self.window
-
-    def register_pygame_handler(self, event, handler):
-        """Registers a method to be a handler for a certain type of Pygame
-        event.
-
-        Args:
-            event: A string of the Pygame event name you're registering this
-            handler for.
-            handler: A method that will be called when this Pygame event is
-            posted.
-        """
-        if event not in self.registered_pygame_handlers:
-            self.registered_pygame_handlers[event] = set()
-
-        self.registered_pygame_handlers[event].add(handler)
-        self.pygame_allowed_events.append(event)
-
-        self.log.debug("Adding Window event handler. Event:%s, Handler:%s",
-                       event, handler)
-
-        pygame.event.set_allowed(self.pygame_allowed_events)
-
-    def get_pygame_events(self):
-        """Gets (and dispatches) Pygame events. Automatically called every
-        machine loop via the timer_tick event.
-        """
-        for event in pygame.event.get():
-            if event.type in self.registered_pygame_handlers:
-                for handler in self.registered_pygame_handlers[event.type]:
-
-                    if (event.type == pygame.KEYDOWN or
-                            event.type == pygame.KEYUP):
-                        handler(event.key, event.mod)
-                    else:
-                        handler()
+    def add_monitor_class(self, monitor_class):
+        if monitor_class not in self.monitors:
+            self.monitors[monitor_class] = set()
 
     def run(self):
         """The main machine run loop."""
-        self.log.debug("Starting the main machine run loop.")
+        self.log.debug("Starting the main run loop.")
 
         self.platform.timer_initialize()
 
         if self.platform.features['hw_timer']:
             self.platform.hw_loop()
         else:
-            if 'Enable Loop Data' in self.config['Machine'] and (
-                    self.config['Machine']['Enable Loop Data']):
+            if 'Enable Loop Data' in self.config['machine'] and (
+                    self.config['machine']['Enable Loop Data']):
                 self.sw_data_loop()
             else:
                 self.sw_optimized_loop()
@@ -456,18 +393,19 @@ class MachineController(object):
         except KeyboardInterrupt:
             pass
 
-        if self.pygame:
-            pygame.quit()
-
         self.log.info("Target loop rate: %s Hz", timing.Timing.HZ)
-        self.log.info("Actual loop rate: %s Hz",
-                      loops / (time.time() - start_time))
+
+        try:
+            self.log.info("Actual loop rate: %s Hz",
+                          loops / (time.time() - start_time))
+        except ZeroDivisionError:
+            self.log.info("Actual loop rate: 0 Hz")
 
     def sw_data_loop(self):
         """ This is the main game run loop.
 
         """
-        # todo currently this just runs as fast as it can. Should I have it
+        # todo currently this just runs as fast as it can. Should it
         # sleep while waiting for the next timer tick?
 
         self.log.debug("Starting the software loop")
@@ -518,9 +456,6 @@ class MachineController(object):
 
         except KeyboardInterrupt:
             pass
-
-        if self.pygame:
-            pygame.quit()
 
         self.log.info("Hardware load percent: %s", self.loop_rate)
         self.log.info("MPF load percent: %s", self.mpf_load)

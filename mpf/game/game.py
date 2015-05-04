@@ -29,6 +29,10 @@ class Game(MachineMode):
     def __init__(self, machine, name):
         super(Game, self).__init__(machine, name)
         self.log = logging.getLogger("Game")
+        self.player = None
+        self.player_list = list()
+        self.num_balls_in_play = 0
+        self.tilted = False
 
         self.machine.game = None
 
@@ -45,7 +49,7 @@ class Game(MachineMode):
         # Intialize variables
         Player.total_players = 0
         self.player = None  # This is the current player
-        self.player_list = []
+        self.player_list = list()
         self.machine.game = self
         self.num_balls_in_play = 0
         self.tilted = False
@@ -77,9 +81,11 @@ class Game(MachineMode):
             self.machine.events.add_handler('slam_tilt',
                                             self.slam_tilt, priority=1000))
 
-        if ('Restart on long press' in self.machine.config['Game'] and
-                self.machine.config['Game']['Restart on long press']):
+        if ('restart on long press' in self.machine.config['game'] and
+                self.machine.config['game']['restart on long press']):
             self.setup_midgame_restart()
+
+        self.machine.events.post('enable_volume_keys')
 
         # Add our first player
         self.request_player_add()
@@ -133,16 +139,6 @@ class Game(MachineMode):
         """
         self.log.info("Player added successfully. Total players: %s",
                       Player.total_players)
-
-    """
-      _____                       __ _
-     / ____|                     / _| |
-    | |  __  __ _ _ __ ___   ___| |_| | _____      __
-    | | |_ |/ _` | '_ ` _ \ / _ \  _| |/ _ \ \ /\ / /
-    | |__| | (_| | | | | | |  __/ | | | (_) \ V  V /
-     \_____|\__,_|_| |_| |_|\___|_| |_|\___/ \_/\_/
-
-    """
 
     def ball_starting(self):
         """Called when a new ball is starting.
@@ -198,7 +194,7 @@ class Game(MachineMode):
 
         try:
             self.machine.playfield.add_ball(trigger_event='sw_' +
-                self.machine.config['Game']['player_controlled_eject_tag'])
+                self.machine.config['game']['player_controlled_eject_tag'])
         except KeyError:
             self.machine.playfield.add_ball()
 
@@ -278,7 +274,7 @@ class Game(MachineMode):
             self.shoot_again()
             return
 
-        if (self.player.ball == self.machine.config['Game']['Balls per game']
+        if (self.player.ball == self.machine.config['game']['balls per game']
                 and self.player.number == Player.total_players):
             self.game_ending()
         else:
@@ -423,8 +419,8 @@ class Game(MachineMode):
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
 
-        if len(self.player_list) >= self.machine.config['Game']\
-                ['Max players per game']:
+        if len(self.player_list) >= self.machine.config['game']\
+                ['max players per game']:
             self.log.debug("Game is at max players. Cannot add another.")
             return False
 
@@ -460,11 +456,14 @@ class Game(MachineMode):
         if not self.player:
             self.player_rotate()
 
-        self.machine.events.post('player_turn_start', player=self.player)
+        self.machine.events.post('player_turn_start', player=self.player,
+                                 number=self.player.number,
+                                 callback=self._player_turn_started)
+
+    def _player_turn_started(self, **kwargs):
 
         self.player.ball += 1
-        self.ball_starting()  # todo is this ok to jump right into?
-        # todo wonder if we should do player_turn_start as boolean? meh..
+        self.ball_starting()
 
     def player_rotate(self, player_num=None):
         """Rotates the game to the next player.
@@ -489,7 +488,8 @@ class Game(MachineMode):
 
         else:
 
-            self.machine.events.post('player_turn_stop', player=self.player)
+            self.machine.events.post('player_turn_stop', player=self.player,
+                                     number=self.player.number)
 
             if self.player.number < Player.total_players:
                 self.player = self.player_list[self.player.number]

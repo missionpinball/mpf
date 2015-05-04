@@ -2,7 +2,7 @@
 use the Multimorphic R-ROC hardware controllers.
 
 This code can be used with P-ROC driver boards, or with Stern SAM, Stern
-Whitestar, Williams WPC, or Williams WPC95  driver boards.
+Whitestar, Williams WPC, or Williams WPC95 driver boards.
 
 Much of this code is from the P-ROC drivers section of the pyprocgame project,
 written by Adam Preble and Gerry Stellenberg. It was originally released under
@@ -26,27 +26,25 @@ http://www.pinballcontrollers.com/forum/index.php?board=10.0
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import pinproc  # If this fails it's because you don't have pypinproc.
 import re
 import time
 import sys
 
-from mpf.system.timing import Timing
+try:
+    import pinproc
+    pinproc_imported = True
+except:
+    pinproc_imported = False
+
 from mpf.system.platform import Platform
 from mpf.system.config import Config
-
-try:
-    import pygame
-    import pygame.locals
-except:
-    pass
 
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00
 
 
 class HardwarePlatform(Platform):
-    """Platform class for the P-ROC or P3-ROC hardware controller.
+    """Platform class for the P-ROC hardware controller.
 
     Args:
         machine: The MachineController instance.
@@ -60,7 +58,14 @@ class HardwarePlatform(Platform):
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P-ROC Platform')
-        self.log.debug("Configuring machine for P-ROC hardware.")
+        self.log.debug("Configuring machine for P-ROC hardware")
+
+        if not pinproc_imported:
+            self.log.error('Could not import "pinproc". Most likely you do not '
+                           'have libpinproc and/or pypinproc installed. You can'
+                           'run MPF in software-only "virtual" mode by using '
+                           'the -x command like option for now instead.')
+            sys.exit()
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -74,23 +79,26 @@ class HardwarePlatform(Platform):
         # todo need to add differences between patter and pulsed_patter
 
         # Make the platform features available to everyone
-        self.machine.config['Platform'] = self.features
+        self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
         self.machine_type = pinproc.normalize_machine_type(
-            self.machine.config['Hardware']['DriverBoards'])
+            self.machine.config['hardware']['driverboards'])
 
         # Connect to the P-ROC. Keep trying if it doesn't work the first time.
 
         self.proc = None
 
+        self.log.info("Connecting to P-ROC")
+
         while not self.proc:
             try:
-                print "trying to connect to P-ROC"
                 self.proc = pinproc.PinPROC(self.machine_type)
                 self.proc.reset(1)
-            except:
-                print "Failed, trying again..."
+            except IOError:
+                print "Retrying..."
+
+        self.log.info("Succefully connected to P-ROC")
 
         # Clear out the default program for the aux port since we might need it
         # for a 9th column. Details:
@@ -110,18 +118,18 @@ class HardwarePlatform(Platform):
         # Only then can we relate the YAML coil/light #'s to P-ROC numbers for
         # the collections.
         if self.machine_type == pinproc.MachineTypePDB:
-            self.log.debug("Configuring P-ROC for PDBs (P-ROC driver boards).")
+            self.log.debug("Configuring P-ROC for PDBs (P-ROC driver boards)")
             self.pdbconfig = PDBConfig(self.proc, self.machine.config)
 
         else:
-            self.log.debug("Configuring P-ROC for OEM driver boards.")
+            self.log.debug("Configuring P-ROC for OEM driver boards")
 
         self.polarity = self.machine_type == pinproc.MachineTypeSternWhitestar\
             or self.machine_type == pinproc.MachineTypeSternSAM\
             or self.machine_type == pinproc.MachineTypePDB
 
     def configure_driver(self, config, device_type='coil'):
-        """ Creates a P-ROC driver.
+        """Creates a P-ROC driver.
 
         Typically drivers are coils or flashers, but for the P-ROC this is
         also used for matrix-based lights.
@@ -166,29 +174,31 @@ class HardwarePlatform(Platform):
         return proc_driver_object, config['number']
 
     def configure_switch(self, config):
-        """ Configures a P-ROC switch.
+        """Configures a P-ROC switch.
 
         Args:
             config: Dictionary of settings for the switch. In the case
-            of the P-ROC, it uses the following:
+                of the P-ROC, it uses the following:
             number : The number (or number string) for the switch as specified
-            in the machine configuration file.
+                in the machine configuration file.
             debounce : Boolean which specifies whether the P-ROC should debounce
-            this switch first before sending open and close notifications to the
-            host computer.
+                this switch first before sending open and close notifications to
+                the host computer.
 
         Returns:
             switch : A reference to the switch object that was just created.
             proc_num : Integer of the actual hardware switch number the P-ROC
-            uses to refer to this switch. Typically your machine configuration
-            files would specify a switch number like `SD12` or `7/5`. This
-            `proc_num` is an int between 0 and 255. state : An integer of the
-            current hardware state of the switch, used to set the initial state
-            state in the machine. A value of 0 means the switch is open, and 1
-            means it's closed. Note this state is the physical state of the
-            switch, so if you configure the switch to be normally-closed (i.e.
-            "inverted" then your code will have to invert it too.) MPF handles
-            this automatically if the switch type is 'NC'.
+                uses to refer to this switch. Typically your machine
+                configuration files would specify a switch number like `SD12` or
+                `7/5`. This `proc_num` is an int between 0 and 255.
+            state : An integer of the current hardware state of the switch, used
+                to set the initial state state in the machine. A value of 0
+                means the switch is open, and 1 means it's closed. Note this
+                state is the physical state of the switch, so if you configure
+                the switch to be normally-closed (i.e. "inverted" then your code
+                will have to invert it too.) MPF handles this automatically if
+                the switch type is 'NC'.
+
         """
 
         if self.machine_type == pinproc.MachineTypePDB:
@@ -211,8 +221,8 @@ class HardwarePlatform(Platform):
         if config['debounce'] is False or \
                 proc_num >= pinproc.SwitchNeverDebounceFirst:
             self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
-                                         {'notifyHost': True, 'reloadActive':
-                                         False}, [], False)
+                                         {'notifyHost': True,
+                                          'reloadActive': False}, [], False)
             self.proc.switch_update_rule(proc_num, 'open_nondebounced',
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
@@ -222,7 +232,7 @@ class HardwarePlatform(Platform):
                                           'reloadActive': False}, [], False)
             self.proc.switch_update_rule(proc_num, 'open_debounced',
                                          {'notifyHost': True,
-                                         'reloadActive': False}, [], False)
+                                          'reloadActive': False}, [], False)
 
         # Read in and set the initial switch state
         # The P-ROC uses the following values for hw switch states:
@@ -280,22 +290,20 @@ class HardwarePlatform(Platform):
         that a DMD frame was updated).
 
         Also tickles the watchdog and flushes any queued commands to the P-ROC.
+
         """
         # Get P-ROC events (switches & DMD frames displayed)
         for event in self.proc.get_events():
             event_type = event['type']
             event_value = event['value']
-            #event_time = event['time']  # not using this, maybe in the future?
             if event_type == 99:  # CTRL-C to quit todo does this go here?
                 self.machine.end_run_loop()
             elif event_type == pinproc.EventTypeDMDFrameDisplayed:
                 pass
             elif event_type == pinproc.EventTypeSwitchClosedDebounced:
-                #print "switch closed", event_value
                 self.machine.switch_controller.process_switch(state=1,
                                                               num=event_value)
             elif event_type == pinproc.EventTypeSwitchOpenDebounced:
-                #print "switch open", event_value
                 self.machine.switch_controller.process_switch(state=0,
                                                               num=event_value)
             else:
@@ -948,17 +956,17 @@ class PDBConfig(object):
                 self.aliases.append(alias)
 
         # Make a list of unique coil banks
-        for name in config['Coils']:
-            item_dict = config['Coils'][name]
+        for name in config['coils']:
+            item_dict = config['coils'][name]
             coil = PDBCoil(self, str(item_dict['number']))
             if coil.bank() not in coil_bank_list:
                 coil_bank_list.append(coil.bank())
 
         # Make a list of unique lamp source banks.  The P-ROC only supports 2.
         # TODO: What should be done if 2 is exceeded?
-        if 'MatrixLights' in config:
-            for name in config['MatrixLights']:
-                item_dict = config['MatrixLights'][name]
+        if 'matrixlights' in config:
+            for name in config['matrixlights']:
+                item_dict = config['matrixlights'][name]
                 lamp = PDBLight(self, str(item_dict['number']))
 
                 # Catalog PDB banks
@@ -1128,8 +1136,8 @@ class PDBConfig(object):
 
         if enable:
             self.log.debug("Configuring PDB Driver Globals:  polarity = %s  "
-                             "matrix column index 0 = %d  matrix column index "
-                             "1 = %d", True, lamp_source_bank_list[0],
+                           "matrix column index 0 = %d  matrix column index "
+                           "1 = %d", True, lamp_source_bank_list[0],
                              lamp_source_bank_list[1]);
         proc.driver_update_global_config(enable,  # Don't enable outputs yet
                                          True,  # Polarity
@@ -1215,7 +1223,7 @@ class DriverAlias(object):
 def is_pdb_address(addr, aliases=[]):
     """Returne True if the given address is a valid PDB address."""
     try:
-        t = decode_pdb_address(addr=addr, aliases=aliases)
+        decode_pdb_address(addr=addr, aliases=aliases)
         return True
     except:
         return False
@@ -1288,11 +1296,24 @@ class PROCDMD(object):
 
         self.machine.events.add_handler('timer_tick', self.tick)
 
-    def update(self, surface):
+    def update(self, data):
+        """Updates the DMD with a new frame.
 
-        self.dmd.set_data(pygame.image.tostring(surface, 'P'))
+        Args:
+            data: A 4096-byte raw string.
+
+        """
+        if len(data) == 4096:
+            self.dmd.set_data(data)
+        else:
+            self.log.warning("Received a DMD frame of length %s instead of "
+                             "4096. Discarding...")
 
     def tick(self):
+        """Updates the physical DMD with the latest frame data. Meant to be
+        called once per machine tick.
+
+        """
         self.machine.platform.proc.dmd_draw(self.dmd)
 
 

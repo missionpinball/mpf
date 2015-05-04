@@ -9,7 +9,8 @@
 from collections import defaultdict
 
 from mpf.system.timing import Timing
-from mpf.system.config import Config
+from mpf.system.config import Config, CaseInsensitiveDict
+
 
 
 class Device(object):
@@ -18,7 +19,7 @@ class Device(object):
     """
     def __init__(self, machine, name, config=None, collection=-1):
         self.machine = machine
-        self.name = name
+        self.name = name.lower()
         self.tags = list()
         self.label = None
         self.debug_logging = False
@@ -128,9 +129,8 @@ class Device(object):
         return return_dict
 
     def _create_events(self, ev_name, ev_type, delay, callback):
-
         self.log.debug("Creating %s_event handler for event '%s' with delay "
-                       "'%s' husker", ev_type, ev_name, delay)
+                       "'%s'", ev_type, ev_name, delay)
 
         self.machine.events.add_handler(event=ev_name,
                                     handler=self._action_event_handler,
@@ -172,7 +172,7 @@ class Device(object):
         pass
 
 
-class DeviceCollection(dict):
+class DeviceCollection(CaseInsensitiveDict):
     """A collection of Devices.
 
     One instance of this class will be created for each different type of
@@ -187,19 +187,11 @@ class DeviceCollection(dict):
         try:
             # If we were passed a name of an item
             if type(attr) == str:
-                return self[attr]
+                return self[attr.lower()]
             elif type(attr) == int:
                 self.number(number=attr)
         except KeyError:
             raise KeyError('Error: No device exists with the name:', attr)
-
-        # todo there's something that's not working here that I need to figure
-        # out. An example like this will fail:
-        # self.hold_coil = self.machine.coils[config['hold_coil']]
-        # even if config is a defaultdict, because config will return
-        # None, and we can't call this DeviceCollection on None. Maybe make
-        # default dict return some non-None as its default which we can catch
-        # here?
 
     def __iter__(self):
         for item in self.itervalues():
@@ -232,7 +224,7 @@ class DeviceCollection(dict):
             True or False, depending on whether the name is a valid device or
             not.
         """
-        if name in self.itervalues():
+        if name.lower() in self.itervalues():
             return True
         else:
             return False
@@ -242,7 +234,6 @@ class DeviceCollection(dict):
         for name, obj in self.iteritems():
             if obj.number == number:
                 return self[name]
-
 
 
 # The MIT License (MIT)

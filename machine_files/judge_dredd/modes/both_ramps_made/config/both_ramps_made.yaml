@@ -1,3 +1,4 @@
+# config_version=1
 Mode:
     start_events: both_ramps_made
     stop_events: ball_ending

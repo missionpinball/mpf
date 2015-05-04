@@ -101,7 +101,7 @@ class Platform(object):
     def hw_loop(self):
         """Called once per game loop to read the platform hardware for any
         changes to any devices."""
-        pass
+        time.sleep(0.001)
 
     def verify_switches(self):
         pass

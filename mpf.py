@@ -66,6 +66,7 @@ options_dict = vars(options)  # convert the values instance to python dict
 # if --version was passed, print the version and quit
 if options_dict['version']:
     print "Mission Pinball Framework version:", version.__version__
+    print "Requires Config File version:", version.__config_version__
     sys.exit()
 
 # add the first positional argument into the options dict as the machine path
@@ -87,7 +88,7 @@ except OSError as exception:
         raise
 
 logging.basicConfig(level=options.loglevel,
-                    format='%(asctime)s : %(name)s : %(message)s',
+                    format='%(asctime)s : %(levelname)s : %(name)s : %(message)s',
                     filename=options.logfile,
                     filemode='w')
 
@@ -108,7 +109,7 @@ logging.getLogger('').addHandler(console)
 def main():
     machine = MachineController(options_dict)
     machine.run()
-    print "MPF exiting from main()"
+    logging.info("MPF run loop ended. Go play pinball!")
     sys.exit()
 
 if __name__ == '__main__':

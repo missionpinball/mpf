@@ -14,8 +14,27 @@ import yaml
 from copy import deepcopy
 
 from mpf.system.timing import Timing
+import version
 
 log = logging.getLogger('ConfigProcessor')
+
+
+class CaseInsensitiveDict(dict):
+    """A class based on Python's 'dict' class that internally stores all keys
+    as lowercase. Set, get, contains, and del methods have been overwritten to
+    automatically convert incoming calls to lowercase.
+    """
+    def __setitem__(self, key, value):
+        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
+
+    def __getitem__(self, key):
+        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
+
+    def __contains__(self, key):
+        return super(CaseInsensitiveDict, self).__contains__(key.lower())
+
+    def __del__(self, key):
+        return super(CaseInsensitiveDict, self).__del__(key.lower())
 
 
 class Config(object):
@@ -60,31 +79,36 @@ class Config(object):
 
         if not config:
             config = dict()
+        else:
+            config = Config.keys_to_lower(config)
 
         new_updates = dict()
 
         # If we were passed a config dict, load from there
         if type(new_config_dict) == dict:
-            new_updates = new_config_dict
+            new_updates = Config.keys_to_lower(new_config_dict)
 
         # If not, do we have a yaml_file?
         elif yaml_file:
             if os.path.isfile(yaml_file):
+                Config.check_config_file_version(yaml_file)
                 config_location = yaml_file
                 # Pull out the path in case we need it later
-                config['Config_path'] = os.path.split(yaml_file)[0]
-            elif os.path.isfile(os.path.join(config['Config_path'],
+                config['config_path'] = os.path.split(yaml_file)[0]
+            elif os.path.isfile(os.path.join(config['config_path'],
                                              yaml_file)):
-                config_location = os.path.join(config['Config_path'],
+                config_location = os.path.join(config['config_path'],
                                                yaml_file)
             else:
                 log.critical("Couldn't find file: %s.", yaml_file)
                 sys.exit()
 
         if config_location:
+
             try:
                 log.info("Loading configuration from file: %s", config_location)
-                new_updates = yaml.load(open(config_location, 'r'))
+                new_updates = Config.keys_to_lower(yaml.load(open(
+                                                   config_location, 'r')))
             except yaml.YAMLError, exc:
                 if hasattr(exc, 'problem_mark'):
                     mark = exc.problem_mark
@@ -102,18 +126,67 @@ class Config(object):
         # iterate and remove them
 
         try:
-            if 'Config' in config:
-                if yaml_file in config['Config']:
-                    config['Config'].remove(yaml_file)
-                if config['Config']:
+            if 'config' in config:
+                if yaml_file in config['config']:
+                    config['config'].remove(yaml_file)
+                if config['config']:
                     config = Config.load_config_yaml(config=config,
-                                              yaml_file=config['Config'][0])
+                                              yaml_file=config['config'][0])
         except:
-            log.critical("No configuration file found, or config file is "
-                              "empty. But congrats! Your game works! :)")
+            log.critical("No configuration file found, or config file is empty."
+                         " But congrats! MPF works! :)")
             sys.exit()
 
         return config
+
+    @staticmethod
+    def check_config_file_version(file_location):
+        """Checks a configuration file to see if it's the proper version for
+        this version of MPF.
+
+        Args:
+            file_location: The path to the file to check.
+
+        Returns: True if the config version of the file matches. False if not.
+
+        This method checks that the a string 'config_version=x' exists in the
+        first line of the file. If so, it checks that 'x' matches MPF's
+        config_version specification.
+
+        This check is done as integers.
+
+        """
+        with open(file_location) as f:
+            file_version = f.readline().split('config_version=')[-1:][0]
+
+            try:
+                file_version = int(file_version)
+            except ValueError:
+                file_version = 0
+
+            if file_version != int(version.__config_version__):
+                log.warning("Config file %s is version %s. MPF %s requires "
+                            "version %s", file_location, file_version,
+                            version.__version__, version.__config_version__)
+                return False
+            else:
+                return True
+
+    @staticmethod
+    def keys_to_lower(source_dict):
+        """Converts the keys of a dictionary to lowercase.
+
+        Args:
+            source_dict: The dictionary you want to convert.
+
+        Returns:
+            A dictionary with lowercase keys.
+        """
+        for k in source_dict.keys():
+            if type(source_dict[k]) is dict:
+                source_dict[k] = Config.keys_to_lower(source_dict[k])
+
+        return dict((str(k).lower(), v) for k, v in source_dict.iteritems())
 
     @staticmethod
     def process_config(config_spec, source, target=None):
@@ -139,14 +212,12 @@ class Config(object):
 
         default = 'default required!@#'
 
-        if '|' in spec: # list|none
+        if '|' in spec:
             item_type, default = spec.split('|')
-            # item_type = list, default = none
             if type(default) is str and default.lower() == 'none':
                 default = None
-        else:  #int
-            item_type = spec  # item_type: int
-            #default = no default!@#
+        else:
+            item_type = spec
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
@@ -167,7 +238,10 @@ class Config(object):
         elif item_type == 'string':
             return str(item)
         elif item_type == 'boolean':
-            return bool(item)
+            if type(item) is bool:
+                return item
+            else:
+                return item.lower() in ('yes', 'true')
         elif item_type == 'ms':
             return Timing.string_to_ms(item)
         elif item_type == 'secs':
@@ -239,7 +313,7 @@ class Config(object):
     @staticmethod
     def string_to_list(string):
         """ Converts a comma-separated and/or space-separated string into a
-        python list.
+        Python list.
 
         Args:
             string: The string you'd like to convert.
@@ -265,6 +339,25 @@ class Config(object):
         else:
             # if we're passed anything else, just make it into a list
             return [string]
+
+    @staticmethod
+    def string_to_lowercase_list(string):
+        """ Converts a comma-separated and/or space-separated string into a
+        Python list where each item in the list has been converted to lowercase.
+
+        Args:
+            string: The string you'd like to convert.
+
+        Returns:
+            A python list object containing whatever was between commas and/or
+            spaces in the string, with each item converted to lowercase.
+        """
+        new_list = Config.string_to_list(string)
+
+        new_list = [x.lower() for x in new_list]
+
+        return new_list
+
 
     @staticmethod
     def list_of_lists(incoming_string):

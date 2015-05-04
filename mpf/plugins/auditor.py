@@ -1,6 +1,6 @@
 """MPF plugin for an auditor which records switch events, high scores, shots,
 etc."""
-# devices.py
+# auditor.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -13,10 +13,7 @@ import yaml
 import errno
 
 from mpf.system.config import Config
-
-def preload_check(machine):
-
-    return True
+from mpf.system.shots import Shot
 
 
 class Auditor(object):
@@ -27,6 +24,13 @@ class Auditor(object):
         Args:
             machine: A refence to the machine controller object.
         """
+
+        if 'auditor' not in machine.config:
+            machine.log.debug('"Auditor:" section not found in machine '
+                              'configuration, so the auditor will not be '
+                              'used.')
+            return
+
         self.log = logging.getLogger('Auditor')
         self.machine = machine
 
@@ -38,8 +42,7 @@ class Auditor(object):
         disable() methods.
         """
 
-        #self.config = self.machine.config['Auditor']
-        self.machine.events.add_handler('machine_init_phase_4', self._initialize)
+        self.machine.events.add_handler('init_phase_4', self._initialize)
 
     def _initialize(self):
         # Initializes the auditor. We do this separate from __init__() since
@@ -54,11 +57,10 @@ class Auditor(object):
                     '''
 
         self.config = Config.process_config(config,
-                                                  self.machine.config['Auditor'])
-
+                                            self.machine.config['auditor'])
 
         self.filename = os.path.join(self.machine.machine_path,
-            self.machine.config['MPF']['paths']['audits'])
+            self.machine.config['mpf']['paths']['audits'])
 
         # todo add option for abs path outside of machine root
 
@@ -71,46 +73,50 @@ class Auditor(object):
 
         # Make sure we have all the sections we need in our audit dict
         if ('shots' in self.config['audit'] and
-                'Shots' not in self.current_audits):
-            self.current_audits['Shots'] = dict()
+                'shots' not in self.current_audits):
+            self.current_audits['shots'] = dict()
 
         if ('switches' in self.config['audit'] and
-                'Switches' not in self.current_audits):
-            self.current_audits['Switches'] = dict()
+                'switches' not in self.current_audits):
+            self.current_audits['switches'] = dict()
 
         if ('events' in self.config['audit'] and
-                'Events' not in self.current_audits):
-            self.current_audits['Events'] = dict()
+                'events' not in self.current_audits):
+            self.current_audits['events'] = dict()
 
         if ('player' in self.config['audit'] and
-                'Player' not in self.current_audits):
-            self.current_audits['Player'] = dict()
+                'player' not in self.current_audits):
+            self.current_audits['player'] = dict()
 
         # Make sure we have all the switches in our audit dict
         for switch in self.machine.switches:
-            if switch.name not in self.current_audits['Switches']:
-                self.current_audits['Switches'][switch.name] = 0
+            if switch.name not in self.current_audits['switches']:
+                self.current_audits['switches'][switch.name] = 0
 
         # Make sure we have all the shots in our audit dict
         if hasattr(self.machine, 'shots'):
             for shot in self.machine.shots.shots:
-                if shot.name not in self.current_audits['Shots']:
-                    self.current_audits['Shots'][shot.name] = 0
+                if shot.name not in self.current_audits['shots']:
+                    self.current_audits['shots'][shot.name] = 0
 
         # Make sure we have all the player stuff in our audit dict
         if 'player' in self.config['audit']:
             for item in self.config['player']:
-                if item not in self.current_audits['Player']:
-                    self.current_audits['Player'][item] = dict()
-                    self.current_audits['Player'][item]['top'] = list()
-                    self.current_audits['Player'][item]['average'] = 0
-                    self.current_audits['Player'][item]['total'] = 0
+                if item not in self.current_audits['player']:
+                    self.current_audits['player'][item] = dict()
+                    self.current_audits['player'][item]['top'] = list()
+                    self.current_audits['player'][item]['average'] = 0
+                    self.current_audits['player'][item]['total'] = 0
 
         # Register for the events the auditor needs to do its job
         self.machine.events.add_handler('game_starting', self.enable)
         self.machine.events.add_handler('game_ended', self.disable)
         if 'player' in self.config['audit']:
             self.machine.events.add_handler('game_ending', self.audit_player)
+
+        # Enable the shots monitor
+        Shot.monitor_enabled = True
+        self.machine.register_monitor('shots', self.audit_shot)
 
     def audit(self, audit_class, event, **kwargs):
         """Called to log an auditable event.
@@ -125,7 +131,10 @@ class Auditor(object):
         self.current_audits[audit_class][event] += 1
 
     def audit_switch(self, switch_name, state, ms):
-        self.audit('Switches', switch_name)
+        self.audit('switches', switch_name)
+
+    def audit_shot(self, name):
+        self.audit('shots', name)
 
     def audit_event(self, eventname, **kwargs):
         """Registered as an event handlers to log an event to the audit log.
@@ -136,7 +145,7 @@ class Auditor(object):
                 kwargs.
         """
 
-        self.current_audits['Events'][eventname] += 1
+        self.current_audits['events'][eventname] += 1
 
     def audit_player(self, **kwargs):
         """Called to write player data to the audit log. Typically this is only
@@ -149,19 +158,19 @@ class Auditor(object):
         for item in self.config['player']:
             for player in self.machine.game.player_list:
 
-                self.current_audits['Player'][item]['top'] = \
+                self.current_audits['player'][item]['top'] = \
                     self._merge_into_top_list(
                         player[item],
-                        self.current_audits['Player'][item]['top'],
+                        self.current_audits['player'][item]['top'],
                         self.config['num_player_top_records'])
 
-                self.current_audits['Player'][item]['average'] = (
-                    ((self.current_audits['Player'][item]['total'] *
-                      self.current_audits['Player'][item]['average']) +
+                self.current_audits['player'][item]['average'] = (
+                    ((self.current_audits['player'][item]['total'] *
+                      self.current_audits['player'][item]['average']) +
                      self.machine.game.player[item]) /
-                    (self.current_audits['Player'][item]['total'] + 1))
+                    (self.current_audits['player'][item]['total'] + 1))
 
-                self.current_audits['Player'][item]['total'] += 1
+                self.current_audits['player'][item]['total'] += 1
 
     def _merge_into_top_list(self, new_item, current_list, num_items):
         # takes a list of top integers and a new item and merges the new item
@@ -233,8 +242,8 @@ class Auditor(object):
                                                 self.audit_event,
                                                 eventname=event)
                 # Make sure we have an entry in our audit file for this event
-                if event not in self.current_audits['Events']:
-                    self.current_audits['Events'][event] = 0
+                if event not in self.current_audits['events']:
+                    self.current_audits['events'][event] = 0
 
         for event in self.config['save_events']:
             self.machine.events.add_handler(event,
@@ -261,6 +270,9 @@ class Auditor(object):
             if 'no_audit' not in switch.tags:
                 self.machine.switch_controller.remove_switch_handler(
                     switch.name, self.audit_switch, 1, 0)
+
+
+plugin_class = Auditor
 
 
 # The MIT License (MIT)

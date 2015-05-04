@@ -1,0 +1,139 @@
+# config_version=1
+mediacontroller:
+    modules:
+
+        modes.ModeController
+        language.Language
+        display.DisplayController
+        show_controller.ShowController
+        keyboard.Keyboard
+        sound.SoundController
+    
+    port: 5050
+    exit_on_disconnect: yes
+
+    display_modules:
+        elements:
+            - text
+            - virtualdmd
+            - image
+            - animation
+            - shape
+            - movie
+        modules:
+            dmd.DMD
+        transitions:
+            move_out: move_out.MoveOut
+            move_in: move_in.MoveIn
+        decorators:
+            blink: blink.Blink
+    paths:
+        shows: shows
+        sounds: sounds
+        machine_files: machine_files
+        config: config
+        fonts: fonts
+        images: images
+        animations: animations
+        movies: movies
+        modes: modes
+
+timing:
+    hz: 30
+
+displaydefaults:
+    Text:
+        font: default
+        size: 10
+        opaque: false
+        v_pos: center
+        h_pos: center
+        x: 0
+        y: 0
+        time: 0s
+        text_color: ffffff
+        background_color: 000000
+        text_shade: 15
+        background_shade: 0
+        antialias: False
+
+fonts:
+    default:
+        file: Quadrit.ttf
+        size: 10
+        crop_top: 2
+        crop_bottom: 3
+    space title huge:
+        file: DEADJIM.TTF
+        size: 29
+        antialias: yes
+        crop_top: 3
+        crop_bottom: 3
+    space title:
+        file: DEADJIM.TTF
+        size: 21
+        antialias: yes
+        crop_top: 2
+        crop_bottom: 3
+    medium:
+        file: pixelmix.ttf
+        size: 8
+        crop_top: 1
+        crop_bottom: 1
+    small:
+        file: smallest_pixel-7.ttf
+        size: 9
+        crop_top: 2
+        crop_bottom: 3
+    tall title:
+       file: big_noodle_titling.ttf
+       size: 20
+
+textstrings:
+    volume_zero: OFF
+    volume_max: MAX
+
+assetdefaults:
+    images:
+        default:
+            load: preload
+        screen:
+            target: screen
+        dmd:
+            target: dmd
+    animations:
+        default:
+            load: preload
+            target: dmd
+        screen:
+            load: preload
+            target: screen
+    sounds:
+        default:
+            track: sfx
+            load: preload
+        voice:
+            track: voice
+            load: preload
+        sfx:
+            track: sfx
+            load: preload
+        music:
+            track: music
+            load: preload
+    shows:
+        default:
+            load: preload
+    movies:
+        default:
+            load: preload
+
+slideplayer:
+    client_connected:
+      - type: Text
+        text: CLIENT CONNECTED
+        font: small
+    client_disconnected:
+      - type: Text
+        text: CLIENT DISCONNECTED
+        font: small

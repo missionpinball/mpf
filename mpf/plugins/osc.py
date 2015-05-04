@@ -36,39 +36,36 @@ except:
     import_success = False
 
 
-def preload_check(machine):
-
-    if import_success:
-        return True
-    else:
-        return False
-
-
 class OSC(object):
 
     def __init__(self, machine):
 
-        self.log = logging.getLogger('OSC')
+        if 'osc' not in machine.config:
+            machine.log.debug('"OSC:" section not found in the machine '
+                                   'configuration, so the OSC plugin will not '
+                                   'be used.')
+            return
+
+        if not import_success:
+            machine.log.warning('OSC plugin requires PyOSC which does not '
+                                     'appear to be installed. No prob, but FYI '
+                                     'that the OSC will not be available.')
+            return
+
+        self.log = logging.getLogger('osc')
         self.machine = machine
 
         config_spec = '''
                         client_port: int|8000
                         debug_messages: boolean|False
-
-        '''
+                        '''
 
         self.config = Config.process_config(config_spec,
-                                          self.machine.config['OSC'])
+                                          self.machine.config['osc'])
 
         if self.config['machine_ip'].upper() == 'AUTO':
             self.config['machine_ip'] = socket.gethostbyname(
                                                         socket.gethostname())
-
-        #if 'client_port' not in self.config:
-        #    self.config['client_port'] = 8000
-        #
-        #if 'debug_messages' not in self.config:
-        #        self.config['debug_messages'] = False
 
         if 'client_updates' in self.config:
             self.config['client_updates'] = self.config['client_updates'].split(
@@ -85,13 +82,13 @@ class OSC(object):
         self.clients_to_add = list()
 
         # If this machine uses WPC driver boards then we can drive devices by #
-        if self.machine.config['Hardware']['DriverBoards'][0:3] == 'wpc':
+        if self.machine.config['hardware']['driverboards'][0:3] == 'wpc':
             self.wpc = True
         else:
             self.wpc = False
 
         # register for events
-        self.machine.events.add_handler('machine_init_phase_4', self.start)
+        self.machine.events.add_handler('init_phase_4', self.start)
 
     def start(self):
         """Starts the OSC server."""
@@ -246,8 +243,12 @@ class OSC(object):
     def register_lights(self):
         """Adds handlers to all lights so the OSC client can receive
         updates."""
-        for light in self.machine.lights:
-            light.add_handler(self.client_update_light)
+
+        try:
+            for light in self.machine.lights:
+                light.add_handler(self.client_update_light)
+        except AttributeError:
+            pass
 
     def register_data(self):
         self.machine.events.add_handler('player_turn_start', self.update_player)
@@ -399,6 +400,10 @@ class OSC(object):
                                            self.config['client_port']))
         if address in self.clients_to_add:
             self.clients_to_add.remove(address)
+
+
+plugin_class = OSC
+
 
 # The MIT License (MIT)
 

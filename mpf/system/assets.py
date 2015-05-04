@@ -49,7 +49,7 @@ class AssetManager(object):
                                                  load_key='mode_start')
 
         # register & load systemwide assets
-        self.machine.events.add_handler('machine_init_phase_4',
+        self.machine.events.add_handler('init_phase_4',
             self.register_and_load_machine_assets)
 
         self.defaults = self.setup_defaults(self.machine.config)
@@ -67,7 +67,7 @@ class AssetManager(object):
                 settings that will be used for the specific asset. (Note this
                 is not needed for all assets, as any asset file found not in the
                 config dictionary will be set up with the folder it was found
-                in's AssetDefaults settings.)
+                in's assetdefaults settings.)
             path: A full system path to the root folder that will be searched
                 for assetsk. This should *not* include the asset-specific path
                 string. If omitted, only the machine's root folder will be
@@ -90,7 +90,7 @@ class AssetManager(object):
 
             for file_name in valid_files:
                 folder = os.path.basename(path)
-                name = os.path.splitext(file_name)[0]
+                name = os.path.splitext(file_name)[0].lower()
                 full_file_path = os.path.join(path, file_name)
 
                 if folder == self.path_string or folder not in self.defaults:
@@ -121,7 +121,7 @@ class AssetManager(object):
 
                 config[name] = built_up_config
 
-                self.log.info("Registering Asset: %s, File: %s, Default Group:"
+                self.log.debug("Registering Asset: %s, File: %s, Default Group:"
                               " %s, Final Config: %s", name, file_name,
                               default_string, built_up_config)
 
@@ -136,7 +136,7 @@ class AssetManager(object):
         also load the asset file into memory.
         """
 
-        self.log.info("Registering machine-wide %s", self.config_section)
+        self.log.debug("Registering machine-wide %s", self.config_section)
 
         if self.config_section in self.machine.config:
             config = self.machine.config[self.config_section]
@@ -146,23 +146,23 @@ class AssetManager(object):
         self.machine.config[self.config_section] = self.register_assets(
             config=config)
 
-        self.log.info("Loading machine-wide 'preload' %s", self.config_section)
+        self.log.debug("Loading machine-wide 'preload' %s", self.config_section)
 
         # Load preload systemwide assets
         self.load_assets(self.machine.config[self.config_section],
                          load_key='preload')
 
     def setup_defaults(self, config):
-        """Processed the `AssetDefaults` section of the machine config files."""
+        """Processed the `assetdefaults` section of the machine config files."""
 
         default_config_dict = dict()
 
-        if 'AssetDefaults' in config and config['AssetDefaults']:
+        if 'assetdefaults' in config and config['assetdefaults']:
 
-            if (self.config_section in config['AssetDefaults'] and
-                config['AssetDefaults'][self.config_section]):
+            if (self.config_section in config['assetdefaults'] and
+                config['assetdefaults'][self.config_section]):
 
-                this_config = config['AssetDefaults'][self.config_section]
+                this_config = config['assetdefaults'][self.config_section]
 
                 # set the default
                 default_config_dict['default'] = this_config.pop('default')
@@ -228,7 +228,7 @@ class AssetManager(object):
                     file_name=config[asset]['file'],
                     path=mode_path)
 
-            self.register_asset(asset=asset,
+            self.register_asset(asset=asset.lower(),
                                 config=config[asset])
 
         return config
@@ -259,7 +259,7 @@ class AssetManager(object):
 
     def unload_assets(self, asset_set):
         for asset in asset_set:
-            self.log.info("Unloading asset: %s", asset.file_name)
+            self.log.debug("Unloading asset: %s", asset.file_name)
             asset.unload()
 
     def load_asset(self, asset, callback, priority=10):
@@ -315,12 +315,12 @@ class AssetLoader(threading.Thread):
 
         while 1:
             asset = self.queue.get()
-            self.log.info("Loading Asset: '%s'. Callback: %s", asset[1],
+            self.log.debug("Loading Asset: '%s'. Callback: %s", asset[1],
                           asset[2])
 
             if not asset[1].loaded:
                 asset[1]._load(asset[2])
-                self.log.info("Asset Finished Loading: %s", asset[1])
+                self.log.debug("Asset Finished Loading: %s", asset[1])
             else:
                 self.log.error("Received request to load %s, but it's already"
                                " loaded", asset[1])

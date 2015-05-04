@@ -8,7 +8,7 @@ a pinball machine."""
 import logging
 
 from mpf.system.tasks import DelayManager
-from mpf.system.devices import Device, DeviceCollection
+from mpf.system.devices import DeviceCollection
 from mpf.devices.playfield import Playfield
 
 
@@ -31,7 +31,7 @@ class BallController(object):
 
         self.game = None
 
-        self.machine.playfield = None  # Configured in machine_init_phase_2
+        self.machine.playfield = None  # Configured in init_phase_2
 
         self._num_balls_known = -999
 
@@ -43,15 +43,18 @@ class BallController(object):
                                         self.request_to_start_game)
         self.machine.events.add_handler('machine_reset_phase_2',
                                         self._initialize)
-        self.machine.events.add_handler('machine_init_phase_2',
+        self.machine.events.add_handler('init_phase_2',
                                         self.create_playfield_device)
 
     @property
     def balls(self):
+        self.log.debug("Counting Balls")
         balls = 0
         for device in self.machine.balldevices:
+            self.log.debug("Found %s ball(s) in %s", device.balls, device.name)
             balls += device.balls
             if balls > self._num_balls_known:
+                self.log.debug("Setting known balls to %s", balls)
                 self.num_balls_known = balls
         if balls < 0:
             return -999
@@ -100,8 +103,8 @@ class BallController(object):
                                                 self._ball_drained_handler)
 
         # todo
-        if 'Allow start with loose balls' not in self.machine.config['Game']:
-            self.machine.config['Game']['Allow start with loose balls'] = False
+        if 'Allow start with loose balls' not in self.machine.config['game']:
+            self.machine.config['game']['Allow start with loose balls'] = False
 
     def request_to_start_game(self):
         """Method registered for the *request_to_start_game* event.
@@ -113,18 +116,19 @@ class BallController(object):
         self.log.debug("Received request to start game.")
         self.log.debug("Balls contained: %s, Min balls needed: %s",
                        self.balls,
-                       self.machine.config['Machine']['Min Balls'])
-        if self.balls < self.machine.config['Machine']['Min Balls']:
-            self.log.debug("BallController denies game start. Not enough balls")
+                       self.machine.config['machine']['min balls'])
+        if self.balls < self.machine.config['machine']['min balls']:
+            self.log.warning("BallController denies game start. Not enough "
+                             "balls")
             return False
 
-        if self.machine.config['Game']['Allow start with loose balls']:
+        if self.machine.config['game']['Allow start with loose balls']:
             return
 
         elif not self.are_balls_gathered(['home', 'trough']):
             self.gather_balls('home')
-            self.log.debug("BallController denies game start. Balls are not in"
-                           " their home positions.")
+            self.log.warning("BallController denies game start. Balls are not "
+                             "in their home positions.")
             return False
 
     def are_balls_gathered(self, target=['home', 'trough']):
@@ -159,12 +163,16 @@ class BallController(object):
 
         for device in devices:
             count += device.get_status('balls')
+            self.log.debug('Found %s ball(s) in %s. Found %s total',
+                           device.get_status('balls'), device.name, count)
 
         if count == self.machine.ball_controller.num_balls_known:
             self.log.debug("Yes, all balls are gathered")
             return True
         else:
-            self.log.debug("No, all balls are not gathered")
+            self.log.debug("No, all balls are not gathered. Total balls: %s. "
+                           "Balls in tagged devices: %s", count,
+                           self.machine.ball_controller.num_balls_known)
             return False
 
     def gather_balls(self, target='home', antitarget=None):

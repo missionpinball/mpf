@@ -1,13 +1,5 @@
-# Demo Man config file for MPF 0.16
-
-Plugins:
-    - shots.ShotController
-    - keyboard.Keyboard
-    - ball_search.BallSearch
-    - logic_blocks.LogicBlocks
-    - scoring.ScoreController
-    - auditor.Auditor
-    - sound.SoundController
+# config_version=1
+# Demo Man
 
 Machine:
     HZ: 30
@@ -36,6 +28,14 @@ Scriptlets:
     attract.Attract
     claw.Claw
 
+Virtual Platform Start Active Switches:
+    s_trough_1
+    s_trough_2
+    s_trough_3
+    s_trough_4
+    s_trough_5
+    s_trough_6
+
 Switches:
 # Fliptronics
     s_flipper_lower_right_eos:
@@ -44,7 +44,7 @@ Switches:
         label:
     s_flipper_lower_right:
         number: sf2
-        tags:
+        tags: player
         label:
         tags: right_flipper
     s_flipper_lower_left_eos:
@@ -53,7 +53,7 @@ Switches:
         label:
     s_flipper_lower_left:
         number: sf4
-        tags:
+        tags: player
         label:
         tags: left_flipper
     s_flipper_upper_left_eos:
@@ -62,7 +62,7 @@ Switches:
         label:
     s_flipper_upper_left:
         number: sf6
-        tags:
+        tags: player
         label:
     s_flipper_upper_right_eos:
         number: sf7
@@ -70,7 +70,7 @@ Switches:
         label:
     s_flipper_upper_right:
         number: sf8
-        tags:
+        tags: player
         label:
 
 # Direct
@@ -96,11 +96,11 @@ Switches:
         label:
     s_down:
         number: sd6
-        tags:
+        tags: volume_down
         label:
     s_up:
         number: sd7
-        tags:
+        tags: volume_up
         label:
     s_enter:
         number: sd8
@@ -111,15 +111,15 @@ Switches:
     s_ball_launch:
         number: s11
         label:
-        tags: plunger
+        tags: plunger, player
     s_left_handle_button:
         number: s12
         label:
-        tags:
+        tags: player
     s_start:
         number: s13
         label:
-        tags: start
+        tags: start, player
     s_plumb_bob:
         number: s14
         label:
@@ -979,7 +979,6 @@ SoundSystem:
         name: music
         priority: 0
 
-
     buffer: 512
     frequency: 44100
     channels: 1
@@ -992,7 +991,6 @@ DMD:
     height: 32
     shades: 16
     fps: auto
-
 
 Window:
     width: 800
@@ -1045,18 +1043,28 @@ Keyboard:
   1:
     switch: s_trough_1
     toggle: yes
-    start_active: yes
   8:
     switch: s_shooter_lane
     toggle: yes
   x:
     switch: s_left_slingshot
+  equals:
+    switch: s_up
+  minus:
+    switch: s_down
+
 
 ShowPlayer:
   machineflow_Attract_start:
     - show: attract_dmd_loop
       repeat: yes
       tocks_per_sec: 1
+  machineflow_Attract_stop:
+    - show: attract_dmd_loop
+      action: stop
+
+LightPlayer:
+  machineflow_Attract_start:
     - show: multiball_sweep
       repeat: yes
       tocks_per_sec: 10
@@ -1095,8 +1103,6 @@ ShowPlayer:
       tocks_per_sec: 8
 
   machineflow_Attract_stop:
-    - show: attract_dmd_loop
-      action: stop
     - show: multiball_sweep
       action: stop
     - show: random_flashing
@@ -1154,9 +1160,16 @@ LightScripts:
           color: ff
         - tocks: 1
           color: 0
-    on:
+    "on":
         - tocks: 1
           color: ff
-    off:
+    "off":
         - tocks: 1
           color: 0
+
+SlidePlayer:
+    volume_change:
+        type: Text
+        text: "VOLUME: %display_volume"
+        expire: 2s
+        slide_priority: 10000

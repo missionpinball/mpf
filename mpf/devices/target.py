@@ -10,13 +10,14 @@ import logging
 
 from mpf.system.devices import Device
 from mpf.system.tasks import DelayManager
-from mpf.system.show_controller import Playlist
+from mpf.system.light_controller import Playlist
 from collections import deque
 from mpf.system.config import Config
 
+
 class Target(Device):
 
-    config_section = 'Targets'
+    config_section = 'targets'
     collection = 'targets'
 
     # todo need to add complete show and complete script
@@ -169,7 +170,7 @@ class Target(Device):
 
 class TargetGroup(Device):
 
-    config_section = 'TargetGroups'
+    config_section = 'targetgroups'
     collection = 'target_groups'
 
     # todo need to add complete_scripts
@@ -246,7 +247,7 @@ class TargetGroup(Device):
                 self.update_count)
 
         # need to wait until after the show controller is loaded
-        self.machine.events.add_handler('machine_init_phase_2', self.load_shows)
+        self.machine.events.add_handler('init_phase_2', self.load_shows)
 
         # watch for rotation events
         for event in self.config['rotate_left_events']:

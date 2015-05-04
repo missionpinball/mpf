@@ -1,3 +1,4 @@
 *.pyc
 /logs
+/machine_files/*/audits/
 *.local

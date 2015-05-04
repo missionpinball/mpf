@@ -1,3 +1,5 @@
+# config_version=1
+
 # Instructions for this config file:
 # https://missionpinball.com/docs/configuration-file-reference/
 
@@ -13,27 +15,21 @@ Keyboard:
     1:
         switch: trough1
         toggle: True
-        start_active: True
     2:
         switch: trough2
         toggle: True
-        start_active: True
     3:
         switch: trough3
         toggle: True
-        start_active: True
     4:
         switch: trough4
         toggle: True
-        start_active: True
     5:
         switch: trough5
         toggle: True
-        start_active: True
     6:
         switch: trough6
         toggle: True
-        start_active: True
 
     7:
         switch: shooterR

@@ -34,6 +34,7 @@ class EventManager(object):
         Args:
             event: String name of the event you're adding a handler for. Since
                 events are text strings, they don't have to be pre-defined.
+                Note that all event strings will be converted to lowercase.
             handler: The method that will be called when the event is fired.
             priority: An arbitrary integer value that defines what order the
                 handlers will be called in. The default is 1, so if you have a
@@ -59,6 +60,8 @@ class EventManager(object):
         ``events.remove_handler(handler)``
 
         """
+
+        event = event.lower()
 
         # Add an entry for this event if it's not there already
         if not event in self.registered_handlers:
@@ -86,7 +89,7 @@ class EventManager(object):
 
         Args:
             event: The event you want to check to see if this handler is
-                registered for.
+                registered for. This string will be converted to lowercase.
             handler: The method of the handler you want to check.
             priority: Optional priority of the new handler that will be
                 registered.
@@ -104,6 +107,8 @@ class EventManager(object):
         # If we don't have kwargs, then we'll look for just the handler meth.
         # If we have kwargs, we'll look for that combination. If it finds it,
         # remove it.
+
+        event = event.lower()
 
         if event in self.registered_handlers:
             if kwargs:
@@ -141,6 +146,7 @@ class EventManager(object):
 
         Args:
             event: The name of the event you want to remove the handler from.
+                This string will be converted to lowercase.
             handler: The handler method you want to remove.
 
         Note that keyword arguments for the handler are not taken into
@@ -148,6 +154,8 @@ class EventManager(object):
         handler / event combination, regardless of whether the keyword
         arguments match or not.
         """
+
+        event = event.lower()
 
         if event in self.registered_handlers:
             for handler_tup in self.registered_handlers[event][:]:
@@ -197,14 +205,15 @@ class EventManager(object):
         is passed.
 
         Args:
-            event_name : The string name of the event you want to check
+            event_name : The string name of the event you want to check. This
+                string will be converted to lowercase.
 
         Returns:
             True or False
 
         """
 
-        if event_name in self.registered_handlers:
+        if event_name.lower() in self.registered_handlers:
             return True
         else:
             return False
@@ -225,7 +234,8 @@ class EventManager(object):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it.
+                you post, so be it. Note that this event name will be converted
+                to lowercase.
             callback: An optional method which will be called when the final
                 handler is done processing this event. Default is None.
             **kwargs: One or more options keyword/value pairs that will be
@@ -255,7 +265,8 @@ class EventManager(object):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it.
+                you post, so be it. Note that this event name will be converted
+                to lowercase.
             callback: An optional method which will be called when the final
                 handler is done processing this event. Default is None. If
                 any handler returns False and cancels this boolean event, the
@@ -291,7 +302,8 @@ class EventManager(object):
             event: A string name of the event you're posting. Note that you can
                 post whatever event you want. You don't have to set up anything
                 ahead of time, and if no handlers are registered for the event
-                you post, so be it.
+                you post, so be it. Note that this event name will be converted
+                to lowercase.
             callback: The method which will be called when the final
                 handler is done processing this event and any handlers that
                 registered waits have cleared their waits.
@@ -305,13 +317,21 @@ class EventManager(object):
 
     def post_relay(self, event, callback=None, **kwargs):
         """Posts a relay event which causes all the registered handlers to be
-        called.
+        called. A dictionary can be passed from handler-to-handler and modified
+        as needed.
 
-        Relay events differ from standard events in that the resulting kwargs
-        from one handler are passed to the next handler. (In other words,
-        stanard events mean that all the handlers get the same initial kwargs,
-        whereas relay events "relay" the resulting kwargs from one handler to
-        the next.)
+        Args:
+            event: A string name of the event you're posting. Note that you can
+                post whatever event you want. You don't have to set up anything
+                ahead of time, and if no handlers are registered for the event
+                you post, so be it. Note that this event name will be converted
+                to lowercase.
+            callback: The method which will be called when the final handler is
+                done processing this event. Default is None.
+            **kwargs: One or more options keyword/value pairs that will be
+                passed to each handler. (Just make sure your handlers are
+                expecting them. You can add **kwargs to your handler methods if
+                certain ones don't need them.)
 
         Events are processed serially (e.g. one at a time), so if the event
         system is in the process of handling another event, this event is
@@ -321,22 +341,19 @@ class EventManager(object):
         specifying a priority when the handlers were registed. (Higher priority
         values will be processed first.)
 
-        Args:
-            event: A string name of the event you're posting. Note that you can
-                post whatever event you want. You don't have to set up anything
-                ahead of time, and if no handlers are registered for the event
-                you post, so be it.
-            callback: The method which will be called when the final handler is
-                done processing this event. Default is None.
-            **kwargs: One or more options keyword/value pairs that will be
-                passed to each handler. (Just make sure your handlers are
-                expecting them. You can add **kwargs to your handler methods if
-                certain ones don't need them.)
+        Relay events differ from standard events in that the resulting kwargs
+        from one handler are passed to the next handler. (In other words,
+        stanard events mean that all the handlers get the same initial kwargs,
+        whereas relay events "relay" the resulting kwargs from one handler to
+        the next.)
 
         """
         self._post(event, ev_type='relay', callback=callback, **kwargs)
 
     def _post(self, event, ev_type, callback, **kwargs):
+
+        event = event.lower()
+
         if self.debug and event != 'timer_tick':
             # Use friendly_kwargs so the logger shows a "friendly" name of the
             # callback handler instead of the bound method object reference.
@@ -501,6 +518,7 @@ class QueuedEvent(object):
             return True
         else:
             return False
+
 
 # The MIT License (MIT)
 

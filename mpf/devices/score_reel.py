@@ -196,7 +196,7 @@ class ScoreReelGroup(Device):
     group. This group also has support for the blank zero "inserts" that some
     machines use. This is a subclass of mpf.system.devices.Device.
     """
-    config_section = 'Score Reel Groups'
+    config_section = 'score reel groups'
     collection = 'score_reel_groups'
 
     @classmethod
@@ -284,7 +284,7 @@ class ScoreReelGroup(Device):
         # ---- temp chimes code end --------------------------------
 
         # register for events
-        self.machine.events.add_handler('machine_init_phase_2',
+        self.machine.events.add_handler('init_phase_2',
                                         self.initialize)
 
         self.machine.events.add_handler('timer_tick', self.tick)
@@ -895,7 +895,7 @@ class ScoreReel(Device):
     in multiple directions (such as the credit reel).
     """
 
-    config_section = 'Score Reels'
+    config_section = 'score reels'
     collection = 'score_reels'
 
     def __init__(self, machine, name, config, collection=None):
@@ -1068,7 +1068,7 @@ class ScoreReel(Device):
 
         `reel_<name>_pulse_done`: When the coil is done pulsing
         `reel_<name>_ready`: When the config['repeat_pulse_time'] time is up
-        `reel_<name>_hw_value: When the config['hw_confirm_time'] time is up
+        `reel_<name>_hw_value`: When the config['hw_confirm_time'] time is up
 
         Args:
             direction (int, optional): If direction is 1, advances the reel

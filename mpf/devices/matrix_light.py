@@ -19,7 +19,7 @@ class MatrixLight(Device):
 
     """
 
-    config_section = 'MatrixLights'
+    config_section = 'matrixlights'
     collection = 'lights'
 
     #todo need to get the handler stuff out of each of these I think and into
@@ -37,7 +37,8 @@ class MatrixLight(Device):
         # some things later.
         self.config['number_str'] = str(config['number']).upper()
 
-        self.hw_driver, self.number = self.machine.platform.configure_matrixlight(self.config)
+        self.hw_driver, self.number = (
+            self.machine.platform.configure_matrixlight(self.config))
 
         self.registered_handlers = []
 

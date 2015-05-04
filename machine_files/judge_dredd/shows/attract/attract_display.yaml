@@ -40,7 +40,7 @@
 #    layer: 1
 #    shade: 8
 
-- tocks: 30
+- tocks: 3
   display:
     - type: Text
       text: "(PRESS START)"

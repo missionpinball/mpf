@@ -8,12 +8,12 @@ Much of this code is from the P-ROC drivers section of the pyprocgame project,
 written by Adam Preble and Gerry Stellenberg. It was originally released under
 the MIT license and is released here under the MIT License.
 
-More info on the P-ROC hardware platform: http://pinballcontrollers.com/
+More info on the P3-ROC hardware platform: http://pinballcontrollers.com/
 
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 
-If you want to use the Mission Pinball Framework with P-ROC hardware, you also
+If you want to use the Mission Pinball Framework with P3-ROC hardware, you also
 need libpinproc and pypinproc. More info:
 http://www.pinballcontrollers.com/forum/index.php?board=10.0
 
@@ -26,43 +26,49 @@ http://www.pinballcontrollers.com/forum/index.php?board=10.0
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import pinproc  # If this fails it's because you don't have pypinproc.
 import re
 import time
 import sys
 
-from mpf.system.timing import Timing
-from mpf.system.platform import Platform
-
 try:
-    import pygame
-    import pygame.locals
+    import pinproc
+    pinproc_imported = True
 except:
-    pass
+    pinproc_imported = False
+
+from mpf.system.platform import Platform
 
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00
 
 
 class HardwarePlatform(Platform):
-    """Platform class for the P-ROC or P3-ROC hardware controller.
+    """Platform class for the P3-ROC hardware controller.
 
-    Parameters
-    ----------
+    Args:
+        machine: The MachineController instance.
 
-    machine : int
-        A reference to the MachineController instance
-
+    Attributes:
+        machine: The MachineController instance.
+        proc: The P3-ROC pinproc.PinPROC device.
+        machine_type: Constant of the pinproc.MachineType
     """
 
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
-        self.log = logging.getLogger('P-ROC Platform')
-        self.log.debug("Configuring machine for P-ROC hardware.")
+        self.log = logging.getLogger('P3-ROC Platform')
+        self.log.debug("Configuring machine for P3-ROC hardware.")
+
+        if not pinproc_imported:
+            self.log.error('Could not import "pinproc". Most likely you do not '
+                           'have libpinproc and/or pypinproc installed. You can'
+                           'run MPF in software-only "virtual" mode by using '
+                           'the -x command like option for now instead.')
+            sys.exit()
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
-        # are based on what the P-ROC hardware can and cannot do.
+        # are based on what the P3-ROC hardware can and cannot do.
         self.features['max_pulse'] = 255
         self.features['hw_timer'] = False
         self.features['hw_rule_coil_delay'] = False
@@ -72,23 +78,26 @@ class HardwarePlatform(Platform):
         # todo need to add differences between patter and pulsed_patter
 
         # Make the platform features available to everyone
-        self.machine.config['Platform'] = self.features
+        self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
         self.machine_type = pinproc.normalize_machine_type(
-            self.machine.config['Hardware']['DriverBoards'])
+            self.machine.config['hardware']['driverboards'])
 
-        # Connect to the P-ROC. Keep trying if it doesn't work the first time.
+        # Connect to the P3-ROC. Keep trying if it doesn't work the first time.
 
         self.proc = None
 
+        self.log.info("Connecting to P3-ROC")
+
         while not self.proc:
             try:
-                print "trying to connect to P-ROC"
                 self.proc = pinproc.PinPROC(self.machine_type)
                 self.proc.reset(1)
-            except:
-                print "Failed, trying again..."
+            except IOError:
+                print "Retrying..."
+
+        self.log.info("Succefully connected to P3-ROC")
 
         '''
         Since the P3-ROC has no Aux port, this code will break it.
@@ -107,24 +116,21 @@ class HardwarePlatform(Platform):
 
         # Because PDBs can be configured in many different ways, we need to
         # traverse the YAML settings to see how many PDBs are being used.
-        # Then we can configure the P-ROC appropriately to use those PDBs.
-        # Only then can we relate the YAML coil/light #'s to P-ROC numbers for
+        # Then we can configure the P3-ROC appropriately to use those PDBs.
+        # Only then can we relate the YAML coil/light #'s to P3-ROC numbers for
         # the collections.
-        if self.machine_type == pinproc.MachineTypePDB:
-            self.log.debug("Configuring P-ROC for PDBs (P-ROC driver boards).")
-            self.pdbconfig = PDBConfig(self.proc, self.machine.config)
 
-        else:
-            self.log.debug("Configuring P-ROC for OEM driver boards.")
+        self.log.debug("Configuring P3-ROC for PDBs (P-ROC driver boards).")
+        self.pdbconfig = PDBConfig(self.proc, self.machine.config)
 
         self.polarity = self.machine_type == pinproc.MachineTypeSternWhitestar\
             or self.machine_type == pinproc.MachineTypeSternSAM\
             or self.machine_type == pinproc.MachineTypePDB
 
     def configure_driver(self, config, device_type='coil'):
-        """ Creates a P-ROC driver.
+        """ Creates a P3-ROC driver.
 
-        Typically drivers are coils or flashers, but for the P-ROC this is
+        Typically drivers are coils or flashers, but for the P3-ROC this is
         also used for matrix-based lights.
 
         Args:
@@ -139,20 +145,15 @@ class HardwarePlatform(Platform):
         # todo need to add Aux Bus support
         # todo need to add virtual driver support for driver counts > 256
 
-        # Find the P-ROC number for each driver. For P-ROC driver boards, the
-        # P-ROC number is specified via the Ax-By-C format. For OEM driver
-        # boards configured via driver numbers, libpinproc's decode() method
-        # can provide the number.
+        # Find the P3-ROC number for each driver. For P3-ROC driver boards, the
+        # P3-ROC number is specified via the Ax-By-C format.
 
-        if self.machine_type == pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number(device_type,
-                                                      str(config['number']))
-            if proc_num == -1:
-                self.log.error("Coil cannot be controlled by the P-ROC. "
-                               "Ignoring.")
-                return
-        else:
-            proc_num = pinproc.decode(self.machine_type, str(config['number']))
+        proc_num = self.pdbconfig.get_proc_number(device_type,
+                                                  str(config['number']))
+        if proc_num == -1:
+            self.log.error("Coil cannot be controlled by the P3-ROC. "
+                           "Ignoring.")
+            return
 
         if device_type == 'coil':
             proc_driver_object = PROCDriver(proc_num, self.proc)
@@ -167,53 +168,55 @@ class HardwarePlatform(Platform):
         return proc_driver_object, config['number']
 
     def configure_switch(self, config):
-        """ Configures a P-ROC switch.
+        """Configures a P3-ROC switch.
 
         Args:
             config: Dictionary of settings for the switch. In the case
-            of the P-ROC, it uses the following:
+                of the P3-ROC, it uses the following:
             number : The number (or number string) for the switch as specified
-            in the machine configuration file.
-            debounce : Boolean which specifies whether the P-ROC should debounce
-            this switch first before sending open and close notifications to the
-            host computer.
+                in the machine configuration file.
+            debounce : Boolean which specifies whether the P3-ROC should
+                debounce this switch first before sending open and close
+                notifications to the host computer.
 
         Returns:
             switch : A reference to the switch object that was just created.
-            proc_num : Integer of the actual hardware switch number the P-ROC
-            uses to refer to this switch. Typically your machine configuration
-            files would specify a switch number like `SD12` or `7/5`. This
-            `proc_num` is an int between 0 and 255. state : An integer of the
-            current hardware state of the switch, used to set the initial state
-            state in the machine. A value of 0 means the switch is open, and 1
-            means it's closed. Note this state is the physical state of the
-            switch, so if you configure the switch to be normally-closed (i.e.
-            "inverted" then your code will have to invert it too.) MPF handles
-            this automatically if the switch type is 'NC'.
+            proc_num : Integer of the actual hardware switch number the P3-ROC
+                uses to refer to this switch. Typically your machine
+                configuration files would specify a switch number like `SD12` or
+                `7/5`. This `proc_num` is an int between 0 and 255.
+            state : An integer of the current hardware state of the switch, used
+                to set the initial state state in the machine. A value of 0
+                means the switch is open, and 1 means it's closed. Note this
+                state is the physical state of the switch, so if you configure
+                the switch to be normally-closed (i.e. "inverted" then your code
+                will have to invert it too.) MPF handles this automatically if
+                the switch type is 'NC'.
+
         """
 
         if self.machine_type == pinproc.MachineTypePDB:
             proc_num = self.pdbconfig.get_proc_number('switch',
                                                       str(config['number']))
             if config['number'] == -1:
-                self.log.error("Switch cannot be controlled by the P-ROC. "
+                self.log.error("Switch cannot be controlled by the P3-ROC. "
                                "Ignoring.")
                 return
         else:
             proc_num = pinproc.decode(self.machine_type, str(config['number']))
 
         switch = PROCSwitch(proc_num)
-        # The P-ROC needs to be configured to notify the host computers of
+        # The P3-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)
-        self.log.debug("Configuring switch's host notification settings. P-ROC"
+        self.log.debug("Configuring switch's host notification settings. P3-ROC"
                        "number: %s, debounce: %s", proc_num,
                        config['debounce'])
         if config['debounce'] is False or \
                 proc_num >= pinproc.SwitchNeverDebounceFirst:
             self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
-                                         {'notifyHost': True, 'reloadActive':
-                                         False}, [], False)
+                                         {'notifyHost': True,
+                                          'reloadActive': False}, [], False)
             self.proc.switch_update_rule(proc_num, 'open_nondebounced',
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
@@ -223,10 +226,10 @@ class HardwarePlatform(Platform):
                                           'reloadActive': False}, [], False)
             self.proc.switch_update_rule(proc_num, 'open_debounced',
                                          {'notifyHost': True,
-                                         'reloadActive': False}, [], False)
+                                          'reloadActive': False}, [], False)
 
         # Read in and set the initial switch state
-        # The P-ROC uses the following values for hw switch states:
+        # The P3-ROC uses the following values for hw switch states:
         # 1 - closed (debounced)
         # 2 - open (debounced)
         # 3 - closed (not debounced)
@@ -243,7 +246,7 @@ class HardwarePlatform(Platform):
         return switch, proc_num, state
 
     def configure_led(self, config):
-        """ Configures a P-ROC RGB LED controlled via a PD-LED."""
+        """ Configures a P3-ROC RGB LED controlled via a PD-LED."""
 
         # todo add polarity
 
@@ -263,29 +266,29 @@ class HardwarePlatform(Platform):
                       invert=invert)
 
     def configure_matrixlight(self, config):
-        """Configures a P-ROC matrix light."""
-        # On the P-ROC, matrix lights are drivers
+        """Configures a P3-ROC matrix light."""
+        # On the P3-ROC, matrix lights are drivers
         return self.configure_driver(config, 'light')
 
     def configure_gi(self, config):
-        """Configures a P-ROC GI string light."""
-        # On the P-ROC, GI strings are drivers
+        """Configures a P3-ROC GI string light."""
+        # On the P3-ROC, GI strings are drivers
         return self.configure_driver(config, 'light')
 
     def configure_dmd(self):
-        """Configures a hardware DMD connected to a classic P-ROC."""
-        pass
+        """The P3-ROC does not support a physical DMD, so this method does
+        nothing. It's included here in case it's called by mistake.
 
-        # P3-ROC has no hw DMD
-        #return PROCDMD(self.machine)
+        """
+        self.log.error("An attempt was made to configure a physical DMD, but "
+                       "the P3-ROC does not support physical DMDs.")
 
     def hw_loop(self):
-        """Checks the P-ROC for any events (switch state changes or notification
-        that a DMD frame was updated).
+        """Checks the P3-ROC for any events (switch state changes).
 
-        Also tickles the watchdog and flushes any queued commands to the P-ROC.
+        Also tickles the watchdog and flushes any queued commands to the P3-ROC.
         """
-        # Get P-ROC events (switches & DMD frames displayed)
+        # Get P3-ROC events (switches & DMD frames displayed)
         for event in self.proc.get_events():
             event_type = event['type']
             event_value = event['value']
@@ -324,11 +327,11 @@ class HardwarePlatform(Platform):
                         debounced=True,
                         drive_now=False):
 
-        """Used to write (or update) a hardware rule to the P-ROC.
+        """Used to write (or update) a hardware rule to the P3-ROC.
 
-        *Hardware Rules* are used to configure the P-ROC to automatically
+        *Hardware Rules* are used to configure the P3-ROC to automatically
         change driver states based on switch changes. These rules are
-        completely handled by the P-ROC hardware (i.e. with no interaction from
+        completely handled by the P3-ROC hardware (i.e. with no interaction from
         the Python game code). They're used for things that you want to happen
         fast, like firing coils when flipper buttons are pushed, slingshots,
         pop bumpers, etc.
@@ -336,8 +339,7 @@ class HardwarePlatform(Platform):
         You can overwrite existing hardware rules at any time to change or
         remove them.
 
-        Parameters
-        ----------
+        Args:
             sw : switch object
                 Which switch you're creating this rule for. The parameter is a
                 reference to the switch object itsef.
@@ -358,20 +360,20 @@ class HardwarePlatform(Platform):
                 If the coil should be held on at less than 100% duty cycle,
                 this is the "off" time (in ms).
             delay : int
-                Not currently implemented for the P-ROC hardware
+                Not currently implemented for the P3-ROC hardware
             recycle_time : int
                 How long (in ms) should this switch rule wait before firing
                 again. Put another way, what's the "fastest" this rule can
                 fire? This is used to prevent "machine gunning" of slingshots
-                and pop bumpers. Do not use it with flippers. Note the P-ROC
+                and pop bumpers. Do not use it with flippers. Note the P3-ROC
                 has a non-configurable delay time of 125ms. (So it's either
                 125ms or 0.) So if you set this delay to anything other than
                 0, it will be 125ms.
             debounced : bool
-                Should the P-ROC fire this coil after the switch has been
+                Should the P3-ROC fire this coil after the switch has been
                 debounced? Typically no.
             drive_now : bool
-                Should the P-ROC check the state of the switches when this
+                Should the P3-ROC check the state of the switches when this
                 rule is firts applied, and fire the coils if they should be?
                 Typically this is True, especially with flippers because you
                 want them to fire if the player is holding in the buttons when
@@ -395,7 +397,7 @@ class HardwarePlatform(Platform):
         else:  # if sw_activity == 1 and not debounced:
             event_type = "closed_nondebounced"
 
-        # Note the P-ROC uses a 125ms non-configurable recycle time. So any
+        # Note the P3-ROC uses a 125ms non-configurable recycle time. So any
         # non-zero value passed here will enable the 125ms recycle.
 
         reloadActive = False
@@ -413,7 +415,7 @@ class HardwarePlatform(Platform):
 
         rule = {'notifyHost': notifyHost, 'reloadActive': reloadActive}
 
-        # Now let's figure out what type of P-ROC action we need to take.
+        # Now let's figure out what type of P3-ROC action we need to take.
         # We're going to 'brtue force' this here because it's the easiest to
         # understand. (Which makes it the most pythonic, right? :)
 
@@ -435,14 +437,14 @@ class HardwarePlatform(Platform):
             elif patter:
                 if pulse_ms:
                     pass
-                    # todo error, P-ROC can't do timed patter with pulse
+                    # todo error, P3-ROC can't do timed patter with pulse
                 else:  # no initial pulse
                     proc_action = 'pulsed_patter'
 
         this_driver = []
         final_driver = []
 
-        # The P-ROC ties hardware rules to switches, with a list of linked
+        # The P3-ROC ties hardware rules to switches, with a list of linked
         # drivers that should change state based on a switch activity.
         # Since our framework applies the rules one-at-a-time, we have to read
         # the existing linked drivers from the hardware for that switch, add
@@ -558,8 +560,8 @@ class PDBLED(object):
             0-255 each.
         """
 
-        self.log.info("Setting Color. Board: %s, Address: %s, Color: %s",
-                       self.board, self.address, color)
+        #self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
+        #               self.board, self.address, color)
 
         self.proc.led_color(self.board, self.address[0],
                             self.normalize_color(color[0]))
@@ -603,7 +605,7 @@ class PDBLED(object):
 
 
 class PDBSwitch(object):
-    """Base class for switches connected to a P-ROC."""
+    """Base class for switches connected to a P3-ROC."""
     def __init__(self, pdb, number_str):
         upper_str = number_str.upper()
         if upper_str.startswith('SD'):
@@ -625,7 +627,7 @@ class PDBSwitch(object):
 
 
 class PDBCoil(object):
-    """Base class for coils connected to a P-ROC that are controlled via P-ROC
+    """Base class for coils connected to a P3-ROC that are controlled via P3-ROC
     driver boards (i.e. the PD-16 board).
 
     """
@@ -754,7 +756,7 @@ class PROCSwitch(object):
 
 
 class PROCDriver(object):
-    """ Base class for drivers connected to a P-ROC. This class is used for all
+    """ Base class for drivers connected to a P3-ROC. This class is used for all
     drivers, regardless of whether they're connected to a P-ROC driver board
     (such as the PD-16 or PD-8x8) or an OEM driver board.
 
@@ -782,13 +784,13 @@ class PROCDriver(object):
         ``ValueError`` will be raised if `milliseconds` is outside of the range
         0-255.
         """
-        if not milliseconds in range(256):
+        if milliseconds not in range(256):
             raise ValueError('milliseconds must be in range 0-255.')
         self.log.debug('Pulsing Driver for %sms', milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
 
     def future_pulse(self, milliseconds=None, timestamp=0):
-        """Enables this driver for `milliseconds` at P-ROC timestamp:
+        """Enables this driver for `milliseconds` at P3-ROC timestamp:
         `timestamp`. If no parameter is provided for `milliseconds`,
         :attr:`pulse_ms` is used. If no parameter is provided or
         `timestamp`, 0 is used. ``ValueError`` will be raised if `milliseconds`
@@ -796,12 +798,11 @@ class PROCDriver(object):
         """
         if milliseconds is None:
             milliseconds = self.config['pulse_ms']
-        if not milliseconds in range(256):
+        if milliseconds not in range(256):
             raise ValueError('milliseconds must be in range 0-255.')
         self.log.debug("Driver %s - future pulse %d", self.name,
-                          milliseconds, timestamp)
-        self.proc.driver_future_pulse(self.number, milliseconds,
-                                           timestamp)
+                       milliseconds, timestamp)
+        self.proc.driver_future_pulse(self.number, milliseconds, timestamp)
 
     def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
         """Enables a pitter-patter sequence.
@@ -830,18 +831,18 @@ class PROCDriver(object):
         `on_ms`  milliseconds and off for `off_ms` milliseconds.
         """
 
-        if not run_time in range(256):
+        if run_time not in range(256):
             raise ValueError('run_time must be in range 0-255.')
-        if not on_ms in range(128):
+        if on_ms not in range(128):
             raise ValueError('on_ms must be in range 0-127.')
-        if not off_ms in range(128):
+        if off_ms not in range(128):
             raise ValueError('off_ms must be in range 0-127.')
 
         self.log.debug("Driver %s - pulsed patter on:%d, off:%d,"
-                          "run_time:%d, now:%s", self.name, on_ms, off_ms,
-                          run_time, now)
-        self.proc.driver_pulsed_patter(self.number, on_ms, off_ms,
-                                            run_time, now)
+                        "run_time:%d, now:%s", self.name, on_ms, off_ms,
+                        run_time, now)
+        self.proc.driver_pulsed_patter(self.number, on_ms, off_ms, run_time,
+                                       now)
         self.last_time_changed = time.time()
 
     def schedule(self, schedule, cycle_seconds=0, now=True):
@@ -902,7 +903,7 @@ class PROCMatrixLight(object):
 
 
 class PDBConfig(object):
-    """ This class is only used when the P-ROC is configured to use P-ROC
+    """ This class is only used when the P3-ROC is configured to use P3-ROC
     driver boards such as the PD-16 or PD-8x8. i.e. not when it's operating in
     WPC or Stern mode.
 
@@ -914,7 +915,7 @@ class PDBConfig(object):
     def __init__(self, proc, config):
 
         self.log = logging.getLogger('PDBConfig')
-        self.log.debug("Processing P-ROC Driver Board configuration")
+        self.log.debug("Processing P3-ROC Driver Board configuration")
 
         self.proc = proc
 
@@ -934,21 +935,21 @@ class PDBConfig(object):
                 self.aliases.append(alias)
 
         # Make a list of unique coil banks
-        for name in config['Coils']:
-            item_dict = config['Coils'][name]
+        for name in config['coils']:
+            item_dict = config['coils'][name]
             coil = PDBCoil(self, str(item_dict['number']))
             if coil.bank() not in coil_bank_list:
                 coil_bank_list.append(coil.bank())
 
-        # Make a list of unique lamp source banks.  The P-ROC only supports 2.
+        # Make a list of unique lamp source banks.  The P3-ROC only supports 2.
         # TODO: What should be done if 2 is exceeded?
-        if 'MatrixLights' in config:
-            for name in config['MatrixLights']:
-                item_dict = config['MatrixLights'][name]
+        if 'matrixlights' in config:
+            for name in config['matrixlights']:
+                item_dict = config['matrixlights'][name]
                 lamp = PDBLight(self, str(item_dict['number']))
 
                 # Catalog PDB banks
-                # Dedicated lamps don't use PDB banks. They use P-ROC direct
+                # Dedicated lamps don't use PDB banks. They use P3-ROC direct
                 # driver pins.
                 if lamp.lamp_type == 'dedicated':
                     pass
@@ -979,7 +980,7 @@ class PDBConfig(object):
                         lamp_list_for_index.append(lamp_dict_for_index)
 
         # Create a list of indexes.  The PDB banks will be mapped into this
-        # list. The index of the bank is used to calculate the P-ROC driver
+        # list. The index of the bank is used to calculate the P3-ROC driver
         # number for each driver.
         num_proc_banks = pinproc.DriverCount/8
         self.indexes = [99] * num_proc_banks
@@ -1005,22 +1006,22 @@ class PDBConfig(object):
 
         group_ctr += 1
 
-        # Process lamps first. The P-ROC can only control so many drivers
+        # Process lamps first. The P3-ROC can only control so many drivers
         # directly. Since software won't have the speed to control lamp
-        # matrixes, map the lamps first. If there aren't enough P-ROC driver
+        # matrixes, map the lamps first. If there aren't enough P3-ROC driver
         # groups for coils, the overflow coils can be controlled by software
         # via VirtualDrivers (which should get set up automatically by this
         # code.)
 
         for i, lamp_dict in enumerate(lamp_list):
-            # If the bank is 16 or higher, the P-ROC can't control it
+            # If the bank is 16 or higher, the P3-ROC can't control it
             # directly. Software can't really control lamp matrixes either
             # (need microsecond resolution).  Instead of doing crazy logic here
             # for a case that probably won't happen, just ignore these banks.
             if (group_ctr >= num_proc_banks or lamp_dict['sink_bank'] >= 16):
                 self.log.error("Lamp matrix banks can't be mapped to index "
                                   "%d because that's outside of the banks the "
-                                  "P-ROC can control.", lamp_dict['sink_bank'])
+                                  "P3-ROC can control.", lamp_dict['sink_bank'])
             else:
                 self.log.debug("Driver group %02d (lamp sink): slow_time=%d "
                                  "enable_index=%d row_activate_index=%d "
@@ -1042,16 +1043,16 @@ class PDBConfig(object):
                 group_ctr += 1
 
         for coil_bank in coil_bank_list:
-            # If the bank is 16 or higher, the P-ROC can't control it directly.
+            # If the bank is 16 or higher, the P3-ROC can't control it directly.
             # Software will have do the driver logic and write any changes to
             # the PDB bus. Therefore, map these banks to indexes above the
-            # P-ROC's driver count, which will force the drivers to be created
+            # P3-ROC's driver count, which will force the drivers to be created
             # as VirtualDrivers. Appending the bank avoids conflicts when
             # group_ctr gets too high.
 
             if (group_ctr >= num_proc_banks or coil_bank >= 16):
                 self.log.warning("Driver group %d mapped to driver index"
-                                 "outside of P-ROC control.  These Drivers "
+                                 "outside of P3-ROC control.  These Drivers "
                                  "will become VirtualDrivers.  Note, the "
                                  "index will not match the board/bank "
                                  "number; so software will need to request "
@@ -1089,7 +1090,7 @@ class PDBConfig(object):
         while len(lamp_source_bank_list) < 2:
             lamp_source_bank_list.append(0)
 
-        # Now set up globals.  First disable them to allow the P-ROC to set up
+        # Now set up globals.  First disable them to allow the P3-ROC to set up
         # the polarities on the Drivers.  Then enable them.
         self.configure_globals(proc, lamp_source_bank_list, False)
         self.configure_globals(proc, lamp_source_bank_list, True)
@@ -1168,10 +1169,10 @@ class PDBConfig(object):
                                          self.watchdog_time)
 
     def get_proc_number(self, device_type, number_str):
-        """Returns the P-ROC number for the requested driver string.
+        """Returns the P3-ROC number for the requested driver string.
 
         This method uses the driver string to look in the indexes list that
-        was set up when the PDBs were configured.  The resulting P-ROC index
+        was set up when the PDBs were configured.  The resulting P3-ROC index
         * 3 is the first driver number in the group, and the driver offset is
         to that.
 
@@ -1222,7 +1223,7 @@ class DriverAlias(object):
 def is_pdb_address(addr, aliases=[]):
     """Returne True if the given address is a valid PDB address."""
     try:
-        t = decode_pdb_address(addr=addr, aliases=aliases)
+        decode_pdb_address(addr=addr, aliases=aliases)
         return True
     except:
         return False
