@@ -1,5 +1,5 @@
 # config_version=1
-MediaController:
+nediacontroller:
     modules:
 
         modes.ModeController
@@ -41,7 +41,7 @@ MediaController:
 timing:
     hz: 30
 
-DisplayDefaults:
+displaydefaults:
     Text:
         font: default
         size: 10
@@ -57,7 +57,7 @@ DisplayDefaults:
         background_shade: 0
         antialias: False
 
-Fonts:
+fonts:
     default:
         file: Quadrit.ttf
         size: 10
@@ -89,26 +89,26 @@ Fonts:
        file: big_noodle_titling.ttf
        size: 20
 
-TextStrings:
+textstrings:
     volume_zero: OFF
     volume_max: MAX
 
-AssetDefaults:
-    Images:
+assetdefaults:
+    images:
         default:
             load: preload
         screen:
             target: screen
         dmd:
             target: dmd
-    Animations:
+    animations:
         default:
             load: preload
             target: dmd
         screen:
             load: preload
             target: screen
-    Sounds:
+    sounds:
         default:
             track: sfx
             load: preload
@@ -121,14 +121,14 @@ AssetDefaults:
         music:
             track: music
             load: preload
-    Shows:
+    shows:
         default:
             load: preload
-    Movies:
+    movies:
         default:
             load: preload
 
-SlidePlayer:
+slideplayer:
     client_connected:
       - type: Text
         text: CLIENT CONNECTED
