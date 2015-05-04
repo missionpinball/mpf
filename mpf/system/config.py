@@ -20,6 +20,10 @@ log = logging.getLogger('ConfigProcessor')
 
 
 class CaseInsensitiveDict(dict):
+    """A class based on Python's 'dict' class that internally stores all keys
+    as lowercase. Set, get, contains, and del methods have been overwritten to
+    automatically convert incoming calls to lowercase.
+    """
     def __setitem__(self, key, value):
         super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
 
@@ -137,6 +141,21 @@ class Config(object):
 
     @staticmethod
     def check_config_file_version(file_location):
+        """Checks a configuration file to see if it's the proper version for
+        this version of MPF.
+
+        Args:
+            file_location: The path to the file to check.
+
+        Returns: True if the config version of the file matches. False if not.
+
+        This method checks that the a string 'config_version=x' exists in the
+        first line of the file. If so, it checks that 'x' matches MPF's
+        config_version specification.
+
+        This check is done as integers.
+
+        """
         with open(file_location) as f:
             file_version = f.readline().split('config_version=')[-1:][0]
 
@@ -145,7 +164,7 @@ class Config(object):
             except ValueError:
                 file_version = 0
 
-            if file_version < int(version.__config_version__):
+            if file_version != int(version.__config_version__):
                 log.warning("Config file %s is version %s. MPF %s requires "
                             "version %s", file_location, file_version,
                             version.__version__, version.__config_version__)
@@ -155,7 +174,14 @@ class Config(object):
 
     @staticmethod
     def keys_to_lower(source_dict):
+        """Converts the keys of a dictionary to lowercase.
 
+        Args:
+            source_dict: The dictionary you want to convert.
+
+        Returns:
+            A dictionary with lowercase keys.
+        """
         for k in source_dict.keys():
             if type(source_dict[k]) is dict:
                 source_dict[k] = Config.keys_to_lower(source_dict[k])
@@ -287,7 +313,7 @@ class Config(object):
     @staticmethod
     def string_to_list(string):
         """ Converts a comma-separated and/or space-separated string into a
-        python list.
+        Python list.
 
         Args:
             string: The string you'd like to convert.
@@ -316,6 +342,16 @@ class Config(object):
 
     @staticmethod
     def string_to_lowercase_list(string):
+        """ Converts a comma-separated and/or space-separated string into a
+        Python list where each item in the list has been converted to lowercase.
+
+        Args:
+            string: The string you'd like to convert.
+
+        Returns:
+            A python list object containing whatever was between commas and/or
+            spaces in the string, with each item converted to lowercase.
+        """
         new_list = Config.string_to_list(string)
 
         new_list = [x.lower() for x in new_list]
