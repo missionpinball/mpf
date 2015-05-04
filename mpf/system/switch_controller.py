@@ -46,7 +46,7 @@ class SwitchController(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick, 1000)
-        self.machine.events.add_handler('machine_init_phase_2',
+        self.machine.events.add_handler('init_phase_2',
                                         self.initialize_hw_states,
                                         1000)
                                         # priority 1000 so this fires first
@@ -59,7 +59,7 @@ class SwitchController(object):
 
         We can't do this in __init__() because we need the switch controller to
         be setup first before we set up the hw switches. This method is
-        called via an event handler which listens for `machine_init_phase_2`.
+        called via an event handler which listens for `init_phase_2`.
         """
 
         start_active = list()

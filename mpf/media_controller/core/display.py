@@ -13,7 +13,6 @@ Decorator.
 import logging
 import uuid
 import time
-import os
 
 try:
     import pygame
@@ -25,7 +24,7 @@ except:
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing, Timer
 from mpf.system.light_controller import LightController
-from mpf.media_controller.core.assets import AssetManager
+from mpf.system.assets import AssetManager
 from mpf.media_controller.core.font_manager import FontManager
 from mpf.media_controller.core.slide_builder import SlideBuilder
 import mpf.media_controller.decorators
@@ -81,19 +80,19 @@ class DisplayController(object):
 
         # Register for events
         if 'window' in self.machine.config:
-            self.machine.events.add_handler('mc_init_phase_2',
+            self.machine.events.add_handler('init_phase_2',
                                             self.machine.get_window,
                                             priority=1000)
 
-        self.machine.events.add_handler('mc_init_phase_1',
+        self.machine.events.add_handler('init_phase_1',
                                         self._load_display_modules)
-        self.machine.events.add_handler('mc_init_phase_1',
+        self.machine.events.add_handler('init_phase_1',
                                         self._load_display_element_modules)
-        self.machine.events.add_handler('mc_init_phase_1',
+        self.machine.events.add_handler('init_phase_1',
                                         self._load_fonts)
-        self.machine.events.add_handler('mc_init_phase_1',
+        self.machine.events.add_handler('init_phase_1',
                                         self._load_transitions)
-        self.machine.events.add_handler('mc_init_phase_1',
+        self.machine.events.add_handler('init_phase_1',
                                         self._load_decorators)
         self.machine.events.add_handler('action_show_slide', self.show_slide)
 

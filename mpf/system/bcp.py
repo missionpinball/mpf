@@ -182,7 +182,7 @@ class BCP(object):
         except KeyError:
             pass
 
-        self.machine.events.add_handler('machine_init_phase_2',
+        self.machine.events.add_handler('init_phase_2',
                                         self._setup_bcp_connections)
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
         self.machine.events.add_handler('game_starting', self.bcp_game_start)

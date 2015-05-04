@@ -10,7 +10,7 @@ import pygame
 import pygame.locals
 
 from mpf.media_controller.core.display import DisplayElement
-from mpf.media_controller.core.assets import Asset
+from mpf.system.assets import Asset
 
 
 class Movie(Asset):

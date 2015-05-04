@@ -45,7 +45,7 @@ class DropTarget(Target):
             self.update_state_from_switch, 1)
 
         # can't read the switch until the switch controller is set up
-        self.machine.events.add_handler('machine_init_phase_1',
+        self.machine.events.add_handler('init_phase_1',
                                         self.update_state_from_switch)
 
         # todo add switch handler to watch for reset switch?
@@ -99,7 +99,7 @@ class DropTargetBank(TargetGroup):
                                                 self.config['reset_coils'])
 
         # can't read the switches until the switch controller is set up
-        self.machine.events.add_handler('machine_init_phase_1',
+        self.machine.events.add_handler('init_phase_1',
                                         self.update_count)
 
     def reset(self):

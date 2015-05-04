@@ -88,7 +88,7 @@ class OSC(object):
             self.wpc = False
 
         # register for events
-        self.machine.events.add_handler('machine_init_phase_4', self.start)
+        self.machine.events.add_handler('init_phase_4', self.start)
 
     def start(self):
         """Starts the OSC server."""

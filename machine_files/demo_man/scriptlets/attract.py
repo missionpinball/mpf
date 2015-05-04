@@ -7,8 +7,8 @@ class Attract(Scriptlet):
 
     def on_load(self):
 
-        self.machine.events.add_handler('machineflow_Attract_start', self.start)
-        self.machine.events.add_handler('machineflow_Attract_stop', self.stop)
+        self.machine.events.add_handler('machineflow_attract_start', self.start)
+        self.machine.events.add_handler('machineflow_attract_stop', self.stop)
 
     def start(self):
 

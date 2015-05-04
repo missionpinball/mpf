@@ -10,7 +10,7 @@ import time
 
 from mpf.media_controller.core.display import DisplayElement
 import mpf.media_controller.display_modules.dmd
-from mpf.media_controller.core.assets import Asset
+from mpf.system.assets import Asset
 
 dmd_palette = [(0, 0, 0),
             (1, 0, 0),

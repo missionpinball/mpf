@@ -74,7 +74,7 @@ class LightController(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick)
-        self.machine.events.add_handler('machine_init_phase_5',
+        self.machine.events.add_handler('init_phase_5',
                                         self._initialize)
 
         # Tell the mode controller that it should look for LightPlayer items in

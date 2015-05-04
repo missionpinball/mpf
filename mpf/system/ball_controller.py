@@ -31,7 +31,7 @@ class BallController(object):
 
         self.game = None
 
-        self.machine.playfield = None  # Configured in machine_init_phase_2
+        self.machine.playfield = None  # Configured in init_phase_2
 
         self._num_balls_known = -999
 
@@ -43,7 +43,7 @@ class BallController(object):
                                         self.request_to_start_game)
         self.machine.events.add_handler('machine_reset_phase_2',
                                         self._initialize)
-        self.machine.events.add_handler('machine_init_phase_2',
+        self.machine.events.add_handler('init_phase_2',
                                         self.create_playfield_device)
 
     @property

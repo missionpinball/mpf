@@ -76,11 +76,11 @@ class MachineController(object):
         self.events.add_handler('machine_reset_phase_3', self.flow_advance,
                                 position=0)
 
-        self.events.post("machine_init_phase_1")
+        self.events.post("init_phase_1")
         self._load_device_modules()
-        self.events.post("machine_init_phase_2")
+        self.events.post("init_phase_2")
         self._load_plugins()
-        self.events.post("machine_init_phase_3")
+        self.events.post("init_phase_3")
         self._load_scriptlets()
 
         # Configure the Machine Flow
@@ -96,8 +96,8 @@ class MachineController(object):
         # register event handlers
         self.events.add_handler('machineflow_advance', self.flow_advance)
 
-        self.events.post("machine_init_phase_4")
-        self.events.post("machine_init_phase_5")
+        self.events.post("init_phase_4")
+        self.events.post("init_phase_5")
 
         self.reset()
 
