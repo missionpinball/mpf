@@ -284,7 +284,7 @@ class ScoreReelGroup(Device):
         # ---- temp chimes code end --------------------------------
 
         # register for events
-        self.machine.events.add_handler('machine_init_phase_2',
+        self.machine.events.add_handler('init_phase_2',
                                         self.initialize)
 
         self.machine.events.add_handler('timer_tick', self.tick)

@@ -7,7 +7,6 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import pygame
-import logging
 # todo make it so this doesn't crash if pygame is not available
 
 from mpf.system.light_controller import LightController

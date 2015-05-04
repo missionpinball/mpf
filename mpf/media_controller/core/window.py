@@ -80,7 +80,7 @@ class WindowManager(MPFDisplay):
 
         self._setup_window()
 
-        self.machine.events.add_handler('mc_init_phase_5',
+        self.machine.events.add_handler('init_phase_5',
                                         self._load_window_elements)
 
         # Block all Pygame events from being reported. We'll selectively enable

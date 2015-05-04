@@ -42,7 +42,7 @@ class Auditor(object):
         disable() methods.
         """
 
-        self.machine.events.add_handler('machine_init_phase_4', self._initialize)
+        self.machine.events.add_handler('init_phase_4', self._initialize)
 
     def _initialize(self):
         # Initializes the auditor. We do this separate from __init__() since

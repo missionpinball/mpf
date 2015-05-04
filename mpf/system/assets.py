@@ -49,7 +49,7 @@ class AssetManager(object):
                                                  load_key='mode_start')
 
         # register & load systemwide assets
-        self.machine.events.add_handler('machine_init_phase_4',
+        self.machine.events.add_handler('init_phase_4',
             self.register_and_load_machine_assets)
 
         self.defaults = self.setup_defaults(self.machine.config)
@@ -82,7 +82,7 @@ class AssetManager(object):
 
         root_path = os.path.join(path, self.path_string)
 
-        self.log.info("Processing assets from folder: %s", root_path)
+        self.log.info("Processing assets from base folder: %s", root_path)
 
         for path, _, files in os.walk(root_path, followlinks=True):
 

@@ -171,11 +171,11 @@ class MediaController(object):
             # malicious files in the system folder then you have access to this
             # code too.
 
-        self.events.post("mc_init_phase_1")
-        self.events.post("mc_init_phase_2")
-        self.events.post("mc_init_phase_3")
-        self.events.post("mc_init_phase_4")
-        self.events.post("mc_init_phase_5")
+        self.events.post("init_phase_1")
+        self.events.post("init_phase_2")
+        self.events.post("init_phase_3")
+        self.events.post("init_phase_4")
+        self.events.post("init_phase_5")
 
         self.reset()
 
@@ -214,7 +214,7 @@ class MediaController(object):
         """
 
         if pygame and not self.pygame_requested:
-            self.events.add_handler('mc_init_phase_3', self._pygame_init)
+            self.events.add_handler('init_phase_3', self._pygame_init)
             self.pygame_requested = True
             return True
 

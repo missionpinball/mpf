@@ -247,7 +247,7 @@ class TargetGroup(Device):
                 self.update_count)
 
         # need to wait until after the show controller is loaded
-        self.machine.events.add_handler('machine_init_phase_2', self.load_shows)
+        self.machine.events.add_handler('init_phase_2', self.load_shows)
 
         # watch for rotation events
         for event in self.config['rotate_left_events']:

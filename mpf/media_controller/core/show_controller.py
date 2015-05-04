@@ -10,7 +10,7 @@ import logging
 import yaml
 import time
 
-from mpf.media_controller.core.assets import Asset, AssetManager
+from mpf.system.assets import AssetManager, Asset
 from mpf.system.config import Config
 
 
@@ -63,7 +63,7 @@ class ShowController(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick)
-        self.machine.events.add_handler('mc_init_phase_4',
+        self.machine.events.add_handler('init_phase_4',
                                         self._initialize)
 
         # Create the show AssetManager

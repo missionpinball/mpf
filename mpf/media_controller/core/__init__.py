@@ -4,7 +4,6 @@ __all__ = [
            'language',
            'modes',
            'sound',
-           'assets',
            'window',
            'show_controller',
            'font_manager',

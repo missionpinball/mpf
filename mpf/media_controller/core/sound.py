@@ -13,7 +13,7 @@ import Queue
 import uuid
 import copy
 
-from mpf.media_controller.core.assets import Asset, AssetManager
+from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config
 
 global import_success
@@ -98,7 +98,7 @@ class SoundController(object):
         self.machine.events.add_handler('pygame_initialized', self._initialize)
 
         if 'soundplayer' in self.machine.config:
-            self.machine.events.add_handler('mc_init_phase_5',
+            self.machine.events.add_handler('init_phase_5',
                 self.register_sound_events,
                 config=self.machine.config['soundplayer'])
 
