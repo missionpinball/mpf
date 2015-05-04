@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.media_controller.elements.text module &mdash; Mission Pinball Framework 0.17.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.17.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.17.0 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.media_controller.elements.text">
+<span id="mpf-media-controller-elements-text-module"></span><h1>mpf.media_controller.elements.text module</h1>
+<p>Contains the parent class of the Text DisplayElement</p>
+<dl class="class">
+<dt id="mpf.media_controller.elements.text.Text">
+<em class="property">class </em><tt class="descclassname">mpf.media_controller.elements.text.</tt><tt class="descname">Text</tt><big>(</big><em>slide</em>, <em>machine</em>, <em>text</em>, <em>x=None</em>, <em>y=None</em>, <em>h_pos=None</em>, <em>v_pos=None</em>, <em>layer=0</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.media_controller.core.display.html#mpf.media_controller.core.display.DisplayElement" title="mpf.media_controller.core.display.DisplayElement"><tt class="xref py py-class docutils literal"><span class="pre">mpf.media_controller.core.display.DisplayElement</span></tt></a></p>
+<p>Represents an animation display element.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>slide</strong> &#8211; The Slide object this animation is being added to.</li>
+<li><strong>machine</strong> &#8211; The main machine object.</li>
+<li><strong>text</strong> &#8211; A string of the text you&#8217;d like to display. If you have the
+multi-language plug-in enabled, this text will be run through the
+language engine before it&#8217;s displayed.</li>
+<li><strong>x</strong> &#8211; The horizontal position offset for the placement of this element.</li>
+<li><strong>y</strong> &#8211; The vertical position offset for the placement of this element.</li>
+<li><strong>h_pos</strong> &#8211; The horizontal anchor.</li>
+<li><strong>v_pos</strong> &#8211; The vertical anchor.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note: Full documentation on the use of the x, y, h_pos, and v_pos arguments
+can be found at: <a class="reference external" href="https://missionpinball.com/docs/displays/display-elements/positioning/">https://missionpinball.com/docs/displays/display-elements/positioning/</a></p>
+<dl class="method">
+<dt id="mpf.media_controller.elements.text.Text.double_zeros">
+<tt class="descname">double_zeros</tt><big>(</big><em>number</em><big>)</big></dt>
+<dd><p>Formats a number so if it&#8217;s zero then it returns a string of &#8220;00&#8221;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>number</strong> &#8211; The input value as int or string.</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns: String &#8220;00&#8221; if the input is 0. Otherwise returns whatever it</dt>
+<dd>received unchanged.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.elements.text.Text.group_digits">
+<tt class="descname">group_digits</tt><big>(</big><em>text</em>, <em>separator='</em>, <em>'</em>, <em>group_size=3</em><big>)</big></dt>
+<dd><p>Enables digit grouping (i.e. adds comma separators between
+thousands digits).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>text</strong> &#8211; A string of the text which will be searched for numbers to
+group.</li>
+<li><strong>separator</strong> &#8211; String of the character(s) you&#8217;d like to add between the
+digit groups. Default is a comma. (&#8221;,&#8221;)</li>
+<li><strong>group_size</strong> &#8211; How many digits you want in each group. Default is 3.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns: A string with the separator added. If no numbers were found in</dt>
+<dd>the string that was passed, the original string will be returned.</dd>
+</dl>
+<p>Note: This code came from here:
+<a class="reference external" href="http://code.activestate.com/recipes/439357-simple-digit-grouping/">http://code.activestate.com/recipes/439357-simple-digit-grouping/</a></p>
+<p>MPF uses this method instead of the Python locale settings because the
+locale settings are a mess. They&#8217;re set system-wide and it&#8217;s really hard
+to make them work cross-platform and there are all sorts of external
+dependencies, so this is just way easier.</p>
+<p>This method only identifies integers.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.elements.text.display_element_class">
+<tt class="descclassname">mpf.media_controller.elements.text.</tt><tt class="descname">display_element_class</tt></dt>
+<dd><p>alias of <a class="reference internal" href="#mpf.media_controller.elements.text.Text" title="mpf.media_controller.elements.text.Text"><tt class="xref py py-class docutils literal"><span class="pre">Text</span></tt></a></p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.media_controller.elements.text.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
