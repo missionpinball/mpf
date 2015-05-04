@@ -6,8 +6,11 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
+import logging
+
 import pygame
 import pygame.locals
+
 
 from mpf.media_controller.core.display import DisplayElement
 import mpf.media_controller.display_modules.dmd
@@ -134,6 +137,8 @@ class ImageDisplayElement(DisplayElement):
 
         super(ImageDisplayElement, self).__init__(slide, x, y, h_pos, v_pos,
                                                   layer)
+
+        self.log = logging.getLogger('ImageDE.' + image)
 
         self.loadable_asset = True
         self.machine = machine
