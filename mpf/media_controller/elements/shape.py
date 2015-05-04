@@ -56,12 +56,12 @@ class Shape(DisplayElement):
         super(Shape, self).__init__(slide, x, y, h_pos, v_pos, layer)
 
         self.slide = slide
-        self.shape = shape
+        self.shape = shape.lower()
 
         if 'name' in kwargs:
             self.name = kwargs['name']
         else:
-            self.name = 'Shape'
+            self.name = 'shape'
 
         self.adjust_colors(**kwargs)
 
@@ -78,8 +78,7 @@ class Shape(DisplayElement):
                       end_y=kwargs['height'],
                       thickness=kwargs['thickness'])
         else:
-            self.machine.log.critical("Invalid shape: ", shape)
-            raise Exception()
+            raise Exception("Invalid shape: " + shape)
 
         # todo change to arg
         self.element_surface.set_colorkey((0, 0, 0))

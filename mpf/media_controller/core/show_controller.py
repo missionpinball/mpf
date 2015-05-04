@@ -9,10 +9,10 @@
 import logging
 import yaml
 import time
-import os
 
 from mpf.media_controller.core.assets import Asset, AssetManager
 from mpf.system.config import Config
+
 
 class ShowController(object):
     """Manages all the shows in a pinball machine.
@@ -153,6 +153,12 @@ class ShowController(object):
 
         if 'hold' not in settings:
             settings['hold'] = False
+
+        if 'show' in settings:
+            settings['show'] = settings['show'].lower()
+
+        if 'script' in settings:
+            settings['script'] = settings['script'].lower()
 
         if 'action' in settings and settings['action'] == 'stop':
             key = self.machine.events.add_handler(event, self.stop_show,

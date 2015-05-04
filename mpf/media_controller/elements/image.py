@@ -9,6 +9,7 @@
 import pygame
 import pygame.locals
 
+
 from mpf.media_controller.core.display import DisplayElement
 import mpf.media_controller.display_modules.dmd
 from mpf.media_controller.core.assets import Asset
@@ -138,13 +139,12 @@ class ImageDisplayElement(DisplayElement):
         self.loadable_asset = True
         self.machine = machine
 
+        image = image.lower()
+
         if image not in machine.images:
-            self.log.critical("Received a request to add an image, but "
-                              "the name '%s' doesn't exist in in the list of "
-                              "registered images.", image)
-            raise Exception("Received a request to add an image, but "
-                             "the name '%s' doesn't exist in in the list of "
-                             "registered images.", image)
+            raise Exception("Received a request to add an image, but the name "+
+                            image + " doesn't exist in in the list of "
+                            "registered images.")
         else:
             self.image = machine.images[image]
 

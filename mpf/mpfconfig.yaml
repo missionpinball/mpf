@@ -8,7 +8,7 @@
 
 # Configuration for the MPF framework itself
 
-MPF:
+mpf:
     system_modules:  # order is important here
         timing.Timing
         events.EventManager
@@ -62,7 +62,7 @@ MPF:
 
 # Default settings for machines. All can be overridden
 
-Machine:
+machine:
     Balls Installed: 1
     Min Balls: 1
     Max Balls: 10
@@ -70,27 +70,27 @@ Machine:
 timing:
     hz: 30
 
-Hardware:
+hardware:
     Platform: virtual
 
-P_ROC:
+p_roc:
     lamp_matrix_strobe_time: 100
     watchdog_time: 1000
     use_watchdog: True
 
-LEDSettings:
+ledsettings:
     brightness_compensation: 1.0
     default_led_fade_ms: 100
 
-Game:
+game:
     Balls per game: 3
     Max players per game: 4
 
-MachineFlow:
+machineflow:
     mpf.game.attract.Attract
     mpf.game.game.Game
 
-Auditor:
+auditor:
     save_events:
         game_started
         ball_ended
@@ -108,15 +108,15 @@ Auditor:
     player:
         score
 
-BallSearch:
+ballsearch:
     Secs until ball search start: 10
     Secs between ball search rounds: 3
     Secs between ball search coils: .15
     If ball search fails: Keep Looking
 
-LogicBlocks:
+logicblocks:
 
-    Counters:
+    counters:
 
         tilt:
             count_events: sw_tilt
@@ -131,8 +131,8 @@ LogicBlocks:
             count_complete_value: 1
             events_when_complete: slam_tilt
 
-DisplayDefaults:
-    Text:
+displaydefaults:
+    text:
         font: default
         size: 10
         opaque: false
@@ -147,7 +147,7 @@ DisplayDefaults:
         background_shade: 0
         antialias: False
 
-Fonts:
+fonts:
     default:
         file: Quadrit.ttf
         size: 10
@@ -179,46 +179,16 @@ Fonts:
        file: big_noodle_titling.ttf
        size: 20
 
-TextStrings:
+textstrings:
     volume_zero: OFF
     volume_max: MAX
 
-AssetDefaults:
-    Images:
-        default:
-            load: preload
-        screen:
-            target: screen
-        dmd:
-            target: dmd
-    Animations:
-        default:
-            load: preload
-            target: dmd
-        screen:
-            load: preload
-            target: screen
-    Sounds:
-        default:
-            track: sfx
-            load: preload
-        voice:
-            track: voice
-            load: preload
-        sfx:
-            track: sfx
-            load: preload
-        music:
-            track: music
-            load: preload
-    Shows:
-        default:
-            load: preload
-    Movies:
+assetdefaults:
+    shows:
         default:
             load: preload
 
-BCP:
+bcp:
     connections:
         local_display:
             host: localhost
@@ -255,7 +225,7 @@ BCP:
         ball
         extra_balls
 
-Volume:
+volume:
     tracks:
         master: 20
         voice: 20

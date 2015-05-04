@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 import time
 
 from mpf.media_controller.core.display import DisplayElement
@@ -50,7 +49,7 @@ class Animation(Asset):
         # load from image file
 
         if self.file_name.endswith('.dmd'):
-            self.surface_list = display_modules.dmd.load_dmd_file(
+            self.surface_list = mpf.media_controller.display_modules.dmd.load_dmd_file(
                 self.file_name,
                 dmd_palette,
                 self.alpha_color)
@@ -114,18 +113,12 @@ class AnimationDisplayElement(DisplayElement):
         super(AnimationDisplayElement, self).__init__(slide, x, y, h_pos, v_pos,
                                                       layer)
 
-        self.log = logging.getLogger('Animation.' + animation)
-
         self.loadable_asset = True
         self.machine = machine
 
         if animation not in machine.animations:
-            self.log.critical("Received a request to add an animation, but "
-                              "the name '%s' doesn't exist in in the list of "
-                              "registered animations.", animation)
             raise Exception("Received a request to add an animation, but "
-                              "the name '%s' doesn't exist in in the list of "
-                              "registered animations.", animation)
+                            "the name registered animations.")
         else:
             self.animation = machine.animations[animation]
 

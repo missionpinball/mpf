@@ -90,7 +90,7 @@ class AssetManager(object):
 
             for file_name in valid_files:
                 folder = os.path.basename(path)
-                name = os.path.splitext(file_name)[0]
+                name = os.path.splitext(file_name)[0].lower()
                 full_file_path = os.path.join(path, file_name)
 
                 if folder == self.path_string or folder not in self.defaults:
@@ -228,7 +228,7 @@ class AssetManager(object):
                     file_name=config[asset]['file'],
                     path=mode_path)
 
-            self.register_asset(asset=asset,
+            self.register_asset(asset=asset.lower(),
                                 config=config[asset])
 
         return config
