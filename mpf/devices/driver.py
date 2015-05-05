@@ -47,17 +47,17 @@ class Driver(Device):
         self.log.debug("Creating '%s' with config: %s", name, config)
 
         if 'pulse_ms' not in self.config:
-            # If there's a holdPatter and no pulse_ms, we'll keep it at zero
-            if 'holdPatter' in self.config:
+            # If there's a holdpatter and no pulse_ms, we'll keep it at zero
+            if 'holdpatter' in self.config:
                 self.config['pulse_ms'] = 0
             # Otherwise we'll use the system default for pulse_ms
             else:
                 self.config['pulse_ms'] = \
                     self.machine.config['mpf']['default_pulse_ms']
 
-        if 'holdPatter' in self.config:
-            self.config['pwm_on'] = int(config['holdPatter'].split('-')[0])
-            self.config['pwm_off'] = int(config['holdPatter'].split('-')[1])
+        if 'holdpatter' in self.config:
+            self.config['pwm_on'] = int(config['holdpatter'].split('-')[0])
+            self.config['pwm_off'] = int(config['holdpatter'].split('-')[1])
         else:
             self.config['pwm_on'] = 0
             self.config['pwm_off'] = 0
@@ -71,8 +71,8 @@ class Driver(Device):
     def enable(self):
         """Enables a driver by holding it 'on'.
 
-        If this driver is configured with a holdPatter, then this method will use
-        that holdPatter to pwm pulse the driver.
+        If this driver is configured with a holdpatter, then this method will use
+        that holdpatter to pwm pulse the driver.
 
         If not, then this method will just enable the driver. As a safety
         precaution, if you want to enable() this driver without pwm, then you
