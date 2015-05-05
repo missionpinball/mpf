@@ -244,7 +244,6 @@ class DMD(MPFDisplay):
             self.config = dict()
 
         self.log = logging.getLogger('dmd')
-        #super(DMD, self).__init__(machine, self.config)
         MPFDisplay.__init__(self, machine, self.config)
 
         self.use_physical = False
@@ -293,18 +292,6 @@ class DMD(MPFDisplay):
         if 'type' in self.config and self.config['type'] == 'color':
             self.color_dmd = True
             self.depth = 24
-
-        #if not self.color_dmd and self.use_physical:
-        #    # Get a pointer to the physical DMD controller
-        #    self.physical_dmd = self.machine.platform.configure_dmd()
-        #
-        #if self.color_dmd and self.use_physical:
-        #    self.log.critical("You can't use a physical traditonal DMD as a "
-        #                      "color DMD. If you want an LCD screen to be a "
-        #                      "color DMD, then that is done with the Window "
-        #                      "Manager. The physical setting here needs to be "
-        #                      "'No' in this case.")
-        #    raise Exception()
 
     def _initialize(self):
         # Internal method which initialized the DMD. This is separate from

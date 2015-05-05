@@ -71,7 +71,14 @@ timing:
     hz: 30
 
 hardware:
-    Platform: virtual
+    platform: virtual
+    coils: default
+    switches: default
+    matrixlights: virtual
+    leds: default
+    dmd: default
+    gis: default
+    flashers: default
 
 p_roc:
     lamp_matrix_strobe_time: 100

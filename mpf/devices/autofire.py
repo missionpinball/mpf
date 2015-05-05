@@ -39,6 +39,8 @@ class AutofireCoil(Device):
 
         super(AutofireCoil, self).__init__(machine, name, config, collection)
 
+        self.platform = None
+
         # todo convert to dict
         self.switch = None
         self.switch_activity = 'active'
@@ -54,6 +56,8 @@ class AutofireCoil(Device):
 
         if config:
             self.configure(config)
+
+        self.validate()
 
     def configure(self, config=None):
         """Configures an autofire coil.
@@ -110,6 +114,22 @@ class AutofireCoil(Device):
         if 'drive_now' in self.config:
             self.drive_now = self.config['drive_now']
 
+    def validate(self):
+        """Autofire rules only work if the switch is on the same platform as the
+        coil.
+
+        In the future we may expand this to support other rules various platform
+        vendors might have.
+
+        """
+
+        if (self.machine.switches[self.switch].platform ==
+                self.machine.coils[self.coil].platform):
+            self.platform = self.machine.coils[self.coil].platform
+            return True
+        else:
+            return False
+
     def enable(self, *args, **kwargs):
         """Enables the autofire coil rule."""
 
@@ -119,22 +139,22 @@ class AutofireCoil(Device):
         if not self.coil:
             self.configure()
 
-        self.machine.platform.set_hw_rule(sw_name=self.switch,
-                                       sw_activity=self.switch_activity,
-                                       coil_name=self.coil,
-                                       coil_action_ms=self.coil_action_ms,
-                                       pulse_ms=self.pulse_ms,
-                                       pwm_on=self.pwm_on_ms,
-                                       pwm_off=self.pwm_off_ms,
-                                       delay=self.delay,
-                                       recycle_time=self.recycle_ms,
-                                       debounced=self.debounced,
-                                       drive_now=self.drive_now)
+        self.platform.set_hw_rule(sw_name=self.switch,
+                                  sw_activity=self.switch_activity,
+                                  coil_name=self.coil,
+                                  coil_action_ms=self.coil_action_ms,
+                                  pulse_ms=self.pulse_ms,
+                                  pwm_on=self.pwm_on_ms,
+                                  pwm_off=self.pwm_off_ms,
+                                  delay=self.delay,
+                                  recycle_time=self.recycle_ms,
+                                  debounced=self.debounced,
+                                  drive_now=self.drive_now)
 
     def disable(self, *args, **kwargs):
         """Disables the autofire coil rule."""
         self.log.debug("Disabling")
-        self.machine.platform.clear_hw_rule(self.switch)
+        self.platform.clear_hw_rule(self.switch)
 
 # The MIT License (MIT)
 

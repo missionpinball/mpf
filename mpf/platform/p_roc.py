@@ -1314,7 +1314,7 @@ class PROCDMD(object):
         called once per machine tick.
 
         """
-        self.machine.platform.proc.dmd_draw(self.dmd)
+        self.proc.dmd_draw(self.dmd)
 
 
 # The MIT License (MIT)

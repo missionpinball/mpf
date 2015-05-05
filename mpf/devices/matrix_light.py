@@ -30,7 +30,8 @@ class MatrixLight(Device):
 
         self.log.debug('Creating device with config: %s', config)
 
-        super(MatrixLight, self).__init__(machine, name, config, collection)
+        super(MatrixLight, self).__init__(machine, name, config, collection,
+                                          platform_section='matrixlights')
 
         # We save out number_str since the platform driver will convert the
         # number into a hardware number, but we need the original number for
@@ -38,7 +39,7 @@ class MatrixLight(Device):
         self.config['number_str'] = str(config['number']).upper()
 
         self.hw_driver, self.number = (
-            self.machine.platform.configure_matrixlight(self.config))
+            self.platform.configure_matrixlight(self.config))
 
         self.registered_handlers = []
 

@@ -37,7 +37,8 @@ class LED(Device):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('LED.' + name)
-        super(LED, self).__init__(machine, name, config, collection)
+        super(LED, self).__init__(machine, name, config, collection,
+                                  platform_section='leds')
 
         self.log.debug("Creating '%s' with config: %s", name, config)
 
@@ -54,7 +55,7 @@ class LED(Device):
         else:
             self.config['default_color'] = [255, 255, 255]
 
-        self.hw_driver = self.machine.platform.configure_led(self.config)
+        self.hw_driver = self.platform.configure_led(self.config)
 
         self.fade_in_progress = False
         self.fade_task = None
