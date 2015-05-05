@@ -32,6 +32,7 @@ class Diverter(Device):
         # Attributes
         self.active = False
         self.enabled = False
+        self.platform = None
 
         # configure defaults:
         if 'type' not in self.config:
@@ -130,6 +131,8 @@ class Diverter(Device):
         for switch in self.config['disable_switches']:
             self.machine.switch_controller.add_switch_handler(
                 switch, self.disable)
+
+        self.platform = self.config['activation_coil'].platform
 
     def enable(self, auto=False, activations=-1, **kwargs):
         """Enables this diverter.
@@ -269,7 +272,7 @@ class Diverter(Device):
 
             for switch in self.config['activation_switches']:
 
-                self.machine.platform.set_hw_rule(
+                self.platform.set_hw_rule(
                     sw_name=switch,
                     sw_activity='active',
                     coil_name=self.config['activation_coil'].name,
@@ -291,7 +294,7 @@ class Diverter(Device):
 
             for switch in self.config['activation_switches']:
 
-                self.machine.platform.set_hw_rule(
+                self.platform.set_hw_rule(
                     sw_name=switch,
                     sw_activity='active',
                     coil_name=self.config['activation_coil'].name,
@@ -305,7 +308,7 @@ class Diverter(Device):
         """
 
         for switch in self.config['activation_switches']:
-            self.machine.platform.clear_hw_rule(switch)
+            self.platform.clear_hw_rule(switch)
 
         # todo this should not clear all the rules for this switch
 

@@ -52,6 +52,7 @@ class Flipper(Device):
         self.strength = 100
         self.inverted = False
         self.rules = dict()
+        self.platform = None
 
         self.rules['a'] = False
         self.rules['b'] = False
@@ -96,6 +97,8 @@ class Flipper(Device):
         self.flipper_switches.append(self.config['activation_switch'])
         if self.config['eos_switch']:
             self.flipper_switches.append(self.config['eos_switch'])
+
+        self.platform = self.machine.coils[self.config['main_coil']].platform
 
     def enable(self, *args, **kwargs):
         """Enables the flipper by writing the necessary hardware rules to the
@@ -228,14 +231,14 @@ class Flipper(Device):
         if self.flipper_switches:
             self.log.debug("Disabling")
             for switch in self.flipper_switches:
-                    self.machine.platform.clear_hw_rule(switch)
+                self.platform.clear_hw_rule(switch)
 
     def _enable_flipper_rule_A(self):
         """
         Rule  Type     Coil  Switch  Action
         A.    Enable   Main  Button  active
         """
-        self.machine.platform.set_hw_rule(
+        self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'],
             sw_activity='active',
             coil_name=self.config['main_coil'],
@@ -249,7 +252,7 @@ class Flipper(Device):
         Rule  Type     Coil  Switch  Action
         B.    Pulse    Main  Button  active
         """
-        self.machine.platform.set_hw_rule(
+        self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'],
             sw_activity='active',
             coil_name=self.config['main_coil'],
@@ -266,7 +269,7 @@ class Flipper(Device):
         Rule  Type       Coil  Switch  Action
         C.    Pulse/PWM  Main  button  active
         """
-        self.machine.platform.set_hw_rule(
+        self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'],
             sw_activity='active',
             coil_name=self.config['main_coil'],
@@ -284,7 +287,7 @@ class Flipper(Device):
         Rule  Type     Coil  Switch  Action
         D.    Enable   Hold  Button  active
         """
-        self.machine.platform.set_hw_rule(
+        self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'],
             sw_activity='active',
             coil_name=self.config['hold_coil'],
@@ -298,7 +301,7 @@ class Flipper(Device):
         Rule  Type     Coil  Switch  Action
         E.    Disable  Main  EOS     active
         """
-        self.machine.platform.set_hw_rule(
+        self.platform.set_hw_rule(
             sw_name=self.config['eos_switch'],
             sw_activity='active',
             coil_name=self.config['main_coil'],
@@ -313,7 +316,7 @@ class Flipper(Device):
         F.    Disable  Main  Button  inactive
         """
         if not self.machine.config['platform']['hw_enable_auto_disable']:
-            self.machine.platform.set_hw_rule(
+            self.platform.set_hw_rule(
                 sw_name=self.config['activation_switch'],
                 sw_activity='inactive',
                 coil_name=self.config['main_coil'],
@@ -328,7 +331,7 @@ class Flipper(Device):
         G.    Disable  Hold  Button  inactive
         """
         if not self.machine.config['platform']['hw_enable_auto_disable']:
-            self.machine.platform.set_hw_rule(
+            self.platform.set_hw_rule(
                 sw_name=self.config['activation_switch'],
                 sw_activity='inactive',
                 coil_name=self.config['hold_coil'],
@@ -342,7 +345,7 @@ class Flipper(Device):
         Rule  Type     Coil  Switch  Action
         H.    PWM      Main  EOS     active
         """
-        self.machine.platform.set_hw_rule(
+        self.platform.set_hw_rule(
             sw_name=self.config['eos_switch'],
             sw_activity='active',
             coil_name=self.config['main_coil'],

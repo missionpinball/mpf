@@ -67,7 +67,20 @@ class MachineController(object):
         self.config = dict()
         self._load_config()
 
-        self.platform = self.set_platform()
+        self.hardware_platforms = dict()
+        self.default_platform = None
+
+        if self.physical_hw:
+            for section, platform in self.config['hardware'].iteritems():
+                if platform.lower() != 'default' and section != 'driverboards':
+                        self.add_platform(platform)
+        else:
+            self.add_platform('virtual')
+
+        if self.physical_hw:
+            self.set_default_platform(self.config['hardware']['platform'])
+        else:
+            self.set_default_platform('virtual')
 
         self._load_system_modules()
 
@@ -273,34 +286,21 @@ class MachineController(object):
         # Now start the new machine mode
         self.config['machineflow'][self.machineflow_index].start(**kwargs)
 
-    def set_platform(self):
-        """ Sets the hardware platform based on the "Platform" item in the
-        configuration dictionary. Looks for a module of that name in the
-        /platform directory.
-        """
+    def add_platform(self, name):
 
-        if self.physical_hw:
-            try:
-                hardware_platform = __import__('mpf.platform.%s' %
-                                   self.config['hardware']['platform'],
-                                   fromlist=["HardwarePlatform"])
-                # above line has an effect similar to:
-                # from mpf.platform.<platform_name> import HardwarePlatform
-                return hardware_platform.HardwarePlatform(self)
+        if name not in self.hardware_platforms:
+            hardware_platform = __import__('mpf.platform.%s' % name,
+                                           fromlist=["HardwarePlatform"])
+            self.hardware_platforms[name] = hardware_platform.HardwarePlatform(self)
 
-            except ImportError:
-                self.log.error("Error importing platform module: %s",
-                               self.config['hardware']['platform'])
-                # do it again so the error shows up in the console. I forget
-                # why we use 'try' here?
-                hardware_platform = __import__('mpf.platform.%s' %
-                                   self.config['hardware']['platform'],
-                                   fromlist=["HardwarePlatform"])
-                raise Exception("Error importing platform module: %s",
-                                self.config['hardware']['platform'])
-        else:
-            from mpf.platform.virtual import HardwarePlatform
-            return HardwarePlatform(self)
+    def set_default_platform(self, name):
+
+        try:
+            self.default_platform = self.hardware_platforms[name]
+            self.log.debug("Setting default platform to '%s'", name)
+        except KeyError:
+            self.log.error("Cannot set default platform to '%s', as that's not "
+                           "a currently active platform", name)
 
     def string_to_class(self, class_string):
         """Converts a string like mpf.system.events.EventManager into a python
@@ -350,10 +350,10 @@ class MachineController(object):
         """The main machine run loop."""
         self.log.debug("Starting the main run loop.")
 
-        self.platform.timer_initialize()
+        self.default_platform.timer_initialize()
 
-        if self.platform.features['hw_timer']:
-            self.platform.hw_loop()
+        if self.default_platform.features['hw_timer']:
+            self.default_platform.hw_loop()
         else:
             if 'Enable Loop Data' in self.config['machine'] and (
                     self.config['machine']['Enable Loop Data']):
@@ -375,16 +375,16 @@ class MachineController(object):
 
         secs_per_tick = timing.Timing.secs_per_tick
 
-        self.platform.next_tick_time = time.time()
+        self.default_platform.next_tick_time = time.time()
 
         try:
             while self.done is False:
-                self.platform.hw_loop()
+                self.default_platform.hw_loop()
 
-                if self.platform.next_tick_time <= time.time():  # todo change this
+                if self.default_platform.next_tick_time <= time.time():  # todo change this
                     self.timer_tick()
-                    self.platform.next_tick_time += secs_per_tick
-                    #sleep = (self.platform.next_tick_time - time.time()) / 1000.0
+                    self.default_platform.next_tick_time += secs_per_tick
+                    #sleep = (self.default_platform.next_tick_time - time.time()) / 1000.0
                     #if sleep > 0:
                     #    print sleep
                     #    time.sleep(sleep)
@@ -421,9 +421,9 @@ class MachineController(object):
         try:
             while self.done is False:
                 hw_entry = time.time()
-                self.platform.hw_loop()
+                self.default_platform.hw_loop()
                 hw_loop_time += time.time() - hw_entry
-                if self.platform.next_tick_time <= time.time():
+                if self.default_platform.next_tick_time <= time.time():
 
                     mpf_entry = time.time()
                     self.timer_tick()
@@ -452,7 +452,7 @@ class MachineController(object):
                     hw_loop_time = 0.0
                     this_loop_start = time.time()
 
-                    self.platform.next_tick_time += timing.Timing.secs_per_tick
+                    self.default_platform.next_tick_time += timing.Timing.secs_per_tick
 
         except KeyboardInterrupt:
             pass
@@ -465,7 +465,7 @@ class MachineController(object):
         # not good
 
     def timer_tick(self):
-        """Called by the platform each machine tick based on self.HZ"""
+        """Called by the default platform each machine tick based on self.HZ"""
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
         tasks.Task.timer_tick()  # notifies tasks

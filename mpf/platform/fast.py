@@ -42,7 +42,7 @@ class HardwarePlatform(Platform):
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('FAST Platform')
-        self.log.debug("Configuring machine for FAST hardware.")
+        self.log.debug("Configuring FAST hardware.")
 
         if not fastpinball_imported:
             self.log.error('Could not import "fastpinball". Most likely you do '

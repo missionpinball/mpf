@@ -58,7 +58,7 @@ class HardwarePlatform(Platform):
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P-ROC Platform')
-        self.log.debug("Configuring machine for P-ROC hardware")
+        self.log.debug("Configuring P-ROC hardware")
 
         if not pinproc_imported:
             self.log.error('Could not import "pinproc". Most likely you do not '
@@ -1314,7 +1314,7 @@ class PROCDMD(object):
         called once per machine tick.
 
         """
-        self.machine.platform.proc.dmd_draw(self.dmd)
+        self.proc.dmd_draw(self.dmd)
 
 
 # The MIT License (MIT)

@@ -12,12 +12,12 @@ from mpf.system.timing import Timing
 from mpf.system.config import Config, CaseInsensitiveDict
 
 
-
 class Device(object):
     """ Generic parent class of for every hardware object in a pinball machine.
 
     """
-    def __init__(self, machine, name, config=None, collection=-1):
+    def __init__(self, machine, name, config=None, collection=-1,
+                 platform_section=None):
         self.machine = machine
         self.name = name.lower()
         self.tags = list()
@@ -37,6 +37,18 @@ class Device(object):
             if 'debug_logging' in config and config['debug_logging']:
                 self.debug_logging = True
                 self.log.info("Enabling debug_logging for this device")
+
+            if platform_section:
+                if 'platform' not in config:
+                    if self.machine.config['hardware'][platform_section] != 'default':
+                        self.platform = (
+                            self.machine.hardware_platforms
+                            [self.machine.config['hardware'][platform_section]])
+                    else:
+                        self.platform = self.machine.default_platform
+                else:
+                    self.platform = (
+                        self.machine.hardware_platforms[config['platform']])
 
         # set event handlers to enable, disable, and reset this device
         # note that not all devices will use all of these methods
@@ -83,8 +95,6 @@ class Device(object):
         if collection != -1:
             # Have to use -1 here instead of None to catch an empty collection
             collection[name] = self
-
-        #self.configure(config)
 
     def __str__(self):
         return self.name

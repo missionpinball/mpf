@@ -18,7 +18,8 @@ class Switch(Device):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Switch.' + name)
-        super(Switch, self).__init__(machine, name, config, collection)
+        super(Switch, self).__init__(machine, name, config, collection,
+                                     platform_section='switches')
 
         self.machine = machine
         self.name = name
@@ -52,7 +53,7 @@ class Switch(Device):
         self.log.debug("Creating '%s' with config: %s", name, config)
 
         self.hw_switch, self.number, self.hw_state = \
-            self.machine.platform.configure_switch(config)
+            self.platform.configure_switch(config)
 
         self.log.debug("Current hardware state of switch '%s': %s",
                        self.name, self.hw_state)

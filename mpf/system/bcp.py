@@ -142,13 +142,15 @@ class BCP(object):
                                      'set': self.bcp_receive_set
                                     }
 
-        self.dmd = self.machine.platform.configure_dmd()
+        self.dmd = None
 
         self.filter_player_events = True
         self.send_player_vars = False
         self.mpfmc_trigger_events = set()
         self.track_volumes = dict()
         self.volume_control_enabled = False
+
+        self._setup_dmd()
 
         try:
             self.bcp_events = self.config['event_map']
@@ -197,12 +199,24 @@ class BCP(object):
         self.machine.events.add_handler('disable_volume_keys',
                                         self.disable_volume_keys)
 
-
         self.machine.modes.register_start_method(self.bcp_mode_start, 'mode')
         self.machine.modes.register_start_method(self.register_triggers,
                                                  'triggers')
         self.machine.modes.register_load_method(
             self.register_mpfmc_trigger_events)
+
+    def _setup_dmd(self):
+
+        dmd_platform = self.machine.default_platform
+
+        if self.machine.physical_hw:
+
+            if self.machine.config['hardware']['dmd'] != 'default':
+                dmd_platform = (self.machine.hardware_platforms
+                                [self.machine.config['platform']['dmd']])
+
+        print dmd_platform
+        self.dmd = dmd_platform.configure_dmd()
 
     def _setup_bcp_connections(self):
         for name, settings in self.connection_config.iteritems():
