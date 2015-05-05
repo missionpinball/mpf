@@ -23,8 +23,7 @@ class HardwarePlatform(Platform):
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger("Virtual Platform")
-        self.log.debug("Configuring machine for virtual hardware.")
-        self.machine.physical_hw = False
+        self.log.debug("Configuring virtual hardware interface.")
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They

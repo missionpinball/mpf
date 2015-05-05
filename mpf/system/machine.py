@@ -71,9 +71,9 @@ class MachineController(object):
         self.default_platform = None
 
         if self.physical_hw:
-            for platform in self.config['hardware'].values():
-                if platform.lower() != 'default':
-                    self.add_platform(platform)
+            for section, platform in self.config['hardware'].iteritems():
+                if platform.lower() != 'default' and section != 'driverboards':
+                        self.add_platform(platform)
         else:
             self.add_platform('virtual')
 
@@ -286,35 +286,6 @@ class MachineController(object):
         # Now start the new machine mode
         self.config['machineflow'][self.machineflow_index].start(**kwargs)
 
-    # def set_platform(self):
-    #     """ Sets the hardware platform based on the "Platform" item in the
-    #     configuration dictionary. Looks for a module of that name in the
-    #     /platform directory.
-    #     """
-    #
-    #     if self.physical_hw:
-    #         try:
-    #             hardware_platform = __import__('mpf.platform.%s' %
-    #                                self.config['hardware']['platform'],
-    #                                fromlist=["HardwarePlatform"])
-    #             # above line has an effect similar to:
-    #             # from mpf.platform.<platform_name> import HardwarePlatform
-    #             return hardware_platform.HardwarePlatform(self)
-    #
-    #         except ImportError:
-    #             self.log.error("Error importing platform module: %s",
-    #                            self.config['hardware']['platform'])
-    #             # do it again so the error shows up in the console. I forget
-    #             # why we use 'try' here?
-    #             hardware_platform = __import__('mpf.platform.%s' %
-    #                                self.config['hardware']['platform'],
-    #                                fromlist=["HardwarePlatform"])
-    #             raise Exception("Error importing platform module: %s",
-    #                             self.config['hardware']['platform'])
-    #     else:
-    #         from mpf.platform.virtual import HardwarePlatform
-    #         return HardwarePlatform(self)
-
     def add_platform(self, name):
 
         if name not in self.hardware_platforms:
@@ -326,6 +297,7 @@ class MachineController(object):
 
         try:
             self.default_platform = self.hardware_platforms[name]
+            self.log.debug("Setting default platform to '%s'", name)
         except KeyError:
             self.log.error("Cannot set default platform to '%s', as that's not "
                            "a currently active platform", name)
