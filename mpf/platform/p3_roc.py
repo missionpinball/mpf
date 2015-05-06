@@ -56,7 +56,7 @@ class HardwarePlatform(Platform):
 
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
-        self.log = logging.getLogger('P3-ROC Platform')
+        self.log = logging.getLogger('P3-ROC')
         self.log.debug("Configuring P3-ROC hardware.")
 
         if not pinproc_imported:
@@ -283,20 +283,18 @@ class HardwarePlatform(Platform):
         self.log.error("An attempt was made to configure a physical DMD, but "
                        "the P3-ROC does not support physical DMDs.")
 
-    def hw_loop(self):
+    def tick(self):
         """Checks the P3-ROC for any events (switch state changes).
 
         Also tickles the watchdog and flushes any queued commands to the P3-ROC.
         """
-        # Get P3-ROC events (switches & DMD frames displayed)
+        # Get P3-ROC events
         for event in self.proc.get_events():
             event_type = event['type']
             event_value = event['value']
             #event_time = event['time']  # not using this, maybe in the future?
             if event_type == 99:  # CTRL-C to quit todo does this go here?
                 self.machine.end_run_loop()
-            elif event_type == pinproc.EventTypeDMDFrameDisplayed:
-                pass
             elif event_type == pinproc.EventTypeSwitchClosedDebounced:
                 #print "switch closed", event_value
                 self.machine.switch_controller.process_switch(state=1,
@@ -314,7 +312,7 @@ class HardwarePlatform(Platform):
         self.proc.watchdog_tickle()
         self.proc.flush()
 
-    def _do_set_hw_rule(self,
+    def write_hw_rule(self,
                         sw,
                         sw_activity,
                         coil_action_ms,  # 0 = disable, -1 = hold forever
@@ -490,7 +488,7 @@ class HardwarePlatform(Platform):
         self.proc.switch_update_rule(sw.number, event_type, rule, final_driver,
                                      drive_now)
 
-    def _do_clear_hw_rule(self, sw_num):
+    def clear_hw_rule(self, sw_name):
         """Clears a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
@@ -506,6 +504,9 @@ class HardwarePlatform(Platform):
             The number of the switch whose rule you want to clear.
 
         """
+
+        sw_num = self.machine.switches[sw_name].number
+
         self.log.debug("Clearing HW rule for switch: %s", sw_num)
 
         self.proc.switch_update_rule(sw_num, 'open_nondebounced',

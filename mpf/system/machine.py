@@ -353,7 +353,7 @@ class MachineController(object):
         self.default_platform.timer_initialize()
 
         if self.default_platform.features['hw_timer']:
-            self.default_platform.hw_loop()
+            self.default_platform.run_loop()
         else:
             if 'Enable Loop Data' in self.config['machine'] and (
                     self.config['machine']['Enable Loop Data']):
@@ -379,7 +379,8 @@ class MachineController(object):
 
         try:
             while self.done is False:
-                self.default_platform.hw_loop()
+                time.sleep(.001)
+                self.default_platform.tick()
 
                 if self.default_platform.next_tick_time <= time.time():  # todo change this
                     self.timer_tick()
@@ -420,8 +421,9 @@ class MachineController(object):
 
         try:
             while self.done is False:
+                time.sleep(.001)
                 hw_entry = time.time()
-                self.default_platform.hw_loop()
+                self.default_platform.tick()
                 hw_loop_time += time.time() - hw_entry
                 if self.default_platform.next_tick_time <= time.time():
 

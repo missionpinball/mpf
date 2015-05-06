@@ -68,24 +68,12 @@ class HardwarePlatform(Platform):
     def configure_dmd(self):
         return VirtualDMD(self.machine)
 
-    def _do_set_hw_rule(self,
-                        sw,
-                        sw_activity,
-                        coil_action_ms,  # 0 = disable, -1 = hold forever
-                        coil=None,
-                        pulse_ms=0,
-                        pwm_on=0,
-                        pwm_off=0,
-                        delay=0,
-                        recycle_time=0,
-                        debounced=True,
-                        drive_now=False):
-
+    def write_hw_rule(self, *args, **kwargs):
         pass
-        # todo create switch handlers to fire coils based on these hardware
-        # rules
 
-    def _do_clear_hw_rule(self, sw_num):
+    def clear_hw_rule(self, sw_name):
+        sw_num = self.machine.switches[sw_name].number
+
         for entry in self.hw_switch_rules.keys():  # slice for copy
             if entry.startswith(
                     self.machine.switches.number(sw_num).name):
