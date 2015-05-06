@@ -74,7 +74,7 @@ hardware:
     platform: virtual
     coils: default
     switches: default
-    matrixlights: virtual
+    matrixlights: default
     leds: default
     dmd: default
     gis: default
@@ -239,3 +239,7 @@ volume:
         sfx: 20
         music: 20
     steps: 20
+
+openpixelcontrol:
+    host: localhost
+    port: 7890
