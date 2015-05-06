@@ -57,7 +57,7 @@ class HardwarePlatform(Platform):
 
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
-        self.log = logging.getLogger('P-ROC Platform')
+        self.log = logging.getLogger('P-ROC')
         self.log.debug("Configuring P-ROC hardware")
 
         if not pinproc_imported:
@@ -285,7 +285,7 @@ class HardwarePlatform(Platform):
         """Configures a hardware DMD connected to a classic P-ROC."""
         return PROCDMD(self.proc, self.machine)
 
-    def hw_loop(self):
+    def tick(self):
         """Checks the P-ROC for any events (switch state changes or notification
         that a DMD frame was updated).
 
@@ -315,7 +315,7 @@ class HardwarePlatform(Platform):
         self.proc.watchdog_tickle()
         self.proc.flush()
 
-    def _do_set_hw_rule(self,
+    def write_hw_rule(self,
                         sw,
                         sw_activity,
                         coil_action_ms,  # 0 = disable, -1 = hold forever
@@ -492,7 +492,7 @@ class HardwarePlatform(Platform):
         self.proc.switch_update_rule(sw.number, event_type, rule, final_driver,
                                      drive_now)
 
-    def _do_clear_hw_rule(self, sw_num):
+    def clear_hw_rule(self, sw_name):
         """Clears a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
@@ -508,6 +508,8 @@ class HardwarePlatform(Platform):
             The number of the switch whose rule you want to clear.
 
         """
+        sw_num = self.machine.switches[sw_name].number
+
         self.log.debug("Clearing HW rule for switch: %s", sw_num)
 
         self.proc.switch_update_rule(sw_num, 'open_nondebounced',

@@ -31,17 +31,14 @@ except:
 class HardwarePlatform(Platform):
     """Platform class for the FAST hardware controller.
 
-    Parameters
-    ----------
-
-    machine : int
-        A reference to the MachineController instance
+    Args:
+        machine: The main ``MachineController`` instance.
 
     """
 
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
-        self.log = logging.getLogger('FAST Platform')
+        self.log = logging.getLogger('FAST')
         self.log.debug("Configuring FAST hardware.")
 
         if not fastpinball_imported:
@@ -107,7 +104,7 @@ class HardwarePlatform(Platform):
         self.fast = fastpinball.fpOpen(ports, port_assignments)
 
         self.log.info("Fast Config. Ports: %s, Assignments: %s", ports,
-                       port_assignments)
+                      port_assignments)
 
         # We need to setup a timer to get the initial switch reads, so we just
         # do this one at 1 sec now. It will be overwritten later when the
@@ -133,75 +130,73 @@ class HardwarePlatform(Platform):
             self.log.debug("Configuring FAST Controller for FAST driver boards.")
 
         self.wpc_switch_map = {
-                               'S11':'00', 'S12':'01', 'S13':'02', 'S14':'03',
-                               'S15':'04', 'S16':'05', 'S17':'06', 'S18':'07',
-                               'S21':'08', 'S22':'09', 'S23':'10', 'S24':'11',
-                               'S25':'12', 'S26':'13', 'S27':'14', 'S28':'15',
-                               'S31':'16', 'S32':'17', 'S33':'18', 'S34':'19',
-                               'S35':'20', 'S36':'21', 'S37':'22', 'S38':'23',
-                               'S41':'24', 'S42':'25', 'S43':'26', 'S44':'27',
-                               'S45':'28', 'S46':'29', 'S47':'30', 'S48':'31',
-                               'S51':'32', 'S52':'33', 'S53':'34', 'S54':'35',
-                               'S55':'36', 'S56':'37', 'S57':'38', 'S58':'39',
-                               'S61':'40', 'S62':'41', 'S63':'42', 'S64':'43',
-                               'S65':'44', 'S66':'45', 'S67':'46', 'S68':'47',
-                               'S71':'48', 'S72':'49', 'S73':'50', 'S74':'51',
-                               'S75':'52', 'S76':'53', 'S77':'54', 'S78':'55',
-                               'S81':'56', 'S82':'57', 'S83':'58', 'S84':'59',
-                               'S85':'60', 'S86':'61', 'S87':'62', 'S88':'63',
-                               'S91':'64', 'S92':'65', 'S93':'66', 'S94':'67',
-                               'S95':'68', 'S96':'69', 'S97':'70', 'S98':'71',
+            'S11': '00', 'S12': '01', 'S13': '02', 'S14': '03',
+            'S15': '04', 'S16': '05', 'S17': '06', 'S18': '07',
+            'S21': '08', 'S22': '09', 'S23': '10', 'S24': '11',
+            'S25': '12', 'S26': '13', 'S27': '14', 'S28': '15',
+            'S31': '16', 'S32': '17', 'S33': '18', 'S34': '19',
+            'S35': '20', 'S36': '21', 'S37': '22', 'S38': '23',
+            'S41': '24', 'S42': '25', 'S43': '26', 'S44': '27',
+            'S45': '28', 'S46': '29', 'S47': '30', 'S48': '31',
+            'S51': '32', 'S52': '33', 'S53': '34', 'S54': '35',
+            'S55': '36', 'S56': '37', 'S57': '38', 'S58': '39',
+            'S61': '40', 'S62': '41', 'S63': '42', 'S64': '43',
+            'S65': '44', 'S66': '45', 'S67': '46', 'S68': '47',
+            'S71': '48', 'S72': '49', 'S73': '50', 'S74': '51',
+            'S75': '52', 'S76': '53', 'S77': '54', 'S78': '55',
+            'S81': '56', 'S82': '57', 'S83': '58', 'S84': '59',
+            'S85': '60', 'S86': '61', 'S87': '62', 'S88': '63',
+            'S91': '64', 'S92': '65', 'S93': '66', 'S94': '67',
+            'S95': '68', 'S96': '69', 'S97': '70', 'S98': '71',
 
-                               'SD1':'80', 'SD2':'81', 'SD3':'82', 'SD4':'83',
-                               'SD5':'84', 'SD6':'85', 'SD7':'86', 'SD8':'87',
+            'SD1': '80', 'SD2': '81', 'SD3': '82', 'SD4': '83',
+            'SD5': '84', 'SD6': '85', 'SD7': '86', 'SD8': '87',
 
-                               'DIP1':'88', 'DIP2':'89', 'DIP3':'90',
-                               'DIP4':'91', 'DIP5':'92', 'DIP6':'93',
-                               'DIP7':'94', 'DIP8':'95',
+            'DIP1': '88', 'DIP2': '89', 'DIP3': '90', 'DIP4': '91',
+            'DIP5': '92', 'DIP6': '93', 'DIP7': '94', 'DIP8': '95',
 
-                               'SF1':'96', 'SF2':'97', 'SF3':'98', 'SF4':'99',
-                               'SF5':'100', 'SF6':'101', 'SF7':'102',
-                               'SF8':'103',
+            'SF1': '96', 'SF2': '97', 'SF3': '98', 'SF4': '99',
+            'SF5': '100', 'SF6': '101', 'SF7': '102', 'SF8': '103',
                                }
 
         self.wpc_light_map = {
-                               'L11':'00', 'L12':'01', 'L13':'02', 'L14':'03',
-                               'L15':'04', 'L16':'05', 'L17':'06', 'L18':'07',
-                               'L21':'08', 'L22':'09', 'L23':'10', 'L24':'11',
-                               'L25':'12', 'L26':'13', 'L27':'14', 'L28':'15',
-                               'L31':'16', 'L32':'17', 'L33':'18', 'L34':'19',
-                               'L35':'20', 'L36':'21', 'L37':'22', 'L38':'23',
-                               'L41':'24', 'L42':'25', 'L43':'26', 'L44':'27',
-                               'L45':'28', 'L46':'29', 'L47':'30', 'L48':'31',
-                               'L51':'32', 'L52':'33', 'L53':'34', 'L54':'35',
-                               'L55':'36', 'L56':'37', 'L57':'38', 'L58':'39',
-                               'L61':'40', 'L62':'41', 'L63':'42', 'L64':'43',
-                               'L65':'44', 'L66':'45', 'L67':'46', 'L68':'47',
-                               'L71':'48', 'L72':'49', 'L73':'50', 'L74':'51',
-                               'L75':'52', 'L76':'53', 'L77':'54', 'L78':'55',
-                               'L81':'56', 'L82':'57', 'L83':'58', 'L84':'59',
-                               'L85':'60', 'L86':'61', 'L87':'62', 'L88':'63',
+            'L11': '00', 'L12': '01', 'L13': '02', 'L14': '03',
+            'L15': '04', 'L16': '05', 'L17': '06', 'L18': '07',
+            'L21': '08', 'L22': '09', 'L23': '10', 'L24': '11',
+            'L25': '12', 'L26': '13', 'L27': '14', 'L28': '15',
+            'L31': '16', 'L32': '17', 'L33': '18', 'L34': '19',
+            'L35': '20', 'L36': '21', 'L37': '22', 'L38': '23',
+            'L41': '24', 'L42': '25', 'L43': '26', 'L44': '27',
+            'L45': '28', 'L46': '29', 'L47': '30', 'L48': '31',
+            'L51': '32', 'L52': '33', 'L53': '34', 'L54': '35',
+            'L55': '36', 'L56': '37', 'L57': '38', 'L58': '39',
+            'L61': '40', 'L62': '41', 'L63': '42', 'L64': '43',
+            'L65': '44', 'L66': '45', 'L67': '46', 'L68': '47',
+            'L71': '48', 'L72': '49', 'L73': '50', 'L74': '51',
+            'L75': '52', 'L76': '53', 'L77': '54', 'L78': '55',
+            'L81': '56', 'L82': '57', 'L83': '58', 'L84': '59',
+            'L85': '60', 'L86': '61', 'L87': '62', 'L88': '63',
                                }
 
         self.wpc_driver_map = {
-                               'C01':'00', 'C02':'01', 'C03':'02', 'C04':'03',
-                               'C05':'04', 'C06':'05', 'C07':'06', 'C08':'07',
-                               'C09':'08', 'C10':'09', 'C11':'10', 'C12':'11',
-                               'C13':'12', 'C14':'13', 'C15':'14', 'C16':'15',
-                               'C17':'16', 'C18':'17', 'C19':'18', 'C20':'19',
-                               'C21':'20', 'C22':'21', 'C23':'22', 'C24':'23',
-                               'C25':'24', 'C26':'25', 'C27':'26', 'C28':'27',
-                               'C29':'32', 'C30':'33', 'C31':'34', 'C32':'35',
-                               'C33':'36', 'C34':'37', 'C35':'38', 'C36':'39',
-                               'FLRM':'32', 'FLRH':'33', 'FLLM':'34',
-                               'FLLH':'35', 'FURM':'36', 'FURH':'37',
-                               'FULM':'38', 'FULH':'39',
-                               'C37':'40', 'C38':'41', 'C39':'42', 'C40':'43',
-                               'C41':'44', 'C42':'45', 'C43':'46', 'C44':'47',
-                               }
+            'C01': '00', 'C02': '01', 'C03': '02', 'C04': '03',
+            'C05': '04', 'C06': '05', 'C07': '06', 'C08': '07',
+            'C09': '08', 'C10': '09', 'C11': '10', 'C12': '11',
+            'C13': '12', 'C14': '13', 'C15': '14', 'C16': '15',
+            'C17': '16', 'C18': '17', 'C19': '18', 'C20': '19',
+            'C21': '20', 'C22': '21', 'C23': '22', 'C24': '23',
+            'C25': '24', 'C26': '25', 'C27': '26', 'C28': '27',
+            'C29': '32', 'C30': '33', 'C31': '34', 'C32': '35',
+            'C33': '36', 'C34': '37', 'C35': '38', 'C36': '39',
+            'FLRM': '32', 'FLRH': '33', 'FLLM': '34', 'FLLH': '35',
+            'FURM': '36', 'FURH': '37', 'FULM': '38', 'FULH': '39',
+            'C37': '40', 'C38': '41', 'C39': '42', 'C40': '43',
+            'C41': '44', 'C42': '45', 'C43': '46', 'C44': '47',
+                                }
 
-        self.wpc_gi_map = {'G01':'00', 'G02':'01', 'G03':'02', 'G04':'03',
-                           'G05':'04', 'G06':'05', 'G07':'06', 'G08':'07',
+        self.wpc_gi_map = {
+            'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
+            'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
                           }
 
         # temp until we have a proper reset
@@ -246,21 +241,23 @@ class HardwarePlatform(Platform):
     def configure_switch(self, config):
         """Configures the switch object for a FAST Pinball controller.
 
-        FAST Controllers support two types of switches: local and network. Local
-        switches are switches that are connected to the FAST controller board
-        itself, and network switches are those connected to a FAST I/O board.
+        FAST Controllers support two types of switches: `local` and `network`.
+        Local switches are switches that are connected to the FAST controller
+        board itself, and network switches are those connected to a FAST I/O
+        board.
 
         MPF needs to know which type of switch is this is. You can specify the
-        switch's connection type in the config file via the "connection"
-        setting (either 'local' or 'network'.
+        switch's connection type in the config file via the ``connection:``
+        setting (either ``local`` or ``network``).
 
         If a connection type is not specified, this method will use some
         intelligence to try to figure out which default should be used.
 
-        If the DriverBoard type is 'fast', then it assumes the default is
-        'network'. If it's anything else (wpc, system11, bally, etc.) then it
-        assumes the connection type is 'local'. Connection types can be mixed
-        and matched.
+        If the DriverBoard type is ``fast``, then it assumes the default is
+        ``network``. If it's anything else (``wpc``, ``system11``, ``bally``,
+        etc.) then it assumes the connection type is ``local``. Connection types
+        can be mixed and matched in the same machine.
+
         """
 
         if self.machine_type == 'WPC':  # translate switch number to FAST switch
@@ -340,13 +337,9 @@ class HardwarePlatform(Platform):
 
     def configure_dmd(self):
         """Configures a hardware DMD connected to a FAST controller."""
-        if pygame:
-            return FASTDMD(self.machine, self.fast)
-        else:
-            self.log.critical("The FAST platform needs pygame. Quitting.")
-            raise Exception()
+        return FASTDMD(self.machine, self.fast)
 
-    def hw_loop(self):
+    def run_loop(self):
         """Loop code which checks the controller for any events (switch state
         changes or notification that a DMD frame was updated).
 
@@ -407,18 +400,9 @@ class HardwarePlatform(Platform):
                 self.log.info("Hardware loop speed: %sHz",
                               self.machine.loop_rate)
 
-    def _do_set_hw_rule(self,
-                        sw,
-                        sw_activity,
-                        coil_action_ms,  # 0 = disable, -1 = hold forever
-                        coil=None,
-                        pulse_ms=0,
-                        pwm_on=0,
-                        pwm_off=0,
-                        delay=0,
-                        recycle_time=0,
-                        debounced=True,
-                        drive_now=False):
+    def write_hw_rule(self, sw, sw_activity, coil_action_ms, coil=None,
+                      pulse_ms=0, pwm_on=0, pwm_off=0, delay=0, recycle_time=0,
+                      debounced=True, drive_now=False):
         """Used to write (or update) a hardware rule to the FAST controller.
 
         *Hardware Rules* are used to configure the hardware controller to
@@ -431,48 +415,36 @@ class HardwarePlatform(Platform):
         You can overwrite existing hardware rules at any time to change or
         remove them.
 
-        Parameters
-        ----------
-            sw : switch object
-                Which switch you're creating this rule for. The parameter is a
+        Args:
+            sw:  Which switch you're creating this rule for. The parameter is a
                 reference to the switch object itsef.
-            sw_activity : int
-                Do you want this coil to fire when the switch becomes active
-                (1) or inactive (0)
-            coil_action_ms : int
-                The total time (in ms) that this coil action should take place.
-                A value of -1 means it's forever.
-            coil : coil object
-                Which coil is this rule controlling
-            pulse_ms : int
-                How long should the coil be pulsed (ms)
-            pwm_on : int
-                If the coil should be held on at less than 100% duty cycle,
+            sw_activity: Int which specifies whether this coil should fire when
+                the switch becomes active (1) or inactive (0)
+            coil_action_ms: Int of the total time (in ms) that this coil action
+                should take place. A value of -1 means it's forever. A value of
+                0 means the coil disables itself when this switch goes into the
+                state specified.
+            coil: The coil object this rule is for.
+            pulse_ms: How long should the coil be pulsed (ms)
+            pwm_on: If the coil should be held on at less than 100% duty cycle,
                 this is the "on" time (in ms).
-            pwm_off : int
-                If the coil should be held on at less than 100% duty cycle,
+            pwm_off: If the coil should be held on at less than 100% duty cycle,
                 this is the "off" time (in ms).
-            delay : int
-                Not currently implemented
-            recycle_time : int
-                How long (in ms) should this switch rule wait before firing
-                again. Put another way, what's the "fastest" this rule can
-                fire? This is used to prevent "machine gunning" of slingshots
-                and pop bumpers. Do not use it with flippers.
-            debounced : bool
-                Should the hardware fire this coil after the switch has been
-                debounced? Typically no.
-            drive_now : bool
-                Should the hardware check the state of the switches when this
-                rule is firts applied, and fire the coils if they should be?
-                Typically this is True, especially with flippers because you
+            delay: Not currently implemented
+            recycle_time: How long (in ms) should this switch rule wait before
+                firing again. Put another way, what's the "fastest" this rule
+                can fire? This is used to prevent "machine gunning" of
+                slingshots and pop bumpers. Do not use it with flippers.
+            debounced: Should the hardware fire this coil after the switch has
+                been debounced?
+            drive_now: Should the hardware check the state of the switches when
+                this rule is firts applied, and fire the coils if they should
+                be? Typically this is True, especially with flippers because you
                 want them to fire if the player is holding in the buttons when
                 the machine enables the flippers (which is done via several
                 calls to this method.)
 
         """
-
-        # todo update documentation for on time and off time for debounce
 
         self.log.debug("Setting HW Rule. Switch:%s, Action ms:%s, Coil:%s, "
                        "Pulse:%s, pwm_on:%s, pwm_off:%s, Delay:%s, Recycle:%s,"
@@ -516,7 +488,7 @@ class HardwarePlatform(Platform):
                                   )
         # todo ensure / verify switch & coil are on the same board.
 
-    def _do_clear_hw_rule(self, sw_num):
+    def clear_hw_rule(self, sw_name):
         """Clears a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
@@ -525,13 +497,12 @@ class HardwarePlatform(Platform):
         the flippers to flip), you'd call this method with your flipper button
         as the *sw_num*.
 
-        Parameters
-        ----------
-
-        sw_num : int
-            The number of the switch whose rule you want to clear.
+        Args:
+            sw_name: The string name of the switch whose rule you want to clear.
 
         """
+
+        sw_num = self.machine.switches[sw_name].number
 
         self.log.debug("Clearing HW Rule for switch %s", sw_num)
 
@@ -551,26 +522,20 @@ class HardwarePlatform(Platform):
                                       )
             # todo ensure / verify switch & coil are on the same board.
 
-    def verify_switches(self):
-        """Queries the FAST controller to get the current state of all the
-        switches and then compares that to the state that MPF thinks the
-        switches are in. Throws logging WARNINGs if anything doesn't match.
+    def get_switch_state(self, switch):
+        """Returns the hardware state of a switch.
 
-        This method is notification only. It doesn't fix anything.
+        Args:
+            switch: A class `Switch` object.
+
+        Returns:
+            Integer 1 if the switch is active, and 0 if the switch is
+            inactive. This method does not compensate for NO or NC status,
+            rather, it returns the raw hardware state of the switch.
+
         """
-
-        for switch in self.machine.switches:
-            hw_state = fastpinball.fpReadSwitch(self.fast, switch.number[0],
-                                                switch.number[1])
-
-            sw_state = self.machine.switches[switch.name].state
-
-            if self.machine.switches[switch.name].type == 'NC':
-                sw_state = sw_state ^ 1
-            if sw_state != hw_state:
-                self.log.warning("Switch State Error! Switch: %s, FAST State: "
-                                 "%s, MPF State: %s", switch.name, hw_state,
-                                 sw_state)
+        return fastpinball.fpReadSwitch(self.fast, switch.number[0],
+                                        switch.number[1])
 
 
 class FASTSwitch(object):

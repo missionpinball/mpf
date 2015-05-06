@@ -80,6 +80,28 @@ class SwitchController(object):
 
             self.set_state(switch.name, switch.state, reset_time=True)
 
+    def verify_switches(self):
+        """Loops through all the switches and queries their hardware states via
+        their platform interfaces and them compares that to the state that MPF
+        thinks the switches are in.
+
+        Throws logging warnings if anything doesn't match.
+
+        This method is notification only. It doesn't fix anything.
+
+        """
+
+        for switch in self.machine.switches:
+            hw_state = switch.platform.get_switch_state(switch)
+            sw_state = self.machine.switches[switch.name].state
+
+            if self.machine.switches[switch.name].type == 'NC':
+                sw_state = sw_state ^ 1
+            if sw_state != hw_state:
+                self.log.warning("Switch State Error! Switch: %s, FAST State: "
+                                 "%s, MPF State: %s", switch.name, hw_state,
+                                 sw_state)
+
     def is_state(self, switch_name, state, ms=0):
         """Queries whether a switch is in a given state and (optionally)
         whether it has been in that state for the specified number of ms.
