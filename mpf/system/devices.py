@@ -39,16 +39,19 @@ class Device(object):
                 self.log.info("Enabling debug_logging for this device")
 
             if platform_section:
-                if 'platform' not in config:
-                    if self.machine.config['hardware'][platform_section] != 'default':
-                        self.platform = (
-                            self.machine.hardware_platforms
-                            [self.machine.config['hardware'][platform_section]])
+                if self.machine.physical_hw:
+                    if 'platform' not in config:
+                        if self.machine.config['hardware'][platform_section] != 'default':
+                            self.platform = (
+                                self.machine.hardware_platforms
+                                [self.machine.config['hardware'][platform_section]])
+                        else:
+                            self.platform = self.machine.default_platform
                     else:
-                        self.platform = self.machine.default_platform
+                        self.platform = (
+                            self.machine.hardware_platforms[config['platform']])
                 else:
-                    self.platform = (
-                        self.machine.hardware_platforms[config['platform']])
+                    self.platform = self.machine.default_platform
 
         # set event handlers to enable, disable, and reset this device
         # note that not all devices will use all of these methods
