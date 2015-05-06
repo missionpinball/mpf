@@ -15,6 +15,11 @@ import socket
 from mpf.system.platform import Platform
 
 
+
+# todo move OPC client to its own thread
+# todo change all LED colors to tuples instead of lists
+
+
 class HardwarePlatform(Platform):
     """Base class for the open pixel hardware platform."""
 
@@ -60,9 +65,6 @@ class OpenPixelLED(object):
         self.log.debug("Setting color: %s", color)
         self.opc_client.set_pixel_color(self.channel, self.led, color)
 
-    def disable(self):
-        self.color((0, 0, 0))
-
     def enable(self, brightness_compensation=True):
         pass
 
@@ -77,6 +79,7 @@ class OpenPixelClient(object):
         self.port = int(port)
         self.socket = None
         self.dirty = True
+        self.update_every_tick = False
 
         self.channels = list()
 
@@ -143,7 +146,7 @@ class OpenPixelClient(object):
 
     def tick(self):
         """Called once per machine loop to update the pixels."""
-        if self.dirty:
+        if self.update_every_tick or self.dirty:
             for channel_index, pixel_list in enumerate(self.channels):
                 self.put_pixels(pixel_list, channel_index)
 
@@ -185,7 +188,15 @@ class OpenPixelClient(object):
             g = min(255, max(0, int(g)))
             b = min(255, max(0, int(b)))
             pieces.append(chr(r) + chr(g) + chr(b))
-        message = ''.join(pieces)
+        self.send(''.join(pieces))
+
+    def send(self, message):
+
+        is_connected = self.connect()
+        if not is_connected:
+            self.log.debug('Not connected to OPC server. Ignoring these '
+                           'pixels.')
+            return False
 
         try:
             self.socket.send(message)

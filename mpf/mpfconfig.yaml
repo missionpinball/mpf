@@ -88,6 +88,12 @@ p_roc:
 ledsettings:
     brightness_compensation: 1.0
     default_led_fade_ms: 100
+    gamma: 2.5
+    whitepoint: 1.0, 1.0, 1.0
+    linear_slope: 1.0
+    linear_cutoff: 0.0
+    keyframe_interpolation: True
+    dithering: True
 
 game:
     Balls per game: 3
