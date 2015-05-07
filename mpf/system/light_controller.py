@@ -997,7 +997,7 @@ class Show(Asset):
                             led_list = [self.machine.leds[led]]
                         except KeyError:
                             self.asset_manager.log.warning("Found invalid "
-                                "LED name '%s' in show. Skipping...", light)
+                                "LED name '%s' in show. Skipping...", led)
                             continue
 
                     value = show_actions[step_num]['leds'][led]
