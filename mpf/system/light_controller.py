@@ -876,6 +876,11 @@ class Show(Asset):
         if not show_actions:
             show_actions = self.load_show_from_disk()
 
+        if type(show_actions) is not list:
+            self.asset_manager.log.warning("%s is not a valid YAML file. "
+                                           "Skipping show.", self.file_name)
+            return False
+
         for step_num in range(len(show_actions)):
             step_actions = dict()
 
@@ -899,21 +904,14 @@ class Show(Asset):
 
                     if 'tag|' in light:
                         tag = light.split('tag|')[1]
-
                         light_list = self.machine.lights.items_tagged(tag)
-                    else:
-                        light_list = [light]
-
-                    # convert light strings to objects
-                    light_object_list = list()
-
-                    for i in light_list:
+                    else:  # create a single item list of the light object
                         try:
-                            light_object_list.append(self.machine.lights[i])
-                        except:
-                            # this light name is invalid
+                            light_list = [self.machine.lights[light]]
+                        except KeyError:
                             self.asset_manager.log.warning("Found invalid "
                                 "light name '%s' in show. Skipping...", light)
+                            continue
 
                     value = show_actions[step_num]['lights'][light]
 
@@ -925,12 +923,12 @@ class Show(Asset):
                     if type(value) is int and value > 255:
                         value = 255
 
-                    for light_object in light_object_list:
-                        light_actions[light_object] = value
+                    for light in light_list:
+                        light_actions[light] = value
 
                         # make sure this light is in self.light_states
-                        if light_object not in self.light_states:
-                            self.light_states[light_object] = 0
+                        if light not in self.light_states:
+                            self.light_states[light] = 0
 
                 step_actions['lights'] = light_actions
 
@@ -944,7 +942,7 @@ class Show(Asset):
 
                 step_actions['events'] = event_list
 
-            #Coils
+            # Coils
             if ('coils' in show_actions[step_num] and
                     show_actions[step_num]['coils']):
 
@@ -956,10 +954,9 @@ class Show(Asset):
                         this_coil = self.machine.coils[coil]
                     except:
                         # this coil name is invalid
-                        self.asset_manager.log.warning("WARNING: Found invalid coil name"
-                                         " '%s' in show. Skipping...",
-                                         coil)
-                        break
+                        self.asset_manager.log.warning("WARNING: Found invalid "
+                            "coil name '%s' in show. Skipping...", coil)
+                        continue
 
                     value = show_actions[step_num]['coils'][coil]
 
@@ -994,21 +991,14 @@ class Show(Asset):
 
                     if 'tag|' in led:
                         tag = led.split('tag|')[1]
-
                         led_list = self.machine.leds.items_tagged(tag)
-                    else:
-                        led_list = [led]
-
-                    # convert led strings to objects
-                    led_object_list = list()
-
-                    for i in led_list:
+                    else:  # create a single item list of the led object
                         try:
-                            led_object_list.append(self.machine.leds[i])
-                        except:
-                            # this light name is invalid
+                            led_list = [self.machine.leds[led]]
+                        except KeyError:
                             self.asset_manager.log.warning("Found invalid "
-                                "led name '%s' in show. Skipping...", led)
+                                "LED name '%s' in show. Skipping...", light)
+                            continue
 
                     value = show_actions[step_num]['leds'][led]
 
@@ -1031,12 +1021,12 @@ class Show(Asset):
                     value = LightController.hexstring_to_list(value)
                     value.append(fade)
 
-                    for led_object in led_object_list:
-                        led_actions[led_object] = value
+                    for led in led_list:
+                        led_actions[led] = value
 
                         # make sure this led is in self.led_states
-                        if led_object not in self.led_states:
-                            self.led_states[led_object] = {
+                        if led not in self.led_states:
+                            self.led_states[led] = {
                                 'current_color': [0, 0, 0],
                                 'destination_color': [0, 0, 0],
                                 'start_color': [0, 0, 0],
