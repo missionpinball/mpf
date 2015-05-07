@@ -35,7 +35,7 @@ class BallSave(object):
         self.log.debug("ball save active: %s", self.flag_ball_save_active)
         self.log.debug("num balls to save: %s", self.num_balls_to_save)
 
-        if self.num_balls_in_play:  # if there was at least one BIP
+        if self.balls_in_play:  # if there was at least one BIP
             if self.flag_ball_save_active:  # if ball save is active
                 # nope, should post event saying we got one, then let
                 # other modes potentially kick in? Do a boolean event?

@@ -40,7 +40,6 @@ def decode_command_string(bcp_string):
         Output: ('trigger', {'name': 'hello', 'foo': 'foo bar'})
 
     """
-    #bcp_command = urlparse.urlsplit(bcp_string.lower().decode('utf-8'))
     bcp_command = urlparse.urlsplit(bcp_string.lower())
     try:
         kwargs = urlparse.parse_qs(bcp_command.query)
@@ -845,6 +844,7 @@ class BCPClient(object):
 
         Args:
             message: String of the message to send.
+
         """
 
         if not self.socket and self.attempt_socket_connection:
@@ -857,6 +857,7 @@ class BCPClient(object):
         them onto the receive queue.
 
         This method is run as a thread.
+
         """
 
         # Implementation note: Sockets don't necessarily receive the entire

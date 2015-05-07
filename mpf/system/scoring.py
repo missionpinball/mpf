@@ -163,7 +163,7 @@ class ScoreController(object):
         """
 
         # Only process scores if there's at least one ball in play
-        if not self.machine.game or not self.machine.game.num_balls_in_play:
+        if not self.machine.game or not self.machine.game.balls_in_play:
             if not force:
                 return
 
@@ -179,7 +179,7 @@ class ScoreController(object):
         # priority with block enabled
         # if so, do nothing. If not, do the score
 
-        if self.machine.game and self.machine.game.num_balls_in_play:
+        if self.machine.game and self.machine.game.balls_in_play:
 
             # try because it's possible this score entry was removed between
             # the time the event was posted and it was processed
