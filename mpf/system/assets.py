@@ -265,8 +265,8 @@ class AssetManager(object):
     def load_asset(self, asset, callback, priority=10):
         self.loader_queue.put((-priority, asset, callback))
         # priority above is negative so this becomes a LIFO queue
-        self.log.debug("Adding asset to loader queue at priority %s. New queue "
-                       "size: %s", priority, self.loader_queue.qsize())
+        self.log.debug("Adding %s to loader queue at priority %s. New queue "
+                       "size: %s", asset, priority, self.loader_queue.qsize())
 
     def locate_asset_file(self, file_name, path=None):
         """Takes a file name and a root path and returns a link to the absolute
@@ -315,15 +315,21 @@ class AssetLoader(threading.Thread):
 
         while 1:
             asset = self.queue.get()
-            self.log.debug("Loading Asset: '%s'. Callback: %s", asset[1],
-                          asset[2])
 
             if not asset[1].loaded:
+                self.log.debug("Loading Asset: %s. Callback: %s", asset[1],
+                          asset[2])
                 asset[1]._load(asset[2])
-                self.log.debug("Asset Finished Loading: %s", asset[1])
-            else:
-                self.log.error("Received request to load %s, but it's already"
-                               " loaded", asset[1])
+                self.log.debug("Asset Finished Loading: %s. Remaining: %s",
+                               asset[1], self.queue.qsize())
+
+            # If the asset is already loaded, just ignore it and move on.
+            # I thought about trying to make sure that an asset isn't
+            # in the queue before it gets added. But since this is separate
+            # threads that would require all sorts of work. It's actually
+            # more efficient to add it to the queue anyway and then just
+            # skip it if it's already loaded by the time the loader gets to
+            # it.
 
 
 class Asset(object):
