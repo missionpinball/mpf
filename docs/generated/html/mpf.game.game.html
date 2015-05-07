@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.17.0 documentation</title>
+    <title>mpf.game.game module &mdash; Mission Pinball Framework 0.18.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.17.0',
+        VERSION:     '0.18.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.17.0 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.18.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -58,6 +58,25 @@ manages an the game in a pinball machine.</p>
 <p>Base class that runs an active game on a pinball machine.</p>
 <p>Responsible for creating players, starting and ending balls, rotating to
 the next player, etc.</p>
+<dl class="method">
+<dt id="mpf.game.game.Game.add_balls_in_play">
+<tt class="descname">add_balls_in_play</tt><big>(</big><em>balls=1</em><big>)</big></dt>
+<dd><p>Adds one or more balls to the current balls in play value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>balls</strong> &#8211; Int of the balls to add.</td>
+</tr>
+</tbody>
+</table>
+<p>This method does not actually eject any new balls onto the playfield,
+rather, it just changes the game controller&#8217;s count of the number of
+balls in play.</p>
+<p>Note that if the number of balls added exceeds the number of balls
+known, it will be set to the number of balls known.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="mpf.game.game.Game.award_extra_ball">
 <tt class="descname">award_extra_ball</tt><big>(</big><em>num=1</em>, <em>force=False</em><big>)</big></dt>
@@ -125,6 +144,11 @@ opportunity to do things before the ball actually starts. Once that
 event is clear, this method calls <a class="reference internal" href="#mpf.game.game.Game.ball_started" title="mpf.game.game.Game.ball_started"><tt class="xref py py-meth docutils literal"><span class="pre">ball_started()</span></tt></a>.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="mpf.game.game.Game.balls_in_play">
+<tt class="descname">balls_in_play</tt></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="mpf.game.game.Game.game_ended">
 <tt class="descname">game_ended</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
@@ -187,6 +211,24 @@ called again.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="mpf.game.game.Game.remove_balls_in_play">
+<tt class="descname">remove_balls_in_play</tt><big>(</big><em>balls=1</em><big>)</big></dt>
+<dd><p>Removes one or more balls from the current balls in play value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>balls</strong> &#8211; Int of the balls to add.</td>
+</tr>
+</tbody>
+</table>
+<p>Note that if the number of balls removed would take the current balls in
+play count to less than zero, the number of balls in play will be set to
+zero.</p>
+<p>If balls in play drops to zero, <tt class="docutils literal"><span class="pre">ball_ending()</span></tt> will be called.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="mpf.game.game.Game.request_player_add">
 <tt class="descname">request_player_add</tt><big>(</big><big>)</big></dt>
 <dd><p>Called by any module that wants to add a player to an active game.</p>
@@ -200,6 +242,27 @@ there are not enough credits in the machine.)</p>
 <p>If <em>player_add_request</em> comes back True, the event
 <em>player_add_success</em> is posted with a reference to the new player
 object as a <em>player</em> kwarg.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.game.game.Game.set_balls_in_play">
+<tt class="descname">set_balls_in_play</tt><big>(</big><em>balls</em><big>)</big></dt>
+<dd><p>Sets the number of balls in play to the value passed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>balls</strong> &#8211; Int of the new value of balls in play.</td>
+</tr>
+</tbody>
+</table>
+<p>This method does not actually eject any new balls onto the playfield,
+rather, it just changes the game controller&#8217;s count of the number of
+balls in play.</p>
+<p>The balls in play value cannot be lower than 0 or higher than
+the number of balls known. This message will automatically set the balls
+in play to the nearest valid value if it&#8217;s outside of this range.</p>
+<p>If balls in play drops to zero, <tt class="docutils literal"><span class="pre">ball_ending()</span></tt> will be called.</p>
 </dd></dl>
 
 <dl class="method">
@@ -277,7 +340,7 @@ object as a <em>player</em> kwarg.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

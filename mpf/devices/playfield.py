@@ -128,12 +128,27 @@ class Playfield(BallDevice):
                 before adding the ball into play. Typically used with player-
                 controlled eject tag events.
 
-        Note that both source_name and source_device args are included to give
-        you two options for specifying the source of the ball(s) to be added.
-        You don't need to supply both. (it's an "either/or" thing.) Both of
-        these args are optional, so if you don't supply them then MPF will look
-        for a device tagged with 'ball_add_live'. If you don't provide a source
-        and you don't have a device with the 'ball_add_live' tag, MPF will quit.
+        Both source_name and source_device args are included to give you two
+        options for specifying the source of the ball(s) to be added. You don't
+        need to supply both. (it's an "either/or" thing.) Both of these args are
+        optional, so if you don't supply them then MPF will look for a device
+        tagged with 'ball_add_live'. If you don't provide a source and you don't
+        have a device with the 'ball_add_live' tag, MPF will quit.
+
+        This method does *not* increase the game controller's count of the
+        number of balls in play. So if you want to add balls (like in a
+        ball scenario(, you need to call this method along with
+        ``self.machine.game.add_balls_in_play()``.)
+
+        MPF tracks the number of balls in play separately from the actual balls
+        on the playfield because there are numerous situations where the two
+        counts are not the same. For example, if a ball is in a VUK while some
+        animation is playing, there are no balls on the playfield but still one
+        ball in play, or if the player has a two-ball multiball and they shoot
+        them both into locks, there are still two balls in play even though
+        there are no balls on the playfield, or if the player tilts then there
+        are still balls on the playfield but no balls in play.
+
         """
 
         if balls < 1:

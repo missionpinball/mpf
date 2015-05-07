@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.platform.p_roc module &mdash; Mission Pinball Framework 0.17.0 documentation</title>
+    <title>mpf.platform.p_roc module &mdash; Mission Pinball Framework 0.18.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.17.0',
+        VERSION:     '0.18.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.17.0 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.18.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -104,6 +104,25 @@ need libpinproc and pypinproc. More info:
 <dt id="mpf.platform.p_roc.HardwarePlatform.machine_type">
 <tt class="descname">machine_type</tt></dt>
 <dd><p>Constant of the pinproc.MachineType</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p_roc.HardwarePlatform.clear_hw_rule">
+<tt class="descname">clear_hw_rule</tt><big>(</big><em>sw_name</em><big>)</big></dt>
+<dd><p>Clears a hardware rule.</p>
+<p>This is used if you want to remove the linkage between a switch and
+some driver activity. For example, if you wanted to disable your
+flippers (so that a player pushing the flipper buttons wouldn&#8217;t cause
+the flippers to flip), you&#8217;d call this method with your flipper button
+as the <em>sw_num</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sw_num</strong> (<em>int</em>) &#8211; The number of the switch whose rule you want to clear.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -201,11 +220,63 @@ the switch type is &#8216;NC&#8217;.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.platform.p_roc.HardwarePlatform.hw_loop">
-<tt class="descname">hw_loop</tt><big>(</big><big>)</big></dt>
+<dt id="mpf.platform.p_roc.HardwarePlatform.tick">
+<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
 <dd><p>Checks the P-ROC for any events (switch state changes or notification
 that a DMD frame was updated).</p>
 <p>Also tickles the watchdog and flushes any queued commands to the P-ROC.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p_roc.HardwarePlatform.write_hw_rule">
+<tt class="descname">write_hw_rule</tt><big>(</big><em>sw</em>, <em>sw_activity</em>, <em>coil_action_ms</em>, <em>coil=None</em>, <em>pulse_ms=0</em>, <em>pwm_on=0</em>, <em>pwm_off=0</em>, <em>delay=0</em>, <em>recycle_time=0</em>, <em>debounced=True</em>, <em>drive_now=False</em><big>)</big></dt>
+<dd><p>Used to write (or update) a hardware rule to the P-ROC.</p>
+<p><em>Hardware Rules</em> are used to configure the P-ROC to automatically
+change driver states based on switch changes. These rules are
+completely handled by the P-ROC hardware (i.e. with no interaction from
+the Python game code). They&#8217;re used for things that you want to happen
+fast, like firing coils when flipper buttons are pushed, slingshots,
+pop bumpers, etc.</p>
+<p>You can overwrite existing hardware rules at any time to change or
+remove them.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sw</strong> (<em>switch object</em>) &#8211; Which switch you&#8217;re creating this rule for. The parameter is a
+reference to the switch object itsef.</li>
+<li><strong>sw_activity</strong> (<em>int</em>) &#8211; Do you want this coil to fire when the switch becomes active
+(1) or inactive (0)</li>
+<li><strong>coil_action_ms</strong> (<em>int</em>) &#8211; The total time (in ms) that this coil action should take place.
+A value of -1 means it&#8217;s forever.</li>
+<li><strong>coil</strong> (<em>coil object</em>) &#8211; Which coil is this rule controlling</li>
+<li><strong>pulse_ms</strong> (<em>int</em>) &#8211; How long should the coil be pulsed (ms)</li>
+<li><strong>pwm_on</strong> (<em>int</em>) &#8211; If the coil should be held on at less than 100% duty cycle,
+this is the &#8220;on&#8221; time (in ms).</li>
+<li><strong>pwm_off</strong> (<em>int</em>) &#8211; If the coil should be held on at less than 100% duty cycle,
+this is the &#8220;off&#8221; time (in ms).</li>
+<li><strong>delay</strong> (<em>int</em>) &#8211; Not currently implemented for the P-ROC hardware</li>
+<li><strong>recycle_time</strong> (<em>int</em>) &#8211; How long (in ms) should this switch rule wait before firing
+again. Put another way, what&#8217;s the &#8220;fastest&#8221; this rule can
+fire? This is used to prevent &#8220;machine gunning&#8221; of slingshots
+and pop bumpers. Do not use it with flippers. Note the P-ROC
+has a non-configurable delay time of 125ms. (So it&#8217;s either
+125ms or 0.) So if you set this delay to anything other than
+0, it will be 125ms.</li>
+<li><strong>debounced</strong> (<em>bool</em>) &#8211; Should the P-ROC fire this coil after the switch has been
+debounced? Typically no.</li>
+<li><strong>drive_now</strong> (<em>bool</em>) &#8211; Should the P-ROC check the state of the switches when this
+rule is firts applied, and fire the coils if they should be?
+Typically this is True, especially with flippers because you
+want them to fire if the player is holding in the buttons when
+the machine enables the flippers (which is done via several
+calls to this method.)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -613,7 +684,7 @@ a tuple of (addr, bank, number).</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

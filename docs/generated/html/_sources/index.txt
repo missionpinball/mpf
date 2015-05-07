@@ -3,11 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Mission Pinball Framework's module reference!
-=======================================================
+Welcome to Mission Pinball Framework's API reference!
+=====================================================
 
-This is the module reference for the Mission Pinball Framework, a python-based software framework for controlling real 
-pinball machines via P-ROC or FAST Pinball hardware. The instructions and documentation are available at 
+This is the API reference for the Mission Pinball Framework, a Python-based
+software framework for controlling real pinball machines via P-ROC or FAST
+Pinball hardware. The instructions and documentation are available at
 https://missionpinball.com/docs
 
 Contents:

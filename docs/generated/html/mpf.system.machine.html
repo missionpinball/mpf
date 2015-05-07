@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.machine module &mdash; Mission Pinball Framework 0.17.0 documentation</title>
+    <title>mpf.system.machine module &mdash; Mission Pinball Framework 0.18.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.17.0',
+        VERSION:     '0.18.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.17.0 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.18.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -138,6 +138,11 @@ hardware attached.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="mpf.system.machine.MachineController.add_platform">
+<tt class="descname">add_platform</tt><big>(</big><em>name</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="mpf.system.machine.MachineController.end_run_loop">
 <tt class="descname">end_run_loop</tt><big>(</big><big>)</big></dt>
 <dd><p>Causes the main run_loop to end.</p>
@@ -189,12 +194,9 @@ method is called after a game ends and before attract mode begins.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.system.machine.MachineController.set_platform">
-<tt class="descname">set_platform</tt><big>(</big><big>)</big></dt>
-<dd><p>Sets the hardware platform based on the &#8220;Platform&#8221; item in the
-configuration dictionary. Looks for a module of that name in the
-/platform directory.</p>
-</dd></dl>
+<dt id="mpf.system.machine.MachineController.set_default_platform">
+<tt class="descname">set_default_platform</tt><big>(</big><em>name</em><big>)</big></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.machine.MachineController.string_to_class">
@@ -231,7 +233,7 @@ does-python-have-an-equivalent-to-java-class-forname</p>
 <dl class="method">
 <dt id="mpf.system.machine.MachineController.timer_tick">
 <tt class="descname">timer_tick</tt><big>(</big><big>)</big></dt>
-<dd><p>Called by the platform each machine tick based on self.HZ</p>
+<dd><p>Called by the default platform each machine tick based on self.HZ</p>
 </dd></dl>
 
 </dd></dl>
@@ -275,7 +277,7 @@ does-python-have-an-equivalent-to-java-class-forname</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.playfield module &mdash; Mission Pinball Framework 0.17.0 documentation</title>
+    <title>mpf.devices.playfield module &mdash; Mission Pinball Framework 0.18.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.17.0',
+        VERSION:     '0.18.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.17.0 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.18.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -74,12 +74,24 @@ controlled eject tag events.</li>
 </tr>
 </tbody>
 </table>
-<p>Note that both source_name and source_device args are included to give
-you two options for specifying the source of the ball(s) to be added.
-You don&#8217;t need to supply both. (it&#8217;s an &#8220;either/or&#8221; thing.) Both of
-these args are optional, so if you don&#8217;t supply them then MPF will look
-for a device tagged with &#8216;ball_add_live&#8217;. If you don&#8217;t provide a source
-and you don&#8217;t have a device with the &#8216;ball_add_live&#8217; tag, MPF will quit.</p>
+<p>Both source_name and source_device args are included to give you two
+options for specifying the source of the ball(s) to be added. You don&#8217;t
+need to supply both. (it&#8217;s an &#8220;either/or&#8221; thing.) Both of these args are
+optional, so if you don&#8217;t supply them then MPF will look for a device
+tagged with &#8216;ball_add_live&#8217;. If you don&#8217;t provide a source and you don&#8217;t
+have a device with the &#8216;ball_add_live&#8217; tag, MPF will quit.</p>
+<p>This method does <em>not</em> increase the game controller&#8217;s count of the
+number of balls in play. So if you want to add balls (like in a
+ball scenario(, you need to call this method along with
+<tt class="docutils literal"><span class="pre">self.machine.game.add_balls_in_play()</span></tt>.)</p>
+<p>MPF tracks the number of balls in play separately from the actual balls
+on the playfield because there are numerous situations where the two
+counts are not the same. For example, if a ball is in a VUK while some
+animation is playing, there are no balls on the playfield but still one
+ball in play, or if the player has a two-ball multiball and they shoot
+them both into locks, there are still two balls in play even though
+there are no balls on the playfield, or if the player tilts then there
+are still balls on the playfield but no balls in play.</p>
 </dd></dl>
 
 <dl class="method">
@@ -297,7 +309,7 @@ the trigger_event.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

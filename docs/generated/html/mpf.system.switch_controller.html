@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.17.0 documentation</title>
+    <title>mpf.system.switch_controller module &mdash; Mission Pinball Framework 0.18.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.17.0',
+        VERSION:     '0.18.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.17.0 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.18.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -131,7 +131,7 @@ is in the state regardless of how long it&#8217;s been in that state.</p>
 
 <dl class="attribute">
 <dt id="mpf.system.switch_controller.SwitchController.log">
-<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x2e20b90&gt;</em></dt>
+<tt class="descname">log</tt><em class="property"> = &lt;logging.Logger object at 0x2b67230&gt;</em></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -214,6 +214,16 @@ last changed state.</p>
 <dd><p>Sets the state of a switch.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="mpf.system.switch_controller.SwitchController.verify_switches">
+<tt class="descname">verify_switches</tt><big>(</big><big>)</big></dt>
+<dd><p>Loops through all the switches and queries their hardware states via
+their platform interfaces and them compares that to the state that MPF
+thinks the switches are in.</p>
+<p>Throws logging warnings if anything doesn&#8217;t match.</p>
+<p>This method is notification only. It doesn&#8217;t fix anything.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -255,7 +265,7 @@ last changed state.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.platform.fast module &mdash; Mission Pinball Framework 0.17.0 documentation</title>
+    <title>mpf.platform.fast module &mdash; Mission Pinball Framework 0.18.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.17.0',
+        VERSION:     '0.18.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.17.0 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.18.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -225,10 +225,29 @@ target (0 = local, 1 = network)</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> (<em>int</em>) &#8211; A reference to the MachineController instance</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> &#8211; The main <tt class="docutils literal"><span class="pre">MachineController</span></tt> instance.</td>
 </tr>
 </tbody>
 </table>
+<dl class="method">
+<dt id="mpf.platform.fast.HardwarePlatform.clear_hw_rule">
+<tt class="descname">clear_hw_rule</tt><big>(</big><em>sw_name</em><big>)</big></dt>
+<dd><p>Clears a hardware rule.</p>
+<p>This is used if you want to remove the linkage between a switch and
+some driver activity. For example, if you wanted to disable your
+flippers (so that a player pushing the flipper buttons wouldn&#8217;t cause
+the flippers to flip), you&#8217;d call this method with your flipper button
+as the <em>sw_num</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sw_name</strong> &#8211; The string name of the switch whose rule you want to clear.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="method">
 <dt id="mpf.platform.fast.HardwarePlatform.configure_dmd">
 <tt class="descname">configure_dmd</tt><big>(</big><big>)</big></dt>
@@ -259,23 +278,42 @@ target (0 = local, 1 = network)</p>
 <dt id="mpf.platform.fast.HardwarePlatform.configure_switch">
 <tt class="descname">configure_switch</tt><big>(</big><em>config</em><big>)</big></dt>
 <dd><p>Configures the switch object for a FAST Pinball controller.</p>
-<p>FAST Controllers support two types of switches: local and network. Local
-switches are switches that are connected to the FAST controller board
-itself, and network switches are those connected to a FAST I/O board.</p>
+<p>FAST Controllers support two types of switches: <cite>local</cite> and <cite>network</cite>.
+Local switches are switches that are connected to the FAST controller
+board itself, and network switches are those connected to a FAST I/O
+board.</p>
 <p>MPF needs to know which type of switch is this is. You can specify the
-switch&#8217;s connection type in the config file via the &#8220;connection&#8221;
-setting (either &#8216;local&#8217; or &#8216;network&#8217;.</p>
+switch&#8217;s connection type in the config file via the <tt class="docutils literal"><span class="pre">connection:</span></tt>
+setting (either <tt class="docutils literal"><span class="pre">local</span></tt> or <tt class="docutils literal"><span class="pre">network</span></tt>).</p>
 <p>If a connection type is not specified, this method will use some
 intelligence to try to figure out which default should be used.</p>
-<p>If the DriverBoard type is &#8216;fast&#8217;, then it assumes the default is
-&#8216;network&#8217;. If it&#8217;s anything else (wpc, system11, bally, etc.) then it
-assumes the connection type is &#8216;local&#8217;. Connection types can be mixed
-and matched.</p>
+<p>If the DriverBoard type is <tt class="docutils literal"><span class="pre">fast</span></tt>, then it assumes the default is
+<tt class="docutils literal"><span class="pre">network</span></tt>. If it&#8217;s anything else (<tt class="docutils literal"><span class="pre">wpc</span></tt>, <tt class="docutils literal"><span class="pre">system11</span></tt>, <tt class="docutils literal"><span class="pre">bally</span></tt>,
+etc.) then it assumes the connection type is <tt class="docutils literal"><span class="pre">local</span></tt>. Connection types
+can be mixed and matched in the same machine.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpf.platform.fast.HardwarePlatform.hw_loop">
-<tt class="descname">hw_loop</tt><big>(</big><big>)</big></dt>
+<dt id="mpf.platform.fast.HardwarePlatform.get_switch_state">
+<tt class="descname">get_switch_state</tt><big>(</big><em>switch</em><big>)</big></dt>
+<dd><p>Returns the hardware state of a switch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>switch</strong> &#8211; A class <cite>Switch</cite> object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Integer 1 if the switch is active, and 0 if the switch is
+inactive. This method does not compensate for NO or NC status,
+rather, it returns the raw hardware state of the switch.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.fast.HardwarePlatform.run_loop">
+<tt class="descname">run_loop</tt><big>(</big><big>)</big></dt>
 <dd><p>Loop code which checks the controller for any events (switch state
 changes or notification that a DMD frame was updated).</p>
 </dd></dl>
@@ -286,12 +324,54 @@ changes or notification that a DMD frame was updated).</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="mpf.platform.fast.HardwarePlatform.verify_switches">
-<tt class="descname">verify_switches</tt><big>(</big><big>)</big></dt>
-<dd><p>Queries the FAST controller to get the current state of all the
-switches and then compares that to the state that MPF thinks the
-switches are in. Throws logging WARNINGs if anything doesn&#8217;t match.</p>
-<p>This method is notification only. It doesn&#8217;t fix anything.</p>
+<dt id="mpf.platform.fast.HardwarePlatform.write_hw_rule">
+<tt class="descname">write_hw_rule</tt><big>(</big><em>sw</em>, <em>sw_activity</em>, <em>coil_action_ms</em>, <em>coil=None</em>, <em>pulse_ms=0</em>, <em>pwm_on=0</em>, <em>pwm_off=0</em>, <em>delay=0</em>, <em>recycle_time=0</em>, <em>debounced=True</em>, <em>drive_now=False</em><big>)</big></dt>
+<dd><p>Used to write (or update) a hardware rule to the FAST controller.</p>
+<p><em>Hardware Rules</em> are used to configure the hardware controller to
+automatically change driver states based on switch changes. These rules
+are completely handled by the hardware (i.e. with no interaction from
+the Python game code). They&#8217;re used for things that you want to happen
+fast, like firing coils when flipper buttons are pushed, slingshots, pop
+bumpers, etc.</p>
+<p>You can overwrite existing hardware rules at any time to change or
+remove them.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sw</strong> &#8211; Which switch you&#8217;re creating this rule for. The parameter is a
+reference to the switch object itsef.</li>
+<li><strong>sw_activity</strong> &#8211; Int which specifies whether this coil should fire when
+the switch becomes active (1) or inactive (0)</li>
+<li><strong>coil_action_ms</strong> &#8211; Int of the total time (in ms) that this coil action
+should take place. A value of -1 means it&#8217;s forever. A value of
+0 means the coil disables itself when this switch goes into the
+state specified.</li>
+<li><strong>coil</strong> &#8211; The coil object this rule is for.</li>
+<li><strong>pulse_ms</strong> &#8211; How long should the coil be pulsed (ms)</li>
+<li><strong>pwm_on</strong> &#8211; If the coil should be held on at less than 100% duty cycle,
+this is the &#8220;on&#8221; time (in ms).</li>
+<li><strong>pwm_off</strong> &#8211; If the coil should be held on at less than 100% duty cycle,
+this is the &#8220;off&#8221; time (in ms).</li>
+<li><strong>delay</strong> &#8211; Not currently implemented</li>
+<li><strong>recycle_time</strong> &#8211; How long (in ms) should this switch rule wait before
+firing again. Put another way, what&#8217;s the &#8220;fastest&#8221; this rule
+can fire? This is used to prevent &#8220;machine gunning&#8221; of
+slingshots and pop bumpers. Do not use it with flippers.</li>
+<li><strong>debounced</strong> &#8211; Should the hardware fire this coil after the switch has
+been debounced?</li>
+<li><strong>drive_now</strong> &#8211; Should the hardware check the state of the switches when
+this rule is firts applied, and fire the coils if they should
+be? Typically this is True, especially with flippers because you
+want them to fire if the player is holding in the buttons when
+the machine enables the flippers (which is done via several
+calls to this method.)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -335,7 +415,7 @@ switches are in. Throws logging WARNINGs if anything doesn&#8217;t match.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.17.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.18.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
