@@ -41,7 +41,7 @@ class MachineMode(object):
         self.log.debug("Mode started")
         self.active = True
         self.task = Task.Create(self.tick, sleep=0)
-        self.machine.events.post('machineflow_' + self.name + '_start')
+        #self.machine.events.post('machineflow_' + self.name + '_start')
 
     def stop(self):
         """Stops this machine mode. """
@@ -69,7 +69,7 @@ class MachineMode(object):
         self.registered_switch_handlers = list()
 
         self.log.debug("Stopped")
-        self.machine.events.post('machineflow_' + self.name + '_stop')
+        #self.machine.events.post('machineflow_' + self.name + '_stop')
 
     def tick(self):
         """Most likely you'll just copy this entire method to your mode
