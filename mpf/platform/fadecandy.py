@@ -1,13 +1,10 @@
 """Contains code for an FadeCandy hardware for RGB LEDs."""
-# openpixel.py
+# fadecandy.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/mpf
-
-# The python code to build the OPC message packet came from here:
-# https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 
 import logging
 import json
@@ -17,12 +14,14 @@ from mpf.system.config import Config
 from mpf.platform.openpixel import OpenPixelClient
 from mpf.platform.openpixel import HardwarePlatform as OPHardwarePlatform
 
-# todo move OPC client to its own thread
-# todo change all LED colors to tuples instead of lists
-
 
 class HardwarePlatform(OPHardwarePlatform):
-    """Base class for the open pixel hardware platform."""
+    """Base class for the open pixel hardware platform.
+
+    Args:
+        machine: The main ``MachineController`` object.
+
+    """
 
     def __init__(self, machine):
 
@@ -33,14 +32,24 @@ class HardwarePlatform(OPHardwarePlatform):
 
     def _setup_opc_client(self):
         self.opc_client = FadeCandyOPClient(self.machine,
-            server=self.machine.config['openpixelcontrol']['host'],
-            port=self.machine.config['openpixelcontrol']['port'])
+            self.machine.config['openpixelcontrol'])
 
 
 class FadeCandyOPClient(OpenPixelClient):
-    def __init__(self, machine, server, port):
+    """Base class of an OPC client which connects to a FadeCandy server.
 
-        super(FadeCandyOPClient, self).__init__(machine, server, port)
+    Args:
+        machine: The main ``MachineController`` instance.
+        config: Dictionary which contains configuration settings for the OPC
+            client.
+
+    This class implements some FadeCandy-specific features that are not
+    available with generic OPC implementations.
+
+    """
+    def __init__(self, machine, config):
+
+        super(FadeCandyOPClient, self).__init__(machine, config)
 
         self.log = logging.getLogger('FadeCandyClient')
 
@@ -66,7 +75,7 @@ class FadeCandyOPClient(OpenPixelClient):
             self.disable_dithering()
 
         if not self.keyframe_interpolation:
-            self.disable_interpolation()
+            self.update_every_tick = False
 
         self.set_global_color_correction()
         self.write_firmware_options()
@@ -94,12 +103,9 @@ class FadeCandyOPClient(OpenPixelClient):
         self.whitepoint = whitepoint
         self.set_global_color_correction()
 
-    def setlinear_slope(self, linearslope):
+    def set_linear_slope(self, linearslope):
         """Sets the linear slope (output / input) of the linear section of the
         brightness curve.
-
-        From the FadeCandy documentation:
-
 
         Args:
             linearslope: Float of the new linear slope. Default is 1.0.
@@ -227,29 +233,29 @@ class FadeCandyOPClient(OpenPixelClient):
                             })
 
         self.send(struct.pack(
-            ">BBHHH", 0, 0xFF, len(msg) + 4, 0x0001, 0x0001) + msg)
+            "!BBHHH", 0x00, 0xFF, len(msg) + 4, 0x0001, 0x0001) + msg)
 
     def write_firmware_options(self):
         """Writes the current firmware settings (keyframe interpolation and
         dithering) to the FadeCandy hardware.
 
         """
+        config_byte = 0x00
 
-        return  # this doesn't work yet
+        if not self.dithering:
+            config_byte = config_byte | 0x01
 
-        # config_byte = 0x00
-        #
-        # if self.dithering:
-        #     pass
-        #
-        # if self.keyframe_interpolation:
-        #     pass
-        #
-        # # manual LED
-        # config_byte = config_byte | 0x02
-        #
-        # self.send(struct.pack(
-        #     ">BHHHHH", 0, 0xFF, 0x0005, 0x0001, 0x0002, config_byte))
+        if not self.keyframe_interpolation:
+            config_byte = config_byte | 0x02
+
+        # manual LED control
+        # config_byte = config_byte | 0x04
+
+        # turn LED on
+        # config_byte = config_byte | 0x08
+
+        self.send(struct.pack(
+            "!BBHHHB", 0x00, 0xFF, 0x0005, 0x0001, 0x0002, config_byte))
 
 
 # The MIT License (MIT)

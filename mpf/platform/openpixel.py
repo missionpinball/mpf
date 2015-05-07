@@ -11,17 +11,19 @@
 
 import logging
 import socket
+from Queue import Queue
+import threading
 
 from mpf.system.platform import Platform
 
 
-
-# todo move OPC client to its own thread
-# todo change all LED colors to tuples instead of lists
-
-
 class HardwarePlatform(Platform):
-    """Base class for the open pixel hardware platform."""
+    """Base class for the open pixel hardware platform.
+
+    Args:
+        machine: The main ``MachineController`` object.
+
+    """
 
     def __init__(self, machine):
 
@@ -48,11 +50,11 @@ class HardwarePlatform(Platform):
 
     def _setup_opc_client(self):
         self.opc_client = OpenPixelClient(self.machine,
-            server=self.machine.config['openpixelcontrol']['host'],
-            port=self.machine.config['openpixelcontrol']['port'])
+            self.machine.config['openpixelcontrol'])
 
 
 class OpenPixelLED(object):
+
     def __init__(self, opc_client, channel, led):
         self.log = logging.getLogger('OpenPixelLED')
 
@@ -65,25 +67,33 @@ class OpenPixelLED(object):
         self.log.debug("Setting color: %s", color)
         self.opc_client.set_pixel_color(self.channel, self.led, color)
 
-    def enable(self, brightness_compensation=True):
-        pass
-
 
 class OpenPixelClient(object):
-    def __init__(self, machine, server, port):
+    """Base class of an OPC client which connects to a FadeCandy server.
+
+    Args:
+        machine: The main ``MachineController`` instance.
+        server: String name of the server to connect to.
+        port: Int of the TCP port of the server to connect to.
+
+    """
+    def __init__(self, machine, config):
 
         self.log = logging.getLogger('OpenPixelClient')
 
         self.machine = machine
-        self.server = server
-        self.port = int(port)
-        self.socket = None
         self.dirty = True
         self.update_every_tick = False
-
+        self.sending_queue = Queue()
+        self.sending_thread = None
         self.channels = list()
 
         self.machine.events.add_handler('timer_tick', self.tick, 1000000)
+
+        self.sending_thread = OPCThread(self.machine, self.sending_queue,
+                                        config)
+        self.sending_thread.daemon = True
+        self.sending_thread.start()
 
     def add_pixel(self, channel, led):
         """Adds a pixel to the list that will be sent to the OPC server.
@@ -113,46 +123,26 @@ class OpenPixelClient(object):
                 self.channels[channel] + [(0, 0, 0) for i in range(leds_to_add)])
 
     def set_pixel_color(self, channel, pixel, color):
+        """Sets an invidual pixel color.
+
+        Args:
+            channel: Int of the OPC channel for this pixel.
+            pixel: Int of the number for this pixel on that channel.
+            color: 3-item list or tuple of (red, green, blue) color values, each
+                an integer between 0-255.
+        """
         self.channels[channel][pixel] = color
         self.dirty = True
-
-    def connect(self):
-        """Connect to the OPC server.
-
-        Returns:
-            True on success. False if it was unable to connect.
-
-        """
-        if self.socket:
-            return True
-
-        try:
-            self.log.debug('Trying to connect to OPC server: %s:%s',
-                           self.server, self.port)
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect((self.server, self.port))
-            self.log.debug('Connected to the OPC server.')
-            return True
-        except socket.error:
-            self.log.debug('Failed to connect to the OPC server.')
-            self.socket = None
-            return False
-
-    def disconnect(self):
-        """Disconnects from the OPC server."""
-        if self.socket:
-            self.socket.close()
-        self.socket = None
 
     def tick(self):
         """Called once per machine loop to update the pixels."""
         if self.update_every_tick or self.dirty:
             for channel_index, pixel_list in enumerate(self.channels):
-                self.put_pixels(pixel_list, channel_index)
+                self.update_pixels(pixel_list, channel_index)
 
             self.dirty = False
 
-    def put_pixels(self, pixels, channel=0):
+    def update_pixels(self, pixels, channel=0):
         """Send the list of pixel colors to the OPC server
 
         Args:
@@ -170,13 +160,8 @@ class OpenPixelClient(object):
         all the pixels up until the point you want. e.g. if you have 30 LEDs on
         the channel and you just want to update LED #10, then you need to send
         pixel data for the first 10 pixels.)
-        """
 
-        is_connected = self.connect()
-        if not is_connected:
-            self.log.debug('Not connected to OPC server. Ignoring these '
-                           'pixels.')
-            return False
+        """
 
         # Build the OPC message
         len_hi_byte = int(len(pixels)*3 / 256)
@@ -191,21 +176,114 @@ class OpenPixelClient(object):
         self.send(''.join(pieces))
 
     def send(self, message):
+        """Puts a message on the queue to be sent to the OPC server.
 
-        is_connected = self.connect()
-        if not is_connected:
-            self.log.debug('Not connected to OPC server. Ignoring these '
-                           'pixels.')
-            return False
+        Args:
+            message: The raw message you want to send. No processing is done on
+                this. It's sent however it comes in.
+        """
+        self.sending_queue.put(message)
+
+
+class OPCThread(threading.Thread):
+    """Base class for the thread that connects to the OPC server.
+
+    Args:
+        machine: The main ``MachineController`` instance.
+        queue: The Queue() object that receives OPC messages for the OPC server.
+        config: Dictionary of configuration settings.
+
+    The OPC connection is handled in a separate thread so it doesn't bog down
+    the main MPF machine loop if there are connection problems.
+    """
+
+    def __init__(self, machine, sending_queue, config):
+        threading.Thread.__init__(self)
+        self.sending_queue = sending_queue
+        self.machine = machine
+        self.host = config['host']
+        self.port = config['port']
+        self.connection_required = config['connection_required']
+        self.max_connection_attempts = config['connection_attempts']
+
+        self.log = logging.getLogger("OpenPixelThread")
+
+        self.socket = None
+        self.connection_attempts = 0
+        self.try_connecting = True
+
+        self.connect()
+
+    def connect(self):
+        """Connects to the OPC server.
+
+        Returns:
+            True on success. False if it was unable to connect.
+
+        This method also tracks and respects ``connection_attempts`` and
+        ``max_connection_attempts``.
+
+        """
+        if self.socket:
+            return True
+
+        self.connection_attempts += 1
+
+        if (self.max_connection_attempts > 0 and
+                self.connection_attempts > self.max_connection_attempts):
+
+            self.log.info("Max connection attempts reached")
+            self.try_connecting = False
+
+            if self.connection_required:
+                self.log.info("Configuration is set that OPC connection is "
+                              "required. MPF exiting.")
+                self.done()
 
         try:
-            self.socket.send(message)
+            self.log.info('Trying to connect to OPC server: %s:%s. Attempt '
+                          'number %s', self.host, self.port,
+                          self.connection_attempts)
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((self.host, self.port))
+            self.log.info('Connected to the OPC server.')
+            self.connection_attempts = 0
+
         except socket.error:
-            self.log.debug('Connection lost. Could not send pixels.')
+            self.log.warning('Failed to connect to the OPC server: %s:%s',
+                             self.host, self.port)
             self.socket = None
             return False
 
-        return True
+    def disconnect(self):
+        """Disconnects from the OPC server."""
+        if self.socket:
+            self.socket.close()
+        self.socket = None
+
+    def run(self):
+        """Thread run loop."""
+        while True:
+            while self.socket:
+                message = self.sending_queue.get()
+
+                try:
+                    self.socket.send(message)
+                except (IOError, AttributeError):
+                    self.log.warning('Connection to OPC server lost.')
+                    self.socket = None
+
+            while not self.socket and self.try_connecting:
+                self.connect()
+                # don't want to build up stale pixel data while we're not
+                # connected
+                self.sending_queue.queue.clear()
+                self.log.warning('Discarding stale pixel data from the queue.')
+
+    def done(self):
+        """Exits the thread and causes MPF to shut down."""
+        self.disconnect
+        self.machine.done = True
 
 
 # The MIT License (MIT)

@@ -249,3 +249,5 @@ volume:
 openpixelcontrol:
     host: localhost
     port: 7890
+    connection_required: no
+    connection_attempts: -1
