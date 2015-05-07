@@ -8,7 +8,6 @@
 
 import logging
 from collections import deque
-from copy import copy
 import uuid
 
 
@@ -374,7 +373,7 @@ class EventManager(object):
             self.queue.append((event, ev_type, callback, kwargs))
 
             self.log.debug("================== ACTIVE EVENTS ==================")
-            for event in copy(self.queue):
+            for event in list(self.queue):
                 self.log.debug("%s, %s, %s, %s", event[0], event[1], event[2],
                                event[3])
             self.log.debug("==================================================")
