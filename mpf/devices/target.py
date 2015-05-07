@@ -354,7 +354,7 @@ class TargetGroup(Device):
 
     def rotate(self, direction='right', move_state=True, steps=1):
 
-        if not self.machine.game or not self.machine.game.num_balls_in_play:
+        if not self.machine.game or not self.machine.game.balls_in_play:
             return
 
         self.log.debug("Rotating target group. Direction: %s, Moving state:"
