@@ -31,10 +31,33 @@ class Game(MachineMode):
         self.log = logging.getLogger("Game")
         self.player = None
         self.player_list = list()
-        self.num_balls_in_play = 0
+        self._balls_in_play = 0
         self.tilted = False
 
         self.machine.game = None
+
+    @property
+    def balls_in_play(self):
+        return self._balls_in_play
+
+    @balls_in_play.setter
+    def balls_in_play(self, value):
+        prev_balls_in_play = self._balls_in_play
+
+        if value > self.machine.ball_controller.num_balls_known:
+            self._balls_in_play = self.machine.ball_controller.num_balls_known
+
+        elif value < 0:
+            self._balls_in_play = 0
+
+        else:
+            self._balls_in_play = value
+
+        self.log.debug("Balls in Play change. New value: %s, (Previous: %s)",
+                       self._balls_in_play, prev_balls_in_play)
+
+        if prev_balls_in_play and not self._balls_in_play:
+            self.ball_ending()
 
     def start(self, buttons=None, hold_time=None):
         """Automatically called when the *Game* machine mode becomes active."""
@@ -51,7 +74,7 @@ class Game(MachineMode):
         self.player = None  # This is the current player
         self.player_list = list()
         self.machine.game = self
-        self.num_balls_in_play = 0
+        self._balls_in_play = 0
         self.tilted = False
 
         # todo register for request_to_start_game so you can deny it, or allow
@@ -128,7 +151,7 @@ class Game(MachineMode):
         # we ignore game in the params since that was just a reference that
         # was passed around to other registered handlers, but we don't need
         # it here.
-          # if this fails we're in limbo.
+        # if this fails we're in limbo.
         self.machine.events.post('game_started')
 
     def player_add_success(self, player, **kwargs):
@@ -150,7 +173,6 @@ class Game(MachineMode):
         opportunity to do things before the ball actually starts. Once that
         event is clear, this method calls :meth:`ball_started`.
         """
-        self.log.debug("ball_starting for Ball %s", self.player.ball)
         self.log.debug("***************************************************")
         self.log.debug("***************************************************")
         self.log.debug("**                                               **")
@@ -186,8 +208,7 @@ class Game(MachineMode):
             self.machine.events.add_handler('ball_drain',
                                             self.ball_drained))
 
-        self.log.debug("Game is setting Balls in Play to 1")
-        self.num_balls_in_play = 1
+        self.balls_in_play = 1
 
         self.machine.events.post('ball_started', ball=self.player.ball,
                                  player=self.player.number)
@@ -203,17 +224,7 @@ class Game(MachineMode):
 
         if balls:
             self.log.debug("Processing %s newly-drained ball(s)", balls)
-            self.log.debug("Previous balls in play: %s", self.num_balls_in_play)
-            self.num_balls_in_play -= balls
-            self.log.debug("Balls in play now: %s", self.num_balls_in_play)
-
-            if self.num_balls_in_play < 0:
-                # This should only happen if we find a lost ball. #todo
-                self.num_balls_in_play = 0
-                self.log.warning("Balls in play went negative. Resetting to 0")
-
-            if not self.num_balls_in_play:
-                self.ball_ending()
+            self.balls_in_play -= balls
 
         return {'balls': balls}
 
@@ -239,9 +250,10 @@ class Game(MachineMode):
         # It doesn't really matter since the game ending can just remove them
         # all, but technically it's not clean.
 
+        self._balls_in_play = 0
+
         # todo everything below is hard coded temporary
 
-        self.num_balls_in_play = 0  # todo redundant?
         self.log.debug("Entering Game.ball_ending()")
 
         self.machine.events.post_queue('ball_ending',
@@ -334,21 +346,71 @@ class Game(MachineMode):
             self.player.extra_balls -= 1
         self.ball_starting()
 
+    def set_balls_in_play(self, balls):
+        """Sets the number of balls in play to the value passed.
+
+        Args:
+            balls: Int of the new value of balls in play.
+
+        This method does not actually eject any new balls onto the playfield,
+        rather, it just changes the game controller's count of the number of
+        balls in play.
+
+        The balls in play value cannot be lower than 0 or higher than
+        the number of balls known. This message will automatically set the balls
+        in play to the nearest valid value if it's outside of this range.
+
+        If balls in play drops to zero, ``ball_ending()`` will be called.
+
+        """
+
+        self.balls_in_play = balls
+
+    def add_balls_in_play(self, balls=1):
+        """Adds one or more balls to the current balls in play value.
+
+        Args:
+            balls: Int of the balls to add.
+
+        This method does not actually eject any new balls onto the playfield,
+        rather, it just changes the game controller's count of the number of
+        balls in play.
+
+        Note that if the number of balls added exceeds the number of balls
+        known, it will be set to the number of balls known.
+
+        """
+
+        self.balls_in_play += balls
+
+    def remove_balls_in_play(self, balls=1):
+        """Removes one or more balls from the current balls in play value.
+
+        Args:
+            balls: Int of the balls to add.
+
+        Note that if the number of balls removed would take the current balls in
+        play count to less than zero, the number of balls in play will be set to
+        zero.
+
+        If balls in play drops to zero, ``ball_ending()`` will be called.
+
+        """
+        self.balls_in_play -= balls
+
     def tilt(self):
         """Called when the 'tilt' event is posted indicated the ball has tilted.
         """
 
         # todo add support to catch if the player tilts during ball ending?
 
-        self.log.debug("Processing Ball Tilt")
+        self.log.debug("Processing Tilt")
         self.tilted = True
-
-        self.num_balls_in_play = 0
 
         self.machine.events.add_handler('ball_ending',
                                         self._tilt_ball_ending_wait)
 
-        self.ball_ending()
+        self.balls_in_play = 0
 
     def _tilt_ball_ending_wait(self, queue):
         # Method that hooks ball_ending which happens from a tilt. Used so we
@@ -363,7 +425,7 @@ class Game(MachineMode):
     def _tilt_ball_ending_clear(self, **kwargs):
 
         # If there are still live balls out there, wait for them to drain too.
-        if self.machine.ball_controller.num_balls_live:
+        if self.machine.playfield.balls:
             return
 
         # todo there's a bug here. If there are multiple balls live when the
