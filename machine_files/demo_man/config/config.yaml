@@ -7,9 +7,9 @@ Machine:
     Min Balls: 1
     Max Balls: 6
 
-Hardware:
-    DriverBoards: wpc
-    Platform: p_roc
+hardware:
+    driverboards: wpc
+    platform: p_roc
 
 MPF:
   default_pulse_ms: 20
@@ -27,6 +27,7 @@ Modes:
 Scriptlets:
     attract.Attract
     claw.Claw
+    add_a_ball.AddABall
 
 Virtual Platform Start Active Switches:
     s_trough_1
@@ -151,7 +152,7 @@ Switches:
     s_buy_in:
         number: s23
         label:
-        tags:
+        tags: buy_in
     s_always_closed:
         number: s24
         label:
