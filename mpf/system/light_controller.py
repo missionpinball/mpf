@@ -12,7 +12,7 @@ import time
 import os
 
 from mpf.system.assets import Asset, AssetManager
-from mpf.system.config import Config
+from mpf.system.config import Config, CaseInsensitiveDict
 
 
 class LightController(object):
@@ -35,7 +35,7 @@ class LightController(object):
         self.event_queue = set()
         self.coil_queue = set()
 
-        self.registered_light_scripts = dict()
+        self.registered_light_scripts = CaseInsensitiveDict()
 
         self.light_update_list = []
         self.led_update_list = []

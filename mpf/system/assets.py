@@ -12,6 +12,8 @@ import threading
 import copy
 from Queue import PriorityQueue
 
+from mpf.system.config import CaseInsensitiveDict
+
 
 class AssetManager(object):
     """Base class for an Asset Manager.
@@ -54,7 +56,7 @@ class AssetManager(object):
         self.machine.asset_managers[config_section] = self
 
         if not hasattr(self.machine, asset_attribute):
-            setattr(self.machine, asset_attribute, dict())
+            setattr(self.machine, asset_attribute, CaseInsensitiveDict())
 
         self.asset_list = getattr(self.machine, asset_attribute)
 
@@ -359,6 +361,8 @@ class AssetManager(object):
         look for the file in the machine root plus the path string location.
 
         """
+
+        print "*", file_name
 
         if path:
             path_list = [path]

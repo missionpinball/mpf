@@ -25,16 +25,28 @@ class CaseInsensitiveDict(dict):
     automatically convert incoming calls to lowercase.
     """
     def __setitem__(self, key, value):
-        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
+        try:
+            super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
+        except AttributeError:
+            super(CaseInsensitiveDict, self).__setitem__(key, value)
 
     def __getitem__(self, key):
-        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
+        try:
+            return super(CaseInsensitiveDict, self).__getitem__(key.lower())
+        except AttributeError:
+            return super(CaseInsensitiveDict, self).__getitem__(key)
 
     def __contains__(self, key):
-        return super(CaseInsensitiveDict, self).__contains__(key.lower())
+        try:
+            return super(CaseInsensitiveDict, self).__contains__(key.lower())
+        except AttributeError:
+            return super(CaseInsensitiveDict, self).__contains__(key)
 
     def __del__(self, key):
-        return super(CaseInsensitiveDict, self).__del__(key.lower())
+        try:
+            return super(CaseInsensitiveDict, self).__del__(key.lower())
+        except AttributeError:
+            return super(CaseInsensitiveDict, self).__del__(key)
 
 
 class Config(object):
@@ -105,6 +117,8 @@ class Config(object):
                 sys.exit()
 
         if config_location:
+
+            print "config location", config_location
 
             try:
                 log.info("Loading configuration from file: %s", config_location)
@@ -358,7 +372,6 @@ class Config(object):
         new_list = [x.lower() for x in new_list]
 
         return new_list
-
 
     @staticmethod
     def list_of_lists(incoming_string):
