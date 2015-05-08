@@ -152,7 +152,7 @@ class Mode(object):
     def __init__(self, machine, config, name, path):
         self.machine = machine
         self.config = config
-        self.name = name
+        self.name = name.lower()
         self.path = path
 
         self.log = logging.getLogger('Mode.' + name)

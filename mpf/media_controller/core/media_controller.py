@@ -27,7 +27,7 @@ import pygame
 
 from mpf.media_controller.core import *
 
-from mpf.system.config import Config
+from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.events import EventManager
 from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
@@ -69,7 +69,7 @@ class MediaController(object):
         self.socket_thread = None
         self.receive_queue = Queue()
         self.sending_queue = Queue()
-        self.game_modes = dict()
+        self.game_modes = CaseInsensitiveDict()
         self.player_list = list()
         self.player = None
         self.HZ = 0
