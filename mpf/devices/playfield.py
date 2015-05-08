@@ -7,7 +7,6 @@ a pinball machine."""
 
 import logging
 from collections import defaultdict
-import sys
 
 from mpf.devices.ball_device import BallDevice
 from mpf.system.tasks import DelayManager
@@ -34,6 +33,8 @@ class Playfield(BallDevice):
         # Attributes
         self._balls = 0
         self.num_balls_requested = 0
+        self.player_controlled_eject_in_progress = False
+        self.queued_balls = list()
 
         # Set up event handlers
 
@@ -126,7 +127,8 @@ class Playfield(BallDevice):
                 ball(s) from.
             trigger_event: The optional name of an event that MPF will wait for
                 before adding the ball into play. Typically used with player-
-                controlled eject tag events.
+                controlled eject tag events. If None, the ball will be added
+                immediately.
 
         Both source_name and source_device args are included to give you two
         options for specifying the source of the ball(s) to be added. You don't
@@ -156,6 +158,13 @@ class Playfield(BallDevice):
                            "make sense. Quitting...")
             raise Exception("Received request to add %s balls, which doesn't "
                             "make sense. Quitting...")
+
+        # If there's a player controlled eject in progress, we hold this request
+        # until it's over.
+        if self.player_controlled_eject_in_progress:
+            self.queued_balls.append((balls, source_name, source_device,
+                                      trigger_event))
+            return
 
         # Figure out which device we'll get a ball from
 
@@ -225,11 +234,25 @@ class Playfield(BallDevice):
                                         self.player_eject_request,
                                         balls=balls, device=device)
 
+        self.player_controlled_eject_in_progress = True
+
     def remove_player_controlled_eject(self):
         """Removed the player-controlled eject so a player hitting a switch
         no longer calls the device(s) to eject a ball.
         """
+        self.player_controlled_eject_in_progress = False
         self.machine.events.remove_handler(self.player_eject_request)
+
+        # Need to do this in case one of these queued balls is also a player
+        # controlled eject which would re-add it to the queue while iterating.
+        # So we clear it and pass them all to add_ball() and then let the queue
+        # rebuild with what's left if it needs to.
+        ball_list = self.queued_balls
+        self.queued_balls = list()
+
+        for item in ball_list:
+            self.add_ball(balls=item[0], source_name=item[1],
+                          source_device=item[2], trigger_event=item[3])
 
     def player_eject_request(self, balls, device):
         """A player has hit a switch tagged with the player_eject_request_tag.
