@@ -162,13 +162,6 @@ class Playfield(BallDevice):
                            "make sense. Not adding any balls...")
             return False
 
-        # If there's a player controlled eject in progress, we hold this request
-        # until it's over.
-        if self.player_controlled_eject_in_progress:
-            self.queued_balls.append((balls, source_name, source_device,
-                                      trigger_event))
-            return
-
         # Figure out which device we'll get a ball from
 
         if source_device:
@@ -190,6 +183,16 @@ class Playfield(BallDevice):
                             "devices are tagged with 'ball_add_live'. Cannot "
                             "add a ball.")
 
+        # If there's a player controlled eject in progress for this device, we
+        # hold this request until it's over.
+        if self.player_controlled_eject_in_progress == source_device:
+            self.queued_balls.append((balls, source_name, source_device,
+                                      trigger_event))
+            self.log.debug("An add_ball() request came in while there was a "
+                           "current player-controlled eject in progress for the"
+                            "same device. Will queue the eject request")
+            return True
+
         self.log.debug("Received request to add %s ball(s). Source device: %s. "
                        "Wait for event: %s", balls, source_device.name,
                        trigger_event)
@@ -208,12 +211,6 @@ class Playfield(BallDevice):
         # Plunger lane has no switch: ball_add_live device is trough, we do
         # eject now since there's no player_controlled tag and the device has an
         # eject coil.
-
-        if self.player_controlled_eject_in_progress == source_device:
-            self.log.warning("An add_ball() request came in while there was a "
-                             "current player-controlled eject in progress for "
-                             "the same device.")
-            return False
 
         if trigger_event and source_device.config['eject_coil']:
             self.setup_player_controlled_eject(balls, source_device,
