@@ -24,7 +24,6 @@ class Playfield(BallDevice):
         self.config['eject_targets'] = list()
 
         self.ball_controller = self.machine.ball_controller
-        self.player_controlled_eject_in_progress = None
 
         self.delay = DelayManager()
 
@@ -34,6 +33,8 @@ class Playfield(BallDevice):
         # Attributes
         self._balls = 0
         self.num_balls_requested = 0
+        self.player_controlled_eject_in_progress = None
+        self.queued_balls = list()
 
         # Set up event handlers
 
@@ -126,7 +127,8 @@ class Playfield(BallDevice):
                 ball(s) from.
             trigger_event: The optional name of an event that MPF will wait for
                 before adding the ball into play. Typically used with player-
-                controlled eject tag events.
+                controlled eject tag events. If None, the ball will be added
+                immediately.
 
         Returns:
             True if it's able to process the add_ball() request, False if it
@@ -159,6 +161,13 @@ class Playfield(BallDevice):
             self.log.error("Received request to add %s balls, which doesn't "
                            "make sense. Not adding any balls...")
             return False
+
+        # If there's a player controlled eject in progress, we hold this request
+        # until it's over.
+        if self.player_controlled_eject_in_progress:
+            self.queued_balls.append((balls, source_name, source_device,
+                                      trigger_event))
+            return
 
         # Figure out which device we'll get a ball from
 
@@ -254,6 +263,17 @@ class Playfield(BallDevice):
 
         self.machine.events.remove_handler(self.player_eject_request)
         self.player_controlled_eject_in_progress = None
+
+        # Need to do this in case one of these queued balls is also a player
+        # controlled eject which would re-add it to the queue while iterating.
+        # So we clear it and pass them all to add_ball() and then let the queue
+        # rebuild with what's left if it needs to.
+        ball_list = self.queued_balls
+        self.queued_balls = list()
+
+        for item in ball_list:
+            self.add_ball(balls=item[0], source_name=item[1],
+                          source_device=item[2], trigger_event=item[3])
 
     def player_eject_request(self, balls, device):
         """A player has hit a switch tagged with the player_eject_request_tag.

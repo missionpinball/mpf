@@ -59,6 +59,7 @@ class MediaController(object):
         self.done = False  # todo
         self.machine_path = None
         self.asset_managers = dict()
+        self.num_assets_to_load = 0
         self.window = None
         self.window_manager = None
         self.pygame = False

@@ -46,7 +46,7 @@
             
   <div class="section" id="module-mpf.system.assets">
 <span id="mpf-system-assets-module"></span><h1>mpf.system.assets module</h1>
-<p>Contains AssetManager and Asset parent classes</p>
+<p>Contains AssetManager, AssetLoader, and Asset parent classes</p>
 <dl class="class">
 <dt id="mpf.system.assets.Asset">
 <em class="property">class </em><tt class="descclassname">mpf.system.assets.</tt><tt class="descname">Asset</tt><big>(</big><em>machine</em>, <em>config</em>, <em>file_name</em>, <em>asset_manager</em><big>)</big></dt>
@@ -65,12 +65,30 @@
 
 <dl class="class">
 <dt id="mpf.system.assets.AssetLoader">
-<em class="property">class </em><tt class="descclassname">mpf.system.assets.</tt><tt class="descname">AssetLoader</tt><big>(</big><em>name</em>, <em>queue</em><big>)</big></dt>
+<em class="property">class </em><tt class="descclassname">mpf.system.assets.</tt><tt class="descname">AssetLoader</tt><big>(</big><em>name</em>, <em>queue</em>, <em>machine</em><big>)</big></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></tt></p>
+<p>Base class for the Asset Loader with runs as a separate thread and
+actually loads the assets from disk.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; String name of what this loader will be called. (Only really used
+to give a friendly name to it in logs.)</li>
+<li><strong>queue</strong> &#8211; A reference to the asset loader <tt class="docutils literal"><span class="pre">Queue</span></tt> which holds assets
+waiting to be loaded.</li>
+<li><strong>machine</strong> &#8211; The main <tt class="docutils literal"><span class="pre">MachineController</span></tt> object.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="mpf.system.assets.AssetLoader.run">
 <tt class="descname">run</tt><big>(</big><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Run loop for the loader thread.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -78,6 +96,32 @@
 <dt id="mpf.system.assets.AssetManager">
 <em class="property">class </em><tt class="descclassname">mpf.system.assets.</tt><tt class="descname">AssetManager</tt><big>(</big><em>machine</em>, <em>config_section</em>, <em>path_string</em>, <em>asset_class</em>, <em>asset_attribute</em>, <em>file_extensions</em><big>)</big></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for an Asset Manager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>machine</strong> &#8211; The main <tt class="docutils literal"><span class="pre">MachineController</span></tt> object.</li>
+<li><strong>config_section</strong> &#8211; String of the name of the section in the config file
+for the asset settings that this Asset Manager will machine. e.g.
+&#8216;image&#8217;.</li>
+<li><strong>path_string</strong> &#8211; The setting in the paths section of the config file that
+specifies what path these asset files are in. e.g. &#8216;images&#8217;.</li>
+<li><strong>asset_class</strong> &#8211; A class object of the base class for the assets that this
+Asset Manager will manage. e.g. Image.</li>
+<li><strong>asset_attribute</strong> &#8211; The string name that you want to refer to this asset
+collection as. e.g. a value of &#8216;images&#8217; means that assets will be
+accessible via <tt class="docutils literal"><span class="pre">self.machine.images</span></tt>.</li>
+<li><strong>file_extensions</strong> &#8211; A tuple of strings of valid file extensions that files
+for this asset will use. e.g. <tt class="docutils literal"><span class="pre">('png',</span> <span class="pre">'jpg',</span> <span class="pre">'jpeg',</span> <span class="pre">'bmp')</span></tt></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>There will be one Asset Manager for each different type of asset. (e.g. one
+for images, one for movies, one for sounds, etc.)</p>
 <dl class="method">
 <dt id="mpf.system.assets.AssetManager.create_loader_thread">
 <tt class="descname">create_loader_thread</tt><big>(</big><big>)</big></dt>
@@ -96,12 +140,50 @@ magnetic disk, think multiple threads would make it slower.</p>
 <dl class="method">
 <dt id="mpf.system.assets.AssetManager.load_asset">
 <tt class="descname">load_asset</tt><big>(</big><em>asset</em>, <em>callback</em>, <em>priority=10</em><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Loads an asset into memory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>asset</strong> &#8211; The Asset object to load.</li>
+<li><strong>callback</strong> &#8211; The callback that will be called once the asset has been
+loaded by the loader thread.</li>
+<li><strong>priority</strong> &#8211; The relative loading priority of the asset. If there&#8217;s a
+queue of assets waiting to be loaded, this load request will be
+inserted into the queue in a position based on its priority.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.assets.AssetManager.load_assets">
-<tt class="descname">load_assets</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>load_key=None</em>, <em>**kwargs</em><big>)</big></dt>
-<dd></dd></dl>
+<tt class="descname">load_assets</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>load_key=None</em>, <em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Loads the assets from a config dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>config</strong> &#8211; Dictionary that holds the assets to load.</li>
+<li><strong>mode</strong> &#8211; Not used. Included here since this method is registered as a
+mode start handler.</li>
+<li><strong>load_key</strong> &#8211; String name of the load key which specifies which assets
+should be loaded.</li>
+<li><strong>callback</strong> &#8211; Callback method which is called by each asset once it&#8217;s
+loaded.</li>
+<li><strong>**kwargs</strong> &#8211; Not used. Included to allow this method to be used as an
+event handler.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The assets must already be registered in order for this method to work.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.assets.AssetManager.locate_asset_file">
@@ -170,7 +252,24 @@ also load the asset file into memory.</p>
 <dl class="method">
 <dt id="mpf.system.assets.AssetManager.register_asset">
 <tt class="descname">register_asset</tt><big>(</big><em>asset</em>, <em>config</em><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Registers an asset with the Asset Manager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>asset</strong> &#8211; String name of the asset to register.</li>
+<li><strong>config</strong> &#8211; Dictionary which contains settings for this asset.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Registering an asset is what makes it available to be used in the game.
+Note that registering an asset is separate from loading an asset. All
+assets will be registered on MPF boot, but they can be loaded and
+unloaded as needed to save on memory.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.assets.AssetManager.register_assets">
@@ -200,13 +299,26 @@ memory.</p>
 <dl class="method">
 <dt id="mpf.system.assets.AssetManager.setup_defaults">
 <tt class="descname">setup_defaults</tt><big>(</big><em>config</em><big>)</big></dt>
-<dd><p>Processed the <cite>assetdefaults</cite> section of the machine config files.</p>
+<dd><p>Processed the <tt class="docutils literal"><span class="pre">assetdefaults</span></tt> section of the machine config
+files.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mpf.system.assets.AssetManager.unload_assets">
 <tt class="descname">unload_assets</tt><big>(</big><em>asset_set</em><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Unloads assets from memory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>asset_set</strong> &#8211; A set (or any iterable) of Asset objects which will be
+unloaded.</td>
+</tr>
+</tbody>
+</table>
+<p>Unloading an asset does not de-register it. It&#8217;s still available to be
+used, but it&#8217;s just unloaded from memory to save on memory.</p>
+</dd></dl>
 
 </dd></dl>
 

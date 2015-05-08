@@ -697,9 +697,19 @@ class BallDevice(Device):
         self._do_eject()
 
     def eject_all(self, target=None):
+        """Ejects all the balls from this device
+
+        Args:
+            target: The string or BallDevice target for this eject. Default of
+                None means `playfield`.
+
+        Returns:
+            True if there are balls to eject. False if this device is empty.
+        """
         self.log.debug("Ejecting all balls")
         if self.balls > 0:
             self.eject(balls=self.balls, target=target)
+            return True
         else:
             return False
 

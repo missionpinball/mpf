@@ -64,6 +64,8 @@ class MachineController(object):
         self.game_modes = list()
         self.asset_managers = dict()
 
+        self.num_assets_to_load = 0
+
         self.config = dict()
         self._load_config()
 
@@ -360,8 +362,6 @@ class MachineController(object):
                 self.sw_data_loop()
             else:
                 self.sw_optimized_loop()
-
-        # todo add support to read software switch events
 
     def sw_optimized_loop(self):
         """The optimized version of the main game run loop."""

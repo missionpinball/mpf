@@ -95,8 +95,9 @@ class Config(object):
                 config_location = yaml_file
                 # Pull out the path in case we need it later
                 config['config_path'] = os.path.split(yaml_file)[0]
-            elif os.path.isfile(os.path.join(config['config_path'],
-                                             yaml_file)):
+            elif ('config_path' in config and
+                    os.path.isfile(os.path.join(config['config_path'],
+                                                yaml_file))):
                 config_location = os.path.join(config['config_path'],
                                                yaml_file)
             else:
