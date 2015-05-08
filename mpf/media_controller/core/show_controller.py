@@ -108,7 +108,6 @@ class ShowController(object):
             pass
 
     def stop_show(self, show, reset=True, hold=True, **kwargs):
-
         if show in self.machine.shows:
             self.machine.shows[show].stop(reset=reset, hold=hold)
 
@@ -536,13 +535,15 @@ class Show(Asset):
                 hold or not with True or False here.
         """
 
-        if self.running:
+        #if self.running:
             #if hold:
             #    self.hold = True
             #elif hold is False:  # if it's None we do nothing
             #    self.hold = False
 
-            self.machine.show_controller._end_show(self, reset)
+            #self.machine.show_controller._end_show(self, reset)
+
+        self.machine.show_controller._end_show(self, reset)
 
     def change_speed(self, tocks_per_sec=1):
         """Changes the playback speed of a running Show.
