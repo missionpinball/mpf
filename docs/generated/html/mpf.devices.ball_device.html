@@ -104,7 +104,7 @@ event handler.</li>
 
 <dl class="method">
 <dt id="mpf.devices.ball_device.BallDevice.eject">
-<tt class="descname">eject</tt><big>(</big><em>balls=1</em>, <em>target=None</em>, <em>timeout=0</em>, <em>get_ball=False</em><big>)</big></dt>
+<tt class="descname">eject</tt><big>(</big><em>balls=1</em>, <em>target=None</em>, <em>timeout=None</em>, <em>get_ball=False</em><big>)</big></dt>
 <dd><p>Ejects one or more balls from the device.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -116,6 +116,10 @@ event handler.</li>
 either a string name of the ball device or a ball device
 object. Default is None which means this device will eject this
 ball to the first entry in the eject_targets list.</li>
+<li><strong>timeout</strong> &#8211; How long (in ms) to wait for the ball to make it into the
+target device after the ball is ejected. A value of <tt class="docutils literal"><span class="pre">None</span></tt>
+means the default timeout from the config file will be used. A
+value of 0 means there is no timeout.</li>
 <li><strong>get_ball</strong> &#8211; Boolean as to whether this device should attempt to get
 a ball to eject if it doesn&#8217;t have one. Default is False.</li>
 </ul>
