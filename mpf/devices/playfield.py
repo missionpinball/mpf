@@ -7,7 +7,6 @@ a pinball machine."""
 
 import logging
 from collections import defaultdict
-import sys
 
 from mpf.devices.ball_device import BallDevice
 from mpf.system.tasks import DelayManager
@@ -25,6 +24,7 @@ class Playfield(BallDevice):
         self.config['eject_targets'] = list()
 
         self.ball_controller = self.machine.ball_controller
+        self.player_controlled_eject_in_progress = None
 
         self.delay = DelayManager()
 
@@ -128,6 +128,10 @@ class Playfield(BallDevice):
                 before adding the ball into play. Typically used with player-
                 controlled eject tag events.
 
+        Returns:
+            True if it's able to process the add_ball() request, False if it
+            cannot.
+
         Both source_name and source_device args are included to give you two
         options for specifying the source of the ball(s) to be added. You don't
         need to supply both. (it's an "either/or" thing.) Both of these args are
@@ -153,9 +157,8 @@ class Playfield(BallDevice):
 
         if balls < 1:
             self.log.error("Received request to add %s balls, which doesn't "
-                           "make sense. Quitting...")
-            raise Exception("Received request to add %s balls, which doesn't "
-                            "make sense. Quitting...")
+                           "make sense. Not adding any balls...")
+            return False
 
         # Figure out which device we'll get a ball from
 
@@ -197,14 +200,23 @@ class Playfield(BallDevice):
         # eject now since there's no player_controlled tag and the device has an
         # eject coil.
 
+        if self.player_controlled_eject_in_progress == source_device:
+            self.log.warning("An add_ball() request came in while there was a "
+                             "current player-controlled eject in progress for "
+                             "the same device.")
+            return False
+
         if trigger_event and source_device.config['eject_coil']:
-            self.setup_player_controlled_eject(balls, device, trigger_event)
+            self.setup_player_controlled_eject(balls, source_device,
+                                               trigger_event)
 
         else:
             # if there's no trigger, eject right away
             # if there's no eject coil, that's ok. We still need to setup the
             # eject so the device will be expecting the ball to disappear
             source_device.eject(balls=balls, target=self, get_ball=True)
+
+        return True
 
     def setup_player_controlled_eject(self, balls, device, trigger_event):
         """Used to set up an eject from a ball device which will eject a ball to
@@ -221,6 +233,9 @@ class Playfield(BallDevice):
         the trigger_event.
         """
 
+        self.log.debug("Setting up a player controlled eject. Balls: %s, Device"
+                       ": %s, Trigger Event: %s", balls, device, trigger_event)
+
         if not device.balls:
             device.request_ball(balls=balls)
 
@@ -228,11 +243,17 @@ class Playfield(BallDevice):
                                         self.player_eject_request,
                                         balls=balls, device=device)
 
+        self.player_controlled_eject_in_progress = device
+
     def remove_player_controlled_eject(self):
         """Removed the player-controlled eject so a player hitting a switch
         no longer calls the device(s) to eject a ball.
         """
+
+        self.log.debug("Removing player-controlled eject.")
+
         self.machine.events.remove_handler(self.player_eject_request)
+        self.player_controlled_eject_in_progress = None
 
     def player_eject_request(self, balls, device):
         """A player has hit a switch tagged with the player_eject_request_tag.
@@ -256,7 +277,7 @@ class Playfield(BallDevice):
                 self.log.debug("PF switch hit with no balls expected. Setting "
                                "pf balls to 1.")
                 self.balls = 1
-                self.machine.events.post('Unexpected_ball_on_playfield')
+                self.machine.events.post('unexpected_ball_on_playfield')
 
     def _ball_added_handler(self, balls):
         self.log.debug("%s ball(s) added to the playfield", balls)
