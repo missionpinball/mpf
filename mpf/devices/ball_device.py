@@ -637,7 +637,7 @@ class BallDevice(Device):
         self._cancel_eject_confirmation()
         self.count_balls()  # need this since we're canceling the eject conf
 
-    def eject(self, balls=1, target=None, timeout=0, get_ball=False):
+    def eject(self, balls=1, target=None, timeout=None, get_ball=False):
         """Ejects one or more balls from the device.
 
         Args:
@@ -646,6 +646,10 @@ class BallDevice(Device):
                 either a string name of the ball device or a ball device
                 object. Default is None which means this device will eject this
                 ball to the first entry in the eject_targets list.
+            timeout: How long (in ms) to wait for the ball to make it into the
+                target device after the ball is ejected. A value of ``None``
+                means the default timeout from the config file will be used. A
+                value of 0 means there is no timeout.
             get_ball: Boolean as to whether this device should attempt to get
                 a ball to eject if it doesn't have one. Default is False.
 
@@ -670,13 +674,12 @@ class BallDevice(Device):
                        balls, target.name)
 
         if not self.config['eject_coil']:
-            self.log.debug("This device has no eject coil, there's nothing to "
-                           "do here. We assume this is a manual plunger and "
-                           "wait for the player to eject the ball.")
-            return
+            self.log.debug("This device has no eject coil, so we're assuming "
+                           "a manual eject by the player.")
+            timeout = 0  # unlimited since who knows how long the player waits
 
         # Set the timeout for this eject
-        if not timeout:
+        if timeout is None:
             timeout = self.config['eject_timeouts'][target]
 
         # Set the number of balls to eject
@@ -732,9 +735,6 @@ class BallDevice(Device):
                                "receive.", target.name)
                 return False
 
-            # todo should we try to find another target in the queue that is
-            # ready?
-
             else:
                 self.log.debug("Proceeding with the eject")
 
@@ -780,12 +780,14 @@ class BallDevice(Device):
 
         self.balls -= self.num_balls_ejecting
 
-        self.log.debug("Firing eject coil. num_balls_ejecting: %s. New "
-                       "balls: %s.",
-                       self.num_balls_ejecting, self.balls)
-
-        self.config['eject_coil'].pulse()
-        # todo add support for hold coils with variable release times
+        try:
+            self.config['eject_coil'].pulse()
+            # todo add support for hold coils with variable release times
+            self.log.debug("Firing eject coil. num_balls_ejecting: %s. New "
+                           "balls: %s.",
+                           self.num_balls_ejecting, self.balls)
+        except AttributeError:
+            self.log.debug("Waiting for player to manually eject ball(s)")
 
     def _setup_eject_confirmation(self, target=None, timeout=0):
         # Called after an eject request to confirm the eject. The exact method
@@ -840,7 +842,7 @@ class BallDevice(Device):
 
         elif self.config['confirm_eject_type'] == 'event':
             self.log.debug("Will confirm eject via posting of event '%s'",
-                          self.config['confirm_eject_event'])
+                           self.config['confirm_eject_event'])
             # watch for that event
             self.machine.events.add_handler(
                 self.config['confirm_eject_event'], self._eject_success)

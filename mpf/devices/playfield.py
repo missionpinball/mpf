@@ -197,11 +197,14 @@ class Playfield(BallDevice):
         # eject now since there's no player_controlled tag and the device has an
         # eject coil.
 
-        if not trigger_event and source_device.config['eject_coil']:
-            source_device.eject(balls=balls, target=self, get_ball=True)
+        if trigger_event and source_device.config['eject_coil']:
+            self.setup_player_controlled_eject(balls, device, trigger_event)
 
         else:
-            self.setup_player_controlled_eject(balls, device, trigger_event)
+            # if there's no trigger, eject right away
+            # if there's no eject coil, that's ok. We still need to setup the
+            # eject so the device will be expecting the ball to disappear
+            source_device.eject(balls=balls, target=self, get_ball=True)
 
     def setup_player_controlled_eject(self, balls, device, trigger_event):
         """Used to set up an eject from a ball device which will eject a ball to
