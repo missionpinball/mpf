@@ -60,7 +60,7 @@ a pinball machine.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>balls</strong> &#8211; Integer of the number of balls you&#8217;d like to add.</li>
 <li><strong>source_name</strong> &#8211; Optional string name of the ball device you&#8217;d like to
 add the ball(s) from.</li>
@@ -71,6 +71,10 @@ before adding the ball into play. Typically used with player-
 controlled eject tag events. If None, the ball will be added
 immediately.</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True if it&#8217;s able to process the add_ball() request, False if it
+cannot.</p>
 </td>
 </tr>
 </tbody>
