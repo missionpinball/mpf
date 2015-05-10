@@ -358,8 +358,8 @@ class BCP(object):
                                             name=event)
             self.mpfmc_trigger_events.add(event)
 
-    def register_triggers(self, config, priority, mode):
-        """Sets up trigger events based on a 'Triggers:' section of a config
+    def register_triggers(self, config, priority=0, mode=None):
+        """Sets up trigger events based on a 'triggers:' section of a config
         dictionary.
 
         Args:
