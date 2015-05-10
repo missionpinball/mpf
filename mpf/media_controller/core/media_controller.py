@@ -172,6 +172,8 @@ class MediaController(object):
             # malicious files in the system folder then you have access to this
             # code too.
 
+        self.start_socket_thread()
+
         self.events.post("init_phase_1")
         self.events.post("init_phase_2")
         self.events.post("init_phase_3")
@@ -330,7 +332,7 @@ class MediaController(object):
 
         self.log.info("Starting the run loop at %sHz", self.HZ)
 
-        self.start_socket_thread()
+        #self.start_socket_thread()
 
         start_time = time.time()
         loops = 0
@@ -655,6 +657,7 @@ class BCPServer(threading.Thread):
             self.sending_queue.put('goodbye')
             time.sleep(1)  # give it a chance to send goodbye before quitting
             self.done = True
+            self.mc.done = True
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
