@@ -79,7 +79,6 @@ class SwitchController(object):
             self.registered_switches[switch.name + '-0'] = list()
             self.registered_switches[switch.name + '-1'] = list()
 
-
     def verify_switches(self):
         """Loops through all the switches and queries their hardware states via
         their platform interfaces and them compares that to the state that MPF
@@ -98,7 +97,7 @@ class SwitchController(object):
             if self.machine.switches[switch.name].type == 'NC':
                 sw_state = sw_state ^ 1
             if sw_state != hw_state:
-                self.log.warning("Switch State Error! Switch: %s, FAST State: "
+                self.log.warning("Switch State Error! Switch: %s, HW State: "
                                  "%s, MPF State: %s", switch.name, hw_state,
                                  sw_state)
 
@@ -182,17 +181,8 @@ class SwitchController(object):
         # to here.
 
     def process_switch(self, name=None, state=1, logical=False, num=None,
-                       obj=None):
+                       obj=None, debounced=True):
         """Processes a new switch state change.
-
-        This is the method that is called by the platform driver whenever a
-        switch changes state. It's also used by the "other" modules that
-        activate switches, including the keyboard and OSC interfaces.
-
-        State 0 means the switch changed from active to inactive, and 1 means
-        it changed from inactive to active. (The hardware & platform code
-        handles NC versus NO switches and translates them to 'active' versus
-        'inactive'.)
 
         Args:
             name: The string name of the switch. This is optional if you specify
@@ -210,9 +200,20 @@ class SwitchController(object):
                 logical=True.
             num: The hardware number of the switch.
             obj: The switch object.
+            debounced: Whether or not the update for the switch you're sending
+                has been debounced or not. Default is True
 
         Note that there are three different paramter options to specify the
         switch: 'name', 'num', and 'obj'. You only need to pass one of them.
+
+        This is the method that is called by the platform driver whenever a
+        switch changes state. It's also used by the "other" modules that
+        activate switches, including the keyboard and OSC interfaces.
+
+        State 0 means the switch changed from active to inactive, and 1 means
+        it changed from inactive to active. (The hardware & platform code
+        handles NC versus NO switches and translates them to 'active' versus
+        'inactive'.)
 
         """
 
@@ -248,6 +249,13 @@ class SwitchController(object):
                 # state is the opposite
                 state = state ^ 1
 
+        # If this update is not debounced, only proceed if this switch is
+        # configured to not be debounced.
+
+        if not debounced:
+            if self.machine.switches[name].config['debounce']:
+                return
+
         # update the switch device
         self.machine.switches[name].state = state
         self.machine.switches[name].hw_state = hw_state
@@ -255,8 +263,11 @@ class SwitchController(object):
         # if the switch is already in this state, then abort
         if self.switches[name]['state'] == state:
             # todo log this as potential hw error??
-            self.log.warning("Received duplicate switch state. Switch: %s, "
-                             "State: %s", name, state)
+            self.log.debug("Received duplicate switch state, which means this "
+                           "switch had some non-debounced state changes. This "
+                           "could be nothing, but if it happens a lot it could "
+                           "indicate noise or interference on the line. Switch:"
+                           "%s", name)
             return
 
         self.log.info("<<<<< switch: %s, State:%s >>>>>", name, state)

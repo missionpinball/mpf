@@ -306,11 +306,17 @@ class HardwarePlatform(Platform):
             elif event_type == pinproc.EventTypeSwitchOpenDebounced:
                 self.machine.switch_controller.process_switch(state=0,
                                                               num=event_value)
+            elif event_type == pinproc.EventTypeSwitchClosedNondebounced:
+                self.machine.switch_controller.process_switch(state=1,
+                                                              num=event_value,
+                                                              debounced=False)
+            elif event_type == pinproc.EventTypeSwitchOpenNondebounced:
+                self.machine.switch_controller.process_switch(state=0,
+                                                              num=event_value,
+                                                              debounced=False)
             else:
-                pass
-                # todo we still have event types:
-                # pinproc.EventTypeSwitchClosedNondebounced
-                # pinproc.EventTypeSwitchOpenNondebounced
+                self.log.warning("Received unrecognized event from the P-ROC. "
+                                 "Type: %s, Value: %s", event_type, event_value)
 
         self.proc.watchdog_tickle()
         self.proc.flush()
