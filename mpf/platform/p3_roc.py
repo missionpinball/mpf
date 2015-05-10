@@ -292,22 +292,27 @@ class HardwarePlatform(Platform):
         for event in self.proc.get_events():
             event_type = event['type']
             event_value = event['value']
-            #event_time = event['time']  # not using this, maybe in the future?
             if event_type == 99:  # CTRL-C to quit todo does this go here?
                 self.machine.end_run_loop()
+            elif event_type == pinproc.EventTypeDMDFrameDisplayed:
+                pass
             elif event_type == pinproc.EventTypeSwitchClosedDebounced:
-                #print "switch closed", event_value
                 self.machine.switch_controller.process_switch(state=1,
                                                               num=event_value)
             elif event_type == pinproc.EventTypeSwitchOpenDebounced:
-                #print "switch open", event_value
                 self.machine.switch_controller.process_switch(state=0,
                                                               num=event_value)
+            elif event_type == pinproc.EventTypeSwitchClosedNondebounced:
+                self.machine.switch_controller.process_switch(state=1,
+                                                              num=event_value,
+                                                              debounced=False)
+            elif event_type == pinproc.EventTypeSwitchOpenNondebounced:
+                self.machine.switch_controller.process_switch(state=0,
+                                                              num=event_value,
+                                                              debounced=False)
             else:
-                pass
-                # todo we still have event types:
-                # pinproc.EventTypeSwitchClosedNondebounced
-                # pinproc.EventTypeSwitchOpenNondebounced
+                self.log.warning("Received unrecognized event from the P3-ROC. "
+                                 "Type: %s, Value: %s", event_type, event_value)
 
         self.proc.watchdog_tickle()
         self.proc.flush()
