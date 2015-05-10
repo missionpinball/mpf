@@ -122,7 +122,12 @@ class Diverter(Device):
                                             '_ball_eject_attempt',
                                             self._feeder_eject_attempt)
 
-        # register for deactivation switches
+        self.machine.events.add_handler('init_phase_3', self._register_switches)
+
+        self.platform = self.config['activation_coil'].platform
+
+    def _register_switches(self):
+                # register for deactivation switches
         for switch in self.config['deactivation_switches']:
             self.machine.switch_controller.add_switch_handler(
                 switch, self.deactivate)
@@ -131,8 +136,6 @@ class Diverter(Device):
         for switch in self.config['disable_switches']:
             self.machine.switch_controller.add_switch_handler(
                 switch, self.disable)
-
-        self.platform = self.config['activation_coil'].platform
 
     def enable(self, auto=False, activations=-1, **kwargs):
         """Enables this diverter.

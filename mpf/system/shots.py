@@ -46,7 +46,9 @@ class ShotController(object):
         self.shots = []
 
         if 'shots' in self.machine.config:
-            self.process_config(self.machine.config['shots'])
+            self.machine.events.add_handler('init_phase_3', self.process_config,
+                                            config=self.machine.config['shots'])
+            #self.process_config(self.machine.config['shots'])
 
         # Tell the mode controller that it should look for shot items in
         # modes.
