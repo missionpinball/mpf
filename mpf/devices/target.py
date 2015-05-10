@@ -74,11 +74,6 @@ class Target(Device):
         # light color
         # unlight color
 
-        # register for switch handlers so we know if this switch is hit
-        # note this only looks for activations
-        self.machine.switch_controller.add_switch_handler(self.config['switch'],
-                                                          self.hit, 1)
-
         # register for events
 
         self.machine.events.add_handler('action_target_' + self.name +
@@ -89,6 +84,13 @@ class Target(Device):
 
         self.machine.events.add_handler('action_target_' + self.name +
                                         '_toggle', self.toggle)
+
+        self.machine.events.add_handler('init_phase_3',
+                                        self._register_switch_handlers)
+
+    def _register_switch_handlers(self):
+        self.machine.switch_controller.add_switch_handler(self.config['switch'],
+                                                          self.hit, 1)
 
     def hit(self, stealth=False):
         """This target was just hit.

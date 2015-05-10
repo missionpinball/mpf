@@ -29,7 +29,7 @@ class SwitchController(object):
 
     def __init__(self, machine):
         self.machine = machine
-        self.registered_switches = defaultdict(list)
+        self.registered_switches = CaseInsensitiveDict()
         # Dictionary of switches and states that have been registered for
         # callbacks.
 
@@ -47,20 +47,16 @@ class SwitchController(object):
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick, 1000)
         self.machine.events.add_handler('init_phase_2',
-                                        self.initialize_hw_states,
+                                        self._initialize_switches,
                                         1000)
                                         # priority 1000 so this fires first
 
         self.machine.events.add_handler('machine_reset_phase_3',
                                         self.log_active_switches)
 
-    def initialize_hw_states(self):
-        """Reads and processes the hardware states of the physical switches.
+    def _initialize_switches(self):
 
-        We can't do this in __init__() because we need the switch controller to
-        be setup first before we set up the hw switches. This method is
-        called via an event handler which listens for `init_phase_2`.
-        """
+        # Set "start active" switches
 
         start_active = list()
 
@@ -72,13 +68,17 @@ class SwitchController(object):
             except KeyError:
                 pass
 
-        self.log.debug("Syncing the logical and physical switch states.")
         for switch in self.machine.switches:
 
+            # Populate self.switches
             if switch.name in start_active:
-                switch.state = 1
-
+                switch.state = 1  # set state based on physical state
             self.set_state(switch.name, switch.state, reset_time=True)
+
+            # Populate self.registered_switches
+            self.registered_switches[switch.name + '-0'] = list()
+            self.registered_switches[switch.name + '-1'] = list()
+
 
     def verify_switches(self):
         """Loops through all the switches and queries their hardware states via
@@ -311,32 +311,27 @@ class SwitchController(object):
 
     def add_switch_handler(self, switch_name, callback, state=1, ms=0,
                            return_info=False):
-        """Register a handler to take action on some switch event.
+        """Register a handler to take action on a switch event.
 
         Args:
-
             switch_name: String name of the switch you're adding this handler
                 for.
-
             callback: The method you want called when this switch handler fires.
-
             state: Integer of the state transition you want to callback to be
                 triggered on. Default is 1 which means it's called when the
                 switch goes from inactive to active, but you can also use 0
                 which means your callback will be called when the switch becomes
                 inactive
-
             ms: Integer. If you specify a 'ms' parameter, the handler won't be
                 called until the witch is in that state for that many
                 milliseconds (rounded up to the nearst machine timer tick).
-
             return_info: If True, the switch controller will pass the
                 parameters of the switch handler as arguments to the callback,
                 including switch_name, state, and ms. If False (default), it
                 just calls the callback with no parameters.
 
-
         You can mix & match entries for the same switch here.
+
         """
 
         # todo add support for other parameters to the callback?
@@ -400,7 +395,9 @@ class SwitchController(object):
 
         Currently this only works if you specify everything exactly as you set
         it up. (Except for return_info, which doesn't matter if true or false, it
-        will remove either / both."""
+        will remove either / both.
+
+        """
 
         self.log.debug("Removing switch handler. Switch: %s, State: %s, ms: %s",
                       switch_name, state, ms)
