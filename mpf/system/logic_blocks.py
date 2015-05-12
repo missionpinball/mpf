@@ -231,7 +231,7 @@ class LogicBlock(object):
             self.reset()
             self.enable()
 
-        if self.config['disable_on_complete']:
+        elif self.config['disable_on_complete']:
             self.disable()
 
 
@@ -292,7 +292,6 @@ class Counter(LogicBlock):
         """Enables this counter. Automatically called when one of the
         'enable_event's is posted. Can also manually be called.
         """
-
         super(Counter, self).enable(**kwargs)
         self.machine.events.remove_handler(self.hit)  # prevents multiples
 
