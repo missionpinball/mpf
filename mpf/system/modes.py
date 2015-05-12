@@ -496,6 +496,7 @@ class ModeTimer(object):
 
         self.running = False
         self.start_value = 0
+        self.restart_on_complete = False
         self._ticks = 0
         self.end_value = 0
         self.max_value = None
@@ -531,6 +532,10 @@ class ModeTimer(object):
 
         if 'max_value' in self.config:
             self.max_value = self.config['max_value']
+
+        if ('restart_on_complete' in self.config and
+                self.config['restart_on_complete']):
+            self.restart_on_complete = True
 
         if 'bcp' in self.config and self.config['bcp']:
             self.bcp = True
@@ -584,6 +589,9 @@ class ModeTimer(object):
     def _remove_control_events(self):
         for key in self.event_keys:
             self.machine.events.remove_handler_by_key(key)
+
+    def reset(self):
+        self._ticks = self.start_value
 
     def start(self, **kwargs):
         """Starts this timer based on the starting value that's already been
@@ -675,6 +683,10 @@ class ModeTimer(object):
         self.machine.events.post('timer_' + self.name + '_complete',
                                  ticks=self.mode.player[self.tick_var])
 
+        if self.restart_on_complete:
+            self.reset()
+            self.start()
+
     def _timer_tick(self):
         # Automatically called by the sytem timer each tick
 
@@ -751,7 +763,7 @@ class ModeTimer(object):
             self.machine.bcp.send('timer', name=self.name,
                                   action='time_subtracted',
                                   ticks=self.mode.player[self.tick_var],
-                                  ticks_subtracted=ticks_added)
+                                  ticks_subtracted=ticks_subtracted)
 
         self._check_for_done()
 
