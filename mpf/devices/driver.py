@@ -52,8 +52,8 @@ class Driver(Device):
                 self.config['pulse_ms'] = 0
             # Otherwise we'll use the system default for pulse_ms
             else:
-                self.config['pulse_ms'] = \
-                    self.machine.config['mpf']['default_pulse_ms']
+                self.config['pulse_ms'] = (
+                    self.machine.config['mpf']['default_pulse_ms'])
 
         if 'holdpatter' in self.config:
             self.config['pwm_on'] = int(config['holdpatter'].split('-')[0])

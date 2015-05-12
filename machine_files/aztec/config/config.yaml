@@ -17,9 +17,9 @@ Fast:
     port1_baud: 921600
     port2_name: \\.\COM12
     port2_baud: 921600
+    dmd_port: 0
     main_port: 1
-    led_port: 0
-    dmd_port: 2
+    led_port: 2
     config_number_format: hex
 
 Game:
@@ -434,14 +434,21 @@ SlidePlayer:
         transition:
             type: move_in
             direction: top
-    balldevice_deadworld_ball_enter:
-        type: Text
-        text: "BALLS LOCKED: %balls"
     volume_change:
         type: Text
         text: "VOLUME: %display_volume"
+        expire: 2s
+        slide_priority: 10000
+    assets_to_load:
+        type: text
+        text: "LOADING ASSETS: %assets TO GO"
+        font: small
+    assets_loading_complete:
+        type: text
+        text: ASSET LOADING COMPLETE
+        font: small
 
-ShowPlayer:
+lightplayer:
     machineflow_Attract_start:
       - show: semi_circle_rainbow
         repeat: yes
@@ -452,12 +459,7 @@ ShowPlayer:
       - show: ball_lock_lane
         repeat: yes
         tocks_per_sec: 5
-#      - show: top_lanes
-#        repeat: yes
-#        tocks_per_sec: 11
-      - show: attract_display
-        repeat: yes
-        tocks_per_sec: 1
+
     machineflow_Attract_stop:
       - show: semi_circle_rainbow
         action: stop
@@ -465,7 +467,20 @@ ShowPlayer:
         action: stop
       - show: ball_lock_lane
         action: stop
-#      - show: top_lanes
-#        action: stop
+
+showplayer:
+    attract_start:
+      - show: attract_display
+        repeat: yes
+        tocks_per_sec: 1
+    attract_stop:
       - show: attract_display
         action: stop
+
+bcp:
+    connections:
+        local_display:
+            host: localhost
+            port: 5050
+            connection_attempts: 5
+            require_connection: yes

@@ -8,7 +8,6 @@
 
 import logging
 import os
-from collections import deque
 import time
 import sys
 
@@ -52,11 +51,10 @@ class MachineController(object):
         self.log_system_info()
 
         self.loop_start_time = 0
+        self.num_loops = 0
         self.physical_hw = options['physical_hw']
         self.done = False
         self.machineflow_index = None
-        self.loop_rate = 0.0
-        self.mpf_load = 0.0
         self.machine_path = None  # Path to this machine's folder root
         self.monitors = dict()
         self.plugins = list()
@@ -354,120 +352,49 @@ class MachineController(object):
 
         self.default_platform.timer_initialize()
 
+        self.loop_start_time = time.time()
+
         if self.default_platform.features['hw_timer']:
             self.default_platform.run_loop()
         else:
-            if 'Enable Loop Data' in self.config['machine'] and (
-                    self.config['machine']['Enable Loop Data']):
-                self.sw_data_loop()
-            else:
-                self.sw_optimized_loop()
+            self.sw_run_loop()
 
-    def sw_optimized_loop(self):
-        """The optimized version of the main game run loop."""
+    def sw_run_loop(self):
+        """Main machine run loop with an MPF-controlled timer"""
 
-        self.log.debug("Starting the optimized software loop. Metrics are "
-                       "disabled in this optimized loop.")
-        self.mpf_load = 0
-        self.loop_rate = 0
+        self.log.debug("Starting the main run loop.")
+
         start_time = time.time()
         loops = 0
-
         secs_per_tick = timing.Timing.secs_per_tick
+        sleep_sec = self.config['timing']['hw_thread_sleep_ms'] / 1000.0
 
         self.default_platform.next_tick_time = time.time()
 
         try:
             while self.done is False:
-                time.sleep(.001)
+                time.sleep(sleep_sec)
                 self.default_platform.tick()
+                loops += 1
 
                 if self.default_platform.next_tick_time <= time.time():  # todo change this
                     self.timer_tick()
                     self.default_platform.next_tick_time += secs_per_tick
-                    #sleep = (self.default_platform.next_tick_time - time.time()) / 1000.0
-                    #if sleep > 0:
-                    #    print sleep
-                    #    time.sleep(sleep)
-                    loops += 1
 
         except KeyboardInterrupt:
             pass
 
-        self.log.info("Target loop rate: %s Hz", timing.Timing.HZ)
+        self.log_loop_rate()
 
         try:
-            self.log.info("Actual loop rate: %s Hz",
-                          loops / (time.time() - start_time))
+            self.log.info("Hardware loop rate: %s Hz",
+                          round(loops / (time.time() - start_time), 2))
         except ZeroDivisionError:
-            self.log.info("Actual loop rate: 0 Hz")
-
-    def sw_data_loop(self):
-        """ This is the main game run loop.
-
-        """
-        # todo currently this just runs as fast as it can. Should it
-        # sleep while waiting for the next timer tick?
-
-        self.log.debug("Starting the software loop")
-
-        mpf_times = deque()
-        hw_times = deque()
-
-        mpf_times.extend([0] * 100)
-        hw_times.extend([0] * 100)
-        this_loop_time = 0
-        hw_loop_time = 0
-
-        try:
-            while self.done is False:
-                time.sleep(.001)
-                hw_entry = time.time()
-                self.default_platform.tick()
-                hw_loop_time += time.time() - hw_entry
-                if self.default_platform.next_tick_time <= time.time():
-
-                    mpf_entry = time.time()
-                    self.timer_tick()
-
-                    try:
-                        mpf_times.append((time.time() - mpf_entry) /
-                                        (time.time() - this_loop_start))
-                    except:
-                        mpf_times.append(0.0)
-
-                    try:
-                        hw_times.append(hw_loop_time /
-                                        (time.time() - this_loop_start))
-                    except:
-                        hw_times.append(0.0)
-
-                    # throw away the oldest time
-                    mpf_times.popleft()
-                    hw_times.popleft()
-
-                    # update our public info
-                    self.mpf_load = round(sum(mpf_times), 2)
-                    self.loop_rate = round(sum(hw_times), 2)
-
-                    # reset the loop counter
-                    hw_loop_time = 0.0
-                    this_loop_start = time.time()
-
-                    self.default_platform.next_tick_time += timing.Timing.secs_per_tick
-
-        except KeyboardInterrupt:
-            pass
-
-        self.log.info("Hardware load percent: %s", self.loop_rate)
-        self.log.info("MPF load percent: %s", self.mpf_load)
-
-        # todo add detection to see if the system is running behind?
-        # if you ask for 100HZ and the system can only do 50, that is
-        # not good
+            self.log.info("Hardware loop rate: 0 Hz")
 
     def timer_tick(self):
         """Called by the default platform each machine tick based on self.HZ"""
+        self.num_loops += 1
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
         tasks.Task.timer_tick()  # notifies tasks
@@ -478,6 +405,17 @@ class MachineController(object):
         self.log.info("Shutting down...")
         self.events.post('shutdown')
         self.done = True
+
+    def log_loop_rate(self):
+
+        self.log.info("Target MPF loop rate: %s Hz", timing.Timing.HZ)
+
+        try:
+            self.log.info("Actual MPF loop rate: %s Hz",
+                          round(self.num_loops /
+                                (time.time() - self.loop_start_time), 2))
+        except ZeroDivisionError:
+            self.log.info("Actual MPF loop rate: 0 Hz")
 
 
 # The MIT License (MIT)

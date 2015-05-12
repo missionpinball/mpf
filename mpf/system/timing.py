@@ -50,7 +50,6 @@ class Timing(object):
     def timer_tick(self):
         global tick
         Timing.tick += 1
-        #self.log.debug("t:%s", Timing.tick)
         for timer in self.timers:
             if timer.wakeup and timer.wakeup <= time.time():
                 timer.call()
