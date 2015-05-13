@@ -251,3 +251,11 @@ openpixelcontrol:
     port: 7890
     connection_required: no
     connection_attempts: -1
+
+triggers:
+    assets_to_load:
+        bcp_name: assets_to_load
+        params:
+            assets: "%assets"
+    assets_loading_complete:
+        bcp_name: assets_loading_complete
