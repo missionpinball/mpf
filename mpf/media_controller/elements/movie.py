@@ -29,6 +29,10 @@ class Movie(Asset):
         except:
             raise Exception()
 
+        # todo potential bug? What if Pygame isn't loaded yet? Should probably
+        # hold move asset loading until we get the pygame_loaded event?
+        # this bug probably also applies to images and sounds??
+
         self.movie_surface = pygame.Surface((self.movie_object.get_size()))
         self.movie_object.set_display(self.movie_surface)
 

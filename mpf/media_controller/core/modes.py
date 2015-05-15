@@ -274,7 +274,10 @@ class Mode(object):
         self.active = False
 
         for item in self.stop_methods:
-            item[0](item[1])
+            try:
+                item[0](item[1])
+            except TypeError:
+                pass
 
         self.stop_methods = list()
 

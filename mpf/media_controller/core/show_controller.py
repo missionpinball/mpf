@@ -46,7 +46,7 @@ class ShowController(object):
         # playlist
         # action_time
 
-        self.active_scripts = []  # list of active scripts that have been
+        # self.active_scripts = []  # list of active scripts that have been
         # converted to Shows. We need this to facilitate removing shows when
         # they're done, since programmers don't use a name for scripts like
         # they do with shows. active_scripts is a list of dictionaries, with
@@ -65,6 +65,11 @@ class ShowController(object):
         self.machine.events.add_handler('timer_tick', self._tick)
         self.machine.events.add_handler('init_phase_4',
                                         self._initialize)
+
+        # Tell the mode controller that it should look for LightPlayer items in
+        # modes.
+        self.machine.modes.register_start_method(self.process_shows_from_config,
+                                                 'showplayer')
 
         # Create the show AssetManager
         self.asset_manager = AssetManager(
@@ -92,6 +97,9 @@ class ShowController(object):
         if show in self.machine.shows:
             if 'stop_key' in kwargs:
                 self.machine.shows[show].stop_key = kwargs['stop_key']
+
+            self.log.debug("Playing Show: %s. Priority %s", show, priority)
+
             self.machine.shows[show].play(repeat=repeat, priority=priority,
                                           blend=blend, hold=hold,
                                           tocks_per_sec=tocks_per_sec,
@@ -101,19 +109,27 @@ class ShowController(object):
         elif isinstance(show, Show):
             if 'stop_key' in kwargs:
                 show.stop_key = kwargs['stop_key']
+
+            self.log.debug("Playing Show: %s. Priority %s", show.file_name,
+               priority)
+
             show.play(repeat=repeat, priority=priority, blend=blend, hold=hold,
                       tocks_per_sec=tocks_per_sec,
                       start_location=start_location, num_repeats=num_repeats)
-        else:  # no show by that name to stop
+        else:  # no show by that name to play
             pass
 
-    def stop_show(self, show, reset=True, hold=True, **kwargs):
+    def stop_show(self, show, reset=True, hold=False, **kwargs):
+
+        self.log.debug("Stopping Show: %s", show)
+
         if show in self.machine.shows:
             self.machine.shows[show].stop(reset=reset, hold=hold)
 
     def stop_shows_by_key(self, key):
         for show in self.running_shows:
             if show.stop_key == key:
+                self.log.debug("Stopping Show: %s", show)
                 show.stop()
 
     def process_shows_from_config(self, config, mode=None, priority=0):
@@ -179,38 +195,43 @@ class ShowController(object):
         show.current_repeat_step = 0
         show.last_action_time = self.current_time
         # or in the advance loop?
-        self.running_shows.append(show)  # should this be a set?
+
+        if show not in self.running_shows:
+            self.running_shows.append(show)
         self.running_shows.sort(key=lambda x: x.priority)
 
     def _end_show(self, show, reset=True):
         # Internal method which ends a running Show
 
-        if show in self.running_shows:
+        try:
             self.running_shows.remove(show)
-            show.running = False
+        except ValueError:
+            pass
+
+        show.running = False
 
         #if not show.hold:
         #    for key in show.slide_removal_keys:
         #        self.machine.display.remove_slides(key)
 
-            for key in show.slide_removal_keys:
-                self.machine.display.remove_slides(key)
+        for key in show.slide_removal_keys:
+            self.machine.display.remove_slides(key)
 
-            show.slide_removal_keys = set()
+        show.slide_removal_keys = set()
 
         if reset:
             show.current_location = 0
 
-        # if this show that's ending was from a script, remove it from the
-        # active_scripts list
-
-        # Make a copy of the active scripts object since we're potentially
-        # deleting from it while we're also iterating through it.
-        active_scripts_copy = list(self.active_scripts)
-
-        for entry in active_scripts_copy:
-            if entry['show'] == show:
-                self.active_scripts.remove(entry)
+        ## if this show that's ending was from a script, remove it from the
+        ## active_scripts list
+        #
+        ## Make a copy of the active scripts object since we're potentially
+        ## deleting from it while we're also iterating through it.
+        #active_scripts_copy = list(self.active_scripts)
+        #
+        #for entry in active_scripts_copy:
+        #    if entry['show'] == show:
+        #        self.active_scripts.remove(entry)
 
         if show.callback:
             show.callback()
@@ -310,7 +331,6 @@ class Show(Asset):
             self.config = config
             self.file_name = file_name
             self.asset_manager = asset_manager
-
 
             self._initialize_asset()
             #self.loaded = True

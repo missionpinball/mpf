@@ -137,3 +137,16 @@ slideplayer:
       - type: Text
         text: CLIENT DISCONNECTED
         font: small
+    volume_change:
+        type: Text
+        text: "VOLUME: %display_volume"
+        expire: 2s
+        slide_priority: 10000
+    assets_to_load:
+        type: text
+        text: "LOADING ASSETS: %assets TO GO"
+        font: small
+    assets_loading_complete:
+        type: text
+        text: ASSET LOADING COMPLETE
+        font: small
