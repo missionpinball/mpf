@@ -139,6 +139,29 @@ class Timing(object):
 
         return output
 
+    @staticmethod
+    def pwm_ms_to_byte_int(self, pwm_on, pwm_off):
+        """Converts a pwm_on / pwm_off ms times to a single byte pwm mask.
+
+        """
+
+        total_ms = pwm_on + pwm_off
+
+        if total_ms % 2 or total_ms > 8:
+            # todo dunno what to do here.
+            self.log.error("pwm_ms_to_byte error: pwm_on + pwm_off total must "
+                           "be 1, 2, 4, or 8.")
+            quit()
+
+        if not pwm_on:
+            return 0
+
+        elif not pwm_off:
+            return 255
+
+        else:
+            return int(pwm_on / float(pwm_on + pwm_off) * 255)
+
 
 class Timer(object):
     """Periodic timer object.
