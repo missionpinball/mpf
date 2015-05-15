@@ -205,7 +205,7 @@ class HardwarePlatform(Platform):
 
         # libfastpinball needs a timer to work, but since we don't use it in MPF
         # we'll set it to 1 sec (1,000,000us) so it doesn't get in our way
-        fastpinball.fpTimerConfig(self.fast, 1000000)
+        fastpinball.fpTimerConfig(self.fast, 5000)
 
         self.fast_events = fastpinball.fpGetEventObject()
 
