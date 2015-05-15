@@ -208,7 +208,13 @@ class LightController(object):
                         key=this_action.get('key', None))
 
                 elif 'show' in this_action:
-                    this_action['show'] = self.machine.shows[this_action['show']]
+                    try:
+                        this_action['show'] = (
+                            self.machine.shows[this_action['show']])
+                    except KeyError:
+                        # If this mode has been started previously then the show
+                        # will already be a Show instance and not a string.
+                        pass
 
                 this_action['priority'] = priority
 
