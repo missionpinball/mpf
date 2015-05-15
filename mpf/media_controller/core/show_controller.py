@@ -332,7 +332,6 @@ class Show(Asset):
             self.file_name = file_name
             self.asset_manager = asset_manager
 
-
             self._initialize_asset()
             #self.loaded = True
             #self.show_actions = actions
