@@ -63,7 +63,7 @@ class HardwarePlatform(Platform):
         if not pinproc_imported:
             self.log.error('Could not import "pinproc". Most likely you do not '
                            'have libpinproc and/or pypinproc installed. You can'
-                           'run MPF in software-only "virtual" mode by using '
+                           ' run MPF in software-only "virtual" mode by using '
                            'the -x command like option for now instead.')
             sys.exit()
 
@@ -76,6 +76,7 @@ class HardwarePlatform(Platform):
         self.features['variable_recycle_time'] = False
         self.features['variable_debounce_time'] = False
         self.features['hw_enable_auto_disable'] = False
+        self.features['hw_led_fade'] = True
         # todo need to add differences between patter and pulsed_patter
 
         # Make the platform features available to everyone
@@ -297,7 +298,7 @@ class HardwarePlatform(Platform):
             event_type = event['type']
             event_value = event['value']
             if event_type == 99:  # CTRL-C to quit todo does this go here?
-                self.machine.end_run_loop()
+                self.machine.quit()
             elif event_type == pinproc.EventTypeDMDFrameDisplayed:
                 pass
             elif event_type == pinproc.EventTypeSwitchClosedDebounced:

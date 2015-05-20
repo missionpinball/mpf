@@ -84,8 +84,10 @@ class MachineController(object):
 
         self._load_system_modules()
 
-        self.events.add_handler('action_shutdown', self.end_run_loop)
-        self.events.add_handler('sw_shutdown', self.end_run_loop)
+        self.events.add_handler('action_shutdown', self.power_off)
+        self.events.add_handler('sw_shutdown', self.power_off)
+        self.events.add_handler('action_quit', self.quit)
+        self.events.add_handler('sw_quit', self.quit)
         self.events.add_handler('machine_reset_phase_3', self.flow_advance,
                                 position=0)
 
@@ -95,8 +97,14 @@ class MachineController(object):
         self._load_plugins()
         self.events.post("init_phase_3")
         self._load_scriptlets()
+        self.events.post("init_phase_4")
+        self._init_machine_flow()
+        self.events.post("init_phase_5")
 
-        # Configure the Machine Flow
+        self.reset()
+
+    def _init_machine_flow(self):
+        # sets up the machine flow
         self.log.debug("Configuring Machine Flow")
         self.config['machineflow'] = self.config['machineflow'].split(' ')
         # Convert the MachineFlow config into a list of objects
@@ -109,12 +117,8 @@ class MachineController(object):
         # register event handlers
         self.events.add_handler('machineflow_advance', self.flow_advance)
 
-        self.events.post("init_phase_4")
-        self.events.post("init_phase_5")
-
-        self.reset()
-
     def _load_config(self):
+        # creates the main config dictionary from the YAML machine config files.
 
         self.config = dict()
 
@@ -253,6 +257,8 @@ class MachineController(object):
         scratch without reloading the config files and assets from disk. This
         method is called after a game ends and before attract mode begins.
 
+        Note: This method is not yet implemented.
+
         """
         self.events.post('machine_reset_phase_1')
         self.events.post('machine_reset_phase_2')
@@ -264,9 +270,6 @@ class MachineController(object):
         machineflow. Typically this just advances between Attract mode and Game
         mode.
         """
-
-        # This method will be called for the first time by the event
-        # 'machine_reset_phase_3'
 
         # If there's a current machineflow position, stop that mode
         if self.machineflow_index is not None:
@@ -291,6 +294,14 @@ class MachineController(object):
         self.config['machineflow'][self.machineflow_index].start(**kwargs)
 
     def add_platform(self, name):
+        """Makes an additional hardware platform interface available to MPF.
+
+        Args:
+            name: String name of the platform to add. Must match the name of a
+                platform file in the mpf/platforms folder (without the .py
+                extension).
+
+        """
 
         if name not in self.hardware_platforms:
             hardware_platform = __import__('mpf.platform.%s' % name,
@@ -298,6 +309,13 @@ class MachineController(object):
             self.hardware_platforms[name] = hardware_platform.HardwarePlatform(self)
 
     def set_default_platform(self, name):
+        """Sets the default platform which is used if a device class-specific or
+        device-specific platform is not specified. The default platform also
+        controls whether a platform timer or MPF's timer is used.
+
+        Args:
+            name: String name of the platform to set to default.
+        """
 
         try:
             self.default_platform = self.hardware_platforms[name]
@@ -328,30 +346,34 @@ class MachineController(object):
         return m
 
     def register_monitor(self, monitor_class, monitor):
-        """Registers a callback that will be called any time any player variable
-        changes.
+        """Registers a monitor.
 
-        The callback will be called with several paramters:
+        Args:
+            monitor_class: String name of the monitor class for this monitor
+                that's being registered.
+            monitor: String name of the monitor.
 
-        name: The name of the player variable that changed
-        value: The new value of the player variable
-        prev_value: The previous value of the player variable
-        change: The numeric amount the value changed, or if it can't be
-            calculated, boolean True
+        MPF uses monitors to allow components to monitor certain internal
+        elements of MPF.
+
+        For example, a player variable monitor could be setup to be notified of
+        any changes to a player variable, or a switch monitor could be used to
+        allow a plugin to be notified of any changes to any switches.
+
+        The MachineController's list of registered monitors doesn't actually
+        do anything. Rather it's a dictionary of sets which the monitors
+        themselves can reference when they need to do something. We just needed
+        a central registry of monitors.
 
         """
 
         if monitor_class not in self.monitors:
-            self.add_monitor_class(monitor_class)
+            self.monitors[monitor_class] = set()
 
         self.monitors[monitor_class].add(monitor)
 
-    def add_monitor_class(self, monitor_class):
-        if monitor_class not in self.monitors:
-            self.monitors[monitor_class] = set()
-
     def run(self):
-        """The main machine run loop."""
+        """Starts the main machine run loop."""
         self.log.debug("Starting the main run loop.")
 
         self.default_platform.timer_initialize()
@@ -364,7 +386,8 @@ class MachineController(object):
             self._mpf_timer_run_loop()
 
     def _mpf_timer_run_loop(self):
-        """Main machine run loop with an MPF-controlled timer"""
+        #Main machine run loop with when the default platform interface
+        #specifies the MPF should control the main timer
 
         start_time = time.time()
         loops = 0
@@ -395,15 +418,28 @@ class MachineController(object):
             self.log.info("Hardware loop rate: 0 Hz")
 
     def timer_tick(self):
-        """Called by the default platform each machine tick based on self.HZ"""
-        self.num_loops += 1
+        """Called to "tick" MPF at a rate specified by the machine Hz setting.
+
+        This method is called by the MPF run loop or the platform run loop,
+        depending on the platform. (Some platforms drive the loop, and others
+        let MPF drive.)
+
+        """
+        self.num_loops += 1  # used to calculate the loop rate when MPF exits
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
         tasks.Task.timer_tick()  # notifies tasks
         tasks.DelayManager.timer_tick()
 
-    def end_run_loop(self):
-        """Causes the main run_loop to end."""
+    def power_off(self):
+        """Attempts to perform a power down of the pinball machine and ends MPF.
+
+        This method is not yet implemented.
+        """
+        pass
+
+    def quit(self):
+        """Performs a graceful exit of MPF."""
         self.log.info("Shutting down...")
         self.events.post('shutdown')
         self.done = True
