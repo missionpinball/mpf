@@ -182,23 +182,27 @@ class MachineController(object):
             self.config['mpf']['device_modules'].split(' '))
         for device_type in self.config['mpf']['device_modules']:
             device_cls = eval(device_type)
-            # Check to see if we have these types of devices specified in this
-            # machine's config file and only load the modules this machine uses.
-            if device_cls.is_used(self.config):
 
-                collection, config = device_cls.get_config_info()
+            collection, config = device_cls.get_config_info()
 
-                self.log.info("Loading '%s' devices", collection)
+            self.log.info("Loading '%s' devices", collection)
 
-                # create the collection
-                exec('self.' + collection + '=devices.DeviceCollection()')
+            # create the collection
+            exec('self.' + collection + '=devices.DeviceCollection()')
 
-                # Create this device
-                devices.Device.create_devices(device_cls,
-                                              eval('self.' + collection),
-                                              self.config[config],
-                                              self
-                                              )
+            # Create this device
+
+            try:
+                config = self.config[config]
+            except KeyError:
+                self.log.debug("No " + collection + " devices found in config.")
+                config = dict()
+
+            devices.Device.create_devices(device_cls,
+                                          eval('self.' + collection),
+                                          config,
+                                          self
+                                          )
 
     def _load_system_modules(self):
         self.config['mpf']['system_modules'] = (
@@ -357,12 +361,10 @@ class MachineController(object):
         if self.default_platform.features['hw_timer']:
             self.default_platform.run_loop()
         else:
-            self.sw_run_loop()
+            self._mpf_timer_run_loop()
 
-    def sw_run_loop(self):
+    def _mpf_timer_run_loop(self):
         """Main machine run loop with an MPF-controlled timer"""
-
-        self.log.debug("Starting the main run loop.")
 
         start_time = time.time()
         loops = 0

@@ -103,11 +103,6 @@ class Device(object):
         return self.name
 
     @classmethod
-    def is_used(cls, config):
-        if cls.config_section in config:
-            return True
-
-    @classmethod
     def get_config_info(cls):
         return cls.collection, cls.config_section
 
