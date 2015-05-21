@@ -110,10 +110,11 @@ class Device(object):
     def create_devices(cls, collection, config, machine):
         # if this device class has a device_class_init staticmethod, run it now
 
-        try:
-            cls.device_class_init(machine)
-        except:
-            pass
+        if config:
+            try:
+                cls.device_class_init(machine)
+            except:
+                pass
 
         # create the devices
         for device in config:
