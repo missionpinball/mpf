@@ -10,10 +10,12 @@ import logging
 import os
 import time
 import sys
+import Queue
 
 from mpf.system import *
 from mpf.devices import *
 from mpf.system.config import Config
+from mpf.system.tasks import Task
 import version
 
 
@@ -64,6 +66,9 @@ class MachineController(object):
 
         self.num_assets_to_load = 0
 
+        self.crash_queue = Queue.Queue()
+        Task.Create(self._check_crash_queue)
+
         self.config = dict()
         self._load_config()
 
@@ -102,6 +107,16 @@ class MachineController(object):
         self.events.post("init_phase_5")
 
         self.reset()
+
+    def _check_crash_queue(self):
+        try:
+            crash = self.crash_queue.get(block=False)
+        except Queue.Empty:
+            yield 1000
+        else:
+            self.log.critical("MPF Shutting down due to child thread crash")
+            self.log.critical("Crash details: %s", crash)
+            self.done = True
 
     def _init_machine_flow(self):
         # sets up the machine flow

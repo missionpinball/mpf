@@ -13,6 +13,8 @@ import logging
 import socket
 from Queue import Queue
 import threading
+import sys
+import traceback
 
 from mpf.system.platform import Platform
 
@@ -263,22 +265,29 @@ class OPCThread(threading.Thread):
 
     def run(self):
         """Thread run loop."""
-        while True:
-            while self.socket:
-                message = self.sending_queue.get()
+        try:
+            while True:
+                while self.socket:
+                    message = self.sending_queue.get()
 
-                try:
-                    self.socket.send(message)
-                except (IOError, AttributeError):
-                    self.log.warning('Connection to OPC server lost.')
-                    self.socket = None
+                    try:
+                        self.socket.send(message)
+                    except (IOError, AttributeError):
+                        self.log.warning('Connection to OPC server lost.')
+                        self.socket = None
 
-            while not self.socket and self.try_connecting:
-                self.connect()
-                # don't want to build up stale pixel data while we're not
-                # connected
-                self.sending_queue.queue.clear()
-                self.log.warning('Discarding stale pixel data from the queue.')
+                while not self.socket and self.try_connecting:
+                    self.connect()
+                    # don't want to build up stale pixel data while we're not
+                    # connected
+                    self.sending_queue.queue.clear()
+                    self.log.warning('Discarding stale pixel data from the queue.')
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.machine.crash_queue.put(msg)
 
     def done(self):
         """Exits the thread and causes MPF to shut down."""

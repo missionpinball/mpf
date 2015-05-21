@@ -16,6 +16,8 @@
 import logging
 import socket
 import threading
+import sys
+import traceback
 import urllib
 import urlparse
 from Queue import Queue
@@ -869,53 +871,59 @@ class BCPClient(object):
 
         fragment = ''  # used to save a partial incoming message
 
-        while self.socket:
+        try:
+            while self.socket:
 
-            try:
-                data = self.socket.recv(4096)
-            except:
-                self.socket = None
-                data = None
+                try:
+                    data = self.socket.recv(4096)
+                except:
+                    self.socket = None
+                    data = None
 
-            if data:
+                if data:
 
-                # if there's an existing fragment, join our new data to it
-                if fragment:
-                    data = fragment + data
+                    # if there's an existing fragment, join our new data to it
+                    if fragment:
+                        data = fragment + data
 
-                # if we still don't have \n, it's still a fragment
-                if '\n' not in data:
-                    fragment = data
+                    # if we still don't have \n, it's still a fragment
+                    if '\n' not in data:
+                        fragment = data
 
-                # we have at least one \n in our data
-                else:
-                    messages = data.split("\n")
+                    # we have at least one \n in our data
+                    else:
+                        messages = data.split("\n")
 
-                    # if the \n is not the last char...
-                    if messages[-1:]:
-                        # save whatever was after the last \n to a new fragment
-                        fragment = messages[-1:][0]
-                        # trim that last fragment from our messages list
-                        messages = messages[:-1]
+                        # if the \n is not the last char...
+                        if messages[-1:]:
+                            # save whatever was after the last \n to a new fragment
+                            fragment = messages[-1:][0]
+                            # trim that last fragment from our messages list
+                            messages = messages[:-1]
 
-                    # now process the remaining complete messages
-                    for message in messages:
-                        if message:
-                            if message.startswith('dmd_frame'):
-                                # If we received a dmd_frame command, we process
-                                # them here immediately since they're a special
-                                # case.
-                                self.machine.bcp.dmd.update(message[10:])
+                        # now process the remaining complete messages
+                        for message in messages:
+                            if message:
+                                if message.startswith('dmd_frame'):
+                                    # If we received a dmd_frame command, we process
+                                    # them here immediately since they're a special
+                                    # case.
+                                    self.machine.bcp.dmd.update(message[10:])
 
-                            else:
-                                self.log.debug('Received "%s"',
-                                              message)
-                                cmd, kwargs = decode_command_string(message)
-
-                                if cmd in self.bcp_commands:
-                                    self.bcp_commands[cmd](**kwargs)
                                 else:
-                                    self.receive_queue.put((cmd, kwargs))
+                                    self.log.debug('Received "%s"',
+                                                  message)
+                                    cmd, kwargs = decode_command_string(message)
+
+                                    if cmd in self.bcp_commands:
+                                        self.bcp_commands[cmd](**kwargs)
+                                    else:
+                                        self.receive_queue.put((cmd, kwargs))
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.machine.crash_queue.put(msg)
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
@@ -923,16 +931,24 @@ class BCPClient(object):
 
         This method is run as a thread.
         """
-        while self.socket:
-            message = self.sending_queue.get()
+        try:
+            while self.socket:
+                message = self.sending_queue.get()
 
-            try:
-                self.log.debug('Sending "%s"', message)
-                self.socket.sendall(message + '\n')
+                try:
+                    self.log.debug('Sending "%s"', message)
+                    self.socket.sendall(message + '\n')
 
-            except (IOError, AttributeError):
-                # MPF is probably in the process of shutting down
-                pass
+                except (IOError, AttributeError):
+                    # MPF is probably in the process of shutting down
+                    pass
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.machine.crash_queue.put(msg)
+
 
     def receive_hello(self, **kwargs):
         """Processes incoming BCP 'hello' command."""

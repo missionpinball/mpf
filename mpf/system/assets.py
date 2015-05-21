@@ -11,6 +11,8 @@ import os
 import threading
 import copy
 from Queue import PriorityQueue
+import sys
+import traceback
 
 from mpf.system.config import CaseInsensitiveDict
 
@@ -405,33 +407,41 @@ class AssetLoader(threading.Thread):
     def run(self):
         """Run loop for the loader thread."""
 
-        while 1:
-            asset = self.queue.get()
+        try:
+            while True:
+                asset = self.queue.get()
 
-            if not asset[1].loaded:
-                self.log.debug("Loading Asset: %s. Callback: %s", asset[1],
-                          asset[2])
-                asset[1]._load(asset[2])
-                self.log.debug("Asset Finished Loading: %s. Remaining: %s",
-                               asset[1], self.queue.qsize())
+                if not asset[1].loaded:
+                    self.log.debug("Loading Asset: %s. Callback: %s", asset[1],
+                              asset[2])
+                    asset[1]._load(asset[2])
+                    self.log.debug("Asset Finished Loading: %s. Remaining: %s",
+                                   asset[1], self.queue.qsize())
 
-            # If the asset is already loaded and we don't need to load it again,
-            # we still need to call the callback.
-            elif asset[2]:
-                self.log.debug("Calling callback for asset %s since it's "
-                               "already loaded. Callback: %s", asset[1],
-                               asset[2])
-                asset[2]()
+                # If the asset is already loaded and we don't need to load it again,
+                # we still need to call the callback.
+                elif asset[2]:
+                    self.log.debug("Calling callback for asset %s since it's "
+                                   "already loaded. Callback: %s", asset[1],
+                                   asset[2])
+                    asset[2]()
 
-            self.machine.num_assets_to_load -= 1
+                self.machine.num_assets_to_load -= 1
 
-            # If the asset is already loaded, just ignore it and move on.
-            # I thought about trying to make sure that an asset isn't
-            # in the queue before it gets added. But since this is separate
-            # threads that would require all sorts of work. It's actually
-            # more efficient to add it to the queue anyway and then just
-            # skip it if it's already loaded by the time the loader gets to
-            # it.
+                # If the asset is already loaded, just ignore it and move on.
+                # I thought about trying to make sure that an asset isn't
+                # in the queue before it gets added. But since this is separate
+                # threads that would require all sorts of work. It's actually
+                # more efficient to add it to the queue anyway and then just
+                # skip it if it's already loaded by the time the loader gets to
+                # it.
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.machine.crash_queue.put(msg)
+
 
 
 class Asset(object):
