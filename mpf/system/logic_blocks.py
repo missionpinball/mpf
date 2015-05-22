@@ -102,7 +102,7 @@ class LogicBlocks(object):
         if 'sequences' in config:
             for item in config['sequences']:
                 block = Sequence(self.machine, item, player,
-                                 config['accruals'][item])
+                                 config['sequences'][item])
                 blocks_added.add(block)
 
         # Enable any logic blocks that do not have specific enable events
