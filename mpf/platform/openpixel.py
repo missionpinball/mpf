@@ -91,6 +91,7 @@ class OpenPixelClient(object):
         self.channels = list()
 
         self.machine.events.add_handler('timer_tick', self.tick, 1000000)
+        # todo should this be highest priority? Or lowest??
 
         self.sending_thread = OPCThread(self.machine, self.sending_queue,
                                         config)

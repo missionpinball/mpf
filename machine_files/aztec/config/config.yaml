@@ -10,16 +10,9 @@ Hardware:
     Platform: fast
     DriverBoards: fast
 
-Fast:
-    port0_name: \\.\COM10
-    port0_baud: 921600
-    port1_name: \\.\COM11
-    port1_baud: 921600
-    port2_name: \\.\COM12
-    port2_baud: 921600
-    dmd_port: 0
-    main_port: 1
-    led_port: 2
+fast:
+    #ports: \\.\COM10, \\.\COM11, \\.\COM12
+    ports: \\.\COM11, \\.\COM12
     config_number_format: hex
 
 Game:
@@ -323,7 +316,7 @@ Scoring:
         Score: 250
 
 DMD:
-    physical: yes
+    physical: no
     width: 128
     height: 32
     shades: 16

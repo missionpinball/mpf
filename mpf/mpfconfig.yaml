@@ -58,7 +58,6 @@ mpf:
         config: config
         modes: modes
     default_pulse_ms: 10
-    default_debounce_ms: 0  # fast only
 
 # Default settings for machines. All can be overridden
 
@@ -85,6 +84,12 @@ p_roc:
     lamp_matrix_strobe_time: 100
     watchdog_time: 1000
     use_watchdog: True
+
+fast:
+    baud: 921600
+    watchdog: 1s
+    default_debounce_open: 30ms
+    default_debounce_close: 30ms
 
 ledsettings:
     brightness_compensation: 1.0

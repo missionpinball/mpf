@@ -1,9 +1,6 @@
 """Contains the hardware interface and drivers for the FAST Pinball platform
-hardware, including the FAST Core and FAST WPC controllers.
-
-This code is written for the libfastpinball v1.0, released Dec 19, 2014.
-
-https://github.com/fastpinball/libfastpinball
+hardware, including the FAST Core and WPC controllers as well as FAST I/O
+boards.
 
 """
 
@@ -17,16 +14,24 @@ https://github.com/fastpinball/libfastpinball
 import logging
 import time
 import sys
+import threading
+import Queue
+import traceback
 
-
-from mpf.system.timing import Timing
 from mpf.system.platform import Platform
+from mpf.system.config import Config
 
 try:
-    import fastpinball
-    fastpinball_imported = True
+    import serial
+    serial_imported = True
 except:
-    fastpinball_imported = False
+    serial_imported = False
+
+# Minimum firmware versions needed for this module
+DMD_MIN_FW = 0.87
+NET_MIN_FW = 0.85
+RGB_MIN_FW = 0.85
+IO_MIN_FW = 0.85
 
 
 class HardwarePlatform(Platform):
@@ -42,11 +47,9 @@ class HardwarePlatform(Platform):
         self.log = logging.getLogger('FAST')
         self.log.debug("Configuring FAST hardware.")
 
-        if not fastpinball_imported:
-            self.log.error('Could not import "fastpinball". Most likely you do '
-                           'not have libfastpinball installed. You can run MPF '
-                           'in software-only "virtual" mode by using the -x '
-                           'command like option for now instead.')
+        if not serial_imported:
+            self.log.error('Could not import "pySerial". This is required for '
+                           'the FAST platform interface')
             sys.exit()
 
         # ----------------------------------------------------------------------
@@ -54,7 +57,7 @@ class HardwarePlatform(Platform):
         # are based on what the FAST hardware can and cannot do.
         self.features['max_pulse'] = 255  # todo
         self.features['hw_timer'] = False
-        self.features['hw_rule_coil_delay'] = False  # todo
+        self.features['hw_rule_coil_delay'] = True  # todo
         self.features['variable_recycle_time'] = True  # todo
         self.features['variable_debounce_time'] = True  # todo
         self.features['hw_enable_auto_disable'] = True
@@ -63,205 +66,318 @@ class HardwarePlatform(Platform):
         # ----------------------------------------------------------------------
 
         self.hw_rules = dict()
-        self.fast_events = None
+        self.dmd_connection = None
+        self.net_connection = None
+        self.rgb_connection = None
+        self.fast_nodes = list()
+        self.connection_threads = set()
+        self.receive_queue = Queue.Queue()
+        self.fast_leds = set()
+        self.flag_led_tick_registered = False
+        self.flag_switch_registered = False
 
-        # Set up the connection to the FAST controller
-        self.log.info("Initializing FAST Pinball Controller interface...")
+        config_spec = '''
+                    ports: list
+                    baud: int|921600
+                    config_number_format: string|hex
+                    watchdog: ms|1000
+                    default_debounce_open: ms|30
+                    default_debounce_close: ms|30
+                    debug: boolean|False
+                    '''
 
-        ports = list()
+        self.config = Config.process_config(config_spec=config_spec,
+                                            source=self.machine.config['fast'])
 
-        if ('port0_name' in self.machine.config['fast'] and
-                'port0_baud' in self.machine.config['fast']):
+        self.watchdog_command = 'WD:' + str(hex(self.config['watchdog']))[2:]
 
-            ports.append((self.machine.config['fast']['port0_name'],
-                          self.machine.config['fast']['port0_baud']))
-
-        if ('port1_name' in self.machine.config['fast'] and
-                'port1_baud' in self.machine.config['fast']):
-
-            ports.append((self.machine.config['fast']['port1_name'],
-                          self.machine.config['fast']['port1_baud']))
-
-        if ('port2_name' in self.machine.config['fast'] and
-                'port2_baud' in self.machine.config['fast']):
-
-            ports.append((self.machine.config['fast']['port2_name'],
-                          self.machine.config['fast']['port2_baud']))
-
-        self.log.debug("FAST Ports: %s", ports)
-
-        if ('main_port' in self.machine.config['fast'] and
-                'led_port' in self.machine.config['fast'] and
-                'dmd_port' in self.machine.config['fast']):
-
-            port_assignments = (self.machine.config['fast']['main_port'],
-                                self.machine.config['fast']['dmd_port'],
-                                self.machine.config['fast']['led_port'])
-
-        else:
-            self.log.critical("Error in fast config. Entries needed for "
-                              "main_port and led_port and dmd_port.")
-            raise Exception()
-
-        self.fast = fastpinball.fpOpen(ports, port_assignments)
-
-        self.log.debug("Fast Config. Ports: %s, Assignments: %s", ports,
-                       port_assignments)
-
-        self._initialize_hardware()
-        #self.timer_initialize()
+        self._connect_to_hardware()
 
         if 'config_number_format' not in self.machine.config['fast']:
             self.machine.config['fast']['config_number_format'] = 'int'
 
         self.machine_type = (
-            self.machine.config['hardware']['driverboards'].upper())
+            self.machine.config['hardware']['driverboards'].lower())
 
-        if self.machine_type == 'WPC':
+        if self.machine_type == 'wpc':
             self.log.debug("Configuring the FAST Controller for WPC driver "
                            "boards")
 
-        elif self.machine_type == 'FAST':
+        elif self.machine_type == 'fast':
             self.log.debug("Configuring FAST Controller for FAST driver boards.")
 
-        self.wpc_switch_map = {
-            'S11': '00', 'S12': '01', 'S13': '02', 'S14': '03',
-            'S15': '04', 'S16': '05', 'S17': '06', 'S18': '07',
-            'S21': '08', 'S22': '09', 'S23': '10', 'S24': '11',
-            'S25': '12', 'S26': '13', 'S27': '14', 'S28': '15',
-            'S31': '16', 'S32': '17', 'S33': '18', 'S34': '19',
-            'S35': '20', 'S36': '21', 'S37': '22', 'S38': '23',
-            'S41': '24', 'S42': '25', 'S43': '26', 'S44': '27',
-            'S45': '28', 'S46': '29', 'S47': '30', 'S48': '31',
-            'S51': '32', 'S52': '33', 'S53': '34', 'S54': '35',
-            'S55': '36', 'S56': '37', 'S57': '38', 'S58': '39',
-            'S61': '40', 'S62': '41', 'S63': '42', 'S64': '43',
-            'S65': '44', 'S66': '45', 'S67': '46', 'S68': '47',
-            'S71': '48', 'S72': '49', 'S73': '50', 'S74': '51',
-            'S75': '52', 'S76': '53', 'S77': '54', 'S78': '55',
-            'S81': '56', 'S82': '57', 'S83': '58', 'S84': '59',
-            'S85': '60', 'S86': '61', 'S87': '62', 'S88': '63',
-            'S91': '64', 'S92': '65', 'S93': '66', 'S94': '67',
-            'S95': '68', 'S96': '69', 'S97': '70', 'S98': '71',
-
-            'SD1': '80', 'SD2': '81', 'SD3': '82', 'SD4': '83',
-            'SD5': '84', 'SD6': '85', 'SD7': '86', 'SD8': '87',
-
-            'DIP1': '88', 'DIP2': '89', 'DIP3': '90', 'DIP4': '91',
-            'DIP5': '92', 'DIP6': '93', 'DIP7': '94', 'DIP8': '95',
-
-            'SF1': '96', 'SF2': '97', 'SF3': '98', 'SF4': '99',
-            'SF5': '100', 'SF6': '101', 'SF7': '102', 'SF8': '103',
-                               }
+        self.wpc_switch_map = {  # autogenerated, so not in order. Sorry :(
+            'SF8': '67', 'SF6': '65', 'SF7': '66', 'SF4': '63',
+            'SF5': '64', 'SF2': '61', 'SF3': '62', 'SF1': '60',
+            'S57': '26', 'S56': '25', 'S55': '24', 'S54': '23',
+            'S53': '22', 'S52': '21', 'S51': '20', 'S58': '27',
+            'S44': '1b', 'S45': '1c', 'S46': '1d', 'S47': '1e',
+            'S41': '18', 'S42': '19', 'S43': '1a', 'S48': '1f',
+            'S78': '37', 'S71': '30', 'S73': '32', 'S72': '31',
+            'S75': '34', 'S74': '33', 'S77': '36', 'S76': '35',
+            'S68': '2f', 'S66': '2d', 'S67': '2e', 'S64': '2b',
+            'S65': '2c', 'S62': '29', 'S63': '2a', 'S61': '28',
+            'S18': '07', 'S13': '02', 'S12': '01', 'S11': '00',
+            'S17': '06', 'S16': '05', 'S15': '04', 'S14': '03',
+            'S93': '42', 'S92': '41', 'S91': '40', 'S97': '46',
+            'S96': '45', 'S95': '44', 'S94': '43', 'S98': '47',
+            'S81': '38', 'S82': '39', 'S83': '3a', 'S84': '3b',
+            'S85': '3c', 'S86': '3d', 'S87': '3e', 'S88': '3f',
+            'SD4': '53', 'SD5': '54', 'SD6': '55', 'SD7': '56',
+            'SD1': '50', 'SD2': '51', 'SD3': '52', 'SD8': '57',
+            'S38': '17', 'S35': '14', 'S34': '13', 'S37': '16',
+            'S36': '15', 'S31': '10', 'S33': '12', 'S32': '11',
+            'S22': '09', 'S23': '0a', 'S21': '08', 'S26': '0d',
+            'S27': '0e', 'S24': '0b', 'S25': '0c', 'S28': '0f',
+            'DIP8': '5f', 'DIP1': '58', 'DIP3': '5a', 'DIP2': '59',
+            'DIP5': '5c', 'DIP4': '5b', 'DIP7': '5e', 'DIP6': '5d',
+                              }
 
         self.wpc_light_map = {
             'L11': '00', 'L12': '01', 'L13': '02', 'L14': '03',
             'L15': '04', 'L16': '05', 'L17': '06', 'L18': '07',
-            'L21': '08', 'L22': '09', 'L23': '10', 'L24': '11',
-            'L25': '12', 'L26': '13', 'L27': '14', 'L28': '15',
-            'L31': '16', 'L32': '17', 'L33': '18', 'L34': '19',
-            'L35': '20', 'L36': '21', 'L37': '22', 'L38': '23',
-            'L41': '24', 'L42': '25', 'L43': '26', 'L44': '27',
-            'L45': '28', 'L46': '29', 'L47': '30', 'L48': '31',
-            'L51': '32', 'L52': '33', 'L53': '34', 'L54': '35',
-            'L55': '36', 'L56': '37', 'L57': '38', 'L58': '39',
-            'L61': '40', 'L62': '41', 'L63': '42', 'L64': '43',
-            'L65': '44', 'L66': '45', 'L67': '46', 'L68': '47',
-            'L71': '48', 'L72': '49', 'L73': '50', 'L74': '51',
-            'L75': '52', 'L76': '53', 'L77': '54', 'L78': '55',
-            'L81': '56', 'L82': '57', 'L83': '58', 'L84': '59',
-            'L85': '60', 'L86': '61', 'L87': '62', 'L88': '63',
+            'L21': '08', 'L22': '09', 'L23': '0A', 'L24': '0B',
+            'L25': '0C', 'L26': '0D', 'L27': '0E', 'L28': '0F',
+            'L31': '10', 'L32': '11', 'L33': '12', 'L34': '13',
+            'L35': '14', 'L36': '15', 'L37': '16', 'L38': '17',
+            'L41': '18', 'L42': '19', 'L43': '1A', 'L44': '1B',
+            'L45': '1C', 'L46': '1D', 'L47': '1E', 'L48': '1F',
+            'L51': '20', 'L52': '21', 'L53': '22', 'L54': '23',
+            'L55': '24', 'L56': '25', 'L57': '26', 'L58': '27',
+            'L61': '28', 'L62': '29', 'L63': '2A', 'L64': '2B',
+            'L65': '2C', 'L66': '2D', 'L67': '2E', 'L68': '2F',
+            'L71': '30', 'L72': '31', 'L73': '32', 'L74': '33',
+            'L75': '34', 'L76': '35', 'L77': '36', 'L78': '37',
+            'L81': '38', 'L82': '39', 'L83': '3A', 'L84': '3B',
+            'L85': '3C', 'L86': '3D', 'L87': '3E', 'L88': '3F',
                                }
 
         self.wpc_driver_map = {
             'C01': '00', 'C02': '01', 'C03': '02', 'C04': '03',
             'C05': '04', 'C06': '05', 'C07': '06', 'C08': '07',
-            'C09': '08', 'C10': '09', 'C11': '10', 'C12': '11',
-            'C13': '12', 'C14': '13', 'C15': '14', 'C16': '15',
-            'C17': '16', 'C18': '17', 'C19': '18', 'C20': '19',
-            'C21': '20', 'C22': '21', 'C23': '22', 'C24': '23',
-            'C25': '24', 'C26': '25', 'C27': '26', 'C28': '27',
-            'C29': '32', 'C30': '33', 'C31': '34', 'C32': '35',
-            'C33': '36', 'C34': '37', 'C35': '38', 'C36': '39',
-            'FLRM': '32', 'FLRH': '33', 'FLLM': '34', 'FLLH': '35',
-            'FURM': '36', 'FURH': '37', 'FULM': '38', 'FULH': '39',
-            'C37': '40', 'C38': '41', 'C39': '42', 'C40': '43',
-            'C41': '44', 'C42': '45', 'C43': '46', 'C44': '47',
+            'C09': '08', 'C10': '09', 'C11': '0A', 'C12': '0B',
+            'C13': '0C', 'C14': '0D', 'C15': '0E', 'C16': '0F',
+            'C17': '10', 'C18': '11', 'C19': '12', 'C20': '13',
+            'C21': '14', 'C22': '15', 'C23': '16', 'C24': '17',
+            'C25': '18', 'C26': '19', 'C27': '1A', 'C28': '1B',
+            'C29': '1C', 'C30': '1D', 'C31': '1E', 'C32': '1F',
+            'C33': '24', 'C34': '25', 'C35': '26', 'C36': '27',
+            'FLRM': '20', 'FLRH': '21', 'FLLM': '22', 'FLLH': '23',
+            'FURM': '24', 'FURH': '25', 'FULM': '26', 'FULH': '27',
+            'C37': '28', 'C38': '29', 'C39': '2A', 'C40': '2B',
+            'C41': '2C', 'C42': '2D', 'C43': '2E', 'C44': '2F',
                                 }
 
         self.wpc_gi_map = {
             'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
             'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
-                          }
+                           }
 
-        # temp until we have a proper reset
-        fastpinball.fpWriteAllRgbs(self.fast, 0, 0, 0)
+        self.pwm8_to_hex_string = {
+            0: '00', 1: '01', 2: '88', 3: '92', 4: 'AA', 5: 'BA', 6: 'EE',
+            7: 'FE', 8: 'FF'
+                                  }
 
-    def _initialize_hardware(self):
-        # The fast hardware needs to get a loop setup and needs a few calls
-        # to start sending switch data. So we do that here and return once we
-        # get valid switch data back.
-        self.log.info("Connecting to the FAST hardware...")
+        self.pwm8_to_int = {
+            0: 0, 1: 1, 2: 136, 3: 146, 4: 170, 5: 186, 6: 238,
+            7: 254, 8: 255
+                                  }
 
-        # libfastpinball needs a timer to work, but since we don't use it in MPF
-        # we'll set it to 1 sec (1,000,000us) so it doesn't get in our way
-        fastpinball.fpTimerConfig(self.fast, 5000)
+        self.fast_commands = {'ID': self.receive_id,  # processor ID
+                              'WX': self.receive_wx,  # watchdog
+                              'SL': self.receive_sl,  # local switch change
+                              'SN': self.receive_sn,  # nw switch change
+                              'NN': self.receive_nn,  # node id list
+                              'NI': self.receive_ni,  # node ID
+                              'RX': self.receive_rx,  # RGB cmd received
+                              'DX': self.receive_dx,  # DMD cmd received
+                              'SX': self.receive_sx,  # sw config received
+                              'LX': self.receive_lx,  # lamp cmd received
+                              'PX': self.receive_px,  # segment cmd received
+                              'LS': self.receive_ls,  # local switch states
+                              'NS': self.receive_ns,  # network switch states
+                              }
 
-        self.fast_events = fastpinball.fpGetEventObject()
+    def process_received_message(self, msg):
+        """Sends an incoming message from the FAST controller to the proper
+        method for servicing.
 
-        fastpinball.fpEventPoll(self.fast, self.fast_events)
-        fastpinball.fpEventPoll(self.fast, self.fast_events)
-        fastpinball.fpEventPoll(self.fast, self.fast_events)
-        fastpinball.fpEventPoll(self.fast, self.fast_events)
-        fastpinball.fpEventPoll(self.fast, self.fast_events)
+        """
+        if msg[2:3] == ':':
+            cmd = msg[0:2]
+            msg = msg[3:].replace('\r\n','')
 
-        got_local_switches = False
-        got_nw_switches = False
+            if cmd in self.fast_commands:
+                self.fast_commands[cmd](msg)
 
-        return  # Uncomment to allow running without a physical connection
+    def _connect_to_hardware(self):
+        # Connect to each port from the config. This procuess will cause the
+        # connection threads to figure out which processor they've connected to
+        # and to register themselves.
+        for port in self.config['ports']:
 
-        while not got_local_switches or not got_nw_switches:
-            time.sleep(0.001)
-            fastpinball.fpReadAllSwitches(self.fast)
-            fastpinball.fpEventPoll(self.fast, self.fast_events)
-            fastpinball.fpEventPoll(self.fast, self.fast_events)
-            fastpinball.fpEventPoll(self.fast, self.fast_events)
-            fastpinball.fpEventPoll(self.fast, self.fast_events)
-            fastpinball.fpEventPoll(self.fast, self.fast_events)
-            event_type = fastpinball.fpGetEventType(self.fast_events)
+            self.connection_threads.add(SerialCommunicator(machine=self.machine,
+                platform=self, port=port, baud=self.config['baud'],
+                send_queue=Queue.Queue(), receive_queue=self.receive_queue))
 
-            if event_type == fastpinball.FP_EVENT_TYPE_NETWORK_SWITCHES_UPDATED:
-                got_nw_switches = True
+        # Send the command to cause the FAST controller to send information
+        # about connected nodes. The message processing on the receive queue
+        # will automatically process this when it comes in.
+        try:
+            self.net_connection.send('CN:')
+        except:
+            print "error sending CN:"
+            sys.exit()
 
-            elif event_type == fastpinball.FP_EVENT_TYPE_SWITCHES_UPDATED:
-                got_local_switches = True
+    def register_processor_connection(self, name, communicator):
+        """Once a communication link has been established with one of the
+        processors on the FAST board, this method lets the communicator let MPF
+        know which processor it's talking to.
 
-        self.log.info("Connected to the FAST hardware.")
+        This is a separate method since we don't know which processor is on
+        which serial port ahead of time.
 
-    def timer_initialize(self):
+        """
 
-        # FAST timer tick is in microsecs
-        us = int((1.0 / self.machine.config['timing']['hz']) * 1000000)
-        self.log.debug("Initializing the FAST hardware timer for %sHz (%s us)",
-                       Timing.HZ, us)
-        #fastpinball.fpTimerConfig(self.fast, us)
+        if name == 'DMD':
+            self.dmd_connection = communicator
+        elif name == 'NET':
+            self.net_connection = communicator
+        elif name == 'RGB':
+            self.rgb_connection = communicator
+
+    def update_leds(self):
+        """ Updates all the LEDs connected to a FAST controller. This is done
+        once per game loop for efficiency (i.e. all LEDs are sent as a single
+        update rather than lots of individual ones).
+
+        Also, every LED is updated every loop, even if it doesn't change. This
+        is in case some interference causes a LED to change color. Since we
+        update every loop, it will only be the wrong color for one tick.
+
+        """
+
+        msg = 'RS:'
+
+        for led in self.fast_leds:
+            msg += (led.number + led.current_color + ',')
+
+        self.rgb_connection.send(msg)
+
+    def get_switch_states(self):
+        self.net_connection.send('SA:')
+
+
+    def receive_id(self, msg):
+        pass
+
+    def receive_wx(self, msg):
+        pass
+
+    def receive_ni(self, msg):
+        pass
+
+    def receive_rx(self, msg):
+        pass
+
+    def receive_dx(self, msg):
+        pass
+
+    def receive_sx(self, msg):
+        pass
+
+    def receive_lx(self, msg):
+        pass
+
+    def receive_px(self, msg):
+        pass
+
+    def receive_nn(self, msg):
+        msg = msg.split(',')
+        node_id = msg[0]
+        model = msg[1]
+        fw = msg[2]
+        num_switches = msg[3]
+        num_drivers = msg[4]
+        exdata_in = msg[5]
+        exdata_out = msg[6]
+
+        # todo
+        # save this to a config list?
+        # verify min fw for each node
+
+    def receive_sl(self, msg):
+        try:
+            switch_num = msg[:2]
+
+            if msg[2] == '+':
+                state = 1
+            else:
+                state = 0
+        except:
+            self.log.warning("Received malformed SL command: '%s'", msg)
+            return
+
+        self.machine.switch_controller.process_switch(state=state,
+                                                      num=(switch_num, 0))
+
+    def receive_sn(self, msg):
+        try:
+            switch_num = msg[:2]
+
+            if msg[2] == '+':
+                state = 1
+            else:
+                state = 0
+        except:
+            self.log.warning("Received malformed SN command: '%s'", msg)
+            return
+
+        self.machine.switch_controller.process_switch(state=state,
+                                                      num=(switch_num, 1))
+
+    def receive_ns(self, msg):
+        for offset, byte in enumerate(bytearray.fromhex(msg)):
+            for i in range(8):
+                if byte & (2**i):
+                    num = self.int_to_hex_string((offset * 8) + i)
+                    self.log.info("Found initial active switch: %s", num)
+                    self.machine.switch_controller.process_switch(num=(num, 1),
+                                                                  state=1)
+
+    def receive_ls(self, msg):
+        for offset, byte in enumerate(bytearray.fromhex(msg)):
+            for i in range(8):
+                if byte & (2**i):
+                    num = self.int_to_hex_string((offset * 8) + i)
+                    self.log.info("Found initial active switch: %s", num)
+                    self.machine.switch_controller.process_switch(num=(num, 0),
+                                                                  state=1)
 
     def configure_driver(self, config, device_type='coil'):
 
-        # If we have WPC driver boards, look up the switch number
-        if self.machine_type == 'WPC':
-            config['number'] = int(self.wpc_driver_map.get(
-                                   config['number_str'].upper()))
+        if not self.net_connection:
+            self.log.critical("A request was made to configure a FAST driver, "
+                              "but no connection to a NET processor is "
+                              "available")
+            sys.exit()
+
+        # If we have WPC driver boards, look up the driver number
+        if self.machine_type == 'wpc':
+            config['number'] = self.wpc_driver_map.get(
+                                                config['number_str'].upper())
             if 'connection' not in config:
                 config['connection'] = 0  # local driver (default for WPC)
             else:
                 config['connection'] = 1  # network driver
 
-        # If we have fast driver boards, we need to make sure we have ints
-        elif self.machine_type == 'FAST':
+        # If we have fast driver boards, we need to make sure we have hex strs
+        elif self.machine_type == 'fast':
 
-            if self.machine.config['fast']['config_number_format'] == 'hex':
-                config['number'] = int(config['number_str'], 16)
+            if self.config['config_number_format'] == 'int':
+                config['number'] = self.int_to_hex_string(config['number'])
+            else:
+                config['number'] = self.normalize_hex_string(config['number'])
 
             # Now figure out the connection type
             if 'connection' not in config:
@@ -273,7 +389,9 @@ class HardwarePlatform(Platform):
         # (driver number, connection type)
         config['number'] = (config['number'], config['connection'])
 
-        return FASTDriver(config['number'], self.fast), config['number']
+        return FASTDriver(config['number'], self.net_connection.send), config['number']
+
+        # todo set the rest time, default pulse times, etc.?
 
     def configure_switch(self, config):
         """Configures the switch object for a FAST Pinball controller.
@@ -297,53 +415,71 @@ class HardwarePlatform(Platform):
 
         """
 
-        if self.machine_type == 'WPC':  # translate switch number to FAST switch
-            config['number'] = int(self.wpc_switch_map.get(
-                                   config['number_str']))
+        if not self.net_connection:
+            self.log.critical("A request was made to configure a FAST switch, "
+                              "but no connection to a NET processor is "
+                              "available")
+            sys.exit()
+
+        if self.machine_type == 'wpc':  # translate switch number to FAST switch
+            config['number'] = self.wpc_switch_map.get(
+                                                config['number_str'].upper())
             if 'connection' not in config:
                 config['connection'] = 0  # local switch (default for WPC)
             else:
                 config['connection'] = 1  # network switch
 
-        elif self.machine_type == 'FAST':
+        elif self.machine_type == 'fast':
             if 'connection' not in config:
                 config['connection'] = 1  # network switch (default for FAST)
             else:
                 config['connection'] = 0  # local switch
 
-            if self.machine.config['fast']['config_number_format'] == 'hex':
-                config['number'] = int(config['number_str'], 16)
+            if self.config['config_number_format'] == 'int':
+                config['number'] = self.int_to_hex_string(config['number'])
+            else:
+                config['number'] = self.normalize_hex_string(config['number'])
 
-        # converet the switch number into a tuple which is:
+        # convert the switch number into a tuple which is:
         # (switch number, connection)
         config['number'] = (config['number'], config['connection'])
 
-        if 'debounce_on' not in config:
-            if 'default_debounce_on_ms' in self.machine.config['fast']:
-                config['debounce_on'] = (self.machine.config['fast']
-                                         ['default_debounce_on_ms'])
-            else:
-                config['debounce_on'] = 20
-        if 'debounce_off' not in config:
-                if 'default_debounce_off_ms' in self.machine.config['fast']:
-                    config['debounce_off'] = (self.machine.config['fast']
-                                              ['default_debounce_off_ms'])
-                else:
-                    config['debounce_off'] = 20
+        if 'debounce_open' not in config:
+            config['debounce_open'] = self.config['default_debounce_open']
+
+        if 'debounce_close' not in config:
+            config['debounce_close'] = self.config['default_debounce_close']
 
         self.log.debug("FAST Switch hardware tuple: %s", config['number'])
 
-        switch = FASTSwitch(config['number'], config['debounce_on'],
-                            config['debounce_off'], self.fast)
+        switch = FASTSwitch(number=config['number'],
+                            debounce_open=config['debounce_open'],
+                            debounce_close=config['debounce_close'],
+                            sender=self.net_connection.send)
 
-        state = fastpinball.fpReadSwitch(self.fast, config['number'][0],
-                                         config['number'][1])
+        state = 0  # todo
+
+        if not self.flag_switch_registered:
+            self.machine.events.add_handler('init_phase_2',
+                                            self.get_switch_states)
+            self.flag_switch_registered = True
 
         # Return the switch object and an integer of its current state.
         # 1 = active, 0 = inactive
         return switch, config['number'], state
 
     def configure_led(self, config):
+
+        if not self.rgb_connection:
+            self.log.critical("A request was made to configure a FAST LED, "
+                              "but no connection to an LED processor is "
+                              "available")
+            sys.exit()
+
+        if not self.flag_led_tick_registered:
+            self.machine.events.add_handler('timer_tick', self.update_leds)
+            self.flag_led_tick_registered = True
+
         # if the LED number is in <channel> - <led> format, convert it to a
         # FAST hardware number
         if '-' in config['number_str']:
@@ -352,62 +488,68 @@ class HardwarePlatform(Platform):
         else:
             config['number'] = str(config['number'])
 
-        # if the config is in hex format, convert it to int
-        if self.machine.config['fast']['config_number_format'] == 'hex':
-            config['number'] = int(config['number'], 16)
+        if self.config['config_number_format'] == 'int':
+            config['number'] = self.int_to_hex_string(config['number'])
+        else:
+            config['number'] = self.normalize_hex_string(config['number'])
 
-        return FASTDirectLED(config['number'], self.fast)
+        this_fast_led = FASTDirectLED(config['number'])
+        self.fast_leds.add(this_fast_led)
+
+        return this_fast_led
 
     def configure_gi(self, config):
-        if self.machine_type == 'WPC':  # translate switch number to FAST switch
-            config['number'] = int(self.wpc_gi_map.get(config['number_str']))
 
-        return FASTGIString(config['number'], self.fast), config['number']
+        if not self.net_connection:
+            self.log.critical("A request was made to configure a FAST GI, "
+                              "but no connection to a NET processor is "
+                              "available")
+            sys.exit()
+
+        if self.machine_type == 'wpc':  # translate switch number to FAST switch
+            config['number'] = self.wpc_gi_map.get(config['number_str'].upper())
+
+        return (FASTGIString(config['number'], self.net_connection.send),
+                config['number'])
 
     def configure_matrixlight(self, config):
-        if self.machine_type == 'WPC':  # translate switch number to FAST switch
-            config['number'] = int(self.wpc_light_map.get(config['number_str']))
-        elif self.machine.config['fast']['config_number_format'] == 'hex':
-            config['number'] = int(config['number_str'], 16)
 
-        return FASTMatrixLight(config['number'], self.fast), config['number']
+        if not self.net_connection:
+            self.log.critical("A request was made to configure a FAST matrix "
+                              "light, but no connection to a NET processor is "
+                              "available")
+            sys.exit()
+
+        if self.machine_type == 'wpc':  # translate number to FAST light num
+            config['number'] = self.wpc_light_map.get(
+                                                config['number_str'].upper())
+        elif self.config['config_number_format'] == 'int':
+            config['number'] = self.int_to_hex_string(config['number'])
+        else:
+            config['number'] = self.normalize_hex_string(config['number'])
+
+        return (FASTMatrixLight(config['number'], self.net_connection.send),
+                config['number'])
 
     def configure_dmd(self):
         """Configures a hardware DMD connected to a FAST controller."""
-        return FASTDMD(self.machine, self.fast)
+
+        if not self.dmd_connection:
+            self.log.critical("A request was made to configure a FAST DMD, "
+                              "but no connection to a DMD processor is "
+                              "available")
+            sys.exit()
+
+        return FASTDMD(self.machine, self.dmd_connection.send)
 
     def tick(self):
-        no_more_events = False
+        while not self.receive_queue.empty():
+            self.process_received_message(self.receive_queue.get(False))
 
-        while not no_more_events:
-
-            fastpinball.fpEventPoll(self.fast, self.fast_events)
-            event_type = fastpinball.fpGetEventType(self.fast_events)
-
-            if event_type == fastpinball.FP_EVENT_TYPE_NONE:
-                no_more_events = True
-
-            elif event_type == fastpinball.FP_EVENT_TYPE_TIMER_TICK:
-                no_more_events = True
-
-            elif event_type == fastpinball.FP_EVENT_TYPE_SWITCH_ACTIVE:
-                self.machine.switch_controller.process_switch(state=1,
-                    num=(fastpinball.fpGetEventSwitchID(self.fast_events), 0))
-
-            elif event_type == fastpinball.FP_EVENT_TYPE_SWITCH_INACTIVE:
-                self.machine.switch_controller.process_switch(state=0,
-                    num=(fastpinball.fpGetEventSwitchID(self.fast_events), 0))
-
-            elif event_type == fastpinball.FP_EVENT_TYPE_NETWORK_SWITCH_ACTIVE:
-                self.machine.switch_controller.process_switch(state=1,
-                    num=(fastpinball.fpGetEventSwitchID(self.fast_events), 1))
-
-            elif event_type == fastpinball.FP_EVENT_TYPE_NETWORK_SWITCH_INACTIVE:
-                self.machine.switch_controller.process_switch(state=0,
-                    num=(fastpinball.fpGetEventSwitchID(self.fast_events), 1))
+        self.net_connection.send(self.watchdog_command)
 
     def write_hw_rule(self, sw, sw_activity, coil_action_ms, coil=None,
-                      pulse_ms=0, pwm_on=0, pwm_off=0, delay=0, recycle_time=0,
+                      pulse_ms=0, pwm_on=8, pwm_off=8, delay=0, recycle_time=0,
                       debounced=True, drive_now=False):
         """Used to write (or update) a hardware rule to the FAST controller.
 
@@ -432,10 +574,10 @@ class HardwarePlatform(Platform):
                 state specified.
             coil: The coil object this rule is for.
             pulse_ms: How long should the coil be pulsed (ms)
-            pwm_on: If the coil should be held on at less than 100% duty cycle,
-                this is the "on" time (in ms).
-            pwm_off: If the coil should be held on at less than 100% duty cycle,
-                this is the "off" time (in ms).
+            pwm_on: Integer 0 (off) through 8 (100% on) for the initial pwm
+                power of this coil
+            pwm_off: pwm level 0-8 of the power of this coil during the hold
+                phase (after the initial kick).
             delay: Not currently implemented
             recycle_time: How long (in ms) should this switch rule wait before
                 firing again. Put another way, what's the "fastest" this rule
@@ -456,13 +598,29 @@ class HardwarePlatform(Platform):
             return  # with fast this is built into the main coil rule
 
         self.log.info("Setting HW Rule. Switch:%s, Action ms:%s, Coil:%s, "
-                       "Pulse:%s, pwm_on:%s, pwm_off:%s, Delay:%s, Recycle:%s,"
+                       "Pulse:%s, pwm1:%s, pwm2:%s, Delay:%s, Recycle:%s,"
                        "Debounced:%s, Now:%s", sw.name, coil_action_ms,
                        coil.name, pulse_ms, pwm_on, pwm_off, delay,
                        recycle_time, debounced, drive_now)
 
+        if not pwm_on:
+            pwm_on = 8
+
+        if not pwm_off:
+            pwm_off = 8
+
+        pwm_on = self.pwm8_to_int[pwm_on]
+        pwm_off = self.pwm8_to_int[pwm_off]
+
         control = 0x01  # Driver enabled
-        mode = 0x00
+        if drive_now:
+            control += 0x08
+
+        if sw_activity == 0:
+            control += 0x10
+
+        control = self.int_to_hex_string(int(control))
+        mode = '00'
         param1 = 0
         param2 = 0
         param3 = 0
@@ -472,134 +630,69 @@ class HardwarePlatform(Platform):
         # First figure out if this is pulse (timed) or latched
 
         if coil_action_ms == -1:  # Latched
-            mode = fastpinball.FP_DRIVER_MODE_LATCHED
-
-            # do we have pulse+pwm, pwm only, or straight enable?
-
-            # pulse+pwm
-            if pulse_ms and pwm_on and pwm_off:
-                # pwm = self.pwm_to_byte(pwm_on, pwm_off)
-                pass  # todo
-
-            # pwm only
-            elif not pulse_ms and pwm_on and pwm_off:
-                # pwm = self.pwm_to_byte(pwm_on, pwm_off)
-                pass  # todo
-            # enable
-            else:
-                pwm = 0xff
-
-            # build up the args for fpConfigDriver
-            param1 = pulse_ms
-            param2 = pwm
+            mode = '18'
+            param1 = pulse_ms   # max on time
+            param2 = pwm_on     # pwm 1
+            param3 = pwm_off    # pwm 2
+            param4 = recycle_time
+            #param5
 
         elif coil_action_ms > 0:  # Pulsed
-            mode = fastpinball.FP_DRIVER_MODE_PULSED
+            mode = '10'
+            param1 = pulse_ms                   # initial pulse
+            param2 = pwm_on                     # pwm for initial pulse
+            param3 = coil_action_ms - pulse_ms  # second on time
+            param4 = pwm_off                    # pwm for second pulse
+            param5 = recycle_time
 
-            pwm = coil_action_ms - pulse_ms
+        if coil.number[1] == 1:
+            cmd = 'DN:'
+        else:
+            cmd = 'DL:'
 
-            # build up the args for fpConfigDriver
-            param1 = pulse_ms
-            param2 = pwm
+        param1 = self.int_to_hex_string(param1)
+        param2 = self.int_to_hex_string(param2)
+        param3 = self.int_to_hex_string(param3)
+        param4 = self.int_to_hex_string(param4)
+        param5 = self.int_to_hex_string(param5)
 
-        # Does this rule fire on a switch open?
-        if sw_activity == 0:
-            control += fastpinball.FP_DRIVER_CONTROL_SWITCH_1_INVERTED
+
+        # hw_rules key = ('05', 1)
+        # all values are strings
 
         self.hw_rules[coil.config['number']] = {'mode': mode,
-                                                'switch': sw.number,
-                                                'on': pwm_on,
-                                                'off': pwm_off}
+                                                'param1': param1,
+                                                'param2': param2,
+                                                'param3': param3,
+                                                'param4': param4,
+                                                'param5': param5,
+                                                'switch': sw.number}
 
-        self.log.info("fpConfigDriver (int): %s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-                      coil.number[0], control, sw.number[0], mode, param1,
-                      param2, param3, param4, param5, coil.number[1])
+        cmd = (cmd + coil.number[0] + ',' + control  + ',' + sw.number[0] + ','
+               + mode + ',' + param1 + ',' + param2 + ',' + param3 + ',' +
+               param4 + ',' + param5)  # todo change to join()
 
-        fastpinball.fpConfigDriver(self.fast,
-                                   coil.number[0],
-                                   control,
-                                   sw.number[0],
-                                   mode,
-                                   param1,
-                                   param2,
-                                   param3,
-                                   param4,
-                                   param5,
-                                   coil.number[1])
+        print cmd
 
+        self.net_connection.send(cmd)
+
+    def int_to_hex_string(self, source_int):
+        """Converts an int from 0-255 to a one-byte (2 chars) hex string, with
+        uppercase characters.
 
         """
 
+        source_int = int(source_int)
 
-        DN:00,01,00,10,20,FF,00,00,80 => Flipper Main Coil, Pulse
-           id,co,sw,md,p1,p2,p3,p4,p5
-        DN:01,01,00,18,20,92,20,00,00 => Flipper Hold Coil, Latched
-        DN:04,01,04,10,20,AA,00,00,80 => Slingshot, Pulsed
-        DN:0a,01,2D,10,20,AA,00,00,80 => Pop Bumper
+        if source_int >= 0 and source_int <= 255:
+            return format(source_int, 'x').upper().zfill(2)
 
-        Params - pulse (mode 10)
-        ontime1
-        pwm1
-        ontime2
-        pwm2
-        resttime
+        else:
+            print "invalid source int:", source_int
+            raise ValueError
 
-        Params - latches (mode 18)
-        pwm1_maxontime
-        pwm1
-        pwm2
-        resttime
-        none
-
-            fastpnball. fpConfigDriver(fpDevice,
-                                unsigned char id,
-                                unsigned char control,
-                                unsigned char switchId,
-                                unsigned char mode,
-                                unsigned char param1,
-                                unsigned char param2,
-                                unsigned char param3,
-                                unsigned char param4,
-                                unsigned char param5,
-                                int target);
-
-        Control
-        FP_DRIVER_CONTROL_OFF                   = 0x00,
-        FP_DRIVER_CONTROL_DRIVER_ENABLED        = 0x01,
-        FP_DRIVER_CONTROL_TRIGGER_ONESHOT       = 0x08,
-        FP_DRIVER_CONTROL_SWITCH_1_INVERTED     = 0x10,
-        FP_DRIVER_CONTROL_SWITCH_2_INVERTED     = 0x20,
-        FP_DRIVER_CONTROL_MANUAL_MODE_TRIGGER   = 0x40,
-        FP_DRIVER_CONTROL_MANUAL_MODE_ENABLED   = 0x80
-
-        Mode
-        FP_DRIVER_MODE_OFF                          = 0x00,
-        FP_DRIVER_MODE_PULSED                       = 0x10,
-        FP_DRIVER_MODE_LATCHED                      = 0x18,
-        FP_DRIVER_MODE_FLIPFLOP                     = 0x20,
-        FP_DRIVER_MODE_DELAY                        = 0x30,
-        FP_DRIVER_MODE_FLIPPER_DUAL                 = 0x40,
-        FP_DRIVER_MODE_FLIPPER_DUAL_COMPANION       = 0x41,
-        FP_DRIVER_MODE_FLIPPER_DUAL_EOS             = 0x48,
-        FP_DRIVER_MODE_FLIPPER_DUAL_EOS_COMPANION   = 0x49,
-        FP_DRIVER_MODE_FLIPPER_PWM                  = 0x50,
-        FP_DRIVER_MODE_FLIPPER_PWM_EOS              = 0x58,
-        FP_DRIVER_MODE_DIVERTER                     = 0x70,
-        FP_DRIVER_MODE_DITHER                       = 0x80
-        """
-
-        # old
-        #fastpinball.fpWriteDriver(self.fast,        # fast board
-        #                          coil.number[0],   # coil number
-        #                          mode,             # mode
-        #                          sw_activity,      # triggerType
-        #                          sw.number[0],     # switch
-        #                          pulse_ms,         # on time
-        #                          recycle_time,     # time before can enable again
-        #                          pwm,              # pwm (0 - 32)
-        #                          coil.number[1],   # local or network
-        #                          )
-        # todo ensure / verify switch & coil are on the same board.
+    def normalize_hex_string(self, source_hex, num_chars=2):
+            return str(source_hex).upper().zfill(num_chars)
 
     def clear_hw_rule(self, sw_name):
         """Clears a hardware rule.
@@ -615,79 +708,49 @@ class HardwarePlatform(Platform):
 
         """
 
+        print "sw name", sw_name
+
         sw_num = self.machine.switches[sw_name].number
+
+        print "swnum", sw_num
 
         self.log.debug("Clearing HW Rule for switch %s", sw_num)
 
         # find the rule(s) based on this switch
         coils = [k for k, v in self.hw_rules.iteritems() if v == sw_num]
 
+        print "coils", coils
+
         for coil in coils:
-            fastpinball.fpConfigDriver(self.fast,    # fast board
-                                       coil[0],      # DRIVER_ID
-                                       0,            # CONTROL
-                                       0,            # SWITCH_ID
-                                       0,            # MODE
-                                       0,            # PARAM 1
-                                       0,            # PARAM 2
-                                       0,            # PARAM 3
-                                       0,            # PARAM 4
-                                       0,            # PARAM 5
-                                       coil[1],      # local or network
-                                       )
-            # todo ensure / verify switch & coil are on the same board.
+            if coil.number[1] == 1:
+                cmd = 'DN:'
+            else:
+                cmd = 'DL:'
+            driver = coil[0]
+            mode = '81'
 
-        self.log.info("fpConfigDriver (int): %s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-                      coil.number[0], 0, 0, 0, 0, 0, 0, 0, 0, coil.number[1])
-
-    def get_switch_state(self, switch):
-        """Returns the hardware state of a switch.
-
-        Args:
-            switch: A class `Switch` object.
-
-        Returns:
-            Integer 1 if the switch is active, and 0 if the switch is
-            inactive. This method does not compensate for NO or NC status,
-            rather, it returns the raw hardware state of the switch.
-
-        """
-        return fastpinball.fpReadSwitch(self.fast, switch.number[0],
-                                        switch.number[1])
+            self.net_connection.send(cmd + driver + ',' + mode)
 
 
 class FASTSwitch(object):
-    """
-    fpWriteSwitchConfig params:
-        fp_device (self.fast)
-        switch number (switch number as int)
-        mode (0 = no report, 1 = report on, 2 = report inverted
-        debounce close
-        debounce open
-        sound
-        target (0 = local, 1 = network)
 
-        todo add support for different debounce open and close times
-
-    """
-
-    def __init__(self, number, debounce_on, debounce_off, fast_device):
+    def __init__(self, number, debounce_open, debounce_close, sender):
         self.log = logging.getLogger('FASTSwitch')
-        self.fast = fast_device
         self.number = number[0]
         self.connection = number[1]
-        self.log.debug("fastpinball.fpWriteSwitchConfig(%s, %s, 1, %s, %s, 0, "
-                       "%s)", fast_device, number[0], debounce_on,
-                       debounce_off, number[1])
-        fastpinball.fpWriteSwitchConfig(fast_device,    # fast board
-                                        number[0],      # switch number
-                                        1,              # mode (1=report "on")
-                                        debounce_on,    # debounce on (close)
-                                        debounce_off,   # debounce off (open)
-                                        0,              # sound
-                                        number[1])      # connection type
+        self.send = sender
 
+        if self.connection:
+            cmd = 'SN:'
+        else:
+            cmd = 'SL:'
 
+        debounce_open = str(hex(debounce_open))[2:]
+        debounce_close = str(hex(debounce_close))[2:]
+
+        cmd += str(self.number) + ',01,' + debounce_open + ',' + debounce_close
+
+        self.send(cmd)
 
 
 class FASTDriver(object):
@@ -695,7 +758,7 @@ class FASTDriver(object):
 
     """
 
-    def __init__(self, number, fast_device):
+    def __init__(self, number, sender):
         """
 
         Args:
@@ -712,7 +775,10 @@ class FASTDriver(object):
         """
         self.log = logging.getLogger('FASTDriver')
         self.number = number
-        self.fast = fast_device
+        self.send = sender
+
+        # send this driver's pulse / pwm settings
+        
 
     def disable(self):
         """Disables (turns off) this driver.
@@ -722,7 +788,7 @@ class FASTDriver(object):
         DRIVER_ID
         CONTROL n/a
         SWITCH_ID n/a
-        MODE fastpinball.FP_DRIVER_MODE_OFF (0x00)
+        MODE 00
         PARAM1 n/a
         PARAM2 n/a
         PARAM3 n/a
@@ -734,22 +800,8 @@ class FASTDriver(object):
         """
 
         self.log.debug('Disabling Driver')
-        fastpinball.fpConfigDriver(self.fast,                       # FAST BOARD
-                                   self.number[0],                  # DRIVER_ID
-                                   0,                               # CONTROL
-                                   0,                               # SWITCH_ID
-                                   fastpinball.FP_DRIVER_MODE_OFF,  # MODE
-                                   0,                               # PARAM 1
-                                   0,                               # PARAM 2
-                                   0,                               # PARAM 3
-                                   0,                               # PARAM 4
-                                   0,                               # PARAM 5
-                                   self.number[1],                  # LOCAL/NW
-                                   )
 
-        self.log.info("fpConfigDriver (int): %s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-                      self.number[0], 0, 0, fastpinball.FP_DRIVER_MODE_OFF, 0,
-                      0, 0, 0, 0, self.number[1])
+        self.send()
 
     def enable(self):
         """Enables (turns on) this driver.
@@ -759,37 +811,16 @@ class FASTDriver(object):
         DRIVER_ID
         CONTROL 193
         SWITCH_ID
-        MODE fastpinball.FP_DRIVER_MODE_LATCHED (0x18)
+        MODE 18
         PARAM1 pwm max on time
         PARAM2 pwm 1
         PARAM3 pwm 2
         PARAM4 rest time
         PARAM5 not used with latched config
 
-        CONTROL is 193 (0xC1) which is bitwise or of:
-        0x01 Driver enabled
-        0x40 Manual mode trigger
-        0x80 Manual mode enabled
-
         """
         self.log.debug('Enabling Driver')
-        fastpinball.fpConfigDriver(self.fast,       # fast board
-                                   self.number[0],  # driver number
-                                   193,             # control
-                                   0,               # switch
-                                   fastpinball.FP_DRIVER_MODE_LATCHED,  # mode
-                                   10,              # pwm max on time
-                                   255,             # pwm 1
-                                   255,             # pwm 2
-                                   0,               # rest time
-                                   0,               # not used
-                                   self.number[1],  # local or network
-                                   )
 
-        self.log.info("fpConfigDriver (int): %s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-                      self.number[0], 193, 0,
-                      fastpinball.FP_DRIVER_MODE_LATCHED,
-                      10, 255, 255, 0, 0, self.number[1])
 
         # todo change hold to pulse with re-ups
 
@@ -801,7 +832,7 @@ class FASTDriver(object):
         DRIVER_ID
         CONTROL
         SWITCH_ID
-        MODE fastpinball.FP_DRIVER_MODE_PULSED (0x10)
+        MODE 10
         PARAM1 pwm1 on time
         PARAM2 pwm 1
         PARAM3 pwm2 on time
@@ -810,32 +841,9 @@ class FASTDriver(object):
 
         Associated libfastpinball method:
 
-
-        CONTROL is 193 (0xC1) which is bitwise or of:
-        0x01 Driver enabled
-        0x40 Manual mode trigger
-        0x80 Manual mode enabled
-
-
         """
 
         self.log.debug('Pulsing Driver for %sms', milliseconds)
-        fastpinball.fpConfigDriver(self.fast,       # fast board
-                                   self.number[0],  # driver number
-                                   193,             # control
-                                   0,               # switch
-                                   fastpinball.FP_DRIVER_MODE_PULSED,  # mode
-                                   milliseconds,    # pwm 1 on time
-                                   255,             # pwm 1 power
-                                   0,               # pwm 2 on time
-                                   0,               # pwm 2 power
-                                   0,               # rest time
-                                   self.number[1],  # local or network
-                                   )
-
-        self.log.info("fpConfigDriver (int): %s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-                      self.number[0], 193, 0, fastpinball.FP_DRIVER_MODE_PULSED,
-                      milliseconds, 255, 0, 0, 0, self.number[1])
 
     def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
         """Enables this driver in a pwm pattern.
@@ -847,91 +855,62 @@ class FASTDriver(object):
         DRIVER_ID
         CONTROL
         SWITCH_ID
-        MODE fastpinball.FP_DRIVER_MODE_PULSED (0x10)
+        MODE 10
         PARAM1 pwm1 on time
         PARAM2 pwm 1
         PARAM3 pwm2 on time
         PARAM4 pwm 2
         PARAM 5 rest time
 
-        Associated libfastpinball method:
-
-
-        CONTROL is 193 (0xC1) which is bitwise or of:
-        0x01 Driver enabled
-        0x40 Manual mode trigger
-        0x80 Manual mode enabled
-
         """
         pass
 
-        # not yet implemented. I need to figure out the best way to do the pwm
-        # calculations.
-
-        #pwm = Timing.int_to_pwm()
-        #
-        #self.log.debug("pwm:", pwm)
-        #
-        #fastpinball.fpConfigDriver(self.fast,       # fast board
-        #                           self.number[0],  # driver number
-        #                           193,             # control
-        #                           0,               # switch
-        #                           fastpinball.FP_DRIVER_MODE_LATCHED,  # mode
-        #                           10,              # pwm max on time
-        #                           pwm,             # pwm 1
-        #                           pwm,             # pwm 2
-        #                           0,               # rest time
-        #                           0,               # not used
-        #                           self.number[1],  # local or network
-        #                           )
-
 
 class FASTGIString(object):
-    def __init__(self, number, fast_device):
-        """ A FAST GI string in a WPC machine.
+    def __init__(self, number, sender):
+        """A FAST GI string in a WPC machine.
 
         TODO: Need to implement the enable_relay and control which strings are
         dimmable.
         """
         self.log = logging.getLogger('FASTGIString.0x' + str(number))
         self.number = number
-        self.fast = fast_device
+        self.send = sender
 
     def off(self):
         self.log.debug("Turning Off GI String")
-        fastpinball.fpWriteGiString(self.fast, self.number, 0)
+        self.send('GI:' + self.number + '00')
         self.last_time_changed = time.time()
-        fastpinball.fpReadAllSwitches(self.fast)
 
     def on(self, brightness=255, fade_ms=0, start=0):
         if brightness >= 255:
             self.log.debug("Turning On GI String")
-            fastpinball.fpWriteGiString(self.fast, self.number, 100)
+            self.send('GI:' + self.number + 'ff')
         elif brightness == 0:
             self.off()
         else:
-            fastpinball.fpWriteGiString(self.fast, self.number,
-                                        int(brightness/255.0*100))
+            brightness = str(hex(brightness))[2:]
+            self.send('GI:' + self.number + brightness)
 
         self.last_time_changed = time.time()
 
 
 class FASTMatrixLight(object):
 
-    def __init__(self, number, fast_device):
+    def __init__(self, number, sender):
         self.log = logging.getLogger('FASTMatrixLight')
         self.number = number
-        self.fast = fast_device
+        self.send = sender
 
     def off(self):
-        """Disables (turns off) this driver."""
-        fastpinball.fpWriteLamp(self.fast, self.number, 0)
+        """Disables (turns off) this matrix light."""
+        self.send('L1:' + self.number + '00')
         self.last_time_changed = time.time()
 
     def on(self, brightness=255, fade_ms=0, start=0):
         """Enables (turns on) this driver."""
         if brightness >= 255:
-            fastpinball.fpWriteLamp(self.fast, self.number, 1)
+            self.send('L1:' + self.number + 'FF')
         elif brightness == 0:
             self.off()
         else:
@@ -943,17 +922,23 @@ class FASTMatrixLight(object):
 
 class FASTDirectLED(object):
 
-    def __init__(self, number, fast_device):
+    def __init__(self, number):
         self.log = logging.getLogger('FASTLED')
-        self.fast = fast_device
         self.number = number
 
-        self.current_color = [0, 0, 0]
+        self.current_color = '000000'
 
         # All FAST LEDs are 3 element RGB
 
         self.log.debug("Creating FAST RGB LED at hardware address: %s",
                        self.number)
+
+    def hex_to_rgb(self, value):
+        lv = len(value)
+        return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
+
+    def rgb_to_hex(self, rgb):
+        return '%02x%02x%02x' % ((rgb[0], rgb[1], rgb[2]))
 
     def color(self, color):
         """Instantly sets this LED to the color passed.
@@ -962,17 +947,10 @@ class FASTDirectLED(object):
             color: a 3-item list of integers representing R, G, and B values,
             0-255 each.
         """
-        # Pad the color with zeros to make sure we have as many colors as
-        # elements
-        # todo verify this is needed with FAST. It might just work without
 
-        color += [0] * (3 - len(color))
-
-        #self.log.info("fastpinball.fpWriteRgb(self.fast, %s, %s, %s, %s)",
-        #               self.number, color[0], color[1], color[2])
-
-        fastpinball.fpWriteRgb(self.fast, self.number, color[0], color[1],
-                               color[2])
+        self.current_color = self.rgb_to_hex(color)
+        # todo this is crazy inefficient right now. todo change it so it can use
+        # hex strings as the color throughout
 
     def fade(self, color, fade_ms):
         # todo
@@ -984,20 +962,20 @@ class FASTDirectLED(object):
         turns all elements off.
         """
 
-        fastpinball.fpWriteRgb(self.fast, self.number, 0, 0, 0)
+        self.current_color = '000000'
 
     def enable(self):
-        self.color([255, 255, 255])
+        self.current_color = 'ffffff'
 
 
 class FASTDMD(object):
 
-    def __init__(self, machine, fast_device):
+    def __init__(self, machine, sender):
         self.machine = machine
-        self.fast = fast_device
+        self.send = sender
 
         # Clear the DMD
-        fastpinball.fpClearDmd(self.fast)
+        pass  # todo
 
         self.dmd_frame = bytearray()
 
@@ -1011,7 +989,135 @@ class FASTDMD(object):
             pass
 
     def tick(self):
-        fastpinball.fpWriteDmd(self.fast, self.dmd_frame)
+        pass  # write DMD frame bytearray
+
+
+class SerialCommunicator(object):
+
+    def __init__(self, machine, platform, port, baud, send_queue, receive_queue):
+        self.machine = machine
+        self.platform = platform
+        self.send_queue = send_queue
+        self.receive_queue = receive_queue
+        self.debug = False
+        self.log = None
+
+        self.remote_processor = None
+        self.remote_model = None
+        self.remote_firmware = 0.0
+
+        self.ignored_messages = ['RX:P', 'DX:P', 'SX:P', 'LX:P', 'PX:P']
+
+        self.platform.log.info("Connecting to %s at %sbps", port, baud)
+        self.serial_connection = serial.Serial(port=port, baudrate=baud,
+                                               timeout=1, writeTimeout=None)
+
+        self.identify_connection()
+        self.platform.register_processor_connection(self.remote_processor, self)
+        self._start_threads()
+
+    def identify_connection(self):
+        """Identifies which processor this serial connection is talking to."""
+
+        # keep looping and wait for an ID response
+
+        msg = ''
+
+        while True:
+            self.platform.log.debug("Sending 'ID:' command to port '%s'",
+                                   self.serial_connection.name)
+            self.serial_connection.write('ID:\r\n')
+            msg = self.serial_connection.readline()  # todo timeout
+            if msg.startswith('ID:'):
+                break
+
+        # examples of ID responses
+        # ID:DMD FP-CPU-002-1 00.87
+        # ID:NET FP-CPU-002-2 00.85
+        # ID:RGB FP-CPU-002-2 00.85
+
+        try:
+            self.remote_processor, self.remote_model, self.remote_firmware = (
+                msg[3:].split())
+        except ValueError:
+            self.remote_processor, self.remote_model, = msg[3:].split()
+
+        self.platform.log.info("Received ID acknowledgement. Processor: %s, "
+                               "Board: %s, Firmware: %s", self.remote_processor,
+                               self.remote_model, self.remote_firmware)
+
+        self.remote_firmware = float(self.remote_firmware)
+        # todo change to loose version
+        # todo verify version
+
+    def _start_threads(self):
+        self.receive_thread = threading.Thread(target=self._receive_loop)
+        self.receive_thread.daemon = True
+        self.receive_thread.start()
+
+        self.sending_thread = threading.Thread(target=self._sending_loop)
+        self.sending_thread.daemon = True
+        self.sending_thread.start()
+
+    def stop(self):
+        """Stops and shuts down this serial connection."""
+        self.serial_connection.close()
+        self.serial_connection = None  # child threads stop when this is None
+
+        # todo clear the hw?
+
+    def send(self, msg):
+        """Sends a message to the remote processor over the serial connection.
+
+        Args:
+            msg: String of the message you want to send. THe <CR> character will
+                be added automatically.
+
+        """
+        self.send_queue.put(msg + '\r\n')
+
+    def _sending_loop(self):
+
+        debug = self.platform.config['debug']
+
+        try:
+            while self.serial_connection:
+                msg = self.send_queue.get()
+                self.serial_connection.write(msg)
+
+                if debug:
+                    self.platform.log.info("Sending: %s", msg)
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.machine.crash_queue.put(msg)
+
+    def _receive_loop(self):
+
+        debug = self.platform.config['debug']
+
+        try:
+            while self.serial_connection:
+                msg = self.serial_connection.readline()
+
+                if debug:
+                    self.platform.log.info("Received: %s", msg)
+
+                if msg not in self.ignored_messages:
+                    self.receive_queue.put(msg)
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.machine.crash_queue.put(msg)
+
+
+
+
+
 
 
 # The MIT License (MIT)
