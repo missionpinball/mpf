@@ -151,7 +151,8 @@ class BCP(object):
         self.track_volumes = dict()
         self.volume_control_enabled = False
 
-        self._setup_dmd()
+        if self.machine.config['dmd']['physical']:
+            self._setup_dmd()
 
         try:
             self.bcp_events = self.config['event_map']
@@ -216,7 +217,6 @@ class BCP(object):
                 dmd_platform = (self.machine.hardware_platforms
                                 [self.machine.config['platform']['dmd']])
 
-        print dmd_platform
         self.dmd = dmd_platform.configure_dmd()
 
     def _setup_bcp_connections(self):
