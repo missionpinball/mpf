@@ -217,7 +217,7 @@ class TargetGroup(Device):
             self.config['unlit_complete_show'] = None
 
         if 'unlit_complete_script' not in self.config:
-            self.config['unlt_complete_script'] = None
+            self.config['unlit_complete_script'] = None
 
         if 'rotate_left_events' not in self.config:
             self.config['rotate_left_events'] = list()
