@@ -1,0 +1,7 @@
+- tocks: 1
+  gis:
+    gi_back_panel: ff
+    gi_upper_right: ff
+    gi_upper_left: ff
+    gi_lower_right: ff
+    gi_lower_left: ff

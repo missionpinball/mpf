@@ -58,6 +58,7 @@ mpf:
         config: config
         modes: modes
     default_pulse_ms: 10
+    default_flash_ms: 50
 
 # Default settings for machines. All can be overridden
 

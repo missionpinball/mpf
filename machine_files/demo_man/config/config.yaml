@@ -1102,6 +1102,12 @@ LightPlayer:
     - show: inlane_alternate
       repeat: yes
       tocks_per_sec: 8
+    - show: gi_on
+      repeat: no
+      hold: yes
+    - show: flashers
+      repeat: yes
+      tocks_per_sec: 4
 
   attract_stop:
     - show: multiball_sweep
@@ -1130,6 +1136,8 @@ LightPlayer:
     - show: inlane_alternate
       action: stop
       hold: false
+    - show: flashers
+      action: stop
 
 Shots:
     left_orbit:

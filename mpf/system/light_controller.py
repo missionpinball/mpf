@@ -34,6 +34,8 @@ class LightController(object):
         self.led_queue = []
         self.event_queue = set()
         self.coil_queue = set()
+        self.gi_queue = set()
+        self.flasher_queue = set()
 
         self.registered_light_scripts = CaseInsensitiveDict()
 
@@ -499,6 +501,12 @@ class LightController(object):
             # for pulse, it's a power multiplier
         self.coil_queue.add((coil, action))
 
+    def _add_to_gi_queue(self, gi, value):
+        self.gi_queue.add((gi, value))
+
+    def _add_to_flasher_queue(self, flasher):
+        self.flasher_queue.add(flasher)
+
     def _do_update(self):
         if self.light_update_list:
             self._update_lights()
@@ -508,6 +516,10 @@ class LightController(object):
             self._fire_coils()
         if self.event_queue:
             self._fire_events()
+        if self.gi_queue:
+            self._update_gis()
+        if self.flasher_queue:
+            self._update_flashers()
 
     def _fire_coils(self):
         for coil in self.coil_queue:
@@ -519,6 +531,16 @@ class LightController(object):
         for event in self.event_queue:
             self.machine.events.post(event)
         self.event_queue = set()
+
+    def _update_gis(self):
+        for gi in self.gi_queue:
+            gi[0].on(brightness=gi[1])
+        self.gi_queue = set()
+
+    def _update_flashers(self):
+        for flasher in self.flasher_queue:
+            flasher.flash()
+        self.flasher_queue = set()
 
     def _update_lights(self):
         # Updates all the lights in the machine with whatever's in
@@ -987,6 +1009,66 @@ class Show(Asset):
 
                 step_actions['coils'] = coil_actions
 
+            # Flashers
+            if ('flashers' in show_actions[step_num] and
+                    show_actions[step_num]['flashers']):
+
+                flasher_set = set()
+
+                for flasher in Config.string_to_list(
+                        show_actions[step_num]['flashers']):
+
+                    if 'tag|' in flasher:
+                        tag = flasher.split('tag|')[1]
+                        flasher_list = self.machine.flashers.items_tagged(tag)
+                    else:  # create a single item list of the flasher objects
+                        try:
+                            flasher_list = [self.machine.flashers[flasher]]
+                        except KeyError:
+                            self.asset_manager.log.warning("Found invalid "
+                                "flasher name '%s' in show. Skipping...",
+                                flasher)
+                            continue
+
+                    for flasher in flasher_list:
+                        flasher_set.add(flasher)
+
+                step_actions['flashers'] = flasher_set
+
+            # GI
+            if ('gis' in show_actions[step_num] and
+                    show_actions[step_num]['gis']):
+
+                gi_actions = dict()
+
+                for gi in show_actions[step_num]['gis']:
+
+                    if 'tag|' in gi:
+                        tag = gi.split('tag|')[1]
+                        gi_list = self.machine.gi.items_tagged(tag)
+                    else:  # create a single item list of the light object
+                        try:
+                            gi_list = [self.machine.gi[gi]]
+                        except KeyError:
+                            self.asset_manager.log.warning("Found invalid "
+                                "GI name '%s' in show. Skipping...",
+                                gi)
+                            continue
+
+                    value = show_actions[step_num]['gis'][gi]
+
+                    # convert / ensure flashers are single ints
+                    if type(value) is str:
+                        value = LightController.hexstring_to_int(value)
+
+                    if type(value) is int and value > 255:
+                        value = 255
+
+                    for gi in gi_list:
+                        gi_actions[gi] = value
+
+                step_actions['gis'] = gi_actions
+
             # LEDs
             if ('leds' in show_actions[step_num] and
                     show_actions[step_num]['leds']):
@@ -1282,18 +1364,19 @@ class Show(Asset):
 
                 for coil_obj, coil_action in item_dict.iteritems():
                     self.machine.light_controller._add_to_coil_queue(
-                        coil = coil_obj,
-                        action = coil_action)
+                        coil=coil_obj,
+                        action=coil_action)
 
-            #elif item_type == 'display':
-            #
-            #    self.last_slide = (
-            #        self.machine.display.slidebuilder.build_slide(item_dict,
-            #        priority=self.priority))
-            #
-            #    self.slide_removal_keys.add(self.last_slide.removal_key)
+            elif item_type == 'gis':
+                for gi, value in item_dict.iteritems():
+                    self.machine.light_controller._add_to_gi_queue(
+                        gi=gi,
+                        value=value)
 
-                # todo make it so they don't all have the same name?
+            elif item_type == 'flashers':
+                for flasher in item_dict:
+                    self.machine.light_controller._add_to_flasher_queue(
+                        flasher=flasher)
 
         # increment this show's current_location pointer and handle repeats
 
