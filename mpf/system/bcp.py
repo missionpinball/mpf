@@ -151,8 +151,11 @@ class BCP(object):
         self.track_volumes = dict()
         self.volume_control_enabled = False
 
-        if self.machine.config['dmd']['physical']:
-            self._setup_dmd()
+        try:
+            if self.machine.config['dmd']['physical']:
+                self._setup_dmd()
+        except KeyError:
+            pass
 
         try:
             self.bcp_events = self.config['event_map']
