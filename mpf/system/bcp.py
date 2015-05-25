@@ -537,13 +537,13 @@ class BCP(object):
             return
 
         if 'callback' in kwargs:
-            self.machine.events.post(event='trigger_' + name,
+            self.machine.events.post(event=name,
                                      callback=self.bcp_trigger,
                                      name=kwargs.pop('callback'),
                                      **kwargs)
 
         else:
-            self.machine.events.post(event='trigger_' + name, **kwargs)
+            self.machine.events.post(event=name, **kwargs)
 
     def enable_bcp_switch(self, name):
         """Enables sending BCP switch commands when this switch changes state.
