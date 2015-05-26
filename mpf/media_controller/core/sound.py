@@ -469,6 +469,7 @@ class Track(object):
         If this new sound has a higher priority than the lowest playing sound,
         it will interrupt that sound to play. Otherwise it will be added to the
         queue to be played when a channel becomes available.
+
         """
 
         # Make sure we have a sound object. If not we assume the sound is being
@@ -728,6 +729,9 @@ class Channel(object):
                   sound.config['volume'] *
                   self.machine_sound.volume)
 
+        if 'volume' in settings:
+            volume *= settings['volume']
+
         self.log.info("Playing Sound: %s Vol: %s", sound.file_name, volume)
 
         # set the sound's current volume
@@ -809,10 +813,18 @@ class Sound(Asset):
                 callback which could include random kwargs.
         """
 
+        self.asset_manager.log.info("Playing sound. Loops: %s, Priority: %s, "
+                                    "Fade in: %s, Vol: %s, kwargs: %s",
+                                    loops, priority, fade_in, volume, kwargs)
+
         if not self.sound_object:
             self.load()
 
-        self.track.play(self, priority=priority, loops=loops)
+        if 'sound' in kwargs:
+            kwargs.pop('sound')
+
+        self.track.play(self, priority=priority, loops=loops, volume=volume,
+                        fade_in=fade_in, **kwargs)
 
     def stop(self, fade_out=0, reset=True, **kwargs):
         """Stops this sound playing.
