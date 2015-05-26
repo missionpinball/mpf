@@ -50,7 +50,6 @@ def load_dmd_file(file_name, palette=None, alpha_color=None,
     # This code to read DMD files is based on the following:
     # https://github.com/preble/pyprocgame/blob/master/procgame/dmd/animation.py#L267-L280
 
-
     try:
         with open(file_name, 'rb') as f:
             f.seek(0, os.SEEK_END)  # Go to the end of the file to get its length
@@ -306,12 +305,6 @@ class DMD(MPFDisplay):
         """
 
         super(DMD, self).update()
-
-        # todo the P-ROC maintains a 3-frame buffer, so if we stop updating the
-        # hardare when the surface is clean then it won't show until we send
-        # another frame. So for the P-ROC we either need to send frames every
-        # tick, or maintain a counter of the buffer so we can fill / flush it
-        # with our clean image
 
         if self.use_physical:
             self.machine.send_dmd_frame(

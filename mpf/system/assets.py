@@ -74,7 +74,7 @@ class AssetManager(object):
 
         # register & load systemwide assets
         self.machine.events.add_handler('init_phase_4',
-            self.register_and_load_machine_assets)
+                                        self.register_and_load_machine_assets)
 
         self.defaults = self.setup_defaults(self.machine.config)
 
@@ -134,7 +134,13 @@ class AssetManager(object):
                 built_up_config = copy.deepcopy(self.defaults[default_string])
 
                 for k, v in config.iteritems():
-                    if v['file'] == file_name:
+
+                    if name == k:
+                        print name
+                        print config[k]
+                        print built_up_config
+
+                    if ('file' in v and v['file'] == file_name) or name == k:
                         if name != k:
                             name = k
                             #print "NEW NAME:", name
@@ -146,8 +152,8 @@ class AssetManager(object):
                 config[name] = built_up_config
 
                 self.log.debug("Registering Asset: %s, File: %s, Default Group:"
-                              " %s, Final Config: %s", name, file_name,
-                              default_string, built_up_config)
+                               " %s, Final Config: %s", name, file_name,
+                               default_string, built_up_config)
 
         return config
 
@@ -187,7 +193,7 @@ class AssetManager(object):
         if 'assetdefaults' in config and config['assetdefaults']:
 
             if (self.config_section in config['assetdefaults'] and
-                config['assetdefaults'][self.config_section]):
+                    config['assetdefaults'][self.config_section]):
 
                 this_config = config['assetdefaults'][self.config_section]
 
@@ -364,8 +370,6 @@ class AssetManager(object):
 
         """
 
-        print "*", file_name
-
         if path:
             path_list = [path]
         else:
@@ -413,13 +417,13 @@ class AssetLoader(threading.Thread):
 
                 if not asset[1].loaded:
                     self.log.debug("Loading Asset: %s. Callback: %s", asset[1],
-                              asset[2])
+                                   asset[2])
                     asset[1]._load(asset[2])
                     self.log.debug("Asset Finished Loading: %s. Remaining: %s",
                                    asset[1], self.queue.qsize())
 
-                # If the asset is already loaded and we don't need to load it again,
-                # we still need to call the callback.
+                # If the asset is already loaded and we don't need to load it
+                # again, we still need to call the callback.
                 elif asset[2]:
                     self.log.debug("Calling callback for asset %s since it's "
                                    "already loaded. Callback: %s", asset[1],
@@ -443,7 +447,6 @@ class AssetLoader(threading.Thread):
             self.machine.crash_queue.put(msg)
 
 
-
 class Asset(object):
 
     def __init__(self, machine, config, file_name, asset_manager):
@@ -460,7 +463,7 @@ class Asset(object):
         if self.file_name:
             return self.file_name
         else:
-            return "Dynamically created show"
+            return "Dynamically created show"  # todo change this?
 
     def load(self, callback=None):
         self.asset_manager.load_asset(self, callback)
@@ -470,7 +473,6 @@ class Asset(object):
         self.loaded = False
 
         # todo also check the loader queue to remove this asset from there
-
 
 
 # The MIT License (MIT)

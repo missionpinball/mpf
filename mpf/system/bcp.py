@@ -22,6 +22,7 @@ import urllib
 import urlparse
 from Queue import Queue
 import copy
+import time
 
 from mpf.game.player import Player
 from mpf.system.config import Config
@@ -865,68 +866,65 @@ class BCPClient(object):
 
         """
 
-        # Implementation note: Sockets don't necessarily receive the entire
-        # message in one socket.recv() call. BCP separates messages based on the
-        # '\n' character. So we have to split the incoming messages by \n, but
-        # if there are any leftover characters we have to save them and add them
-        # whatever we get on the next recv() read to it. So that's what all this
-        # craziness is here.
-
-        fragment = ''  # used to save a partial incoming message
+        socket_bytes = ''
 
         try:
             while self.socket:
 
-                try:
-                    data = self.socket.recv(4096)
-                except:
-                    self.socket = None
-                    data = None
+                socket_bytes += self.get_from_socket()
 
-                if data:
+                if socket_bytes:
 
-                    # if there's an existing fragment, join our new data to it
-                    if fragment:
-                        data = fragment + data
+                    while socket_bytes.startswith('dmd_frame'):
+                        # trim the `dmd_frame?` so we have just the data
+                        socket_bytes = socket_bytes[10:]
 
-                    # if we still don't have \n, it's still a fragment
-                    if '\n' not in data:
-                        fragment = data
+                        while len(socket_bytes) < 4096:
+                            # If we don't have the full data, loop until we
+                            # have it.
+                            socket_bytes += self.get_from_socket()
 
-                    # we have at least one \n in our data
-                    else:
-                        messages = data.split("\n")
+                        # trim the first 4096 bytes for the dmd data
+                        dmd_data = socket_bytes[:4096]
+                        # Save the rest. This is +1 over the last step since we
+                        # need to skip the \n separator
+                        socket_bytes = socket_bytes[4097:]
+                        self.machine.bcp.dmd.update(dmd_data)
 
-                        # if the \n is not the last char...
-                        if messages[-1:]:
-                            # save whatever was after the last \n to a new fragment
-                            fragment = messages[-1:][0]
-                            # trim that last fragment from our messages list
-                            messages = messages[:-1]
+                    if '\n' in socket_bytes:
+                        message, socket_bytes = socket_bytes.split('\n', 1)
 
-                        # now process the remaining complete messages
-                        for message in messages:
-                            if message:
-                                if message.startswith('dmd_frame'):
-                                    # If we received a dmd_frame command, we process
-                                    # them here immediately since they're a special
-                                    # case.
-                                    self.machine.bcp.dmd.update(message[10:])
+                        self.log.debug('Received "%s"', message)
+                        cmd, kwargs = decode_command_string(message)
 
-                                else:
-                                    self.log.debug('Received "%s"',
-                                                  message)
-                                    cmd, kwargs = decode_command_string(message)
+                        if cmd in self.bcp_commands:
+                            self.bcp_commands[cmd](**kwargs)
+                        else:
+                            self.receive_queue.put((cmd, kwargs))
 
-                                    if cmd in self.bcp_commands:
-                                        self.bcp_commands[cmd](**kwargs)
-                                    else:
-                                        self.receive_queue.put((cmd, kwargs))
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
             msg = ''.join(line for line in lines)
             self.machine.crash_queue.put(msg)
+
+    def get_from_socket(self, num_bytes=8192):
+        """Reads and returns whatever data is sitting in the receiving socket.
+
+        Args:
+            num_bytes: Int of the max number of bytes to read.
+
+        Returns:
+            The data in raw string format.
+
+        """
+        try:
+            socket_bytes = self.socket.recv(num_bytes)
+        except:
+            self.socket = None
+            socket_bytes = None
+
+        return socket_bytes
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
@@ -951,7 +949,6 @@ class BCPClient(object):
             lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
             msg = ''.join(line for line in lines)
             self.machine.crash_queue.put(msg)
-
 
     def receive_hello(self, **kwargs):
         """Processes incoming BCP 'hello' command."""

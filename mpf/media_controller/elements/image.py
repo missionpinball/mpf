@@ -52,7 +52,7 @@ class Image(Asset):
     def save_image(self, surface, filename):
         """ Saves an image to disk.
 
-        This menthod is not yet imlpemented.
+        This menthod is not yet implemented.
 
         """
         image_string = pygame.image.tostring(surface, 'P')
@@ -67,7 +67,6 @@ class Image(Asset):
         pass
 
     def _load(self, callback):
-
         if self.file_name.endswith('.dmd'):
             self.image_surface = mpf.display_modules.dmd.load_dmd_file(
                 file_name=self.file_name,
@@ -76,8 +75,7 @@ class Image(Asset):
             self.image_surface = self.image_surface[0]
             self.loaded = True
 
-        else:
-
+        else:  # image file (.png, .bmp, etc.)
             try:
                 self.image_surface = pygame.image.load(self.file_name)
             except pygame.error:
@@ -89,9 +87,10 @@ class Image(Asset):
             if self.target == 'dmd':
                 # This image will be shown on the DMD, so we need to convert its
                 # surface to the DMD format
-                self.image_surface = display_modules.dmd.surface_to_dmd(
-                    surface=self.image_surface,
-                    alpha_color=self.alpha_color)
+
+                self.image_surface = (
+                    mpf.media_controller.display_modules.dmd.surface_to_dmd(
+                    surface=self.image_surface, alpha_color=self.alpha_color))
                 # todo add shades here if we ever support values other than 16
 
         self.loaded = True
@@ -143,7 +142,7 @@ class ImageDisplayElement(DisplayElement):
         image = image.lower()
 
         if image not in machine.images:
-            raise Exception("Received a request to add an image, but the name "+
+            raise Exception("Received a request to add an image, but the name " +
                             image + " doesn't exist in in the list of "
                             "registered images.")
         else:
