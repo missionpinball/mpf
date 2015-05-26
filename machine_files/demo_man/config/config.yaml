@@ -1190,3 +1190,7 @@ SlidePlayer:
         type: text
         text: ASSET LOADING COMPLETE
         font: small
+
+images:
+    demo_man_logo:
+        target: dmd
