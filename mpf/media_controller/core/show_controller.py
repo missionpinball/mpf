@@ -270,7 +270,7 @@ class ShowController(object):
 
     def _fire_events(self):
         for event in self.event_queue:
-            self.machine.events.post(event)
+            #self.machine.events.post(event)
             self.machine.send('trigger', name=event)
         self.event_queue = set()
 
