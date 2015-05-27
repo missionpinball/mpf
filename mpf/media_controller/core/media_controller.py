@@ -325,6 +325,7 @@ class MediaController(object):
         Args:
             data: A 4096-length raw byte string.
         """
+
         dmd_string = 'dmd_frame?' + data
         self.sending_queue.put(dmd_string)
 
@@ -345,8 +346,6 @@ class MediaController(object):
         self._timer_init()
 
         self.log.info("Starting the run loop at %sHz", self.HZ)
-
-        #self.start_socket_thread()
 
         start_time = time.time()
         loops = 0
@@ -696,7 +695,6 @@ class BCPServer(threading.Thread):
                 try:
                     self.connection.sendall(msg + '\n')
                 except (AttributeError, socket.error):
-                    #self.done = True
                     pass
                     # Do we just keep on trying, waiting until a new client
                     # connects?

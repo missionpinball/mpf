@@ -1315,8 +1315,8 @@ class PROCDMD(object):
         if len(data) == 4096:
             self.dmd.set_data(data)
         else:
-            self.log.warning("Received a DMD frame of length %s instead of "
-                             "4096. Discarding...")
+            self.machine.log.warning("Received a DMD frame of length %s instead"
+                                     "of 4096. Discarding...", len(data))
 
     def tick(self):
         """Updates the physical DMD with the latest frame data. Meant to be

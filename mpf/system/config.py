@@ -118,8 +118,6 @@ class Config(object):
 
         if config_location:
 
-            print "config location", config_location
-
             try:
                 log.info("Loading configuration from file: %s", config_location)
                 new_updates = Config.keys_to_lower(yaml.load(open(

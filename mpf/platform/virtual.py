@@ -169,7 +169,7 @@ class VirtualDMD(object):
     def __init__(self, machine):
         pass
 
-    def update(self, pixel_array):
+    def update(self, data):
         pass
 
 # The MIT License (MIT)

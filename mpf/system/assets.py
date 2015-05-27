@@ -135,11 +135,6 @@ class AssetManager(object):
 
                 for k, v in config.iteritems():
 
-                    if name == k:
-                        print name
-                        print config[k]
-                        print built_up_config
-
                     if ('file' in v and v['file'] == file_name) or name == k:
                         if name != k:
                             name = k
