@@ -616,7 +616,13 @@ class StreamTrack(object):
                   sound.config['volume'] *
                   self.machine_sound.volume)
 
+        if 'volume' in settings:
+            volume *= settings['volume']
+
         pygame.mixer.music.set_volume(volume)
+
+        self.log.info("Playing Sound: %s Vol: %s", sound.file_name,
+                      pygame.mixer.music.get_volume())
 
         if 'loops' not in settings:
             settings['loops'] = 1
@@ -735,7 +741,8 @@ class Channel(object):
         # set the sound's current volume
         sound.sound_object.set_volume(volume)
 
-        self.log.info("Playing Sound: %s Vol: %s", sound.file_name, sound.sound_object.get_volume())
+        self.log.info("Playing Sound: %s Vol: %s", sound.file_name,
+                      sound.sound_object.get_volume())
 
         self.pygame_channel.play(sound.sound_object, loops)
 
