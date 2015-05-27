@@ -732,10 +732,10 @@ class Channel(object):
         if 'volume' in settings:
             volume *= settings['volume']
 
-        self.log.info("Playing Sound: %s Vol: %s", sound.file_name, volume)
-
         # set the sound's current volume
         sound.sound_object.set_volume(volume)
+
+        self.log.info("Playing Sound: %s Vol: %s", sound.file_name, sound.sound_object.get_volume())
 
         self.pygame_channel.play(sound.sound_object, loops)
 
