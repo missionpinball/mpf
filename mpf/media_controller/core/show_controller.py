@@ -9,6 +9,7 @@
 import logging
 import yaml
 import time
+import sys
 
 from mpf.system.assets import AssetManager, Asset
 from mpf.system.config import Config
@@ -279,7 +280,8 @@ class Show(Asset):
 
     def __init__(self, machine, config, file_name, asset_manager, actions=None):
         if not actions:
-            super(Show, self).__init__(machine, config, file_name, asset_manager)
+            super(Show, self).__init__(machine, config, file_name,
+                                       asset_manager)
         else:
             self.machine = machine
             self.config = config
@@ -365,7 +367,28 @@ class Show(Asset):
 
                 step_actions['display'] = (
                     self.machine.display.slidebuilder.preprocess_settings(
-                    show_actions[step_num]['display']))
+                        show_actions[step_num]['display']))
+
+            # Sounds
+            if ('sounds' in show_actions[step_num] and
+                    show_actions[step_num]['sounds']):
+
+                # make sure we have a list of dicts
+                if type(show_actions[step_num]['sounds']) is dict:
+                    show_actions[step_num]['sounds'] = (
+                        [show_actions[step_num]['sounds']])
+
+                for entry in show_actions[step_num]['sounds']:
+
+                    try:
+                        entry['sound'] = self.machine.sounds[entry['sound']]
+                    except KeyError:
+                        self.asset_manager.log.critical("Invalid sound '%s' "
+                                                        "found in show. ",
+                                                        entry['sound'])
+                        sys.exit()
+
+                step_actions['sounds'] = show_actions[step_num]['sounds']
 
             self.show_actions.append(step_actions)
 
@@ -574,6 +597,18 @@ class Show(Asset):
                 self.slide_removal_keys.add(self.last_slide.removal_key)
 
                 # todo make it so they don't all have the same name?
+
+            elif item_type == 'sounds':
+
+                for sound_entry in item_dict:
+
+
+                    if ('action' in sound_entry and
+                            sound_entry['action'].lower() == 'stop'):
+                        sound_entry['sound'].stop(**sound_entry)
+
+                    else:
+                        sound_entry['sound'].play(**sound_entry)
 
         # increment this show's current_location pointer and handle repeats
 
