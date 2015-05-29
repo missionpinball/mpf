@@ -162,7 +162,7 @@ class HardwarePlatform(Platform):
         else:
             proc_num = pinproc.decode(self.machine_type, str(config['number']))
 
-        if device_type == 'coil':
+        if device_type in ['coil', 'flasher']:
             proc_driver_object = PROCDriver(proc_num, self.proc)
         elif device_type == 'light':
             proc_driver_object = PROCMatrixLight(proc_num, self.proc)
