@@ -28,7 +28,8 @@ class Flasher(Device):
         self.config['number_str'] = str(config['number']).upper()
 
         self.hw_driver, self.number = (
-            self.platform.configure_driver(self.config))
+            self.platform.configure_driver(config=self.config,
+                                           device_type='flasher'))
         self.log.debug("Creating '%s' with config: %s", name, config)
 
         if 'flash_ms' not in self.config:

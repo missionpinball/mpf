@@ -17,6 +17,8 @@ import sys
 import threading
 import Queue
 import traceback
+import io
+from distutils.version import StrictVersion
 
 from mpf.system.platform import Platform
 from mpf.system.config import Config
@@ -28,10 +30,10 @@ except:
     serial_imported = False
 
 # Minimum firmware versions needed for this module
-DMD_MIN_FW = 0.87
-NET_MIN_FW = 0.85
-RGB_MIN_FW = 0.85
-IO_MIN_FW = 0.85
+DMD_MIN_FW = '0.87'
+NET_MIN_FW = '0.88'
+RGB_MIN_FW = '0.87'
+IO_MIN_FW = '0.87'
 
 
 class HardwarePlatform(Platform):
@@ -183,10 +185,9 @@ class HardwarePlatform(Platform):
             7: 254, 8: 255
                                   }
 
+        # todo verify this list
         self.fast_commands = {'ID': self.receive_id,  # processor ID
                               'WX': self.receive_wx,  # watchdog
-                              'SL': self.receive_sl,  # local switch change
-                              'SN': self.receive_sn,  # nw switch change
                               'NN': self.receive_nn,  # node id list
                               'NI': self.receive_ni,  # node ID
                               'RX': self.receive_rx,  # RGB cmd received
@@ -194,8 +195,12 @@ class HardwarePlatform(Platform):
                               'SX': self.receive_sx,  # sw config received
                               'LX': self.receive_lx,  # lamp cmd received
                               'PX': self.receive_px,  # segment cmd received
-                              'LS': self.receive_ls,  # local switch states
-                              'NS': self.receive_ns,  # network switch states
+                              'SA': self.receive_sa,  # all switch states
+                              '/N': self.receive_nw_open,    # nw switch open
+                              '-N': self.receive_nw_closed,  # nw switch closed
+                              '/L': self.receive_local_open,    # local sw open
+                              '-L': self.receive_local_closed,  # local sw close
+                              'WD': self.receive_wd,  # watchdog
                               }
 
     def process_received_message(self, msg):
@@ -203,12 +208,15 @@ class HardwarePlatform(Platform):
         method for servicing.
 
         """
+
         if msg[2:3] == ':':
             cmd = msg[0:2]
-            msg = msg[3:].replace('\r\n','')
+            payload = msg[3:].replace('\r','')
 
-            if cmd in self.fast_commands:
-                self.fast_commands[cmd](msg)
+        try:
+            self.fast_commands[cmd](payload)
+        except (KeyError, UnboundLocalError):
+            self.log.warning("Received unknown serial command? %s", msg)
 
     def _connect_to_hardware(self):
         # Connect to each port from the config. This procuess will cause the
@@ -224,9 +232,9 @@ class HardwarePlatform(Platform):
         # about connected nodes. The message processing on the receive queue
         # will automatically process this when it comes in.
         try:
-            self.net_connection.send('CN:')
+            self.net_connection.send('NN:')
         except:
-            print "error sending CN:"
+            print "error sending NN:"
             sys.exit()
 
     def register_processor_connection(self, name, communicator):
@@ -247,7 +255,7 @@ class HardwarePlatform(Platform):
             self.rgb_connection = communicator
 
     def update_leds(self):
-        """ Updates all the LEDs connected to a FAST controller. This is done
+        """Updates all the LEDs connected to a FAST controller. This is done
         once per game loop for efficiency (i.e. all LEDs are sent as a single
         update rather than lots of individual ones).
 
@@ -260,13 +268,12 @@ class HardwarePlatform(Platform):
         msg = 'RS:'
 
         for led in self.fast_leds:
-            msg += (led.number + led.current_color + ',')
+            msg += (led.number + led.current_color + ',')  # todo change to join
 
         self.rgb_connection.send(msg)
 
     def get_switch_states(self):
         self.net_connection.send('SA:')
-
 
     def receive_id(self, msg):
         pass
@@ -306,51 +313,42 @@ class HardwarePlatform(Platform):
         # save this to a config list?
         # verify min fw for each node
 
-    def receive_sl(self, msg):
-        try:
-            switch_num = msg[:2]
+    def receive_wd(self, msg):
+        pass
 
-            if msg[2] == '+':
-                state = 1
-            else:
-                state = 0
-        except:
-            self.log.warning("Received malformed SL command: '%s'", msg)
-            return
+    def receive_nw_open(self, msg):
+        self.machine.switch_controller.process_switch(state=0,
+                                                      num=(msg, 1))
 
-        self.machine.switch_controller.process_switch(state=state,
-                                                      num=(switch_num, 0))
+    def receive_nw_closed(self, msg):
+        self.machine.switch_controller.process_switch(state=1,
+                                                      num=(msg, 1))
 
-    def receive_sn(self, msg):
-        try:
-            switch_num = msg[:2]
+    def receive_local_open(self, msg):
+        self.machine.switch_controller.process_switch(state=0,
+                                                      num=(msg, 0))
 
-            if msg[2] == '+':
-                state = 1
-            else:
-                state = 0
-        except:
-            self.log.warning("Received malformed SN command: '%s'", msg)
-            return
+    def receive_local_closed(self, msg):
+        self.machine.switch_controller.process_switch(state=1,
+                                                      num=(msg, 0))
 
-        self.machine.switch_controller.process_switch(state=state,
-                                                      num=(switch_num, 1))
+    def receive_sa(self, msg):
+        num_local, local_states, num_nw, nw_states = msg.split(',')
 
-    def receive_ns(self, msg):
-        for offset, byte in enumerate(bytearray.fromhex(msg)):
+        for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
                 if byte & (2**i):
                     num = self.int_to_hex_string((offset * 8) + i)
-                    self.log.info("Found initial active switch: %s", num)
+                    self.log.info("Found initial active network switch: %s",
+                                  num)
                     self.machine.switch_controller.process_switch(num=(num, 1),
                                                                   state=1)
 
-    def receive_ls(self, msg):
-        for offset, byte in enumerate(bytearray.fromhex(msg)):
+        for offset, byte in enumerate(bytearray.fromhex(local_states)):
             for i in range(8):
                 if byte & (2**i):
                     num = self.int_to_hex_string((offset * 8) + i)
-                    self.log.info("Found initial active switch: %s", num)
+                    self.log.info("Found initial active local switch: %s", num)
                     self.machine.switch_controller.process_switch(num=(num, 0),
                                                                   state=1)
 
@@ -389,7 +387,7 @@ class HardwarePlatform(Platform):
         # (driver number, connection type)
         config['number'] = (config['number'], config['connection'])
 
-        return FASTDriver(config['number'], self.net_connection.send), config['number']
+        return FASTDriver(config, self.net_connection.send), config['number']
 
         # todo set the rest time, default pulse times, etc.?
 
@@ -656,7 +654,6 @@ class HardwarePlatform(Platform):
         param4 = self.int_to_hex_string(param4)
         param5 = self.int_to_hex_string(param5)
 
-
         # hw_rules key = ('05', 1)
         # all values are strings
 
@@ -672,9 +669,49 @@ class HardwarePlatform(Platform):
                + mode + ',' + param1 + ',' + param2 + ',' + param3 + ',' +
                param4 + ',' + param5)  # todo change to join()
 
-        print cmd
+        coil.autofire = cmd
+        self.log.info("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
+
+    def clear_hw_rule(self, sw_name):
+        """Clears a hardware rule.
+
+        This is used if you want to remove the linkage between a switch and
+        some driver activity. For example, if you wanted to disable your
+        flippers (so that a player pushing the flipper buttons wouldn't cause
+        the flippers to flip), you'd call this method with your flipper button
+        as the *sw_num*.
+
+        Args:
+            sw_name: The string name of the switch whose rule you want to clear.
+
+        """
+
+        sw_num = self.machine.switches[sw_name].number
+
+        # find the rule(s) based on this switch
+        coils = [k for k, v in self.hw_rules.iteritems() if v['switch'] == sw_num]
+
+        self.log.debug("Clearing HW Rule for switch: %s %s, coils: %s", sw_name,
+                       sw_num, coils)
+
+        for coil in coils:
+
+            del self.hw_rules[coil]
+
+            if coil[1] == 1:
+                cmd = 'DN:'
+            else:
+                cmd = 'DL:'
+            driver = coil[0]
+            mode = '81'
+
+            self.machine.coils.number(coil).autofire = None
+
+            self.log.info("Clearing hardware rule: %s", cmd)
+
+            self.net_connection.send(cmd + driver + ',' + mode)
 
     def int_to_hex_string(self, source_int):
         """Converts an int from 0-255 to a one-byte (2 chars) hex string, with
@@ -692,44 +729,20 @@ class HardwarePlatform(Platform):
             raise ValueError
 
     def normalize_hex_string(self, source_hex, num_chars=2):
-            return str(source_hex).upper().zfill(num_chars)
-
-    def clear_hw_rule(self, sw_name):
-        """Clears a hardware rule.
-
-        This is used if you want to remove the linkage between a switch and
-        some driver activity. For example, if you wanted to disable your
-        flippers (so that a player pushing the flipper buttons wouldn't cause
-        the flippers to flip), you'd call this method with your flipper button
-        as the *sw_num*.
+        """Takes an incoming hex value and converts it to uppercase and fills in
+        leading zeros.
 
         Args:
-            sw_name: The string name of the switch whose rule you want to clear.
+            source_hex: Incoming source number. Can be any format.
+            num_chars: Total number of characters that will be returned. Default
+                is two.
+
+        Returns: String, uppercase, zero padded to the num_chars.
+
+        Example usage: Send "c" as source_hex, returns "0C".
 
         """
-
-        print "sw name", sw_name
-
-        sw_num = self.machine.switches[sw_name].number
-
-        print "swnum", sw_num
-
-        self.log.debug("Clearing HW Rule for switch %s", sw_num)
-
-        # find the rule(s) based on this switch
-        coils = [k for k, v in self.hw_rules.iteritems() if v == sw_num]
-
-        print "coils", coils
-
-        for coil in coils:
-            if coil.number[1] == 1:
-                cmd = 'DN:'
-            else:
-                cmd = 'DL:'
-            driver = coil[0]
-            mode = '81'
-
-            self.net_connection.send(cmd + driver + ',' + mode)
+        return str(source_hex).upper().zfill(num_chars)
 
 
 class FASTSwitch(object):
@@ -758,112 +771,108 @@ class FASTDriver(object):
 
     """
 
-    def __init__(self, number, sender):
+    def __init__(self, config, sender):
         """
 
-        Args:
-            config:
-            fast_device:
-
-        config dict:
-            number: int
-            connection: 1=network, 0=local
-            pulse_ms: int
-            pwm_on:
-            pwm_off:
-            allow_enable:
         """
+
+        self.autofire = None
+
+        self.config = dict()
+
+        self.config['trigger'] = '81'  # enabled, but with manual control
+        self.config['mode'] = '10'  # pulsed
+        self.config['param1'] = '00'
+        self.config['param2'] = '00'
+        self.config['param3'] = '00'
+        self.config['param4'] = '00'
+        self.config['param5'] = '00'
+
         self.log = logging.getLogger('FASTDriver')
-        self.number = number
+        self.config['number'] = config['number'][0]
         self.send = sender
+
+        if config['number'][1] == 1:
+            self.config['config_cmd'] = 'DN:'
+            self.config['trigger_cmd'] = 'TN:'
+        else:
+            self.config['config_cmd'] = 'DL:'
+            self.config['trigger_cmd'] = 'TL:'
+
+        if 'recycle_ms' in config:
+            self.config['recycle_ms'] = str(config['recycle_ms'])
+        else:
+            self.config['recycle_ms'] = '00'
 
         # send this driver's pulse / pwm settings
 
+        if 'fast_param1' in config:
+            self.config['param1'] = config['fast_param1']
+
+        if 'fast_param2' in config:
+            self.config['param2'] = config['fast_param2']
+
+        if 'fast_param3' in config:
+            self.config['param3'] = config['fast_param3']
+
+        if 'fast_param4' in config:
+            self.config['param4'] = config['fast_param4']
+
+        if 'fast_param5' in config:
+            self.config['param5'] = config['fast_param5']
 
     def disable(self):
-        """Disables (turns off) this driver.
+        """Disables (turns off) this driver. """
 
-        FAST Protcol command DL/DN:
+        cmd = self.config['trigger_cmd'] + self.config['number'] + ',' + '02'
 
-        DRIVER_ID
-        CONTROL n/a
-        SWITCH_ID n/a
-        MODE 00
-        PARAM1 n/a
-        PARAM2 n/a
-        PARAM3 n/a
-        PARAM4 n/a
-        PARAM5 n/a
-
-        Associated libfastpinball method:
-
-        """
-
-        self.log.debug('Disabling Driver')
-
-        self.send()
+        self.log.info("Sending Disable Command: %s", cmd)
+        self.send(cmd)
 
     def enable(self):
-        """Enables (turns on) this driver.
+        """Enables (turns on) this driver. """
 
-        FAST Protcol command DL/DN:
+        if self.autofire:
+            cmd = (self.config['trigger_cmd'] + self.config['number'] + ',' +
+                   '03')
+        else:
+            cmd = (self.config['config_cmd'] + self.config['number'] +
+                   'C1,00,18,00,ff,ff,' + self.config['recycle_ms'])
 
-        DRIVER_ID
-        CONTROL 193
-        SWITCH_ID
-        MODE 18
-        PARAM1 pwm max on time
-        PARAM2 pwm 1
-        PARAM3 pwm 2
-        PARAM4 rest time
-        PARAM5 not used with latched config
-
-        """
-        self.log.debug('Enabling Driver')
-
-
+        self.log.info("Sending Enable Command: %s", cmd)
+        self.send(cmd)
         # todo change hold to pulse with re-ups
 
     def pulse(self, milliseconds=None):
-        """Pulses this driver.
+        """Pulses this driver. """
 
-        FAST Protcol command DL/DN:
+        if milliseconds >= 0 and milliseconds <= 255:
+            milliseconds = format(milliseconds, 'x').upper().zfill(2)
 
-        DRIVER_ID
-        CONTROL
-        SWITCH_ID
-        MODE 10
-        PARAM1 pwm1 on time
-        PARAM2 pwm 1
-        PARAM3 pwm2 on time
-        PARAM4 pwm 2
-        PARAM 5 rest time
+        if self.autofire:
+            cmd = (self.config['trigger_cmd'] + self.config['number'] + ',' +
+            '01')
+        else:
+            cmd = (self.config['config_cmd'] + self.config['number'] +
+                   ',89,00,10,' + str(milliseconds) + ',ff,00,00,' +
+                   self.config['recycle_ms'])
 
-        Associated libfastpinball method:
-
-        """
-
-        self.log.debug('Pulsing Driver for %sms', milliseconds)
+        self.log.info("Sending Pulse Command: %s", cmd)
+        self.send(cmd)
 
     def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
-        """Enables this driver in a pwm pattern.
+        """Enables this driver in a pwm pattern.  """
 
-        Pulses this driver.
+        if self.autofire:
+            cmd = (self.config['trigger_cmd'] + self.config['number'] + ',' +
+                   '03')
+        else:
+            cmd = (self.config['config_cmd'] + self.config['number'] +
+                   ',89,00,18,' + str(original_on_ms) + ',' + str(on_ms) + ','
+                   + str(off_ms) + ',' + self.config['recycle_ms'])
 
-        FAST Protcol command DL/DN:
-
-        DRIVER_ID
-        CONTROL
-        SWITCH_ID
-        MODE 10
-        PARAM1 pwm1 on time
-        PARAM2 pwm 1
-        PARAM3 pwm2 on time
-        PARAM4 pwm 2
-        PARAM 5 rest time
-
-        """
-        pass
+        self.log.info("Sending PWM Hold Command: %s", cmd)
+        self.send(cmd)
 
 
 class FASTGIString(object):
@@ -989,7 +998,7 @@ class FASTDMD(object):
             pass
 
     def tick(self):
-        pass  # write DMD frame bytearray
+        self.send('B1:' + self.dmd_frame)
 
 
 class SerialCommunicator(object):
@@ -1006,11 +1015,22 @@ class SerialCommunicator(object):
         self.remote_model = None
         self.remote_firmware = 0.0
 
-        self.ignored_messages = ['RX:P', 'DX:P', 'SX:P', 'LX:P', 'PX:P']
+        self.ignored_messages = ['RX:P',
+                                 'SN:P',
+                                 'LX:P',
+                                 'PX:P',
+                                 'DN:P',
+                                 'XX:U',
+                                 'R1:F',
+                                 ]
 
         self.platform.log.info("Connecting to %s at %sbps", port, baud)
         self.serial_connection = serial.Serial(port=port, baudrate=baud,
                                                timeout=1, writeTimeout=None)
+
+        self.serial_io = io.TextIOWrapper(io.BufferedRWPair(
+            self.serial_connection, self.serial_connection, 1), newline='\r',
+            line_buffering=True)
 
         self.identify_connection()
         self.platform.register_processor_connection(self.remote_processor, self)
@@ -1025,9 +1045,9 @@ class SerialCommunicator(object):
 
         while True:
             self.platform.log.debug("Sending 'ID:' command to port '%s'",
-                                   self.serial_connection.name)
-            self.serial_connection.write('ID:\r\n')
-            msg = self.serial_connection.readline()  # todo timeout
+                                    self.serial_connection.name)
+            self.serial_connection.write('ID:\r')
+            msg = self.serial_io.readline()  # todo timeout
             if msg.startswith('ID:'):
                 break
 
@@ -1046,11 +1066,23 @@ class SerialCommunicator(object):
                                "Board: %s, Firmware: %s", self.remote_processor,
                                self.remote_model, self.remote_firmware)
 
-        self.remote_firmware = float(self.remote_firmware)
-        # todo change to loose version
-        # todo verify version
+        if self.remote_processor == 'DMD':
+            version = DMD_MIN_FW
+        elif self.remote_processor == 'NET':
+            version = NET_MIN_FW
+        else:
+            version = RGB_MIN_FW
+
+        if StrictVersion(version) != StrictVersion(self.remote_firmware):
+            self.platform.log.critical("Firmware version mismatch. MPF requires"
+                " the %s processor to be firmware %s, but yours is %s",
+                self.remote_processor, version, self.remote_firmware)
+            sys.exit()
 
     def _start_threads(self):
+
+        self.serial_connection.timeout = None
+
         self.receive_thread = threading.Thread(target=self._receive_loop)
         self.receive_thread.daemon = True
         self.receive_thread.start()
@@ -1074,7 +1106,7 @@ class SerialCommunicator(object):
                 be added automatically.
 
         """
-        self.send_queue.put(msg + '\r\n')
+        self.send_queue.put(msg + '\r')
 
     def _sending_loop(self):
 
@@ -1100,7 +1132,10 @@ class SerialCommunicator(object):
 
         try:
             while self.serial_connection:
-                msg = self.serial_connection.readline()
+                msg = self.serial_io.readline()[:-1]  # strip the \r
+
+                if 'XX' in msg:
+                    print len(msg), msg
 
                 if debug:
                     self.platform.log.info("Received: %s", msg)

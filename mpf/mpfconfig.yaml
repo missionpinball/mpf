@@ -89,8 +89,9 @@ p_roc:
 fast:
     baud: 921600
     watchdog: 1s
+    default_debounce_close: 10ms
     default_debounce_open: 30ms
-    default_debounce_close: 30ms
+
 
 ledsettings:
     brightness_compensation: 1.0
