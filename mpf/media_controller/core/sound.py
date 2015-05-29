@@ -509,7 +509,10 @@ class Track(object):
                                  **settings)
 
     def stop(self, sound):
-        sound.sound_object.stop()
+        try:
+            sound.sound_object.stop()
+        except AttributeError:
+            pass
 
     def queue_sound(self, sound, priority, exp_time=None, **settings):
         """Adds a sound to the queue to be played when a Pygame channel becomes
