@@ -143,12 +143,13 @@ class MatrixLight(Device):
         if callback in self.registered_handlers:
             self.registered_handlers.remove(callback)
 
-    def restore(self, force=False):
+    def restore(self):
         """Restores the light state from cache."""
 
-        # todo revisit force
-
-        # if self.cache['priority'] >= self.state['priority'] or force is True:
+        if self.debug_logging:
+            self.log.info("Received a restore command.")
+            self.log.info("Cached brightness: %s, Cached priority: %s",
+                          self.cache['brightness'], self.cache['priority'])
 
         self.on(brightness=self.cache['brightness'],
                 priority=self.cache['priority'],

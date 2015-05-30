@@ -395,10 +395,10 @@ class LightController(object):
         # first force the restore of whatever the lights were manually set to
         for light in show.light_states:
             if light.cache['priority'] < priority:
-                light.restore(force=False)
+                light.restore()
         for led in show.led_states:
             if led.cache['priority'] < priority:
-                led.restore(force=False)
+                led.restore()
 
         # todo check that the above is right. Dunno which way force should be.
 
@@ -578,7 +578,8 @@ class LightController(object):
                 item['led'].color(color=item['color'],
                                   fade_ms=item['fade_ms'],
                                   priority=item['priority'],
-                                  blend=item['blend'])
+                                  blend=item['blend'],
+                                  cache=False)
 
             elif item['led'].debug_logging:
                 item['led'].log.info("Show Controller has an update for this "

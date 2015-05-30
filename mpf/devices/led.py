@@ -256,16 +256,18 @@ class LED(Device):
         """Returns the current state of this LED"""
         return self.state
 
-    def restore(self, force=False):
+    def restore(self):
         """Sets this LED to the cached state."""
 
-        # todo revisit force
+        if self.debug_logging:
+            self.log.info("Received a restore command.")
+            self.log.info("Cached color: %s, Cached priority: %s",
+                          self.cache['color'], self.cache['priority'])
 
         self.color(color=self.cache['color'],
                    fade_ms=0,
                    brightness_compensation=False,  # cached value includes this
-                   priority=self.cache['priority'],
-                   force=False)
+                   priority=self.cache['priority'])
 
     def compensate(self, color):
         """Applies the current brightness compensation values to the passed
