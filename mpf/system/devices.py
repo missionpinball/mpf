@@ -34,9 +34,9 @@ class Device(object):
                 self.label = config['label']  # todo change to multi lang
             # todo more pythonic way, like self.label = blah if blah?
 
-            if 'debug_logging' in config and config['debug_logging']:
+            if 'debug' in config and config['debug']:
                 self.debug_logging = True
-                self.log.info("Enabling debug_logging for this device")
+                self.log.info("Enabling debug logging for this device")
 
             if platform_section:
                 if self.machine.physical_hw:
