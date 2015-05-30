@@ -1,0 +1,14 @@
+- tocks: 1
+  leds:
+    shootAgain: ffffff
+    leftoutlane: ffffff
+    rightoutlane: ffffff
+    spinnerArrow: ffffff
+    centerRowRed: ffffff
+- tocks: 1
+  leds:
+    shootAgain: 0
+    leftoutlane: 0
+    rightoutlane: 0
+    spinnerArrow: 0
+    centerRowRed: 0

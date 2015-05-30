@@ -1,0 +1,9 @@
+- tocks: 1
+  leds:
+    leftorbit: ffffff
+    semicircle_above: 00
+- tocks: 1
+  leds:
+    leftorbit: 00
+    semicircle_above: ffffff
+    
