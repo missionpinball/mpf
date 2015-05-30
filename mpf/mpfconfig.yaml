@@ -259,6 +259,7 @@ openpixelcontrol:
     port: 7890
     connection_required: no
     connection_attempts: -1
+    number_format: int
 
 triggers:
     assets_to_load:
