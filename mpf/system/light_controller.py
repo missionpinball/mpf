@@ -393,14 +393,29 @@ class LightController(object):
             priority = show.priority
 
         # first force the restore of whatever the lights were manually set to
-        for light in show.light_states:
-            if light.cache['priority'] < priority:
-                light.restore()
-        for led in show.led_states:
-            if led.cache['priority'] < priority:
-                led.restore()
 
-        # todo check that the above is right. Dunno which way force should be.
+        for light in show.light_states:
+
+            if light.debug_logging:
+                light.log.info("Found this light in a restore_lower_lights meth "
+                              "in show.light_states. Light cache priority: %s,"
+                              "ending show priority: %s", light.cache['priority'],
+                              priority)
+
+            if light.cache['priority'] <= priority:
+                light.restore()
+
+        for led in show.led_states:
+
+            if led.debug_logging:
+                led.log.info("Found this LED in a restore_lower_lights meth "
+                              "in show.led_states. LEd cache priority: %s,"
+                              "ending show priority: %s", led.cache['priority'],
+                              priority)
+
+            if led.cache['priority'] <= priority:
+
+                led.restore()
 
         # now see if there are other shows that have these lights in an active
         # state
@@ -412,8 +427,8 @@ class LightController(object):
         # for the lights and leds that were in this show that just ended?
 
     def _tick(self):
-        #Runs once per machine loop and services any light updates that are
-        #needed.
+        # Runs once per machine loop and services any light updates that are
+        # needed.
 
         self.current_time = time.time()
         # we calculate current_time one per loop because we want every action
