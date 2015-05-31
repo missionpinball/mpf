@@ -216,6 +216,7 @@ class HardwarePlatform(Platform):
         try:
             self.fast_commands[cmd](payload)
         except (KeyError, UnboundLocalError):
+            #msg = ':'.join(x.encode('hex') for x in msg)
             self.log.warning("Received unknown serial command? %s", msg)
 
     def _connect_to_hardware(self):
@@ -1021,11 +1022,12 @@ class SerialCommunicator(object):
                                  'DN:P',
                                  'XX:F',
                                  'R1:F',
+                                 'XX:U',
                                  ]
 
         self.platform.log.info("Connecting to %s at %sbps", port, baud)
         self.serial_connection = serial.Serial(port=port, baudrate=baud,
-                                               timeout=1, writeTimeout=None)
+                                               timeout=1, writeTimeout=0)
 
         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(
             self.serial_connection, self.serial_connection, 1), newline='\r',
