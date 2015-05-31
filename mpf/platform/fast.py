@@ -30,7 +30,7 @@ except:
     serial_imported = False
 
 # Minimum firmware versions needed for this module
-DMD_MIN_FW = '0.87'
+DMD_MIN_FW = '0.88'
 NET_MIN_FW = '0.88'
 RGB_MIN_FW = '0.87'
 IO_MIN_FW = '0.87'
@@ -223,7 +223,6 @@ class HardwarePlatform(Platform):
         # connection threads to figure out which processor they've connected to
         # and to register themselves.
         for port in self.config['ports']:
-
             self.connection_threads.add(SerialCommunicator(machine=self.machine,
                 platform=self, port=port, baud=self.config['baud'],
                 send_queue=Queue.Queue(), receive_queue=self.receive_queue))
@@ -998,7 +997,7 @@ class FASTDMD(object):
             pass
 
     def tick(self):
-        self.send('B1:' + self.dmd_frame)
+        self.send('BM:\r' + self.dmd_frame)
 
 
 class SerialCommunicator(object):
@@ -1020,7 +1019,7 @@ class SerialCommunicator(object):
                                  'LX:P',
                                  'PX:P',
                                  'DN:P',
-                                 'XX:U',
+                                 'XX:F',
                                  'R1:F',
                                  ]
 
@@ -1133,9 +1132,6 @@ class SerialCommunicator(object):
         try:
             while self.serial_connection:
                 msg = self.serial_io.readline()[:-1]  # strip the \r
-
-                if 'XX' in msg:
-                    print len(msg), msg
 
                 if debug:
                     self.platform.log.info("Received: %s", msg)
