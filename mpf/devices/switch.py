@@ -8,6 +8,7 @@
 
 import logging
 from mpf.system.devices import Device
+from mpf.system.config import Config
 
 
 class Switch(Device):
@@ -24,6 +25,8 @@ class Switch(Device):
         self.machine = machine
         self.name = name
         self.config = config
+        self.deactivation_events = list()
+        self.activation_events = list()
         self.state = 0
         """ The logical state of a switch. 1 = active, 0 = inactive. This takes
         into consideration the NC or NO settings for the switch."""
@@ -41,6 +44,14 @@ class Switch(Device):
 
         if 'debounce' not in config:
             config['debounce'] = True
+
+        if 'activation_events' in config:
+            self.activation_events = Config.string_to_lowercase_list(
+                config['activation_events'])
+
+        if 'deactivation_events' in config:
+            self.deactivation_events = Config.string_to_lowercase_list(
+                config['deactivation_events'])
 
         # We save out number_str since the platform driver will convert the
         # number into a hardware number, but we need the original number for

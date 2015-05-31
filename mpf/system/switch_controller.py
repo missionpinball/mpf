@@ -447,12 +447,15 @@ class SwitchController(object):
         if state == 1:
 
             for tag in self.machine.switches[switch_name].tags:
-
                 self.machine.events.post('sw_' + tag)
+
+            for event in self.machine.switches[switch_name].activation_events:
+                self.machine.events.post(event)
 
         # the following events all fire the moment a switch becomes inactive
         elif state == 0:
-            pass
+            for event in self.machine.switches[switch_name].deactivation_events:
+                self.machine.events.post(event)
 
     def _tick(self):
         """Called once per machine tick.
