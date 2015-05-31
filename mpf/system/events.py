@@ -401,19 +401,20 @@ class EventManager(object):
             self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback,
                            friendly_kwargs)
+
         if not self.busy:
             self._process_event(event, ev_type, callback, **kwargs)
         else:
-
-            self.log.debug("XXXX Event '%s' is in progress. Added to the "
-                           "queue.", self.current_event)
             self.queue.append((event, ev_type, callback, kwargs))
 
-            self.log.debug("================== ACTIVE EVENTS ==================")
-            for event in list(self.queue):
-                self.log.debug("%s, %s, %s, %s", event[0], event[1], event[2],
-                               event[3])
-            self.log.debug("==================================================")
+            if self.debug and event != 'timer_tick':
+                self.log.debug("XXXX Event '%s' is in progress. Added to the "
+                               "queue.", self.current_event)
+                self.log.debug("================== ACTIVE EVENTS =============")
+                for event in list(self.queue):
+                    self.log.debug("%s, %s, %s, %s", event[0], event[1],
+                                   event[2], event[3])
+                self.log.debug("==============================================")
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
