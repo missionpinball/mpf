@@ -253,6 +253,7 @@ class HardwarePlatform(Platform):
             self.net_connection = communicator
         elif name == 'RGB':
             self.rgb_connection = communicator
+            self.rgb_connection.send('RA:000000')  # turn off all LEDs
 
     def update_leds(self):
         """Updates all the LEDs connected to a FAST controller. This is done
