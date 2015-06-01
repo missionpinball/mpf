@@ -17,14 +17,9 @@ class Attract(Scriptlet):
         self.machine.events.add_handler('machineflow_attract_stop', self.stop)
 
     def start(self):
-
         self.machine.bcp.enable_bcp_switches('player')
 
     def stop(self):
-
-        for led in self.machine.leds:
-            led.off()
-
         self.machine.bcp.disable_bcp_switches('player')
 
 # The MIT License (MIT)

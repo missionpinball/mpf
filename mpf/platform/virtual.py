@@ -105,8 +105,9 @@ class VirtualLED(object):
         self.number = number
 
     def color(self, color, fade_ms=0, brightness_compensation=True):
-        self.log.debug("Setting color: %s, fade: %s, comp: %s",
-                       color, fade_ms, brightness_compensation)
+        #self.log.debug("Setting color: %s, fade: %s, comp: %s",
+        #               color, fade_ms, brightness_compensation)
+        pass
 
     def disable(self):
         pass

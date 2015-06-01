@@ -416,7 +416,6 @@ class MachineController(object):
                 time.sleep(sleep_sec)
                 self.default_platform.tick()
                 loops += 1
-
                 if self.default_platform.next_tick_time <= time.time():  # todo change this
                     self.timer_tick()
                     self.default_platform.next_tick_time += secs_per_tick
