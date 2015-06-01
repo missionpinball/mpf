@@ -153,7 +153,8 @@ class MatrixLight(Device):
 
         self.on(brightness=self.cache['brightness'],
                 priority=self.cache['priority'],
-                force=True)
+                force=True,
+                cache=True)
 
 
 # The MIT License (MIT)
