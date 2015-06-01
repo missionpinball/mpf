@@ -340,22 +340,21 @@ class LightController(object):
     def _run_show(self, show):
         # Internal method which starts a Show
 
-        # todo what happens if we try to run a show that's already running?
+        # if the show is already playing, it does not try to play again
+        if show in self.running_shows:
+            return
 
-        show.running = True
         show.ending = False
         show.current_repeat_step = 0
         show.last_action_time = self.current_time
         # or in the advance loop?
-        self.running_shows.append(show)  # should this be a set?
+        self.running_shows.append(show)
         self.running_shows.sort(key=lambda x: x.priority)
 
     def _end_show(self, show, reset=True):
         # Internal method which ends a running Show
 
-        if show in self.running_shows:
-            self.running_shows.remove(show)
-            show.running = False
+        self.running_shows = filter(lambda x: x != show, self.running_shows)
 
         if not show.hold:
             self.restore_lower_lights(show=show)
@@ -363,8 +362,7 @@ class LightController(object):
         if reset:
             show.current_location = 0
 
-        # if this show that's ending was from a script, remove it from the
-        # running_show_keys dict
+        # if this show was from a script, remove it from running_show_keys
 
         keys_to_remove = [key for key, value in self.running_show_keys.iteritems()
                           if value == show]
@@ -448,10 +446,6 @@ class LightController(object):
                 # show.service_locations.append(show.current_location)
                 # advance the show to the current time
                 show._advance()
-
-                if not show.running:
-                    # if we hit the end of the show, we can stop
-                    break
 
         # Check to see if we need to service any items from our queue. This can
         # be single commands or playlists
@@ -891,7 +885,6 @@ class Show(Asset):
         self.hold = False  # hold the item states when the show ends.
         self.priority = 0  # relative priority of this show
         self.ending = False  # show will end after the current tock ends
-        self.running = False  # is this show running currently?
         self.blend = False  # when an light is off in this show, should it allow
         # lower priority lights to show through?
 
@@ -1281,13 +1274,12 @@ class Show(Asset):
                 hold or not with True or False here.
         """
 
-        if self.running:
-            if hold:
-                self.hold = True
-            elif hold is False:  # if it's None we don't assume False
-                self.hold = False
+        if hold:
+            self.hold = True
+        elif hold is False:  # if it's None we don't assume False
+            self.hold = False
 
-            self.machine.light_controller._end_show(self, reset)
+        self.machine.light_controller._end_show(self, reset)
 
     def change_speed(self, tocks_per_sec=1):
         """Changes the playback speed of a running Show.
@@ -1684,7 +1676,7 @@ class Playlist(object):
             self.current_repeat_loop = 0
 
     def _advance(self):
-        #Runs the Show(s) at the current step of the plylist and advances
+        # Runs the Show(s) at the current step of the plylist and advances
         # the pointer to the next step
 
         # If we stop at a step with a trigger show, the stopping of the trigger
@@ -1708,7 +1700,8 @@ class Playlist(object):
                     # We have to make sure the show is running before we try to
                     # stop it, because if this show was a trigger show then it
                     # stopped itself already
-                    if action['show'].running:
+                    if action['show'] in (
+                            self.machine.light_controller.running_shows):
                         action['show'].stop()
         self.starting = False
 

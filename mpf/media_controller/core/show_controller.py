@@ -180,31 +180,22 @@ class ShowController(object):
     def _run_show(self, show):
         # Internal method which starts a Show
 
-        # todo what happens if we try to run a show that's already running?
+        # if the show is already playing, it does not try to play again
+        if show in self.running_shows:
+            return
 
-        show.running = True
         show.ending = False
         show.current_repeat_step = 0
         show.last_action_time = self.current_time
         # or in the advance loop?
 
-        if show not in self.running_shows:
-            self.running_shows.append(show)
+        self.running_shows.append(show)
         self.running_shows.sort(key=lambda x: x.priority)
 
     def _end_show(self, show, reset=True):
         # Internal method which ends a running Show
 
-        try:
-            self.running_shows.remove(show)
-        except ValueError:
-            pass
-
-        show.running = False
-
-        #if not show.hold:
-        #    for key in show.slide_removal_keys:
-        #        self.machine.display.remove_slides(key)
+        self.running_shows = filter(lambda x: x != show, self.running_shows)
 
         for key in show.slide_removal_keys:
             self.machine.display.remove_slides(key)
@@ -236,10 +227,6 @@ class ShowController(object):
                 # show.service_locations.append(show.current_location)
                 # advance the show to the current time
                 show._advance()
-
-                if not show.running:
-                    # if we hit the end of the show, we can stop
-                    break
 
         # Check to see if we need to service any items from our queue. This can
         # be single commands or playlists
@@ -300,15 +287,11 @@ class Show(Asset):
         self.secs_per_tock = 0  # calculated based on tocks_per_sec
         self.repeat = False  # whether this show repeats when finished
         self.num_repeats = 0  # if self.repeat=True, how many times it repeats
-        # self.num_repeats = 0 means it repeats indefinitely until stopped
         self.current_repeat_step = 0  # tracks which repeat we're on, used with
         # num_repeats above
         self.hold = False  # hold the item states when the show ends.
         self.priority = 0  # relative priority of this show
         self.ending = False  # show will end after the current tock ends
-        self.running = False  # is this show running currently?
-        #self.blend = False  # when an light is off in this show, should it allow
-        # lower priority lights to show through?
 
         self.current_location = 0  # index of which step (tock) a running show is
         self.last_action_time = 0.0  # when the last action happened
@@ -318,8 +301,6 @@ class Show(Asset):
         self.callback = None  # if the show should call something when it ends
         # naturally. (Not invoked if show is manually stopped)
 
-        #self.light_states = {}
-        #self.led_states = {}
         self.last_slide = None
         self.slide_removal_keys = set()
         self.stop_key = None
@@ -522,22 +503,8 @@ class Show(Asset):
         Args:
             reset: Boolean which controls whether the show will reset its
                 current position back to zero. Default is True.
-            hold: Boolean which controls whether the show will hold its current
-                lights and LEDs in whatever state they are now, including their
-                priorities. Default is None which will just use whatever the
-                show setting was when you played it, but you can force it to
-                hold or not with True or False here.
+
         """
-
-        # todo add / fix this
-        #if self.running:
-            #if hold:
-            #    self.hold = True
-            #elif hold is False:  # if it's None we do nothing
-            #    self.hold = False
-
-            #self.machine.show_controller._end_show(self, reset)
-
         self.machine.show_controller._end_show(self, reset)
 
     def change_speed(self, tocks_per_sec=1):
@@ -601,7 +568,6 @@ class Show(Asset):
             elif item_type == 'sounds':
 
                 for sound_entry in item_dict:
-
 
                     if ('action' in sound_entry and
                             sound_entry['action'].lower() == 'stop'):
