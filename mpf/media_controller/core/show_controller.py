@@ -370,7 +370,7 @@ class Show(Asset):
                         self.asset_manager.log.critical("Invalid sound '%s' "
                                                         "found in show. ",
                                                         entry['sound'])
-                        sys.exit()
+                        raise
 
                 step_actions['sounds'] = show_actions[step_num]['sounds']
 
