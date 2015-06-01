@@ -218,7 +218,10 @@ class LightController(object):
                         # will already be a Show instance and not a string.
                         pass
 
-                this_action['priority'] = priority
+                if 'priority' in this_action:
+                    this_action['priority'] += priority
+                else:
+                    this_action['priority'] = priority
 
                 event_keys.add(self.add_lightplayer_show(event_name,
                                                          this_action))
@@ -409,7 +412,7 @@ class LightController(object):
 
             if led.debug_logging:
                 led.log.info("Found this LED in a restore_lower_lights meth "
-                              "in show.led_states. LEd cache priority: %s,"
+                              "in show.led_states. LED cache priority: %s,"
                               "ending show priority: %s", led.cache['priority'],
                               priority)
 
