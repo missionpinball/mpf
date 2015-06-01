@@ -447,6 +447,9 @@ class LightController(object):
                 # advance the show to the current time
                 show._advance()
 
+                if show.ending:
+                    break
+
         # Check to see if we need to service any items from our queue. This can
         # be single commands or playlists
 
