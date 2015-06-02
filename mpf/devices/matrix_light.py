@@ -30,7 +30,8 @@ class MatrixLight(Device):
 
         self.log.debug('Creating device with config: %s', config)
 
-        super(MatrixLight, self).__init__(machine, name, config, collection)
+        super(MatrixLight, self).__init__(machine, name, config, collection,
+                                          platform_section='matrixlights')
 
         # We save out number_str since the platform driver will convert the
         # number into a hardware number, but we need the original number for
@@ -38,7 +39,7 @@ class MatrixLight(Device):
         self.config['number_str'] = str(config['number']).upper()
 
         self.hw_driver, self.number = (
-            self.machine.platform.configure_matrixlight(self.config))
+            self.platform.configure_matrixlight(self.config))
 
         self.registered_handlers = []
 
@@ -142,16 +143,18 @@ class MatrixLight(Device):
         if callback in self.registered_handlers:
             self.registered_handlers.remove(callback)
 
-    def restore(self, force=False):
+    def restore(self):
         """Restores the light state from cache."""
 
-        # todo revisit force
-
-        # if self.cache['priority'] >= self.state['priority'] or force is True:
+        if self.debug_logging:
+            self.log.info("Received a restore command.")
+            self.log.info("Cached brightness: %s, Cached priority: %s",
+                          self.cache['brightness'], self.cache['priority'])
 
         self.on(brightness=self.cache['brightness'],
                 priority=self.cache['priority'],
-                force=True)
+                force=True,
+                cache=True)
 
 
 # The MIT License (MIT)

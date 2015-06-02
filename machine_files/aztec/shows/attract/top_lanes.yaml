@@ -1,4 +1,4 @@
-- tocks: 5
+- tocks: 1
   leds:
     upperLaneLeft: 00ff00
     upperLaneRight: 000000
@@ -6,7 +6,7 @@
   leds:
     upperLaneMiddle: ffcc00
     upperLaneLeft: 000000
-- tocks: 5
+- tocks: 1
   leds:
     upperLaneRight: ff0000
     upperLaneMiddle: 000000

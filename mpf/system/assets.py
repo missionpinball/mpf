@@ -1,4 +1,4 @@
-"""Contains AssetManager and Asset parent classes"""
+"""Contains AssetManager, AssetLoader, and Asset parent classes"""
 # assets.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
@@ -11,9 +11,33 @@ import os
 import threading
 import copy
 from Queue import PriorityQueue
+import sys
+import traceback
+
+from mpf.system.config import CaseInsensitiveDict
 
 
 class AssetManager(object):
+    """Base class for an Asset Manager.
+
+    Args:
+        machine: The main ``MachineController`` object.
+        config_section: String of the name of the section in the config file
+            for the asset settings that this Asset Manager will machine. e.g.
+            'image'.
+        path_string: The setting in the paths section of the config file that
+            specifies what path these asset files are in. e.g. 'images'.
+        asset_class: A class object of the base class for the assets that this
+            Asset Manager will manage. e.g. Image.
+        asset_attribute: The string name that you want to refer to this asset
+            collection as. e.g. a value of 'images' means that assets will be
+            accessible via ``self.machine.images``.
+        file_extensions: A tuple of strings of valid file extensions that files
+            for this asset will use. e.g. ``('png', 'jpg', 'jpeg', 'bmp')``
+
+    There will be one Asset Manager for each different type of asset. (e.g. one
+    for images, one for movies, one for sounds, etc.)
+    """
 
     def __init__(self, machine, config_section, path_string, asset_class,
                  asset_attribute, file_extensions):
@@ -34,7 +58,7 @@ class AssetManager(object):
         self.machine.asset_managers[config_section] = self
 
         if not hasattr(self.machine, asset_attribute):
-            setattr(self.machine, asset_attribute, dict())
+            setattr(self.machine, asset_attribute, CaseInsensitiveDict())
 
         self.asset_list = getattr(self.machine, asset_attribute)
 
@@ -50,12 +74,12 @@ class AssetManager(object):
 
         # register & load systemwide assets
         self.machine.events.add_handler('init_phase_4',
-            self.register_and_load_machine_assets)
+                                        self.register_and_load_machine_assets)
 
         self.defaults = self.setup_defaults(self.machine.config)
 
     def process_assets_from_disk(self, config, path=None):
-        """ Looks at a path and finds all the assets in the folder.
+        """Looks at a path and finds all the assets in the folder.
         Looks in a subfolder based on the asset's path string.
         Crawls subfolders too. The first subfolder it finds is used for the
         asset's default config section.
@@ -110,7 +134,8 @@ class AssetManager(object):
                 built_up_config = copy.deepcopy(self.defaults[default_string])
 
                 for k, v in config.iteritems():
-                    if v['file'] == file_name:
+
+                    if ('file' in v and v['file'] == file_name) or name == k:
                         if name != k:
                             name = k
                             #print "NEW NAME:", name
@@ -122,8 +147,8 @@ class AssetManager(object):
                 config[name] = built_up_config
 
                 self.log.debug("Registering Asset: %s, File: %s, Default Group:"
-                              " %s, Final Config: %s", name, file_name,
-                              default_string, built_up_config)
+                               " %s, Final Config: %s", name, file_name,
+                               default_string, built_up_config)
 
         return config
 
@@ -153,14 +178,17 @@ class AssetManager(object):
                          load_key='preload')
 
     def setup_defaults(self, config):
-        """Processed the `assetdefaults` section of the machine config files."""
+        """Processed the ``assetdefaults`` section of the machine config
+        files.
+
+        """
 
         default_config_dict = dict()
 
         if 'assetdefaults' in config and config['assetdefaults']:
 
             if (self.config_section in config['assetdefaults'] and
-                config['assetdefaults'][self.config_section]):
+                    config['assetdefaults'][self.config_section]):
 
                 this_config = config['assetdefaults'][self.config_section]
 
@@ -195,7 +223,8 @@ class AssetManager(object):
         """
 
         self.loader_thread = AssetLoader(name=self.config_section,
-                                         queue=self.loader_queue)
+                                         queue=self.loader_queue,
+                                         machine=self.machine)
         self.loader_thread.daemon = True
         self.loader_thread.start()
 
@@ -233,7 +262,24 @@ class AssetManager(object):
 
         return config
 
-    def load_assets(self, config, mode=None, load_key=None, **kwargs):
+    def load_assets(self, config, mode=None, load_key=None, callback=None,
+                    **kwargs):
+        """Loads the assets from a config dictionary.
+
+        Args:
+            config: Dictionary that holds the assets to load.
+            mode: Not used. Included here since this method is registered as a
+                mode start handler.
+            load_key: String name of the load key which specifies which assets
+                should be loaded.
+            callback: Callback method which is called by each asset once it's
+                loaded.
+            **kwargs: Not used. Included to allow this method to be used as an
+                event handler.
+
+        The assets must already be registered in order for this method to work.
+
+        """
         # actually loads assets from a config file. Assumes that they've
         # aleady been registered.
 
@@ -241,12 +287,24 @@ class AssetManager(object):
 
         for asset in config:
             if self.asset_list[asset].config['load'] == load_key:
-                self.asset_list[asset].load()
+                self.asset_list[asset].load(callback=callback)
                 asset_set.add(self.asset_list[asset])
 
         return self.unload_assets, asset_set
 
     def register_asset(self, asset, config):
+        """Registers an asset with the Asset Manager.
+
+        Args:
+            asset: String name of the asset to register.
+            config: Dictionary which contains settings for this asset.
+
+        Registering an asset is what makes it available to be used in the game.
+        Note that registering an asset is separate from loading an asset. All
+        assets will be registered on MPF boot, but they can be loaded and
+        unloaded as needed to save on memory.
+
+        """
 
         #file_name = self.locate_asset_file(config['file'], path)
         #
@@ -258,15 +316,37 @@ class AssetManager(object):
                                                   config['file'], self)
 
     def unload_assets(self, asset_set):
+        """Unloads assets from memory.
+
+        Args:
+            asset_set: A set (or any iterable) of Asset objects which will be
+                unloaded.
+
+        Unloading an asset does not de-register it. It's still available to be
+        used, but it's just unloaded from memory to save on memory.
+
+        """
         for asset in asset_set:
             self.log.debug("Unloading asset: %s", asset.file_name)
             asset.unload()
 
     def load_asset(self, asset, callback, priority=10):
+        """Loads an asset into memory.
+
+        Args:
+            asset: The Asset object to load.
+            callback: The callback that will be called once the asset has been
+                loaded by the loader thread.
+            priority: The relative loading priority of the asset. If there's a
+                queue of assets waiting to be loaded, this load request will be
+                inserted into the queue in a position based on its priority.
+
+        """
         self.loader_queue.put((-priority, asset, callback))
         # priority above is negative so this becomes a LIFO queue
-        self.log.debug("Adding asset to loader queue at priority %s. New queue "
-                       "size: %s", priority, self.loader_queue.qsize())
+        self.log.debug("Adding %s to loader queue at priority %s. New queue "
+                       "size: %s", asset, priority, self.loader_queue.qsize())
+        self.machine.num_assets_to_load += 1
 
     def locate_asset_file(self, file_name, path=None):
         """Takes a file name and a root path and returns a link to the absolute
@@ -304,26 +384,62 @@ class AssetManager(object):
 
 
 class AssetLoader(threading.Thread):
+    """Base class for the Asset Loader with runs as a separate thread and
+    actually loads the assets from disk.
 
-    def __init__(self, name, queue):
+    Args:
+        name: String name of what this loader will be called. (Only really used
+            to give a friendly name to it in logs.)
+        queue: A reference to the asset loader ``Queue`` which holds assets
+            waiting to be loaded.
+        machine: The main ``MachineController`` object.
+
+    """
+
+    def __init__(self, name, queue, machine):
 
         threading.Thread.__init__(self)
         self.log = logging.getLogger(name + ' Asset Loader')
         self.queue = queue
+        self.machine = machine
 
     def run(self):
+        """Run loop for the loader thread."""
 
-        while 1:
-            asset = self.queue.get()
-            self.log.debug("Loading Asset: '%s'. Callback: %s", asset[1],
-                          asset[2])
+        try:
+            while True:
+                asset = self.queue.get()
 
-            if not asset[1].loaded:
-                asset[1]._load(asset[2])
-                self.log.debug("Asset Finished Loading: %s", asset[1])
-            else:
-                self.log.error("Received request to load %s, but it's already"
-                               " loaded", asset[1])
+                if not asset[1].loaded:
+                    self.log.debug("Loading Asset: %s. Callback: %s", asset[1],
+                                   asset[2])
+                    asset[1]._load(asset[2])
+                    self.log.debug("Asset Finished Loading: %s. Remaining: %s",
+                                   asset[1], self.queue.qsize())
+
+                # If the asset is already loaded and we don't need to load it
+                # again, we still need to call the callback.
+                elif asset[2]:
+                    self.log.debug("Calling callback for asset %s since it's "
+                                   "already loaded. Callback: %s", asset[1],
+                                   asset[2])
+                    asset[2]()
+
+                self.machine.num_assets_to_load -= 1
+
+                # If the asset is already loaded, just ignore it and move on.
+                # I thought about trying to make sure that an asset isn't
+                # in the queue before it gets added. But since this is separate
+                # threads that would require all sorts of work. It's actually
+                # more efficient to add it to the queue anyway and then just
+                # skip it if it's already loaded by the time the loader gets to
+                # it.
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.machine.crash_queue.put(msg)
 
 
 class Asset(object):
@@ -342,7 +458,7 @@ class Asset(object):
         if self.file_name:
             return self.file_name
         else:
-            return "Dynamically created show"
+            return "Dynamically created show"  # todo change this?
 
     def load(self, callback=None):
         self.asset_manager.load_asset(self, callback)
@@ -352,7 +468,6 @@ class Asset(object):
         self.loaded = False
 
         # todo also check the loader queue to remove this asset from there
-
 
 
 # The MIT License (MIT)

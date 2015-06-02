@@ -107,9 +107,14 @@ logging.getLogger('').addHandler(console)
 
 
 def main():
-    machine = MachineController(options_dict)
-    machine.run()
-    logging.info("MPF run loop ended. Go play pinball!")
+
+    try:
+        machine = MachineController(options_dict)
+        machine.run()
+        logging.info("MPF run loop ended.")
+    except Exception, e:
+        logging.exception(e)
+
     sys.exit()
 
 if __name__ == '__main__':

@@ -58,7 +58,7 @@ mpf:
         config: config
         modes: modes
     default_pulse_ms: 10
-    default_debounce_ms: 0  # fast only
+    default_flash_ms: 50
 
 # Default settings for machines. All can be overridden
 
@@ -69,18 +69,39 @@ machine:
 
 timing:
     hz: 30
+    hw_thread_sleep_ms: 1
 
 hardware:
-    Platform: virtual
+    platform: virtual
+    coils: default
+    switches: default
+    matrixlights: default
+    leds: default
+    dmd: default
+    gis: default
+    flashers: default
 
 p_roc:
     lamp_matrix_strobe_time: 100
     watchdog_time: 1000
     use_watchdog: True
 
+fast:
+    baud: 921600
+    watchdog: 1s
+    default_debounce_close: 10ms
+    default_debounce_open: 30ms
+
+
 ledsettings:
     brightness_compensation: 1.0
     default_led_fade_ms: 100
+    gamma: 2.5
+    whitepoint: 1.0, 1.0, 1.0
+    linear_slope: 1.0
+    linear_cutoff: 0.0
+    keyframe_interpolation: True
+    dithering: True
 
 game:
     Balls per game: 3
@@ -232,3 +253,18 @@ volume:
         sfx: 20
         music: 20
     steps: 20
+
+openpixelcontrol:
+    host: localhost
+    port: 7890
+    connection_required: no
+    connection_attempts: -1
+    number_format: int
+
+triggers:
+    assets_to_load:
+        bcp_name: assets_to_load
+        params:
+            assets: "%assets"
+    assets_loading_complete:
+        bcp_name: assets_loading_complete

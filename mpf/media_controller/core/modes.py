@@ -152,7 +152,7 @@ class Mode(object):
     def __init__(self, machine, config, name, path):
         self.machine = machine
         self.config = config
-        self.name = name
+        self.name = name.lower()
         self.path = path
 
         self.log = logging.getLogger('Mode.' + name)
@@ -274,7 +274,10 @@ class Mode(object):
         self.active = False
 
         for item in self.stop_methods:
-            item[0](item[1])
+            try:
+                item[0](item[1])
+            except TypeError:
+                pass
 
         self.stop_methods = list()
 

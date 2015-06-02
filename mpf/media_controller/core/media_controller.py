@@ -21,13 +21,14 @@ import sys
 import time
 import threading
 from distutils.version import LooseVersion
-from Queue import Queue
+import Queue
+import traceback
 
 import pygame
 
 from mpf.media_controller.core import *
 
-from mpf.system.config import Config
+from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.events import EventManager
 from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
@@ -59,6 +60,7 @@ class MediaController(object):
         self.done = False  # todo
         self.machine_path = None
         self.asset_managers = dict()
+        self.num_assets_to_load = 0
         self.window = None
         self.window_manager = None
         self.pygame = False
@@ -66,14 +68,17 @@ class MediaController(object):
         self.registered_pygame_handlers = dict()
         self.pygame_allowed_events = list()
         self.socket_thread = None
-        self.receive_queue = Queue()
-        self.sending_queue = Queue()
-        self.game_modes = dict()
+        self.receive_queue = Queue.Queue()
+        self.sending_queue = Queue.Queue()
+        self.crash_queue = Queue.Queue()
+        self.game_modes = CaseInsensitiveDict()
         self.player_list = list()
         self.player = None
         self.HZ = 0
         self.next_tick_time = 0
         self.secs_per_tick = 0
+
+        Task.Create(self._check_crash_queue)
 
         self.bcp_commands = {'hello': self.bcp_hello,
                              'goodbye': self.bcp_goodbye,
@@ -171,6 +176,8 @@ class MediaController(object):
             # malicious files in the system folder then you have access to this
             # code too.
 
+        self.start_socket_thread()
+
         self.events.post("init_phase_1")
         self.events.post("init_phase_2")
         self.events.post("init_phase_3")
@@ -178,6 +185,16 @@ class MediaController(object):
         self.events.post("init_phase_5")
 
         self.reset()
+
+    def _check_crash_queue(self):
+        try:
+            crash = self.crash_queue.get(block=False)
+        except Queue.Empty:
+            yield 1000
+        else:
+            self.log.critical("MPF Shutting down due to child thread crash")
+            self.log.critical("Crash details: %s", crash)
+            self.done = True
 
     def reset(self, **kwargs):
         """Processes an incoming BCP 'reset' command."""
@@ -308,6 +325,7 @@ class MediaController(object):
         Args:
             data: A 4096-length raw byte string.
         """
+
         dmd_string = 'dmd_frame?' + data
         self.sending_queue.put(dmd_string)
 
@@ -328,8 +346,6 @@ class MediaController(object):
         self._timer_init()
 
         self.log.info("Starting the run loop at %sHz", self.HZ)
-
-        self.start_socket_thread()
 
         start_time = time.time()
         loops = 0
@@ -617,35 +633,42 @@ class BCPServer(threading.Thread):
     def run(self):
         """The socket thread's run loop."""
 
-        while True:
-            self.log.info("Waiting for a connection...")
-            self.mc.events.post('client_disconnected')
-            self.connection, client_address = self.socket.accept()
-
-            self.log.info("Received connection from: %s:%s",
-                          client_address[0], client_address[1])
-            self.mc.events.post('client_connected',
-                                address=client_address[0],
-                                port=client_address[1])
-
-            # Receive the data in small chunks and retransmit it
+        try:
             while True:
-                try:
-                    data = self.connection.recv(4096)
-                    if data:
-                        commands = data.split("\n")
-                        for cmd in commands:
-                            if cmd:
-                                self.process_received_message(cmd)
-                    else:
-                        # no more data
-                        break
+                self.log.info("Waiting for a connection...")
+                self.mc.events.post('client_disconnected')
+                self.connection, client_address = self.socket.accept()
 
-                except:
-                    if self.mc.config['mediacontroller']['exit_on_disconnect']:
-                        self.mc.shutdown()
-                    else:
-                        break
+                self.log.info("Received connection from: %s:%s",
+                              client_address[0], client_address[1])
+                self.mc.events.post('client_connected',
+                                    address=client_address[0],
+                                    port=client_address[1])
+
+                # Receive the data in small chunks and retransmit it
+                while True:
+                    try:
+                        data = self.connection.recv(4096)
+                        if data:
+                            commands = data.split("\n")
+                            for cmd in commands:
+                                if cmd:
+                                    self.process_received_message(cmd)
+                        else:
+                            # no more data
+                            break
+
+                    except:
+                        if self.mc.config['mediacontroller']['exit_on_disconnect']:
+                            self.mc.shutdown()
+                        else:
+                            break
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.mc.crash_queue.put(msg)
 
     def stop(self):
         """ Stops and shuts down the BCP server."""
@@ -654,6 +677,7 @@ class BCPServer(threading.Thread):
             self.sending_queue.put('goodbye')
             time.sleep(1)  # give it a chance to send goodbye before quitting
             self.done = True
+            self.mc.done = True
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
@@ -661,24 +685,30 @@ class BCPServer(threading.Thread):
 
         This method is run as a thread.
         """
-        while not self.done:
-            msg = self.sending_queue.get()
+        try:
+            while not self.done:
+                msg = self.sending_queue.get()
 
-            if not msg.startswith('dmd_frame'):
-                self.log.debug('Sending "%s"', msg)
+                if not msg.startswith('dmd_frame'):
+                    self.log.debug('Sending "%s"', msg)
 
-            try:
-                self.connection.sendall(msg + '\n')
-            except (AttributeError, socket.error):
-                #self.done = True
-                pass
-                # Do we just keep on trying, waiting until a new client
-                # connects?
+                try:
+                    self.connection.sendall(msg + '\n')
+                except (AttributeError, socket.error):
+                    pass
+                    # Do we just keep on trying, waiting until a new client
+                    # connects?
 
-        self.socket.close()
-        self.socket = None
+            self.socket.close()
+            self.socket = None
 
-        self.mc.socket_thread_stopped()
+            self.mc.socket_thread_stopped()
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.mc.crash_queue.put(msg)
 
     def process_received_message(self, message):
         """Puts a received BCP message into the receiving queue.

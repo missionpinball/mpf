@@ -29,7 +29,7 @@ class SwitchController(object):
 
     def __init__(self, machine):
         self.machine = machine
-        self.registered_switches = defaultdict(list)
+        self.registered_switches = CaseInsensitiveDict()
         # Dictionary of switches and states that have been registered for
         # callbacks.
 
@@ -47,20 +47,16 @@ class SwitchController(object):
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick, 1000)
         self.machine.events.add_handler('init_phase_2',
-                                        self.initialize_hw_states,
+                                        self._initialize_switches,
                                         1000)
                                         # priority 1000 so this fires first
 
         self.machine.events.add_handler('machine_reset_phase_3',
                                         self.log_active_switches)
 
-    def initialize_hw_states(self):
-        """Reads and processes the hardware states of the physical switches.
+    def _initialize_switches(self):
 
-        We can't do this in __init__() because we need the switch controller to
-        be setup first before we set up the hw switches. This method is
-        called via an event handler which listens for `init_phase_2`.
-        """
+        # Set "start active" switches
 
         start_active = list()
 
@@ -72,13 +68,38 @@ class SwitchController(object):
             except KeyError:
                 pass
 
-        self.log.debug("Syncing the logical and physical switch states.")
         for switch in self.machine.switches:
 
+            # Populate self.switches
             if switch.name in start_active:
-                switch.state = 1
-
+                switch.state = 1  # set state based on physical state
             self.set_state(switch.name, switch.state, reset_time=True)
+
+            # Populate self.registered_switches
+            self.registered_switches[switch.name + '-0'] = list()
+            self.registered_switches[switch.name + '-1'] = list()
+
+    def verify_switches(self):
+        """Loops through all the switches and queries their hardware states via
+        their platform interfaces and them compares that to the state that MPF
+        thinks the switches are in.
+
+        Throws logging warnings if anything doesn't match.
+
+        This method is notification only. It doesn't fix anything.
+
+        """
+
+        for switch in self.machine.switches:
+            hw_state = switch.platform.get_switch_state(switch)
+            sw_state = self.machine.switches[switch.name].state
+
+            if self.machine.switches[switch.name].type == 'NC':
+                sw_state = sw_state ^ 1
+            if sw_state != hw_state:
+                self.log.warning("Switch State Error! Switch: %s, HW State: "
+                                 "%s, MPF State: %s", switch.name, hw_state,
+                                 sw_state)
 
     def is_state(self, switch_name, state, ms=0):
         """Queries whether a switch is in a given state and (optionally)
@@ -160,17 +181,8 @@ class SwitchController(object):
         # to here.
 
     def process_switch(self, name=None, state=1, logical=False, num=None,
-                       obj=None):
+                       obj=None, debounced=True):
         """Processes a new switch state change.
-
-        This is the method that is called by the platform driver whenever a
-        switch changes state. It's also used by the "other" modules that
-        activate switches, including the keyboard and OSC interfaces.
-
-        State 0 means the switch changed from active to inactive, and 1 means
-        it changed from inactive to active. (The hardware & platform code
-        handles NC versus NO switches and translates them to 'active' versus
-        'inactive'.)
 
         Args:
             name: The string name of the switch. This is optional if you specify
@@ -188,9 +200,20 @@ class SwitchController(object):
                 logical=True.
             num: The hardware number of the switch.
             obj: The switch object.
+            debounced: Whether or not the update for the switch you're sending
+                has been debounced or not. Default is True
 
         Note that there are three different paramter options to specify the
         switch: 'name', 'num', and 'obj'. You only need to pass one of them.
+
+        This is the method that is called by the platform driver whenever a
+        switch changes state. It's also used by the "other" modules that
+        activate switches, including the keyboard and OSC interfaces.
+
+        State 0 means the switch changed from active to inactive, and 1 means
+        it changed from inactive to active. (The hardware & platform code
+        handles NC versus NO switches and translates them to 'active' versus
+        'inactive'.)
 
         """
 
@@ -205,15 +228,10 @@ class SwitchController(object):
         elif obj:
             name = obj.name
 
-        if name and not self.machine.switches[name]:
-            self.log.warning("Received process_switch command but can't find "
-                              "the switch. Name: %s, Num: %s, Obj: %s", name,
-                              num, obj)
-            # Removed the Exception below since it's kind of annoying to have
-            # MPF halt every time a non-configured switch is hit.
-            #raise Exception("Received process_switch command but can't find the"
-            #                " switch. Name: %s, Num: %s, Obj: %s", name, num,
-            #                obj)
+        if not name:
+            self.log.warning("Received a state change from non-configured "
+                             "switch. Number: %s", num)
+            return
 
         # flip the logical & physical states for NC switches
         hw_state = state
@@ -226,6 +244,13 @@ class SwitchController(object):
                 # state is the opposite
                 state = state ^ 1
 
+        # If this update is not debounced, only proceed if this switch is
+        # configured to not be debounced.
+
+        if not debounced:
+            if self.machine.switches[name].config['debounce']:
+                return
+
         # update the switch device
         self.machine.switches[name].state = state
         self.machine.switches[name].hw_state = hw_state
@@ -233,8 +258,11 @@ class SwitchController(object):
         # if the switch is already in this state, then abort
         if self.switches[name]['state'] == state:
             # todo log this as potential hw error??
-            self.log.warning("Received duplicate switch state. Switch: %s, "
-                             "State: %s", name, state)
+            self.log.debug("Received duplicate switch state, which means this "
+                           "switch had some non-debounced state changes. This "
+                           "could be nothing, but if it happens a lot it could "
+                           "indicate noise or interference on the line. Switch:"
+                           "%s", name)
             return
 
         self.log.info("<<<<< switch: %s, State:%s >>>>>", name, state)
@@ -289,32 +317,27 @@ class SwitchController(object):
 
     def add_switch_handler(self, switch_name, callback, state=1, ms=0,
                            return_info=False):
-        """Register a handler to take action on some switch event.
+        """Register a handler to take action on a switch event.
 
         Args:
-
             switch_name: String name of the switch you're adding this handler
                 for.
-
             callback: The method you want called when this switch handler fires.
-
             state: Integer of the state transition you want to callback to be
                 triggered on. Default is 1 which means it's called when the
                 switch goes from inactive to active, but you can also use 0
                 which means your callback will be called when the switch becomes
                 inactive
-
             ms: Integer. If you specify a 'ms' parameter, the handler won't be
                 called until the witch is in that state for that many
                 milliseconds (rounded up to the nearst machine timer tick).
-
             return_info: If True, the switch controller will pass the
                 parameters of the switch handler as arguments to the callback,
                 including switch_name, state, and ms. If False (default), it
                 just calls the callback with no parameters.
 
-
         You can mix & match entries for the same switch here.
+
         """
 
         # todo add support for other parameters to the callback?
@@ -378,7 +401,9 @@ class SwitchController(object):
 
         Currently this only works if you specify everything exactly as you set
         it up. (Except for return_info, which doesn't matter if true or false, it
-        will remove either / both."""
+        will remove either / both.
+
+        """
 
         self.log.debug("Removing switch handler. Switch: %s, State: %s, ms: %s",
                       switch_name, state, ms)
@@ -422,12 +447,15 @@ class SwitchController(object):
         if state == 1:
 
             for tag in self.machine.switches[switch_name].tags:
-
                 self.machine.events.post('sw_' + tag)
+
+            for event in self.machine.switches[switch_name].activation_events:
+                self.machine.events.post(event)
 
         # the following events all fire the moment a switch becomes inactive
         elif state == 0:
-            pass
+            for event in self.machine.switches[switch_name].deactivation_events:
+                self.machine.events.post(event)
 
     def _tick(self):
         """Called once per machine tick.

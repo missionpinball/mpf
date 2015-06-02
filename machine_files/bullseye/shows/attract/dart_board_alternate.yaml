@@ -1,0 +1,8 @@
+- tocks: 1
+  leds:
+    tag|board_red: ff0000
+    tag|board_black: 00
+- tocks: 1
+  leds:
+    tag|board_red: 00
+    tag|board_black: 0000ff

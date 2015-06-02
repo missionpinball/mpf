@@ -11,6 +11,7 @@ import logging
 from mpf.devices.target import Target, TargetGroup
 from mpf.system.config import Config
 
+
 class DropTarget(Target):
     """Represents a single drop target in a pinball machine.
 
@@ -36,20 +37,24 @@ class DropTarget(Target):
         if 'knockdown_coil' not in self.config:
             self.config['knockdown_coil'] = None
 
-        # register for notification of switch state
+        # can't read the switch until the switch controller is set up
+        self.machine.events.add_handler('init_phase_1',
+                                        self.update_state_from_switch)
+
+        self.machine.events.add_handler('init_phase_3',
+                                        self._register_switch_handlers)
+
+        # todo add switch handler to watch for reset switch?
+        # or do we? What about ball search? Config option?
+
+    def _register_switch_handlers(self):
+                # register for notification of switch state
         # this is in addition to the parent since drop targets track
         # self.complete in separately from lit/unlit
         self.machine.switch_controller.add_switch_handler(self.config['switch'],
             self.update_state_from_switch, 0)
         self.machine.switch_controller.add_switch_handler(self.config['switch'],
             self.update_state_from_switch, 1)
-
-        # can't read the switch until the switch controller is set up
-        self.machine.events.add_handler('init_phase_1',
-                                        self.update_state_from_switch)
-
-        # todo add switch handler to watch for reset switch?
-        # or do we? What about ball search? Config option?
 
     def knowndown(self):
         """Pulses the knockdown coil to knock down this drop target."""

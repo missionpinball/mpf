@@ -19,21 +19,33 @@ class Flasher(Device):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Flasher.' + name)
-        super(Flasher, self).__init__(machine, name, config, collection)
+        super(Flasher, self).__init__(machine, name, config, collection,
+                                      platform_section='flashers')
 
         # We save out number_str since the platform driver will convert the
         # number into a hardware number, but we need the original number for
         # some things later.
         self.config['number_str'] = str(config['number']).upper()
 
-        self.hw_driver, self.number = self.machine.platform.configure_driver(
-                                                                self.config)
+        self.hw_driver, self.number = (
+            self.platform.configure_driver(config=self.config,
+                                           device_type='flasher'))
         self.log.debug("Creating '%s' with config: %s", name, config)
 
         if 'flash_ms' not in self.config:
-            self.config['flash_ms'] = 10
+            self.config['flash_ms'] = (
+                self.machine.config['mpf']['default_flash_ms'])
 
     def flash(self, milliseconds=None):
+        """Flashes the flasher.
+
+        Args:
+            milliseconds: Int of how long you want the flash to be, in ms.
+                Default is None which causes the flasher to flash for whatever
+                its default config is, either its own flash_ms or the system-
+                wide default_flash_ms settings. (Current default is 50ms.)
+
+        """
 
         if milliseconds is None:
             milliseconds = self.config['flash_ms']

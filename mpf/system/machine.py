@@ -8,13 +8,14 @@
 
 import logging
 import os
-from collections import deque
 import time
 import sys
+import Queue
 
 from mpf.system import *
 from mpf.devices import *
 from mpf.system.config import Config
+from mpf.system.tasks import Task
 import version
 
 
@@ -52,11 +53,10 @@ class MachineController(object):
         self.log_system_info()
 
         self.loop_start_time = 0
+        self.num_loops = 0
         self.physical_hw = options['physical_hw']
         self.done = False
         self.machineflow_index = None
-        self.loop_rate = 0.0
-        self.mpf_load = 0.0
         self.machine_path = None  # Path to this machine's folder root
         self.monitors = dict()
         self.plugins = list()
@@ -64,15 +64,35 @@ class MachineController(object):
         self.game_modes = list()
         self.asset_managers = dict()
 
+        self.num_assets_to_load = 0
+
+        self.crash_queue = Queue.Queue()
+        Task.Create(self._check_crash_queue)
+
         self.config = dict()
         self._load_config()
 
-        self.platform = self.set_platform()
+        self.hardware_platforms = dict()
+        self.default_platform = None
+
+        if self.physical_hw:
+            for section, platform in self.config['hardware'].iteritems():
+                if platform.lower() != 'default' and section != 'driverboards':
+                        self.add_platform(platform)
+        else:
+            self.add_platform('virtual')
+
+        if self.physical_hw:
+            self.set_default_platform(self.config['hardware']['platform'])
+        else:
+            self.set_default_platform('virtual')
 
         self._load_system_modules()
 
-        self.events.add_handler('action_shutdown', self.end_run_loop)
-        self.events.add_handler('sw_shutdown', self.end_run_loop)
+        self.events.add_handler('action_shutdown', self.power_off)
+        self.events.add_handler('sw_shutdown', self.power_off)
+        self.events.add_handler('action_quit', self.quit)
+        self.events.add_handler('sw_quit', self.quit)
         self.events.add_handler('machine_reset_phase_3', self.flow_advance,
                                 position=0)
 
@@ -82,8 +102,24 @@ class MachineController(object):
         self._load_plugins()
         self.events.post("init_phase_3")
         self._load_scriptlets()
+        self.events.post("init_phase_4")
+        self._init_machine_flow()
+        self.events.post("init_phase_5")
 
-        # Configure the Machine Flow
+        self.reset()
+
+    def _check_crash_queue(self):
+        try:
+            crash = self.crash_queue.get(block=False)
+        except Queue.Empty:
+            yield 1000
+        else:
+            self.log.critical("MPF Shutting down due to child thread crash")
+            self.log.critical("Crash details: %s", crash)
+            self.done = True
+
+    def _init_machine_flow(self):
+        # sets up the machine flow
         self.log.debug("Configuring Machine Flow")
         self.config['machineflow'] = self.config['machineflow'].split(' ')
         # Convert the MachineFlow config into a list of objects
@@ -96,12 +132,8 @@ class MachineController(object):
         # register event handlers
         self.events.add_handler('machineflow_advance', self.flow_advance)
 
-        self.events.post("init_phase_4")
-        self.events.post("init_phase_5")
-
-        self.reset()
-
     def _load_config(self):
+        # creates the main config dictionary from the YAML machine config files.
 
         self.config = dict()
 
@@ -169,23 +201,27 @@ class MachineController(object):
             self.config['mpf']['device_modules'].split(' '))
         for device_type in self.config['mpf']['device_modules']:
             device_cls = eval(device_type)
-            # Check to see if we have these types of devices specified in this
-            # machine's config file and only load the modules this machine uses.
-            if device_cls.is_used(self.config):
 
-                collection, config = device_cls.get_config_info()
+            collection, config = device_cls.get_config_info()
 
-                self.log.info("Loading '%s' devices", collection)
+            self.log.info("Loading '%s' devices", collection)
 
-                # create the collection
-                exec('self.' + collection + '=devices.DeviceCollection()')
+            # create the collection
+            exec('self.' + collection + '=devices.DeviceCollection()')
 
-                # Create this device
-                devices.Device.create_devices(device_cls,
-                                              eval('self.' + collection),
-                                              self.config[config],
-                                              self
-                                              )
+            # Create this device
+
+            try:
+                config = self.config[config]
+            except KeyError:
+                self.log.debug("No " + collection + " devices found in config.")
+                config = dict()
+
+            devices.Device.create_devices(device_cls,
+                                          eval('self.' + collection),
+                                          config,
+                                          self
+                                          )
 
     def _load_system_modules(self):
         self.config['mpf']['system_modules'] = (
@@ -236,6 +272,8 @@ class MachineController(object):
         scratch without reloading the config files and assets from disk. This
         method is called after a game ends and before attract mode begins.
 
+        Note: This method is not yet implemented.
+
         """
         self.events.post('machine_reset_phase_1')
         self.events.post('machine_reset_phase_2')
@@ -247,9 +285,6 @@ class MachineController(object):
         machineflow. Typically this just advances between Attract mode and Game
         mode.
         """
-
-        # This method will be called for the first time by the event
-        # 'machine_reset_phase_3'
 
         # If there's a current machineflow position, stop that mode
         if self.machineflow_index is not None:
@@ -273,34 +308,36 @@ class MachineController(object):
         # Now start the new machine mode
         self.config['machineflow'][self.machineflow_index].start(**kwargs)
 
-    def set_platform(self):
-        """ Sets the hardware platform based on the "Platform" item in the
-        configuration dictionary. Looks for a module of that name in the
-        /platform directory.
+    def add_platform(self, name):
+        """Makes an additional hardware platform interface available to MPF.
+
+        Args:
+            name: String name of the platform to add. Must match the name of a
+                platform file in the mpf/platforms folder (without the .py
+                extension).
+
         """
 
-        if self.physical_hw:
-            try:
-                hardware_platform = __import__('mpf.platform.%s' %
-                                   self.config['hardware']['platform'],
-                                   fromlist=["HardwarePlatform"])
-                # above line has an effect similar to:
-                # from mpf.platform.<platform_name> import HardwarePlatform
-                return hardware_platform.HardwarePlatform(self)
+        if name not in self.hardware_platforms:
+            hardware_platform = __import__('mpf.platform.%s' % name,
+                                           fromlist=["HardwarePlatform"])
+            self.hardware_platforms[name] = hardware_platform.HardwarePlatform(self)
 
-            except ImportError:
-                self.log.error("Error importing platform module: %s",
-                               self.config['hardware']['platform'])
-                # do it again so the error shows up in the console. I forget
-                # why we use 'try' here?
-                hardware_platform = __import__('mpf.platform.%s' %
-                                   self.config['hardware']['platform'],
-                                   fromlist=["HardwarePlatform"])
-                raise Exception("Error importing platform module: %s",
-                                self.config['hardware']['platform'])
-        else:
-            from mpf.platform.virtual import HardwarePlatform
-            return HardwarePlatform(self)
+    def set_default_platform(self, name):
+        """Sets the default platform which is used if a device class-specific or
+        device-specific platform is not specified. The default platform also
+        controls whether a platform timer or MPF's timer is used.
+
+        Args:
+            name: String name of the platform to set to default.
+        """
+
+        try:
+            self.default_platform = self.hardware_platforms[name]
+            self.log.debug("Setting default platform to '%s'", name)
+        except KeyError:
+            self.log.error("Cannot set default platform to '%s', as that's not "
+                           "a currently active platform", name)
 
     def string_to_class(self, class_string):
         """Converts a string like mpf.system.events.EventManager into a python
@@ -324,158 +361,113 @@ class MachineController(object):
         return m
 
     def register_monitor(self, monitor_class, monitor):
-        """Registers a callback that will be called any time any player variable
-        changes.
+        """Registers a monitor.
 
-        The callback will be called with several paramters:
+        Args:
+            monitor_class: String name of the monitor class for this monitor
+                that's being registered.
+            monitor: String name of the monitor.
 
-        name: The name of the player variable that changed
-        value: The new value of the player variable
-        prev_value: The previous value of the player variable
-        change: The numeric amount the value changed, or if it can't be
-            calculated, boolean True
+        MPF uses monitors to allow components to monitor certain internal
+        elements of MPF.
+
+        For example, a player variable monitor could be setup to be notified of
+        any changes to a player variable, or a switch monitor could be used to
+        allow a plugin to be notified of any changes to any switches.
+
+        The MachineController's list of registered monitors doesn't actually
+        do anything. Rather it's a dictionary of sets which the monitors
+        themselves can reference when they need to do something. We just needed
+        a central registry of monitors.
 
         """
 
-        if monitor_class not in self.monitors:
-            self.add_monitor_class(monitor_class)
-
-        self.monitors[monitor_class].add(monitor)
-
-    def add_monitor_class(self, monitor_class):
         if monitor_class not in self.monitors:
             self.monitors[monitor_class] = set()
 
+        self.monitors[monitor_class].add(monitor)
+
     def run(self):
-        """The main machine run loop."""
+        """Starts the main machine run loop."""
         self.log.debug("Starting the main run loop.")
 
-        self.platform.timer_initialize()
+        self.default_platform.timer_initialize()
 
-        if self.platform.features['hw_timer']:
-            self.platform.hw_loop()
+        self.loop_start_time = time.time()
+
+        if self.default_platform.features['hw_timer']:
+            self.default_platform.run_loop()
         else:
-            if 'Enable Loop Data' in self.config['machine'] and (
-                    self.config['machine']['Enable Loop Data']):
-                self.sw_data_loop()
-            else:
-                self.sw_optimized_loop()
+            self._mpf_timer_run_loop()
 
-        # todo add support to read software switch events
+    def _mpf_timer_run_loop(self):
+        #Main machine run loop with when the default platform interface
+        #specifies the MPF should control the main timer
 
-    def sw_optimized_loop(self):
-        """The optimized version of the main game run loop."""
-
-        self.log.debug("Starting the optimized software loop. Metrics are "
-                       "disabled in this optimized loop.")
-        self.mpf_load = 0
-        self.loop_rate = 0
         start_time = time.time()
         loops = 0
-
         secs_per_tick = timing.Timing.secs_per_tick
+        sleep_sec = self.config['timing']['hw_thread_sleep_ms'] / 1000.0
 
-        self.platform.next_tick_time = time.time()
+        self.default_platform.next_tick_time = time.time()
 
         try:
             while self.done is False:
-                self.platform.hw_loop()
-
-                if self.platform.next_tick_time <= time.time():  # todo change this
+                time.sleep(sleep_sec)
+                self.default_platform.tick()
+                loops += 1
+                if self.default_platform.next_tick_time <= time.time():  # todo change this
                     self.timer_tick()
-                    self.platform.next_tick_time += secs_per_tick
-                    #sleep = (self.platform.next_tick_time - time.time()) / 1000.0
-                    #if sleep > 0:
-                    #    print sleep
-                    #    time.sleep(sleep)
-                    loops += 1
+                    self.default_platform.next_tick_time += secs_per_tick
 
         except KeyboardInterrupt:
             pass
 
-        self.log.info("Target loop rate: %s Hz", timing.Timing.HZ)
+        self.log_loop_rate()
 
         try:
-            self.log.info("Actual loop rate: %s Hz",
-                          loops / (time.time() - start_time))
+            self.log.info("Hardware loop rate: %s Hz",
+                          round(loops / (time.time() - start_time), 2))
         except ZeroDivisionError:
-            self.log.info("Actual loop rate: 0 Hz")
-
-    def sw_data_loop(self):
-        """ This is the main game run loop.
-
-        """
-        # todo currently this just runs as fast as it can. Should it
-        # sleep while waiting for the next timer tick?
-
-        self.log.debug("Starting the software loop")
-
-        mpf_times = deque()
-        hw_times = deque()
-
-        mpf_times.extend([0] * 100)
-        hw_times.extend([0] * 100)
-        this_loop_time = 0
-        hw_loop_time = 0
-
-        try:
-            while self.done is False:
-                hw_entry = time.time()
-                self.platform.hw_loop()
-                hw_loop_time += time.time() - hw_entry
-                if self.platform.next_tick_time <= time.time():
-
-                    mpf_entry = time.time()
-                    self.timer_tick()
-
-                    try:
-                        mpf_times.append((time.time() - mpf_entry) /
-                                        (time.time() - this_loop_start))
-                    except:
-                        mpf_times.append(0.0)
-
-                    try:
-                        hw_times.append(hw_loop_time /
-                                        (time.time() - this_loop_start))
-                    except:
-                        hw_times.append(0.0)
-
-                    # throw away the oldest time
-                    mpf_times.popleft()
-                    hw_times.popleft()
-
-                    # update our public info
-                    self.mpf_load = round(sum(mpf_times), 2)
-                    self.loop_rate = round(sum(hw_times), 2)
-
-                    # reset the loop counter
-                    hw_loop_time = 0.0
-                    this_loop_start = time.time()
-
-                    self.platform.next_tick_time += timing.Timing.secs_per_tick
-
-        except KeyboardInterrupt:
-            pass
-
-        self.log.info("Hardware load percent: %s", self.loop_rate)
-        self.log.info("MPF load percent: %s", self.mpf_load)
-
-        # todo add detection to see if the system is running behind?
-        # if you ask for 100HZ and the system can only do 50, that is
-        # not good
+            self.log.info("Hardware loop rate: 0 Hz")
 
     def timer_tick(self):
-        """Called by the platform each machine tick based on self.HZ"""
+        """Called to "tick" MPF at a rate specified by the machine Hz setting.
+
+        This method is called by the MPF run loop or the platform run loop,
+        depending on the platform. (Some platforms drive the loop, and others
+        let MPF drive.)
+
+        """
+        self.num_loops += 1  # used to calculate the loop rate when MPF exits
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
         tasks.Task.timer_tick()  # notifies tasks
         tasks.DelayManager.timer_tick()
 
-    def end_run_loop(self):
-        """Causes the main run_loop to end."""
+    def power_off(self):
+        """Attempts to perform a power down of the pinball machine and ends MPF.
+
+        This method is not yet implemented.
+        """
+        pass
+
+    def quit(self):
+        """Performs a graceful exit of MPF."""
         self.log.info("Shutting down...")
         self.events.post('shutdown')
         self.done = True
+
+    def log_loop_rate(self):
+
+        self.log.info("Target MPF loop rate: %s Hz", timing.Timing.HZ)
+
+        try:
+            self.log.info("Actual MPF loop rate: %s Hz",
+                          round(self.num_loops /
+                                (time.time() - self.loop_start_time), 2))
+        except ZeroDivisionError:
+            self.log.info("Actual MPF loop rate: 0 Hz")
 
 
 # The MIT License (MIT)

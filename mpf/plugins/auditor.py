@@ -72,32 +72,19 @@ class Auditor(object):
             self.current_audits = dict()
 
         # Make sure we have all the sections we need in our audit dict
-        if ('shots' in self.config['audit'] and
-                'shots' not in self.current_audits):
-            self.current_audits['shots'] = dict()
-
-        if ('switches' in self.config['audit'] and
-                'switches' not in self.current_audits):
+        if 'switches' not in self.current_audits:
             self.current_audits['switches'] = dict()
 
-        if ('events' in self.config['audit'] and
-                'events' not in self.current_audits):
+        if 'events' not in self.current_audits:
             self.current_audits['events'] = dict()
 
-        if ('player' in self.config['audit'] and
-                'player' not in self.current_audits):
+        if 'player' not in self.current_audits:
             self.current_audits['player'] = dict()
 
         # Make sure we have all the switches in our audit dict
         for switch in self.machine.switches:
             if switch.name not in self.current_audits['switches']:
                 self.current_audits['switches'][switch.name] = 0
-
-        # Make sure we have all the shots in our audit dict
-        if hasattr(self.machine, 'shots'):
-            for shot in self.machine.shots.shots:
-                if shot.name not in self.current_audits['shots']:
-                    self.current_audits['shots'][shot.name] = 0
 
         # Make sure we have all the player stuff in our audit dict
         if 'player' in self.config['audit']:
@@ -128,6 +115,13 @@ class Auditor(object):
             **kawargs: Not used, but included since some of the audit events
                 might include random kwargs.
         """
+
+        if audit_class not in self.current_audits:
+            self.current_audits[audit_class] = dict()
+
+        if event not in self.current_audits[audit_class]:
+            self.current_audits[audit_class][event] = 0
+
         self.current_audits[audit_class][event] += 1
 
     def audit_switch(self, switch_name, state, ms):

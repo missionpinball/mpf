@@ -1,11 +1,3 @@
-- tocks: 5
-  display:
-    type: Image
-    image: mission_pinball_flag_dmd
-    transition:
-      type: move_in
-      direction: top
-
 - tocks: 3
   display:
     - type: Text
@@ -16,18 +8,6 @@
       font: small
       #y: -1
       x: 2
-
-- tocks: 2
-  display:
-  - type: Animation
-    animation: rolling_ball
-    fps: 60
-    drop_frames: no
-    layer: 1
-    repeat: True
-    transition:
-      type: move_out
-      direction: top
 
 - tocks: 3
   display:
@@ -66,72 +46,11 @@
     shade: 9
     layer: 1
 
-- tocks: 3
-  display:
-  - type: Image
-    image: scribble
-    transition:
-      type: move_in
-      direction: left
-    layer: 2
-  - type: Text
-    text: TEXT UNDER IMAGE
-    color: 00ff00
-    layer: 1
-    shade: 8
-
-- tocks: 3
-  display:
-  - type: Text
-    text: CENTERED SIZE 10
-    color: ff0000
-  - type: Text
-    font: small
-    v_pos: top
-    h_pos: left
-    color: ffff00
-    text: TOP LEFT SIZE 5
-  - type: Text
-    text: BOTTOM CENTERED SIZE 7
-    v_pos: bottom
-    h_pos: center
-    font: medium
-    color: 0000ff
-    transition:
-      type: move_out
-      direction: bottom
-
-- tocks: 3
-  display:
-  - type: Text
-    font: small
-    v_pos: center
-    h_pos: center
-    text: DRAWING SHAPES
-    color: ff00ff
-    layer: 1
-  - type: Shape
-    shape: box
-    x: 0
-    y: 0
-    color: ff0000
-    width: 128
-    height: 32
-    thickness: 3
-  - type: Shape
-    shape: box
-    x: 10
-    y: 10
-    width: 10
-    height: 15
-    shade: 9
-    color: 4400ff
-  - type: Shape
-    shape: box
-    x: 100
-    y: 5
-    width: 20
-    height: 30
-    thickness: 0
-    shade: 3
-    color: ff3300
+#- tocks: 1
+#  display:
+#    type: shape
+#    shape: box
+#    width: 128
+#    height: 32
+#    color:
+    

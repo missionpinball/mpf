@@ -7,9 +7,9 @@ Machine:
     Min Balls: 1
     Max Balls: 6
 
-Hardware:
-    DriverBoards: wpc
-    Platform: p_roc
+hardware:
+    driverboards: wpc
+    platform: p_roc
 
 MPF:
   default_pulse_ms: 20
@@ -27,6 +27,7 @@ Modes:
 Scriptlets:
     attract.Attract
     claw.Claw
+    add_a_ball.AddABall
 
 Virtual Platform Start Active Switches:
     s_trough_1
@@ -151,7 +152,7 @@ Switches:
     s_buy_in:
         number: s23
         label:
-        tags:
+        tags: buy_in
     s_always_closed:
         number: s24
         label:
@@ -384,207 +385,207 @@ MatrixLights:
     l_ball_save:
         number: l11
         label:
-        tags:
+        tags: red
     l_fortress_multiball:
         number: l12
         label:
-        tags:
+        tags: purple
     l_museum_multiball:
         number: l13
         label:
-        tags:
+        tags: purple
     l_cryoprison_multiball:
         number: l14
         label:
-        tags:
+        tags: purple
     l_wasteland_multiball:
         number: l15
         label:
-        tags:
+        tags: purple
     l_shoot_again:
         number: l16
         label:
-        tags:
+        tags: orange
     l_access_claw:
         number: l17
         label:
-        tags:
+        tags: red
     l_left_ramp_explode:
         number: l18
         label:
-        tags:
+        tags: yellow
     l_right_ramp_jackpot:
         number: l21
         label:
-        tags:
+        tags: orange
     l_right_loop_explode:
         number: l22
         label:
-        tags:
+        tags: yellow
     l_light_quick_freeze:
         number: l23
         label:
-        tags:
+        tags: red
     l_freeze_4:
         number: l24
         label:
-        tags:
+        tags: blue
     l_claw_ready:
         number: l25
         label:
-        tags:
+        tags:  yellow
     l_freeze_3:
         number: l26
         label:
-        tags:
+        tags: blue
     l_freeze_2:
         number: l27
         label:
-        tags:
+        tags: blue
     l_freeze_1:
         number: l28
         label:
-        tags:
+        tags: blue
     l_right_loop_jackpot:
         number: l31
         label:
-        tags:
+        tags: orange
     l_standup_5:
         number: l32
         label:
-        tags:
+        tags: white
     l_right_ramp_arrow:
         number: l33
         label:
-        tags:
+        tags: red
     l_left_ramp_jackpot:
         number: l34
         label:
-        tags:
+        tags: orange
     l_left_loop_jackpot:
         number: l35
         label:
-        tags:
+        tags: orange
     l_car_crash_top:
         number: l36
         label:
-        tags:
+        tags: yellow
     l_standup_1:
         number: l37
         label:
-        tags:
+        tags: white
     l_car_crash_center:
         number: l38
         label:
-        tags:
+        tags: yellow
     l_right_ramp_explode:
         number: l41
         label:
-        tags:
+        tags: yellow
     l_right_ramp_car_chase:
         number: l42
         label:
-        tags:
+        tags: yellow
     l_quick_freeze:
         number: l43
         label:
-        tags:
+        tags: yellow
     l_left_ramp_car_chase:
         number: l44
         label:
-        tags:
+        tags: yellow
     l_extra_ball:
         number: l45
         label:
-        tags:
+        tags: yellow
     l_start_multiball:
         number: l46
         label:
-        tags:
+        tags: yellow
     l_car_crash_bottom:
         number: l47
         label:
-        tags:
+        tags: yellow
     l_left_loop_explode:
         number: l48
         label:
-        tags:
+        tags: yellow
     l_underground_arrow:
         number: l51
         label:
-        tags:
+        tags: red
     l_underground_jackpot:
         number: l52
         label:
-        tags:
+        tags: orange
     l_standup_2:
         number: l53
         label:
-        tags:
+        tags: white
     l_left_ramp_arrow:
         number: l54
         label:
-        tags:
+        tags: red
     l_side_ramp_jackpot:
         number: l55
         label:
-        tags:
+        tags: orange
     l_side_ramp_arrow:
         number: l56
         label:
-        tags:
+        tags: red
     l_left_loop_arrow:
         number: l57
         label:
-        tags:
+        tags: red
     l_center_ramp_jackpot:
         number: l58
         label:
-        tags:
+        tags: orange
     l_claw_capture_simon:
         number: l61
         label:
-        tags:
+        tags: red
     l_claw_super_jets:
         number: l62
         label:
-        tags:
+        tags: red
     l_claw_prison_break:
         number: l63
         label:
-        tags:
+        tags: red
     l_claw_lock_freeze:
         number: l64
         label:
-        tags:
+        tags: red
     l_claw_start_acmag:
         number: l65
         label:
-        tags:
+        tags: red
     l_left_rollover:
         number: l66
         label:
-        tags:
+        tags: green
     l_middle_rollover:
         number: l67
         label:
-        tags:
+        tags: green
     l_right_rollover:
         number: l68
         label:
-        tags:
+        tags: green
     l_super_jackpot:
         number: l71
         label:
-        tags:
+        tags: red
     l_computer:
         number: l72
         label:
-        tags:
+        tags: green
     l_demo_time:
         number: l73
         label:
-        tags:
+        tags: blue
     #name:
     #    number: l74
     #    label:
@@ -596,47 +597,47 @@ MatrixLights:
     l_standup_4:
         number: l76
         label:
-        tags:
+        tags: white
     l_standup_3:
         number: l77
         label:
-        tags:
+        tags: white
     l_retina_scan:
         number: l78
         label:
-        tags:
+        tags: red
     l_center_ramp_middle:
         number: l81
         label:
-        tags:
+        tags: orange
     l_center_ramp_outer:
         number: l82
         label:
-        tags:
+        tags: orange
     l_center_ramp_inner:
         number: l83
         label:
-        tags:
+        tags: red
     l_center_ramp_arrow:
         number: l84
         label:
-        tags:
+        tags: red
     l_right_loop_arrow:
         number: l85
         label:
-        tags:
+        tags: red
     l_buy_in:
         number: l86
         label:
-        tags:
+        tags: cabinet
     l_ball_launch:
         number: l87
         label:
-        tags:
+        tags: cabinet
     l_start:
         number: l88
         label:
-        tags:
+        tags: cabinet
 
 Coils:
     c_trough_eject:
@@ -1064,7 +1065,7 @@ ShowPlayer:
       action: stop
 
 LightPlayer:
-  machineflow_Attract_start:
+  attract_start:
     - show: multiball_sweep
       repeat: yes
       tocks_per_sec: 10
@@ -1101,8 +1102,14 @@ LightPlayer:
     - show: inlane_alternate
       repeat: yes
       tocks_per_sec: 8
+    - show: gi_on
+      repeat: no
+      hold: yes
+    - show: flashers
+      repeat: yes
+      tocks_per_sec: 4
 
-  machineflow_Attract_stop:
+  attract_stop:
     - show: multiball_sweep
       action: stop
     - show: random_flashing
@@ -1129,6 +1136,8 @@ LightPlayer:
     - show: inlane_alternate
       action: stop
       hold: false
+    - show: flashers
+      action: stop
 
 Shots:
     left_orbit:
@@ -1173,3 +1182,15 @@ SlidePlayer:
         text: "VOLUME: %display_volume"
         expire: 2s
         slide_priority: 10000
+    assets_to_load:
+        type: text
+        text: "LOADING ASSETS: %assets TO GO"
+        font: small
+    assets_loading_complete:
+        type: text
+        text: ASSET LOADING COMPLETE
+        font: small
+
+images:
+    demo_man_logo:
+        target: dmd

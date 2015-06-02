@@ -1,0 +1,10 @@
+- tocks: 1
+  leds:
+    upperRolloverLeft: ff0000
+    upperRolloverMiddle: 000000
+    upperRolloverRight: ff0000
+- tocks: 1
+  leds:
+    upperRolloverLeft: 000000
+    upperRolloverMiddle: ff0000
+    upperRolloverRight: 000000

@@ -22,6 +22,7 @@ class EventManager(object):
         self.queue = deque([])
         self.current_event = None
         self.debug = True  # logs all event activity except timer_ticks.
+        self.registered_monitors = set()  # callbacks that get every event
 
     def add_handler(self, event, handler, priority=1, **kwargs):
         """Registers an event handler to respond to an event.
@@ -82,6 +83,42 @@ class EventManager(object):
         self.registered_handlers[event].sort(key=lambda x: x[1], reverse=True)
 
         return key
+
+    def add_monitor(self, monitor):
+        """Adds a new event monitor.
+
+        Args:
+            monitor: Reference to the callback function that will be called on
+                every event posting.
+
+        Event monitors are similar to event handlers except they're called on
+        every single event. In other words, they're like handlers you register
+        for every event instead of a single event.
+
+        The monitor you register will be called on each event posting with the
+        following paramters:
+
+            * event String name of the evnet
+            * ev_type String of the type of event
+            * callback Reference to the event callback (if it has one)
+            * kwargs Dict of kwargs that will be passed to the handlers.
+
+        """
+        self.events_monitors.add(monitor)
+
+    def remove_monitor(self, monitor):
+        """Removes / deregisters an event monitor.
+
+        Args:
+            monitor: The function you want to deregister.
+
+        This method can safely be called even if this monitor is not registered.
+
+        """
+        try:
+            self.events_monitors.remove(monitor)
+        except KeyError:
+            pass
 
     def replace_handler(self, event, handler, priority=1, **kwargs):
         """Checks to see if a handler (optionally with kwargs) is registered for
@@ -364,19 +401,20 @@ class EventManager(object):
             self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback,
                            friendly_kwargs)
+
         if not self.busy:
             self._process_event(event, ev_type, callback, **kwargs)
         else:
-
-            self.log.debug("XXXX Event '%s' is in progress. Added to the "
-                           "queue.", self.current_event)
             self.queue.append((event, ev_type, callback, kwargs))
 
-            self.log.debug("================== ACTIVE EVENTS ==================")
-            for event in self.queue:
-                self.log.debug("%s, %s, %s, %s", event[0], event[1], event[2],
-                               event[3])
-            self.log.debug("==================================================")
+            if self.debug and event != 'timer_tick':
+                self.log.debug("XXXX Event '%s' is in progress. Added to the "
+                               "queue.", self.current_event)
+                self.log.debug("================== ACTIVE EVENTS =============")
+                for event in list(self.queue):
+                    self.log.debug("%s, %s, %s, %s", event[0], event[1],
+                                   event[2], event[3])
+                self.log.debug("==============================================")
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
@@ -391,6 +429,10 @@ class EventManager(object):
             self.log.debug("^^^^ Processing event '%s'. Type: %s, Callback: %s,"
                            " Args: %s", event, ev_type, callback,
                            friendly_kwargs)
+
+        for monitor in self.registered_monitors:
+            monitor(event=event, ev_type=ev_type, callback=callback,
+                    kwargs=kwargs)
 
         # Now let's call the handlers one-by-one, including any kwargs
         if event in self.registered_handlers:

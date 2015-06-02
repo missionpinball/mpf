@@ -12,7 +12,7 @@ import time
 import os
 
 from mpf.system.assets import Asset, AssetManager
-from mpf.system.config import Config
+from mpf.system.config import Config, CaseInsensitiveDict
 
 
 class LightController(object):
@@ -34,8 +34,10 @@ class LightController(object):
         self.led_queue = []
         self.event_queue = set()
         self.coil_queue = set()
+        self.gi_queue = set()
+        self.flasher_queue = set()
 
-        self.registered_light_scripts = dict()
+        self.registered_light_scripts = CaseInsensitiveDict()
 
         self.light_update_list = []
         self.led_update_list = []
@@ -208,9 +210,18 @@ class LightController(object):
                         key=this_action.get('key', None))
 
                 elif 'show' in this_action:
-                    this_action['show'] = self.machine.shows[this_action['show']]
+                    try:
+                        this_action['show'] = (
+                            self.machine.shows[this_action['show']])
+                    except KeyError:
+                        # If this mode has been started previously then the show
+                        # will already be a Show instance and not a string.
+                        pass
 
-                this_action['priority'] = priority
+                if 'priority' in this_action:
+                    this_action['priority'] += priority
+                else:
+                    this_action['priority'] = priority
 
                 event_keys.add(self.add_lightplayer_show(event_name,
                                                          this_action))
@@ -329,22 +340,21 @@ class LightController(object):
     def _run_show(self, show):
         # Internal method which starts a Show
 
-        # todo what happens if we try to run a show that's already running?
+        # if the show is already playing, it does not try to play again
+        if show in self.running_shows:
+            return
 
-        show.running = True
         show.ending = False
         show.current_repeat_step = 0
         show.last_action_time = self.current_time
         # or in the advance loop?
-        self.running_shows.append(show)  # should this be a set?
+        self.running_shows.append(show)
         self.running_shows.sort(key=lambda x: x.priority)
 
     def _end_show(self, show, reset=True):
         # Internal method which ends a running Show
 
-        if show in self.running_shows:
-            self.running_shows.remove(show)
-            show.running = False
+        self.running_shows = filter(lambda x: x != show, self.running_shows)
 
         if not show.hold:
             self.restore_lower_lights(show=show)
@@ -352,8 +362,7 @@ class LightController(object):
         if reset:
             show.current_location = 0
 
-        # if this show that's ending was from a script, remove it from the
-        # running_show_keys dict
+        # if this show was from a script, remove it from running_show_keys
 
         keys_to_remove = [key for key, value in self.running_show_keys.iteritems()
                           if value == show]
@@ -385,14 +394,29 @@ class LightController(object):
             priority = show.priority
 
         # first force the restore of whatever the lights were manually set to
-        for light in show.light_states:
-            if light.cache['priority'] < priority:
-                light.restore(force=False)
-        for led in show.led_states:
-            if led.cache['priority'] < priority:
-                led.restore(force=False)
 
-        # todo check that the above is right. Dunno which way force should be.
+        for light in show.light_states:
+
+            if light.debug_logging:
+                light.log.info("Found this light in a restore_lower_lights meth "
+                              "in show.light_states. Light cache priority: %s,"
+                              "ending show priority: %s", light.cache['priority'],
+                              priority)
+
+            if light.cache['priority'] <= priority:
+                light.restore()
+
+        for led in show.led_states:
+
+            if led.debug_logging:
+                led.log.info("Found this LED in a restore_lower_lights meth "
+                              "in show.led_states. LED cache priority: %s,"
+                              "ending show priority: %s", led.cache['priority'],
+                              priority)
+
+            if led.cache['priority'] <= priority:
+
+                led.restore()
 
         # now see if there are other shows that have these lights in an active
         # state
@@ -404,8 +428,8 @@ class LightController(object):
         # for the lights and leds that were in this show that just ended?
 
     def _tick(self):
-        #Runs once per machine loop and services any light updates that are
-        #needed.
+        # Runs once per machine loop and services any light updates that are
+        # needed.
 
         self.current_time = time.time()
         # we calculate current_time one per loop because we want every action
@@ -423,8 +447,7 @@ class LightController(object):
                 # advance the show to the current time
                 show._advance()
 
-                if not show.running:
-                    # if we hit the end of the show, we can stop
+                if show.ending:
                     break
 
         # Check to see if we need to service any items from our queue. This can
@@ -493,6 +516,12 @@ class LightController(object):
             # for pulse, it's a power multiplier
         self.coil_queue.add((coil, action))
 
+    def _add_to_gi_queue(self, gi, value):
+        self.gi_queue.add((gi, value))
+
+    def _add_to_flasher_queue(self, flasher):
+        self.flasher_queue.add(flasher)
+
     def _do_update(self):
         if self.light_update_list:
             self._update_lights()
@@ -502,6 +531,10 @@ class LightController(object):
             self._fire_coils()
         if self.event_queue:
             self._fire_events()
+        if self.gi_queue:
+            self._update_gis()
+        if self.flasher_queue:
+            self._update_flashers()
 
     def _fire_coils(self):
         for coil in self.coil_queue:
@@ -513,6 +546,16 @@ class LightController(object):
         for event in self.event_queue:
             self.machine.events.post(event)
         self.event_queue = set()
+
+    def _update_gis(self):
+        for gi in self.gi_queue:
+            gi[0].on(brightness=gi[1])
+        self.gi_queue = set()
+
+    def _update_flashers(self):
+        for flasher in self.flasher_queue:
+            flasher.flash()
+        self.flasher_queue = set()
 
     def _update_lights(self):
         # Updates all the lights in the machine with whatever's in
@@ -550,7 +593,8 @@ class LightController(object):
                 item['led'].color(color=item['color'],
                                   fade_ms=item['fade_ms'],
                                   priority=item['priority'],
-                                  blend=item['blend'])
+                                  blend=item['blend'],
+                                  cache=False)
 
             elif item['led'].debug_logging:
                 item['led'].log.info("Show Controller has an update for this "
@@ -844,7 +888,6 @@ class Show(Asset):
         self.hold = False  # hold the item states when the show ends.
         self.priority = 0  # relative priority of this show
         self.ending = False  # show will end after the current tock ends
-        self.running = False  # is this show running currently?
         self.blend = False  # when an light is off in this show, should it allow
         # lower priority lights to show through?
 
@@ -876,6 +919,11 @@ class Show(Asset):
         if not show_actions:
             show_actions = self.load_show_from_disk()
 
+        if type(show_actions) is not list:
+            self.asset_manager.log.warning("%s is not a valid YAML file. "
+                                           "Skipping show.", self.file_name)
+            return False
+
         for step_num in range(len(show_actions)):
             step_actions = dict()
 
@@ -899,21 +947,14 @@ class Show(Asset):
 
                     if 'tag|' in light:
                         tag = light.split('tag|')[1]
-
                         light_list = self.machine.lights.items_tagged(tag)
-                    else:
-                        light_list = [light]
-
-                    # convert light strings to objects
-                    light_object_list = list()
-
-                    for i in light_list:
+                    else:  # create a single item list of the light object
                         try:
-                            light_object_list.append(self.machine.lights[i])
-                        except:
-                            # this light name is invalid
+                            light_list = [self.machine.lights[light]]
+                        except KeyError:
                             self.asset_manager.log.warning("Found invalid "
                                 "light name '%s' in show. Skipping...", light)
+                            continue
 
                     value = show_actions[step_num]['lights'][light]
 
@@ -925,12 +966,12 @@ class Show(Asset):
                     if type(value) is int and value > 255:
                         value = 255
 
-                    for light_object in light_object_list:
-                        light_actions[light_object] = value
+                    for light in light_list:
+                        light_actions[light] = value
 
                         # make sure this light is in self.light_states
-                        if light_object not in self.light_states:
-                            self.light_states[light_object] = 0
+                        if light not in self.light_states:
+                            self.light_states[light] = 0
 
                 step_actions['lights'] = light_actions
 
@@ -944,7 +985,7 @@ class Show(Asset):
 
                 step_actions['events'] = event_list
 
-            #Coils
+            # Coils
             if ('coils' in show_actions[step_num] and
                     show_actions[step_num]['coils']):
 
@@ -956,10 +997,9 @@ class Show(Asset):
                         this_coil = self.machine.coils[coil]
                     except:
                         # this coil name is invalid
-                        self.asset_manager.log.warning("WARNING: Found invalid coil name"
-                                         " '%s' in show. Skipping...",
-                                         coil)
-                        break
+                        self.asset_manager.log.warning("WARNING: Found invalid "
+                            "coil name '%s' in show. Skipping...", coil)
+                        continue
 
                     value = show_actions[step_num]['coils'][coil]
 
@@ -984,6 +1024,66 @@ class Show(Asset):
 
                 step_actions['coils'] = coil_actions
 
+            # Flashers
+            if ('flashers' in show_actions[step_num] and
+                    show_actions[step_num]['flashers']):
+
+                flasher_set = set()
+
+                for flasher in Config.string_to_list(
+                        show_actions[step_num]['flashers']):
+
+                    if 'tag|' in flasher:
+                        tag = flasher.split('tag|')[1]
+                        flasher_list = self.machine.flashers.items_tagged(tag)
+                    else:  # create a single item list of the flasher objects
+                        try:
+                            flasher_list = [self.machine.flashers[flasher]]
+                        except KeyError:
+                            self.asset_manager.log.warning("Found invalid "
+                                "flasher name '%s' in show. Skipping...",
+                                flasher)
+                            continue
+
+                    for flasher in flasher_list:
+                        flasher_set.add(flasher)
+
+                step_actions['flashers'] = flasher_set
+
+            # GI
+            if ('gis' in show_actions[step_num] and
+                    show_actions[step_num]['gis']):
+
+                gi_actions = dict()
+
+                for gi in show_actions[step_num]['gis']:
+
+                    if 'tag|' in gi:
+                        tag = gi.split('tag|')[1]
+                        gi_list = self.machine.gi.items_tagged(tag)
+                    else:  # create a single item list of the light object
+                        try:
+                            gi_list = [self.machine.gi[gi]]
+                        except KeyError:
+                            self.asset_manager.log.warning("Found invalid "
+                                "GI name '%s' in show. Skipping...",
+                                gi)
+                            continue
+
+                    value = show_actions[step_num]['gis'][gi]
+
+                    # convert / ensure flashers are single ints
+                    if type(value) is str:
+                        value = LightController.hexstring_to_int(value)
+
+                    if type(value) is int and value > 255:
+                        value = 255
+
+                    for gi in gi_list:
+                        gi_actions[gi] = value
+
+                step_actions['gis'] = gi_actions
+
             # LEDs
             if ('leds' in show_actions[step_num] and
                     show_actions[step_num]['leds']):
@@ -994,21 +1094,14 @@ class Show(Asset):
 
                     if 'tag|' in led:
                         tag = led.split('tag|')[1]
-
                         led_list = self.machine.leds.items_tagged(tag)
-                    else:
-                        led_list = [led]
-
-                    # convert led strings to objects
-                    led_object_list = list()
-
-                    for i in led_list:
+                    else:  # create a single item list of the led object
                         try:
-                            led_object_list.append(self.machine.leds[i])
-                        except:
-                            # this light name is invalid
+                            led_list = [self.machine.leds[led]]
+                        except KeyError:
                             self.asset_manager.log.warning("Found invalid "
-                                "led name '%s' in show. Skipping...", led)
+                                "LED name '%s' in show. Skipping...", led)
+                            continue
 
                     value = show_actions[step_num]['leds'][led]
 
@@ -1031,12 +1124,12 @@ class Show(Asset):
                     value = LightController.hexstring_to_list(value)
                     value.append(fade)
 
-                    for led_object in led_object_list:
-                        led_actions[led_object] = value
+                    for led in led_list:
+                        led_actions[led] = value
 
                         # make sure this led is in self.led_states
-                        if led_object not in self.led_states:
-                            self.led_states[led_object] = {
+                        if led not in self.led_states:
+                            self.led_states[led] = {
                                 'current_color': [0, 0, 0],
                                 'destination_color': [0, 0, 0],
                                 'start_color': [0, 0, 0],
@@ -1184,13 +1277,12 @@ class Show(Asset):
                 hold or not with True or False here.
         """
 
-        if self.running:
-            if hold:
-                self.hold = True
-            elif hold is False:  # if it's None we don't assume False
-                self.hold = False
+        if hold:
+            self.hold = True
+        elif hold is False:  # if it's None we don't assume False
+            self.hold = False
 
-            self.machine.light_controller._end_show(self, reset)
+        self.machine.light_controller._end_show(self, reset)
 
     def change_speed(self, tocks_per_sec=1):
         """Changes the playback speed of a running Show.
@@ -1286,18 +1378,19 @@ class Show(Asset):
 
                 for coil_obj, coil_action in item_dict.iteritems():
                     self.machine.light_controller._add_to_coil_queue(
-                        coil = coil_obj,
-                        action = coil_action)
+                        coil=coil_obj,
+                        action=coil_action)
 
-            #elif item_type == 'display':
-            #
-            #    self.last_slide = (
-            #        self.machine.display.slidebuilder.build_slide(item_dict,
-            #        priority=self.priority))
-            #
-            #    self.slide_removal_keys.add(self.last_slide.removal_key)
+            elif item_type == 'gis':
+                for gi, value in item_dict.iteritems():
+                    self.machine.light_controller._add_to_gi_queue(
+                        gi=gi,
+                        value=value)
 
-                # todo make it so they don't all have the same name?
+            elif item_type == 'flashers':
+                for flasher in item_dict:
+                    self.machine.light_controller._add_to_flasher_queue(
+                        flasher=flasher)
 
         # increment this show's current_location pointer and handle repeats
 
@@ -1586,7 +1679,7 @@ class Playlist(object):
             self.current_repeat_loop = 0
 
     def _advance(self):
-        #Runs the Show(s) at the current step of the plylist and advances
+        # Runs the Show(s) at the current step of the plylist and advances
         # the pointer to the next step
 
         # If we stop at a step with a trigger show, the stopping of the trigger
@@ -1610,7 +1703,8 @@ class Playlist(object):
                     # We have to make sure the show is running before we try to
                     # stop it, because if this show was a trigger show then it
                     # stopped itself already
-                    if action['show'].running:
+                    if action['show'] in (
+                            self.machine.light_controller.running_shows):
                         action['show'].stop()
         self.starting = False
 

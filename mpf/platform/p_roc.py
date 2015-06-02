@@ -57,13 +57,13 @@ class HardwarePlatform(Platform):
 
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
-        self.log = logging.getLogger('P-ROC Platform')
-        self.log.debug("Configuring machine for P-ROC hardware")
+        self.log = logging.getLogger('P-ROC')
+        self.log.debug("Configuring P-ROC hardware")
 
         if not pinproc_imported:
             self.log.error('Could not import "pinproc". Most likely you do not '
                            'have libpinproc and/or pypinproc installed. You can'
-                           'run MPF in software-only "virtual" mode by using '
+                           ' run MPF in software-only "virtual" mode by using '
                            'the -x command like option for now instead.')
             sys.exit()
 
@@ -76,6 +76,7 @@ class HardwarePlatform(Platform):
         self.features['variable_recycle_time'] = False
         self.features['variable_debounce_time'] = False
         self.features['hw_enable_auto_disable'] = False
+        self.features['hw_led_fade'] = True
         # todo need to add differences between patter and pulsed_patter
 
         # Make the platform features available to everyone
@@ -161,7 +162,7 @@ class HardwarePlatform(Platform):
         else:
             proc_num = pinproc.decode(self.machine_type, str(config['number']))
 
-        if device_type == 'coil':
+        if device_type in ['coil', 'flasher']:
             proc_driver_object = PROCDriver(proc_num, self.proc)
         elif device_type == 'light':
             proc_driver_object = PROCMatrixLight(proc_num, self.proc)
@@ -285,7 +286,7 @@ class HardwarePlatform(Platform):
         """Configures a hardware DMD connected to a classic P-ROC."""
         return PROCDMD(self.proc, self.machine)
 
-    def hw_loop(self):
+    def tick(self):
         """Checks the P-ROC for any events (switch state changes or notification
         that a DMD frame was updated).
 
@@ -297,7 +298,7 @@ class HardwarePlatform(Platform):
             event_type = event['type']
             event_value = event['value']
             if event_type == 99:  # CTRL-C to quit todo does this go here?
-                self.machine.end_run_loop()
+                self.machine.quit()
             elif event_type == pinproc.EventTypeDMDFrameDisplayed:
                 pass
             elif event_type == pinproc.EventTypeSwitchClosedDebounced:
@@ -306,16 +307,22 @@ class HardwarePlatform(Platform):
             elif event_type == pinproc.EventTypeSwitchOpenDebounced:
                 self.machine.switch_controller.process_switch(state=0,
                                                               num=event_value)
+            elif event_type == pinproc.EventTypeSwitchClosedNondebounced:
+                self.machine.switch_controller.process_switch(state=1,
+                                                              num=event_value,
+                                                              debounced=False)
+            elif event_type == pinproc.EventTypeSwitchOpenNondebounced:
+                self.machine.switch_controller.process_switch(state=0,
+                                                              num=event_value,
+                                                              debounced=False)
             else:
-                pass
-                # todo we still have event types:
-                # pinproc.EventTypeSwitchClosedNondebounced
-                # pinproc.EventTypeSwitchOpenNondebounced
+                self.log.warning("Received unrecognized event from the P-ROC. "
+                                 "Type: %s, Value: %s", event_type, event_value)
 
         self.proc.watchdog_tickle()
         self.proc.flush()
 
-    def _do_set_hw_rule(self,
+    def write_hw_rule(self,
                         sw,
                         sw_activity,
                         coil_action_ms,  # 0 = disable, -1 = hold forever
@@ -492,7 +499,7 @@ class HardwarePlatform(Platform):
         self.proc.switch_update_rule(sw.number, event_type, rule, final_driver,
                                      drive_now)
 
-    def _do_clear_hw_rule(self, sw_num):
+    def clear_hw_rule(self, sw_name):
         """Clears a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
@@ -508,6 +515,8 @@ class HardwarePlatform(Platform):
             The number of the switch whose rule you want to clear.
 
         """
+        sw_num = self.machine.switches[sw_name].number
+
         self.log.debug("Clearing HW rule for switch: %s", sw_num)
 
         self.proc.switch_update_rule(sw_num, 'open_nondebounced',
@@ -1306,15 +1315,15 @@ class PROCDMD(object):
         if len(data) == 4096:
             self.dmd.set_data(data)
         else:
-            self.log.warning("Received a DMD frame of length %s instead of "
-                             "4096. Discarding...")
+            self.machine.log.warning("Received a DMD frame of length %s instead"
+                                     "of 4096. Discarding...", len(data))
 
     def tick(self):
         """Updates the physical DMD with the latest frame data. Meant to be
         called once per machine tick.
 
         """
-        self.machine.platform.proc.dmd_draw(self.dmd)
+        self.proc.dmd_draw(self.dmd)
 
 
 # The MIT License (MIT)

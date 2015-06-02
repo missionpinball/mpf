@@ -1,5 +1,5 @@
 """ Contains the parent classes Platform"""
-# hardware.py
+# platform.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -10,15 +10,13 @@ import time
 
 
 class Platform(object):
-    """ Parent class for the machine's hardware controller.
+    """Parent class for the a hardware platform interface.
+
+    Args:
+        machine: The main ``MachineController`` instance.
 
     This is the class that each hardware controller (such as P-ROC or FAST)
-    will subclass to talk to their hardware. If there is no physical hardware
-    attached, then this class can be used on its own. (Many of the methods
-    will do nothing and your game will work.)
-
-    For example, the P-ROC HardwarePlatform class will have a Driver class
-    with methods such as pulse() to fire a coil.
+    will subclass to talk to their hardware.
 
     """
     def __init__(self, machine):
@@ -32,7 +30,7 @@ class Platform(object):
         # Set default platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
         self.features['max_pulse'] = 255
-        self.features['hw_timer'] = True
+        self.features['hw_timer'] = False
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
 
@@ -44,20 +42,37 @@ class Platform(object):
         """
         self.next_tick_time = time.time()
 
-    def set_hw_rule(self,
-                    sw_name,  # switch name
-                    sw_activity,  # active or inactive?
-                    coil_name=None,  # coil name
-                    coil_action_ms=0,  # total time coil is active for
-                    pulse_ms=0,  # ms to pulse the coil?
-                    pwm_on=0,  # 'on' ms of a pwm-based patter
-                    pwm_off=0,  # 'off' ms of a pwm-based patter
-                    delay=0,  # delay before firing?
-                    recycle_time=0,  # wait before firing again?
-                    debounced=False,  # should coil wait for debounce?
-                    drive_now=False,  # should rule check sw and fire coil now?
-                    ):
-        """Writes the hardware rule to the controller.
+    def set_hw_rule(self, sw_name, sw_activity, coil_name=None,
+                    coil_action_ms=0, pulse_ms=0, pwm_on=0, pwm_off=0, delay=0,
+                    recycle_time=0, debounced=False, drive_now=False):
+        """Writes a hardware rule to the controller.
+
+        Args:
+            sw_name: String name of the switch.
+            sw_activity: String description of the switch activity this rule
+                will be set for, either 'active' or 'inactive'.
+            coil_name: String name of the coil.
+            coil_action_ms: Total time in ms the coil should activate for.
+            pulse_ms: How long in ms the coil should activate for. Default is 0.
+            pwn_on: The 'on' portion, in ms of a pwm-based patter. Default is 0.
+            pwm_off: The 'off' portion, in ms, of a pwm-based patter. Default is
+                0.
+            delay: The delay, in ms, the coil should wait before firing. Default
+                is 0.
+            recycle_time: How long the coil must be inactive, in ms, before it
+                can be fired again via this rule. Default is 0.
+            debounced: Boolean which specifies whether this coil should activate
+                on a debounced or non-debounced switch change state. Default is
+                False (non-debounced).
+            drive_name: Boolean which controls whether the coil should activate
+                immediately when this rule is applied if the switch currently in
+                in the state set in this rule.
+
+        Note that this method provides several convenience processing to convert
+        the incoming parameters into a format that is more widely-used by
+        hardware controls. It's intended that platform interfaces subclass
+        `write_hw_rule()` instead of this method, though this method may be
+        subclassed if you wish.
 
         """
 
@@ -83,27 +98,145 @@ class Platform(object):
         if self.machine.switches[sw_name].type == 'NC':
             sw_activity = sw_activity ^ 1  # bitwise invert
 
-        self._do_set_hw_rule(sw, sw_activity, coil_action_ms, coil,
-                            pulse_ms, pwm_on, pwm_off, delay, recycle_time,
-                            debounced, drive_now)
+        self.write_hw_rule(sw, sw_activity, coil_action_ms, coil, pulse_ms,
+                           pwm_on, pwm_off, delay, recycle_time, debounced,
+                           drive_now)
 
-    def clear_hw_rule(self, sw_name):
-        """ Clears all the hardware switch rules for a switch, meaning those
-        switch actions will no longer affect coils.
+    def write_hw_rule(sw, sw_activity, coil_action_ms, coil, pulse_ms, pwm_on,
+                      pwm_off, delay, recycle_time, debounced, drive_now):
+        """Subclass this method in a platform interface to write a hardware
+        switch rule to the controller.
 
-        Another way to think of this is that it 'disables' a hardware rule.
-        This is what you'd use to disable flippers or bumpers during tilt, game
-        over, etc.
+        Game programmers will typically use `set_hw_rule` instead of this method
+        because `set_hw_rule` takes switch NC and NO settings into account, so
+        it's a bit more convenient.
 
         """
-        self._do_clear_hw_rule(self.machine.switches[sw_name].number)
+        pass
 
-    def hw_loop(self):
-        """Called once per game loop to read the platform hardware for any
-        changes to any devices."""
-        time.sleep(0.001)
+    def clear_hw_rule(self, sw_name):
+        """Subclass this method in a platform module to clear a hardware switch
+        rule for this switch.
 
-    def verify_switches(self):
+        Clearing a hardware rule means actions on this switch will no longer
+        affect coils.
+
+        Another way to think of this is that it 'disables' a hardware rule.
+        This is what you'd use to disable flippers and autofire coils during
+        tilt, game over, etc.
+
+        """
+        pass
+
+    def tick(self):
+        """Subclass this method in a platform module to perform periodic updates
+        to the platform hardware, e.g. reading switches, sending driver or
+        light updates, etc.
+
+        If you want to use this method and let MPF control the machine's run
+        loop, set `self.features['hw_timer'] = False`.
+
+        This method is only used when MPF controls the game loop. Each platform
+        interface either needs to implement this method or the `run_loop`
+        method.
+
+        This method will be called every 1ms.
+
+        """
+        pass
+
+    def run_loop(self):
+        """Subclass this method in a platform module if the platform will
+        control the run loop rather than MPF controlling it.
+
+        If you want to use this method and let your platform control the
+        machine's run loop, set `self.features['hw_timer'] = True`.
+
+        If your platform controls the loop, it should call
+        `self.machine.timer_tick()` periodically based on the `self.machine.HZ`
+        rate.
+
+        Also the loop should continue running until `self.machine.done` is True.
+        For example, it could run in `while not self.machine.done:` loop.
+
+        Your loop can call `self.machine.switch_controller.process_switch()` if
+        any switch events come in "off cycle", but the timer_tick should be
+        called consistently.
+
+        This loop can safely block. If the call to the hardware does not block,
+        there should be a small pause in the loop (e.g. `time.sleep(.001)` to
+        prevent 100% CPU utilization.)
+
+        """
+        pass
+
+    def get_switch_state(self, switch):
+        """Subclass this method in a platform module to get the hardware state
+        of a switch.
+
+        Args:
+            switch: A class `Switch` object.
+
+        Return a value of 1 if the switch is active, and 0 if the switch is
+        inactive. This method should not compensate for NO or NC status, rather,
+        it should return the raw hardware state of the switch.
+
+        """
+        pass
+
+    def configure_driver(self, config, device_type='coil'):
+        """Subclass this method in a platform module to configure a driver.
+
+        This method should return a reference to the driver's platform interface
+        object which will be called to access the hardware.
+
+        """
+        pass
+
+    def configure_switch(self, config):
+        """Subclass this method in a platform module to configure a switch.
+
+        This method should return a reference to the switch's platform interface
+        object which will be called to access the hardware.
+
+        """
+        pass
+
+    def configure_led(self, config):
+        """Subclass this method in a platform module to configure an LED.
+
+        This method should return a reference to the LED's platform interface
+        object which will be called to access the hardware.
+
+        """
+        pass
+
+    def configure_gi(self, config):
+        """Subclass this method in a platform module to configure a GI string.
+
+        This method should return a reference to the GI string's platform
+        interface object which will be called to access the hardware.
+
+        """
+        pass
+
+    def configure_matrixlight(self, config):
+        """Subclass this method in a platform module to configure a matrix
+        light.
+
+        This method should return a reference to the matrix lights's platform
+        interface object which will be called to access the hardware.
+
+        """
+        pass
+
+    def configure_dmd(self):
+        """Subclass this method in a platform module to configure the DMD.
+
+        This method should return a reference to the DMD's platform interface
+        object which will be called to access the hardware.
+
+        """
         pass
 
 # The MIT License (MIT)

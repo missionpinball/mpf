@@ -90,7 +90,7 @@ class LogicBlocks(object):
         if 'counters' in config:
             for item in config['counters']:
                 block = Counter(self.machine, item, player,
-                                   config['counters'][item])
+                                config['counters'][item])
                 blocks_added.add(block)
 
         if 'accruals' in config:
@@ -102,7 +102,7 @@ class LogicBlocks(object):
         if 'sequences' in config:
             for item in config['sequences']:
                 block = Sequence(self.machine, item, player,
-                                 config['accruals'][item])
+                                 config['sequences'][item])
                 blocks_added.add(block)
 
         # Enable any logic blocks that do not have specific enable events
@@ -231,7 +231,7 @@ class LogicBlock(object):
             self.reset()
             self.enable()
 
-        if self.config['disable_on_complete']:
+        elif self.config['disable_on_complete']:
             self.disable()
 
 
@@ -292,14 +292,12 @@ class Counter(LogicBlock):
         """Enables this counter. Automatically called when one of the
         'enable_event's is posted. Can also manually be called.
         """
-
-        super(Counter, self).enable(**kwargs)
+        super(Counter, self).enable()
         self.machine.events.remove_handler(self.hit)  # prevents multiples
 
-        self.enabled = True
-
         for event in self.config['count_events']:
-            self.machine.events.add_handler(event, self.hit)
+            self.handler_keys.add(
+                self.machine.events.add_handler(event, self.hit))
 
     def reset(self, **kwargs):
         """Resets the hit progress towards completion"""
@@ -378,13 +376,14 @@ class Accrual(LogicBlock):
         """Enables this accrual. Automatically called when one of the
         'enable_events' is posted. Can also manually be called.
         """
-        super(Accrual, self).enable(**kwargs)
+        super(Accrual, self).enable()
         self.machine.events.remove_handler(self.hit)  # prevents multiples
 
         for entry_num in range(len(self.config['events'])):
             for event in self.config['events'][entry_num]:
-                self.machine.events.add_handler(event, self.hit,
-                                                step=entry_num)
+                self.handler_keys.add(
+                    self.machine.events.add_handler(event, self.hit,
+                                                    step=entry_num))
 
     def reset(self, **kwargs):
         """Resets the hit progress towards completion"""
@@ -435,7 +434,7 @@ class Sequence(LogicBlock):
         if 'player_variable' not in config:
                 self.config['player_variable'] = self.name + '_step'
 
-        self.player[self.config['player_variable']] = 1
+        self.player[self.config['player_variable']] = 0
 
     def enable(self, step=0, **kwargs):
         """Enables this Sequence. Automatically called when one of the
@@ -444,8 +443,11 @@ class Sequence(LogicBlock):
         Args:
             step: Step number this logic block will be at when it's enabled.
                 Default is 0.
+
+        Note the step numbers are zero-based.
         """
-        self.log.debug("Enabling")
+        super(Sequence, self).enable()
+
         if step:
             self.player[self.config['player_variable']] = step
 
@@ -458,12 +460,11 @@ class Sequence(LogicBlock):
             self.complete()  # I guess we just complete?
             return
 
-        self.enabled = True
-
         # add the handlers for the current step
         for event in (self.config['events']
                       [self.player[self.config['player_variable']]]):
-            self.machine.events.add_handler(event, self.hit)
+            self.handler_keys.add(
+                self.machine.events.add_handler(event, self.hit))
 
     def hit(self, **kwargs):
         """Increases the hit progress towards completion. Automatically called
@@ -483,7 +484,8 @@ class Sequence(LogicBlock):
             # add the handlers for the new current step
             for event in (self.config['events']
                           [self.player[self.config['player_variable']]]):
-                self.machine.events.add_handler(event, self.hit)
+                self.handler_keys.add(
+                    self.machine.events.add_handler(event, self.hit))
 
 
 # The MIT License (MIT)

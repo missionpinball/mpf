@@ -31,7 +31,8 @@ class Driver(Device):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Driver.' + name)
-        super(Driver, self).__init__(machine, name, config, collection)
+        super(Driver, self).__init__(machine, name, config, collection,
+                                     platform_section='coils')
 
         self.time_last_changed = 0
         self.time_when_done = 0
@@ -41,8 +42,8 @@ class Driver(Device):
         # some things later.
         self.config['number_str'] = str(config['number']).upper()
 
-        self.hw_driver, self.number = self.machine.platform.configure_driver(
-                                                                self.config)
+        self.hw_driver, self.number = (
+            self.platform.configure_driver(self.config))
         self.log.debug("Creating '%s' with config: %s", name, config)
 
         if 'pulse_ms' not in self.config:
@@ -51,8 +52,8 @@ class Driver(Device):
                 self.config['pulse_ms'] = 0
             # Otherwise we'll use the system default for pulse_ms
             else:
-                self.config['pulse_ms'] = \
-                    self.machine.config['mpf']['default_pulse_ms']
+                self.config['pulse_ms'] = (
+                    self.machine.config['mpf']['default_pulse_ms'])
 
         if 'holdpatter' in self.config:
             self.config['pwm_on'] = int(config['holdpatter'].split('-')[0])

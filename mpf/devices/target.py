@@ -74,11 +74,6 @@ class Target(Device):
         # light color
         # unlight color
 
-        # register for switch handlers so we know if this switch is hit
-        # note this only looks for activations
-        self.machine.switch_controller.add_switch_handler(self.config['switch'],
-                                                          self.hit, 1)
-
         # register for events
 
         self.machine.events.add_handler('action_target_' + self.name +
@@ -89,6 +84,13 @@ class Target(Device):
 
         self.machine.events.add_handler('action_target_' + self.name +
                                         '_toggle', self.toggle)
+
+        self.machine.events.add_handler('init_phase_3',
+                                        self._register_switch_handlers)
+
+    def _register_switch_handlers(self):
+        self.machine.switch_controller.add_switch_handler(self.config['switch'],
+                                                          self.hit, 1)
 
     def hit(self, stealth=False):
         """This target was just hit.
@@ -215,7 +217,7 @@ class TargetGroup(Device):
             self.config['unlit_complete_show'] = None
 
         if 'unlit_complete_script' not in self.config:
-            self.config['unlt_complete_script'] = None
+            self.config['unlit_complete_script'] = None
 
         if 'rotate_left_events' not in self.config:
             self.config['rotate_left_events'] = list()
@@ -354,7 +356,7 @@ class TargetGroup(Device):
 
     def rotate(self, direction='right', move_state=True, steps=1):
 
-        if not self.machine.game or not self.machine.game.num_balls_in_play:
+        if not self.machine.game or not self.machine.game.balls_in_play:
             return
 
         self.log.debug("Rotating target group. Direction: %s, Moving state:"

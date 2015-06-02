@@ -1,0 +1,85 @@
+- tocks: 1
+  leds:
+    tag|standup: ff0033
+- tocks: 1
+  leds:
+    tag|standup: ff0066
+- tocks: 1
+  leds:
+    tag|standup: ff0099
+- tocks: 1
+  leds:
+    tag|standup: ff00cc
+- tocks: 1
+  leds:
+    tag|standup: ff00ff
+- tocks: 1
+  leds:
+    tag|standup: cc00ff
+- tocks: 1
+  leds:
+    tag|standup: 6600ff
+- tocks: 1
+  leds:
+    tag|standup: 3300ff
+- tocks: 1
+  leds:
+    tag|standup: 0000fff
+- tocks: 1
+  leds:
+    tag|standup: 0033ff
+- tocks: 1
+  leds:
+    tag|standup: 0066ff
+
+- tocks: 1
+  leds:
+    tag|standup: 0099ff
+- tocks: 1
+  leds:
+    tag|standup: 00ccff
+- tocks: 1
+  leds:
+    tag|standup: 00ffff
+- tocks: 1
+  leds:
+    tag|standup: 00ffcc
+- tocks: 1
+  leds:
+    tag|standup: 00ff99
+- tocks: 1
+  leds:
+    tag|standup: 00ff33
+- tocks: 1
+  leds:
+    tag|standup: 00ff00
+- tocks: 1
+  leds:
+    tag|standup: 33ff00
+- tocks: 1
+  leds:
+    tag|standup: 66ff00
+- tocks: 1
+  leds:
+    tag|standup: 99ff00
+- tocks: 1
+  leds:
+    tag|standup: ccff00
+- tocks: 1
+  leds:
+    tag|standup: ffff00
+- tocks: 1
+  leds:
+    tag|standup: ffcc00
+- tocks: 1
+  leds:
+    tag|standup: ff9900
+- tocks: 1
+  leds:
+    tag|standup: ff6600
+- tocks: 1
+  leds:
+    tag|standup: ff3300
+- tocks: 1
+  leds:
+    tag|standup: ff0000

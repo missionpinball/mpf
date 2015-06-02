@@ -23,8 +23,7 @@ class HardwarePlatform(Platform):
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger("Virtual Platform")
-        self.log.debug("Configuring machine for virtual hardware.")
-        self.machine.physical_hw = False
+        self.log.debug("Configuring virtual hardware interface.")
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -69,24 +68,12 @@ class HardwarePlatform(Platform):
     def configure_dmd(self):
         return VirtualDMD(self.machine)
 
-    def _do_set_hw_rule(self,
-                        sw,
-                        sw_activity,
-                        coil_action_ms,  # 0 = disable, -1 = hold forever
-                        coil=None,
-                        pulse_ms=0,
-                        pwm_on=0,
-                        pwm_off=0,
-                        delay=0,
-                        recycle_time=0,
-                        debounced=True,
-                        drive_now=False):
-
+    def write_hw_rule(self, *args, **kwargs):
         pass
-        # todo create switch handlers to fire coils based on these hardware
-        # rules
 
-    def _do_clear_hw_rule(self, sw_num):
+    def clear_hw_rule(self, sw_name):
+        sw_num = self.machine.switches[sw_name].number
+
         for entry in self.hw_switch_rules.keys():  # slice for copy
             if entry.startswith(
                     self.machine.switches.number(sw_num).name):
@@ -118,8 +105,9 @@ class VirtualLED(object):
         self.number = number
 
     def color(self, color, fade_ms=0, brightness_compensation=True):
-        self.log.debug("Setting color: %s, fade: %s, comp: %s",
-                       color, fade_ms, brightness_compensation)
+        #self.log.debug("Setting color: %s, fade: %s, comp: %s",
+        #               color, fade_ms, brightness_compensation)
+        pass
 
     def disable(self):
         pass
@@ -182,7 +170,7 @@ class VirtualDMD(object):
     def __init__(self, machine):
         pass
 
-    def update(self, pixel_array):
+    def update(self, data):
         pass
 
 # The MIT License (MIT)

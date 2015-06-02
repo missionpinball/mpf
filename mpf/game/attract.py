@@ -42,11 +42,50 @@ class Attract(MachineMode):
         self.start_hold_time = 0.0
         self.start_buttons_held = set()
 
+        self.assets_waiting = 0
+
     def start(self, **kwargs):
         """ Automatically called when the Attract game mode becomes active.
 
         """
         super(Attract, self).start()
+
+        if not self.machine.num_assets_to_load:
+            self._do_start()
+        else:
+            self.machine.events.add_handler('timer_tick', self._loading_tick,
+                                            10000)
+
+    def stop(self):
+        super(Attract, self).stop()
+        self.machine.events.post('machineflow_attract_stop')
+        self.machine.events.post('attract_stop')
+
+    def _loading_tick(self):
+
+        if self.machine.num_assets_to_load:
+
+            if self.assets_waiting != self.machine.num_assets_to_load:
+
+                self.log.info("Holding Attract start while assets load. "
+                              "Remaining: %s", self.machine.num_assets_to_load)
+
+                self.machine.events.post('assets_to_load',
+                                         assets=self.machine.num_assets_to_load)
+
+                self.assets_waiting = self.machine.num_assets_to_load
+
+        else:
+            self.log.info("Asset loading complete")
+            self.machine.events.post('assets_loading_complete')
+            self._do_start()
+
+    def _do_start(self):
+
+        self.machine.events.remove_handler(self._loading_tick)
+
+        self.machine.events.post('machineflow_attract_start')
+        self.machine.events.post('attract_start')
 
         # register switch handlers for the start button press so we can
         # capture long presses

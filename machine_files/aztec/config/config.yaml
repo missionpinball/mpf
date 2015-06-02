@@ -1,30 +1,33 @@
 # config_version=1
 
 Machine:
-    HZ: 30
     Balls Installed: 1
     Min Balls: 0
     Max Balls: 1
+
+timing:
+    hz: 28
 
 Hardware:
     Platform: fast
     DriverBoards: fast
 
-Fast:
-    port0_name: \\.\COM10
-    port0_baud: 921600
-    port1_name: \\.\COM11
-    port1_baud: 921600
-    port2_name: \\.\COM12
-    port2_baud: 921600
-    main_port: 1
-    led_port: 0
-    dmd_port: 2
+fast:
+    ports: \\.\COM10, \\.\COM11, \\.\COM12
     config_number_format: hex
+
+openpixelcontrol:
+    number_format: hex
 
 Game:
     Balls per game: 3
     Max players per game: 4
+
+Modes:
+    - base
+
+Scriptlets:
+    attract.Attract
 
 Switches:
     leftPop:
@@ -44,9 +47,11 @@ Switches:
     leftFlipper:
         number: 0
         tags: left_flipper
+        debounce_close: 2
     rightFlipper:
         number: 2
         tags: right_flipper
+        debounce_close: 2
     start:
         tags: start
         number: 3
@@ -119,6 +124,7 @@ LEDs:
         number: 0
     leftUpperStandup:
         number: 1
+        tags: standup
     upperLaneLeft:
         number: 2
     upperRolloverLeft:
@@ -147,8 +153,10 @@ LEDs:
         number: e
     righttarget1:
         number: f
+        tags: standup
     righttarget2:
         number: 10
+        tags: standup
     centerRow5:
         number: 11
     centerRow4:
@@ -165,8 +173,10 @@ LEDs:
         number: 17
     lefttarget2:
         number: 18
+        tags: standup
     lefttarget1:
         number: 19
+        tags: standup
     leftoutlane:
         number: 1a
     semicircle1:
@@ -191,7 +201,7 @@ LEDs:
         number: 24
     semicircle9:
         number: 25
-    leftoutlane:
+    rightoutlane:
         number: 26
 
 BallDevices:
@@ -201,7 +211,7 @@ BallDevices:
         entrance_count_delay: 200ms
         exit_count_delay: 1s
         eject_coil: trough
-        confirm_eject_type: count    
+        confirm_eject_type: count
     
     ballLock:
         ball_switches: ballLock
@@ -278,49 +288,8 @@ TargetGroups:
         rotate_right_events: sw_right_flipper
         reset_events: targets_upperLanes_lit_complete
 
-Shots:
-    pops:
-        Switch: leftPop, rightPop, bottomPop
-    slings:
-        Switch: leftSling, rightSling
 
-Scoring:
-    targets_upperLanes_lit_complete:
-        Score: 5000
-    targets_upperLanes_lit_hit:
-        Score: 100
-    targets_upperLanes_unlit_hit:
-        Score: 1000
-    shot_pops:
-        Score: 150
-    shot_slings:
-        Score: 10
-    balldevice_ballLock_ball_enter:
-        Score: 2500
-    target_right1_lit:
-        Score: 50
-    target_right2_lit:
-        Score: 50
-    target_left1_lit:
-        Score: 50
-    target_left2_lit:
-        Score: 50
-    target_middle_lit:
-        Score: 50
-    target_upperLeft_lit:
-        Score: 50
-    target_right1_unlit:
-        Score: 50
-    target_right2_unlit:
-        Score: 250
-    target_left1_unlit:
-        Score: 250
-    target_left2_unlit:
-        Score: 250
-    target_middle_unlit:
-        Score: 250
-    target_upperLeft_unlit:
-        Score: 250
+
 
 DMD:
     physical: yes
@@ -330,8 +299,8 @@ DMD:
     fps: auto
 
 Window:
-    width: 800
-    height: 600
+    width: 1024
+    height: 256
     title: FAST Pinball Portable Machine
     resizable: yes
     frame: yes
@@ -340,36 +309,36 @@ Window:
     quit_on_close: True
     elements:
       - type: VirtualDMD
-        width: 512
-        height: 128
+        width: 1024
+        height: 256
         h_pos: center
         v_pos: center
-        pixel_color: ff5500
+        pixel_color: ff0000
         dark_color: 220000
         layer: 1
-        pixel_spacing: 1
+        pixel_spacing: 2
 
-      - type: Text
-        font: tall title
-        text: FAST PINBALL
-        h_pos: right
-        v_pos: bottom
-        y: -10
-        x: -20
-        size: 60
-        antialias: yes
-        layer: 1
-        color: ff0000
-
-      - type: Shape
-        shape: box
-        width: 516
-        height: 132
-        layer: 2
-        thickness: 2
-        v_pos: center
-        h_pos: center
-        color: aaaaaa
+      #- type: Text
+      #  font: tall title
+      #  text: FAST PINBALL
+      #  h_pos: right
+      #  v_pos: bottom
+      #  y: -10
+      #  x: -20
+      #  size: 60
+      #  antialias: yes
+      #  layer: 1
+      #  color: ff0000
+      #
+      #- type: Shape
+      #  shape: box
+      #  width: 516
+      #  height: 132
+      #  layer: 2
+      #  thickness: 2
+      #  v_pos: center
+      #  h_pos: center
+      #  color: aaaaaa
 
 Virtual Platform Start Active Switches:
     trough
@@ -404,45 +373,22 @@ Keyboard:
         switch: standupMidLeft1
 
 SlidePlayer:
-    score_change:
-      - type: Text
-        text: "%score"
-        number_grouping: true
-      - type: Text
-        text: PLAYER %number%
-        v_pos: bottom
-        h_pos: left
-        font: small
-      - type: Text
-        text: BALL %ball%
-        v_pos: bottom
-        h_pos: right
-        font: small
-    ball_started:
-      - type: Text
-        text: "%score%"
-      - type: Text
-        text: PLAYER %player
-        v_pos: bottom
-        h_pos: left
-        font: small
-      - type: Text
-        text: BALL %ball
-        v_pos: bottom
-        h_pos: right
-        font: small
-        transition:
-            type: move_in
-            direction: top
-    balldevice_deadworld_ball_enter:
-        type: Text
-        text: "BALLS LOCKED: %balls"
     volume_change:
         type: Text
         text: "VOLUME: %display_volume"
+        expire: 2s
+        slide_priority: 10000
+    assets_to_load:
+        type: text
+        text: "LOADING ASSETS: %assets TO GO"
+        font: small
+    assets_loading_complete:
+        type: text
+        text: ASSET LOADING COMPLETE
+        font: small
 
-ShowPlayer:
-    machineflow_Attract_start:
+lightplayer:
+    attract_start:
       - show: semi_circle_rainbow
         repeat: yes
         tocks_per_sec: 15
@@ -451,21 +397,55 @@ ShowPlayer:
         tocks_per_sec: 10
       - show: ball_lock_lane
         repeat: yes
-        tocks_per_sec: 5
-#      - show: top_lanes
-#        repeat: yes
-#        tocks_per_sec: 11
-      - show: attract_display
+        tocks_per_sec: 8
+      - show: top_lanes
         repeat: yes
-        tocks_per_sec: 1
-    machineflow_Attract_stop:
+        tocks_per_sec: 5
+      - show: colored_inserts
+        repeat: yes
+        tocks_per_sec: 4
+      - show: rainbow_targets
+        repeat: yes
+        tocks_per_sec: 30
+      - show: top_inserts
+        repeat: yes
+        tocks_per_sec: 7
+      - show: whites
+        repeat: yes
+        tocks_per_sec: 15
+
+    attract_stop:
       - show: semi_circle_rainbow
         action: stop
       - show: kit
         action: stop
       - show: ball_lock_lane
         action: stop
-#      - show: top_lanes
-#        action: stop
+      - show: top_lanes
+        action: stop
+      - show: colored_inserts
+        action: stop
+      - show: rainbow_targets
+        action: stop
+      - show: top_inserts
+        action: stop
+      - show: whites
+        action: stop
+
+showplayer:
+    attract_start:
+      - show: attract_display
+        repeat: yes
+        tocks_per_sec: 1
+    attract_stop:
       - show: attract_display
         action: stop
+
+bcp:
+    connections:
+        local_display:
+            host: localhost
+            port: 5050
+            connection_attempts: 5
+            require_connection: yes
+

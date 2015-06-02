@@ -12,12 +12,12 @@ from mpf.system.timing import Timing
 from mpf.system.config import Config, CaseInsensitiveDict
 
 
-
 class Device(object):
     """ Generic parent class of for every hardware object in a pinball machine.
 
     """
-    def __init__(self, machine, name, config=None, collection=-1):
+    def __init__(self, machine, name, config=None, collection=-1,
+                 platform_section=None):
         self.machine = machine
         self.name = name.lower()
         self.tags = list()
@@ -34,9 +34,24 @@ class Device(object):
                 self.label = config['label']  # todo change to multi lang
             # todo more pythonic way, like self.label = blah if blah?
 
-            if 'debug_logging' in config and config['debug_logging']:
+            if 'debug' in config and config['debug']:
                 self.debug_logging = True
-                self.log.info("Enabling debug_logging for this device")
+                self.log.info("Enabling debug logging for this device")
+
+            if platform_section:
+                if self.machine.physical_hw:
+                    if 'platform' not in config:
+                        if self.machine.config['hardware'][platform_section] != 'default':
+                            self.platform = (
+                                self.machine.hardware_platforms
+                                [self.machine.config['hardware'][platform_section]])
+                        else:
+                            self.platform = self.machine.default_platform
+                    else:
+                        self.platform = (
+                            self.machine.hardware_platforms[config['platform']])
+                else:
+                    self.platform = self.machine.default_platform
 
         # set event handlers to enable, disable, and reset this device
         # note that not all devices will use all of these methods
@@ -84,15 +99,8 @@ class Device(object):
             # Have to use -1 here instead of None to catch an empty collection
             collection[name] = self
 
-        #self.configure(config)
-
     def __str__(self):
         return self.name
-
-    @classmethod
-    def is_used(cls, config):
-        if cls.config_section in config:
-            return True
 
     @classmethod
     def get_config_info(cls):
@@ -102,10 +110,11 @@ class Device(object):
     def create_devices(cls, collection, config, machine):
         # if this device class has a device_class_init staticmethod, run it now
 
-        try:
-            cls.device_class_init(machine)
-        except:
-            pass
+        if config:
+            try:
+                cls.device_class_init(machine)
+            except:
+                pass
 
         # create the devices
         for device in config:
