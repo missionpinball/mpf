@@ -271,6 +271,8 @@ class HardwarePlatform(Platform):
         for led in self.fast_leds:
             msg += (led.number + led.current_color + ',')  # todo change to join
 
+        msg = msg[:-1]  # trim the final comma
+
         self.rgb_connection.send(msg)
 
     def get_switch_states(self):
