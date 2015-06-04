@@ -2,3 +2,4 @@
 /logs
 /machine_files/*/audits/
 *.local
+/machine_files/
