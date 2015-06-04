@@ -1,5 +1,12 @@
 #! /bin/bash
 
+# To use this, run ./mpf.sh as if you were launching mpf.py or mc.py.
+# Example:
+#
+# ./mpf.sh demo_man -c proc -vV
+#
+# Command arguments will be passed to both processes.
+
 # This code will launch mc in a new window and require you to switch windows
 # and Ctrl-C out of each
 
