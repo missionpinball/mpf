@@ -2,4 +2,4 @@
 /logs
 /machine_files/*/audits/
 *.local
-/machine_files/
+/machine_files/sttng
