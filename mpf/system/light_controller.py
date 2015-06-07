@@ -279,7 +279,7 @@ class LightController(object):
                 if 'lights' not in this_step:
                     this_step['lights'] = dict()
 
-                for tag in Config.string_to_list(light_tags):
+                for tag in Config.string_to_lowercase_list(light_tags):
                     this_step['lights']['tag|' + tag] = step['color']
 
             if led_tags:
@@ -287,7 +287,7 @@ class LightController(object):
                 if 'leds' not in this_step:
                     this_step['leds'] = dict()
 
-                for tag in Config.string_to_list(led_tags):
+                for tag in Config.string_to_lowercase_list(led_tags):
                     this_step['leds']['tag|' + tag] = step['color']
 
             action_list.append(this_step)

@@ -28,7 +28,7 @@ class Device(object):
         if config:
             self.config.update(config)
             if 'tags' in config:
-                self.tags = Config.string_to_list(config['tags'])
+                self.tags = Config.string_to_lowercase_list(config['tags'])
 
             if 'label' in config:
                 self.label = config['label']  # todo change to multi lang
