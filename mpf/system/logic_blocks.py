@@ -261,7 +261,7 @@ class Counter(LogicBlock):
 
         config_spec = '''
                         count_events: list|None
-                        count_complete_value: int|0
+                        count_complete_value: int|None
                         multiple_hit_window: ms|0
                         count_interval: int|1
                         direction: string|up
