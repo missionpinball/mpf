@@ -187,8 +187,8 @@ class SwitchController(object):
         Args:
             name: The string name of the switch. This is optional if you specify
                 the switch via the 'num' or 'obj' parameters.
-            state: The state of the switch you're processing, 1 is active, 0 is
-                inactive.
+            state: Boolean or int of state of the switch you're processing,
+                True/1 is active, False/0 is inactive.
             logical: Boolean which specifies whether the 'state' argument
                 represents the "physical" or "logical" state of the switch. If
                 True, a 1 means this switch is active and a 0 means it's
@@ -232,6 +232,12 @@ class SwitchController(object):
             self.log.warning("Received a state change from non-configured "
                              "switch. Number: %s", num)
             return
+
+        # We need int, but this lets it come in as boolean also
+        if state:
+            state = 1
+        else:
+            state = 0
 
         # flip the logical & physical states for NC switches
         hw_state = state
