@@ -487,6 +487,12 @@ class Sequence(LogicBlock):
                 self.handler_keys.add(
                     self.machine.events.add_handler(event, self.hit))
 
+    def reset(self, **kwargs):
+        """Resets the sequence back to the first step."""
+
+        super(Sequence, self).reset(**kwargs)
+        self.player[self.config['player_variable']] = 0
+
 
 # The MIT License (MIT)
 
