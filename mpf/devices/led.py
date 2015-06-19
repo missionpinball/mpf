@@ -103,7 +103,13 @@ class LED(Device):
         if 'fade_ms' not in self.config:
             self.config['fade_ms'] = None
 
+        self.log_color = self.config.get('log_color_changes', False)
+
+        if self.log_color:
+            self.log.info("Enabling color change logging for this LED")
+
         self.current_color = []  # one item for each element, 0-255
+
 
         if self.debug_logging:
             self.log.info("Intial settings: %s", self.config)
@@ -205,6 +211,9 @@ class LED(Device):
         else:
             self.hw_driver.color(color)
             self.state['color'] = color
+
+            if self.log_color:
+                self.log.info("Setting Color: %s", color)
 
         if cache:
             self.cache['color'] = color  # new color
