@@ -13,6 +13,7 @@ import os
 
 from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.timing import Timing
 
 
 class LightController(object):
@@ -107,65 +108,42 @@ class LightController(object):
         if 'lightplayer' in self.machine.config:
             self.process_lightplayer(self.machine.config['lightplayer'])
 
-    def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
-                  tocks_per_sec=30, start_location=None, num_repeats=0,
-                  key=None, **kwargs):
+    def play_show(self, show, priority=0, **kwargs):
         """Plays a light show.
 
         Args:
             show: Either the string name of a registered show or a direct
                 reference to the show object you want to play.
-            repeat: Boolean which specifies whether this show will repeat (i.e.
-                "loop") after it reaches the end.
             priority: The priority this show will play at.
-            blend: Boolean which controls whether lights or LEDs that are "off"
-                in this show will allow the lights to be on if they're on in
-                lower priority shows.
-            hold: Boolean which controls whether the any lights that are on in
-                the last step in the show will stay on when the show ends.
-            tocks_per_sec: Integer of how fast the show will be played in tocks
-                per second.
-            start_location: Integer of what location (step) of the show you want
-                it to start playing at. Default of None means that the show will
-                start whenever it's currently set to.
-            num_repeats: How many times you'd like the show to repeat. Must be
-                used with repeat=True. Default of 0 means it will repeat
-                forever.
-            key: Optional string name of a key that can be used to later to
-                identify this show. Typically this is used with shows created
-                from scripts.
-            **kwargs: Unused. Included in case this method is used as an event
-                handler which might contain random keywords.
+            **kwargs: Contains the parameters and settings to control the
+                playing of the show. See Show.play() for options and details.
         """
 
-        if 'show_priority' in kwargs:
-            priority += kwargs['show_priority']
+        try:
+            priority += kwargs.pop('show_priority')
+        except KeyError:
+            pass
 
         if show in self.machine.shows:
-            self.machine.shows[show].play(repeat=repeat, priority=priority,
-                                          blend=blend, hold=hold,
-                                          tocks_per_sec=tocks_per_sec,
-                                          start_location=start_location,
-                                          num_repeats=num_repeats)
-
+            self.machine.shows[show].play(priority=priority, **kwargs)
         else:  # assume it's a show object?
-            show.play(repeat=repeat, priority=priority, blend=blend, hold=hold,
-                      tocks_per_sec=tocks_per_sec,
-                      start_location=start_location, num_repeats=num_repeats)
+            show.play(priority=priority, **kwargs)
 
-        if key:
-            self.running_show_keys[key] = show
+        try:
+            self.running_show_keys[kwargs['key']] = show
+        except KeyError:
+            pass
 
-    def stop_show(self, show=None, reset=True, hold=False, key=None, **kwargs):
+    def stop_show(self, show=None, key=None, **kwargs):
 
         try:
             show.stop(reset=reset, hold=hold)
         except AttributeError:
             if show in self.machine.shows:
-                self.machine.shows[show].stop(reset=reset, hold=hold)
+                self.machine.shows[show].stop(**kwargs)
 
         if key:
-            self.stop_script(key, reset=reset, hold=hold)
+            self.stop_script(key, **kwargs)
 
     def stop_shows_by_key(self, key):
         try:
@@ -337,6 +315,32 @@ class LightController(object):
 
         return event_key
 
+    def sync_ms_next_tick(self, sync_ms):
+        """Figures out the next tick show should start based on the passed
+        sync_ms value.
+
+        Args:
+            sync_ms: Integer of the sync period in ms.
+
+        Returns:
+            Int of a tick number
+
+        """
+
+        tick_interval = Timing.HZ / (1000 / sync_ms)
+        next_tick = self.machine.tick_num
+
+        if (sync_ms >= Timing.ms_per_tick and
+                self.machine.tick_num % tick_interval):
+            next_tick = self.machine.tick_num + tick_interval - (
+                self.machine.tick_num % tick_interval)
+
+        self.log.info("Calculating show sync. Sync_ms: %s, Current tick: %s, "
+                       "Show start: %s", sync_ms, self.machine.tick_num,
+                       next_tick)
+
+        return next_tick
+
     def _run_show(self, show):
         # Internal method which starts a Show
 
@@ -346,8 +350,11 @@ class LightController(object):
 
         show.ending = False
         show.current_repeat_step = 0
-        show.last_action_time = self.current_time
         # or in the advance loop?
+
+        if show.sync_ms:
+            show.next_action_tick = self.sync_ms_next_tick(show.sync_ms)
+
         self.running_shows.append(show)
         self.running_shows.sort(key=lambda x: x.priority)
 
@@ -431,16 +438,11 @@ class LightController(object):
         # Runs once per machine loop and services any light updates that are
         # needed.
 
-        self.current_time = time.time()
-        # we calculate current_time one per loop because we want every action
-        # in this loop to write the same "last action time" so they all stay
-        # in sync. Also we truncate to 3 decimals for ease of comparisons later
-
         # Check the running Shows
         for show in self.running_shows:
             # we use a while loop so we can catch multiple action blocks
             # if the show tocked more than once since our last update
-            while show.next_action_time <= self.current_time:
+            while show.next_action_tick <= self.machine.tick_num:
 
                 # add the current location to the list to be serviced
                 # show.service_locations.append(show.current_location)
@@ -859,18 +861,15 @@ class Show(Asset):
 
     def __init__(self, machine, config, file_name, asset_manager, actions=None):
         if not actions:
-            super(Show, self).__init__(machine, config, file_name, asset_manager)
+            super(Show, self).__init__(machine, config, file_name,
+                                       asset_manager)
         else:
             self.machine = machine
             self.config = config
             self.file_name = file_name
             self.asset_manager = asset_manager
 
-
             self._initialize_asset()
-            #self.loaded = True
-            #self.show_actions = actions
-            #self._asset_loaded()
             self._load(callback=None, show_actions=actions)
 
     def _initialize_asset(self):
@@ -879,7 +878,7 @@ class Show(Asset):
         # you can safely read this value to determine the current playback rate
         # But don't update it directly to change the speed of a running show.
         # Use the change_speed() method instead.
-        self.secs_per_tock = 0  # calculated based on tocks_per_sec
+        self.ticks_per_tock = 0  # calculated based on tocks_per_sec
         self.repeat = False  # whether this show repeats when finished
         self.num_repeats = 0  # if self.repeat=True, how many times it repeats
         # self.num_repeats = 0 means it repeats indefinitely until stopped
@@ -890,14 +889,14 @@ class Show(Asset):
         self.ending = False  # show will end after the current tock ends
         self.blend = False  # when an light is off in this show, should it allow
         # lower priority lights to show through?
-
+        self.debug = False
         self.current_location = 0  # index of which step (tock) a running show is
-        self.last_action_time = 0.0  # when the last action happened
         self.total_locations = 0  # total number of action locations
         self.current_tock = 0  # index of which tock a running show is in
-        self.next_action_time = 0  # time of when the next action happens
+        self.next_action_tick = 0  # tick number of when the next action happens
         self.callback = None  # if the show should call something when it ends
         # naturally. (Not invoked if show is manually stopped)
+        self.sync_ms = 0
 
         self.light_states = {}
         self.led_states = {}
@@ -1157,7 +1156,7 @@ class Show(Asset):
 
     def play(self, repeat=False, priority=0, blend=False, hold=False,
              tocks_per_sec=30, start_location=None, callback=None,
-             num_repeats=0):
+             num_repeats=0, sync_ms=0, **kwargs):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
         speed, priority, whether this show blends with others, etc. These are
@@ -1202,6 +1201,11 @@ class Show(Asset):
             num_repeats: Integer of how many times you want this show to repeat
                 before stopping. A value of 0 means that it repeats
                 indefinitely. Note this only works if you also have repeat=True.
+            sync_ms: Number of ms of the show sync cycle. A value of zero means
+                this show will also start playing immediately. See the full MPF
+                documentation for details on how this works.
+            **kwargs: Not used, but included in case this method is used as an
+                event handler which might include additional kwargs.
         """
 
         if not self.loaded:
@@ -1213,7 +1217,8 @@ class Show(Asset):
                                     tocks_per_sec=tocks_per_sec,
                                     start_location=start_location,
                                     callback=callback,
-                                    num_repeats=num_repeats)
+                                    num_repeats=num_repeats,
+                                    sync_ms=sync_ms)
             self.load()
             return False
 
@@ -1222,9 +1227,10 @@ class Show(Asset):
         self.blend = blend
         self.hold = hold
         self.tocks_per_sec = tocks_per_sec  # also referred to as 'tps'
-        self.secs_per_tock = 1/float(tocks_per_sec)
+        self.ticks_per_tock = Timing.HZ/float(tocks_per_sec)
         self.callback = callback
         self.num_repeats = num_repeats
+        self.sync_ms = sync_ms
         if start_location is not None:
             # if you don't specify a start location, it will start where it
             # left off (if you stopped it with reset=False). If the show has
@@ -1298,10 +1304,10 @@ class Show(Asset):
             self.your_show.change_speed(self.your_show.tocks_per_second*2)
 
         Note that you can't just update the show's tocks_per_second directly
-        because we also need to update self.secs_per_tock.
+        because we also need to update self.ticks_per_tock.
         """
         self.tocks_per_sec = tocks_per_sec
-        self.secs_per_tock = 1/float(tocks_per_sec)
+        self.ticks_per_tock = Timing.HZ/float(tocks_per_sec)
 
     def _advance(self):
 
@@ -1310,17 +1316,23 @@ class Show(Asset):
             self.machine.light_controller._end_show(self)
             return
 
-        action_loop_count = 0  # Tracks how many loops we've done here
+        action_loop_count = 0  # Tracks how many loops we've done in this call
+        # Used to detect if a show is running too slow
 
-        while (self.next_action_time <=
-               self.machine.light_controller.current_time):
+        while (self.next_action_tick <=
+               self.machine.tick_num):
             action_loop_count += 1
 
             # Set the next action time & step to the next location
-            self.next_action_time = ((self.show_actions[self.current_location]
-                                     ['tocks'] * self.secs_per_tock) +
-                                     self.last_action_time)
-            self.last_action_time = self.next_action_time
+            self.next_action_tick = ((self.show_actions[self.current_location]
+                                     ['tocks'] * self.ticks_per_tock) +
+                                     self.machine.tick_num)
+
+            if self.debug:
+                print "Current tick", self.machine.tick_num
+                print "Next Tick:", self.next_action_tick
+                print "current location tocks", self.show_actions[self.current_location]['tocks']
+                print "ticks per tock", self.ticks_per_tock
 
         # create a dictionary of the current items of each type, combined with
         # the show details, that we can throw up to our queue

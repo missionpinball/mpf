@@ -22,6 +22,7 @@ class Timing(object):
 
     HZ = None
     secs_per_tick = None
+    ms_per_tick = None
     tick = 0
 
     def __init__(self, machine):
@@ -39,6 +40,7 @@ class Timing(object):
 
         self.log.info("Configuring system Timing for %sHz", Timing.HZ)
         Timing.secs_per_tick = 1 / float(Timing.HZ)
+        Timing.ms_per_tick = 1000 * Timing.secs_per_tick
 
     def add(self, timer):
         timer.wakeup = time.time() + timer.frequency
