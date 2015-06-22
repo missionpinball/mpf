@@ -18,7 +18,7 @@ need libpinproc and pypinproc. More info:
 http://www.pinballcontrollers.com/forum/index.php?board=10.0
 
 """
-# p_roc.py
+# p3_roc.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)

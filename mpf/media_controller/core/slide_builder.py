@@ -40,7 +40,6 @@ class SlideBuilder(object):
         self.machine.modes.register_start_method(self.process_config,
                                                  'slideplayer')
 
-
     def process_config(self, config, mode=None, priority=0):
         self.log.debug("Processing SlideBuilder configuration. Base priority: "
                        "%s", priority)
@@ -203,7 +202,7 @@ class SlideBuilder(object):
 
         """
 
-        if not 'preprocessed' in settings[0]:
+        if 'preprocessed' not in settings[0]:
             settings = self.preprocess_settings(settings)
 
         if display:
@@ -224,7 +223,6 @@ class SlideBuilder(object):
         # Does this slide need to auto clear itself?
         if 'expire' not in settings[0]:
             settings[0]['expire']
-
 
         # Does this slide name already exist for this display?
 
@@ -273,7 +271,6 @@ class SlideBuilder(object):
             # Are there any text variables to replace on the fly?
             # todo should this go here?
             if '%' in settings['text']:
-
                 # first check for player vars (%var_name%)
                 if self.machine.player:
                     for name, value in self.machine.player:

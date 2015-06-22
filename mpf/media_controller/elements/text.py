@@ -7,14 +7,10 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import pygame
-
 from mpf.media_controller.core.display import DisplayElement
 
 
 class Text(DisplayElement):
-
-
     """Represents an animation display element.
 
     Args:
