@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
-__version_info__ = ('0', '19', '0a9')
-=======
-__version_info__ = ('0', '19', '0a7')
->>>>>>> Stashed changes
+__version_info__ = ('0', '19', '0a10')
 __version__ = '.'.join(__version_info__)
 
 __bcp_version_info__ = ('1', '0')
