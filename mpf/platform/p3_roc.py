@@ -244,6 +244,8 @@ class HardwarePlatform(Platform):
         else:
             state = 0
 
+        self.log.debug("P3-ROC switch %s initial state: %s", proc_num,
+                       states[proc_num])
         # Return the switch object and an integer of its current state.
         # 1 = active, 0 = inactive
         return switch, proc_num, state
