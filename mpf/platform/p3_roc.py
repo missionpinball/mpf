@@ -236,8 +236,10 @@ class HardwarePlatform(Platform):
         # 3 - closed (not debounced)
         # 4 - open (not debounced)
 
+        # Note: The P3-ROC will return a state of "3" for switches from non-
+        # connected SW-16 boards, so that's why we only check for "1" below
         states = self.proc.switch_get_states()
-        if states[proc_num] == 1 or states[proc_num] == 3:
+        if states[proc_num] == 1:
             state = 1
         else:
             state = 0
