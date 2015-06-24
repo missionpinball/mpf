@@ -946,11 +946,12 @@ class PDBConfig(object):
                 self.aliases.append(alias)
 
         # Make a list of unique coil banks
-        for name in config['coils']:
-            item_dict = config['coils'][name]
-            coil = PDBCoil(self, str(item_dict['number']))
-            if coil.bank() not in coil_bank_list:
-                coil_bank_list.append(coil.bank())
+        if 'coils' in config:
+            for name in config['coils']:
+                item_dict = config['coils'][name]
+                coil = PDBCoil(self, str(item_dict['number']))
+                if coil.bank() not in coil_bank_list:
+                    coil_bank_list.append(coil.bank())
 
         # Make a list of unique lamp source banks.  The P3-ROC only supports 2.
         # TODO: What should be done if 2 is exceeded?
