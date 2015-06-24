@@ -137,7 +137,8 @@ class LightController(object):
     def stop_show(self, show=None, key=None, **kwargs):
 
         try:
-            show.stop(reset=kwargs['reset'], hold=kwargs['hold'])
+            show.stop(reset=kwargs.get('reset', False),
+                      hold=kwargs.get('hold', False))
         except AttributeError:
             if show in self.machine.shows:
                 self.machine.shows[show].stop(**kwargs)
