@@ -593,6 +593,9 @@ class ModeTimer(object):
             elif entry['action'] == 'stop':
                 handler = self.stop
 
+            elif entry['action'] == 'reset':
+                handler = self.reset
+
             elif entry['action'] == 'pause':
                 handler = self.pause
                 kwargs = {'timer_value': entry['value']}
@@ -620,7 +623,15 @@ class ModeTimer(object):
         for key in self.event_keys:
             self.machine.events.remove_handler_by_key(key)
 
-    def reset(self):
+    def reset(self, **kwargs):
+        """Resets this timer based to the starting value that's already been
+        configured. Does not start or stop the timer.
+
+        Args:
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+        """
 
         if self.log:
             self.log.info("Resetting timer. New value: %s", self.start_value)
