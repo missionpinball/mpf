@@ -596,6 +596,9 @@ class ModeTimer(object):
             elif entry['action'] == 'reset':
                 handler = self.reset
 
+            elif entry['action'] == 'restart':
+                handler = self.restart
+
             elif entry['action'] == 'pause':
                 handler = self.pause
                 kwargs = {'timer_value': entry['value']}
@@ -668,6 +671,19 @@ class ModeTimer(object):
             self.machine.bcp.send('timer', name=self.name, action='started',
                                   ticks=self.mode.player[self.tick_var],
                                   ticks_remaining=self.ticks_remaining)
+
+    def restart(self, **kwargs):
+        """Restarts the timer by resetting it and then starting it. Essentially
+        this is just a reset() then a start()
+
+        Args:
+            **kwargs: Not used in this method. Only exists since this method is
+                often registered as an event handler which may contain
+                additional keyword arguments.
+
+        """
+        self.reset()
+        self.start()
 
     def stop(self, **kwargs):
         """Stops the timer and posts the 'timer_<name>_stopped' event.
