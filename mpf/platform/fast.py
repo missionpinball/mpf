@@ -349,10 +349,10 @@ class HardwarePlatform(Platform):
             config['number'] = self.wpc_driver_map.get(
                                                 config['number_str'].upper())
             if ('connection' in config and
-                    config['connection'].lower() == 'local'):
-                config['connection'] = 0  # local driver (default for WPC)
+                    config['connection'].lower() == 'network'):
+                config['connection'] = 1
             else:
-                config['connection'] = 1  # network driver
+                config['connection'] = 0  # local driver (default for WPC)
 
         # If we have fast driver boards, we need to make sure we have hex strs
         elif self.machine_type == 'fast':
@@ -364,10 +364,10 @@ class HardwarePlatform(Platform):
 
             # Now figure out the connection type
             if ('connection' in config and
-                    config['connection'].lower() == 'network'):
-                config['connection'] = 1  # network driver (default for FAST)
+                    config['connection'].lower() == 'local'):
+                config['connection'] = 0
             else:
-                config['connection'] = 0  # local driver
+                config['connection'] = 1  # network driver (default for FAST)
 
         else:
             self.log.critical("Invalid machine type: {0{}}".format(
