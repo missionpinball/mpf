@@ -2,6 +2,7 @@
 Mode:
     start_events: ball_starting
     priority: 100
+    code: base.Base
 
 SlidePlayer:
     player_score:
