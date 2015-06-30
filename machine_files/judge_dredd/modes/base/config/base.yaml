@@ -58,7 +58,7 @@ SlidePlayer:
       - type: Text
         text: "%score%"
         number_grouping: true
-        double_zeros: true
+        min_digits: 2
         v_pos: center
         transition:
             type: move_in
