@@ -645,13 +645,13 @@ class HardwarePlatform(Platform):
         # hw_rules key = ('05', 1)
         # all values are strings
 
-        self.hw_rules[coil.config['number']] = {'mode': mode,
-                                                'param1': param1,
-                                                'param2': param2,
-                                                'param3': param3,
-                                                'param4': param4,
-                                                'param5': param5,
-                                                'switch': sw.number}
+        self.hw_rules[coil] = {'mode': mode,
+                               'param1': param1,
+                               'param2': param2,
+                               'param3': param3,
+                               'param4': param4,
+                               'param5': param5,
+                               'switch': sw.number}
 
         cmd = (cmd + coil.number[0] + ',' + control  + ',' + sw.number[0] + ','
                + mode + ',' + param1 + ',' + param2 + ',' + param3 + ',' +
@@ -688,16 +688,17 @@ class HardwarePlatform(Platform):
 
             del self.hw_rules[coil]
 
-            if coil[1] == 1:
+            if coil.number[1] == 1:
                 cmd = 'DN:'
             else:
                 cmd = 'DL:'
-            driver = coil[0]
+            driver = coil.number[0]
             mode = '81'
 
-            self.machine.coils.number(coil).autofire = None
+            coil.autofire = None
 
-            self.log.info("Clearing hardware rule: %s", cmd)
+            self.log.info("Clearing hardware rule: %s",
+                          cmd + driver + ',' + mode)
 
             self.net_connection.send(cmd + driver + ',' + mode)
 
