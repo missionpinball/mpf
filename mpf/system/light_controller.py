@@ -17,9 +17,9 @@ from mpf.system.timing import Timing
 
 
 class LightController(object):
-    """Manages all the shows in a pinball machine.
+    """Manages all the light shows in a pinball machine.
 
-    'shows' are coordinated light, flasher, coil, event, audio, and DMD effects.
+    'light shows' are coordinated light, flasher, coil, and event effects.
     The LightController handles priorities, restores, running and stopping
     Shows, etc. There should be only one per machine.
 
