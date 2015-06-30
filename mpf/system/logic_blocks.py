@@ -472,7 +472,6 @@ class Sequence(LogicBlock):
                              " Sequence only has %s step(s). Marking complete",
                              self.player[self.config['player_variable']],
                              len(self.config['events']))
-            self.complete()  # I guess we just complete?
             return
 
         # add the handlers for the current step
