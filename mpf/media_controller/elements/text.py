@@ -55,7 +55,7 @@ class Text(DisplayElement):
         # todo move enabling this and separator char to config
 
             # find the numbers in the string
-            number_list = [int(s) for s in text.split() if s.isdigit()]
+            number_list = [s for s in text.split() if s.isdigit()]
 
             # group the numbers and replace them in the string
             for item in number_list:
@@ -88,53 +88,26 @@ class Text(DisplayElement):
         thousands digits).
 
         Args:
-            text: A string of the text which will be searched for numbers to
-                group.
+            text: The incoming string of text
             separator: String of the character(s) you'd like to add between the
                 digit groups. Default is a comma. (",")
             group_size: How many digits you want in each group. Default is 3.
 
-        Returns: A string with the separator added. If no numbers were found in
-            the string that was passed, the original string will be returned.
-
-        Note: This code came from here:
-        http://code.activestate.com/recipes/439357-simple-digit-grouping/
+        Returns: A string with the separator added.
 
         MPF uses this method instead of the Python locale settings because the
         locale settings are a mess. They're set system-wide and it's really hard
         to make them work cross-platform and there are all sorts of external
         dependencies, so this is just way easier.
 
-        This method only identifies integers.
-
         """
 
-        if text < 0:
-            prefix = '-'
-            text = -text;
-        else:
-            prefix = ''
-        string = "{0}".format(text)
-        dot_index = string.find('.');
-        string_size = len(string) if dot_index == -1 else dot_index
+        digit_list = list(text.split('.')[0])
 
-        if string_size > group_size:
-            groups = []
-            first_group_size = string_size % group_size;
-            if first_group_size:
-                groups.append(string[0:first_group_size])
-            for i in range(first_group_size, string_size, group_size):
-                groups.append(string[i:i+group_size])
-            return_string = separator.join(groups)
+        for i in range(len(digit_list))[::-group_size][1:]:
+            digit_list.insert(i+1, separator)
 
-            if dot_index == -1:
-                return_string = return_string
-            else:
-                return_string + string[dot_index:]
-        else:
-            return_string = string
-
-        return prefix + return_string
+        return ''.join(digit_list)
 
 
 display_element_class = Text
