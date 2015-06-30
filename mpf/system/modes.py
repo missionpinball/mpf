@@ -639,7 +639,7 @@ class ModeTimer(object):
         if self.log:
             self.log.info("Resetting timer. New value: %s", self.start_value)
 
-        self._ticks = self.start_value
+        self.set_current_time(self.start_value)
 
     def start(self, **kwargs):
         """Starts this timer based on the starting value that's already been
