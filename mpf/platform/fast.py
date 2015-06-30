@@ -1083,8 +1083,15 @@ class SerialCommunicator(object):
             self.query_fast_io_boards()
 
     def query_fast_io_boards(self):
+        """Queries the NET processor to see if any FAST IO boards are connected,
+        and if so, queries the IO boards to log them and make sure they're the
+        proper firmware version.
+
+        """
 
         self.platform.log.debug('Querying FAST IO boards...')
+
+        firmware_ok = True
 
         for board_id in range(8):
             self.serial_connection.write('NN:{0}\r'.format(board_id))
@@ -1105,6 +1112,18 @@ class SerialCommunicator(object):
                                            'Firmware: {2}, Switches: {3}, '
                                            'Drivers: {4}'.format(node_id, model,
                                            fw, int(sw, 16), int(dr, 16)))
+
+                    if StrictVersion(IO_MIN_FW) > str(fw):
+                        self.platform.log.critical("Firmware version mismatch. MPF "
+                            "requires the IO boards to be firmware {0}, but "
+                            "your Board {1} ({2}) is v{3}".format(IO_MIN_FW,
+                            node_id, model, fw))
+                        firmware_ok = False
+
+        if not firmware_ok:
+            self.platform.log.critical("Exiting due to IO board firmware "
+                                       "mismatch")
+            sys.exit()
 
     def _start_threads(self):
 
