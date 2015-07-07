@@ -51,6 +51,8 @@ class BallDevice(Device):
             self.config['eject_coil_hold_times'] = list()
         if 'confirm_eject_type' not in self.config:
             self.config['confirm_eject_type'] = 'count'  # todo make optional?
+        if 'captures_from' not in self.config:
+            self.config['captures_from'] = 'playfield'
         if 'eject_targets' not in self.config:
             self.config['eject_targets'] = ['playfield']
         else:
@@ -449,7 +451,7 @@ class BallDevice(Device):
             # came from the playfield. Post this event so the playfield can keep
             # track of how many balls are out.
             if not self.num_balls_requested:
-                self.machine.events.post('balldevice_captured_from_playfield',
+                self.machine.events.post('balldevice_captured_from_' + self.config['captures_from'],
                                          balls=balls)
 
             # Post the relay event as other handlers might be looking for to act
@@ -864,13 +866,13 @@ class BallDevice(Device):
             self.log.debug("Will confirm eject via recount of ball switches.")
             self.flag_confirm_eject_via_count = True
 
-        elif (self.config['confirm_eject_type'] == 'playfield' or
-                target == self.machine.balldevices['playfield']):
+        elif (self.config['confirm_eject_type'] == 'playfield' and
+                target.__class__.__name__ == 'Playfield'):
 
-            if self.machine.playfield.ok_to_confirm_ball_via_playfield_switch():
-                self.log.debug("Will confirm eject when a playfield switch is "
-                               "hit")
-                self.machine.events.add_handler('sw_playfield_active',
+            if target.ok_to_confirm_ball_via_playfield_switch():
+                self.log.debug("Will confirm eject when a %s switch is "
+                               "hit", target.name)
+                self.machine.events.add_handler('sw_' + target.name + '_active',
                                                 self._eject_success)
             else:
                 self.log.debug("Will confirm eject via recount of ball "

@@ -2,12 +2,14 @@
 Mode:
     start_events: ball_starting
     priority: 100
+    code: base.Base
 
 SlidePlayer:
     player_score:
       - type: Text
         text: "%value"
         number_grouping: true
+        min_digits: 2
         v_pos: center
       - type: Text
         text: PLAYER %number%
@@ -24,7 +26,7 @@ SlidePlayer:
       - type: Text
         text: "%score%"
         number_grouping: true
-        double_zeros: true
+        min_digits: 2
         v_pos: center
       - type: Text
         text: PLAYER %number%

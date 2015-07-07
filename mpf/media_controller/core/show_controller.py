@@ -340,7 +340,7 @@ class Show(Asset):
             if ('events' in show_actions[step_num] and
                     show_actions[step_num]['events']):
 
-                event_list = (Config.string_to_list(
+                event_list = (Config.string_to_lowercase_list(
                     show_actions[step_num]['events']))
 
                 step_actions['events'] = event_list

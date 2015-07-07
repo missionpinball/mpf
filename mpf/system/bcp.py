@@ -174,13 +174,11 @@ class BCP(object):
 
             self.send_player_vars = True
 
-            if (type(self.config['player_variables']) is str and
-                    self.config['player_variables'] == '__all__'):
-                self.filter_player_events = False
+            self.config['player_variables'] = (
+                Config.string_to_list(self.config['player_variables']))
 
-            else:
-                self.config['player_variables'] = (
-                    Config.string_to_list(self.config['player_variables']))
+            if '__all__' in self.config['player_variables']:
+                self.filter_player_events = False
 
         self._setup_player_monitor()
         self.register_mpfmc_trigger_events(self.machine.config)

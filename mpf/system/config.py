@@ -245,11 +245,20 @@ class Config(object):
         if item_type == 'list':
             return Config.string_to_list(item)
         elif item_type == 'int':
-            return int(item)
+            try:
+                return int(item)
+            except TypeError:
+                return None
         elif item_type == 'float':
-            return float(item)
+            try:
+                return float(item)
+            except TypeError:
+                return None
         elif item_type == 'string':
-            return str(item)
+            try:
+                return str(item)
+            except TypeError:
+                return None
         elif item_type == 'boolean':
             if type(item) is bool:
                 return item

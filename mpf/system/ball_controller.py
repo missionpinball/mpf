@@ -170,8 +170,8 @@ class BallController(object):
             self.log.debug("Yes, all balls are gathered")
             return True
         else:
-            self.log.debug("No, all balls are not gathered. Total balls: %s. "
-                           "Balls in tagged devices: %s", count,
+            self.log.debug("No, all balls are not gathered. Balls Counted: %s. "
+                           "Total balls known: %s", count,
                            self.machine.ball_controller.num_balls_known)
             return False
 

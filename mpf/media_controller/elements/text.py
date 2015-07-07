@@ -7,14 +7,11 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import pygame
 
 from mpf.media_controller.core.display import DisplayElement
 
 
 class Text(DisplayElement):
-
-
     """Represents an animation display element.
 
     Args:
@@ -49,21 +46,21 @@ class Text(DisplayElement):
         kwargs['color'] = self.adjusted_color
         kwargs['bg_color'] = self.adjusted_bg_color
 
+        if 'min_digits' in kwargs:
+            text = text.zfill(kwargs['min_digits'])
+
         if 'number_grouping' in kwargs and kwargs['number_grouping']:
 
         # todo this only works for ints
         # todo move enabling this and separator char to config
 
             # find the numbers in the string
-            number_list = [int(s) for s in text.split() if s.isdigit()]
+            number_list = [s for s in text.split() if s.isdigit()]
 
             # group the numbers and replace them in the string
             for item in number_list:
                 grouped_item = self.group_digits(item)
                 text = text.replace(str(item), grouped_item)
-
-        if 'double_zeros' in kwargs and kwargs['double_zeros']:
-            text = self.double_zeros(text)
 
         # Are we set up for multi-language>
         if self.language:
@@ -91,68 +88,27 @@ class Text(DisplayElement):
         thousands digits).
 
         Args:
-            text: A string of the text which will be searched for numbers to
-                group.
+            text: The incoming string of text
             separator: String of the character(s) you'd like to add between the
                 digit groups. Default is a comma. (",")
             group_size: How many digits you want in each group. Default is 3.
 
-        Returns: A string with the separator added. If no numbers were found in
-            the string that was passed, the original string will be returned.
-
-        Note: This code came from here:
-        http://code.activestate.com/recipes/439357-simple-digit-grouping/
+        Returns: A string with the separator added.
 
         MPF uses this method instead of the Python locale settings because the
         locale settings are a mess. They're set system-wide and it's really hard
         to make them work cross-platform and there are all sorts of external
         dependencies, so this is just way easier.
 
-        This method only identifies integers.
-
         """
 
-        if text < 0:
-            prefix = '-'
-            text = -text;
-        else:
-            prefix = ''
-        string = "{0}".format(text)
-        dot_index = string.find('.');
-        string_size = len(string) if dot_index == -1 else dot_index
+        digit_list = list(text.split('.')[0])
 
-        if string_size > group_size:
-            groups = []
-            first_group_size = string_size % group_size;
-            if first_group_size:
-                groups.append(string[0:first_group_size])
-            for i in range(first_group_size, string_size, group_size):
-                groups.append(string[i:i+group_size])
-            return_string = separator.join(groups)
+        for i in range(len(digit_list))[::-group_size][1:]:
+            digit_list.insert(i+1, separator)
 
-            if dot_index == -1:
-                return_string = return_string
-            else:
-                return_string + string[dot_index:]
-        else:
-            return_string = string
+        return ''.join(digit_list)
 
-        return prefix + return_string
-
-    def double_zeros(self, number):
-        """Formats a number so if it's zero then it returns a string of "00".
-
-        Args:
-            number: The input value as int or string.
-
-        Returns: String "00" if the input is 0. Otherwise returns whatever it
-            received unchanged.
-        """
-
-        if number == 0 or number == "0":
-            return "00"
-        else:
-            return number
 
 display_element_class = Text
 create_asset_manager = False

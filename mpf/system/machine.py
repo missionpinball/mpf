@@ -53,7 +53,7 @@ class MachineController(object):
         self.log_system_info()
 
         self.loop_start_time = 0
-        self.num_loops = 0
+        self.tick_num = 0
         self.physical_hw = options['physical_hw']
         self.done = False
         self.machineflow_index = None
@@ -439,7 +439,7 @@ class MachineController(object):
         let MPF drive.)
 
         """
-        self.num_loops += 1  # used to calculate the loop rate when MPF exits
+        self.tick_num += 1  # used to calculate the loop rate when MPF exits
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
         tasks.Task.timer_tick()  # notifies tasks
@@ -464,7 +464,7 @@ class MachineController(object):
 
         try:
             self.log.info("Actual MPF loop rate: %s Hz",
-                          round(self.num_loops /
+                          round(self.tick_num /
                                 (time.time() - self.loop_start_time), 2))
         except ZeroDivisionError:
             self.log.info("Actual MPF loop rate: 0 Hz")

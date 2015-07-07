@@ -138,6 +138,7 @@ class LogicBlock(object):
                     enable_events: list|None
                     disable_events: list|None
                     reset_events: list|None
+                    restart_events: list|None
                     restart_on_complete: boolean|False
                     disable_on_complete: boolean|True
                     '''
@@ -181,6 +182,10 @@ class LogicBlock(object):
             self.handler_keys.add(
                 self.machine.events.add_handler(event, self.reset))
 
+        for event in self.config['restart_events']:
+            self.handler_keys.add(
+                self.machine.events.add_handler(event, self.restart))
+
     def _remove_all_event_handlers(self):
         for key in self.handler_keys:
             self.machine.events.remove_handler_by_key(key)
@@ -216,6 +221,15 @@ class LogicBlock(object):
         Can also be manually called.
         """
         self.log.debug("Resetting")
+
+    def restart(self, **kwargs):
+        """Restarts this logic block by calling reset() and enable()
+        Automatically called when one of the restart_event events is called.
+        Can also be manually called.
+        """
+        self.log.debug("Restarting (resetting then enabling)")
+        self.reset()
+        self.enable()
 
     def complete(self):
         """Marks this logic block as complete. Posts the 'events_when_complete'
@@ -261,7 +275,7 @@ class Counter(LogicBlock):
 
         config_spec = '''
                         count_events: list|None
-                        count_complete_value: int|0
+                        count_complete_value: int|None
                         multiple_hit_window: ms|0
                         count_interval: int|1
                         direction: string|up
@@ -456,8 +470,8 @@ class Sequence(LogicBlock):
             # hmm.. we're enabling, but we're done. So now what?
             self.log.warning("Received request to enable at step %s, but this "
                              " Sequence only has %s step(s). Marking complete",
-                             step, len(self.config['events']))
-            self.complete()  # I guess we just complete?
+                             self.player[self.config['player_variable']],
+                             len(self.config['events']))
             return
 
         # add the handlers for the current step
@@ -486,6 +500,12 @@ class Sequence(LogicBlock):
                           [self.player[self.config['player_variable']]]):
                 self.handler_keys.add(
                     self.machine.events.add_handler(event, self.hit))
+
+    def reset(self, **kwargs):
+        """Resets the sequence back to the first step."""
+
+        super(Sequence, self).reset(**kwargs)
+        self.player[self.config['player_variable']] = 0
 
 
 # The MIT License (MIT)

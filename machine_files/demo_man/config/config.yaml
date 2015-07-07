@@ -45,18 +45,16 @@ Switches:
         label:
     s_flipper_lower_right:
         number: sf2
-        tags: player
+        tags: player, right_flipper
         label:
-        tags: right_flipper
     s_flipper_lower_left_eos:
         number: sf3
         tags:
         label:
     s_flipper_lower_left:
         number: sf4
-        tags: player
+        tags: player, left_flipper
         label:
-        tags: left_flipper
     s_flipper_upper_left_eos:
         number: sf5
         tags:
@@ -1053,6 +1051,10 @@ Keyboard:
     switch: s_up
   minus:
     switch: s_down
+  z:
+    switch: s_flipper_lower_left
+  /:
+    switch: s_flipper_lower_right
 
 
 ShowPlayer:
@@ -1194,3 +1196,7 @@ SlidePlayer:
 images:
     demo_man_logo:
         target: dmd
+
+bcp:
+    player_variables:
+      __all__

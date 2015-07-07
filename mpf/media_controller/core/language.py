@@ -36,7 +36,7 @@ class Language(object):
     def _configure(self):
         self.config = self.machine.config['languages']
         self.machine.language = self
-        self.languages = Config.string_to_list(
+        self.languages = Config.string_to_lowercase_list(
             self.machine.config['languages'])
 
         # Set the default language to the first entry in the list
