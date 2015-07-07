@@ -53,11 +53,11 @@ class Playfield(BallDevice):
                 break
 
         # Watch for balls removed from the playfield
-        self.machine.events.add_handler('balldevice_captured_from_playfield',
+        self.machine.events.add_handler('balldevice_captured_from_' + self.name,
                                         self._ball_removed_handler)
 
         # Watch for any switch hit which indicates a ball on the playfield
-        self.machine.events.add_handler('sw_playfield_active',
+        self.machine.events.add_handler('sw_' + self.name + '_active',
                                         self.playfield_switch_hit)
 
     @property
@@ -94,7 +94,7 @@ class Playfield(BallDevice):
                                            '_ball_enter', balls=ball_change)
 
         if ball_change:
-            self.machine.events.post('playfield_ball_count_change',
+            self.machine.events.post(self.name + '_ball_count_change',
                                      balls=balls, change=ball_change)
 
     def count_balls(self, **kwargs):
@@ -294,7 +294,7 @@ class Playfield(BallDevice):
                 self.log.debug("PF switch hit with no balls expected. Setting "
                                "pf balls to 1.")
                 self.balls = 1
-                self.machine.events.post('unexpected_ball_on_playfield')
+                self.machine.events.post('unexpected_ball_on_' + self.name)
 
     def _ball_added_handler(self, balls):
         self.log.debug("%s ball(s) added to the playfield", balls)
