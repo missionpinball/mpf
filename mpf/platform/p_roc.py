@@ -797,7 +797,7 @@ class PROCDriver(object):
         """
         if not milliseconds in range(256):
             raise ValueError('milliseconds must be in range 0-255.')
-        self.log.debug('Pulsing Driver for %sms', milliseconds)
+        self.log.debug('Pulsing Driver %s for %sms', self.number, milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
 
     def future_pulse(self, milliseconds=None, timestamp=0):
