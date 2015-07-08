@@ -242,7 +242,7 @@ class Mode(object):
                                 mode=self,
                                 **item.kwargs))
 
-        self.machine.events.post('mode_' + self.name + '_started')
+        #self.machine.events.post('mode_' + self.name + '_started')
 
     def stop(self, callback=None, **kwargs):
         """Stops this mode.
@@ -270,7 +270,7 @@ class Mode(object):
 
         self.stop_methods = list()
 
-        self.machine.events.post('mode_' + self.name + '_stopped')
+        #self.machine.events.post('mode_' + self.name + '_stopped')
 
 
 # The MIT License (MIT)

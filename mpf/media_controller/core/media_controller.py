@@ -445,22 +445,24 @@ class MediaController(object):
 
     def bcp_ball_start(self, **kwargs):
         """Processes an incoming BCP 'ball_start' command."""
-        self.events.post('ball_started', **kwargs)
+        pass
+        #self.events.post('ball_started', **kwargs)
 
     def bcp_ball_end(self, **kwargs):
         """Processes an incoming BCP 'ball_end' command."""
-        self.events.post('ball_ended', **kwargs)
+        pass
+        #self.events.post('ball_ended', **kwargs)
 
     def bcp_game_start(self, **kargs):
         """Processes an incoming BCP 'game_start' command."""
         self.bcp_player_add(number=1)
         self.bcp_player_turn_start(player=1)
-        self.events.post('game_started', **kargs)
+        #self.events.post('game_started', **kargs)
 
     def bcp_game_end(self, **kwargs):
         """Processes an incoming BCP 'game_end' command."""
         self.player = None
-        self.events.post('game_ended', **kwargs)
+        #self.events.post('game_ended', **kwargs)
 
     def bcp_player_add(self, number, **kwargs):
         """Processes an incoming BCP 'player_add' command."""
@@ -470,7 +472,7 @@ class MediaController(object):
             self.player_list.append(new_player)
             new_player.score = 0
 
-            self.events.post('player_add_success', num=number)
+            #self.events.post('player_add_success', num=number)
 
     def bcp_player_variable(self, name, value, prev_value, change, **kwargs):
         """Processes an incoming BCP 'player_variable' command."""
@@ -486,11 +488,12 @@ class MediaController(object):
 
     def bcp_attract_start(self, **kwargs):
         """Processes an incoming BCP 'attract_start' command."""
-        self.events.post('machineflow_Attract_start')
+        #self.events.post('machineflow_Attract_start')
+        pass
 
     def bcp_attract_stop(self, **kwargs):
-        self.events.post('machineflow_Attract_stop')
         """Processes an incoming BCP 'attract_stop' command."""
+        #self.events.post('machineflow_Attract_stop')
 
     def bcp_player_turn_start(self, player, **kwargs):
         """Processes an incoming BCP 'player_turn_start' command."""
@@ -503,6 +506,7 @@ class MediaController(object):
     def bcp_trigger(self, name, **kwargs):
         """Processes an incoming BCP 'trigger' command."""
 
+        '''
         blocked_event_prefixes = ('player_',
                                   'machinemode_',
                                  )
@@ -515,15 +519,18 @@ class MediaController(object):
 
         if not (name.startswith(blocked_event_prefixes) and
                 name in blocked_events):
+        '''
 
-            self.events.post(name, **kwargs)
+        self.events.post(name, **kwargs)
 
     def bcp_switch(self, name, state, **kwargs):
         """Processes an incoming BCP 'switch' command."""
         if int(state):
-            self.events.post('switch_' + name + '_active')
+            #self.events.post('switch_' + name + '_active')
+            pass
         else:
-            self.events.post('switch_' + name + '_inactive')
+            #self.events.post('switch_' + name + '_inactive')
+            pass
 
     def bcp_get(self, **kwargs):
         """Processes an incoming BCP 'get' command.
@@ -554,9 +561,10 @@ class MediaController(object):
                 self.bcp_set_volume(track=k.split('volume_')[1], value=v)
 
     def bcp_timer(self, name, action, **kwargs):
-        """Processes an incoming BCP 'config' command."""
+        """Processes an incoming BCP 'timer' command."""
+        pass
 
-        self.events.post('timer_' + name + '_' + action, **kwargs)
+        #self.events.post('timer_' + name + '_' + action, **kwargs)
 
     def bcp_set_volume(self, track, value):
         """Sets the volume based on an incoming BCP 'config' command.
