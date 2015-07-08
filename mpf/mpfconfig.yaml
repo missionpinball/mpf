@@ -9,17 +9,17 @@
 # Configuration for the MPF framework itself
 
 mpf:
-    system_modules:  # order is important here
-        timing.Timing
-        events.EventManager
-        switch_controller.SwitchController
-        ball_controller.BallController
-        modes.ModeController
-        light_controller.LightController
-        bcp.BCP
-        shots.ShotController
-        logic_blocks.LogicBlocks
-        scoring.ScoreController
+    system_modules: !!omap  # order is important here
+        - timing: mpf.system.timing.Timing
+        - events: mpf.system.events.EventManager
+        - switch_controller: mpf.system.switch_controller.SwitchController
+        - ball_controller: mpf.system.ball_controller.BallController
+        - modes: mpf.system.modes.ModeController
+        - light_controller: mpf.system.light_controller.LightController
+        - bcp: mpf.system.bcp.BCP
+        - shots: mpf.system.shots.ShotController
+        - logic_blocks: mpf.system.logic_blocks.LogicBlocks
+        - scoring: mpf.system.scoring.ScoreController
 
     device_modules:
         driver.Driver
