@@ -126,6 +126,7 @@ class BallDevice(Device):
 
         self.valid = False
         self.need_first_time_count = True
+        self._playfield = False
 
         # Now configure the device
         self.configure()
@@ -867,7 +868,7 @@ class BallDevice(Device):
             self.flag_confirm_eject_via_count = True
 
         elif (self.config['confirm_eject_type'] == 'playfield' and
-                target.__class__.__name__ == 'Playfield'):
+                target.is_playfield()):
 
             if target.ok_to_confirm_ball_via_playfield_switch():
                 self.log.debug("Will confirm eject when a %s switch is "
@@ -1014,6 +1015,13 @@ class BallDevice(Device):
         self.machine.events.post('balldevice_' + self.name +
                                  '_ok_to_receive',
                                  balls=self.get_additional_ball_capacity())
+
+    def is_playfield(self):
+        """Returns True if this ball device is a Playfield-type device, False if
+        it's a regular ball device.
+
+        """
+        return self._playfield
 
 
 # The MIT License (MIT)

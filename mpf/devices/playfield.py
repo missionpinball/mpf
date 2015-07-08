@@ -35,6 +35,7 @@ class Playfield(BallDevice):
         self.num_balls_requested = 0
         self.player_controlled_eject_in_progress = None
         self.queued_balls = list()
+        self._playfield = True
 
         # Set up event handlers
 
