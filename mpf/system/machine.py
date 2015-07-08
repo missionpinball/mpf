@@ -224,17 +224,10 @@ class MachineController(object):
                                           )
 
     def _load_system_modules(self):
-        self.config['mpf']['system_modules'] = (
-            self.config['mpf']['system_modules'].split(' '))
         for module in self.config['mpf']['system_modules']:
-            self.log.info("Loading '%s' system module", module)
-            module_parts = module.split('.')
-            exec('self.' + module_parts[0] + '=' + module + '(self)')
-
-            # todo there's probably a more pythonic way to do this, and I know
-            # exec() is supposedly unsafe, but meh, if you have access to put
-            # malicious files in the system folder then you have access to this
-            # code too.
+            self.log.info("Loading '%s' system module", module[1])
+            m = self.string_to_class(module[1])(self)
+            setattr(self, module[0], m);
 
     def _load_plugins(self):
         for plugin in Config.string_to_list(
