@@ -84,8 +84,9 @@ class Game(MachineMode):
             self.machine.events.add_handler('player_add_success',
                                             self.player_add_success))
         self.registered_event_handlers.append(
-            self.machine.events.add_handler('sw_start',
-                                            self.request_player_add))
+            self.machine.events.add_handler(
+                self.machine.config['mpf']['switch_tag_event'].
+                replace('%', 'start'), self.request_player_add))
 
         self.registered_event_handlers.append(
             self.machine.events.add_handler('game_started',
@@ -207,8 +208,9 @@ class Game(MachineMode):
                                  player=self.player.number)
 
         try:
-            self.machine.playfield.add_ball(trigger_event='sw_' +
-                self.machine.config['game']['player_controlled_eject_tag'])
+            self.machine.playfield.add_ball(trigger_event=self.machine.config
+                ['mpf']['switch_tag_event'].replace('%',
+                self.machine.config['game']['player_controlled_eject_tag']))
         except KeyError:
             self.machine.playfield.add_ball()
 

@@ -48,6 +48,8 @@ class SwitchController(object):
             self.machine.config['mpf']['switch_event_active'])
         self.switch_event_inactive = (
             self.machine.config['mpf']['switch_event_inactive'])
+        self.switch_tag_event = (
+            self.machine.config['mpf']['switch_tag_event'])
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick, 1000)
@@ -85,23 +87,14 @@ class SwitchController(object):
             self.registered_switches[switch.name + '-1'] = list()
 
             if self.machine.config['mpf']['auto_create_switch_events']:
-                self.add_switch_handler(switch_name=switch.name,
-                                        callback=self._switch_event_callback,
-                                        state=0,
-                                        return_info=True)
-                self.add_switch_handler(switch_name=switch.name,
-                                        callback=self._switch_event_callback,
-                                        state=1,
-                                        return_info=True)
 
-    def _switch_event_callback(self, switch_name, state, ms):
+                switch.activation_events.add(
+                    self.machine.config['mpf']['switch_event_active'].replace(
+                                    '%', switch.name))
 
-        if state:
-            self.machine.events.post(self.switch_event_active.replace(
-                                    '%', switch_name))
-        else:
-            self.machine.events.post(self.switch_event_inactive.replace(
-                                    '%', switch_name))
+                switch.deactivation_events.add(
+                    self.machine.config['mpf']['switch_event_inactive'].replace(
+                                    '%', switch.name))
 
     def verify_switches(self):
         """Loops through all the switches and queries their hardware states via
@@ -471,16 +464,14 @@ class SwitchController(object):
     def _post_switch_events(self, switch_name, state):
         """Posts the game events based on this switch changing state. """
 
-        # post events based on the switch tags
-
         # the following events all fire the moment a switch goes active
         if state == 1:
 
-            for tag in self.machine.switches[switch_name].tags:
-                self.machine.events.post('sw_' + tag)
-
             for event in self.machine.switches[switch_name].activation_events:
                 self.machine.events.post(event)
+
+            for tag in self.machine.switches[switch_name].tags:
+                self.machine.events.post(self.switch_tag_event.replace('%', tag))
 
         # the following events all fire the moment a switch becomes inactive
         elif state == 0:
