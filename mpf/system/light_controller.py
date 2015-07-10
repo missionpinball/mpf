@@ -195,12 +195,13 @@ class LightController(object):
                     except KeyError:
                         # If this mode has been started previously then the show
                         # will already be a Show instance and not a string.
-                        pass
 
-                if 'priority' in this_action:
-                    this_action['priority'] += priority
-                else:
-                    this_action['priority'] = priority
+                        # We only need this here since if the show has already
+                        # been processed then it will already have a priority
+                        if 'priority' in this_action:
+                            this_action['priority'] += priority
+                        else:
+                            this_action['priority'] = priority
 
                 event_keys.add(self.add_lightplayer_show(event_name,
                                                          this_action))
