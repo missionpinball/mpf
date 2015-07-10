@@ -98,7 +98,7 @@ class HardwarePlatform(Platform):
             except IOError:
                 print "Retrying..."
 
-        self.log.info("Succefully connected to P3-ROC")
+        self.log.info("Successfully connected to P3-ROC")
 
         '''
         Since the P3-ROC has no Aux port, this code will break it.

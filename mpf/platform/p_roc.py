@@ -99,7 +99,7 @@ class HardwarePlatform(Platform):
             except IOError:
                 print "Retrying..."
 
-        self.log.info("Succefully connected to P-ROC")
+        self.log.info("Successfully connected to P-ROC")
 
         # Clear out the default program for the aux port since we might need it
         # for a 9th column. Details:

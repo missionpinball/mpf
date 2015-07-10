@@ -447,12 +447,12 @@ class BallDevice(Device):
             # If there's an eject in progress with a jam switch count of only 1,
             # or no eject in progress, we assume this was a valid new ball.
 
-
             # If this device is not expecting any balls, we assuming this one
             # came from the playfield. Post this event so the playfield can keep
             # track of how many balls are out.
             if not self.num_balls_requested:
-                self.machine.events.post('balldevice_captured_from_' + self.config['captures_from'],
+                self.machine.events.post('balldevice_captured_from_' +
+                                         self.config['captures_from'],
                                          balls=balls)
 
             # Post the relay event as other handlers might be looking for to act
