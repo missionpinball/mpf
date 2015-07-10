@@ -14,6 +14,7 @@ from collections import defaultdict
 import time
 
 from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.timing import Timing
 
 
 class SwitchController(object):
@@ -95,6 +96,38 @@ class SwitchController(object):
                 switch.deactivation_events.add(
                     self.machine.config['mpf']['switch_event_inactive'].replace(
                                     '%', switch.name))
+
+            if 'activation_events' in switch.config:
+                for event in Config.string_to_lowercase_list(
+                        switch.config['activation_events']):
+
+                    if "|" in event:
+                        ev_name, ev_time = event.split("|")
+                        self.add_switch_handler(
+                            switch_name=switch.name,
+                            callback=self.machine.events.post,
+                            state=1,
+                            ms=Timing.string_to_ms(ev_time),
+                            callback_kwargs={'event': ev_name}
+                            )
+                    else:
+                        switch.activation_events.add(event)
+
+            if 'deactivation_events' in switch.config:
+                for event in Config.string_to_lowercase_list(
+                        switch.config['deactivation_events']):
+
+                    if "|" in event:
+                        ev_name, ev_time = event.split("|")
+                        self.add_switch_handler(
+                            switch_name=switch.name,
+                            callback=self.machine.events.post,
+                            state=0,
+                            ms=Timing.string_to_ms(ev_time),
+                            callback_kwargs={'event': ev_name}
+                            )
+                    else:
+                        switch.deactivation_events.add(event)
 
     def verify_switches(self):
         """Loops through all the switches and queries their hardware states via
@@ -310,7 +343,8 @@ class SwitchController(object):
                              'switch_name': name,
                              'state': state,
                              'ms': entry['ms'],
-                             'return_info': entry['return_info']}
+                             'return_info': entry['return_info'],
+                             'callback_kwargs': entry['callback_kwargs']}
                     self.active_timed_switches[key].append(value)
                     self.log.debug("Found timed switch handler for k/v %s / %s",
                                    key, value)
@@ -319,9 +353,10 @@ class SwitchController(object):
                     # now
                     if entry['return_info']:
 
-                        entry['callback'](switch_name=name, state=state, ms=0)
+                        entry['callback'](switch_name=name, state=state, ms=0,
+                                          **entry['callback_kwargs'])
                     else:
-                        entry['callback']()
+                        entry['callback'](**entry['callback_kwargs'])
 
                 # todo need to add args and kwargs support to callback
 
@@ -339,7 +374,7 @@ class SwitchController(object):
         self._post_switch_events(name, state)
 
     def add_switch_handler(self, switch_name, callback, state=1, ms=0,
-                           return_info=False):
+                           return_info=False, callback_kwargs=None):
         """Register a handler to take action on a switch event.
 
         Args:
@@ -358,19 +393,22 @@ class SwitchController(object):
                 parameters of the switch handler as arguments to the callback,
                 including switch_name, state, and ms. If False (default), it
                 just calls the callback with no parameters.
+            callback_kwargs: Additional kwargs that will be passed with the
+                callback.
 
         You can mix & match entries for the same switch here.
 
         """
-
-        # todo add support for other parameters to the callback?
+        if not callback_kwargs:
+            callback_kwargs = dict()
 
         self.log.debug("Registering switch handler: %s, %s, state: %s, ms: %s"
-                       ", info: %s", switch_name, callback, state, ms,
-                       return_info)
+                       ", info: %s, cb_kwargs: %s", switch_name, callback, state, ms,
+                       return_info, callback_kwargs)
 
         entry_val = {'ms': ms, 'callback': callback,
-                     'return_info': return_info}
+                     'return_info': return_info,
+                     'callback_kwargs': callback_kwargs}
         entry_key = str(switch_name) + '-' + str(state)
 
         self.registered_switches[entry_key].append(entry_val)
@@ -397,7 +435,8 @@ class SwitchController(object):
                              'switch_name': switch_name,
                              'state': state,
                              'ms': ms,
-                             'return_info': return_info}
+                             'return_info': return_info,
+                             'callback_kwargs': callback_kwargs}
                     self.active_timed_switches[key].append(value)
             elif state == 0:
                 if self.is_inactive(switch_name, 0) and (
@@ -410,7 +449,8 @@ class SwitchController(object):
                              'switch_name': switch_name,
                              'state': state,
                              'ms': ms,
-                             'return_info': return_info}
+                             'return_info': return_info,
+                             'callback_kwargs': callback_kwargs}
                     self.active_timed_switches[key].append(value)
 
         # Return the args we used to setup this handler for easy removal later
@@ -496,9 +536,10 @@ class SwitchController(object):
                     if entry['return_info']:
                         entry['callback'](switch_name=entry['switch_name'],
                                          state=entry['state'],
-                                         ms=entry['ms'])
+                                         ms=entry['ms'],
+                                         **entry['callback_kwargs'])
                     else:
-                        entry['callback']()
+                        entry['callback'](**entry['callback_kwargs'])
                 del self.active_timed_switches[k]
 
 # The MIT License (MIT)
