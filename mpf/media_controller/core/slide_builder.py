@@ -54,16 +54,7 @@ class SlideBuilder(object):
                 key_list.append(self.machine.events.add_handler(
                                 event,
                                 self.build_slide,
-                                #settings[0]['slide_priority'],
                                 settings=settings))
-
-                # todo is it right to pass the priority to the event handler?
-                # if we have two slideplayer entries for the same event, how
-                # do we ensure that only the highest one is built? Sure, only
-                # the highest one will be shown, but we don't want to waste time
-                # building lower slides that will never be shown. I think?
-                # Or is that ok in case the higher one ends so the lower one is
-                # there to show through?
 
         return self.unload_slide_events, (key_list, mode)
 
@@ -143,10 +134,14 @@ class SlideBuilder(object):
             # If a 'clear_slide' setting isn't specified, set a default of True
             if 'clear_slide' in element:
                 first_settings['clear_slide'] = element.pop('clear_slide')
+            else:
+                first_settings['clear_slide'] = True
 
             # If a 'persist_slide' setting isn't specified, set default of False
             if 'persist_slide' in element:
                 first_settings['persist_slide'] = element.pop('persist_slide')
+            else:
+                first_settings['persist_slide'] = False
 
             if 'display' in element:
                 first_settings['display'] = element.pop('display')
@@ -181,7 +176,7 @@ class SlideBuilder(object):
 
     def build_slide(self, settings, display=None, slide_name=None,
                     priority=None, **kwargs):
-        """Buils a slide from a SlideBuilder set of keyword arguments.
+        """Builds a slide from a SlideBuilder set of keyword arguments.
 
         Args:
             settings: Python dictionary of settings for this slide. This
@@ -226,7 +221,7 @@ class SlideBuilder(object):
 
         # Does this slide name already exist for this display?
 
-        if slide_name in display.slides:  # Found existing slide
+        if slide_name and slide_name in display.slides:  # Found existing slide
             slide = display.slides[slide_name]
             if 'clear_slide' in settings[0] and settings[0]['clear_slide']:
                 slide.clear()
@@ -236,6 +231,7 @@ class SlideBuilder(object):
                 priority = settings[0]['slide_priority']
 
             slide = display.add_slide(name=slide_name, priority=priority,
+                                      persist=settings[0]['persist_slide'],
                                       removal_key=settings[0]['removal_key'],
                                       expire_ms=settings[0]['expire'])
 
@@ -308,6 +304,7 @@ class SlideBuilder(object):
                         self.machine.display.decorators[decorator['type']][1])
 
                 element.attach_decorator(decorator_class(element, **decorator))
+
 
 # The MIT License (MIT)
 

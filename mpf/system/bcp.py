@@ -152,6 +152,17 @@ class BCP(object):
         self.track_volumes = dict()
         self.volume_control_enabled = False
 
+        # Add the following to the set of events that already have mpf mc
+        # triggers since these are all posted on the mc side already
+        self.mpfmc_trigger_events.add('timer_tick')
+        self.mpfmc_trigger_events.add('ball_started')
+        self.mpfmc_trigger_events.add('ball_ended')
+        self.mpfmc_trigger_events.add('game_starting')
+        self.mpfmc_trigger_events.add('game_ended')
+        self.mpfmc_trigger_events.add('player_add_success')
+        self.mpfmc_trigger_events.add('machineflow_Attract_start')
+        self.mpfmc_trigger_events.add('machineflow_Attract_stop')
+
         try:
             if self.machine.config['dmd']['physical']:
                 self._setup_dmd()
@@ -246,6 +257,19 @@ class BCP(object):
         Player.monitor_enabled = True
         self.machine.register_monitor('player', self._player_var_change)
 
+        # Since we have a player monitor setup, we need to add whatever events
+        # it will send to our ignored list. Otherwise
+        # register_mpfmc_trigger_events() will register for them too and they'll
+        # be sent twice
+
+        self.mpfmc_trigger_events.add('player_score')
+
+        # figure out which player events are being sent already and add them to
+        # the list so we don't send them again
+        if self.filter_player_events:
+            for event in self.config['player_variables']:
+                self.mpfmc_trigger_events.add('player_' + event.lower())
+
     def _player_var_change(self, name, value, prev_value, change):
 
         if name == 'score':
@@ -320,6 +344,9 @@ class BCP(object):
 
         self.log.debug("Registering Trigger Events")
 
+        # todo should this be here? Or in the individual showplayer, soundplayer
+        # and slideplayer modules?
+
         try:
             for event in config['showplayer'].keys():
                 self.create_trigger_event(event)
@@ -354,6 +381,9 @@ class BCP(object):
         will be sent when that event is posted will be trigger?name=foo_event.
 
         """
+
+        if not self.filter_player_events and event.startswith('player_'):
+            return  # since all player events are already being sent
 
         if event not in self.mpfmc_trigger_events:
 
@@ -518,12 +548,11 @@ class BCP(object):
         the remote BCP hosts.
         """
         self.send('game_start')
-        self.send('player_added', number=1)
+        #self.send('player_added', number=1)
 
     def bcp_player_added(self, player, num):
         """Sends BCP 'player_added' to the connected BCP hosts."""
-        if num > 1:
-            self.send('player_added', number=num)
+        self.send('player_added', number=num)
 
     def bcp_trigger(self, name, **kwargs):
         """Sends BCP 'trigger' to the connected BCP hosts."""

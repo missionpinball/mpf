@@ -310,7 +310,7 @@ class MPFDisplay(object):
         if not self.machine.display.default_display:
             self.machine.display.default_display = self
 
-        self.current_slide = self.add_slide('default')
+        self.current_slide = self.add_slide(name='blank', persist=True)
 
         self.machine.timing.add(
             Timer(self.update, frequency=1/float(self.config['fps'])))
@@ -335,7 +335,6 @@ class MPFDisplay(object):
         Returns: Reference to the new slide object that was just created.
 
         """
-
         self.slides[name] = Slide(mpfdisplay=self, name=name, priority=priority,
                                   persist=persist, machine=self.machine,
                                   removal_key=removal_key,
@@ -356,9 +355,12 @@ class MPFDisplay(object):
         any slides.
         """
 
-        for slide_obj in self.slides.values():
-            if slide_obj.removal_key == removal_key:
-                slide_obj.remove()
+        self.log.debug("Removing slides by key: %s", removal_key)
+
+        if removal_key:
+            for slide_obj in self.slides.values():
+                if slide_obj.removal_key == removal_key:
+                    slide_obj.remove()
 
     def transition(self, new_slide, transition=None, **kwargs):
         """Transitions this display to a new slide.
@@ -464,13 +466,13 @@ class MPFDisplay(object):
 
         if slide:
             new_slide = slide
-        elif name:
+        elif name and name in self.slides:
             new_slide = self.slides[name]
         else:
-            # we don't have a new slide. Change the current slide to priority
-            # 0 so it can be killed by anything that comes next.
-            self.current_slide.priority = 0
-            return
+            if 'blank' in self.slides:
+                new_slide = self.slides['blank']
+            else:
+                new_slide = self.add_slide(name='blank', persist=True)
 
         self.log.debug('Setting current slide to: %s', new_slide.name)
 
@@ -483,7 +485,8 @@ class MPFDisplay(object):
                            new_slide.priority, old_slide.priority)
             return
 
-        if old_slide and not old_slide.persist and old_slide in self.slides:
+        if (old_slide and (not old_slide.persist) and
+                old_slide.name in self.slides):
             # Not all slides are in self.slides, e.g. temp transition ones
             del self.slides[old_slide.name]
 
@@ -497,7 +500,6 @@ class MPFDisplay(object):
             new_slide.schedule_removal()
 
     def show_current_active_slide(self):
-
         self.set_current_slide(slide=self.get_highest_priority_slide(),
                                force=True)
 
@@ -522,6 +524,12 @@ class MPFDisplay(object):
     def get_surface(self):
         """Returns the surface of the current slide."""
         return self.current_slide.surface
+
+    def clear(self):
+        """Clears (blanks) the display."""
+
+        self.log.debug("Clearing the display")
+        self.set_current_slide(name='blank', force=True)
 
 
 class DisplayElement(object):
@@ -1195,6 +1203,9 @@ class Slide(object):
         """Removes the slide. If this slide is active, the next-highest priority
         slide will automatically be shown.
         """
+
+        self.log.debug("Removing slide")
+
         try:
             del self.mpfdisplay.slides[self.name]
         except KeyError:

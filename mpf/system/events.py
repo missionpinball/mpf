@@ -20,9 +20,9 @@ class EventManager(object):
         self.registered_handlers = {}
         self.busy = False
         self.queue = deque([])
-        self.current_event = None
         self.debug = True  # logs all event activity except timer_ticks.
         self.registered_monitors = set()  # callbacks that get every event
+        self.current_event = (None, None, None, None)  # current in-progress ev
 
     def add_handler(self, event, handler, priority=1, **kwargs):
         """Registers an event handler to respond to an event.
@@ -409,7 +409,7 @@ class EventManager(object):
 
             if self.debug and event != 'timer_tick':
                 self.log.debug("XXXX Event '%s' is in progress. Added to the "
-                               "queue.", self.current_event)
+                               "queue.", self.current_event[0])
                 self.log.debug("================== ACTIVE EVENTS =============")
                 for event in list(self.queue):
                     self.log.debug("%s, %s, %s, %s", event[0], event[1],
@@ -418,6 +418,9 @@ class EventManager(object):
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
+
+        self.current_event = (event, ev_type, callback, kwargs)
+
         result = None
         queue = None
         if self.debug and event != 'timer_tick':
@@ -437,7 +440,6 @@ class EventManager(object):
         # Now let's call the handlers one-by-one, including any kwargs
         if event in self.registered_handlers:
             self.busy = True
-            self.current_event = event
 
             if ev_type == 'queue' and callback:
                 queue = QueuedEvent(callback, **kwargs)
@@ -477,7 +479,6 @@ class EventManager(object):
                 elif ev_type == 'relay' and type(result) is dict:
                     kwargs.update(result)
 
-            self.current_event = None
             self.busy = False
         if self.debug and event != 'timer_tick':
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
@@ -506,6 +507,8 @@ class EventManager(object):
             else:
                 callback()
 
+        self.current_event = (None, None, None, None)
+
         # Finally see if we have any more events to process
         self._do_next()
 
@@ -518,6 +521,22 @@ class EventManager(object):
                                 ev_type=event[1],
                                 callback=event[2],
                                 **event[3])
+
+    def get_current_event(self):
+        """Returns a tuple with information about the current event that's in
+        progress.
+
+        Returned result is a 4-element tuple:
+
+        [0] event name (str)
+        [1] event type (str)
+        [2] post-event callback (meth)
+        [3] kwargs (dict)
+
+        If no event is in progress, these are all None.
+
+        """
+        return self.current_event
 
 
 class QueuedEvent(object):
