@@ -171,8 +171,9 @@ class Playfield(BallDevice):
             source_device = self.machine.balldevices[source_name]
         else:
             for device in self.machine.balldevices.items_tagged('ball_add_live'):
-                source_device = device
-                break
+                if self in device.config['eject_targets']:
+                    source_device = device
+                    break
 
         if not source_device:
             self.log.critical("Received request to add a ball to the playfield, "
