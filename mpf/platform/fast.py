@@ -883,18 +883,18 @@ class FASTGIString(object):
 
     def off(self):
         self.log.debug("Turning Off GI String")
-        self.send('GI:' + self.number + '00')
+        self.send('GI:' + self.number + ',00')
         self.last_time_changed = time.time()
 
     def on(self, brightness=255, fade_ms=0, start=0):
         if brightness >= 255:
             self.log.debug("Turning On GI String")
-            self.send('GI:' + self.number + 'ff')
+            self.send('GI:' + self.number + ',FF')
         elif brightness == 0:
             self.off()
         else:
             brightness = str(hex(brightness))[2:]
-            self.send('GI:' + self.number + brightness)
+            self.send('GI:' + self.number + ',' + brightness)
 
         self.last_time_changed = time.time()
 
@@ -908,13 +908,13 @@ class FASTMatrixLight(object):
 
     def off(self):
         """Disables (turns off) this matrix light."""
-        self.send('L1:' + self.number + '00')
+        self.send('L1:' + self.number + ',00')
         self.last_time_changed = time.time()
 
     def on(self, brightness=255, fade_ms=0, start=0):
         """Enables (turns on) this driver."""
         if brightness >= 255:
-            self.send('L1:' + self.number + 'FF')
+            self.send('L1:' + self.number + ',FF')
         elif brightness == 0:
             self.off()
         else:
@@ -1020,6 +1020,9 @@ class SerialCommunicator(object):
                                  'XX:F',  # Unrecognized command?
                                  'R1:F',
                                  'XX:U',
+                                 'XX:N',
+                                 'L1:P',
+                                 'GI:P',
                                  ]
 
         self.platform.log.info("Connecting to %s at %sbps", port, baud)
