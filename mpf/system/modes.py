@@ -255,7 +255,8 @@ class Mode(object):
         # register mode start events
         if 'start_events' in config:
             for event in config['start_events']:
-                self.machine.events.add_handler(event, self.start)
+                self.machine.events.add_handler(event=event, handler=self.start,
+                                                priority=config['priority'])
 
         self.config['mode'] = config
 
@@ -293,7 +294,11 @@ class Mode(object):
         # register mode stop events
         if 'stop_events' in self.config['mode']:
             for event in self.config['mode']['stop_events']:
-                self.add_mode_event_handler(event, self.stop)
+                # stop priority is +1 so if two modes of the same priority
+                # start and stop on the same event, the one will stop before the
+                # other starts
+                self.add_mode_event_handler(event=event, handler=self.stop,
+                                            priority=self.priority + 1)
 
         self.start_callback = callback
 
