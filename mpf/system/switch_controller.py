@@ -44,6 +44,11 @@ class SwitchController(object):
         # current states. State here does factor in whether a switch is NO or NC,
         # so 1 = active and 0 = inactive.
 
+        self.switch_event_active = (
+            self.machine.config['mpf']['switch_event_active'])
+        self.switch_event_inactive = (
+            self.machine.config['mpf']['switch_event_inactive'])
+
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick, 1000)
         self.machine.events.add_handler('init_phase_2',
@@ -78,6 +83,25 @@ class SwitchController(object):
             # Populate self.registered_switches
             self.registered_switches[switch.name + '-0'] = list()
             self.registered_switches[switch.name + '-1'] = list()
+
+            if self.machine.config['mpf']['auto_create_switch_events']:
+                self.add_switch_handler(switch_name=switch.name,
+                                        callback=self._switch_event_callback,
+                                        state=0,
+                                        return_info=True)
+                self.add_switch_handler(switch_name=switch.name,
+                                        callback=self._switch_event_callback,
+                                        state=1,
+                                        return_info=True)
+
+    def _switch_event_callback(self, switch_name, state, ms):
+
+        if state:
+            self.machine.events.post(self.switch_event_active.replace(
+                                    '%', switch_name))
+        else:
+            self.machine.events.post(self.switch_event_inactive.replace(
+                                    '%', switch_name))
 
     def verify_switches(self):
         """Loops through all the switches and queries their hardware states via

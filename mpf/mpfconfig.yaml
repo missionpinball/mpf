@@ -57,8 +57,12 @@ mpf:
         machine_files: machine_files
         config: config
         modes: modes
+
     default_pulse_ms: 10
     default_flash_ms: 50
+    auto_create_switch_events: True
+    switch_event_active: "%_active"
+    switch_event_inactive: "%_inactive"
 
 # Default settings for machines. All can be overridden
 
