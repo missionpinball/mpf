@@ -110,7 +110,6 @@ class LED(Device):
 
         self.current_color = []  # one item for each element, 0-255
 
-
         if self.debug_logging:
             self.log.info("Intial settings: %s", self.config)
 
