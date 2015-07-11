@@ -314,24 +314,25 @@ class SwitchController(object):
         obj.hw_state = hw_state
 
         # if the switch is active, check to see if it's recycle_time has passed
+        if state and not self._check_recycle_time(obj, state):
+            return
+
+        obj.state = state  # update the switch device
+
         if state:
-            if self._check_recycle_time(obj):
-
-                obj.state = state  # update the switch device
-                # update the switch's next recycle clear time
-                obj.recycle_clear_tick = Timing.tick + obj.recycle_ticks
-
-            else:  # recycle_time not passed yet
-                return
+            # update the switch's next recycle clear time
+            obj.recycle_clear_tick = Timing.tick + obj.recycle_ticks
 
         # if the switch is already in this state, then abort
         if self.switches[name]['state'] == state:
-            # todo log this as potential hw error??
-            self.log.debug("Received duplicate switch state, which means this "
-                           "switch had some non-debounced state changes. This "
-                           "could be nothing, but if it happens a lot it could "
-                           "indicate noise or interference on the line. Switch:"
-                           "%s", name)
+
+            if not obj.recycle_ticks:
+                self.log.info("Received duplicate switch state, which means "
+                    "this switch had some non-debounced state changes. This "
+                    "could be nothing, but if it happens a lot it could "
+                    "indicate noise or interference on the line. Switch: %s",
+                    name)
+
             return
 
         self.log.info("<<<<< switch: %s, State:%s >>>>>", name, state)
@@ -514,7 +515,7 @@ class SwitchController(object):
             if v['state']:
                 self.log.info("Active Switch|%s",k)
 
-    def _check_recycle_time(self, switch):
+    def _check_recycle_time(self, switch, state):
         # checks to see when a switch is ok to be activated again after it's
         # been last activated
 
@@ -522,9 +523,9 @@ class SwitchController(object):
             return True
 
         else:
-            switch.recycle_jitter_count += 1
+            if state:
+                switch.recycle_jitter_count += 1
             return False
-
 
     def _post_switch_events(self, switch_name, state):
         """Posts the game events based on this switch changing state. """
