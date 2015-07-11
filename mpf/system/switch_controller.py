@@ -278,6 +278,9 @@ class SwitchController(object):
         elif obj:
             name = obj.name
 
+        if not obj:
+            obj = self.machine.switches[name]
+
         if not name:
             self.log.warning("Received a state change from non-configured "
                              "switch. Number: %s", num)
@@ -292,7 +295,7 @@ class SwitchController(object):
         # flip the logical & physical states for NC switches
         hw_state = state
 
-        if self.machine.switches[name].type == 'NC':
+        if obj.type == 'NC':
             if logical:  # NC + logical means hw_state is opposite of state
                 hw_state = hw_state ^ 1
             else:
@@ -304,12 +307,22 @@ class SwitchController(object):
         # configured to not be debounced.
 
         if not debounced:
-            if self.machine.switches[name].config['debounce']:
+            if obj.config['debounce']:
                 return
 
-        # update the switch device
-        self.machine.switches[name].state = state
-        self.machine.switches[name].hw_state = hw_state
+        # Update the hardware state since we always want this to match real hw
+        obj.hw_state = hw_state
+
+        # if the switch is active, check to see if it's recycle_time has passed
+        if state:
+            if self._check_recycle_time(obj):
+
+                obj.state = state  # update the switch device
+                # update the switch's next recycle clear time
+                obj.recycle_clear_tick = Timing.tick + obj.recycle_ticks
+
+            else:  # recycle_time not passed yet
+                return
 
         # if the switch is already in this state, then abort
         if self.switches[name]['state'] == state:
@@ -500,6 +513,18 @@ class SwitchController(object):
         for k, v in self.switches.iteritems():
             if v['state']:
                 self.log.info("Active Switch|%s",k)
+
+    def _check_recycle_time(self, switch):
+        # checks to see when a switch is ok to be activated again after it's
+        # been last activated
+
+        if Timing.tick >= switch.recycle_clear_tick:
+            return True
+
+        else:
+            switch.recycle_jitter_count += 1
+            return False
+
 
     def _post_switch_events(self, switch_name, state):
         """Posts the game events based on this switch changing state. """

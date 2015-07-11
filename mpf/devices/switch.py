@@ -8,6 +8,7 @@
 
 import logging
 from mpf.system.devices import Device
+from mpf.system.timing import Timing
 
 
 class Switch(Device):
@@ -39,11 +40,18 @@ class Switch(Device):
         """ Specifies whether the switch is normally open ('NO', default) or
         normally closed ('NC')."""
 
+        self.recycle_ticks = 0
+        self.recycle_clear_tick = 0
+        self.recycle_jitter_count = 0
+
         if 'type' in config and config['type'].upper() == 'NC':
             self.type = 'NC'
 
         if 'debounce' not in config:
             config['debounce'] = True
+
+        if 'recycle_time' in config:
+            self.recycle_ticks = Timing.string_to_ticks(config['recycle_time'])
 
         # We save out number_str since the platform driver will convert the
         # number into a hardware number, but we need the original number for
