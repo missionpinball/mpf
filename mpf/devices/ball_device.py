@@ -499,7 +499,7 @@ class BallDevice(Device):
         Returns: True or False
 
         """
-        if self.balls == self.ball_capacity:
+        if self.balls == self.config['ball_capacity']:
             return True
         elif self.balls == self.machine.ball_controller.num_balls_known:
             return True
