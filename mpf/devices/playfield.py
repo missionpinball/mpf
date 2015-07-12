@@ -51,7 +51,18 @@ class Playfield(BallDevice):
                         event='balldevice_' + device.name +
                         '_ball_eject_attempt',
                         handler=self._source_device_eject_attempt)
-                break
+                    break
+
+        for device in self.machine.playfield_transfer:
+            if device.config['eject_target'] == self.name:
+                self.machine.events.add_handler(
+                    event='balldevice_' + device.name +
+                    '_ball_eject_success',
+                    handler=self._source_device_eject_success)
+                self.machine.events.add_handler(
+                    event='balldevice_' + device.name +
+                    '_ball_eject_attempt',
+                    handler=self._source_device_eject_attempt)
 
         # Watch for balls removed from the playfield
         self.machine.events.add_handler('balldevice_captured_from_' + self.name,
