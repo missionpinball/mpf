@@ -212,10 +212,11 @@ class MachineController(object):
             exec('self.' + collection + '=devices.DeviceCollection()')
 
             # Create this device
-
-            try:
+            # don't want to use try here since there's a lot going on and it was
+            # swallowing too many exceptions
+            if config in self.config:
                 config = self.config[config]
-            except KeyError:
+            else:
                 self.log.debug("No " + collection + " devices found in config.")
                 config = dict()
 

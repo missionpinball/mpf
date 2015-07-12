@@ -108,13 +108,10 @@ class Device(object):
 
     @staticmethod
     def create_devices(cls, collection, config, machine):
-        # if this device class has a device_class_init staticmethod, run it now
-
-        if config:
-            try:
-                cls.device_class_init(machine)
-            except:
-                pass
+        # if this device class has a device_class_init classmethod, run it now
+        if config and hasattr(cls, 'device_class_init'):
+            # don't want to use try here in case the called meth has an error
+            cls.device_class_init(machine)
 
         # create the devices
         for device in config:
