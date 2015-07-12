@@ -589,7 +589,8 @@ class BallDevice(Device):
         # set event handler to watch for receiving a ball
         self.machine.events.add_handler('balldevice_' + self.name +
                                         '_ball_enter',
-                                        self._requested_ball_received)
+                                        self._requested_ball_received,
+                                        priority=1000)
 
         self.machine.events.post('balldevice_' + self.name + '_ball_request',
                                  balls=balls)
