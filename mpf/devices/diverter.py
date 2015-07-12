@@ -92,20 +92,6 @@ class Diverter(Device):
         self.config['active_objects'] = list()
         self.config['inactive_objects'] = list()
 
-        for target_device in self.config['targets_when_active']:
-            if target_device == 'playfield':
-                self.config['active_objects'].append('playfield')
-            else:
-                self.config['active_objects'].append(
-                    self.machine.balldevices[target_device])
-
-        for target_device in self.config['targets_when_inactive']:
-            if target_device == 'playfield':
-                self.config['inactive_objects'].append('playfield')
-            else:
-                self.config['inactive_objects'].append(
-                    self.machine.balldevices[target_device])
-
         # convert the activation_time to ms
         self.config['activation_time'] = Timing.string_to_ms(self.config['activation_time'])
 
@@ -122,9 +108,20 @@ class Diverter(Device):
                                             '_ball_eject_attempt',
                                             self._feeder_eject_attempt)
 
+        self.machine.events.add_handler('init_phase_1', self._initialize)
+
         self.machine.events.add_handler('init_phase_3', self._register_switches)
 
         self.platform = self.config['activation_coil'].platform
+
+    def _initialize(self):
+        for target_device in self.config['targets_when_active']:
+            self.config['active_objects'].append(
+                self.machine.balldevices[target_device])
+
+        for target_device in self.config['targets_when_inactive']:
+            self.config['inactive_objects'].append(
+                self.machine.balldevices[target_device])
 
     def _register_switches(self):
                 # register for deactivation switches
