@@ -485,17 +485,29 @@ class SwitchController(object):
         self.log.debug("Removing switch handler. Switch: %s, State: %s, ms: %s",
                       switch_name, state, ms)
 
-        # Try first with return_info: False
-        entry_val = {'ms': ms, 'callback': callback, 'return_info': False}
+
         entry_key = str(switch_name) + '-' + str(state)
 
-        if entry_val in self.registered_switches[entry_key]:
-            self.registered_switches[entry_key].remove(entry_val)
+        if entry_key in self.registered_switches:
+            for index, settings in enumerate(self.registered_switches[entry_key]):
+                print settings
+                if (settings['ms'] == ms and
+                        settings['callback'] == callback):
+                    self.registered_switches[entry_key].remove(settings)
 
-        # And try again with return_info: True
-        entry_val = {'ms': ms, 'callback': callback, 'return_info': True}
-        if entry_val in self.registered_switches[entry_key]:
-            self.registered_switches[entry_key].remove(entry_val)
+
+
+        # # Try first with return_info: False
+        # entry_val = {'ms': ms, 'callback': callback, 'return_info': False}
+        # entry_key = str(switch_name) + '-' + str(state)
+        #
+        # if entry_val in self.registered_switches[entry_key]:
+        #     self.registered_switches[entry_key].remove(entry_val)
+        #
+        # # And try again with return_info: True
+        # entry_val = {'ms': ms, 'callback': callback, 'return_info': True}
+        # if entry_val in self.registered_switches[entry_key]:
+        #     self.registered_switches[entry_key].remove(entry_val)
 
     def log_active_switches(self):
         """Writes out entries to the log file of all switches that are
