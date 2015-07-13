@@ -485,11 +485,6 @@ class MPFDisplay(object):
                            new_slide.priority, old_slide.priority)
             return
 
-        if (old_slide and (not old_slide.persist) and
-                old_slide.name in self.slides):
-            # Not all slides are in self.slides, e.g. temp transition ones
-            del self.slides[old_slide.name]
-
         if not new_slide.ready():
             new_slide.add_ready_callback(self.set_current_slide,
                                          slide=new_slide)
@@ -498,6 +493,15 @@ class MPFDisplay(object):
             self.current_slide.update()
             self.current_slide.active = True
             new_slide.schedule_removal()
+
+        # We will delete the existing (old slide) if:
+        # - it's not set to persist
+        # - the new slide doesn't expire (meaning we need the old slide)
+        # - we have a record of the old slide
+        if (old_slide and not old_slide.persist and not new_slide.expire_ms and
+                old_slide.name in self.slides):
+            # Not all slides are in self.slides, e.g. temp transition ones
+            del self.slides[old_slide.name]
 
     def show_current_active_slide(self):
         self.set_current_slide(slide=self.get_highest_priority_slide(),
