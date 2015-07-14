@@ -40,7 +40,7 @@ class Text(DisplayElement):
         self.fonts = machine.display.fonts
         self.language = machine.language
         self.slide = slide
-        self.original_text
+        self.machine = machine
 
         self.adjust_colors(**kwargs)
 
@@ -56,17 +56,16 @@ class Text(DisplayElement):
         if '%' in text:
 
             t = text.split('%')
-            if len(t) % 2 == 1:
-                break
+            if len(t) % 2 == 0:
 
-            for text_string in xrange(1, len(t)-1, 2):
-                self.register_player_event_handler(text_string)
+                for text_string in xrange(1, len(t)-1, 2):
+                    self.register_player_event_handler(text_string)
 
         self.layer = layer
 
         self.text = self.process_text(text, **kwargs)
 
-        self.render()
+        self.render(**kwargs)
 
     def process_text(self, text, **kwargs):
         if '%' in text:
@@ -98,14 +97,14 @@ class Text(DisplayElement):
 
         return text
 
-    def render(self):
+    def render(self, **kwargs):
         self.element_surface = self.fonts.render(text=self.text, **kwargs)
 
         # todo add logic around color/shade
 
         # todo trim this to a certain size? Or force it to fit in the size?
 
-        self.set_position(x, y, h_pos, v_pos)
+        self.set_position(self.x, self.y, self.h_pos, self.v_pos)
 
     def register_player_event_handler(self, player_var):
         self.machine.events.add_handler('player_' + player_var,
