@@ -863,6 +863,10 @@ class DisplayElement(object):
             else:
                 self.adjusted_bg_color = None
 
+    def scrub(self):
+        pass
+
+
 
 class Slide(object):
     """Parent class for a Slide object.
@@ -1209,6 +1213,9 @@ class Slide(object):
         """
 
         self.log.debug("Removing slide")
+
+        for element in self.elements:
+            element.scrub()
 
         try:
             del self.mpfdisplay.slides[self.name]

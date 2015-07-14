@@ -264,17 +264,8 @@ class SlideBuilder(object):
         if 'text' in settings:
             settings['text'] = str(settings['text'])
 
-            # Are there any text variables to replace on the fly?
-            # todo should this go here?
+            # Are there any kwarg variables to replace on the fly?
             if '%' in settings['text']:
-                # first check for player vars (%var_name%)
-                if self.machine.player:
-                    for name, value in self.machine.player:
-                        if '%' + name + '%' in settings['text']:
-                            settings['text'] = settings['text'].replace(
-                                '%' + name + '%', str(value))
-
-                # now check for single % which means event kwargs
                 for kw in text_variables:
                     if '%' + kw in settings['text']:
                         settings['text'] = settings['text'].replace(
