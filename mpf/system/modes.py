@@ -113,7 +113,7 @@ class ModeController(object):
     def register_load_method(self, load_method, config_section_name=None,
                              **kwargs):
         """Used by system components, plugins, etc. to register themselves with
-        the Mode Controller for anything that they a mode to do when its
+        the Mode Controller for anything they need a mode to do when it's
         registered.
 
         Args:
@@ -126,7 +126,7 @@ class ModeController(object):
                 to the load_method.
 
         Note that these methods will be called once, when the mode code is first
-        initialized.
+        initialized during the MPF boot process.
         """
         self.loader_methods.append(RemoteMethod(method=load_method,
             config_section=config_section_name, kwargs=kwargs))

@@ -22,7 +22,6 @@ class ScoreController(object):
 
         """
         self.machine = machine
-        self.machine.score = self
         self.log = logging.getLogger("Score")
         self.log.debug("Loading the Score Controller")
         self.score_events = dict()
