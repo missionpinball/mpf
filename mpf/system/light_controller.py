@@ -195,13 +195,12 @@ class LightController(object):
                     except KeyError:
                         # If this mode has been started previously then the show
                         # will already be a Show instance and not a string.
+                        pass
 
-                        # We only need this here since if the show has already
-                        # been processed then it will already have a priority
-                        if 'priority' in this_action:
-                            this_action['priority'] += priority
-                        else:
-                            this_action['priority'] = priority
+                if 'priority' in this_action:
+                    this_action['priority'] += priority
+                else:
+                    this_action['priority'] = priority
 
                 event_keys.add(self.add_lightplayer_show(event_name,
                                                          this_action))
@@ -610,9 +609,14 @@ class LightController(object):
 
         self.led_update_list = []
 
+    def run_registered_script(self, script_name, **kwargs):
+
+        return self.run_script(
+            script=self.registered_light_scripts[script_name], **kwargs)
+
     def run_script(self, script, lights=None, leds=None, priority=0,
                    repeat=True, blend=False, tps=1, num_repeats=0,
-                   callback=None, key=None, **kwargs):
+                   callback=None, key=None, start_location=0, **kwargs):
         """Runs a light script.
 
         Args:
@@ -635,6 +639,9 @@ class LightController(object):
             key: A key that can be used to later stop the light show this script
                 creates. Typically a unique string. If it's not passed, it will
                 either be the first light name or the first LED name.
+            start_location: Int of the step in the script you want to start the
+                playback. Default is 0. Enter negative numbers to count back
+                from the end. (-1 is last step, -2 is second to last, etc.)
 
         Returns:
             :class:`Show` object. Since running a script just sets up and
@@ -734,11 +741,11 @@ class LightController(object):
         if not key:
             try:
                 key = lights[0]
-            except TypeError:
+            except (TypeError, IndexError):
                 try:
                     key = leds[0]
-                except TypeError:
-                    return
+                except (TypeError, IndexError):
+                    return False
 
         for step in script:
             if step.get('fade', None):
@@ -749,12 +756,11 @@ class LightController(object):
             current_action = {'tocks': step['tocks']}
 
             if lights:
-                current_action['leds'] = dict()
+                current_action['lights'] = dict()
                 for light in Config.string_to_list(lights):
                     current_action['lights'][light] = color
 
             if leds:
-
                 current_action['leds'] = dict()
                 for led in Config.string_to_list(leds):
                     current_action['leds'][led] = color
@@ -763,8 +769,10 @@ class LightController(object):
 
         show = Show(machine=self.machine, config=None, file_name=None,
                     asset_manager=self.asset_manager, actions=show_actions)
+
         show.play(repeat=repeat, tocks_per_sec=tps, priority=priority,
-                  blend=blend, num_repeats=num_repeats, callback=callback)
+                  blend=blend, num_repeats=num_repeats, callback=callback,
+                  start_location=start_location)
 
         self.running_show_keys[key] = show
 
@@ -1156,7 +1164,7 @@ class Show(Asset):
     def _unload(self):
         self.show_actions = None
 
-    def play(self, repeat=False, priority=0, blend=False, hold=False,
+    def play(self, repeat=False, priority=0, blend=False, hold=None,
              tocks_per_sec=30, start_location=None, callback=None,
              num_repeats=0, sync_ms=0, **kwargs):
         """Plays a Show. There are many parameters you can use here which
@@ -1183,7 +1191,9 @@ class Show(Asset):
                 or command that turns the light on). Note that not all item
                 types blend. (You can't blend a coil or event, for example.)
             hold: Boolean which controls whether the lights or LEDs remain in
-                their final show state when the show ends.
+                their final show state when the show ends. Default is None which
+                means hold will be False if the show has more than one step, and
+                True if there is only one step.
             tocks_per_sec: Integer of how fast your show runs ("Playback speed,"
                 in other words.) Your Show files specify action times in terms
                 of 'tocks', like "make this light red for 3 tocks, then off for
@@ -1197,7 +1207,9 @@ class Show(Asset):
                 "ticks" which is used by the machine run loop.
             start_location: Integer of which position in the show file the show
                 should start in. Usually this is 0 but it's nice to start part
-                way through. Also used for restarting shows that you paused.
+                way through. Also used for restarting shows that you paused. A
+                negative value will count backwards from the end (-1 is the last
+                position, -2 is second to last, etc.).
             callback: A callback function that is invoked when the show is
                 stopped.
             num_repeats: Integer of how many times you want this show to repeat
@@ -1224,10 +1236,16 @@ class Show(Asset):
             self.load()
             return False
 
-        self.repeat = repeat
+        if hold is not None:
+            self.hold = hold
+        elif self.total_locations == 1:
+            self.hold = True
+
+        if self.total_locations > 1:
+            self.repeat = repeat
+
         self.priority = int(priority)
         self.blend = blend
-        self.hold = hold
         self.tocks_per_sec = tocks_per_sec  # also referred to as 'tps'
         self.ticks_per_tock = Timing.HZ/float(tocks_per_sec)
         self.callback = callback
@@ -1237,7 +1255,12 @@ class Show(Asset):
             # if you don't specify a start location, it will start where it
             # left off (if you stopped it with reset=False). If the show has
             # never been run, it will start at 0 per the initialization
+
             self.current_location = start_location
+            # if start_location >= 0:
+            #     self.current_location = start_location
+            # else:
+            #     self.current_location = self.total_locations + start_location + 1
 
         self.machine.light_controller._run_show(self)
 
