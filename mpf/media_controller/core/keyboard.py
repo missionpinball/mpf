@@ -88,7 +88,7 @@ class Keyboard(object):
 
             # Process the key map entry
             k = k.upper()  # convert to everything to uppercase
-            k = k.split('-')
+            k = k.replace('+', '-').split('-')
 
             # There are lots of different modifier key values, and they really
             # vary depending on the platform. So rather than stripping out ones
