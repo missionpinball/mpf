@@ -867,7 +867,6 @@ class DisplayElement(object):
         pass
 
 
-
 class Slide(object):
     """Parent class for a Slide object.
 
@@ -1159,8 +1158,25 @@ class Slide(object):
         """Removes all elements from the slide and resets the slide to all
         black."""
         self.elements = list()
-        self.surface.fill((0, 0, 0))
+        self.surface = pygame.Surface.copy(self.mpfdisplay.surface)
         self.dirty = True
+
+    def refresh(self, force_dirty=False):
+        """Refreshes the slide by clearing it, and updating all the display
+        elements.
+
+        Args:
+            force_dirty: Boolean which controls whether you want to force all
+                the elements to be marked as dirty so they're regenerated.
+
+        """
+        self.surface = pygame.Surface.copy(self.mpfdisplay.surface)
+
+        if force_dirty:
+            for element in self.elements:
+                element.dirty = True
+
+        self.update()
 
     def show(self):
         """Shows this slide by making it active.

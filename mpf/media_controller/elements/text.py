@@ -41,33 +41,36 @@ class Text(DisplayElement):
         self.language = machine.language
         self.slide = slide
         self.machine = machine
+        self.original_text = text
+        self.config = kwargs
 
-        self.adjust_colors(**kwargs)
+        self.adjust_colors(**self.config)
 
-        kwargs['color'] = self.adjusted_color
-        kwargs['bg_color'] = self.adjusted_bg_color
+        self.config['color'] = self.adjusted_color
+        self.config['bg_color'] = self.adjusted_bg_color
 
         # Set defaults
-        if 'name' in kwargs:
-            self.name = kwargs['name']
+        if 'name' in self.config:
+            self.name = self.config['name']
         else:
             self.name = text
 
         if '%' in text:
-
             t = text.split('%')
-            if len(t) % 2 == 0:
+            if len(t) % 2 == 1:
 
-                for text_string in xrange(1, len(t)-1, 2):
-                    self.register_player_event_handler(text_string)
+                for i in xrange(1, len(t)-1, 2):
+                    self.register_player_event_handler(t[i])
 
         self.layer = layer
 
-        self.text = self.process_text(text, **kwargs)
+        self.text = self.process_text(text)
 
-        self.render(**kwargs)
+        self.element_surface = self.fonts.render(text=self.text, **self.config)
+        self.set_position(self.x, self.y, self.h_pos, self.v_pos)
 
-    def process_text(self, text, **kwargs):
+    def process_text(self, text):
+
         if '%' in text:
             if self.machine.player:
                 for name, value in self.machine.player:
@@ -75,10 +78,10 @@ class Text(DisplayElement):
                         text = text.replace(
                             '%' + name + '%', str(value))
 
-        if 'min_digits' in kwargs:
-            text = text.zfill(kwargs['min_digits'])
+        if 'min_digits' in self.config:
+            text = text.zfill(self.config['min_digits'])
 
-        if 'number_grouping' in kwargs and kwargs['number_grouping']:
+        if 'number_grouping' in self.config and self.config['number_grouping']:
 
         # todo this only works for ints
         # todo move enabling this and separator char to config
@@ -97,14 +100,16 @@ class Text(DisplayElement):
 
         return text
 
-    def render(self, **kwargs):
-        self.element_surface = self.fonts.render(text=self.text, **kwargs)
+    def render(self):
+
+        self.element_surface = self.fonts.render(text=self.text, **self.config)
+        self.set_position(self.x, self.y, self.h_pos, self.v_pos)
+        self.dirty = True
+
+        self.slide.refresh()
 
         # todo add logic around color/shade
-
         # todo trim this to a certain size? Or force it to fit in the size?
-
-        self.set_position(self.x, self.y, self.h_pos, self.v_pos)
 
     def register_player_event_handler(self, player_var):
         self.machine.events.add_handler('player_' + player_var,
