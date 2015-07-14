@@ -99,7 +99,7 @@ class Device(object):
             # Have to use -1 here instead of None to catch an empty collection
             collection[name] = self
 
-    def __str__(self):
+    def __repr__(self):
         return self.name
 
     @classmethod
