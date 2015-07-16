@@ -182,7 +182,7 @@ class Config(object):
                             "version %s", file_location, file_version,
                             version.__version__, version.__config_version__)
                 log.error("Run MPF with the -m option to automatically migrate"
-                          " your config files")
+                          " your config filesconfig")
                 log.error("More info: %s", version.__config_version_url__)
                 sys.exit()
 
