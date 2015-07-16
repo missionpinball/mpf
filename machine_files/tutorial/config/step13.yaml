@@ -1,4 +1,4 @@
-#config_version=1
+#config_version=2
 
 # Config file for Step 10 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
@@ -525,8 +525,8 @@ window:
         layer: 1
         color: ee9900
 
-slideplayer:
-    machineflow_attract_start:
+slide_player:
+    attract_start:
         type: text
         text: PRESS START
     ball_started:
@@ -563,7 +563,7 @@ keyboard:
     q:
         switch: s_right_inlane
 
-balldevices:
+ball_devices:
   bd_trough:
     tags: trough, home, drain
     ball_switches: s_trough1, s_trough2, s_trough3, s_trough4, s_trough5, s_trough_jam
@@ -595,7 +595,7 @@ balldevices:
   bd_elevator:
     ball_switches: s_elevator_hold
 
-virtual platform start active switches:
+virtual_platform_start_active_switches:
     s_trough1
     s_trough2
     s_trough3

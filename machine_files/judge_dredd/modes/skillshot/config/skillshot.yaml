@@ -1,11 +1,11 @@
-# config_version=1
+# config_version=2
 Mode:
     start_events: ball_starting
     stop_events: timer_mode_timer_complete 
     code: skillshot.SkillShot
     priority: 300
 
-LogicBlocks:
+Logic_Blocks:
     Counters:
         xyz_sling:
             count_events: sw_sling
@@ -26,7 +26,7 @@ Timers:
           - event: balldevice_playfield_ball_enter
             action: start
 
-SlidePlayer:
+Slide_Player:
     mode_skillshot_started:
         type: text
         text: SKILLSHOT

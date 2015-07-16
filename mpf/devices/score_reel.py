@@ -196,7 +196,7 @@ class ScoreReelGroup(Device):
     group. This group also has support for the blank zero "inserts" that some
     machines use. This is a subclass of mpf.system.devices.Device.
     """
-    config_section = 'score reel groups'
+    config_section = 'score_reel_groups'
     collection = 'score_reel_groups'
 
     @classmethod
@@ -895,7 +895,7 @@ class ScoreReel(Device):
     in multiple directions (such as the credit reel).
     """
 
-    config_section = 'score reels'
+    config_section = 'score_reels'
     collection = 'score_reels'
 
     def __init__(self, machine, name, config, collection=None):

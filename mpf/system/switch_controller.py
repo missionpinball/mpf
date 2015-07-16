@@ -72,7 +72,7 @@ class SwitchController(object):
 
             try:
                 start_active = Config.string_to_lowercase_list(
-                    self.machine.config['virtual platform start active switches'])
+                    self.machine.config['virtual_platform_start_active_switches'])
             except KeyError:
                 pass
 

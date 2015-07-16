@@ -1,4 +1,4 @@
-# config_version=1
+# config_version=2
 
 # Base game mode for Aztec
 
@@ -6,7 +6,7 @@ Mode:
     start_events: ball_starting
     priority: 100
 
-SlidePlayer:
+slide_player:
     player_score:
       - type: Text
         text: "%value"
@@ -90,7 +90,7 @@ Scoring:
     target_upperLeft_unlit:
         Score: 250
 
-soundplayer:
+sound_player:
     drain:
         sound: fail
         start_events: ball_drain

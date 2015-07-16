@@ -1,26 +1,10 @@
-# config_version=1
+# config_version=2
 Mode:
     start_events: ball_starting
     priority: 100
     code: base.Base
 
-SlidePlayer:
-    player_score:
-      - type: Text
-        text: "%value"
-        number_grouping: true
-        min_digits: 2
-        v_pos: center
-      - type: Text
-        text: PLAYER %number%
-        v_pos: bottom
-        h_pos: left
-        font: small
-      - type: Text
-        text: BALL %ball%
-        v_pos: bottom
-        h_pos: right
-        font: small
+slide_player:
 
     mode_base_started:
       - type: Text
@@ -45,7 +29,7 @@ SlidePlayer:
         expire: 2s
         priority: 1
 
-SoundPlayer:
+sound_player:
     waiting to plunge loop:
         sound: waiting to plunge loop
         start_events: mode_base_started
@@ -77,7 +61,7 @@ SoundPlayer:
         start_events: sw_jet
         sound: medium metal
 
-ShowPlayer:
+show_player:
     shot_left_orbit:
         show: left orbit
 
@@ -124,3 +108,11 @@ Scoring:
         Score: 110000
     balldevice_retina_hole_ball_enter:
         Score: 225000
+
+target_groups:
+    rollover_lanes:
+        targets: left_lane, middle_lane, right_lane
+        rotate_left_events: sw_left_flipper
+        rotate_right_events: sw_right_flipper
+    standups:
+        target_profile: knock_out

@@ -1,4 +1,4 @@
-# config_version=1
+# config_version=2
 Mode:
     start_events: ball_starting
     priority: 100
@@ -31,7 +31,7 @@ Scoring:
     standups_pf_standups_complete:
         Score: 5000
 
-SlidePlayer:
+Slide_Player:
     player_score:
       - type: Text
         text: "%value"
@@ -77,7 +77,7 @@ SlidePlayer:
         type: Text
         text: "BALLS LOCKED: %balls"
 
-SoundPlayer:
+Sound_Player:
     waiting to plunge loop:
         sound: waiting to plunge loop
         start_events: mode_base_started
@@ -95,13 +95,13 @@ SoundPlayer:
         sound: slingshot
         start_events: shot_Slingshot
 
-ShowPlayer:
+Show_Player:
     mode_base_started:
       - show: game_info
         repeat: yes
         tocks_per_sec: 1
 
-LogicBlocks:
+logic_blocks:
     Accruals:
         both_ramps_made:
             events: shot_RightRamp, shot_LeftRamp

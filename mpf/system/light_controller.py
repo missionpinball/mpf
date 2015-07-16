@@ -80,10 +80,10 @@ class LightController(object):
         self.machine.events.add_handler('init_phase_5',
                                         self._initialize)
 
-        # Tell the mode controller that it should look for LightPlayer items in
+        # Tell the mode controller that it should look for light_player items in
         # modes.
-        self.machine.modes.register_start_method(self.process_lightplayer,
-                                                 'lightplayer')
+        self.machine.modes.register_start_method(self.process_light_player,
+                                                 'light_player')
 
         # Create scripts from config
         self.machine.modes.register_start_method(self.process_light_scripts,
@@ -105,8 +105,8 @@ class LightController(object):
         if 'light_scripts' in self.machine.config:
             self.process_light_scripts(self.machine.config['light_scripts'])
 
-        if 'lightplayer' in self.machine.config:
-            self.process_lightplayer(self.machine.config['lightplayer'])
+        if 'light_player' in self.machine.config:
+            self.process_light_player(self.machine.config['light_player'])
 
     def play_show(self, show, priority=0, **kwargs):
         """Plays a light show.
@@ -162,9 +162,9 @@ class LightController(object):
         for k, v in config.iteritems():
             self.registered_light_scripts[k] = v
 
-    def process_lightplayer(self, config, mode=None, priority=0):
-        # config is localized to 'lightplayer'
-        self.log.debug("Processing LightPlayer configuration. Priority: %s",
+    def process_light_player(self, config, mode=None, priority=0):
+        # config is localized to 'light_player'
+        self.log.debug("Processing light_player configuration. Priority: %s",
                        priority)
 
         event_keys = set()
@@ -202,7 +202,7 @@ class LightController(object):
                 else:
                     this_action['priority'] = priority
 
-                event_keys.add(self.add_lightplayer_show(event_name,
+                event_keys.add(self.add_light_player_show(event_name,
                                                          this_action))
 
                 try:  # if this entry is to stop a script, there will be no show
@@ -210,7 +210,7 @@ class LightController(object):
                 except KeyError:
                     pass
 
-        return self.unload_lightplayer_shows, (event_keys, shows)
+        return self.unload_light_player_shows, (event_keys, shows)
 
     def create_show_from_script(self, script, lights=None, leds=None,
                                 light_tags=None, led_tags=None, key=None):
@@ -274,16 +274,16 @@ class LightController(object):
         return Show(machine=self.machine, config=None, file_name=None,
                     asset_manager=self.asset_manager, actions=action_list)
 
-    def unload_lightplayer_shows(self, removal_tuple):
+    def unload_light_player_shows(self, removal_tuple):
         event_keys, shows = removal_tuple
 
-        self.log.debug("Removing LightPlayer events & stopping shows")
+        self.log.debug("Removing light_player events & stopping shows")
         self.machine.events.remove_handlers_by_keys(event_keys)
 
         for show in shows:
             show.stop()
 
-    def add_lightplayer_show(self, event, settings):
+    def add_light_player_show(self, event, settings):
         if 'priority' in settings:
             settings['show_priority'] = settings['priority']
 
@@ -615,7 +615,7 @@ class LightController(object):
             script=self.registered_light_scripts[script_name], **kwargs)
 
     def run_script(self, script, lights=None, leds=None, priority=0,
-                   repeat=True, blend=False, tps=1, num_repeats=0,
+                   repeat=True, blend=False, tocks_per_sec=1, num_repeats=0,
                    callback=None, key=None, start_location=0, **kwargs):
         """Runs a light script.
 
@@ -629,7 +629,7 @@ class LightController(object):
             repeat (bool): Whether the script repeats (loops).
             blend (bool): Whether the script should blend the light colors with
                 lower prioirty things. todo
-            tps (int): Tocks per second, which is how fast this script will be
+            tocks_per_sec (int): Tocks per second, which is how fast this script will be
                 played back.
             num_repeats (int): How many times this script should repeat before
                 ending. A value of 0 indicates it will repeat forever. Also
@@ -724,7 +724,7 @@ class LightController(object):
 
             self.blah = self.machine.show_controller.run_script("light2",
                                                         self.flash_red, "4",
-                                                        tps=2)
+                                                        tocks_per_sec=2)
          """
 
         # convert the steps from the script list that was passed into the
@@ -770,7 +770,7 @@ class LightController(object):
         show = Show(machine=self.machine, config=None, file_name=None,
                     asset_manager=self.asset_manager, actions=show_actions)
 
-        show.play(repeat=repeat, tocks_per_sec=tps, priority=priority,
+        show.play(repeat=repeat, tocks_per_sec=tocks_per_sec, priority=priority,
                   blend=blend, num_repeats=num_repeats, callback=callback,
                   start_location=start_location)
 
@@ -1246,7 +1246,7 @@ class Show(Asset):
 
         self.priority = int(priority)
         self.blend = blend
-        self.tocks_per_sec = tocks_per_sec  # also referred to as 'tps'
+        self.tocks_per_sec = tocks_per_sec
         self.ticks_per_tock = Timing.HZ/float(tocks_per_sec)
         self.callback = callback
         self.num_repeats = num_repeats

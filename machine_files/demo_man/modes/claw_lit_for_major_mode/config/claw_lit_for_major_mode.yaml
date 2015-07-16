@@ -1,10 +1,10 @@
-# config_version=1
+# config_version=2
 Mode:
     start_events: ball_starting
     stop_events: start_mode1_acmag
     priority: 200
 
-LightPlayer:
+light_player:
     mode_claw_lit_for_major_mode_started:
         lights: l_claw_ready, l_right_ramp_arrow
         script: flash
@@ -15,7 +15,7 @@ LightPlayer:
         key: claw_lit
         action: stop
 
-LogicBlocks:
+logic_blocks:
     Accruals:
         enable_the_claw:
             events: mode_claw_lit_for_major_mode_started
@@ -24,7 +24,7 @@ LogicBlocks:
             events: sw_acmag
             events_when_complete: start_mode1_acmag
 
-SlidePlayer:
+slide_player:
     balldevice_elevator_ball_enter:
         type: text
         text: PICK YOUR MODE

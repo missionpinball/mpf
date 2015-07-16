@@ -1,4 +1,4 @@
-#config_version=1
+#config_version=2
 
 # Config file for Step 7 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
@@ -73,8 +73,8 @@ window:
         layer: 1
         color: ee9900
 
-slideplayer:
-    machineflow_attract_start:
+slide_player:
+    attract_start:
         type: text
         text: PRESS START
 

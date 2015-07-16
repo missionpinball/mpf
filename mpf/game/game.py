@@ -231,7 +231,7 @@ class Game(MachineMode):
         ends. Once all the registered handlers for that event have finished,
         this method calls :meth:`ball_ended`.
 
-        Currently this method also disables the autofire coils and flippers,
+        Currently this method also disables the autofire_coils and flippers,
         though that's temporary as we'll move those into config file options.
         """
         # todo check tilt

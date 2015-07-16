@@ -22,7 +22,6 @@ import urllib
 import urlparse
 from Queue import Queue
 import copy
-import time
 
 from mpf.game.player import Player
 from mpf.system.config import Config
@@ -160,8 +159,8 @@ class BCP(object):
         self.mpfmc_trigger_events.add('game_starting')
         self.mpfmc_trigger_events.add('game_ended')
         self.mpfmc_trigger_events.add('player_add_success')
-        self.mpfmc_trigger_events.add('machineflow_Attract_start')
-        self.mpfmc_trigger_events.add('machineflow_Attract_stop')
+        self.mpfmc_trigger_events.add('attract_start')
+        self.mpfmc_trigger_events.add('attract_stop')
 
         try:
             if self.machine.config['dmd']['physical']:
@@ -344,23 +343,23 @@ class BCP(object):
 
         self.log.debug("Registering Trigger Events")
 
-        # todo should this be here? Or in the individual showplayer, soundplayer
-        # and slideplayer modules?
+        # todo should this be here? Or in the individual show_player, sound_player
+        # and slide_player modules?
 
         try:
-            for event in config['showplayer'].keys():
+            for event in config['show_player'].keys():
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for event in config['slideplayer'].keys():
+            for event in config['slide_player'].keys():
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for k, v in config['soundplayer'].iteritems():
+            for k, v in config['sound_player'].iteritems():
                 if 'start_events' in v:
                     for event in Config.string_to_list(v['start_events']):
                         self.create_trigger_event(event)
@@ -594,6 +593,7 @@ class BCP(object):
                 sending
 
         """
+
         for switch in self.machine.switches.items_tagged(tag):
             self.enable_bcp_switch(switch)
 

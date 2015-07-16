@@ -96,7 +96,7 @@ class DisplayController(object):
                                         self._load_decorators)
         self.machine.events.add_handler('action_show_slide', self.show_slide)
 
-        if 'slideplayer' in self.machine.config:
+        if 'slide_player' in self.machine.config:
             self.machine.events.add_handler('pygame_initialized',
                 self._load_slidebuilder_config)
 
@@ -104,18 +104,18 @@ class DisplayController(object):
         # This has to be a separate method since slidebuilder.process config
         # returns an unloader method so we can't use it as an event handler
         self.slidebuilder.process_config(
-            self.machine.config['slideplayer'], priority=0)
+            self.machine.config['slide_player'], priority=0)
 
     def _load_display_modules(self):
         # Load the display modules as specified in the config files
 
         # todo this could be cleaned up a bit
 
-        self.machine.config['mediacontroller']['display_modules']['modules'] = (
-            self.machine.config['mediacontroller']['display_modules']
+        self.machine.config['media_controller']['display_modules']['modules'] = (
+            self.machine.config['media_controller']['display_modules']
             ['modules'].split(' '))
 
-        for module in (self.machine.config['mediacontroller']['display_modules']
+        for module in (self.machine.config['media_controller']['display_modules']
                        ['modules']):
             i = __import__('mpf.media_controller.display_modules.' +
                            module.split('.')[0], fromlist=[''])
@@ -129,7 +129,7 @@ class DisplayController(object):
         # adds the available display elements to the list
         # creates asset managers for display assets that need them
 
-        for module in (self.machine.config['mediacontroller']['display_modules']
+        for module in (self.machine.config['media_controller']['display_modules']
                        ['elements']):
 
             display_element_module = __import__('mpf.media_controller.elements.'
@@ -140,7 +140,7 @@ class DisplayController(object):
                 AssetManager(
                     machine=self.machine,
                     config_section=display_element_module.config_section,
-                    path_string=(self.machine.config['mediacontroller']['paths']
+                    path_string=(self.machine.config['media_controller']['paths']
                                   [display_element_module.path_string]),
                     asset_class=display_element_module.asset_class,
                     asset_attribute=display_element_module.asset_attribute,
@@ -159,7 +159,7 @@ class DisplayController(object):
         # todo this could be cleaned up by adding module attributes which point
         # to the classes in the module
 
-        for k, v in (self.machine.config['mediacontroller']['display_modules']
+        for k, v in (self.machine.config['media_controller']['display_modules']
                      ['transitions'].iteritems()):
             __import__('mpf.media_controller.transitions.' + v.split('.')[0])
             module = eval('mpf.media_controller.transitions.' + v.split('.')[0])
@@ -173,7 +173,7 @@ class DisplayController(object):
         # todo this could be cleaned up by adding module attributes which point
         # to the classes in the module
 
-        for k, v in (self.machine.config['mediacontroller']['display_modules']
+        for k, v in (self.machine.config['media_controller']['display_modules']
                      ['decorators'].iteritems()):
             __import__('mpf.media_controller.decorators.' + v.split('.')[0])
             module = eval('mpf.media_controller.decorators.' + v.split('.')[0])

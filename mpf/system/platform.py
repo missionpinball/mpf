@@ -122,7 +122,7 @@ class Platform(object):
         affect coils.
 
         Another way to think of this is that it 'disables' a hardware rule.
-        This is what you'd use to disable flippers and autofire coils during
+        This is what you'd use to disable flippers and autofire_coils during
         tilt, game over, etc.
 
         """

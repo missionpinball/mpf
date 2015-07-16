@@ -1,4 +1,4 @@
-# config_version=1
+# config_version=2
 # Demo Man
 
 machine:
@@ -34,7 +34,7 @@ Scriptlets:
     claw.Claw
     add_a_ball.AddABall
 
-Virtual Platform Start Active Switches:
+virtual_platform_start_active_switches:
     s_trough_1
     s_trough_2
     s_trough_3
@@ -383,7 +383,7 @@ Switches:
         label:
         tags: playfield_active
 
-MatrixLights:
+matrix_lights:
 
     l_ball_save:
         number: l11
@@ -864,7 +864,7 @@ GIs:
     #    label:
     #    tags:
 
-BallDevices:
+ball_devices:
   trough:
     tags: trough, home, drain
     ball_switches: s_trough_1, s_trough_2, s_trough_3, s_trough_4, s_trough_5, s_trough_jam
@@ -902,7 +902,7 @@ Diverters:
     deactivation_switches: s_elevator_hold
     targets_when_active: elevator
 
-Autofire Coils:
+autofire_coils:
   left_slingshot:
     coil: c_left_slingshot
     switch: s_left_slingshot
@@ -1080,16 +1080,16 @@ Keyboard:
 
 
 
-ShowPlayer:
-  machineflow_Attract_start:
+Show_Player:
+  attract_start:
     - show: attract_dmd_loop
       repeat: yes
       tocks_per_sec: 1
-  machineflow_Attract_stop:
+  attract_stop:
     - show: attract_dmd_loop
       action: stop
 
-LightPlayer:
+light_player:
   attract_start:
     - show: multiball_sweep
       repeat: yes
@@ -1201,7 +1201,7 @@ light_scripts:
         - tocks: 1
           color: 0
 
-SlidePlayer:
+slide_player:
     volume_change:
         type: Text
         text: "VOLUME: %display_volume"

@@ -19,7 +19,7 @@ class MatrixLight(Device):
 
     """
 
-    config_section = 'matrixlights'
+    config_section = 'matrix_lights'
     collection = 'lights'
 
     #todo need to get the handler stuff out of each of these I think and into
@@ -31,7 +31,7 @@ class MatrixLight(Device):
         self.log.debug('Creating device with config: %s', config)
 
         super(MatrixLight, self).__init__(machine, name, config, collection,
-                                          platform_section='matrixlights')
+                                          platform_section='matrix_lights')
 
         # We save out number_str since the platform driver will convert the
         # number into a hardware number, but we need the original number for

@@ -1,4 +1,4 @@
-# config_version=1
+# config_version=2
 Mode:
     start_events: start_mode1_acmag
     stop_events: timer_mode_countdown_complete
@@ -12,7 +12,7 @@ Timers:
         start_running: true
         bcp: true
 
-SlidePlayer:
+slide_player:
     timer_mode_countdown_tick:
       - type: text
         text: "COUNTDOWN: %ticks"
@@ -26,7 +26,7 @@ SlidePlayer:
             on_secs: .3
             off_secs: .3
 
-LightPlayer:
+light_player:
     mode_mode1_acmag_started:
         lights: l_left_ramp_arrow
         script: flash

@@ -104,10 +104,10 @@ class Language(object):
                 text_string = replacement_string[1:-1]
                 modified_string = text_string
 
-                if (self.current_language in self.machine.config['languagestrings']
-                        and text_string in self.machine.config['languagestrings']
+                if (self.current_language in self.machine.config['language_strings']
+                        and text_string in self.machine.config['language_strings']
                         [self.current_language]):
-                    modified_string = (self.machine.config['languagestrings']
+                    modified_string = (self.machine.config['language_strings']
                         [self.current_language][text_string])
 
                 text = text.replace(replacement_string, modified_string)

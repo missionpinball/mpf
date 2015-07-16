@@ -1,4 +1,4 @@
-# config_version=1
+# config_version=2
 
 machine:
     HZ: 30
@@ -455,7 +455,7 @@ leds:
     #    number:
     #    tags: gi
 
-balldevices:
+ball_devices:
     trough:
         tags: trough, home, drain, ball_add_live
         ball_switches: s_trough
@@ -481,7 +481,7 @@ flippers:
         main_coil: c_flipper_right
         activation_switch: s_flipper_right
 
-autofire coils:
+autofire_coils:
     left_pop:
         coil: c_pop_left
         switch: s_pop_left
@@ -556,7 +556,7 @@ window:
         h_pos: center
         color: 00ff00
 
-lightplayer:
+light_player:
     attract_start:
       - show: dart_board_alternate
         repeat: yes
@@ -576,7 +576,7 @@ lightplayer:
       - show: rainbow_circle_spinners
         action: stop
 
-showplayer:
+show_player:
     attract_start:
       - show: attract_display
         repeat: yes

@@ -35,10 +35,10 @@ class SlideBuilder(object):
         else:
             self.language = None
 
-        # Tell the mode controller that it should look for SlidePlayer items in
+        # Tell the mode controller that it should look for slide_player items in
         # modes.
         self.machine.modes.register_start_method(self.process_config,
-                                                 'slideplayer')
+                                                 'slide_player')
 
     def process_config(self, config, mode=None, priority=0):
         self.log.debug("Processing SlideBuilder configuration. Base priority: "
@@ -69,11 +69,11 @@ class SlideBuilder(object):
             self.machine.display.remove_slides(slide_key)
 
     def preprocess_settings(self, settings, base_priority=0):
-        """Takes an unstructured list of SlidePlayer settings and processed them
+        """Takes an unstructured list of slide_player settings and processed them
         so they can be displayed.
 
         Args:
-            settings: A list of dictionary of SlidePlayer settings for a slide.
+            settings: A list of dictionary of slide_player settings for a slide.
             base_priority: An integer that will be added to slide's priority
                 from the config settings.
 
@@ -91,7 +91,7 @@ class SlideBuilder(object):
 
         """
 
-        # This is a stupid band-aid because when modes load their slideplayer
+        # This is a stupid band-aid because when modes load their slide_player
         # settings are already processed. I don't know why though, but I don't
         # have time to track it down now. $50 to anyone who figures out why!!!
 

@@ -6,10 +6,10 @@ from mpf.system.scriptlet import Scriptlet
 class Deadworld(Scriptlet):
 
     def on_load(self):
-        self.machine.events.add_handler('machineflow_Game_start', self.start)
-        self.machine.events.add_handler('machineflow_Game_stop', self.stop)
+        self.machine.events.add_handler('game_starting', self.start)
+        self.machine.events.add_handler('game_ending', self.stop)
 
-    def start(self):
+    def start(self. **kwargs):
         self.log.debug("Starting Deadworld")
         self.machine.events.add_handler('shot_LeftRamp', self.enable_lock)
         self.machine.events.add_handler('ball_ending', self.disable_lock)

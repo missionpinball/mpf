@@ -24,8 +24,8 @@ class PlayfieldTransfer(Device):
             state=1, ms=0)
             
         # load target playfield
-        self.target = self.machine.balldevices[self.config['eject_target']]
-        self.source = self.machine.balldevices[self.config['captures_from']]
+        self.target = self.machine.ball_devices[self.config['eject_target']]
+        self.source = self.machine.ball_devices[self.config['captures_from']]
 
     def _ball_went_through(self):
         self.log.info("Ball went from " + self.source.name + " to " + self.target.name);

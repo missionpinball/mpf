@@ -61,9 +61,9 @@ class ModeController(object):
         self.log.info('Processing mode: %s', mode_string)
 
         mode_path = os.path.join(self.machine.machine_path,
-            self.machine.config['mediacontroller']['paths']['modes'], mode_string)
+            self.machine.config['media_controller']['paths']['modes'], mode_string)
         mode_config_file = os.path.join(self.machine.machine_path,
-            self.machine.config['mediacontroller']['paths']['modes'],
+            self.machine.config['media_controller']['paths']['modes'],
             mode_string, 'config', mode_string + '.yaml')
         config = Config.load_config_yaml(yaml_file=mode_config_file)
 

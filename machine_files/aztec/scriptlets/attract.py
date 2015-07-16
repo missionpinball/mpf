@@ -13,8 +13,8 @@ class Attract(Scriptlet):
 
     def on_load(self):
 
-        self.machine.events.add_handler('machineflow_attract_start', self.start)
-        self.machine.events.add_handler('machineflow_attract_stop', self.stop)
+        self.machine.events.add_handler('attract_start', self.start)
+        self.machine.events.add_handler('attract_stop', self.stop)
 
     def start(self):
         self.machine.bcp.enable_bcp_switches('player')

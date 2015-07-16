@@ -18,14 +18,14 @@ class LogicBlocks(object):
 
     def __init__(self, machine):
 
-        self.log = logging.getLogger('LogicBlocks Manager')
+        self.log = logging.getLogger('Logic Blocks Manager')
 
         self.machine = machine
 
         # Tell the mode controller that it should look for LogicBlock items in
         # modes.
         self.machine.modes.register_start_method(self._process_config,
-                                                 'logicblocks')
+                                                 'logic_blocks')
 
         # Process game-wide (i.e. not in modes) logic blocks
         self.machine.events.add_handler('player_add_success',
@@ -48,8 +48,8 @@ class LogicBlocks(object):
         """
         player.logic_blocks = set()
 
-        if 'logicblocks' in self.machine.config:
-            self._create_logic_blocks(config=self.machine.config['logicblocks'],
+        if 'logic_blocks' in self.machine.config:
+            self._create_logic_blocks(config=self.machine.config['logic_blocks'],
                                      player=player,
                                      enable=False)
 

@@ -955,9 +955,9 @@ class PDBConfig(object):
 
         # Make a list of unique lamp source banks.  The P3-ROC only supports 2.
         # TODO: What should be done if 2 is exceeded?
-        if 'matrixlights' in config:
-            for name in config['matrixlights']:
-                item_dict = config['matrixlights'][name]
+        if 'matrix_lights' in config:
+            for name in config['matrix_lights']:
+                item_dict = config['matrix_lights'][name]
                 lamp = PDBLight(self, str(item_dict['number']))
 
                 # Catalog PDB banks

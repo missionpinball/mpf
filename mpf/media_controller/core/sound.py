@@ -97,13 +97,13 @@ class SoundController(object):
         self.machine.events.add_handler('action_set_volume', self.set_volume)
         self.machine.events.add_handler('pygame_initialized', self._initialize)
 
-        if 'soundplayer' in self.machine.config:
+        if 'sound_player' in self.machine.config:
             self.machine.events.add_handler('init_phase_5',
                 self.register_sound_events,
-                config=self.machine.config['soundplayer'])
+                config=self.machine.config['sound_player'])
 
         self.machine.modes.register_start_method(self.register_sound_events,
-                                                 'soundplayer')
+                                                 'sound_player')
 
     def _initialize(self):
         # Initialize the sound controller. Not done in __init__() because we
@@ -149,7 +149,7 @@ class SoundController(object):
         AssetManager(
             machine=self.machine,
             config_section=config_section,
-            path_string=(self.machine.config['mediacontroller']['paths'][path_string]),
+            path_string=(self.machine.config['media_controller']['paths'][path_string]),
             asset_class=asset_class,
             asset_attribute=asset_attribute,
             file_extensions=file_extensions)
@@ -170,9 +170,9 @@ class SoundController(object):
                                   config)
 
     def register_sound_events(self, config, mode=None, priority=0):
-        # config is SoundPlayer subection of config dict
+        # config is sound_player subection of config dict
 
-        self.log.debug("Processing SoundPlayer configuration. Base Priority: "
+        self.log.debug("Processing sound_player configuration. Base Priority: "
                        "%s", priority)
         self.log.debug("config: %s", config)
 
@@ -192,7 +192,7 @@ class SoundController(object):
 
     def unregister_sound_events(self, key_list):
 
-        self.log.debug("Unloading SoundPlayer events")
+        self.log.debug("Unloading sound_player events")
         for key in key_list:
             self.unregister_sound_event(key)
 

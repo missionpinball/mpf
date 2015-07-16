@@ -40,7 +40,7 @@ class Playfield(BallDevice):
         # Set up event handlers
 
         # Watch for balls added to the playfield
-        for device in self.machine.balldevices:
+        for device in self.machine.ball_devices:
             for target in device.config['eject_targets']:
                 if target == self.name:
                     self.machine.events.add_handler(
@@ -178,10 +178,10 @@ class Playfield(BallDevice):
 
         if source_device:
             pass
-        elif source_name and source_name in self.machine.balldevices:
-            source_device = self.machine.balldevices[source_name]
+        elif source_name and source_name in self.machine.ball_devices:
+            source_device = self.machine.ball_devices[source_name]
         else:
-            for device in self.machine.balldevices.items_tagged('ball_add_live'):
+            for device in self.machine.ball_devices.items_tagged('ball_add_live'):
                 if self in device.config['eject_targets']:
                     source_device = device
                     break
@@ -384,12 +384,12 @@ class Playfield(BallDevice):
                 self.flag_no_ball_search is False. Default is False
 
         """
-        if self.machine.config['ballsearch']:
+        if self.machine.config['ball_search']:
             if not self.flag_no_ball_search or force is True:
                 if secs is not None:
                     start_ms = secs * 1000
                 else:
-                    start_ms = (self.machine.config['ballsearch']
+                    start_ms = (self.machine.config['ball_search']
                         ['secs until ball search start'] * 1000)
                 self.log.debug("Scheduling a ball search for %s secs from now",
                                start_ms / 1000.0)

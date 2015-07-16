@@ -1,4 +1,4 @@
-# config_version=1
+# config_version=2
 Game:
     Balls per game: 3
     Max players per game: 4
@@ -9,8 +9,8 @@ Modes:
     - base
     - both_ramps_made
 
-ShowPlayer:
-    machineflow_Attract_start:
+Show_Player:
+    attract_start:
       - show: drop_target_sweep
         repeat: yes
         tocks_per_sec: 5
@@ -37,7 +37,7 @@ ShowPlayer:
         repeat: yes
         tocks_per_sec: 1
 
-    machineflow_Attract_stop:
+    attract_stop:
       - show: drop_target_sweep
         action: stop
       - show: chain_sweep
@@ -89,7 +89,7 @@ Shots:
     DropTarget:
         Switch: dropTargetJ, dropTargetU, dropTargetD, dropTargetG, dropTargetE
 
-SlidePlayer:
+slide_player:
     volume_change:
         type: Text
         text: "VOLUME: %display_volume"

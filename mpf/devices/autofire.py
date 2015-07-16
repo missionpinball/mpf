@@ -14,16 +14,16 @@ class AutofireCoil(Device):
     """Base class for coils in the pinball machine which should fire
     automatically based on switch activity using hardware switch rules.
 
-    Autofire coils are used when you want the coils to respond "instantly"
+    autofire_coils are used when you want the coils to respond "instantly"
     without waiting for the lag of the python game code running on the host
     computer.
 
-    Examples of Autofire Coils are pop bumpers, slingshots, and flippers.
+    Examples of autofire_coils are pop bumpers, slingshots, and flippers.
 
     Args: Same as Device.
     """
 
-    config_section = 'autofire coils'
+    config_section = 'autofire_coils'
     collection = 'autofires'
 
     def __init__(self, machine, name, config, collection=None):

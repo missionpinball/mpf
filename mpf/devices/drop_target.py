@@ -17,7 +17,7 @@ class DropTarget(Target):
 
     Args: Same as the Target parent class"""
 
-    config_section = 'droptargets'
+    config_section = 'drop_targets'
     collection = 'drop_targets'
 
     def __init__(self, machine, name, config, collection=None):
@@ -82,7 +82,7 @@ class DropTargetBank(TargetGroup):
     together multiple DropTarget class devices.
     """
 
-    config_section = 'droptargetbanks'
+    config_section = 'drop_targets'
     collection = 'drop_target_banks'
 
     def __init__(self, machine, name, config, collection, member_collection=None,

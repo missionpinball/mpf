@@ -25,8 +25,8 @@ class BallDevice(Device):
     Args: Same as Device.
     """
 
-    config_section = 'balldevices'
-    collection = 'balldevices'
+    config_section = 'ball_devices'
+    collection = 'ball_devices'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('BallDevice.' + name)
@@ -200,7 +200,7 @@ class BallDevice(Device):
         if self.config['eject_targets']:
             for i in range(len(self.config['eject_targets'])):
                 self.config['eject_targets'][i] = (
-                    self.machine.balldevices[self.config['eject_targets'][i]])
+                    self.machine.ball_devices[self.config['eject_targets'][i]])
 
         # make sure the eject timeouts list matches the length of the eject targets
         if (len(self.config['eject_timeouts']) <
@@ -672,7 +672,7 @@ class BallDevice(Device):
             target = self.config['eject_targets'][0]
 
         elif type(target) is str:
-            target = self.machine.balldevices[target]
+            target = self.machine.ball_devices[target]
 
         self.log.debug("Received request to eject %s ball(s) to target '%s'",
                        balls, target.name)

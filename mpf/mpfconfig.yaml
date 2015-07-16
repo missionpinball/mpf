@@ -1,4 +1,4 @@
-# config_version=1
+# config_version=2
 # This file contains confinguration options for the MPF itself, including
 # default settings for your pinball machines.
 
@@ -20,6 +20,7 @@ mpf:
         - shots: mpf.system.shots.ShotController
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
         - scoring: mpf.system.scoring.ScoreController
+        - target_controller: mpf.system.target_controller.TargetController
 
     device_modules:
         driver.Driver
@@ -81,7 +82,7 @@ hardware:
     platform: virtual
     coils: default
     switches: default
-    matrixlights: default
+    matrix_lights: default
     leds: default
     dmd: default
     gis: default
@@ -99,7 +100,7 @@ fast:
     default_debounce_open: 30ms
 
 
-ledsettings:
+led_settings:
     brightness_compensation: 1.0
     default_led_fade_ms: 100
     gamma: 2.5
@@ -113,7 +114,7 @@ game:
     Balls per game: 3
     Max players per game: 4
 
-machineflow:
+machine_flow:
     mpf.game.attract.Attract
     mpf.game.game.Game
 
@@ -135,13 +136,13 @@ auditor:
     player:
         score
 
-ballsearch:
+ball_search:
     Secs until ball search start: 10
     Secs between ball search rounds: 3
     Secs between ball search coils: .15
     If ball search fails: Keep Looking
 
-logicblocks:
+logic_blocks:
 
     counters:
 
@@ -210,7 +211,7 @@ textstrings:
     volume_zero: OFF
     volume_max: MAX
 
-assetdefaults:
+asset_defaults:
     shows:
         default:
             load: preload
@@ -233,10 +234,10 @@ bcp:
         ball_ending:
             command: ball_end
 
-        machineflow_Attract_start:
+        attract_start:
             command: attract_start
 
-        machineflow_Attract_stop:
+        attract_stop:
             command: attract_stop
 
         game_ended:
@@ -246,11 +247,9 @@ bcp:
             command: player_turn_start
             params:
                 player: "%number"
-    
+
     player_variables:
-#        __all__
-        ball
-        extra_balls
+      __all__
 
 volume:
     tracks:
@@ -260,7 +259,7 @@ volume:
         music: 20
     steps: 20
 
-openpixelcontrol:
+open_pixel_control:
     host: localhost
     port: 7890
     connection_required: no
@@ -274,3 +273,33 @@ triggers:
             assets: "%assets"
     assets_loading_complete:
         bcp_name: assets_loading_complete
+
+target_profiles:
+    default:
+        #control_events:
+        #  - event: ball_starting
+        #    action: reset
+        #  - event: foo
+        #    action: apply_profile
+        #    value: hit_flashing
+            
+        steps:
+          - name: unlit
+            light_script: "off"
+          - name: lit
+            light_script: "on"
+                
+#
+#target_group_profiles:
+#    default:
+#        shift_left_events:
+#        shift_right_events:
+#        target_profile: default
+#    lanes:
+#        shift_left_events: sw_left_flipper
+#        shift_right_events: sw_right_flipper
+#        complete_step: lit
+#        target_profile: default
+#    skillshot:
+#        target_profile: hit_flashing
+#        initial_states: off, off, off, on, off, off

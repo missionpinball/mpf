@@ -117,11 +117,11 @@ class Diverter(Device):
     def _initialize(self):
         for target_device in self.config['targets_when_active']:
             self.config['active_objects'].append(
-                self.machine.balldevices[target_device])
+                self.machine.ball_devices[target_device])
 
         for target_device in self.config['targets_when_inactive']:
             self.config['inactive_objects'].append(
-                self.machine.balldevices[target_device])
+                self.machine.ball_devices[target_device])
 
     def _register_switches(self):
                 # register for deactivation switches

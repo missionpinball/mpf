@@ -58,10 +58,10 @@ class ShowController(object):
         self.machine.events.add_handler('init_phase_4',
                                         self._initialize)
 
-        # Tell the mode controller that it should look for LightPlayer items in
+        # Tell the mode controller that it should look for light_player items in
         # modes.
         self.machine.modes.register_start_method(self.process_shows_from_config,
-                                                 'showplayer')
+                                                 'show_player')
 
         # Create the show AssetManager
         self.asset_manager = AssetManager(
@@ -76,8 +76,8 @@ class ShowController(object):
     def _initialize(self):
         # Sets up everything that has to be instantiated first
 
-        if 'showplayer' in self.machine.config:
-            self.process_shows_from_config(self.machine.config['showplayer'])
+        if 'show_player' in self.machine.config:
+            self.process_shows_from_config(self.machine.config['show_player'])
 
     def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
                   tocks_per_sec=30, start_location=None, num_repeats=0,
@@ -125,7 +125,7 @@ class ShowController(object):
                 show.stop()
 
     def process_shows_from_config(self, config, mode=None, priority=0):
-        self.log.debug("Processing ShowPlayer configuration. Priority: %s",
+        self.log.debug("Processing show_player configuration. Priority: %s",
                        priority)
 
         key_list = list()
@@ -147,7 +147,7 @@ class ShowController(object):
 
         key_list, show_key = removal_tuple
 
-        self.log.debug("Removing ShowPlayer events")
+        self.log.debug("Removing show_player events")
         self.machine.events.remove_handlers_by_keys(key_list)
 
         if show_key:
@@ -345,7 +345,7 @@ class Show(Asset):
 
                 step_actions['events'] = event_list
 
-            # SlidePlayer
+            # slide_player
             if ('display' in show_actions[step_num] and
                     show_actions[step_num]['display']):
 
@@ -457,7 +457,7 @@ class Show(Asset):
         self.priority = int(priority)
         self.blend = blend
         self.hold = hold
-        self.tocks_per_sec = tocks_per_sec  # also referred to as 'tps'
+        self.tocks_per_sec = tocks_per_sec
         self.secs_per_tock = 1/float(tocks_per_sec)
         self.callback = callback
         self.num_repeats = num_repeats

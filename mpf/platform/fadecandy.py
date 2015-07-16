@@ -32,7 +32,7 @@ class HardwarePlatform(OPHardwarePlatform):
 
     def _setup_opc_client(self):
         self.opc_client = FadeCandyOPClient(self.machine,
-            self.machine.config['openpixelcontrol'])
+            self.machine.config['open_pixel_control'])
 
 
 class FadeCandyOPClient(OpenPixelClient):
@@ -55,21 +55,21 @@ class FadeCandyOPClient(OpenPixelClient):
 
         self.update_every_tick = True
 
-        self.gamma = self.machine.config['ledsettings']['gamma']
+        self.gamma = self.machine.config['led_settings']['gamma']
         self.whitepoint = Config.string_to_list(
-            self.machine.config['ledsettings']['whitepoint'])
+            self.machine.config['led_settings']['whitepoint'])
 
         self.whitepoint[0] = float(self.whitepoint[0])
         self.whitepoint[1] = float(self.whitepoint[1])
         self.whitepoint[2] = float(self.whitepoint[2])
 
         self.linear_slope = (
-            self.machine.config['ledsettings']['linear_slope'])
+            self.machine.config['led_settings']['linear_slope'])
         self.linear_cutoff = (
-            self.machine.config['ledsettings']['linear_cutoff'])
+            self.machine.config['led_settings']['linear_cutoff'])
         self.keyframe_interpolation = (
-            self.machine.config['ledsettings']['keyframe_interpolation'])
-        self.dithering = self.machine.config['ledsettings']['dithering']
+            self.machine.config['led_settings']['keyframe_interpolation'])
+        self.dithering = self.machine.config['led_settings']['dithering']
 
         if not self.dithering:
             self.disable_dithering()

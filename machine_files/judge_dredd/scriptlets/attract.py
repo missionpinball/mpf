@@ -6,7 +6,7 @@ from mpf.system.scriptlet import Scriptlet
 class Attract(Scriptlet):
 
     def on_load(self):
-        self.machine.events.add_handler('machineflow_attract_start', self.start)
+        self.machine.events.add_handler('attract_start', self.start)
 
     def start(self):
         for gi in self.machine.gi:

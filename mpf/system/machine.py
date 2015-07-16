@@ -123,12 +123,12 @@ class MachineController(object):
     def _init_machine_flow(self):
         # sets up the machine flow
         self.log.debug("Configuring Machine Flow")
-        self.config['machineflow'] = self.config['machineflow'].split(' ')
+        self.config['machine_flow'] = self.config['machine_flow'].split(' ')
         # Convert the MachineFlow config into a list of objects
         i = 0
-        for machine_mode in self.config['machineflow']:
+        for machine_mode in self.config['machine_flow']:
             name = machine_mode.split('.')[-1:]
-            self.config['machineflow'][i] = self.string_to_class(machine_mode)(
+            self.config['machine_flow'][i] = self.string_to_class(machine_mode)(
                                                                  self, name[0])
             i += 1
         # register event handlers
@@ -284,13 +284,13 @@ class MachineController(object):
 
         # If there's a current machineflow position, stop that mode
         if self.machineflow_index is not None:
-            self.config['machineflow'][self.machineflow_index].stop()
+            self.config['machine_flow'][self.machineflow_index].stop()
         else:
             self.machineflow_index = 0
 
         # Now find the new position and start it:
         if position is None:  # A specific position was not passed, so just advance
-            if self.machineflow_index >= len(self.config['machineflow']) - 1:
+            if self.machineflow_index >= len(self.config['machine_flow']) - 1:
                 self.machineflow_index = 0
             else:
                 self.machineflow_index += 1
@@ -302,7 +302,7 @@ class MachineController(object):
                        self.machineflow_index)
 
         # Now start the new machine mode
-        self.config['machineflow'][self.machineflow_index].start(**kwargs)
+        self.config['machine_flow'][self.machineflow_index].start(**kwargs)
 
     def add_platform(self, name):
         """Makes an additional hardware platform interface available to MPF.

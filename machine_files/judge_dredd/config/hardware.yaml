@@ -1,4 +1,4 @@
-# config_version=1
+# config_version=2
 
 # Machine hardware config file for Judge Dredd
 
@@ -257,7 +257,7 @@ Coils:
         number: C04
     resetDropTarget:
         number: C05
-        tags: ballSearch
+        tags: ball_search
         pulse_ms: 25
     globeMotor:
         number: C06
@@ -272,21 +272,21 @@ Coils:
         pulse_ms: 20
     tripDropTarget:
         number: C10
-        tags: ballSearch
+        tags: ball_search
     diverter:
         number: C11
-        tags: ballSearch
+        tags: ball_search
         holdPatter: 1-2
     trough:
         number: C13
         pulse_ms: 20
     slingL: 
         number: C15
-        tags: ballSearch
+        tags: ball_search
         pulse_ms: 20
     slingR: 
         number: C16
-        tags: ballSearch
+        tags: ball_search
         pulse_ms: 20
     flasherFire:
         number: C17
@@ -313,7 +313,7 @@ Coils:
     flashersInsert:
         number: C28
 
-MatrixLights:
+matrix_lights:
 
     perp1White:
         number: L11
@@ -580,7 +580,7 @@ Flippers:
         eos_switch: flipperUpR_EOS
         label: Upper Right Flipper
         
-Autofire Coils:
+autofire_coils:
     # label
         # coil - name
         # switch - name
@@ -596,7 +596,7 @@ Autofire Coils:
         coil: slingR
         switch: slingR
         
-DropTargets:
+drop_targets:
     J:
         switch: dropTargetJ
         light: dropTargetJ
@@ -619,7 +619,7 @@ DropTargets:
         light: dropTargetE
         reset_coil: resetDropTarget
 
-DropTargetBanks:
+drop_target_banks:
     Judge:
         drop_targets: J, U, G, E
         reset_coils: resetDropTarget
@@ -639,7 +639,7 @@ Diverters:
         deactivation_switches: leftRampToLock
         targets_when_active: deadworld
 
-BallDevices:
+ball_devices:
 
     trough:
         tags: trough, home, drain

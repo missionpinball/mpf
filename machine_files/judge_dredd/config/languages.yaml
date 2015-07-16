@@ -1,10 +1,10 @@
-# config_version=1
+# config_version=2
 Languages:
     English
     German
     French
 
-LanguageStrings:
+language_strings:
     French:
         PRESS START: APPUYEZ SUR START
         FREE PLAY: JEU GRATUIT
