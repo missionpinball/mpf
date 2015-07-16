@@ -220,7 +220,7 @@ class Target(Device):
                                  self.current_step_name + '_hit')
 
     def jump(self, step):
-        self._stop_current_lights()
+        self._stop_current_ligights()
 
         self.player[self.player_variable] = step
 
