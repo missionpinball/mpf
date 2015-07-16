@@ -86,7 +86,7 @@ class LightController(object):
                                                  'lightplayer')
 
         # Create scripts from config
-        self.machine.modes.register_start_method(self.process_lightscripts,
+        self.machine.modes.register_start_method(self.process_light_scripts,
                                                  'lightscipts')
 
         # Create the show AssetManager
@@ -102,8 +102,8 @@ class LightController(object):
     def _initialize(self):
         # Sets up everything that has to be instantiated first
 
-        if 'lightscripts' in self.machine.config:
-            self.process_lightscripts(self.machine.config['lightscripts'])
+        if 'light_scripts' in self.machine.config:
+            self.process_light_scripts(self.machine.config['light_scripts'])
 
         if 'lightplayer' in self.machine.config:
             self.process_lightplayer(self.machine.config['lightplayer'])
@@ -156,8 +156,8 @@ class LightController(object):
         for key in keys:
             self.stop_shows_by_key(key)
 
-    def process_lightscripts(self, config, mode=None, priority=0):
-        # config here is localized to LightScripts:
+    def process_light_scripts(self, config, mode=None, priority=0):
+        # config here is localized to light_scripts:
 
         for k, v in config.iteritems():
             self.registered_light_scripts[k] = v

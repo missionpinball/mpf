@@ -1,8 +1,8 @@
 # config_version=1
 # Demo Man
 
-Machine:
-    HZ: 30
+machine:
+    hz: 30
     Balls Installed: 6
     Min Balls: 1
     Max Balls: 6
@@ -11,10 +11,14 @@ hardware:
     driverboards: wpc
     platform: p_roc
 
-MPF:
+fast:
+    ports: COM5, COM6, COM7
+    #config_number_format: int
+
+mpf:
   default_pulse_ms: 20
 
-Game:
+game:
     Balls per game: 3
     Max players per game: 4
     player_controlled_eject_tag: plunger
@@ -23,6 +27,7 @@ Modes:
   - base
   - claw_lit_for_major_mode
   - mode1_acmag
+  - skillshot
 
 Scriptlets:
     attract.Attract
@@ -59,7 +64,7 @@ Switches:
         number: sf5
         tags:
         label:
-    s_flipper_upper_left:
+    s_handle_trigger_right:
         number: sf6
         tags: player
         label:
@@ -67,7 +72,7 @@ Switches:
         number: sf7
         tags:
         label:
-    s_flipper_upper_right:
+    s_handle_trigger_left:
         number: sf8
         tags: player
         label:
@@ -928,7 +933,7 @@ Flippers:
     hold_coil: c_flipper_upper_hold
     activation_switch: s_flipper_lower_left
 
-Targets:
+targets:
   left_lane:
     switch: s_left_rollover
     light: l_left_rollover
@@ -954,11 +959,12 @@ Targets:
     switch: s_standup_5
     light: l_standup_5
 
-TargetGroups:
+target_groups:
   rollover_lanes:
     targets: left_lane, middle_lane, right_lane
     rotate_left_events: sw_left_flipper
     rotate_right_events: sw_right_flipper
+
   standups:
     targets: standup_1, standup_2, standup_3, standup_4, standup_5
 
@@ -1055,6 +1061,23 @@ Keyboard:
     switch: s_flipper_lower_left
   /:
     switch: s_flipper_lower_right
+  shift+1:
+    switch: s_standup_1
+  shift+2:
+    switch: s_standup_2
+  shift+3:
+    switch: s_standup_3
+  shift+4:
+    switch: s_standup_4
+  shift+5:
+    switch: s_standup_5
+  shift+8:
+    switch: s_left_rollover
+  shift+9:
+    switch: s_center_rollover
+  shift+0:
+    switch: s_right_rollover
+
 
 
 ShowPlayer:
@@ -1165,7 +1188,7 @@ Shots:
     center_ramp:
         Switch: s_center_ramp
 
-LightScripts:
+light_scripts:
     flash:
         - tocks: 1
           color: ff
@@ -1197,6 +1220,3 @@ images:
     demo_man_logo:
         target: dmd
 
-bcp:
-    player_variables:
-      __all__
