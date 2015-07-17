@@ -47,14 +47,14 @@ class SoundController(object):
         self.log = logging.getLogger('SoundController')
         self.machine = machine
 
-        if 'soundsystem' not in self.machine.config:
+        if 'sound_system' not in self.machine.config:
             self.config = dict()
             return  # todo move to preload_check()
 
         self.log.debug("Loading the Sound Controller")
 
         self.machine.sound = self
-        self.config = self.machine.config['soundsystem']
+        self.config = self.machine.config['sound_system']
         self.tracks = dict()  # k = track name, v = track obj
         self.stream_track = None
         self.pygame_channels = list()
