@@ -496,6 +496,9 @@ class EventManager(object):
             queue = None
             del kwargs['queue']  # ditch this since we don't need it now
 
+        # Process event posted during event _before_ running the callback
+        self._do_next()
+
         if callback and not queue:
 
             if result:
