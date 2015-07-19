@@ -402,11 +402,11 @@ class EventManager(object):
                            "Args: %s", event, ev_type, callback,
                            friendly_kwargs)
 
+        self.queue.append((event, ev_type, callback, kwargs))
         if not self.busy:
-            self._process_event(event, ev_type, callback, **kwargs)
+            # process event queue right away
+            self._process_event_queue()
         else:
-            self.queue.append((event, ev_type, callback, kwargs))
-
             if self.debug and event != 'timer_tick':
                 self.log.debug("XXXX Event '%s' is in progress. Added to the "
                                "queue.", self.current_event[0])
@@ -496,9 +496,6 @@ class EventManager(object):
             queue = None
             del kwargs['queue']  # ditch this since we don't need it now
 
-        # Process event posted during event _before_ running the callback
-        self._do_next()
-
         if callback and not queue:
 
             if result:
@@ -512,13 +509,10 @@ class EventManager(object):
 
         self.current_event = (None, None, None, None)
 
-        # Finally see if we have any more events to process
-        self._do_next()
-
-    def _do_next(self):
+    def _process_event_queue(self):
         # Internal method which checks to see if there are any other events
         # that need to be processed, and then processes them.
-        if len(self.queue) > 0:
+        while len(self.queue) > 0:
             event = self.queue.popleft()
             self._process_event(event=event[0],
                                 ev_type=event[1],
