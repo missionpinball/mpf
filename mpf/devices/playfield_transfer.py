@@ -31,23 +31,33 @@ class PlayfieldTransfer(Device):
         self.log.info("Ball went from " + self.source.name + " to " + self.target.name);
 
         # source playfield is obviously active
-        # TODO: this will not work because sw_playfield_active will post another event
-        # which is running after the next one and complain that ball_count went to -1
-        # self.machine.events.post('sw_' + self.source.name + '_active')
+        # we will continue using a callback to keep the ball count sane
+        # (otherwise it may go to -1 during the next event)
+        self.machine.events.post('sw_' + self.source.name + '_active', callback=self._ball_went_through2)
 
+    # used as callback in _ball_went_through
+    def _ball_went_through2(self):
         # trigger remove ball from source playfield
-        self.machine.events.post('balldevice_captured_from_' + self.source.name, balls=1)
+        self.machine.events.post('balldevice_captured_from_' + self.source.name,
+                                        balls=1)
 
         # inform target playfield about incomming ball
         self.machine.events.post('balldevice_' + self.name + '_ball_eject_attempt',
-                                         balls=1,
-                                         target=self.target,
-                                         timeout=0)
+                                        balls=1,
+                                        target=self.target,
+                                        timeout=0,
+                                        callback=self._ball_went_through3)
 
+    # used as callback in _ball_went_through2
+    def _ball_went_through3(self, balls, target, timeout):
         # promise (and hope) that it actually goes there
         self.machine.events.post('balldevice_' + self.name + '_ball_eject_success',
-                                     balls=1, target=self.target)
+                                        balls=1,
+                                        target=self.target,
+                                        callback=self._ball_went_through4)
 
+    # used as callback in _ball_went_through3
+    def _ball_went_through4(self, balls, target):
         # since we confirmed eject target playfield has to be active
         self.machine.events.post('sw_' + self.target.name + '_active')
 
