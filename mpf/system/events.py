@@ -16,10 +16,9 @@ class EventManager(object):
     def __init__(self, machine):
         self.log = logging.getLogger("Events")
         self.machine = machine
-        self.event_queue = []
         self.registered_handlers = {}
         self.busy = False
-        self.queue = deque([])
+        self.event_queue = deque([])
         self.debug = True  # logs all event activity except timer_ticks.
         self.registered_monitors = set()  # callbacks that get every event
         self.current_event = (None, None, None, None)  # current in-progress ev
@@ -402,7 +401,7 @@ class EventManager(object):
                            "Args: %s", event, ev_type, callback,
                            friendly_kwargs)
 
-        self.queue.append((event, ev_type, callback, kwargs))
+        self.event_queue.append((event, ev_type, callback, kwargs))
         if not self.busy:
             # process event queue right away
             self._process_event_queue()
@@ -411,7 +410,7 @@ class EventManager(object):
                 self.log.debug("XXXX Event '%s' is in progress. Added to the "
                                "queue.", self.current_event[0])
                 self.log.debug("================== ACTIVE EVENTS =============")
-                for event in list(self.queue):
+                for event in list(self.event_queue):
                     self.log.debug("%s, %s, %s, %s", event[0], event[1],
                                    event[2], event[3])
                 self.log.debug("==============================================")
@@ -512,8 +511,8 @@ class EventManager(object):
     def _process_event_queue(self):
         # Internal method which checks to see if there are any other events
         # that need to be processed, and then processes them.
-        while len(self.queue) > 0:
-            event = self.queue.popleft()
+        while len(self.event_queue) > 0:
+            event = self.event_queue.popleft()
             self._process_event(event=event[0],
                                 ev_type=event[1],
                                 callback=event[2],
