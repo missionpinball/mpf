@@ -278,7 +278,7 @@ class SwitchController(object):
         elif obj:
             name = obj.name
 
-        if not obj:
+        if not obj and name:
             obj = self.machine.switches[name]
 
         if not name:
