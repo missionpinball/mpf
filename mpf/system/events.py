@@ -19,6 +19,7 @@ class EventManager(object):
         self.registered_handlers = {}
         self.busy = False
         self.event_queue = deque([])
+        self.callback_queue = deque([])
         self.debug = True  # logs all event activity except timer_ticks.
         self.registered_monitors = set()  # callbacks that get every event
         self.current_event = (None, None, None, None)  # current in-progress ev
@@ -499,10 +500,7 @@ class EventManager(object):
                 # if our last handler returned something, add it to kwargs
                 kwargs['ev_result'] = result
 
-            if kwargs:
-                callback(**kwargs)
-            else:
-                callback()
+            self.callback_queue.append((callback, kwargs))
 
         self.current_event = (None, None, None, None)
 
@@ -510,12 +508,16 @@ class EventManager(object):
         self.busy = True
         # Internal method which checks to see if there are any other events
         # that need to be processed, and then processes them.
-        while len(self.event_queue) > 0:
-            event = self.event_queue.popleft()
-            self._process_event(event=event[0],
-                                ev_type=event[1],
-                                callback=event[2],
-                                **event[3])
+        while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
+            while len(self.event_queue) > 0:
+                event = self.event_queue.popleft()
+                self._process_event(event=event[0],
+                                    ev_type=event[1],
+                                    callback=event[2],
+                                    **event[3])
+            if len(self.callback_queue) > 0:
+                callback, kwargs = self.callback_queue.pop()
+                callback(**kwargs)
 
         self.busy = False
 
