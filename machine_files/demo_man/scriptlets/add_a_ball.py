@@ -13,8 +13,10 @@ class AddABall(Scriptlet):
         self.machine.events.add_handler('sw_buy_in', self.add_ball)
 
     def add_ball(self):
-        self.machine.game.add_balls_in_play(1)
-        self.machine.playfield.add_ball()
+
+        if self.machine.game:
+            self.machine.game.add_balls_in_play(1)
+            self.machine.playfield.add_ball()
 
 # The MIT License (MIT)
 

@@ -5,7 +5,6 @@ Mode:
     code: base.Base
 
 slide_player:
-
     mode_base_started:
       - type: Text
         text: "%score%"
@@ -115,4 +114,4 @@ target_groups:
         rotate_left_events: sw_left_flipper
         rotate_right_events: sw_right_flipper
     standups:
-        target_profile: knock_out
+        target_profile: default

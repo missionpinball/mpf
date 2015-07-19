@@ -9,11 +9,7 @@ machine:
 
 hardware:
     driverboards: wpc
-    platform: fast
-
-fast:
-    ports: COM3, COM4 COM5
-    #config_number_format: int
+    platform: p_roc
 
 mpf:
   default_pulse_ms: 20
