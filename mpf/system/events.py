@@ -438,7 +438,6 @@ class EventManager(object):
 
         # Now let's call the handlers one-by-one, including any kwargs
         if event in self.registered_handlers:
-            self.busy = True
 
             if ev_type == 'queue' and callback:
                 queue = QueuedEvent(callback, **kwargs)
@@ -478,7 +477,6 @@ class EventManager(object):
                 elif ev_type == 'relay' and type(result) is dict:
                     kwargs.update(result)
 
-            self.busy = False
         if self.debug and event != 'timer_tick':
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
                            "Args: %s", event, ev_type, callback, kwargs)
@@ -509,6 +507,7 @@ class EventManager(object):
         self.current_event = (None, None, None, None)
 
     def _process_event_queue(self):
+        self.busy = True
         # Internal method which checks to see if there are any other events
         # that need to be processed, and then processes them.
         while len(self.event_queue) > 0:
@@ -517,6 +516,8 @@ class EventManager(object):
                                 ev_type=event[1],
                                 callback=event[2],
                                 **event[3])
+
+        self.busy = False
 
     def get_current_event(self):
         """Returns a tuple with information about the current event that's in
