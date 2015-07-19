@@ -509,12 +509,18 @@ class EventManager(object):
         # Internal method which checks to see if there are any other events
         # that need to be processed, and then processes them.
         while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
+            # first process all events. if they post more events we will
+            # process them in the same loop.
             while len(self.event_queue) > 0:
                 event = self.event_queue.popleft()
                 self._process_event(event=event[0],
                                     ev_type=event[1],
                                     callback=event[2],
                                     **event[3])
+
+            # when all events are processed run the _last_ callback. afterwards
+            # continue with the loop and run all events. this makes sure all
+            # events are completed before running the callback
             if len(self.callback_queue) > 0:
                 callback, kwargs = self.callback_queue.pop()
                 callback(**kwargs)
