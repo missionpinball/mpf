@@ -42,7 +42,7 @@ class CaseInsensitiveDict(dict):
         except AttributeError:
             return super(CaseInsensitiveDict, self).__contains__(key)
 
-    def __del__(self, key):
+    def __delitem__(self, key):
         try:
             return super(CaseInsensitiveDict, self).__del__(key.lower())
         except AttributeError:
