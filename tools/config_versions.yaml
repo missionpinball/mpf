@@ -1,0 +1,37 @@
+2:
+  section_replacements:
+    assetdefaults: asset_defaults
+    autofire coils: autofire_coils
+    balldevices: ball_devices
+    ballsearch: ball_search
+    droptargets: drop_targets
+    droptargetbanks: drop_target_banks
+    languagestrings: language_strings
+    lightplayer: light_player
+    lightscripts: light_scripts
+    logicblocks: logic_blocks
+    ledsettings: led_settings
+    machineflow: machine_flow
+    mediacontroller: media_controller
+    openpixelcontrol: open_pixel_control
+    score reels: score_reels
+    score reel groups: score_reel_groups
+    showplayer: show_player
+    slideplayer: slide_player
+    soundplayer: sound_player
+    soundsystem: sound_system
+    switchplayer: switch_player
+    targetgroups: target_groups
+    virtual platform start active switches: virtual_platform_start_active_switches
+
+  section_warnings:
+    - path: targets
+      url:
+    - path: target groups
+      url:
+    - path: droptargets
+      url:
+    - path: droptargetbanks
+
+  section_deprecations:
+    - plugins
