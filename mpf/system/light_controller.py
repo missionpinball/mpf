@@ -87,7 +87,7 @@ class LightController(object):
 
         # Create scripts from config
         self.machine.modes.register_start_method(self.process_light_scripts,
-                                                 'lightscipts')
+                                                 'light_scripts')
 
         # Create the show AssetManager
         self.asset_manager = AssetManager(
