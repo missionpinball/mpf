@@ -34,8 +34,6 @@ mpf:
         drop_target.DropTargetBank
         target.Target
         target.TargetGroup
-        rollover.Rollover
-        rollover.RolloverGroup
         flipper.Flipper
         diverter.Diverter
         score_reel.ScoreReel
