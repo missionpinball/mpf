@@ -1,9 +1,0 @@
-This folder contains a few sample sound files for Judge Dredd. This is not
-complete, and we don't intend on "finishing" the Judge Dredd project. Rather,
-we have access to a Judge Dredd machine and it's the main machine we're using
-for MPF development.
-
-The sample sound files included here are open source and were obtained from the
-link in this forum post:
-
-http://www.pinballcontrollers.com/forum/index.php?topic=370
