@@ -37,8 +37,10 @@ class Target(Device):
         self.current_step_index = 0
         self.current_step_name = None
         self.running_light_show = None
-
+        self.target_group = None
         self.profiles = list()
+        self.player = None
+        self.player_variable = None
 
         if 'profile' not in self.config:
             self.config['profile'] = 'default'
@@ -55,9 +57,6 @@ class Target(Device):
 
         if 'led' in self.config:
             self.config['led'] = Config.string_to_list(self.config['led'])
-
-            # for index, led in enumerate(self.config['led']):
-            #     self.config['led'][index] = self.machine.leds[led]
         else:
             self.config['led'] = list()
 
@@ -82,14 +81,18 @@ class Target(Device):
             if self.config['loops']:
                 self.player[self.player_variable] = 0
             else:
-                pass
-                # todo target is done / disabled
+                return
         else:
             self.machine.game.player[self.player_variable] += 1
 
         self._stop_current_lights()
         self._update_current_step_variables()
         self._do_step_actions()
+        self._update_group_status()
+
+    def _update_group_status(self):
+        if self.target_group:
+            self.target_group.check_for_complete()
 
     def _stop_current_lights(self):
         if self.running_light_show:
@@ -141,7 +144,6 @@ class Target(Device):
     def apply_profile(self, profile, priority, removal_key=None):
 
         if profile in self.machine.target_controller.profiles:
-
             self.log.info("Applying target profile '%s', priority %s", profile,
                           priority)
 
@@ -158,7 +160,6 @@ class Target(Device):
             self._update_lights()
 
         else:
-
             if not self.active_profile_name:
                 self.apply_profile('default')
 
@@ -225,6 +226,9 @@ class Target(Device):
         self.player[self.player_variable] = step
 
         self._update_current_step_variables()  # curr_step_index, curr_step_name
+
+        self._update_group_status()
+
         self._update_lights()
 
 
@@ -278,6 +282,7 @@ class TargetGroup(Device):
         # convert target list from str to objects
         for target in self.config[self.device_str]:
             self.targets.append(member_collection[target])
+            member_collection[target].target_group = self
 
         self.machine.events.add_handler('init_phase_3',
                                         self._register_switch_handlers)
@@ -329,6 +334,20 @@ class TargetGroup(Device):
         for i in range(len(self.targets)):
             self.targets[i].jump(step=target_state_list[i])
 
+    def check_for_complete(self):
+        """Checks all the targets in this target group. If they are all in the
+        same step, then that step number is returned. If they are in different
+        steps, False is returned.
+
+        """
+        target_states = set()
+
+        for target in self.targets:
+            target_states.add(target.current_step_name)
+
+        if len(target_states) == 1 and target_states.pop():
+            self.machine.events.post('target_group_' + self.name + '_' +
+                                    self.targets[0].current_step_name)
 
 
 # The MIT License (MIT)
