@@ -181,9 +181,13 @@ class Config(object):
                 log.error("Config file %s is version %s. MPF %s requires "
                             "version %s", file_location, file_version,
                             version.__version__, version.__config_version__)
-                log.error("Run MPF with the -m option to automatically migrate"
-                          " your config filesconfig")
-                log.error("More info: %s", version.__config_version_url__)
+                log.error("Use the Config File Migrator to automatically "
+                          "migrate your config file to the latest version.")
+                log.error("Migration tool: "
+                           "https://missionpinball.com/docs/tools/config-file-migrator/")
+                log.error("More info on config version %s: %s",
+                          version.__config_version__,
+                          version.__config_version_url__)
                 sys.exit()
 
     @staticmethod

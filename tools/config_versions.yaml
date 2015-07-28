@@ -26,12 +26,13 @@
 
   section_warnings:
     - path: targets
-      url:
+      url: "https://missionpinball.com/docs/configuration-file-reference/targets/"
     - path: target groups
-      url:
+      url: "https://missionpinball.com/docs/configuration-file-reference/targetgroups/"
     - path: droptargets
-      url:
+      url: "https://missionpinball.com/docs/configuration-file-reference/droptargets/"
     - path: droptargetbanks
+      url: "https://missionpinball.com/docs/configuration-file-reference/droptargetbanks/"
 
   section_deprecations:
     - plugins
