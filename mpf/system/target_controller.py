@@ -106,10 +106,6 @@ class TargetController(object):
                 target.remove_profile(removal_key=mode)
 
 
-
-
-
-
 # The MIT License (MIT)
 
 # Copyright (c) 2013-2015 Brian Madden and Gabe Knuth

@@ -179,8 +179,8 @@ class Config(object):
 
             if file_version != int(version.__config_version__):
                 log.error("Config file %s is version %s. MPF %s requires "
-                            "version %s", file_location, file_version,
-                            version.__version__, version.__config_version__)
+                          "version %s", file_location, file_version,
+                          version.__version__, version.__config_version__)
                 log.error("Use the Config File Migrator to automatically "
                           "migrate your config file to the latest version.")
                 log.error("Migration tool: "
