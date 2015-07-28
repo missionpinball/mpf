@@ -22,6 +22,7 @@ class Diverter(Device):
 
     config_section = 'diverters'
     collection = 'diverters'
+    class_label = 'diverter'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Diverter.' + name)
@@ -94,13 +95,6 @@ class Diverter(Device):
 
         # convert the activation_time to ms
         self.config['activation_time'] = Timing.string_to_ms(self.config['activation_time'])
-
-        # register for events
-        for event in self.config['enable_events']:
-            self.machine.events.add_handler(event, self.enable)
-
-        for event in self.config['disable_events']:
-            self.machine.events.add_handler(event, self.disable)
 
         # register for feeder device eject events
         for feeder_device in self.config['feeder_devices']:

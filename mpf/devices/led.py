@@ -26,6 +26,7 @@ class LED(Device):
 
     config_section = 'leds'
     collection = 'leds'
+    class_label = 'led'
 
     @classmethod
     def device_class_init(cls, machine):

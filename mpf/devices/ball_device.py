@@ -27,6 +27,7 @@ class BallDevice(Device):
 
     config_section = 'ball_devices'
     collection = 'ball_devices'
+    class_label = 'ball_device'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('BallDevice.' + name)

@@ -206,33 +206,34 @@ class MachineController(object):
 
             collection, config = device_cls.get_config_info()
 
-            self.log.info("Loading '%s' devices", collection)
-
             # create the collection
-            exec('self.' + collection + '=devices.DeviceCollection()')
+            setattr(self, collection,
+                    devices.DeviceCollection(self, collection))
 
             # Create this device
-            # don't want to use try here since there's a lot going on and it was
-            # swallowing too many exceptions
             if config in self.config:
-                config = self.config[config]
-            else:
-                self.log.debug("No " + collection + " devices found in config.")
-                config = dict()
-
-            devices.Device.create_devices(device_cls,
-                                          eval('self.' + collection),
-                                          config,
+                self.log.info("Loading '%s' devices", collection)
+                devices.Device.create_devices(device_cls,
+                                          getattr(self, collection),
+                                          self.config[config],
                                           self
                                           )
+            else:
+                self.log.debug("No '%s:' section found in machine configuration"
+                               ", so this collection will not be created.",
+                               config)
 
     def _load_system_modules(self):
         for module in self.config['mpf']['system_modules']:
             self.log.info("Loading '%s' system module", module[1])
             m = self.string_to_class(module[1])(self)
-            setattr(self, module[0], m);
+            setattr(self, module[0], m)
 
     def _load_plugins(self):
+
+        # TODO: This should be cleaned up. Create a Plugins superclass and
+        # classmethods to determine if the plugins should be used.
+
         for plugin in Config.string_to_list(
                 self.config['mpf']['plugins']):
 

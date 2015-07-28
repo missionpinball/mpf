@@ -25,17 +25,10 @@ class AutofireCoil(Device):
 
     config_section = 'autofire_coils'
     collection = 'autofires'
+    class_label = 'autofire'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('AutofireCoil.' + name)
-
-        if 'enable_events' not in config:
-            config['enable_events'] = {'ball_started': 0}
-
-        if 'disable_events' not in config:
-            config['disable_events'] = {'ball_ending': 0,
-                                        'tilt': 0,
-                                        'slam_tilt': 0}
 
         super(AutofireCoil, self).__init__(machine, name, config, collection)
 

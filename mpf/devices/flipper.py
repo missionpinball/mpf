@@ -33,17 +33,10 @@ class Flipper(Device):
     """
     config_section = 'flippers'
     collection = 'flippers'
+    class_label = 'flipper'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Flipper.' + name)
-
-        if 'enable_events' not in config:
-            config['enable_events'] = {'ball_started': 0}
-
-        if 'disable_events' not in config:
-            config['disable_events'] = {'ball_ending': 0,
-                                        'tilt': 0,
-                                        'slam_tilt': 0}
 
         super(Flipper, self).__init__(machine, name, config, collection)
 

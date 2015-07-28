@@ -21,6 +21,7 @@ class MatrixLight(Device):
 
     config_section = 'matrix_lights'
     collection = 'lights'
+    class_label = 'light'
 
     #todo need to get the handler stuff out of each of these I think and into
     # a parent class? Maybe this is a device thing?

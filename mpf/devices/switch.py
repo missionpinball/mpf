@@ -16,6 +16,7 @@ class Switch(Device):
 
     config_section = 'switches'
     collection = 'switches'
+    class_label = 'switch'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Switch.' + name)

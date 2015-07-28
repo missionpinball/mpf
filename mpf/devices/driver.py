@@ -28,6 +28,7 @@ class Driver(Device):
 
     config_section = 'coils'
     collection = 'coils'
+    class_label = 'coil'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Driver.' + name)

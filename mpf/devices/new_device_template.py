@@ -9,8 +9,9 @@ from mpf.system.devices import Device
 
 class YourNewDevice(Device):
 
-    config_section = 'YourNewDevices'
-    collection = 'yournewdevices'
+    config_section = 'your_new_devices'
+    collection = 'your_new_devices'
+    class_label = 'your_new_device'
 
     """ The two class attributes above control how devices based on this class
     are configured and how they're presented to the MPF.

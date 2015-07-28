@@ -21,6 +21,7 @@ class GI(Device):
 
     config_section = 'gis'
     collection = 'gi'
+    class_label = 'gi'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('GI.' + name)

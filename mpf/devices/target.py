@@ -17,16 +17,11 @@ class Target(Device):
 
     config_section = 'targets'
     collection = 'targets'
+    class_label = 'target'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Target.' + name)
         self.log.debug("Configuring target with settings: '%s'", config)
-
-        if 'enable_events' not in config:
-            config['enable_events'] = {'ball_started': 0}
-
-        if 'disable_events' not in config:
-            config['disable_events'] = {'ball_ending': 0}
 
         super(Target, self).__init__(machine, name, config, collection)
 
@@ -236,18 +231,13 @@ class TargetGroup(Device):
 
     config_section = 'target_groups'
     collection = 'target_groups'
+    class_label = 'target_group'
 
     def __init__(self, machine, name, config, collection=None,
                  member_collection=None, device_str=None):
         self.log = logging.getLogger('TargetGroup.' + name)
 
         self.log.debug("Configuring target group with settings: '%s'", config)
-
-        if 'enable_events' not in config:
-            config['enable_events'] = {'ball_started': 0}
-
-        if 'disable_events' not in config:
-            config['disable_events'] = {'ball_ending': 0}
 
         super(TargetGroup, self).__init__(machine, name, config, collection)
 

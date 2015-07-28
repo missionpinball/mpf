@@ -8,6 +8,7 @@ class PlayfieldTransfer(Device):
 
     config_section = 'playfield_transfer'
     collection = 'playfield_transfer'
+    class_label = 'playfield_transfer'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('PlayfieldTransfer.' + name)
@@ -22,7 +23,7 @@ class PlayfieldTransfer(Device):
             switch_name=self.config['ball_switch'],
             callback=self._ball_went_through,
             state=1, ms=0)
-            
+
         # load target playfield
         self.target = self.machine.ball_devices[self.config['eject_target']]
         self.source = self.machine.ball_devices[self.config['captures_from']]
@@ -50,6 +51,3 @@ class PlayfieldTransfer(Device):
 
         # since we confirmed eject target playfield has to be active
         self.machine.events.post('sw_' + self.target.name + '_active')
-
-
-

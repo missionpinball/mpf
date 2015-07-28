@@ -16,6 +16,7 @@ class Flasher(Device):
 
     config_section = 'flashers'
     collection = 'flashers'
+    class_label = 'flasher'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Flasher.' + name)

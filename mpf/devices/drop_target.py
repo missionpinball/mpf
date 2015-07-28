@@ -19,6 +19,7 @@ class DropTarget(Target):
 
     config_section = 'drop_targets'
     collection = 'drop_targets'
+    class_label = 'drop_target'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('DropTarget.' + name)
@@ -88,6 +89,7 @@ class DropTargetBank(TargetGroup):
 
     config_section = 'drop_target_banks'
     collection = 'drop_target_banks'
+    class_label = 'drop_target_bank'
 
     def __init__(self, machine, name, config, collection, member_collection=None,
                  device_str=None):
