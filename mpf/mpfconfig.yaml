@@ -289,6 +289,15 @@ target_profiles:
           - name: lit
             light_script: "on"
                 
+    drop_target_default:
+        control_events:
+          - event: ball_starting
+            action: reset
+        steps:
+          - name: incomplete
+            light_script: "off"
+          - name: complete
+            light_script: "on"
 #
 #target_group_profiles:
 #    default:

@@ -25,7 +25,10 @@ class DropTarget(Target):
         self.device_str = 'droptarget'
         super(DropTarget, self).__init__(machine, name, config, collection)
 
-        # drop targets maintain self.complete in addition to self.lit from the
+        if self.config['profile'] == 'default':
+            self.config['profile'] = 'drop_target_default'
+
+        # Drop targets maintain self.complete in addition to self.lit from the
         # parent class since they can maintain a physical state which could
         # vary from the lit state. For example, you might want to have a drop
         # target "lit" that was still standing (i.e. not complete)
@@ -42,21 +45,21 @@ class DropTarget(Target):
                                         self.update_state_from_switch)
 
         self.machine.events.add_handler('init_phase_3',
-                                        self._register_switch_handlers)
+                                        self._register_dt_switch_handlers)
 
         # todo add switch handler to watch for reset switch?
         # or do we? What about ball search? Config option?
 
-    def _register_switch_handlers(self):
-                # register for notification of switch state
+    def _register_dt_switch_handlers(self):
+        # register for notification of switch state
         # this is in addition to the parent since drop targets track
-        # self.complete in separately from lit/unlit
+        # self.complete in separately
         self.machine.switch_controller.add_switch_handler(self.config['switch'],
             self.update_state_from_switch, 0)
         self.machine.switch_controller.add_switch_handler(self.config['switch'],
             self.update_state_from_switch, 1)
 
-    def knowndown(self):
+    def knockdown(self):
         """Pulses the knockdown coil to knock down this drop target."""
         if self.config['knockdown_coil']:
             self.machine.coils[self.config['knockdown_coil']].pulse()
@@ -80,9 +83,10 @@ class DropTarget(Target):
 class DropTargetBank(TargetGroup):
     """Represents a bank of drop targets in a pinball machine by grouping
     together multiple DropTarget class devices.
+
     """
 
-    config_section = 'drop_targets'
+    config_section = 'drop_target_banks'
     collection = 'drop_target_banks'
 
     def __init__(self, machine, name, config, collection, member_collection=None,
