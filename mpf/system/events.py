@@ -10,6 +10,8 @@ import logging
 from collections import deque
 import uuid
 
+from mpf.system.config import Config
+
 
 class EventManager(object):
 
@@ -23,6 +25,15 @@ class EventManager(object):
         self.debug = True  # logs all event activity except timer_ticks.
         self.registered_monitors = set()  # callbacks that get every event
         self.current_event = (None, None, None, None)  # current in-progress ev
+
+        self.add_handler('init_phase_1', self._initialize)
+
+    def _initialize(self):
+        if 'event_player' in self.machine.config:
+            self.process_event_player(self.machine.config['event_player'])
+
+        self.machine.modes.register_start_method(self.process_event_player,
+                                                 'event_player')
 
     def add_handler(self, event, handler, priority=1, **kwargs):
         """Registers an event handler to respond to an event.
@@ -542,6 +553,29 @@ class EventManager(object):
 
         """
         return self.current_event
+
+    def process_event_player(self, config, mode=None, priority=0):
+        # config is localized to 'event_player'
+        self.log.debug("Processing event_player configuration. Priority: %s",
+                       priority)
+
+        event_keys = set()
+
+        for event_name, events in config.iteritems():
+            if type(events) is not list:
+                events = Config.string_to_list(events)
+
+            for event in events:
+                event_keys.add(self.machine.events.add_handler(event_name,
+                    self._event_player_callback, priority, event_to_call=event))
+
+        return self.unload_event_player_events, event_keys
+
+    def unload_event_player_events(self, event_keys):
+        self.machine.events.remove_handlers_by_keys(event_keys)
+
+    def _event_player_callback(self, event_to_call, **kwargs):
+        self.machine.events.post(event_to_call)
 
 
 class QueuedEvent(object):
