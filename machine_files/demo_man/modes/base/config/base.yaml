@@ -64,7 +64,7 @@ show_player:
     shot_left_orbit:
         show: left orbit
 
-Scoring:
+scoring:
     shot_left_orbit:
         Score: 1000000
     shot_left_ramp:

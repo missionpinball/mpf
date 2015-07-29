@@ -1,0 +1,9 @@
+fast:
+    ports: COM3, COM4 COM5
+
+hardware:
+    driverboards: wpc
+    platform: fast
+
+config:
+    - config.yaml
