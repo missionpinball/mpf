@@ -310,3 +310,17 @@ target_profiles:
 #    skillshot:
 #        target_profile: hit_flashing
 #        initial_states: off, off, off, on, off, off
+
+event_player:
+    ball_started:
+        cmd_flippers_enable
+        cmd_autofire_coils_enable
+    ball_ending:
+        cmd_flippers_disable
+        cmd_autofire_coils_disable
+    tilt:
+        cmd_flippers_disable
+        cmd_autofire_coils_disable
+    slam_tilt:
+        cmd_flippers_disable
+        cmd_autofire_coils_disable
