@@ -65,11 +65,9 @@ class SwitchController(object):
     def _initialize_switches(self):
 
         # Set "start active" switches
-
         start_active = list()
 
         if not self.machine.physical_hw:
-
             try:
                 start_active = Config.string_to_lowercase_list(
                     self.machine.config['virtual_platform_start_active_switches'])
@@ -77,7 +75,6 @@ class SwitchController(object):
                 pass
 
         for switch in self.machine.switches:
-
             # Populate self.switches
             if switch.name in start_active:
                 switch.state = 1  # set state based on physical state

@@ -131,6 +131,7 @@ class Config(object):
                     sys.exit()
             except:
                 log.critical("Couldn't load from file: %s", yaml_file)
+                raise
                 sys.exit()
 
         config = Config.dict_merge(config, new_updates)
@@ -140,14 +141,20 @@ class Config(object):
 
         try:
             if 'config' in config:
+
+                if type(config['config']) is not list:
+                    config['config'] = Config.string_to_list(config['config'])
+
                 if yaml_file in config['config']:
                     config['config'].remove(yaml_file)
+
                 if config['config']:
                     config = Config.load_config_yaml(config=config,
                                               yaml_file=config['config'][0])
         except:
             log.critical("No configuration file found, or config file is empty."
                          " But congrats! MPF works! :)")
+            raise
             sys.exit()
 
         return config
