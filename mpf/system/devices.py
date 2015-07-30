@@ -16,7 +16,6 @@ class Device(object):
     """ Generic parent class of for every hardware device in a pinball machine.
 
     """
-
     def __init__(self, machine, name, config=None, collection=-1,
                  platform_section=None):
         self.machine = machine
@@ -54,48 +53,13 @@ class Device(object):
                 else:
                     self.platform = self.machine.default_platform
 
-        # set event handlers to enable, disable, and reset this device
-        # note that not all devices will use all of these methods
+        self._create_control_events()
 
-        # these lists of events can be strings or dicts
-
-        if 'enable_events' in self.config:
-            self.config['enable_events'] = self._event_config_to_dict(
-                self.config['enable_events'])
-        else:
-            self.config['enable_events'] = dict()
-
-        for event, delay in self.config['enable_events'].iteritems():
-            self._create_events(ev_name=event,
-                                ev_type='enable',
-                                delay=delay,
-                                callback=self.enable)
-
-        if 'disable_events' in self.config:
-            self.config['disable_events'] = self._event_config_to_dict(
-                self.config['disable_events'])
-        else:
-            self.config['disable_events'] = dict()
-
-        for event, delay in self.config['disable_events'].iteritems():
-            self._create_events(ev_name=event,
-                                ev_type='disable',
-                                delay=delay,
-                                callback=self.disable)
-
-        if 'reset_events' in self.config:
-            self.config['reset_events'] = self._event_config_to_dict(
-                self.config['reset_events'])
-        else:
-            self.config['reset_events'] = dict()
-
-        for event, delay in self.config['reset_events'].iteritems():
-            self._create_events(ev_name=event,
-                                ev_type='reset',
-                                delay=delay,
-                                callback=self.reset)
-
-        self._create_cmd_events()
+        try:
+            self._create_default_control_events(self.machine.config['mpf']
+                                        ['device_events'][self.collection])
+        except KeyError:
+            pass
 
         # Add this instance to the collection for this type of device
         if collection != -1:
@@ -137,20 +101,42 @@ class Device(object):
 
         return return_dict
 
-    def _create_cmd_events(self):
+    def _create_control_events(self):
 
-        event_prefix = 'cmd_' + self.name + '_' + self.class_label + '_'
+        for k, v in self.config.iteritems():
+            if str(k).endswith('_events'):
+                method = str(k).split('_events')[0]
+                v = self._event_config_to_dict(v)
 
-        self.machine.events.add_handler(event=event_prefix + 'disable',
-                                        handler=self.disable)
-        self.machine.events.add_handler(event=event_prefix + 'enable',
-                                        handler=self.enable)
-        self.machine.events.add_handler(event=event_prefix + 'reset',
-                                        handler=self.reset)
+                for event, delay in v.iteritems():
+                    self._create_events(ev_name=event,
+                                        ev_type=method,
+                                        delay=delay,
+                                        callback=getattr(self, method))
+
+    def _create_default_control_events(self, config):
+        # config is localized to this device's mpf:device_events section
+
+        event_prefix = self.class_label + '_' + self.name + '_'
+        event_prefix2 = self.collection + '_'
+
+        for method, events in config.iteritems():
+            events = Config.string_to_list(events)
+
+            if method + '_events' not in self.config:
+
+                for event in events:
+                    self.machine.events.add_handler(event=event,
+                        handler=getattr(self, method))
+
+                self.machine.events.add_handler(event=event_prefix + method,
+                                                handler=getattr(self, method))
+                self.machine.events.add_handler(event=event_prefix2 + method,
+                                                handler=getattr(self, method))
 
     def _create_events(self, ev_name, ev_type, delay, callback):
-        self.log.debug("Creating %s_event handler for event '%s' with delay "
-                       "'%s'", ev_type, ev_name, delay)
+        self.log.info("Creating %s_event handler for event '%s' with delay "
+                       "'%s'. Callback %s", ev_type, ev_name, delay, callback)
 
         self.machine.events.add_handler(event=ev_name,
                                         handler=self._action_event_handler,
@@ -164,39 +150,6 @@ class Device(object):
         else:
             callback()
 
-    def enable(self, *args, **kwargs):
-        """Enables the device.
-
-        This method is automatically called when the event
-        `cmd_<device_name>_<class_label>_enable` is posted. Implement it
-        in the device subclass if you want to use it for that type of
-        device.
-
-        """
-        pass
-
-    def disable(self, *args, **kwargs):
-        """Disables the device.
-
-        This method is automatically called when the event
-        `cmd_<device_name>_<class_label>_disable` is posted. Implement it
-        in the device subclass if you want to use it for that type of
-        device.
-
-        """
-        pass
-
-    def reset(self, *args, **kwargs):
-        """Resets the device.
-
-        This method is automatically called when the event
-        `cmd_<device_name>_<class_label>_reset` is posted. Implement it
-        in the device subclass if you want to use it for that type of
-        device.
-
-        """
-        pass
-
 
 class DeviceCollection(CaseInsensitiveDict):
     """A collection of Devices.
@@ -206,14 +159,15 @@ class DeviceCollection(CaseInsensitiveDict):
 
     """
 
-    def __init__(self, machine, collection):
-        super(DeviceCollection, self).__init__()
-
-        event_prefix = 'cmd_' + collection + '_'
-
-        machine.events.add_handler(event_prefix + 'reset', self.reset)
-        machine.events.add_handler(event_prefix + 'enable', self.enable)
-        machine.events.add_handler(event_prefix + 'disable', self.disable)
+    # def __init__(self, machine, collection):
+    #     super(DeviceCollection, self).__init__()
+    #
+    #     #event_prefix = 'cmd_' + collection + '_'
+    #     event_prefix = collection + '_'
+    #
+    #     machine.events.add_handler(event_prefix + 'reset', self.reset)
+    #     machine.events.add_handler(event_prefix + 'enable', self.enable)
+    #     machine.events.add_handler(event_prefix + 'disable', self.disable)
 
     def __getattr__(self, attr):
         # We use this to allow the programmer to access a hardware item like
@@ -270,20 +224,20 @@ class DeviceCollection(CaseInsensitiveDict):
             if obj.number == number:
                 return self[name]
 
-    def reset(self):
-        """Resets all the devices in this collection."""
-        for item in self:
-            item.reset()
-
-    def enable(self):
-        """Enables all the devices in this collection."""
-        for item in self:
-            item.enable()
-
-    def disable(self):
-        """Disables all the devices in this collection."""
-        for item in self:
-            item.disable()
+    # def reset(self):
+    #     """Resets all the devices in this collection."""
+    #     for item in self:
+    #         item.reset()
+    #
+    # def enable(self):
+    #     """Enables all the devices in this collection."""
+    #     for item in self:
+    #         item.enable()
+    #
+    # def disable(self):
+    #     """Disables all the devices in this collection."""
+    #     for item in self:
+    #         item.disable()
 
 
 # The MIT License (MIT)

@@ -45,13 +45,7 @@ class DropTarget(Target):
         self.machine.events.add_handler('init_phase_1',
                                         self.update_state_from_switch)
 
-        self.machine.events.add_handler('init_phase_3',
-                                        self._register_dt_switch_handlers)
-
-        # todo add switch handler to watch for reset switch?
-        # or do we? What about ball search? Config option?
-
-    def _register_dt_switch_handlers(self):
+    def _register_switch_handlers(self):
         # register for notification of switch state
         # this is in addition to the parent since drop targets track
         # self.complete in separately
@@ -78,7 +72,6 @@ class DropTarget(Target):
             self.complete = True
         else:
             self.complete = False
-            self.reset()
 
 
 class DropTargetBank(TargetGroup):

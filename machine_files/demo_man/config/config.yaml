@@ -161,16 +161,3 @@ images:
     demo_man_logo:
         target: dmd
 
-event_player:
-    ball_starting:
-        cmd_flippers_enable
-        cmd_autofire_coils_enable
-    ball_ending:
-        cmd_flippers_disable
-        cmd_autofire_coils_disable
-    tilt:
-        cmd_flippers_disable
-        cmd_autofire_coils_disable
-    slam_tilt:
-        cmd_flippers_disable
-        cmd_autofire_coils_disable

@@ -37,6 +37,8 @@ class Target(Device):
         self.player = None
         self.player_variable = None
 
+        self.enabled = False
+
         if 'profile' not in self.config:
             self.config['profile'] = 'default'
 
@@ -205,6 +207,9 @@ class Target(Device):
                 not force):
             return
 
+        if not self.enabled:
+            return
+
         self.log.info("Hit! Profile: %s, Current Step: %s",
                       self.active_profile_name, self.current_step_name)
 
@@ -226,6 +231,14 @@ class Target(Device):
 
         self._update_lights()
 
+    def enable(self):
+        self.log.info("Enabling...")
+        self.enabled = True
+
+    def disable(self):
+        self.log.info("Disabling...")
+        self.enabled = False
+
 
 class TargetGroup(Device):
 
@@ -242,18 +255,6 @@ class TargetGroup(Device):
         super(TargetGroup, self).__init__(machine, name, config, collection)
 
         self.enabled = False
-
-        if 'rotate_left_events' not in self.config:
-            self.config['rotate_left_events'] = list()
-        else:
-            self.config['rotate_left_events'] = Config.string_to_list(
-                self.config['rotate_left_events'])
-
-        if 'rotate_right_events' not in self.config:
-            self.config['rotate_right_events'] = list()
-        else:
-            self.config['rotate_right_events'] = Config.string_to_list(
-                self.config['rotate_right_events'])
 
         if not device_str:
             self.device_str = 'targets'
@@ -287,17 +288,10 @@ class TargetGroup(Device):
         self.machine.events.post('target_group_' + self.name + '_hit')
 
     def enable(self):
-
         self.enabled = True
 
         for target in self.targets:
             target.enable()
-
-        # watch for rotation events
-        for event in self.config['rotate_left_events']:
-            self.machine.events.add_handler(event, self.rotate, direction='left')
-        for event in self.config['rotate_right_events']:
-            self.machine.events.add_handler(event, self.rotate, direction='right')
 
     def disable(self):
         for target in self.targets:
@@ -305,9 +299,10 @@ class TargetGroup(Device):
 
         self.enabled = False
 
-        self.machine.events.remove_handler(self.rotate)
+    def rotate(self, direction='right', steps=1, **kwargs):
 
-    def rotate(self, direction='right', steps=1):
+        if not self.enabled:
+            return
 
         target_state_list = deque()
 
@@ -323,6 +318,12 @@ class TargetGroup(Device):
         # step through all our targets and update their complete status
         for i in range(len(self.targets)):
             self.targets[i].jump(step=target_state_list[i])
+
+    def rotate_right(self, steps=1, **kwargs):
+        self.rotate(direction='right', steps=steps)
+
+    def rotate_left(self, steps=1, **kwargs):
+        self.rotate(direction='left', steps=steps)
 
     def check_for_complete(self):
         """Checks all the targets in this target group. If they are all in the

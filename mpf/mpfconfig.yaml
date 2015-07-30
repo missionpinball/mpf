@@ -64,6 +64,19 @@ mpf:
     switch_event_active: "%_active"
     switch_event_inactive: "%_inactive"
     switch_tag_event: sw_%
+    
+    device_events:
+        autofires:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+        flippers:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+        drop_targets:
+            reset: ball_starting
+        targets:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
 
 # Default settings for machines. All can be overridden
 
@@ -311,16 +324,4 @@ target_profiles:
 #        target_profile: hit_flashing
 #        initial_states: off, off, off, on, off, off
 
-event_player:
-    ball_started:
-        cmd_flippers_enable
-        cmd_autofire_coils_enable
-    ball_ending:
-        cmd_flippers_disable
-        cmd_autofire_coils_disable
-    tilt:
-        cmd_flippers_disable
-        cmd_autofire_coils_disable
-    slam_tilt:
-        cmd_flippers_disable
-        cmd_autofire_coils_disable
+
