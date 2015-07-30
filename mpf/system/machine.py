@@ -207,8 +207,7 @@ class MachineController(object):
             collection, config = device_cls.get_config_info()
 
             # create the collection
-            setattr(self, collection,
-                    devices.DeviceCollection(self, collection))
+            setattr(self, collection, devices.DeviceCollection())
 
             # Create this device
             if config in self.config:
