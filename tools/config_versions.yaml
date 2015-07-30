@@ -27,11 +27,11 @@
   section_warnings:
     - path: targets
       url: "https://missionpinball.com/docs/configuration-file-reference/targets/"
-    - path: target groups
+    - path: target_groups
       url: "https://missionpinball.com/docs/configuration-file-reference/targetgroups/"
-    - path: droptargets
+    - path: drop_targets
       url: "https://missionpinball.com/docs/configuration-file-reference/droptargets/"
-    - path: droptargetbanks
+    - path: drop_target_banks
       url: "https://missionpinball.com/docs/configuration-file-reference/droptargetbanks/"
 
   section_deprecations:
