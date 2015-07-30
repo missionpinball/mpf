@@ -345,7 +345,8 @@ class TargetGroup(Device):
 
         if len(target_states) == 1 and target_states.pop():
             self.machine.events.post('target_group_' + self.name + '_' +
-                                    self.targets[0].current_step_name)
+                                     self.targets[0].active_profile_name + '_' +
+                                     self.targets[0].current_step_name)
 
 
 # The MIT License (MIT)
