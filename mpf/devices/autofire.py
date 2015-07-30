@@ -123,7 +123,7 @@ class AutofireCoil(Device):
         else:
             return False
 
-    def enable(self, *args, **kwargs):
+    def enable(self, **kwargs):
         """Enables the autofire coil rule."""
 
         # todo disable first to clear any old rules?
@@ -144,7 +144,7 @@ class AutofireCoil(Device):
                                   debounced=self.debounced,
                                   drive_now=self.drive_now)
 
-    def disable(self, *args, **kwargs):
+    def disable(self, **kwargs):
         """Disables the autofire coil rule."""
         self.log.debug("Disabling")
         self.platform.clear_hw_rule(self.switch)

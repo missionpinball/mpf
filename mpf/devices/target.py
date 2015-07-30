@@ -231,15 +231,15 @@ class Target(Device):
 
         self._update_lights()
 
-    def enable(self):
+    def enable(self, **kwargs):
         self.log.info("Enabling...")
         self.enabled = True
 
-    def disable(self):
+    def disable(self, **kwargs):
         self.log.info("Disabling...")
         self.enabled = False
 
-    def reset(self):
+    def reset(self, **kwargs):
         self.jump(step=0)
 
 
@@ -290,19 +290,19 @@ class TargetGroup(Device):
     def hit(self):
         self.machine.events.post('target_group_' + self.name + '_hit')
 
-    def enable(self):
+    def enable(self, **kwargs):
         self.enabled = True
 
         for target in self.targets:
             target.enable()
 
-    def disable(self):
+    def disable(self, **kwargs):
         for target in self.targets:
             target.disable()
 
         self.enabled = False
 
-    def reset(self):
+    def reset(self, **kwargs):
         for target in self.targets:
             target.reset()
 

@@ -106,7 +106,7 @@ class DropTargetBank(TargetGroup):
         self.machine.events.add_handler('init_phase_1',
                                         self.update_count)
 
-    def reset(self):
+    def reset(self, **kwargs):
         super(DropTargetBank, self).reset()
         for coil in self.config['reset_coils']:
             self.machine.coils[coil].pulse()

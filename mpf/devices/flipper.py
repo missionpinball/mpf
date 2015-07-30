@@ -93,7 +93,7 @@ class Flipper(Device):
 
         self.platform = self.machine.coils[self.config['main_coil']].platform
 
-    def enable(self, *args, **kwargs):
+    def enable(self, **kwargs):
         """Enables the flipper by writing the necessary hardware rules to the
         hardware controller.
 
@@ -212,7 +212,7 @@ class Flipper(Device):
         self.power = percent
         self.enable()
 
-    def disable(self, *args, **kwargs):
+    def disable(self, **kwargs):
         """Disables the flipper.
 
         This method makes it so the cabinet flipper buttons no longer control
