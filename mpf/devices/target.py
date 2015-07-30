@@ -239,6 +239,9 @@ class Target(Device):
         self.log.info("Disabling...")
         self.enabled = False
 
+    def reset(self):
+        self.jump(step=0)
+
 
 class TargetGroup(Device):
 
@@ -298,6 +301,10 @@ class TargetGroup(Device):
             target.disable()
 
         self.enabled = False
+
+    def reset(self):
+        for target in self.targets:
+            target.reset()
 
     def rotate(self, direction='right', steps=1, **kwargs):
 
