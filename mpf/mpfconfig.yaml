@@ -324,4 +324,15 @@ target_profiles:
 #        target_profile: hit_flashing
 #        initial_states: off, off, off, on, off, off
 
-
+light_scripts:
+    flash:
+        - tocks: 1
+          color: ff
+        - tocks: 1
+          color: 0
+    "on":
+        - tocks: 1
+          color: ff
+    "off":
+        - tocks: 1
+          color: 0
