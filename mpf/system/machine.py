@@ -15,7 +15,7 @@ import Queue
 from mpf.system import *
 from mpf.devices import *
 from mpf.system.config import Config
-from mpf.system.tasks import Task
+from mpf.system.tasks import Task, DelayManager
 import version
 
 
@@ -65,6 +65,8 @@ class MachineController(object):
         self.asset_managers = dict()
 
         self.num_assets_to_load = 0
+
+        self.delay = DelayManager()
 
         self.crash_queue = Queue.Queue()
         Task.Create(self._check_crash_queue)
@@ -207,7 +209,8 @@ class MachineController(object):
             collection, config = device_cls.get_config_info()
 
             # create the collection
-            setattr(self, collection, devices.DeviceCollection())
+            setattr(self, collection, devices.DeviceCollection(self, collection,
+                                                               device_cls.config_section))
 
             # Create this device
             if config in self.config:

@@ -91,7 +91,7 @@ class ModeController(object):
         return mode_object
 
     def _ball_ending(self, queue):
-        # unloads all the active modes, like when the ball ends
+        # unloads all the active modes
 
         if not self.active_modes:
             return()
@@ -127,6 +127,7 @@ class ModeController(object):
 
         Note that these methods will be called once, when the mode code is first
         initialized during the MPF boot process.
+
         """
         self.loader_methods.append(RemoteMethod(method=load_method,
             config_section=config_section_name, kwargs=kwargs))
@@ -147,6 +148,7 @@ class ModeController(object):
 
         Note that these methods will be called every single time this mode is
         started.
+
         """
         self.start_methods.append(RemoteMethod(method=start_method,
             config_section=config_section_name, kwargs=kwargs))
@@ -186,6 +188,8 @@ class Mode(object):
         self.path = path
 
         self.log = logging.getLogger('Mode.' + name)
+
+        self.delay = DelayManager()
 
         self.priority = 0
         self._active = False
@@ -358,6 +362,7 @@ class Mode(object):
         self.stop_callback = callback
 
         self._kill_timers()
+        self.delay.clear()
 
         # self.machine.events.remove_handler(self.stop)
         # todo is this ok here? Or should we only remove ones that we know this
