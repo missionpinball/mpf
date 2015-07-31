@@ -12,6 +12,7 @@
     logicblocks: logic_blocks
     ledsettings: led_settings
     machineflow: machine_flow
+    matrixlights: matrix_lights
     mediacontroller: media_controller
     openpixelcontrol: open_pixel_control
     score reels: score_reels
@@ -36,3 +37,14 @@
 
   section_deprecations:
     - plugins
+
+# Below is a list of things we'll change in v3, but we don't want to do that
+# until we have enough to warrant an actual change.
+
+#3:
+#  section_replacements:
+#    balls installed: balls_installed
+#    min balls: min_balls
+#    max balls: max_balls
+#    balls per game: balls_per_game
+#    max players per game: max_players
