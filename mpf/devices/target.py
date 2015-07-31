@@ -20,6 +20,13 @@ class Target(Device):
     class_label = 'target'
 
     def __init__(self, machine, name, config, collection=None):
+        """Represents a target in a pinball machine. A target is typically the
+        combination of a switch and a light, such as a standup or rollover.
+        Targets have multiple 'states' and intelligence to track what state the
+        target was in when it was hit and to advance through various states as
+        it's hit again and again.
+
+        """
         self.log = logging.getLogger('Target.' + name)
         self.log.debug("Configuring target with settings: '%s'", config)
 
@@ -71,8 +78,7 @@ class Target(Device):
             self.machine.switch_controller.add_switch_handler(
                 switch, self.hit, 1)
 
-    def advance_step(self, steps=1):
-
+    def _advance_step(self, steps=1):
         if (self.player[self.player_variable] + 1 >=
                 len(self.active_profile_steps)):
             if self.config['loops']:
@@ -121,7 +127,6 @@ class Target(Device):
             self.running_light_show = None
 
     def _update_lights(self):
-
         if ('light_script' in self.active_profile_steps[self.current_step_index]
                 and ((self.running_light_show and
                       self.running_light_show.priority <= self.active_profile_priority)
@@ -135,11 +140,23 @@ class Target(Device):
                 **self.active_profile_steps[self.current_step_index]))
 
     def player_turn_start(self, player):
+        # TODO is this used anymore? I think it needs to be???
         self.player = player
         self.apply_profile(self.config['profile'], priority=0)
 
     def apply_profile(self, profile, priority, removal_key=None):
+        """Applies a target profile to this target.
 
+        Args:
+            profile: String name of the profile to apply.
+            priority: Priority of this profile. Only one profile is active at a
+                time. If this profile is the highest, then it will be active. If
+                not then it will still be applied and will become active if
+                higher priority profiles are removed.
+            removal_key: Optional hashable that can be used to identify this
+                profile so it can be removed later.
+
+        """
         if profile in self.machine.target_controller.profiles:
             self.log.info("Applying target profile '%s', priority %s", profile,
                           priority)
@@ -151,7 +168,7 @@ class Target(Device):
 
             self.profiles.append(profile_tuple)
 
-            self.sort_profiles()
+            self._sort_profiles()
             self._set_player_variable()
             self._update_current_step_variables()
             self._update_lights()
@@ -163,17 +180,20 @@ class Target(Device):
             self.log.info("Target profile '%s' not found. Target is has '%s' "
                            "applied.", profile, self.active_profile_name)
 
-    def remove_profile(self, removal_key=None):
+    def remove_profile(self, removal_key):
+        """Removes a target profile from this target.
 
+        If the profile removed is the active one (because it was the highest
+        priority), then this method activates the next-highest priority profile.
+
+        """
         old_profile = self.active_profile_name
 
-        if removal_key:
-            for entry in self.profiles[:]:  # slice so we can remove while iter
-                if entry[4] == removal_key:
-                    self.profiles.remove(entry)
+        for entry in self.profiles[:]:  # slice so we can remove while iter
+            if entry[4] == removal_key:
+                self.profiles.remove(entry)
 
-        old_profile = self.active_profile_name
-        self.sort_profiles()
+        self._sort_profiles()
 
         if self.active_profile_name != old_profile:
             self.running_light_show.stop()
@@ -182,8 +202,7 @@ class Target(Device):
             self._update_current_step_variables()
             self._update_lights()
 
-    def sort_profiles(self):
-
+    def _sort_profiles(self):
         self.profiles.sort(key=lambda x: x[1], reverse=True)
 
         (self.active_profile_name, self.active_profile_priority,
@@ -191,7 +210,8 @@ class Target(Device):
          self.active_profile_steps, _) = self.profiles[0]
 
     def hit(self, force=False):
-        """This target was just hit.
+        """Method which is called to indicate this target was just hit. This
+        method will advance the currently-active target profile.
 
         Args:
             force: Boolean that forces this hit to be registered. Default is
@@ -200,8 +220,10 @@ class Target(Device):
                 want to force the hit to be processed even if no balls are in
                 play.
 
-        """
+        Note that the target must be enabled in order for this hit to be
+        processed.
 
+        """
         if (not self.machine.game or (
                 self.machine.game and not self.machine.game.balls_in_play) and
                 not force):
@@ -213,7 +235,7 @@ class Target(Device):
         self.log.info("Hit! Profile: %s, Current Step: %s",
                       self.active_profile_name, self.current_step_name)
 
-        self.advance_step()
+        self._advance_step()
 
         # post event target_<name>_<profile>_<step>_hit
         self.machine.events.post('target_' + self.name + '_' +
@@ -221,30 +243,51 @@ class Target(Device):
                                  self.current_step_name + '_hit')
 
     def jump(self, step):
+        """Jumps to a certain step in the active target profile.
+
+        Args:
+            step: int of the step number you want to jump to. Note that steps
+                are zero-based, so the first step is 0.
+
+        """
         self._stop_current_lights()
-
         self.player[self.player_variable] = step
-
         self._update_current_step_variables()  # curr_step_index, curr_step_name
-
         self._update_group_status()
-
         self._update_lights()
 
     def enable(self, **kwargs):
+        """Enables this target. If the target is not enabled, hits to it will
+        not be processed.
+
+        """
         self.log.info("Enabling...")
         self.enabled = True
 
     def disable(self, **kwargs):
+        """Disables this target. If the target is not enabled, hits to it will
+        not be processed.
+
+        """
         self.log.info("Disabling...")
         self.enabled = False
 
     def reset(self, **kwargs):
+        """Resets the active target profile back to the first step (Step 0).
+        This method is the same as calling jump(0).
+
+        """
         self.jump(step=0)
 
 
 class TargetGroup(Device):
+    """Represents a group of targets in a pinball machine by grouping
+    together multiple `Target` class devices. This is used so you get get
+    "group-level" functionality, like target rotation, target group completion,
+    etc. This would be used for a group of rollover lanes, a bank of standups,
+    etc.
 
+    """
     config_section = 'target_groups'
     collection = 'target_groups'
     class_label = 'target_group'
@@ -288,26 +331,60 @@ class TargetGroup(Device):
                     switch, self.hit, 1)
 
     def hit(self):
-        self.machine.events.post('target_group_' + self.name + '_hit')
+        """One of the member targets in this target group was hit.
+
+        This method is only processed if this target group is enabled.
+
+        """
+        if self.enabled:
+            self.machine.events.post('target_group_' + self.name + '_hit')
 
     def enable(self, **kwargs):
+        """Enables this target group. Also enables all the targets in this
+        group.
+
+        """
         self.enabled = True
 
         for target in self.targets:
             target.enable()
 
     def disable(self, **kwargs):
+        """Disables this target group. Also disables all the targets in this
+        group.
+
+        """
         for target in self.targets:
             target.disable()
 
         self.enabled = False
 
     def reset(self, **kwargs):
+        """Resets each of the targets in this group back to the initial step in
+        whatever target profile they have applied. This is the same as calling
+        each target's reset() method one-by-one.
+
+        """
         for target in self.targets:
             target.reset()
 
     def rotate(self, direction='right', steps=1, **kwargs):
+        """Rotates (or "shifts") the state of all the targets in this group.
+        This is used for things like lane change, where hitting the flipper
+        button shifts all the states of the targets in the group to the left or
+        right.
 
+        This method actually transfers the current state of each target profile
+        to the left or the right, and the target on the end rolls over to the
+        taret on the other end.
+
+        Args:
+            direction: String that specifies whether the rotation direction is
+                to the left or right. Values are 'right' or 'left'. Default is
+                'right'.
+            steps: Integer of how many steps you want to rotate. Default is 1.
+
+        """
         if not self.enabled:
             return
 
@@ -327,9 +404,23 @@ class TargetGroup(Device):
             self.targets[i].jump(step=target_state_list[i])
 
     def rotate_right(self, steps=1, **kwargs):
+        """Rotates the state of the targets to the right. This method is the
+        same as calling rotate('right', steps)
+
+        Args:
+            steps: Integer of how many steps you want to rotate. Default is 1.
+
+        """
         self.rotate(direction='right', steps=steps)
 
     def rotate_left(self, steps=1, **kwargs):
+        """Rotates the state of the targets to the left. This method is the
+        same as calling rotate('left', steps)
+
+        Args:
+            steps: Integer of how many steps you want to rotate. Default is 1.
+
+        """
         self.rotate(direction='left', steps=steps)
 
     def check_for_complete(self):
