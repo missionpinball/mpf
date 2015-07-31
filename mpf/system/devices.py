@@ -53,7 +53,7 @@ class Device(object):
                 else:
                     self.platform = self.machine.default_platform
 
-        self._create_control_events()
+        self.create_control_events(self.config, self.machine.delay)
 
         try:
             self._create_default_control_events(self.machine.config['mpf']
@@ -84,6 +84,35 @@ class Device(object):
         for device in config:
             cls(machine, device, config[device], collection)
 
+    def create_control_events(self, config, delay_manager=None):
+
+        if not delay_manager:
+            delay_manager = self.machine.delay
+
+        event_keys = set()
+
+        for k, v in config.iteritems():
+            if str(k).endswith('_events'):
+                method = str(k).split('_events')[0]
+                v = self._event_config_to_dict(v)
+
+                for event, delay in v.iteritems():
+
+                    event_keys.add(self.machine.events.add_handler(event=event,
+                        handler=self._control_event_handler,
+                        callback=getattr(self, method),
+                        ms_delay=Timing.string_to_ms(delay),
+                        delay_mgr=delay_manager))
+
+        return event_keys
+
+    def _control_event_handler(self, ms_delay, callback, delay_mgr, **kwargs):
+        if ms_delay:
+            # name_target_reset
+            delay_mgr.add(self.name + callback, ms_delay, callback)
+        else:
+            callback()
+
     def _event_config_to_dict(self, config):
         # processes the enable, disable, and reset events from the config file
 
@@ -100,19 +129,6 @@ class Device(object):
                 return_dict[event] = 0
 
         return return_dict
-
-    def _create_control_events(self):
-
-        for k, v in self.config.iteritems():
-            if str(k).endswith('_events'):
-                method = str(k).split('_events')[0]
-                v = self._event_config_to_dict(v)
-
-                for event, delay in v.iteritems():
-                    self._create_events(ev_name=event,
-                                        ev_type=method,
-                                        delay=delay,
-                                        callback=getattr(self, method))
 
     def _create_default_control_events(self, config):
         # config is localized to this device's mpf:device_events section
@@ -134,22 +150,6 @@ class Device(object):
                 self.machine.events.add_handler(event=event_prefix2 + method,
                                                 handler=getattr(self, method))
 
-    def _create_events(self, ev_name, ev_type, delay, callback):
-        self.log.info("Creating %s_event handler for event '%s' with delay "
-                       "'%s'. Callback %s", ev_type, ev_name, delay, callback)
-
-        self.machine.events.add_handler(event=ev_name,
-                                        handler=self._action_event_handler,
-                                        callback=callback,
-                                        ms_delay=Timing.string_to_ms(delay))
-
-    def _action_event_handler(self, ms_delay, callback, *args, **kwargs):
-        if ms_delay:
-            # name_target_reset
-            self.delay.add(self.name + '_target_reset', ms_delay, callback)
-        else:
-            callback()
-
 
 class DeviceCollection(CaseInsensitiveDict):
     """A collection of Devices.
@@ -159,15 +159,28 @@ class DeviceCollection(CaseInsensitiveDict):
 
     """
 
-    # def __init__(self, machine, collection):
-    #     super(DeviceCollection, self).__init__()
-    #
-    #     #event_prefix = 'cmd_' + collection + '_'
-    #     event_prefix = collection + '_'
-    #
-    #     machine.events.add_handler(event_prefix + 'reset', self.reset)
-    #     machine.events.add_handler(event_prefix + 'enable', self.enable)
-    #     machine.events.add_handler(event_prefix + 'disable', self.disable)
+    def __init__(self, machine, collection, config_section):
+        super(DeviceCollection, self).__init__()
+
+        self.machine = machine
+        self.collection_name = collection
+
+        self.machine.modes.register_start_method(self._register_control_events,
+                                                 config_section)
+
+    def _register_control_events(self, config, priority=0, mode=None):
+
+        for device_name, device_settings in config.iteritems():
+            device = getattr(self.machine, self.collection_name)[device_name]
+
+            key_list = device.create_control_events(device_settings,
+                                                      mode.delay)
+
+            return self._remove_control_events, key_list
+
+    def _remove_control_events(self, key_list):
+
+        self.machine.events.remove_handlers_by_keys(key_list)
 
     def __getattr__(self, attr):
         # We use this to allow the programmer to access a hardware item like
