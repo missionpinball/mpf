@@ -74,18 +74,9 @@ mpf:
             disable: ball_ending, tilt, slam_tilt
         drop_targets:
             reset: ball_starting
-            enable:
-            disable:
         targets:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
-            reset:
-        target_groups:
-            rotate_left:
-            rotate_right:
-            enable:
-            disable:
-            reset:
 
 # Default settings for machines. All can be overridden
 
