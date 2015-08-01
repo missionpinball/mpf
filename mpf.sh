@@ -10,7 +10,7 @@
 # This code will launch mc in a new window and require you to switch windows
 # and Ctrl-C out of each
 
-x-terminal-emulator -e "python mc.py '$@'"
+x-terminal-emulator -e bash -c "python mc.py $@"
 python mpf.py "$@"
 
 # The line below will launch both processes in the same terminal window
