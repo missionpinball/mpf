@@ -9,6 +9,7 @@
 import logging
 from collections import deque
 import time
+import sys
 
 from mpf.system.tasks import DelayManager
 from mpf.system.devices import Device
@@ -753,9 +754,13 @@ class BallDevice(Device):
             else:
                 self.log.debug("Proceeding with the eject")
 
-                self.log.debug("Setting eject_in_progress_target, timeout")
+
                 self.eject_in_progress_target, timeout = (
                     self.eject_queue.popleft())
+                self.log.debug("Setting eject_in_progress_target: %s, "
+                               "timeout %s", self.eject_in_progress_target.name,
+                               timeout)
+
 
                 self.num_eject_attempts += 1
 
@@ -830,6 +835,18 @@ class BallDevice(Device):
                                "target. This shouldn't happen. Post to the "
                                "forum if you see this.")
 
+            if target.is_playfield():
+
+                if target.ok_to_confirm_ball_via_playfield_switch():
+                    self.log.debug("Will confirm eject when a %s switch is "
+                                   "hit", target.name)
+                    self.machine.events.add_handler('sw_' + target.name + '_active',
+                                                    self._eject_success)
+                else:
+                    self.log.debug("Will confirm eject via recount of ball "
+                                   "switches.")
+                    self.flag_confirm_eject_via_count = True
+
             if timeout:
                 # set up the delay to check for the failed the eject
                 self.delay.add(name='target_eject_confirmation_timeout',
@@ -869,25 +886,10 @@ class BallDevice(Device):
             self.log.debug("Will confirm eject via recount of ball switches.")
             self.flag_confirm_eject_via_count = True
 
-        elif (self.config['confirm_eject_type'] == 'playfield' and
-                target.is_playfield()):
-
-            if target.ok_to_confirm_ball_via_playfield_switch():
-                self.log.debug("Will confirm eject when a %s switch is "
-                               "hit", target.name)
-                self.machine.events.add_handler('sw_' + target.name + '_active',
-                                                self._eject_success)
-            else:
-                self.log.debug("Will confirm eject via recount of ball "
-                               "switches.")
-                self.flag_confirm_eject_via_count = True
-
         else:
-            # If there's no confirm eject type specified, then we'll just
-            # confirm it right away.
-            self.log.debug("No eject confirmation configured. Confirming now.")
-            self._eject_success()
-            return
+            self.log.error("Invalid confirm_eject_type setting: '%s'",
+                           self.config['confirm_eject_type'])
+            sys.exit()
 
     def _cancel_eject_confirmation(self):
         self.log.debug("Canceling eject confirmations")

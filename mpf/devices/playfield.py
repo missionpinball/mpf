@@ -23,6 +23,8 @@ class Playfield(BallDevice):
         self.config = defaultdict(lambda: None)
         self.config['eject_targets'] = list()
 
+        self.log.debug("Setting up playfield: '%s', name")
+
         self.ball_controller = self.machine.ball_controller
 
         self.delay = DelayManager()
@@ -298,8 +300,8 @@ class Playfield(BallDevice):
         device.eject(balls, target=self)
 
     def playfield_switch_hit(self):
-        """A switch tagged with 'playfield_active' was just hit, indicating that
-        there is at least one ball on the playfield.
+        """A switch tagged with '<this playfield name>_active' was just hit,
+        indicating that there is at least one ball on the playfield.
         """
         if not self.balls:
 
@@ -321,7 +323,7 @@ class Playfield(BallDevice):
         # A source device is attempting to eject a ball. We need to know if it's
         # headed to the playfield.
         if target == self:
-            self.log.debug("A source device is attempting to ejected %s ball(s)"
+            self.log.debug("A source device is attempting to eject %s ball(s)"
                            " to the playfield.", balls)
             self.num_balls_requested += balls
 
