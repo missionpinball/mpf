@@ -16,6 +16,9 @@ class Device(object):
     """ Generic parent class of for every hardware device in a pinball machine.
 
     """
+
+    use_control_events = True
+
     def __init__(self, machine, name, config=None, collection=-1,
                  platform_section=None):
         self.machine = machine
@@ -85,6 +88,11 @@ class Device(object):
             cls(machine, device, config[device], collection)
 
     def create_control_events(self, config, delay_manager=None):
+
+        # Some device classes don't use control events, so don't try to create
+        # them in that case
+        if not self.use_control_events:
+            return set()
 
         if not delay_manager:
             delay_manager = self.machine.delay
