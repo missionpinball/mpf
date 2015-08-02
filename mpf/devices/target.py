@@ -235,12 +235,12 @@ class Target(Device):
         self.log.info("Hit! Profile: %s, Current Step: %s",
                       self.active_profile_name, self.current_step_name)
 
-        self._advance_step()
-
         # post event target_<name>_<profile>_<step>_hit
         self.machine.events.post('target_' + self.name + '_' +
                                  self.active_profile_name + '_' +
                                  self.current_step_name + '_hit')
+
+        self._advance_step()
 
     def jump(self, step):
         """Jumps to a certain step in the active target profile.
