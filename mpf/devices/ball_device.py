@@ -835,17 +835,15 @@ class BallDevice(Device):
                                "target. This shouldn't happen. Post to the "
                                "forum if you see this.")
 
-            if target.is_playfield():
+            self.log.debug("Will confirm eject via recount of ball "
+                               "switches.")
+            self.flag_confirm_eject_via_count = True
 
-                if target.ok_to_confirm_ball_via_playfield_switch():
-                    self.log.debug("Will confirm eject when a %s switch is "
-                                   "hit", target.name)
-                    self.machine.events.add_handler('sw_' + target.name + '_active',
-                                                    self._eject_success)
-                else:
-                    self.log.debug("Will confirm eject via recount of ball "
-                                   "switches.")
-                    self.flag_confirm_eject_via_count = True
+            if target.is_playfield() and target.ok_to_confirm_ball_via_playfield_switch():
+                self.log.debug("Will confirm eject when a %s switch is "
+                               "hit (additionally)", target.name)
+                self.machine.events.add_handler('sw_' + target.name + '_active',
+                                                self._eject_success)
 
             if timeout:
                 # set up the delay to check for the failed the eject
