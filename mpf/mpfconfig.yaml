@@ -1,12 +1,9 @@
 # config_version=2
-# This file contains confinguration options for the MPF itself, including
-# default settings for your pinball machines.
+# This file contains configuration options for the MPF itself, including
+# default settings for your machine-wide game-specific config files.
 
 # You should create specific subfolders for each game you want to make and put
 # config files there to override these defaults.
-
-
-# Configuration for the MPF framework itself
 
 mpf:
     system_modules: !!omap  # order is important here
@@ -77,6 +74,8 @@ mpf:
             disable: ball_ending, tilt, slam_tilt
             reset: ball_starting, machine_reset_phase_3
         drop_target_banks:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
             reset: machine_reset_phase_3, ball_starting
         targets:
             enable: ball_started
@@ -308,6 +307,14 @@ target_profiles:
             light_script: "off"
           - name: down
             light_script: "on"
+    hit_me:
+        steps:
+            - name: active
+              light_script: flash
+              repeat: yes
+              tocks_per_sec: 5
+            - name: "off"
+              light_script: "off"
 
 light_scripts:
     flash:

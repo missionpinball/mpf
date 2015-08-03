@@ -163,7 +163,7 @@ class Target(Device):
 
         """
         if profile in self.machine.target_controller.profiles:
-            self.log.info("Applying target profile '%s', priority %s", profile,
+            self.log.debug("Applying target profile '%s', priority %s", profile,
                           priority)
 
             profile_tuple = (profile, priority,
@@ -182,7 +182,7 @@ class Target(Device):
             if not self.active_profile_name:
                 self.apply_profile('default')
 
-            self.log.info("Target profile '%s' not found. Target is has '%s' "
+            self.log.debug("Target profile '%s' not found. Target is has '%s' "
                            "applied.", profile, self.active_profile_name)
 
     def remove_profile(self, removal_key):
@@ -243,13 +243,17 @@ class Target(Device):
         if not self.enabled:
             return
 
-        self.log.info("Hit! Profile: %s, Current Step: %s",
+        self.log.debug("Hit! Profile: %s, Current Step: %s",
                       self.active_profile_name, self.current_step_name)
 
         # post event <name>_<profile>_<step>_hit
         self.machine.events.post(self.name + '_' +
                                  self.active_profile_name + '_' +
                                  self.current_step_name + '_hit')
+
+        if self.target_group:
+            self.target_group.hit(self.active_profile_name,
+                                  self.current_step_name)
 
         self._advance_step()
 
@@ -285,7 +289,7 @@ class Target(Device):
         not be processed.
 
         """
-        self.log.info("Enabling...")
+        self.log.debug("Enabling...")
         self.enabled = True
 
     def disable(self, **kwargs):
@@ -293,7 +297,7 @@ class Target(Device):
         not be processed.
 
         """
-        self.log.info("Disabling...")
+        self.log.debug("Disabling...")
         self.enabled = False
 
     def reset(self, **kwargs):
@@ -345,23 +349,21 @@ class TargetGroup(Device):
             self.targets.append(member_collection[target])
             member_collection[target].target_group = self
 
-        self.machine.events.add_handler('init_phase_3',
-                                        self._register_switch_handlers)
-
-    def _register_switch_handlers(self):
-        for target in self.targets:
-            for switch in target.config['switch']:
-                self.machine.switch_controller.add_switch_handler(
-                    switch, self.hit, 1)
-
-    def hit(self, **kwargs):
+    def hit(self, profile_name, profile_step_name, **kwargs):
         """One of the member targets in this target group was hit.
 
         This method is only processed if this target group is enabled.
 
+        Args:
+            profile_name: String name of the active profile of the target that
+                was hit.
+            profile_step_name: String name of the step name of the profile of
+                the target that was hit.
+
         """
         if self.enabled:
-            self.machine.events.post(self.name + '_hit')
+            self.machine.events.post(self.name + '_' + profile_name + '_' +
+                                     profile_step_name + '_hit')
 
     def enable(self, **kwargs):
         """Enables this target group. Also enables all the targets in this
