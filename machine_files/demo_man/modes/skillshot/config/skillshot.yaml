@@ -66,6 +66,8 @@ target_profiles:
 target_groups:
     standups:
         target_profile: hit_me
+        rotate_left_events: sw_left_flipper
+        rotate_right_events: sw_right_flipper
 
 scoring:
     target_standup_1_active_hit:

@@ -1,5 +1,5 @@
 # config_version=2
-Mode:
+mode:
     start_events: ball_starting
     priority: 100
     code: base.Base

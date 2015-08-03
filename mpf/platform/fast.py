@@ -1111,7 +1111,7 @@ class FASTDMD(object):
             pass
 
     def tick(self):
-        self.send('BM:\r' + self.dmd_frame)
+        self.send('BM:' + self.dmd_frame)
 
 
 class SerialCommunicator(object):
