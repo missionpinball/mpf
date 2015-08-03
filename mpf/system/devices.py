@@ -94,17 +94,17 @@ class Device(object):
 
         if self.config_section in self.machine.config['mpf']['device_events']:
 
-            for method, v in self.machine.config['mpf']['device_events'][self.config_section].iteritems():
+            for method, v in (
+                    self.machine.config['mpf']['device_events']
+                                       [self.config_section].iteritems()):
 
-                    v = self._event_config_to_dict(v)
+                for event, delay in self._event_config_to_dict(v).iteritems():
 
-                    for event, delay in v.iteritems():
-
-                        event_keys.add(self.machine.events.add_handler(event=event,
-                            handler=self._control_event_handler,
-                            callback=getattr(self, method),
-                            ms_delay=Timing.string_to_ms(delay),
-                            delay_mgr=delay_manager))
+                    event_keys.add(self.machine.events.add_handler(event=event,
+                        handler=self._control_event_handler,
+                        callback=getattr(self, method),
+                        ms_delay=Timing.string_to_ms(delay),
+                        delay_mgr=delay_manager))
 
         return event_keys
 
@@ -146,7 +146,7 @@ class Device(object):
             for method in event_config:
 
                 if event_config[method] and method + '_events' not in self.config:
-                    for event in event_config[method]:
+                    for event in Config.string_to_list(event_config[method]):
                         self.machine.events.add_handler(event=event,
                             handler=getattr(self, method))
 
