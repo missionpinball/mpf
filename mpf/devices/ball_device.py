@@ -782,6 +782,7 @@ class BallDevice(Device):
                                          balls=self.num_balls_ejecting,
                                          target=self.eject_in_progress_target,
                                          timeout=timeout,
+                                         num_attempts=self.num_eject_attempts,
                                          callback=self._fire_eject_coil)
                 # Fire the coil via a callback in case there are events in the
                 # queue. This ensures that the coil pulse happens when this
@@ -981,6 +982,10 @@ class BallDevice(Device):
         self.eject_queue.appendleft((self.eject_in_progress_target,
             self.config['eject_timeouts'][self.eject_in_progress_target]))
 
+        # Remember variables for event
+        target = self.eject_in_progress_target
+        balls = self.num_balls_ejecting
+
         # Reset the stuff that showed a current eject in progress
         self.eject_in_progress_target = None
         self.num_balls_ejecting = 0
@@ -992,6 +997,8 @@ class BallDevice(Device):
 
         self.machine.events.post('balldevice_' + self.name +
                                  '_ball_eject_failed',
+                                 target=target,
+                                 balls=balls,
                                  num_attempts=self.num_eject_attempts)
 
         self._cancel_eject_confirmation()
