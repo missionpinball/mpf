@@ -201,12 +201,21 @@ class SlideBuilder(object):
             settings = self.preprocess_settings(settings)
 
         if display:
-            display = self.machine.display.displays[display]
+            try:
+                display = self.machine.display.displays[display]
+            except KeyError:
+                pass
+
         elif 'display' in settings[0]:
-            display = settings[0]['display']
-            display = self.machine.display.displays[display]
+            try:
+                display = self.machine.display.displays[settings[0]['display']]
+            except KeyError:
+                pass
         else:
             display = self.machine.display.default_display
+
+        if not display:
+            return
 
         # Figure out which slide we're dealing with
         if not slide_name:
