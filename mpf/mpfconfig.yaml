@@ -66,25 +66,52 @@ mpf:
         autofires:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
-        flippers:
-            enable: ball_started
-            disable: ball_ending, tilt, slam_tilt
+        ball_devices:
+            request_ball:
+            stop:
+            eject:
+            eject_all:
+        diverters:
+            enable:
+            disable:
+            activate:
+            deactivate:
         drop_targets:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
             reset: ball_starting, machine_reset_phase_3
+            knockdown:
         drop_target_banks:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
             reset: machine_reset_phase_3, ball_starting
+        coils:
+            enable:
+            disable:
+            pulse:
+        flashers:
+            flash:
+        flippers:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+            enable_no_hold:
+            invert:
+        gis:
+            enable: machine_reset_phase_3
+            disable:
+        lights:
+            "on":
+            "off":
         targets:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
         target_groups:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
-        gi:
-            enable: machine_reset_phase_3
+            reset:
+            rotate_left:
+            rotate_right:
+
 
 # Default settings for machines. All can be overridden
 

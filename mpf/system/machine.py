@@ -92,10 +92,10 @@ class MachineController(object):
 
         self._load_system_modules()
 
-        self.events.add_handler('action_shutdown', self.power_off)
+        self.events.add_handler('shutdown', self.power_off)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'shutdown'), self.power_off)
-        self.events.add_handler('action_quit', self.quit)
+        self.events.add_handler('quit', self.quit)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.quit)
         self.events.add_handler('machine_reset_phase_3', self.flow_advance,

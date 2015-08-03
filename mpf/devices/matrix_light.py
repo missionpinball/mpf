@@ -62,12 +62,6 @@ class MatrixLight(Device):
         if 'y' in config:
             self.y = config['y']
 
-        # register for action events
-        self.machine.events.add_handler('action_light_' + self.name + '_on',
-                                        self.on)
-        self.machine.events.add_handler('action_light_' + self.name + '_off',
-                                        self.off)
-
     def on(self, brightness=255, fade_ms=0, start_brightness=None,
            priority=0, cache=True, force=False):
         """Turns on this matrix light.

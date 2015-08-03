@@ -17,8 +17,6 @@ class Device(object):
 
     """
 
-    use_control_events = True
-
     def __init__(self, machine, name, config=None, collection=-1,
                  platform_section=None):
         self.machine = machine
@@ -56,7 +54,7 @@ class Device(object):
                 else:
                     self.platform = self.machine.default_platform
 
-        self.create_control_events(self.config, self.machine.delay)
+        self._create_control_events(self.config, self.machine.delay)
 
         try:
             self._create_default_control_events(self.machine.config['mpf']
@@ -87,30 +85,26 @@ class Device(object):
         for device in config:
             cls(machine, device, config[device], collection)
 
-    def create_control_events(self, config, delay_manager=None):
-
-        # Some device classes don't use control events, so don't try to create
-        # them in that case
-        if not self.use_control_events:
-            return set()
+    def _create_control_events(self, config, delay_manager=None):
 
         if not delay_manager:
             delay_manager = self.machine.delay
 
         event_keys = set()
 
-        for k, v in config.iteritems():
-            if str(k).endswith('_events'):
-                method = str(k).split('_events')[0]
-                v = self._event_config_to_dict(v)
+        if self.config_section in self.machine.config['mpf']['device_events']:
 
-                for event, delay in v.iteritems():
+            for method, v in self.machine.config['mpf']['device_events'][self.config_section].iteritems():
 
-                    event_keys.add(self.machine.events.add_handler(event=event,
-                        handler=self._control_event_handler,
-                        callback=getattr(self, method),
-                        ms_delay=Timing.string_to_ms(delay),
-                        delay_mgr=delay_manager))
+                    v = self._event_config_to_dict(v)
+
+                    for event, delay in v.iteritems():
+
+                        event_keys.add(self.machine.events.add_handler(event=event,
+                            handler=self._control_event_handler,
+                            callback=getattr(self, method),
+                            ms_delay=Timing.string_to_ms(delay),
+                            delay_mgr=delay_manager))
 
         return event_keys
 
@@ -144,14 +138,17 @@ class Device(object):
         event_prefix = self.class_label + '_' + self.name + '_'
         event_prefix2 = self.collection + '_'
 
-        for method, events in config.iteritems():
-            events = Config.string_to_list(events)
+        if self.config_section in self.machine.config['mpf']['device_events']:
 
-            if method + '_events' not in self.config:
+            event_config = (
+                self.machine.config['mpf']['device_events'][self.config_section])
 
-                for event in events:
-                    self.machine.events.add_handler(event=event,
-                        handler=getattr(self, method))
+            for method in event_config:
+
+                if event_config[method] and method + '_events' not in self.config:
+                    for event in event_config[method]:
+                        self.machine.events.add_handler(event=event,
+                            handler=getattr(self, method))
 
                 self.machine.events.add_handler(event=event_prefix + method,
                                                 handler=getattr(self, method))
@@ -181,7 +178,7 @@ class DeviceCollection(CaseInsensitiveDict):
         for device_name, device_settings in config.iteritems():
             device = getattr(self.machine, self.collection_name)[device_name]
 
-            key_list = device.create_control_events(device_settings,
+            key_list = device._create_control_events(device_settings,
                                                       mode.delay)
 
             return self._remove_control_events, key_list
