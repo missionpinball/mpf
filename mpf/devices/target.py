@@ -344,7 +344,7 @@ class TargetGroup(Device):
 
         """
         if self.enabled:
-            self.machine.events.post('target_group_' + self.name + '_hit')
+            self.machine.events.post(self.name + '_hit')
 
     def enable(self, **kwargs):
         """Enables this target group. Also enables all the targets in this
@@ -393,10 +393,7 @@ class TargetGroup(Device):
 
         """
 
-        print "rotate"
-
         if not self.enabled:
-            print "not enabled, returning"
             return
 
         target_state_list = deque()
@@ -441,9 +438,6 @@ class TargetGroup(Device):
 
         """
 
-        print "checking for complete"
-        print self.targets
-
         target_states = set()
 
         for target in self.targets:
@@ -453,7 +447,8 @@ class TargetGroup(Device):
         if len(target_states) == 1 and target_states.pop():
             self.machine.events.post(self.name + '_' +
                                      self.targets[0].active_profile_name + '_' +
-                                     self.targets[0].current_step_name)
+                                     self.targets[0].current_step_name +
+                                     '_complete')
 
 
 # The MIT License (MIT)
