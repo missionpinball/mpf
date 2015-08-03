@@ -58,7 +58,7 @@ class Device(object):
 
         try:
             self._create_default_control_events(self.machine.config['mpf']
-                                        ['device_events'][self.collection])
+                                        ['device_events'][self.config_section])
         except KeyError:
             pass
 
@@ -94,17 +94,21 @@ class Device(object):
 
         if self.config_section in self.machine.config['mpf']['device_events']:
 
-            for method, v in (
+            for method in (
                     self.machine.config['mpf']['device_events']
-                                       [self.config_section].iteritems()):
+                                       [self.config_section]):
 
-                for event, delay in self._event_config_to_dict(v).iteritems():
+                config_setting = method + '_events'
 
-                    event_keys.add(self.machine.events.add_handler(event=event,
-                        handler=self._control_event_handler,
-                        callback=getattr(self, method),
-                        ms_delay=Timing.string_to_ms(delay),
-                        delay_mgr=delay_manager))
+                if config_setting in config:
+
+                    for event, delay in self._event_config_to_dict(config[config_setting]).iteritems():
+
+                        event_keys.add(self.machine.events.add_handler(event=event,
+                            handler=self._control_event_handler,
+                            callback=getattr(self, method),
+                            ms_delay=Timing.string_to_ms(delay),
+                            delay_mgr=delay_manager))
 
         return event_keys
 
@@ -138,23 +142,20 @@ class Device(object):
         event_prefix = self.class_label + '_' + self.name + '_'
         event_prefix2 = self.collection + '_'
 
-        if self.config_section in self.machine.config['mpf']['device_events']:
+        print config
+        print
 
-            event_config = (
-                self.machine.config['mpf']['device_events'][self.config_section])
+        for method in config:
 
-            for method in event_config:
+            if config[method] and method + '_events' not in self.config:
+                for event in Config.string_to_list(config[method]):
+                    self.machine.events.add_handler(event=event,
+                        handler=getattr(self, method))
 
-                if event_config[method] and method + '_events' not in self.config:
-                    for event in Config.string_to_list(event_config[method]):
-                        self.machine.events.add_handler(event=event,
-                            handler=getattr(self, method))
-
-                self.machine.events.add_handler(event=event_prefix + method,
-                                                handler=getattr(self, method))
-                self.machine.events.add_handler(event=event_prefix2 + method,
-                                                handler=getattr(self, method))
-
+            self.machine.events.add_handler(event=event_prefix + method,
+                                            handler=getattr(self, method))
+            self.machine.events.add_handler(event=event_prefix2 + method,
+                                            handler=getattr(self, method))
 
 class DeviceCollection(CaseInsensitiveDict):
     """A collection of Devices.

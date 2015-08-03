@@ -63,7 +63,7 @@ mpf:
     switch_tag_event: sw_%
     
     device_events:
-        autofires:
+        autofire_coils:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
         ball_devices:
@@ -99,7 +99,7 @@ mpf:
         gis:
             enable: machine_reset_phase_3
             disable:
-        lights:
+        matrix_lights:
             "on":
             "off":
         targets:
