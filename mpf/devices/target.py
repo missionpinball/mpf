@@ -142,7 +142,10 @@ class Target(Device):
                 **self.active_profile_steps[self.current_step_index]))
 
     def player_turn_start(self, player):
-        # TODO is this used anymore? I think it needs to be???
+        """Called when a player's turn starts to update the player reference to
+        the current player and to apply the default machine-wide target profile.
+
+        """
         self.player = player
         self.apply_profile(self.config['profile'], priority=0)
 
@@ -187,6 +190,11 @@ class Target(Device):
 
         If the profile removed is the active one (because it was the highest
         priority), then this method activates the next-highest priority profile.
+
+        Args:
+            removal_key: The key that was returned when the profile was applied
+                to the target which is how the profile you want to remove is
+                identified.
 
         """
         old_profile = self.active_profile_name
