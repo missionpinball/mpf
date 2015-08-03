@@ -313,7 +313,7 @@ target_profiles:
               light_script: flash
               repeat: yes
               tocks_per_sec: 5
-            - name: "off"
+            - name: complete
               light_script: "off"
 
 light_scripts:
