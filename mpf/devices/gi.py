@@ -36,7 +36,8 @@ class GI(Device):
 
         self.registered_handlers = []
 
-    def on(self, brightness=255, fade_ms=0, start_brightness=None):
+    def enable(self, brightness=255, fade_ms=0, start_brightness=None,
+           **kwargs):
         if type(brightness) is list:
             brightness = brightness[0]
 
@@ -46,7 +47,7 @@ class GI(Device):
 
         self.hw_driver.on(brightness, fade_ms, start_brightness)
 
-    def off(self):
+    def disable(self, **kwargs):
         self.hw_driver.off()
 
     def add_handler(self, callback):
