@@ -20,6 +20,7 @@ modes:
 scriptlets:
     attract.Attract
     add_a_ball.AddABall
+    claw.Claw
 
 show_player:
   attract_start:

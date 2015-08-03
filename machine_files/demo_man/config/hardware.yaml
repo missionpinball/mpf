@@ -6,9 +6,6 @@ machine:
     Balls Installed: 6
     Min Balls: 1
     Max Balls: 6
-  
-scriptlets:
-  claw.Claw
 
 virtual_platform_start_active_switches:
     s_trough_1
