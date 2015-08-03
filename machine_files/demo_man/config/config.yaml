@@ -129,19 +129,6 @@ shots:
     center_ramp:
         Switch: s_center_ramp
 
-light_scripts:
-    flash:
-        - tocks: 1
-          color: ff
-        - tocks: 1
-          color: 0
-    "on":
-        - tocks: 1
-          color: ff
-    "off":
-        - tocks: 1
-          color: 0
-
 slide_player:
     volume_change:
         type: Text

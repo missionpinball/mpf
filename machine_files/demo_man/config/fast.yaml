@@ -1,3 +1,4 @@
+#config_version=2
 fast:
     ports: COM3, COM4 COM5
 

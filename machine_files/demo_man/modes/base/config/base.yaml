@@ -110,7 +110,6 @@ scoring:
 
 target_groups:
     rollover_lanes:
-        targets: left_lane, middle_lane, right_lane
         rotate_left_events: sw_left_flipper
         rotate_right_events: sw_right_flipper
     standups:
