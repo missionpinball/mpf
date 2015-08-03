@@ -73,17 +73,26 @@ mpf:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
         drop_targets:
-            reset: ball_starting
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+            reset: ball_starting, machine_reset_phase_3
+        drop_target_banks:
+            reset: machine_reset_phase_3, ball_starting
         targets:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
+        target_groups:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+        gi:
+            enable: machine_reset_phase_3
 
 # Default settings for machines. All can be overridden
 
 machine:
     Balls Installed: 1
     Min Balls: 1
-    Max Balls: 10
+    Max Balls: 6
 
 timing:
     hz: 30

@@ -24,6 +24,7 @@ class DropTarget(Target):
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('DropTarget.' + name)
         self.device_str = 'droptarget'
+
         super(DropTarget, self).__init__(machine, name, config, collection)
 
         if self.config['profile'] == 'default':
@@ -41,22 +42,23 @@ class DropTarget(Target):
             self.reset_coil = self.machine.coils[self.config['reset_coil']]
 
         if 'knockdown_coil' in self.config:
-            self.knockdown_coil = self.machine.coils[self.config['reset_coil']]
+            self.knockdown_coil = self.machine.coils[self.config['knockdown_coil']]
 
         # can't read the switch until the switch controller is set up
-        self.machine.events.add_handler('init_phase_1',
+        self.machine.events.add_handler('init_phase_3',
                                         self.update_state_from_switch)
 
     def _register_switch_handlers(self):
         # register for notification of switch state
         # this is in addition to the parent since drop targets track
         # self.complete in separately
-        self.machine.switch_controller.add_switch_handler(self.config['switch'],
+
+        self.machine.switch_controller.add_switch_handler(self.config['switch'][0],
             self.update_state_from_switch, 0)
-        self.machine.switch_controller.add_switch_handler(self.config['switch'],
+        self.machine.switch_controller.add_switch_handler(self.config['switch'][0],
             self.update_state_from_switch, 1)
 
-    def knockdown(self):
+    def knockdown(self, **kwargs):
         """Pulses the knockdown coil to knock down this drop target."""
         if self.knockdown_coil:
             self.knockdown_coil.pulse()
@@ -69,14 +71,20 @@ class DropTarget(Target):
         then it will also reset the target profile back to its first step.
 
         """
+
+        print "dt switch change"
+
         # set the initial complete state
-        if self.machine.switch_controller.is_active(self.config['switch']):
+        if self.machine.switch_controller.is_active(self.config['switch'][0]):
+            print "dt now complete"
             self.complete = True
+            self.hit()
         else:
+            print 'dt now incomplete'
             self.complete = False
             self.jump(step=0)
 
-    def reset(self):
+    def reset(self, **kwargs):
         """Resets this drop target.
 
         If this drop target is configured with a reset coil, then this method
@@ -89,10 +97,12 @@ class DropTarget(Target):
         physically moves back to the up position.
 
         """
-        if self.reset_coil:
+
+        if self.target_group:
+            #self.target_group.reset()
+            pass
+        elif self.reset_coil:
             self.reset_coil.pulse()
-        elif self.target_group:
-            self.target_group.reset()
 
 
 class DropTargetBank(TargetGroup):
@@ -124,9 +134,6 @@ class DropTargetBank(TargetGroup):
         if 'reset_coil' in self.config:
             self.reset_coil = self.machine.coils[self.config['reset_coil']]
 
-        # can't read the switches until the switch controller is set up
-        self.machine.events.add_handler('init_phase_1', self.update_count)
-
     def reset(self, **kwargs):
         """Resets this bank of drop targets.
 
@@ -149,7 +156,7 @@ class DropTargetBank(TargetGroup):
             coils.add(coil)
 
         if self.reset_coil:
-            coils.add(coil)
+            coils.add(self.reset_coil)
 
         # now pulse them
         for coil in coils:

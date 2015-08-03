@@ -117,7 +117,7 @@ class Device(object):
     def _control_event_handler(self, ms_delay, callback, delay_mgr, **kwargs):
         if ms_delay:
             # name_target_reset
-            delay_mgr.add(self.name + callback, ms_delay, callback)
+            delay_mgr.add(callback, ms_delay, callback)
         else:
             callback()
 

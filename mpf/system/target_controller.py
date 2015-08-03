@@ -73,12 +73,13 @@ class TargetController(object):
             self.register_profile(name, profile)
 
     def _player_turn_start(self, player, **kwargs):
-
         for target in self.machine.targets:
             target.player_turn_start(player)
 
-    def apply_target_profiles(self, config, priority, mode, **kwargs):
+        for drop_target in self.machine.drop_targets:
+            drop_target.player_turn_start(player)
 
+    def apply_target_profiles(self, config, priority, mode, **kwargs):
         for target, settings in config.iteritems():
             if 'profile' in settings:
                 self.machine.targets[target].apply_profile(settings['profile'],

@@ -63,6 +63,7 @@ class MachineController(object):
         self.scriptlets = list()
         self.game_modes = list()
         self.asset_managers = dict()
+        self.game = None
 
         self.num_assets_to_load = 0
 

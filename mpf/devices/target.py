@@ -109,10 +109,12 @@ class Target(Device):
             self.active_profile_steps[self.current_step_index]['name'])
 
     def _do_step_actions(self, ):
-        if 'light_script' in self.active_profile_steps[self.current_step_index]:
+        if ('light_script' in self.active_profile_steps[self.current_step_index]
+                and (self.config['light'] or self.config['led'])):
+
             new_show = self.machine.light_controller.run_registered_script(
                 self.active_profile_steps[self.current_step_index]['light_script'],
-                lights=self.config['light'], leds=self.config['leds'],
+                lights=self.config['light'], leds=self.config['led'],
                 priority=self.profiles[0][1])
 
             if new_show:
@@ -209,7 +211,7 @@ class Target(Device):
          self.active_profile_settings,
          self.active_profile_steps, _) = self.profiles[0]
 
-    def hit(self, force=False):
+    def hit(self, force=False, **kwargs):
         """Method which is called to indicate this target was just hit. This
         method will advance the currently-active target profile.
 
@@ -224,6 +226,7 @@ class Target(Device):
         processed.
 
         """
+
         if (not self.machine.game or (
                 self.machine.game and not self.machine.game.balls_in_play) and
                 not force):
@@ -235,8 +238,8 @@ class Target(Device):
         self.log.info("Hit! Profile: %s, Current Step: %s",
                       self.active_profile_name, self.current_step_name)
 
-        # post event target_<name>_<profile>_<step>_hit
-        self.machine.events.post('target_' + self.name + '_' +
+        # post event <name>_<profile>_<step>_hit
+        self.machine.events.post(self.name + '_' +
                                  self.active_profile_name + '_' +
                                  self.current_step_name + '_hit')
 
@@ -250,6 +253,10 @@ class Target(Device):
                 are zero-based, so the first step is 0.
 
         """
+
+        if not self.machine.game:
+            return
+
         self._stop_current_lights()
         self.player[self.player_variable] = step
         self._update_current_step_variables()  # curr_step_index, curr_step_name
@@ -330,7 +337,7 @@ class TargetGroup(Device):
                 self.machine.switch_controller.add_switch_handler(
                     switch, self.hit, 1)
 
-    def hit(self):
+    def hit(self, **kwargs):
         """One of the member targets in this target group was hit.
 
         This method is only processed if this target group is enabled.
@@ -385,7 +392,11 @@ class TargetGroup(Device):
             steps: Integer of how many steps you want to rotate. Default is 1.
 
         """
+
+        print "rotate"
+
         if not self.enabled:
+            print "not enabled, returning"
             return
 
         target_state_list = deque()
@@ -429,13 +440,18 @@ class TargetGroup(Device):
         steps, False is returned.
 
         """
+
+        print "checking for complete"
+        print self.targets
+
         target_states = set()
 
         for target in self.targets:
             target_states.add(target.current_step_name)
 
+        # <name>_<profile>_<step>
         if len(target_states) == 1 and target_states.pop():
-            self.machine.events.post('target_group_' + self.name + '_' +
+            self.machine.events.post(self.name + '_' +
                                      self.targets[0].active_profile_name + '_' +
                                      self.targets[0].current_step_name)
 
