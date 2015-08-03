@@ -958,6 +958,8 @@ class BallDevice(Device):
 
         if self.eject_queue:
             self._do_eject()
+        elif self.get_additional_ball_capacity():
+            self._ok_to_receive()
 
     def eject_failed(self, retry=True, force_retry=False):
         """Marks the current eject in progress as 'failed.'
