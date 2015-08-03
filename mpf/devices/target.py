@@ -98,9 +98,12 @@ class Target(Device):
             self.target_group.check_for_complete()
 
     def _stop_current_lights(self):
-        if self.running_light_show:
+        try:
             self.running_light_show.stop()
-            self.running_light_show = None
+        except AttributeError:
+            pass
+
+        self.running_light_show = None
 
     def _update_current_step_variables(self):
         self.current_step_index = self.player[self.player_variable]
@@ -206,8 +209,8 @@ class Target(Device):
         self._sort_profiles()
 
         if self.active_profile_name != old_profile:
-            self.running_light_show.stop()
-            self.running_light_show = None
+
+            self._stop_current_lights()
             self._set_player_variable()
             self._update_current_step_variables()
             self._update_lights()
