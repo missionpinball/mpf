@@ -245,12 +245,18 @@ class Target(Device):
 
         self._advance_step()
 
-    def jump(self, step):
+    def jump(self, step, update_group=True):
         """Jumps to a certain step in the active target profile.
 
         Args:
             step: int of the step number you want to jump to. Note that steps
                 are zero-based, so the first step is 0.
+            update_group: Boolean which controls whether this jump event should
+                also contact the target group this target belongs to to see if
+                it should update this group's complete status. Default is True.
+                False is used for things like target rotation where a target
+                needs to jump to a new position but you don't want to post the
+                group complete events again.
 
         """
 
@@ -260,7 +266,10 @@ class Target(Device):
         self._stop_current_lights()
         self.player[self.player_variable] = step
         self._update_current_step_variables()  # curr_step_index, curr_step_name
-        self._update_group_status()
+
+        if update_group:
+            self._update_group_status()
+
         self._update_lights()
 
     def enable(self, **kwargs):
@@ -409,7 +418,7 @@ class TargetGroup(Device):
 
         # step through all our targets and update their complete status
         for i in range(len(self.targets)):
-            self.targets[i].jump(step=target_state_list[i])
+            self.targets[i].jump(step=target_state_list[i], update_group=False)
 
     def rotate_right(self, steps=1, **kwargs):
         """Rotates the state of the targets to the right. This method is the

@@ -28,7 +28,7 @@ class DropTarget(Target):
         super(DropTarget, self).__init__(machine, name, config, collection)
 
         if self.config['profile'] == 'default':
-            self.config['profile'] = 'drop_target_default'
+            self.config['profile'] = 'drop_target'
 
         # Drop targets maintain self.complete in addition to self.lit from the
         # parent class since they can maintain a physical state which could
@@ -72,15 +72,11 @@ class DropTarget(Target):
 
         """
 
-        print "dt switch change"
-
         # set the initial complete state
         if self.machine.switch_controller.is_active(self.config['switch'][0]):
-            print "dt now complete"
             self.complete = True
             self.hit()
         else:
-            print 'dt now incomplete'
             self.complete = False
             self.jump(step=0)
 

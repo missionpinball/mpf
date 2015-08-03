@@ -302,11 +302,11 @@ target_profiles:
           - name: lit
             light_script: "on"
                 
-    drop_target_default:
+    drop_target:
         steps:
-          - name: incomplete
+          - name: up
             light_script: "off"
-          - name: complete
+          - name: down
             light_script: "on"
 
 light_scripts:
