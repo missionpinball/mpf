@@ -122,6 +122,7 @@ class Playfield(BallDevice):
         zero.
 
         Returns: 0
+        
         """
         return 0
 
@@ -130,6 +131,7 @@ class Playfield(BallDevice):
         is the playfield device, this method always returns 999.
 
         Returns: 999
+
         """
         return 999
 
@@ -175,7 +177,6 @@ class Playfield(BallDevice):
         are still balls on the playfield but no balls in play.
 
         """
-
         if balls < 1:
             self.log.error("Received request to add %s balls, which doesn't "
                            "make sense. Not adding any balls...")
@@ -257,8 +258,8 @@ class Playfield(BallDevice):
 
         When this method it called, MPF will set up an event handler to look for
         the trigger_event.
-        """
 
+        """
         self.log.debug("Setting up a player controlled eject. Balls: %s, Device"
                        ": %s, Trigger Event: %s", balls, device, trigger_event)
 
@@ -274,8 +275,8 @@ class Playfield(BallDevice):
     def remove_player_controlled_eject(self):
         """Removed the player-controlled eject so a player hitting a switch
         no longer calls the device(s) to eject a ball.
-        """
 
+        """
         self.log.debug("Removing player-controlled eject.")
 
         self.machine.events.remove_handler(self.player_eject_request)
@@ -298,8 +299,8 @@ class Playfield(BallDevice):
         Args:
             balls: Integer of the number of balls that will be ejected.
             device: The ball device object that will eject the ball(s).
-        """
 
+        """
         self.log.debug("Received player eject request. Balls: %s, Device: %s",
                        balls, device.name)
         device.eject(balls, target=self)
@@ -307,6 +308,7 @@ class Playfield(BallDevice):
     def playfield_switch_hit(self):
         """A switch tagged with '<this playfield name>_active' was just hit,
         indicating that there is at least one ball on the playfield.
+
         """
         if not self.balls:
 
@@ -372,6 +374,7 @@ class Playfield(BallDevice):
         confirmation method since we don't know whether a playfield switch hit
         is from the newly-ejected ball(s) or a current previously-live
         playfield ball.
+
         """
         if not self.balls:
             return True
