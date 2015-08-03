@@ -142,9 +142,6 @@ class Device(object):
         event_prefix = self.class_label + '_' + self.name + '_'
         event_prefix2 = self.collection + '_'
 
-        print config
-        print
-
         for method in config:
 
             if config[method] and method + '_events' not in self.config:
