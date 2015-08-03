@@ -552,7 +552,7 @@ class LightController(object):
 
     def _update_gis(self):
         for gi in self.gi_queue:
-            gi[0].on(brightness=gi[1])
+            gi[0].enable(brightness=gi[1])
         self.gi_queue = set()
 
     def _update_flashers(self):
