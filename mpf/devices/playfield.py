@@ -51,6 +51,11 @@ class Playfield(BallDevice):
                         handler=self._source_device_eject_success)
                     self.machine.events.add_handler(
                         event='balldevice_' + device.name +
+                        '_ball_eject_failed',
+                        handler=self._source_device_eject_failed)
+
+                    self.machine.events.add_handler(
+                        event='balldevice_' + device.name +
                         '_ball_eject_attempt',
                         handler=self._source_device_eject_attempt)
                     break
@@ -326,6 +331,14 @@ class Playfield(BallDevice):
             self.log.debug("A source device is attempting to eject %s ball(s)"
                            " to the playfield.", balls)
             self.num_balls_requested += balls
+
+    def _source_device_eject_failed(self, balls, target, **kwargs):
+        # A source device failed to eject a ball. We need to know if it was
+        # headed to the playfield.
+        if target == self:
+            self.log.debug("A source device has failed to eject %s ball(s)"
+                           " to the playfield.", balls)
+            self.num_balls_requested -= balls
 
     def _source_device_eject_success(self, balls, target):
         # A source device has just confirmed that it has successfully ejected a
