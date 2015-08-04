@@ -776,6 +776,9 @@ class BallDevice(Device):
         # **kwargs just because this method is registered for various events
         # which might pass them.
 
+        if not self.eject_queue:
+            return False  # No eject queue and therefore nothing to do
+
         self.log.debug("Entering _do_eject(). Current in progress target: %s. "
                        "Eject queue: %s",
                        self.eject_in_progress_target, self.eject_queue)
@@ -792,7 +795,7 @@ class BallDevice(Device):
             # will re-start this _do_eject() process
             return False
 
-        elif self.eject_queue and self.balls:
+        elif self.balls:
             self.log.debug("We have an eject queue: %s", self.eject_queue)
 
             target = self.eject_queue[0][0]  # first item, first part of tuple
@@ -829,7 +832,7 @@ class BallDevice(Device):
                 else:
                     self.num_balls_ejecting = self.balls
 
-                self.machine.events.post('balldevice_' + self.name +
+                self.machine.events.post_queue('balldevice_' + self.name +
                                          '_ball_eject_attempt',
                                          balls=self.num_balls_ejecting,
                                          target=self.eject_in_progress_target,
