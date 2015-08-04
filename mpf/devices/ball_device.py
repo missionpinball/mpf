@@ -832,7 +832,7 @@ class BallDevice(Device):
                 else:
                     self.num_balls_ejecting = self.balls
 
-                self.machine.events.post('balldevice_' + self.name +
+                self.machine.events.post_queue('balldevice_' + self.name +
                                          '_ball_eject_attempt',
                                          balls=self.num_balls_ejecting,
                                          target=self.eject_in_progress_target,
