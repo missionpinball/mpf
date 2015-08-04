@@ -102,7 +102,7 @@ class Diverter(Device):
                                             '_ball_eject_attempt',
                                             self._feeder_eject_attempt)
 
-        self.machine.events.add_handler('init_phase_1', self._initialize)
+        self.machine.events.add_handler('init_phase_2', self._initialize)
 
         self.machine.events.add_handler('init_phase_3', self._register_switches)
 
