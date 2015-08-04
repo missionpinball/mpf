@@ -234,9 +234,10 @@ class Diverter(Device):
 
         if time is not None:
             delay = Timing.string_to_ms(time)
-
         elif self.config['activation_time']:
             delay = self.config['activation_time']
+        else:
+            delay = False
 
         if delay:
             self.delay.add('disable_held_coil', delay, self.disable_held_coil)
