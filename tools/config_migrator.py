@@ -26,14 +26,20 @@ root_folder = ''
 backup_root_folder = ''
 previous_config_version = 0
 new_config_version = 0
-
 skipped_files = list()
 migrated_files = list()
 warnings_files = list()
+target_file_versions = set()
 
 parser = optparse.OptionParser()
 
+parser.add_option("-f", "--force",
+                  action="store_true", dest="force", default=False,
+                  help="Force reprocessing of files thare are already the latest"
+                   "config version")
+
 options, args = parser.parse_args()
+options = vars(options)
 
 try:
     source_str = args[0]
@@ -59,6 +65,12 @@ def load_config():
     print
     print ("Migrating MPF config files from v" + str(previous_config_version) +
            " to v" + str(new_config_version))
+
+    target_file_versions.add(previous_config_version)
+
+    if options['force']:
+        print ("Will also re-check v" + str(new_config_version) + " files")
+        target_file_versions.add(new_config_version)
 
     section_replacements = config_dict[new_config_version]['section_replacements']
     section_warnings = config_dict[new_config_version]['section_warnings']
@@ -104,6 +116,7 @@ def process_file(file_name):
     global skipped_files
     global migrated_files
     global warnings_files
+    global target_file_versions
 
     found_warning = False
 
@@ -116,7 +129,7 @@ def process_file(file_name):
         except ValueError:
             file_version = 0
 
-        if previous_config_version != file_version:
+        if file_version not in target_file_versions:
             skipped_files.append(file_name)
             return
 

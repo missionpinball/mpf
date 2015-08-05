@@ -12,6 +12,8 @@
     logicblocks: logic_blocks
     ledsettings: led_settings
     machineflow: machine_flow
+    machineflow_attract_start: attract_start
+    machineflow_attract_stop: attract_stop
     matrixlights: matrix_lights
     mediacontroller: media_controller
     openpixelcontrol: open_pixel_control
