@@ -52,18 +52,8 @@ class TargetController(object):
                                         self._player_turn_start)
 
     def register_profile(self, name, profile):
-        if 'reset_events' in profile:
-            pass
 
-        if 'loop' in profile:
-            pass
-
-        if 'steps' in profile:
-            # for step in profile['steps']:
-            #     step['name']
-            #     step['light_script']
-            #     step['lightshow']
-            pass
+        self.log.debug("Registering Target Profile: '%s'", name)
 
         self.profiles[name] = profile
 
@@ -94,9 +84,9 @@ class TargetController(object):
 
     def apply_group_profiles(self, config, priority, mode, **kwargs):
         for target_group, settings in config.iteritems():
-            if 'target_profile' in settings:
+            if 'profile' in settings:
                 for target in self.machine.target_groups[target_group].targets:
-                    target.apply_profile(settings['target_profile'], priority,
+                    target.apply_profile(settings['profile'], priority,
                                          removal_key=mode)
 
         return self.remove_group_profiles, mode

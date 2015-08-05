@@ -98,8 +98,9 @@ class Target(Device):
             self.target_group.check_for_complete()
 
     def _stop_current_lights(self):
+
         try:
-            self.running_light_show.stop()
+            self.running_light_show.stop(hold=False, reset=False)
         except AttributeError:
             pass
 
@@ -115,14 +116,29 @@ class Target(Device):
         if ('light_script' in self.active_profile_steps[self.current_step_index]
                 and (self.config['light'] or self.config['led'])):
 
+            settings = self.active_profile_steps[self.current_step_index]
+
+            if 'hold' in settings:
+                hold = settings.pop('hold')
+            else:
+                hold = True
+
+            if 'reset' in settings:
+                reset = settings.pop('reset')
+            else:
+                reset = False
+
             new_show = self.machine.light_controller.run_registered_script(
-                self.active_profile_steps[self.current_step_index]['light_script'],
-                lights=self.config['light'], leds=self.config['led'],
-                priority=self.profiles[0][1])
+                script_name=self.active_profile_steps[self.current_step_index]['light_script'],
+                lights=self.config['light'],
+                leds=self.config['led'],
+                priority=self.profiles[0][1],
+                hold=hold,
+                reset=reset,
+                **self.active_profile_steps[self.current_step_index])
 
             if new_show:
                 self.running_light_show = new_show
-
             else:
                 self.log.warning("Error running light_script '%s'",
                     self.active_profile_steps[self.current_step_index]['light_script'])
@@ -131,18 +147,32 @@ class Target(Device):
         else:
             self.running_light_show = None
 
-    def _update_lights(self):
-        if ('light_script' in self.active_profile_steps[self.current_step_index]
-                and ((self.running_light_show and
-                      self.running_light_show.priority <= self.active_profile_priority)
-                    or not self.running_light_show)):
+    def _update_lights(self, step=0):
+
+        if 'light_script' in self.active_profile_steps[self.current_step_index]:
+
+            settings = self.active_profile_steps[self.current_step_index]
+
+            if 'hold' in settings:
+                hold = settings.pop('hold')
+            else:
+                hold = True
+
+            if 'reset' in settings:
+                reset = settings.pop('reset')
+            else:
+                reset = False
 
             self.running_light_show = (
                 self.machine.light_controller.run_registered_script(
-                self.active_profile_steps[self.current_step_index]['light_script'],
-                lights=self.config['light'], leds=self.config['leds'],
-                start_location=-1, priority=self.active_profile_priority,
-                **self.active_profile_steps[self.current_step_index]))
+                    script_name=settings['light_script'],
+                    lights=self.config['light'],
+                    leds=self.config['led'],
+                    start_location=step,
+                    priority=self.active_profile_priority,
+                    hold=hold,
+                    reset=reset,
+                    **settings))
 
     def player_turn_start(self, player):
         """Called when a player's turn starts to update the player reference to
@@ -179,7 +209,7 @@ class Target(Device):
             self._sort_profiles()
             self._set_player_variable()
             self._update_current_step_variables()
-            self._update_lights()
+            self._update_lights(step=-1)  # update with the the last step
 
         else:
             if not self.active_profile_name:
@@ -260,7 +290,7 @@ class Target(Device):
 
         self._advance_step()
 
-    def jump(self, step, update_group=True):
+    def jump(self, step, update_group=True, current_show_step=0):
         """Jumps to a certain step in the active target profile.
 
         Args:
@@ -285,7 +315,7 @@ class Target(Device):
         if update_group:
             self._update_group_status()
 
-        self._update_lights()
+        self._update_lights(current_show_step)
 
     def enable(self, **kwargs):
         """Enables this target. If the target is not enabled, hits to it will
@@ -421,7 +451,16 @@ class TargetGroup(Device):
         target_state_list = deque()
 
         for target in self.targets:
-            target_state_list.append(target.player[target.player_variable])
+
+            try:
+                current_step = target.running_light_show.current_location
+
+            except AttributeError:
+                current_step = -1
+
+            target_state_list.append(
+                (target.player[target.player_variable], current_step)
+                                    )
 
         # rotate that list
         if direction == 'right':
@@ -431,7 +470,9 @@ class TargetGroup(Device):
 
         # step through all our targets and update their complete status
         for i in range(len(self.targets)):
-            self.targets[i].jump(step=target_state_list[i], update_group=False)
+            self.targets[i].jump(step=target_state_list[i][0],
+                                 update_group=False,
+                                 current_show_step=target_state_list[i][1])
 
     def rotate_right(self, steps=1, **kwargs):
         """Rotates the state of the targets to the right. This method is the

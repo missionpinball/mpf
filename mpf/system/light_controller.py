@@ -336,7 +336,7 @@ class LightController(object):
             next_tick = self.machine.tick_num + tick_interval - (
                 self.machine.tick_num % tick_interval)
 
-        self.log.info("Calculating show sync. Sync_ms: %s, Current tick: %s, "
+        self.log.debug("Calculating show sync. Sync_ms: %s, Current tick: %s, "
                        "Show start: %s", sync_ms, self.machine.tick_num,
                        next_tick)
 
@@ -359,7 +359,7 @@ class LightController(object):
         self.running_shows.append(show)
         self.running_shows.sort(key=lambda x: x.priority)
 
-    def _end_show(self, show, reset=True):
+    def _end_show(self, show, reset=None):
         # Internal method which ends a running Show
 
         self.running_shows = filter(lambda x: x != show, self.running_shows)
@@ -367,7 +367,12 @@ class LightController(object):
         if not show.hold:
             self.restore_lower_lights(show=show)
 
-        if reset:
+        if reset is None:
+            this_reset = show.reset
+        else:
+            this_reset = reset
+
+        if this_reset:
             show.current_location = 0
 
         # if this show was from a script, remove it from running_show_keys
@@ -614,9 +619,8 @@ class LightController(object):
         return self.run_script(
             script=self.registered_light_scripts[script_name], **kwargs)
 
-    def run_script(self, script, lights=None, leds=None, priority=0,
-                   repeat=True, blend=False, tocks_per_sec=1, num_repeats=0,
-                   callback=None, key=None, start_location=0, **kwargs):
+    def run_script(self, script, lights=None, leds=None, repeat=True,
+                   callback=None, key=None, **kwargs):
         """Runs a light script.
 
         Args:
@@ -624,24 +628,14 @@ class LightController(object):
             lights: A light name or list of lights this script will be applied
                 to.
             leds: An LED name or a list of LEDs this script will be applied to.
-            priority: The priority the light in this script should operate
-                at.
             repeat (bool): Whether the script repeats (loops).
-            blend (bool): Whether the script should blend the light colors with
-                lower prioirty things. todo
-            tocks_per_sec (int): Tocks per second, which is how fast this script will be
-                played back.
-            num_repeats (int): How many times this script should repeat before
-                ending. A value of 0 indicates it will repeat forever. Also
-                requires *repeat=True*. 'callback': A callback function that is
-                called when the script is stopped.
             callback: A method that will be called when this script stops.
             key: A key that can be used to later stop the light show this script
                 creates. Typically a unique string. If it's not passed, it will
                 either be the first light name or the first LED name.
-            start_location: Int of the step in the script you want to start the
-                playback. Default is 0. Enter negative numbers to count back
-                from the end. (-1 is last step, -2 is second to last, etc.)
+            **kwargs: Since this method just builds a Light Show, you can use
+                any other Light Show attribute here as well, such as
+                tocks_per_sec, blend, repeat, num_repeats, etc.
 
         Returns:
             :class:`Show` object. Since running a script just sets up and
@@ -770,9 +764,7 @@ class LightController(object):
         show = Show(machine=self.machine, config=None, file_name=None,
                     asset_manager=self.asset_manager, actions=show_actions)
 
-        show.play(repeat=repeat, tocks_per_sec=tocks_per_sec, priority=priority,
-                  blend=blend, num_repeats=num_repeats, callback=callback,
-                  start_location=start_location)
+        show.play(repeat=repeat, callback=callback, **kwargs)
 
         self.running_show_keys[key] = show
 
@@ -884,7 +876,7 @@ class Show(Asset):
 
     def _initialize_asset(self):
 
-        self.tocks_per_sec = 30  # how many steps per second this show runs at
+        self.tocks_per_sec = 1  # how many steps per second this show runs at
         # you can safely read this value to determine the current playback rate
         # But don't update it directly to change the speed of a running show.
         # Use the change_speed() method instead.
@@ -895,6 +887,7 @@ class Show(Asset):
         self.current_repeat_step = 0  # tracks which repeat we're on, used with
         # num_repeats above
         self.hold = False  # hold the item states when the show ends.
+        self.reset = True  # reset back to the first step when the show ends
         self.priority = 0  # relative priority of this show
         self.ending = False  # show will end after the current tock ends
         self.blend = False  # when an light is off in this show, should it allow
@@ -910,8 +903,6 @@ class Show(Asset):
 
         self.light_states = {}
         self.led_states = {}
-        self.last_slide = None
-        self.slide_removal_keys = set()
         self.stop_key = None
 
         self.loaded = False
@@ -1166,7 +1157,7 @@ class Show(Asset):
 
     def play(self, repeat=False, priority=0, blend=False, hold=None,
              tocks_per_sec=30, start_location=None, callback=None,
-             num_repeats=0, sync_ms=0, **kwargs):
+             num_repeats=0, sync_ms=0, reset=True, **kwargs):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
         speed, priority, whether this show blends with others, etc. These are
@@ -1218,6 +1209,8 @@ class Show(Asset):
             sync_ms: Number of ms of the show sync cycle. A value of zero means
                 this show will also start playing immediately. See the full MPF
                 documentation for details on how this works.
+            reset: Boolean which controls whether this show will reset to its
+                first position once it ends. Default is True.
             **kwargs: Not used, but included in case this method is used as an
                 event handler which might include additional kwargs.
         """
@@ -1251,21 +1244,21 @@ class Show(Asset):
         self.callback = callback
         self.num_repeats = num_repeats
         self.sync_ms = sync_ms
+        self.reset = reset
+
         if start_location is not None:
             # if you don't specify a start location, it will start where it
             # left off (if you stopped it with reset=False). If the show has
             # never been run, it will start at 0 per the initialization
 
-            self.current_location = start_location
-            # if start_location >= 0:
-            #     self.current_location = start_location
-            # else:
-            #     self.current_location = self.total_locations + start_location + 1
+            if start_location < 0:
+                self.current_location = self.total_locations + start_location
+            else:
+                self.current_location = start_location
 
         self.machine.light_controller._run_show(self)
 
     def load_show_from_disk(self):
-
         # todo add exception handling
         # create central yaml loader, or, even better, config loader
 
