@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.tasks module &mdash; Mission Pinball Framework 0.19.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.19.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.19.0 documentation" href="index.html" />
+    <link rel="up" title="mpf.system package" href="mpf.system.html" />
+    <link rel="next" title="mpf.system.timing module" href="mpf.system.timing.html" />
+    <link rel="prev" title="mpf.system.target_controller module" href="mpf.system.target_controller.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.timing.html" title="mpf.system.timing module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.target_controller.html" title="mpf.system.target_controller module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" accesskey="U">mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.tasks">
+<span id="mpf-system-tasks-module"></span><h1>mpf.system.tasks module</h1>
+<dl class="class">
+<dt id="mpf.system.tasks.DelayManager">
+<em class="property">class </em><tt class="descclassname">mpf.system.tasks.</tt><tt class="descname">DelayManager</tt></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Parent class for a delay manager which can manage multiple delays.</p>
+<dl class="method">
+<dt id="mpf.system.tasks.DelayManager.add">
+<tt class="descname">add</tt><big>(</big><em>name</em>, <em>ms</em>, <em>callback</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Adds a delay.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; String name of this delay. This name is arbitrary and only
+used to identify the delay later if you want to remove or change
+it.</li>
+<li><strong>ms</strong> &#8211; Int of the number of milliseconds you want this delay to be for.
+Note that the resolution of this time is based on your
+machine&#8217;s tick rate. The callback will be called on the
+first machine tick <em>after</em> the delay time has expired. For
+example, if you have a machine tick rate of 30Hz, that&#8217;s 33.33ms
+per tick. So if you set a delay for 40ms, the actual delay will
+be 66.66ms since that&#8217;s the next tick time after the delay ends.</li>
+<li><strong>callback</strong> &#8211; The method that is called when this delay ends.</li>
+<li><strong>**kwargs</strong> &#8211; Any other (optional) kwarg pairs you pass will be
+passed along as kwargs to the callback method.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.tasks.DelayManager.check">
+<tt class="descname">check</tt><big>(</big><em>delay</em><big>)</big></dt>
+<dd><p>Checks to see if a delay exists.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>delay</strong> &#8211; A string of the delay you&#8217;re checking for.</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: The delay object if it exists, or None if not.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.tasks.DelayManager.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big></dt>
+<dd><p>Removes (clears) all the delays associated with this DelayManager.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.tasks.DelayManager.dead_delay_managers">
+<tt class="descname">dead_delay_managers</tt><em class="property"> = set([])</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.tasks.DelayManager.delay_managers">
+<tt class="descname">delay_managers</tt><em class="property"> = set([])</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.tasks.DelayManager.remove">
+<tt class="descname">remove</tt><big>(</big><em>name</em><big>)</big></dt>
+<dd><p>Removes a delay. (i.e. prevents the callback from being fired and
+cancels the delay.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; String name of the delay you want to remove. If there is no
+delay with this name, that&#8217;s ok. Nothing happens.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.tasks.DelayManager.reset">
+<tt class="descname">reset</tt><big>(</big><em>name</em>, <em>ms</em>, <em>callback</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Resets a delay, first deleting the old one (if it exists) and then
+adding new delay with the new settings.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>as add()</strong> (<em>same</em>) &#8211; </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.tasks.DelayManager.timer_tick">
+<em class="property">static </em><tt class="descname">timer_tick</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.tasks.Task">
+<em class="property">class </em><tt class="descclassname">mpf.system.tasks.</tt><tt class="descname">Task</tt><big>(</big><em>callback</em>, <em>args=None</em>, <em>name=None</em>, <em>sleep=0</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A task/coroutine implementation.</p>
+<p>Tasks are similar to timers except they can yield back to the main loop
+at any point, then be resumed later.</p>
+<p>To wait from a Task, do <cite>yield &lt;ms&gt;</cite>, e.g. <cite>yield 200</cite>.</p>
+<p>To exit from a Task, just return.  This will raise a StopIteration
+exception which the scheduler will catch and remove the task from the
+run queue.</p>
+<dl class="staticmethod">
+<dt id="mpf.system.tasks.Task.Create">
+<em class="property">static </em><tt class="descname">Create</tt><big>(</big><em>callback</em>, <em>args=()</em>, <em>sleep=0</em><big>)</big></dt>
+<dd><p>Creates a new task and insert it into the runnable set.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.tasks.Task.NewTasks">
+<tt class="descname">NewTasks</tt><em class="property"> = set([])</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.tasks.Task.Tasks">
+<tt class="descname">Tasks</tt><em class="property"> = set([])</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.tasks.Task.restart">
+<tt class="descname">restart</tt><big>(</big><big>)</big></dt>
+<dd><p>Restarts the task.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.tasks.Task.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big></dt>
+<dd><p>Stops the task.</p>
+<p>This causes it not to run any longer, by removing it from the task set
+and then deleting it.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.tasks.Task.timer_tick">
+<em class="property">static </em><tt class="descname">timer_tick</tt><big>(</big><big>)</big></dt>
+<dd><p>Scans all tasks now and run those that are ready.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.system.target_controller.html"
+                        title="previous chapter">mpf.system.target_controller module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.system.timing.html"
+                        title="next chapter">mpf.system.timing module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.tasks.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.timing.html" title="mpf.system.timing module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.target_controller.html" title="mpf.system.target_controller module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" >mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.config module &mdash; Mission Pinball Framework 0.19.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.19.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.19.0 documentation" href="index.html" />
+    <link rel="up" title="mpf.system package" href="mpf.system.html" />
+    <link rel="next" title="mpf.system.devices module" href="mpf.system.devices.html" />
+    <link rel="prev" title="mpf.system.bcp module" href="mpf.system.bcp.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.devices.html" title="mpf.system.devices module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.bcp.html" title="mpf.system.bcp module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" accesskey="U">mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.config">
+<span id="mpf-system-config-module"></span><h1>mpf.system.config module</h1>
+<p>Contains the Config class with utility configuration methods</p>
+<dl class="class">
+<dt id="mpf.system.config.CaseInsensitiveDict">
+<em class="property">class </em><tt class="descclassname">mpf.system.config.</tt><tt class="descname">CaseInsensitiveDict</tt></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></p>
+<p>A class based on Python&#8217;s &#8216;dict&#8217; class that internally stores all keys
+as lowercase. Set, get, contains, and del methods have been overwritten to
+automatically convert incoming calls to lowercase.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.config.Config">
+<em class="property">class </em><tt class="descclassname">mpf.system.config.</tt><tt class="descname">Config</tt></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="staticmethod">
+<dt id="mpf.system.config.Config.check_config_file_version">
+<em class="property">static </em><tt class="descname">check_config_file_version</tt><big>(</big><em>file_location</em><big>)</big></dt>
+<dd><p>Checks a configuration file to see if it&#8217;s the proper version for
+this version of MPF.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_location</strong> &#8211; The path to the file to check.</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: True if the config version of the file matches. False if not.</p>
+<p>This method checks that the a string &#8216;config_version=x&#8217; exists in the
+first line of the file. If so, it checks that &#8216;x&#8217; matches MPF&#8217;s
+config_version specification.</p>
+<p>This check is done as integers.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.config.Config.dict_merge">
+<em class="property">static </em><tt class="descname">dict_merge</tt><big>(</big><em>a</em>, <em>b</em>, <em>combine_lists=True</em><big>)</big></dt>
+<dd><p>Recursively merges dictionaries.</p>
+<p>Used to merge dictionaries of dictionaries, like when we&#8217;re merging
+together the machine configuration files. This method is called
+recursively as it finds sub-dictionaries.</p>
+<p>For example, in the traditional python dictionary
+update() methods, if a dictionary key exists in the original and
+merging-in dictionary, the new value will overwrite the old value.</p>
+<p>Consider the following example:</p>
+<p>Original dictionary:
+<cite>config[&#8216;foo&#8217;][&#8216;bar&#8217;] = 1</cite></p>
+<p>New dictionary we&#8217;re merging in:
+<cite>config[&#8216;foo&#8217;][&#8216;other_bar&#8217;] = 2</cite></p>
+<p>Default python dictionary update() method would have the updated
+dictionary as this:</p>
+<p><cite>{&#8216;foo&#8217;: {&#8216;other_bar&#8217;: 2}}</cite></p>
+<p>This happens because the original dictionary which had the single key
+<cite>bar</cite> was overwritten by a new dictionary which has a single key
+<cite>other_bar</cite>.)</p>
+<p>But really we want this:</p>
+<p><cite>{&#8216;foo&#8217;: {&#8216;bar&#8217;: 1, &#8216;other_bar&#8217;: 2}}</cite></p>
+<p>This code was based on this:
+<a class="reference external" href="https://www.xormedia.com/recursively-merge-dictionaries-in-python/">https://www.xormedia.com/recursively-merge-dictionaries-in-python/</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>a</strong> (<em>dict</em>) &#8211; The first dictionary</li>
+<li><strong>b</strong> (<em>dict</em>) &#8211; The second dictionary</li>
+<li><strong>combine_lists</strong> (<em>bool</em>) &#8211; Controls whether lists should be combined (extended) or
+overwritten. Default is <cite>True</cite> which combines them.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The merged dictionaries.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.config.Config.keys_to_lower">
+<em class="property">static </em><tt class="descname">keys_to_lower</tt><big>(</big><em>source_dict</em><big>)</big></dt>
+<dd><p>Converts the keys of a dictionary to lowercase.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>source_dict</strong> &#8211; The dictionary you want to convert.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A dictionary with lowercase keys.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.config.Config.list_of_lists">
+<em class="property">static </em><tt class="descname">list_of_lists</tt><big>(</big><em>incoming_string</em><big>)</big></dt>
+<dd><p>Converts an incoming string or list into a list of lists.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.config.Config.load_config_yaml">
+<em class="property">static </em><tt class="descname">load_config_yaml</tt><big>(</big><em>config=None</em>, <em>yaml_file=None</em>, <em>new_config_dict=None</em><big>)</big></dt>
+<dd><p>Merges a new config dictionary into an existing one.</p>
+<p>This method does what we call a &#8220;deep merge&#8221; which means it merges
+together subdictionaries instead of overwriting them. See the
+documentation for <cite>meth:dict_merge</cite> for a description of how this
+works.</p>
+<p>If the config dictionary you&#8217;re merging in also contains links to
+additional config files, it will also merge those in.</p>
+<p>At this point this method loads YAML files, but it would be simple to
+load them from JSON, XML, INI, or existing python dictionaires.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>config</strong> &#8211; The optional current version of the config dictionary that
+you&#8217;re building up. If you don&#8217;t pass a dictionary, this method
+will create one.</li>
+<li><strong>yaml_file</strong> &#8211; A YAML file containing the settings to deep merge into
+the config dictionary. This method will try to find a file
+with that name and open it to read in the settings. It will
+first try to open it as a file directly (including any path
+that&#8217;s there). If that doesn&#8217;t work, it will try to open the
+file using the last path that worked. (This path is stored in
+<cite>config[&#8216;Config_path&#8217;]</cite>.)</li>
+<li><strong>new_config_dict</strong> &#8211; A dictionary of settings to merge into the config
+dictionary.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note that you only need to specify a yaml_file or new_config_dictionary,
+not both.</p>
+<dl class="docutils">
+<dt>Returns: Python dictionary which is your source with all the new config</dt>
+<dd>options merged in.</dd>
+</dl>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.config.Config.process_config">
+<em class="property">static </em><tt class="descname">process_config</tt><big>(</big><em>config_spec</em>, <em>source</em>, <em>target=None</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.config.Config.string_to_list">
+<em class="property">static </em><tt class="descname">string_to_list</tt><big>(</big><em>string</em><big>)</big></dt>
+<dd><p>Converts a comma-separated and/or space-separated string into a
+Python list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string</strong> &#8211; The string you&#8217;d like to convert.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A python list object containing whatever was between commas and/or
+spaces in the string.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.config.Config.string_to_lowercase_list">
+<em class="property">static </em><tt class="descname">string_to_lowercase_list</tt><big>(</big><em>string</em><big>)</big></dt>
+<dd><p>Converts a comma-separated and/or space-separated string into a
+Python list where each item in the list has been converted to lowercase.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string</strong> &#8211; The string you&#8217;d like to convert.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A python list object containing whatever was between commas and/or
+spaces in the string, with each item converted to lowercase.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpf.system.config.Config.validate_config_item">
+<em class="property">static </em><tt class="descname">validate_config_item</tt><big>(</big><em>spec</em>, <em>item='item not in config!&#64;#'</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.system.bcp.html"
+                        title="previous chapter">mpf.system.bcp module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.system.devices.html"
+                        title="next chapter">mpf.system.devices module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.config.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.devices.html" title="mpf.system.devices module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.bcp.html" title="mpf.system.bcp module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" >mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

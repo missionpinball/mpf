@@ -1,0 +1,214 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.media_controller.core.slide_builder module &mdash; Mission Pinball Framework 0.19.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.19.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.19.0 documentation" href="index.html" />
+    <link rel="up" title="mpf.media_controller.core package" href="mpf.media_controller.core.html" />
+    <link rel="next" title="mpf.media_controller.core.sound module" href="mpf.media_controller.core.sound.html" />
+    <link rel="prev" title="mpf.media_controller.core.slide module" href="mpf.media_controller.core.slide.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.media_controller.core.sound.html" title="mpf.media_controller.core.sound module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.media_controller.core.slide.html" title="mpf.media_controller.core.slide module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.media_controller.html" >mpf.media_controller package</a> &raquo;</li>
+          <li><a href="mpf.media_controller.core.html" accesskey="U">mpf.media_controller.core package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.media_controller.core.slide_builder">
+<span id="mpf-media-controller-core-slide-builder-module"></span><h1>mpf.media_controller.core.slide_builder module</h1>
+<p>Contains the parent classes for MPF&#8217;s display SlideBuilder class.</p>
+<dl class="class">
+<dt id="mpf.media_controller.core.slide_builder.SlideBuilder">
+<em class="property">class </em><tt class="descclassname">mpf.media_controller.core.slide_builder.</tt><tt class="descname">SlideBuilder</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Parent class for SlideBuilder objects which are things you configure via
+the machine config files that let you display text messages based on game
+events. You can use this to show game status, players, scores, etc. Any
+setting that is available via the text method of the display controller is
+available here, including positioning, fonts, size, delays, etc.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> &#8211; The main machine object.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="mpf.media_controller.core.slide_builder.SlideBuilder.build_slide">
+<tt class="descname">build_slide</tt><big>(</big><em>settings</em>, <em>display=None</em>, <em>slide_name=None</em>, <em>priority=None</em>, <em>mode=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Builds a slide from a SlideBuilder set of keyword arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>settings</strong> &#8211; Python dictionary of settings for this slide. This
+includes settings for the various Display Elements as well as
+any transition.</li>
+<li><strong>display</strong> &#8211; String name of the display this slide is being built for.</li>
+<li><strong>slide_name</strong> &#8211; String name of the slide that&#8217;s being built. If this
+slide exists, the elements here will be added to that slide. If
+it doesn&#8217;t exist, a new slide will be created. If no slide name
+is passed, a new slide will be created and given a UUID4 name.</li>
+<li><strong>priority</strong> &#8211; Integer of the priority of this slide.</li>
+<li><strong>mode</strong> &#8211; A reference to the Mode instance that built this slide. Used
+to make sure that each mode keeps at least one active slide.</li>
+<li><strong>**kwargs</strong> &#8211; Catch all since this method is often registered as a
+callback for events which means there could be random event
+keyword argument pairs attached.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns: Slide object from the slide it built (whether or not it&#8217;s</dt>
+<dd>showing now).</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide_builder.SlideBuilder.preprocess_settings">
+<tt class="descname">preprocess_settings</tt><big>(</big><em>settings</em>, <em>base_priority=0</em><big>)</big></dt>
+<dd><p>Takes an unstructured list of slide_player settings and processed them
+so they can be displayed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>settings</strong> &#8211; A list of dictionary of slide_player settings for a slide.</li>
+<li><strong>base_priority</strong> &#8211; An integer that will be added to slide&#8217;s priority
+from the config settings.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: A python list with all the settings in the right places.</p>
+<p>This method does a bunch of things, like making sure all the needed
+values are there, and moving certain things to the first and last
+elements when there are multiple elements used on one slide. (For
+example, if one of the elements wants to clear the slide, it has to
+happen first. If there&#8217;s a transition, it has to happen last after the
+slide is built, etc.</p>
+<p>The returned settings list can be safely called with the by display()
+with the preprocessed=True flag.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide_builder.SlideBuilder.process_config">
+<tt class="descname">process_config</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>priority=0</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide_builder.SlideBuilder.unload_slide_events">
+<tt class="descname">unload_slide_events</tt><big>(</big><em>removal_tuple</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.media_controller.core.slide.html"
+                        title="previous chapter">mpf.media_controller.core.slide module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.media_controller.core.sound.html"
+                        title="next chapter">mpf.media_controller.core.sound module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.media_controller.core.slide_builder.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.media_controller.core.sound.html" title="mpf.media_controller.core.sound module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.media_controller.core.slide.html" title="mpf.media_controller.core.slide module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.media_controller.html" >mpf.media_controller package</a> &raquo;</li>
+          <li><a href="mpf.media_controller.core.html" >mpf.media_controller.core package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

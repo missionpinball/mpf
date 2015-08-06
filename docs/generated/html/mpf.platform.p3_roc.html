@@ -1,0 +1,688 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.platform.p3_roc module &mdash; Mission Pinball Framework 0.19.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.19.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.19.0 documentation" href="index.html" />
+    <link rel="up" title="mpf.platform package" href="mpf.platform.html" />
+    <link rel="next" title="mpf.platform.p_roc module" href="mpf.platform.p_roc.html" />
+    <link rel="prev" title="mpf.platform.openpixel module" href="mpf.platform.openpixel.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.platform.p_roc.html" title="mpf.platform.p_roc module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.platform.openpixel.html" title="mpf.platform.openpixel module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.platform.html" accesskey="U">mpf.platform package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.platform.p3_roc">
+<span id="mpf-platform-p3-roc-module"></span><h1>mpf.platform.p3_roc module</h1>
+<p>Contains the drivers and interface code for pinball machines which
+use the Multimorphic P3-ROC hardware controllers.</p>
+<p>This code can be used with P-ROC driver boards, or with Stern SAM, Stern
+Whitestar, Williams WPC, or Williams WPC95  driver boards.</p>
+<p>Much of this code is from the P-ROC drivers section of the pyprocgame project,
+written by Adam Preble and Gerry Stellenberg. It was originally released under
+the MIT license and is released here under the MIT License.</p>
+<p>More info on the P3-ROC hardware platform: <a class="reference external" href="http://pinballcontrollers.com/">http://pinballcontrollers.com/</a></p>
+<p>Original code source on which this module was based:
+<a class="reference external" href="https://github.com/preble/pyprocgame">https://github.com/preble/pyprocgame</a></p>
+<p>If you want to use the Mission Pinball Framework with P3-ROC hardware, you also
+need libpinproc and pypinproc. More info:
+<a class="reference external" href="http://www.pinballcontrollers.com/forum/index.php?board=10.0">http://www.pinballcontrollers.com/forum/index.php?board=10.0</a></p>
+<dl class="class">
+<dt id="mpf.platform.p3_roc.DriverAlias">
+<em class="property">class </em><tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">DriverAlias</tt><big>(</big><em>key</em>, <em>value</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.platform.p3_roc.DriverAlias.decode">
+<tt class="descname">decode</tt><big>(</big><em>addr</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.DriverAlias.matches">
+<tt class="descname">matches</tt><big>(</big><em>addr</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.p3_roc.HardwarePlatform">
+<em class="property">class </em><tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">HardwarePlatform</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.platform.html#mpf.system.platform.Platform" title="mpf.system.platform.Platform"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.platform.Platform</span></tt></a></p>
+<p>Platform class for the P3-ROC hardware controller.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> &#8211; The MachineController instance.</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.machine">
+<tt class="descname">machine</tt></dt>
+<dd><p>The MachineController instance.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.proc">
+<tt class="descname">proc</tt></dt>
+<dd><p>The P3-ROC pinproc.PinPROC device.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.machine_type">
+<tt class="descname">machine_type</tt></dt>
+<dd><p>Constant of the pinproc.MachineType</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.clear_hw_rule">
+<tt class="descname">clear_hw_rule</tt><big>(</big><em>sw_name</em><big>)</big></dt>
+<dd><p>Clears a hardware rule.</p>
+<p>This is used if you want to remove the linkage between a switch and
+some driver activity. For example, if you wanted to disable your
+flippers (so that a player pushing the flipper buttons wouldn&#8217;t cause
+the flippers to flip), you&#8217;d call this method with your flipper button
+as the <em>sw_num</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sw_num</strong> (<em>int</em>) &#8211; The number of the switch whose rule you want to clear.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.configure_dmd">
+<tt class="descname">configure_dmd</tt><big>(</big><big>)</big></dt>
+<dd><p>The P3-ROC does not support a physical DMD, so this method does
+nothing. It&#8217;s included here in case it&#8217;s called by mistake.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.configure_driver">
+<tt class="descname">configure_driver</tt><big>(</big><em>config</em>, <em>device_type='coil'</em><big>)</big></dt>
+<dd><p>Creates a P3-ROC driver.</p>
+<p>Typically drivers are coils or flashers, but for the P3-ROC this is
+also used for matrix-based lights.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>config</strong> &#8211; Dictionary of settings for the driver.</li>
+<li><strong>device_type</strong> &#8211; String with value of either &#8216;coil&#8217; or &#8216;switch&#8217;.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A reference to the PROCDriver object which is the actual object you
+can use to pulse(), patter(), enable(), etc.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.configure_gi">
+<tt class="descname">configure_gi</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Configures a P3-ROC GI string light.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.configure_led">
+<tt class="descname">configure_led</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Configures a P3-ROC RGB LED controlled via a PD-LED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.configure_matrixlight">
+<tt class="descname">configure_matrixlight</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Configures a P3-ROC matrix light.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.configure_switch">
+<tt class="descname">configure_switch</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Configures a P3-ROC switch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>config</strong> &#8211; Dictionary of settings for the switch. In the case
+of the P3-ROC, it uses the following:</li>
+<li><strong>number</strong> &#8211; The number (or number string) for the switch as specified
+in the machine configuration file.</li>
+<li><strong>debounce</strong> &#8211; Boolean which specifies whether the P3-ROC should
+debounce this switch first before sending open and close
+notifications to the host computer.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><p>A reference to the switch object that was just created.
+proc_num : Integer of the actual hardware switch number the P3-ROC</p>
+<blockquote>
+<div><p>uses to refer to this switch. Typically your machine
+configuration files would specify a switch number like <cite>SD12</cite> or
+<cite>7/5</cite>. This <cite>proc_num</cite> is an int between 0 and 255.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>state <span class="classifier-delimiter">:</span> <span class="classifier">An integer of the current hardware state of the switch, used</span></dt>
+<dd><p class="first last">to set the initial state state in the machine. A value of 0
+means the switch is open, and 1 means it&#8217;s closed. Note this
+state is the physical state of the switch, so if you configure
+the switch to be normally-closed (i.e. &#8220;inverted&#8221; then your code
+will have to invert it too.) MPF handles this automatically if
+the switch type is &#8216;NC&#8217;.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">switch</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.tick">
+<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
+<dd><p>Checks the P3-ROC for any events (switch state changes).</p>
+<p>Also tickles the watchdog and flushes any queued commands to the P3-ROC.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.HardwarePlatform.write_hw_rule">
+<tt class="descname">write_hw_rule</tt><big>(</big><em>sw</em>, <em>sw_activity</em>, <em>coil_action_ms</em>, <em>coil=None</em>, <em>pulse_ms=0</em>, <em>pwm_on=0</em>, <em>pwm_off=0</em>, <em>delay=0</em>, <em>recycle_time=0</em>, <em>debounced=True</em>, <em>drive_now=False</em><big>)</big></dt>
+<dd><p>Used to write (or update) a hardware rule to the P3-ROC.</p>
+<p><em>Hardware Rules</em> are used to configure the P3-ROC to automatically
+change driver states based on switch changes. These rules are
+completely handled by the P3-ROC hardware (i.e. with no interaction from
+the Python game code). They&#8217;re used for things that you want to happen
+fast, like firing coils when flipper buttons are pushed, slingshots,
+pop bumpers, etc.</p>
+<p>You can overwrite existing hardware rules at any time to change or
+remove them.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sw</strong> &#8211; switch object
+Which switch you&#8217;re creating this rule for. The parameter is a
+reference to the switch object itsef.</li>
+<li><strong>sw_activity</strong> &#8211; int
+Do you want this coil to fire when the switch becomes active
+(1) or inactive (0)</li>
+<li><strong>coil_action_ms</strong> &#8211; int
+The total time (in ms) that this coil action should take place.
+A value of -1 means it&#8217;s forever.</li>
+<li><strong>coil</strong> &#8211; coil object
+Which coil is this rule controlling</li>
+<li><strong>pulse_ms</strong> &#8211; int
+How long should the coil be pulsed (ms)</li>
+<li><strong>pwm_on</strong> &#8211; int
+If the coil should be held on at less than 100% duty cycle,
+this is the &#8220;on&#8221; time (in ms).</li>
+<li><strong>pwm_off</strong> &#8211; int
+If the coil should be held on at less than 100% duty cycle,
+this is the &#8220;off&#8221; time (in ms).</li>
+<li><strong>delay</strong> &#8211; int
+Not currently implemented for the P3-ROC hardware</li>
+<li><strong>recycle_time</strong> &#8211; int
+How long (in ms) should this switch rule wait before firing
+again. Put another way, what&#8217;s the &#8220;fastest&#8221; this rule can
+fire? This is used to prevent &#8220;machine gunning&#8221; of slingshots
+and pop bumpers. Do not use it with flippers. Note the P3-ROC
+has a non-configurable delay time of 125ms. (So it&#8217;s either
+125ms or 0.) So if you set this delay to anything other than
+0, it will be 125ms.</li>
+<li><strong>debounced</strong> &#8211; bool
+Should the P3-ROC fire this coil after the switch has been
+debounced? Typically no.</li>
+<li><strong>drive_now</strong> &#8211; bool
+Should the P3-ROC check the state of the switches when this
+rule is firts applied, and fire the coils if they should be?
+Typically this is True, especially with flippers because you
+want them to fire if the player is holding in the buttons when
+the machine enables the flippers (which is done via several
+calls to this method.)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.p3_roc.PDBCoil">
+<em class="property">class </em><tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">PDBCoil</tt><big>(</big><em>pdb</em>, <em>number_str</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for coils connected to a P3-ROC that are controlled via P3-ROC
+driver boards (i.e. the PD-16 board).</p>
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBCoil.bank">
+<tt class="descname">bank</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBCoil.is_direct_coil">
+<tt class="descname">is_direct_coil</tt><big>(</big><em>string</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBCoil.is_pdb_coil">
+<tt class="descname">is_pdb_coil</tt><big>(</big><em>string</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBCoil.output">
+<tt class="descname">output</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.p3_roc.PDBConfig">
+<em class="property">class </em><tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">PDBConfig</tt><big>(</big><em>proc</em>, <em>config</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>This class is only used when the P3-ROC is configured to use P3-ROC
+driver boards such as the PD-16 or PD-8x8. i.e. not when it&#8217;s operating in
+WPC or Stern mode.</p>
+<dl class="attribute">
+<dt id="mpf.platform.p3_roc.PDBConfig.aliases">
+<tt class="descname">aliases</tt><em class="property"> = None</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBConfig.configure_globals">
+<tt class="descname">configure_globals</tt><big>(</big><em>proc</em>, <em>lamp_source_bank_list</em>, <em>enable=True</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBConfig.get_globals">
+<tt class="descname">get_globals</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBConfig.get_proc_number">
+<tt class="descname">get_proc_number</tt><big>(</big><em>device_type</em>, <em>number_str</em><big>)</big></dt>
+<dd><p>Returns the P3-ROC number for the requested driver string.</p>
+<p>This method uses the driver string to look in the indexes list that
+was set up when the PDBs were configured.  The resulting P3-ROC index
+* 3 is the first driver number in the group, and the driver offset is
+to that.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.platform.p3_roc.PDBConfig.indexes">
+<tt class="descname">indexes</tt><em class="property"> = []</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBConfig.initialize_drivers">
+<tt class="descname">initialize_drivers</tt><big>(</big><em>proc</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.platform.p3_roc.PDBConfig.proc">
+<tt class="descname">proc</tt><em class="property"> = None</em></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.p3_roc.PDBLED">
+<em class="property">class </em><tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">PDBLED</tt><big>(</big><em>board</em>, <em>address</em>, <em>proc_driver</em>, <em>invert=False</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents an RGB LED connected to a PD-LED board.</p>
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLED.color">
+<tt class="descname">color</tt><big>(</big><em>color</em><big>)</big></dt>
+<dd><p>Instantly sets this LED to the color passed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>color</strong> &#8211; a 3-item list of integers representing R, G, and B values,</li>
+<li><strong>each.</strong> (<em>0-255</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLED.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables (turns off) this LED instantly. For multi-color LEDs it
+turns all elements off.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLED.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables (turns on) this LED instantly. For multi-color LEDs it turns
+all elements on.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLED.fade">
+<tt class="descname">fade</tt><big>(</big><em>color</em>, <em>fade_ms</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLED.normalize_color">
+<tt class="descname">normalize_color</tt><big>(</big><em>color</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.p3_roc.PDBLight">
+<em class="property">class </em><tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">PDBLight</tt><big>(</big><em>pdb</em>, <em>number_str</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for lights connected to a PD-8x8 driver board.</p>
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.dedicated_bank">
+<tt class="descname">dedicated_bank</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.dedicated_output">
+<tt class="descname">dedicated_output</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.is_direct_lamp">
+<tt class="descname">is_direct_lamp</tt><big>(</big><em>string</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.is_pdb_lamp">
+<tt class="descname">is_pdb_lamp</tt><big>(</big><em>string</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.sink_bank">
+<tt class="descname">sink_bank</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.sink_board">
+<tt class="descname">sink_board</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.sink_output">
+<tt class="descname">sink_output</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.source_bank">
+<tt class="descname">source_bank</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.source_board">
+<tt class="descname">source_board</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.source_output">
+<tt class="descname">source_output</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBLight.split_matrix_addr_parts">
+<tt class="descname">split_matrix_addr_parts</tt><big>(</big><em>string</em><big>)</big></dt>
+<dd><p>Input is of form C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z  or
+aliasX:aliasY.  We want to return only the address part: Ax-By-z,
+x/y/z, or aliasX.  That is, remove the two character prefix if present.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.p3_roc.PDBSwitch">
+<em class="property">class </em><tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">PDBSwitch</tt><big>(</big><em>pdb</em>, <em>number_str</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for switches connected to a P3-ROC.</p>
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBSwitch.parse_matrix_num">
+<tt class="descname">parse_matrix_num</tt><big>(</big><em>num_str</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PDBSwitch.proc_num">
+<tt class="descname">proc_num</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.p3_roc.PROCDriver">
+<em class="property">class </em><tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">PROCDriver</tt><big>(</big><em>number</em>, <em>proc_driver</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for drivers connected to a P3-ROC. This class is used for all
+drivers, regardless of whether they&#8217;re connected to a P-ROC driver board
+(such as the PD-16 or PD-8x8) or an OEM driver board.</p>
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCDriver.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables (turns off) this driver.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCDriver.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables (turns on) this driver.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCDriver.future_pulse">
+<tt class="descname">future_pulse</tt><big>(</big><em>milliseconds=None</em>, <em>timestamp=0</em><big>)</big></dt>
+<dd><p>Enables this driver for <cite>milliseconds</cite> at P3-ROC timestamp:
+<cite>timestamp</cite>. If no parameter is provided for <cite>milliseconds</cite>,
+<tt class="xref py py-attr docutils literal"><span class="pre">pulse_ms</span></tt> is used. If no parameter is provided or
+<cite>timestamp</cite>, 0 is used. <tt class="docutils literal"><span class="pre">ValueError</span></tt> will be raised if <cite>milliseconds</cite>
+is outside of the range 0-255.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCDriver.pulse">
+<tt class="descname">pulse</tt><big>(</big><em>milliseconds=None</em><big>)</big></dt>
+<dd><p>Enables this driver for <cite>milliseconds</cite>.</p>
+<p><tt class="docutils literal"><span class="pre">ValueError</span></tt> will be raised if <cite>milliseconds</cite> is outside of the range
+0-255.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCDriver.pwm">
+<tt class="descname">pwm</tt><big>(</big><em>on_ms=10</em>, <em>off_ms=10</em>, <em>original_on_ms=0</em>, <em>now=True</em><big>)</big></dt>
+<dd><p>Enables a pitter-patter sequence.</p>
+<p>It starts by activating the driver for <cite>original_on_ms</cite> milliseconds.
+Then it repeatedly turns the driver on for <cite>on_ms</cite> milliseconds and
+off for <cite>off_ms</cite> milliseconds.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCDriver.schedule">
+<tt class="descname">schedule</tt><big>(</big><em>schedule</em>, <em>cycle_seconds=0</em>, <em>now=True</em><big>)</big></dt>
+<dd><p>Schedules this driver to be enabled according to the given
+<cite>schedule</cite> bitmask.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCDriver.state">
+<tt class="descname">state</tt><big>(</big><big>)</big></dt>
+<dd><p>Returns a dictionary representing this driver&#8217;s current
+configuration state.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCDriver.tick">
+<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCDriver.timed_pwm">
+<tt class="descname">timed_pwm</tt><big>(</big><em>on_ms=10</em>, <em>off_ms=10</em>, <em>run_time=0</em>, <em>now=True</em><big>)</big></dt>
+<dd><p>Enables a pitter-patter sequence that runs for <cite>run_time</cite>
+milliseconds.</p>
+<p>Until it ends, the sequence repeatedly turns the driver on for
+<cite>on_ms</cite>  milliseconds and off for <cite>off_ms</cite> milliseconds.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.p3_roc.PROCMatrixLight">
+<em class="property">class </em><tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">PROCMatrixLight</tt><big>(</big><em>number</em>, <em>proc_driver</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCMatrixLight.off">
+<tt class="descname">off</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables (turns off) this driver.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.platform.p3_roc.PROCMatrixLight.on">
+<tt class="descname">on</tt><big>(</big><em>brightness=255</em>, <em>fade_ms=0</em>, <em>start=0</em><big>)</big></dt>
+<dd><p>Enables (turns on) this driver.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.platform.p3_roc.PROCSwitch">
+<em class="property">class </em><tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">PROCSwitch</tt><big>(</big><em>number</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mpf.platform.p3_roc.decode_pdb_address">
+<tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">decode_pdb_address</tt><big>(</big><em>addr</em>, <em>aliases=[]</em><big>)</big></dt>
+<dd><p>Decodes Ax-By-z or x/y/z into PDB address, bank number, and output
+number.</p>
+<p>Raises a ValueError exception if it is not a PDB address, otherwise returns
+a tuple of (addr, bank, number).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mpf.platform.p3_roc.is_pdb_address">
+<tt class="descclassname">mpf.platform.p3_roc.</tt><tt class="descname">is_pdb_address</tt><big>(</big><em>addr</em>, <em>aliases=[]</em><big>)</big></dt>
+<dd><p>Returne True if the given address is a valid PDB address.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.platform.openpixel.html"
+                        title="previous chapter">mpf.platform.openpixel module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.platform.p_roc.html"
+                        title="next chapter">mpf.platform.p_roc module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.platform.p3_roc.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.platform.p_roc.html" title="mpf.platform.p_roc module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.platform.openpixel.html" title="mpf.platform.openpixel module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.platform.html" >mpf.platform package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

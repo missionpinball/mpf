@@ -1,0 +1,432 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.media_controller.core.slide module &mdash; Mission Pinball Framework 0.19.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.19.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.19.0 documentation" href="index.html" />
+    <link rel="up" title="mpf.media_controller.core package" href="mpf.media_controller.core.html" />
+    <link rel="next" title="mpf.media_controller.core.slide_builder module" href="mpf.media_controller.core.slide_builder.html" />
+    <link rel="prev" title="mpf.media_controller.core.show_controller module" href="mpf.media_controller.core.show_controller.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.media_controller.core.slide_builder.html" title="mpf.media_controller.core.slide_builder module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.media_controller.core.show_controller.html" title="mpf.media_controller.core.show_controller module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.media_controller.html" >mpf.media_controller package</a> &raquo;</li>
+          <li><a href="mpf.media_controller.core.html" accesskey="U">mpf.media_controller.core package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.media_controller.core.slide">
+<span id="mpf-media-controller-core-slide-module"></span><h1>mpf.media_controller.core.slide module</h1>
+<p>Contains the Slide parent class.</p>
+<dl class="class">
+<dt id="mpf.media_controller.core.slide.Slide">
+<em class="property">class </em><tt class="descclassname">mpf.media_controller.core.slide.</tt><tt class="descname">Slide</tt><big>(</big><em>mpfdisplay</em>, <em>machine</em>, <em>name=None</em>, <em>priority=0</em>, <em>persist=False</em>, <em>removal_key=None</em>, <em>expire_ms=0</em>, <em>mode=None</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Parent class for a Slide object.</p>
+<p>MPF uses the concept of &#8220;slides&#8221; (think PowerPoint) as a collection of
+various display elements that should be shown on the display. There can be
+more than one slides defined at any given time, though only one is active
+at any given time. (Unless a transitioning is happening which transitions
+between an old slide and a new slide.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>mpfdisplay</strong> &#8211; The display object this slide is for.</li>
+<li><strong>name</strong> &#8211; String name of this slide.</li>
+<li><strong>persist</strong> &#8211; Boolean as for whether this slide should be automatically
+destroyed once it&#8217;s not shown on the display anymore.</li>
+<li><strong>removal_key</strong> &#8211; A unique key that can identify this slide for its removal
+later.</li>
+<li><strong>expire_ms</strong> &#8211; How many ms this slide should live for. Default is 0 which
+means it will not automatically be removed.</li>
+<li><strong>mode</strong> &#8211; A reference to the Mode which created this slide.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.name">
+<tt class="descname">name</tt></dt>
+<dd><p>The string name of this slide.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.elements">
+<tt class="descname">elements</tt></dt>
+<dd><p>List of display elements that are active on this slide.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.surface">
+<tt class="descname">surface</tt></dt>
+<dd><p>Reference to the Pygame surface this slide uses.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.priority">
+<tt class="descname">priority</tt></dt>
+<dd><p>Integer of the relative priority of this slide. Lower
+priority slides won&#8217;t be shown if a higher priority slide is
+currently active. (A slide of the same priority as the active slide
+can displace it.) Note that &#8216;higher&#8217; numbers equal &#8216;higher&#8217;
+priority, i.e. Priority 2 is higher than Priority 1.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.active">
+<tt class="descname">active</tt></dt>
+<dd><p>Boolean as to whether this slide is currently active. Active
+slides will constantly ensure that their display elements are
+refreshed, so this saves CPU cycles by not keeping non-active slides
+up-to-date.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.persist">
+<tt class="descname">persist</tt></dt>
+<dd><p>Boolean as to whether this slide should persist when it becomes
+non-active. A value of False means that this slide will be destroyed
+as soon as it&#8217;s no longer active.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.width">
+<tt class="descname">width</tt></dt>
+<dd><p>Width of this slide, in pixels.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.height">
+<tt class="descname">height</tt></dt>
+<dd><p>Height of this slide, in pixels.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.depth">
+<tt class="descname">depth</tt></dt>
+<dd><p>Integer value of the color depth, either 8 or 24.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.palette">
+<tt class="descname">palette</tt></dt>
+<dd><p>The Pygame palette this slide uses. (8-bit only)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.removal_key">
+<tt class="descname">removal_key</tt></dt>
+<dd><p>Unique identifier that can be used later to remove this
+slide.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.expire_ms">
+<tt class="descname">expire_ms</tt></dt>
+<dd><p>Integer of ms that will cause this slide to automatically
+remove itself. The timer doesn&#8217;t start until the slide is shown.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.add_element">
+<tt class="descname">add_element</tt><big>(</big><em>element_type</em>, <em>name=None</em>, <em>x=None</em>, <em>y=None</em>, <em>h_pos=None</em>, <em>v_pos=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Adds a display element to the slide.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>element_type</strong> &#8211; String name of the type of element you&#8217;re adding.
+(i.e. &#8216;Text&#8217;, &#8216;Image&#8217;, &#8216;Shape&#8217;, etc.).</li>
+<li><strong>name</strong> &#8211; Friendly name of the new element.</li>
+<li><strong>x</strong> &#8211; &#8216;x&#8217; position of the upper left corner of this element. This is
+either the &#8216;x&#8217; position, or an offset in pixels, or an offset
+percentage. See the documentation for the calc_position method
+for details.</li>
+<li><strong>y</strong> &#8211; &#8216;y&#8217; position or offset, like x above.</li>
+<li><strong>h_pos</strong> &#8211; Relative horizontal position: left, center, or right.</li>
+<li><strong>v_pos</strong> &#8211; Relative verical position: top, center, or bottom.</li>
+<li><strong>**kwargs</strong> &#8211; A list of key/value settings for the element you&#8217;re
+adding.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><p>name: String name of the element.
+element: The newly-created display element object.
+layer: Integer of the relative layer of this element on the</p>
+<blockquote>
+<div><p>slide.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>x: x position of the upper left corner of this element on the</dt>
+<dd><p class="first last">slide.</p>
+</dd>
+<dt>y: y position of the upper left corner of this element on the</dt>
+<dd><p class="first last">slide.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">An element dictionary, which includes</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.add_ready_callback">
+<tt class="descname">add_ready_callback</tt><big>(</big><em>callback</em>, <em>**kwargs</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.blit_8bit_alpha">
+<tt class="descname">blit_8bit_alpha</tt><big>(</big><em>source_surface</em>, <em>dest_surface</em>, <em>x</em>, <em>y</em><big>)</big></dt>
+<dd><p>Blits an 8-bit surface onto another using the DMD-style alpha values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>source_surface</strong> &#8211; Source 8-bit pygame surface</li>
+<li><strong>dest_surface</strong> &#8211; Destination 8-bit Pygame surface the source surface
+will be blitted <em>to</em>.</li>
+<li><strong>x</strong> &#8211; x position of the upper left corner of where the source surface
+will be blitted to on the destination surface.</li>
+<li><strong>y</strong> &#8211; y position (goes with <cite>x</cite> above)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note this blit is expensive, so it&#8217;s only used when it&#8217;s specifically
+called for.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big></dt>
+<dd><p>Removes all elements from the slide and resets the slide to all
+black.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.get_subsurface">
+<tt class="descname">get_subsurface</tt><big>(</big><em>rect</em>, <em>layer=0</em><big>)</big></dt>
+<dd><p>Returns a surface of the slide based on the rect passed, but only for
+the elements of the passed layer and lower</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>rect</strong> &#8211; A pygame Rect object which defines the rectangle that will
+be returned.</li>
+<li><strong>layer</strong> &#8211; Optional layer which defines the highest layer element
+that should be included in the surface.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: A Pygame surface.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.pending_elements">
+<tt class="descname">pending_elements</tt><em class="property"> = None</em></dt>
+<dd><p>Elements which have related assets that are still loading in a
+background thread.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.ready">
+<tt class="descname">ready</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.media_controller.core.slide.Slide.ready_callbacks">
+<tt class="descname">ready_callbacks</tt><em class="property"> = None</em></dt>
+<dd><p>List of callback/kwarg tuples which will be called when all the
+elements of this slide are ready to be shown.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.refresh">
+<tt class="descname">refresh</tt><big>(</big><em>force_dirty=False</em><big>)</big></dt>
+<dd><p>Refreshes the slide by clearing it, and updating all the display
+elements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>force_dirty</strong> &#8211; Boolean which controls whether you want to force all
+the elements to be marked as dirty so they&#8217;re regenerated.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.remove">
+<tt class="descname">remove</tt><big>(</big><big>)</big></dt>
+<dd><p>Removes the slide. If this slide is active, the next-highest priority
+slide will automatically be shown.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.remove_element">
+<tt class="descname">remove_element</tt><big>(</big><em>name</em><big>)</big></dt>
+<dd><p>Removes a display element from the slide.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; String name of the display element you want to remove.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.schedule_removal">
+<tt class="descname">schedule_removal</tt><big>(</big><em>removal_time=None</em><big>)</big></dt>
+<dd><p>Schedules this slide to automatically be removed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>removal_time</strong> &#8211; MPF time string of when this slide should be removed.
+If no time is specified, the slide&#8217;s existing removal time is
+used. If the slide has no existing time, the slide will not be
+removed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.show">
+<tt class="descname">show</tt><big>(</big><big>)</big></dt>
+<dd><p>Shows this slide by making it active.</p>
+<p>This is immediate. If you want a transition, use the
+MPFDisplay.transition() method.</p>
+<p>This method will only show the slide if its priority is the same or
+higher than the existing slide.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.media_controller.core.slide.Slide.update">
+<tt class="descname">update</tt><big>(</big><big>)</big></dt>
+<dd><p>Updates this slide by calling each display element&#8217;s update() method,
+and blits the results if there&#8217;s an update.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.media_controller.core.show_controller.html"
+                        title="previous chapter">mpf.media_controller.core.show_controller module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.media_controller.core.slide_builder.html"
+                        title="next chapter">mpf.media_controller.core.slide_builder module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.media_controller.core.slide.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.media_controller.core.slide_builder.html" title="mpf.media_controller.core.slide_builder module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.media_controller.core.show_controller.html" title="mpf.media_controller.core.show_controller module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.media_controller.html" >mpf.media_controller package</a> &raquo;</li>
+          <li><a href="mpf.media_controller.core.html" >mpf.media_controller.core package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

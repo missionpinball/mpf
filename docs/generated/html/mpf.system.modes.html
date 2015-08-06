@@ -1,0 +1,621 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.modes module &mdash; Mission Pinball Framework 0.19.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.19.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.19.0 documentation" href="index.html" />
+    <link rel="up" title="mpf.system package" href="mpf.system.html" />
+    <link rel="next" title="mpf.system.platform module" href="mpf.system.platform.html" />
+    <link rel="prev" title="mpf.system.machine_mode module" href="mpf.system.machine_mode.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.platform.html" title="mpf.system.platform module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.machine_mode.html" title="mpf.system.machine_mode module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" accesskey="U">mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.modes">
+<span id="mpf-system-modes-module"></span><h1>mpf.system.modes module</h1>
+<p>Contains the ModeController, Mode, and ModeTimers parent classes</p>
+<dl class="class">
+<dt id="mpf.system.modes.Mode">
+<em class="property">class </em><tt class="descclassname">mpf.system.modes.</tt><tt class="descname">Mode</tt><big>(</big><em>machine</em>, <em>config</em>, <em>name</em>, <em>path</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Parent class for in-game mode code.</p>
+<dl class="attribute">
+<dt id="mpf.system.modes.Mode.active">
+<tt class="descname">active</tt></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.Mode.add_mode_event_handler">
+<tt class="descname">add_mode_event_handler</tt><big>(</big><em>event</em>, <em>handler</em>, <em>priority=1</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Registers an event handler which is automatically removed when this
+mode stops.</p>
+<p>This method is similar to the Event Manager&#8217;s add_handler() method,
+except this method automatically unregisters the handlers when the mode
+ends.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>event</strong> &#8211; String name of the event you&#8217;re adding a handler for. Since
+events are text strings, they don&#8217;t have to be pre-defined.</li>
+<li><strong>handler</strong> &#8211; The method that will be called when the event is fired.</li>
+<li><strong>priority</strong> &#8211; An arbitrary integer value that defines what order the
+handlers will be called in. The default is 1, so if you have a
+handler that you want to be called first, add it here with a
+priority of 2. (Or 3 or 10 or 100000.) The numbers don&#8217;t matter.
+They&#8217;re called from highest to lowest. (i.e. priority 100 is
+called before priority 1.)</li>
+<li><strong>**kwargs</strong> &#8211; Any any additional keyword/argument pairs entered here
+will be attached to the handler and called whenever that handler
+is called. Note these are in addition to kwargs that could be
+passed as part of the event post. If there&#8217;s a conflict, the
+event-level ones will win.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A GUID reference to the handler which you can use to later remove
+the handler via <tt class="docutils literal"><span class="pre">remove_handler_by_key</span></tt>. Though you don&#8217;t need to
+remove the handler since the whole point of this method is they&#8217;re
+automatically removed when the mode stops.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note that if you do add a handler via this method and then remove it
+manually, that&#8217;s ok too.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.Mode.configure_mode_settings">
+<tt class="descname">configure_mode_settings</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Processes this mode&#8217;s configuration settings from a config
+dictionary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.Mode.mode_init">
+<tt class="descname">mode_init</tt><big>(</big><big>)</big></dt>
+<dd><p>User-overrideable method which will be called when this mode
+initializes as part of the MPF boot process.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.Mode.mode_start">
+<tt class="descname">mode_start</tt><big>(</big><big>)</big></dt>
+<dd><p>User-overrideable method which will be called whenever this mode
+starts (i.e. whenever it becomes active).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.Mode.mode_stop">
+<tt class="descname">mode_stop</tt><big>(</big><big>)</big></dt>
+<dd><p>User-overrideable method which will be called whenever this mode
+stops (i.e. whenever it becomes inactive).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.modes.Mode.player">
+<tt class="descname">player</tt><em class="property"> = None</em></dt>
+<dd><p>Reference to the current player object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.Mode.start">
+<tt class="descname">start</tt><big>(</big><em>priority=None</em>, <em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Starts this mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>priority</strong> &#8211; Integer value of what you want this mode to run at. If you
+don&#8217;t specify one, it will use the &#8220;Mode: priority&#8221; setting from
+this mode&#8217;s configuration file.</li>
+<li><strong>**kwargs</strong> &#8211; Catch-all since this mode might start from events with
+who-knows-what keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Warning: You can safely call this method, but do not override it in your
+mode code. If you want to write your own mode code by subclassing Mode,
+put whatever code you want to run when this mode starts in the
+mode_start method which will be called automatically.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.Mode.stop">
+<tt class="descname">stop</tt><big>(</big><em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Stops this mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> &#8211; Catch-all since this mode might start from events with
+who-knows-what keyword arguments.</td>
+</tr>
+</tbody>
+</table>
+<p>Warning: You can safely call this method, but do not override it in your
+mode code. If you want to write your own mode code by subclassing Mode,
+put whatever code you want to run when this mode stops in the
+mode_stop method which will be called automatically.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.modes.ModeController">
+<em class="property">class </em><tt class="descclassname">mpf.system.modes.</tt><tt class="descname">ModeController</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Parent class for the Mode Controller. There is one instance of this in
+MPF and it&#8217;s responsible for loading, unloading, and managing all game
+modes.</p>
+<dl class="method">
+<dt id="mpf.system.modes.ModeController.dump">
+<tt class="descname">dump</tt><big>(</big><big>)</big></dt>
+<dd><p>Dumps the current status of the running modes to the log file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeController.register_load_method">
+<tt class="descname">register_load_method</tt><big>(</big><em>load_method</em>, <em>config_section_name=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Used by system components, plugins, etc. to register themselves with
+the Mode Controller for anything they need a mode to do when it&#8217;s
+registered.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>load_method</strong> &#8211; The method that will be called when this mode code
+loads.</li>
+<li><strong>config_section_name</strong> &#8211; An optional string for the section of the
+configuration file that will be passed to the load_method when
+it&#8217;s called.</li>
+<li><strong>**kwargs</strong> &#8211; Any additional keyword arguments specified will be passed
+to the load_method.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note that these methods will be called once, when the mode code is first
+initialized during the MPF boot process.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeController.register_start_method">
+<tt class="descname">register_start_method</tt><big>(</big><em>start_method</em>, <em>config_section_name=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Used by system components, plugins, etc. to register themselves with
+the Mode Controller for anything that they a mode to do when it starts.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>start_method</strong> &#8211; The method that will be called when this mode code
+loads.</li>
+<li><strong>config_section_name</strong> &#8211; An optional string for the section of the
+configuration file that will be passed to the start_method when
+it&#8217;s called.</li>
+<li><strong>**kwargs</strong> &#8211; Any additional keyword arguments specified will be passed
+to the start_method.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note that these methods will be called every single time this mode is
+started.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.modes.ModeTimer">
+<em class="property">class </em><tt class="descclassname">mpf.system.modes.</tt><tt class="descname">ModeTimer</tt><big>(</big><em>machine</em>, <em>mode</em>, <em>name</em>, <em>config</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Parent class for a mode timer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>machine</strong> &#8211; The main MPF MachineController object.</li>
+<li><strong>mode</strong> &#8211; The parent mode object that this timer belongs to.</li>
+<li><strong>name</strong> &#8211; The string name of this timer.</li>
+<li><strong>config</strong> &#8211; A Python dictionary which contains the configuration settings
+for this timer.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.add_time">
+<tt class="descname">add_time</tt><big>(</big><em>timer_value</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Adds ticks to this timer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>Args</strong> &#8211; </li>
+<li><strong>timer_value</strong> &#8211; The number of ticks you want to add to this timer&#8217;s
+current value.</li>
+<li><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.change_tick_interval">
+<tt class="descname">change_tick_interval</tt><big>(</big><em>change=0.0</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Changes the interval for each &#8220;tick&#8221; of this timer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>change</strong> &#8211; Float or int of the change you want to make to this timer&#8217;s
+tick rate. Note this value is added to the current tick
+interval. To set an absolute value, use the set_tick_interval()
+method. To shorten the tick rate, use a negative value.</li>
+<li><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.kill">
+<tt class="descname">kill</tt><big>(</big><big>)</big></dt>
+<dd><p>Stops this timer and also removes all the control events.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.pause">
+<tt class="descname">pause</tt><big>(</big><em>timer_value=0</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Pauses the timer and posts the &#8216;timer_&lt;name&gt;_paused&#8217; event</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>timer_value</strong> &#8211; How many seconds you want to pause the timer for. Note
+that this pause time is real-world seconds and does not take
+into consideration this timer&#8217;s tick interval.</li>
+<li><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.reset">
+<tt class="descname">reset</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
+<dd><p>Resets this timer based to the starting value that&#8217;s already been
+configured. Does not start or stop the timer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.restart">
+<tt class="descname">restart</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
+<dd><p>Restarts the timer by resetting it and then starting it. Essentially
+this is just a reset() then a start()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.set_current_time">
+<tt class="descname">set_current_time</tt><big>(</big><em>timer_value</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Sets the current amount of time of this timer. This value is
+expressed in &#8220;ticks&#8221; since the interval per tick can be something other
+than 1 second).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>timer_value</strong> &#8211; Integer of the current value you want this timer to be.</li>
+<li><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.set_tick_interval">
+<tt class="descname">set_tick_interval</tt><big>(</big><em>timer_value</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Sets the number of seconds between ticks for this timer. This is an
+absolute setting. To apply a change to the current value, use the
+change_tick_interval() method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>timer_value</strong> &#8211; The new number of seconds between each tick of this
+timer. This value should always be positive.</li>
+<li><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.start">
+<tt class="descname">start</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
+<dd><p>Starts this timer based on the starting value that&#8217;s already been
+configured. Use set_current_time() if you want to set the starting time
+value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.stop">
+<tt class="descname">stop</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
+<dd><p>Stops the timer and posts the &#8216;timer_&lt;name&gt;_stopped&#8217; event.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.subtract_time">
+<tt class="descname">subtract_time</tt><big>(</big><em>timer_value</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Subracts ticks from this timer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>timer_value</strong> &#8211; The numebr of ticks you want to subtract from this
+timer&#8217;s current value.</li>
+<li><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.ModeTimer.timer_complete">
+<tt class="descname">timer_complete</tt><big>(</big><big>)</big></dt>
+<dd><p>Automatically called when this timer completes. Posts the
+&#8216;timer_&lt;name&gt;_complete&#8217; event. Can be manually called to mark this timer
+as complete.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> &#8211; Not used in this method. Only exists since this method is
+often registered as an event handler which may contain
+additional keyword arguments.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.modes.RemoteMethod">
+<em class="property">class </em><tt class="descclassname">mpf.system.modes.</tt><tt class="descname">RemoteMethod</tt></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">tuple</span></tt></p>
+<p>RemotedMethod is used by other modules that want to register a method to
+be called on mode_start or mode_stop.</p>
+<dl class="method">
+<dt id="mpf.system.modes.RemoteMethod.__getnewargs__">
+<tt class="descname">__getnewargs__</tt><big>(</big><big>)</big></dt>
+<dd><p>Return self as a plain tuple.  Used by copy and pickle.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.RemoteMethod.__getstate__">
+<tt class="descname">__getstate__</tt><big>(</big><big>)</big></dt>
+<dd><p>Exclude the OrderedDict from pickling</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.modes.RemoteMethod.__repr__">
+<tt class="descname">__repr__</tt><big>(</big><big>)</big></dt>
+<dd><p>Return a nicely formatted representation string</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.modes.RemoteMethod.config_section">
+<tt class="descname">config_section</tt></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.modes.RemoteMethod.kwargs">
+<tt class="descname">kwargs</tt></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.modes.RemoteMethod.method">
+<tt class="descname">method</tt></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.system.machine_mode.html"
+                        title="previous chapter">mpf.system.machine_mode module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.system.platform.html"
+                        title="next chapter">mpf.system.platform module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.modes.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.platform.html" title="mpf.system.platform module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.machine_mode.html" title="mpf.system.machine_mode module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" >mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
