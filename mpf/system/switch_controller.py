@@ -278,6 +278,8 @@ class SwitchController(object):
         if not obj and name:
             obj = self.machine.switches[name]
 
+        name = obj.name  # switches this to the name MPF wants to use
+
         if not name:
             self.log.warning("Received a state change from non-configured "
                              "switch. Number: %s", num)
