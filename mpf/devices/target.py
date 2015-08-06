@@ -218,18 +218,29 @@ class Target(Device):
             self.log.debug("Target profile '%s' not found. Target is has '%s' "
                            "applied.", profile, self.active_profile_name)
 
-    def remove_profile(self, removal_key):
+    def remove_profile(self, removal_key=None, **kwargs):
         """Removes a target profile from this target.
-
-        If the profile removed is the active one (because it was the highest
-        priority), then this method activates the next-highest priority profile.
 
         Args:
             removal_key: The key that was returned when the profile was applied
                 to the target which is how the profile you want to remove is
-                identified.
+                identified. Default is None, in which case whichever profile is
+                active will be removed.
+
+        If the profile removed is the active one (because it was the highest
+        priority), then this method activates the next-highest priority profile.
+
+        Note that if there is only one profile applied, then it will not be
+        removed.
 
         """
+
+        if len(self.profiles) == 1:
+            return
+
+        if not removal_key:  # Get the key of the highest profile
+            removal_key = self.profiles[0][4]
+
         old_profile = self.active_profile_name
 
         for entry in self.profiles[:]:  # slice so we can remove while iter
@@ -276,7 +287,7 @@ class Target(Device):
                 not force):
             return
 
-        if not self.enabled or not force:
+        if not self.enabled and not force:
             return
 
         if not stealth:
@@ -441,6 +452,13 @@ class TargetGroup(Device):
         """
         for target in self.targets:
             target.reset()
+
+    def remove_profile(self, **kwargs):
+        """Removes the current active profile from every target in the group.
+
+        """
+        for target in self.targets:
+            target.remove_profile()
 
     def rotate(self, direction='right', steps=1, **kwargs):
         """Rotates (or "shifts") the state of all the targets in this group.
