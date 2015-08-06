@@ -38,21 +38,24 @@ def decode_command_string(bcp_string):
         A tuple of the command string and a dictionary of kwarg pairs.
 
     Example:
-        Input: trigger?name=hello&foo=foo%20bar
-        Output: ('trigger', {'name': 'hello', 'foo': 'foo bar'})
+        Input: trigger?name=hello&foo=Foo%20Bar
+        Output: ('trigger', {'name': 'hello', 'foo': 'Foo Bar'})
+
+    Note that BCP commands and parameter names are not case-sensitive and will
+    be converted to lowercase. Parameter values are case sensitive, and case
+    will be preserved.
 
     """
-    bcp_command = urlparse.urlsplit(bcp_string.lower())
+    bcp_command = urlparse.urlsplit(bcp_string)
     try:
         kwargs = urlparse.parse_qs(bcp_command.query)
 
     except AttributeError:
         kwargs = dict()
 
-    for k, v in kwargs.iteritems():
-        kwargs[k] = urllib.unquote(v[0])
-
-    return bcp_command.path, kwargs
+    return (bcp_command.path.lower(),
+            dict((k.lower(), urllib.unquote(v[0]))
+                for k,v in kwargs.iteritems()))
 
 
 def encode_command_string(bcp_command, **kwargs):
@@ -67,17 +70,21 @@ def encode_command_string(bcp_command, **kwargs):
         A string.
 
     Example:
-        Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'bar'})
-        Output: trigger?name=hello&foo=bar
+        Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'Bar'})
+        Output: trigger?name=hello&foo=Bar
+
+    Note that BCP commands and parameter names are not case-sensitive and will
+    be converted to lowercase. Parameter values are case sensitive, and case
+    will be preserved.
 
     """
+
     kwarg_string = ''
 
     try:
         for k, v in kwargs.iteritems():
-
             kwarg_string += (urllib.quote(k.lower(), '') + '=' +
-                             urllib.quote(str(v).lower(), '') + '&')
+                             urllib.quote(str(v), '') + '&')
 
         kwarg_string = kwarg_string[:-1]
 
@@ -92,7 +99,7 @@ class BCP(object):
     """The parent class for the BCP client.
 
     This class can support connections with multiple remote hosts at the same
-    time using multiple instances of the BCPClient class.
+    time using multiple instances of the BCPClientSocket class.
 
     Args:
         machine: A reference to the main MPF machine object.
@@ -236,14 +243,14 @@ class BCP(object):
             if 'host' not in settings:
                 break
 
-            self.bcp_clients.append(BCPClient(self.machine, name,
+            self.bcp_clients.append(BCPClientSocket(self.machine, name,
                                               settings, self.receive_queue))
 
     def remove_bcp_connection(self, bcp_client):
         """Removes a BCP connection to a remote BCP host.
 
         Args:
-            bcp_client: A reference to the BCPClient instance you want to
+            bcp_client: A reference to the BCPClientSocket instance you want to
                 remove.
 
         """
@@ -354,6 +361,12 @@ class BCP(object):
 
         try:
             for event in config['slide_player'].keys():
+                self.create_trigger_event(event)
+        except KeyError:
+            pass
+
+        try:
+            for event in config['event_player'].keys():
                 self.create_trigger_event(event)
         except KeyError:
             pass
@@ -755,7 +768,7 @@ class BCP(object):
             self.log.warning('Received volume for unknown track "%s"', track)
 
 
-class BCPClient(object):
+class BCPClientSocket(object):
     """Parent class for a BCP client socket. (There can be multiple of these to
     connect to multiple BCP media controllers simultaneously.)
 
@@ -770,7 +783,7 @@ class BCPClient(object):
 
     def __init__(self, machine, name, config, receive_queue):
 
-        self.log = logging.getLogger('BCPClient.' + name)
+        self.log = logging.getLogger('BCPClientSocket.' + name)
         self.log.info('Setting up BCP Client...')
 
         self.machine = machine

@@ -427,6 +427,8 @@ class MediaController(object):
             return
             #todo raise error
 
+        name = name.lower()
+
         if name in self.game_modes:
             self.game_modes[name].start(priority=priority)
 
@@ -435,6 +437,8 @@ class MediaController(object):
         if not name:
             return
             #todo raise error
+
+        name = name.lower()
 
         if name in self.game_modes:
             self.game_modes[name].stop()
