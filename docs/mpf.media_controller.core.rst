@@ -13,6 +13,7 @@ Submodules
    mpf.media_controller.core.media_controller
    mpf.media_controller.core.modes
    mpf.media_controller.core.show_controller
+   mpf.media_controller.core.slide
    mpf.media_controller.core.slide_builder
    mpf.media_controller.core.sound
    mpf.media_controller.core.window
