@@ -38,6 +38,16 @@ class GI(Device):
 
     def enable(self, brightness=255, fade_ms=0, start_brightness=None,
            **kwargs):
+        """Enables this GI string.
+
+        Args:
+            brightness: Int from 0-255 of how bright you want this to be. 255 is
+                on. 0 os iff. Note that not all GI strings on all machines
+                support this.
+            fade_ms: How quickly you'd like this GI string to fade to this
+                brightness level. This is not implemented.
+            start_brightness: Starting brightness level for a fade.
+        """
         if type(brightness) is list:
             brightness = brightness[0]
 
@@ -48,6 +58,7 @@ class GI(Device):
         self.hw_driver.on(brightness, fade_ms, start_brightness)
 
     def disable(self, **kwargs):
+        """Disables this GI string."""
         self.hw_driver.off()
 
     def add_handler(self, callback):

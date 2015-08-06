@@ -220,6 +220,23 @@ class DeviceCollection(CaseInsensitiveDict):
                 output.append(item)
         return output
 
+    def items_not_tagged(self, tag):
+        """Returns of list of device objects which do not have a certain tag.
+
+        Args:
+            tag: A string of the tag name which specifies what devices are
+                returned. All devices will be returned except those with this
+                tag.
+        Returns:
+            A list of device objects. If no devices are found with that tag, it
+            will return an empty list.
+        """
+        output = []
+        for item in self:
+            if tag not in item.tags:
+                output.append(item)
+        return output
+
     def is_valid(self, name):
         """Checks to see if the name passed is a valid device.
 
