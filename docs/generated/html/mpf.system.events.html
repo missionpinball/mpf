@@ -1,0 +1,532 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.events module &mdash; Mission Pinball Framework 0.20.0-a0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.20.0-a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.20.0-a0 documentation" href="index.html" />
+    <link rel="up" title="mpf.system package" href="mpf.system.html" />
+    <link rel="next" title="mpf.system.light_controller module" href="mpf.system.light_controller.html" />
+    <link rel="prev" title="mpf.system.devices module" href="mpf.system.devices.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.light_controller.html" title="mpf.system.light_controller module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.devices.html" title="mpf.system.devices module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" accesskey="U">mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.events">
+<span id="mpf-system-events-module"></span><h1>mpf.system.events module</h1>
+<p>Contains the base classes for the EventManager and QueuedEvents</p>
+<dl class="class">
+<dt id="mpf.system.events.EventManager">
+<em class="property">class </em><tt class="descclassname">mpf.system.events.</tt><tt class="descname">EventManager</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.system.events.EventManager.add_handler">
+<tt class="descname">add_handler</tt><big>(</big><em>event</em>, <em>handler</em>, <em>priority=1</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Registers an event handler to respond to an event.</p>
+<p>If you add a handlers for an event for which it has already been
+registered, the new one will overwrite the old one. This is useful for
+changing priorities of existing handlers. Also it&#8217;s good to know that
+you can safely add a handler over and over.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>event</strong> &#8211; String name of the event you&#8217;re adding a handler for. Since
+events are text strings, they don&#8217;t have to be pre-defined.
+Note that all event strings will be converted to lowercase.</li>
+<li><strong>handler</strong> &#8211; The method that will be called when the event is fired.</li>
+<li><strong>priority</strong> &#8211; An arbitrary integer value that defines what order the
+handlers will be called in. The default is 1, so if you have a
+handler that you want to be called first, add it here with a
+priority of 2. (Or 3 or 10 or 100000.) The numbers don&#8217;t matter.
+They&#8217;re called from highest to lowest. (i.e. priority 100 is
+called before priority 1.)</li>
+<li><strong>**kwargs</strong> &#8211; Any any additional keyword/argument pairs entered here
+will be attached to the handler and called whenever that handler
+is called. Note these are in addition to kwargs that could be
+passed as part of the event post. If there&#8217;s a conflict, the
+event-level ones will win.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A GUID reference to the handler which you can use to later remove
+the handler via <tt class="docutils literal"><span class="pre">remove_handler_by_key</span></tt>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>For example:
+<tt class="docutils literal"><span class="pre">handler_list.append(events.add_handler('ev',</span> <span class="pre">self.test))</span></tt></p>
+<p>Then later to remove all the handlers that a module added, you could:
+for handler in handler_list:
+<tt class="docutils literal"><span class="pre">events.remove_handler(handler)</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.add_monitor">
+<tt class="descname">add_monitor</tt><big>(</big><em>monitor</em><big>)</big></dt>
+<dd><p>Adds a new event monitor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>monitor</strong> &#8211; Reference to the callback function that will be called on
+every event posting.</td>
+</tr>
+</tbody>
+</table>
+<p>Event monitors are similar to event handlers except they&#8217;re called on
+every single event. In other words, they&#8217;re like handlers you register
+for every event instead of a single event.</p>
+<p>The monitor you register will be called on each event posting with the
+following paramters:</p>
+<blockquote>
+<div><ul class="simple">
+<li>event String name of the evnet</li>
+<li>ev_type String of the type of event</li>
+<li>callback Reference to the event callback (if it has one)</li>
+<li>kwargs Dict of kwargs that will be passed to the handlers.</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.does_event_exist">
+<tt class="descname">does_event_exist</tt><big>(</big><em>event_name</em><big>)</big></dt>
+<dd><p>Checks to see if any handlers are registered for the event name that
+is passed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event_name</strong> &#8211; The string name of the event you want to check. This
+string will be converted to lowercase.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True or False</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.get_current_event">
+<tt class="descname">get_current_event</tt><big>(</big><big>)</big></dt>
+<dd><p>Returns a tuple with information about the current event that&#8217;s in
+progress.</p>
+<p>Returned result is a 4-element tuple:</p>
+<p>[0] event name (str)
+[1] event type (str)
+[2] post-event callback (meth)
+[3] kwargs (dict)</p>
+<p>If no event is in progress, these are all None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.post">
+<tt class="descname">post</tt><big>(</big><em>event</em>, <em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Posts an event which causes all the registered handlers to be
+called.</p>
+<p>Events are processed serially (e.g. one at a time), so if the event
+system is in the process of handling another event, this event is
+added to a queue and processed after the current event is done.</p>
+<p>You can control the order the handlers will be called by optionally
+specifying a priority when the handlers were registed. (Higher priority
+values will be processed first.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> &#8211; A string name of the event you&#8217;re posting. Note that you can
+post whatever event you want. You don&#8217;t have to set up anything
+ahead of time, and if no handlers are registered for the event
+you post, so be it. Note that this event name will be converted
+to lowercase.</li>
+<li><strong>callback</strong> &#8211; An optional method which will be called when the final
+handler is done processing this event. Default is None.</li>
+<li><strong>**kwargs</strong> &#8211; One or more options keyword/value pairs that will be
+passed to each handler. (Just make sure your handlers are
+expecting them. You can add <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs to your handler methods if
+certain ones don&#8217;t need them.)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.post_boolean">
+<tt class="descname">post_boolean</tt><big>(</big><em>event</em>, <em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Posts an boolean event which causes all the registered handlers to
+be called one-by-one. Boolean events differ from regular events in that
+if any handler returns False, the remaining handlers will not be
+called.</p>
+<p>Events are processed serially (e.g. one at a time), so if the event
+system is in the process of handling another event, this event is
+added to a queue and processed after the current event is done.</p>
+<p>You can control the order the handlers will be called by optionally
+specifying a priority when the handlers were registed. (Higher priority
+values will be processed first.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> &#8211; A string name of the event you&#8217;re posting. Note that you can
+post whatever event you want. You don&#8217;t have to set up anything
+ahead of time, and if no handlers are registered for the event
+you post, so be it. Note that this event name will be converted
+to lowercase.</li>
+<li><strong>callback</strong> &#8211; An optional method which will be called when the final
+handler is done processing this event. Default is None. If
+any handler returns False and cancels this boolean event, the
+callback will still be called, but a new kwarg ev_result=False
+will be passed to it.</li>
+<li><strong>**kwargs</strong> &#8211; One or more options keyword/value pairs that will be
+passed to each handler. (Just make sure your handlers are
+expecting them. You can add <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs to your handler methods if
+certain ones don&#8217;t need them.)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.post_queue">
+<tt class="descname">post_queue</tt><big>(</big><em>event</em>, <em>callback</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Posts a queue event which causes all the registered handlers to be
+called.</p>
+<p>Queue events differ from standard events in that individual handlers
+are given the option to register a &#8220;wait&#8221;, and the callback will not be
+called until any handler(s) that registered a wait will have to release
+that wait. Once all the handlers release their waits, the callback is
+called.</p>
+<p>Events are processed serially (e.g. one at a time), so if the event
+system is in the process of handling another event, this event is
+added to a queue and processed after the current event is done.</p>
+<p>You can control the order the handlers will be called by optionally
+specifying a priority when the handlers were registed. (Higher priority
+values will be processed first.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> &#8211; A string name of the event you&#8217;re posting. Note that you can
+post whatever event you want. You don&#8217;t have to set up anything
+ahead of time, and if no handlers are registered for the event
+you post, so be it. Note that this event name will be converted
+to lowercase.</li>
+<li><strong>callback</strong> &#8211; The method which will be called when the final
+handler is done processing this event and any handlers that
+registered waits have cleared their waits.</li>
+<li><strong>**kwargs</strong> &#8211; One or more options keyword/value pairs that will be
+passed to each handler. (Just make sure your handlers are
+expecting them. You can add <a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs to your handler methods if
+certain ones don&#8217;t need them.)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.post_relay">
+<tt class="descname">post_relay</tt><big>(</big><em>event</em>, <em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Posts a relay event which causes all the registered handlers to be
+called. A dictionary can be passed from handler-to-handler and modified
+as needed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> &#8211; A string name of the event you&#8217;re posting. Note that you can
+post whatever event you want. You don&#8217;t have to set up anything
+ahead of time, and if no handlers are registered for the event
+you post, so be it. Note that this event name will be converted
+to lowercase.</li>
+<li><strong>callback</strong> &#8211; The method which will be called when the final handler is
+done processing this event. Default is None.</li>
+<li><strong>**kwargs</strong> &#8211; One or more options keyword/value pairs that will be
+passed to each handler. (Just make sure your handlers are
+expecting them. You can add <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs to your handler methods if
+certain ones don&#8217;t need them.)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Events are processed serially (e.g. one at a time), so if the event
+system is in the process of handling another event, this event is
+added to a queue and processed after the current event is done.</p>
+<p>You can control the order the handlers will be called by optionally
+specifying a priority when the handlers were registed. (Higher priority
+values will be processed first.)</p>
+<p>Relay events differ from standard events in that the resulting kwargs
+from one handler are passed to the next handler. (In other words,
+stanard events mean that all the handlers get the same initial kwargs,
+whereas relay events &#8220;relay&#8221; the resulting kwargs from one handler to
+the next.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.process_event_player">
+<tt class="descname">process_event_player</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>priority=0</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.remove_handler">
+<tt class="descname">remove_handler</tt><big>(</big><em>method</em><big>)</big></dt>
+<dd><p>Removes an event handler from all events a method is registered to
+handle.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> &#8211; The method whose handlers you want to remove.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.remove_handler_by_event">
+<tt class="descname">remove_handler_by_event</tt><big>(</big><em>event</em>, <em>handler</em><big>)</big></dt>
+<dd><p>Removes the handler you pass from the event you pass.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> &#8211; The name of the event you want to remove the handler from.
+This string will be converted to lowercase.</li>
+<li><strong>handler</strong> &#8211; The handler method you want to remove.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note that keyword arguments for the handler are not taken into
+consideration. In other words, this method only removes the registered
+handler / event combination, regardless of whether the keyword
+arguments match or not.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.remove_handler_by_key">
+<tt class="descname">remove_handler_by_key</tt><big>(</big><em>key</em><big>)</big></dt>
+<dd><p>Removes a registered event handler by key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; The key of the handler you want to remove</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.remove_handlers_by_keys">
+<tt class="descname">remove_handlers_by_keys</tt><big>(</big><em>key_list</em><big>)</big></dt>
+<dd><p>Removes multiple event handlers based on a passed list of keys</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key_list</strong> &#8211; A list of keys of the handlers you want to remove</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.remove_monitor">
+<tt class="descname">remove_monitor</tt><big>(</big><em>monitor</em><big>)</big></dt>
+<dd><p>Removes / deregisters an event monitor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>monitor</strong> &#8211; The function you want to deregister.</td>
+</tr>
+</tbody>
+</table>
+<p>This method can safely be called even if this monitor is not registered.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.replace_handler">
+<tt class="descname">replace_handler</tt><big>(</big><em>event</em>, <em>handler</em>, <em>priority=1</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Checks to see if a handler (optionally with kwargs) is registered for
+an event and replaces it if so.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> &#8211; The event you want to check to see if this handler is
+registered for. This string will be converted to lowercase.</li>
+<li><strong>handler</strong> &#8211; The method of the handler you want to check.</li>
+<li><strong>priority</strong> &#8211; Optional priority of the new handler that will be
+registered.</li>
+<li><strong>**kwargs</strong> &#8211; The kwargs you want to check and the kwatgs that will be
+registered with the new handler.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If you don&#8217;t pass kwargs, this method will just look for the handler and
+event combination. If you do pass kwargs, it will make sure they match
+before replacing the existing entry.</p>
+<p>If this method doesn&#8217;t find a match, it will still add the new handler.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.EventManager.unload_event_player_events">
+<tt class="descname">unload_event_player_events</tt><big>(</big><em>event_keys</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.events.QueuedEvent">
+<em class="property">class </em><tt class="descclassname">mpf.system.events.</tt><tt class="descname">QueuedEvent</tt><big>(</big><em>callback</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>The base class for an event queue which is created each time a queue
+event is called.</p>
+<p>See the documentation at
+<a class="reference external" href="http://missionpinball.com/docs/system-components/events/">http://missionpinball.com/docs/system-components/events/</a>
+for a description of how queue events work.</p>
+<dl class="method">
+<dt id="mpf.system.events.QueuedEvent.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.QueuedEvent.is_empty">
+<tt class="descname">is_empty</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.QueuedEvent.kill">
+<tt class="descname">kill</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.events.QueuedEvent.wait">
+<tt class="descname">wait</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.system.devices.html"
+                        title="previous chapter">mpf.system.devices module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.system.light_controller.html"
+                        title="next chapter">mpf.system.light_controller module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.events.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.light_controller.html" title="mpf.system.light_controller module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.devices.html" title="mpf.system.devices module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" >mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

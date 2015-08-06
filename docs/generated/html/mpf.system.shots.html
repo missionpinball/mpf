@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.shots module &mdash; Mission Pinball Framework 0.20.0-a0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.20.0-a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.20.0-a0 documentation" href="index.html" />
+    <link rel="up" title="mpf.system package" href="mpf.system.html" />
+    <link rel="next" title="mpf.system.switch_controller module" href="mpf.system.switch_controller.html" />
+    <link rel="prev" title="mpf.system.scriptlet module" href="mpf.system.scriptlet.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.switch_controller.html" title="mpf.system.switch_controller module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.scriptlet.html" title="mpf.system.scriptlet module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" accesskey="U">mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.shots">
+<span id="mpf-system-shots-module"></span><h1>mpf.system.shots module</h1>
+<p>MPF plugin for a shot controller which converts series of switch events
+to &#8216;shots&#8217; in the game.</p>
+<dl class="class">
+<dt id="mpf.system.shots.SequenceShot">
+<em class="property">class </em><tt class="descclassname">mpf.system.shots.</tt><tt class="descname">SequenceShot</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>priority</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.system.shots.Shot" title="mpf.system.shots.Shot"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.shots.Shot</span></tt></a></p>
+<dl class="method">
+<dt id="mpf.system.shots.SequenceShot.confirm_shot">
+<tt class="descname">confirm_shot</tt><big>(</big><big>)</big></dt>
+<dd><p>Called when the shot is complete to confirm and reset it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.shots.SequenceShot.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables the shot. If it&#8217;s disabled, the switch handlers aren&#8217;t
+active and the shot event will not be posted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.shots.SequenceShot.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables the shot. If it&#8217;s not enabled, the switch handlers aren&#8217;t
+active and the shot event will not be posted.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.shots.SequenceShot.progress_index">
+<tt class="descname">progress_index</tt><em class="property"> = None</em></dt>
+<dd><p>Tracks how far along through this sequence the current shot is.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.shots.SequenceShot.reset">
+<tt class="descname">reset</tt><big>(</big><big>)</big></dt>
+<dd><p>Resets the progress without disabling the shot.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.shots.Shot">
+<em class="property">class </em><tt class="descclassname">mpf.system.shots.</tt><tt class="descname">Shot</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>priority=0</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.system.shots.Shot.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables this shot.</p>
+<p>When a shot is disabled, it doesn&#8217;t track switches or progress and
+doesn&#8217;t post events when the shot is made.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.shots.Shot.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables this shot.</p>
+<p>Shots are enabled by default when they&#8217;re created.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.system.shots.Shot.monitor_enabled">
+<tt class="descname">monitor_enabled</tt><em class="property"> = False</em></dt>
+<dd><p>Class attribute which specifies whether any monitors have been registered
+to track shots.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.shots.Shot.shot_made">
+<tt class="descname">shot_made</tt><big>(</big><big>)</big></dt>
+<dd><p>Called when this shot was successfully made.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.shots.ShotController">
+<em class="property">class </em><tt class="descclassname">mpf.system.shots.</tt><tt class="descname">ShotController</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.system.shots.ShotController.process_config">
+<tt class="descname">process_config</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>priority=0</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.shots.ShotController.remove_shots">
+<tt class="descname">remove_shots</tt><big>(</big><em>shot_list</em><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.shots.StandardShot">
+<em class="property">class </em><tt class="descclassname">mpf.system.shots.</tt><tt class="descname">StandardShot</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>priority</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="#mpf.system.shots.Shot" title="mpf.system.shots.Shot"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.shots.Shot</span></tt></a></p>
+<dl class="method">
+<dt id="mpf.system.shots.StandardShot.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables the shot.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.shots.StandardShot.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables the shot.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.system.scriptlet.html"
+                        title="previous chapter">mpf.system.scriptlet module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.system.switch_controller.html"
+                        title="next chapter">mpf.system.switch_controller module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.shots.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.switch_controller.html" title="mpf.system.switch_controller module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.scriptlet.html" title="mpf.system.scriptlet module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" >mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

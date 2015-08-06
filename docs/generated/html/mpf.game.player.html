@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.game.player module &mdash; Mission Pinball Framework 0.20.0-a0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.20.0-a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.20.0-a0 documentation" href="index.html" />
+    <link rel="up" title="mpf.game package" href="mpf.game.html" />
+    <link rel="next" title="mpf.media_controller package" href="mpf.media_controller.html" />
+    <link rel="prev" title="mpf.game.game module" href="mpf.game.game.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.media_controller.html" title="mpf.media_controller package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.game.game.html" title="mpf.game.game module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.game.html" accesskey="U">mpf.game package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.game.player">
+<span id="mpf-game-player-module"></span><h1>mpf.game.player module</h1>
+<p>Contains the Player class which reprsents a player in a pinball game.</p>
+<dl class="class">
+<dt id="mpf.game.player.Player">
+<em class="property">class </em><tt class="descclassname">mpf.game.player.</tt><tt class="descname">Player</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for a player. One instance of this class is created for each
+player.</p>
+<p>The Game class maintains a &#8220;player&#8221; attribute which always points to the
+current player. You can access this via game.player. (Or
+self.machine.game.player).</p>
+<p>This class is responsible for tracking per-player variables. There are
+several ways they can be used:</p>
+<p>player.ball = 0 (sets the player&#8217;s &#8216;ball&#8217; value to 0)
+print player.ball (prints the value of the player&#8217;s &#8216;ball&#8217; value)</p>
+<p>If the value of a variable is requested but that variable doesn&#8217;t exist,
+that variable will automatically be created (and returned) with a value of
+0.</p>
+<p>Every time a player variable is changed, an MPF is posted with the name
+&#8220;player_&lt;name&gt;&#8221;. That event will have three parameters posted along with it:</p>
+<ul class="simple">
+<li>value (the new value)</li>
+<li>prev_value (the old value before it was updated)</li>
+<li>change (the change in the value)</li>
+</ul>
+<p>For the &#8216;change&#8217; parameter, it will attempt to subtract the old value from
+the new value. If that works, it will return the result as the change. If it
+doesn&#8217;t work (like if you&#8217;re not storing numbers in this variable), then
+the change paramter will be True if the new value is different and False if
+the value didn&#8217;t change.</p>
+<p>Some examples:</p>
+<p>player.score = 0</p>
+<p>Event posted:
+&#8216;player_score&#8217; with Args: value=0, change=0, prev_value=0</p>
+<p>player.score += 500</p>
+<p>Event posted:
+&#8216;player_score&#8217; with Args: value=500, change=500, prev_value=0</p>
+<p>player.score = 1200</p>
+<p>Event posted:
+&#8216;player_score&#8217; with Args: value=1200, change=700, prev_value=500</p>
+<dl class="attribute">
+<dt id="mpf.game.player.Player.monitor_enabled">
+<tt class="descname">monitor_enabled</tt><em class="property"> = False</em></dt>
+<dd><p>Class attribute which specifies whether any monitors have been registered
+to track player variable changes.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.game.player.Player.total_players">
+<tt class="descname">total_players</tt><em class="property"> = 0</em></dt>
+<dd><p>Tracks the the number of players in the game (starting with 1).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.game.game.html"
+                        title="previous chapter">mpf.game.game module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.media_controller.html"
+                        title="next chapter">mpf.media_controller package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.game.player.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.media_controller.html" title="mpf.media_controller package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.game.game.html" title="mpf.game.game module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.game.html" >mpf.game package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

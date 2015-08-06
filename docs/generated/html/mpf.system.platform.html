@@ -1,0 +1,308 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.platform module &mdash; Mission Pinball Framework 0.20.0-a0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.20.0-a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.20.0-a0 documentation" href="index.html" />
+    <link rel="up" title="mpf.system package" href="mpf.system.html" />
+    <link rel="next" title="mpf.system.scoring module" href="mpf.system.scoring.html" />
+    <link rel="prev" title="mpf.system.modes module" href="mpf.system.modes.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.scoring.html" title="mpf.system.scoring module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.modes.html" title="mpf.system.modes module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" accesskey="U">mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.platform">
+<span id="mpf-system-platform-module"></span><h1>mpf.system.platform module</h1>
+<p>Contains the parent classes Platform</p>
+<dl class="class">
+<dt id="mpf.system.platform.Platform">
+<em class="property">class </em><tt class="descclassname">mpf.system.platform.</tt><tt class="descname">Platform</tt><big>(</big><em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Parent class for the a hardware platform interface.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>machine</strong> &#8211; The main <tt class="docutils literal"><span class="pre">MachineController</span></tt> instance.</td>
+</tr>
+</tbody>
+</table>
+<p>This is the class that each hardware controller (such as P-ROC or FAST)
+will subclass to talk to their hardware.</p>
+<dl class="method">
+<dt id="mpf.system.platform.Platform.clear_hw_rule">
+<tt class="descname">clear_hw_rule</tt><big>(</big><em>sw_name</em><big>)</big></dt>
+<dd><p>Subclass this method in a platform module to clear a hardware switch
+rule for this switch.</p>
+<p>Clearing a hardware rule means actions on this switch will no longer
+affect coils.</p>
+<p>Another way to think of this is that it &#8216;disables&#8217; a hardware rule.
+This is what you&#8217;d use to disable flippers and autofire_coils during
+tilt, game over, etc.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.configure_dmd">
+<tt class="descname">configure_dmd</tt><big>(</big><big>)</big></dt>
+<dd><p>Subclass this method in a platform module to configure the DMD.</p>
+<p>This method should return a reference to the DMD&#8217;s platform interface
+object which will be called to access the hardware.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.configure_driver">
+<tt class="descname">configure_driver</tt><big>(</big><em>config</em>, <em>device_type='coil'</em><big>)</big></dt>
+<dd><p>Subclass this method in a platform module to configure a driver.</p>
+<p>This method should return a reference to the driver&#8217;s platform interface
+object which will be called to access the hardware.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.configure_gi">
+<tt class="descname">configure_gi</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Subclass this method in a platform module to configure a GI string.</p>
+<p>This method should return a reference to the GI string&#8217;s platform
+interface object which will be called to access the hardware.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.configure_led">
+<tt class="descname">configure_led</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Subclass this method in a platform module to configure an LED.</p>
+<p>This method should return a reference to the LED&#8217;s platform interface
+object which will be called to access the hardware.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.configure_matrixlight">
+<tt class="descname">configure_matrixlight</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Subclass this method in a platform module to configure a matrix
+light.</p>
+<p>This method should return a reference to the matrix lights&#8217;s platform
+interface object which will be called to access the hardware.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.configure_switch">
+<tt class="descname">configure_switch</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Subclass this method in a platform module to configure a switch.</p>
+<p>This method should return a reference to the switch&#8217;s platform interface
+object which will be called to access the hardware.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.get_switch_state">
+<tt class="descname">get_switch_state</tt><big>(</big><em>switch</em><big>)</big></dt>
+<dd><p>Subclass this method in a platform module to get the hardware state
+of a switch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>switch</strong> &#8211; A class <cite>Switch</cite> object.</td>
+</tr>
+</tbody>
+</table>
+<p>Return a value of 1 if the switch is active, and 0 if the switch is
+inactive. This method should not compensate for NO or NC status, rather,
+it should return the raw hardware state of the switch.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.run_loop">
+<tt class="descname">run_loop</tt><big>(</big><big>)</big></dt>
+<dd><p>Subclass this method in a platform module if the platform will
+control the run loop rather than MPF controlling it.</p>
+<p>If you want to use this method and let your platform control the
+machine&#8217;s run loop, set <cite>self.features[&#8216;hw_timer&#8217;] = True</cite>.</p>
+<p>If your platform controls the loop, it should call
+<cite>self.machine.timer_tick()</cite> periodically based on the <cite>self.machine.HZ</cite>
+rate.</p>
+<p>Also the loop should continue running until <cite>self.machine.done</cite> is True.
+For example, it could run in <cite>while not self.machine.done:</cite> loop.</p>
+<p>Your loop can call <cite>self.machine.switch_controller.process_switch()</cite> if
+any switch events come in &#8220;off cycle&#8221;, but the timer_tick should be
+called consistently.</p>
+<p>This loop can safely block. If the call to the hardware does not block,
+there should be a small pause in the loop (e.g. <cite>time.sleep(.001)</cite> to
+prevent 100% CPU utilization.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.set_hw_rule">
+<tt class="descname">set_hw_rule</tt><big>(</big><em>sw_name</em>, <em>sw_activity</em>, <em>coil_name=None</em>, <em>coil_action_ms=0</em>, <em>pulse_ms=0</em>, <em>pwm_on=0</em>, <em>pwm_off=0</em>, <em>delay=0</em>, <em>recycle_time=0</em>, <em>debounced=False</em>, <em>drive_now=False</em><big>)</big></dt>
+<dd><p>Writes a hardware rule to the controller.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sw_name</strong> &#8211; String name of the switch.</li>
+<li><strong>sw_activity</strong> &#8211; String description of the switch activity this rule
+will be set for, either &#8216;active&#8217; or &#8216;inactive&#8217;.</li>
+<li><strong>coil_name</strong> &#8211; String name of the coil.</li>
+<li><strong>coil_action_ms</strong> &#8211; Total time in ms the coil should activate for.</li>
+<li><strong>pulse_ms</strong> &#8211; How long in ms the coil should activate for. Default is 0.</li>
+<li><strong>pwn_on</strong> &#8211; The &#8216;on&#8217; portion, in ms of a pwm-based patter. Default is 0.</li>
+<li><strong>pwm_off</strong> &#8211; The &#8216;off&#8217; portion, in ms, of a pwm-based patter. Default is
+0.</li>
+<li><strong>delay</strong> &#8211; The delay, in ms, the coil should wait before firing. Default
+is 0.</li>
+<li><strong>recycle_time</strong> &#8211; How long the coil must be inactive, in ms, before it
+can be fired again via this rule. Default is 0.</li>
+<li><strong>debounced</strong> &#8211; Boolean which specifies whether this coil should activate
+on a debounced or non-debounced switch change state. Default is
+False (non-debounced).</li>
+<li><strong>drive_name</strong> &#8211; Boolean which controls whether the coil should activate
+immediately when this rule is applied if the switch currently in
+in the state set in this rule.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Note that this method provides several convenience processing to convert
+the incoming parameters into a format that is more widely-used by
+hardware controls. It&#8217;s intended that platform interfaces subclass
+<cite>write_hw_rule()</cite> instead of this method, though this method may be
+subclassed if you wish.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.tick">
+<tt class="descname">tick</tt><big>(</big><big>)</big></dt>
+<dd><p>Subclass this method in a platform module to perform periodic updates
+to the platform hardware, e.g. reading switches, sending driver or
+light updates, etc.</p>
+<p>If you want to use this method and let MPF control the machine&#8217;s run
+loop, set <cite>self.features[&#8216;hw_timer&#8217;] = False</cite>.</p>
+<p>This method is only used when MPF controls the game loop. Each platform
+interface either needs to implement this method or the <cite>run_loop</cite>
+method.</p>
+<p>This method will be called every 1ms.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.timer_initialize">
+<tt class="descname">timer_initialize</tt><big>(</big><big>)</big></dt>
+<dd><p>Run this before the machine loop starts. I want to do it here so we
+don&#8217;t need to check for initialization on each machine loop. (Or is
+this premature optimization?)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.platform.Platform.write_hw_rule">
+<tt class="descname">write_hw_rule</tt><big>(</big><em>sw</em>, <em>sw_activity</em>, <em>coil_action_ms</em>, <em>coil</em>, <em>pulse_ms</em>, <em>pwm_on</em>, <em>pwm_off</em>, <em>delay</em>, <em>recycle_time</em>, <em>debounced</em>, <em>drive_now</em><big>)</big></dt>
+<dd><p>Subclass this method in a platform interface to write a hardware
+switch rule to the controller.</p>
+<p>Game programmers will typically use <cite>set_hw_rule</cite> instead of this method
+because <cite>set_hw_rule</cite> takes switch NC and NO settings into account, so
+it&#8217;s a bit more convenient.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.system.modes.html"
+                        title="previous chapter">mpf.system.modes module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.system.scoring.html"
+                        title="next chapter">mpf.system.scoring module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.platform.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.scoring.html" title="mpf.system.scoring module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.modes.html" title="mpf.system.modes module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" >mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

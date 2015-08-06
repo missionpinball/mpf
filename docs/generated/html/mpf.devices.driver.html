@@ -1,0 +1,238 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.devices.driver module &mdash; Mission Pinball Framework 0.20.0-a0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.20.0-a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.20.0-a0 documentation" href="index.html" />
+    <link rel="up" title="mpf.devices package" href="mpf.devices.html" />
+    <link rel="next" title="mpf.devices.drop_target module" href="mpf.devices.drop_target.html" />
+    <link rel="prev" title="mpf.devices.diverter module" href="mpf.devices.diverter.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.devices.drop_target.html" title="mpf.devices.drop_target module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.devices.diverter.html" title="mpf.devices.diverter module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.devices.html" accesskey="U">mpf.devices package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.devices.driver">
+<span id="mpf-devices-driver-module"></span><h1>mpf.devices.driver module</h1>
+<p>Contains the Driver parent class.</p>
+<dl class="class">
+<dt id="mpf.devices.driver.Driver">
+<em class="property">class </em><tt class="descclassname">mpf.devices.driver.</tt><tt class="descname">Driver</tt><big>(</big><em>machine</em>, <em>name</em>, <em>config</em>, <em>collection=None</em><big>)</big></dt>
+<dd><p>Bases: <a class="reference internal" href="mpf.system.devices.html#mpf.system.devices.Device" title="mpf.system.devices.Device"><tt class="xref py py-class docutils literal"><span class="pre">mpf.system.devices.Device</span></tt></a></p>
+<p>Generic class that holds driver objects.</p>
+<p>A &#8216;driver&#8217; is any device controlled from a driver board which is typically
+the high-voltage stuff like coils and flashers.</p>
+<p>This class exposes the methods you should use on these driver types of
+devices. Each platform module (i.e. P-ROC, FAST, etc.) subclasses this
+class to actually communicate with the physical hardware and perform the
+actions.</p>
+<p>Args: Same as the Device parent class</p>
+<dl class="attribute">
+<dt id="mpf.devices.driver.Driver.class_label">
+<tt class="descname">class_label</tt><em class="property"> = 'coil'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.driver.Driver.collection">
+<tt class="descname">collection</tt><em class="property"> = 'coils'</em></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpf.devices.driver.Driver.config_section">
+<tt class="descname">config_section</tt><em class="property"> = 'coils'</em></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.driver.Driver.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big></dt>
+<dd><p>Disables this driver</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.driver.Driver.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big></dt>
+<dd><p>Enables a driver by holding it &#8216;on&#8217;.</p>
+<p>If this driver is configured with a holdpatter, then this method will use
+that holdpatter to pwm pulse the driver.</p>
+<p>If not, then this method will just enable the driver. As a safety
+precaution, if you want to enable() this driver without pwm, then you
+have to add the following option to this driver in your machine
+configuration files:</p>
+<p>allow_enable: True</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.driver.Driver.pulse">
+<tt class="descname">pulse</tt><big>(</big><em>milliseconds=None</em>, <em>power=1.0</em><big>)</big></dt>
+<dd><p>Pulses this driver.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>milliseconds</strong> &#8211; The number of milliseconds the driver should be
+enabled for. If no value is provided, the driver will be
+enabled for the value specified in the config dictionary.</li>
+<li><strong>power</strong> &#8211; A multiplier that will be applied to the default pulse time,
+typically a float between 0.0 and 1.0. (Note this is only used
+if milliseconds is not specified.)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.driver.Driver.pwm">
+<tt class="descname">pwm</tt><big>(</big><em>on_ms</em>, <em>off_ms</em>, <em>orig_on_ms=0</em><big>)</big></dt>
+<dd><p>Quickly turns this driver on and off to have the effect of holding
+this driver &#8216;on&#8217; without burning up the coil.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>on_ms</strong> &#8211; Integer of how long this driver is on in the &#8216;on&#8217; portion.</li>
+<li><strong>off_ms</strong> &#8211; Integer of how long this driver is off in the &#8216;off&#8217;
+portion.</li>
+<li><strong>orig_on_ms</strong> &#8211; Integer of how long this driver should be held on
+initially before the on/off pulsing starts.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>For example, to rapidly pulse a driver 1ms and then off 4ms, pass the</dt>
+<dd>values on_ms=1, off_ms=4.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.devices.driver.Driver.timed_pwm">
+<tt class="descname">timed_pwm</tt><big>(</big><em>on_ms</em>, <em>off_ms</em>, <em>runtime_ms</em><big>)</big></dt>
+<dd><p>Quickly pulses a driver on/off for a specified number of
+milliseconds.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>on_ms</strong> &#8211; Integer of how long this driver is on in the &#8216;on&#8217; portion.</li>
+<li><strong>off_ms</strong> &#8211; Integer of how long this driver is off in the &#8216;off&#8217;
+portion.</li>
+<li><strong>runtime_ms</strong> &#8211; Integer of the total number of milliseconds this driver
+should pulse on and off for.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.devices.diverter.html"
+                        title="previous chapter">mpf.devices.diverter module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.devices.drop_target.html"
+                        title="next chapter">mpf.devices.drop_target module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.devices.driver.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.devices.drop_target.html" title="mpf.devices.drop_target module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.devices.diverter.html" title="mpf.devices.diverter module"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.devices.html" >mpf.devices package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

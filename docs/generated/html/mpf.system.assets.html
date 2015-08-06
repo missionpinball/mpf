@@ -1,0 +1,395 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mpf.system.assets module &mdash; Mission Pinball Framework 0.20.0-a0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.20.0-a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Mission Pinball Framework 0.20.0-a0 documentation" href="index.html" />
+    <link rel="up" title="mpf.system package" href="mpf.system.html" />
+    <link rel="next" title="mpf.system.ball_controller module" href="mpf.system.ball_controller.html" />
+    <link rel="prev" title="mpf.system package" href="mpf.system.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.ball_controller.html" title="mpf.system.ball_controller module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.html" title="mpf.system package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" accesskey="U">mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-mpf.system.assets">
+<span id="mpf-system-assets-module"></span><h1>mpf.system.assets module</h1>
+<p>Contains AssetManager, AssetLoader, and Asset parent classes</p>
+<dl class="class">
+<dt id="mpf.system.assets.Asset">
+<em class="property">class </em><tt class="descclassname">mpf.system.assets.</tt><tt class="descname">Asset</tt><big>(</big><em>machine</em>, <em>config</em>, <em>file_name</em>, <em>asset_manager</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mpf.system.assets.Asset.load">
+<tt class="descname">load</tt><big>(</big><em>callback=None</em><big>)</big></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.assets.Asset.unload">
+<tt class="descname">unload</tt><big>(</big><big>)</big></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.assets.AssetLoader">
+<em class="property">class </em><tt class="descclassname">mpf.system.assets.</tt><tt class="descname">AssetLoader</tt><big>(</big><em>name</em>, <em>queue</em>, <em>machine</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></tt></p>
+<p>Base class for the Asset Loader with runs as a separate thread and
+actually loads the assets from disk.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; String name of what this loader will be called. (Only really used
+to give a friendly name to it in logs.)</li>
+<li><strong>queue</strong> &#8211; A reference to the asset loader <tt class="docutils literal"><span class="pre">Queue</span></tt> which holds assets
+waiting to be loaded.</li>
+<li><strong>machine</strong> &#8211; The main <tt class="docutils literal"><span class="pre">MachineController</span></tt> object.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="mpf.system.assets.AssetLoader.run">
+<tt class="descname">run</tt><big>(</big><big>)</big></dt>
+<dd><p>Run loop for the loader thread.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpf.system.assets.AssetManager">
+<em class="property">class </em><tt class="descclassname">mpf.system.assets.</tt><tt class="descname">AssetManager</tt><big>(</big><em>machine</em>, <em>config_section</em>, <em>path_string</em>, <em>asset_class</em>, <em>asset_attribute</em>, <em>file_extensions</em><big>)</big></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Base class for an Asset Manager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>machine</strong> &#8211; The main <tt class="docutils literal"><span class="pre">MachineController</span></tt> object.</li>
+<li><strong>config_section</strong> &#8211; String of the name of the section in the config file
+for the asset settings that this Asset Manager will machine. e.g.
+&#8216;image&#8217;.</li>
+<li><strong>path_string</strong> &#8211; The setting in the paths section of the config file that
+specifies what path these asset files are in. e.g. &#8216;images&#8217;.</li>
+<li><strong>asset_class</strong> &#8211; A class object of the base class for the assets that this
+Asset Manager will manage. e.g. Image.</li>
+<li><strong>asset_attribute</strong> &#8211; The string name that you want to refer to this asset
+collection as. e.g. a value of &#8216;images&#8217; means that assets will be
+accessible via <tt class="docutils literal"><span class="pre">self.machine.images</span></tt>.</li>
+<li><strong>file_extensions</strong> &#8211; A tuple of strings of valid file extensions that files
+for this asset will use. e.g. <tt class="docutils literal"><span class="pre">('png',</span> <span class="pre">'jpg',</span> <span class="pre">'jpeg',</span> <span class="pre">'bmp')</span></tt></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>There will be one Asset Manager for each different type of asset. (e.g. one
+for images, one for movies, one for sounds, etc.)</p>
+<dl class="method">
+<dt id="mpf.system.assets.AssetManager.create_loader_thread">
+<tt class="descname">create_loader_thread</tt><big>(</big><big>)</big></dt>
+<dd><p>Creates a loader thread which will handle the actual reading from
+disk and loading into memory for assets of this class. Note that one
+loader thread is created for each class of assets used in your game.</p>
+<p>Note that this asset loader as a separate <em>thread</em>, not a separate
+<em>process</em>. It will run on the same core as your main MPF Python
+instance.</p>
+<p>Note that it&#8217;s possible to call this method multiple times to create
+multiple loader threads, but that will not make things load any faster
+since this process is limited by CPU and disk I/O. In fact if it&#8217;s a
+magnetic disk, think multiple threads would make it slower.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.assets.AssetManager.load_asset">
+<tt class="descname">load_asset</tt><big>(</big><em>asset</em>, <em>callback</em>, <em>priority=10</em><big>)</big></dt>
+<dd><p>Loads an asset into memory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>asset</strong> &#8211; The Asset object to load.</li>
+<li><strong>callback</strong> &#8211; The callback that will be called once the asset has been
+loaded by the loader thread.</li>
+<li><strong>priority</strong> &#8211; The relative loading priority of the asset. If there&#8217;s a
+queue of assets waiting to be loaded, this load request will be
+inserted into the queue in a position based on its priority.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.assets.AssetManager.load_assets">
+<tt class="descname">load_assets</tt><big>(</big><em>config</em>, <em>mode=None</em>, <em>load_key=None</em>, <em>callback=None</em>, <em>**kwargs</em><big>)</big></dt>
+<dd><p>Loads the assets from a config dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>config</strong> &#8211; Dictionary that holds the assets to load.</li>
+<li><strong>mode</strong> &#8211; Not used. Included here since this method is registered as a
+mode start handler.</li>
+<li><strong>load_key</strong> &#8211; String name of the load key which specifies which assets
+should be loaded.</li>
+<li><strong>callback</strong> &#8211; Callback method which is called by each asset once it&#8217;s
+loaded.</li>
+<li><strong>**kwargs</strong> &#8211; Not used. Included to allow this method to be used as an
+event handler.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The assets must already be registered in order for this method to work.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.assets.AssetManager.locate_asset_file">
+<tt class="descname">locate_asset_file</tt><big>(</big><em>file_name</em>, <em>path=None</em><big>)</big></dt>
+<dd><p>Takes a file name and a root path and returns a link to the absolute
+path of the file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>file_name</strong> &#8211; String of the file name</li>
+<li><strong>path</strong> &#8211; root of the path to check (without the specific asset path
+string)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: String of the full path (path + file name) of the asset.</p>
+<p>Note this method will add the path string between the path you pass and
+the file. Also if it can&#8217;t find the file in the path you pass, it will
+look for the file in the machine root plus the path string location.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.assets.AssetManager.process_assets_from_disk">
+<tt class="descname">process_assets_from_disk</tt><big>(</big><em>config</em>, <em>path=None</em><big>)</big></dt>
+<dd><p>Looks at a path and finds all the assets in the folder.
+Looks in a subfolder based on the asset&#8217;s path string.
+Crawls subfolders too. The first subfolder it finds is used for the
+asset&#8217;s default config section.
+If an asset has a related entry in the config file, it will create
+the asset with that config. Otherwise it uses the default</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>config</strong> &#8211; A dictionary which contains a list of asset names with
+settings that will be used for the specific asset. (Note this
+is not needed for all assets, as any asset file found not in the
+config dictionary will be set up with the folder it was found
+in&#8217;s asset_defaults settings.)</li>
+<li><strong>path</strong> &#8211; A full system path to the root folder that will be searched
+for assetsk. This should <em>not</em> include the asset-specific path
+string. If omitted, only the machine&#8217;s root folder will be
+searched.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.assets.AssetManager.register_and_load_machine_assets">
+<tt class="descname">register_and_load_machine_assets</tt><big>(</big><big>)</big></dt>
+<dd><p>Called on MPF boot to register any assets found in the machine-wide
+configuration files. (i.e. any assets not specified in mode config
+files.)</p>
+<p>If an asset is set with the load type of &#8216;preload&#8217;, this method will
+also load the asset file into memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.assets.AssetManager.register_asset">
+<tt class="descname">register_asset</tt><big>(</big><em>asset</em>, <em>config</em><big>)</big></dt>
+<dd><p>Registers an asset with the Asset Manager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>asset</strong> &#8211; String name of the asset to register.</li>
+<li><strong>config</strong> &#8211; Dictionary which contains settings for this asset.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Registering an asset is what makes it available to be used in the game.
+Note that registering an asset is separate from loading an asset. All
+assets will be registered on MPF boot, but they can be loaded and
+unloaded as needed to save on memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.assets.AssetManager.register_assets">
+<tt class="descname">register_assets</tt><big>(</big><em>config</em>, <em>mode_path=None</em><big>)</big></dt>
+<dd><p>Scans a config dictionary and registers any asset entries it finds.</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first last docutils">
+<dt>config: A dictionary of asset entries. This dictionary needs to</dt>
+<dd>be &#8220;localized&#8221; to just the section for this particular
+asset type. e.g. if you&#8217;re loading &#8220;Images&#8221; the keys of this
+dictionary should be image_1, image_2, etc., not &#8220;Images&#8221;.</dd>
+<dt>mode_path: The full path to the base folder that will be</dt>
+<dd>seaerched for the asset file on disk. This folder should
+<em>not</em> include the asset-specific folder. If omitted, the
+base machine folder will be searched.</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+<p>Note that this method merely registers the assets so they can be
+referenced in MPF. It does not actually load the asset files into
+memory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.assets.AssetManager.setup_defaults">
+<tt class="descname">setup_defaults</tt><big>(</big><em>config</em><big>)</big></dt>
+<dd><p>Processed the <tt class="docutils literal"><span class="pre">asset_defaults</span></tt> section of the machine config
+files.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.assets.AssetManager.unload_assets">
+<tt class="descname">unload_assets</tt><big>(</big><em>asset_set</em><big>)</big></dt>
+<dd><p>Unloads assets from memory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>asset_set</strong> &#8211; A set (or any iterable) of Asset objects which will be
+unloaded.</td>
+</tr>
+</tbody>
+</table>
+<p>Unloading an asset does not de-register it. It&#8217;s still available to be
+used, but it&#8217;s just unloaded from memory to save on memory.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpf.system.html"
+                        title="previous chapter">mpf.system package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpf.system.ball_controller.html"
+                        title="next chapter">mpf.system.ball_controller module</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mpf.system.assets.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.ball_controller.html" title="mpf.system.ball_controller module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mpf.system.html" title="mpf.system package"
+             >previous</a> |</li>
+        <li><a href="mpf.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li>
+          <li><a href="mpf.system.html" >mpf.system package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Brian Madden, Gabe Knuth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
