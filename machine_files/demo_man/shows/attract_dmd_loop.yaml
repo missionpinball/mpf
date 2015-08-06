@@ -10,7 +10,7 @@
 - tocks: 3
   display:
     - type: Text
-      text: PRESS START
+      text: THIS IS CUSTOM CODE
       decorators:
         type: blink
         repeats: -1

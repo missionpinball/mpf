@@ -50,7 +50,7 @@ class BallController(object):
     def balls(self):
         self.log.debug("Counting Balls")
         balls = 0
-        for device in self.machine.balldevices:
+        for device in self.machine.ball_devices:
             self.log.debug("Found %s ball(s) in %s", device.balls, device.name)
             balls += device.balls
             if balls > self._num_balls_known:
@@ -81,22 +81,22 @@ class BallController(object):
         """Creates the actual playfield ball device and assigns it to
         self.playfield.
         """
-        if not hasattr(self.machine, 'balldevices'):
-            self.machine.balldevices = DeviceCollection()
+        if not hasattr(self.machine, 'ball_devices'):
+            self.machine.ball_devices = DeviceCollection()
 
         self.machine.playfield = Playfield(self.machine, name='playfield',
-                                           collection='balldevices')
+                                           collection='ball_devices')
 
     def _initialize(self):
 
         # If there are no ball devices, then the ball controller has no work to
         # do and will create errors, so we just abort.
-        if not hasattr(self.machine, 'balldevices'):
+        if not hasattr(self.machine, 'ball_devices'):
             return
 
         self.num_balls_known = self.balls
 
-        for device in self.machine.balldevices:
+        for device in self.machine.ball_devices:
             if 'drain' in device.tags:  # device is used to drain balls from pf
                 self.machine.events.add_handler('balldevice_' + device.name +
                                                 '_ball_enter',
@@ -154,7 +154,7 @@ class BallController(object):
         devices = set()
 
         for tag in target:
-            for device in self.machine.balldevices.items_tagged(tag):
+            for device in self.machine.ball_devices.items_tagged(tag):
                 devices.add(device)
 
         if len(devices) == 0:
@@ -170,8 +170,8 @@ class BallController(object):
             self.log.debug("Yes, all balls are gathered")
             return True
         else:
-            self.log.debug("No, all balls are not gathered. Total balls: %s. "
-                           "Balls in tagged devices: %s", count,
+            self.log.debug("No, all balls are not gathered. Balls Counted: %s. "
+                           "Total balls known: %s", count,
                            self.machine.ball_controller.num_balls_known)
             return False
 
@@ -202,7 +202,7 @@ class BallController(object):
             # todo do we add the option of making the target a list?
             self.log.debug("Gathering all balls to devices tagged '%s'",
                            target)
-            for device in self.machine.balldevices:
+            for device in self.machine.ball_devices:
                 if target not in device.tags and device.balls > 0:
                     device.eject_all()
 

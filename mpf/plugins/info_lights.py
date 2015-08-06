@@ -37,8 +37,7 @@ class InfoLights(object):
 
         self.machine.events.add_handler('ball_started', self.ball_started)
         self.machine.events.add_handler('game_ended', self.game_ended)
-        self.machine.events.add_handler('machineflow_Game_start',
-                                        self.game_starting)
+        self.machine.events.add_handler('game_starting', self.game_starting)
         self.machine.events.add_handler('player_add_success', self.player_added)
         self.machine.events.add_handler('tilt', self.tilt)
         self.machine.events.add_handler('match', self.match)
@@ -81,7 +80,7 @@ class InfoLights(object):
             self.machine.show_controller.run_script(
                 lightname=self.config['game_over']['light'].name,
                 script=self.flash,
-                tps=2)
+                tocks_per_sec=2)
 
     def game_starting(self, **kwargs):
         self.log.debug("game_starting")

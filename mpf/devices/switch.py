@@ -8,7 +8,7 @@
 
 import logging
 from mpf.system.devices import Device
-from mpf.system.config import Config
+from mpf.system.timing import Timing
 
 
 class Switch(Device):
@@ -16,6 +16,7 @@ class Switch(Device):
 
     config_section = 'switches'
     collection = 'switches'
+    class_label = 'switch'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Switch.' + name)
@@ -25,8 +26,8 @@ class Switch(Device):
         self.machine = machine
         self.name = name
         self.config = config
-        self.deactivation_events = list()
-        self.activation_events = list()
+        self.deactivation_events = set()
+        self.activation_events = set()
         self.state = 0
         """ The logical state of a switch. 1 = active, 0 = inactive. This takes
         into consideration the NC or NO settings for the switch."""
@@ -39,19 +40,19 @@ class Switch(Device):
         self.type = 'NO'
         """ Specifies whether the switch is normally open ('NO', default) or
         normally closed ('NC')."""
+
+        self.recycle_ticks = 0
+        self.recycle_clear_tick = 0
+        self.recycle_jitter_count = 0
+
         if 'type' in config and config['type'].upper() == 'NC':
             self.type = 'NC'
 
         if 'debounce' not in config:
             config['debounce'] = True
 
-        if 'activation_events' in config:
-            self.activation_events = Config.string_to_lowercase_list(
-                config['activation_events'])
-
-        if 'deactivation_events' in config:
-            self.deactivation_events = Config.string_to_lowercase_list(
-                config['deactivation_events'])
+        if 'recycle_time' in config:
+            self.recycle_ticks = Timing.string_to_ticks(config['recycle_time'])
 
         # We save out number_str since the platform driver will convert the
         # number into a hardware number, but we need the original number for

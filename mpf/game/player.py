@@ -69,6 +69,24 @@ class Player(object):
     to track player variable changes.
     """
 
+    def __init__(self, machine):
+        # use self.__dict__ below since __setattr__ would make these player vars
+        self.__dict__['log'] = logging.getLogger("Player")
+        self.__dict__['machine'] = machine
+        self.__dict__['vars'] = dict()
+
+        Player.total_players += 1
+
+        self.machine.events.post('player_add_success', player=self,
+                                 num=Player.total_players)
+
+        # initialize player vars
+        self.vars['index'] = Player.total_players - 1
+        self.vars['number'] = Player.total_players
+
+        self.log.debug("Creating new player: Player %s. (player index '%s')",
+                      self.vars['number'], self.index)
+
     def __getattr__(self, name):
         if name in self.vars:
             return self.vars[name]
@@ -114,25 +132,8 @@ class Player(object):
         for name, value in self.vars.iteritems():
             yield name, value
 
-    def __init__(self, machine):
-        """Player object contructor:
 
-        Args:
-            machine: Machine controller
-        """
-        # use self.__dict__ below since __setattr__ would make these player vars
-        self.__dict__['log'] = logging.getLogger("Player")
-        self.__dict__['machine'] = machine
-        self.__dict__['vars'] = dict()
 
-        Player.total_players += 1
-
-        # initialize player vars
-        self.vars['index'] = Player.total_players - 1
-        self.vars['number'] = Player.total_players
-
-        self.log.debug("Creating new player: Player %s. (player index '%s')",
-                      self.vars['number'], self.index)
 
     # todo method to dump the player vars to disk?
 

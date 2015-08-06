@@ -7,6 +7,7 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
+from collections import deque
 
 from mpf.system.devices import Device
 from mpf.system.tasks import DelayManager
@@ -22,6 +23,7 @@ class Diverter(Device):
 
     config_section = 'diverters'
     collection = 'diverters'
+    class_label = 'diverter'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Diverter.' + name)
@@ -33,6 +35,10 @@ class Diverter(Device):
         self.active = False
         self.enabled = False
         self.platform = None
+
+        self.divering_ejects_count = 0
+        self.eject_state = False
+        self.eject_attempt_queue = deque()
 
         # configure defaults:
         if 'type' not in self.config:
@@ -92,29 +98,8 @@ class Diverter(Device):
         self.config['active_objects'] = list()
         self.config['inactive_objects'] = list()
 
-        for target_device in self.config['targets_when_active']:
-            if target_device == 'playfield':
-                self.config['active_objects'].append('playfield')
-            else:
-                self.config['active_objects'].append(
-                    self.machine.balldevices[target_device])
-
-        for target_device in self.config['targets_when_inactive']:
-            if target_device == 'playfield':
-                self.config['inactive_objects'].append('playfield')
-            else:
-                self.config['inactive_objects'].append(
-                    self.machine.balldevices[target_device])
-
         # convert the activation_time to ms
         self.config['activation_time'] = Timing.string_to_ms(self.config['activation_time'])
-
-        # register for events
-        for event in self.config['enable_events']:
-            self.machine.events.add_handler(event, self.enable)
-
-        for event in self.config['disable_events']:
-            self.machine.events.add_handler(event, self.disable)
 
         # register for feeder device eject events
         for feeder_device in self.config['feeder_devices']:
@@ -122,9 +107,29 @@ class Diverter(Device):
                                             '_ball_eject_attempt',
                                             self._feeder_eject_attempt)
 
+            self.machine.events.add_handler('balldevice_' + feeder_device +
+                                            '_ball_eject_failed',
+                                            self._feeder_eject_count_decrease)
+
+            self.machine.events.add_handler('balldevice_' + feeder_device +
+                                            '_ball_eject_success',
+                                            self._feeder_eject_count_decrease)
+
+
+        self.machine.events.add_handler('init_phase_2', self._initialize)
+
         self.machine.events.add_handler('init_phase_3', self._register_switches)
 
         self.platform = self.config['activation_coil'].platform
+
+    def _initialize(self):
+        for target_device in self.config['targets_when_active']:
+            self.config['active_objects'].append(
+                self.machine.ball_devices[target_device])
+
+        for target_device in self.config['targets_when_inactive']:
+            self.config['inactive_objects'].append(
+                self.machine.ball_devices[target_device])
 
     def _register_switches(self):
                 # register for deactivation switches
@@ -243,9 +248,10 @@ class Diverter(Device):
 
         if time is not None:
             delay = Timing.string_to_ms(time)
-
         elif self.config['activation_time']:
             delay = self.config['activation_time']
+        else:
+            delay = False
 
         if delay:
             self.delay.add('disable_held_coil', delay, self.disable_held_coil)
@@ -319,7 +325,30 @@ class Diverter(Device):
         """Physically disables the coil holding this diverter open."""
         self.config['activation_coil'].disable()
 
-    def _feeder_eject_attempt(self, target, **kwargs):
+    def _feeder_eject_count_decrease(self, target, **kwargs):
+        self.divering_ejects_count -= 1
+        if self.divering_ejects_count <= 0:
+            self.divering_ejects_count = 0
+
+            # If there are ejects waiting for the other target switch diverter
+            if len(self.eject_attempt_queue) > 0:
+                if self.eject_state == False:
+                    self.eject_state = True
+                    self.log.debug("Enabling diverter since eject target is on the "
+                                   "active target list")
+                    self.enable()
+                elif self.eject_state == True:
+                    self.eject_state = False
+                    self.log.debug("Enabling diverter since eject target is on the "
+                                   "inactive target list")
+                    self.disable()
+            # And perform those ejects
+            while len(self.eject_attempt_queue) > 0:
+                self.divering_ejects_count += 1
+                queue = self.eject_attempt_queue.pop()
+                queue.clear()
+
+    def _feeder_eject_attempt(self, queue, target, **kwargs):
         # Event handler which is called when one of this diverter's feeder
         # devices attempts to eject a ball. This is what allows this diverter
         # to get itself in the right position to send the ball to where it needs
@@ -330,14 +359,37 @@ class Diverter(Device):
 
         self.log.debug("Feeder device eject attempt for target: %s", target)
 
+        desired_state = None
         if target in self.config['active_objects']:
-            self.log.debug("Enabling diverter since eject target is on the "
-                           "active target list")
-            self.enable()
+            desired_state = True
 
         elif target in self.config['inactive_objects']:
+            desired_state = False
+
+        if desired_state == None:
+            self.log.debug("Feeder device ejects to an unknown target: %s. "
+                           "Ignoring!", target.name)
+            return
+
+        if self.divering_ejects_count > 0 and self.eject_state != desired_state:
+            self.log.debug("Feeder devices tries to eject to a target which "
+                           "would require a state change. Postponing that "
+                           "because we have an eject to the other side")
+            queue.wait()
+            self.eject_attempt_queue.append(queue)
+            return
+
+        self.divering_ejects_count += 1
+
+        if desired_state == True:
+            self.log.debug("Enabling diverter since eject target is on the "
+                           "active target list")
+            self.eject_state = desired_state
+            self.enable()
+        elif desired_state == False:
             self.log.debug("Enabling diverter since eject target is on the "
                            "inactive target list")
+            self.eject_state = desired_state
             self.disable()
 
 # The MIT License (MIT)

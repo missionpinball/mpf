@@ -18,7 +18,7 @@ need libpinproc and pypinproc. More info:
 http://www.pinballcontrollers.com/forum/index.php?board=10.0
 
 """
-# p_roc.py
+# p3_roc.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -98,7 +98,7 @@ class HardwarePlatform(Platform):
             except IOError:
                 print "Retrying..."
 
-        self.log.info("Succefully connected to P3-ROC")
+        self.log.info("Successfully connected to P3-ROC")
 
         '''
         Since the P3-ROC has no Aux port, this code will break it.
@@ -236,12 +236,16 @@ class HardwarePlatform(Platform):
         # 3 - closed (not debounced)
         # 4 - open (not debounced)
 
+        # Note: The P3-ROC will return a state of "3" for switches from non-
+        # connected SW-16 boards, so that's why we only check for "1" below
         states = self.proc.switch_get_states()
-        if states[proc_num] == 1 or states[proc_num] == 3:
+        if states[proc_num] == 1:
             state = 1
         else:
             state = 0
 
+        self.log.debug("P3-ROC switch %s initial state: %s", proc_num,
+                       states[proc_num])
         # Return the switch object and an integer of its current state.
         # 1 = active, 0 = inactive
         return switch, proc_num, state
@@ -942,17 +946,18 @@ class PDBConfig(object):
                 self.aliases.append(alias)
 
         # Make a list of unique coil banks
-        for name in config['coils']:
-            item_dict = config['coils'][name]
-            coil = PDBCoil(self, str(item_dict['number']))
-            if coil.bank() not in coil_bank_list:
-                coil_bank_list.append(coil.bank())
+        if 'coils' in config:
+            for name in config['coils']:
+                item_dict = config['coils'][name]
+                coil = PDBCoil(self, str(item_dict['number']))
+                if coil.bank() not in coil_bank_list:
+                    coil_bank_list.append(coil.bank())
 
         # Make a list of unique lamp source banks.  The P3-ROC only supports 2.
         # TODO: What should be done if 2 is exceeded?
-        if 'matrixlights' in config:
-            for name in config['matrixlights']:
-                item_dict = config['matrixlights'][name]
+        if 'matrix_lights' in config:
+            for name in config['matrix_lights']:
+                item_dict = config['matrix_lights'][name]
                 lamp = PDBLight(self, str(item_dict['number']))
 
                 # Catalog PDB banks

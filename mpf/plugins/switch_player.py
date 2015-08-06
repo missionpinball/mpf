@@ -17,10 +17,10 @@ from mpf.system.timing import Timing
 class SwitchPlayer(object):
 
     def __init__(self, machine):
-        self.log = logging.getLogger('switchplayer')
+        self.log = logging.getLogger('switch_player')
 
-        if 'switchplayer' not in machine.config:
-            machine.log.debug('"switchplayer:" section not found in '
+        if 'switch_player' not in machine.config:
+            machine.log.debug('"switch_player:" section not found in '
                                    'machine configuration, so the Switch Player'
                                    'plugin will not be used.')
             return
@@ -35,7 +35,7 @@ class SwitchPlayer(object):
                         '''
 
         self.config = Config.process_config(config_spec,
-                                            self.machine.config['switchplayer'])
+                                            self.machine.config['switch_player'])
 
         self.machine.events.add_handler(self.config['start_event'],
                                         self._start_event_callback)

@@ -118,7 +118,7 @@ class MediaController(object):
                 options['machinepath'].startswith('\\')):
             machine_path = options['machinepath']
         else:
-            machine_path = os.path.join(self.config['mediacontroller']['paths']
+            machine_path = os.path.join(self.config['media_controller']['paths']
                                         ['machine_files'],
                                         options['machinepath'])
 
@@ -141,7 +141,7 @@ class MediaController(object):
                 options['configfile'] += '.yaml'
 
             config_file = os.path.join(self.machine_path,
-                                       self.config['mediacontroller']['paths']
+                                       self.config['media_controller']['paths']
                                        ['config'],
                                        options['configfile'])
 
@@ -156,17 +156,17 @@ class MediaController(object):
                         port: int|5050
                         '''
 
-        self.config['mediacontroller'] = (
+        self.config['media_controller'] = (
             Config.process_config(mediacontroller_config_spec,
-                                  self.config['mediacontroller']))
+                                  self.config['media_controller']))
 
         self.events = EventManager(self)
         self.timing = Timing(self)
 
         # Load the media controller modules
-        self.config['mediacontroller']['modules'] = (
-            self.config['mediacontroller']['modules'].split(' '))
-        for module in self.config['mediacontroller']['modules']:
+        self.config['media_controller']['modules'] = (
+            self.config['media_controller']['modules'].split(' '))
+        for module in self.config['media_controller']['modules']:
             self.log.info("Loading module: %s", module)
             module_parts = module.split('.')
             exec('self.' + module_parts[0] + '=' + module + '(self)')
@@ -417,7 +417,7 @@ class MediaController(object):
 
     def bcp_goodbye(self, **kwargs):
         """Processes an incoming BCP 'goodbye' command."""
-        if self.config['mediacontroller']['exit_on_disconnect']:
+        if self.config['media_controller']['exit_on_disconnect']:
             self.socket_thread.sending_thread.stop()
             sys.exit()
 
@@ -427,6 +427,8 @@ class MediaController(object):
             return
             #todo raise error
 
+        name = name.lower()
+
         if name in self.game_modes:
             self.game_modes[name].start(priority=priority)
 
@@ -435,6 +437,8 @@ class MediaController(object):
         if not name:
             return
             #todo raise error
+
+        name = name.lower()
 
         if name in self.game_modes:
             self.game_modes[name].stop()
@@ -453,8 +457,9 @@ class MediaController(object):
 
     def bcp_game_start(self, **kargs):
         """Processes an incoming BCP 'game_start' command."""
-        self.bcp_player_add(number=1)
-        self.bcp_player_turn_start(player=1)
+        self.player = None
+        self.player_list = list()
+        Player.total_players = 0
         self.events.post('game_started', **kargs)
 
     def bcp_game_end(self, **kwargs):
@@ -486,11 +491,11 @@ class MediaController(object):
 
     def bcp_attract_start(self, **kwargs):
         """Processes an incoming BCP 'attract_start' command."""
-        self.events.post('machineflow_Attract_start')
+        self.events.post('attract_start')
 
     def bcp_attract_stop(self, **kwargs):
-        self.events.post('machineflow_Attract_stop')
         """Processes an incoming BCP 'attract_stop' command."""
+        self.events.post('attract_stop')
 
     def bcp_player_turn_start(self, player, **kwargs):
         """Processes an incoming BCP 'player_turn_start' command."""
@@ -503,6 +508,7 @@ class MediaController(object):
     def bcp_trigger(self, name, **kwargs):
         """Processes an incoming BCP 'trigger' command."""
 
+        '''
         blocked_event_prefixes = ('player_',
                                   'machinemode_',
                                  )
@@ -515,8 +521,9 @@ class MediaController(object):
 
         if not (name.startswith(blocked_event_prefixes) and
                 name in blocked_events):
+        '''
 
-            self.events.post(name, **kwargs)
+        self.events.post(name, **kwargs)
 
     def bcp_switch(self, name, state, **kwargs):
         """Processes an incoming BCP 'switch' command."""
@@ -554,9 +561,10 @@ class MediaController(object):
                 self.bcp_set_volume(track=k.split('volume_')[1], value=v)
 
     def bcp_timer(self, name, action, **kwargs):
-        """Processes an incoming BCP 'config' command."""
+        """Processes an incoming BCP 'timer' command."""
+        pass
 
-        self.events.post('timer_' + name + '_' + action, **kwargs)
+        #self.events.post('timer_' + name + '_' + action, **kwargs)
 
     def bcp_set_volume(self, track, value):
         """Sets the volume based on an incoming BCP 'config' command.
@@ -659,7 +667,7 @@ class BCPServer(threading.Thread):
                             break
 
                     except:
-                        if self.mc.config['mediacontroller']['exit_on_disconnect']:
+                        if self.mc.config['media_controller']['exit_on_disconnect']:
                             self.mc.shutdown()
                         else:
                             break

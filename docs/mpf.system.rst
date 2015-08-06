@@ -22,6 +22,7 @@ Submodules
    mpf.system.scriptlet
    mpf.system.shots
    mpf.system.switch_controller
+   mpf.system.target_controller
    mpf.system.tasks
    mpf.system.timing
 

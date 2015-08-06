@@ -28,9 +28,11 @@ class Driver(Device):
 
     config_section = 'coils'
     collection = 'coils'
+    class_label = 'coil'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Driver.' + name)
+
         super(Driver, self).__init__(machine, name, config, collection,
                                      platform_section='coils')
 
@@ -59,8 +61,11 @@ class Driver(Device):
             self.config['pwm_on'] = int(config['holdpatter'].split('-')[0])
             self.config['pwm_off'] = int(config['holdpatter'].split('-')[1])
         else:
-            self.config['pwm_on'] = 0
-            self.config['pwm_off'] = 0
+            if 'pwm_on' not in self.config:
+                self.config['pwm_on'] = 0
+
+            if 'pwm_off' not in self.config:
+                self.config['pwm_off'] = 0
 
         if ('allow_enable' in self.config and
                 str(self.config['allow_enable']).upper() == 'TRUE'):

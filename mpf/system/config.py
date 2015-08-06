@@ -42,7 +42,7 @@ class CaseInsensitiveDict(dict):
         except AttributeError:
             return super(CaseInsensitiveDict, self).__contains__(key)
 
-    def __del__(self, key):
+    def __delitem__(self, key):
         try:
             return super(CaseInsensitiveDict, self).__del__(key.lower())
         except AttributeError:
@@ -131,6 +131,7 @@ class Config(object):
                     sys.exit()
             except:
                 log.critical("Couldn't load from file: %s", yaml_file)
+                raise
                 sys.exit()
 
         config = Config.dict_merge(config, new_updates)
@@ -140,14 +141,20 @@ class Config(object):
 
         try:
             if 'config' in config:
+
+                if type(config['config']) is not list:
+                    config['config'] = Config.string_to_list(config['config'])
+
                 if yaml_file in config['config']:
                     config['config'].remove(yaml_file)
+
                 if config['config']:
                     config = Config.load_config_yaml(config=config,
                                               yaml_file=config['config'][0])
         except:
             log.critical("No configuration file found, or config file is empty."
                          " But congrats! MPF works! :)")
+            raise
             sys.exit()
 
         return config
@@ -178,12 +185,17 @@ class Config(object):
                 file_version = 0
 
             if file_version != int(version.__config_version__):
-                log.warning("Config file %s is version %s. MPF %s requires "
-                            "version %s", file_location, file_version,
-                            version.__version__, version.__config_version__)
-                return False
-            else:
-                return True
+                log.error("Config file %s is version %s. MPF %s requires "
+                          "version %s", file_location, file_version,
+                          version.__version__, version.__config_version__)
+                log.error("Use the Config File Migrator to automatically "
+                          "migrate your config file to the latest version.")
+                log.error("Migration tool: "
+                           "https://missionpinball.com/docs/tools/config-file-migrator/")
+                log.error("More info on config version %s: %s",
+                          version.__config_version__,
+                          version.__config_version_url__)
+                sys.exit()
 
     @staticmethod
     def keys_to_lower(source_dict):
@@ -245,11 +257,20 @@ class Config(object):
         if item_type == 'list':
             return Config.string_to_list(item)
         elif item_type == 'int':
-            return int(item)
+            try:
+                return int(item)
+            except TypeError:
+                return None
         elif item_type == 'float':
-            return float(item)
+            try:
+                return float(item)
+            except TypeError:
+                return None
         elif item_type == 'string':
-            return str(item)
+            try:
+                return str(item)
+            except TypeError:
+                return None
         elif item_type == 'boolean':
             if type(item) is bool:
                 return item

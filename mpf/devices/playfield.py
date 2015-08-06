@@ -23,6 +23,8 @@ class Playfield(BallDevice):
         self.config = defaultdict(lambda: None)
         self.config['eject_targets'] = list()
 
+        self.log.debug("Setting up playfield: '%s', name")
+
         self.ball_controller = self.machine.ball_controller
 
         self.delay = DelayManager()
@@ -35,11 +37,12 @@ class Playfield(BallDevice):
         self.num_balls_requested = 0
         self.player_controlled_eject_in_progress = None
         self.queued_balls = list()
+        self._playfield = True
 
         # Set up event handlers
 
         # Watch for balls added to the playfield
-        for device in self.machine.balldevices:
+        for device in self.machine.ball_devices:
             for target in device.config['eject_targets']:
                 if target == self.name:
                     self.machine.events.add_handler(
@@ -48,16 +51,32 @@ class Playfield(BallDevice):
                         handler=self._source_device_eject_success)
                     self.machine.events.add_handler(
                         event='balldevice_' + device.name +
+                        '_ball_eject_failed',
+                        handler=self._source_device_eject_failed)
+
+                    self.machine.events.add_handler(
+                        event='balldevice_' + device.name +
                         '_ball_eject_attempt',
                         handler=self._source_device_eject_attempt)
-                break
+                    break
+
+        for device in self.machine.playfield_transfer:
+            if device.config['eject_target'] == self.name:
+                self.machine.events.add_handler(
+                    event='balldevice_' + device.name +
+                    '_ball_eject_success',
+                    handler=self._source_device_eject_success)
+                self.machine.events.add_handler(
+                    event='balldevice_' + device.name +
+                    '_ball_eject_attempt',
+                    handler=self._source_device_eject_attempt)
 
         # Watch for balls removed from the playfield
-        self.machine.events.add_handler('balldevice_captured_from_playfield',
+        self.machine.events.add_handler('balldevice_captured_from_' + self.name,
                                         self._ball_removed_handler)
 
         # Watch for any switch hit which indicates a ball on the playfield
-        self.machine.events.add_handler('sw_playfield_active',
+        self.machine.events.add_handler('sw_' + self.name + '_active',
                                         self.playfield_switch_hit)
 
     @property
@@ -94,7 +113,7 @@ class Playfield(BallDevice):
                                            '_ball_enter', balls=ball_change)
 
         if ball_change:
-            self.machine.events.post('playfield_ball_count_change',
+            self.machine.events.post(self.name + '_ball_count_change',
                                      balls=balls, change=ball_change)
 
     def count_balls(self, **kwargs):
@@ -103,6 +122,7 @@ class Playfield(BallDevice):
         zero.
 
         Returns: 0
+        
         """
         return 0
 
@@ -111,6 +131,7 @@ class Playfield(BallDevice):
         is the playfield device, this method always returns 999.
 
         Returns: 999
+
         """
         return 999
 
@@ -156,7 +177,6 @@ class Playfield(BallDevice):
         are still balls on the playfield but no balls in play.
 
         """
-
         if balls < 1:
             self.log.error("Received request to add %s balls, which doesn't "
                            "make sense. Not adding any balls...")
@@ -166,12 +186,13 @@ class Playfield(BallDevice):
 
         if source_device:
             pass
-        elif source_name and source_name in self.machine.balldevices:
-            source_device = self.machine.balldevices[source_name]
+        elif source_name and source_name in self.machine.ball_devices:
+            source_device = self.machine.ball_devices[source_name]
         else:
-            for device in self.machine.balldevices.items_tagged('ball_add_live'):
-                source_device = device
-                break
+            for device in self.machine.ball_devices.items_tagged('ball_add_live'):
+                if self in device.config['eject_targets']:
+                    source_device = device
+                    break
 
         if not source_device:
             self.log.critical("Received request to add a ball to the playfield, "
@@ -237,8 +258,8 @@ class Playfield(BallDevice):
 
         When this method it called, MPF will set up an event handler to look for
         the trigger_event.
-        """
 
+        """
         self.log.debug("Setting up a player controlled eject. Balls: %s, Device"
                        ": %s, Trigger Event: %s", balls, device, trigger_event)
 
@@ -254,8 +275,8 @@ class Playfield(BallDevice):
     def remove_player_controlled_eject(self):
         """Removed the player-controlled eject so a player hitting a switch
         no longer calls the device(s) to eject a ball.
-        """
 
+        """
         self.log.debug("Removing player-controlled eject.")
 
         self.machine.events.remove_handler(self.player_eject_request)
@@ -278,15 +299,16 @@ class Playfield(BallDevice):
         Args:
             balls: Integer of the number of balls that will be ejected.
             device: The ball device object that will eject the ball(s).
-        """
 
+        """
         self.log.debug("Received player eject request. Balls: %s, Device: %s",
                        balls, device.name)
         device.eject(balls, target=self)
 
     def playfield_switch_hit(self):
-        """A switch tagged with 'playfield_active' was just hit, indicating that
-        there is at least one ball on the playfield.
+        """A switch tagged with '<this playfield name>_active' was just hit,
+        indicating that there is at least one ball on the playfield.
+
         """
         if not self.balls:
 
@@ -294,7 +316,7 @@ class Playfield(BallDevice):
                 self.log.debug("PF switch hit with no balls expected. Setting "
                                "pf balls to 1.")
                 self.balls = 1
-                self.machine.events.post('unexpected_ball_on_playfield')
+                self.machine.events.post('unexpected_ball_on_' + self.name)
 
     def _ball_added_handler(self, balls):
         self.log.debug("%s ball(s) added to the playfield", balls)
@@ -308,9 +330,17 @@ class Playfield(BallDevice):
         # A source device is attempting to eject a ball. We need to know if it's
         # headed to the playfield.
         if target == self:
-            self.log.debug("A source device is attempting to ejected %s ball(s)"
+            self.log.debug("A source device is attempting to eject %s ball(s)"
                            " to the playfield.", balls)
             self.num_balls_requested += balls
+
+    def _source_device_eject_failed(self, balls, target, **kwargs):
+        # A source device failed to eject a ball. We need to know if it was
+        # headed to the playfield.
+        if target == self:
+            self.log.debug("A source device has failed to eject %s ball(s)"
+                           " to the playfield.", balls)
+            self.num_balls_requested -= balls
 
     def _source_device_eject_success(self, balls, target):
         # A source device has just confirmed that it has successfully ejected a
@@ -344,6 +374,7 @@ class Playfield(BallDevice):
         confirmation method since we don't know whether a playfield switch hit
         is from the newly-ejected ball(s) or a current previously-live
         playfield ball.
+
         """
         if not self.balls:
             return True
@@ -371,12 +402,12 @@ class Playfield(BallDevice):
                 self.flag_no_ball_search is False. Default is False
 
         """
-        if self.machine.config['ballsearch']:
+        if self.machine.config['ball_search']:
             if not self.flag_no_ball_search or force is True:
                 if secs is not None:
                     start_ms = secs * 1000
                 else:
-                    start_ms = (self.machine.config['ballsearch']
+                    start_ms = (self.machine.config['ball_search']
                         ['secs until ball search start'] * 1000)
                 self.log.debug("Scheduling a ball search for %s secs from now",
                                start_ms / 1000.0)

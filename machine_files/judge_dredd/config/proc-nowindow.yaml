@@ -1,6 +1,0 @@
-# config_version=1
-Hardware:
-    Platform: p_roc
-
-Config:
-    - jd.yaml

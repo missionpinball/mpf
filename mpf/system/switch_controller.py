@@ -14,6 +14,7 @@ from collections import defaultdict
 import time
 
 from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.timing import Timing
 
 
 class SwitchController(object):
@@ -44,6 +45,13 @@ class SwitchController(object):
         # current states. State here does factor in whether a switch is NO or NC,
         # so 1 = active and 0 = inactive.
 
+        self.switch_event_active = (
+            self.machine.config['mpf']['switch_event_active'])
+        self.switch_event_inactive = (
+            self.machine.config['mpf']['switch_event_inactive'])
+        self.switch_tag_event = (
+            self.machine.config['mpf']['switch_tag_event'])
+
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick, 1000)
         self.machine.events.add_handler('init_phase_2',
@@ -57,19 +65,16 @@ class SwitchController(object):
     def _initialize_switches(self):
 
         # Set "start active" switches
-
         start_active = list()
 
         if not self.machine.physical_hw:
-
             try:
                 start_active = Config.string_to_lowercase_list(
-                    self.machine.config['virtual platform start active switches'])
+                    self.machine.config['virtual_platform_start_active_switches'])
             except KeyError:
                 pass
 
         for switch in self.machine.switches:
-
             # Populate self.switches
             if switch.name in start_active:
                 switch.state = 1  # set state based on physical state
@@ -78,6 +83,48 @@ class SwitchController(object):
             # Populate self.registered_switches
             self.registered_switches[switch.name + '-0'] = list()
             self.registered_switches[switch.name + '-1'] = list()
+
+            if self.machine.config['mpf']['auto_create_switch_events']:
+
+                switch.activation_events.add(
+                    self.machine.config['mpf']['switch_event_active'].replace(
+                                    '%', switch.name))
+
+                switch.deactivation_events.add(
+                    self.machine.config['mpf']['switch_event_inactive'].replace(
+                                    '%', switch.name))
+
+            if 'activation_events' in switch.config:
+                for event in Config.string_to_lowercase_list(
+                        switch.config['activation_events']):
+
+                    if "|" in event:
+                        ev_name, ev_time = event.split("|")
+                        self.add_switch_handler(
+                            switch_name=switch.name,
+                            callback=self.machine.events.post,
+                            state=1,
+                            ms=Timing.string_to_ms(ev_time),
+                            callback_kwargs={'event': ev_name}
+                            )
+                    else:
+                        switch.activation_events.add(event)
+
+            if 'deactivation_events' in switch.config:
+                for event in Config.string_to_lowercase_list(
+                        switch.config['deactivation_events']):
+
+                    if "|" in event:
+                        ev_name, ev_time = event.split("|")
+                        self.add_switch_handler(
+                            switch_name=switch.name,
+                            callback=self.machine.events.post,
+                            state=0,
+                            ms=Timing.string_to_ms(ev_time),
+                            callback_kwargs={'event': ev_name}
+                            )
+                    else:
+                        switch.deactivation_events.add(event)
 
     def verify_switches(self):
         """Loops through all the switches and queries their hardware states via
@@ -187,8 +234,8 @@ class SwitchController(object):
         Args:
             name: The string name of the switch. This is optional if you specify
                 the switch via the 'num' or 'obj' parameters.
-            state: The state of the switch you're processing, 1 is active, 0 is
-                inactive.
+            state: Boolean or int of state of the switch you're processing,
+                True/1 is active, False/0 is inactive.
             logical: Boolean which specifies whether the 'state' argument
                 represents the "physical" or "logical" state of the switch. If
                 True, a 1 means this switch is active and a 0 means it's
@@ -228,15 +275,24 @@ class SwitchController(object):
         elif obj:
             name = obj.name
 
+        if not obj and name:
+            obj = self.machine.switches[name]
+
         if not name:
             self.log.warning("Received a state change from non-configured "
                              "switch. Number: %s", num)
             return
 
+        # We need int, but this lets it come in as boolean also
+        if state:
+            state = 1
+        else:
+            state = 0
+
         # flip the logical & physical states for NC switches
         hw_state = state
 
-        if self.machine.switches[name].type == 'NC':
+        if obj.type == 'NC':
             if logical:  # NC + logical means hw_state is opposite of state
                 hw_state = hw_state ^ 1
             else:
@@ -248,21 +304,32 @@ class SwitchController(object):
         # configured to not be debounced.
 
         if not debounced:
-            if self.machine.switches[name].config['debounce']:
+            if obj.config['debounce']:
                 return
 
-        # update the switch device
-        self.machine.switches[name].state = state
-        self.machine.switches[name].hw_state = hw_state
+        # Update the hardware state since we always want this to match real hw
+        obj.hw_state = hw_state
+
+        # if the switch is active, check to see if it's recycle_time has passed
+        if state and not self._check_recycle_time(obj, state):
+            return
+
+        obj.state = state  # update the switch device
+
+        if state:
+            # update the switch's next recycle clear time
+            obj.recycle_clear_tick = Timing.tick + obj.recycle_ticks
 
         # if the switch is already in this state, then abort
         if self.switches[name]['state'] == state:
-            # todo log this as potential hw error??
-            self.log.debug("Received duplicate switch state, which means this "
-                           "switch had some non-debounced state changes. This "
-                           "could be nothing, but if it happens a lot it could "
-                           "indicate noise or interference on the line. Switch:"
-                           "%s", name)
+
+            if not obj.recycle_ticks:
+                self.log.info("Received duplicate switch state, which means "
+                    "this switch had some non-debounced state changes. This "
+                    "could be nothing, but if it happens a lot it could "
+                    "indicate noise or interference on the line. Switch: %s",
+                    name)
+
             return
 
         self.log.info("<<<<< switch: %s, State:%s >>>>>", name, state)
@@ -287,7 +354,8 @@ class SwitchController(object):
                              'switch_name': name,
                              'state': state,
                              'ms': entry['ms'],
-                             'return_info': entry['return_info']}
+                             'return_info': entry['return_info'],
+                             'callback_kwargs': entry['callback_kwargs']}
                     self.active_timed_switches[key].append(value)
                     self.log.debug("Found timed switch handler for k/v %s / %s",
                                    key, value)
@@ -296,9 +364,10 @@ class SwitchController(object):
                     # now
                     if entry['return_info']:
 
-                        entry['callback'](switch_name=name, state=state, ms=0)
+                        entry['callback'](switch_name=name, state=state, ms=0,
+                                          **entry['callback_kwargs'])
                     else:
-                        entry['callback']()
+                        entry['callback'](**entry['callback_kwargs'])
 
                 # todo need to add args and kwargs support to callback
 
@@ -316,7 +385,7 @@ class SwitchController(object):
         self._post_switch_events(name, state)
 
     def add_switch_handler(self, switch_name, callback, state=1, ms=0,
-                           return_info=False):
+                           return_info=False, callback_kwargs=None):
         """Register a handler to take action on a switch event.
 
         Args:
@@ -335,19 +404,22 @@ class SwitchController(object):
                 parameters of the switch handler as arguments to the callback,
                 including switch_name, state, and ms. If False (default), it
                 just calls the callback with no parameters.
+            callback_kwargs: Additional kwargs that will be passed with the
+                callback.
 
         You can mix & match entries for the same switch here.
 
         """
-
-        # todo add support for other parameters to the callback?
+        if not callback_kwargs:
+            callback_kwargs = dict()
 
         self.log.debug("Registering switch handler: %s, %s, state: %s, ms: %s"
-                       ", info: %s", switch_name, callback, state, ms,
-                       return_info)
+                       ", info: %s, cb_kwargs: %s", switch_name, callback, state, ms,
+                       return_info, callback_kwargs)
 
         entry_val = {'ms': ms, 'callback': callback,
-                     'return_info': return_info}
+                     'return_info': return_info,
+                     'callback_kwargs': callback_kwargs}
         entry_key = str(switch_name) + '-' + str(state)
 
         self.registered_switches[entry_key].append(entry_val)
@@ -374,7 +446,8 @@ class SwitchController(object):
                              'switch_name': switch_name,
                              'state': state,
                              'ms': ms,
-                             'return_info': return_info}
+                             'return_info': return_info,
+                             'callback_kwargs': callback_kwargs}
                     self.active_timed_switches[key].append(value)
             elif state == 0:
                 if self.is_inactive(switch_name, 0) and (
@@ -387,7 +460,8 @@ class SwitchController(object):
                              'switch_name': switch_name,
                              'state': state,
                              'ms': ms,
-                             'return_info': return_info}
+                             'return_info': return_info,
+                             'callback_kwargs': callback_kwargs}
                     self.active_timed_switches[key].append(value)
 
         # Return the args we used to setup this handler for easy removal later
@@ -408,17 +482,13 @@ class SwitchController(object):
         self.log.debug("Removing switch handler. Switch: %s, State: %s, ms: %s",
                       switch_name, state, ms)
 
-        # Try first with return_info: False
-        entry_val = {'ms': ms, 'callback': callback, 'return_info': False}
         entry_key = str(switch_name) + '-' + str(state)
 
-        if entry_val in self.registered_switches[entry_key]:
-            self.registered_switches[entry_key].remove(entry_val)
-
-        # And try again with return_info: True
-        entry_val = {'ms': ms, 'callback': callback, 'return_info': True}
-        if entry_val in self.registered_switches[entry_key]:
-            self.registered_switches[entry_key].remove(entry_val)
+        if entry_key in self.registered_switches:
+            for index, settings in enumerate(self.registered_switches[entry_key]):
+                if (settings['ms'] == ms and
+                        settings['callback'] == callback):
+                    self.registered_switches[entry_key].remove(settings)
 
     def log_active_switches(self):
         """Writes out entries to the log file of all switches that are
@@ -438,19 +508,29 @@ class SwitchController(object):
             if v['state']:
                 self.log.info("Active Switch|%s",k)
 
+    def _check_recycle_time(self, switch, state):
+        # checks to see when a switch is ok to be activated again after it's
+        # been last activated
+
+        if Timing.tick >= switch.recycle_clear_tick:
+            return True
+
+        else:
+            if state:
+                switch.recycle_jitter_count += 1
+            return False
+
     def _post_switch_events(self, switch_name, state):
         """Posts the game events based on this switch changing state. """
-
-        # post events based on the switch tags
 
         # the following events all fire the moment a switch goes active
         if state == 1:
 
-            for tag in self.machine.switches[switch_name].tags:
-                self.machine.events.post('sw_' + tag)
-
             for event in self.machine.switches[switch_name].activation_events:
                 self.machine.events.post(event)
+
+            for tag in self.machine.switches[switch_name].tags:
+                self.machine.events.post(self.switch_tag_event.replace('%', tag))
 
         # the following events all fire the moment a switch becomes inactive
         elif state == 0:
@@ -475,9 +555,10 @@ class SwitchController(object):
                     if entry['return_info']:
                         entry['callback'](switch_name=entry['switch_name'],
                                          state=entry['state'],
-                                         ms=entry['ms'])
+                                         ms=entry['ms'],
+                                         **entry['callback_kwargs'])
                     else:
-                        entry['callback']()
+                        entry['callback'](**entry['callback_kwargs'])
                 del self.active_timed_switches[k]
 
 # The MIT License (MIT)

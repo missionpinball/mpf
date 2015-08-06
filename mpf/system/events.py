@@ -10,19 +10,30 @@ import logging
 from collections import deque
 import uuid
 
+from mpf.system.config import Config
+
 
 class EventManager(object):
 
     def __init__(self, machine):
         self.log = logging.getLogger("Events")
         self.machine = machine
-        self.event_queue = []
         self.registered_handlers = {}
         self.busy = False
-        self.queue = deque([])
-        self.current_event = None
+        self.event_queue = deque([])
+        self.callback_queue = deque([])
         self.debug = True  # logs all event activity except timer_ticks.
         self.registered_monitors = set()  # callbacks that get every event
+        self.current_event = (None, None, None, None)  # current in-progress ev
+
+        self.add_handler('init_phase_1', self._initialize)
+
+    def _initialize(self):
+        if 'event_player' in self.machine.config:
+            self.process_event_player(self.machine.config['event_player'])
+
+        self.machine.modes.register_start_method(self.process_event_player,
+                                                 'event_player')
 
     def add_handler(self, event, handler, priority=1, **kwargs):
         """Registers an event handler to respond to an event.
@@ -402,22 +413,25 @@ class EventManager(object):
                            "Args: %s", event, ev_type, callback,
                            friendly_kwargs)
 
+        self.event_queue.append((event, ev_type, callback, kwargs))
         if not self.busy:
-            self._process_event(event, ev_type, callback, **kwargs)
+            # process event queue right away
+            self._process_event_queue()
         else:
-            self.queue.append((event, ev_type, callback, kwargs))
-
             if self.debug and event != 'timer_tick':
                 self.log.debug("XXXX Event '%s' is in progress. Added to the "
-                               "queue.", self.current_event)
+                               "queue.", self.current_event[0])
                 self.log.debug("================== ACTIVE EVENTS =============")
-                for event in list(self.queue):
+                for event in list(self.event_queue):
                     self.log.debug("%s, %s, %s, %s", event[0], event[1],
                                    event[2], event[3])
                 self.log.debug("==============================================")
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
+
+        self.current_event = (event, ev_type, callback, kwargs)
+
         result = None
         queue = None
         if self.debug and event != 'timer_tick':
@@ -436,8 +450,6 @@ class EventManager(object):
 
         # Now let's call the handlers one-by-one, including any kwargs
         if event in self.registered_handlers:
-            self.busy = True
-            self.current_event = event
 
             if ev_type == 'queue' and callback:
                 queue = QueuedEvent(callback, **kwargs)
@@ -477,8 +489,6 @@ class EventManager(object):
                 elif ev_type == 'relay' and type(result) is dict:
                     kwargs.update(result)
 
-            self.current_event = None
-            self.busy = False
         if self.debug and event != 'timer_tick':
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
                            "Args: %s", event, ev_type, callback, kwargs)
@@ -501,23 +511,71 @@ class EventManager(object):
                 # if our last handler returned something, add it to kwargs
                 kwargs['ev_result'] = result
 
-            if kwargs:
-                callback(**kwargs)
-            else:
-                callback()
+            self.callback_queue.append((callback, kwargs))
 
-        # Finally see if we have any more events to process
-        self._do_next()
+        self.current_event = (None, None, None, None)
 
-    def _do_next(self):
+    def _process_event_queue(self):
+        self.busy = True
         # Internal method which checks to see if there are any other events
         # that need to be processed, and then processes them.
-        if len(self.queue) > 0:
-            event = self.queue.popleft()
-            self._process_event(event=event[0],
-                                ev_type=event[1],
-                                callback=event[2],
-                                **event[3])
+        while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
+            # first process all events. if they post more events we will
+            # process them in the same loop.
+            while len(self.event_queue) > 0:
+                event = self.event_queue.popleft()
+                self._process_event(event=event[0],
+                                    ev_type=event[1],
+                                    callback=event[2],
+                                    **event[3])
+
+            # when all events are processed run the _last_ callback. afterwards
+            # continue with the loop and run all events. this makes sure all
+            # events are completed before running the callback
+            if len(self.callback_queue) > 0:
+                callback, kwargs = self.callback_queue.pop()
+                callback(**kwargs)
+
+        self.busy = False
+
+    def get_current_event(self):
+        """Returns a tuple with information about the current event that's in
+        progress.
+
+        Returned result is a 4-element tuple:
+
+        [0] event name (str)
+        [1] event type (str)
+        [2] post-event callback (meth)
+        [3] kwargs (dict)
+
+        If no event is in progress, these are all None.
+
+        """
+        return self.current_event
+
+    def process_event_player(self, config, mode=None, priority=0):
+        # config is localized to 'event_player'
+        self.log.debug("Processing event_player configuration. Priority: %s",
+                       priority)
+
+        event_keys = set()
+
+        for event_name, events in config.iteritems():
+            if type(events) is not list:
+                events = Config.string_to_list(events)
+
+            for event in events:
+                event_keys.add(self.machine.events.add_handler(event_name,
+                    self._event_player_callback, priority, event_to_call=event))
+
+        return self.unload_event_player_events, event_keys
+
+    def unload_event_player_events(self, event_keys):
+        self.machine.events.remove_handlers_by_keys(event_keys)
+
+    def _event_player_callback(self, event_to_call, **kwargs):
+        self.machine.events.post(event_to_call)
 
 
 class QueuedEvent(object):

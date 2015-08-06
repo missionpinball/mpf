@@ -35,11 +35,10 @@ class SlideBuilder(object):
         else:
             self.language = None
 
-        # Tell the mode controller that it should look for SlidePlayer items in
+        # Tell the mode controller that it should look for slide_player items in
         # modes.
         self.machine.modes.register_start_method(self.process_config,
-                                                 'slideplayer')
-
+                                                 'slide_player')
 
     def process_config(self, config, mode=None, priority=0):
         self.log.debug("Processing SlideBuilder configuration. Base priority: "
@@ -55,16 +54,8 @@ class SlideBuilder(object):
                 key_list.append(self.machine.events.add_handler(
                                 event,
                                 self.build_slide,
-                                #settings[0]['slide_priority'],
+                                mode=mode,
                                 settings=settings))
-
-                # todo is it right to pass the priority to the event handler?
-                # if we have two slideplayer entries for the same event, how
-                # do we ensure that only the highest one is built? Sure, only
-                # the highest one will be shown, but we don't want to waste time
-                # building lower slides that will never be shown. I think?
-                # Or is that ok in case the higher one ends so the lower one is
-                # there to show through?
 
         return self.unload_slide_events, (key_list, mode)
 
@@ -79,11 +70,11 @@ class SlideBuilder(object):
             self.machine.display.remove_slides(slide_key)
 
     def preprocess_settings(self, settings, base_priority=0):
-        """Takes an unstructured list of SlidePlayer settings and processed them
+        """Takes an unstructured list of slide_player settings and processed them
         so they can be displayed.
 
         Args:
-            settings: A list of dictionary of SlidePlayer settings for a slide.
+            settings: A list of dictionary of slide_player settings for a slide.
             base_priority: An integer that will be added to slide's priority
                 from the config settings.
 
@@ -101,7 +92,7 @@ class SlideBuilder(object):
 
         """
 
-        # This is a stupid band-aid because when modes load their slideplayer
+        # This is a stupid band-aid because when modes load their slide_player
         # settings are already processed. I don't know why though, but I don't
         # have time to track it down now. $50 to anyone who figures out why!!!
 
@@ -144,10 +135,14 @@ class SlideBuilder(object):
             # If a 'clear_slide' setting isn't specified, set a default of True
             if 'clear_slide' in element:
                 first_settings['clear_slide'] = element.pop('clear_slide')
+            else:
+                first_settings['clear_slide'] = True
 
             # If a 'persist_slide' setting isn't specified, set default of False
             if 'persist_slide' in element:
                 first_settings['persist_slide'] = element.pop('persist_slide')
+            else:
+                first_settings['persist_slide'] = False
 
             if 'display' in element:
                 first_settings['display'] = element.pop('display')
@@ -181,8 +176,8 @@ class SlideBuilder(object):
         return processed_settings
 
     def build_slide(self, settings, display=None, slide_name=None,
-                    priority=None, **kwargs):
-        """Buils a slide from a SlideBuilder set of keyword arguments.
+                    priority=None, mode=None, **kwargs):
+        """Builds a slide from a SlideBuilder set of keyword arguments.
 
         Args:
             settings: Python dictionary of settings for this slide. This
@@ -194,6 +189,8 @@ class SlideBuilder(object):
                 it doesn't exist, a new slide will be created. If no slide name
                 is passed, a new slide will be created and given a UUID4 name.
             priority: Integer of the priority of this slide.
+            mode: A reference to the Mode instance that built this slide. Used
+                to make sure that each mode keeps at least one active slide.
             **kwargs: Catch all since this method is often registered as a
                 callback for events which means there could be random event
                 keyword argument pairs attached.
@@ -203,16 +200,25 @@ class SlideBuilder(object):
 
         """
 
-        if not 'preprocessed' in settings[0]:
+        if 'preprocessed' not in settings[0]:
             settings = self.preprocess_settings(settings)
 
         if display:
-            display = self.machine.display.displays[display]
+            try:
+                display = self.machine.display.displays[display]
+            except KeyError:
+                pass
+
         elif 'display' in settings[0]:
-            display = settings[0]['display']
-            display = self.machine.display.displays[display]
+            try:
+                display = self.machine.display.displays[settings[0]['display']]
+            except KeyError:
+                pass
         else:
             display = self.machine.display.default_display
+
+        if not display:
+            return
 
         # Figure out which slide we're dealing with
         if not slide_name:
@@ -225,10 +231,9 @@ class SlideBuilder(object):
         if 'expire' not in settings[0]:
             settings[0]['expire']
 
-
         # Does this slide name already exist for this display?
 
-        if slide_name in display.slides:  # Found existing slide
+        if slide_name and slide_name in display.slides:  # Found existing slide
             slide = display.slides[slide_name]
             if 'clear_slide' in settings[0] and settings[0]['clear_slide']:
                 slide.clear()
@@ -238,8 +243,10 @@ class SlideBuilder(object):
                 priority = settings[0]['slide_priority']
 
             slide = display.add_slide(name=slide_name, priority=priority,
+                                      persist=settings[0]['persist_slide'],
                                       removal_key=settings[0]['removal_key'],
-                                      expire_ms=settings[0]['expire'])
+                                      expire_ms=settings[0]['expire'],
+                                      mode=mode)
 
         # loop through and add the elements
         for element in settings:
@@ -270,18 +277,8 @@ class SlideBuilder(object):
         if 'text' in settings:
             settings['text'] = str(settings['text'])
 
-            # Are there any text variables to replace on the fly?
-            # todo should this go here?
+            # Are there any kwarg variables to replace on the fly?
             if '%' in settings['text']:
-
-                # first check for player vars (%var_name%)
-                if self.machine.player:
-                    for name, value in self.machine.player:
-                        if '%' + name + '%' in settings['text']:
-                            settings['text'] = settings['text'].replace(
-                                '%' + name + '%', str(value))
-
-                # now check for single % which means event kwargs
                 for kw in text_variables:
                     if '%' + kw in settings['text']:
                         settings['text'] = settings['text'].replace(
@@ -311,6 +308,7 @@ class SlideBuilder(object):
                         self.machine.display.decorators[decorator['type']][1])
 
                 element.attach_decorator(decorator_class(element, **decorator))
+
 
 # The MIT License (MIT)
 

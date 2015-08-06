@@ -68,10 +68,11 @@ class Image(Asset):
 
     def _load(self, callback):
         if self.file_name.endswith('.dmd'):
-            self.image_surface = mpf.display_modules.dmd.load_dmd_file(
-                file_name=self.file_name,
-                palette=dmd_palette,
-                alpha_color=self.alpha_color)
+            self.image_surface = (
+                mpf.media_controller.display_modules.dmd.load_dmd_file(
+                    file_name=self.file_name,
+                    palette=dmd_palette,
+                    alpha_color=self.alpha_color))
             self.image_surface = self.image_surface[0]
             self.loaded = True
 

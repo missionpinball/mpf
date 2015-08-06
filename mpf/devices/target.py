@@ -7,11 +7,9 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
+from collections import deque
 
 from mpf.system.devices import Device
-from mpf.system.tasks import DelayManager
-from mpf.system.light_controller import Playlist
-from collections import deque
 from mpf.system.config import Config
 
 
@@ -19,173 +17,378 @@ class Target(Device):
 
     config_section = 'targets'
     collection = 'targets'
-
-    # todo need to add complete show and complete script
-    # todo support multiple switches & multiple lights
+    class_label = 'target'
 
     def __init__(self, machine, name, config, collection=None):
+        """Represents a target in a pinball machine. A target is typically the
+        combination of a switch and a light, such as a standup or rollover.
+        Targets have multiple 'states' and intelligence to track what state the
+        target was in when it was hit and to advance through various states as
+        it's hit again and again.
+
+        """
         self.log = logging.getLogger('Target.' + name)
-
-        if 'enable_events' not in config:
-            config['enable_events'] = {'ball_started': 0}
-
-        if 'disable_events' not in config:
-            config['disable_events'] = {'ball_ending': 0}
+        self.log.debug("Configuring target with settings: '%s'", config)
 
         super(Target, self).__init__(machine, name, config, collection)
 
-        self.lit = False
-        self.device_str = 'target'
+        self.active_profile_name = None
+        self.active_profile_config = dict()
+        self.active_profile_steps = list()
+        self.active_profile_priority = 0
+        self.current_step_index = 0
+        self.current_step_name = None
+        self.running_light_show = None
+        self.target_group = None
+        self.profiles = list()
+        self.player = None
+        self.player_variable = None
 
-        self.delay = DelayManager()
+        self.enabled = False
 
-        # set config defaults
-        if 'light' not in self.config:
-            self.config['light'] = None
+        if 'profile' not in self.config:
+            self.config['profile'] = 'default'
 
-        elif (hasattr(self.machine, 'lights') and
-              self.config['light'] in self.machine.lights):
-            self.log.debug("Configuring with light: %s", self.config['light'])
-            self.config['light'] = self.machine.lights[self.config['light']]
-
-        elif (hasattr(self.machine, 'leds') and
-              self.config['light'] in self.machine.leds):
-            self.log.debug("Configuring with LED: %s", self.config['light'])
-            self.config['light'] = self.machine.leds[self.config['light']]
-
-        if 'light_if_unlit' not in self.config:
-            self.config['light_if_unlit'] = True
-
-        if 'unlight_if_lit' not in self.config:
-            self.config['unlight_if_lit'] = False
-
-        if 'default_state' not in self.config:
-            self.config['default_state'] = 'unlit'
-
-        if 'reset_events' in self.config:
-            self.config['reset_events'] = Config.string_to_list(
-                self.config['reset_events'])
+        if 'switch' in self.config:
+            self.config['switch'] = Config.string_to_list(self.config['switch'])
         else:
-            self.config['reset_events'] = [None]
-        # todo change this to dict with timing delays?
+            self.config['switch'] = list()
 
-        # light script
-        # unlight script
-        # light color
-        # unlight color
+        if 'light' in self.config:
+            self.config['light'] = Config.string_to_list(self.config['light'])
+        else:
+            self.config['light'] = list()
 
-        # register for events
-
-        self.machine.events.add_handler('action_target_' + self.name +
-                                        '_light', self.light)
-
-        self.machine.events.add_handler('action_target_' + self.name +
-                                        '_unlight', self.unlight)
-
-        self.machine.events.add_handler('action_target_' + self.name +
-                                        '_toggle', self.toggle)
+        if 'led' in self.config:
+            self.config['led'] = Config.string_to_list(self.config['led'])
+        else:
+            self.config['led'] = list()
 
         self.machine.events.add_handler('init_phase_3',
                                         self._register_switch_handlers)
 
+    def _set_player_variable(self):
+        if 'player_variable' in self.active_profile_settings:
+            self.player_variable = self.active_profile_settings['player_variable']
+        else:
+            self.player_variable = (self.name + '_' + self.active_profile_name)
+
     def _register_switch_handlers(self):
-        self.machine.switch_controller.add_switch_handler(self.config['switch'],
-                                                          self.hit, 1)
+        for switch in self.config['switch']:
+            self.machine.switch_controller.add_switch_handler(
+                switch, self.hit, 1)
 
-    def hit(self, stealth=False):
-        """This target was just hit.
+    def _advance_step(self, steps=1):
+        if (self.player[self.player_variable] + 1 >=
+                len(self.active_profile_steps)):
+            if self.config['loops']:
+                self.player[self.player_variable] = 0
+            else:
+                return
+        else:
+            self.machine.game.player[self.player_variable] += 1
 
-        Stealth lets us change the status without posting the events. Used for
-        rotation.
+        self._stop_current_lights()
+        self._update_current_step_variables()
+        self._do_step_actions()
+        self._update_group_status()
+
+    def _update_group_status(self):
+        if self.target_group:
+            self.target_group.check_for_complete()
+
+    def _stop_current_lights(self):
+
+        try:
+            self.running_light_show.stop(hold=False, reset=False)
+        except AttributeError:
+            pass
+
+        self.running_light_show = None
+
+    def _update_current_step_variables(self):
+        self.current_step_index = self.player[self.player_variable]
+
+        self.current_step_name = (
+            self.active_profile_steps[self.current_step_index]['name'])
+
+    def _do_step_actions(self, ):
+        if ('light_script' in self.active_profile_steps[self.current_step_index]
+                and (self.config['light'] or self.config['led'])):
+
+            settings = self.active_profile_steps[self.current_step_index]
+
+            if 'hold' in settings:
+                hold = settings.pop('hold')
+            else:
+                hold = True
+
+            if 'reset' in settings:
+                reset = settings.pop('reset')
+            else:
+                reset = False
+
+            new_show = self.machine.light_controller.run_registered_script(
+                script_name=self.active_profile_steps[self.current_step_index]['light_script'],
+                lights=self.config['light'],
+                leds=self.config['led'],
+                priority=self.profiles[0][1],
+                hold=hold,
+                reset=reset,
+                **self.active_profile_steps[self.current_step_index])
+
+            if new_show:
+                self.running_light_show = new_show
+            else:
+                self.log.warning("Error running light_script '%s'",
+                    self.active_profile_steps[self.current_step_index]['light_script'])
+                self.running_light_show = None
+
+        else:
+            self.running_light_show = None
+
+    def _update_lights(self, step=0):
+
+        if 'light_script' in self.active_profile_steps[self.current_step_index]:
+
+            settings = self.active_profile_steps[self.current_step_index]
+
+            if 'hold' in settings:
+                hold = settings.pop('hold')
+            else:
+                hold = True
+
+            if 'reset' in settings:
+                reset = settings.pop('reset')
+            else:
+                reset = False
+
+            self.running_light_show = (
+                self.machine.light_controller.run_registered_script(
+                    script_name=settings['light_script'],
+                    lights=self.config['light'],
+                    leds=self.config['led'],
+                    start_location=step,
+                    priority=self.active_profile_priority,
+                    hold=hold,
+                    reset=reset,
+                    **settings))
+
+    def player_turn_start(self, player):
+        """Called when a player's turn starts to update the player reference to
+        the current player and to apply the default machine-wide target profile.
+
         """
-        self.log.debug("Hit. Currently lit: %s", self.lit)
+        self.player = player
+        self.apply_profile(self.config['profile'], priority=0)
 
-        # todo make this only duing active balls?
+    def apply_profile(self, profile, priority, removal_key=None):
+        """Applies a target profile to this target.
 
-        if not self.lit:
-            if not stealth:
-                self.machine.events.post(self.device_str + '_' +
-                                         self.name + '_unlit_hit')
-            if self.config['light_if_unlit']:  # light
-                self.light(stealth)
+        Args:
+            profile: String name of the profile to apply.
+            priority: Priority of this profile. Only one profile is active at a
+                time. If this profile is the highest, then it will be active. If
+                not then it will still be applied and will become active if
+                higher priority profiles are removed.
+            removal_key: Optional hashable that can be used to identify this
+                profile so it can be removed later.
 
-        elif self.lit:
-            if not stealth:
-                self.machine.events.post(self.device_str + '_' +
-                                         self.name + '_lit_hit')
-            if self.config['unlight_if_lit']:  # unlight
-                self.unlight(stealth)
+        """
+        if profile in self.machine.target_controller.profiles:
+            self.log.debug("Applying target profile '%s', priority %s", profile,
+                          priority)
 
-    def light(self, stealth=False):
-        self.lit = True
-        self.log.debug("Lighting Target. Stealth: %s", stealth)
+            profile_tuple = (profile, priority,
+                self.machine.target_controller.profiles[profile],
+                self.machine.target_controller.profiles[profile]['steps'],
+                removal_key)
 
-        # todo add state param
+            self.profiles.append(profile_tuple)
+
+            self._sort_profiles()
+            self._set_player_variable()
+            self._update_current_step_variables()
+            self._update_lights(step=-1)  # update with the the last step
+
+        else:
+            if not self.active_profile_name:
+                self.apply_profile('default')
+
+            self.log.debug("Target profile '%s' not found. Target is has '%s' "
+                           "applied.", profile, self.active_profile_name)
+
+    def remove_profile(self, removal_key=None, **kwargs):
+        """Removes a target profile from this target.
+
+        Args:
+            removal_key: The key that was returned when the profile was applied
+                to the target which is how the profile you want to remove is
+                identified. Default is None, in which case whichever profile is
+                active will be removed.
+
+        If the profile removed is the active one (because it was the highest
+        priority), then this method activates the next-highest priority profile.
+
+        Note that if there is only one profile applied, then it will not be
+        removed.
+
+        """
+
+        if len(self.profiles) == 1:
+            return
+
+        if not removal_key:  # Get the key of the highest profile
+            removal_key = self.profiles[0][4]
+
+        old_profile = self.active_profile_name
+
+        for entry in self.profiles[:]:  # slice so we can remove while iter
+            if entry[4] == removal_key:
+                self.profiles.remove(entry)
+
+        self._sort_profiles()
+
+        if self.active_profile_name != old_profile:
+
+            self._stop_current_lights()
+            self._set_player_variable()
+            self._update_current_step_variables()
+            self._update_lights()
+
+    def _sort_profiles(self):
+        self.profiles.sort(key=lambda x: x[1], reverse=True)
+
+        (self.active_profile_name, self.active_profile_priority,
+         self.active_profile_settings,
+         self.active_profile_steps, _) = self.profiles[0]
+
+    def hit(self, force=False, stealth=False, **kwargs):
+        """Method which is called to indicate this target was just hit. This
+        method will advance the currently-active target profile.
+
+        Args:
+            force: Boolean that forces this hit to be registered. Default is
+                False which means if there are no balls in play (e.g. after a
+                tilt) then this hit isn't processed. Set this to True if you
+                want to force the hit to be processed even if no balls are in
+                play.
+            stealth: Boolean that controls whether this hit will post hit
+                events. Useful if you want to just advance the step without
+                triggering scoring, etc. Default is False.
+
+        Note that the target must be enabled in order for this hit to be
+        processed.
+
+        """
+
+        if (not self.machine.game or (
+                self.machine.game and not self.machine.game.balls_in_play) and
+                not force):
+            return
+
+        if not self.enabled and not force:
+            return
 
         if not stealth:
-            self.machine.events.post(self.device_str + '_' +
-                                     self.name + '_lit')
 
-        if self.config['light']:
-            if self.config['light_script']:
-                pass
-                # todo add lit script or light color
-            else:
-                self.config['light'].on()
-                self.log.debug("turning on light")
+            self.log.debug("Hit! Profile: %s, Current Step: %s",
+                          self.active_profile_name, self.current_step_name)
 
-    def unlight(self, stealth=False):
-        self.lit = False
-        self.log.debug("Unlighting Target. Stealth: %s", stealth)
+            # post event <name>_<profile>_<step>_hit
+            self.machine.events.post(self.name + '_' +
+                                     self.active_profile_name + '_' +
+                                     self.current_step_name + '_hit')
 
-        # todo add state param
+            if self.target_group:
+                self.target_group.hit(profile_name=self.active_profile_name,
+                                      profile_step_name=self.current_step_name)
 
-        if not stealth:
-            self.machine.events.post(self.device_str + '_' +
-                                     self.name + '_unlit')
+        self._advance_step()
 
-        if self.config['light']:
-            if self.config['unlight_script']:
-                pass
-                # todo add lit script or light color
-            else:
-                self.config['light'].off()
-                self.log.debug("turning off light")
+    def jump(self, step, update_group=True, current_show_step=0):
+        """Jumps to a certain step in the active target profile.
 
-    def toggle(self, stealth=False):
-        self.log.debug("Toggling lit state")
-        if self.lit:
-            self.unlight(stealth)
-        else:
-            self.light(stealth)
+        Args:
+            step: int of the step number you want to jump to. Note that steps
+                are zero-based, so the first step is 0.
+            update_group: Boolean which controls whether this jump event should
+                also contact the target group this target belongs to to see if
+                it should update this group's complete status. Default is True.
+                False is used for things like target rotation where a target
+                needs to jump to a new position but you don't want to post the
+                group complete events again.
 
-    def reset(self, *args, **kwargs):
-        self.log.debug("Resetting Target. Default state: %s",
-                       self.config['default_state'])
-        # todo add state param
+        """
 
-        if self.config['default_state'] == 'lit':
-            self.light(False)
-        else:
-            self.unlight(False)
+        if not self.machine.game:
+            return
+
+        self._stop_current_lights()
+        self.player[self.player_variable] = step
+        self._update_current_step_variables()  # curr_step_index, curr_step_name
+
+        if update_group:
+            self._update_group_status()
+
+        self._update_lights(current_show_step)
+
+    def advance(self, **kwargs):
+        """Advances the active target profile one step forward.
+
+        If this profile is at the last step and configured to roll over, it will
+        roll over to the first step. If this profile is at the last step and not
+        configured to roll over, this method has no effect.
+
+        """
+        self.hit(force=True, stealth=True)
+
+    def enable(self, **kwargs):
+        """Enables this target. If the target is not enabled, hits to it will
+        not be processed.
+
+        """
+        self.log.debug("Enabling...")
+        self.enabled = True
+
+    def disable(self, **kwargs):
+        """Disables this target. If the target is not enabled, hits to it will
+        not be processed.
+
+        """
+        self.log.debug("Disabling...")
+        self.enabled = False
+
+    def reset(self, **kwargs):
+        """Resets the active target profile back to the first step (Step 0).
+        This method is the same as calling jump(0).
+
+        """
+        self.jump(step=0)
 
 
 class TargetGroup(Device):
+    """Represents a group of targets in a pinball machine by grouping
+    together multiple `Target` class devices. This is used so you get get
+    "group-level" functionality, like target rotation, target group completion,
+    etc. This would be used for a group of rollover lanes, a bank of standups,
+    etc.
 
-    config_section = 'targetgroups'
+    """
+    config_section = 'target_groups'
     collection = 'target_groups'
-
-    # todo need to add complete_scripts
-    # todo add show playback speed
-    # need to add some concept of active that makes sure completion & rotations
-    # only happen when they should
+    class_label = 'target_group'
 
     def __init__(self, machine, name, config, collection=None,
                  member_collection=None, device_str=None):
         self.log = logging.getLogger('TargetGroup.' + name)
+
+        self.log.debug("Configuring target group with settings: '%s'", config)
+
         super(TargetGroup, self).__init__(machine, name, config, collection)
 
-        self.delay = DelayManager()
+        self.enabled = False
+
         if not device_str:
             self.device_str = 'targets'
         else:
@@ -194,196 +397,162 @@ class TargetGroup(Device):
         if not member_collection:
             member_collection = self.machine.targets
 
-        self.num_lit = 0
-        self.num_unlit = 0
-        self.num_targets = 0
         self.targets = list()
 
-        # make sure our target list is a list
+        # make sure target list is a Python list
         self.config[self.device_str] = Config.string_to_list(
             self.config[self.device_str])
 
-        # create our list of objects
+        # convert target list from str to objects
         for target in self.config[self.device_str]:
             self.targets.append(member_collection[target])
+            member_collection[target].target_group = self
 
-        if 'lit_complete_show' not in self.config:
-            self.config['lit_complete_show'] = None
+    def hit(self, profile_name, profile_step_name, **kwargs):
+        """One of the member targets in this target group was hit.
 
-        if 'lit_complete_script' not in self.config:
-            self.config['lit_complete_script'] = None
+        This method is only processed if this target group is enabled.
 
-        if 'unlit_complete_show' not in self.config:
-            self.config['unlit_complete_show'] = None
+        Args:
+            profile_name: String name of the active profile of the target that
+                was hit.
+            profile_step_name: String name of the step name of the profile of
+                the target that was hit.
 
-        if 'unlit_complete_script' not in self.config:
-            self.config['unlit_complete_script'] = None
-
-        if 'rotate_left_events' not in self.config:
-            self.config['rotate_left_events'] = list()
-        else:
-            self.config['rotate_left_events'] = Config.string_to_list(
-                self.config['rotate_left_events'])
-
-        if 'rotate_right_events' not in self.config:
-            self.config['rotate_right_events'] = list()
-        else:
-            self.config['rotate_right_events'] = Config.string_to_list(
-                self.config['rotate_right_events'])
-
-        # If no reset events are specified, just self reset when complete
-        if not self.config['reset_events']:
-            self.config['reset_events'] = {(self.device_str + '_' +
-                                           self.name + '_complete'): 0}
-        # todo look for config typo where they don't enter a delay time?
-
-        self.num_targets = len(self.targets)
-
-        # set event handlers to watch for target state changes
-        for target in self.targets:
-            self.machine.events.add_handler(
-                target.device_str + '_' + target.name + '_lit',
-                self.update_count)
-            self.machine.events.add_handler(
-                target.device_str + '_' + target.name + '_unlit',
-                self.update_count)
-
-        # need to wait until after the show controller is loaded
-        self.machine.events.add_handler('init_phase_2', self.load_shows)
-
-        # watch for rotation events
-        for event in self.config['rotate_left_events']:
-            self.machine.events.add_handler(event, self.rotate, direction='left')
-        for event in self.config['rotate_right_events']:
-            self.machine.events.add_handler(event, self.rotate, direction='right')
-
-    def load_shows(self):
-        if self.config['lit_complete_show']:
-            playlist = Playlist(self.machine)
-            playlist.add_show(step_num=1,
-                              show=self.machine.shows[self.config[
-                                                      'lit_complete_show']],
-                              num_repeats=1,
-                              tocks_per_sec=10)
-            playlist.step_settings(step=1)
-            self.config['lit_complete_show'] = playlist
-
-        if self.config['unlit_complete_show']:
-            playlist = Playlist(self.machine)
-            playlist.add_show(step_num=1,
-                              show=self.machine.shows[self.config[
-                                                      'unlit_complete_show']],
-                              num_repeats=1,
-                              tocks_per_sec=10)
-            playlist.step_settings(step=1)
-            self.config['unlit_complete_show'] = playlist
-
-    def update_count(self):
-        """One of this group's targets changed state. Let's recount them all.
         """
+        if self.enabled:
+            self.machine.events.post(self.name + '_' + profile_name + '_' +
+                                     profile_step_name + '_hit')
 
-        self.log.debug("entering update count for device: %s", self.name)
+    def enable(self, **kwargs):
+        """Enables this target group. Also enables all the targets in this
+        group.
 
-        num_lit = 0
+        """
+        self.enabled = True
+
         for target in self.targets:
-            if target.lit:
-                num_lit += 1
+            target.enable()
 
-        self.log.debug("current number lit: %s", num_lit)
-        self.log.debug("previous number lit: %s", self.num_lit)
+    def disable(self, **kwargs):
+        """Disables this target group. Also disables all the targets in this
+        group.
 
-        old_lit = self.num_lit
+        """
+        for target in self.targets:
+            target.disable()
 
-        # Post events for this group based on new lits or unlits
-        if num_lit > old_lit:  # we have a new lit
-            self.log.debug("found a new lit")
-            for new_hit in range(num_lit - old_lit):
-                self.machine.events.post(self.device_str + '_' + self.name +
-                                         '_lit_hit')
+        self.enabled = False
 
-        elif old_lit > num_lit:  # we have a new unlit
-            self.log.debug("found a new unlit")
-            for new_hit in range(old_lit - num_lit):
-                self.machine.events.post(self.device_str + '_' + self.name +
-                                         '_unlit_hit')
+    def reset(self, **kwargs):
+        """Resets each of the targets in this group back to the initial step in
+        whatever target profile they have applied. This is the same as calling
+        each target's reset() method one-by-one.
 
-        self.num_lit = num_lit
-        self.num_unlit = self.num_targets - self.num_lit
-
-        self.log.debug("Updated target group state. Num lit: %s, Num unlit:"
-                       " %s", self.num_lit, self.num_unlit)
-
-        if self.num_lit == self.num_targets:
-            self.lit_complete()
-        elif self.num_unlit == self.num_targets:
-            self.unlit_complete()
-
-    def lit_complete(self):
-        """All the targets in this group are lit."""
-        self.log.debug("All targets in group are lit")
-
-        if self.config['lit_complete_show']:
-            self.config['lit_complete_show'].start(priority=100, repeat=False,
-                                                   reset=True)
-
-        self.machine.events.post(self.device_str + '_' +
-                                 self.name + '_lit_complete')
-
-    def unlit_complete(self):
-        """All the targets in this group are lit."""
-        self.log.debug("All targets in group are unlit")
-
-        if self.config['unlit_complete_show']:
-            self.config['unlit_complete_show'].start(priority=100, repeat=False,
-                                                     reset=True)
-
-        self.machine.events.post(self.device_str + '_' +
-                                 self.name + '_unlit_complete')
-
-    def reset(self, *args, **kwargs):
-        """Resets this group of targets."""
-        # todo only do this if we have completed targets? Add a force?
-        self.log.debug("Resetting target group")
-
+        """
         for target in self.targets:
             target.reset()
 
-        self.update_count()
+    def remove_profile(self, **kwargs):
+        """Removes the current active profile from every target in the group.
 
-        # todo do reset show or script
+        """
+        for target in self.targets:
+            target.remove_profile()
 
-        # todo add enable and disable methods
+    def advance(self, **kwargs):
+        """Advances the current active profile from every target in the group
+        one step forward.
 
-    def rotate(self, direction='right', move_state=True, steps=1):
+        """
+        for target in self.targets:
+            target.advance()
 
-        if not self.machine.game or not self.machine.game.balls_in_play:
+    def rotate(self, direction='right', steps=1, **kwargs):
+        """Rotates (or "shifts") the state of all the targets in this group.
+        This is used for things like lane change, where hitting the flipper
+        button shifts all the states of the targets in the group to the left or
+        right.
+
+        This method actually transfers the current state of each target profile
+        to the left or the right, and the target on the end rolls over to the
+        taret on the other end.
+
+        Args:
+            direction: String that specifies whether the rotation direction is
+                to the left or right. Values are 'right' or 'left'. Default is
+                'right'.
+            steps: Integer of how many steps you want to rotate. Default is 1.
+
+        """
+
+        if not self.enabled:
             return
 
-        self.log.debug("Rotating target group. Direction: %s, Moving state:"
-                       "%s, Steps: %s", direction, move_state, steps)
+        target_state_list = deque()
 
-        # todo implement move_colors
-
-        # create a list which shows which targets are lit.
-        lit_list = deque()
         for target in self.targets:
-            if target.lit:
-                lit_list.append(True)
-            else:
-                lit_list.append(False)
+
+            try:
+                current_step = target.running_light_show.current_location
+
+            except AttributeError:
+                current_step = -1
+
+            target_state_list.append(
+                (target.player[target.player_variable], current_step)
+                                    )
 
         # rotate that list
         if direction == 'right':
-            lit_list.rotate(steps)
+            target_state_list.rotate(steps)
         else:
-            lit_list.rotate(steps * -1)
+            target_state_list.rotate(steps * -1)
 
         # step through all our targets and update their complete status
-        for i in range(self.num_targets):
-            if lit_list[i]:
-                self.targets[i].light(stealth=True)
-            else:
-                self.targets[i].unlight(stealth=True)
+        for i in range(len(self.targets)):
+            self.targets[i].jump(step=target_state_list[i][0],
+                                 update_group=False,
+                                 current_show_step=target_state_list[i][1])
+
+    def rotate_right(self, steps=1, **kwargs):
+        """Rotates the state of the targets to the right. This method is the
+        same as calling rotate('right', steps)
+
+        Args:
+            steps: Integer of how many steps you want to rotate. Default is 1.
+
+        """
+        self.rotate(direction='right', steps=steps)
+
+    def rotate_left(self, steps=1, **kwargs):
+        """Rotates the state of the targets to the left. This method is the
+        same as calling rotate('left', steps)
+
+        Args:
+            steps: Integer of how many steps you want to rotate. Default is 1.
+
+        """
+        self.rotate(direction='left', steps=steps)
+
+    def check_for_complete(self):
+        """Checks all the targets in this target group. If they are all in the
+        same step, then that step number is returned. If they are in different
+        steps, False is returned.
+
+        """
+
+        target_states = set()
+
+        for target in self.targets:
+            target_states.add(target.current_step_name)
+
+        # <name>_<profile>_<step>
+        if len(target_states) == 1 and target_states.pop():
+            self.machine.events.post(self.name + '_' +
+                                     self.targets[0].active_profile_name + '_' +
+                                     self.targets[0].current_step_name +
+                                     '_complete')
 
 
 # The MIT License (MIT)

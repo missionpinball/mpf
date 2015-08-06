@@ -21,6 +21,7 @@ class GI(Device):
 
     config_section = 'gis'
     collection = 'gi'
+    class_label = 'gi'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('GI.' + name)
@@ -35,7 +36,8 @@ class GI(Device):
 
         self.registered_handlers = []
 
-    def on(self, brightness=255, fade_ms=0, start_brightness=None):
+    def enable(self, brightness=255, fade_ms=0, start_brightness=None,
+           **kwargs):
         if type(brightness) is list:
             brightness = brightness[0]
 
@@ -45,7 +47,7 @@ class GI(Device):
 
         self.hw_driver.on(brightness, fade_ms, start_brightness)
 
-    def off(self):
+    def disable(self, **kwargs):
         self.hw_driver.off()
 
     def add_handler(self, callback):

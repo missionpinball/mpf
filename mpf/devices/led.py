@@ -26,6 +26,7 @@ class LED(Device):
 
     config_section = 'leds'
     collection = 'leds'
+    class_label = 'led'
 
     @classmethod
     def device_class_init(cls, machine):
@@ -103,6 +104,11 @@ class LED(Device):
         if 'fade_ms' not in self.config:
             self.config['fade_ms'] = None
 
+        self.log_color = self.config.get('log_color_changes', False)
+
+        if self.log_color:
+            self.log.info("Enabling color change logging for this LED")
+
         self.current_color = []  # one item for each element, 0-255
 
         if self.debug_logging:
@@ -179,8 +185,8 @@ class LED(Device):
                     self.log.info("Incoming fade_ms is none. Setting to %sms "
                                   "based on this LED's default fade config",
                                   fade_ms)
-            elif self.machine.config['ledsettings']:
-                fade_ms = (self.machine.config['ledsettings']
+            elif self.machine.config['led_settings']:
+                fade_ms = (self.machine.config['led_settings']
                            ['default_led_fade_ms'])
                 if self.debug_logging:
                     self.log.info("Incoming fade_ms is none. Setting to %sms "
@@ -205,6 +211,9 @@ class LED(Device):
         else:
             self.hw_driver.color(color)
             self.state['color'] = color
+
+            if self.log_color:
+                self.log.info("Setting Color: %s", color)
 
         if cache:
             self.cache['color'] = color  # new color
@@ -282,7 +291,7 @@ class LED(Device):
             The brightness-compensated 3-item color list of ints
         """
 
-        global_settings = self.machine.config['ledsettings']
+        global_settings = self.machine.config['led_settings']
 
         color[0] = (int(color[0] *
                     self.config['brightness_compensation'][0] *

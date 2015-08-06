@@ -1,8 +1,8 @@
-# config_version=1
+# config_version=2
 Config:
     - config.yaml
 
-SwitchPlayer:
+switch_player:
     start_event: machine_reset_phase_3
     start_delay: 1s
     steps:

@@ -1,25 +1,23 @@
-# config_version=1
-# This file contains confinguration options for the MPF itself, including
-# default settings for your pinball machines.
+# config_version=2
+# This file contains configuration options for the MPF itself, including
+# default settings for your machine-wide game-specific config files.
 
 # You should create specific subfolders for each game you want to make and put
 # config files there to override these defaults.
 
-
-# Configuration for the MPF framework itself
-
 mpf:
-    system_modules:  # order is important here
-        timing.Timing
-        events.EventManager
-        switch_controller.SwitchController
-        ball_controller.BallController
-        modes.ModeController
-        light_controller.LightController
-        bcp.BCP
-        shots.ShotController
-        logic_blocks.LogicBlocks
-        scoring.ScoreController
+    system_modules: !!omap  # order is important here
+        - timing: mpf.system.timing.Timing
+        - events: mpf.system.events.EventManager
+        - switch_controller: mpf.system.switch_controller.SwitchController
+        - ball_controller: mpf.system.ball_controller.BallController
+        - modes: mpf.system.modes.ModeController
+        - light_controller: mpf.system.light_controller.LightController
+        - bcp: mpf.system.bcp.BCP
+        - shots: mpf.system.shots.ShotController
+        - logic_blocks: mpf.system.logic_blocks.LogicBlocks
+        - scoring: mpf.system.scoring.ScoreController
+        - target_controller: mpf.system.target_controller.TargetController
 
     device_modules:
         driver.Driver
@@ -33,13 +31,12 @@ mpf:
         drop_target.DropTargetBank
         target.Target
         target.TargetGroup
-        rollover.Rollover
-        rollover.RolloverGroup
         flipper.Flipper
         diverter.Diverter
         score_reel.ScoreReel
         score_reel.ScoreReelGroup
         flasher.Flasher
+        playfield_transfer.PlayfieldTransfer
     
     plugins:
         auditor
@@ -57,15 +54,80 @@ mpf:
         machine_files: machine_files
         config: config
         modes: modes
+
     default_pulse_ms: 10
     default_flash_ms: 50
+    auto_create_switch_events: True
+    switch_event_active: "%_active"
+    switch_event_inactive: "%_inactive"
+    switch_tag_event: sw_%
+    
+    device_events:
+        autofire_coils:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+        ball_devices:
+            request_ball:
+            stop:
+            eject:
+            eject_all:
+        diverters:
+            enable:
+            disable:
+            activate:
+            deactivate:
+        drop_targets:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+            reset: ball_starting, machine_reset_phase_3
+            knockdown:
+            hit:
+            remove_profile:
+            advance:
+        drop_target_banks:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+            reset: machine_reset_phase_3, ball_starting
+            advance:
+        coils:
+            enable:
+            disable:
+            pulse:
+        flashers:
+            flash:
+        flippers:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+            enable_no_hold:
+            invert:
+        gis:
+            enable: machine_reset_phase_3
+            disable:
+        matrix_lights:
+            "on":
+            "off":
+        targets:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+            reset:
+            advance:
+            hit:
+            remove_profile:
+        target_groups:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+            reset:
+            rotate_left:
+            rotate_right:
+            advance:
+
 
 # Default settings for machines. All can be overridden
 
 machine:
     Balls Installed: 1
     Min Balls: 1
-    Max Balls: 10
+    Max Balls: 6
 
 timing:
     hz: 30
@@ -75,7 +137,7 @@ hardware:
     platform: virtual
     coils: default
     switches: default
-    matrixlights: default
+    matrix_lights: default
     leds: default
     dmd: default
     gis: default
@@ -93,7 +155,7 @@ fast:
     default_debounce_open: 30ms
 
 
-ledsettings:
+led_settings:
     brightness_compensation: 1.0
     default_led_fade_ms: 100
     gamma: 2.5
@@ -107,7 +169,7 @@ game:
     Balls per game: 3
     Max players per game: 4
 
-machineflow:
+machine_flow:
     mpf.game.attract.Attract
     mpf.game.game.Game
 
@@ -129,13 +191,13 @@ auditor:
     player:
         score
 
-ballsearch:
+ball_search:
     Secs until ball search start: 10
     Secs between ball search rounds: 3
     Secs between ball search coils: .15
     If ball search fails: Keep Looking
 
-logicblocks:
+logic_blocks:
 
     counters:
 
@@ -204,7 +266,7 @@ textstrings:
     volume_zero: OFF
     volume_max: MAX
 
-assetdefaults:
+asset_defaults:
     shows:
         default:
             load: preload
@@ -227,10 +289,10 @@ bcp:
         ball_ending:
             command: ball_end
 
-        machineflow_Attract_start:
+        attract_start:
             command: attract_start
 
-        machineflow_Attract_stop:
+        attract_stop:
             command: attract_stop
 
         game_ended:
@@ -240,11 +302,9 @@ bcp:
             command: player_turn_start
             params:
                 player: "%number"
-    
+
     player_variables:
-#        __all__
-        ball
-        extra_balls
+      __all__
 
 volume:
     tracks:
@@ -254,7 +314,7 @@ volume:
         music: 20
     steps: 20
 
-openpixelcontrol:
+open_pixel_control:
     host: localhost
     port: 7890
     connection_required: no
@@ -268,3 +328,39 @@ triggers:
             assets: "%assets"
     assets_loading_complete:
         bcp_name: assets_loading_complete
+
+target_profiles:
+    default:
+        steps:
+          - name: unlit
+            light_script: "off"
+          - name: lit
+            light_script: "on"
+                
+    drop_target:
+        steps:
+          - name: up
+            light_script: "off"
+          - name: down
+            light_script: "on"
+    hit_me:
+        steps:
+            - name: active
+              light_script: flash
+              repeat: yes
+              tocks_per_sec: 5
+            - name: complete
+              light_script: "off"
+
+light_scripts:
+    flash:
+        - tocks: 1
+          color: ff
+        - tocks: 1
+          color: 0
+    "on":
+        - tocks: 1
+          color: ff
+    "off":
+        - tocks: 1
+          color: 0

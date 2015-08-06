@@ -1,4 +1,4 @@
-# config_version=1
+# config_version=2
 
 # WPC hardware config file template
 
@@ -8,7 +8,7 @@
 
 # Switches
 # Coils
-# MatrixLights
+# matrix_lights
 # Flashers
 # GIs
 
@@ -348,7 +348,7 @@ Switches:
         label:
         tags:
 
-MatrixLights:
+matrix_lights:
 
     name:
         number: l11

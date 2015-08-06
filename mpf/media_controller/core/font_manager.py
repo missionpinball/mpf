@@ -134,7 +134,7 @@ class FontManager(object):
             return
 
         full_path = os.path.join(self.machine.machine_path,
-                                 self.machine.config['mediacontroller']['paths']
+                                 self.machine.config['media_controller']['paths']
                                  ['fonts'],
                                  file_name)
         if os.path.isfile(full_path):

@@ -40,7 +40,7 @@ class ShotController(object):
 
         """
         self.machine = machine
-        self.machine.shots = self  # is there a better way to do this? todo
+        #self.machine.shots = self  # is there a better way to do this? todo
         self.log = logging.getLogger("Shots")
         self.log.debug("Loading the ShotController")
         self.shots = []

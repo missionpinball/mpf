@@ -1,27 +1,82 @@
-# config_version=1
-Mode:
+# config_version=2
+mode:
     start_events: ball_starting
-    stop_events: timer_mode_timer_complete 
+    stop_events: timer_mode_timer_complete, target_group_standups_hit
     priority: 300
 
-Timers:
+timers:
     mode_timer:
         start_events: balldevice_playfield_ball_enter
-        start_value: 5
+        start_value: 3
         start_paused: yes
         end_value: 0
-        direction: down # up or down
-        tick_interval: 1.5s
+        direction: down
+        tick_interval: 1s
         control_events:
           - event: balldevice_playfield_ball_enter
             action: start
 
-SlidePlayer:
+slide_player:
     mode_skillshot_started:
-        type: text
-        text: SKILLSHOT
+      - type: Text
+        text: "%score%"
+        number_grouping: true
+        min_digits: 2
+        v_pos: center
+      - type: Text
+        text: PLAYER %number%
+        v_pos: bottom
+        h_pos: left
+        font: small
+      - type: Text
+        text: BALL %ball%
+        v_pos: bottom
+        h_pos: right
+        font: small
+      - type: shape
+        shape: box
+        thickness: 0
+        shade: 8
+        width: 128
+        height: 7
+        x: 0
+        y: 0
+      - type: text
+        text: "SKILLSHOT: LIT STANDUPS"
         decorators:
             type: blink
             repeats: -1
             on_secs: .5
             off_secs: .5
+        font: small
+        y: 1
+        shade: 0
+        layer: 1
+
+target_profiles:
+    hit_me:
+        steps:
+            - name: active
+              light_script: flash
+              repeat: yes
+              tocks_per_sec: 10
+            - name: "off"
+              light_script: "off"
+
+target_groups:
+    standups:
+        target_profile: hit_me
+        rotate_left_events: sw_left_flipper
+        rotate_right_events: sw_right_flipper
+
+scoring:
+    target_standup_1_active_hit:
+        score: 200000
+    target_standup_2_active_hit:
+        score: 200000
+    target_standup_3_active_hit:
+        score: 200000
+    target_standup_4_active_hit:
+        score: 200000
+    target_standup_5_active_hit:
+        score: 200000

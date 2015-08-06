@@ -2,3 +2,14 @@
 /logs
 /machine_files/*/audits/
 *.local
+
+# Note, if you want to exclude your own machine files from git, you can move the
+# machine file path out of the mpf folder and then specify the full path when
+# running MPF.
+
+# For example, running MPF with machine files in mpf/machine_files/demo_man:
+# mpf demo_man -x -v
+
+# New way, with machine files in some other location:
+# mpf c:\my_machine_files\demo_man -x -v
+

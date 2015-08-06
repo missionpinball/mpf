@@ -58,7 +58,6 @@ class Attract(MachineMode):
 
     def stop(self):
         super(Attract, self).stop()
-        self.machine.events.post('machineflow_attract_stop')
         self.machine.events.post('attract_stop')
 
     def _loading_tick(self):
@@ -84,7 +83,6 @@ class Attract(MachineMode):
 
         self.machine.events.remove_handler(self._loading_tick)
 
-        self.machine.events.post('machineflow_attract_start')
         self.machine.events.post('attract_start')
 
         # register switch handlers for the start button press so we can
@@ -99,8 +97,8 @@ class Attract(MachineMode):
                 self.machine.switch_controller.add_switch_handler(
                     switch.name, self.start_button_released, 0))
 
-        if (hasattr(self.machine, 'balldevices') and
-                self.machine.balldevices.items_tagged('home')):
+        if (hasattr(self.machine, 'ball_devices') and
+                self.machine.ball_devices.items_tagged('home')):
             self.machine.ball_controller.gather_balls('home')
 
         self.machine.events.post('enable_volume_keys')

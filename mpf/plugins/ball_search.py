@@ -40,13 +40,13 @@ class BallSearch(object):
     """
 
     def __init__(self, machine):
-        self.log = logging.getLogger('ballsearch')
+        self.log = logging.getLogger('ball_search')
         self.machine = machine
         self.active = False
 
         # Setup ball search coils
         self.ball_search_coils = []
-        for coil in self.machine.coils.items_tagged('ballSearch'):
+        for coil in self.machine.coils.items_tagged('ball_search'):
             self.ball_search_coils.append(coil)
         self.log.debug("Found %s ball search coils",
                        len(self.ball_search_coils))
@@ -73,9 +73,9 @@ class BallSearch(object):
         while self.active:
             for coil in self.ball_search_coils:
                 self.pop_coil(coil)
-                yield Timing.secs(self.machine.config['ballsearch']\
+                yield Timing.secs(self.machine.config['ball_search']\
                     ['secs between ball search coils'])
-            yield Timing.secs(self.machine.config['ballsearch']\
+            yield Timing.secs(self.machine.config['ball_search']\
                     ['secs between ball search rounds'])
         # todo do we have to deal with switches that might be hit due to these
         # coils firing?

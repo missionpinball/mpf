@@ -1,4 +1,4 @@
-# config_version=1
+# config_version=2
 Hardware:
     Platform: p_roc
     DriverBoards: wpc
@@ -69,7 +69,7 @@ Flippers:
         hold_coil: flipperRightHold
         activation_switch: rightFlipperButton
 
-Virtual Platform Start Active Switches:
+virtual_platform_start_active_switches:
     trough1
     trough2
     trough3
@@ -109,7 +109,7 @@ Keyboard:
         switch: plungerLaunch
     
 
-BallDevices:
+ball_devices:
     trough:
         ball_switches: trough1, trough2, trough3, trough4, trough5, trough6, troughJam
         entrance_count_delay: 300ms
@@ -160,8 +160,8 @@ Window:
           layer: 1
           color: ee9900
 
-SlidePlayer:
-    machineflow_Attract_start:
+Slide_Player:
+    attract_start:
         type: Text
         text: PRESS START
     ball_live_added:

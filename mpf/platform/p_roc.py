@@ -99,7 +99,7 @@ class HardwarePlatform(Platform):
             except IOError:
                 print "Retrying..."
 
-        self.log.info("Succefully connected to P-ROC")
+        self.log.info("Successfully connected to P-ROC")
 
         # Clear out the default program for the aux port since we might need it
         # for a 9th column. Details:
@@ -797,7 +797,7 @@ class PROCDriver(object):
         """
         if not milliseconds in range(256):
             raise ValueError('milliseconds must be in range 0-255.')
-        self.log.debug('Pulsing Driver for %sms', milliseconds)
+        self.log.debug('Pulsing Driver %s for %sms', self.number, milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
 
     def future_pulse(self, milliseconds=None, timestamp=0):
@@ -965,17 +965,18 @@ class PDBConfig(object):
                 self.aliases.append(alias)
 
         # Make a list of unique coil banks
-        for name in config['coils']:
-            item_dict = config['coils'][name]
-            coil = PDBCoil(self, str(item_dict['number']))
-            if coil.bank() not in coil_bank_list:
-                coil_bank_list.append(coil.bank())
+        if 'coils' in config:
+            for name in config['coils']:
+                item_dict = config['coils'][name]
+                coil = PDBCoil(self, str(item_dict['number']))
+                if coil.bank() not in coil_bank_list:
+                    coil_bank_list.append(coil.bank())
 
         # Make a list of unique lamp source banks.  The P-ROC only supports 2.
         # TODO: What should be done if 2 is exceeded?
-        if 'matrixlights' in config:
-            for name in config['matrixlights']:
-                item_dict = config['matrixlights'][name]
+        if 'matrix_lights' in config:
+            for name in config['matrix_lights']:
+                item_dict = config['matrix_lights'][name]
                 lamp = PDBLight(self, str(item_dict['number']))
 
                 # Catalog PDB banks

@@ -19,8 +19,9 @@ class MatrixLight(Device):
 
     """
 
-    config_section = 'matrixlights'
+    config_section = 'matrix_lights'
     collection = 'lights'
+    class_label = 'light'
 
     #todo need to get the handler stuff out of each of these I think and into
     # a parent class? Maybe this is a device thing?
@@ -31,7 +32,7 @@ class MatrixLight(Device):
         self.log.debug('Creating device with config: %s', config)
 
         super(MatrixLight, self).__init__(machine, name, config, collection,
-                                          platform_section='matrixlights')
+                                          platform_section='matrix_lights')
 
         # We save out number_str since the platform driver will convert the
         # number into a hardware number, but we need the original number for
@@ -60,12 +61,6 @@ class MatrixLight(Device):
 
         if 'y' in config:
             self.y = config['y']
-
-        # register for action events
-        self.machine.events.add_handler('action_light_' + self.name + '_on',
-                                        self.on)
-        self.machine.events.add_handler('action_light_' + self.name + '_off',
-                                        self.off)
 
     def on(self, brightness=255, fade_ms=0, start_brightness=None,
            priority=0, cache=True, force=False):

@@ -22,7 +22,6 @@ import urllib
 import urlparse
 from Queue import Queue
 import copy
-import time
 
 from mpf.game.player import Player
 from mpf.system.config import Config
@@ -39,21 +38,24 @@ def decode_command_string(bcp_string):
         A tuple of the command string and a dictionary of kwarg pairs.
 
     Example:
-        Input: trigger?name=hello&foo=foo%20bar
-        Output: ('trigger', {'name': 'hello', 'foo': 'foo bar'})
+        Input: trigger?name=hello&foo=Foo%20Bar
+        Output: ('trigger', {'name': 'hello', 'foo': 'Foo Bar'})
+
+    Note that BCP commands and parameter names are not case-sensitive and will
+    be converted to lowercase. Parameter values are case sensitive, and case
+    will be preserved.
 
     """
-    bcp_command = urlparse.urlsplit(bcp_string.lower())
+    bcp_command = urlparse.urlsplit(bcp_string)
     try:
         kwargs = urlparse.parse_qs(bcp_command.query)
 
     except AttributeError:
         kwargs = dict()
 
-    for k, v in kwargs.iteritems():
-        kwargs[k] = urllib.unquote(v[0])
-
-    return bcp_command.path, kwargs
+    return (bcp_command.path.lower(),
+            dict((k.lower(), urllib.unquote(v[0]))
+                for k,v in kwargs.iteritems()))
 
 
 def encode_command_string(bcp_command, **kwargs):
@@ -68,17 +70,21 @@ def encode_command_string(bcp_command, **kwargs):
         A string.
 
     Example:
-        Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'bar'})
-        Output: trigger?name=hello&foo=bar
+        Input: encode_command_string('trigger', {'name': 'hello', 'foo': 'Bar'})
+        Output: trigger?name=hello&foo=Bar
+
+    Note that BCP commands and parameter names are not case-sensitive and will
+    be converted to lowercase. Parameter values are case sensitive, and case
+    will be preserved.
 
     """
+
     kwarg_string = ''
 
     try:
         for k, v in kwargs.iteritems():
-
             kwarg_string += (urllib.quote(k.lower(), '') + '=' +
-                             urllib.quote(str(v).lower(), '') + '&')
+                             urllib.quote(str(v), '') + '&')
 
         kwarg_string = kwarg_string[:-1]
 
@@ -93,7 +99,7 @@ class BCP(object):
     """The parent class for the BCP client.
 
     This class can support connections with multiple remote hosts at the same
-    time using multiple instances of the BCPClient class.
+    time using multiple instances of the BCPClientSocket class.
 
     Args:
         machine: A reference to the main MPF machine object.
@@ -152,6 +158,17 @@ class BCP(object):
         self.track_volumes = dict()
         self.volume_control_enabled = False
 
+        # Add the following to the set of events that already have mpf mc
+        # triggers since these are all posted on the mc side already
+        self.mpfmc_trigger_events.add('timer_tick')
+        self.mpfmc_trigger_events.add('ball_started')
+        self.mpfmc_trigger_events.add('ball_ended')
+        self.mpfmc_trigger_events.add('game_starting')
+        self.mpfmc_trigger_events.add('game_ended')
+        self.mpfmc_trigger_events.add('player_add_success')
+        self.mpfmc_trigger_events.add('attract_start')
+        self.mpfmc_trigger_events.add('attract_stop')
+
         try:
             if self.machine.config['dmd']['physical']:
                 self._setup_dmd()
@@ -174,13 +191,11 @@ class BCP(object):
 
             self.send_player_vars = True
 
-            if (type(self.config['player_variables']) is str and
-                    self.config['player_variables'] == '__all__'):
-                self.filter_player_events = False
+            self.config['player_variables'] = (
+                Config.string_to_list(self.config['player_variables']))
 
-            else:
-                self.config['player_variables'] = (
-                    Config.string_to_list(self.config['player_variables']))
+            if '__all__' in self.config['player_variables']:
+                self.filter_player_events = False
 
         self._setup_player_monitor()
         self.register_mpfmc_trigger_events(self.machine.config)
@@ -228,14 +243,14 @@ class BCP(object):
             if 'host' not in settings:
                 break
 
-            self.bcp_clients.append(BCPClient(self.machine, name,
+            self.bcp_clients.append(BCPClientSocket(self.machine, name,
                                               settings, self.receive_queue))
 
     def remove_bcp_connection(self, bcp_client):
         """Removes a BCP connection to a remote BCP host.
 
         Args:
-            bcp_client: A reference to the BCPClient instance you want to
+            bcp_client: A reference to the BCPClientSocket instance you want to
                 remove.
 
         """
@@ -247,6 +262,19 @@ class BCP(object):
     def _setup_player_monitor(self):
         Player.monitor_enabled = True
         self.machine.register_monitor('player', self._player_var_change)
+
+        # Since we have a player monitor setup, we need to add whatever events
+        # it will send to our ignored list. Otherwise
+        # register_mpfmc_trigger_events() will register for them too and they'll
+        # be sent twice
+
+        self.mpfmc_trigger_events.add('player_score')
+
+        # figure out which player events are being sent already and add them to
+        # the list so we don't send them again
+        if self.filter_player_events:
+            for event in self.config['player_variables']:
+                self.mpfmc_trigger_events.add('player_' + event.lower())
 
     def _player_var_change(self, name, value, prev_value, change):
 
@@ -322,20 +350,29 @@ class BCP(object):
 
         self.log.debug("Registering Trigger Events")
 
+        # todo should this be here? Or in the individual show_player, sound_player
+        # and slide_player modules?
+
         try:
-            for event in config['showplayer'].keys():
+            for event in config['show_player'].keys():
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for event in config['slideplayer'].keys():
+            for event in config['slide_player'].keys():
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for k, v in config['soundplayer'].iteritems():
+            for event in config['event_player'].keys():
+                self.create_trigger_event(event)
+        except KeyError:
+            pass
+
+        try:
+            for k, v in config['sound_player'].iteritems():
                 if 'start_events' in v:
                     for event in Config.string_to_list(v['start_events']):
                         self.create_trigger_event(event)
@@ -356,6 +393,9 @@ class BCP(object):
         will be sent when that event is posted will be trigger?name=foo_event.
 
         """
+
+        if not self.filter_player_events and event.startswith('player_'):
+            return  # since all player events are already being sent
 
         if event not in self.mpfmc_trigger_events:
 
@@ -520,12 +560,11 @@ class BCP(object):
         the remote BCP hosts.
         """
         self.send('game_start')
-        self.send('player_added', number=1)
+        #self.send('player_added', number=1)
 
     def bcp_player_added(self, player, num):
         """Sends BCP 'player_added' to the connected BCP hosts."""
-        if num > 1:
-            self.send('player_added', number=num)
+        self.send('player_added', number=num)
 
     def bcp_trigger(self, name, **kwargs):
         """Sends BCP 'trigger' to the connected BCP hosts."""
@@ -567,6 +606,7 @@ class BCP(object):
                 sending
 
         """
+
         for switch in self.machine.switches.items_tagged(tag):
             self.enable_bcp_switch(switch)
 
@@ -728,7 +768,7 @@ class BCP(object):
             self.log.warning('Received volume for unknown track "%s"', track)
 
 
-class BCPClient(object):
+class BCPClientSocket(object):
     """Parent class for a BCP client socket. (There can be multiple of these to
     connect to multiple BCP media controllers simultaneously.)
 
@@ -743,7 +783,7 @@ class BCPClient(object):
 
     def __init__(self, machine, name, config, receive_queue):
 
-        self.log = logging.getLogger('BCPClient.' + name)
+        self.log = logging.getLogger('BCPClientSocket.' + name)
         self.log.info('Setting up BCP Client...')
 
         self.machine = machine

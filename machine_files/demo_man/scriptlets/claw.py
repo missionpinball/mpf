@@ -107,5 +107,5 @@ class Claw(Scriptlet):
         self.machine.coils['c_elevator_motor'].disable()
 
     def light_claw(self):
-        #self.machine.balldevices['elevator'].request_ball()
+        #self.machine.ball_devices['elevator'].request_ball()
         self.machine.diverters['diverter'].enable()

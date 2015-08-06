@@ -61,24 +61,13 @@ class ModeController(object):
         self.log.info('Processing mode: %s', mode_string)
 
         mode_path = os.path.join(self.machine.machine_path,
-            self.machine.config['mediacontroller']['paths']['modes'], mode_string)
+            self.machine.config['media_controller']['paths']['modes'], mode_string)
         mode_config_file = os.path.join(self.machine.machine_path,
-            self.machine.config['mediacontroller']['paths']['modes'],
+            self.machine.config['media_controller']['paths']['modes'],
             mode_string, 'config', mode_string + '.yaml')
         config = Config.load_config_yaml(yaml_file=mode_config_file)
 
-        if 'code' in config['mode']:
-
-            import_str = ('modes.' + mode_string + '.code.' +
-                          config['mode']['code'].split('.')[0])
-            i = __import__(import_str, fromlist=[''])
-            mode_object = getattr(i, config['mode']['code'].split('.')[1])(
-                self.machine, config, mode_string, mode_path)
-
-        else:
-            mode_object = Mode(self.machine, config, mode_string, mode_path)
-
-        return mode_object
+        return Mode(self.machine, config, mode_string, mode_path)
 
     def register_load_method(self, load_method, config_section_name=None,
                              **kwargs):
@@ -253,7 +242,7 @@ class Mode(object):
                                 mode=self,
                                 **item.kwargs))
 
-        self.machine.events.post('mode_' + self.name + '_started')
+        #self.machine.events.post('mode_' + self.name + '_started')
 
     def stop(self, callback=None, **kwargs):
         """Stops this mode.
@@ -281,7 +270,7 @@ class Mode(object):
 
         self.stop_methods = list()
 
-        self.machine.events.post('mode_' + self.name + '_stopped')
+        #self.machine.events.post('mode_' + self.name + '_stopped')
 
 
 # The MIT License (MIT)

@@ -84,8 +84,9 @@ class Game(MachineMode):
             self.machine.events.add_handler('player_add_success',
                                             self.player_add_success))
         self.registered_event_handlers.append(
-            self.machine.events.add_handler('sw_start',
-                                            self.request_player_add))
+            self.machine.events.add_handler(
+                self.machine.config['mpf']['switch_tag_event'].
+                replace('%', 'start'), self.request_player_add))
 
         self.registered_event_handlers.append(
             self.machine.events.add_handler('game_started',
@@ -109,9 +110,6 @@ class Game(MachineMode):
             self.setup_midgame_restart()
 
         self.machine.events.post('enable_volume_keys')
-
-        # Add our first player
-        self.request_player_add()
 
         self.machine.events.post_queue('game_starting',
                                        callback=self.game_started, game=self)
@@ -143,22 +141,18 @@ class Game(MachineMode):
 
         # todo this should post the request to start game event first
 
-    def game_started(self, ev_result=True, game=None):
+    def game_started(self, ev_result=True, **kwargs):
         """All the modules that needed to do something on game start are done,
         so our game is officially 'started'.
+
         """
-        self.log.debug("Entering Game.game_started")
-        # we ignore game in the params since that was just a reference that
-        # was passed around to other registered handlers, but we don't need
-        # it here.
-        # if this fails we're in limbo.
+        self._player_add()
         self.machine.events.post('game_started')
 
     def player_add_success(self, player, **kwargs):
         """Called when a new player is successfully added to the current game
         (including when the first player is added).
 
-        If this is the first player, calls :meth:`player_turn_start`.
         """
         self.log.info("Player added successfully. Total players: %s",
                       Player.total_players)
@@ -214,8 +208,9 @@ class Game(MachineMode):
                                  player=self.player.number)
 
         try:
-            self.machine.playfield.add_ball(trigger_event='sw_' +
-                self.machine.config['game']['player_controlled_eject_tag'])
+            self.machine.playfield.add_ball(trigger_event=self.machine.config
+                ['mpf']['switch_tag_event'].replace('%',
+                self.machine.config['game']['player_controlled_eject_tag']))
         except KeyError:
             self.machine.playfield.add_ball()
 
@@ -236,7 +231,7 @@ class Game(MachineMode):
         ends. Once all the registered handlers for that event have finished,
         this method calls :meth:`ball_ended`.
 
-        Currently this method also disables the autofire coils and flippers,
+        Currently this method also disables the autofire_coils and flippers,
         though that's temporary as we'll move those into config file options.
         """
         # todo check tilt
@@ -447,17 +442,6 @@ class Game(MachineMode):
     def slam_tilt(self):
         self.game_ended()
 
-    """
-    _____  _
-   |  __ \| |
-   | |__) | | __ _ _   _  ___ _ __
-   |  ___/| |/ _` | | | |/ _ \ '__|
-   | |    | | (_| | |_| |  __/ |
-   |_|    |_|\__,_|\__, |\___|_|
-                    __/ |
-                   |___/
-    """
-
     def request_player_add(self):
         """Called by any module that wants to add a player to an active game.
 
@@ -499,10 +483,7 @@ class Game(MachineMode):
         if ev_result is False:
             self.log.debug("Request to add player has been denied.")
         else:
-            new_player = Player(self.machine)
-            self.player_list.append(new_player)
-            self.machine.events.post('player_add_success', player=new_player,
-                                     num=new_player.number)
+            self.player_list.append(Player(self.machine))
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.

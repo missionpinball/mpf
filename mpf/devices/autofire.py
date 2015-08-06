@@ -14,28 +14,21 @@ class AutofireCoil(Device):
     """Base class for coils in the pinball machine which should fire
     automatically based on switch activity using hardware switch rules.
 
-    Autofire coils are used when you want the coils to respond "instantly"
+    autofire_coils are used when you want the coils to respond "instantly"
     without waiting for the lag of the python game code running on the host
     computer.
 
-    Examples of Autofire Coils are pop bumpers, slingshots, and flippers.
+    Examples of autofire_coils are pop bumpers, slingshots, and flippers.
 
     Args: Same as Device.
     """
 
-    config_section = 'autofire coils'
+    config_section = 'autofire_coils'
     collection = 'autofires'
+    class_label = 'autofire'
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('AutofireCoil.' + name)
-
-        if 'enable_events' not in config:
-            config['enable_events'] = {'ball_started': 0}
-
-        if 'disable_events' not in config:
-            config['disable_events'] = {'ball_ending': 0,
-                                        'tilt': 0,
-                                        'slam_tilt': 0}
 
         super(AutofireCoil, self).__init__(machine, name, config, collection)
 
@@ -130,7 +123,7 @@ class AutofireCoil(Device):
         else:
             return False
 
-    def enable(self, *args, **kwargs):
+    def enable(self, **kwargs):
         """Enables the autofire coil rule."""
 
         # todo disable first to clear any old rules?
@@ -151,7 +144,7 @@ class AutofireCoil(Device):
                                   debounced=self.debounced,
                                   drive_now=self.drive_now)
 
-    def disable(self, *args, **kwargs):
+    def disable(self, **kwargs):
         """Disables the autofire coil rule."""
         self.log.debug("Disabling")
         self.platform.clear_hw_rule(self.switch)

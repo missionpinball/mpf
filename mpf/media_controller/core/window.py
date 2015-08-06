@@ -34,7 +34,6 @@ class WindowManager(MPFDisplay):
 
         # move some of this to parent class
 
-
         if 'window' in machine.config:
             self.config = machine.config['window']
         else:
@@ -58,7 +57,8 @@ class WindowManager(MPFDisplay):
         self.current_slide = None
 
         if 'title' not in self.config:
-            self.config['title'] = 'Mission Pinball Framework v' + version.__version__
+            self.config['title'] = ('Mission Pinball Framework v' +
+                                    version.__version__)
 
         if 'resizable' not in self.config:
             self.config['resizable'] = True
@@ -98,21 +98,13 @@ class WindowManager(MPFDisplay):
         if 'elements' not in self.config:
             return
 
+        self.config['elements'][0]['persist_slide'] = True
+
         self.machine.display.slidebuilder.build_slide(
             settings=self.config['elements'],
             display='window',
             slide_name='default',
             priority=0)
-
-
-        #for element in self.config['elements']:
-        #    this_element = self.config['elements'][element]
-        #    if 'type' in this_element:
-        #        this_element['element_type'] = this_element.pop('type')
-        #
-        #    # create a new element
-        #    self.current_slide.add_element(
-        #        dmd_object=self.machine.display.hw_module, **this_element)
 
     def _setup_window(self):
         # Sets up the Pygame window based on the settings in the config file.
@@ -139,8 +131,8 @@ class WindowManager(MPFDisplay):
     def update(self):
         """Updates the display. Called from a timer based on this display's fps
         settings.
-        """
 
+        """
         super(WindowManager, self).update()
 
         # Update the display

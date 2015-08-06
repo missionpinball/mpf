@@ -21,8 +21,16 @@ class Timing(object):
     """
 
     HZ = None
+    """Number of ticks per second."""
     secs_per_tick = None
+    """Float of how many seconds one tick takes."""
+    ms_per_tick = None
+    """Float of how many milliseconds one tick takes."""
     tick = 0
+    """Current tick number of the machine. Starts at 0 when MPF boots and counts
+    up forever until MPF ends. Used instead of real-world time for all MPF time-
+    related functions.
+    """
 
     def __init__(self, machine):
 
@@ -39,6 +47,7 @@ class Timing(object):
 
         self.log.info("Configuring system Timing for %sHz", Timing.HZ)
         Timing.secs_per_tick = 1 / float(Timing.HZ)
+        Timing.ms_per_tick = 1000 * Timing.secs_per_tick
 
     def add(self, timer):
         timer.wakeup = time.time() + timer.frequency
@@ -72,13 +81,18 @@ class Timing(object):
         return s / 1000.0
 
     @staticmethod
-    def string_to_secs(s):
-        return Timing.string_to_ms(s) / 1000.0
+    def string_to_secs(time_string):
+        """Decodes a string of real-world time into an float of seconds.
+
+        See 'string_to_ms' for a description of the time string.
+
+        """
+        return Timing.string_to_ms(time_string) / 1000.0
 
     @staticmethod
-    def string_to_ms(time):
-        """Converts a string of real-world time into int of ms. Example
-        inputs:
+    def string_to_ms(time_string):
+        """Decodes a string of real-world time into an int of milliseconds.
+        Example inputs:
 
         200ms
         2s
@@ -88,26 +102,37 @@ class Timing(object):
 
         If time is 'None' or a string of 'None', this method returns 0.
 
-        Returns: An integer. The examples listed above 200, 2000 and 0,
+        Returns:
+            Integer. The examples listed above return 200, 2000 and 0,
             respectively
         """
 
-        time = str(time).upper()
+        time_string = str(time_string).upper()
 
-        if time.endswith("MS") or time.endswith("MSEC"):
-            time = ''.join(i for i in time if not i.isalpha())
-            return int(time)
+        if time_string.endswith("MS") or time_string.endswith("MSEC"):
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(time_string)
 
-        elif time.endswith("S") or time.endswith("SEC"):
-            time = ''.join(i for i in time if not i.isalpha())
-            return int(float(time) * 1000)
+        elif time_string.endswith("S") or time_string.endswith("SEC"):
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(float(time_string) * 1000)
 
-        elif not time or time == 'NONE':
+        elif not time_string or time_string == 'NONE':
             return 0
 
         else:
-            time = ''.join(i for i in time if not i.isalpha())
-            return int(time)
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(time_string)
+
+    @staticmethod
+    def string_to_ticks(time_string):
+        """Converts a string of real-world time into a float of how many machine
+        ticks correspond to that amount of time.
+
+        See 'string_to_ms' for a description of the time string.
+
+        """
+        return Timing.string_to_ms(time_string) / Timing.ms_per_tick
 
     @staticmethod
     def int_to_pwm(ratio, length):

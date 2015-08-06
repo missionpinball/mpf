@@ -1,5 +1,5 @@
-# config_version=1
-mediacontroller:
+# config_version=2
+media_controller:
     modules:
 
         modes.ModeController
@@ -93,7 +93,7 @@ textstrings:
     volume_zero: OFF
     volume_max: MAX
 
-assetdefaults:
+asset_defaults:
     images:
         default:
             load: preload
@@ -128,7 +128,7 @@ assetdefaults:
         default:
             load: preload
 
-slideplayer:
+slide_player:
     client_connected:
       - type: Text
         text: CLIENT CONNECTED
