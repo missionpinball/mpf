@@ -1,7 +1,9 @@
 *.pyc
-/logs
+logs/
 /machine_files/*/audits/
 *.local
+docs/
+# docs have been moved to a branch called gh-pages
 
 # Note, if you want to exclude your own machine files from git, you can move the
 # machine file path out of the mpf folder and then specify the full path when
@@ -12,4 +14,3 @@
 
 # New way, with machine files in some other location:
 # mpf c:\my_machine_files\demo_man -x -v
-
