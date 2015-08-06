@@ -83,10 +83,12 @@ mpf:
             knockdown:
             hit:
             remove_profile:
+            advance:
         drop_target_banks:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
             reset: machine_reset_phase_3, ball_starting
+            advance:
         coils:
             enable:
             disable:
@@ -108,7 +110,7 @@ mpf:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
             reset:
-            advance_step:
+            advance:
             hit:
             remove_profile:
         target_groups:
@@ -117,6 +119,7 @@ mpf:
             reset:
             rotate_left:
             rotate_right:
+            advance:
 
 
 # Default settings for machines. All can be overridden

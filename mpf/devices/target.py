@@ -333,7 +333,7 @@ class Target(Device):
 
         self._update_lights(current_show_step)
 
-    def advance_step(self, **kwargs):
+    def advance(self, **kwargs):
         """Advances the active target profile one step forward.
 
         If this profile is at the last step and configured to roll over, it will
@@ -341,7 +341,7 @@ class Target(Device):
         configured to roll over, this method has no effect.
 
         """
-        self.hit(forse=True, stealth=True)
+        self.hit(force=True, stealth=True)
 
     def enable(self, **kwargs):
         """Enables this target. If the target is not enabled, hits to it will
@@ -459,6 +459,14 @@ class TargetGroup(Device):
         """
         for target in self.targets:
             target.remove_profile()
+
+    def advance(self, **kwargs):
+        """Advances the current active profile from every target in the group
+        one step forward.
+
+        """
+        for target in self.targets:
+            target.advance()
 
     def rotate(self, direction='right', steps=1, **kwargs):
         """Rotates (or "shifts") the state of all the targets in this group.
