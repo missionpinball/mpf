@@ -9,7 +9,12 @@
 
 import logging
 import uuid
-import pygame
+
+try:
+    import pygame
+except:
+    pass
+
 
 class Slide(object):
     """Parent class for a Slide object.
