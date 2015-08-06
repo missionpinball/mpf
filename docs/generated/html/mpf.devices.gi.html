@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.devices.gi module &mdash; Mission Pinball Framework 0.19.0 documentation</title>
+    <title>mpf.devices.gi module &mdash; Mission Pinball Framework 0.19.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.19.0',
+        VERSION:     '0.19.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.19.0 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.19.1 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.19.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -79,12 +79,30 @@ LED. The key is that they&#8217;re connected up to a lamp matrix.</p>
 <dl class="method">
 <dt id="mpf.devices.gi.GI.disable">
 <tt class="descname">disable</tt><big>(</big><em>**kwargs</em><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Disables this GI string.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.gi.GI.enable">
 <tt class="descname">enable</tt><big>(</big><em>brightness=255</em>, <em>fade_ms=0</em>, <em>start_brightness=None</em>, <em>**kwargs</em><big>)</big></dt>
-<dd></dd></dl>
+<dd><p>Enables this GI string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>brightness</strong> &#8211; Int from 0-255 of how bright you want this to be. 255 is
+on. 0 os iff. Note that not all GI strings on all machines
+support this.</li>
+<li><strong>fade_ms</strong> &#8211; How quickly you&#8217;d like this GI string to fade to this
+brightness level. This is not implemented.</li>
+<li><strong>start_brightness</strong> &#8211; Starting brightness level for a fade.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpf.devices.gi.GI.remove_handler">
@@ -133,7 +151,7 @@ LED. The key is that they&#8217;re connected up to a lamp matrix.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.19.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.19.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
