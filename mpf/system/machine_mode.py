@@ -40,6 +40,21 @@ class MachineMode(object):
         """Starts this machine mode. """
         self.log.debug("Mode started")
         self.active = True
+
+        self.log.debug("Turning off and resetting all lights and LEDs")
+
+        try:
+            for light in self.machine.lights:
+                light.off(force=True, cache=True)
+        except AttributeError:
+            pass
+
+        try:
+            for led in self.machine.leds:
+                led.off(force=True, cache=True)
+        except AttributeError:
+            pass
+
         self.task = Task.Create(self.tick, sleep=0)
         #self.machine.events.post('machineflow_' + self.name + '_start')
 
