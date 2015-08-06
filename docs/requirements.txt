@@ -1,5 +1,1 @@
 sphinxcontrib-napoleon==0.2.6
-pygame>=1.8
-pyserial>=2.7
-pyyaml>=3.11
-pyosc>=0.3
