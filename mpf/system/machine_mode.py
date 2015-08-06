@@ -44,13 +44,13 @@ class MachineMode(object):
         self.log.debug("Turning off and resetting all lights and LEDs")
 
         try:
-            for light in self.machine.lights:
+            for light in self.machine.lights.items_not_tagged('stay_on'):
                 light.off(force=True, cache=True)
         except AttributeError:
             pass
 
         try:
-            for led in self.machine.leds:
+            for led in self.machine.leds.items_not_tagged('stay_on'):
                 led.off(force=True, cache=True)
         except AttributeError:
             pass

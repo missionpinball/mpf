@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mpf.system.devices module &mdash; Mission Pinball Framework 0.20.0-a0 documentation</title>
+    <title>mpf.system.devices module &mdash; Mission Pinball Framework 0.19.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.20.0-a0',
+        VERSION:     '0.19.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Mission Pinball Framework 0.20.0-a0 documentation" href="index.html" /> 
+    <link rel="top" title="Mission Pinball Framework 0.19.1 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.19.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -83,6 +83,25 @@ hardware device (such as coils, lights, switches, ball devices, etc.)</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True or False, depending on whether the name is a valid device or
 not.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpf.system.devices.DeviceCollection.items_not_tagged">
+<tt class="descname">items_not_tagged</tt><big>(</big><em>tag</em><big>)</big></dt>
+<dd><p>Returns of list of device objects which do not have a certain tag.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tag</strong> &#8211; A string of the tag name which specifies what devices are
+returned. All devices will be returned except those with this
+tag.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of device objects. If no devices are found with that tag, it
+will return an empty list.</td>
 </tr>
 </tbody>
 </table>
@@ -153,7 +172,7 @@ will return an empty list.</td>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Mission Pinball Framework 0.20.0-a0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Mission Pinball Framework 0.19.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
