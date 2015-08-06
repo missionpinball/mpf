@@ -1,6 +1,0 @@
-sphinx-apidoc -o ~/git/mpf-docs .. -f --separate
-make html
-cd ~/git/mpf-docs/html
-git add .
-git commit -m "Updated docs"
-git push origin gh-pages
