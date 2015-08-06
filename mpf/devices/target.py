@@ -252,7 +252,7 @@ class Target(Device):
          self.active_profile_settings,
          self.active_profile_steps, _) = self.profiles[0]
 
-    def hit(self, force=False, **kwargs):
+    def hit(self, force=False, stealth=False, **kwargs):
         """Method which is called to indicate this target was just hit. This
         method will advance the currently-active target profile.
 
@@ -262,6 +262,9 @@ class Target(Device):
                 tilt) then this hit isn't processed. Set this to True if you
                 want to force the hit to be processed even if no balls are in
                 play.
+            stealth: Boolean that controls whether this hit will post hit
+                events. Useful if you want to just advance the step without
+                triggering scoring, etc. Default is False.
 
         Note that the target must be enabled in order for this hit to be
         processed.
@@ -273,20 +276,22 @@ class Target(Device):
                 not force):
             return
 
-        if not self.enabled:
+        if not self.enabled or not force:
             return
 
-        self.log.debug("Hit! Profile: %s, Current Step: %s",
-                      self.active_profile_name, self.current_step_name)
+        if not stealth:
 
-        # post event <name>_<profile>_<step>_hit
-        self.machine.events.post(self.name + '_' +
-                                 self.active_profile_name + '_' +
-                                 self.current_step_name + '_hit')
+            self.log.debug("Hit! Profile: %s, Current Step: %s",
+                          self.active_profile_name, self.current_step_name)
 
-        if self.target_group:
-            self.target_group.hit(self.active_profile_name,
-                                  self.current_step_name)
+            # post event <name>_<profile>_<step>_hit
+            self.machine.events.post(self.name + '_' +
+                                     self.active_profile_name + '_' +
+                                     self.current_step_name + '_hit')
+
+            if self.target_group:
+                self.target_group.hit(profile_name=self.active_profile_name,
+                                      profile_step_name=self.current_step_name)
 
         self._advance_step()
 
@@ -316,6 +321,16 @@ class Target(Device):
             self._update_group_status()
 
         self._update_lights(current_show_step)
+
+    def advance_step(self, **kwargs):
+        """Advances the active target profile one step forward.
+
+        If this profile is at the last step and configured to roll over, it will
+        roll over to the first step. If this profile is at the last step and not
+        configured to roll over, this method has no effect.
+
+        """
+        self.hit(forse=True, stealth=True)
 
     def enable(self, **kwargs):
         """Enables this target. If the target is not enabled, hits to it will

@@ -81,6 +81,7 @@ mpf:
             disable: ball_ending, tilt, slam_tilt
             reset: ball_starting, machine_reset_phase_3
             knockdown:
+            hit:
         drop_target_banks:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
@@ -105,6 +106,9 @@ mpf:
         targets:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
+            reset:
+            advance_step:
+            hit:
         target_groups:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
