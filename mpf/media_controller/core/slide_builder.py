@@ -54,6 +54,7 @@ class SlideBuilder(object):
                 key_list.append(self.machine.events.add_handler(
                                 event,
                                 self.build_slide,
+                                mode=mode,
                                 settings=settings))
 
         return self.unload_slide_events, (key_list, mode)
@@ -175,7 +176,7 @@ class SlideBuilder(object):
         return processed_settings
 
     def build_slide(self, settings, display=None, slide_name=None,
-                    priority=None, **kwargs):
+                    priority=None, mode=None, **kwargs):
         """Builds a slide from a SlideBuilder set of keyword arguments.
 
         Args:
@@ -188,6 +189,8 @@ class SlideBuilder(object):
                 it doesn't exist, a new slide will be created. If no slide name
                 is passed, a new slide will be created and given a UUID4 name.
             priority: Integer of the priority of this slide.
+            mode: A reference to the Mode instance that built this slide. Used
+                to make sure that each mode keeps at least one active slide.
             **kwargs: Catch all since this method is often registered as a
                 callback for events which means there could be random event
                 keyword argument pairs attached.
@@ -242,7 +245,8 @@ class SlideBuilder(object):
             slide = display.add_slide(name=slide_name, priority=priority,
                                       persist=settings[0]['persist_slide'],
                                       removal_key=settings[0]['removal_key'],
-                                      expire_ms=settings[0]['expire'])
+                                      expire_ms=settings[0]['expire'],
+                                      mode=mode)
 
         # loop through and add the elements
         for element in settings:
