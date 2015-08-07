@@ -265,24 +265,24 @@ class SwitchController(object):
         """
 
         # Find the switch name
-        # todo find a better way to do this ...
-        if num is not None:
+
+        if num is not None:  # can't be 'if num:` in case the num is 0.
             for switch in self.machine.switches:
                 if switch.number == num:
                     name = switch.name
+                    obj = switch
                     break
 
         elif obj:
             name = obj.name
 
-        if not obj and name:
+        elif name:
             obj = self.machine.switches[name]
+            name = obj.name  # switches this to the name MPF wants to use
 
-        name = obj.name  # switches this to the name MPF wants to use
-
-        if not name:
+        else:
             self.log.warning("Received a state change from non-configured "
-                             "switch. Number: %s", num)
+                             "switch. Number: %s, Name: %s", num, name)
             return
 
         # We need int, but this lets it come in as boolean also
