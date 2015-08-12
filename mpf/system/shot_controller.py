@@ -1,5 +1,5 @@
-""" Contains the TargetController class."""
-# target_profile_manager.py
+""" Contains the ShotController class."""
+# shot_controller.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -9,16 +9,16 @@
 import logging
 
 
-class TargetController(object):
+class ShotController(object):
 
     def __init__(self, machine):
 
         self.machine = machine
 
-        self.log = logging.getLogger('TargetController')
+        self.log = logging.getLogger('ShotController')
 
         self.profiles = dict()
-        """target_profiles dict:
+        """shot_profiles dict:
 
         profile name : dict of settings
 
@@ -35,25 +35,25 @@ class TargetController(object):
 
         '"""
 
-        if 'target_profiles' in self.machine.config:
+        if 'shot_profiles' in self.machine.config:
             self.machine.events.add_handler('init_phase_3',
                 self.register_profiles,
-                config=self.machine.config['target_profiles'])
+                config=self.machine.config['shot_profiles'])
 
         self.machine.modes.register_load_method(
-            self.register_profiles, config_section_name="target_profiles")
+            self.register_profiles, config_section_name="shot_profiles")
 
         self.machine.modes.register_start_method(
-            self.apply_target_profiles, config_section_name="targets")
+            self.apply_shot_profiles, config_section_name="shots")
         self.machine.modes.register_start_method(
-            self.apply_group_profiles, config_section_name="target_groups")
+            self.apply_group_profiles, config_section_name="shot_groups")
 
         self.machine.events.add_handler('player_turn_start',
                                         self._player_turn_start)
 
     def register_profile(self, name, profile):
 
-        self.log.debug("Registering Target Profile: '%s'", name)
+        self.log.debug("Registering shot Profile: '%s'", name)
 
         self.profiles[name] = profile
 
@@ -63,38 +63,38 @@ class TargetController(object):
             self.register_profile(name, profile)
 
     def _player_turn_start(self, player, **kwargs):
-        for target in self.machine.targets:
-            target.player_turn_start(player)
+        for shot in self.machine.shots:
+            shot.player_turn_start(player)
 
         for drop_target in self.machine.drop_targets:
             drop_target.player_turn_start(player)
 
-    def apply_target_profiles(self, config, priority, mode, **kwargs):
-        for target, settings in config.iteritems():
+    def apply_shot_profiles(self, config, priority, mode, **kwargs):
+        for shot, settings in config.iteritems():
             if 'profile' in settings:
-                self.machine.targets[target].apply_profile(settings['profile'],
+                self.machine.shots[shot].apply_profile(settings['profile'],
                                                            priority,
                                                            removal_key=mode)
 
-        return self.remove_target_profiles, mode
+        return self.remove_shot_profiles, mode
 
-    def remove_target_profiles(self, mode):
-        for target in self.machine.targets:
-            target.remove_profile(removal_key=mode)
+    def remove_shot_profiles(self, mode):
+        for shot in self.machine.shots:
+            shot.remove_profile(removal_key=mode)
 
     def apply_group_profiles(self, config, priority, mode, **kwargs):
-        for target_group, settings in config.iteritems():
+        for shot_group, settings in config.iteritems():
             if 'profile' in settings:
-                for target in self.machine.target_groups[target_group].targets:
-                    target.apply_profile(settings['profile'], priority,
+                for shot in self.machine.shot_groups[shot_group].shots:
+                    shot.apply_profile(settings['profile'], priority,
                                          removal_key=mode)
 
         return self.remove_group_profiles, mode
 
     def remove_group_profiles(self, mode):
-        for target_group in self.machine.target_groups:
-            for target in target_group.targets:
-                target.remove_profile(removal_key=mode)
+        for shot_group in self.machine.shot_groups:
+            for shot in shot_group.shots:
+                shot.remove_profile(removal_key=mode)
 
 
 # The MIT License (MIT)

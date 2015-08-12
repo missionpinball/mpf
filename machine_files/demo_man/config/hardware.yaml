@@ -908,7 +908,7 @@ flippers:
     hold_coil: c_flipper_upper_hold
     activation_switch: s_flipper_lower_left
 
-targets:
+shots:
   left_lane:
     switch: s_left_rollover
     light: l_left_rollover
@@ -934,12 +934,12 @@ targets:
     switch: s_standup_5
     light: l_standup_5
 
-target_groups:
+shot_groups:
   rollover_lanes:
-    targets: left_lane, middle_lane, right_lane
+    shots: left_lane, middle_lane, right_lane
 
   standups:
-    targets: standup_1, standup_2, standup_3, standup_4, standup_5
+    shots: standup_1, standup_2, standup_3, standup_4, standup_5
 
 sound_system:
     tracks:

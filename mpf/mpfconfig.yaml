@@ -14,10 +14,9 @@ mpf:
         - modes: mpf.system.modes.ModeController
         - light_controller: mpf.system.light_controller.LightController
         - bcp: mpf.system.bcp.BCP
-        - shots: mpf.system.shots.ShotController
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
         - scoring: mpf.system.scoring.ScoreController
-        - target_controller: mpf.system.target_controller.TargetController
+        - shot_controller: mpf.system.shot_controller.ShotController
 
     device_modules:
         driver.Driver
@@ -29,8 +28,8 @@ mpf:
         ball_device.BallDevice
         drop_target.DropTarget
         drop_target.DropTargetBank
-        target.Target
-        target.TargetGroup
+        shot.Shot
+        shot.ShotGroup
         flipper.Flipper
         diverter.Diverter
         score_reel.ScoreReel
@@ -106,14 +105,14 @@ mpf:
         matrix_lights:
             "on":
             "off":
-        targets:
+        shots:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
             reset:
             advance:
             hit:
             remove_profile:
-        target_groups:
+        shot_groups:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
             reset:
@@ -329,7 +328,7 @@ triggers:
     assets_loading_complete:
         bcp_name: assets_loading_complete
 
-target_profiles:
+shot_profiles:
     default:
         steps:
           - name: unlit

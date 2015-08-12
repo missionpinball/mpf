@@ -8,11 +8,11 @@
 
 import logging
 
-from mpf.devices.target import Target, TargetGroup
+from mpf.devices.shot import Shot, ShotGroup
 from mpf.system.config import Config
 
 
-class DropTarget(Target):
+class DropTarget(Shot):
     """Represents a single drop target in a pinball machine.
 
     Args: Same as the `Target` parent class"""
@@ -94,14 +94,14 @@ class DropTarget(Target):
 
         """
 
-        if self.target_group:
-            #self.target_group.reset()
+        if self.shot_group:
+            #self.shot_group.reset()
             pass
         elif self.reset_coil:
             self.reset_coil.pulse()
 
 
-class DropTargetBank(TargetGroup):
+class DropTargetBank(ShotGroup):
     """Represents a bank of drop targets in a pinball machine by grouping
     together multiple `DropTarget` class devices.
 
@@ -144,7 +144,7 @@ class DropTargetBank(TargetGroup):
         # figure out all the coils we need to pulse
         coils = set()
 
-        for drop_target in self.targets:
+        for drop_target in self.shots:
             if drop_target.reset_coil:
                 coils.add(drop_target.reset_coil)
 
