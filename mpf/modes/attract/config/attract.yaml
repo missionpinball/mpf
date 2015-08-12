@@ -1,0 +1,6 @@
+#config_version=2
+mode:
+  start_events: game_ended, machine_reset_phase_3
+  stop_events: game_start
+  priority: 1
+  code: attract.Attract

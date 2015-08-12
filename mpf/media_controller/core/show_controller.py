@@ -60,7 +60,7 @@ class ShowController(object):
 
         # Tell the mode controller that it should look for light_player items in
         # modes.
-        self.machine.modes.register_start_method(self.process_shows_from_config,
+        self.machine.mode_controller.register_start_method(self.process_shows_from_config,
                                                  'show_player')
 
         # Create the show AssetManager

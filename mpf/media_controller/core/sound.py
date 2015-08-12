@@ -102,7 +102,7 @@ class SoundController(object):
                 self.register_sound_events,
                 config=self.machine.config['sound_player'])
 
-        self.machine.modes.register_start_method(self.register_sound_events,
+        self.machine.mode_controller.register_start_method(self.register_sound_events,
                                                  'sound_player')
 
     def _initialize(self):

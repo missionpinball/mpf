@@ -1,4 +1,4 @@
-"""Contains the Player class which reprsents a player in a pinball game.
+"""Contains the Player class which represents a player in a pinball game.
 
 """
 # player.py
@@ -131,9 +131,6 @@ class Player(object):
     def __iter__(self):
         for name, value in self.vars.iteritems():
             yield name, value
-
-
-
 
     # todo method to dump the player vars to disk?
 

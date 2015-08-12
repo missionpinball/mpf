@@ -82,11 +82,11 @@ class LightController(object):
 
         # Tell the mode controller that it should look for light_player items in
         # modes.
-        self.machine.modes.register_start_method(self.process_light_player,
+        self.machine.mode_controller.register_start_method(self.process_light_player,
                                                  'light_player')
 
         # Create scripts from config
-        self.machine.modes.register_start_method(self.process_light_scripts,
+        self.machine.mode_controller.register_start_method(self.process_light_scripts,
                                                  'light_scripts')
 
         # Create the show AssetManager

@@ -32,7 +32,7 @@ from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.events import EventManager
 from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
-from mpf.game.player import Player
+from mpf.system.player import Player
 import mpf.system.bcp as bcp
 import version
 
@@ -71,7 +71,7 @@ class MediaController(object):
         self.receive_queue = Queue.Queue()
         self.sending_queue = Queue.Queue()
         self.crash_queue = Queue.Queue()
-        self.game_modes = CaseInsensitiveDict()
+        self.modes = CaseInsensitiveDict()
         self.player_list = list()
         self.player = None
         self.HZ = 0
@@ -429,8 +429,8 @@ class MediaController(object):
 
         name = name.lower()
 
-        if name in self.game_modes:
-            self.game_modes[name].start(priority=priority)
+        if name in self.modes:
+            self.modes[name].start(priority=priority)
 
     def bcp_mode_stop(self, name, **kwargs):
         """Processes an incoming BCP 'mode_stop' command."""
@@ -440,8 +440,8 @@ class MediaController(object):
 
         name = name.lower()
 
-        if name in self.game_modes:
-            self.game_modes[name].stop()
+        if name in self.modes:
+            self.modes[name].stop()
 
     def bcp_error(self, **kwargs):
         """Processes an incoming BCP 'error' command."""

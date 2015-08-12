@@ -14,6 +14,7 @@ from collections import namedtuple
 from mpf.system.timing import Timing, Timer
 from mpf.system.tasks import DelayManager
 from mpf.system.config import Config
+from mpf.media_controller.core.mode import Mode
 
 RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs',
                           verbose=False)
@@ -49,7 +50,7 @@ class ModeController(object):
         #file.
 
         for mode in self.machine.config['modes']:
-            self.machine.game_modes[mode] = self._load_mode(mode)
+            self.machine.modes[mode] = self._load_mode(mode)
 
     def _load_mode(self, mode_string):
         """Loads a mode, reads in its config, and creates the Mode object.
@@ -57,15 +58,35 @@ class ModeController(object):
         Args:
             mode: String name of the mode you're loading. This is the name of
                 the mode's folder in your game's machine_files/modes folder.
+
         """
         self.log.info('Processing mode: %s', mode_string)
 
+        config = dict()
+
+        # Is there an MPF default config for this mode? If so, load it first
+        mpf_mode_config = os.path.join(
+            'mpf',
+            self.machine.config['media_controller']['paths']['modes'],
+            mode_string,
+            'config',
+            mode_string + '.yaml')
+
+        if os.path.isfile(mpf_mode_config):
+            config = Config.load_config_yaml(yaml_file=mpf_mode_config)
+
+        # Now figure out if there's a machine-specific config for this mode, and
+        # if so, merge it into the config
         mode_path = os.path.join(self.machine.machine_path,
             self.machine.config['media_controller']['paths']['modes'], mode_string)
         mode_config_file = os.path.join(self.machine.machine_path,
-            self.machine.config['media_controller']['paths']['modes'],
-            mode_string, 'config', mode_string + '.yaml')
-        config = Config.load_config_yaml(yaml_file=mode_config_file)
+            self.machine.config['media_controller']['paths']['modes'], mode_string, 'config',
+            mode_string + '.yaml')
+
+        if os.path.isfile(mode_config_file):
+
+            config = Config.load_config_yaml(config=config,
+                                             yaml_file=mode_config_file)
 
         return Mode(self.machine, config, mode_string, mode_path)
 
@@ -133,144 +154,6 @@ class ModeController(object):
                 self.log.info('%s : %s', mode.name, mode.priority)
 
         self.log.info('======================================================')
-
-
-class Mode(object):
-    """Parent class for in-game mode code."""
-
-    def __init__(self, machine, config, name, path):
-        self.machine = machine
-        self.config = config
-        self.name = name.lower()
-        self.path = path
-
-        self.log = logging.getLogger('Mode.' + name)
-
-        self.priority = 0
-        self._active = False
-        self.stop_methods = list()
-        self.start_callback = None
-        self.stop_callback = None
-        self.event_handlers = set()
-
-        if 'mode' in self.config:
-            self.configure_mode_settings(config['mode'])
-
-        for asset_manager in self.machine.asset_managers.values():
-
-            config_data = self.config.get(asset_manager.config_section, dict())
-
-            self.config[asset_manager.config_section] = (
-                asset_manager.register_assets(config=config_data,
-                                              mode_path=self.path))
-
-        # Call registered remote loader methods
-        for item in self.machine.modes.loader_methods:
-            if (item.config_section in self.config and
-                    self.config[item.config_section]):
-                item.method(config=self.config[item.config_section],
-                            mode_path=self.path,
-                            **item.kwargs)
-
-    @property
-    def active(self):
-        return self._active
-
-    @active.setter
-    def active(self, active):
-        if self._active != active:
-            self._active = active
-            self.machine.modes._active_change(self, self._active)
-
-    def configure_mode_settings(self, config):
-        """Processes this mode's configuration settings from a config
-        dictionary.
-        """
-
-        if not ('priority' in config and type(config['priority']) is int):
-            config['priority'] = 0
-
-        if 'start_events' in config:
-            config['start_events'] = Config.string_to_list(
-                config['start_events'])
-        else:
-            config['start_events'] = list()
-
-        if 'stop_events' in config:
-            config['stop_events'] = Config.string_to_list(
-                config['stop_events'])
-        else:
-            config['stop_events'] = list()
-
-        # register mode start events
-        if 'start_events' in config:
-            for event in config['start_events']:
-                self.machine.events.add_handler(event, self.start)
-
-        self.config['mode'] = config
-
-    def start(self, priority=None, callback=None, **kwargs):
-        """Starts this mode.
-
-        Args:
-            priority: Integer value of what you want this mode to run at. If you
-                don't specify one, it will use the "Mode: priority" setting from
-                this mode's configuration file.
-            **kwargs: Catch-all since this mode might start from events with
-                who-knows-what keyword arguments.
-
-        Warning: You can safely call this method, but do not override it in your
-        mode code. If you want to write your own mode code by subclassing Mode,
-        put whatever code you want to run when this mode starts in the
-        mode_start method which will be called automatically.
-        """
-
-        if type(priority) is int:
-            self.priority = priority
-        else:
-            self.priority = self.config['mode']['priority']
-
-        self.log.info('Mode Start. Priority: %s', self.priority)
-
-        self.active = True
-
-        for item in self.machine.modes.start_methods:
-            if item.config_section in self.config:
-                self.stop_methods.append(
-                    item.method(config=self.config[item.config_section],
-                                priority=self.priority,
-                                mode=self,
-                                **item.kwargs))
-
-        #self.machine.events.post('mode_' + self.name + '_started')
-
-    def stop(self, callback=None, **kwargs):
-        """Stops this mode.
-
-        Args:
-            **kwargs: Catch-all since this mode might start from events with
-                who-knows-what keyword arguments.
-
-        Warning: You can safely call this method, but do not override it in your
-        mode code. If you want to write your own mode code by subclassing Mode,
-        put whatever code you want to run when this mode stops in the
-        mode_stop method which will be called automatically.
-        """
-
-        self.log.debug('Mode Stop.')
-
-        self.priority = 0
-        self.active = False
-
-        for item in self.stop_methods:
-            try:
-                item[0](item[1])
-            except TypeError:
-                pass
-
-        self.stop_methods = list()
-
-        #self.machine.events.post('mode_' + self.name + '_stopped')
 
 
 # The MIT License (MIT)

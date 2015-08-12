@@ -61,7 +61,7 @@ class MachineController(object):
         self.monitors = dict()
         self.plugins = list()
         self.scriptlets = list()
-        self.game_modes = list()
+        self.modes = list()
         self.asset_managers = dict()
         self.game = None
 
@@ -98,8 +98,6 @@ class MachineController(object):
         self.events.add_handler('quit', self.quit)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.quit)
-        self.events.add_handler('machine_reset_phase_3', self.flow_advance,
-                                position=0)
 
         self.events.post("init_phase_1")
         self._load_device_modules()
@@ -108,7 +106,6 @@ class MachineController(object):
         self.events.post("init_phase_3")
         self._load_scriptlets()
         self.events.post("init_phase_4")
-        self._init_machine_flow()
         self.events.post("init_phase_5")
 
         self.reset()
@@ -122,20 +119,6 @@ class MachineController(object):
             self.log.critical("MPF Shutting down due to child thread crash")
             self.log.critical("Crash details: %s", crash)
             self.done = True
-
-    def _init_machine_flow(self):
-        # sets up the machine flow
-        self.log.debug("Configuring Machine Flow")
-        self.config['machine_flow'] = self.config['machine_flow'].split(' ')
-        # Convert the MachineFlow config into a list of objects
-        i = 0
-        for machine_mode in self.config['machine_flow']:
-            name = machine_mode.split('.')[-1:]
-            self.config['machine_flow'][i] = self.string_to_class(machine_mode)(
-                                                                 self, name[0])
-            i += 1
-        # register event handlers
-        self.events.add_handler('machineflow_advance', self.flow_advance)
 
     def _load_config(self):
         # creates the main config dictionary from the YAML machine config files.
@@ -279,34 +262,6 @@ class MachineController(object):
         self.events.post('machine_reset_phase_2')
         self.events.post('machine_reset_phase_3')
         self.log.info("Reset Complete")
-
-    def flow_advance(self, position=None, **kwargs):
-        """Advances the machine to the next machine mode as specified in the
-        machineflow. Typically this just advances between Attract mode and Game
-        mode.
-        """
-
-        # If there's a current machineflow position, stop that mode
-        if self.machineflow_index is not None:
-            self.config['machine_flow'][self.machineflow_index].stop()
-        else:
-            self.machineflow_index = 0
-
-        # Now find the new position and start it:
-        if position is None:  # A specific position was not passed, so just advance
-            if self.machineflow_index >= len(self.config['machine_flow']) - 1:
-                self.machineflow_index = 0
-            else:
-                self.machineflow_index += 1
-
-        else:  # Go to whatever position was passed
-            self.machineflow_index = position
-
-        self.log.debug("Advancing Machine Flow. New Index: %s",
-                       self.machineflow_index)
-
-        # Now start the new machine mode
-        self.config['machine_flow'][self.machineflow_index].start(**kwargs)
 
     def add_platform(self, name):
         """Makes an additional hardware platform interface available to MPF.

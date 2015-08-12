@@ -24,7 +24,7 @@ class LogicBlocks(object):
 
         # Tell the mode controller that it should look for LogicBlock items in
         # modes.
-        self.machine.modes.register_start_method(self._process_config,
+        self.machine.mode_controller.register_start_method(self._process_config,
                                                  'logic_blocks')
 
         # Process game-wide (i.e. not in modes) logic blocks

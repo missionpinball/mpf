@@ -11,7 +11,7 @@ mpf:
         - events: mpf.system.events.EventManager
         - switch_controller: mpf.system.switch_controller.SwitchController
         - ball_controller: mpf.system.ball_controller.BallController
-        - modes: mpf.system.modes.ModeController
+        - mode_controller: mpf.system.mode_controller.ModeController
         - light_controller: mpf.system.light_controller.LightController
         - bcp: mpf.system.bcp.BCP
         - shots: mpf.system.shots.ShotController
@@ -154,6 +154,10 @@ fast:
     default_debounce_close: 10ms
     default_debounce_open: 30ms
 
+modes:
+    - attract
+    - game
+
 
 led_settings:
     brightness_compensation: 1.0
@@ -168,10 +172,6 @@ led_settings:
 game:
     Balls per game: 3
     Max players per game: 4
-
-machine_flow:
-    mpf.game.attract.Attract
-    mpf.game.game.Game
 
 auditor:
     save_events:

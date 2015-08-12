@@ -40,12 +40,12 @@ class TargetController(object):
                 self.register_profiles,
                 config=self.machine.config['target_profiles'])
 
-        self.machine.modes.register_load_method(
+        self.machine.mode_controller.register_load_method(
             self.register_profiles, config_section_name="target_profiles")
 
-        self.machine.modes.register_start_method(
+        self.machine.mode_controller.register_start_method(
             self.apply_target_profiles, config_section_name="targets")
-        self.machine.modes.register_start_method(
+        self.machine.mode_controller.register_start_method(
             self.apply_group_profiles, config_section_name="target_groups")
 
         self.machine.events.add_handler('player_turn_start',

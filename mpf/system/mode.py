@@ -1,4 +1,4 @@
-""" Contains the ModeController, Mode, and ModeTimers parent classes"""
+""" Contains the Mode, and ModeTimers parent classes"""
 # modes.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
@@ -7,19 +7,13 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import os
-
-from collections import namedtuple
 
 from mpf.system.timing import Timing, Timer
 from mpf.system.tasks import DelayManager
 from mpf.system.config import Config
+from mpf.system.mode_controller import RemoteMethod
 
-RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs',
-                          verbose=False)
-"""RemotedMethod is used by other modules that want to register a method to
-be called on mode_start or mode_stop.
-"""
+
 
 
 # todo
@@ -27,155 +21,7 @@ be called on mode_start or mode_stop.
 # override event strings
 
 
-class ModeController(object):
-    """Parent class for the Mode Controller. There is one instance of this in
-    MPF and it's responsible for loading, unloading, and managing all game
-    modes.
-    """
 
-    def __init__(self, machine):
-        self.machine = machine
-        self.log = logging.getLogger('ModeController')
-
-        self.queue = None  # ball ending event queue
-
-        self.active_modes = list()
-        self.mode_stop_count = 0
-
-        # The following two lists hold namedtuples of any remote components that
-        # need to be notified when a mode object is created and/or started.
-        self.loader_methods = list()
-        self.start_methods = list()
-
-        if 'modes' in self.machine.config:
-            self.machine.events.add_handler('init_phase_4',
-                                            self._load_modes)
-
-        self.machine.events.add_handler('ball_ending', self._ball_ending,
-                                        priority=0)
-
-    def _load_modes(self):
-        #Loads the modes from the Modes: section of the machine configuration
-        #file.
-
-        for mode in self.machine.config['modes']:
-            self.machine.game_modes.append(self._load_mode(mode))
-
-    def _load_mode(self, mode_string):
-        """Loads a mode, reads in its config, and creates the Mode object.
-
-        Args:
-            mode: String name of the mode you're loading. This is the name of
-                the mode's folder in your game's machine_files/modes folder.
-        """
-        self.log.info('Processing mode: %s', mode_string)
-
-        mode_path = os.path.join(self.machine.machine_path,
-            self.machine.config['mpf']['paths']['modes'], mode_string)
-        mode_config_file = os.path.join(self.machine.machine_path,
-            self.machine.config['mpf']['paths']['modes'], mode_string, 'config',
-            mode_string + '.yaml')
-        config = Config.load_config_yaml(yaml_file=mode_config_file)
-
-        if 'code' in config['mode']:
-
-            import_str = ('modes.' + mode_string + '.code.' +
-                          config['mode']['code'].split('.')[0])
-            i = __import__(import_str, fromlist=[''])
-            mode_object = getattr(i, config['mode']['code'].split('.')[1])(
-                self.machine, config, mode_string, mode_path)
-
-        else:
-            mode_object = Mode(self.machine, config, mode_string, mode_path)
-
-        return mode_object
-
-    def _ball_ending(self, queue):
-        # unloads all the active modes
-
-        if not self.active_modes:
-            return()
-
-        self.queue = queue
-        self.queue.wait()
-        self.mode_stop_count = 0
-
-        for mode in self.active_modes:
-            self.mode_stop_count += 1
-            mode.stop(callback=self._mode_stopped_callback)
-
-    def _mode_stopped_callback(self):
-        self.mode_stop_count -= 1
-
-        if not self.mode_stop_count:
-            self.queue.clear()
-
-    def register_load_method(self, load_method, config_section_name=None,
-                             **kwargs):
-        """Used by system components, plugins, etc. to register themselves with
-        the Mode Controller for anything they need a mode to do when it's
-        registered.
-
-        Args:
-            load_method: The method that will be called when this mode code
-                loads.
-            config_section_name: An optional string for the section of the
-                configuration file that will be passed to the load_method when
-                it's called.
-            **kwargs: Any additional keyword arguments specified will be passed
-                to the load_method.
-
-        Note that these methods will be called once, when the mode code is first
-        initialized during the MPF boot process.
-
-        """
-        self.loader_methods.append(RemoteMethod(method=load_method,
-            config_section=config_section_name, kwargs=kwargs))
-
-    def register_start_method(self, start_method, config_section_name=None,
-                              **kwargs):
-        """Used by system components, plugins, etc. to register themselves with
-        the Mode Controller for anything that they a mode to do when it starts.
-
-        Args:
-            start_method: The method that will be called when this mode code
-                loads.
-            config_section_name: An optional string for the section of the
-                configuration file that will be passed to the start_method when
-                it's called.
-            **kwargs: Any additional keyword arguments specified will be passed
-                to the start_method.
-
-        Note that these methods will be called every single time this mode is
-        started.
-
-        """
-        self.start_methods.append(RemoteMethod(method=start_method,
-            config_section=config_section_name, kwargs=kwargs))
-
-    def _active_change(self, mode, active):
-        # called when a mode goes active or inactive
-
-        if active:
-            self.active_modes.append(mode)
-        else:
-            self.active_modes.remove(mode)
-
-        # sort the active mode list by priority
-        self.active_modes.sort(key=lambda x: x.priority, reverse=True)
-
-        self.dump()
-
-    def dump(self):
-        """Dumps the current status of the running modes to the log file."""
-
-        self.log.info('================ ACTIVE GAME MODES ===================')
-
-        for mode in self.active_modes:
-            if mode.active:
-                self.log.info('%s : %s', mode.name, mode.priority)
-
-        self.log.info('======================================================')
 
 
 class Mode(object):
@@ -198,6 +44,15 @@ class Mode(object):
         self.start_callback = None
         self.stop_callback = None
         self.event_handlers = set()
+        self.switch_handlers = list()
+        self.mode_start_kwargs = dict()
+        self.mode_stop_kwargs = dict()
+
+        self.auto_stop_on_ball_end = True
+        '''Controlled whether this mode is stopped when the ball ends,
+        regardless of its stop_events settings.
+        '''
+
         self.player = None
         '''Reference to the current player object.'''
 
@@ -213,7 +68,7 @@ class Mode(object):
                                               mode_path=self.path))
 
         # Call registered remote loader methods
-        for item in self.machine.modes.loader_methods:
+        for item in self.machine.mode_controller.loader_methods:
             if (item.config_section and
                     item.config_section in self.config and
                     self.config[item.config_section]):
@@ -234,7 +89,7 @@ class Mode(object):
     def active(self, active):
         if self._active != active:
             self._active = active
-            self.machine.modes._active_change(self, self._active)
+            self.machine.mode_controller._active_change(self, self._active)
 
     def configure_mode_settings(self, config):
         """Processes this mode's configuration settings from a config
@@ -280,20 +135,17 @@ class Mode(object):
         mode_start method which will be called automatically.
         """
 
-        if self.active or not self.machine.game.player:
-            # Only start the mode if it's not already started and there's an
-            # active player.
-            self.log.debug('Mode Start Aborted')
+        if self._active:
             return
-
-        self.player = self.machine.game.player
 
         if type(priority) is int:
             self.priority = priority
         else:
             self.priority = self.config['mode']['priority']
 
-        self.log.info('Mode Starting. Priority: %s', self.priority)
+        self.start_event_kwargs = kwargs
+
+        self.log.debug('Mode Starting. Priority: %s', self.priority)
 
         # register mode stop events
         if 'stop_events' in self.config['mode']:
@@ -315,11 +167,11 @@ class Mode(object):
     def _started(self):
         # Called after the mode_<name>_starting queue event has finished.
 
-        self.log.info('Mode Started. Priority: %s', self.priority)
+        self.log.debug('Mode Started. Priority: %s', self.priority)
 
         self.active = True
 
-        for item in self.machine.modes.start_methods:
+        for item in self.machine.mode_controller.start_methods:
             if item.config_section in self.config:
                 self.stop_methods.append(
                     item.method(config=self.config[item.config_section],
@@ -334,7 +186,9 @@ class Mode(object):
 
     def _mode_started_callback(self, **kwargs):
         # Called after the mode_<name>_started queue event has finished.
-        self.mode_start()
+        self.mode_start(**self.start_event_kwargs)
+
+        self.start_event_kwargs = dict()
 
         if self.start_callback:
             self.start_callback()
@@ -352,12 +206,15 @@ class Mode(object):
         mode_stop method which will be called automatically.
         """
 
-        if not self.active:
+        if not self._active:
             return
+
+        self.mode_stop_kwargs = kwargs
 
         self.log.debug('Mode Stopping.')
 
         self._remove_mode_event_handlers()
+        self._remove_mode_switch_handlers()
 
         self.stop_callback = callback
 
@@ -390,12 +247,12 @@ class Mode(object):
                                  callback=self._mode_stopped_callback)
 
     def _mode_stopped_callback(self, **kwargs):
-        self.mode_stop()
+        self.mode_stop(**self.mode_stop_kwargs)
+
+        self.mode_stop_kwargs = dict()
 
         if self.stop_callback:
             self.stop_callback()
-
-        self.player = None
 
     def add_mode_event_handler(self, event, handler, priority=1, **kwargs):
         """Registers an event handler which is automatically removed when this
@@ -443,6 +300,16 @@ class Mode(object):
             self.machine.events.remove_handler_by_key(key)
         self.event_handlers = set()
 
+    def _remove_mode_switch_handlers(self):
+        for handler in self.switch_handlers:
+            self.machine.switch_controller.remove_switch_handler(
+                switch_name=handler['switch_name'],
+                callback=handler['callback'],
+                state=handler['state'],
+                ms=handler['ms'])
+        self.switch_handlers = list()
+
+
     def _setup_timers(self):
         # config is localized
 
@@ -470,13 +337,13 @@ class Mode(object):
         """
         pass
 
-    def mode_start(self):
+    def mode_start(self, **kwargs):
         """User-overrideable method which will be called whenever this mode
         starts (i.e. whenever it becomes active).
         """
         pass
 
-    def mode_stop(self):
+    def mode_stop(self, **kwargs):
         """User-overrideable method which will be called whenever this mode
         stops (i.e. whenever it becomes inactive).
         """

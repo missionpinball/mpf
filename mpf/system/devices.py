@@ -168,7 +168,7 @@ class DeviceCollection(CaseInsensitiveDict):
         self.machine = machine
         self.collection_name = collection
 
-        self.machine.modes.register_start_method(self._register_control_events,
+        self.machine.mode_controller.register_start_method(self._register_control_events,
                                                  config_section)
 
     def _register_control_events(self, config, priority=0, mode=None):

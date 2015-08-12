@@ -77,7 +77,7 @@ class Config(object):
                 first try to open it as a file directly (including any path
                 that's there). If that doesn't work, it will try to open the
                 file using the last path that worked. (This path is stored in
-                `config['Config_path']`.)
+                `config['config_path']`.)
             new_config_dict: A dictionary of settings to merge into the config
                 dictionary.
 
