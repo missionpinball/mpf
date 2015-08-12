@@ -68,16 +68,43 @@ class BallLock(Device):
         """Resets the lock. Will release locked balls. Device will status will
         stay the same (enabled/disabled)
         """
-        self._release_all_balls()
+        self.release_all_balls()
 
-    def _release_all_balls(self):
+    def release_all_balls(self):
+        self.release_balls(self.balls_locked)
+
+    def release_balls(self, balls_to_release):
+        """Release all balls and return the actual amount of balls released.
+        """
         if len(self.lock_queue) == 0:
-            return
+            return 0
 
-        self.log.debug("Releasing all balls from lock")
+        remaining_balls_to_release = balls_to_release
+
+        self.log.debug("Releasing up to %s balls from lock", balls_to_release)
+        balls_released = 0
         while len(self.lock_queue) > 0:
-            device, balls = self.lock_queue.pop()
+            device, balls_locked = self.lock_queue.pop()
+            balls = balls_locked
+            balls_in_device = device.count_balls(stealth=True)
+            if balls > balls_in_device:
+                balls = balls_in_device
+
+            if balls > remaining_balls_to_release:
+                self.lock_queue.append((device, balls_locked - remaining_balls_to_release))
+                balls = remaining_balls_to_release
+
             device.eject(balls=balls)
+            balls_released += balls
+            remaining_balls_to_release -= balls
+            if remaining_balls_to_release <= 0:
+                break
+
+        if balls_released > 0:
+            self.machine.events.post('ball_lock_' + self.name + '_balls_released',
+                                     balls_released=balls_released)
+
+        return balls_released
 
     def _register_handlers(self):
         # register on ball_enter of lock_devices

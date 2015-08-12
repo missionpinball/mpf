@@ -67,8 +67,19 @@ class Multiball(Device):
         self.balls_ejected = self.config['ball_count'] - 1
 
         self.machine.game.add_balls_in_play(balls=self.balls_ejected)
-        # TODO: use lock_devices first
-        self.source_playfield.add_ball(balls=self.balls_ejected)
+
+        balls_added = 0
+
+        # use lock_devices first
+        for device in self.ball_locks:
+            balls_added += device.release_balls(self.balls_ejected - balls_added)
+
+            if self.balls_ejected - balls_added <= 0:
+                break
+
+        # request remaining balls
+        if self.balls_ejected - balls_added > 0:
+            self.source_playfield.add_ball(balls=self.balls_ejected - balls_added)
 
         if self.config['shoot_again'] == False:
             # No shoot again. Just stop multiball right away
