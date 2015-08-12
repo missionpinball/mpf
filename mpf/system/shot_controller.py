@@ -50,6 +50,8 @@ class ShotController(object):
 
         self.machine.events.add_handler('player_turn_start',
                                         self._player_turn_start)
+        self.machine.events.add_handler('player_turn_stop',
+                                        self._player_turn_stop)
 
     def register_profile(self, name, profile):
 
@@ -64,10 +66,17 @@ class ShotController(object):
 
     def _player_turn_start(self, player, **kwargs):
         for shot in self.machine.shots:
-            shot.player_turn_start(player)
+            shot._player_turn_start(player)
 
         for drop_target in self.machine.drop_targets:
-            drop_target.player_turn_start(player)
+            drop_target._player_turn_start(player)
+
+    def _player_turn_stop(self, player, **kwargs):
+        for shot in self.machine.shots:
+            shot.player_turn_stop(player)
+
+        for drop_target in self.machine.drop_targets:
+            drop_target.player_turn_stop(player)
 
     def apply_shot_profiles(self, config, priority, mode, **kwargs):
         for shot, settings in config.iteritems():

@@ -17,6 +17,8 @@ class Device(object):
 
     """
 
+    allow_per_mode_devices = False
+
     def __init__(self, machine, name, config=None, collection=-1,
                  platform_section=None):
         self.machine = machine
@@ -82,8 +84,10 @@ class Device(object):
             cls.device_class_init(machine)
 
         # create the devices
-        for device in config:
-            cls(machine, device, config[device], collection)
+
+        if config:
+            for device in config:
+                cls(machine, device, config[device], collection)
 
     def _create_control_events(self, config, delay_manager=None):
 
@@ -153,124 +157,6 @@ class Device(object):
                                             handler=getattr(self, method))
             self.machine.events.add_handler(event=event_prefix2 + method,
                                             handler=getattr(self, method))
-
-class DeviceCollection(CaseInsensitiveDict):
-    """A collection of Devices.
-
-    One instance of this class will be created for each different type of
-    hardware device (such as coils, lights, switches, ball devices, etc.)
-
-    """
-
-    def __init__(self, machine, collection, config_section):
-        super(DeviceCollection, self).__init__()
-
-        self.machine = machine
-        self.collection_name = collection
-
-        self.machine.modes.register_start_method(self._register_control_events,
-                                                 config_section)
-
-    def _register_control_events(self, config, priority=0, mode=None):
-
-        for device_name, device_settings in config.iteritems():
-            device = getattr(self.machine, self.collection_name)[device_name]
-
-            key_list = device._create_control_events(device_settings,
-                                                      mode.delay)
-
-            return self._remove_control_events, key_list
-
-    def _remove_control_events(self, key_list):
-
-        self.machine.events.remove_handlers_by_keys(key_list)
-
-    def __getattr__(self, attr):
-        # We use this to allow the programmer to access a hardware item like
-        # self.coils.coilname
-
-        try:
-            # If we were passed a name of an item
-            if type(attr) == str:
-                return self[attr.lower()]
-            elif type(attr) == int:
-                self.number(number=attr)
-        except KeyError:
-            raise KeyError('Error: No device exists with the name:', attr)
-
-    def __iter__(self):
-        for item in self.itervalues():
-            yield item
-
-        # todo add an exception here if this isn't found?
-
-    def items_tagged(self, tag):
-        """Returns of list of device objects which have a certain tag.
-
-        Args:
-            tag: A string of the tag name which specifies what devices are
-                returned.
-        Returns:
-            A list of device objects. If no devices are found with that tag, it
-            will return an empty list.
-        """
-        output = []
-        for item in self:
-            if tag in item.tags:
-                output.append(item)
-        return output
-
-    def items_not_tagged(self, tag):
-        """Returns of list of device objects which do not have a certain tag.
-
-        Args:
-            tag: A string of the tag name which specifies what devices are
-                returned. All devices will be returned except those with this
-                tag.
-        Returns:
-            A list of device objects. If no devices are found with that tag, it
-            will return an empty list.
-        """
-        output = []
-        for item in self:
-            if tag not in item.tags:
-                output.append(item)
-        return output
-
-    def is_valid(self, name):
-        """Checks to see if the name passed is a valid device.
-
-        Args:
-            name: The string of the device name you want to check.
-        Returns:
-            True or False, depending on whether the name is a valid device or
-            not.
-        """
-        if name.lower() in self.itervalues():
-            return True
-        else:
-            return False
-
-    def number(self, number):
-        """Returns a device object based on its number."""
-        for name, obj in self.iteritems():
-            if obj.number == number:
-                return self[name]
-
-    # def reset(self):
-    #     """Resets all the devices in this collection."""
-    #     for item in self:
-    #         item.reset()
-    #
-    # def enable(self):
-    #     """Enables all the devices in this collection."""
-    #     for item in self:
-    #         item.enable()
-    #
-    # def disable(self):
-    #     """Disables all the devices in this collection."""
-    #     for item in self:
-    #         item.disable()
 
 
 # The MIT License (MIT)

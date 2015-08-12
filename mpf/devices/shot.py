@@ -11,6 +11,7 @@ from collections import deque
 
 from mpf.system.devices import Device
 from mpf.system.config import Config
+from mpf.system.timing import Timing
 
 
 class Shot(Device):
@@ -18,6 +19,7 @@ class Shot(Device):
     config_section = 'shots'
     collection = 'shots'
     class_label = 'shot'
+    allow_per_mode_devices = True
 
     monitor_enabled = False
     """Class attribute which specifies whether any monitors have been registered
@@ -46,10 +48,10 @@ class Shot(Device):
         self.running_light_show = None
         self.shot_groups = set()
         self.profiles = list()
-        self.player = None
         self.player_variable = None
         self.sequence_index = 0
         self.sequence_delay = False
+        self.player = None
 
         self.enabled = False
 
@@ -93,7 +95,7 @@ class Shot(Device):
             self.machine.switch_controller.add_switch_handler(
                 switch, self.hit, 1)
 
-        for switch in self.config['sequence_switches']:
+        for switch in self.config['switch_sequence']:
             self.machine.switch_controller.add_switch_handler(
                 switch, self._sequence_hit, 1, return_info=True)
 
@@ -102,7 +104,7 @@ class Shot(Device):
             self.machine.switch_controller.remove_switch_handler(
                 switch, self.hit, 1)
 
-        for switch in self.config['sequence_switches']:
+        for switch in self.config['switch_sequence']:
             self.machine.switch_controller.remove_switch_handler(
                 switch, self._sequence_hit, 1)
 
@@ -203,13 +205,17 @@ class Shot(Device):
                     reset=reset,
                     **settings))
 
-    def player_turn_start(self, player):
+    def _player_turn_start(self, player, **kwargs):
         """Called when a player's turn starts to update the player reference to
         the current player and to apply the default machine-wide shot profile.
 
         """
         self.player = player
         self.apply_profile(self.config['profile'], priority=0)
+
+    def _player_turn_stop(self):
+        self.player = None
+        self.remove_profiles()
 
     def apply_profile(self, profile, priority, removal_key=None):
         """Applies a shot profile to this shot.
@@ -284,6 +290,10 @@ class Shot(Device):
             self._set_player_variable()
             self._update_current_step_variables()
             self._update_lights()
+
+    def remove_profiles(self, ):
+        self._stop_current_lights()
+        self.profiles = list()
 
     def _sort_profiles(self):
         self.profiles.sort(key=lambda x: x[1], reverse=True)
@@ -413,6 +423,7 @@ class Shot(Device):
         not be processed.
 
         """
+
         self.log.debug("Enabling...")
         self._register_switch_handlers()
         self.enabled = True
@@ -448,6 +459,7 @@ class ShotGroup(Device):
     config_section = 'shot_groups'
     collection = 'shot_groups'
     class_label = 'shot_group'
+    allow_per_mode_devices = True
 
     def __init__(self, machine, name, config, collection=None,
                  member_collection=None, device_str=None):
@@ -465,7 +477,9 @@ class ShotGroup(Device):
             self.device_str = device_str
 
         if not member_collection:
-            member_collection = self.machine.shots
+            self.member_collection = self.machine.shots
+        else:
+            self.member_collection = member_collection
 
         self.shots = list()
 
@@ -475,15 +489,15 @@ class ShotGroup(Device):
 
         # convert shot list from str to objects
         for shot in self.config[self.device_str]:
-            self.shots.append(member_collection[shot])
+            self.shots.append(self.member_collection[shot])
 
     def register_member_switches(self):
         for shot in self.config[self.device_str]:
-            member_collection[shot].add_to_shot_group(self)
+            self.member_collection[shot].add_to_shot_group(self)
 
     def deregister_member_switches(self):
         for shot in self.config[self.device_str]:
-            member_collection[shot].remove_from_shot_group(self)
+            self.member_collection[shot].remove_from_shot_group(self)
 
     def hit(self, profile_name, profile_step_name, **kwargs):
         """One of the member shots in this shot group was hit.

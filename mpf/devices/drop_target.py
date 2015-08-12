@@ -94,8 +94,8 @@ class DropTarget(Shot):
 
         """
 
-        if self.shot_group:
-            #self.shot_group.reset()
+        if self.shot_groups:
+            #self.shot_groups.reset()
             pass
         elif self.reset_coil:
             self.reset_coil.pulse()

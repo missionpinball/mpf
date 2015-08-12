@@ -16,6 +16,7 @@ mpf:
         - bcp: mpf.system.bcp.BCP
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
         - scoring: mpf.system.scoring.ScoreController
+        - device_manager: mpf.system.device_manager.DeviceManager
         - shot_controller: mpf.system.shot_controller.ShotController
 
     device_modules:
