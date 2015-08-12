@@ -37,6 +37,7 @@ mpf:
         score_reel.ScoreReelGroup
         flasher.Flasher
         playfield_transfer.PlayfieldTransfer
+        ball_lock.BallLock
     
     plugins:
         auditor
@@ -71,6 +72,10 @@ mpf:
             stop:
             eject:
             eject_all:
+        ball_locks:
+            enable: ball_started
+            disable: ball_ending
+            reset: machine_reset_phase_3
         diverters:
             enable:
             disable:
