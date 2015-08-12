@@ -4,6 +4,9 @@
 
 import logging
 from mpf.system.devices import Device
+from mpf.system.tasks import DelayManager
+from mpf.system.timing import Timing
+from mpf.system.config import Config
 
 class Multiball(Device):
 
@@ -19,12 +22,18 @@ class Multiball(Device):
             raise ValueError('Please specify ball_count')
         if 'source_playfield' not in self.config:
             self.config['source_playfield'] = 'playfield'
+        if 'shoot_again' not in self.config:
+            self.config['shoot_again'] = '10s'
         if 'ball_locks' not in self.config:
             self.config['ball_locks'] = []
         else:
             self.config['ball_locks'] = Config.string_to_list(
                 self.config['ball_locks'])
 
+        if not isinstance(self.config['shoot_again'], bool):
+            self.config['shoot_again'] = Timing.string_to_ms(self.config['shoot_again'])
+
+        self.delay = DelayManager()
 
         # let ball devices initialise first
         self.machine.events.add_handler('init_phase_3',
@@ -32,8 +41,9 @@ class Multiball(Device):
 
     def _initialize(self):
         self.ball_locks = []
-        self.started = False
+        self.shoot_again = False
         self.enabled = False
+
         for device in self.config['ball_locks']:
             self.ball_locks.append(self.machine.ball_locks[device])
 
@@ -44,20 +54,76 @@ class Multiball(Device):
         if not self.enabled:
             return
 
-        self.started = True
+
+
+        if self.balls_ejected > 0:
+            self.log.debug("Cannot start MB because %s are still in play",
+                           self.balls_ejected)
+
+        self.shoot_again = True
         self.log.debug("Starting multiball with %s balls",
                        self.config['ball_count'])
 
         self.balls_ejected = self.config['ball_count'] - 1
+
         self.machine.game.add_balls_in_play(balls=self.balls_ejected)
         # TODO: use lock_devices first
         self.source_playfield.add_ball(balls=self.balls_ejected)
 
-        # TODO: add handler to drain until self.balls_ejected are drained
+        if self.config['shoot_again'] == False:
+            # No shoot again. Just stop multiball right away
+            self.stop()
+        else:
+            # Enable shoot again
+            self.machine.events.add_handler('ball_drain',
+                                            self._ball_drain_shoot_again,
+                                            priority=1000)
+            # Register stop handler
+            if not isinstance(self.config['shoot_again'], bool):
+                self.delay.add('disable_shoot_again',
+                               self.config['shoot_again'], self.stop)
+
+        self.machine.events.post("multiball_" + self.name + "_started",
+                         balls=self.config['ball_count'])
+
+    def _ball_drain_shoot_again(self, balls, **kwargs):
+        if balls <= 0:
+            return {'balls': balls}
+
+        self.machine.events.post("multiball_" + self.name + "_shoot_again", balls=balls)
+
+        self.log.debug("Ball drained during MB. Requesting a new one")
+        self.source_playfield.add_ball(balls=balls)
+        return {'balls': 0}
+
+
+    def _ball_drain_count_balls(self, balls, **kwargs):
+        self.balls_ejected -= balls
+        if self.balls_ejected <= 0:
+            self.balls_ejected = 0
+            self.machine.events.remove_handler(self._ball_drain_count_balls)
+            self.machine.events.post("multiball_" + self.name + "_ended")
+            self.log.debug("Ball drained. MB ended.")
+        else:
+            self.log.debug("Ball drained. %s balls remain until MB ends",
+                           self.balls_ejected)
+
+        # TODO: we are _not_ claiming the balls because we want it to drain.
+        # However this may result in wrong results with multiple MBs at the
+        # same time. May be we should claim and remove balls manually?
+
+        return {'balls': balls}
 
     def stop(self, **kwargs):
         self.log.debug("Stopping shoot again of multiball")
-        self.stop = False
+        self.shoot_again = False
+
+        # disable shoot again
+        self.machine.events.remove_handler(self._ball_drain_shoot_again)
+
+        # add handler for ball_drain until self.balls_ejected are drained
+        self.machine.events.add_handler('ball_drain',
+                                        self._ball_drain_count_balls)
 
     def enable(self, **kwargs):
         """ Enables the multiball. If the multiball is not enabled, it cannot
@@ -77,6 +143,6 @@ class Multiball(Device):
         """Resets the multiball and disables it.
         """
         self.enabled = False
-        self.started = False
-
+        self.shoot_again = False
+        self.balls_ejected = 0
 

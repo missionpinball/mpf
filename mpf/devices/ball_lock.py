@@ -71,6 +71,9 @@ class BallLock(Device):
         self._release_all_balls()
 
     def _release_all_balls(self):
+        if len(self.lock_queue) == 0:
+            return
+
         self.log.debug("Releasing all balls from lock")
         while len(self.lock_queue) > 0:
             device, balls = self.lock_queue.pop()
