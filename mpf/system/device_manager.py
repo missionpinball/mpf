@@ -2,6 +2,7 @@
 
 import logging
 from collections import OrderedDict
+import yaml
 
 from mpf.devices import *
 from mpf.system.config import CaseInsensitiveDict
@@ -58,6 +59,16 @@ class DeviceManager(object):
             config=config,
             machine=self.machine
             )
+
+    def save_tree_to_file(self, filename):
+        print "Exporting file..."
+
+        with open(filename, 'w') as output_file:
+            output_file.write(yaml.dump(self.collections,
+                                        default_flow_style=False))
+
+        print "Export complete!"
+
 
 class DeviceCollection(CaseInsensitiveDict):
     """A collection of Devices.
