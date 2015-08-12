@@ -34,7 +34,7 @@ class BallLock(Device):
         self.lock_queue = deque()
 
         # let ball devices initialise first
-        self.machine.events.add_handler('machine_reset_phase_2',
+        self.machine.events.add_handler('init_phase_3',
                                         self._initialize)
 
     def _initialize(self):
