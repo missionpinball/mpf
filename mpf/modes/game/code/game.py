@@ -67,7 +67,7 @@ class Game(Mode):
             self.start_button_hold_time = hold_time
 
         # Intialize variables
-        Player.total_players = 0
+        self.num_players = 0
         self.player_list = list()
         self.machine.game = self
         self._balls_in_play = 0
@@ -128,8 +128,11 @@ class Game(Mode):
         so our game is officially 'started'.
 
         """
+
         self._player_add()
+
         self.machine.events.post('game_started')
+
         self.player_turn_start()
 
     def player_add_success(self, player, **kwargs):
@@ -138,7 +141,7 @@ class Game(Mode):
 
         """
         self.log.info("Player added successfully. Total players: %s",
-                      Player.total_players)
+                      self.num_players)
 
     def ball_starting(self):
         """Called when a new ball is starting.
@@ -263,7 +266,7 @@ class Game(Mode):
             return
 
         if (self.player.ball == self.machine.config['game']['balls per game']
-                and self.player.number == Player.total_players):
+                and self.player.number == self.num_players):
             self.game_ending()
         else:
             self.player_rotate()
@@ -286,6 +289,7 @@ class Game(Mode):
         # Callback for when the game_ending queue is clear. All this does is
         # post game_ended, but we do it this way so that game_ended slots in
         # properly after other existing events have been posted.
+        self.player_turn_stop()
         self.machine.events.post('game_ended')
 
     def game_ended(self, **kwargs):
@@ -460,10 +464,12 @@ class Game(Mode):
     def _player_add(self, ev_result=True):
         # This is the callback from our request player add event.
         # Don't call it directly.
+
         if ev_result is False:
             self.log.debug("Request to add player has been denied.")
         else:
-            self.player_list.append(Player(self.machine))
+            Player(self.machine, self.player_list)
+            self.num_players = len(self.player_list)
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.
@@ -476,12 +482,28 @@ class Game(Mode):
 
         # If we get a request to start a turn but we haven't done a rotate to
         # set the first player, do that now.
+
         if not self.player:
             self.player_rotate()
 
         self.machine.events.post('player_turn_start', player=self.player,
                                  number=self.player.number,
                                  callback=self._player_turn_started)
+
+    def player_turn_stop(self, ):
+
+        self.machine.events.post('player_turn_stop', player=self.player,
+                                     number=self.player.number)
+
+        if self.player.number < self.num_players:
+            self.player = self.player_list[self.player.number]
+            # Note the above line is kind of confusing but it works because
+            # the current player number is always 1 more than the index.
+            # i.e. "Player 1" has an index of 0, etc. So using the current
+            # player number as the next player's index works out.
+        else:
+            self.player = self.player_list[0]
+
 
     def _player_turn_started(self, **kwargs):
         self.player.ball += 1
@@ -502,22 +524,12 @@ class Game(Mode):
         """
         # todo  do cool stuff in the future to change order, etc.
 
-        if not self.player:  # no current player, grab the first one
+        if self.player:
+            self.player_turn_stop()
+
+        else:  # no current player, grab the first one
             self.player = self.player_list[0]
 
-        else:
-
-            self.machine.events.post('player_turn_stop', player=self.player,
-                                     number=self.player.number)
-
-            if self.player.number < Player.total_players:
-                self.player = self.player_list[self.player.number]
-                # Note the above line is kind of confusing but it works because
-                # the current player number is always 1 more than the index.
-                # i.e. "Player 1" has an index of 0, etc. So using the current
-                # player number as the next player's index works out.
-            else:
-                self.player = self.player_list[0]
         self.log.debug("Player rotate: Now up is Player %s", self.player.number)
 
 

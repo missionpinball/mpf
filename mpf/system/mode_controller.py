@@ -53,6 +53,10 @@ class ModeController(object):
                                         self._player_turn_start,
                                         priority=1000000)
 
+        self.machine.events.add_handler('player_turn_stop',
+                                        self._player_turn_stop,
+                                        priority=1000000)
+
     def _load_modes(self):
         #Loads the modes from the Modes: section of the machine configuration
         #file.
@@ -133,6 +137,11 @@ class ModeController(object):
 
         for mode in self.machine.modes:
             mode.player = player
+
+    def _player_turn_stop(self, player, **kwargs):
+
+        for mode in self.machine.modes:
+            mode.player = None
 
     def _ball_ending(self, queue):
         # unloads all the active modes

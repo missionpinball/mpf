@@ -459,7 +459,7 @@ class MediaController(object):
         """Processes an incoming BCP 'game_start' command."""
         self.player = None
         self.player_list = list()
-        Player.total_players = 0
+        self.num_players = 0
         self.events.post('game_started', **kargs)
 
     def bcp_game_end(self, **kwargs):
@@ -471,9 +471,7 @@ class MediaController(object):
         """Processes an incoming BCP 'player_add' command."""
 
         if number > len(self.player_list):
-            new_player = Player(self)
-            self.player_list.append(new_player)
-            new_player.score = 0
+            new_player = Player(self, self.player_list)
 
             self.events.post('player_add_success', num=number)
 
@@ -500,10 +498,17 @@ class MediaController(object):
     def bcp_player_turn_start(self, player, **kwargs):
         """Processes an incoming BCP 'player_turn_start' command."""
 
+        self.log.info("bcp_player_turn_start")
+
         if ((self.player and self.player.number != player) or
                 not self.player):
 
-            self.player = self.player_list[int(player)-1]
+            try:
+                self.player = self.player_list[int(player)-1]
+            except IndexError:
+                self.log.error('Received player turn start for player %s, but '
+                               'only %s player(s) exist',
+                               player, len(self.player_list))
 
     def bcp_trigger(self, name, **kwargs):
         """Processes an incoming BCP 'trigger' command."""
