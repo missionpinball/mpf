@@ -19,6 +19,11 @@ class Shot(Device):
     collection = 'shots'
     class_label = 'shot'
 
+    monitor_enabled = False
+    """Class attribute which specifies whether any monitors have been registered
+    to track shots.
+    """
+
     def __init__(self, machine, name, config, collection=None):
         """Represents a shot in a pinball machine. A shot is typically the
         combination of a switch and a light, such as a standup or rollover.
@@ -39,10 +44,12 @@ class Shot(Device):
         self.current_step_index = 0
         self.current_step_name = None
         self.running_light_show = None
-        self.shot_group = None
+        self.shot_groups = set()
         self.profiles = list()
         self.player = None
         self.player_variable = None
+        self.sequence_index = 0
+        self.sequence_delay = False
 
         self.enabled = False
 
@@ -54,6 +61,17 @@ class Shot(Device):
         else:
             self.config['switch'] = list()
 
+        if 'switch_sequence' in self.config:
+            self.config['switch_sequence'] = (
+                Config.string_to_list(self.config['switch_sequence']))
+        else:
+            self.config['switch_sequence'] = list()
+
+        if 'time' in self.config:
+            self.config['time'] = Timing.string_to_ms(self.config['time'])
+        else:
+            self.config['time'] = 0
+
         if 'light' in self.config:
             self.config['light'] = Config.string_to_list(self.config['light'])
         else:
@@ -63,9 +81,6 @@ class Shot(Device):
             self.config['led'] = Config.string_to_list(self.config['led'])
         else:
             self.config['led'] = list()
-
-        self.machine.events.add_handler('init_phase_3',
-                                        self._register_switch_handlers)
 
     def _set_player_variable(self):
         if 'player_variable' in self.active_profile_settings:
@@ -77,6 +92,19 @@ class Shot(Device):
         for switch in self.config['switch']:
             self.machine.switch_controller.add_switch_handler(
                 switch, self.hit, 1)
+
+        for switch in self.config['sequence_switches']:
+            self.machine.switch_controller.add_switch_handler(
+                switch, self._sequence_hit, 1, return_info=True)
+
+    def _remove_switch_handlers(self):
+        for switch in self.config['switch']:
+            self.machine.switch_controller.remove_switch_handler(
+                switch, self.hit, 1)
+
+        for switch in self.config['sequence_switches']:
+            self.machine.switch_controller.remove_switch_handler(
+                switch, self._sequence_hit, 1)
 
     def _advance_step(self, steps=1):
         if (self.player[self.player_variable] + 1 >=
@@ -94,8 +122,9 @@ class Shot(Device):
         self._update_group_status()
 
     def _update_group_status(self):
-        if self.shot_group:
-            self.shot_group.check_for_complete()
+
+        for group in self.shot_groups:
+            group.check_for_complete()
 
     def _stop_current_lights(self):
 
@@ -300,11 +329,47 @@ class Shot(Device):
                                      self.active_profile_name + '_' +
                                      self.current_step_name + '_hit')
 
-            if self.shot_group:
-                self.shot_group.hit(profile_name=self.active_profile_name,
-                                      profile_step_name=self.current_step_name)
+            for group in self.shot_groups:
+                group.hit(profile_name=self.active_profile_name,
+                          profile_step_name=self.current_step_name)
+
+
+            if Shot.monitor_enabled:
+                for callback in self.machine.monitors['shots']:
+                    callback(name=self.name)
 
         self._advance_step()
+
+    def _sequence_hit(self, switch_name, state, ms):
+        # does this current switch meet the next switch in the progress index?
+        if switch_name == self.config['sequence_switches'][self.sequence_index]:
+
+            # are we at the end?
+            if self.sequence_index == len(self.config['switches']) - 1:
+                self.hit()
+            else:
+                # does this shot specific a time limit?
+                if self.config['time']:
+                    # do we need to set a delay?
+                    if not self.sequence_delay:
+                        self.delay.reset(name='shot_timer',
+                                         ms=self.config['time'],
+                                         callback=self._reset_timer)
+                        self.sequence_delay = True
+
+                # advance the progress index
+                self.sequence_index += 1
+
+    def _reset_timer(self):
+        self.log.debug("Resetting this sequence timer")
+        self.sequence_index = 0
+        self.sequence_delay = False
+
+    def add_to_shot_group(self, group):
+        self.shot_groups.add(group)
+
+    def remove_from_shot_group(self, group):
+        self.shot_groups.discard(group)
 
     def jump(self, step, update_group=True, current_show_step=0):
         """Jumps to a certain step in the active shot profile.
@@ -349,6 +414,7 @@ class Shot(Device):
 
         """
         self.log.debug("Enabling...")
+        self._register_switch_handlers()
         self.enabled = True
 
     def disable(self, **kwargs):
@@ -357,6 +423,8 @@ class Shot(Device):
 
         """
         self.log.debug("Disabling...")
+        self._reset_timer()
+        self._remove_switch_handlers()
         self.enabled = False
 
     def reset(self, **kwargs):
@@ -364,7 +432,9 @@ class Shot(Device):
         This method is the same as calling jump(0).
 
         """
+        self._reset_timer()
         self.jump(step=0)
+
 
 
 class ShotGroup(Device):
@@ -406,7 +476,14 @@ class ShotGroup(Device):
         # convert shot list from str to objects
         for shot in self.config[self.device_str]:
             self.shots.append(member_collection[shot])
-            member_collection[shot].shot_group = self
+
+    def register_member_switches(self):
+        for shot in self.config[self.device_str]:
+            member_collection[shot].add_to_shot_group(self)
+
+    def deregister_member_switches(self):
+        for shot in self.config[self.device_str]:
+            member_collection[shot].remove_from_shot_group(self)
 
     def hit(self, profile_name, profile_step_name, **kwargs):
         """One of the member shots in this shot group was hit.
@@ -431,6 +508,8 @@ class ShotGroup(Device):
         """
         self.enabled = True
 
+        self.register_member_switches()
+
         for shot in self.shots:
             shot.enable()
 
@@ -439,6 +518,9 @@ class ShotGroup(Device):
         group.
 
         """
+
+        self.deregister_member_switches()
+
         for shot in self.shots:
             shot.disable()
 
