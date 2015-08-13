@@ -20,11 +20,17 @@ class BallSave(Device):
 
         if 'source_playfield' not in self.config:
             self.config['source_playfield'] = 'playfield'
+        if 'auto_disable_time' not in self.config:
+            self.config['auto_disable_time'] = '0'
+
+
+        self.config['auto_disable_time'] = Timing.string_to_ms(self.config['auto_disable_time'])
 
         # let ball devices initialise first
         self.machine.events.add_handler('init_phase_3',
                                         self._initialize)
-        self.log.debug("Loaded")
+
+        self.delay = DelayManager()
 
     def _initialize(self):
         self.source_playfield = self.machine.ball_devices[self.config['source_playfield']]
@@ -36,9 +42,16 @@ class BallSave(Device):
         self.machine.events.add_handler('ball_drain',
                                         self._ball_drain_shoot_again,
                                         priority=1000)
+
+        if self.config['auto_disable_time'] > 0:
+            self.delay.add('disable_shoot_again',
+                           self.config['auto_disable_time'], self.disable)
+
+
     def disable(self, **kwargs):
         self.log.debug("Disabling...")
         self.machine.events.remove_handler(self._ball_drain_shoot_again)
+        self.delay.remove('disable_shoot_again')
 
     def _ball_drain_shoot_again(self, balls, **kwargs):
         if balls <= 0:
