@@ -6,8 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-from collections import defaultdict
-
 from mpf.system.timing import Timing
 from mpf.system.config import Config, CaseInsensitiveDict
 

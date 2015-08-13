@@ -68,26 +68,34 @@ class DeviceManager(object):
             )
 
     def _mode_start(self, config, mode=None, priority=0):
+        # Loops through the mode config to see if there are any device configs
+        # for devices that have not been setup. If so, it sets them up. Returns
+        # a list of the ones it set up so they can be removed when the mode ends
+        # later.
 
-        print "mode start"
+        devices = set()
 
         # i is tuple (config_section, device class, collection)
         for i in self.mode_config_sections:
             if i[0] in config:
-                print "found a config for", i
 
                 for device, settings in config[i[0]].iteritems():
 
-                    print i[2], device
-
-                    if device in i[2]:
-                        print "found an existing device"
-                    else:
-                        print "did not find a device. will create it"
+                    if device not in i[2]:  # no existing device, create now
                         self.create_devices(i[2].name, {device: settings})
 
+                        # Have to do some things here since the player's turn
+                        # has already started. Typically this creates the
+                        # player attribute mapping and enables the device.
                         i[2][device].device_added_to_mode(mode.player)
 
+                        devices.add(i[2][device])
+
+        return  self.remove_devices, devices
+
+    def remove_devices(self, devices):
+        for device in devices:
+            device.remove()
 
     def save_tree_to_file(self, filename):
         print "Exporting file..."
@@ -117,8 +125,6 @@ class DeviceCollection(CaseInsensitiveDict):
                                                  config_section)
 
     def _register_control_events(self, config, priority=0, mode=None):
-
-        print "1", config
 
         for device_name, device_settings in config.iteritems():
             device = getattr(self.machine, self.name)[device_name]

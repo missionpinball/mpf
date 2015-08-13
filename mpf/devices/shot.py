@@ -208,7 +208,7 @@ class Shot(Device):
                     reset=reset,
                     **settings))
 
-    def _player_turn_start(self, player, **kwargs):
+    def player_turn_start(self, player, **kwargs):
         """Called when a player's turn starts to update the player reference to
         the current player and to apply the default machine-wide shot profile.
 
@@ -216,14 +216,29 @@ class Shot(Device):
         self.player = player
         self.apply_profile(self.config['profile'], priority=0)
 
-    def _player_turn_stop(self):
+    def player_turn_stop(self):
         self.player = None
         self.remove_profiles()
 
     def device_added_to_mode(self, player):
-        self._player_turn_start(player)
+        self.player_turn_start(player)
         self.enable()
 
+    def remove(self):
+
+        self.log.debug("Removing...")
+
+        for group in self.shot_groups:
+
+            try:
+                group.remove_member_shot(self)
+            except ValueError:
+                pass
+
+        self._remove_switch_handlers()
+        self._stop_current_lights()
+
+        del self.machine.shots[self.name]
 
     def apply_profile(self, profile, priority, removal_key=None):
         """Applies a shot profile to this shot.
@@ -519,6 +534,12 @@ class ShotGroup(Device):
         for shot in self.config[self.device_str]:
             self.member_collection[shot].remove_from_shot_group(self)
 
+    def remove_member_shot(self, shot):
+
+        self.shots.remove(shot)
+        self.deregister_member_switches()
+        self.register_member_switches()
+
     def hit(self, profile_name, profile_step_name, **kwargs):
         """One of the member shots in this shot group was hit.
 
@@ -679,6 +700,12 @@ class ShotGroup(Device):
 
     def device_added_to_mode(self, player):
         self.enable()
+
+    def remove(self):
+        self.log.debug("Removing...")
+        self.deregister_member_switches()
+        del self.machine.shot_groups[self.name]
+
 
 # The MIT License (MIT)
 
