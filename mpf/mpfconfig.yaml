@@ -37,6 +37,8 @@ mpf:
         score_reel.ScoreReelGroup
         flasher.Flasher
         playfield_transfer.PlayfieldTransfer
+        ball_lock.BallLock
+        multiball.Multiball
     
     plugins:
         auditor
@@ -71,6 +73,10 @@ mpf:
             stop:
             eject:
             eject_all:
+        ball_locks:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+            reset: machine_reset_phase_3
         diverters:
             enable:
             disable:
@@ -106,6 +112,12 @@ mpf:
         matrix_lights:
             "on":
             "off":
+        multiballs:
+            enable: ball_started
+            disable: ball_ending, tilt, slam_tilt
+            reset: machine_reset_phase_3
+            start:
+            stop:
         targets:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
