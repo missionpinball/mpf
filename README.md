@@ -1,3 +1,14 @@
+Dev Branch Notes for 0.20.0-dev3
+================================
+
+We have implemented the "machine-wide" modes feature. Here are the changes you
+will need to make for your own machines to run.
+
+If you have custom mode code:
+* Change 'from mpf.system.modes import Mode' to 'from mpf.system.mode import Mode'
+* If you have a mode_start() method, change 'def mode_start(self)' to 'def mode_start(self, \*\*kwargs)'
+* If you have a mode_stop() method, change 'def mode_start(self)' to 'def mode_stop(self, \*\*kwargs)'
+
 Mission Pinball Framework (mpf)
 ===============================
 
