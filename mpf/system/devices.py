@@ -26,7 +26,7 @@ class Device(object):
         self.tags = list()
         self.label = None
         self.debug_logging = False
-        self.config = defaultdict(lambda: None, config)
+        self.config = dict()
 
         if config:
             self.config.update(config)
@@ -158,6 +158,8 @@ class Device(object):
             self.machine.events.add_handler(event=event_prefix2 + method,
                                             handler=getattr(self, method))
 
+    def device_added_to_mode(self, player):
+        pass
 
 # The MIT License (MIT)
 

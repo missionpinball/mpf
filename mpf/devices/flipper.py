@@ -83,13 +83,20 @@ class Flipper(Device):
 
         self.flipper_coils = []
         self.flipper_coils.append(self.config['main_coil'])
-        if self.config['hold_coil']:
+        if 'hold_coil' in self.config:
             self.flipper_coils.append(self.config['hold_coil'])
+        else:
+            self.config['hold_coil'] = None
 
         self.flipper_switches = []
         self.flipper_switches.append(self.config['activation_switch'])
-        if self.config['eos_switch']:
+        if 'eos_switch' in self.config:
             self.flipper_switches.append(self.config['eos_switch'])
+        else:
+            self.config['eos_swtich'] = None
+
+        if 'use_eos' not in self.config:
+            self.config['use_eos'] = False
 
         self.platform = self.machine.coils[self.config['main_coil']].platform
 

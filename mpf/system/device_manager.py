@@ -17,8 +17,11 @@ class DeviceManager(object):
 
         self.collections = OrderedDict()
         self.device_classes = dict()
+        self.mode_config_sections = list()
 
         self._load_device_modules()
+
+        self.machine.modes.register_start_method(self._mode_start, None, 100)
 
     def _load_device_modules(self):
         self.machine.config['mpf']['device_modules'] = (
@@ -31,9 +34,16 @@ class DeviceManager(object):
 
             self.device_classes[collection_name] = device_cls
 
+
             # create the collection
             collection = DeviceCollection(self.machine, collection_name,
                                           device_cls.config_section)
+
+            if device_cls.allow_per_mode_devices:
+                self.mode_config_sections.append(
+                    (device_cls.config_section, device_cls, collection))
+
+                print (device_cls.config_section, device_cls, collection)
 
             self.collections[collection_name] = collection
             setattr(self.machine, collection_name, collection)
@@ -48,9 +58,6 @@ class DeviceManager(object):
                                ", so this collection will not be created.",
                                config)
 
-            # if device_cls.allow_per_mode_devices:
-            #     self.setup_per_mode_device_handlers(machine)
-
     def create_devices(self, collection, config):
 
         self.device_classes[collection].create_devices(
@@ -59,6 +66,28 @@ class DeviceManager(object):
             config=config,
             machine=self.machine
             )
+
+    def _mode_start(self, config, mode=None, priority=0):
+
+        print "mode start"
+
+        # i is tuple (config_section, device class, collection)
+        for i in self.mode_config_sections:
+            if i[0] in config:
+                print "found a config for", i
+
+                for device, settings in config[i[0]].iteritems():
+
+                    print i[2], device
+
+                    if device in i[2]:
+                        print "found an existing device"
+                    else:
+                        print "did not find a device. will create it"
+                        self.create_devices(i[2].name, {device: settings})
+
+                        i[2][device].device_added_to_mode(mode.player)
+
 
     def save_tree_to_file(self, filename):
         print "Exporting file..."
@@ -82,15 +111,17 @@ class DeviceCollection(CaseInsensitiveDict):
         super(DeviceCollection, self).__init__()
 
         self.machine = machine
-        self.collection_name = collection
+        self.name = collection
 
         self.machine.modes.register_start_method(self._register_control_events,
                                                  config_section)
 
     def _register_control_events(self, config, priority=0, mode=None):
 
+        print "1", config
+
         for device_name, device_settings in config.iteritems():
-            device = getattr(self.machine, self.collection_name)[device_name]
+            device = getattr(self.machine, self.name)[device_name]
 
             key_list = device._create_control_events(device_settings,
                                                       mode.delay)

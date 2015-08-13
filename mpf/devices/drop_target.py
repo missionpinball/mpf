@@ -20,6 +20,7 @@ class DropTarget(Shot):
     config_section = 'drop_targets'
     collection = 'drop_targets'
     class_label = 'drop_target'
+    allow_per_mode_devices = False
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('DropTarget.' + name)

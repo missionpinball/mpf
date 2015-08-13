@@ -84,6 +84,9 @@ class Shot(Device):
         else:
             self.config['led'] = list()
 
+        if 'loops' not in self.config:
+            self.config['loops'] = 0
+
     def _set_player_variable(self):
         if 'player_variable' in self.active_profile_settings:
             self.player_variable = self.active_profile_settings['player_variable']
@@ -216,6 +219,11 @@ class Shot(Device):
     def _player_turn_stop(self):
         self.player = None
         self.remove_profiles()
+
+    def device_added_to_mode(self, player):
+        self._player_turn_start(player)
+        self.enable()
+
 
     def apply_profile(self, profile, priority, removal_key=None):
         """Applies a shot profile to this shot.
@@ -424,6 +432,9 @@ class Shot(Device):
 
         """
 
+        if self.enabled:
+            return
+
         self.log.debug("Enabling...")
         self._register_switch_handlers()
         self.enabled = True
@@ -433,6 +444,10 @@ class Shot(Device):
         not be processed.
 
         """
+
+        if not self.enabled:
+            return
+
         self.log.debug("Disabling...")
         self._reset_timer()
         self._remove_switch_handlers()
@@ -489,7 +504,12 @@ class ShotGroup(Device):
 
         # convert shot list from str to objects
         for shot in self.config[self.device_str]:
-            self.shots.append(self.member_collection[shot])
+
+            try:
+                self.shots.append(self.member_collection[shot])
+            except KeyError:
+                self.log.error("No shot named '%s'. Could not add to group",
+                               shot)
 
     def register_member_switches(self):
         for shot in self.config[self.device_str]:
@@ -520,6 +540,10 @@ class ShotGroup(Device):
         group.
 
         """
+
+        if self.enabled:
+            return
+
         self.enabled = True
 
         self.register_member_switches()
@@ -532,6 +556,9 @@ class ShotGroup(Device):
         group.
 
         """
+
+        if not self.enabled:
+            return
 
         self.deregister_member_switches()
 
@@ -650,6 +677,8 @@ class ShotGroup(Device):
                                      self.shots[0].current_step_name +
                                      '_complete')
 
+    def device_added_to_mode(self, player):
+        self.enable()
 
 # The MIT License (MIT)
 
