@@ -39,6 +39,7 @@ mpf:
         playfield_transfer.PlayfieldTransfer
         ball_lock.BallLock
         multiball.Multiball
+        ball_save.BallSave
     
     plugins:
         auditor
@@ -77,6 +78,9 @@ mpf:
             enable: ball_started
             disable: ball_ending, tilt, slam_tilt
             reset: machine_reset_phase_3
+        ball_saves:
+            enable:
+            disable: ball_ending, tilt, slam_tilt
         diverters:
             enable:
             disable:
