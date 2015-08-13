@@ -44,9 +44,9 @@ class CaseInsensitiveDict(dict):
 
     def __delitem__(self, key):
         try:
-            return super(CaseInsensitiveDict, self).__del__(key.lower())
+            return super(CaseInsensitiveDict, self).__delitem__(key.lower())
         except AttributeError:
-            return super(CaseInsensitiveDict, self).__del__(key)
+            return super(CaseInsensitiveDict, self).__delitem__(key)
 
 
 class Config(object):
