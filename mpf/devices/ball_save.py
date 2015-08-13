@@ -51,6 +51,7 @@ class BallSave(Device):
     def disable(self, **kwargs):
         self.log.debug("Disabling...")
         self.machine.events.remove_handler(self._ball_drain_shoot_again)
+        self.delay.remove('disable_shoot_again')
 
     def _ball_drain_shoot_again(self, balls, **kwargs):
         if balls <= 0:
