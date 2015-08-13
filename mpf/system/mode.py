@@ -45,6 +45,8 @@ class Mode(object):
         self.stop_callback = None
         self.event_handlers = set()
         self.switch_handlers = list()
+        self.mode_start_kwargs = dict()
+        self.mode_stop_kwargs = dict()
 
         self.auto_stop_on_ball_end = True
         '''Controlled whether this mode is stopped when the ball ends,
@@ -184,7 +186,9 @@ class Mode(object):
 
     def _mode_started_callback(self, **kwargs):
         # Called after the mode_<name>_started queue event has finished.
-        self.mode_start()
+        self.mode_start(**self.start_event_kwargs)
+
+        self.start_event_kwargs = dict()
 
         if self.start_callback:
             self.start_callback()
@@ -243,7 +247,9 @@ class Mode(object):
                                  callback=self._mode_stopped_callback)
 
     def _mode_stopped_callback(self, **kwargs):
-        self.mode_stop()
+        self.mode_stop(**self.mode_stop_kwargs)
+
+        self.mode_stop_kwargs = dict()
 
         if self.stop_callback:
             self.stop_callback()
