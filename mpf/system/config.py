@@ -256,30 +256,53 @@ class Config(object):
 
         if item_type == 'list':
             return Config.string_to_list(item)
+
+        if item_type == 'list_of_dicts':
+            if type(item) is list:
+                return item
+            elif type(item) is dict:
+                return [item]
+
+        elif item_type == 'set':
+            return set(Config.string_to_list(item))
+
+        elif item_type == 'dict':
+            if type(item) is dict or type(item) is CaseInsensitiveDict:
+                return item
+            else:
+                log.error('Config error. "%s" is not a dictionary', item)
+                sys.exit()
+
         elif item_type == 'int':
             try:
                 return int(item)
             except TypeError:
                 return None
+
         elif item_type == 'float':
             try:
                 return float(item)
             except TypeError:
                 return None
+
         elif item_type == 'string':
             try:
                 return str(item)
             except TypeError:
                 return None
+
         elif item_type == 'boolean':
             if type(item) is bool:
                 return item
             else:
                 return item.lower() in ('yes', 'true')
+
         elif item_type == 'ms':
             return Timing.string_to_ms(item)
+
         elif item_type == 'secs':
             return Timing.string_to_secs(item)
+
         elif item_type == 'list_of_lists':
             return Config.list_of_lists(item)
 
