@@ -8,12 +8,11 @@
 
 import logging
 
-from mpf.devices.shot import Shot
-from mpf.devices.shot_group import ShotGroup
+from mpf.system.devices import Device
 from mpf.system.config import Config
 
 
-class DropTarget(Shot):
+class DropTarget(Device):
     """Represents a single drop target in a pinball machine.
 
     Args: Same as the `Target` parent class"""
@@ -21,7 +20,6 @@ class DropTarget(Shot):
     config_section = 'drop_targets'
     collection = 'drop_targets'
     class_label = 'drop_target'
-    allow_per_mode_devices = False
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('DropTarget.' + name)
@@ -29,58 +27,77 @@ class DropTarget(Shot):
 
         super(DropTarget, self).__init__(machine, name, config, collection)
 
-        if self.config['profile'] == 'default':
-            self.config['profile'] = 'drop_target'
-
-        # Drop targets maintain self.complete in addition to self.lit from the
-        # parent class since they can maintain a physical state which could
-        # vary from the lit state. For example, you might want to have a drop
-        # target "lit" that was still standing (i.e. not complete)
         self.complete = False
         self.reset_coil = None
         self.knockdown_coil = None
+        self.banks = set()
 
-        if 'reset_coil' in self.config:
+        config_spec = '''
+                        switch: string
+                        reset_coil: str|None
+                        knockdown_coil: str|None
+
+                        '''
+
+        self.config = Config.process_config(config_spec, self.config)
+
+        try:
             self.reset_coil = self.machine.coils[self.config['reset_coil']]
+        except KeyError:
+            pass
 
-        if 'knockdown_coil' in self.config:
+        try:
             self.knockdown_coil = self.machine.coils[self.config['knockdown_coil']]
+        except KeyError:
+            pass
 
         # can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_3',
-                                        self.update_state_from_switch)
+                                        self._update_state_from_switch)
 
     def _register_switch_handlers(self):
         # register for notification of switch state
         # this is in addition to the parent since drop targets track
         # self.complete in separately
 
-        self.machine.switch_controller.add_switch_handler(self.config['switch'][0],
-            self.update_state_from_switch, 0)
-        self.machine.switch_controller.add_switch_handler(self.config['switch'][0],
-            self.update_state_from_switch, 1)
+        self.machine.switch_controller.add_switch_handler(self.config['switch'],
+            self._update_state_from_switch, 0)
+        self.machine.switch_controller.add_switch_handler(self.config['switch'],
+            self._update_state_from_switch, 1)
 
     def knockdown(self, **kwargs):
         """Pulses the knockdown coil to knock down this drop target."""
         if self.knockdown_coil:
             self.knockdown_coil.pulse()
 
-    def update_state_from_switch(self):
-        """Reads the state of this drop target's switch and updates this drop
-        target's "complete" status.
+    def _update_state_from_switch(self):
+        if self.machine.switch_controller.is_active(self.config['switch']):
+            self._down()
+        else:
+            self._up()
 
-        If this method sees that this target has changed back to its up state,
-        then it will also reset the target profile back to its first step.
+    def _down(self):
+        self.complete = True
+        self.machine.events.post(self.name + '_down')
+
+    def _up(self):
+        self.complete = False
+        self.machine.events.post(self.name + '_up')
+
+    def _update_banks(self):
+
+        for bank in self.banks:
+            bank.update_member_target(self, self.complete)
+
+    def add_to_bank(self, bank):
+        """Adds this drop target to a drop target bank, which allows the bank to
+        update its status based on state changes to this drop target.
+
+        Args:
+            bank: DropTargetBank object to add this drop target to.
 
         """
-
-        # set the initial complete state
-        if self.machine.switch_controller.is_active(self.config['switch'][0]):
-            self.complete = True
-            self.hit()
-        else:
-            self.complete = False
-            self.jump(step=0)
+        self.banks.add(bank)
 
     def reset(self, **kwargs):
         """Resets this drop target.
@@ -96,14 +113,11 @@ class DropTarget(Shot):
 
         """
 
-        if self.shot_groups:
-            #self.shot_groups.reset()
-            pass
-        elif self.reset_coil:
+        if self.reset_coil:
             self.reset_coil.pulse()
 
 
-class DropTargetBank(ShotGroup):
+class DropTargetBank(Device):
     """Represents a bank of drop targets in a pinball machine by grouping
     together multiple `DropTarget` class devices.
 
@@ -112,18 +126,19 @@ class DropTargetBank(ShotGroup):
     collection = 'drop_target_banks'
     class_label = 'drop_target_bank'
 
-    def __init__(self, machine, name, config, collection,
-                 member_collection=None, device_str=None):
+    def __init__(self, machine, name, config, collection=None):
 
         self.device_str = 'drop_targets'
 
         self.log = logging.getLogger('DropTargetBank.' + name)
-        super(DropTargetBank, self).__init__(machine, name, config, collection,
-                                             machine.drop_targets,
-                                             self.device_str)
+        super(DropTargetBank, self).__init__(machine, name, config, collection)
 
+        self.drop_targets = set()
         self.reset_coil = None
         self.reset_coils = set()
+        self.complete = False
+        self.down = 0
+        self.up = 0
 
         if 'reset_coils' in self.config:
             for coil_name in Config.string_to_list(self.config['reset_coils']):
@@ -131,6 +146,13 @@ class DropTargetBank(ShotGroup):
 
         if 'reset_coil' in self.config:
             self.reset_coil = self.machine.coils[self.config['reset_coil']]
+
+        self.config['drop_targets'] = (
+            Config.string_to_list(config['drop_targets']))
+
+        for target in self.config['drop_targets']:
+            self.drop_targets.add(self.machine.drop_targets[target])
+            self.machine.drop_targets[target].add_to_bank(self)
 
     def reset(self, **kwargs):
         """Resets this bank of drop targets.
@@ -146,7 +168,7 @@ class DropTargetBank(ShotGroup):
         # figure out all the coils we need to pulse
         coils = set()
 
-        for drop_target in self.shots:
+        for drop_target in self.drop_targets:
             if drop_target.reset_coil:
                 coils.add(drop_target.reset_coil)
 
@@ -160,6 +182,40 @@ class DropTargetBank(ShotGroup):
         for coil in coils:
             coil.pulse()
 
+    def member_target_change(self):
+        """A member drop target has changed state.
+
+        This method causes this group to update its down and up counts and
+        complete status.
+
+        """
+        self.down = 0
+        self.up = 0
+
+        for target in self.drop_targets:
+            if target.complete:
+                self.down += 1
+            else:
+                self.up += 1
+
+        if down == len(self.drop_targets):
+            self._bank_down()
+        if not down:
+            self._bank_up()
+        else:
+            self._bank_mixed()
+
+    def _bank_down(self):
+        self.complete = True
+        self.machine.events.post(self.name + '_down')
+
+    def _bank_up(self):
+        self.complete = False
+        self.machine.events.post(self.name + '_up')
+
+    def _bank_mixed(self):
+        self.complete = False
+        self.machine.events.post(self.name + '_mixed', down=self.down)
 
 # The MIT License (MIT)
 

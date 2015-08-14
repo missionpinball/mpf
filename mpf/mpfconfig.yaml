@@ -87,18 +87,10 @@ mpf:
             activate:
             deactivate:
         drop_targets:
-            enable: ball_started
-            disable: ball_ending, tilt, slam_tilt
             reset: ball_starting, machine_reset_phase_3
             knockdown:
-            hit:
-            remove_active_profile:
-            advance:
         drop_target_banks:
-            enable: ball_started
-            disable: ball_ending, tilt, slam_tilt
             reset: machine_reset_phase_3, ball_starting
-            advance:
         coils:
             enable:
             disable:

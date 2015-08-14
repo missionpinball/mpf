@@ -92,7 +92,7 @@ class ShotController(object):
                         step_names_to_not_rotate: list|None
                         loop: boolean|False
                         steps: list_of_dicts
-                        player_variable: str|None
+                        player_variable: string|None
                         '''
 
         return Config.process_config(config_spec, config)
@@ -101,15 +101,9 @@ class ShotController(object):
         for shot in self.machine.shots:
             shot.player_turn_start(player)
 
-        for drop_target in self.machine.drop_targets:
-            drop_target.player_turn_start(player)
-
     def _player_turn_stop(self, player, **kwargs):
         for shot in self.machine.shots:
             shot.player_turn_stop()
-
-        for drop_target in self.machine.drop_targets:
-            drop_target.player_turn_stop()
 
     def apply_shot_profiles(self, config, priority, mode, **kwargs):
         """Scans a config of shots looking for profile entries and applies any
@@ -133,7 +127,7 @@ class ShotController(object):
 
     def remove_shot_profiles(self, mode):
         """Removes all the shot profiles from all shots based on the mode
-        passed. Also removed them from drop targets.
+        passed.
 
         Args:
             mode: Mode class that will be used to determine which shot profiles
@@ -142,12 +136,6 @@ class ShotController(object):
         """
         for shot in self.machine.shots:
             shot.remove_profile_by_key(mode)
-
-        try:
-            for drop_target in self.machine.drop_targets:
-                drop_target.remove_profile_by_key(mode)
-        except AttributeError:
-            pass
 
     def apply_group_profiles(self, config, priority, mode, **kwargs):
         """Applies profiles to member shots of a dict of shot groups.
