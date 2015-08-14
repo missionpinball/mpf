@@ -43,8 +43,6 @@ class DeviceManager(object):
                 self.mode_config_sections.append(
                     (device_cls.config_section, device_cls, collection))
 
-                print (device_cls.config_section, device_cls, collection)
-
             self.collections[collection_name] = collection
             setattr(self.machine, collection_name, collection)
 

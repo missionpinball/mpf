@@ -8,6 +8,8 @@
 
 import logging
 
+from mpf.system.config import Config
+
 
 class ShotController(object):
 
@@ -25,13 +27,12 @@ class ShotController(object):
         settings dict:
 
         * loop: boolean
+        * step_names_to_rotate: list
+        * step_names_to_not_rotate: list
         * steps: list of tuples:
             name
             light_script
             lightshow
-
-
-
 
         '"""
 
@@ -57,12 +58,24 @@ class ShotController(object):
 
         self.log.debug("Registering shot Profile: '%s'", name)
 
-        self.profiles[name] = profile
+        self.profiles[name] = self.process_profile_config(profile)
 
     def register_profiles(self, config, **kwargs):
 
         for name, profile in config.iteritems():
             self.register_profile(name, profile)
+
+    def process_profile_config(self, config):
+
+        config_spec = '''
+                        step_names_to_rotate: list|None
+                        step_names_to_not_rotate: list|None
+                        loop: boolean|False
+                        steps: list_of_dicts
+                        player_variable: str|None
+                        '''
+
+        return Config.process_config(config_spec, config)
 
     def _player_turn_start(self, player, **kwargs):
         for shot in self.machine.shots:

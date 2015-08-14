@@ -40,8 +40,7 @@ class Shot(Device):
         super(Shot, self).__init__(machine, name, config, collection)
 
         self.active_profile_name = None
-        self.active_profile_config = dict()
-        self.active_profile_steps = list()
+        self.active_profile = dict()
         self.active_profile_priority = 0
         self.current_step_index = 0
         self.current_step_name = None
@@ -55,41 +54,21 @@ class Shot(Device):
 
         self.enabled = False
 
-        if 'profile' not in self.config:
-            self.config['profile'] = 'default'
+        config_spec = '''
+                        profile: str|default
+                        switch: list|None
+                        switch_sequence: list|None
+                        time: ms|0
+                        light: list|None
+                        led: list|None
+                        '''
 
-        if 'switch' in self.config:
-            self.config['switch'] = Config.string_to_list(self.config['switch'])
-        else:
-            self.config['switch'] = list()
-
-        if 'switch_sequence' in self.config:
-            self.config['switch_sequence'] = (
-                Config.string_to_list(self.config['switch_sequence']))
-        else:
-            self.config['switch_sequence'] = list()
-
-        if 'time' in self.config:
-            self.config['time'] = Timing.string_to_ms(self.config['time'])
-        else:
-            self.config['time'] = 0
-
-        if 'light' in self.config:
-            self.config['light'] = Config.string_to_list(self.config['light'])
-        else:
-            self.config['light'] = list()
-
-        if 'led' in self.config:
-            self.config['led'] = Config.string_to_list(self.config['led'])
-        else:
-            self.config['led'] = list()
-
-        if 'loops' not in self.config:
-            self.config['loops'] = 0
+        self.config = Config.process_config(config_spec, self.config)
 
     def _set_player_variable(self):
-        if 'player_variable' in self.active_profile_settings:
-            self.player_variable = self.active_profile_settings['player_variable']
+
+        if self.active_profile['player_variable']:
+            self.player_variable = self.active_profile['player_variable']
         else:
             self.player_variable = (self.name + '_' + self.active_profile_name)
 
@@ -113,8 +92,8 @@ class Shot(Device):
 
     def _advance_step(self, steps=1):
         if (self.player[self.player_variable] + 1 >=
-                len(self.active_profile_steps)):
-            if self.config['loops']:
+                len(self.active_profile['steps'])):
+            if self.active_profile['loop']:
                 self.player[self.player_variable] = 0
             else:
                 return
@@ -144,13 +123,13 @@ class Shot(Device):
         self.current_step_index = self.player[self.player_variable]
 
         self.current_step_name = (
-            self.active_profile_steps[self.current_step_index]['name'])
+            self.active_profile['steps'][self.current_step_index]['name'])
 
     def _do_step_actions(self, ):
-        if ('light_script' in self.active_profile_steps[self.current_step_index]
+        if ('light_script' in self.active_profile['steps'][self.current_step_index]
                 and (self.config['light'] or self.config['led'])):
 
-            settings = self.active_profile_steps[self.current_step_index]
+            settings = self.active_profile['steps'][self.current_step_index]
 
             if 'hold' in settings:
                 hold = settings.pop('hold')
@@ -163,19 +142,19 @@ class Shot(Device):
                 reset = False
 
             new_show = self.machine.light_controller.run_registered_script(
-                script_name=self.active_profile_steps[self.current_step_index]['light_script'],
+                script_name=self.active_profile['steps'][self.current_step_index]['light_script'],
                 lights=self.config['light'],
                 leds=self.config['led'],
                 priority=self.profiles[0][1],
                 hold=hold,
                 reset=reset,
-                **self.active_profile_steps[self.current_step_index])
+                **self.active_profile['steps'][self.current_step_index])
 
             if new_show:
                 self.running_light_show = new_show
             else:
                 self.log.warning("Error running light_script '%s'",
-                    self.active_profile_steps[self.current_step_index]['light_script'])
+                    self.active_profile['steps'][self.current_step_index]['light_script'])
                 self.running_light_show = None
 
         else:
@@ -183,9 +162,9 @@ class Shot(Device):
 
     def _update_lights(self, step=0):
 
-        if 'light_script' in self.active_profile_steps[self.current_step_index]:
+        if 'light_script' in self.active_profile['steps'][self.current_step_index]:
 
-            settings = self.active_profile_steps[self.current_step_index]
+            settings = self.active_profile['steps'][self.current_step_index]
 
             if 'hold' in settings:
                 hold = settings.pop('hold')
@@ -255,7 +234,7 @@ class Shot(Device):
         """
         if profile in self.machine.shot_controller.profiles:
             self.log.debug("Applying shot profile '%s', priority %s", profile,
-                          priority)
+                           priority)
 
             profile_tuple = (profile, priority,
                 self.machine.shot_controller.profiles[profile],
@@ -270,8 +249,8 @@ class Shot(Device):
             self._update_lights(step=-1)  # update with the the last step
 
         else:
-            if not self.active_profile_name:
-                self.apply_profile('default')
+            if not self.active_profile:
+                self.apply_profile('default', priority)
 
             self.log.debug("Shot profile '%s' not found. Shot is has '%s' "
                            "applied.", profile, self.active_profile_name)
@@ -321,9 +300,10 @@ class Shot(Device):
     def _sort_profiles(self):
         self.profiles.sort(key=lambda x: x[1], reverse=True)
 
-        (self.active_profile_name, self.active_profile_priority,
-         self.active_profile_settings,
-         self.active_profile_steps, _) = self.profiles[0]
+        (self.active_profile_name,
+         self.active_profile_priority,
+         self.active_profile,
+         self.active_profile['steps'], _) = self.profiles[0]
 
     def hit(self, force=False, stealth=False, **kwargs):
         """Method which is called to indicate this shot was just hit. This
@@ -612,7 +592,8 @@ class ShotGroup(Device):
         for shot in self.shots:
             shot.advance()
 
-    def rotate(self, direction='right', steps=1, **kwargs):
+    def rotate(self, direction='right', steps=1, states=None,
+               exclude_states=None, **kwargs):
         """Rotates (or "shifts") the state of all the shots in this group.
         This is used for things like lane change, where hitting the flipper
         button shifts all the states of the shots in the group to the left or
@@ -627,15 +608,46 @@ class ShotGroup(Device):
                 to the left or right. Values are 'right' or 'left'. Default is
                 'right'.
             steps: Integer of how many steps you want to rotate. Default is 1.
-
+            states: A string of a state or a list of strings that represent the
+                targets that will be selected to rotate. If None (default), then
+                all targets will be included.
+            exclude_states: A string of a state or a list of strings that
+                controls whether any targets will *not* be rotated. (Any
+                targets with an active profile in one of these states will not
+                be included in the rotation. Default is None which means all
+                targets will be rotated)
         """
 
         if not self.enabled:
             return
 
+        # if we don't have states or exclude_states, we'll see if the first shot
+        # in the group has them and use those. Since all the shots should have
+        # the same profile applied, it's ok to just pick from the first one.
+
+        if states:
+            states = Config.string_to_lowercase_list(states)
+        else:
+            states = self.shots[0].active_profile['step_names_to_rotate']
+
+        if exclude_states:
+            exclude_states = Config.string_to_lowercase_list(exclude_states)
+        else:
+            exclude_states = (
+                self.shots[0].active_profile['step_names_to_not_rotate'])
+
+        shot_list = list()
+
+        # build of a list of shots we're actually going to rotate
+        for shot in self.shots:
+            if ((not states or shot.current_step_name in states) and
+                    shot.current_step_name not in exclude_states):
+
+                shot_list.append(shot)
+
         shot_state_list = deque()
 
-        for shot in self.shots:
+        for shot in shot_list:
 
             try:
                 current_step = shot.running_light_show.current_location
@@ -654,10 +666,10 @@ class ShotGroup(Device):
             shot_state_list.rotate(steps * -1)
 
         # step through all our shots and update their complete status
-        for i in range(len(self.shots)):
-            self.shots[i].jump(step=shot_state_list[i][0],
-                                 update_group=False,
-                                 current_show_step=shot_state_list[i][1])
+        for i in range(len(shot_list)):
+            shot_list[i].jump(step=shot_state_list[i][0],
+                              update_group=False,
+                              current_show_step=shot_state_list[i][1])
 
     def rotate_right(self, steps=1, **kwargs):
         """Rotates the state of the shots to the right. This method is the
