@@ -42,7 +42,7 @@ class ShotController(object):
                 config=self.machine.config['shot_profiles'])
 
         self.machine.mode_controller.register_load_method(
-            self.register_profiles, config_section_name="shott_profiles")
+            self.register_profiles, config_section_name="shot_profiles")
 
         self.machine.mode_controller.register_start_method(
             self.apply_shot_profiles, config_section_name="shots")
