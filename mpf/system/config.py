@@ -288,9 +288,10 @@ class Config(object):
                 return None
 
         elif item_type in ('string', 'str'):
-            try:
+
+            if item:
                 return str(item)
-            except TypeError:
+            else:
                 return None
 
         elif item_type in ('boolean', 'bool'):
