@@ -7,6 +7,7 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
+import uuid
 
 from mpf.system.devices import Device
 from mpf.system.config import Config
@@ -54,6 +55,12 @@ class Shot(Device):
         """
 
         self.player_variable = None
+
+        self.active_sequences = set()
+        """Set of tuples:
+        (id, current_position_index, next_switch)
+        """
+
         self.sequence_index = 0
         self.sequence_delay = False
         self.player = None
@@ -430,31 +437,73 @@ class Shot(Device):
         self._advance_step()
 
     def _sequence_switch_hit(self, switch_name, state, ms):
-        # does this current switch meet the next switch in the progress index?
+        # Since we can track multiple simulatenous sequences (e.g. two balls
+        # going into an orbit in a row), we first have to see whether this
+        # switch is starting a new sequence or continuing an existing one
 
+        if switch_name == self.config['switch_sequence'][0]:
+
+            # need to start a new sequence
+            self._start_new_sequence()
+
+        else:
+            # loop through all the sequences
+            for sequence in self.active_sequences:
+
+                # if we find one with the next step at this switch, advance it
+                if sequence[2] == switch_name:
+                    self._advance_sequence(sequence[0])
+
+                    # stop looping. Only want to advance one sequence per hit.
+                    return
+
+
+    def _start_new_sequence(self):
+        # If the sequence hasn't started, make sure we're not within the
+        # delay_switch hit window
         if self.active_delay_switches:
             return
 
-        if switch_name == self.config['sequence_switches'][self.sequence_index]:
+        # create a new sequence
+        seq_id = uuid.uuid4()
+        next_switch = self.config['switch_sequence'][0]
 
-            # are we at the end?
-            if self.sequence_index == len(self.config['switches']) - 1:
-                self.hit()
-            else:
-                # does this shot specific a time limit?
-                if self.config['time']:
-                    # do we need to set a delay?
-                    if not self.sequence_delay:
-                        self.delay.reset(name='shot_timer',
-                                         ms=self.config['time'],
-                                         callback=self._reset_sequence)
-                        self.sequence_delay = True
+        self.active_sequences.add(
+            (seq_id, 0, next_switch)
+            )
 
-                # advance the progress index
-                self.sequence_index += 1
+        # if this sequence has a delay, set that up
+        if self.config['time']:
+            self.delay.reset(name='seq_id',
+                             ms=self.config['time'],
+                             callback=self._reset_sequence,
+                             seq_id=seq_id)
+            self.sequence_delay = True
+
+    def _advance_sequence(self, seq_id):
+        # get this sequence
+        for sequence in self.active_sequences:
+            if sequence[0] == seq_id:
+                seq_id, current_position_index, next_switch = sequence
+
+                # Remove this sequence from the set
+                self.active_sequences.remove(sequence)
+
+                if current_position_index == (
+                    len(self.config['switch_sequence']) - 2):  # complete
+
+                    # TODO remove the delay
+                    self.hit()
+
+                else:
+                    current_position_index += 1
+                    next_switch = (
+                        self.config['switch_sequence'][current_position_index])
+                    self.active_sequences.add(
+                        (seq_id, current_position_index, next_switch))
 
     def _cancel_switch_hit(self):
-        self._reset_sequence()
+        self._reset_all_sequences()
 
     def _delay_switch_hit(self, switch_name, state, ms):
 
@@ -468,10 +517,25 @@ class Shot(Device):
     def _release_delay(self, switch):
         self.active_delay_switches.remove(switch_name)
 
-    def _reset_sequence(self):
+    def _reset_sequence(self, seq_id):
         self.log.debug("Resetting this sequence")
-        self.sequence_index = 0
-        self.sequence_delay = False
+
+        for sequence in self.active_sequences:
+            if sequence[0] == seq_id:
+                seq_id, current_position_index, next_switch = sequence
+
+                # Remove this sequence from the set
+                self.active_sequences.remove(sequence)
+
+    def _reset_all_sequences(self):
+
+        seq_ids = [x[0] for x in self.active_sequences]
+
+        for seq_id in seq_ids:
+            self.delay.remove(seq_id)
+
+        self.active_sequences = set()
+
 
     def add_to_shot_group(self, group):
         """Adds this shot to a shot group.
@@ -556,7 +620,7 @@ class Shot(Device):
             return
 
         self.log.debug("Disabling...")
-        self._reset_sequence()
+        self._reset_all_sequences()
         self._remove_switch_handlers()
         self.delay.clear()
         self.enabled = False
@@ -566,7 +630,7 @@ class Shot(Device):
         This method is the same as calling jump(0).
 
         """
-        self._reset_sequence()
+        self._reset_all_sequences()
         self.jump(step=0)
 
 
