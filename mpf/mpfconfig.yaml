@@ -30,7 +30,7 @@ mpf:
         drop_target.DropTarget
         drop_target.DropTargetBank
         shot.Shot
-        shot.ShotGroup
+        shot_group.ShotGroup
         flipper.Flipper
         diverter.Diverter
         score_reel.ScoreReel

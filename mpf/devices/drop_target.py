@@ -8,7 +8,8 @@
 
 import logging
 
-from mpf.devices.shot import Shot, ShotGroup
+from mpf.devices.shot import Shot
+from mpf.devices.shot_group import ShotGroup
 from mpf.system.config import Config
 
 
