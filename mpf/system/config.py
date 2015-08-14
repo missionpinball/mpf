@@ -285,13 +285,13 @@ class Config(object):
             except TypeError:
                 return None
 
-        elif item_type == 'string':
+        elif item_type in ('string', 'str'):
             try:
                 return str(item)
             except TypeError:
                 return None
 
-        elif item_type == 'boolean':
+        elif item_type in ('boolean', 'bool'):
             if type(item) is bool:
                 return item
             else:
