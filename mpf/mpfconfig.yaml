@@ -127,6 +127,8 @@ mpf:
             reset:
             rotate_left:
             rotate_right:
+            enable_rotation:
+            disable_rotation:
             advance:
 
 

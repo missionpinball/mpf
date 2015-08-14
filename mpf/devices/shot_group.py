@@ -35,6 +35,7 @@ class ShotGroup(Device):
         super(ShotGroup, self).__init__(machine, name, config, collection)
 
         self.enabled = False
+        self.rotation_enabled = True
 
         if not device_str:
             self.device_str = 'shots'
@@ -123,6 +124,21 @@ class ShotGroup(Device):
 
         self.enabled = False
 
+    def enable_rotation(self, **kwargs):
+        """Enables shot rotation. If disabled, rotation events do not actually
+        rotate the shots.
+
+        """
+        self.rotation_enabled = True
+
+    def disable_rotation(self, **kwargs):
+        """Disables shot rotation. If disabled, rotation events do not actually
+        rotate the shots.
+
+        """
+
+        self.rotation_enabled = False
+
     def reset(self, **kwargs):
         """Resets each of the shots in this group back to the initial step in
         whatever shot profile they have applied. This is the same as calling
@@ -171,9 +187,13 @@ class ShotGroup(Device):
                 targets with an active profile in one of these states will not
                 be included in the rotation. Default is None which means all
                 targets will be rotated)
+
+        Note that this shot group must, and rotation_events for this
+        shot group, must both be enabled for the rotation events to work.
+
         """
 
-        if not self.enabled:
+        if not self.enabled or not self.rotation_enabled:
             return
 
         # if we don't have states or exclude_states, we'll see if the first shot
