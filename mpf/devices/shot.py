@@ -11,6 +11,7 @@ import logging
 from mpf.system.devices import Device
 from mpf.system.config import Config
 from mpf.system.timing import Timing
+from mpf.system.tasks import DelayManager
 
 
 class Shot(Device):
@@ -38,6 +39,8 @@ class Shot(Device):
 
         super(Shot, self).__init__(machine, name, config, collection)
 
+        self.delay = DelayManager()
+
         self.active_profile_name = None
         self.active_profile = dict()
         self.active_profile_priority = 0
@@ -54,19 +57,25 @@ class Shot(Device):
         self.sequence_index = 0
         self.sequence_delay = False
         self.player = None
+        self.active_delay_switches = set()
 
         self.enabled = False
 
         config_spec = '''
-                        profile: str|default
+                        profile: string|default
                         switch: list|None
                         switch_sequence: list|None
+                        cancel_switch: list|None
+                        delay_switch: dict|None
                         time: ms|0
                         light: list|None
                         led: list|None
                         '''
 
         self.config = Config.process_config(config_spec, self.config)
+
+        for switch, time in self.config['delay_switch'].iteritems():
+            time = Config.time_string_to_ms(time)
 
     def _set_player_variable(self):
 
@@ -82,7 +91,15 @@ class Shot(Device):
 
         for switch in self.config['switch_sequence']:
             self.machine.switch_controller.add_switch_handler(
-                switch, self._sequence_hit, 1, return_info=True)
+                switch, self._sequence_switch_hit, 1, return_info=True)
+
+        for switch in self.config['cancel_switch']:
+            self.machine.switch_controller.add_switch_handler(
+                switch, self._cancel_switch_hit, 1)
+
+        for switch in self.config['delay_switch'].keys():
+            self.machine.switch_controller.add_switch_handler(
+                switch, self._delay_switch_hit, 1, return_info=True)
 
     def _remove_switch_handlers(self):
         for switch in self.config['switch']:
@@ -91,7 +108,15 @@ class Shot(Device):
 
         for switch in self.config['switch_sequence']:
             self.machine.switch_controller.remove_switch_handler(
-                switch, self._sequence_hit, 1)
+                switch, self._sequence_switch_hit, 1)
+
+        for switch in self.config['cancel_switch']:
+            self.machine.switch_controller.remove_switch_handler(
+                switch, self._cancel_switch_hit, 1)
+
+        for switch in self.config['delay_switch'].keys():
+            self.machine.switch_controller.remove_switch_handler(
+                switch, self._delay_switch_hit, 1)
 
     def _advance_step(self, steps=1):
         if (self.player[self.player_variable] + 1 >=
@@ -371,12 +396,16 @@ class Shot(Device):
         processed.
 
         """
+        # Why 3 ifs here? Less brain hurting trying to follow the logic. :)
         if (not self.machine.game or (
                 self.machine.game and not self.machine.game.balls_in_play) and
                 not force):
             return
 
         if not self.enabled and not force:
+            return
+
+        if self.active_delay_switches and not force:
             return
 
         if not stealth:
@@ -400,8 +429,12 @@ class Shot(Device):
 
         self._advance_step()
 
-    def _sequence_hit(self, switch_name, state, ms):
+    def _sequence_switch_hit(self, switch_name, state, ms):
         # does this current switch meet the next switch in the progress index?
+
+        if self.active_delay_switches:
+            return
+
         if switch_name == self.config['sequence_switches'][self.sequence_index]:
 
             # are we at the end?
@@ -414,14 +447,29 @@ class Shot(Device):
                     if not self.sequence_delay:
                         self.delay.reset(name='shot_timer',
                                          ms=self.config['time'],
-                                         callback=self._reset_timer)
+                                         callback=self._reset_sequence)
                         self.sequence_delay = True
 
                 # advance the progress index
                 self.sequence_index += 1
 
-    def _reset_timer(self):
-        self.log.debug("Resetting this sequence timer")
+    def _cancel_switch_hit(self):
+        self._reset_sequence()
+
+    def _delay_switch_hit(self, switch_name, state, ms):
+
+        self.delay.reset(name=switch_name + 'delay_timer',
+                         ms=self.config['delay_switch'][switch_name],
+                         callback=self._release_delay,
+                         switch=switch_name)
+
+        self.active_delay_switches.add(switch_name)
+
+    def _release_delay(self, switch):
+        self.active_delay_switches.remove(switch_name)
+
+    def _reset_sequence(self):
+        self.log.debug("Resetting this sequence")
         self.sequence_index = 0
         self.sequence_delay = False
 
@@ -508,8 +556,9 @@ class Shot(Device):
             return
 
         self.log.debug("Disabling...")
-        self._reset_timer()
+        self._reset_sequence()
         self._remove_switch_handlers()
+        self.delay.clear()
         self.enabled = False
 
     def reset(self, **kwargs):
@@ -517,7 +566,7 @@ class Shot(Device):
         This method is the same as calling jump(0).
 
         """
-        self._reset_timer()
+        self._reset_sequence()
         self.jump(step=0)
 
 

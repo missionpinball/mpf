@@ -269,6 +269,8 @@ class Config(object):
         elif item_type == 'dict':
             if type(item) is dict or type(item) is CaseInsensitiveDict:
                 return item
+            elif not default:
+                return dict()
             else:
                 log.error('Config error. "%s" is not a dictionary', item)
                 sys.exit()
