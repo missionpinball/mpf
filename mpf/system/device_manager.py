@@ -21,7 +21,7 @@ class DeviceManager(object):
 
         self._load_device_modules()
 
-        self.machine.modes.register_start_method(self._mode_start, None, 100)
+        self.machine.mode_controller.register_start_method(self._mode_start, None, 100)
 
     def _load_device_modules(self):
         self.machine.config['mpf']['device_modules'] = (
@@ -119,7 +119,7 @@ class DeviceCollection(CaseInsensitiveDict):
         self.machine = machine
         self.name = collection
 
-        self.machine.modes.register_start_method(self._register_control_events,
+        self.machine.mode_controller.register_start_method(self._register_control_events,
                                                  config_section)
 
     def _register_control_events(self, config, priority=0, mode=None):

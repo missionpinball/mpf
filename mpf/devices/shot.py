@@ -47,6 +47,10 @@ class Shot(Device):
         self.running_light_show = None
         self.shot_groups = set()
         self.profiles = list()
+        """List of tuples:
+        (profile_name, priority, profile_config, steps, key)
+        """
+
         self.player_variable = None
         self.sequence_index = 0
         self.sequence_delay = False
@@ -161,7 +165,6 @@ class Shot(Device):
             self.running_light_show = None
 
     def _update_lights(self, step=0):
-
         if 'light_script' in self.active_profile['steps'][self.current_step_index]:
 
             settings = self.active_profile['steps'][self.current_step_index]
@@ -196,14 +199,28 @@ class Shot(Device):
         self.apply_profile(self.config['profile'], priority=0)
 
     def player_turn_stop(self):
+        """Called when the player's turn ends. Removes the profiles from the
+        shot and removes the player reference.
+
+        """
         self.player = None
         self.remove_profiles()
 
     def device_added_to_mode(self, player):
+        """Called when this shot is dynamically added to a mode that was
+        already started. Automatically enables the shot and calls the the method
+        that's usually called when a player's turn starts since that was missed
+        since the mode started after that.
+
+        """
         self.player_turn_start(player)
         self.enable()
 
     def remove(self):
+        """Remove this shot device. Destroys it and removes it from the shots
+        collection.
+
+        """
 
         self.log.debug("Removing...")
 
@@ -241,7 +258,8 @@ class Shot(Device):
                 self.machine.shot_controller.profiles[profile]['steps'],
                 removal_key)
 
-            self.profiles.append(profile_tuple)
+            if profile_tuple not in self.profiles:
+                self.profiles.append(profile_tuple)
 
             self._sort_profiles()
             self._set_player_variable()
@@ -255,7 +273,34 @@ class Shot(Device):
             self.log.debug("Shot profile '%s' not found. Shot is has '%s' "
                            "applied.", profile, self.active_profile_name)
 
-    def remove_profile(self, removal_key=None, **kwargs):
+    def remove_active_profile(self):
+        """Removes the current active shot profile and restores whichever one is
+        the next-highest. Note that if there is only one active profile, then
+        this method has no effect (since shots are required to have at least one
+        active profile.)
+
+        """
+        if len(self.profiles) > 1:
+            removal_key = self.profiles[0][4]
+            self.remove_profile_by_key(removal_key)
+
+    def remove_profile_by_name(self, profile_name, **kwargs):
+        """Removes an active profile by name.
+
+        Args:
+            profile_name: String name of the profile to remove.
+
+        Note that if the profile_name is the only active profile for this shot,
+        then it will not be removed since each shot needs to have at least one
+        active profile.
+
+        """
+        for profile in self.profiles:
+            if profile[0] == profile_name:
+                self.remove_profile_by_key(profile[4])
+                return
+
+    def remove_profile_by_key(self, removal_key, **kwargs):
         """Removes a shot profile from this shot.
 
         Args:
@@ -275,9 +320,6 @@ class Shot(Device):
         if len(self.profiles) == 1:
             return
 
-        if not removal_key:  # Get the key of the highest profile
-            removal_key = self.profiles[0][4]
-
         old_profile = self.active_profile_name
 
         for entry in self.profiles[:]:  # slice so we can remove while iter
@@ -293,9 +335,16 @@ class Shot(Device):
             self._update_current_step_variables()
             self._update_lights()
 
-    def remove_profiles(self, ):
-        self._stop_current_lights()
-        self.profiles = list()
+    def remove_profiles(self):
+        """Removes all the profiles for this shot and reapplies the default
+        profile specified in the machine-wide config.
+
+        """
+        if len(self.profiles) > 1:
+
+            self._stop_current_lights()
+            self.profiles = list()
+            self.apply_profile(self.config['profile'], 0)
 
     def _sort_profiles(self):
         self.profiles.sort(key=lambda x: x[1], reverse=True)
@@ -323,7 +372,6 @@ class Shot(Device):
         processed.
 
         """
-
         if (not self.machine.game or (
                 self.machine.game and not self.machine.game.balls_in_play) and
                 not force):
@@ -379,9 +427,26 @@ class Shot(Device):
         self.sequence_delay = False
 
     def add_to_shot_group(self, group):
-        self.shot_groups.add(group)
+        """Adds this shot to a shot group.
+
+        Args:
+            group: String name of the shot_group this shot should be added to.
+
+        Note that if this shot is already a member of that group, it is not
+        added again.
+
+        """
+        if group in self.machine.shot_groups:
+            self.shot_groups.add(group)
 
     def remove_from_shot_group(self, group):
+        """Removes this shot from a shot group.
+
+        Args:
+            group: String name of the shot_group this shot should be removed
+                from.
+
+        """
         self.shot_groups.discard(group)
 
     def jump(self, step, update_group=True, current_show_step=0):
@@ -455,7 +520,6 @@ class Shot(Device):
         """
         self._reset_timer()
         self.jump(step=0)
-
 
 
 class ShotGroup(Device):
@@ -582,7 +646,7 @@ class ShotGroup(Device):
 
         """
         for shot in self.shots:
-            shot.remove_profile()
+            shot.remove_active_profile()
 
     def advance(self, **kwargs):
         """Advances the current active profile from every shot in the group

@@ -45,7 +45,7 @@ class ShotController(object):
             self.register_profiles, config_section_name="shott_profiles")
 
         self.machine.mode_controller.register_start_method(
-            self.apply_target_profiles, config_section_name="shots")
+            self.apply_shot_profiles, config_section_name="shots")
         self.machine.mode_controller.register_start_method(
             self.apply_group_profiles, config_section_name="shot_groups")
 
@@ -55,18 +55,38 @@ class ShotController(object):
                                         self._player_turn_stop)
 
     def register_profile(self, name, profile):
+        """Registers a new shot profile with the shot controller which will
+        allow it to be applied to shots.
 
+        Args:
+            name: String name of the profile you're registering.
+            profile: Dict of the profile settings.
+
+        """
         self.log.debug("Registering Shot Profile: '%s'", name)
 
         self.profiles[name] = self.process_profile_config(profile)
 
     def register_profiles(self, config, **kwargs):
+        """Registers multiple shot profiles.
+
+        Args:
+            config: Dict containing the profiles you're registering. Keys are
+                profile names, values are dictionaries of profile settings.
+
+        """
 
         for name, profile in config.iteritems():
             self.register_profile(name, profile)
 
     def process_profile_config(self, config):
+        """Processes a shot profile config to convert everything to the format
+        the shot controller needs.
 
+        Args:
+            config: Dict of the profile settings to process.
+
+        """
         config_spec = '''
                         step_names_to_rotate: list|None
                         step_names_to_not_rotate: list|None
@@ -92,6 +112,17 @@ class ShotController(object):
             drop_target.player_turn_stop()
 
     def apply_shot_profiles(self, config, priority, mode, **kwargs):
+        """Scans a config of shots looking for profile entries and applies any
+        it finds to those shots.
+
+        Args:
+            config: Dict containing shot configurations.
+            priority: Int of the priority these profiles will be applied at.
+            mode: A Mode class which is the mode that's applying these shot
+                profiles. This can be used later to remove the profiles when the
+                mode ends.
+
+        """
         for shot, settings in config.iteritems():
             if 'profile' in settings:
                 self.machine.shots[shot].apply_profile(settings['profile'],
@@ -101,10 +132,35 @@ class ShotController(object):
         return self.remove_shot_profiles, mode
 
     def remove_shot_profiles(self, mode):
+        """Removes all the shot profiles from all shots based on the mode
+        passed. Also removed them from drop targets.
+
+        Args:
+            mode: Mode class that will be used to determine which shot profiles
+                will be removed.
+
+        """
         for shot in self.machine.shots:
-            shot.remove_profile(removal_key=mode)
+            shot.remove_profile_by_key(mode)
+
+        try:
+            for drop_target in self.machine.drop_targets:
+                drop_target.remove_profile_by_key(mode)
+        except AttributeError:
+            pass
 
     def apply_group_profiles(self, config, priority, mode, **kwargs):
+        """Applies profiles to member shots of a dict of shot groups.
+
+        Args:
+            config: Dict containing shot groups. Keys are shot group names.
+                Values are settings for each shot group.
+            priority: Int of the priority these profiles will be applied at.
+            mode: A Mode class object for the mode which is applying these
+                profiles. Used as the key to remove the profiles a specific mode
+                applied later.
+
+        """
         for shot_group, settings in config.iteritems():
             if 'profile' in settings:
                 for shot in self.machine.shot_groups[shot_group].shots:
@@ -114,9 +170,18 @@ class ShotController(object):
         return self.remove_group_profiles, mode
 
     def remove_group_profiles(self, mode):
+        """Removes all the profiles that were applied to shots based on shot
+        group settings in a mode.
+
+        Args:
+            mode: A Mode class which represents the mode that applied the
+                profiles originally which will be used to determine which shot
+                profiles should be removed.
+
+        """
         for shot_group in self.machine.shot_groups:
             for shot in shot_group.shots:
-                shot.remove_profile(removal_key=mode)
+                shot.remove_profile_by_key(mode)
 
 
 # The MIT License (MIT)
