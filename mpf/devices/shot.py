@@ -85,7 +85,6 @@ class Shot(Device):
             time = Config.time_string_to_ms(time)
 
     def _set_player_variable(self):
-
         if self.active_profile['player_variable']:
             self.player_variable = self.active_profile['player_variable']
         else:
@@ -141,12 +140,10 @@ class Shot(Device):
         self._update_group_status()
 
     def _update_group_status(self):
-
         for group in self.shot_groups:
             group.check_for_complete()
 
     def _stop_current_lights(self):
-
         try:
             self.running_light_show.stop(hold=False, reset=False)
         except AttributeError:
@@ -528,14 +525,12 @@ class Shot(Device):
                 self.active_sequences.remove(sequence)
 
     def _reset_all_sequences(self):
-
         seq_ids = [x[0] for x in self.active_sequences]
 
         for seq_id in seq_ids:
             self.delay.remove(seq_id)
 
         self.active_sequences = set()
-
 
     def add_to_shot_group(self, group):
         """Adds this shot to a shot group.

@@ -62,19 +62,24 @@ class ShotGroup(Device):
                 self.log.error("No shot named '%s'. Could not add to group",
                                shot)
 
-    def register_member_switches(self):
+    def _register_member_switches(self):
         for shot in self.config[self.device_str]:
             self.member_collection[shot].add_to_shot_group(self)
 
-    def deregister_member_switches(self):
+    def _deregister_member_switches(self):
         for shot in self.config[self.device_str]:
             self.member_collection[shot].remove_from_shot_group(self)
 
     def remove_member_shot(self, shot):
+        """Remembers a member shot from this group.
 
+        Args:
+            shot: A Shot object to remove.
+
+        """
         self.shots.remove(shot)
-        self.deregister_member_switches()
-        self.register_member_switches()
+        self._deregister_member_switches()
+        self._register_member_switches()
 
     def hit(self, profile_name, profile_step_name, **kwargs):
         """One of the member shots in this shot group was hit.
@@ -103,7 +108,7 @@ class ShotGroup(Device):
 
         self.enabled = True
 
-        self.register_member_switches()
+        self._register_member_switches()
 
         for shot in self.shots:
             shot.enable()
@@ -117,7 +122,7 @@ class ShotGroup(Device):
         if not self.enabled:
             return
 
-        self.deregister_member_switches()
+        self._deregister_member_switches()
 
         for shot in self.shots:
             shot.disable()
@@ -290,7 +295,7 @@ class ShotGroup(Device):
 
     def remove(self):
         self.log.debug("Removing...")
-        self.deregister_member_switches()
+        self._deregister_member_switches()
         del self.machine.shot_groups[self.name]
 
 

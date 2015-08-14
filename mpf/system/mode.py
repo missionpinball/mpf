@@ -13,16 +13,9 @@ from mpf.system.tasks import DelayManager
 from mpf.system.config import Config
 from mpf.system.mode_controller import RemoteMethod
 
-
-
-
 # todo
 # override player var
 # override event strings
-
-
-
-
 
 class Mode(object):
     """Parent class for in-game mode code."""

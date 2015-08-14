@@ -72,15 +72,10 @@ class Player(object):
         self.__dict__['machine'] = machine
         self.__dict__['vars'] = dict()
 
-        print "----- in Player.__init__()"
-        print "----- incoming player_list", player_list
-
         player_list.append(self)
 
         self.vars['index'] = len(player_list) - 1
         self.vars['number'] = len(player_list)
-
-        print "----- new player_list", player_list
 
         self.log.debug("Creating new player: Player %s. (player index '%s')",
                       self.vars['number'], self.vars['index'])
