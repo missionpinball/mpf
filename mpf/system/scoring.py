@@ -31,7 +31,7 @@ class ScoreController(object):
 
         # Tell the mode controller that it should look for scoring items in
         # modes.
-        self.machine.modes.register_start_method(self.process_config, 'scoring')
+        self.machine.mode_controller.register_start_method(self.process_config, 'scoring')
 
     def process_config(self, config, mode=None, priority=0):
         # config is Scoring subsection of config dict

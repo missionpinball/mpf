@@ -1,4 +1,4 @@
-"""Contains the Player class which reprsents a player in a pinball game.
+"""Contains the Player class which represents a player in a pinball game.
 
 """
 # player.py
@@ -61,31 +61,32 @@ class Player(object):
 
     """
 
-    total_players = 0  # might not use this here
-    """Tracks the the number of players in the game (starting with 1)."""
-
     monitor_enabled = False
     """Class attribute which specifies whether any monitors have been registered
     to track player variable changes.
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine, player_list):
         # use self.__dict__ below since __setattr__ would make these player vars
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
         self.__dict__['vars'] = dict()
 
-        Player.total_players += 1
+        print "----- in Player.__init__()"
+        print "----- incoming player_list", player_list
 
-        self.machine.events.post('player_add_success', player=self,
-                                 num=Player.total_players)
+        player_list.append(self)
 
-        # initialize player vars
-        self.vars['index'] = Player.total_players - 1
-        self.vars['number'] = Player.total_players
+        self.vars['index'] = len(player_list) - 1
+        self.vars['number'] = len(player_list)
+
+        print "----- new player_list", player_list
 
         self.log.debug("Creating new player: Player %s. (player index '%s')",
-                      self.vars['number'], self.index)
+                      self.vars['number'], self.vars['index'])
+
+        self.machine.events.post('player_add_success', player=self,
+                                 num=self.vars['number'])
 
     def __getattr__(self, name):
         if name in self.vars:
@@ -131,9 +132,6 @@ class Player(object):
     def __iter__(self):
         for name, value in self.vars.iteritems():
             yield name, value
-
-
-
 
     # todo method to dump the player vars to disk?
 

@@ -14,25 +14,24 @@ Note that in the Mission Pinball Framework, a distinction is made between a
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-from mpf.system.machine_mode import MachineMode
-from mpf.game.player import Player
+from mpf.system.mode import Mode
+from mpf.system.player import Player
 
 
-class Game(MachineMode):
-    """Base class that runs an active game on a pinball machine.
+class Game(Mode):
+    """Base mode that runs an active game on a pinball machine.
 
     Responsible for creating players, starting and ending balls, rotating to
     the next player, etc.
 
     """
 
-    def __init__(self, machine, name):
-        super(Game, self).__init__(machine, name)
-        self.log = logging.getLogger("Game")
-        self.player = None
-        self.player_list = list()
+    def __init__(self, machine, config, name, path):
+        super(Game, self).__init__(machine, config, name, path)
+        self.auto_stop_on_ball_end = False
         self._balls_in_play = 0
         self.tilted = False
+        self.player_list = list()
 
         self.machine.game = None
 
@@ -59,10 +58,8 @@ class Game(MachineMode):
         if prev_balls_in_play and not self._balls_in_play:
             self.ball_ending()
 
-    def start(self, buttons=None, hold_time=None):
+    def mode_start(self, buttons=None, hold_time=None, **kwargs):
         """Automatically called when the *Game* machine mode becomes active."""
-        super(Game, self).start()
-        self.log.info("Game Starting!!")
 
         if buttons:
             self.buttons_held_on_start = buttons
@@ -70,8 +67,7 @@ class Game(MachineMode):
             self.start_button_hold_time = hold_time
 
         # Intialize variables
-        Player.total_players = 0
-        self.player = None  # This is the current player
+        self.num_players = 0
         self.player_list = list()
         self.machine.game = self
         self._balls_in_play = 0
@@ -80,30 +76,16 @@ class Game(MachineMode):
         # todo register for request_to_start_game so you can deny it, or allow
         # it with a long press
 
-        self.registered_event_handlers.append(
-            self.machine.events.add_handler('player_add_success',
-                                            self.player_add_success))
-        self.registered_event_handlers.append(
-            self.machine.events.add_handler(
-                self.machine.config['mpf']['switch_tag_event'].
-                replace('%', 'start'), self.request_player_add))
+        self.add_mode_event_handler('player_add_success',
+                                    self.player_add_success)
+        self.add_mode_event_handler(
+            self.machine.config['mpf']['switch_tag_event'].
+            replace('%', 'start'), self.request_player_add)
 
-        self.registered_event_handlers.append(
-            self.machine.events.add_handler('game_started',
-                                            self.player_turn_start))
-
-        self.registered_event_handlers.append(
-            self.machine.events.add_handler('ball_ended',
-                                            self.ball_ended))
-        self.registered_event_handlers.append(
-            self.machine.events.add_handler('game_ended',
-                                            self.game_ended))
-        self.registered_event_handlers.append(
-            self.machine.events.add_handler('tilt',
-                                            self.tilt, priority=1000))
-        self.registered_event_handlers.append(
-            self.machine.events.add_handler('slam_tilt',
-                                            self.slam_tilt, priority=1000))
+        self.add_mode_event_handler('ball_ended', self.ball_ended)
+        self.add_mode_event_handler('game_ended', self.game_ended)
+        self.add_mode_event_handler('tilt', self.tilt, priority=1000)
+        self.add_mode_event_handler('slam_tilt', self.slam_tilt, priority=1000)
 
         if ('restart on long press' in self.machine.config['game'] and
                 self.machine.config['game']['restart on long press']):
@@ -111,12 +93,13 @@ class Game(MachineMode):
 
         self.machine.events.post('enable_volume_keys')
 
+
+
         self.machine.events.post_queue('game_starting',
                                        callback=self.game_started, game=self)
 
-    def stop(self):
+    def mode_stop(self, **kwargs):
         self.machine.game = None
-        super(Game, self).stop()
 
     def setup_midgame_restart(self, tag='start', time='1s', min_ball=0):
         """Allows a long button press to restart the game."""
@@ -125,7 +108,7 @@ class Game(MachineMode):
         self.min_restart_ball = min_ball
 
         for switch in self.machine.switches.items_tagged(tag):
-            self.registered_switch_handlers.append(
+            self.switch_handlers.append(
                 self.machine.switch_controller.add_switch_handler(
                     switch_name=switch.name,
                     callback=self._midgame_restart_handler,
@@ -137,7 +120,6 @@ class Game(MachineMode):
     def _midgame_restart_handler(self, **kwargs):
         if self.player and self.player.ball > self.min_restart_ball:
             self.log.debug("------Restarting game via long button press------")
-            self.machine.flow_advance(1)
 
         # todo this should post the request to start game event first
 
@@ -146,8 +128,12 @@ class Game(MachineMode):
         so our game is officially 'started'.
 
         """
+
         self._player_add()
+
         self.machine.events.post('game_started')
+
+        self.player_turn_start()
 
     def player_add_success(self, player, **kwargs):
         """Called when a new player is successfully added to the current game
@@ -155,7 +141,7 @@ class Game(MachineMode):
 
         """
         self.log.info("Player added successfully. Total players: %s",
-                      Player.total_players)
+                      self.num_players)
 
     def ball_starting(self):
         """Called when a new ball is starting.
@@ -198,9 +184,7 @@ class Game(MachineMode):
 
         # register handlers to watch for ball drain and live ball removed
 
-        self.registered_event_handlers.append(
-            self.machine.events.add_handler('ball_drain',
-                                            self.ball_drained))
+        self.add_mode_event_handler('ball_drain', self.ball_drained)
 
         self.balls_in_play = 1
 
@@ -282,7 +266,7 @@ class Game(MachineMode):
             return
 
         if (self.player.ball == self.machine.config['game']['balls per game']
-                and self.player.number == Player.total_players):
+                and self.player.number == self.num_players):
             self.game_ending()
         else:
             self.player_rotate()
@@ -305,6 +289,7 @@ class Game(MachineMode):
         # Callback for when the game_ending queue is clear. All this does is
         # post game_ended, but we do it this way so that game_ended slots in
         # properly after other existing events have been posted.
+        self.player_turn_stop()
         self.machine.events.post('game_ended')
 
     def game_ended(self, **kwargs):
@@ -316,7 +301,6 @@ class Game(MachineMode):
 
         """
         self.log.debug("Entering Game.game_ended()")
-        self.machine.events.post('machineflow_advance')
 
     def award_extra_ball(self, num=1, force=False):
         """Awards the player an extra ball.
@@ -402,7 +386,7 @@ class Game(MachineMode):
         self.log.debug("Processing Tilt")
         self.tilted = True
 
-        self.machine.events.add_handler('ball_ending',
+        self.add_mode_event_handler('ball_ending',
                                         self._tilt_ball_ending_wait)
 
         self.balls_in_play = 0
@@ -411,7 +395,7 @@ class Game(MachineMode):
         # Method that hooks ball_ending which happens from a tilt. Used so we
         # can wait for the balls to drain before allowing the game to move on.
 
-        self.machine.events.add_handler('tilted_ball_drain',
+        self.add_mode_event_handler('tilted_ball_drain',
                                         self._tilt_ball_ending_clear)
 
         self.tilt_ball_ending_queue = queue
@@ -480,10 +464,12 @@ class Game(MachineMode):
     def _player_add(self, ev_result=True):
         # This is the callback from our request player add event.
         # Don't call it directly.
+
         if ev_result is False:
             self.log.debug("Request to add player has been denied.")
         else:
-            self.player_list.append(Player(self.machine))
+            Player(self.machine, self.player_list)
+            self.num_players = len(self.player_list)
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.
@@ -496,6 +482,7 @@ class Game(MachineMode):
 
         # If we get a request to start a turn but we haven't done a rotate to
         # set the first player, do that now.
+
         if not self.player:
             self.player_rotate()
 
@@ -503,8 +490,22 @@ class Game(MachineMode):
                                  number=self.player.number,
                                  callback=self._player_turn_started)
 
-    def _player_turn_started(self, **kwargs):
+    def player_turn_stop(self, ):
 
+        self.machine.events.post('player_turn_stop', player=self.player,
+                                     number=self.player.number)
+
+        if self.player.number < self.num_players:
+            self.player = self.player_list[self.player.number]
+            # Note the above line is kind of confusing but it works because
+            # the current player number is always 1 more than the index.
+            # i.e. "Player 1" has an index of 0, etc. So using the current
+            # player number as the next player's index works out.
+        else:
+            self.player = self.player_list[0]
+
+
+    def _player_turn_started(self, **kwargs):
         self.player.ball += 1
         self.ball_starting()
 
@@ -516,32 +517,19 @@ class Game(MachineMode):
 
         All it does really is set :attr:`player` to the next player's number.
 
-        Parameters
-        ----------
-
-        player_num : int
-            Lets you specify which player you want to rotate to. If None, it
-            just rotates to the next player in order.
+        Args:
+            player_num : Int which lets you specify which player you want to
+                rotate to. If None, it just rotates to the next player in order.
 
         """
         # todo  do cool stuff in the future to change order, etc.
 
-        if not self.player:  # no current player, grab the first one
+        if self.player:
+            self.player_turn_stop()
+
+        else:  # no current player, grab the first one
             self.player = self.player_list[0]
 
-        else:
-
-            self.machine.events.post('player_turn_stop', player=self.player,
-                                     number=self.player.number)
-
-            if self.player.number < Player.total_players:
-                self.player = self.player_list[self.player.number]
-                # Note the above line is kind of confusing but it works because
-                # the current player number is always 1 more than the index.
-                # i.e. "Player 1" has an index of 0, etc. So using the current
-                # player number as the next player's index works out.
-            else:
-                self.player = self.player_list[0]
         self.log.debug("Player rotate: Now up is Player %s", self.player.number)
 
 

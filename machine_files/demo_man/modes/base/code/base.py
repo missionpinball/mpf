@@ -1,4 +1,4 @@
-from mpf.system.modes import Mode
+from mpf.system.mode import Mode
 
 
 class Base(Mode):
@@ -7,12 +7,12 @@ class Base(Mode):
         """
         pass
 
-    def mode_start(self):
+    def mode_start(self, **kwargs):
         """Sample custom code that will run for this mode when it starts.
         """
         pass
 
-    def mode_stop(self):
+    def mode_stop(self, **kwargs):
         """Sample custom code that will run for this mode when it stops.
         """
         pass

@@ -32,7 +32,7 @@ class EventManager(object):
         if 'event_player' in self.machine.config:
             self.process_event_player(self.machine.config['event_player'])
 
-        self.machine.modes.register_start_method(self.process_event_player,
+        self.machine.mode_controller.register_start_method(self.process_event_player,
                                                  'event_player')
 
     def add_handler(self, event, handler, priority=1, **kwargs):

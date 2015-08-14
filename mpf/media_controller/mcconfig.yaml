@@ -2,7 +2,7 @@
 media_controller:
     modules:
 
-        modes.ModeController
+        mode_controller.ModeController
         language.Language
         display.DisplayController
         show_controller.ShowController
@@ -40,6 +40,10 @@ media_controller:
 
 timing:
     hz: 30
+
+modes:
+    - attract
+    - game
 
 displaydefaults:
     Text:

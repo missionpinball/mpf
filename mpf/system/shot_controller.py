@@ -41,12 +41,12 @@ class ShotController(object):
                 self.register_profiles,
                 config=self.machine.config['shot_profiles'])
 
-        self.machine.modes.register_load_method(
-            self.register_profiles, config_section_name="shot_profiles")
+        self.machine.mode_controller.register_load_method(
+            self.register_profiles, config_section_name="shott_profiles")
 
-        self.machine.modes.register_start_method(
-            self.apply_shot_profiles, config_section_name="shots")
-        self.machine.modes.register_start_method(
+        self.machine.mode_controller.register_start_method(
+            self.apply_target_profiles, config_section_name="shots")
+        self.machine.mode_controller.register_start_method(
             self.apply_group_profiles, config_section_name="shot_groups")
 
         self.machine.events.add_handler('player_turn_start',
@@ -56,7 +56,7 @@ class ShotController(object):
 
     def register_profile(self, name, profile):
 
-        self.log.debug("Registering shot Profile: '%s'", name)
+        self.log.debug("Registering Shot Profile: '%s'", name)
 
         self.profiles[name] = self.process_profile_config(profile)
 

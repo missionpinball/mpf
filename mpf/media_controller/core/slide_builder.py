@@ -37,7 +37,7 @@ class SlideBuilder(object):
 
         # Tell the mode controller that it should look for slide_player items in
         # modes.
-        self.machine.modes.register_start_method(self.process_config,
+        self.machine.mode_controller.register_start_method(self.process_config,
                                                  'slide_player')
 
     def process_config(self, config, mode=None, priority=0):
@@ -279,10 +279,17 @@ class SlideBuilder(object):
 
             # Are there any kwarg variables to replace on the fly?
             if '%' in settings['text']:
-                for kw in text_variables:
-                    if '%' + kw in settings['text']:
+                # for kw in text_variables:
+                #     if '%' + kw in settings['text']:
+                #         settings['text'] = settings['text'].replace(
+                #             '%' + kw, str(text_variables[kw]))
+
+
+                for k, v in text_variables.iteritems():
+                    if '%' + k in settings['text']:
                         settings['text'] = settings['text'].replace(
-                            '%' + kw, str(text_variables[kw]))
+                            '%' + k, str(v))
+
 
         element_type = settings.pop('type').lower()
 

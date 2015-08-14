@@ -64,11 +64,11 @@ class AssetManager(object):
 
         self.create_loader_thread()
 
-        self.machine.modes.register_load_method(self.load_assets,
+        self.machine.mode_controller.register_load_method(self.load_assets,
                                                 self.config_section,
                                                 load_key='preload')
 
-        self.machine.modes.register_start_method(self.load_assets,
+        self.machine.mode_controller.register_start_method(self.load_assets,
                                                  self.config_section,
                                                  load_key='mode_start')
 

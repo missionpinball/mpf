@@ -21,128 +21,6 @@ RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs priority
 be called on mode_start or mode_stop.
 """
 
-
-class ModeController(object):
-    """Parent class for the Mode Controller. There is one instance of this in
-    MPF and it's responsible for loading, unloading, and managing all game
-    modes.
-    """
-
-    def __init__(self, machine):
-        self.machine = machine
-        self.log = logging.getLogger('ModeController')
-
-        self.active_modes = list()
-        self.mode_stop_count = 0
-
-        # The following two lists hold namedtuples of any remote components that
-        # need to be notified when a mode object is created and/or started.
-        self.loader_methods = list()
-        self.start_methods = list()
-
-        if 'modes' in self.machine.config:
-            self.machine.events.add_handler('init_phase_4',
-                                            self._load_modes)
-
-    def _load_modes(self):
-        #Loads the modes from the Modes: section of the machine configuration
-        #file.
-
-        for mode in self.machine.config['modes']:
-            self.machine.game_modes[mode] = self._load_mode(mode)
-
-    def _load_mode(self, mode_string):
-        """Loads a mode, reads in its config, and creates the Mode object.
-
-        Args:
-            mode: String name of the mode you're loading. This is the name of
-                the mode's folder in your game's machine_files/modes folder.
-        """
-        self.log.info('Processing mode: %s', mode_string)
-
-        mode_path = os.path.join(self.machine.machine_path,
-            self.machine.config['media_controller']['paths']['modes'], mode_string)
-        mode_config_file = os.path.join(self.machine.machine_path,
-            self.machine.config['media_controller']['paths']['modes'],
-            mode_string, 'config', mode_string + '.yaml')
-        config = Config.load_config_yaml(yaml_file=mode_config_file)
-
-        return Mode(self.machine, config, mode_string, mode_path)
-
-    def register_load_method(self, load_method, config_section_name=None,
-                             priority=0, **kwargs):
-        """Used by system components, plugins, etc. to register themselves with
-        the Mode Controller for anything that they a mode to do when its
-        registered.
-
-        Args:
-            load_method: The method that will be called when this mode code
-                loads.
-            config_section_name: An optional string for the section of the
-                configuration file that will be passed to the load_method when
-                it's called.
-            priority: Int of the relative priority which allows remote methods
-                to be called in a specific order. Default is 0. Higher values
-                will be called first.
-            **kwargs: Any additional keyword arguments specified will be passed
-                to the load_method.
-
-        Note that these methods will be called once, when the mode code is first
-        initialized.
-        """
-        self.loader_methods.append(RemoteMethod(method=load_method,
-            config_section=config_section_name, priority=priority,
-            kwargs=kwargs))
-
-    def register_start_method(self, start_method, config_section_name=None,
-                              priority=0, **kwargs):
-        """Used by system components, plugins, etc. to register themselves with
-        the Mode Controller for anything that they a mode to do when it starts.
-
-        Args:
-            start_method: The method that will be called when this mode code
-                loads.
-            config_section_name: An optional string for the section of the
-                configuration file that will be passed to the start_method when
-                it's called.
-            priority: Int of the relative priority which allows remote methods
-                to be called in a specific order. Default is 0. Higher values
-                will be called first.
-            **kwargs: Any additional keyword arguments specified will be passed
-                to the start_method.
-
-        Note that these methods will be called every single time this mode is
-        started.
-        """
-        self.start_methods.append(RemoteMethod(method=start_method,
-            config_section=config_section_name, priority=priority,
-            kwargs=kwargs))
-
-    def _active_change(self, mode, active):
-        # called when a mode goes active or inactive
-
-        if active:
-            self.active_modes.append(mode)
-        else:
-            self.active_modes.remove(mode)
-
-        # sort the active mode list by priority
-        self.active_modes.sort(key=lambda x: x.priority, reverse=True)
-
-        self.dump()
-
-    def dump(self):
-        """Dumps the current status of the running modes to the log file."""
-
-        self.log.info('================ ACTIVE GAME MODES ===================')
-
-        for mode in self.active_modes:
-            if mode.active:
-                self.log.info('%s : %s', mode.name, mode.priority)
-
-        self.log.info('======================================================')
-
-
 class Mode(object):
     """Parent class for in-game mode code."""
 
@@ -173,7 +51,7 @@ class Mode(object):
                                               mode_path=self.path))
 
         # Call registered remote loader methods
-        for item in self.machine.modes.loader_methods:
+        for item in self.machine.mode_controller.loader_methods:
             if (item.config_section in self.config and
                     self.config[item.config_section]):
                 item.method(config=self.config[item.config_section],
@@ -188,7 +66,7 @@ class Mode(object):
     def active(self, active):
         if self._active != active:
             self._active = active
-            self.machine.modes._active_change(self, self._active)
+            self.machine.mode_controller._active_change(self, self._active)
 
     def configure_mode_settings(self, config):
         """Processes this mode's configuration settings from a config
@@ -242,7 +120,7 @@ class Mode(object):
 
         self.active = True
 
-        for item in self.machine.modes.start_methods:
+        for item in self.machine.mode_controller.start_methods:
             if item.config_section in self.config:
                 self.stop_methods.append(
                     item.method(config=self.config[item.config_section],
