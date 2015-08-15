@@ -36,7 +36,9 @@ class Shot(Device):
 
         """
         self.log = logging.getLogger('Shot.' + name)
-        self.log.debug("Configuring shot with settings: '%s'", config)
+
+        if self.debug:
+            self.log.debug("Configuring shot with settings: '%s'", config)
 
         super(Shot, self).__init__(machine, name, config, collection)
 
@@ -56,8 +58,8 @@ class Shot(Device):
 
         self.player_variable = None
 
-        self.active_sequences = set()
-        """Set of tuples:
+        self.active_sequences = list()
+        """List of tuples:
         (id, current_position_index, next_switch)
         """
 
@@ -234,7 +236,8 @@ class Shot(Device):
 
         """
 
-        self.log.debug("Removing...")
+        if self.debug:
+            self.log.debug("Removing...")
 
         for group in self.shot_groups:
 
@@ -262,8 +265,9 @@ class Shot(Device):
 
         """
         if profile in self.machine.shot_controller.profiles:
-            self.log.debug("Applying shot profile '%s', priority %s", profile,
-                           priority)
+            if self.debug:
+                self.log.debug("Applying shot profile '%s', priority %s",
+                               profile, priority)
 
             profile_tuple = (profile, priority,
                 self.machine.shot_controller.profiles[profile],
@@ -282,8 +286,9 @@ class Shot(Device):
             if not self.active_profile:
                 self.apply_profile('default', priority)
 
-            self.log.debug("Shot profile '%s' not found. Shot is has '%s' "
-                           "applied.", profile, self.active_profile_name)
+            if self.debug:
+                self.log.debug("Shot profile '%s' not found. Shot is has '%s' "
+                               "applied.", profile, self.active_profile_name)
 
     def remove_active_profile(self):
         """Removes the current active shot profile and restores whichever one is
@@ -398,21 +403,18 @@ class Shot(Device):
 
         if not stealth:
 
-            self.log.debug("Hit! Profile: %s, Current Step: %s",
-                          self.active_profile_name, self.current_step_name)
+            if self.debug:
+                self.log.debug("Hit! Profile: %s, Current Step: %s",
+                              self.active_profile_name, self.current_step_name)
 
             # post event <name>_<profile>_<step>_hit
             self.machine.events.post(self.name + '_' +
                                      self.active_profile_name + '_' +
                                      self.current_step_name + '_hit')
 
-            print "active shot groups:", self.shot_groups
-
             for group in self.shot_groups:
-                print "htting group", group.name
                 group.hit(profile_name=self.active_profile_name,
                           profile_step_name=self.current_step_name)
-
 
             if Shot.monitor_enabled:
                 for callback in self.machine.monitors['shots']:
@@ -425,9 +427,10 @@ class Shot(Device):
         # going into an orbit in a row), we first have to see whether this
         # switch is starting a new sequence or continuing an existing one
 
-        if switch_name == self.config['switch_sequence'][0]:
+        if self.debug:
+            self.log.info("Sequence switch hit: %s", switch_name)
 
-            # need to start a new sequence
+        if switch_name == self.config['switch_sequence'][0].name:
             self._start_new_sequence()
 
         else:
@@ -445,19 +448,36 @@ class Shot(Device):
     def _start_new_sequence(self):
         # If the sequence hasn't started, make sure we're not within the
         # delay_switch hit window
+
+
+
         if self.active_delay_switches:
+
+            if self.debug:
+                self.log.info("There's a delay switch timer in effect from "
+                              "switch(es) %s. Sequence will not be started.",
+                              self.active_delay_switches)
+
             return
 
         # create a new sequence
         seq_id = uuid.uuid4()
-        next_switch = self.config['switch_sequence'][0]
+        next_switch = self.config['switch_sequence'][1].name
 
-        self.active_sequences.add(
+        if self.debug:
+                self.log.info("Setting up a new sequence. Next switch: %s",
+                              next_switch)
+
+        self.active_sequences.append(
             (seq_id, 0, next_switch)
             )
 
         # if this sequence has a delay, set that up
         if self.config['time']:
+            if self.debug:
+                self.log.info("Setting up a sequence timer for %sms",
+                              self.config['time'])
+
             self.delay.reset(name='seq_id',
                              ms=self.config['time'],
                              callback=self._reset_sequence,
@@ -476,14 +496,23 @@ class Shot(Device):
                 if current_position_index == (
                     len(self.config['switch_sequence']) - 2):  # complete
 
+                    if self.debug:
+                        self.log.info("Sequence complete!")
+
                     # TODO remove the delay
                     self.hit()
 
                 else:
                     current_position_index += 1
-                    next_switch = (
-                        self.config['switch_sequence'][current_position_index])
-                    self.active_sequences.add(
+                    next_switch = (self.config['switch_sequence']
+                                   [current_position_index].name)
+
+                    if self.debug:
+                        self.log.info("Advancing the sequence. Next switch: %s",
+                                      next_switch)
+
+
+                    self.active_sequences.append(
                         (seq_id, current_position_index, next_switch))
 
     def _cancel_switch_hit(self):
@@ -502,9 +531,10 @@ class Shot(Device):
         self.active_delay_switches.remove(switch_name)
 
     def _reset_sequence(self, seq_id):
-        self.log.debug("Resetting this sequence")
+        if self.debug:
+            self.log.debug("Resetting this sequence")
 
-        for sequence in self.active_sequences:
+        for sequence in self.active_sequences[:]:
             if sequence[0] == seq_id:
                 seq_id, current_position_index, next_switch = sequence
 
@@ -517,7 +547,7 @@ class Shot(Device):
         for seq_id in seq_ids:
             self.delay.remove(seq_id)
 
-        self.active_sequences = set()
+        self.active_sequences = list()
 
     def add_to_shot_group(self, group):
         """Adds this shot to a shot group.
@@ -529,8 +559,8 @@ class Shot(Device):
         added again.
 
         """
-        self.log.debug('Adding this shot to group: %s', group.name)
-        print "adding to group", self.name, group.name
+        if self.debug:
+            self.log.debug('Adding this shot to group: %s', group.name)
         self.shot_groups.add(group)
 
     def remove_from_shot_group(self, group):
@@ -541,7 +571,8 @@ class Shot(Device):
                 from.
 
         """
-        self.log.debug('Removing this shot from group: %s', group.name)
+        if self.debug:
+            self.log.debug('Removing this shot from group: %s', group.name)
         self.shot_groups.discard(group)
 
     def jump(self, step, update_group=True, current_show_step=0):
@@ -590,7 +621,8 @@ class Shot(Device):
         if self.enabled:
             return
 
-        self.log.debug("Enabling...")
+        if self.debug:
+            self.log.debug("Enabling...")
         self._register_switch_handlers()
         self.enabled = True
 
@@ -603,7 +635,8 @@ class Shot(Device):
         if not self.enabled:
             return
 
-        self.log.debug("Disabling...")
+        if self.debug:
+            self.log.debug("Disabling...")
         self._reset_all_sequences()
         self._remove_switch_handlers()
         self.delay.clear()

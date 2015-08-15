@@ -23,14 +23,14 @@ class Device(object):
         self.name = name.lower()
         self.tags = list()
         self.label = None
-        self.debug_logging = False
+        self.debug = False
         self.config = dict()
 
         self.config = self.machine.config_processor.process_config2(
             'device:' + self.class_label, config, self.name)
 
         if self.config['debug']:
-            self.debug_logging = True
+            self.debug = True
             self.log.info("Enabling debug logging for this device")
 
         self.tags = self.config['tags']

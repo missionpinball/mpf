@@ -136,7 +136,7 @@ class MatrixLight(Device):
     def restore(self):
         """Restores the light state from cache."""
 
-        if self.debug_logging:
+        if self.debug:
             self.log.info("Received a restore command.")
             self.log.info("Cached brightness: %s, Cached priority: %s",
                           self.cache['brightness'], self.cache['priority'])
