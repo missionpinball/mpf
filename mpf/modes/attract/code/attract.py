@@ -26,7 +26,7 @@ class Attract(Mode):
 
         self.start_button_pressed_time = 0.0
         self.start_hold_time = 0.0
-        self.start_buttons_held = set()
+        self.start_buttons_held = list()
 
         self.assets_waiting = 0
 
@@ -98,14 +98,11 @@ class Attract(Mode):
 
         """
         self.start_hold_time = time.time() - self.start_button_pressed_time
+        self.start_buttons_held = list()
 
-        if hasattr(self.machine, 'flippers'):
-
-            for flipper in self.machine.flippers:
-                if self.machine.switch_controller.is_active(
-                        flipper.config['activation_switch']):
-                    self.start_buttons_held.add(flipper.config['activation_switch'])
-            # todo change this to any player-accessible switch
+        for switch in self.machine.switches.items_tagged('player'):
+            if self.machine.switch_controller.is_active(switch.name):
+                self.start_buttons_held.add(switch.name)
 
         # todo test for active?
         # todo should this be a decorator?
