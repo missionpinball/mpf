@@ -38,21 +38,16 @@ class LED(Device):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('LED.' + name)
+        config['number_str'] = str(config['number']).upper()
         super(LED, self).__init__(machine, name, config, collection,
                                   platform_section='leds')
 
         self.log.debug("Creating '%s' with config: %s", name, config)
 
-        # We save out number_str since the platform driver will convert the
-        # number into a hardware number, but we need the original number for
-        # some things later.
-        self.config['number_str'] = str(config['number']).upper()
-
-        if 'default_color' in self.config:
-            if type(self.config['default_color']) is str:
-                self.config['default_color'] = self.hexstring_to_list(
-                    input_string=self.config['default_color'],
-                    output_length=3)
+        if self.config['default_color']:
+            self.config['default_color'] = self.hexstring_to_list(
+                input_string=self.config['default_color'],
+                output_length=3)
         else:
             self.config['default_color'] = [255, 255, 255]
 
@@ -101,12 +96,7 @@ class LED(Device):
                 self.config['brightness_compensation'][i] = (
                     float(self.config['brightness_compensation'][i]))
 
-        if 'fade_ms' not in self.config:
-            self.config['fade_ms'] = None
-
-        self.log_color = self.config.get('log_color_changes', False)
-
-        if self.log_color:
+        if self.debug_logging:
             self.log.info("Enabling color change logging for this LED")
 
         self.current_color = []  # one item for each element, 0-255
@@ -212,7 +202,7 @@ class LED(Device):
             self.hw_driver.color(color)
             self.state['color'] = color
 
-            if self.log_color:
+            if self.debug_logging:
                 self.log.info("Setting Color: %s", color)
 
         if cache:

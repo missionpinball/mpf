@@ -122,7 +122,7 @@ class Playfield(BallDevice):
         zero.
 
         Returns: 0
-        
+
         """
         return 0
 

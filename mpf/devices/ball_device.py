@@ -36,57 +36,8 @@ class BallDevice(Device):
 
         self.delay = DelayManager()
 
-        # set config defaults
-        if 'exit_count_delay' not in self.config:
-            self.config['exit_count_delay'] = ".5s"  # todo make optional
-        if 'entrance_count_delay' not in self.config:
-            self.config['entrance_count_delay'] = "0.5s"
-        if 'eject_coil' not in self.config:
-            self.config['eject_coil'] = None
-        if 'eject_switch' not in self.config:
-            self.config['eject_switch'] = None
-        if 'entrance_switch' not in self.config:
-            self.config['entrance_switch'] = None
-        if 'jam_switch' not in self.config:
-            self.config['jam_switch'] = None
-        if 'eject_coil_hold_times' not in self.config:
-            self.config['eject_coil_hold_times'] = list()
-        if 'confirm_eject_type' not in self.config:
-            self.config['confirm_eject_type'] = 'count'  # todo make optional?
-        if 'captures_from' not in self.config:
-            self.config['captures_from'] = 'playfield'
-        if 'eject_targets' not in self.config:
-            self.config['eject_targets'] = ['playfield']
-        else:
-            self.config['eject_targets'] = Config.string_to_list(
-                self.config['eject_targets'])
-
-        if 'eject_timeouts' not in self.config:
-            self.config['eject_timeouts'] = list()
-        else:
-            self.config['eject_timeouts'] = Config.string_to_list(
-                self.config['eject_timeouts'])
-
-        if 'confirm_eject_switch' not in self.config:
-            self.config['confirm_eject_switch'] = None
-        if 'confirm_eject_event' not in self.config:
-            self.config['confirm_eject_event'] = None
-        if 'balls_per_eject' not in self.config:
-            self.config['balls_per_eject'] = 1
-        if 'max_eject_attempts' not in self.config:
-            self.config['max_eject_attempts'] = 0
-
-        if 'ball_switches' in self.config:
-            self.config['ball_switches'] = Config.string_to_list(
-                self.config['ball_switches'])
-        else:
-            self.config['ball_switches'] = []
-
-        if 'ball_capacity' not in self.config:
+        if self.config['ball_capacity'] is None:
             self.config['ball_capacity'] = len(self.config['ball_switches'])
-
-        if 'debug' not in self.config:
-            self.config['debug'] = False
 
         # initialize variables
 
@@ -114,7 +65,6 @@ class BallDevice(Device):
         self.num_balls_in_transit = 0
         """The number of balls in transit to this device.
         """
-
 
         self.num_jam_switch_count = 0
         """How many times the jam switch has been activated since the last
@@ -144,8 +94,12 @@ class BallDevice(Device):
         self.need_first_time_count = True
         self._playfield = False
 
-        # Now configure the device
-        self._configure()
+        self.machine.events.add_handler('balldevice_' + self.name +
+                                        '_ball_eject_request',
+                                        self.eject)
+
+        self.machine.events.add_handler('init_phase_2',
+                                        self.configure_eject_targets)
 
     @property
     def num_balls_ejectable(self):
@@ -154,32 +108,13 @@ class BallDevice(Device):
 
         # todo look at upstream devices
 
-    def _configure(self, config=None):
-        #Performs the actual configuration of the ball device
+    def configure_eject_targets(self, config=None):
+        new_list = list()
 
-        # Merge in any new changes that were just passed
-        if config:
-            self.config.update(config)
+        for target in self.config['eject_targets']:
+            new_list.append(self.machine.ball_devices[target])
 
-        self.log.debug("Configuring device with: %s", self.config)
-
-        # convert delay strings to ms ints
-        if self.config['exit_count_delay']:
-            self.config['exit_count_delay'] = \
-                Timing.string_to_ms(self.config['exit_count_delay'])
-
-        if self.config['entrance_count_delay']:
-            self.config['entrance_count_delay'] = \
-                Timing.string_to_ms(self.config['entrance_count_delay'])
-
-        # Register for events
-
-
-        # Look for eject requests for this device
-        self.machine.events.add_handler('balldevice_' + self.name +
-                                        '_ball_eject_request',
-                                        self.eject)
-        # todo change event name to action_balldevice_name_eject_request
+        self.config['eject_targets'] = new_list
 
     def _source_device_eject_attempt(self, balls, target, **kwargs):
         # A source device is attempting to eject a ball.
@@ -202,40 +137,8 @@ class BallDevice(Device):
                 self.num_balls_in_transit = 0
                 self.machine.events.remove_handler(self._requested_ball_received)
 
-
     def _initialize(self):
         # convert names to objects
-
-        if self.config['ball_switches']:
-            for i in range(len(self.config['ball_switches'])):
-                self.config['ball_switches'][i] = (
-                    self.machine.switches[self.config['ball_switches'][i]])
-
-        if self.config['eject_coil']:
-            self.config['eject_coil'] = (
-                self.machine.coils[self.config['eject_coil']])
-
-        if self.config['eject_switch']:
-            self.config['eject_switch'] = (
-                self.machine.switches[self.config['eject_switch']])
-
-        if self.config['entrance_switch']:
-            self.config['entrance_switch'] = (
-                self.machine.switches[self.config['entrance_switch']])
-
-        if self.config['jam_switch']:
-            self.config['jam_switch'] = (
-                self.machine.switches[self.config['jam_switch']])
-
-        if self.config['confirm_eject_type'] == 'switch' and (
-                self.config['confirm_eject_target']):
-            self.config['confirm_eject_switch'] = (
-                self.machine.switches[self.config['confirm_eject_switch']])
-
-        if self.config['eject_targets']:
-            for i in range(len(self.config['eject_targets'])):
-                self.config['eject_targets'][i] = (
-                    self.machine.ball_devices[self.config['eject_targets'][i]])
 
         # make sure the eject timeouts list matches the length of the eject targets
         if (len(self.config['eject_timeouts']) <

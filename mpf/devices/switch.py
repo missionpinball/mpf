@@ -20,6 +20,9 @@ class Switch(Device):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Switch.' + name)
+
+        config['number_str'] = str(config['number']).upper()
+
         super(Switch, self).__init__(machine, name, config, collection,
                                      platform_section='switches')
 
@@ -45,19 +48,10 @@ class Switch(Device):
         self.recycle_clear_tick = 0
         self.recycle_jitter_count = 0
 
-        if 'type' in config and config['type'].upper() == 'NC':
+        if self.config['type'].upper() == 'NC':
             self.type = 'NC'
 
-        if 'debounce' not in config:
-            config['debounce'] = True
-
-        if 'recycle_time' in config:
-            self.recycle_ticks = Timing.string_to_ticks(config['recycle_time'])
-
-        # We save out number_str since the platform driver will convert the
-        # number into a hardware number, but we need the original number for
-        # some things later.
-        self.config['number_str'] = str(config['number']).upper()
+        self.recycle_ticks = self.config['recycle_time']
 
         self.last_changed = None
         self.hw_timestamp = None

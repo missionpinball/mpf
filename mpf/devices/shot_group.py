@@ -47,28 +47,19 @@ class ShotGroup(Device):
         else:
             self.member_collection = member_collection
 
-        self.shots = list()
+        self.shots = self.config['shots']
 
-        # make sure shot list is a Python list
-        self.config[self.device_str] = Config.string_to_list(
-            self.config[self.device_str])
+    def _register_member_shots(self):
 
-        # convert shot list from str to objects
-        for shot in self.config[self.device_str]:
+        print "registering member shots"
 
-            try:
-                self.shots.append(self.member_collection[shot])
-            except KeyError:
-                self.log.error("No shot named '%s'. Could not add to group",
-                               shot)
+        for shot in self.shots:
+            print "found shot:", shot.name
+            shot.add_to_shot_group(self)
 
-    def _register_member_switches(self):
-        for shot in self.config[self.device_str]:
-            self.member_collection[shot].add_to_shot_group(self)
-
-    def _deregister_member_switches(self):
-        for shot in self.config[self.device_str]:
-            self.member_collection[shot].remove_from_shot_group(self)
+    def _deregister_member_shots(self):
+        for shot in self.shots:
+            shot.remove_from_shot_group(self)
 
     def remove_member_shot(self, shot):
         """Remembers a member shot from this group.
@@ -78,8 +69,8 @@ class ShotGroup(Device):
 
         """
         self.shots.remove(shot)
-        self._deregister_member_switches()
-        self._register_member_switches()
+        self._deregister_member_shots()
+        self._register_member_shot()
 
     def hit(self, profile_name, profile_step_name, **kwargs):
         """One of the member shots in this shot group was hit.
@@ -93,7 +84,11 @@ class ShotGroup(Device):
                 the shot that was hit.
 
         """
+
         if self.enabled:
+            self.log.debug('Hit! Active profile: s%, Current step: %s',
+                       profile_name, profile_step_name)
+
             self.machine.events.post(self.name + '_' + profile_name + '_' +
                                      profile_step_name + '_hit')
 
@@ -106,12 +101,14 @@ class ShotGroup(Device):
         if self.enabled:
             return
 
-        self.enabled = True
+        self.log.debug('Enabling')
 
-        self._register_member_switches()
+        self.enabled = True
 
         for shot in self.shots:
             shot.enable()
+
+        self._register_member_shots()
 
     def disable(self, **kwargs):
         """Disables this shot group. Also disables all the shots in this
@@ -122,7 +119,9 @@ class ShotGroup(Device):
         if not self.enabled:
             return
 
-        self._deregister_member_switches()
+        self.log.debug('Disabling')
+
+        self._deregister_member_shots()
 
         for shot in self.shots:
             shot.disable()
@@ -134,6 +133,7 @@ class ShotGroup(Device):
         rotate the shots.
 
         """
+        self.log.debug('Enabling rotation')
         self.rotation_enabled = True
 
     def disable_rotation(self, **kwargs):
@@ -141,7 +141,7 @@ class ShotGroup(Device):
         rotate the shots.
 
         """
-
+        self.log.debug('Disabling rotation')
         self.rotation_enabled = False
 
     def reset(self, **kwargs):
@@ -150,13 +150,15 @@ class ShotGroup(Device):
         each shot's reset() method one-by-one.
 
         """
+        self.log.debug('Resetting')
         for shot in self.shots:
             shot.reset()
 
-    def remove_profile(self, **kwargs):
+    def remove_active_profile(self, **kwargs):
         """Removes the current active profile from every shot in the group.
 
         """
+        self.log.debug('Removing active profile')
         for shot in self.shots:
             shot.remove_active_profile()
 
@@ -165,6 +167,7 @@ class ShotGroup(Device):
         one step forward.
 
         """
+        self.log.debug('Advancing')
         for shot in self.shots:
             shot.advance()
 
@@ -239,6 +242,10 @@ class ShotGroup(Device):
                 (shot.player[shot.player_variable], current_step)
                                     )
 
+        self.log.debug('Rotating. Direction: %s, Include states: %s, Exclude '
+               'states: %s, Shots to be rotated: %s', direction, states,
+               exclude_states, [x.name for x in shot_list])
+
         # rotate that list
         if direction == 'right':
             shot_state_list.rotate(steps)
@@ -295,7 +302,7 @@ class ShotGroup(Device):
 
     def remove(self):
         self.log.debug("Removing...")
-        self._deregister_member_switches()
+        self._deregister_member_shots()
         del self.machine.shot_groups[self.name]
 
 

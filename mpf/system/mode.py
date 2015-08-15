@@ -74,6 +74,9 @@ class Mode(object):
 
         self.mode_init()
 
+    def __str__(self):
+        return '<Mode.' + self.name + '>'
+
     @property
     def active(self):
         return self._active
@@ -302,7 +305,6 @@ class Mode(object):
                 state=handler['state'],
                 ms=handler['ms'])
         self.switch_handlers = list()
-
 
     def _setup_timers(self):
         # config is localized

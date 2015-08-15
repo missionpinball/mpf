@@ -26,33 +26,30 @@ class Device(object):
         self.debug_logging = False
         self.config = dict()
 
-        if config:
-            self.config.update(config)
-            if 'tags' in config:
-                self.tags = Config.string_to_lowercase_list(config['tags'])
+        self.config = self.machine.config_processor.process_config2(
+            'device:' + self.class_label, config, self.name)
 
-            if 'label' in config:
-                self.label = config['label']  # todo change to multi lang
-            # todo more pythonic way, like self.label = blah if blah?
+        if self.config['debug']:
+            self.debug_logging = True
+            self.log.info("Enabling debug logging for this device")
 
-            if 'debug' in config and config['debug']:
-                self.debug_logging = True
-                self.log.info("Enabling debug logging for this device")
+        self.tags = self.config['tags']
+        self.label = self.config['label']
 
-            if platform_section:
-                if self.machine.physical_hw:
-                    if 'platform' not in config:
-                        if self.machine.config['hardware'][platform_section] != 'default':
-                            self.platform = (
-                                self.machine.hardware_platforms
-                                [self.machine.config['hardware'][platform_section]])
-                        else:
-                            self.platform = self.machine.default_platform
-                    else:
+        if platform_section:
+            if self.machine.physical_hw:
+                if 'platform' not in config:
+                    if self.machine.config['hardware'][platform_section] != 'default':
                         self.platform = (
-                            self.machine.hardware_platforms[config['platform']])
+                            self.machine.hardware_platforms
+                            [self.machine.config['hardware'][platform_section]])
+                    else:
+                        self.platform = self.machine.default_platform
                 else:
-                    self.platform = self.machine.default_platform
+                    self.platform = (
+                        self.machine.hardware_platforms[config['platform']])
+            else:
+                self.platform = self.machine.default_platform
 
         self._create_control_events(self.config, self.machine.delay)
 
@@ -67,8 +64,8 @@ class Device(object):
             # Have to use -1 here instead of None to catch an empty collection
             collection[name] = self
 
-    def __repr__(self):
-        return self.name
+    def __str__(self):
+        return '<' + self.class_label + '.' + self.name + '>'
 
     @classmethod
     def get_config_info(cls):
@@ -104,9 +101,11 @@ class Device(object):
 
                 if config_setting in config:
 
-                    for event, delay in self._event_config_to_dict(config[config_setting]).iteritems():
+                    for event, delay in self._event_config_to_dict(
+                        config[config_setting]).iteritems():
 
-                        event_keys.add(self.machine.events.add_handler(event=event,
+                        event_keys.add(self.machine.events.add_handler(
+                            event=event,
                             handler=self._control_event_handler,
                             callback=getattr(self, method),
                             ms_delay=Timing.string_to_ms(delay),

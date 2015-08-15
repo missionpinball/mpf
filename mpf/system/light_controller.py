@@ -874,6 +874,9 @@ class Show(Asset):
             self._initialize_asset()
             self._load(callback=None, show_actions=actions)
 
+    def __str__(self, ):
+        return '<Show.' + self.file_name + '.>'
+
     def _initialize_asset(self):
 
         self.tocks_per_sec = 1  # how many steps per second this show runs at

@@ -25,13 +25,10 @@ class GI(Device):
 
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('GI.' + name)
+        config['number_str'] = str(config['number']).upper()
         super(GI, self).__init__(machine, name, config, collection,
                                  platform_section='gis')
 
-        # We save out number_str since the platform driver will convert the
-        # number into a hardware number, but we need the original number for
-        # some things later.
-        self.config['number_str'] = str(config['number']).upper()
         self.hw_driver, self.number = self.platform.configure_gi(self.config)
 
         self.registered_handlers = []

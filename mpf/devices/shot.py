@@ -68,22 +68,6 @@ class Shot(Device):
 
         self.enabled = False
 
-        config_spec = '''
-                        profile: string|default
-                        switch: list|None
-                        switch_sequence: list|None
-                        cancel_switch: list|None
-                        delay_switch: dict|None
-                        time: ms|0
-                        light: list|None
-                        led: list|None
-                        '''
-
-        self.config = Config.process_config(config_spec, self.config)
-
-        for switch, time in self.config['delay_switch'].iteritems():
-            time = Config.time_string_to_ms(time)
-
     def _set_player_variable(self):
         if self.active_profile['player_variable']:
             self.player_variable = self.active_profile['player_variable']
@@ -93,36 +77,36 @@ class Shot(Device):
     def _register_switch_handlers(self):
         for switch in self.config['switch']:
             self.machine.switch_controller.add_switch_handler(
-                switch, self.hit, 1)
+                switch.name, self.hit, 1)
 
         for switch in self.config['switch_sequence']:
             self.machine.switch_controller.add_switch_handler(
-                switch, self._sequence_switch_hit, 1, return_info=True)
+                switch.name, self._sequence_switch_hit, 1, return_info=True)
 
         for switch in self.config['cancel_switch']:
             self.machine.switch_controller.add_switch_handler(
-                switch, self._cancel_switch_hit, 1)
+                switch.name, self._cancel_switch_hit, 1)
 
         for switch in self.config['delay_switch'].keys():
             self.machine.switch_controller.add_switch_handler(
-                switch, self._delay_switch_hit, 1, return_info=True)
+                switch.name, self._delay_switch_hit, 1, return_info=True)
 
     def _remove_switch_handlers(self):
         for switch in self.config['switch']:
             self.machine.switch_controller.remove_switch_handler(
-                switch, self.hit, 1)
+                switch.name, self.hit, 1)
 
         for switch in self.config['switch_sequence']:
             self.machine.switch_controller.remove_switch_handler(
-                switch, self._sequence_switch_hit, 1)
+                switch.name, self._sequence_switch_hit, 1)
 
         for switch in self.config['cancel_switch']:
             self.machine.switch_controller.remove_switch_handler(
-                switch, self._cancel_switch_hit, 1)
+                switch.name, self._cancel_switch_hit, 1)
 
         for switch in self.config['delay_switch'].keys():
             self.machine.switch_controller.remove_switch_handler(
-                switch, self._delay_switch_hit, 1)
+                switch.name, self._delay_switch_hit, 1)
 
     def _advance_step(self, steps=1):
         if (self.player[self.player_variable] + 1 >=
@@ -175,8 +159,8 @@ class Shot(Device):
 
             new_show = self.machine.light_controller.run_registered_script(
                 script_name=self.active_profile['steps'][self.current_step_index]['light_script'],
-                lights=self.config['light'],
-                leds=self.config['led'],
+                lights=[x.name for x in self.config['light']],
+                leds=[x.name for x in self.config['led']],
                 priority=self.profiles[0][1],
                 hold=hold,
                 reset=reset,
@@ -210,8 +194,8 @@ class Shot(Device):
             self.running_light_show = (
                 self.machine.light_controller.run_registered_script(
                     script_name=settings['light_script'],
-                    lights=self.config['light'],
-                    leds=self.config['led'],
+                    lights=[x.name for x in self.config['light']],
+                    leds=[x.name for x in self.config['led']],
                     start_location=step,
                     priority=self.active_profile_priority,
                     hold=hold,
@@ -422,7 +406,10 @@ class Shot(Device):
                                      self.active_profile_name + '_' +
                                      self.current_step_name + '_hit')
 
+            print "active shot groups:", self.shot_groups
+
             for group in self.shot_groups:
+                print "htting group", group.name
                 group.hit(profile_name=self.active_profile_name,
                           profile_step_name=self.current_step_name)
 
@@ -542,8 +529,9 @@ class Shot(Device):
         added again.
 
         """
-        if group in self.machine.shot_groups:
-            self.shot_groups.add(group)
+        self.log.debug('Adding this shot to group: %s', group.name)
+        print "adding to group", self.name, group.name
+        self.shot_groups.add(group)
 
     def remove_from_shot_group(self, group):
         """Removes this shot from a shot group.
@@ -553,6 +541,7 @@ class Shot(Device):
                 from.
 
         """
+        self.log.debug('Removing this shot from group: %s', group.name)
         self.shot_groups.discard(group)
 
     def jump(self, step, update_group=True, current_show_step=0):

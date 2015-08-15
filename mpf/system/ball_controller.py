@@ -44,7 +44,12 @@ class BallController(object):
         self.machine.events.add_handler('machine_reset_phase_2',
                                         self._initialize)
         self.machine.events.add_handler('init_phase_2',
-                                        self.create_playfield_device)
+                                        self.create_playfield_device, 2)
+
+
+
+
+
 
     @property
     def balls(self):
@@ -82,7 +87,9 @@ class BallController(object):
         self.playfield.
         """
         if not hasattr(self.machine, 'ball_devices'):
-            self.machine.ball_devices = DeviceCollection()
+            self.machine.ball_devices = DeviceCollection(self.machine,
+                                                         'ball_devices',
+                                                         'ball_devices')
 
         self.machine.playfield = Playfield(self.machine, name='playfield',
                                            collection='ball_devices')

@@ -182,13 +182,15 @@ class MachineController(object):
         self.log.info("Python executable location: %s", sys.executable)
         self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
 
-
-
     def _load_system_modules(self):
         for module in self.config['mpf']['system_modules']:
             self.log.info("Loading '%s' system module", module[1])
             m = self.string_to_class(module[1])(self)
             setattr(self, module[0], m)
+            # try:
+            #     getattr(self, module[0]).post_init_callback()
+            # except AttributeError:
+            #     pass
 
     def _load_plugins(self):
 

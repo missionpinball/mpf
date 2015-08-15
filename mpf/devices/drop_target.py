@@ -28,28 +28,9 @@ class DropTarget(Device):
         super(DropTarget, self).__init__(machine, name, config, collection)
 
         self.complete = False
-        self.reset_coil = None
-        self.knockdown_coil = None
+        self.reset_coil = self.config['reset_coil']
+        self.knockdown_coil = self.config['knockdown_coil']
         self.banks = set()
-
-        config_spec = '''
-                        switch: string
-                        reset_coil: str|None
-                        knockdown_coil: str|None
-
-                        '''
-
-        self.config = Config.process_config(config_spec, self.config)
-
-        try:
-            self.reset_coil = self.machine.coils[self.config['reset_coil']]
-        except KeyError:
-            pass
-
-        try:
-            self.knockdown_coil = self.machine.coils[self.config['knockdown_coil']]
-        except KeyError:
-            pass
 
         # can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_3',
@@ -60,9 +41,9 @@ class DropTarget(Device):
         # this is in addition to the parent since drop targets track
         # self.complete in separately
 
-        self.machine.switch_controller.add_switch_handler(self.config['switch'],
+        self.machine.switch_controller.add_switch_handler(self.config['switch'].name,
             self._update_state_from_switch, 0)
-        self.machine.switch_controller.add_switch_handler(self.config['switch'],
+        self.machine.switch_controller.add_switch_handler(self.config['switch'].name,
             self._update_state_from_switch, 1)
 
     def knockdown(self, **kwargs):
@@ -71,7 +52,7 @@ class DropTarget(Device):
             self.knockdown_coil.pulse()
 
     def _update_state_from_switch(self):
-        if self.machine.switch_controller.is_active(self.config['switch']):
+        if self.machine.switch_controller.is_active(self.config['switch'].name):
             self._down()
         else:
             self._up()
@@ -140,18 +121,7 @@ class DropTargetBank(Device):
         self.down = 0
         self.up = 0
 
-        if 'reset_coils' in self.config:
-            for coil_name in Config.string_to_list(self.config['reset_coils']):
-                self.reset_coils.add(self.machine.coils[coil_name])
-
-        if 'reset_coil' in self.config:
-            self.reset_coil = self.machine.coils[self.config['reset_coil']]
-
-        self.config['drop_targets'] = (
-            Config.string_to_list(config['drop_targets']))
-
         for target in self.config['drop_targets']:
-            self.drop_targets.add(self.machine.drop_targets[target])
             self.machine.drop_targets[target].add_to_bank(self)
 
     def reset(self, **kwargs):

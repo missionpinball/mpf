@@ -28,7 +28,7 @@ class PlayfieldTransfer(Device):
     def _initialize(self):
         # register switch handler
         self.machine.switch_controller.add_switch_handler(
-            switch_name=self.config['ball_switch'],
+            switch_name=self.config['ball_switch'].name,
             callback=self._ball_went_through,
             state=1, ms=0)
 
