@@ -14,12 +14,10 @@ mpf:
         - device_manager: mpf.system.device_manager.DeviceManager
         - switch_controller: mpf.system.switch_controller.SwitchController
         - ball_controller: mpf.system.ball_controller.BallController
-        
         - light_controller: mpf.system.light_controller.LightController
         - bcp: mpf.system.bcp.BCP
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
         - scoring: mpf.system.scoring.ScoreController
-        
         - shot_controller: mpf.system.shot_controller.ShotController
 
     device_modules:
@@ -272,6 +270,13 @@ config_validator:
             source_playfield: single|self.machine.playfield[%]|playfield
             shoot_again: ms|str|10s
             ball_locks: list|self.machine.ball_locks[%]|None
+            tags: list|str|None
+            label: single|str|%
+            debug: bool|bool|False
+        playfield_transfer:
+            ball_switch: single|self.machine.switches[%]|
+            eject_target: single|self.machine.ball_device[%]|
+            captures_from: single|self.machine.ball_devices[%]|
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
