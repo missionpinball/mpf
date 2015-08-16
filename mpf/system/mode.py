@@ -1,4 +1,4 @@
-""" Contains the Mode, and ModeTimers parent classes"""
+""" Contains the Mode and ModeTimers parent classes"""
 # modes.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth

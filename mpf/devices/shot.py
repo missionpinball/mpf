@@ -1,4 +1,4 @@
-""" Contains the base classes for Shots."""
+""" Contains Shots device base class."""
 # shot.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth

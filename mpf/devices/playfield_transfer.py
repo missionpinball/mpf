@@ -1,8 +1,8 @@
 """ Transfer a ball between two playfields. E.g. lower to upper playfield via a ramp"""
 # playfield_transfer.py
 # Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# This module originally created by JAB
+# MPF is written by Brian Madden & Gabe Knuth
+# This module originally created by Jan Kantert
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/mpf
@@ -66,6 +66,7 @@ class PlayfieldTransfer(Device):
     def _ball_went_through4(self, balls, target):
         # since we confirmed eject target playfield has to be active
         self.machine.events.post('sw_' + self.target.name + '_active')
+
 
 # The MIT License (MIT)
 
