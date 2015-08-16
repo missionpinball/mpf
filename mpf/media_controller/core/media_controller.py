@@ -24,6 +24,7 @@ from distutils.version import LooseVersion
 import Queue
 import traceback
 
+
 import pygame
 
 from mpf.media_controller.core import *

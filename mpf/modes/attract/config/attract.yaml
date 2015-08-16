@@ -1,4 +1,4 @@
-#config_version=2
+#config_version=3
 mode:
   start_events: game_ended, machine_reset_phase_3
   stop_events: game_start

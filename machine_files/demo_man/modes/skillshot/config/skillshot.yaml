@@ -1,4 +1,4 @@
-# config_version=2
+# config_version=3
 mode:
     start_events: ball_starting
     stop_events: timer_mode_timer_complete, target_group_standups_hit

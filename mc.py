@@ -14,10 +14,10 @@ import socket
 import os
 from optparse import OptionParser
 import errno
-import version
 import sys
 
 from mpf.media_controller.core.media_controller import MediaController
+import version
 
 # Allow command line options to do things
 # We use optparse instead of argpase so python 2.6 works
