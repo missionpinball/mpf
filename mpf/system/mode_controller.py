@@ -5,7 +5,7 @@ from collections import namedtuple
 from mpf.system.config import Config
 
 
-RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs',
+RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs priority',
                           verbose=False)
 """RemotedMethod is used by other modules that want to register a method to
 be called on mode_start or mode_stop.
@@ -61,7 +61,7 @@ class ModeController(object):
         #Loads the modes from the Modes: section of the machine configuration
         #file.
 
-        for mode in self.machine.config['modes']:
+        for mode in set(self.machine.config['modes']):
             self.machine.modes.append(self._load_mode(mode))
 
     def _load_mode(self, mode_string):
@@ -167,7 +167,7 @@ class ModeController(object):
             self.queue.clear()
 
     def register_load_method(self, load_method, config_section_name=None,
-                             **kwargs):
+                             priority=0, **kwargs):
         """Used by system components, plugins, etc. to register themselves with
         the Mode Controller for anything they need a mode to do when it's
         registered.
@@ -178,6 +178,9 @@ class ModeController(object):
             config_section_name: An optional string for the section of the
                 configuration file that will be passed to the load_method when
                 it's called.
+            priority: Int of the relative priority which allows remote methods
+                to be called in a specific order. Default is 0. Higher values
+                will be called first.
             **kwargs: Any additional keyword arguments specified will be passed
                 to the load_method.
 
@@ -186,10 +189,11 @@ class ModeController(object):
 
         """
         self.loader_methods.append(RemoteMethod(method=load_method,
-            config_section=config_section_name, kwargs=kwargs))
+            config_section=config_section_name, kwargs=kwargs,
+            priority=priority))
 
     def register_start_method(self, start_method, config_section_name=None,
-                              **kwargs):
+                              priority=0, **kwargs):
         """Used by system components, plugins, etc. to register themselves with
         the Mode Controller for anything that they a mode to do when it starts.
 
@@ -199,6 +203,9 @@ class ModeController(object):
             config_section_name: An optional string for the section of the
                 configuration file that will be passed to the start_method when
                 it's called.
+            priority: Int of the relative priority which allows remote methods
+                to be called in a specific order. Default is 0. Higher values
+                will be called first.
             **kwargs: Any additional keyword arguments specified will be passed
                 to the start_method.
 
@@ -207,7 +214,10 @@ class ModeController(object):
 
         """
         self.start_methods.append(RemoteMethod(method=start_method,
-            config_section=config_section_name, kwargs=kwargs))
+            config_section=config_section_name, priority=priority,
+            kwargs=kwargs))
+
+        self.start_methods.sort(key=lambda x: x.priority, reverse=True)
 
     def _active_change(self, mode, active):
         # called when a mode goes active or inactive

@@ -8,7 +8,6 @@ __all__ = ['events',
            'mode_controller',
            'assets',
            'bcp',
-           'shots',
            'logic_blocks',
            'scoring'
            ]

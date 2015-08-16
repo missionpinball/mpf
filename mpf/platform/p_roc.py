@@ -129,6 +129,9 @@ class HardwarePlatform(Platform):
             or self.machine_type == pinproc.MachineTypeSternSAM\
             or self.machine_type == pinproc.MachineTypePDB
 
+    def __repr__(self):
+        return '<Platform.P-ROC>'
+
     def configure_driver(self, config, device_type='coil'):
         """Creates a P-ROC driver.
 

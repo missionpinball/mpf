@@ -18,21 +18,6 @@ class Multiball(Device):
         self.log = logging.getLogger('Multiball.' + name)
         super(Multiball, self).__init__(machine, name, config, collection)
 
-        if 'ball_count' not in self.config:
-            raise ValueError('Please specify ball_count')
-        if 'source_playfield' not in self.config:
-            self.config['source_playfield'] = 'playfield'
-        if 'shoot_again' not in self.config:
-            self.config['shoot_again'] = '10s'
-        if 'ball_locks' not in self.config:
-            self.config['ball_locks'] = []
-        else:
-            self.config['ball_locks'] = Config.string_to_list(
-                self.config['ball_locks'])
-
-        if not isinstance(self.config['shoot_again'], bool):
-            self.config['shoot_again'] = Timing.string_to_ms(self.config['shoot_again'])
-
         self.delay = DelayManager()
 
         # let ball devices initialise first
@@ -40,21 +25,14 @@ class Multiball(Device):
                                         self._initialize)
 
     def _initialize(self):
-        self.ball_locks = []
+        self.ball_locks = self.config['ball_locks']
         self.shoot_again = False
         self.enabled = False
+        self.source_playfield = self.config['source_playfield']
 
-        for device in self.config['ball_locks']:
-            self.ball_locks.append(self.machine.ball_locks[device])
-
-        self.source_playfield = self.machine.ball_devices[self.config['source_playfield']]
-
-        
     def start(self, **kwargs):
         if not self.enabled:
             return
-
-
 
         if self.balls_ejected > 0:
             self.log.debug("Cannot start MB because %s are still in play",
@@ -156,4 +134,3 @@ class Multiball(Device):
         self.enabled = False
         self.shoot_again = False
         self.balls_ejected = 0
-

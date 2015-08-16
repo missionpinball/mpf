@@ -13,16 +13,9 @@ from mpf.system.tasks import DelayManager
 from mpf.system.config import Config
 from mpf.system.mode_controller import RemoteMethod
 
-
-
-
 # todo
 # override player var
 # override event strings
-
-
-
-
 
 class Mode(object):
     """Parent class for in-game mode code."""
@@ -80,6 +73,9 @@ class Mode(object):
                             **item.kwargs)
 
         self.mode_init()
+
+    def __repr__(self):
+        return '<Mode.' + self.name + '>'
 
     @property
     def active(self):
@@ -174,7 +170,8 @@ class Mode(object):
         for item in self.machine.mode_controller.start_methods:
             if item.config_section in self.config:
                 self.stop_methods.append(
-                    item.method(config=self.config[item.config_section],
+                    item.method(config=self.config.get(item.config_section,
+                                                       self.config),
                                 priority=self.priority,
                                 mode=self,
                                 **item.kwargs))
@@ -308,7 +305,6 @@ class Mode(object):
                 state=handler['state'],
                 ms=handler['ms'])
         self.switch_handlers = list()
-
 
     def _setup_timers(self):
         # config is localized

@@ -157,7 +157,7 @@ class LogicBlock(object):
             if 'ball_starting' not in self.config['reset_events']:
                 self.config['reset_events'].append('ball_starting')
 
-    def __str__(self):
+    def __repr__(self):
         return self.name
 
     def _create_control_events(self):

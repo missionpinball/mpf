@@ -13,7 +13,6 @@ import sys
 import Queue
 
 from mpf.system import *
-from mpf.devices import *
 from mpf.system.config import Config
 from mpf.system.tasks import Task, DelayManager
 import version
@@ -100,7 +99,6 @@ class MachineController(object):
                                 replace('%', 'quit'), self.quit)
 
         self.events.post("init_phase_1")
-        self._load_device_modules()
         self.events.post("init_phase_2")
         self._load_plugins()
         self.events.post("init_phase_3")
@@ -184,36 +182,15 @@ class MachineController(object):
         self.log.info("Python executable location: %s", sys.executable)
         self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
 
-    def _load_device_modules(self):
-        self.config['mpf']['device_modules'] = (
-            self.config['mpf']['device_modules'].split(' '))
-        for device_type in self.config['mpf']['device_modules']:
-            device_cls = eval(device_type)
-
-            collection, config = device_cls.get_config_info()
-
-            # create the collection
-            setattr(self, collection, devices.DeviceCollection(self, collection,
-                                                               device_cls.config_section))
-
-            # Create this device
-            if config in self.config:
-                self.log.info("Loading '%s' devices", collection)
-                devices.Device.create_devices(device_cls,
-                                          getattr(self, collection),
-                                          self.config[config],
-                                          self
-                                          )
-            else:
-                self.log.debug("No '%s:' section found in machine configuration"
-                               ", so this collection will not be created.",
-                               config)
-
     def _load_system_modules(self):
         for module in self.config['mpf']['system_modules']:
             self.log.info("Loading '%s' system module", module[1])
             m = self.string_to_class(module[1])(self)
             setattr(self, module[0], m)
+            # try:
+            #     getattr(self, module[0]).post_init_callback()
+            # except AttributeError:
+            #     pass
 
     def _load_plugins(self):
 

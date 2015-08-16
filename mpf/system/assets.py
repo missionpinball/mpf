@@ -453,7 +453,7 @@ class Asset(object):
 
         self._initialize_asset()
 
-    # def __str__(self):
+    # def __repr__(self):
     #
     #     if self.file_name:
     #         return self.file_name

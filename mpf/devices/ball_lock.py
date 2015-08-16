@@ -18,17 +18,6 @@ class BallLock(Device):
         self.log = logging.getLogger('BallLock.' + name)
         super(BallLock, self).__init__(machine, name, config, collection)
 
-        # check config
-        if 'balls_to_lock' not in self.config:
-            raise ValueError('Please specify balls_to_lock')
-        if 'lock_devices' not in self.config:
-            raise ValueError('Please specify lock_devices')
-        else:
-            self.config['lock_devices'] = Config.string_to_list(
-                self.config['lock_devices'])
-        if 'source_playfield' not in self.config:
-            self.config['source_playfield'] = 'playfield'
-
         # initialise variables
         self.balls_locked = 0
         self.lock_queue = deque()
@@ -43,9 +32,9 @@ class BallLock(Device):
         self.lock_devices = []
         self.enabled = False
         for device in self.config['lock_devices']:
-            self.lock_devices.append(self.machine.ball_devices[device])
+            self.lock_devices.append(device)
 
-        self.source_playfield = self.machine.ball_devices[self.config['source_playfield']]
+        self.source_playfield = self.config['source_playfield']
 
     def enable(self, **kwargs):
         """ Enables the lock. If the lock is not enabled, no balls will be
@@ -143,7 +132,7 @@ class BallLock(Device):
             balls_to_lock = capacity
         else:
             balls_to_lock = balls
-        
+
         self.balls_locked += balls_to_lock
         self.log.debug("Locked %s balls", balls_to_lock)
 

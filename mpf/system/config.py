@@ -44,12 +44,17 @@ class CaseInsensitiveDict(dict):
 
     def __delitem__(self, key):
         try:
-            return super(CaseInsensitiveDict, self).__del__(key.lower())
+            return super(CaseInsensitiveDict, self).__delitem__(key.lower())
         except AttributeError:
-            return super(CaseInsensitiveDict, self).__del__(key)
+            return super(CaseInsensitiveDict, self).__delitem__(key)
 
 
 class Config(object):
+
+    def __init__(self, machine):
+        self.machine = machine
+        self.log = logging.getLogger('Config')
+
 
     @staticmethod
     def load_config_yaml(config=None, yaml_file=None,
@@ -256,32 +261,238 @@ class Config(object):
 
         if item_type == 'list':
             return Config.string_to_list(item)
+
+        if item_type == 'list_of_dicts':
+            if type(item) is list:
+                return item
+            elif type(item) is dict:
+                return [item]
+
+        elif item_type == 'set':
+            return set(Config.string_to_list(item))
+
+        elif item_type == 'dict':
+            if type(item) is dict or type(item) is CaseInsensitiveDict:
+                return item
+            elif not default:
+                return dict()
+            else:
+                log.error('Config error. "%s" is not a dictionary', item)
+                sys.exit()
+
         elif item_type == 'int':
             try:
                 return int(item)
             except TypeError:
                 return None
+
         elif item_type == 'float':
             try:
                 return float(item)
             except TypeError:
                 return None
-        elif item_type == 'string':
-            try:
+
+        elif item_type in ('string', 'str'):
+
+            if item:
                 return str(item)
-            except TypeError:
+            else:
                 return None
-        elif item_type == 'boolean':
+
+        elif item_type in ('boolean', 'bool'):
             if type(item) is bool:
                 return item
             else:
                 return item.lower() in ('yes', 'true')
+
         elif item_type == 'ms':
             return Timing.string_to_ms(item)
+
         elif item_type == 'secs':
             return Timing.string_to_secs(item)
+
         elif item_type == 'list_of_lists':
             return Config.list_of_lists(item)
+
+    def process_config2(self, config_spec, source, section_name, target=None):
+
+        validation_failure_info = (config_spec, section_name)
+
+        # config_spec = "device:shot"
+        config_spec = config_spec.split(':')
+        this_spec = self.machine.config['config_validator']
+
+        for i in range(len(config_spec)):
+            this_spec = this_spec[config_spec[i]]
+
+        processed_config = source
+
+        for k in this_spec.keys():
+            if k in source:  # validate the entry that exists
+                processed_config[k] = self.validate_config_item2(
+                    this_spec[k], item=source[k],
+                    validation_failure_info=(validation_failure_info, k))
+            else:  # create the default entry
+                processed_config[k] = self.validate_config_item2(
+                    this_spec[k],
+                    validation_failure_info=(validation_failure_info, k))
+
+        if target:
+            processed_config = Config.dict_merge(target, processed_config)
+
+        return processed_config
+
+    def validate_config_item2(self, spec, validation_failure_info,
+                              item='item not in config!@#',):
+
+        default = 'default required!@#'
+
+        item_type, validation, default = spec.split('|')
+
+        if default.lower() == 'none':
+            default = None
+
+        if item == 'item not in config!@#':
+            if default == 'default required!@#':
+                log.error('Required setting missing from config file. Run with '
+                          'verbose logging and look for the last '
+                          'ConfigProcessor entry above this line to see where '
+                          'the problem is.')
+                sys.exit()
+            else:
+                item = default
+
+        if item_type == 'list':
+            item = Config.string_to_list(item)
+
+            new_list = list()
+
+            for i in item:
+                new_list.append(
+                    self.validate_item(i, validation, validation_failure_info))
+
+            item = new_list
+
+        elif item_type == 'list_of_dicts':
+            if type(item) is list:
+                pass
+            elif type(item) is dict:
+                item = [item]
+
+            # TODO
+
+        elif item_type == 'single':
+            item = self.validate_item(item, validation, validation_failure_info)
+
+        elif item_type == 'delay_dict':  # time values will be ms
+            if not item:
+                item = dict()
+
+            else:
+                new_dict = dict()
+
+                for k, v in item.iteritems():
+                    new_dict[self.validate_item(k, validation,
+                        validation_failure_info)] = Timing.string_to_ms(v)
+
+                item = new_dict
+
+        elif item_type == 'set':
+            item = set(Config.string_to_list(item))
+
+            new_set = set()
+
+            for i in item:
+                new_set.add(
+                    self.validate_item(i, validation, validation_failure_info))
+
+            item = new_set
+
+        elif item_type == 'dict':
+            if type(item) is dict or type(item) is CaseInsensitiveDict:
+                pass
+            elif not default:
+                item = dict()
+            else:
+                log.error('Config error. "%s" is not a dictionary', item)
+                sys.exit()
+
+            # TODO
+
+        elif item_type == 'int':
+
+            try:
+                item = int(item)
+            except TypeError:
+                # TODO error
+                pass
+
+        elif item_type == 'float':
+            try:
+                item = float(item)
+            except TypeError:
+                # TODO error
+                pass
+
+        elif item_type in ('boolean', 'bool'):
+            if not item:
+                item = False
+            elif type(item) is str and item.lower() in ('no', 'false', 'off'):
+                item = False
+            else:
+                item = True
+
+        elif item_type == 'ms':
+            item = Timing.string_to_ms(item)
+
+        elif item_type == 'secs':
+            item = Timing.string_to_secs(item)
+
+        elif item_type == 'list_of_lists':
+            item = Config.list_of_lists(item)
+
+            # TODO
+
+        elif item_type == 'ticks':
+            item = Timing.string_to_ticks(item)
+
+        return item
+
+    def validate_item(self, item, validator, validation_failure_info):
+
+        if '%' in validator and item:
+
+            if item:
+
+                try:
+                    item = eval(validator.replace('%', "'" + item + "'"))
+                except KeyError:
+                    self.validation_error(item, validation_failure_info)
+
+        elif validator in ('string', 'str'):
+            if item:
+                item = str(item)
+            else:
+                item = None
+
+        elif validator == 'float':
+            item = float(item)
+
+        elif validator == 'int':
+            item = int(item)
+
+        elif validator == 'bool':
+            item = bool(item)
+
+        return item
+
+    def validation_error(self, item, validation_failure_info):
+        self.log.error("Config validation error: Entry %s:%s:%s:%s is not valid",
+                       validation_failure_info[0][0],
+                       validation_failure_info[0][1],
+                       validation_failure_info[1],
+                       item)
+        sys.exit()
 
     @staticmethod
     def dict_merge(a, b, combine_lists=True):

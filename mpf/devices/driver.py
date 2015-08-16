@@ -33,6 +33,8 @@ class Driver(Device):
     def __init__(self, machine, name, config, collection=None):
         self.log = logging.getLogger('Driver.' + name)
 
+        config['number_str'] = str(config['number']).upper()
+
         super(Driver, self).__init__(machine, name, config, collection,
                                      platform_section='coils')
 
@@ -42,36 +44,25 @@ class Driver(Device):
         # We save out number_str since the platform driver will convert the
         # number into a hardware number, but we need the original number for
         # some things later.
-        self.config['number_str'] = str(config['number']).upper()
+        #self.config['number_str'] = str(config['number']).upper()
+
 
         self.hw_driver, self.number = (
             self.platform.configure_driver(self.config))
         self.log.debug("Creating '%s' with config: %s", name, config)
 
-        if 'pulse_ms' not in self.config:
+        if not self.config['pulse_ms']:
             # If there's a holdpatter and no pulse_ms, we'll keep it at zero
-            if 'holdpatter' in self.config:
+            if self.config['holdpatter']:
                 self.config['pulse_ms'] = 0
             # Otherwise we'll use the system default for pulse_ms
             else:
                 self.config['pulse_ms'] = (
                     self.machine.config['mpf']['default_pulse_ms'])
 
-        if 'holdpatter' in self.config:
+        if self.config['holdpatter']:
             self.config['pwm_on'] = int(config['holdpatter'].split('-')[0])
             self.config['pwm_off'] = int(config['holdpatter'].split('-')[1])
-        else:
-            if 'pwm_on' not in self.config:
-                self.config['pwm_on'] = 0
-
-            if 'pwm_off' not in self.config:
-                self.config['pwm_off'] = 0
-
-        if ('allow_enable' in self.config and
-                str(self.config['allow_enable']).upper() == 'TRUE'):
-            self.config['allow_enable'] = True
-        else:
-            self.config['allow_enable'] = False
 
     def enable(self):
         """Enables a driver by holding it 'on'.
