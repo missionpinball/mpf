@@ -35,6 +35,9 @@ class HardwarePlatform(Platform):
         self.log.debug("Configuring Open Pixel hardware interface.")
         self.opc_client = None
 
+    def __repr__(self):
+        return '<Platform.OpenPixel>'
+
     def configure_led(self, config):
 
         if not self.opc_client:

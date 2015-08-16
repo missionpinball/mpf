@@ -874,7 +874,7 @@ class Show(Asset):
             self._initialize_asset()
             self._load(callback=None, show_actions=actions)
 
-    def __str__(self, ):
+    def __repr__(self, ):
         return '<Show.' + self.file_name + '.>'
 
     def _initialize_asset(self):

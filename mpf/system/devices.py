@@ -24,6 +24,7 @@ class Device(object):
         self.tags = list()
         self.label = None
         self.debug = False
+        self.platform = None
         self.config = dict()
 
         self.config = self.machine.config_processor.process_config2(
@@ -31,7 +32,8 @@ class Device(object):
 
         if self.config['debug']:
             self.debug = True
-            self.log.info("Enabling debug logging for this device")
+            self.log.debug("Enabling debug logging for this device")
+            self.log.debug("Configuring device with settings: '%s'", config)
 
         self.tags = self.config['tags']
         self.label = self.config['label']
@@ -51,6 +53,9 @@ class Device(object):
             else:
                 self.platform = self.machine.default_platform
 
+        if self.debug:
+            self.log.debug('Platform Driver: %s', self.platform)
+
         self._create_control_events(self.config, self.machine.delay)
 
         try:
@@ -64,7 +69,7 @@ class Device(object):
             # Have to use -1 here instead of None to catch an empty collection
             collection[name] = self
 
-    def __str__(self):
+    def __repr__(self):
         return '<' + self.class_label + '.' + self.name + '>'
 
     @classmethod

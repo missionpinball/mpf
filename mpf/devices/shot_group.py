@@ -30,10 +30,11 @@ class ShotGroup(Device):
                  member_collection=None, device_str=None):
         self.log = logging.getLogger('ShotGroup.' + name)
 
+        super(ShotGroup, self).__init__(machine, name, config, collection)
+
         if self.debug:
             self.log.debug("Configuring shot group with settings: '%s'", config)
 
-        super(ShotGroup, self).__init__(machine, name, config, collection)
 
         self.enabled = False
         self.rotation_enabled = True

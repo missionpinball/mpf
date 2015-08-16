@@ -306,6 +306,9 @@ class HardwarePlatform(Platform):
                               'WD': self.receive_wd,  # watchdog
                               }
 
+    def __repr__(self):
+        return '<Platform.FAST>'
+
     def process_received_message(self, msg):
         """Sends an incoming message from the FAST controller to the proper
         method for servicing.

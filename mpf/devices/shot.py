@@ -37,9 +37,6 @@ class Shot(Device):
         """
         self.log = logging.getLogger('Shot.' + name)
 
-        if self.debug:
-            self.log.debug("Configuring shot with settings: '%s'", config)
-
         super(Shot, self).__init__(machine, name, config, collection)
 
         self.delay = DelayManager()

@@ -109,8 +109,6 @@ class DropTargetBank(Device):
 
     def __init__(self, machine, name, config, collection=None):
 
-        self.device_str = 'drop_targets'
-
         self.log = logging.getLogger('DropTargetBank.' + name)
         super(DropTargetBank, self).__init__(machine, name, config, collection)
 
@@ -121,8 +119,15 @@ class DropTargetBank(Device):
         self.down = 0
         self.up = 0
 
-        for target in self.config['drop_targets']:
-            self.machine.drop_targets[target].add_to_bank(self)
+        self.drop_targets = self.config['drop_targets']
+        self.reset_coil = self.config['reset_coil']
+        self.reset_coils = self.config['reset_coils']
+
+        for target in self.drop_targets:
+            target.add_to_bank(self)
+
+        if self.debug:
+            self.log.debug('Drop Targets: %s', self.drop_targets)
 
     def reset(self, **kwargs):
         """Resets this bank of drop targets.
@@ -135,8 +140,13 @@ class DropTargetBank(Device):
         coil, even if each drop target is configured with its own coil.)
 
         """
+
+        if self.debug:
+            self.log.debug('Resetting')
+
         # figure out all the coils we need to pulse
         coils = set()
+
 
         for drop_target in self.drop_targets:
             if drop_target.reset_coil:
@@ -150,6 +160,10 @@ class DropTargetBank(Device):
 
         # now pulse them
         for coil in coils:
+
+            if self.debug:
+                self.log.debug('Pulsing reset coils: %s', coils)
+
             coil.pulse()
 
     def member_target_change(self):
@@ -168,6 +182,11 @@ class DropTargetBank(Device):
             else:
                 self.up += 1
 
+        if self.debug:
+            self.log.debug('Member drop target status change: Up: %s, Down: %s,'
+                           ' Total: %s', self.up, self.down,
+                           len(self.drop_targets))
+
         if down == len(self.drop_targets):
             self._bank_down()
         if not down:
@@ -177,10 +196,15 @@ class DropTargetBank(Device):
 
     def _bank_down(self):
         self.complete = True
+        if self.debug:
+            self.log.debug('All targets are down')
+
         self.machine.events.post(self.name + '_down')
 
     def _bank_up(self):
         self.complete = False
+        if self.debug:
+            self.log.debug('All targets are up')
         self.machine.events.post(self.name + '_up')
 
     def _bank_mixed(self):

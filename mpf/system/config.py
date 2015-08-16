@@ -400,8 +400,13 @@ class Config(object):
         elif item_type == 'set':
             item = set(Config.string_to_list(item))
 
+            new_set = set()
+
             for i in item:
-                i = self.validate_item(i, validation, validation_failure_info)
+                new_set.add(
+                    self.validate_item(i, validation, validation_failure_info))
+
+            item = new_set
 
         elif item_type == 'dict':
             if type(item) is dict or type(item) is CaseInsensitiveDict:
