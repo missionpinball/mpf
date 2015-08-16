@@ -49,7 +49,7 @@ class ModeController(object):
         #Loads the modes from the Modes: section of the machine configuration
         #file.
 
-        for mode in self.machine.config['modes']:
+        for mode in set(self.machine.config['modes']):
             self.machine.modes[mode] = self._load_mode(mode)
 
     def _load_mode(self, mode_string):
