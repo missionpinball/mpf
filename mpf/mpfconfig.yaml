@@ -28,6 +28,7 @@ mpf:
         gi.GI
         autofire.AutofireCoil
         ball_device.BallDevice
+        playfield.Playfield
         drop_target.DropTarget
         drop_target.DropTargetBank
         shot.Shot
@@ -179,12 +180,12 @@ config_validator:
         ball_lock:
             balls_to_lock: int|int|
             lock_devices: list|self.machine.ball_devices[%]|
-            source_playfield: single|self.machine.playfield[%]|playfield
+            source_playfield: single|self.machine.ball_devices[%]|playfield
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
         ball_save:
-            source_playfield: single|self.machine.playfield[%]|playfield
+            source_playfield: single|self.machine.ball_devices[%]|playfield
             auto_disable_time: ms|str|0
             tags: list|str|None
             label: single|str|%
@@ -267,9 +268,14 @@ config_validator:
             debug: bool|bool|False
         multiball:
             ball_count: int|int|
-            source_playfield: single|self.machine.playfield[%]|playfield
+            source_playfield: single|self.machine.ball_devices[%]|playfield
             shoot_again: ms|str|10s
             ball_locks: list|self.machine.ball_locks[%]|None
+            tags: list|str|None
+            label: single|str|%
+            debug: bool|bool|False
+        playfield:
+            eject_targets: list|str|None
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
@@ -579,3 +585,7 @@ light_scripts:
     "off":
         - tocks: 1
           color: 0
+
+playfields:
+    playfield:
+        tags: default

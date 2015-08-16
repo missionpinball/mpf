@@ -9,7 +9,7 @@ import logging
 
 from mpf.system.tasks import DelayManager
 from mpf.system.device_manager import DeviceCollection
-from mpf.devices.playfield import Playfield
+
 
 
 class BallController(object):
@@ -31,8 +31,6 @@ class BallController(object):
 
         self.game = None
 
-        self.machine.playfield = None  # Configured in init_phase_2
-
         self._num_balls_known = -999
 
         self.num_balls_missing = 0
@@ -43,13 +41,8 @@ class BallController(object):
                                         self.request_to_start_game)
         self.machine.events.add_handler('machine_reset_phase_2',
                                         self._initialize)
-        self.machine.events.add_handler('init_phase_2',
-                                        self.create_playfield_device, 2)
-
-
-
-
-
+        # self.machine.events.add_handler('init_phase_2',
+        #                                 self.create_playfield_device, 2)
 
     @property
     def balls(self):
@@ -82,17 +75,17 @@ class BallController(object):
         """
         self._num_balls_known = balls
 
-    def create_playfield_device(self):
-        """Creates the actual playfield ball device and assigns it to
-        self.playfield.
-        """
-        if not hasattr(self.machine, 'ball_devices'):
-            self.machine.ball_devices = DeviceCollection(self.machine,
-                                                         'ball_devices',
-                                                         'ball_devices')
-
-        self.machine.playfield = Playfield(self.machine, name='playfield',
-                                           collection='ball_devices')
+    # def create_playfield_device(self):
+    #     """Creates the actual playfield ball device and assigns it to
+    #     self.playfield.
+    #     """
+    #     if not hasattr(self.machine, 'ball_devices'):
+    #         self.machine.ball_devices = DeviceCollection(self.machine,
+    #                                                      'ball_devices',
+    #                                                      'ball_devices')
+    #
+    #     self.machine.playfield = Playfield(self.machine, name='playfield',
+    #                                        collection='ball_devices')
 
     def _initialize(self):
 

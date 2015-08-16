@@ -410,7 +410,7 @@ class LightController(object):
 
         for light in show.light_states:
 
-            if light.debug_logging:
+            if light.debug:
                 light.log.info("Found this light in a restore_lower_lights meth "
                               "in show.light_states. Light cache priority: %s,"
                               "ending show priority: %s", light.cache['priority'],
@@ -421,7 +421,7 @@ class LightController(object):
 
         for led in show.led_states:
 
-            if led.debug_logging:
+            if led.debug:
                 led.log.info("Found this LED in a restore_lower_lights meth "
                               "in show.led_states. LED cache priority: %s,"
                               "ending show priority: %s", led.cache['priority'],
@@ -594,7 +594,7 @@ class LightController(object):
 
                 # Now we're doing the actual update.
 
-                if item['led'].debug_logging:
+                if item['led'].debug:
                     item['led'].log.info("Applying update to LED from the Show "
                                          "Controller")
 
@@ -604,7 +604,7 @@ class LightController(object):
                                   blend=item['blend'],
                                   cache=False)
 
-            elif item['led'].debug_logging:
+            elif item['led'].debug:
                 item['led'].log.info("Show Controller has an update for this "
                                      "LED, but the update is priority %s while "
                                      "the current priority of the LED is %s. "
@@ -875,7 +875,10 @@ class Show(Asset):
             self._load(callback=None, show_actions=actions)
 
     def __repr__(self, ):
-        return '<Show.' + self.file_name + '.>'
+        try:
+            return '<Show.' + self.file_name + '.>'
+        except TypeError:
+            return '<Show Object created from script>'
 
     def _initialize_asset(self):
 
