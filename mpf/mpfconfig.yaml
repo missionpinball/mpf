@@ -137,11 +137,10 @@ mpf:
 config_validator:
 # values are type|validation|default
     device:
-        autofire:
+        autofire_coils:
             coil: single|self.machine.coils[%]|
             switch: single|self.machine.switches[%]|
             reverse_switch: bool|bool|False
-            # verify
             pulse_ms: int|int|None
             pwm_on_ms: int|int|None
             pwm_off_ms: int|int|None
@@ -153,7 +152,7 @@ config_validator:
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        ball_device:
+        ball_devices:
             exit_count_delay: ms|int|500ms
             entrance_count_delay: ms|int|500ms
             eject_coil: single|self.machine.coils[%]|None
@@ -162,11 +161,9 @@ config_validator:
             jam_switch: single|self.machine.switches[%]|None
             eject_count_hold_times: list|ms|None
             confirm_eject_type: single|str|count
-            # verify
             captures_from: single|str|playfield
             eject_targets: list|str|playfield
             # can't convert to objects until all ball_devices are setup
-            # verify
             eject_timeouts: list|ms|None
             confirm_eject_switch: single|self.machine.switches[%]|None
             confirm_eject_event: single|str|None
@@ -177,20 +174,20 @@ config_validator:
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        ball_lock:
+        ball_locks:
             balls_to_lock: int|int|
             lock_devices: list|self.machine.ball_devices[%]|
             source_playfield: single|self.machine.ball_devices[%]|playfield
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        ball_save:
+        ball_saves:
             source_playfield: single|self.machine.ball_devices[%]|playfield
             auto_disable_time: ms|str|0
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        coil:
+        coils:
             number: single|str|
             number_str: single|str|
             pulse_ms: int|int|0
@@ -201,7 +198,7 @@ config_validator:
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        diverter:
+        diverters:
             type: single|str|pulse
             activation_time: ms|str|0
             activation_switches: list|self.machine.switches[%]|None
@@ -215,28 +212,28 @@ config_validator:
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        drop_target:
+        drop_targets:
             switch: single|self.machine.switches[%]|
             reset_coil: single|self.machine.coils[%]|
             knockdown_coil: single|self.machine.coils[%]|None
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        drop_target_bank:
+        drop_target_banks:
             drop_targets: set|self.machine.drop_targets[%]|
             reset_coil: single|self.machine.coils[%]|None
             reset_coils: list|self.machine.coils[%]|None
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        flasher:
+        flashers:
             number: single|str|
             number_str: single|str|
             flash_ms: ms|str|None
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        flipper:
+        flippers:
             main_coil: single|self.machine.coils[%]|
             hold_coil: single|self.machine.coils[%]|None
             activation_switch: single|self.machine.switches[%]|
@@ -245,13 +242,13 @@ config_validator:
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        gi:
+        gis:
             number: single|str|
             number_str: single|str|
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        led:
+        leds:
             number: single|str|
             number_str: single|str|
             default_color: single|str|None
@@ -260,13 +257,13 @@ config_validator:
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        light:
+        matrix_lights:
             number: single|str|
             number_str: single|str|
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        multiball:
+        multiballs:
             ball_count: int|int|
             source_playfield: single|self.machine.ball_devices[%]|playfield
             shoot_again: ms|str|10s
@@ -274,19 +271,19 @@ config_validator:
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        playfield:
+        playfields:
             eject_targets: list|str|None
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        playfield_transfer:
+        playfield_transfers:
             ball_switch: single|self.machine.switches[%]|
             eject_target: single|self.machine.ball_device[%]|
             captures_from: single|self.machine.ball_devices[%]|
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        score_reel:
+        score_reels:
             coil_inc: single|self.machine.coils[%]|None
             coil_dec: single|self.machine.coils[%]|None
             rollover: bool|bool|True
@@ -296,7 +293,7 @@ config_validator:
             hw_confirm_time: ms|str|300
             config: single|str|lazy
             # switch_x is also here but cannot be processed here
-        score_reel_group:
+        score_reel_groups:
             max_simultaneous_coils: int|int|2
             confirm: single|str|strict
             reels: list|str|
@@ -304,7 +301,7 @@ config_validator:
             repeat_pulse_time: ms|str|200
             hw_confirm_time: ms|str|300
             config: single|str|lazy
-        shot:
+        shots:
             profile: single|str|default
             switch: list|self.machine.switches[%]|None
             switch_sequence: list|self.machine.switches[%]|None
@@ -316,12 +313,12 @@ config_validator:
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        shot_group:
+        shot_groups:
             shots: list|self.machine.shots[%]|
             tags: list|str|None
             label: single|str|%
             debug: bool|bool|False
-        switch:
+        switches:
             number: single|str|
             number_str: single|str|
             type: single|str|NO

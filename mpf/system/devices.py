@@ -28,7 +28,7 @@ class Device(object):
         self.config = dict()
 
         self.config = self.machine.config_processor.process_config2(
-            'device:' + self.class_label, config, self.name)
+            'device:' + self.config_section, config, self.name)
 
         if self.config['debug']:
             self.debug = True
