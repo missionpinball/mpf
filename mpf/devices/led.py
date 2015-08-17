@@ -9,7 +9,7 @@
 import logging
 import time
 
-from mpf.system.devices import Device
+from mpf.system.device import Device
 from mpf.system.tasks import Task
 from mpf.system.config import Config
 

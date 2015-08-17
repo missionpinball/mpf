@@ -209,7 +209,7 @@ class BallController(object):
         elif antitarget:
             self.log.debug("Emptying balls from devices tagged '%s'",
                            antitarget)
-            for device in self.machine.devices:
+            for device in self.machine.ball_devices:
                 if target in device.tags and device.balls > 0:
                     device.eject(balls=device.balls)
 

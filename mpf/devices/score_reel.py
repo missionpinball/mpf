@@ -10,7 +10,7 @@ import logging
 import time
 
 from collections import deque
-from mpf.system.devices import Device
+from mpf.system.device import Device
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 from mpf.system.config import Config
@@ -194,7 +194,7 @@ class ScoreReelGroup(Device):
     """Represents a logical grouping of score reels in a pinball machine, where
     multiple individual ScoreReel object make up the individual digits of this
     group. This group also has support for the blank zero "inserts" that some
-    machines use. This is a subclass of mpf.system.devices.Device.
+    machines use. This is a subclass of mpf.system.device.Device.
     """
     config_section = 'score_reel_groups'
     collection = 'score_reel_groups'

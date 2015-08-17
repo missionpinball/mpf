@@ -8,7 +8,7 @@
 
 import logging
 import time
-from mpf.system.devices import Device
+from mpf.system.device import Device
 
 
 class Driver(Device):

@@ -8,7 +8,7 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-from mpf.system.devices import Device
+from mpf.system.device import Device
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 from mpf.system.config import Config

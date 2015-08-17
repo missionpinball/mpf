@@ -5,7 +5,7 @@
 # Search this file for 'YourNewDevice' and replace with your device name
 
 import logging
-from mpf.system.devices import Device
+from mpf.system.device import Device
 
 class YourNewDevice(Device):
 

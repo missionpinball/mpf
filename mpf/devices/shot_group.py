@@ -9,7 +9,7 @@
 import logging
 from collections import deque
 
-from mpf.system.devices import Device
+from mpf.system.device import Device
 from mpf.system.config import Config
 
 
