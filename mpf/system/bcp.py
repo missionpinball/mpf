@@ -226,6 +226,10 @@ class BCP(object):
         self.machine.mode_controller.register_load_method(
             self.register_mpfmc_trigger_events)
 
+    def __repr(self):
+        return '<BCP Module>'
+
+
     def _setup_dmd(self):
 
         dmd_platform = self.machine.default_platform

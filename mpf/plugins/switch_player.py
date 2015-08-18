@@ -43,6 +43,9 @@ class SwitchPlayer(object):
         self.step_list = self.config['steps']
         self.start_delay = self.config['start_delay']
 
+    def __repr__(self):
+        return '<SwitchPlayer>'
+
     def _start_event_callback(self):
 
         if ('time' in self.step_list[self.current_step] and

@@ -44,6 +44,10 @@ class Auditor(object):
 
         self.machine.events.add_handler('init_phase_4', self._initialize)
 
+    def __repr__(self):
+        return '<Auditor>'
+
+
     def _initialize(self):
         # Initializes the auditor. We do this separate from __init__() since
         # we need everything else to be setup first.

@@ -18,6 +18,10 @@ class Scriptlet(object):
         self.log.info("Loading Scriptlet: %s", name)
         self.on_load()
 
+    def __repr__(self):
+        return '<Scriptlet.' + self.name + '>'
+
+
     def on_load(self):
         """Automatically called when this Scriptlet loads. It's the intention
         that the Scriptlet writer will overwrite this method in the Scriptlet.

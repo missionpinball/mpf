@@ -83,6 +83,9 @@ class Player(object):
         self.machine.events.post('player_add_success', player=self,
                                  num=self.vars['number'])
 
+    def __repr__(self):
+        return '<Player ' + str(self.vars['number']) + '>'
+
     def __getattr__(self, name):
         if name in self.vars:
             return self.vars[name]

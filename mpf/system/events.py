@@ -596,6 +596,10 @@ class QueuedEvent(object):
         self.kwargs = kwargs
         self.num_waiting = 0
 
+    def __repr__(self):
+        return '<QueuedEvent for callback ' + self.callback + '>'
+
+
     def wait(self):
         self.num_waiting += 1
         self.log.debug("Registering a wait. Current count: %s",
