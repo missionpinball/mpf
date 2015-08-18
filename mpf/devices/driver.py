@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 import time
 from mpf.system.device import Device
 
@@ -31,25 +30,15 @@ class Driver(Device):
     class_label = 'coil'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('Driver.' + name)
-
         config['number_str'] = str(config['number']).upper()
-
         super(Driver, self).__init__(machine, name, config, collection,
                                      platform_section='coils')
 
         self.time_last_changed = 0
         self.time_when_done = 0
 
-        # We save out number_str since the platform driver will convert the
-        # number into a hardware number, but we need the original number for
-        # some things later.
-        #self.config['number_str'] = str(config['number']).upper()
-
-
         self.hw_driver, self.number = (
             self.platform.configure_driver(self.config))
-        self.log.debug("Creating '%s' with config: %s", name, config)
 
         if not self.config['pulse_ms']:
             # If there's a holdpatter and no pulse_ms, we'll keep it at zero

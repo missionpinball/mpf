@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 from mpf.system.device import Device
 
 
@@ -36,8 +35,6 @@ class Flipper(Device):
     class_label = 'flipper'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('Flipper.' + name)
-
         super(Flipper, self).__init__(machine, name, config, collection)
 
         # todo convert to dict
@@ -56,8 +53,7 @@ class Flipper(Device):
         self.rules['h'] = False
         self.rules['g'] = False
 
-        if config:
-            self.configure(config)
+        self.configure(self.config)
 
     def configure(self, config=None):
         """Configures the flipper device.

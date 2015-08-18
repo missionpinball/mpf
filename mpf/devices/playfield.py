@@ -19,7 +19,7 @@ class Playfield(BallDevice):
     class_label = 'playfield'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('Playfield')
+        self.log = logging.getLogger('playfield')
 
         self.machine = machine
         self.name = name.lower()

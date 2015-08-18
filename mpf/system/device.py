@@ -6,6 +6,8 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
+import logging
+
 from mpf.system.timing import Timing
 from mpf.system.config import Config, CaseInsensitiveDict
 
@@ -19,8 +21,10 @@ class Device(object):
 
     def __init__(self, machine, name, config=None, collection=-1,
                  platform_section=None):
+
         self.machine = machine
         self.name = name.lower()
+        self.log = logging.getLogger(self.class_label + '.' + self.name)
         self.tags = list()
         self.label = None
         self.debug = False

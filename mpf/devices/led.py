@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 import time
 
 from mpf.system.device import Device
@@ -37,12 +36,9 @@ class LED(Device):
             machine.config['hardware']['brightness_compensation'] = 1.0
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('LED.' + name)
         config['number_str'] = str(config['number']).upper()
         super(LED, self).__init__(machine, name, config, collection,
                                   platform_section='leds')
-
-        self.log.debug("Creating '%s' with config: %s", name, config)
 
         self.config['default_color'] = Config.hexstring_to_list(
             input_string=self.config['default_color'],
@@ -76,9 +72,6 @@ class LED(Device):
         self.set_brightness_compensation(self.config['brightness_compensation'])
 
         self.current_color = []  # one item for each element, 0-255
-
-        if self.debug:
-            self.log.debug("Intial settings: %s", self.config)
 
     def set_brightness_compensation(self, value):
         """Sets the brightness compensation for this LED.

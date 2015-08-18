@@ -20,7 +20,6 @@ class BallLock(Device):
     class_label = 'ball_lock'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('BallLock.' + name)
         super(BallLock, self).__init__(machine, name, config, collection)
 
         # initialise variables

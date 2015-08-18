@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 from mpf.system.device import Device
 
 
@@ -19,17 +18,13 @@ class Flasher(Device):
     class_label = 'flasher'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('Flasher.' + name)
-
         config['number_str'] = str(config['number']).upper()
-
         super(Flasher, self).__init__(machine, name, config, collection,
                                       platform_section='flashers')
 
         self.hw_driver, self.number = (
             self.platform.configure_driver(config=self.config,
                                            device_type='flasher'))
-        self.log.debug("Creating '%s' with config: %s", name, config)
 
         if self.config['flash_ms'] is None:
             self.config['flash_ms'] = (

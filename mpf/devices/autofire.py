@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 from mpf.system.device import Device
 
 
@@ -28,8 +27,6 @@ class AutofireCoil(Device):
     class_label = 'autofire'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('AutofireCoil.' + name)
-
         super(AutofireCoil, self).__init__(machine, name, config, collection)
 
         self.platform = None

@@ -7,7 +7,7 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
+
 from mpf.system.device import Device
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
@@ -20,8 +20,6 @@ class BallSave(Device):
     class_label = 'ball_save'
 
     def __init__(self, machine, name, config, collection=None):
-
-        self.log = logging.getLogger('BallSave.' + name)
         super(BallSave, self).__init__(machine, name, config, collection)
 
         self.delay = DelayManager()

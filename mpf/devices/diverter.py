@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 from collections import deque
 
 from mpf.system.device import Device
@@ -26,7 +25,6 @@ class Diverter(Device):
     class_label = 'diverter'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('Diverter.' + name)
         super(Diverter, self).__init__(machine, name, config, collection)
 
         self.delay = DelayManager()

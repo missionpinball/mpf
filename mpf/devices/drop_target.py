@@ -6,8 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
-
 from mpf.system.device import Device
 from mpf.system.config import Config
 
@@ -22,9 +20,6 @@ class DropTarget(Device):
     class_label = 'drop_target'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('DropTarget.' + name)
-        self.device_str = 'droptarget'
-
         super(DropTarget, self).__init__(machine, name, config, collection)
 
         self.complete = False
@@ -108,8 +103,6 @@ class DropTargetBank(Device):
     class_label = 'drop_target_bank'
 
     def __init__(self, machine, name, config, collection=None):
-
-        self.log = logging.getLogger('DropTargetBank.' + name)
         super(DropTargetBank, self).__init__(machine, name, config, collection)
 
         self.drop_targets = set()

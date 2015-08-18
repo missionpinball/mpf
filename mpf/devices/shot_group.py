@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 from collections import deque
 
 from mpf.system.device import Device
@@ -28,8 +27,6 @@ class ShotGroup(Device):
 
     def __init__(self, machine, name, config, collection=None,
                  member_collection=None, device_str=None):
-        self.log = logging.getLogger('ShotGroup.' + name)
-
         super(ShotGroup, self).__init__(machine, name, config, collection)
 
         if self.debug:

@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 from mpf.system.device import Device
 
 
@@ -24,7 +23,6 @@ class GI(Device):
     class_label = 'gi'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('GI.' + name)
         config['number_str'] = str(config['number']).upper()
         super(GI, self).__init__(machine, name, config, collection,
                                  platform_section='gis')

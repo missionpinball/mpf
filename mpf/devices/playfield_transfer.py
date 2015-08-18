@@ -7,7 +7,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 from mpf.system.device import Device
 
 
@@ -18,7 +17,6 @@ class PlayfieldTransfer(Device):
     class_label = 'playfield_transfer'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('PlayfieldTransfer.' + name)
         super(PlayfieldTransfer, self).__init__(machine, name, config,
                                                 collection)
 

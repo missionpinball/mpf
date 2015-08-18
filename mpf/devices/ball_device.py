@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 from collections import deque
 import time
 import sys
@@ -31,7 +30,6 @@ class BallDevice(Device):
     class_label = 'ball_device'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('BallDevice.' + name)
         super(BallDevice, self).__init__(machine, name, config, collection)
 
         self.delay = DelayManager()

@@ -28,15 +28,6 @@ class Shot(Device):
     """
 
     def __init__(self, machine, name, config, collection=None):
-        """Represents a shot in a pinball machine. A shot is typically the
-        combination of a switch and a light, such as a standup or rollover.
-        Shots have multiple 'states' and intelligence to track what state the
-        shot was in when it was hit and to advance through various states as
-        it's hit again and again.
-
-        """
-        self.log = logging.getLogger('Shot.' + name)
-
         super(Shot, self).__init__(machine, name, config, collection)
 
         self.delay = DelayManager()

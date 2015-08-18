@@ -207,7 +207,6 @@ class ScoreReelGroup(Device):
         machine.score_reel_controller = ScoreReelController(machine)
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('ScoreReelGroup.' + name)
         super(ScoreReelGroup, self).__init__(machine, name, config, collection)
 
         self.wait_for_valid_queue = None
@@ -887,7 +886,6 @@ class ScoreReel(Device):
     class_label = 'score_reel'
 
     def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('ScoreReel.' + name)
         super(ScoreReel, self).__init__(machine, name, config, collection)
         self.delay = DelayManager()
 
