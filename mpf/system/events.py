@@ -34,7 +34,8 @@ class EventManager(object):
             self.process_event_player(self.machine.config['event_player'])
 
         if 'random_event_player' in self.machine.config:
-            self.process_random_event_player(self.machine.config['event_player'])
+            self.process_random_event_player(
+                self.machine.config['random_event_player'])
 
         self.machine.mode_controller.register_start_method(
             self.process_event_player, 'event_player')
@@ -589,9 +590,9 @@ class EventManager(object):
             if type(events) is not list:
                 events = Config.string_to_list(events)
 
-                event_keys.add(self.machine.events.add_handler(event_name,
-                    self._random_event_player_callback, priority,
-                    event_list=events))
+            event_keys.add(self.machine.events.add_handler(event_name,
+                self._random_event_player_callback, priority,
+                event_list=events))
 
         return self.unload_event_player_events, event_keys
 
@@ -601,8 +602,8 @@ class EventManager(object):
     def _event_player_callback(self, event_to_call, **kwargs):
         self.machine.events.post(event_to_call)
 
-    def _random_eventplayer_callback(self, event_list, **kwargs):
-        self.machine.events.post(random.choice(event_to_call))
+    def _random_event_player_callback(self, event_list, **kwargs):
+        self.machine.events.post(random.choice(event_list))
 
 
 class QueuedEvent(object):
