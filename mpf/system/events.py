@@ -8,6 +8,7 @@
 
 import logging
 from collections import deque
+import random
 import uuid
 
 from mpf.system.config import Config
@@ -32,8 +33,14 @@ class EventManager(object):
         if 'event_player' in self.machine.config:
             self.process_event_player(self.machine.config['event_player'])
 
-        self.machine.mode_controller.register_start_method(self.process_event_player,
-                                                 'event_player')
+        if 'random_event_player' in self.machine.config:
+            self.process_random_event_player(self.machine.config['event_player'])
+
+        self.machine.mode_controller.register_start_method(
+            self.process_event_player, 'event_player')
+
+        self.machine.mode_controller.register_start_method(
+            self.process_random_event_player, 'random_event_player')
 
     def add_handler(self, event, handler, priority=1, **kwargs):
         """Registers an event handler to respond to an event.
@@ -571,12 +578,32 @@ class EventManager(object):
 
         return self.unload_event_player_events, event_keys
 
+    def process_random_event_player(self, config, mode=None, priority=0):
+        # config is localized to 'event_player'
+        self.log.debug("Processing random_event_player configuration. Priority:"
+                       " %s", priority)
+
+        event_keys = set()
+
+        for event_name, events in config.iteritems():
+            if type(events) is not list:
+                events = Config.string_to_list(events)
+
+                event_keys.add(self.machine.events.add_handler(event_name,
+                    self._random_event_player_callback, priority,
+                    event_list=events))
+
+        return self.unload_event_player_events, event_keys
+
     def unload_event_player_events(self, event_keys):
         self.machine.events.remove_handlers_by_keys(event_keys)
 
     def _event_player_callback(self, event_to_call, **kwargs):
         self.machine.events.post(event_to_call)
 
+    def _random_eventplayer_callback(self, event_list, **kwargs):
+        self.machine.events.post(random.choice(event_to_call))
+        
 
 class QueuedEvent(object):
     """The base class for an event queue which is created each time a queue
