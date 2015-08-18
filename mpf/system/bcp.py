@@ -608,7 +608,7 @@ class BCP(object):
         """
 
         for switch in self.machine.switches.items_tagged(tag):
-            self.enable_bcp_switch(switch)
+            self.enable_bcp_switch(switch.name)
 
     def disable_bcp_switch(self, name):
         """Disables sending BCP switch commands when this switch changes state.
