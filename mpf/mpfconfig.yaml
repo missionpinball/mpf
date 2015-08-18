@@ -251,8 +251,8 @@ config_validator:
         leds:
             number: single|str|
             number_str: single|str|
-            default_color: single|str|None
-            #brightness_compensation is here, but cannot be processed here
+            default_color: single|str|ffffff
+            brightness_compensation: list|float|1.0
             fade_ms: int|int|None
             tags: list|str|None
             label: single|str|%

@@ -44,12 +44,9 @@ class LED(Device):
 
         self.log.debug("Creating '%s' with config: %s", name, config)
 
-        if self.config['default_color']:
-            self.config['default_color'] = self.hexstring_to_list(
-                input_string=self.config['default_color'],
-                output_length=3)
-        else:
-            self.config['default_color'] = [255, 255, 255]
+        self.config['default_color'] = Config.hexstring_to_list(
+            input_string=self.config['default_color'],
+            output_length=3)
 
         self.hw_driver = self.platform.configure_led(self.config)
 
@@ -76,33 +73,46 @@ class LED(Device):
                         'start_time': 0.0
                      }
 
-        if 'brightness_compensation' not in self.config:
-            self.config['brightness_compensation'] = [1.0, 1.0, 1.0]
-        else:
-            # make sure our config string is a list
-            self.config['brightness_compensation'] = (
-                Config.string_to_list(
-                    self.config['brightness_compensation']))
-            # if there's only one value in the list, use it for all the elements
-            if len(self.config['brightness_compensation']) == 1:
-                self.config['brightness_compensation'].extend(
-                    [self.config['brightness_compensation'][0],
-                     self.config['brightness_compensation'][0]])
-            # if there are only two elements, use 1.0 for the third.
-            elif len(self.config['brightness_compensation']) == 2:
-                self.config['brightness_compensation'].append(1.0)
-            # make sure they're all floats
-            for i in range(3):
-                self.config['brightness_compensation'][i] = (
-                    float(self.config['brightness_compensation'][i]))
-
-        if self.debug:
-            self.log.info("Enabling color change logging for this LED")
+        self.set_brightness_compensation(self.config['brightness_compensation'])
 
         self.current_color = []  # one item for each element, 0-255
 
         if self.debug:
-            self.log.info("Intial settings: %s", self.config)
+            self.log.debug("Intial settings: %s", self.config)
+
+    def set_brightness_compensation(self, value):
+        """Sets the brightness compensation for this LED.
+
+        args:
+            value: Str or list (of 1-to-3 items) of the new brightness
+                compensation value to set. List items are floats. 1.0 is
+                standard full brightness. 0.0 is off. 2.0 is 200% brightness
+                (which only comes into play if the LED is not at full
+                brightness). If the value is a string, it's converted to a list,
+                broken by commas.
+
+        The brightness compensation list is three items long, one for each RGB
+        element. If the LED has less than three elements, additional values are
+        ignored.
+
+        If the value list is only one item, that value is used for all three
+        elements.
+
+        If the value list is two items, a value of 1.0 is used for the third
+        item.
+
+        """
+        if type(value) is not list:
+            value = Config.string_to_list(value)
+
+        value = [float(x) for x in value]
+
+        if len(value) == 1:
+            value.extend([value[0], value[0]])
+        elif len(value) == 2:
+            value.append(1.0)
+
+        self.config['brightness_compensation'] = value
 
     def color(self, color, fade_ms=None, brightness_compensation=True,
               priority=0, cache=True, force=False, blend=False):
@@ -129,57 +139,61 @@ class LED(Device):
         """
 
         if self.debug:
-            self.log.info("+------Received new color command---------")
-            self.log.info("| color: %s", color)
-            self.log.info("| priority: %s", priority)
-            self.log.info("| cache: %s", cache)
-            self.log.info("| force: %s", force)
-            self.log.info("| fade_ms: %s", fade_ms)
-            self.log.info("| blend: %s", blend)
-            self.log.info("| brightness_compensation: %s",
+            self.log.debug("+------Received new color command---------")
+            self.log.debug("| color: %s", color)
+            self.log.debug("| priority: %s", priority)
+            self.log.debug("| cache: %s", cache)
+            self.log.debug("| force: %s", force)
+            self.log.debug("| fade_ms: %s", fade_ms)
+            self.log.debug("| blend: %s", blend)
+            self.log.debug("| brightness_compensation: %s",
                           brightness_compensation)
 
-            self.log.info("+-------------Current State---------------")
-            self.log.info("| color: %s", self.state['color'])
-            self.log.info("| priority: %s", self.state['priority'])
-            self.log.info("| destination_color: %s",
+            self.log.debug("+-------------Current State---------------")
+            self.log.debug("| color: %s", self.state['color'])
+            self.log.debug("| priority: %s", self.state['priority'])
+            self.log.debug("| destination_color: %s",
                           self.state['destination_color'])
-            self.log.info("| destination_time: %s",
+            self.log.debug("| destination_time: %s",
                           self.state['destination_time'])
-            self.log.info("| start_color: %s", self.state['start_color'])
-            self.log.info("| start_time: %s", self.state['start_time'])
-            self.log.info("+-----------------------------------------")
+            self.log.debug("| start_color: %s", self.state['start_color'])
+            self.log.debug("| start_time: %s", self.state['start_time'])
+            self.log.debug("+-----------------------------------------")
 
         # If the incoming priority is lower that what this LED is at currently
         # ignore this request.
         if priority < self.state['priority'] and not force:
 
             if self.debug:
-                self.log.info("Incoming color priority: %s. Current priority: "
+                self.log.debug("Incoming color priority: %s. Current priority: "
                               " %s. Not applying update.", priority,
                               self.state['priority'])
             return
 
         elif self.debug:
-            self.log.info("Incoming color priority: %s. Current priority: "
+            self.log.debug("Incoming color priority: %s. Current priority: "
                           " %s. Processing new command.", priority,
                           self.state['priority'])
 
         if brightness_compensation:
             color = self.compensate(color)
 
+        # make sure we have a list of three ints
+        color = [int(x) for x in color]
+        color.extend([0] * 3-len(color))
+
         if fade_ms is None:
             if self.config['fade_ms'] is not None:
                 fade_ms = self.config['fade_ms']
                 if self.debug:
-                    self.log.info("Incoming fade_ms is none. Setting to %sms "
+                    self.log.debug("Incoming fade_ms is none. Setting to %sms "
                                   "based on this LED's default fade config",
                                   fade_ms)
             elif self.machine.config['led_settings']:
                 fade_ms = (self.machine.config['led_settings']
                            ['default_led_fade_ms'])
                 if self.debug:
-                    self.log.info("Incoming fade_ms is none. Setting to %sms "
+                    self.log.debug("Incoming fade_ms is none. Setting to %sms "
                                   "based on this global default fade", fade_ms)
             # potentional optimization make this not conditional
 
@@ -203,7 +217,7 @@ class LED(Device):
             self.state['color'] = color
 
             if self.debug:
-                self.log.info("Setting Color: %s", color)
+                self.log.debug("Setting Color: %s", color)
 
         if cache:
             self.cache['color'] = color  # new color
@@ -215,19 +229,19 @@ class LED(Device):
             self.cache['start_time'] = time.time()
 
         if self.debug:
-            self.log.info("+---------------New State-----------------")
-            self.log.info("| color: %s *******************", self.state['color'])
-            self.log.info("| priority: %s", self.state['priority'])
-            self.log.info("| new fade: %s", fade_ms)
-            self.log.info("| start_color: %s", self.state['start_color'])
-            self.log.info("| destination_color: %s",
+            self.log.debug("+---------------New State-----------------")
+            self.log.debug("| color: %s *******************", self.state['color'])
+            self.log.debug("| priority: %s", self.state['priority'])
+            self.log.debug("| new fade: %s", fade_ms)
+            self.log.debug("| start_color: %s", self.state['start_color'])
+            self.log.debug("| destination_color: %s",
                           self.state['destination_color'])
-            self.log.info("| start_time: %s", self.state['start_time'])
-            self.log.info("| current_time: %s", time.time())
-            self.log.info("| destination_time: %s",
+            self.log.debug("| start_time: %s", self.state['start_time'])
+            self.log.debug("| current_time: %s", time.time())
+            self.log.debug("| destination_time: %s",
                           self.state['destination_time'])
-            self.log.info("+-----------------------------------------")
-            self.log.info("==========================================")
+            self.log.debug("+-----------------------------------------")
+            self.log.debug("==========================================")
 
     def disable(self, fade_ms=0, priority=0, cache=True, force=False):
         """ Disables an LED, including all elements of a multi-color LED.
@@ -259,8 +273,8 @@ class LED(Device):
         """Sets this LED to the cached state."""
 
         if self.debug:
-            self.log.info("Received a restore command.")
-            self.log.info("Cached color: %s, Cached priority: %s",
+            self.log.debug("Received a restore command.")
+            self.log.debug("Cached color: %s, Cached priority: %s",
                           self.cache['color'], self.cache['priority'])
 
         self.color(color=self.cache['color'],
@@ -351,29 +365,7 @@ class LED(Device):
     def _kill_fade(self):
         self.fade_in_progress = False
 
-    def hexstring_to_list(self, input_string, output_length=3):
-        """Takes a string input of hex numbers and returns a list of integers.
 
-        This always groups the hex string in twos, so an input of ffff00 will
-        be returned as [255, 255, 0]
-
-        Args:
-            input_string: A string of incoming hex colors, like ffff00.
-            output_length: Integer value of the number of items you'd like in
-                your returned list. Default is 3. This method will ignore
-                extra characters if the input_string is too long, and it will
-                pad with zeros if the input string is too short.
-
-        Returns:
-            List of integers, like [255, 255, 0]
-        """
-        output = []
-        input_string = str(input_string).zfill(output_length*2)
-
-        for i in xrange(0, len(input_string), 2):  # step through every 2 chars
-            output.append(int(input_string[i:i+2], 16))
-
-        return output[0:output_length:]
 
 # The MIT License (MIT)
 

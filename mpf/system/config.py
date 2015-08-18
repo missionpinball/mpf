@@ -617,6 +617,53 @@ class Config(object):
 
         return final_list
 
+    @staticmethod
+    def hexstring_to_list(input_string, output_length=3):
+        """Takes a string input of hex numbers and returns a list of integers.
+
+        This always groups the hex string in twos, so an input of ffff00 will
+        be returned as [255, 255, 0]
+
+        Args:
+            input_string: A string of incoming hex colors, like ffff00.
+            output_length: Integer value of the number of items you'd like in
+                your returned list. Default is 3. This method will ignore
+                extra characters if the input_string is too long, and it will
+                pad with zeros if the input string is too short.
+
+        Returns:
+            List of integers, like [255, 255, 0]
+
+        """
+        output = []
+        input_string = str(input_string).zfill(output_length*2)
+
+        for i in xrange(0, len(input_string), 2):  # step through every 2 chars
+            output.append(int(input_string[i:i+2], 16))
+
+        return output[0:output_length:]
+
+    @staticmethod
+    def hexstring_to_int(inputstring, maxvalue=255):
+        """Takes a string input of hex numbers and an integer.
+
+        Args:
+            input_string: A string of incoming hex colors, like ffff00.
+            maxvalue: Integer of the max value you'd like to return. Default is
+                255. (This is the real value of why this method exists.)
+
+        Returns:
+            Integer representation of the hex string.
+        """
+
+        return_int = int(inputstring, 16)
+
+        if return_int > maxvalue:
+            return_int = maxvalue
+
+        return return_int
+
+
 # The MIT License (MIT)
 
 # Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
