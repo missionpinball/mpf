@@ -180,7 +180,7 @@ class LED(Device):
 
         # make sure we have a list of three ints
         color = [int(x) for x in color]
-        color.extend([0] * 3-len(color))
+        color += [0] * (3-len(color))
 
         if fade_ms is None:
             if self.config['fade_ms'] is not None:

@@ -603,7 +603,7 @@ class EventManager(object):
 
     def _random_eventplayer_callback(self, event_list, **kwargs):
         self.machine.events.post(random.choice(event_to_call))
-        
+
 
 class QueuedEvent(object):
     """The base class for an event queue which is created each time a queue
@@ -624,7 +624,7 @@ class QueuedEvent(object):
         self.num_waiting = 0
 
     def __repr__(self):
-        return '<QueuedEvent for callback ' + self.callback + '>'
+        return '<QueuedEvent for callback ' + str(self.callback) + '>'
 
 
     def wait(self):
