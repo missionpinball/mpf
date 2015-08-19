@@ -73,13 +73,15 @@ class HardwarePlatform(Platform):
 
         if not self.initial_states_sent:
 
-            initial_active_switches = [self.machine.switches[x].number for x in
-                Config.string_to_list(
-                    self.machine.config['virtual_platform_start_active_switches'])]
+            if 'virtual_platform_start_active_switches' in self.machine.config:
 
-            for k, v in self.hw_switches.iteritems():
-                if k in initial_active_switches:
-                    self.hw_switches[k] ^= 1
+                initial_active_switches = [self.machine.switches[x].number for x in
+                    Config.string_to_list(
+                        self.machine.config['virtual_platform_start_active_switches'])]
+
+                for k, v in self.hw_switches.iteritems():
+                    if k in initial_active_switches:
+                        self.hw_switches[k] ^= 1
 
             self.initial_states_sent = True
 

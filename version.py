@@ -1,4 +1,4 @@
-__version_info__ = ('0', '20', '0-dev16')
+__version_info__ = ('0', '20', '0-dev17')
 __version__ = '.'.join(__version_info__)
 
 __bcp_version_info__ = ('1', '0')
