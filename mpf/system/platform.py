@@ -95,8 +95,8 @@ class Platform(object):
             raise ValueError('Invalid "switch activity" option for '
                              'AutofireCoil: %s. Valid options are "active"'
                              ' or "inactive".' % (sw_name))
-        if self.machine.switches[sw_name].type == 'NC':
-            sw_activity = sw_activity ^ 1  # bitwise invert
+        if self.machine.switches[sw_name].invert:
+            sw_activity ^= 1
 
         self.write_hw_rule(sw, sw_activity, coil_action_ms, coil, pulse_ms,
                            pwm_on, pwm_off, delay, recycle_time, debounced,
