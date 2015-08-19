@@ -439,7 +439,7 @@ class HardwarePlatform(Platform):
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
-                num = self.int_to_hex_string((offset * 8) + i)
+                num = Config.int_to_hex_string((offset * 8) + i)
                 if byte & (2**i):
                     hw_states[(num, 1)] = 1
                 else:
@@ -448,7 +448,7 @@ class HardwarePlatform(Platform):
         for offset, byte in enumerate(bytearray.fromhex(local_states)):
             for i in range(8):
 
-                num = self.int_to_hex_string((offset * 8) + i)
+                num = Config.int_to_hex_string((offset * 8) + i)
 
                 if byte & (2**i):
                     hw_states[(num, 0)] = 1
@@ -479,9 +479,9 @@ class HardwarePlatform(Platform):
         elif self.machine_type == 'fast':
 
             if self.config['config_number_format'] == 'int':
-                config['number'] = self.int_to_hex_string(config['number'])
+                config['number'] = Config.int_to_hex_string(config['number'])
             else:
-                config['number'] = self.normalize_hex_string(config['number'])
+                config['number'] = Config.normalize_hex_string(config['number'])
 
             # Now figure out the connection type
             if ('connection' in config and
@@ -543,9 +543,9 @@ class HardwarePlatform(Platform):
                 config['connection'] = 0  # local switch
 
             if self.config['config_number_format'] == 'int':
-                config['number'] = self.int_to_hex_string(config['number'])
+                config['number'] = Config.int_to_hex_string(config['number'])
             else:
-                config['number'] = self.normalize_hex_string(config['number'])
+                config['number'] = Config.normalize_hex_string(config['number'])
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
@@ -587,9 +587,9 @@ class HardwarePlatform(Platform):
             config['number'] = str(config['number'])
 
         if self.config['config_number_format'] == 'int':
-            config['number'] = self.int_to_hex_string(config['number'])
+            config['number'] = Config.int_to_hex_string(config['number'])
         else:
-            config['number'] = self.normalize_hex_string(config['number'])
+            config['number'] = Config.normalize_hex_string(config['number'])
 
         this_fast_led = FASTDirectLED(config['number'])
         self.fast_leds.add(this_fast_led)
@@ -622,9 +622,9 @@ class HardwarePlatform(Platform):
             config['number'] = self.wpc_light_map.get(
                                                 config['number_str'].upper())
         elif self.config['config_number_format'] == 'int':
-            config['number'] = self.int_to_hex_string(config['number'])
+            config['number'] = Config.int_to_hex_string(config['number'])
         else:
-            config['number'] = self.normalize_hex_string(config['number'])
+            config['number'] = Config.normalize_hex_string(config['number'])
 
         return (FASTMatrixLight(config['number'], self.net_connection.send),
                 config['number'])
@@ -721,7 +721,7 @@ class HardwarePlatform(Platform):
         if sw_activity == 0:
             control += 0x10
 
-        control = self.int_to_hex_string(int(control))
+        control = Config.int_to_hex_string(int(control))
         mode = '00'
         param1 = 0
         param2 = 0
@@ -752,11 +752,11 @@ class HardwarePlatform(Platform):
         else:
             cmd = 'DL:'
 
-        param1 = self.int_to_hex_string(param1)
-        param2 = self.int_to_hex_string(param2)
-        param3 = self.int_to_hex_string(param3)
-        param4 = self.int_to_hex_string(param4)
-        param5 = self.int_to_hex_string(param5)
+        param1 = Config.int_to_hex_string(param1)
+        param2 = Config.int_to_hex_string(param2)
+        param3 = Config.int_to_hex_string(param3)
+        param4 = Config.int_to_hex_string(param4)
+        param5 = Config.int_to_hex_string(param5)
 
         # hw_rules key = ('05', 1)
         # all values are strings
@@ -818,36 +818,7 @@ class HardwarePlatform(Platform):
 
             self.net_connection.send(cmd + driver + ',' + mode)
 
-    def int_to_hex_string(self, source_int):
-        """Converts an int from 0-255 to a one-byte (2 chars) hex string, with
-        uppercase characters.
 
-        """
-
-        source_int = int(source_int)
-
-        if source_int >= 0 and source_int <= 255:
-            return format(source_int, 'x').upper().zfill(2)
-
-        else:
-            print "invalid source int:", source_int
-            raise ValueError
-
-    def normalize_hex_string(self, source_hex, num_chars=2):
-        """Takes an incoming hex value and converts it to uppercase and fills in
-        leading zeros.
-
-        Args:
-            source_hex: Incoming source number. Can be any format.
-            num_chars: Total number of characters that will be returned. Default
-                is two.
-
-        Returns: String, uppercase, zero padded to the num_chars.
-
-        Example usage: Send "c" as source_hex, returns "0C".
-
-        """
-        return str(source_hex).upper().zfill(num_chars)
 
 
 class FASTSwitch(object):

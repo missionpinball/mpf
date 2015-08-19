@@ -663,6 +663,55 @@ class Config(object):
 
         return return_int
 
+    @staticmethod
+    def event_config_to_dict(config):
+
+        return_dict = dict()
+
+        if type(config) is dict:
+            return config
+        elif type(config) is str:
+            config = Config.string_to_list(config)
+
+        # 'if' instead of 'elif' to pick up just-converted str
+        if type(config) is list:
+            for event in config:
+                return_dict[event] = 0
+
+        return return_dict
+
+    @staticmethod
+    def int_to_hex_string(source_int):
+        """Converts an int from 0-255 to a one-byte (2 chars) hex string, with
+        uppercase characters.
+
+        """
+
+        source_int = int(source_int)
+
+        if source_int >= 0 and source_int <= 255:
+            return format(source_int, 'x').upper().zfill(2)
+
+        else:
+            print "invalid source int:", source_int
+            raise ValueError
+
+    @staticmethod
+    def normalize_hex_string(source_hex, num_chars=2):
+        """Takes an incoming hex value and converts it to uppercase and fills in
+        leading zeros.
+
+        Args:
+            source_hex: Incoming source number. Can be any format.
+            num_chars: Total number of characters that will be returned. Default
+                is two.
+
+        Returns: String, uppercase, zero padded to the num_chars.
+
+        Example usage: Send "c" as source_hex, returns "0C".
+
+        """
+        return str(source_hex).upper().zfill(num_chars)
 
 # The MIT License (MIT)
 
