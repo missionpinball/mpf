@@ -460,9 +460,9 @@ class Config(object):
 
     def validate_item(self, item, validator, validation_failure_info):
 
-        if '%' in validator and item:
+        if '%' in validator and item is not None:
 
-            if item:
+            if item is not None:
 
                 try:
                     item = eval(validator.replace('%', "'" + item + "'"))
@@ -470,7 +470,7 @@ class Config(object):
                     self.validation_error(item, validation_failure_info)
 
         elif validator in ('string', 'str'):
-            if item:
+            if item is not None:
                 item = str(item)
             else:
                 item = None
