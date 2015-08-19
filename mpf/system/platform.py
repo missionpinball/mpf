@@ -170,16 +170,15 @@ class Platform(object):
         """
         pass
 
-    def get_switch_state(self, switch):
-        """Subclass this method in a platform module to get the hardware state
+    def get_hw_switch_states(self):
+        """Subclass this method in a platform module to return the hardware
+        states of all the switches on that platform.
         of a switch.
 
-        Args:
-            switch: A class `Switch` object.
-
-        Return a value of 1 if the switch is active, and 0 if the switch is
-        inactive. This method should not compensate for NO or NC status, rather,
-        it should return the raw hardware state of the switch.
+        This method should return a dict with the switch numbers as keys and the
+        hardware state of the switches as values. (0 = inactive, 1 = active)
+        This method should not compensate for NO or NC status, rather, it
+        should return the raw hardware states of the switches.
 
         """
         pass

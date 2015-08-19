@@ -238,6 +238,9 @@ class HardwarePlatform(Platform):
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
 
+        return switch, proc_num
+
+    def get_hw_switch_states(self):
         # Read in and set the initial switch state
         # The P-ROC uses the following values for hw switch states:
         # 1 - closed (debounced)
@@ -246,14 +249,14 @@ class HardwarePlatform(Platform):
         # 4 - open (not debounced)
 
         states = self.proc.switch_get_states()
-        if states[proc_num] == 1 or states[proc_num] == 3:
-            state = 1
-        else:
-            state = 0
 
-        # Return the switch object and an integer of its current state.
-        # 1 = active, 0 = inactive
-        return switch, proc_num, state
+        for switch, state in enumerate(states):
+            if state == 3 or state == 1:
+                states[switch] = 1
+            else:
+                states[switch] = 0
+
+        return states
 
     def configure_led(self, config):
         """ Configures a P-ROC RGB LED controlled via a PD-LED."""
@@ -511,11 +514,9 @@ class HardwarePlatform(Platform):
         the flippers to flip), you'd call this method with your flipper button
         as the *sw_num*.
 
-        Parameters
-        ----------
-
-        sw_num : int
-            The number of the switch whose rule you want to clear.
+        Args:
+            sw_num : Int of the number of the switch whose rule you want to
+                clear.
 
         """
         sw_num = self.machine.switches[sw_name].number

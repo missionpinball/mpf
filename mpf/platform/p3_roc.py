@@ -232,26 +232,27 @@ class HardwarePlatform(Platform):
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
 
+        return switch, proc_num
+
+    def get_hw_switch_states(self):
         # Read in and set the initial switch state
-        # The P3-ROC uses the following values for hw switch states:
+        # The P-ROC uses the following values for hw switch states:
         # 1 - closed (debounced)
         # 2 - open (debounced)
         # 3 - closed (not debounced)
         # 4 - open (not debounced)
 
-        # Note: The P3-ROC will return a state of "3" for switches from non-
-        # connected SW-16 boards, so that's why we only check for "1" below
         states = self.proc.switch_get_states()
-        if states[proc_num] == 1:
-            state = 1
-        else:
-            state = 0
 
-        self.log.debug("P3-ROC switch %s initial state: %s", proc_num,
-                       states[proc_num])
-        # Return the switch object and an integer of its current state.
-        # 1 = active, 0 = inactive
-        return switch, proc_num, state
+        for switch, state in enumerate(states):
+            # Note: The P3-ROC will return a state of "3" for switches from non-
+            # connected SW-16 boards, so that's why we only check for "1" below
+            if state == 1:
+                states[switch] = 1
+            else:
+                states[switch] = 0
+
+        return states
 
     def configure_led(self, config):
         """ Configures a P3-ROC RGB LED controlled via a PD-LED."""

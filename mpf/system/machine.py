@@ -89,15 +89,9 @@ class MachineController(object):
         else:
             self.set_default_platform('virtual')
 
+
         self._load_system_modules()
-
-        self.events.add_handler('shutdown', self.power_off)
-        self.events.add_handler(self.config['mpf']['switch_tag_event'].
-                                replace('%', 'shutdown'), self.power_off)
-        self.events.add_handler('quit', self.quit)
-        self.events.add_handler(self.config['mpf']['switch_tag_event'].
-                                replace('%', 'quit'), self.quit)
-
+        self._register_system_events()
         self.events.post("init_phase_1")
         self.events.post("init_phase_2")
         self._load_plugins()
@@ -107,6 +101,15 @@ class MachineController(object):
         self.events.post("init_phase_5")
 
         self.reset()
+
+    def _register_system_events(self):
+        self.events.add_handler('shutdown', self.power_off)
+        self.events.add_handler(self.config['mpf']['switch_tag_event'].
+                                replace('%', 'shutdown'), self.power_off)
+        self.events.add_handler('quit', self.quit)
+        self.events.add_handler(self.config['mpf']['switch_tag_event'].
+                                replace('%', 'quit'), self.quit)
+
 
     def _check_crash_queue(self):
         try:

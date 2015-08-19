@@ -84,7 +84,6 @@ class HardwarePlatform(Platform):
         self.receive_queue = Queue.Queue()
         self.fast_leds = set()
         self.flag_led_tick_registered = False
-        self.flag_switch_registered = False
         self.fast_io_boards = list()
         self.waiting_for_switch_data = False
 
@@ -377,13 +376,15 @@ class HardwarePlatform(Platform):
 
         self.rgb_connection.send(msg)
 
-    def get_switch_states(self):
-        self.waiting_for_switch_data = True
+    def get_hw_switch_states(self):
+        self.hw_switch_data = None
         self.net_connection.send('SA:')
 
-        while self.waiting_for_switch_data:
+        while not self.hw_switch_data:
             time.sleep(.01)
             self.tick()
+
+        return self.hw_switch_data
 
     def receive_id(self, msg):
         pass
@@ -432,26 +433,29 @@ class HardwarePlatform(Platform):
 
         self.log.info("Received SA: %s", msg)
 
+        hw_states = dict()
+
         num_local, local_states, num_nw, nw_states = msg.split(',')
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
+                num = self.int_to_hex_string((offset * 8) + i)
                 if byte & (2**i):
-                    num = self.int_to_hex_string((offset * 8) + i)
-                    self.log.info("Found initial active network switch: %s",
-                                  num)
-                    self.machine.switch_controller.process_switch(num=(num, 1),
-                                                                  state=1)
+                    hw_states[(num, 1)] = 1
+                else:
+                    hw_states[(num, 1)] = 0
 
         for offset, byte in enumerate(bytearray.fromhex(local_states)):
             for i in range(8):
-                if byte & (2**i):
-                    num = self.int_to_hex_string((offset * 8) + i)
-                    self.log.info("Found initial active local switch: %s", num)
-                    self.machine.switch_controller.process_switch(num=(num, 0),
-                                                                  state=1)
 
-        self.waiting_for_switch_data = False
+                num = self.int_to_hex_string((offset * 8) + i)
+
+                if byte & (2**i):
+                    hw_states[(num, 0)] = 1
+                else:
+                    hw_states[(num, 0)] = 0
+
+        self.hw_switch_data = hw_states
 
     def configure_driver(self, config, device_type='coil'):
 
@@ -560,16 +564,7 @@ class HardwarePlatform(Platform):
                             debounce_close=config['debounce_close'],
                             sender=self.net_connection.send)
 
-        state = 0  # todo
-
-        if not self.flag_switch_registered:
-            self.machine.events.add_handler('init_phase_2',
-                                            self.get_switch_states)
-            self.flag_switch_registered = True
-
-        # Return the switch object and an integer of its current state.
-        # 1 = active, 0 = inactive
-        return switch, config['number'], state
+        return switch, config['number']
 
     def configure_led(self, config):
 

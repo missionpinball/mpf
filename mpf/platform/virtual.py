@@ -15,6 +15,7 @@ that it doesn't require any P-ROC drivers or modules to be installed.
 
 import logging
 from mpf.system.platform import Platform
+from mpf.system.config import Config
 
 
 class HardwarePlatform(Platform):
@@ -25,6 +26,13 @@ class HardwarePlatform(Platform):
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring virtual hardware interface.")
         self.machine.physical_hw = False
+
+        # Since the virtual platform doesn't have real hardware, we need to
+        # maintain an internal list of switches that were confirmed so we have
+        # something to send when MPF needs to know the hardware states of
+        # switches
+        self.hw_switches = dict()
+        self.initial_states_sent = False
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -49,16 +57,39 @@ class HardwarePlatform(Platform):
         return VirtualDriver(config['number']), config['number']
 
     def configure_switch(self, config):
-        switch = VirtualSwitch(config['number'])
-        # Return the switch object, the hardare number, and an integer of its
-        # current state. (1 = active, 0 = inactive)
+        # We want to have the virtual platform set all the initial switch states
+        # to inactive, so we have to check the config.
 
         state = 0
 
-        if 'type' in config and config['type'] == 'NC':
-            state = 1  # for NC switches, the default "inactive" state is 1.
+        if config['type'].upper() == 'NC':
+            state = 1
 
-        return switch, config['number'], state
+        self.hw_switches[config['number']] = state
+
+        return VirtualSwitch(config['number']), config['number']
+
+    def get_hw_switch_states(self):
+
+        if not self.initial_states_sent:
+
+            initial_active_switches = [self.machine.switches[x].number for x in
+                Config.string_to_list(
+                    self.machine.config['virtual_platform_start_active_switches'])]
+
+            for k, v in self.hw_switches.iteritems():
+                if k in initial_active_switches:
+                    self.hw_switches[k] ^= 1
+
+            self.initial_states_sent = True
+
+        else:
+            switches = [x for x in self.machine.switches if x.platform == self]
+
+            for switch in list_of_switch_numbers:
+                self.hw_switches[x.number] = x.state ^ x.invert
+
+        return self.hw_switches
 
     def configure_matrixlight(self, config):
         return VirtualMatrixLight(config['number']), config['number']

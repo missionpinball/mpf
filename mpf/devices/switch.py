@@ -34,17 +34,14 @@ class Switch(Device):
         0 = inactive. This is what the actual hardware is reporting and does
         not consider whether a switch is NC or NO."""
 
-        # todo read these in and/or change to dict
-        self.type = 'NO'
-        """ Specifies whether the switch is normally open ('NO', default) or
-        normally closed ('NC')."""
+        self.invert = 0
 
         self.recycle_ticks = 0
         self.recycle_clear_tick = 0
         self.recycle_jitter_count = 0
 
         if self.config['type'].upper() == 'NC':
-            self.type = 'NC'
+            self.invert = 1
 
         self.recycle_ticks = self.config['recycle_time']
 
@@ -53,19 +50,8 @@ class Switch(Device):
 
         self.log.debug("Creating '%s' with config: %s", name, self.config)
 
-        self.hw_switch, self.number, self.hw_state = \
-            self.platform.configure_switch(self.config)
-
-        self.log.debug("Current hardware state of switch '%s': %s",
-                       self.name, self.hw_state)
-
-        # If we're using physical hardware, set the initial logical switch
-        # state based on the hw_state
-        if self.machine.physical_hw:
-            if self.type == 'NC':
-                self.state = self.hw_state ^ 1
-            else:
-                self.state = self.hw_state
+        self.hw_switch, self.number = (
+            self.platform.configure_switch(self.config))
 
 # The MIT License (MIT)
 
