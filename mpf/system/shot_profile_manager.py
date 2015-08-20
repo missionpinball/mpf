@@ -1,5 +1,5 @@
-""" Contains the ShotController class."""
-# shot_controller.py
+""" Contains the ShotProfileManager class."""
+# shot_profile_manager.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -7,17 +7,18 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
+from collections import deque
 
 from mpf.system.config import Config
 
 
-class ShotController(object):
+class ShotProfileManager(object):
 
     def __init__(self, machine):
 
         self.machine = machine
 
-        self.log = logging.getLogger('ShotController')
+        self.log = logging.getLogger('ShotProfileManager')
 
         self.profiles = dict()
         """shot_profiles dict:
@@ -87,15 +88,21 @@ class ShotController(object):
             config: Dict of the profile settings to process.
 
         """
-        config_spec = '''
-                        step_names_to_rotate: list|None
-                        step_names_to_not_rotate: list|None
-                        loop: boolean|False
-                        steps: list_of_dicts
-                        player_variable: string|None
-                        '''
 
-        return Config.process_config(config_spec, config)
+        config = self.machine.config_processor.process_config2(
+            'shot_profiles', config, 'shot_profiles')
+
+        rotation_pattern = deque()
+
+        for entry in config['rotation_pattern']:
+            if entry.upper() == 'R' or entry.upper() == 'RIGHT':
+                rotation_pattern.append(1)
+            else:
+                rotation_pattern.append(-1)
+
+        config['rotation_pattern'] = rotation_pattern
+
+        return config
 
     def _player_turn_start(self, player, **kwargs):
         for shot in self.machine.shots:

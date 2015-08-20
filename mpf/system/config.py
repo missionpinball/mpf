@@ -314,11 +314,17 @@ class Config(object):
         elif item_type == 'list_of_lists':
             return Config.list_of_lists(item)
 
-    def process_config2(self, config_spec, source, section_name, target=None):
+    def process_config2(self, config_spec, source, section_name, target=None,
+                        result_type='dict'):
+        # config_spec, str i.e. "device:shot"
+        # source is dict
+        # section_name is str used for logging failures
 
         validation_failure_info = (config_spec, section_name)
 
-        # config_spec = "device:shot"
+        orig_spec = config_spec
+
+
         config_spec = config_spec.split(':')
         this_spec = self.machine.config['config_validator']
 
@@ -329,16 +335,51 @@ class Config(object):
 
         for k in this_spec.keys():
             if k in source:  # validate the entry that exists
-                processed_config[k] = self.validate_config_item2(
-                    this_spec[k], item=source[k],
-                    validation_failure_info=(validation_failure_info, k))
+
+                if type(this_spec[k]) is dict:
+                    # This means we're looking for a list of dicts
+
+                    final_list = list()
+                    if k in source:
+                        for i in source[k]:  # individual step
+                            final_list.append(self.process_config2(
+                                orig_spec + ':' + k, source=i, section_name=k))
+
+                    processed_config[k] = final_list
+
+                elif result_type == 'list':
+                    # spec is dict
+                    # item is source
+                    processed_config = self.validate_config_item2(
+                        spec=this_spec[k], item=source[k],
+                        validation_failure_info=(validation_failure_info, k))
+
+                else:
+                    processed_config[k] = self.validate_config_item2(
+                        this_spec[k], item=source[k],
+                        validation_failure_info=(validation_failure_info, k))
+
             else:  # create the default entry
-                processed_config[k] = self.validate_config_item2(
-                    this_spec[k],
-                    validation_failure_info=(validation_failure_info, k))
+
+                if type(this_spec[k]) is dict:
+                    processed_config[k] = list()
+
+                else:
+                    if result_type == 'list':
+                        processed_config = self.validate_config_item2(
+                            this_spec[k],
+                            validation_failure_info=(validation_failure_info, k))
+
+                    else:
+                        processed_config[k] = self.validate_config_item2(
+                            this_spec[k],
+                            validation_failure_info=(validation_failure_info, k))
 
         if target:
             processed_config = Config.dict_merge(target, processed_config)
+
+        #if result_type == 'list':
+            #quit()
 
         return processed_config
 
@@ -460,7 +501,7 @@ class Config(object):
 
     def validate_item(self, item, validator, validation_failure_info):
 
-        if '%' in validator and item is not None:
+        if '%' in validator and type(item) is str and item:
 
             if item is not None:
 

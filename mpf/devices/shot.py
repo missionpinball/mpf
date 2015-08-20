@@ -216,7 +216,9 @@ class Shot(Device):
 
         """
         self.player_turn_start(player)
-        self.enable()
+
+        if not self.config['enable_events']:
+            self.enable()
 
     def remove(self):
         """Remove this shot device. Destroys it and removes it from the shots
@@ -252,14 +254,14 @@ class Shot(Device):
                 profile so it can be removed later.
 
         """
-        if profile in self.machine.shot_controller.profiles:
+        if profile in self.machine.shot_profile_manager.profiles:
             if self.debug:
                 self.log.debug("Applying shot profile '%s', priority %s",
                                profile, priority)
 
             profile_tuple = (profile, priority,
-                self.machine.shot_controller.profiles[profile],
-                self.machine.shot_controller.profiles[profile]['steps'],
+                self.machine.shot_profile_manager.profiles[profile],
+                self.machine.shot_profile_manager.profiles[profile]['steps'],
                 removal_key)
 
             if profile_tuple not in self.profiles:

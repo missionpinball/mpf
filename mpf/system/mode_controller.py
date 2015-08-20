@@ -222,6 +222,11 @@ class ModeController(object):
         started.
 
         """
+
+        self.log.debug('Registering %s as a mode start method. Config section:'
+                       '%s, priority: %s, kwargs: %s', start_method,
+                       config_section_name, priority, kwargs)
+
         self.start_methods.append(RemoteMethod(method=start_method,
             config_section=config_section_name, priority=priority,
             kwargs=kwargs))

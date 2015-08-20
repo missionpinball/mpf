@@ -5,10 +5,10 @@ from collections import OrderedDict
 import yaml
 
 from mpf.devices import *
-from mpf.system.config import CaseInsensitiveDict
+from mpf.system.config import CaseInsensitiveDict, Config
+from mpf.system.timing import Timing
 
 class DeviceManager(object):
-
 
     def __init__(self, machine):
         self.machine = machine
@@ -16,8 +16,11 @@ class DeviceManager(object):
         self.log.info("Loading the Device Manager")
 
         self.collections = OrderedDict()
-        self.device_classes = dict()
-        self.mode_config_sections = list()
+        self.device_classes = dict()  # collection_name: device_class
+        self.mode_config_to_collection = dict()  # config_section: collection
+        self.mode_config_sections = list() # list of tuples:
+        # config_section, device class, collection
+        self.mode_devices = dict()  # devices added in a mode config. mode:dev
 
         self._load_device_modules()
 
@@ -35,10 +38,11 @@ class DeviceManager(object):
 
             self.device_classes[collection_name] = device_cls
 
-
             # create the collection
             collection = DeviceCollection(self.machine, collection_name,
                                           device_cls.config_section)
+
+            self.mode_config_to_collection[device_cls.config_section] = collection
 
             if device_cls.allow_per_mode_devices:
                 self.mode_config_sections.append(
@@ -47,15 +51,21 @@ class DeviceManager(object):
             self.collections[collection_name] = collection
             setattr(self.machine, collection_name, collection)
 
-            # create the devices
+            # Get the config section for these devices
+            config = self.machine.config.get(config, None)
 
-            if config or device_cls.allow_per_mode_devices:
-                self.create_devices(collection_name,
-                                    self.machine.config.get(config, None))
-            else:
-                self.log.debug("No '%s:' section found in machine configuration"
-                               ", so this collection will not be created.",
-                               config)
+            # create the devices
+            if config:
+                self.create_devices(collection_name, config)
+
+            # create the machine-wide control events
+            self.create_machine_control_events(collection, config)
+
+            # create the default control events
+            try:
+                self._create_default_control_events(collection)
+            except KeyError:
+                pass
 
     def create_devices(self, collection, config):
 
@@ -66,34 +76,163 @@ class DeviceManager(object):
             machine=self.machine
             )
 
-    def _mode_start(self, config, mode=None, priority=0):
+    def _mode_start(self, config, mode, priority=0):
         # Loops through the mode config to see if there are any device configs
         # for devices that have not been setup. If so, it sets them up. Returns
         # a list of the ones it set up so they can be removed when the mode ends
         # later.
 
-        devices = set()
+        self._create_mode_devices(config, mode)
+        self._create_mode_control_events(config, mode, priority)
+
+        return  self._mode_stop, mode
+
+    def _mode_stop(self, mode):
+            self.remove_mode_devices(mode)
+
+    def _create_mode_devices(self, config, mode):
+        # Creates new devices that are specified in a mode config that haven't
+        # been created in the machine-wide config
+
+        # NOTE that devices created in modes
+
+        if mode not in self.mode_devices:
+            self.mode_devices[mode] = set()
 
         # i is tuple (config_section, device class, collection)
         for i in self.mode_config_sections:
             if i[0] in config:
-
                 for device, settings in config[i[0]].iteritems():
-
                     if device not in i[2]:  # no existing device, create now
+
                         self.create_devices(i[2].name, {device: settings})
 
-                        # Have to do some things here since the player's turn
-                        # has already started. Typically this creates the
-                        # player attribute mapping and enables the device.
-                        i[2][device].device_added_to_mode(mode.player)
+                        # change device from str to object
+                        device = i[2][device]
 
-                        devices.add(i[2][device])
+                        # This lets the device know it was created by a mode
+                        # instead of machine-wide, as some devices want to do
+                        # certain things here.
+                        device.device_added_to_mode(mode.player)
 
-        return  self.remove_devices, devices
+                        self.mode_devices[mode].add(device)
 
-    def remove_devices(self, devices):
-        for device in devices:
+                        # Create the 'system' control events which is like
+                        # <device_type>_<device_name>_reset or whatever...
+
+                        event_prefix = (device.class_label + '_' +
+                                        device.name + '_')
+                        event_prefix2 = device.collection + '_'
+
+                        for method in (self.machine.config['mpf']
+                                ['device_events'][device.config_section]):
+
+                            mode.add_mode_event_handler(
+                                event=event_prefix + method,
+                                handler=getattr(device, method))
+                            mode.add_mode_event_handler(
+                                event=event_prefix2 + method,
+                                handler=getattr(device, method))
+
+    def _create_mode_control_events(self, mode_config, mode, priority):
+        # loop through all list of device configs to see if they contain control
+        # events sections. Creates the control events if they do.
+
+        for device_config_section in (
+                self.machine.config['mpf']['device_events']):
+
+            if device_config_section in mode_config:
+
+                for device_name, device_settings in (
+                        mode_config[device_config_section].iteritems()):
+
+                    device = (self.mode_config_to_collection
+                              [device_config_section][device_name])
+
+                    for method in (
+                            self.machine.config['mpf']['device_events']
+                                               [device_config_section]):
+
+                        config_setting = method + '_events'
+
+                        if config_setting in device_settings:
+
+                            for event, delay in Config.event_config_to_dict(
+                                device_settings[config_setting]).iteritems():
+
+                                # We use the mode event handler so it wil be
+                                # removed when the mode ends. And we use the
+                                # mode's delay manager so any remaining delays
+                                # will be removed when the mode ends.
+                                mode.add_mode_event_handler(
+                                    event=event,
+                                    handler=self._control_event_handler,
+                                    callback=getattr(device, method),
+                                    ms_delay=Timing.string_to_ms(delay),
+                                    delay_mgr=mode.delay)
+
+    def create_machine_control_events(self, collection, config):
+
+        for device in collection:
+
+            if device.config_section in (
+                self.machine.config['mpf']['device_events']):
+
+                for method in (
+                        self.machine.config['mpf']['device_events']
+                                           [device.config_section]):
+
+                    config_setting = method + '_events'
+
+                    # There's a machine-wide config entry for this control event
+                    if config_setting in config[device.name]:
+                        for event, delay in Config.event_config_to_dict(
+                            config[device.name][config_setting]).iteritems():
+
+                            self.machine.events.add_handler(
+                                event=event,
+                                handler=self._control_event_handler,
+                                callback=getattr(device, method),
+                                ms_delay=Timing.string_to_ms(delay),
+                                delay_mgr=self.machine.delay)
+
+                    # No machine-wide entry, so use the default(s)
+                    else:
+                        for event in Config.string_to_list(
+                                self.machine.config['mpf']['device_events']
+                                [device.config_section][method]):
+
+                            self.machine.events.add_handler(
+                                event=event,
+                                handler=self._control_event_handler,
+                                callback=getattr(device, method))
+
+
+    def _control_event_handler(self, callback, ms_delay=0, delay_mgr=None,
+                               **kwargs):
+        if ms_delay:
+            # name_target_reset
+            delay_mgr.add(callback, ms_delay, callback)
+        else:
+            callback()
+
+    def _create_default_control_events(self, device_list):
+        for device in device_list:
+
+            event_prefix = device.class_label + '_' + device.name + '_'
+            event_prefix2 = device.collection + '_'
+
+            for method in (self.machine.config['mpf']['device_events']
+                           [device.config_section]):
+
+                self.machine.events.add_handler(event=event_prefix + method,
+                                                handler=getattr(device, method))
+                self.machine.events.add_handler(event=event_prefix2 + method,
+                                                handler=getattr(device, method))
+
+    def remove_mode_devices(self, mode):
+
+        for device in self.mode_devices.pop(mode, list()):
             device.remove()
 
     def save_tree_to_file(self, filename):
@@ -119,23 +258,6 @@ class DeviceCollection(CaseInsensitiveDict):
 
         self.machine = machine
         self.name = collection
-
-        self.machine.mode_controller.register_start_method(
-            self._register_control_events, config_section)
-
-    def _register_control_events(self, config, priority=0, mode=None):
-
-        for device_name, device_settings in config.iteritems():
-            device = getattr(self.machine, self.name)[device_name]
-
-            key_list = device._create_control_events(device_settings,
-                                                      mode.delay)
-
-            return self._remove_control_events, key_list
-
-    def _remove_control_events(self, key_list):
-
-        self.machine.events.remove_handlers_by_keys(key_list)
 
     def __getattr__(self, attr):
         # We use this to allow the programmer to access a hardware item like

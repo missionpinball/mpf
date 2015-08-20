@@ -168,7 +168,7 @@ class Mode(object):
         self.active = True
 
         for item in self.machine.mode_controller.start_methods:
-            if item.config_section in self.config:
+            if item.config_section in self.config or not item.config_section:
                 self.stop_methods.append(
                     item.method(config=self.config.get(item.config_section,
                                                        self.config),

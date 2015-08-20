@@ -32,7 +32,6 @@ class ShotGroup(Device):
         if self.debug:
             self.log.debug("Configuring shot group with settings: '%s'", config)
 
-
         self.enabled = False
         self.rotation_enabled = True
 
@@ -156,6 +155,42 @@ class ShotGroup(Device):
         for shot in self.shots:
             shot.reset()
 
+    def apply_profile(self, profile, priority, removal_key=None):
+        if profile in self.machine.shot_profile_manager.profiles:
+            if self.debug:
+                self.log.debug("Applying shot profile '%s', priority %s",
+                               profile, priority)
+
+            profile_tuple = (profile, priority,
+                self.machine.shot_profile_manager.profiles[profile],
+                removal_key)
+
+            if profile_tuple not in self.profiles:
+                self.profiles.append(profile_tuple)
+
+            for shot in self.shots:
+                shot.apply_profile(profile, priority, removal_key)
+
+            self._sort_profiles()
+
+            # TODO remove when shot is removed and/or disabled
+
+        else:
+            if not self.active_profile:
+                self.apply_profile('default', priority)
+
+            if self.debug:
+                self.log.debug("Shot profile '%s' not found. Shot is has '%s' "
+                               "applied.", profile, self.active_profile_name)
+
+    def _sort_profiles(self):
+        self.profiles.sort(key=lambda x: x[1], reverse=True)
+
+        (self.active_profile_name,
+         self.active_profile_priority,
+         self.active_profile_settings,
+         _) = self.profiles[0]
+
     def remove_active_profile(self, **kwargs):
         """Removes the current active profile from every shot in the group.
 
@@ -175,7 +210,7 @@ class ShotGroup(Device):
         for shot in self.shots:
             shot.advance()
 
-    def rotate(self, direction='right', steps=1, states=None,
+    def rotate(self, direction=None, steps=1, states=None,
                exclude_states=None, **kwargs):
         """Rotates (or "shifts") the state of all the shots in this group.
         This is used for things like lane change, where hitting the flipper
@@ -188,8 +223,9 @@ class ShotGroup(Device):
 
         Args:
             direction: String that specifies whether the rotation direction is
-                to the left or right. Values are 'right' or 'left'. Default is
-                'right'.
+                to the left or right. Values are 'right' or 'left'. Default of
+                None will cause the shot group to rotate in the direction as
+                specified by the rotation_pattern.
             steps: Integer of how many steps you want to rotate. Default is 1.
             states: A string of a state or a list of strings that represent the
                 targets that will be selected to rotate. If None (default), then
@@ -252,6 +288,12 @@ class ShotGroup(Device):
                            direction, states,
                exclude_states, [x.name for x in shot_list])
 
+        # figure out which direction we're going to rotate
+        if not direction:
+
+            direction = self.rotation_pattern[0]
+            self.rotation_pattern.rotate(-1)
+
         # rotate that list
         if direction == 'right':
             shot_state_list.rotate(steps)
@@ -304,7 +346,8 @@ class ShotGroup(Device):
                                      '_complete')
 
     def device_added_to_mode(self, player):
-        self.enable()
+        if 'enable_events' not in self.config:
+            self.enable()
 
     def remove(self):
         if self.debug:

@@ -60,14 +60,6 @@ class Device(object):
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
 
-        self._create_control_events(self.config, self.machine.delay)
-
-        try:
-            self._create_default_control_events(self.machine.config['mpf']
-                                        ['device_events'][self.config_section])
-        except KeyError:
-            pass
-
         # Add this instance to the collection for this type of device
         if collection != -1:
             # Have to use -1 here instead of None to catch an empty collection
@@ -92,77 +84,6 @@ class Device(object):
         if config:
             for device in config:
                 cls(machine, device, config[device], collection)
-
-    def _create_control_events(self, config, delay_manager=None):
-
-        if not delay_manager:
-            delay_manager = self.machine.delay
-
-        event_keys = set()
-
-        if self.config_section in self.machine.config['mpf']['device_events']:
-
-            for method in (
-                    self.machine.config['mpf']['device_events']
-                                       [self.config_section]):
-
-                config_setting = method + '_events'
-
-                if config_setting in config:
-
-                    for event, delay in self._event_config_to_dict(
-                        config[config_setting]).iteritems():
-
-                        event_keys.add(self.machine.events.add_handler(
-                            event=event,
-                            handler=self._control_event_handler,
-                            callback=getattr(self, method),
-                            ms_delay=Timing.string_to_ms(delay),
-                            delay_mgr=delay_manager))
-
-        return event_keys
-
-    def _control_event_handler(self, ms_delay, callback, delay_mgr, **kwargs):
-        if ms_delay:
-            # name_target_reset
-            delay_mgr.add(callback, ms_delay, callback)
-        else:
-            callback()
-
-    def _event_config_to_dict(self, config):
-        # processes the enable, disable, and reset events from the config file
-
-        return_dict = dict()
-
-        if type(config) is dict:
-            return config
-        elif type(config) is str:
-            config = Config.string_to_list(config)
-
-        # 'if' instead of 'elif' to pick up just-converted str
-        if type(config) is list:
-            for event in config:
-                return_dict[event] = 0
-
-        return return_dict
-
-    def _create_default_control_events(self, config):
-        # config is localized to this device's mpf:device_events section
-
-        event_prefix = self.class_label + '_' + self.name + '_'
-        event_prefix2 = self.collection + '_'
-
-        for method in config:
-
-            if config[method] and method + '_events' not in self.config:
-                for event in Config.string_to_list(config[method]):
-                    self.machine.events.add_handler(event=event,
-                        handler=getattr(self, method))
-
-            self.machine.events.add_handler(event=event_prefix + method,
-                                            handler=getattr(self, method))
-            self.machine.events.add_handler(event=event_prefix2 + method,
-                                            handler=getattr(self, method))
 
     def device_added_to_mode(self, player):
         pass

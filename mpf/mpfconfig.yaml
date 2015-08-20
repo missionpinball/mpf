@@ -18,7 +18,7 @@ mpf:
         - bcp: mpf.system.bcp.BCP
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
         - scoring: mpf.system.scoring.ScoreController
-        - shot_controller: mpf.system.shot_controller.ShotController
+        - shot_profile_manager: mpf.system.shot_profile_manager.ShotProfileManager
 
     device_modules:
         driver.Driver
@@ -307,6 +307,8 @@ config_validator:
             switch_sequence: list|self.machine.switches[%]|None
             cancel_switch: list|self.machine.switches[%]|None
             delay_switch: delay_dict|self.machine.switches[%]|None
+            advance_profile_when_hit: bool|bool|True
+            apply_profile_when_disabled: bool|bool|False
             time: ms|float|0
             light: list|self.machine.lights[%]|None
             led: list|self.machine.leds[%]|None
@@ -330,15 +332,17 @@ config_validator:
             label: single|str|%
             debug: bool|bool|False
         
-    shot_controller:
-        profile:
+    shot_profiles:
             loop: bool|bool|False
             step_names_to_rotate: list|str|None
             step_names_to_not_rotate: list|str|None
+            rotation_pattern: list|str|R
+            player_variable: single|str|None
             steps:
-                name: single|str|(required)
-                light_script: single|self.machine.light_controller.registered_light_scripts[%]|None
-                light_show: single|self.machine.shows[%]|None
+                name: single|str|
+                light_script: single|str|None
+                light_show: single|str|None
+                
 
 # Default settings for machines. All can be overridden
 

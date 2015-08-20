@@ -22,6 +22,7 @@
     _remove_profile: _remove_active_profile
     " target_group_": " shot_group_"
     " target_": " shot_"
+    " targets_": " shots_"
 
 2:
   section_replacements:
