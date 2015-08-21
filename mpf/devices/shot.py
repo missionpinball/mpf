@@ -51,7 +51,6 @@ class Shot(Device):
         (id, current_position_index, next_switch)
         """
 
-        self.sequence_index = 0
         self.sequence_delay = False
         self.player = None
         self.active_delay_switches = set()
@@ -174,8 +173,6 @@ class Shot(Device):
                     leds=[x.name for x in self.config['led']],
                     start_location=lightshow_step,
                     priority=self.active_profile_priority,
-                    hold=step_settings.pop('hold'),
-                    reset=step_settings.pop('reset'),
                     **step_settings))
 
     def player_turn_start(self, player, **kwargs):
@@ -412,17 +409,19 @@ class Shot(Device):
             self.log.info("Sequence switch hit: %s", switch_name)
 
         if switch_name == self.config['switch_sequence'][0].name:
+
             self._start_new_sequence()
 
+
         else:
-            # get the seq_id of the first sequence this switch is next for
-            # this is not a loop because we only want to advance 1 sequence
+            # Get the seq_id of the first sequence this switch is next for.
+            # This is not a loop because we only want to advance 1 sequence
             seq_id = next((x[0] for x in self.active_sequences if
                            x[2]==switch_name), None)
 
             if seq_id:
                 # advance this sequence
-                self._advance_sequence(seq_ids[0])
+                self._advance_sequence(seq_id)
 
     def _start_new_sequence(self):
         # If the sequence hasn't started, make sure we're not within the
@@ -463,8 +462,9 @@ class Shot(Device):
 
     def _advance_sequence(self, seq_id):
         # get this sequence
+
         seq_id, current_position_index, next_switch = next(
-            x for x in self.active_secquences if x[0]==seq_id)
+            x for x in self.active_sequences if x[0]==seq_id)
 
         # Remove this sequence from the list
         self.active_sequences.remove((seq_id, current_position_index,
@@ -480,9 +480,10 @@ class Shot(Device):
             self.hit()
 
         else:
+
             current_position_index += 1
             next_switch = (self.config['switch_sequence']
-                           [current_position_index].name)
+                           [current_position_index+1].name)
 
             if self.debug:
                 self.log.info("Advancing the sequence. Next switch: %s",
@@ -509,12 +510,12 @@ class Shot(Device):
         if self.debug:
             self.log.debug("Resetting this sequence")
 
-        for sequence in self.active_sequences[:]:
-            if sequence[0] == seq_id:
-                seq_id, current_position_index, next_switch = sequence
+        sequence = [x for x in self.active_sequences if x[0]==seq_id]
 
-                # Remove this sequence from the set
-                self.active_sequences.remove(sequence)
+        try:
+            self.active_sequences.remove(sequence)
+        except ValueError:
+            pass
 
     def _reset_all_sequences(self):
         seq_ids = [x[0] for x in self.active_sequences]
