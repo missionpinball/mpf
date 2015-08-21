@@ -117,8 +117,14 @@ class Shot(Device):
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self._delay_switch_hit, 1)
 
-    def _advance_step(self, steps=1):
+    def advance(self, steps=1, **kwargs):
+        """Advances the active shot profile one step forward.
 
+        If this profile is at the last step and configured to roll over, it will
+        roll over to the first step. If this profile is at the last step and not
+        configured to roll over, this method has no effect.
+
+        """
         if self.debug:
             self.log.debug("Advancing %s step(s)", steps)
 
@@ -373,7 +379,7 @@ class Shot(Device):
          self.active_profile,
          self.active_profile['steps'], _) = self.profiles[0]
 
-    def hit(self, force=False, stealth=False, **kwargs):
+    def hit(self, force=False, **kwargs):
         """Method which is called to indicate this shot was just hit. This
         method will advance the currently-active shot profile.
 
@@ -383,9 +389,6 @@ class Shot(Device):
                 tilt) then this hit isn't processed. Set this to True if you
                 want to force the hit to be processed even if no balls are in
                 play.
-            stealth: Boolean that controls whether this hit will post hit
-                events. Useful if you want to just advance the step without
-                triggering scoring, etc. Default is False.
 
         Note that the shot must be enabled in order for this hit to be
         processed.
@@ -403,27 +406,36 @@ class Shot(Device):
         if self.active_delay_switches and not force:
             return
 
-        if not stealth:
+        if self.debug:
+            self.log.debug("Hit! Profile: %s, Current Step: %s",
+                          self.active_profile_name, self.current_step_name)
 
-            if self.debug:
-                self.log.debug("Hit! Profile: %s, Current Step: %s",
-                              self.active_profile_name, self.current_step_name)
+        # post events
+        self.machine.events.post(self.name + '_hit',
+                                 profile=self.active_profile_name,
+                                 step=self.current_step_name)
 
-            # post event <name>_<profile>_<step>_hit
-            self.machine.events.post(self.name + '_' +
-                                     self.active_profile_name + '_' +
-                                     self.current_step_name + '_hit')
+        self.machine.events.post(self.name + '_' +
+                                 self.active_profile_name + '_hit',
+                                 profile=self.active_profile_name,
+                                 step=self.current_step_name)
 
-            for group in self.shot_groups:
-                group.hit(profile_name=self.active_profile_name,
-                          profile_step_name=self.current_step_name)
+        self.machine.events.post(self.name + '_' +
+                                 self.active_profile_name + '_' +
+                                 self.current_step_name + '_hit',
+                                 profile=self.active_profile_name,
+                                 step=self.current_step_name)
 
-            if Shot.monitor_enabled:
-                for callback in self.machine.monitors['shots']:
-                    callback(name=self.name)
+        for group in self.shot_groups:
+            group.hit(profile_name=self.active_profile_name,
+                      profile_step_name=self.current_step_name)
+
+        if Shot.monitor_enabled:
+            for callback in self.machine.monitors['shots']:
+                callback(name=self.name)
 
         if self.active_profile['advance_on_hit']:
-            self._advance_step()
+            self.advance()
         elif self.debug:
             self.log.debug('Not advancing profile step since the current '
                            'profile ("%s") has setting advance_on_hit set to '
@@ -608,16 +620,6 @@ class Shot(Device):
             self._update_group_status()
 
         self._update_lights(lightshow_step=lightshow_step)
-
-    def advance(self, **kwargs):
-        """Advances the active shot profile one step forward.
-
-        If this profile is at the last step and configured to roll over, it will
-        roll over to the first step. If this profile is at the last step and not
-        configured to roll over, this method has no effect.
-
-        """
-        self.hit(force=True, stealth=True)
 
     def enable(self, **kwargs):
         """Enables this shot. If the shot is not enabled, hits to it will

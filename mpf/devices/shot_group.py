@@ -95,8 +95,18 @@ class ShotGroup(Device):
                 self.log.debug('Hit! Active profile: %s, Current step: %s',
                            profile_name, profile_step_name)
 
+            self.machine.events.post(self.name + '_hit',
+                                     profile=profile_name,
+                                     step=profile_step_name)
+
+            self.machine.events.post(self.name + '_' + profile_name + '_hit',
+                                     profile=profile_name,
+                                     step=profile_step_name)
+
             self.machine.events.post(self.name + '_' + profile_name + '_' +
-                                     profile_step_name + '_hit')
+                                     profile_step_name + '_hit',
+                                     profile=profile_name,
+                                     step=profile_step_name)
 
     def enable(self, **kwargs):
         """Enables this shot group. Also enables all the shots in this
