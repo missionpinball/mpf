@@ -58,6 +58,23 @@ class Shot(Device):
 
         self.enabled = False
 
+    def _enable_related_device_debugging(self):
+
+        self.log.debug("Enabling debugging for this shot's leds and lights")
+
+        for led in self.config['led']:
+            led.enable_debugging()
+
+        for light in self.config['light']:
+            light.enable_debugging()
+
+    def _disable_related_device_debugging(self):
+        for led in self.config['led']:
+            led.disable_debugging()
+
+        for light in self.config['light']:
+            light.disable_debugging()
+
     def _set_player_variable(self):
         if self.active_profile['player_variable']:
             self.player_variable = self.active_profile['player_variable']
@@ -110,7 +127,7 @@ class Shot(Device):
 
         self._stop_current_lights()
         self._update_current_step_variables()
-        self._do_step_actions()
+        self._update_lights()
         self._update_group_status()
 
     def _update_group_status(self):
@@ -131,66 +148,35 @@ class Shot(Device):
         self.current_step_name = (
             self.active_profile['steps'][self.current_step_index]['name'])
 
-    def _do_step_actions(self, ):
-        if ('light_script' in self.active_profile['steps'][self.current_step_index]
-                and (self.config['light'] or self.config['led'])):
+    def _update_lights(self, lightshow_step=0):
 
-            settings = self.active_profile['steps'][self.current_step_index]
+        if self.debug:
+            self.log.debug("Entering _update_lights(). lightshow_step: %s, Shot"
+                           "enabled: %s, Config setting for "
+                           "'lights_when_disabled': %s", lightshow_step,
+                           self.enabled, self.config['lights_when_disabled'])
 
-            if 'hold' in settings:
-                hold = settings.pop('hold')
-            else:
-                hold = True
+        if not self.enabled and not self.config['lights_when_disabled']:
+            return
 
-            if 'reset' in settings:
-                reset = settings.pop('reset')
-            else:
-                reset = False
+        step_settings = self.active_profile['steps'][self.current_step_index]
 
-            new_show = self.machine.light_controller.run_registered_script(
-                script_name=self.active_profile['steps'][self.current_step_index]['light_script'],
-                lights=[x.name for x in self.config['light']],
-                leds=[x.name for x in self.config['led']],
-                priority=self.profiles[0][1],
-                hold=hold,
-                reset=reset,
-                **self.active_profile['steps'][self.current_step_index])
+        if self.debug:
+            self.log.debug("Current profile step settings: %s", step_settings)
 
-            if new_show:
-                self.running_light_show = new_show
-            else:
-                self.log.warning("Error running light_script '%s'",
-                    self.active_profile['steps'][self.current_step_index]['light_script'])
-                self.running_light_show = None
-
-        else:
-            self.running_light_show = None
-
-    def _update_lights(self, step=0):
-        if 'light_script' in self.active_profile['steps'][self.current_step_index]:
-
-            settings = self.active_profile['steps'][self.current_step_index]
-
-            if 'hold' in settings:
-                hold = settings.pop('hold')
-            else:
-                hold = True
-
-            if 'reset' in settings:
-                reset = settings.pop('reset')
-            else:
-                reset = False
+        if step_settings['light_script'] and (self.config['light'] or
+                                              self.config['led']):
 
             self.running_light_show = (
                 self.machine.light_controller.run_registered_script(
-                    script_name=settings['light_script'],
+                    script_name=step_settings['light_script'],
                     lights=[x.name for x in self.config['light']],
                     leds=[x.name for x in self.config['led']],
-                    start_location=step,
+                    start_location=lightshow_step,
                     priority=self.active_profile_priority,
-                    hold=hold,
-                    reset=reset,
-                    **settings))
+                    hold=step_settings.pop('hold'),
+                    reset=step_settings.pop('reset'),
+                    **step_settings))
 
     def player_turn_start(self, player, **kwargs):
         """Called when a player's turn starts to update the player reference to
@@ -270,7 +256,7 @@ class Shot(Device):
             self._sort_profiles()
             self._set_player_variable()
             self._update_current_step_variables()
-            self._update_lights(step=-1)  # update with the the last step
+            self._update_lights()
 
         else:
             if not self.active_profile:
@@ -410,7 +396,12 @@ class Shot(Device):
                 for callback in self.machine.monitors['shots']:
                     callback(name=self.name)
 
-        self._advance_step()
+        if self.active_profile['advance_on_hit']:
+            self._advance_step()
+        elif self.debug:
+            self.log.debug('Not advancing profile step since the current '
+                           'profile ("%s") has setting advance_on_hit set to '
+                           'False', self.active_profile_name)
 
     def _sequence_switch_hit(self, switch_name, state, ms):
         # Since we can track multiple simulatenous sequences (e.g. two balls
@@ -424,22 +415,18 @@ class Shot(Device):
             self._start_new_sequence()
 
         else:
-            # loop through all the sequences
-            for sequence in self.active_sequences:
+            # get the seq_id of the first sequence this switch is next for
+            # this is not a loop because we only want to advance 1 sequence
+            seq_id = next((x[0] for x in self.active_sequences if
+                           x[2]==switch_name), None)
 
-                # if we find one with the next step at this switch, advance it
-                if sequence[2] == switch_name:
-                    self._advance_sequence(sequence[0])
-
-                    # stop looping. Only want to advance one sequence per hit.
-                    return
-
+            if seq_id:
+                # advance this sequence
+                self._advance_sequence(seq_ids[0])
 
     def _start_new_sequence(self):
         # If the sequence hasn't started, make sure we're not within the
         # delay_switch hit window
-
-
 
         if self.active_delay_switches:
 
@@ -476,40 +463,38 @@ class Shot(Device):
 
     def _advance_sequence(self, seq_id):
         # get this sequence
-        for sequence in self.active_sequences:
-            if sequence[0] == seq_id:
-                seq_id, current_position_index, next_switch = sequence
+        seq_id, current_position_index, next_switch = next(
+            x for x in self.active_secquences if x[0]==seq_id)
 
-                # Remove this sequence from the set
-                self.active_sequences.remove(sequence)
+        # Remove this sequence from the list
+        self.active_sequences.remove((seq_id, current_position_index,
+                                      next_switch))
 
-                if current_position_index == (
-                    len(self.config['switch_sequence']) - 2):  # complete
+        if current_position_index == (
+            len(self.config['switch_sequence']) - 2):  # complete
 
-                    if self.debug:
-                        self.log.info("Sequence complete!")
+            if self.debug:
+                self.log.info("Sequence complete!")
 
-                    # TODO remove the delay
-                    self.hit()
+            self.delay.remove(seq_id)
+            self.hit()
 
-                else:
-                    current_position_index += 1
-                    next_switch = (self.config['switch_sequence']
-                                   [current_position_index].name)
+        else:
+            current_position_index += 1
+            next_switch = (self.config['switch_sequence']
+                           [current_position_index].name)
 
-                    if self.debug:
-                        self.log.info("Advancing the sequence. Next switch: %s",
-                                      next_switch)
+            if self.debug:
+                self.log.info("Advancing the sequence. Next switch: %s",
+                              next_switch)
 
-
-                    self.active_sequences.append(
-                        (seq_id, current_position_index, next_switch))
+            self.active_sequences.append(
+                (seq_id, current_position_index, next_switch))
 
     def _cancel_switch_hit(self):
         self._reset_all_sequences()
 
     def _delay_switch_hit(self, switch_name, state, ms):
-
         self.delay.reset(name=switch_name + 'delay_timer',
                          ms=self.config['delay_switch'][switch_name],
                          callback=self._release_delay,
@@ -565,7 +550,7 @@ class Shot(Device):
             self.log.debug('Removing this shot from group: %s', group.name)
         self.shot_groups.discard(group)
 
-    def jump(self, step, update_group=True, current_show_step=0):
+    def jump(self, step, update_group=True, lightshow_step=0):
         """Jumps to a certain step in the active shot profile.
 
         Args:
@@ -577,9 +562,11 @@ class Shot(Device):
                 False is used for things like shot rotation where a shot
                 needs to jump to a new position but you don't want to post the
                 group complete events again.
+            lightshow_step: The step number that the associated light script
+                should start playing at. Useful with rotations so this shot can
+                pick up right where it left off. Default is 0.
 
         """
-
         if not self.machine.game:
             return
 
@@ -590,7 +577,7 @@ class Shot(Device):
         if update_group:
             self._update_group_status()
 
-        self._update_lights(current_show_step)
+        self._update_lights(lightshow_step=lightshow_step)
 
     def advance(self, **kwargs):
         """Advances the active shot profile one step forward.
@@ -616,6 +603,8 @@ class Shot(Device):
         self._register_switch_handlers()
         self.enabled = True
 
+        self._update_lights()
+
     def disable(self, **kwargs):
         """Disables this shot. If the shot is not enabled, hits to it will
         not be processed.
@@ -631,6 +620,9 @@ class Shot(Device):
         self._remove_switch_handlers()
         self.delay.clear()
         self.enabled = False
+
+        if not self.config['lights_when_disabled']:
+            self._stop_current_lights()
 
     def reset(self, **kwargs):
         """Resets the active shot profile back to the first step (Step 0).

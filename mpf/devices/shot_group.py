@@ -48,7 +48,6 @@ class ShotGroup(Device):
         self.shots = self.config['shots']
 
     def _register_member_shots(self):
-
         for shot in self.shots:
             shot.add_to_shot_group(self)
 
@@ -173,8 +172,6 @@ class ShotGroup(Device):
 
             self._sort_profiles()
 
-            # TODO remove when shot is removed and/or disabled
-
         else:
             if not self.active_profile:
                 self.apply_profile('default', priority)
@@ -242,6 +239,12 @@ class ShotGroup(Device):
         """
 
         if not self.enabled or not self.rotation_enabled:
+
+            if self.debug:
+                self.log.debug("Received rotation request. Shot group enabled:"
+                               "%s, Rotation Enabled: %s. Will NOT rotate",
+                               self.enabled, self.rotation_enabled)
+
             return
 
         # if we don't have states or exclude_states, we'll see if the first shot
@@ -290,9 +293,12 @@ class ShotGroup(Device):
 
         # figure out which direction we're going to rotate
         if not direction:
-
             direction = self.rotation_pattern[0]
             self.rotation_pattern.rotate(-1)
+
+            if self.debug:
+                self.log.debug("Since no direction was specified, pulling from"
+                               " rotation pattern: '%s'", direction)
 
         # rotate that list
         if direction == 'right':
@@ -304,7 +310,7 @@ class ShotGroup(Device):
         for i in range(len(shot_list)):
             shot_list[i].jump(step=shot_state_list[i][0],
                               update_group=False,
-                              current_show_step=shot_state_list[i][1])
+                              lightshow_step=shot_state_list[i][1])
 
     def rotate_right(self, steps=1, **kwargs):
         """Rotates the state of the shots to the right. This method is the
@@ -351,7 +357,7 @@ class ShotGroup(Device):
 
     def remove(self):
         if self.debug:
-            self.log.debug("Removing...")
+            self.log.debug("Removing this shot group")
         self._deregister_member_shots()
         del self.machine.shot_groups[self.name]
 

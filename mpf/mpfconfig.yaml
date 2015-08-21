@@ -307,8 +307,7 @@ config_validator:
             switch_sequence: list|self.machine.switches[%]|None
             cancel_switch: list|self.machine.switches[%]|None
             delay_switch: delay_dict|self.machine.switches[%]|None
-            advance_profile_when_hit: bool|bool|True
-            apply_profile_when_disabled: bool|bool|False
+            lights_when_disabled: bool|bool|True
             time: ms|float|0
             light: list|self.machine.lights[%]|None
             led: list|self.machine.leds[%]|None
@@ -338,10 +337,13 @@ config_validator:
             step_names_to_not_rotate: list|str|None
             rotation_pattern: list|str|R
             player_variable: single|str|None
+            advance_on_hit: bool|bool|True
             steps:
                 name: single|str|
                 light_script: single|str|None
                 light_show: single|str|None
+                hold: bool|bool|True
+                reset: bool|bool|False
                 
 
 # Default settings for machines. All can be overridden
