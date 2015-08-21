@@ -227,8 +227,6 @@ class BallDevice(Device):
                         handler=self._source_device_eject_attempt)
                     break
 
-
-
     def get_status(self, request=None):
         """Returns a dictionary of current status of this ball device.
 

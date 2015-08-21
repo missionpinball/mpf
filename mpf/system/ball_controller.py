@@ -75,18 +75,6 @@ class BallController(object):
         """
         self._num_balls_known = balls
 
-    # def create_playfield_device(self):
-    #     """Creates the actual playfield ball device and assigns it to
-    #     self.playfield.
-    #     """
-    #     if not hasattr(self.machine, 'ball_devices'):
-    #         self.machine.ball_devices = DeviceCollection(self.machine,
-    #                                                      'ball_devices',
-    #                                                      'ball_devices')
-    #
-    #     self.machine.playfield = Playfield(self.machine, name='playfield',
-    #                                        collection='ball_devices')
-
     def _initialize(self):
 
         # If there are no ball devices, then the ball controller has no work to

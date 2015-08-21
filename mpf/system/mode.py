@@ -210,7 +210,6 @@ class Mode(object):
 
         self.log.debug('Mode Stopping.')
 
-        self._remove_mode_event_handlers()
         self._remove_mode_switch_handlers()
 
         self.stop_callback = callback
@@ -232,6 +231,8 @@ class Mode(object):
         self.priority = 0
         self.active = False
 
+        self._remove_mode_event_handlers()
+
         for item in self.stop_methods:
             try:
                 item[0](item[1])
@@ -244,6 +245,9 @@ class Mode(object):
                                  callback=self._mode_stopped_callback)
 
     def _mode_stopped_callback(self, **kwargs):
+
+
+
         self.mode_stop(**self.mode_stop_kwargs)
 
         self.mode_stop_kwargs = dict()

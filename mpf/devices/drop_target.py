@@ -28,7 +28,7 @@ class DropTarget(Device):
         self.banks = set()
 
         # can't read the switch until the switch controller is set up
-        self.machine.events.add_handler('init_phase_3',
+        self.machine.events.add_handler('init_phase_4',
                                         self._update_state_from_switch)
 
     def _register_switch_handlers(self):

@@ -93,8 +93,6 @@ class Game(Mode):
 
         self.machine.events.post('enable_volume_keys')
 
-
-
         self.machine.events.post_queue('game_starting',
                                        callback=self.game_started, game=self)
 
