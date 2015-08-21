@@ -35,8 +35,7 @@ class Device(object):
             'device:' + self.config_section, config, self.name)
 
         if self.config['debug']:
-            self.debug = True
-            self.log.debug("Enabling debug logging for this device")
+            self.enable_debugging()
             self.log.debug("Configuring device with settings: '%s'", config)
 
         self.tags = self.config['tags']
@@ -67,6 +66,22 @@ class Device(object):
 
     def __repr__(self):
         return '<' + self.class_label + '.' + self.name + '>'
+
+    def enable_debugging(self):
+        self.log.debug("Enabling debug logging")
+        self.debug = True
+        self._enable_related_device_debugging()
+
+    def disable_debugging(self):
+        self.log.debug("Disabling debug logging")
+        self.debug = False
+        self._disable_related_device_debugging()
+
+    def _enable_related_device_debugging(self):
+        pass
+
+    def _disable_related_device_debugging(self):
+        pass
 
     @classmethod
     def get_config_info(cls):
