@@ -21,21 +21,6 @@ class ShotProfileManager(object):
         self.log = logging.getLogger('ShotProfileManager')
 
         self.profiles = dict()
-        """shot_profiles dict:
-
-        profile name : dict of settings
-
-        settings dict:
-
-        * loop: boolean
-        * step_names_to_rotate: list
-        * step_names_to_not_rotate: list
-        * steps: list of tuples:
-            name
-            light_script
-            lightshow
-
-        '"""
 
         if 'shot_profiles' in self.machine.config:
             self.machine.events.add_handler('init_phase_3',

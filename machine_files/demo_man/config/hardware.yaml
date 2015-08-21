@@ -13,7 +13,6 @@ virtual_platform_start_active_switches:
     s_trough_3
     s_trough_4
     s_trough_5
-    s_trough_6
 
 switches:
 # Fliptronics

@@ -560,21 +560,6 @@ shot_profiles:
             light_script: "off"
           - name: lit
             light_script: "on"
-                
-    drop_target:
-        steps:
-          - name: up
-            light_script: "off"
-          - name: down
-            light_script: "on"
-    hit_me:
-        steps:
-            - name: active
-              light_script: flash
-              repeat: yes
-              tocks_per_sec: 5
-            - name: complete
-              light_script: "off"
 
 light_scripts:
     flash:
