@@ -1,6 +1,7 @@
 3:
   
   section_deprecations:
+    max balls:
   
   section_warnings:
     - path: shots
@@ -17,6 +18,11 @@
     target_profiles: shot_profiles
     switch_activity: reverse_switch
     log_color_changes: leds
+    attract_start: mode_attract_started
+    balls installed: balls_installed
+    min balls: min_balls
+    balls per game: balls_per_game
+    max players per game: max_players
 
   string_replacements:
     _remove_profile: _remove_active_profile
@@ -65,14 +71,3 @@
 
   section_deprecations:
     - plugins
-
-# Below is a list of things we'll change in v3, but we don't want to do that
-# until we have enough to warrant an actual change.
-
-#3:
-#  section_replacements:
-#    balls installed: balls_installed
-#    min balls: min_balls
-#    max balls: max_balls
-#    balls per game: balls_per_game
-#    max players per game: max_players

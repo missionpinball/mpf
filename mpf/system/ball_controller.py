@@ -104,8 +104,8 @@ class BallController(object):
         self.log.debug("Received request to start game.")
         self.log.debug("Balls contained: %s, Min balls needed: %s",
                        self.balls,
-                       self.machine.config['machine']['min balls'])
-        if self.balls < self.machine.config['machine']['min balls']:
+                       self.machine.config['machine']['min_balls'])
+        if self.balls < self.machine.config['machine']['min_balls']:
             self.log.warning("BallController denies game start. Not enough "
                              "balls")
             return False

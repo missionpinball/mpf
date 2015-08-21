@@ -7,8 +7,8 @@ mpf:
   default_pulse_ms: 20
 
 game:
-    balls per game: 3
-    max players per game: 4
+    balls_per_game: 3
+    max_players: 4
     player_controlled_eject_tag: plunger
 
 modes:

@@ -333,10 +333,17 @@ class Playfield(BallDevice):
         if not self.balls:
 
             if not self.num_balls_requested:
-                self.log.debug("PF switch hit with no balls expected. Setting "
-                               "pf balls to 1.")
-                self.balls = 1
-                self.machine.events.post('unexpected_ball_on_' + self.name)
+                if self.machine.config['game']['glass_off_mode']:
+                    self.log.debug("Playfield_active switch hit with no balls "
+                                   "expected. glass_off_mode is enabled, so "
+                                   "this will be ignored.")
+                else:
+                    self.log.debug("Playfield_active switch hit with no balls "
+                                   "expected. glass_off_mode is not enabled, "
+                                   "setting playfield ball count to 1")
+                
+                    self.balls = 1
+                    self.machine.events.post('unexpected_ball_on_' + self.name)
 
     def _ball_added_handler(self, balls):
         self.log.debug("%s ball(s) added to the playfield", balls)

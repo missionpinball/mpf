@@ -3,9 +3,8 @@
 
 machine:
     hz: 30
-    Balls Installed: 6
-    Min Balls: 1
-    Max Balls: 6
+    balls_installed: 6
+    min_balls: 1
 
 virtual_platform_start_active_switches:
     s_trough_1

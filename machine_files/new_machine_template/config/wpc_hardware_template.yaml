@@ -14,9 +14,8 @@
 
 Machine:
     HZ: 60
-    Balls Installed: 4
-    Min Balls: 1
-    Max Balls: 4
+    balls_installed: 4
+    min_balls: 1
 
 Hardware:
     DriverBoards: wpc

@@ -348,9 +348,8 @@ config_validator:
 # Default settings for machines. All can be overridden
 
 machine:
-    Balls Installed: 1
-    Min Balls: 1
-    Max Balls: 6
+    balls_installed: 1
+    min_balls: 1
 
 timing:
     hz: 30
@@ -393,8 +392,9 @@ led_settings:
     dithering: True
 
 game:
-    Balls per game: 3
-    Max players per game: 4
+    balls_per_game: 3
+    max_players: 4
+    glass_off_mode: true
 
 auditor:
     save_events:

@@ -263,7 +263,7 @@ class Game(Mode):
             self.shoot_again()
             return
 
-        if (self.player.ball == self.machine.config['game']['balls per game']
+        if (self.player.ball == self.machine.config['game']['balls_per_game']
                 and self.player.number == self.num_players):
             self.game_ending()
         else:
@@ -448,7 +448,7 @@ class Game(Mode):
         # player
 
         if len(self.player_list) >= self.machine.config['game']\
-                ['max players per game']:
+                ['max_players']:
             self.log.debug("Game is at max players. Cannot add another.")
             return False
 
