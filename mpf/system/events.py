@@ -93,8 +93,9 @@ class EventManager(object):
         # the handler method, priority, dict of kwargs, & uuid key
 
         self.registered_handlers[event].append((handler, priority, kwargs, key))
-        self.log.debug("Registered %s as a handler for '%s', priority: %s",
-                       (str(handler).split(' '))[2], event, priority)
+        self.log.debug("Registered %s as a handler for '%s', priority: %s, "
+                       "kwargs: %s",
+                       (str(handler).split(' '))[2], event, priority, kwargs)
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each

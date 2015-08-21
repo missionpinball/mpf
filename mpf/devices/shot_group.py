@@ -29,9 +29,6 @@ class ShotGroup(Device):
                  member_collection=None, device_str=None):
         super(ShotGroup, self).__init__(machine, name, config, collection)
 
-        if self.debug:
-            self.log.debug("Configuring shot group with settings: '%s'", config)
-
         self.enabled = False
         self.rotation_enabled = True
 
@@ -46,6 +43,20 @@ class ShotGroup(Device):
             self.member_collection = member_collection
 
         self.shots = self.config['shots']
+
+        if self.debug:
+            self._enable_related_device_debugging()
+
+    def _enable_related_device_debugging(self):
+
+        self.log.debug("Enabling debugging for this shot groups's member shots")
+
+        for shot in self.config['shots']:
+            shot.enable_debugging()
+
+    def _disable_related_device_debugging(self):
+        for shot in self.config['shots']:
+            shot.disable_debugging()
 
     def _register_member_shots(self):
         for shot in self.shots:

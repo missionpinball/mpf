@@ -341,7 +341,6 @@ config_validator:
             steps:
                 name: single|str|
                 light_script: single|str|None
-                light_show: single|str|None
                 hold: bool|bool|True
                 reset: bool|bool|False
                 

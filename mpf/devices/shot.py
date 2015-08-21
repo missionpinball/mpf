@@ -57,6 +57,9 @@ class Shot(Device):
 
         self.enabled = False
 
+        if self.debug:
+            self._enable_related_device_debugging()
+
     def _enable_related_device_debugging(self):
 
         self.log.debug("Enabling debugging for this shot's leds and lights")
@@ -115,14 +118,40 @@ class Shot(Device):
                 switch.name, self._delay_switch_hit, 1)
 
     def _advance_step(self, steps=1):
-        if (self.player[self.player_variable] + 1 >=
+
+        if self.debug:
+            self.log.debug("Advancing %s step(s)", steps)
+
+        if (self.player[self.player_variable] + steps >=
                 len(self.active_profile['steps'])):
+
             if self.active_profile['loop']:
+                if self.debug:
+                    self.log.debug("Active profile 's' is in its final step "
+                                   "based a player variable %s=%s. Profile "
+                                   "setting for loop is True, so resetting to "
+                                   "the first step.",self.active_profile_name,
+                                   self.player_variable,
+                                   self.player[self.player_variable])
+
                 self.player[self.player_variable] = 0
+
             else:
+                if self.debug:
+                    self.log.debug("Active profile 's' is in its final step "
+                                    "based a player variable %s=%s. Profile "
+                                    "setting for loop is False, so step is not "
+                                    "advancing.",self.active_profile_name,
+                                    self.player_variable,
+                                    self.player[self.player_variable])
                 return
         else:
-            self.machine.game.player[self.player_variable] += 1
+
+            if self.debug:
+                self.log.debug("Advancing player variable %s %s step(s)",
+                               self.player_variable, steps)
+
+            self.machine.game.player[self.player_variable] += steps
 
         self._stop_current_lights()
         self._update_current_step_variables()
@@ -151,7 +180,7 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug("Entering _update_lights(). lightshow_step: %s, Shot"
-                           "enabled: %s, Config setting for "
+                           " enabled: %s, Config setting for "
                            "'lights_when_disabled': %s", lightshow_step,
                            self.enabled, self.config['lights_when_disabled'])
 
