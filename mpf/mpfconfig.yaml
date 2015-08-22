@@ -349,6 +349,11 @@ config_validator:
                 light_script: single|str|None
                 hold: bool|bool|True
                 reset: bool|bool|False
+                repeat: bool|bool|True
+                blend: bool|bool|Fase
+                tocks_per_sec: single|int|10
+                num_repeats: single|int|0
+                sync_ms:  single|int|0
                 
 
 # Default settings for machines. All can be overridden
