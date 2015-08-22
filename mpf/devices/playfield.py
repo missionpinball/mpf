@@ -29,7 +29,7 @@ class Playfield(BallDevice):
         self.config = dict()
 
         self.config = self.machine.config_processor.process_config2(
-            'device:' + self.config_section, config, self.name)
+            self.config_section, config, self.name)
 
         if self.config['debug']:
             self.debug = True
@@ -333,7 +333,7 @@ class Playfield(BallDevice):
         if not self.balls:
 
             if not self.num_balls_requested:
-                if self.machine.config['game']['glass_off_mode']:
+                if self.machine.config['machine']['glass_off_mode']:
                     self.log.debug("Playfield_active switch hit with no balls "
                                    "expected. glass_off_mode is enabled, so "
                                    "this will be ignored.")
@@ -341,7 +341,7 @@ class Playfield(BallDevice):
                     self.log.debug("Playfield_active switch hit with no balls "
                                    "expected. glass_off_mode is not enabled, "
                                    "setting playfield ball count to 1")
-                
+
                     self.balls = 1
                     self.machine.events.post('unexpected_ball_on_' + self.name)
 
@@ -485,8 +485,8 @@ class Playfield(BallDevice):
     def ball_lost(self):
         """Mark a ball as lost"""
         self.num_balls_known = self.balls
-        self.num_balls_missing = self.machine.config['machine']\
-            ['balls installed'] - self.balls
+        self.num_balls_missing = (self.machine.config['machine']
+                                  ['balls installed'] - self.balls)
         self.num_balls_live = 0
         # since desired count doesn't change, this will relaunch them
         self.log.debug("Ball(s) Marked Lost. Known: %s, Missing: %s",

@@ -32,7 +32,7 @@ class Device(object):
         self.config = dict()
 
         self.config = self.machine.config_processor.process_config2(
-            'device:' + self.config_section, config, self.name)
+            self.config_section, config, self.name)
 
         if self.config['debug']:
             self.enable_debugging()

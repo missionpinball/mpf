@@ -324,12 +324,14 @@ class Config(object):
 
         orig_spec = config_spec
 
-
         config_spec = config_spec.split(':')
         this_spec = self.machine.config['config_validator']
 
         for i in range(len(config_spec)):
             this_spec = this_spec[config_spec[i]]
+
+        #self.check_for_invalid_sections(this_spec, source,
+        #                                validation_failure_info)
 
         processed_config = source
 
@@ -498,6 +500,41 @@ class Config(object):
             item = Timing.string_to_ticks(item)
 
         return item
+
+    def check_for_invalid_sections(self, spec, config, validation_failure_info):
+        for k, v in config.iteritems():
+            if type(k) is not dict:
+                if k not in spec:
+
+                    path_list = validation_failure_info[0].split(':')
+
+                    if len(path_list) > 1 and (
+                            path_list[-1] == validation_failure_info[1]):
+                        path_list.append('[list_item]')
+                    elif path_list[0] == validation_failure_info[1]:
+                        path_list = list()
+
+                    path_list.append(validation_failure_info[1])
+                    path_list.append(k)
+
+                    path_string = ':'.join(path_list)
+
+                    if (self.machine.config['mpf']
+                            ['allow_invalid_config_sections']):
+
+                        self.log.warning('Unrecognized config setting. "%s" is '
+                                         'not a valid setting name.',
+                                         path_string)
+
+                    else:
+                        self.log.error('Unrecognized config setting. "%s" is '
+                                       'not a valid setting name. You can ignore'
+                                       ' these errors by adding "allow_invalid_config_sections'
+                                       ': yes" to the "mpf:" section of your '
+                                       'machine-wide config file', path_string)
+                        sys.exit()
+
+
 
     def validate_item(self, item, validator, validation_failure_info):
 

@@ -66,6 +66,7 @@ mpf:
     switch_event_active: "%_active"
     switch_event_inactive: "%_inactive"
     switch_tag_event: sw_%
+    allow_invalid_config_sections: true
     
     device_events:
         autofire_coils:
@@ -136,201 +137,206 @@ mpf:
 
 config_validator:
 # values are type|validation|default
-    device:
-        autofire_coils:
-            coil: single|self.machine.coils[%]|
-            switch: single|self.machine.switches[%]|
-            reverse_switch: bool|bool|False
-            pulse_ms: int|int|None
-            pwm_on_ms: int|int|None
-            pwm_off_ms: int|int|None
-            coil_action_ms: int|int|None
-            delay: int|int|0
-            recycle_ms: single|int|125
-            debounced: bool|bool|False
-            drive_now: bool|bool|False
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        ball_devices:
-            exit_count_delay: ms|int|500ms
-            entrance_count_delay: ms|int|500ms
-            eject_coil: single|self.machine.coils[%]|None
-            eject_switch: single|self.machine.switches[%]|None
-            entrance_switch: single|self.machine.switches[%]|None
-            jam_switch: single|self.machine.switches[%]|None
-            eject_count_hold_times: list|ms|None
-            confirm_eject_type: single|str|count
-            captures_from: single|str|playfield
-            eject_targets: list|str|playfield
-            # can't convert to objects until all ball_devices are setup
-            eject_timeouts: list|ms|None
-            confirm_eject_switch: single|self.machine.switches[%]|None
-            confirm_eject_event: single|str|None
-            balls_per_eject: int|int|1
-            max_eject_attempt: int|int|0
-            ball_switches: list|self.machine.switches[%]|None
-            ball_capacity: int|int|None
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        ball_locks:
-            balls_to_lock: int|int|
-            lock_devices: list|self.machine.ball_devices[%]|
-            source_playfield: single|self.machine.ball_devices[%]|playfield
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        ball_saves:
-            source_playfield: single|self.machine.ball_devices[%]|playfield
-            auto_disable_time: ms|str|0
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        coils:
-            number: single|str|
-            number_str: single|str|
-            pulse_ms: int|int|0
-            holdpatter: single|str|None
-            pwm_on: int|int|0
-            pwm_off: int|int|0
-            allow_enable: bool|bool|False
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        diverters:
-            type: single|str|pulse
-            activation_time: ms|str|0
-            activation_switches: list|self.machine.switches[%]|None
-            disable_switches: list|self.machine.switches[%]|None
-            deactivation_switches: list|self.machine.switches[%]|None
-            activation_coil: single|self.machine.coils[%]|None
-            deactivation_coil: single|self.machine.coils[%]|None
-            targets_when_active: list|self.machine.ball_devices[%]|playfield
-            targets_when_inactive: list|self.machine.ball_devices[%]|playfield
-            feeder_devices: list|self.machine.ball_devices[%]|playfield
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        drop_targets:
-            switch: single|self.machine.switches[%]|
-            reset_coil: single|self.machine.coils[%]|
-            knockdown_coil: single|self.machine.coils[%]|None
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        drop_target_banks:
-            drop_targets: set|self.machine.drop_targets[%]|
-            reset_coil: single|self.machine.coils[%]|None
-            reset_coils: list|self.machine.coils[%]|None
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        flashers:
-            number: single|str|
-            number_str: single|str|
-            flash_ms: ms|str|None
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        flippers:
-            main_coil: single|self.machine.coils[%]|
-            hold_coil: single|self.machine.coils[%]|None
-            activation_switch: single|self.machine.switches[%]|
-            eos_switch: single|self.machine.switches[%]|None
-            use_eos: bool|bool|False
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        gis:
-            number: single|str|
-            number_str: single|str|
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        leds:
-            number: single|str|
-            number_str: single|str|
-            default_color: single|str|ffffff
-            brightness_compensation: list|float|1.0
-            fade_ms: int|int|None
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        matrix_lights:
-            number: single|str|
-            number_str: single|str|
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        multiballs:
-            ball_count: int|int|
-            source_playfield: single|self.machine.ball_devices[%]|playfield
-            shoot_again: ms|str|10s
-            ball_locks: list|self.machine.ball_locks[%]|None
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        playfields:
-            eject_targets: list|str|None
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        playfield_transfers:
-            ball_switch: single|self.machine.switches[%]|
-            eject_target: single|self.machine.ball_device[%]|
-            captures_from: single|self.machine.ball_devices[%]|
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        score_reels:
-            coil_inc: single|self.machine.coils[%]|None
-            coil_dec: single|self.machine.coils[%]|None
-            rollover: bool|bool|True
-            limit_lo: int|int|0
-            limit_hi: int|int|9
-            repeat_pulse_time: ms|str|200
-            hw_confirm_time: ms|str|300
-            config: single|str|lazy
-            # switch_x is also here but cannot be processed here
-        score_reel_groups:
-            max_simultaneous_coils: int|int|2
-            confirm: single|str|strict
-            reels: list|str|
-            chimes: list|str|None
-            repeat_pulse_time: ms|str|200
-            hw_confirm_time: ms|str|300
-            config: single|str|lazy
-        shots:
-            profile: single|str|default
-            switch: list|self.machine.switches[%]|None
-            switch_sequence: list|self.machine.switches[%]|None
-            cancel_switch: list|self.machine.switches[%]|None
-            delay_switch: delay_dict|self.machine.switches[%]|None
-            lights_when_disabled: bool|bool|True
-            time: ms|float|0
-            light: list|self.machine.lights[%]|None
-            led: list|self.machine.leds[%]|None
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        shot_groups:
-            shots: list|self.machine.shots[%]|
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        switches:
-            number: single|str|
-            number_str: single|str|
-            type: single|str|NO
-            debounce: bool|bool|True
-            recycle_time: ticks|str|0
-            activation_events: list|str|None
-            deactivation_events: list|str|None
-            tags: list|str|None
-            label: single|str|%
-            debug: bool|bool|False
-        
+    autofire_coils:
+        coil: single|self.machine.coils[%]|
+        switch: single|self.machine.switches[%]|
+        reverse_switch: bool|bool|False
+        pulse_ms: int|int|None
+        pwm_on_ms: int|int|None
+        pwm_off_ms: int|int|None
+        coil_action_ms: int|int|None
+        delay: int|int|0
+        recycle_ms: single|int|125
+        debounced: bool|bool|False
+        drive_now: bool|bool|False
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    ball_devices:
+        exit_count_delay: ms|int|500ms
+        entrance_count_delay: ms|int|500ms
+        eject_coil: single|self.machine.coils[%]|None
+        eject_switch: single|self.machine.switches[%]|None
+        entrance_switch: single|self.machine.switches[%]|None
+        jam_switch: single|self.machine.switches[%]|None
+        eject_count_hold_times: list|ms|None
+        confirm_eject_type: single|str|count
+        captures_from: single|str|playfield
+        eject_targets: list|str|playfield
+        # can't convert to objects until all ball_devices are setup
+        eject_timeouts: list|ms|None
+        confirm_eject_switch: single|self.machine.switches[%]|None
+        confirm_eject_event: single|str|None
+        balls_per_eject: int|int|1
+        max_eject_attempt: int|int|0
+        ball_switches: list|self.machine.switches[%]|None
+        ball_capacity: int|int|None
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    ball_locks:
+        balls_to_lock: int|int|
+        lock_devices: list|self.machine.ball_devices[%]|
+        source_playfield: single|self.machine.ball_devices[%]|playfield
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    ball_saves:
+        source_playfield: single|self.machine.ball_devices[%]|playfield
+        auto_disable_time: ms|str|0
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    coils:
+        number: single|str|
+        number_str: single|str|
+        pulse_ms: int|int|0
+        holdpatter: single|str|None
+        pwm_on: int|int|0
+        pwm_off: int|int|0
+        allow_enable: bool|bool|False
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    diverters:
+        type: single|str|pulse
+        activation_time: ms|str|0
+        activation_switches: list|self.machine.switches[%]|None
+        disable_switches: list|self.machine.switches[%]|None
+        deactivation_switches: list|self.machine.switches[%]|None
+        activation_coil: single|self.machine.coils[%]|None
+        deactivation_coil: single|self.machine.coils[%]|None
+        targets_when_active: list|self.machine.ball_devices[%]|playfield
+        targets_when_inactive: list|self.machine.ball_devices[%]|playfield
+        feeder_devices: list|self.machine.ball_devices[%]|playfield
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    drop_targets:
+        switch: single|self.machine.switches[%]|
+        reset_coil: single|self.machine.coils[%]|
+        knockdown_coil: single|self.machine.coils[%]|None
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    drop_target_banks:
+        drop_targets: set|self.machine.drop_targets[%]|
+        reset_coil: single|self.machine.coils[%]|None
+        reset_coils: list|self.machine.coils[%]|None
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    flashers:
+        number: single|str|
+        number_str: single|str|
+        flash_ms: ms|str|None
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    flippers:
+        main_coil: single|self.machine.coils[%]|
+        hold_coil: single|self.machine.coils[%]|None
+        activation_switch: single|self.machine.switches[%]|
+        eos_switch: single|self.machine.switches[%]|None
+        use_eos: bool|bool|False
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    gis:
+        number: single|str|
+        number_str: single|str|
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    leds:
+        number: single|str|
+        number_str: single|str|
+        default_color: single|str|ffffff
+        brightness_compensation: list|float|1.0
+        fade_ms: int|int|None
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    matrix_lights:
+        number: single|str|
+        number_str: single|str|
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    multiballs:
+        ball_count: int|int|
+        source_playfield: single|self.machine.ball_devices[%]|playfield
+        shoot_again: ms|str|10s
+        ball_locks: list|self.machine.ball_locks[%]|None
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    playfields:
+        eject_targets: list|str|None
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    playfield_transfers:
+        ball_switch: single|self.machine.switches[%]|
+        eject_target: single|self.machine.ball_device[%]|
+        captures_from: single|self.machine.ball_devices[%]|
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    score_reels:
+        coil_inc: single|self.machine.coils[%]|None
+        coil_dec: single|self.machine.coils[%]|None
+        rollover: bool|bool|True
+        limit_lo: int|int|0
+        limit_hi: int|int|9
+        repeat_pulse_time: ms|str|200
+        hw_confirm_time: ms|str|300
+        config: single|str|lazy
+        # switch_x is also here but cannot be processed here
+    score_reel_groups:
+        max_simultaneous_coils: int|int|2
+        confirm: single|str|strict
+        reels: list|str|
+        chimes: list|str|None
+        repeat_pulse_time: ms|str|200
+        hw_confirm_time: ms|str|300
+        config: single|str|lazy
+    shots:
+        profile: single|str|default
+        switch: list|self.machine.switches[%]|None
+        switch_sequence: list|self.machine.switches[%]|None
+        cancel_switch: list|self.machine.switches[%]|None
+        delay_switch: delay_dict|self.machine.switches[%]|None
+        lights_when_disabled: bool|bool|True
+        time: ms|float|0
+        light: list|self.machine.lights[%]|None
+        led: list|self.machine.leds[%]|None
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    shot_groups:
+        shots: list|self.machine.shots[%]|
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+    switches:
+        number: single|str|
+        number_str: single|str|
+        type: single|str|NO
+        debounce: bool|bool|True
+        recycle_time: ticks|str|0
+        activation_events: list|str|None
+        deactivation_events: list|str|None
+        tags: list|str|None
+        label: single|str|%
+        debug: bool|bool|False
+
+    machine:
+        hz: single|int|30
+        balls_installed: single|int|1
+        min_balls: single|int|1
+        glass_off_mode: bool|bool|True
+
     shot_profiles:
             loop: bool|bool|False
             step_names_to_rotate: list|str|None
@@ -350,6 +356,7 @@ config_validator:
 machine:
     balls_installed: 1
     min_balls: 1
+    glass_off_mode: true
 
 timing:
     hz: 30
@@ -394,7 +401,6 @@ led_settings:
 game:
     balls_per_game: 3
     max_players: 4
-    glass_off_mode: true
 
 auditor:
     save_events:
