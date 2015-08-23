@@ -124,7 +124,7 @@ class Config(object):
         if config_location:
 
             try:
-                log.info("Loading configuration from file: %s", config_location)
+                log.debug("Loading configuration from file: %s", config_location)
                 new_updates = Config.keys_to_lower(yaml.load(open(
                                                    config_location, 'r')))
             except yaml.YAMLError, exc:
@@ -330,8 +330,8 @@ class Config(object):
         for i in range(len(config_spec)):
             this_spec = this_spec[config_spec[i]]
 
-        #self.check_for_invalid_sections(this_spec, source,
-        #                                validation_failure_info)
+        self.check_for_invalid_sections(this_spec, source,
+                                        validation_failure_info)
 
         processed_config = source
 
@@ -370,12 +370,14 @@ class Config(object):
                     if result_type == 'list':
                         processed_config = self.validate_config_item2(
                             this_spec[k],
-                            validation_failure_info=(validation_failure_info, k))
+                            validation_failure_info=(validation_failure_info,
+                                                     k))
 
                     else:
                         processed_config[k] = self.validate_config_item2(
                             this_spec[k],
-                            validation_failure_info=(validation_failure_info, k))
+                            validation_failure_info=(validation_failure_info,
+                                                     k))
 
         if target:
             processed_config = Config.dict_merge(target, processed_config)
@@ -405,7 +407,11 @@ class Config(object):
             else:
                 item = default
 
-        if item_type == 'list':
+        if item_type == 'single':
+            item = self.validate_item(item, validation, validation_failure_info)
+
+
+        elif item_type == 'list':
             item = Config.string_to_list(item)
 
             new_list = list()
@@ -415,30 +421,6 @@ class Config(object):
                     self.validate_item(i, validation, validation_failure_info))
 
             item = new_list
-
-        elif item_type == 'list_of_dicts':
-            if type(item) is list:
-                pass
-            elif type(item) is dict:
-                item = [item]
-
-            # TODO
-
-        elif item_type == 'single':
-            item = self.validate_item(item, validation, validation_failure_info)
-
-        elif item_type == 'delay_dict':  # time values will be ms
-            if not item:
-                item = dict()
-
-            else:
-                new_dict = dict()
-
-                for k, v in item.iteritems():
-                    new_dict[self.validate_item(k, validation,
-                        validation_failure_info)] = Timing.string_to_ms(v)
-
-                item = new_dict
 
         elif item_type == 'set':
             item = set(Config.string_to_list(item))
@@ -452,52 +434,18 @@ class Config(object):
             item = new_set
 
         elif item_type == 'dict':
-            if type(item) is dict or type(item) is CaseInsensitiveDict:
-                pass
-            elif not default:
-                item = dict()
-            else:
-                log.error('Config error. "%s" is not a dictionary', item)
-                sys.exit()
 
-            # TODO
+            item = self.validate_item(item, validation,
+                                               validation_failure_info)
 
-        elif item_type == 'int':
-
-            try:
-                item = int(item)
-            except TypeError:
-                # TODO error
-                pass
-
-        elif item_type == 'float':
-            try:
-                item = float(item)
-            except TypeError:
-                # TODO error
-                pass
-
-        elif item_type in ('boolean', 'bool'):
             if not item:
-                item = False
-            elif type(item) is str and item.lower() in ('no', 'false', 'off'):
-                item = False
-            else:
-                item = True
+                item = dict()
 
-        elif item_type == 'ms':
-            item = Timing.string_to_ms(item)
-
-        elif item_type == 'secs':
-            item = Timing.string_to_secs(item)
-
-        elif item_type == 'list_of_lists':
-            item = Config.list_of_lists(item)
-
-            # TODO
-
-        elif item_type == 'ticks':
-            item = Timing.string_to_ticks(item)
+        else:
+            self.log.error("Invalid Type '%s' in config spec %s:%s", item_type,
+                           validation_failure_info[0][0],
+                           validation_failure_info[1])
+            sys.exit()
 
         return item
 
@@ -527,40 +475,82 @@ class Config(object):
                                          path_string)
 
                     else:
-                        self.log.error('Unrecognized config setting. "%s" is '
-                                       'not a valid setting name. You can ignore'
-                                       ' these errors by adding "allow_invalid_config_sections'
-                                       ': yes" to the "mpf:" section of your '
-                                       'machine-wide config file', path_string)
+                        self.log.error('Your config contains a value for the '
+                                       'setting "%s", but this is not a valid '
+                                       'setting name.', path_string)
+
+                        self.lookup_invalid_config_setting(path_string)
+
                         sys.exit()
 
 
 
     def validate_item(self, item, validator, validation_failure_info):
 
-        if '%' in validator and type(item) is str and item:
+        if '%' in validator:
 
-            if item is not None:
+            if type(item) is str:
 
                 try:
                     item = eval(validator.replace('%', "'" + item + "'"))
                 except KeyError:
                     self.validation_error(item, validation_failure_info)
+            else:
+                item = None
 
-        elif validator in ('string', 'str'):
+        elif validator == 'str':
             if item is not None:
                 item = str(item)
             else:
                 item = None
 
         elif validator == 'float':
-            item = float(item)
+            try:
+                item = float(item)
+            except TypeError:
+                # TODO error
+                pass
 
         elif validator == 'int':
-            item = int(item)
+            try:
+                item = int(item)
+            except TypeError:
+                # TODO error
+                pass
 
         elif validator == 'bool':
             item = bool(item)
+
+        elif validator == 'ms':
+            item = Timing.string_to_ms(item)
+
+        elif validator == 'secs':
+            item = Timing.string_to_secs(item)
+
+        elif validator == 'ticks':
+            item = Timing.string_to_ticks(item)
+
+        elif ':' in validator:
+            validator = validator.split(':')
+            # item could be str, list, or list of dicts
+            item = Config.event_config_to_dict(item)
+
+            return_dict = dict()
+
+            for k, v in item.iteritems():
+                return_dict[self.validate_item(k, validator[0],
+                                               validation_failure_info)] = (
+                    self.validate_item(v, validator[1], validation_failure_info)
+                    )
+
+            item = return_dict
+
+        else:
+            self.log.error("Invalid Validator '%s' in config spec %s:%s",
+                           validator,
+                           validation_failure_info[0][0],
+                           validation_failure_info[1])
+            sys.exit()
 
         return item
 
@@ -570,7 +560,34 @@ class Config(object):
                        validation_failure_info[0][1],
                        validation_failure_info[1],
                        item)
+
         sys.exit()
+
+    def lookup_invalid_config_setting(self, setting):
+
+        setting_key = setting.split(':')[-1]
+
+        config_file = yaml.load(open(
+            self.machine.config['mpf']['config_versions_file'], 'r'))
+
+        for ver, sections in config_file.iteritems():
+
+            ver_string = ''
+
+            if int(version.__config_version_info__) > int(ver):
+                ver_string = (' (The latest config version is config_version=' +
+                              version.__config_version_info__ + ').')
+
+            if setting_key in sections['section_replacements']:
+                self.log.info('The setting "%s" has been renamed to "%s" in '
+                              'config_version=%s%s', setting,
+                              sections['section_replacements'][setting_key],
+                              ver, ver_string)
+            if setting_key in sections['section_deprecations']:
+                self.log.info('The setting "%s" has been removed in '
+                              'config_version=%s%s', setting, ver, ver_string)
+
+
 
     @staticmethod
     def dict_merge(a, b, combine_lists=True):
