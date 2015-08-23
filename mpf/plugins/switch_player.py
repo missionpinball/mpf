@@ -59,7 +59,7 @@ class SwitchPlayer(object):
 
             this_step = self.step_list[self.current_step]
 
-            self.log.info("Switch: %s, Action: %s", this_step['switch'],
+            self.log.debug("Switch: %s, Action: %s", this_step['switch'],
                           this_step['action'])
 
             # send this step's switches

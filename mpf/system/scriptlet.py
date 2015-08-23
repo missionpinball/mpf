@@ -15,7 +15,7 @@ class Scriptlet(object):
         self.machine = machine
         self.name = name
         self.log = logging.getLogger('Scriptlet.' + name)
-        self.log.info("Loading Scriptlet: %s", name)
+        self.log.debug("Loading Scriptlet: %s", name)
         self.on_load()
 
     def __repr__(self):

@@ -81,7 +81,7 @@ class ModeController(object):
                 the mode's folder in your game's machine_files/modes folder.
 
         """
-        self.log.info('Processing mode: %s', mode_string)
+        self.log.debug('Processing mode: %s', mode_string)
 
         config = dict()
 
@@ -118,7 +118,7 @@ class ModeController(object):
                               config['mode']['code'].split('.')[0])
                 i = __import__(import_str, fromlist=[''])
 
-                self.log.info("Loading Mode class code from %s", import_str)
+                self.log.debug("Loading Mode class code from %s", import_str)
 
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
                     self.machine, config, mode_string, mode_path)
@@ -131,13 +131,13 @@ class ModeController(object):
                               config['mode']['code'].split('.')[0])
                 i = __import__(import_str, fromlist=[''])
 
-                self.log.info("Loading Mode class code from %s", import_str)
+                self.log.debug("Loading Mode class code from %s", import_str)
 
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
                     self.machine, config, mode_string, mode_path)
 
         else:
-            self.log.info("Loading default Mode class code")
+            self.log.debug("Loading default Mode class code")
             mode_object = Mode(self.machine, config, mode_string, mode_path)
 
         return mode_object

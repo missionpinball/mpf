@@ -431,7 +431,7 @@ class HardwarePlatform(Platform):
 
     def receive_sa(self, msg):
 
-        self.log.info("Received SA: %s", msg)
+        self.log.debug("Received SA: %s", msg)
 
         hw_states = dict()
 
@@ -699,7 +699,7 @@ class HardwarePlatform(Platform):
         if not coil_action_ms:
             return  # with fast this is built into the main coil rule
 
-        self.log.info("Setting HW Rule. Switch:%s, Action ms:%s, Coil:%s, "
+        self.log.debug("Setting HW Rule. Switch:%s, Action ms:%s, Coil:%s, "
                        "Pulse:%s, pwm1:%s, pwm2:%s, Delay:%s, Recycle:%s,"
                        "Debounced:%s, Now:%s", sw.name, coil_action_ms,
                        coil.name, pulse_ms, pwm_on, pwm_off, delay,
@@ -774,7 +774,7 @@ class HardwarePlatform(Platform):
                param4 + ',' + param5)  # todo change to join()
 
         coil.autofire = cmd
-        self.log.info("Writing hardware rule: %s", cmd)
+        self.log.debug("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
@@ -813,7 +813,7 @@ class HardwarePlatform(Platform):
 
             coil.autofire = None
 
-            self.log.info("Clearing hardware rule: %s",
+            self.log.debug("Clearing hardware rule: %s",
                           cmd + driver + ',' + mode)
 
             self.net_connection.send(cmd + driver + ',' + mode)
@@ -907,7 +907,7 @@ class FASTDriver(object):
 
         cmd = self.config['trigger_cmd'] + self.config['number'] + ',' + '02'
 
-        self.log.info("Sending Disable Command: %s", cmd)
+        self.log.debug("Sending Disable Command: %s", cmd)
         self.send(cmd)
 
     def enable(self):
@@ -921,7 +921,7 @@ class FASTDriver(object):
                    ',C1,00,18,00,ff,' + self.config['hold_pwm'] + ',' +
                    self.config['recycle_ms'])
 
-        self.log.info("Sending Enable Command: %s", cmd)
+        self.log.debug("Sending Enable Command: %s", cmd)
         self.send(cmd)
         # todo change hold to pulse with re-ups
 
@@ -939,7 +939,7 @@ class FASTDriver(object):
                    ',89,00,10,' + str(milliseconds) + ',ff,00,00,' +
                    self.config['recycle_ms'])
 
-        self.log.info("Sending Pulse Command: %s", cmd)
+        self.log.debug("Sending Pulse Command: %s", cmd)
         self.send(cmd)
 
     def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
@@ -953,7 +953,7 @@ class FASTDriver(object):
                    ',89,00,18,' + str(original_on_ms) + ',' + str(on_ms) + ','
                    + str(off_ms) + ',' + self.config['recycle_ms'])
 
-        self.log.info("Sending PWM Hold Command: %s", cmd)
+        self.log.debug("Sending PWM Hold Command: %s", cmd)
         self.send(cmd)
 
 

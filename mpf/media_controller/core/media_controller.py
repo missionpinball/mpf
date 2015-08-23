@@ -45,17 +45,17 @@ class MediaController(object):
 
         self.log = logging.getLogger("MediaController")
         self.log.info("Media Controller Version %s", version.__version__)
-        self.log.info("Backbox Control Protocol Version %s",
+        self.log.debug("Backbox Control Protocol Version %s",
                       version.__bcp_version__)
-        self.log.info("Config File Version %s",
+        self.log.debug("Config File Version %s",
                       version.__config_version__)
 
         python_version = sys.version_info
-        self.log.info("Python version: %s.%s.%s", python_version[0],
+        self.log.debug("Python version: %s.%s.%s", python_version[0],
                       python_version[1], python_version[2])
-        self.log.info("Platform: %s", sys.platform)
-        self.log.info("Python executable location: %s", sys.executable)
-        self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
+        self.log.debug("Platform: %s", sys.platform)
+        self.log.debug("Python executable location: %s", sys.executable)
+        self.log.debug("32-bit Python? %s", sys.maxsize < 2**32)
 
         self.config = dict()
         self.done = False  # todo
@@ -146,7 +146,7 @@ class MediaController(object):
                                        ['config'],
                                        options['configfile'])
 
-        self.log.info("Base machine config file: %s", config_file)
+        self.log.debug("Base machine config file: %s", config_file)
 
         # Load the machine-specific config
         self.config = Config.load_config_yaml(config=self.config,
@@ -167,8 +167,9 @@ class MediaController(object):
         # Load the media controller modules
         self.config['media_controller']['modules'] = (
             self.config['media_controller']['modules'].split(' '))
+        self.log.info("Loading Modules...")
         for module in self.config['media_controller']['modules']:
-            self.log.info("Loading module: %s", module)
+            self.log.debug("Loading module: %s", module)
             module_parts = module.split('.')
             exec('self.' + module_parts[0] + '=' + module + '(self)')
 
@@ -499,7 +500,7 @@ class MediaController(object):
     def bcp_player_turn_start(self, player, **kwargs):
         """Processes an incoming BCP 'player_turn_start' command."""
 
-        self.log.info("bcp_player_turn_start")
+        self.log.debug("bcp_player_turn_start")
 
         if ((self.player and self.player.number != player) or
                 not self.player):

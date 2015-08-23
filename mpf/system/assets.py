@@ -43,7 +43,7 @@ class AssetManager(object):
                  asset_attribute, file_extensions):
 
         self.log = logging.getLogger(config_section + ' Asset Manager')
-        self.log.info("Initializing...")
+        self.log.debug("Initializing...")
 
         self.machine = machine
         self.max_memory = None
@@ -106,7 +106,7 @@ class AssetManager(object):
 
         root_path = os.path.join(path, self.path_string)
 
-        self.log.info("Processing assets from base folder: %s", root_path)
+        self.log.debug("Processing assets from base folder: %s", root_path)
 
         for path, _, files in os.walk(root_path, followlinks=True):
 

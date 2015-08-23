@@ -125,7 +125,7 @@ class OSC(object):
         """Receives OSC messages and acts on them."""
 
         if self.config['debug_messages']:
-            self.log.info("Incoming OSC message. Client IP: %s, Message: %s, %s"
+            self.log.debug("Incoming OSC message. Client IP: %s, Message: %s, %s"
                           ", %s", client_address, addr, tags, data)
 
         # Separate the incoming message into category and name parts.

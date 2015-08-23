@@ -198,7 +198,7 @@ class Auditor(object):
 
             return audits_from_file
         else:
-            self.log.info("Didn't find the audits file. No prob. We'll create "
+            self.log.debug("Didn't find the audits file. No prob. We'll create "
                           "it when we save.")
 
     def save_to_disk(self, filename):

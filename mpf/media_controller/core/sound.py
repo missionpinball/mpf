@@ -111,7 +111,7 @@ class SoundController(object):
 
         frequency, bits, channels = pygame.mixer.get_init()
 
-        self.log.info("Pygame Sound Mixer configuration. Freq: %s, Bits: %s, "
+        self.log.debug("Pygame Sound Mixer configuration. Freq: %s, Bits: %s, "
                        "Channels: %s", frequency, bits, channels)
 
         # Configure Pygame to use the correct number of channels. We need one
@@ -624,7 +624,7 @@ class StreamTrack(object):
 
         pygame.mixer.music.set_volume(volume)
 
-        self.log.info("Playing Sound: %s Vol: %s", sound.file_name,
+        self.log.debug("Playing Sound: %s Vol: %s", sound.file_name,
                       pygame.mixer.music.get_volume())
 
         if 'loops' not in settings:
@@ -744,7 +744,7 @@ class Channel(object):
         # set the sound's current volume
         sound.sound_object.set_volume(volume)
 
-        self.log.info("Playing Sound: %s Vol: %s", sound.file_name,
+        self.log.debug("Playing Sound: %s Vol: %s", sound.file_name,
                       sound.sound_object.get_volume())
 
         self.pygame_channel.play(sound.sound_object, loops)

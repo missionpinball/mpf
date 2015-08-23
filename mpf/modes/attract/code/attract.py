@@ -47,7 +47,7 @@ class Attract(Mode):
 
             if self.assets_waiting != self.machine.num_assets_to_load:
 
-                self.log.info("Holding Attract start while assets load. "
+                self.log.debug("Holding Attract start while assets load. "
                               "Remaining: %s", self.machine.num_assets_to_load)
 
                 self.machine.events.post('assets_to_load',
@@ -56,7 +56,7 @@ class Attract(Mode):
                 self.assets_waiting = self.machine.num_assets_to_load
 
         else:
-            self.log.info("Asset loading complete")
+            self.log.debug("Asset loading complete")
             self.machine.events.post('assets_loading_complete')
             self._do_start()
 

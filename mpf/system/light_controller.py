@@ -411,10 +411,10 @@ class LightController(object):
         for light in show.light_states:
 
             if light.debug:
-                light.log.info("Found this light in a restore_lower_lights meth "
-                              "in show.light_states. Light cache priority: %s,"
-                              "ending show priority: %s", light.cache['priority'],
-                              priority)
+                light.log.debug("Found this light in a restore_lower_lights meth "
+                                "in show.light_states. Light cache priority: %s,"
+                                "ending show priority: %s", light.cache['priority'],
+                                priority)
 
             if light.cache['priority'] <= priority:
                 light.restore()
@@ -422,7 +422,7 @@ class LightController(object):
         for led in show.led_states:
 
             if led.debug:
-                led.log.info("Found this LED in a restore_lower_lights meth "
+                led.log.debug("Found this LED in a restore_lower_lights meth "
                               "in show.led_states. LED cache priority: %s,"
                               "ending show priority: %s", led.cache['priority'],
                               priority)
@@ -595,8 +595,8 @@ class LightController(object):
                 # Now we're doing the actual update.
 
                 if item['led'].debug:
-                    item['led'].log.info("Applying update to LED from the Show "
-                                         "Controller")
+                    item['led'].log.debug("Applying update to LED from the Show "
+                                          "Controller")
 
                 item['led'].color(color=item['color'],
                                   fade_ms=item['fade_ms'],
@@ -605,12 +605,12 @@ class LightController(object):
                                   cache=False)
 
             elif item['led'].debug:
-                item['led'].log.info("Show Controller has an update for this "
-                                     "LED, but the update is priority %s while "
-                                     "the current priority of the LED is %s. "
-                                     "The update will not be applied.",
-                                     item['priority'],
-                                     item['led'].state['priority'])
+                item['led'].log.debug("Show Controller has an update for this "
+                                      "LED, but the update is priority %s while "
+                                      "the current priority of the LED is %s. "
+                                      "The update will not be applied.",
+                                      item['priority'],
+                                      item['led'].state['priority'])
 
         self.led_update_list = []
 

@@ -20,7 +20,6 @@ class Shot(Device):
     config_section = 'shots'
     collection = 'shots'
     class_label = 'shot'
-    allow_per_mode_devices = True
 
     monitor_enabled = False
     """Class attribute which specifies whether any monitors have been registered
@@ -51,7 +50,6 @@ class Shot(Device):
         (id, current_position_index, next_switch)
         """
 
-        self.sequence_delay = False
         self.player = None
         self.active_delay_switches = set()
 
@@ -447,7 +445,7 @@ class Shot(Device):
         # switch is starting a new sequence or continuing an existing one
 
         if self.debug:
-            self.log.info("Sequence switch hit: %s", switch_name)
+            self.log.debug("Sequence switch hit: %s", switch_name)
 
         if switch_name == self.config['switch_sequence'][0].name:
 
@@ -469,12 +467,10 @@ class Shot(Device):
         # delay_switch hit window
 
         if self.active_delay_switches:
-
             if self.debug:
-                self.log.info("There's a delay switch timer in effect from "
+                self.log.debug("There's a delay switch timer in effect from "
                               "switch(es) %s. Sequence will not be started.",
                               self.active_delay_switches)
-
             return
 
         # create a new sequence
@@ -482,28 +478,26 @@ class Shot(Device):
         next_switch = self.config['switch_sequence'][1].name
 
         if self.debug:
-                self.log.info("Setting up a new sequence. Next switch: %s",
+                self.log.debug("Setting up a new sequence. Next switch: %s",
                               next_switch)
 
         self.active_sequences.append(
             (seq_id, 0, next_switch)
             )
 
-        # if this sequence has a delay, set that up
+        # if this sequence has a time limit, set that up
         if self.config['time']:
             if self.debug:
-                self.log.info("Setting up a sequence timer for %sms",
+                self.log.debug("Setting up a sequence timer for %sms",
                               self.config['time'])
 
             self.delay.reset(name='seq_id',
                              ms=self.config['time'],
                              callback=self._reset_sequence,
                              seq_id=seq_id)
-            self.sequence_delay = True
 
     def _advance_sequence(self, seq_id):
         # get this sequence
-
         seq_id, current_position_index, next_switch = next(
             x for x in self.active_sequences if x[0]==seq_id)
 
@@ -515,19 +509,18 @@ class Shot(Device):
             len(self.config['switch_sequence']) - 2):  # complete
 
             if self.debug:
-                self.log.info("Sequence complete!")
+                self.log.debug("Sequence complete!")
 
             self.delay.remove(seq_id)
             self.hit()
 
         else:
-
             current_position_index += 1
             next_switch = (self.config['switch_sequence']
                            [current_position_index+1].name)
 
             if self.debug:
-                self.log.info("Advancing the sequence. Next switch: %s",
+                self.log.debug("Advancing the sequence. Next switch: %s",
                               next_switch)
 
             self.active_sequences.append(

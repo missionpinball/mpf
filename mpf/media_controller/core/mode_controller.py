@@ -60,7 +60,7 @@ class ModeController(object):
                 the mode's folder in your game's machine_files/modes folder.
 
         """
-        self.log.info('Processing mode: %s', mode_string)
+        self.log.debug('Processing mode: %s', mode_string)
 
         config = dict()
 

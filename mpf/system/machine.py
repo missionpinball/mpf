@@ -169,7 +169,7 @@ class MachineController(object):
                                        self.config['mpf']['paths']['config'],
                                        self.options['configfile'])
 
-        self.log.info("Base machine config file: %s", config_file)
+        self.log.debug("Base machine config file: %s", config_file)
 
         # Load the machine-specific config
         self.config = Config.load_config_yaml(config=self.config,
@@ -183,15 +183,16 @@ class MachineController(object):
 
         """
         python_version = sys.version_info
-        self.log.info("Python version: %s.%s.%s", python_version[0],
+        self.log.debug("Python version: %s.%s.%s", python_version[0],
                       python_version[1], python_version[2])
-        self.log.info("Platform: %s", sys.platform)
-        self.log.info("Python executable location: %s", sys.executable)
-        self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
+        self.log.debug("Platform: %s", sys.platform)
+        self.log.debug("Python executable location: %s", sys.executable)
+        self.log.debug("32-bit Python? %s", sys.maxsize < 2**32)
 
     def _load_system_modules(self):
+        self.log.info("Loading system modules...")
         for module in self.config['mpf']['system_modules']:
-            self.log.info("Loading '%s' system module", module[1])
+            self.log.debug("Loading '%s' system module", module[1])
             m = self.string_to_class(module[1])(self)
             setattr(self, module[0], m)
             # try:
@@ -200,6 +201,7 @@ class MachineController(object):
             #     pass
 
     def _load_plugins(self):
+        self.log.info("Loading plugins...")
 
         # TODO: This should be cleaned up. Create a Plugins superclass and
         # classmethods to determine if the plugins should be used.
@@ -207,7 +209,8 @@ class MachineController(object):
         for plugin in Config.string_to_list(
                 self.config['mpf']['plugins']):
 
-            self.log.info("Loading '%s' plugin", plugin)
+
+            self.log.debug("Loading '%s' plugin", plugin)
 
             i = __import__('mpf.plugins.' + plugin, fromlist=[''])
             self.plugins.append(i.plugin_class(self))
@@ -216,9 +219,11 @@ class MachineController(object):
         if 'scriptlets' in self.config:
             self.config['scriptlets'] = self.config['scriptlets'].split(' ')
 
+            self.log.info("Loading scriptlets...")
+
             for scriptlet in self.config['scriptlets']:
 
-                self.log.info("Loading '%s' scriptlet", scriptlet)
+                self.log.debug("Loading '%s' scriptlet", scriptlet)
 
                 i = __import__(self.config['mpf']['paths']['scriptlets'] + '.'
                                + scriptlet.split('.')[0], fromlist=[''])
@@ -242,10 +247,11 @@ class MachineController(object):
         Note: This method is not yet implemented.
 
         """
+        self.events.post('Resetting...')
         self.events.post('machine_reset_phase_1')
         self.events.post('machine_reset_phase_2')
         self.events.post('machine_reset_phase_3')
-        self.log.info("Reset Complete")
+        self.log.debug('Reset Complete')
 
     def add_platform(self, name):
         """Makes an additional hardware platform interface available to MPF.

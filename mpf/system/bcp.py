@@ -788,7 +788,7 @@ class BCPClientSocket(object):
     def __init__(self, machine, name, config, receive_queue):
 
         self.log = logging.getLogger('BCPClientSocket.' + name)
-        self.log.info('Setting up BCP Client...')
+        self.log.debug('Setting up BCP Client...')
 
         self.machine = machine
         self.name = name
