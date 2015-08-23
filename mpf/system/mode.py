@@ -275,7 +275,8 @@ class Mode(object):
 
                         self.log.debug("Creating mode-based device: %s", device)
 
-                        self.create_devices(collection.name, {device: settings})
+                        self.machine.device_manager.create_devices(
+                            collection.name, {device: settings})
 
                         # change device from str to object
                         device = collection[device]
@@ -288,9 +289,7 @@ class Mode(object):
                         # instead of machine-wide, as some devices want to do
                         # certain things here. We also pass the player object in
                         # case this device wants to do something with that too.
-                        device.device_added_to_mode(mode.player)
-
-                        self.mode_devices[mode].add(device)
+                        device.device_added_to_mode(self.player)
 
                         # Create the 'system' control events which is like
                         # <device_type>_<device_name>_reset or whatever...
@@ -299,15 +298,15 @@ class Mode(object):
                                         device.name + '_')
                         event_prefix2 = device.collection + '_'
 
-                        for method in (self.machine.config['mpf']
-                                ['device_events'][device.config_section]):
-
-                            mode.add_mode_event_handler(
-                                event=event_prefix + method,
-                                handler=getattr(device, method))
-                            mode.add_mode_event_handler(
-                                event=event_prefix2 + method,
-                                handler=getattr(device, method))
+                        # for method in (self.machine.config['mpf']
+                        #         ['device_events'][device.config_section]):
+                        #
+                        #     mode.add_mode_event_handler(
+                        #         event=event_prefix + method,
+                        #         handler=getattr(device, method))
+                        #     mode.add_mode_event_handler(
+                        #         event=event_prefix2 + method,
+                        #         handler=getattr(device, method))
 
     def _remove_mode_devices(self):
         for device in self.mode_devices:
