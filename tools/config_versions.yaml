@@ -1,7 +1,7 @@
 3:
   
   section_deprecations:
-    max balls:
+    - max balls
   
   section_warnings:
     - path: shots

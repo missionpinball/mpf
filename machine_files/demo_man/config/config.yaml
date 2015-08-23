@@ -24,29 +24,7 @@ scriptlets:
 
 
 
-shots:
-    left_orbit:
-        Type: Sequence
-        Switches: s_upper_left_flipper_gate, s_left_loop
-        Time: 3s
-    left_ramp:
-        Type: Sequence
-        Switches: s_left_ramp_enter, s_left_ramp_exit
-        Time: 3s
-    side_ramp:
-        Type: Sequence
-        Switches: s_side_ramp_enter, s_side_ramp_exit
-        Time: 3s
-    right_ramp:
-        Type: Sequence
-        Switches: s_right_ramp_enter, s_right_ramp_exit
-        Time: 3s
-    right_orbit:
-        Type: Sequence
-        Switches: s_right_freeway, s_left_loop, s_upper_left_flipper_gate,
-        Time: 3s
-    center_ramp:
-        Switch: s_center_ramp
+
 
 slide_player:
     volume_change:
