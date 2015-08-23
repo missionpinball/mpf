@@ -20,7 +20,10 @@ class DeviceManager(object):
         self._load_device_modules()
 
         self.machine.events.add_handler('init_phase_2',
-            self.create_machine_control_events)
+            self.create_machinewide_device_control_events)
+
+        self.machine.events.add_handler('init_phase_2',
+            self.create_collection_control_events)
 
     def _load_device_modules(self):
         self.log.info("Loading devices...")
@@ -47,9 +50,6 @@ class DeviceManager(object):
             # create the devices
             if config:
                 self.create_devices(collection_name, config)
-
-            # create the machine-wide control events
-            #self.create_machine_control_events(collection, config)
 
             # create the default control events
             try:
@@ -92,16 +92,30 @@ class DeviceManager(object):
                                       x.endswith('_events')]
 
                     for control_event in control_events:
+                        # get events from this device's config
                         if settings[control_event]:
                             for event, delay in settings[control_event].iteritems():
 
                                 yield (event,
                                        getattr(self.collections
                                                [collection][device],
-                                               control_event.split('_')[0]),
+                                               control_event[:-7]),
                                        delay)
 
-    def create_machine_control_events(self):
+                        # create the default events
+                        event_name = (self.device_classes[collection].class_label +
+                                      '_' + device + '_' + control_event[:-7])
+
+                        try:
+                            yield (event_name,
+                                   getattr(self.collections
+                                                   [collection][device],
+                                                   control_event[:-7]),
+                                   0)
+                        except AttributeError:
+                            pass
+
+    def create_machinewide_device_control_events(self):
 
         for event, method, delay in (
                 self.get_device_control_events(self.machine.config)):
@@ -112,6 +126,25 @@ class DeviceManager(object):
                 callback=method,
                 ms_delay=delay,
                 delay_mgr=self.machine.delay)
+
+    def create_collection_control_events(self):
+
+        for collection, events in (
+                self.machine.config['mpf']['device_collection_control_events'].
+                iteritems()):
+
+            for event in events:
+
+                event_name = collection + '_' + event
+
+                self.machine.events.add_handler(event_name,
+                    self._collection_control_event_handler,
+                    collection=collection,
+                    method=event)
+
+    def _collection_control_event_handler(self, collection, method):
+        for device in self.collections[collection]:
+            getattr(device, method)()
 
     def _control_event_handler(self, callback, ms_delay=0, delay_mgr=None,
                                **kwargs):

@@ -68,6 +68,27 @@ mpf:
     switch_tag_event: sw_%
     allow_invalid_config_sections: false
     config_versions_file: tools/config_versions.yaml
+    
+    device_collection_control_events:
+        autofires:
+            - enable
+            - disable
+        ball_devices:
+            - stop
+            - eject_all
+        coils:
+            - disable
+        flippers:
+            - enable
+            - disable
+        leds:
+            - "off"
+        lights:
+            - "off"
+        gi:
+            - enable
+            - disable
+        
 
 config_validator:
 # values are type|validation|default
@@ -340,10 +361,8 @@ config_validator:
         label: single|str|%
         debug: single|bool|False
 
-
-
-
 # Default settings for machines. All can be overridden
+
 
 timing:
     hz: 30
