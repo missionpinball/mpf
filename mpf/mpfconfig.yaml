@@ -166,7 +166,7 @@ config_validator:
         deactivate_events: dict|str:ms|None
     drop_targets:
         switch: single|self.machine.switches[%]|
-        reset_coil: single|self.machine.coils[%]|
+        reset_coil: single|self.machine.coils[%]|None
         knockdown_coil: single|self.machine.coils[%]|None
         tags: list|str|None
         label: single|str|%
@@ -298,6 +298,7 @@ config_validator:
         remove_active_profile_events: dict|str:ms|None
     shot_groups:
         shots: list|self.machine.shots[%]|
+        profile: single|str|None
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False
