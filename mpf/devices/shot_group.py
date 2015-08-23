@@ -23,7 +23,6 @@ class ShotGroup(Device):
     config_section = 'shot_groups'
     collection = 'shot_groups'
     class_label = 'shot_group'
-    allow_per_mode_devices = True
 
     def __init__(self, machine, name, config, collection=None,
                  member_collection=None, device_str=None):

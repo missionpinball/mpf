@@ -17,7 +17,9 @@ class Device(object):
 
     """
 
-    allow_per_mode_devices = False
+    config_section = None  # String of the config section name
+    collection = None  # String name of the collection
+    class_label = None  # String of the friendly name of the device class
 
     def __init__(self, machine, name, config=None, collection=-1,
                  platform_section=None):
