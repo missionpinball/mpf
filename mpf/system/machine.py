@@ -93,7 +93,7 @@ class MachineController(object):
         self._load_system_modules()
 
         self.config['machine'] = self.config_processor.process_config2(
-            'machine', self.config['machine'], 'machine')
+            'machine', self.config.get('machine', dict()), 'machine')
 
         self._register_system_events()
         self.events.post("init_phase_1")
