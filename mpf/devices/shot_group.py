@@ -26,9 +26,15 @@ class ShotGroup(Device):
 
     def __init__(self, machine, name, config, collection=None,
                  member_collection=None, device_str=None):
+
+        self.shots = list()
+        for shot in Config.string_to_list(config['shots']):
+            self.shots.append(machine.shots[shot])
+
         super(ShotGroup, self).__init__(machine, name, config, collection)
 
         self.enabled = False
+
         self.rotation_enabled = True
 
         if not device_str:
@@ -41,8 +47,6 @@ class ShotGroup(Device):
         else:
             self.member_collection = member_collection
 
-        self.shots = self.config['shots']
-
         if self.debug:
             self._enable_related_device_debugging()
 
@@ -50,11 +54,11 @@ class ShotGroup(Device):
 
         self.log.debug("Enabling debugging for this shot groups's member shots")
 
-        for shot in self.config['shots']:
+        for shot in self.shots:
             shot.enable_debugging()
 
     def _disable_related_device_debugging(self):
-        for shot in self.config['shots']:
+        for shot in self.shots:
             shot.disable_debugging()
 
     def _register_member_shots(self):

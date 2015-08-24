@@ -131,7 +131,7 @@ class Shot(Device):
 
             if self.active_profile['loop']:
                 if self.debug:
-                    self.log.debug("Active profile 's' is in its final step "
+                    self.log.debug("Active profile '%s' is in its final step "
                                    "based a player variable %s=%s. Profile "
                                    "setting for loop is True, so resetting to "
                                    "the first step.",self.active_profile_name,
@@ -142,7 +142,7 @@ class Shot(Device):
 
             else:
                 if self.debug:
-                    self.log.debug("Active profile 's' is in its final step "
+                    self.log.debug("Active profile '%s' is in its final step "
                                     "based a player variable %s=%s. Profile "
                                     "setting for loop is False, so step is not "
                                     "advancing.",self.active_profile_name,
