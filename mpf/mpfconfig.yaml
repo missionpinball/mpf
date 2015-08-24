@@ -129,7 +129,7 @@ config_validator:
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False
-        enable_events: dict|str:ms|ball_started:0
+        enable_events: dict|str:ms|ball_started
         disable_events: dict|str:ms|ball_ending
     ball_devices:
         exit_count_delay: single|ms|500ms

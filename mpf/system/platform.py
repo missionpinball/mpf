@@ -87,14 +87,6 @@ class Platform(object):
         # fire a coil when a switch that is normally closed is activated, the
         # actual hw_rule we setup has to be when that switch opens, not closes.
 
-        if sw_activity == 'active':
-            sw_activity = 1
-        elif sw_activity == 'inactive':
-            sw_activity = 0
-        else:
-            raise ValueError('Invalid "switch activity" option for '
-                             'AutofireCoil: %s. Valid options are "active"'
-                             ' or "inactive".' % (sw_name))
         if self.machine.switches[sw_name].invert:
             sw_activity ^= 1
 
