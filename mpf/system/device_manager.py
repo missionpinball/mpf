@@ -103,17 +103,17 @@ class DeviceManager(object):
                                        delay)
 
                         # create the default events
-                        event_name = (self.device_classes[collection].class_label +
-                                      '_' + device + '_' + control_event[:-7])
-
-                        try:
-                            yield (event_name,
-                                   getattr(self.collections
-                                                   [collection][device],
-                                                   control_event[:-7]),
-                                   0)
-                        except AttributeError:
-                            pass
+                        # event_name = (self.device_classes[collection].class_label +
+                        #               '_' + device + '_' + control_event[:-7])
+                        #
+                        # try:
+                        #     yield (event_name,
+                        #            getattr(self.collections
+                        #                            [collection][device],
+                        #                            control_event[:-7]),
+                        #            0)
+                        # except AttributeError:
+                        #     pass
 
     def create_machinewide_device_control_events(self):
 
@@ -128,7 +128,6 @@ class DeviceManager(object):
                 delay_mgr=self.machine.delay)
 
     def create_collection_control_events(self):
-
         for collection, events in (
                 self.machine.config['mpf']['device_collection_control_events'].
                 iteritems()):
