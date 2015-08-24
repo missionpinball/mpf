@@ -189,6 +189,7 @@ config_validator:
         enable_events: dict|str:ms|None
         disable_events: dict|str:ms|None
         pulse_events: dict|str:ms|None
+        platform: single|str|None
     diverters:
         type: single|str|pulse
         activation_time: single|ms|0
@@ -232,6 +233,7 @@ config_validator:
         label: single|str|%
         debug: single|bool|False
         flash_events: dict|str:ms|None
+        platform: single|str|None
     flippers:
         main_coil: single|self.machine.coils[%]|
         hold_coil: single|self.machine.coils[%]|None
@@ -253,6 +255,7 @@ config_validator:
         debug: single|bool|False
         enable_events: dict|str:ms|machine_reset_phase_3
         disable_events: dict|str:ms|None
+        platform: single|str|None
     leds:
         number: single|str|
         number_str: single|str|
@@ -265,6 +268,7 @@ config_validator:
         debug: single|bool|False
         on_events:  dict|str:ms|None
         off_events:  dict|str:ms|None
+        platform: single|str|None
     machine:
         hz: single|int|30
         balls_installed: single|int|1
@@ -278,6 +282,7 @@ config_validator:
         debug: single|bool|False
         on_events:  dict|str:ms|None
         off_events:  dict|str:ms|None
+        platform: single|str|None
     multiballs:
         ball_count: single|int|
         source_playfield: single|self.machine.ball_devices[%]|playfield
@@ -369,7 +374,7 @@ config_validator:
                 hold: single|bool|True
                 reset: single|bool|False
                 repeat: single|bool|True
-                blend: single|bool|Fase
+                blend: single|bool|False
                 tocks_per_sec: single|int|10
                 num_repeats: single|int|0
                 sync_ms:  single|int|0
@@ -384,6 +389,7 @@ config_validator:
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False
+        platform: single|str|None
 
 # Default settings for machines. All can be overridden
 

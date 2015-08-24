@@ -45,7 +45,7 @@ class Device(object):
 
         if platform_section:
             if self.machine.physical_hw:
-                if 'platform' not in config:
+                if not config['platform']:
                     if self.machine.config['hardware'][platform_section] != 'default':
                         self.platform = (
                             self.machine.hardware_platforms

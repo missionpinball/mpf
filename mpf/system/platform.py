@@ -49,8 +49,8 @@ class Platform(object):
 
         Args:
             sw_name: String name of the switch.
-            sw_activity: String description of the switch activity this rule
-                will be set for, either 'active' or 'inactive'.
+            sw_activity: Int representing the switch state this rule will be set
+                for. 1 is active, 0 is inactive.
             coil_name: String name of the coil.
             coil_action_ms: Total time in ms the coil should activate for.
             pulse_ms: How long in ms the coil should activate for. Default is 0.
@@ -80,12 +80,6 @@ class Platform(object):
 
         sw = self.machine.switches[sw_name]  # todo make a nice error
         coil = self.machine.coils[coil_name]  # here too
-
-        # convert sw_activity to hardware. (The game framework uses the terms
-        # 'active' and 'inactive,' which take into consideration whether a
-        # switch is normally open or normally closed. For example if we want to
-        # fire a coil when a switch that is normally closed is activated, the
-        # actual hw_rule we setup has to be when that switch opens, not closes.
 
         if self.machine.switches[sw_name].invert:
             sw_activity ^= 1

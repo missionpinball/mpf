@@ -42,7 +42,6 @@ class Flipper(Device):
         self.strength = 100
         self.inverted = False
         self.rules = dict()
-        self.platform = None
 
         self.rules['a'] = False
         self.rules['b'] = False
@@ -53,30 +52,6 @@ class Flipper(Device):
         self.rules['h'] = False
         self.rules['g'] = False
 
-        self.configure(self.config)
-
-    def configure(self, config=None):
-        """Configures the flipper device.
-
-        args:
-            config : A dictionary that holds the configuration values which
-                specify how this flipper should be configured. If this is None,
-                it will use the system config settings that were read in from
-                the config files when the machine was reset.
-        """
-        # Merge in any new changes that were just passed
-        if config:
-            self.config.update(config)
-
-        self.log.debug("Configuring device with: %s", self.config)
-
-        # todo convert these to objects:
-        # config['main_coil']
-        # config['activation_switch']
-        # config['hold_coil']
-        # config['eos_switch']
-        # config['use_eos']
-
         self.flipper_coils = []
         self.flipper_coils.append(self.config['main_coil'].name)
         if self.config['hold_coil'].name:
@@ -86,6 +61,9 @@ class Flipper(Device):
         self.flipper_switches.append(self.config['activation_switch'].name)
 
         self.platform = self.config['main_coil'].platform
+
+        if self.debug:
+            self.log.debug('Platform Driver: %s', self.platform)
 
     def enable(self, **kwargs):
         """Enables the flipper by writing the necessary hardware rules to the
@@ -141,29 +119,31 @@ class Flipper(Device):
 
         # Apply the proper hardware rules for our config
 
-        if self.config['hold_coil'].name and \
-                self.config['use_eos'] and \
-                self.config['eos_switch']:
+        if (self.config['hold_coil'] and self.config['use_eos'] and
+                self.config['eos_switch']):
+
             self._enable_flipper_rule_A()
             self._enable_flipper_rule_D()
             self._enable_flipper_rule_E()
             self._enable_flipper_rule_F()
             self._enable_flipper_rule_G()
 
-        elif not self.config['hold_coil'].name and \
-                self.config['use_eos'] and \
-                self.config['eos_switch']:
+        elif (not self.config['hold_coil'].name and self.config['use_eos'] and
+                self.config['eos_switch']):
+
             self._enable_flipper_rule_A()
             self._enable_flipper_rule_H()
             self._enable_flipper_rule_F()
 
         elif self.config['hold_coil'].name and not self.config['use_eos']:
+
             self._enable_flipper_rule_B()
             self._enable_flipper_rule_D()
             self._enable_flipper_rule_F()
             self._enable_flipper_rule_G()
 
         elif not self.config['hold_coil'].name and not self.config['use_eos']:
+
             self._enable_flipper_rule_C()
             self._enable_flipper_rule_F()
 
@@ -230,7 +210,7 @@ class Flipper(Device):
 
         self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'].name,
-            sw_activity='active',
+            sw_activity=1,
             coil_name=self.config['main_coil'].name,
             coil_action_ms=-1,
             debounced=False)
@@ -246,7 +226,7 @@ class Flipper(Device):
 
         self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'].name,
-            sw_activity='active',
+            sw_activity=1,
             coil_name=self.config['main_coil'].name,
             coil_action_ms=self.config['main_coil'].config['pulse_ms'],
             pulse_ms=self.config['main_coil'].config['pulse_ms'],
@@ -264,7 +244,7 @@ class Flipper(Device):
 
         self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'].name,
-            sw_activity='active',
+            sw_activity=1,
             coil_name=self.config['main_coil'].name,
             coil_action_ms=-1,
             pulse_ms=self.config['main_coil'].config['pulse_ms'],
@@ -284,7 +264,7 @@ class Flipper(Device):
 
         self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'].name,
-            sw_activity='active',
+            sw_activity=1,
             coil_name=self.config['hold_coil'].name,
             coil_action_ms=-1,
             debounced=False)
@@ -301,7 +281,7 @@ class Flipper(Device):
 
         self.platform.set_hw_rule(
             sw_name=self.config['eos_switch'],
-            sw_activity='active',
+            sw_activity=1,
             coil_name=self.config['main_coil'].name,
             coil_action_ms=0,
             debounced=False)
@@ -319,7 +299,7 @@ class Flipper(Device):
         if not self.machine.config['platform']['hw_enable_auto_disable']:
             self.platform.set_hw_rule(
                 sw_name=self.config['activation_switch'].name,
-                sw_activity='inactive',
+                sw_activity=0,
                 coil_name=self.config['main_coil'].name,
                 coil_action_ms=0,
                 debounced=False)
@@ -337,7 +317,7 @@ class Flipper(Device):
         if not self.machine.config['platform']['hw_enable_auto_disable']:
             self.platform.set_hw_rule(
                 sw_name=self.config['activation_switch'].name,
-                sw_activity='inactive',
+                sw_activity=0,
                 coil_name=self.config['hold_coil'].name,
                 coil_action_ms=0,
                 debounced=False)
@@ -354,7 +334,7 @@ class Flipper(Device):
 
         self.platform.set_hw_rule(
             sw_name=self.config['eos_switch'],
-            sw_activity='active',
+            sw_activity=1,
             coil_name=self.config['main_coil'].name,
             coil_action_ms=-1,
             pwm_on=self.config['main_coil'].config['pwm_on'],

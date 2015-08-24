@@ -453,8 +453,10 @@ class Config(object):
         return item
 
     def check_for_invalid_sections(self, spec, config, validation_failure_info):
+
         for k, v in config.iteritems():
             if type(k) is not dict:
+
                 if k not in spec:
 
                     path_list = validation_failure_info[0].split(':')
@@ -485,8 +487,6 @@ class Config(object):
                         self.lookup_invalid_config_setting(path_string)
 
                         sys.exit()
-
-
 
     def validate_item(self, item, validator, validation_failure_info):
 
@@ -522,7 +522,16 @@ class Config(object):
                 pass
 
         elif validator == 'bool':
-            item = bool(item)
+
+            if type(item) is str:
+                if item.lower() in ['false', 'f', 'no', 'disable', 'off']:
+                    item = False
+
+            elif not item:
+                item = False
+
+            else:
+                item = True
 
         elif validator == 'ms':
             item = Timing.string_to_ms(item)
@@ -570,8 +579,10 @@ class Config(object):
 
         setting_key = setting.split(':')[-1]
 
-        config_file = yaml.load(open(
-            self.machine.config['mpf']['config_versions_file'], 'r'))
+        with open(self.machine.config['mpf']['config_versions_file'],
+                  'r') as f:
+
+            config_file = yaml.load(f)
 
         for ver, sections in config_file.iteritems():
 
@@ -589,7 +600,6 @@ class Config(object):
             if setting_key in sections['section_deprecations']:
                 self.log.info('The setting "%s" has been removed in '
                               'config_version=%s%s', setting, ver, ver_string)
-
 
 
     @staticmethod
