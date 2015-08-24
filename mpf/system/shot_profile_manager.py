@@ -36,9 +36,11 @@ class ShotProfileManager(object):
             self.apply_group_profiles, config_section_name="shot_groups")
 
         self.machine.events.add_handler('player_turn_start',
-                                        self._player_turn_start)
+                                        self._player_turn_start,
+                                        priority=1000000)
         self.machine.events.add_handler('player_turn_stop',
-                                        self._player_turn_stop)
+                                        self._player_turn_stop,
+                                        priority=0)
 
     def register_profile(self, name, profile):
         """Registers a new shot profile with the shot controller which will
