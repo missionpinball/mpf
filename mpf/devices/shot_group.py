@@ -27,20 +27,15 @@ class ShotGroup(Device):
     def __init__(self, machine, name, config, collection=None,
                  member_collection=None, device_str=None):
 
-        self.shots = list()
+        self.shots = list()  # list of strings
+
         for shot in Config.string_to_list(config['shots']):
             self.shots.append(machine.shots[shot])
 
         super(ShotGroup, self).__init__(machine, name, config, collection)
 
         self.enabled = False
-
         self.rotation_enabled = True
-
-        if not member_collection:
-            self.member_collection = self.machine.shots
-        else:
-            self.member_collection = member_collection
 
         if self.debug:
             self._enable_related_device_debugging()
@@ -56,55 +51,38 @@ class ShotGroup(Device):
         for shot in self.shots:
             shot.disable_debugging()
 
-    def _register_member_shots(self):
+    def _watch_member_shots(self):
         for shot in self.shots:
-            shot.add_to_shot_group(self)
+            self.machine.events.add_handler(shot.name + '_hit', self.hit)
 
-    def _deregister_member_shots(self):
-        for shot in self.shots:
-            shot.remove_from_shot_group(self)
+    def _stop_watching_member_shots(self):
+        # remove the hit events
+        self.machine.events.remove_handler(self.hit)
 
-    def remove_member_shot(self, shot):
-        """Remembers a member shot from this group.
-
-        Args:
-            shot: A Shot object to remove.
-
-        """
-        self.shots.remove(shot)
-        self._deregister_member_shots()
-        self._register_member_shot()
-
-    def hit(self, profile_name, profile_state_name, **kwargs):
+    def hit(self, profile, state, **kwargs):
         """One of the member shots in this shot group was hit.
 
-        This method is only processed if this shot group is enabled.
-
         Args:
-            profile_name: String name of the active profile of the shot that
+            profile: String name of the active profile of the shot that
                 was hit.
-            profile_state_name: String name of the state name of the profile of
+            profile: String name of the state name of the profile of
                 the shot that was hit.
 
         """
-
-        if self.enabled:
-            if self.debug:
-                self.log.debug('Hit! Active profile: %s, Current state: %s',
+        if self.debug:
+            self.log.debug('Hit! Active profile: %s, Current state: %s',
                            profile_name, profile_state_name)
 
-            self.machine.events.post(self.name + '_hit',
-                                     profile=profile_name,
-                                     state=profile_state_name)
+        self.machine.events.post(self.name + '_hit',
+                                 profile=profile, state=state)
 
-            self.machine.events.post(self.name + '_' + profile_name + '_hit',
-                                     profile=profile_name,
-                                     state=profile_state_name)
+        self.machine.events.post(self.name + '_' + profile + '_hit',
+                                 profile=profile, state=state)
 
-            self.machine.events.post(self.name + '_' + profile_name + '_' +
-                                     profile_state_name + '_hit',
-                                     profile=profile_name,
-                                     state=profile_state_name)
+        self.machine.events.post(self.name + '_' + profile + '_' + state +
+                                 '_hit', profile=profile, state=state)
+
+        self.check_for_complete()
 
     def enable(self, **kwargs):
         """Enables this shot group. Also enables all the shots in this
@@ -120,10 +98,10 @@ class ShotGroup(Device):
 
         self.enabled = True
 
+        self._watch_member_shots()
+
         for shot in self.shots:
             shot.enable()
-
-        self._register_member_shots()
 
     def disable(self, **kwargs):
         """Disables this shot group. Also disables all the shots in this
@@ -137,7 +115,7 @@ class ShotGroup(Device):
         if self.debug:
             self.log.debug('Disabling')
 
-        self._deregister_member_shots()
+        self._stop_watching_member_shots()
 
         for shot in self.shots:
             shot.disable()
@@ -173,7 +151,7 @@ class ShotGroup(Device):
         for shot in self.shots:
             shot.reset()
 
-    def apply_profile(self, profile, priority, removal_key=None):
+    def apply_profile(self, profile, priority):
         if profile in self.machine.shot_profile_manager.profiles:
             if self.debug:
                 self.log.debug("Applying shot profile '%s', priority %s",
@@ -181,13 +159,13 @@ class ShotGroup(Device):
 
             profile_tuple = (profile, priority,
                 self.machine.shot_profile_manager.profiles[profile],
-                removal_key)
+                self)
 
             if profile_tuple not in self.profiles:
                 self.profiles.append(profile_tuple)
 
             for shot in self.shots:
-                shot.apply_profile(profile, priority, removal_key)
+                shot.apply_profile(profile, priority, self)
 
             self._sort_profiles()
 
@@ -332,7 +310,6 @@ class ShotGroup(Device):
         # step through all our shots and update their states
         for i in range(len(shot_list)):
             shot_list[i].jump(state=shot_state_list[i][0],
-                              update_group=False,
                               lightshow_step=shot_state_list[i][1])
 
     def rotate_right(self, steps=1, **kwargs):
@@ -357,11 +334,9 @@ class ShotGroup(Device):
 
     def check_for_complete(self):
         """Checks all the shots in this shot group. If they are all in the
-        same state, then that state number is returned. If they are in different
-        states, False is returned.
+        same state, then a complete event is posted.
 
         """
-
         shot_states = set()
 
         for shot in self.shots:
@@ -381,7 +356,6 @@ class ShotGroup(Device):
     def remove(self):
         if self.debug:
             self.log.debug("Removing this shot group")
-        self._deregister_member_shots()
         del self.machine.shot_groups[self.name]
 
 

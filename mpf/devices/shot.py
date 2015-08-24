@@ -37,7 +37,6 @@ class Shot(Device):
         self.current_state_index = 0
         self.current_state_name = None
         self.running_light_show = None
-        self.shot_groups = set()
         self.profiles = list()
         """List of tuples:
         (profile_name, priority, profile_config, states, key)
@@ -157,11 +156,6 @@ class Shot(Device):
         self._stop_current_lights()
         self._update_current_state_variables()
         self._update_lights()
-        self._update_group_status()
-
-    def _update_group_status(self):
-        for group in self.shot_groups:
-            group.check_for_complete()
 
     def _stop_current_lights(self):
 
@@ -252,13 +246,6 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug("Removing...")
-
-        for group in self.shot_groups:
-
-            try:
-                group.remove_member_shot(self)
-            except ValueError:
-                pass
 
         self._remove_switch_handlers()
         self._stop_current_lights()
@@ -448,10 +435,6 @@ class Shot(Device):
                                  profile=self.active_profile_name,
                                  state=self.current_state_name)
 
-        for group in self.shot_groups:
-            group.hit(profile_name=self.active_profile_name,
-                      profile_state_name=self.current_state_name)
-
         if Shot.monitor_enabled:
             for callback in self.machine.monitors['shots']:
                 callback(name=self.name)
@@ -583,44 +566,12 @@ class Shot(Device):
 
         self.active_sequences = list()
 
-    def add_to_shot_group(self, group):
-        """Adds this shot to a shot group.
-
-        Args:
-            group: String name of the shot_group this shot should be added to.
-
-        Note that if this shot is already a member of that group, it is not
-        added again.
-
-        """
-        if self.debug:
-            self.log.debug('Adding this shot to group: %s', group.name)
-        self.shot_groups.add(group)
-
-    def remove_from_shot_group(self, group):
-        """Removes this shot from a shot group.
-
-        Args:
-            group: String name of the shot_group this shot should be removed
-                from.
-
-        """
-        if self.debug:
-            self.log.debug('Removing this shot from group: %s', group.name)
-        self.shot_groups.discard(group)
-
-    def jump(self, state, update_group=True, lightshow_step=0):
+    def jump(self, state, lightshow_step=0):
         """Jumps to a certain state in the active shot profile.
 
         Args:
             state: int of the state number you want to jump to. Note that states
                 are zero-based, so the first state is 0.
-            update_group: Boolean which controls whether this jump event should
-                also contact the shot group this shot belongs to to see if
-                it should update this group's complete status. Default is True.
-                False is used for things like shot rotation where a shot
-                needs to jump to a new position but you don't want to post the
-                group complete events again.
             lightshow_step: The step number that the associated light script
                 should start playing at. Useful with rotations so this shot can
                 pick up right where it left off. Default is 0.
@@ -639,9 +590,6 @@ class Shot(Device):
         self._stop_current_lights()
         self.player[self.player_variable] = state
         self._update_current_state_variables()  # curr_state_index, curr_state_name
-
-        if update_group:
-            self._update_group_status()
 
         self._update_lights(lightshow_step=lightshow_step)
 

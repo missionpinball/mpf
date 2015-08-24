@@ -352,7 +352,7 @@ config_validator:
         label: single|str|%
         debug: single|bool|False
         enable_events: dict|str:ms|ball_started
-        disable_events: dict|str:ms|ball_ending, tilt, slam_tilt
+        disable_events: dict|str:ms|ball_ending
         reset_events: dict|str:ms|None
         rotate_left_events: dict|str:ms|None
         rotate_right_events: dict|str:ms|None
