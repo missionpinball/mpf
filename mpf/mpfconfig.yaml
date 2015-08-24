@@ -130,7 +130,7 @@ config_validator:
         label: single|str|%
         debug: single|bool|False
         enable_events: dict|str:ms|ball_started:0
-        disable_events: dict|str:ms|ball_ending, tilt, slam_tilt
+        disable_events: dict|str:ms|ball_ending
     ball_devices:
         exit_count_delay: single|ms|500ms
         entrance_count_delay: single|ms|500ms
@@ -165,7 +165,7 @@ config_validator:
         label: single|str|%
         debug: single|bool|False
         enable_events: dict|str:ms|ball_started
-        disable_events: dict|str:ms|ball_ending, tilt, slam_tilt
+        disable_events: dict|str:ms|ball_ending
         reset_events: dict|str:ms|machine_reset_phase_3
     ball_saves:
         source_playfield: single|self.machine.ball_devices[%]|playfield
@@ -174,7 +174,7 @@ config_validator:
         label: single|str|%
         debug: single|bool|False
         enable_events: dict|str:ms|None
-        disable_events: dict|str:ms|ball_ending, tilt, slam_tilt
+        disable_events: dict|str:ms|ball_ending
     coils:
         number: single|str|
         number_str: single|str|
@@ -242,7 +242,7 @@ config_validator:
         label: single|str|%
         debug: single|bool|False
         enable_events: dict|str:ms|ball_started
-        disable_events: dict|str:ms|ball_ending, tilt, slam_tilt
+        disable_events: dict|str:ms|ball_ending
         enable_no_hold_events: dict|str:ms|None
         invert_events: dict|str:ms|None
     gis:
@@ -256,6 +256,7 @@ config_validator:
     leds:
         number: single|str|
         number_str: single|str|
+        polarity: single|bool|False
         default_color: single|str|ffffff
         brightness_compensation: list|float|1.0
         fade_ms: single|int|None
@@ -286,7 +287,7 @@ config_validator:
         label: single|str|%
         debug: single|bool|False
         enable_events:  dict|str:ms|ball_started
-        disable_events:  dict|str:ms|ball_ending, tilt, slam_tilt
+        disable_events:  dict|str:ms|ball_ending
         reset_events:  dict|str:ms|machine_reset_phase_3
         start_events:  dict|str:ms|None
         stop_events:  dict|str:ms|None
@@ -334,7 +335,7 @@ config_validator:
         label: single|str|%
         debug: single|bool|False
         enable_events: dict|str:ms|ball_started
-        disable_events: dict|str:ms|ball_ending, tilt, slam_tilt
+        disable_events: dict|str:ms|ball_ending
         reset_events: dict|str:ms|None
         advance_events: dict|str:ms|None
         hit_events: dict|str:ms|None
@@ -350,6 +351,7 @@ config_validator:
         reset_events: dict|str:ms|None
         rotate_left_events: dict|str:ms|None
         rotate_right_events: dict|str:ms|None
+        rotate_events: dict|str:ms|None
         enable_rotation_events: dict|str:ms|None
         disable_rotation_events: dict|str:ms|None
         advance_events: dict|str:ms|None
@@ -610,3 +612,13 @@ light_scripts:
 playfields:
     playfield:
         tags: default
+        
+debug_profiles:
+    verbose:
+        system_modules:
+            events
+            mode_controller
+        device_collections:
+        individual_devices:
+        plugins:
+
