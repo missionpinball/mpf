@@ -62,6 +62,8 @@ class SwitchController(object):
         self.machine.events.add_handler('machine_reset_phase_3',
                                         self.log_active_switches)
 
+        self.monitors = list()
+
     def _initialize_switches(self):
         self.update_switches_from_hw()
 
@@ -397,7 +399,15 @@ class SwitchController(object):
                     # ^1 in above line invertes the state
                     del self.active_timed_switches[k]
 
+        for monitor in self.monitors:
+            monitor(name, state)
+
         self._post_switch_events(name, state)
+
+    def add_monitor(self, monitor):
+        if monitor not in self.monitors:
+            self.monitors.append(monitor)
+
 
     def add_switch_handler(self, switch_name, callback, state=1, ms=0,
                            return_info=False, callback_kwargs=None):

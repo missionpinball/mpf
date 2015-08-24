@@ -37,6 +37,7 @@ class Auditor(object):
         self.machine = machine
 
         self.machine.auditor = self
+        self.switchnames_to_audit = set()
 
         self.enabled = False
         """Attribute that's viewed by other system components to let them know
@@ -89,8 +90,13 @@ class Auditor(object):
 
         # Make sure we have all the switches in our audit dict
         for switch in self.machine.switches:
-            if switch.name not in self.current_audits['switches']:
+            if (switch.name not in self.current_audits['switches'] and
+                    'no_audit' not in switch.tags):
                 self.current_audits['switches'][switch.name] = 0
+
+        # build this list of swithces we should audit
+        self.switchnames_to_audit = {x.name for x in self.machine.switches
+                                     if 'no_audit' not in x.tags}
 
         # Make sure we have all the player stuff in our audit dict
         if 'player' in self.config['audit']:
@@ -111,6 +117,9 @@ class Auditor(object):
         Shot.monitor_enabled = True
         self.machine.register_monitor('shots', self.audit_shot)
 
+        # Add the switches monitor
+        self.machine.switch_controller.add_monitor(self.audit_switch)
+
     def audit(self, audit_class, event, **kwargs):
         """Called to log an auditable event.
 
@@ -130,8 +139,9 @@ class Auditor(object):
 
         self.current_audits[audit_class][event] += 1
 
-    def audit_switch(self, switch_name, state, ms):
-        self.audit('switches', switch_name)
+    def audit_switch(self, switch_name, state):
+        if state and switch_name in self.switchnames_to_audit:
+            self.audit('switches', switch_name)
 
     def audit_shot(self, name):
         self.audit('shots', name)
@@ -211,7 +221,6 @@ class Auditor(object):
         """
         thread.start_new_thread(self._saving_thread, (filename,))
 
-
     def _saving_thread(self, filename):
         # Audits are usually saved to disk based on events that happen when MPF
         # is really busy.. ball start, game end, etc. So we sleep for 3 secs to
@@ -221,7 +230,6 @@ class Auditor(object):
         with open(filename, 'w') as output_file:
             output_file.write(yaml.dump(self.current_audits,
                                         default_flow_style=False))
-
 
     def make_sure_path_exists(self, path):
         """Checks to see if the audits folder exists and creates it if not."""
@@ -260,12 +268,6 @@ class Auditor(object):
                                             self.save_to_disk,
                                             filename=self.filename,
                                             priority=0)
-
-        # Register for the switches we're auditing
-        for switch in self.machine.switches:
-            if 'no_audit' not in switch.tags:
-                self.machine.switch_controller.add_switch_handler(switch.name,
-                    self.audit_switch, 1, 0, True)
 
     def disable(self, **kwargs):
         """Disables the auditor.
