@@ -88,7 +88,29 @@ mpf:
         gi:
             - enable
             - disable
-        
+    
+    mode_config_sections:
+      - autofire_coils
+      - ball_devices
+      - ball_saves
+      - coils
+      - diverters
+      - drop_targets
+      - drop_target_banks
+      - flashers
+      - flippers
+      - gis
+      - leds
+      - matrix_lights
+      - multiballs
+      - playfields
+      - playfield_transfers
+      - score_reels
+      - score_reel_groups
+      - shots
+      - shot_groups
+      - shot_profiles
+      - switches
 
 config_validator:
 # values are type|validation|default
@@ -166,7 +188,7 @@ config_validator:
         debug: single|bool|False
         enable_events: dict|str:ms|None
         disable_events: dict|str:ms|None
-        pulse_events: dict|str:ms|hello, goodbye
+        pulse_events: dict|str:ms|None
     diverters:
         type: single|str|pulse
         activation_time: single|ms|0
@@ -318,7 +340,7 @@ config_validator:
         hit_events: dict|str:ms|None
         remove_active_profile_events: dict|str:ms|None
     shot_groups:
-        shots: list|self.machine.shots[%]|
+        shots: list|str|
         profile: single|str|None
         tags: list|str|None
         label: single|str|%

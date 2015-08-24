@@ -314,11 +314,14 @@ class Config(object):
         elif item_type == 'list_of_lists':
             return Config.list_of_lists(item)
 
-    def process_config2(self, config_spec, source, section_name, target=None,
-                        result_type='dict'):
+    def process_config2(self, config_spec, source, section_name=None,
+                        target=None, result_type='dict'):
         # config_spec, str i.e. "device:shot"
         # source is dict
         # section_name is str used for logging failures
+
+        if not section_name:
+            section_name = config_spec
 
         validation_failure_info = (config_spec, section_name)
 

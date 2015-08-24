@@ -50,8 +50,12 @@ class Mode(object):
         self.player = None
         '''Reference to the current player object.'''
 
+        self._validate_mode_config()
+
         if 'mode' in self.config:
             self.configure_mode_settings(config['mode'])
+
+
 
         for asset_manager in self.machine.asset_managers.values():
 
@@ -115,6 +119,22 @@ class Mode(object):
                                                 priority=config['priority'])
 
         self.config['mode'] = config
+
+    def _validate_mode_config(self):
+        for section in self.machine.config['mpf']['mode_config_sections']:
+            this_section = self.config.get(section, None)
+
+            if this_section:
+                if type(this_section) is dict:
+                    for device, settings in this_section.iteritems():
+                        self.config[section][device] = (
+                            self.machine.config_processor.process_config2(
+                                section, settings))
+
+                else:
+                    self.config[section] = (
+                        self.machine.config_processor.process_config2(section,
+                                                                      this_section))
 
     def start(self, priority=None, callback=None, **kwargs):
         """Starts this mode.
@@ -291,23 +311,6 @@ class Mode(object):
                         # case this device wants to do something with that too.
                         device.device_added_to_mode(self.player)
 
-                        # Create the 'system' control events which is like
-                        # <device_type>_<device_name>_reset or whatever...
-
-                        event_prefix = (device.class_label + '_' +
-                                        device.name + '_')
-                        event_prefix2 = device.collection + '_'
-
-                        # for method in (self.machine.config['mpf']
-                        #         ['device_events'][device.config_section]):
-                        #
-                        #     mode.add_mode_event_handler(
-                        #         event=event_prefix + method,
-                        #         handler=getattr(device, method))
-                        #     mode.add_mode_event_handler(
-                        #         event=event_prefix2 + method,
-                        #         handler=getattr(device, method))
-
     def _remove_mode_devices(self):
         for device in self.mode_devices:
             device.remove()
@@ -316,7 +319,7 @@ class Mode(object):
 
         for event, method, delay in (
                 self.machine.device_manager.get_device_control_events(
-                self.machine.config)):
+                self.config)):
 
             self.add_mode_event_handler(
                 event=event,
