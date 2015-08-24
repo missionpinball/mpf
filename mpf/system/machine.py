@@ -74,6 +74,8 @@ class MachineController(object):
         self.config = dict()
         self._load_config()
 
+        self.configure_debugger()
+
         self.hardware_platforms = dict()
         self.default_platform = None
 
@@ -409,6 +411,26 @@ class MachineController(object):
                                 (time.time() - self.loop_start_time), 2))
         except ZeroDivisionError:
             self.log.info("Actual MPF loop rate: 0 Hz")
+
+    def configure_debugger(self):
+        pass
+
+
+    def get_debug_status(self, debug_path):
+
+        if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
+            return True
+
+        class_, module = debug_path.split('|')
+
+        try:
+            if module in self.active_debugger[class_]:
+                return True
+            else:
+                return False
+        except KeyError:
+            return False
+
 
 
 # The MIT License (MIT)

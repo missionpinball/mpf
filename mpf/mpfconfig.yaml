@@ -327,7 +327,7 @@ config_validator:
         hw_confirm_time: single|ms|300
         config: single|str|lazy
     shots:
-        profile: single|str|default
+        profile: single|str|None
         switch: list|self.machine.switches[%]|None
         switch_sequence: list|self.machine.switches[%]|None
         cancel_switch: list|self.machine.switches[%]|None
@@ -363,12 +363,12 @@ config_validator:
         remove_active_profile_events: dict|str:ms|None
     shot_profiles:
             loop: single|bool|False
-            step_names_to_rotate: list|str|None
-            step_names_to_not_rotate: list|str|None
+            state_names_to_rotate: list|str|None
+            state_names_to_not_rotate: list|str|None
             rotation_pattern: list|str|R
             player_variable: single|str|None
             advance_on_hit: single|bool|True
-            steps:
+            states:
                 name: single|str|
                 light_script: single|str|None
                 hold: single|bool|True
@@ -596,7 +596,7 @@ triggers:
 
 shot_profiles:
     default:
-        steps:
+        states:
           - name: unlit
             light_script: "off"
           - name: lit

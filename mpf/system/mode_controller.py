@@ -37,9 +37,13 @@ class ModeController(object):
 
     """
 
+    debug_path = 'system_modules|mode_controller'
+
     def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger('ModeController')
+
+        self.debug = self.machine.get_debug_status(self.debug_path)
 
         self.queue = None  # ball ending event queue
 
@@ -81,7 +85,8 @@ class ModeController(object):
                 the mode's folder in your game's machine_files/modes folder.
 
         """
-        self.log.debug('Processing mode: %s', mode_string)
+        if self.debug:
+            self.log.debug('Processing mode: %s', mode_string)
 
         config = dict()
 
@@ -118,7 +123,9 @@ class ModeController(object):
                               config['mode']['code'].split('.')[0])
                 i = __import__(import_str, fromlist=[''])
 
-                self.log.debug("Loading Mode class code from %s", import_str)
+                if self.debug:
+                        self.log.debug("Loading Mode class code from %s",
+                                       import_str)
 
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
                     self.machine, config, mode_string, mode_path)
@@ -131,13 +138,16 @@ class ModeController(object):
                               config['mode']['code'].split('.')[0])
                 i = __import__(import_str, fromlist=[''])
 
-                self.log.debug("Loading Mode class code from %s", import_str)
+                if self.debug:
+                    self.log.debug("Loading Mode class code from %s",
+                                   import_str)
 
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
                     self.machine, config, mode_string, mode_path)
 
         else:
-            self.log.debug("Loading default Mode class code")
+            if self.debug:
+                self.log.debug("Loading default Mode class code")
             mode_object = Mode(self.machine, config, mode_string, mode_path)
 
         return mode_object
@@ -223,7 +233,8 @@ class ModeController(object):
 
         """
 
-        self.log.debug('Registering %s as a mode start method. Config section:'
+        if self.debug:
+            self.log.debug('Registering %s as a mode start method. Config section:'
                        '%s, priority: %s, kwargs: %s', start_method,
                        config_section_name, priority, kwargs)
 

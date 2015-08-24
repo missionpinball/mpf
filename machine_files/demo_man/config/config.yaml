@@ -22,10 +22,6 @@ scriptlets:
     add_a_ball.AddABall
     claw.Claw
 
-
-
-
-
 slide_player:
     volume_change:
         type: Text

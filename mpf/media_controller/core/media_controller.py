@@ -593,6 +593,21 @@ class MediaController(object):
 
             # todo add per-track volume support to sound system
 
+    def get_debug_status(self, debug_path):
+
+        if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
+            return True
+
+        class_, module = debug_path.split('|')
+
+        try:
+            if module in self.active_debugger[class_]:
+                return True
+            else:
+                return False
+        except KeyError:
+            return False
+
 
 class BCPServer(threading.Thread):
     """Parent class for the BCP Server thread.

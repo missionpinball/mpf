@@ -1,5 +1,5 @@
 """ """
-# modes.py
+# mode_controller.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)

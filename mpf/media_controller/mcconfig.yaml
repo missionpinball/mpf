@@ -154,3 +154,12 @@ slide_player:
         type: text
         text: ASSET LOADING COMPLETE
         font: small
+
+debug_profiles:
+    verbose:
+        system_modules:
+            events
+            mode_controller
+        device_collections:
+        individual_devices:
+        plugins:

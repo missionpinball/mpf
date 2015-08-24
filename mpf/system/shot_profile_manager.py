@@ -42,6 +42,8 @@ class ShotProfileManager(object):
                                         self._player_turn_stop,
                                         priority=0)
 
+        self.debug = True
+
     def register_profile(self, name, profile):
         """Registers a new shot profile with the shot controller which will
         allow it to be applied to shots.
@@ -51,7 +53,8 @@ class ShotProfileManager(object):
             profile: Dict of the profile settings.
 
         """
-        self.log.debug("Registering Shot Profile: '%s'", name)
+        if self.debug:
+            self.log.debug("Registering Shot Profile: '%s'", name)
 
         self.profiles[name] = self.process_profile_config(profile)
 
@@ -89,6 +92,9 @@ class ShotProfileManager(object):
 
         config['rotation_pattern'] = rotation_pattern
 
+        if self.debug:
+            self.log.debug("Processed new profile configuration: %s", config)
+
         return config
 
     def _player_turn_start(self, player, **kwargs):
@@ -111,8 +117,18 @@ class ShotProfileManager(object):
                 mode ends.
 
         """
+
+        if self.debug:
+            self.log.debug("Scanning config from mode '%s' for shots",
+                           mode.name)
+
         for shot, settings in config.iteritems():
-            if 'profile' in settings:
+            if settings['profile']:
+
+                if self.debug:
+                    self.log.debug("Found profile '%s' for shot '%s'",
+                                   settings['profile'], shot)
+
                 self.machine.shots[shot].apply_profile(settings['profile'],
                                                            priority,
                                                            removal_key=mode)
@@ -143,8 +159,19 @@ class ShotProfileManager(object):
                 applied later.
 
         """
+
+        if self.debug:
+            self.log.debug("Scanning config from mode '%s' for shot_groups",
+                           mode.name)
+
+
         for shot_group, settings in config.iteritems():
-            if 'profile' in settings:
+            if settings['profile']:
+
+                if self.debug:
+                    self.log.debug("Found profile '%s' for shot_group '%s'",
+                                   settings['profile'], shot_group)
+
                 for shot in self.machine.shot_groups[shot_group].shots:
                     shot.apply_profile(settings['profile'], priority,
                                          removal_key=mode)

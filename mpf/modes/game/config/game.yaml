@@ -2,7 +2,7 @@
 mode:
   start_events: game_start
   stop_events: game_ended
-  priority: 2
+  priority: 20
   code: game.Game
 
 slide_player:

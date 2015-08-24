@@ -23,9 +23,10 @@ class EventManager(object):
         self.busy = False
         self.event_queue = deque([])
         self.callback_queue = deque([])
-        self.debug = True  # logs all event activity except timer_ticks.
         self.registered_monitors = set()  # callbacks that get every event
         self.current_event = (None, None, None, None)  # current in-progress ev
+
+        self.debug = self.machine.get_debug_status('system_modules|events')
 
         self.add_handler('init_phase_1', self._initialize)
 
@@ -93,9 +94,10 @@ class EventManager(object):
         # the handler method, priority, dict of kwargs, & uuid key
 
         self.registered_handlers[event].append((handler, priority, kwargs, key))
-        self.log.debug("Registered %s as a handler for '%s', priority: %s, "
-                       "kwargs: %s",
-                       (str(handler).split(' '))[2], event, priority, kwargs)
+        if self.debug:
+            self.log.debug("Registered %s as a handler for '%s', priority: %s, "
+                           "kwargs: %s",
+                           (str(handler).split(' '))[2], event, priority, kwargs)
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
@@ -193,7 +195,8 @@ class EventManager(object):
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[0] == method:
                     handler_list.remove(handler_tup)
-                    self.log.debug("Removing method %s from event %s",
+                    if self.debug:
+                        self.log.debug("Removing method %s from event %s",
                                    (str(method).split(' '))[2], event)
 
         self._remove_event_if_empty(event)
@@ -218,7 +221,8 @@ class EventManager(object):
             for handler_tup in self.registered_handlers[event][:]:
                 if handler_tup[0] == handler:
                     self.registered_handlers[event].remove(handler_tup)
-                    self.log.debug("Removing method %s from event %s",
+                    if self.debug:
+                        self.log.debug("Removing method %s from event %s",
                                    (str(handler).split(' '))[2], event)
 
         self._remove_event_if_empty(event)
@@ -234,7 +238,8 @@ class EventManager(object):
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[3] == key:
                     handler_list.remove(handler_tup)
-                    self.log.debug("Removing method %s from event %s",
+                    if self.debug:
+                        self.log.debug("Removing method %s from event %s",
                                    (str(handler_tup[0]).split(' '))[2], event)
 
         self._remove_event_if_empty(event)
@@ -254,7 +259,8 @@ class EventManager(object):
 
         if not self.registered_handlers[event]:  # if value is empty list
                 del self.registered_handlers[event]
-                self.log.debug("Removing event %s since there are no more"
+                if self.debug:
+                    self.log.debug("Removing event %s since there are no more"
                                " handlers registered for it", event)
 
     def does_event_exist(self, event_name):
@@ -418,7 +424,8 @@ class EventManager(object):
             if 'callback' in kwargs:
                 friendly_kwargs['callback'] = \
                     (str(kwargs['callback']).split(' '))[2]
-            self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
+            if self.debug:
+                self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback,
                            friendly_kwargs)
 
@@ -428,13 +435,14 @@ class EventManager(object):
             self._process_event_queue()
         else:
             if self.debug and event != 'timer_tick':
-                self.log.debug("XXXX Event '%s' is in progress. Added to the "
+                if self.debug:
+                    self.log.debug("XXXX Event '%s' is in progress. Added to the "
                                "queue.", self.current_event[0])
-                self.log.debug("================== ACTIVE EVENTS =============")
-                for event in list(self.event_queue):
-                    self.log.debug("%s, %s, %s, %s", event[0], event[1],
-                                   event[2], event[3])
-                self.log.debug("==============================================")
+                    self.log.debug("================== ACTIVE EVENTS =============")
+                    for event in list(self.event_queue):
+                        self.log.debug("%s, %s, %s, %s", event[0], event[1],
+                                    event[2], event[3])
+                    self.log.debug("==============================================")
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
@@ -510,7 +518,8 @@ class EventManager(object):
         # If we had a queue event, we need to see if any handlers asked us to
         # wait for them
         if queue and queue.is_empty():
-            self.log.debug("Queue is empty. Deleting.")
+            if self.debug:
+                self.log.debug("Queue is empty. Deleting.")
             queue = None
             del kwargs['queue']  # ditch this since we don't need it now
 
@@ -565,7 +574,8 @@ class EventManager(object):
 
     def process_event_player(self, config, mode=None, priority=0):
         # config is localized to 'event_player'
-        self.log.debug("Processing event_player configuration. Priority: %s",
+        if self.debug:
+            self.log.debug("Processing event_player configuration. Priority: %s",
                        priority)
 
         event_keys = set()
@@ -582,7 +592,8 @@ class EventManager(object):
 
     def process_random_event_player(self, config, mode=None, priority=0):
         # config is localized to 'event_player'
-        self.log.debug("Processing random_event_player configuration. Priority:"
+        if self.debug:
+            self.log.debug("Processing random_event_player configuration. Priority:"
                        " %s", priority)
 
         event_keys = set()
@@ -619,7 +630,11 @@ class QueuedEvent(object):
 
     def __init__(self, callback, **kwargs):
         self.log = logging.getLogger("Queue")
-        self.log.debug("Creating an event queue. Callback: %s Args: %s",
+
+        self.debug = False
+
+        if self.debug:
+            self.log.debug("Creating an event queue. Callback: %s Args: %s",
                        callback, kwargs)
         self.callback = callback
         self.kwargs = kwargs
@@ -631,14 +646,17 @@ class QueuedEvent(object):
 
     def wait(self):
         self.num_waiting += 1
-        self.log.debug("Registering a wait. Current count: %s",
+        if self.debug:
+            self.log.debug("Registering a wait. Current count: %s",
                        self.num_waiting)
 
     def clear(self):
         self.num_waiting -= 1
-        self.log.debug("Clearing a wait. Current count: %s", self.num_waiting)
+        if self.debug:
+            self.log.debug("Clearing a wait. Current count: %s", self.num_waiting)
         if not self.num_waiting:
-            self.log.debug("Queue is empty. Calling %s", self.callback)
+            if self.debug:
+                self.log.debug("Queue is empty. Calling %s", self.callback)
             #del self.kwargs['queue']  # ditch this since we don't need it now
             self.callback(**self.kwargs)
 

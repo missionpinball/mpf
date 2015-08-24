@@ -37,11 +37,6 @@ class ShotGroup(Device):
 
         self.rotation_enabled = True
 
-        if not device_str:
-            self.device_str = 'shots'
-        else:
-            self.device_str = device_str
-
         if not member_collection:
             self.member_collection = self.machine.shots
         else:
@@ -80,7 +75,7 @@ class ShotGroup(Device):
         self._deregister_member_shots()
         self._register_member_shot()
 
-    def hit(self, profile_name, profile_step_name, **kwargs):
+    def hit(self, profile_name, profile_state_name, **kwargs):
         """One of the member shots in this shot group was hit.
 
         This method is only processed if this shot group is enabled.
@@ -88,28 +83,28 @@ class ShotGroup(Device):
         Args:
             profile_name: String name of the active profile of the shot that
                 was hit.
-            profile_step_name: String name of the step name of the profile of
+            profile_state_name: String name of the state name of the profile of
                 the shot that was hit.
 
         """
 
         if self.enabled:
             if self.debug:
-                self.log.debug('Hit! Active profile: %s, Current step: %s',
-                           profile_name, profile_step_name)
+                self.log.debug('Hit! Active profile: %s, Current state: %s',
+                           profile_name, profile_state_name)
 
             self.machine.events.post(self.name + '_hit',
                                      profile=profile_name,
-                                     step=profile_step_name)
+                                     state=profile_state_name)
 
             self.machine.events.post(self.name + '_' + profile_name + '_hit',
                                      profile=profile_name,
-                                     step=profile_step_name)
+                                     state=profile_state_name)
 
             self.machine.events.post(self.name + '_' + profile_name + '_' +
-                                     profile_step_name + '_hit',
+                                     profile_state_name + '_hit',
                                      profile=profile_name,
-                                     step=profile_step_name)
+                                     state=profile_state_name)
 
     def enable(self, **kwargs):
         """Enables this shot group. Also enables all the shots in this
@@ -168,7 +163,7 @@ class ShotGroup(Device):
         self.rotation_enabled = False
 
     def reset(self, **kwargs):
-        """Resets each of the shots in this group back to the initial step in
+        """Resets each of the shots in this group back to the initial state in
         whatever shot profile they have applied. This is the same as calling
         each shot's reset() method one-by-one.
 
@@ -278,20 +273,20 @@ class ShotGroup(Device):
         if states:
             states = Config.string_to_lowercase_list(states)
         else:
-            states = self.shots[0].active_profile['step_names_to_rotate']
+            states = self.shots[0].active_profile['state_names_to_rotate']
 
         if exclude_states:
             exclude_states = Config.string_to_lowercase_list(exclude_states)
         else:
             exclude_states = (
-                self.shots[0].active_profile['step_names_to_not_rotate'])
+                self.shots[0].active_profile['state_names_to_not_rotate'])
 
         shot_list = list()
 
         # build of a list of shots we're actually going to rotate
         for shot in self.shots:
-            if ((not states or shot.current_step_name in states) and
-                    shot.current_step_name not in exclude_states):
+            if ((not states or shot.current_state_name in states) and
+                    shot.current_state_name not in exclude_states):
 
                 shot_list.append(shot)
 
@@ -300,13 +295,13 @@ class ShotGroup(Device):
         for shot in shot_list:
 
             try:
-                current_step = shot.running_light_show.current_location
+                current_state = shot.running_light_show.current_location
 
             except AttributeError:
-                current_step = -1
+                current_state = -1
 
             shot_state_list.append(
-                (shot.player[shot.player_variable], current_step)
+                (shot.player[shot.player_variable], current_state)
                                     )
 
         if self.debug:
@@ -314,6 +309,10 @@ class ShotGroup(Device):
                            'Exclude states: %s, Shots to be rotated: %s',
                            direction, states,
                exclude_states, [x.name for x in shot_list])
+
+            for shot in shot_list:
+                shot.log.debug("This shot is part of a rotation event")
+
 
         # figure out which direction we're going to rotate
         if not direction:
@@ -330,9 +329,9 @@ class ShotGroup(Device):
         else:
             shot_state_list.rotate(steps * -1)
 
-        # step through all our shots and update their complete status
+        # step through all our shots and update their states
         for i in range(len(shot_list)):
-            shot_list[i].jump(step=shot_state_list[i][0],
+            shot_list[i].jump(state=shot_state_list[i][0],
                               update_group=False,
                               lightshow_step=shot_state_list[i][1])
 
@@ -358,21 +357,21 @@ class ShotGroup(Device):
 
     def check_for_complete(self):
         """Checks all the shots in this shot group. If they are all in the
-        same step, then that step number is returned. If they are in different
-        steps, False is returned.
+        same state, then that state number is returned. If they are in different
+        states, False is returned.
 
         """
 
         shot_states = set()
 
         for shot in self.shots:
-            shot_states.add(shot.current_step_name)
+            shot_states.add(shot.current_state_name)
 
-        # <name>_<profile>_<step>
+        # <name>_<profile>_<state>
         if len(shot_states) == 1 and shot_states.pop():
             self.machine.events.post(self.name + '_' +
                                      self.shots[0].active_profile_name + '_' +
-                                     self.shots[0].current_step_name +
+                                     self.shots[0].current_state_name +
                                      '_complete')
 
     def device_added_to_mode(self, player):

@@ -43,7 +43,7 @@ class Mode(object):
         self.mode_devices = set()
 
         self.auto_stop_on_ball_end = True
-        '''Controlled whether this mode is stopped when the ball ends,
+        '''Controls whether this mode is stopped when the ball ends,
         regardless of its stop_events settings.
         '''
 
@@ -312,8 +312,11 @@ class Mode(object):
                         device.device_added_to_mode(self.player)
 
     def _remove_mode_devices(self):
+
         for device in self.mode_devices:
             device.remove()
+
+        self.mode_devices = set()
 
     def _setup_device_control_events(self):
 
@@ -324,7 +327,7 @@ class Mode(object):
             self.add_mode_event_handler(
                 event=event,
                 handler=self.machine.device_manager._control_event_handler,
-                priority=self.priority,
+                priority=self.priority+2,
                 callback=method,
                 ms_delay=delay,
                 delay_mgr=self.delay)

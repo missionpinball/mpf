@@ -55,7 +55,7 @@ slide_player:
 
 shot_profiles:
     hit_me:
-        steps:
+        states:
             - name: active
               light_script: flash
               repeat: yes
