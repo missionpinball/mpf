@@ -71,7 +71,7 @@ class ShotGroup(Device):
         """
         if self.debug:
             self.log.debug('Hit! Active profile: %s, Current state: %s',
-                           profile_name, profile_state_name)
+                           profile, profile)
 
         self.machine.events.post(self.name + '_hit',
                                  profile=profile, state=state)
@@ -81,6 +81,8 @@ class ShotGroup(Device):
 
         self.machine.events.post(self.name + '_' + profile + '_' + state +
                                  '_hit', profile=profile, state=state)
+
+        print "member shot hit", self.name, profile, state
 
         self.check_for_complete()
 
@@ -344,6 +346,12 @@ class ShotGroup(Device):
 
         # <name>_<profile>_<state>
         if len(shot_states) == 1 and shot_states.pop():
+
+            if self.debug:
+                self.log.debug("Shot group is complete with profile :%, state:"
+                               "%s", self.shots[0].active_profile_name,
+                               self.shots[0].current_state_name)
+
             self.machine.events.post(self.name + '_' +
                                      self.shots[0].active_profile_name + '_' +
                                      self.shots[0].current_state_name +

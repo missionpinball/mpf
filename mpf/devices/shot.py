@@ -386,7 +386,7 @@ class Shot(Device):
                 self.log.debug("Setting up a sequence timer for %sms",
                               self.config['time'])
 
-            self.delay.reset(name='seq_id',
+            self.delay.reset(name=seq_id,
                              ms=self.config['time'],
                              callback=self._reset_sequence,
                              seq_id=seq_id)
@@ -439,12 +439,8 @@ class Shot(Device):
         if self.debug:
             self.log.debug("Resetting this sequence")
 
-        sequence = [x for x in self.active_sequences if x[0]==seq_id]
-
-        try:
-            self.active_sequences.remove(sequence)
-        except ValueError:
-            pass
+        self.active_sequences = [x for x in self.active_sequences
+                                 if x[0] != seq_id]
 
     def _reset_all_sequences(self):
         seq_ids = [x[0] for x in self.active_sequences]
@@ -610,13 +606,19 @@ class Shot(Device):
                 # self.current_state_index
                 # self.current_state_name
 
+        if self.debug:
+                self.log.debug("Enabled already: %s, Highest enable_table "
+                               "Enabled setting: %s", self.enabled,
+                               self.enable_table[0]['enable'])
+
         # are we enabled when we weren't before?
         if self.enable_table[0]['enable'] and not self.enabled:
             self._enable()
 
-        elif (self.enable_table[0]['enable'] and self.enabled and
-                old_profile_name != self.active_profile_name):
-            self._update_lights()  # can we not do this if it's the same profile?
+        elif self.enable_table[0]['enable'] and self.enabled:
+
+            if old_profile_name != self.active_profile_name:
+                self._update_lights()
 
         else:
             self._disable()
