@@ -245,7 +245,7 @@ class Diverter(Device):
         for this diverter.
         """
 
-        for switch in self.config['activation_switches']:
+        for switch.name in self.config['activation_switches']:
             self.platform.clear_hw_rule(switch)
 
         # todo this should not clear all the rules for this switch
