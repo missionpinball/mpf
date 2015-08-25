@@ -326,11 +326,16 @@ class Mode(object):
 
             self.add_mode_event_handler(
                 event=event,
-                handler=self.machine.device_manager._control_event_handler,
+                handler=self._control_event_handler,
                 priority=self.priority+2,
                 callback=method,
-                ms_delay=delay,
-                delay_mgr=self.delay)
+                ms_delay=delay)
+
+    def _control_event_handler(self, callback, ms_delay=0, **kwargs):
+        if ms_delay:
+            self.delay.add(callback, ms_delay, callback, mode=self)
+        else:
+            callback(mode=self)
 
     def add_mode_event_handler(self, event, handler, priority=1, **kwargs):
         """Registers an event handler which is automatically removed when this
