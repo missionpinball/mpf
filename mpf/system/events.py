@@ -24,7 +24,6 @@ class EventManager(object):
         self.event_queue = deque([])
         self.callback_queue = deque([])
         self.registered_monitors = set()  # callbacks that get every event
-        self.current_event = (None, None, None, None)  # current in-progress ev
 
         self.debug = self.machine.get_debug_status('system_modules|events')
 
@@ -436,8 +435,8 @@ class EventManager(object):
         else:
             if self.debug and event != 'timer_tick':
                 if self.debug:
-                    self.log.debug("XXXX Event '%s' is in progress. Added to the "
-                               "queue.", self.current_event[0])
+                    self.log.debug("XXXX There's an event in progress. Added to "
+                                   "the queue.")
                     self.log.debug("================== ACTIVE EVENTS =============")
                     for event in list(self.event_queue):
                         self.log.debug("%s, %s, %s, %s", event[0], event[1],
@@ -446,8 +445,6 @@ class EventManager(object):
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
-
-        self.current_event = (event, ev_type, callback, kwargs)
 
         result = None
         queue = None
@@ -531,8 +528,6 @@ class EventManager(object):
 
             self.callback_queue.append((callback, kwargs))
 
-        self.current_event = (None, None, None, None)
-
     def _process_event_queue(self):
         self.busy = True
         # Internal method which checks to see if there are any other events
@@ -555,22 +550,6 @@ class EventManager(object):
                 callback(**kwargs)
 
         self.busy = False
-
-    def get_current_event(self):
-        """Returns a tuple with information about the current event that's in
-        progress.
-
-        Returned result is a 4-element tuple:
-
-        [0] event name (str)
-        [1] event type (str)
-        [2] post-event callback (meth)
-        [3] kwargs (dict)
-
-        If no event is in progress, these are all None.
-
-        """
-        return self.current_event
 
     def process_event_player(self, config, mode=None, priority=0):
         # config is localized to 'event_player'
