@@ -84,7 +84,7 @@ class ShotGroup(Device):
 
         self.check_for_complete()
 
-    def enable(self, **kwargs):
+    def enable(self, mode=None, **kwargs):
         """Enables this shot group. Also enables all the shots in this
         group.
 
@@ -101,9 +101,9 @@ class ShotGroup(Device):
         self._watch_member_shots()
 
         for shot in self.shots:
-            shot.enable()
+            shot.enable(mode)
 
-    def disable(self, **kwargs):
+    def disable(self, mode=None, **kwargs):
         """Disables this shot group. Also disables all the shots in this
         group.
 
@@ -118,7 +118,7 @@ class ShotGroup(Device):
         self._stop_watching_member_shots()
 
         for shot in self.shots:
-            shot.disable()
+            shot.disable(mode)
 
         self.enabled = False
 
@@ -185,14 +185,14 @@ class ShotGroup(Device):
          self.active_profile_settings,
          _) = self.profiles[0]
 
-    def remove_active_profile(self, **kwargs):
+    def remove_active_profile(self, mode, **kwargs):
         """Removes the current active profile from every shot in the group.
 
         """
         if self.debug:
             self.log.debug('Removing active profile')
         for shot in self.shots:
-            shot.remove_active_profile()
+            shot.remove_active_profile(mode)
 
     def advance(self, **kwargs):
         """Advances the current active profile from every shot in the group

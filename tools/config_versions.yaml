@@ -2,6 +2,7 @@
   
   section_deprecations:
     - max balls
+    - machine_flow
   
   section_warnings:
     - path: shots

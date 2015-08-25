@@ -106,46 +106,50 @@ class ShotProfileManager(object):
             shot.player_turn_stop()
 
     def apply_shot_profiles(self, config, priority, mode, **kwargs):
-        """Scans a config of shots looking for profile entries and applies any
-        it finds to those shots.
-
-        Args:
-            config: Dict containing shot configurations.
-            priority: Int of the priority these profiles will be applied at.
-            mode: A Mode class which is the mode that's applying these shot
-                profiles. This can be used later to remove the profiles when the
-                mode ends.
+        """ runs on mode start, sets the shots' enable_tables
 
         """
-
         if self.debug:
             self.log.debug("Scanning config from mode '%s' for shots",
                            mode.name)
 
         for shot, settings in config.iteritems():
+            # is there a profile? yes, use it. no, use default
             if settings['profile']:
+                profile = settings['profile']
+            else:
+                profile = self.machine.shots[shot].config['profile']
 
-                if self.debug:
-                    self.log.debug("Found profile '%s' for shot '%s'",
-                                   settings['profile'], shot)
+            # should this shot be enabled? are there enable events?
+                # yes, do not enable
+                # no, enable it now
+            if settings['enable_events']:
+                enable = False
+            else:
+                enable = True
 
-                self.machine.shots[shot].apply_profile(settings['profile'],
-                                                           priority,
-                                                           removal_key=mode)
+            if self.debug:
+                self.log.debug('Updating shot enable_table from config: profile'
+                               ': %s, enable: %s, mode: %s', profile, enable,
+                               mode)
+                self.machine.shots[shot].log.debug('Updating shot enable_table '
+                    'from config: profile: %s, enable: %s, mode: %s', profile,
+                    enable, mode)
+
+            self.machine.shots[shot].update_enable_table(profile, enable, mode)
 
         return self.remove_shot_profiles, mode
 
     def remove_shot_profiles(self, mode):
-        """Removes all the shot profiles from all shots based on the mode
-        passed.
-
-        Args:
-            mode: Mode class that will be used to determine which shot profiles
-                will be removed.
+        """Runs on mode end
 
         """
+
+        # pass the mode to remove it from the enable_table
+        # get the shot to resort
+
         for shot in self.machine.shots:
-            shot.remove_profile_by_key(mode)
+            shot.remove_from_enable_table(mode)
 
     def apply_group_profiles(self, config, priority, mode, **kwargs):
         """Applies profiles to member shots of a dict of shot groups.
@@ -172,9 +176,25 @@ class ShotProfileManager(object):
                     self.log.debug("Found profile '%s' for shot_group '%s'",
                                    settings['profile'], shot_group)
 
+                if settings['enable_events']:
+                    enable = False
+                else:
+                    enable = True
+
+                if self.debug:
+                    self.log.debug("Updating shot_group's enable_table from "
+                                   "config: profile: %s, enable: %s, mode: %s",
+                                   settings['profile'], enable, mode)
+
+
                 for shot in self.machine.shot_groups[shot_group].shots:
-                    shot.apply_profile(settings['profile'], priority,
-                                         removal_key=mode)
+                    
+                    if self.debug:
+                        shot.log.debug("Updating shot_group's enable_table from"
+                                   " config: profile: %s, enable: %s, mode: %s",
+                                   settings['profile'], enable, mode)
+
+                    shot.update_enable_table(settings['profile'], enable, mode)
 
         return self.remove_group_profiles, mode
 
@@ -190,7 +210,7 @@ class ShotProfileManager(object):
         """
         for shot_group in self.machine.shot_groups:
             for shot in shot_group.shots:
-                shot.remove_profile_by_key(mode)
+                shot.remove_from_enable_table(mode)
 
 
 # The MIT License (MIT)

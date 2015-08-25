@@ -333,7 +333,6 @@ config_validator:
         switch_sequence: list|self.machine.switches[%]|None
         cancel_switch: list|self.machine.switches[%]|None
         delay_switch: dict|self.machine.switches[%]:ms|None
-        lights_when_disabled: single|bool|True
         time: single|ms|0
         light: list|self.machine.lights[%]|None
         led: list|self.machine.leds[%]|None
@@ -369,6 +368,7 @@ config_validator:
             rotation_pattern: list|str|R
             player_variable: single|str|None
             advance_on_hit: single|bool|True
+            lights_when_disabled: single|bool|True
             states:
                 name: single|str|
                 light_script: single|str|None
