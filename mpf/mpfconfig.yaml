@@ -250,6 +250,7 @@ config_validator:
     gis:
         number: single|str|
         number_str: single|str|
+        dimmable: single|bool|False
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False
