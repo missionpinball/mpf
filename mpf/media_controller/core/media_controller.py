@@ -57,6 +57,8 @@ class MediaController(object):
         self.log.debug("Python executable location: %s", sys.executable)
         self.log.debug("32-bit Python? %s", sys.maxsize < 2**32)
 
+        self.active_debugger = dict()
+
         self.config = dict()
         self.done = False  # todo
         self.machine_path = None
