@@ -128,21 +128,21 @@ class Flipper(Device):
             self._enable_flipper_rule_F()
             self._enable_flipper_rule_G()
 
-        elif (not self.config['hold_coil'].name and self.config['use_eos'] and
+        elif (not self.config['hold_coil'] and self.config['use_eos'] and
                 self.config['eos_switch']):
 
             self._enable_flipper_rule_A()
             self._enable_flipper_rule_H()
             self._enable_flipper_rule_F()
 
-        elif self.config['hold_coil'].name and not self.config['use_eos']:
+        elif self.config['hold_coil'] and not self.config['use_eos']:
 
             self._enable_flipper_rule_B()
             self._enable_flipper_rule_D()
             self._enable_flipper_rule_F()
             self._enable_flipper_rule_G()
 
-        elif not self.config['hold_coil'].name and not self.config['use_eos']:
+        elif not self.config['hold_coil'] and not self.config['use_eos']:
 
             self._enable_flipper_rule_C()
             self._enable_flipper_rule_F()
