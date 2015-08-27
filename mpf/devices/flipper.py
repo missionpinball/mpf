@@ -54,7 +54,7 @@ class Flipper(Device):
 
         self.flipper_coils = []
         self.flipper_coils.append(self.config['main_coil'].name)
-        if self.config['hold_coil'].name:
+        if self.config['hold_coil']:
             self.flipper_coils.append(self.config['hold_coil'].name)
 
         self.flipper_switches = []
