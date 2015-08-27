@@ -369,6 +369,7 @@ config_validator:
             player_variable: single|str|None
             advance_on_hit: single|bool|True
             lights_when_disabled: single|bool|True
+            block: single|bool|true
             states:
                 name: single|str|
                 light_script: single|str|None

@@ -82,8 +82,6 @@ class ShotGroup(Device):
         self.machine.events.post(self.name + '_' + profile + '_' + state +
                                  '_hit', profile=profile, state=state)
 
-        print "member shot hit", self.name, profile, state
-
         self.check_for_complete()
 
     def enable(self, mode=None, **kwargs):
@@ -281,8 +279,8 @@ class ShotGroup(Device):
                 current_state = -1
 
             shot_state_list.append(
-                (shot.player[shot.player_variable], current_state)
-                                    )
+                (shot.player[shot.active_player_var],
+                 current_state))
 
         if self.debug:
             self.log.debug('Rotating. Direction: %s, Include states: %s, '
@@ -291,8 +289,8 @@ class ShotGroup(Device):
                exclude_states, [x.name for x in shot_list])
 
             for shot in shot_list:
-                shot.log.debug("This shot is part of a rotation event")
-
+                shot.log.debug("This shot is part of a rotation event. Current"
+                               " state: %s", shot.current_state_name)
 
         # figure out which direction we're going to rotate
         if not direction:
@@ -341,14 +339,24 @@ class ShotGroup(Device):
         """
         shot_states = set()
 
+        if self.debug:
+            state_list = list()
+
         for shot in self.shots:
             shot_states.add(shot.current_state_name)
+
+            if self.debug:
+                state_list.append(shot.current_state_name)
+
+        if self.debug:
+            self.log.debug("Checking for complete. Shot states: %s",
+                           state_list)
 
         # <name>_<profile>_<state>
         if len(shot_states) == 1 and shot_states.pop():
 
             if self.debug:
-                self.log.debug("Shot group is complete with profile :%, state:"
+                self.log.debug("Shot group is complete with profile :%s, state:"
                                "%s", self.shots[0].active_profile_name,
                                self.shots[0].current_state_name)
 

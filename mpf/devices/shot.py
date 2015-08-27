@@ -34,10 +34,9 @@ class Shot(Device):
 
         self.active_profile_name = None
         self.active_profile = dict()
-        self.current_state_index = 0
+        self.active_player_var = None
         self.current_state_name = None
         self.running_light_show = None
-        self.player_variable = None
         self.active_sequences = list()
         """List of tuples: (id, current_position_index, next_switch)"""
         self.player = None
@@ -67,12 +66,6 @@ class Shot(Device):
 
         for light in self.config['light']:
             light.disable_debugging()
-
-    def _set_player_variable(self):
-        if self.active_profile['player_variable']:
-            self.player_variable = self.active_profile['player_variable']
-        else:
-            self.player_variable = (self.name + '_' + self.active_profile_name)
 
     def _register_switch_handlers(self):
 
@@ -120,51 +113,70 @@ class Shot(Device):
 
         self.switch_handlers_active = False
 
-    def advance(self, steps=1, **kwargs):
-        """Advances the active shot profile one step forward.
+    def advance(self, steps=1, profile=None, **kwargs):
+        """Advances a shot profile one step forward.
 
         If this profile is at the last step and configured to roll over, it will
         roll over to the first step. If this profile is at the last step and not
         configured to roll over, this method has no effect.
 
+        If profile is None, it works on the active profile. Otherwise it will
+        update other profiles.
+
         """
+
+        if not profile:
+            profile_name = self.active_profile_name
+            profile = self.active_profile
+        else:
+            profile_name = profile
+            profile = self.machine.shot_profile_manager.profiles[profile]
+
+        player_var = profile['player_variable'].replace('%', self.name)
+
         if self.debug:
-            self.log.debug("Advancing %s state(s)", steps)
+            self.log.debug("Advancing profile '%s' %s state(s). Current active "
+                           "profile: %s", profile_name, steps,
+                           self.active_profile_name)
 
-        if (self.player[self.player_variable] + steps >=
-                len(self.active_profile['states'])):
+        if (self.player[player_var] + steps >=
+                len(profile['states'])):
 
-            if self.active_profile['loop']:
+            if profile['loop']:
                 if self.debug:
-                    self.log.debug("Active profile '%s' is in its final state "
+                    self.log.debug("Profile '%s' is in its final state "
                                    "based a player variable %s=%s. Profile "
                                    "setting for loop is True, so resetting to "
-                                   "the first state.",self.active_profile_name,
-                                   self.player_variable,
-                                   self.player[self.player_variable])
+                                   "the first state.", self.active_profile_name,
+                                   player_var, self.player[player_var])
 
-                self.player[self.player_variable] = 0
+                self.player[profile['player_variable']] = 0
 
             else:
                 if self.debug:
-                    self.log.debug("Active profile '%s' is in its final state "
+                    self.log.debug("Profile '%s' is in its final state "
                                     "based a player variable %s=%s. Profile "
                                     "setting for loop is False, so state is not "
                                     "advancing.",self.active_profile_name,
-                                    self.player_variable,
-                                    self.player[self.player_variable])
+                                    player_var, self.player[player_var])
                 return
         else:
 
             if self.debug:
                 self.log.debug("Advancing player variable %s %s state(s)",
-                               self.player_variable, steps)
+                               player_var, steps)
 
-            self.machine.game.player[self.player_variable] += steps
+            self.player[player_var] += steps
 
-        self._stop_current_lights()
-        self._update_current_state_variables()
-        self._update_lights()
+        if self.active_profile_name == profile_name:
+
+            if self.debug:
+                self.log.debug("Profile '%s' just advanced is the current "
+                               "profile. Updating lights & vars", profile_name)
+
+            self._stop_current_lights()
+            self._update_current_state_variables()
+            self._update_lights()
 
     def _stop_current_lights(self):
 
@@ -183,30 +195,41 @@ class Shot(Device):
         self.running_light_show = None
 
     def _update_current_state_variables(self):
-        self.current_state_index = self.player[self.player_variable]
 
-        self.current_state_name = (
-            self.active_profile['states'][self.current_state_index]['name'])
+        if self.debug:
+            self.log.debug("Old '%s' value: Name: %s",
+                           self.active_player_var,
+                           self.current_state_name)
+
+        self.current_state_name = (self.active_profile['states']
+                                   [self.player[self.active_player_var]]['name'])
+
+        if self.debug:
+            self.log.debug("New '%s' value: Name: %s",
+                           self.active_player_var,
+                           self.current_state_name)
 
     def _update_lights(self, lightshow_step=0):
 
         #self._stop_current_lights()
 
         if self.debug:
-            self.log.debug("Entering _update_lights(). Profile: %s, "
+            self.log.debug("Updating lights 1: Profile: %s, "
                            "lightshow_step: %s, Shot enabled: %s, Config "
                            "setting for 'lights_when_disabled': %s",
                            self.active_profile_name, lightshow_step,
-                           self.enabled, self.active_profile['lights_when_disabled'])
+                           self.enabled,
+                           self.active_profile['lights_when_disabled'])
 
         if not self.enabled and not self.active_profile['lights_when_disabled']:
             return
 
-        state_settings = self.active_profile['states'][self.current_state_index]
+        state_settings = (self.active_profile['states']
+                          [self.player[self.active_player_var]])
 
         if self.debug:
-            self.log.debug("Profile: '%s', State: %s, State settings: %s, "
-                           "Lights: %s, LEDs: %s, Priority: %s",
+            self.log.debug("Updating lights 2: Profile: '%s', State: %s, State "
+                           "settings: %s, Lights: %s, LEDs: %s, Priority: %s",
                            self.active_profile_name, self.current_state_name,
                            state_settings, self.current_priority,
                            self.config['light'], self.config['led'])
@@ -276,7 +299,7 @@ class Shot(Device):
 
         del self.machine.shots[self.name]
 
-    def hit(self, force=False, **kwargs):
+    def hit(self, force=False, profile=None, **kwargs):
         """Method which is called to indicate this shot was just hit. This
         method will advance the currently-active shot profile.
 
@@ -303,36 +326,96 @@ class Shot(Device):
         if self.active_delay_switches and not force:
             return
 
+        if not profile:
+            profile = self.active_profile_name
+
+        player_var_name = (self.machine.shot_profile_manager.profiles[profile]
+                           ['player_variable'].replace('%', self.name))
+
+        current_state_name = (self.machine.shot_profile_manager.profiles
+                              [profile]['states'][self.player[player_var_name]]
+                              ['name'])
+
         if self.debug:
             self.log.debug("Hit! Profile: %s, Current State: %s",
-                          self.active_profile_name, self.current_state_name)
+                          profile, current_state_name)
 
         # post events
         self.machine.events.post(self.name + '_hit',
-                                 profile=self.active_profile_name,
-                                 state=self.current_state_name)
+                                 profile=profile,
+                                 state=current_state_name)
 
         self.machine.events.post(self.name + '_' +
                                  self.active_profile_name + '_hit',
-                                 profile=self.active_profile_name,
-                                 state=self.current_state_name)
+                                 profile=profile,
+                                 state=current_state_name)
 
-        self.machine.events.post(self.name + '_' +
-                                 self.active_profile_name + '_' +
-                                 self.current_state_name + '_hit',
-                                 profile=self.active_profile_name,
-                                 state=self.current_state_name)
+        self.machine.events.post(self.name + '_' + profile + '_' +
+                                 current_state_name + '_hit',
+                                 profile=profile,
+                                 state=current_state_name)
 
         if Shot.monitor_enabled:
             for callback in self.machine.monitors['shots']:
                 callback(name=self.name)
 
         if self.active_profile['advance_on_hit']:
+
+            if self.debug:
+                self.log.debug("Profile '%s' advance_on_hit is True.",
+                               self.active_profile_name)
+
             self.advance()
         elif self.debug:
             self.log.debug('Not advancing profile state since the current '
                            'profile ("%s") has setting advance_on_hit set to '
-                           'False', self.active_profile_name)
+                           'False', profile)
+
+    def _waterfall_hits(self, level=0, waterfall_hits=None):
+
+        if not waterfall_hits:
+            waterfall_hits = list()
+
+        if self.debug:
+            self.log.debug("Waterfall: Checking hits. Level: %s", level)
+
+        try:
+            next_profile = self.enable_table[level+1]
+
+            if self.debug:
+                self.log.debug("Waterfall: Next profile down: %",
+                               next_profile['name'])
+
+        except IndexError:
+            return  # no more profiles
+
+        # if profile is not set to block
+        if not self.enable_table[level]['block']:
+
+            if self.debug:
+                self.log.debug("Waterfall: Next profile is not blocked")
+
+            # if it's not the same profile name, post the hit
+            if (next_profile['name'] != self.enable_table[level]['name'] and
+                    next_profile['enable']):
+
+                if self.debug:
+                    self.log.debug("Waterfall: Next profile is different and "
+                                   "enabled")
+
+                self.hit(level=level)
+
+                # don't post the same profile hit twice
+                waterfall_hits.append(next_profile['name'])
+
+                if self.debug:
+                    self.log.debug("Waterfall hits: %s", waterfall_hits)
+
+            # repeat
+            self._waterfall_hits(level+1, waterfall_hits)
+
+        elif self.debug:
+            self.log.debug("Waterfall: Next profile is set to block. Done.")
 
     def _sequence_switch_hit(self, switch_name, state, ms):
         # Since we can track multiple simulatenous sequences (e.g. two balls
@@ -464,7 +547,14 @@ class Shot(Device):
         if not self.machine.game:
             return
 
-        if state == self.player[self.player_variable]:
+        if self.debug:
+            self.log.debug('Jump: New state: %s, Current state: %s, Player var:'
+                           '%s, Lightshow_step: %s',
+                           state, self.player[self.active_player_var],
+                           self.active_player_var,
+                           lightshow_step)
+
+        if state == self.player[self.active_player_var]:
             # we're already at that state
             return
 
@@ -472,7 +562,7 @@ class Shot(Device):
             self.log.debug("Jumping to profile state '%s'", state)
 
         self._stop_current_lights()
-        self.player[self.player_variable] = state
+        self.player[self.active_player_var] = state
         self._update_current_state_variables()  # curr_state_index, curr_state_name
 
         self._update_lights(lightshow_step=lightshow_step)
@@ -591,7 +681,11 @@ class Shot(Device):
                                self.active_profile_name)
 
             try:
-                self.active_profile = self.machine.shot_profile_manager.profiles[self.active_profile_name]
+                self.active_profile = (
+                    self.machine.shot_profile_manager.profiles
+                    [self.active_profile_name])
+                self.active_player_var = (self.active_profile['player_variable']
+                                          .replace('%',self.name))
             except KeyError:
                 self.log.error("Cannot apply profile '%s' because that is not a"
                                "valid profile name.", self.active_profile_name)
@@ -601,9 +695,7 @@ class Shot(Device):
 
             # need to call
             self._stop_current_lights()
-            self._set_player_variable()
             self._update_current_state_variables()
-                # self.current_state_index
                 # self.current_state_name
 
         if self.debug:
@@ -630,14 +722,15 @@ class Shot(Device):
         else:
             priority = 0
 
-        lights_when_disabled = (self.machine.shot_profile_manager.profiles
-                                [profile]['lights_when_disabled'])
+        profile_settings = self.machine.shot_profile_manager.profiles[profile]
 
         this_entry = {'mode': mode,
                       'priority': priority,
                       'profile': profile,
                       'enable': enable,
-                      'lights_when_disabled': lights_when_disabled}
+                      'lights_when_disabled': profile_settings['lights_when_disabled'],
+                      'block': profile_settings['block'],
+                      'player_variable': profile_settings['player_variable'].replace('%', self.name)}
 
         if self.debug:
                 self.log.debug("Updating the entry table: %s", this_entry)

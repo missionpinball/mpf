@@ -56,7 +56,7 @@ class ShotProfileManager(object):
         if self.debug:
             self.log.debug("Registering Shot Profile: '%s'", name)
 
-        self.profiles[name] = self.process_profile_config(profile)
+        self.profiles[name] = self.process_profile_config(name, profile)
 
     def register_profiles(self, config, **kwargs):
         """Registers multiple shot profiles.
@@ -70,7 +70,7 @@ class ShotProfileManager(object):
         for name, profile in config.iteritems():
             self.register_profile(name, profile)
 
-    def process_profile_config(self, config):
+    def process_profile_config(self, profile_name, config):
         """Processes a shot profile config to convert everything to the format
         the shot controller needs.
 
@@ -92,8 +92,12 @@ class ShotProfileManager(object):
 
         config['rotation_pattern'] = rotation_pattern
 
+        if not config['player_variable']:
+            config['player_variable'] = '%_' + profile_name
+
         if self.debug:
-            self.log.debug("Processed new profile configuration: %s", config)
+            self.log.debug("Processed '%s' profile configuration: %s",
+                           profile_name, config)
 
         return config
 
@@ -188,7 +192,7 @@ class ShotProfileManager(object):
 
 
                 for shot in self.machine.shot_groups[shot_group].shots:
-                    
+
                     if self.debug:
                         shot.log.debug("Updating shot_group's enable_table from"
                                    " config: profile: %s, enable: %s, mode: %s",
