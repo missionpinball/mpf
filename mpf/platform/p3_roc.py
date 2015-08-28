@@ -155,8 +155,8 @@ class HardwarePlatform(Platform):
         proc_num = self.pdbconfig.get_proc_number(device_type,
                                                   str(config['number']))
         if proc_num == -1:
-            self.log.error("Coil cannot be controlled by the P3-ROC. "
-                           "Ignoring.")
+            self.log.error("Coil %s cannot be controlled by the P3-ROC. "
+                           "Ignoring.", str(config['number']))
             return
 
         if device_type == 'coil':
@@ -202,9 +202,9 @@ class HardwarePlatform(Platform):
         if self.machine_type == pinproc.MachineTypePDB:
             proc_num = self.pdbconfig.get_proc_number('switch',
                                                       str(config['number']))
-            if config['number'] == -1:
-                self.log.error("Switch cannot be controlled by the P3-ROC. "
-                               "Ignoring.")
+            if proc_num == -1:
+                self.log.error("Switch %s cannot be controlled by the P3-ROC. "
+                               "Ignoring.", str(config['number']))
                 return
         else:
             proc_num = pinproc.decode(self.machine_type, str(config['number']))
@@ -631,7 +631,15 @@ class PDBSwitch(object):
             self.sw_number = self.parse_matrix_num(upper_str)
         else:
             self.sw_type = 'proc'
-            self.sw_number = int(number_str)
+            try:
+                self.sw_number = int(number_str)
+            except ValueError:
+                try:
+                    (boardnum, banknum, inputnum) = decode_pdb_address(number_str, [])
+                    self.sw_number = boardnum * 16 + banknum * 8 + inputnum
+                except:
+                    raise ValueError('Switch %s is invalid. Use either PDB '
+                                     'format or an int', str(number_str))
 
     def proc_num(self):
         return self.sw_number
