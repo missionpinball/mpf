@@ -15,7 +15,7 @@ class DeviceManager(object):
         self.log = logging.getLogger("DeviceManager")
 
         self.collections = OrderedDict()
-        self.device_classes = dict()  # collection_name: device_class
+        self.device_classes = OrderedDict()  # collection_name: device_class
 
         self._load_device_modules()
 
@@ -57,28 +57,30 @@ class DeviceManager(object):
             except KeyError:
                 pass
 
-    def create_devices(self, collection, config):
+    def create_devices(self, collection, config, validate=True):
 
         self.device_classes[collection].create_devices(
             cls=self.device_classes[collection],
             collection=getattr(self.machine, collection),
             config=config,
-            machine=self.machine
+            machine=self.machine,
+            validate=validate
             )
 
     def get_device_control_events(self, config):
-        """Scans a config dictionary and yields events, methods, and delays for
-        all the devices and control_events in that config.
+        """Scans a config dictionary and yields events, methods, delays, and
+        devices for all the devices and control_events in that config.
 
         Args:
             config: An MPF config dictionary (either machine-wide or mode-
                 specific).
 
         Returns:
-            A generator of 3-item tuples:
+            A generator of 4-item tuples:
                 * The event name
                 * The callback method of the device
                 * The delay in ms
+                * The device object
 
         """
 
@@ -100,32 +102,22 @@ class DeviceManager(object):
                                        getattr(self.collections
                                                [collection][device],
                                                control_event[:-7]),
-                                       delay)
-
-                        # create the default events
-                        # event_name = (self.device_classes[collection].class_label +
-                        #               '_' + device + '_' + control_event[:-7])
-                        #
-                        # try:
-                        #     yield (event_name,
-                        #            getattr(self.collections
-                        #                            [collection][device],
-                        #                            control_event[:-7]),
-                        #            0)
-                        # except AttributeError:
-                        #     pass
+                                       delay,
+                                       self.collections[collection][device])
 
     def create_machinewide_device_control_events(self):
 
-        for event, method, delay in (
+        for event, method, delay, _ in (
                 self.get_device_control_events(self.machine.config)):
 
-            self.machine.events.add_handler(
-                event=event,
-                handler=self._control_event_handler,
-                callback=method,
-                ms_delay=delay,
-                delay_mgr=self.machine.delay)
+            if event != '%auto%':
+
+                self.machine.events.add_handler(
+                    event=event,
+                    handler=self._control_event_handler,
+                    callback=method,
+                    ms_delay=delay,
+                    delay_mgr=self.machine.delay)
 
     def create_collection_control_events(self):
         for collection, events in (

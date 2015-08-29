@@ -339,8 +339,8 @@ config_validator:
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False
-        enable_events: dict|str:ms|ball_started
-        disable_events: dict|str:ms|ball_ending
+        enable_events: dict|str:ms|None
+        disable_events: dict|str:ms|None
         reset_events: dict|str:ms|None
         advance_events: dict|str:ms|None
         hit_events: dict|str:ms|None
@@ -351,8 +351,8 @@ config_validator:
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False
-        enable_events: dict|str:ms|ball_started
-        disable_events: dict|str:ms|ball_ending
+        enable_events: dict|str:ms|None
+        disable_events: dict|str:ms|None
         reset_events: dict|str:ms|None
         rotate_left_events: dict|str:ms|None
         rotate_right_events: dict|str:ms|None

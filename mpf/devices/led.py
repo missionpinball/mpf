@@ -35,10 +35,10 @@ class LED(Device):
         else:
             machine.config['hardware']['brightness_compensation'] = 1.0
 
-    def __init__(self, machine, name, config, collection=None):
+    def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
         super(LED, self).__init__(machine, name, config, collection,
-                                  platform_section='leds')
+                                  platform_section='leds', validate=validate)
 
         self.config['default_color'] = Config.hexstring_to_list(
             input_string=self.config['default_color'],

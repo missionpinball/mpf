@@ -19,8 +19,9 @@ class DropTarget(Device):
     collection = 'drop_targets'
     class_label = 'drop_target'
 
-    def __init__(self, machine, name, config, collection=None):
-        super(DropTarget, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(DropTarget, self).__init__(machine, name, config, collection,
+                                         validate=validate)
 
         self.complete = False
         self.reset_coil = self.config['reset_coil']
@@ -102,8 +103,9 @@ class DropTargetBank(Device):
     collection = 'drop_target_banks'
     class_label = 'drop_target_bank'
 
-    def __init__(self, machine, name, config, collection=None):
-        super(DropTargetBank, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(DropTargetBank, self).__init__(machine, name, config, collection,
+                                             validate=validate)
 
         self.drop_targets = set()
         self.reset_coil = None

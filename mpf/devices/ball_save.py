@@ -19,8 +19,9 @@ class BallSave(Device):
     collection = 'ball_saves'
     class_label = 'ball_save'
 
-    def __init__(self, machine, name, config, collection=None):
-        super(BallSave, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(BallSave, self).__init__(machine, name, config, collection,
+                                       validate=validate)
 
         self.delay = DelayManager()
 

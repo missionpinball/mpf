@@ -18,7 +18,7 @@ class Playfield(BallDevice):
     collection = 'playfields'
     class_label = 'playfield'
 
-    def __init__(self, machine, name, config, collection=None):
+    def __init__(self, machine, name, config, collection=None, validate=True):
         self.log = logging.getLogger('playfield')
 
         self.machine = machine
@@ -28,8 +28,11 @@ class Playfield(BallDevice):
         self.debug = False
         self.config = dict()
 
-        self.config = self.machine.config_processor.process_config2(
-            self.config_section, config, self.name)
+        if validate:
+            self.config = self.machine.config_processor.process_config2(
+                self.config_section, config, self.name)
+        else:
+            self.config = config
 
         if self.config['debug']:
             self.debug = True

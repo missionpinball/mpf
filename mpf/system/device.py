@@ -22,7 +22,7 @@ class Device(object):
     class_label = None  # String of the friendly name of the device class
 
     def __init__(self, machine, name, config=None, collection=-1,
-                 platform_section=None):
+                 platform_section=None, validate=True):
 
         self.machine = machine
         self.name = name.lower()
@@ -33,8 +33,12 @@ class Device(object):
         self.platform = None
         self.config = dict()
 
-        self.config = self.machine.config_processor.process_config2(
-            self.config_section, config, self.name)
+        if validate:
+            self.config = self.machine.config_processor.process_config2(
+                self.config_section, config, self.name)
+
+        else:
+            self.config = config
 
         if self.config['debug']:
             self.enable_debugging()
@@ -90,7 +94,7 @@ class Device(object):
         return cls.collection, cls.config_section
 
     @staticmethod
-    def create_devices(cls, collection, config, machine):
+    def create_devices(cls, collection, config, machine, validate=True):
         # if this device class has a device_class_init classmethod, run it now
         if config and hasattr(cls, 'device_class_init'):
             # don't want to use try here in case the called meth has an error
@@ -100,10 +104,16 @@ class Device(object):
 
         if config:
             for device in config:
-                cls(machine, device, config[device], collection)
+                cls(machine, device, config[device], collection, validate)
 
-    def device_added_to_mode(self, player):
+    def device_added_to_mode(self, mode, player):
+        # Called when a device is created by a mode
         pass
+
+    def control_events_in_mode(self, mode):
+        # Called on mode start if this device has any control events in that mode
+        pass
+
 
 # The MIT License (MIT)
 

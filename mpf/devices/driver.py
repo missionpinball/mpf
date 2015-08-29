@@ -29,10 +29,11 @@ class Driver(Device):
     collection = 'coils'
     class_label = 'coil'
 
-    def __init__(self, machine, name, config, collection=None):
+    def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
         super(Driver, self).__init__(machine, name, config, collection,
-                                     platform_section='coils')
+                                     platform_section='coils',
+                                     validate=validate)
 
         self.time_last_changed = 0
         self.time_when_done = 0

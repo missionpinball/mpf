@@ -24,15 +24,15 @@ class ShotGroup(Device):
     collection = 'shot_groups'
     class_label = 'shot_group'
 
-    def __init__(self, machine, name, config, collection=None,
-                 member_collection=None, device_str=None):
+    def __init__(self, machine, name, config, collection=None, validate=True):
 
         self.shots = list()  # list of strings
 
         for shot in Config.string_to_list(config['shots']):
             self.shots.append(machine.shots[shot])
 
-        super(ShotGroup, self).__init__(machine, name, config, collection)
+        super(ShotGroup, self).__init__(machine, name, config, collection,
+                                        validate=validate)
 
         self.enabled = False
         self.rotation_enabled = True
@@ -51,15 +51,7 @@ class ShotGroup(Device):
         for shot in self.shots:
             shot.disable_debugging()
 
-    def _watch_member_shots(self):
-        for shot in self.shots:
-            self.machine.events.add_handler(shot.name + '_hit', self.hit)
-
-    def _stop_watching_member_shots(self):
-        # remove the hit events
-        self.machine.events.remove_handler(self.hit)
-
-    def hit(self, profile, state, **kwargs):
+    def hit(self, mode, profile, state, **kwargs):
         """One of the member shots in this shot group was hit.
 
         Args:
@@ -82,7 +74,7 @@ class ShotGroup(Device):
         self.machine.events.post(self.name + '_' + profile + '_' + state +
                                  '_hit', profile=profile, state=state)
 
-        self.check_for_complete()
+        self.check_for_complete(mode)
 
     def enable(self, mode=None, **kwargs):
         """Enables this shot group. Also enables all the shots in this
@@ -98,10 +90,9 @@ class ShotGroup(Device):
 
         self.enabled = True
 
-        self._watch_member_shots()
-
         for shot in self.shots:
             shot.enable(mode)
+            shot.add_to_group(self)
 
     def disable(self, mode=None, **kwargs):
         """Disables this shot group. Also disables all the shots in this
@@ -115,10 +106,9 @@ class ShotGroup(Device):
         if self.debug:
             self.log.debug('Disabling')
 
-        self._stop_watching_member_shots()
-
         for shot in self.shots:
             shot.disable(mode)
+            shot.remove_from_group(self)
 
         self.enabled = False
 
@@ -140,7 +130,7 @@ class ShotGroup(Device):
             self.log.debug('Disabling rotation')
         self.rotation_enabled = False
 
-    def reset(self, **kwargs):
+    def reset(self, mode=None, **kwargs):
         """Resets each of the shots in this group back to the initial state in
         whatever shot profile they have applied. This is the same as calling
         each shot's reset() method one-by-one.
@@ -149,41 +139,7 @@ class ShotGroup(Device):
         if self.debug:
             self.log.debug('Resetting')
         for shot in self.shots:
-            shot.reset()
-
-    def apply_profile(self, profile, priority):
-        if profile in self.machine.shot_profile_manager.profiles:
-            if self.debug:
-                self.log.debug("Applying shot profile '%s', priority %s",
-                               profile, priority)
-
-            profile_tuple = (profile, priority,
-                self.machine.shot_profile_manager.profiles[profile],
-                self)
-
-            if profile_tuple not in self.profiles:
-                self.profiles.append(profile_tuple)
-
-            for shot in self.shots:
-                shot.apply_profile(profile, priority, self)
-
-            self._sort_profiles()
-
-        else:
-            if not self.active_profile:
-                self.apply_profile('default', priority)
-
-            if self.debug:
-                self.log.debug("Shot profile '%s' not found. Shot is has '%s' "
-                               "applied.", profile, self.active_profile_name)
-
-    def _sort_profiles(self):
-        self.profiles.sort(key=lambda x: x[1], reverse=True)
-
-        (self.active_profile_name,
-         self.active_profile_priority,
-         self.active_profile_settings,
-         _) = self.profiles[0]
+            shot.reset(mode)
 
     def remove_active_profile(self, mode, **kwargs):
         """Removes the current active profile from every shot in the group.
@@ -194,7 +150,7 @@ class ShotGroup(Device):
         for shot in self.shots:
             shot.remove_active_profile(mode)
 
-    def advance(self, **kwargs):
+    def advance(self, mode=None, **kwargs):
         """Advances the current active profile from every shot in the group
         one step forward.
 
@@ -202,10 +158,10 @@ class ShotGroup(Device):
         if self.debug:
             self.log.debug('Advancing')
         for shot in self.shots:
-            shot.advance()
+            shot.advance(mode)
 
     def rotate(self, direction=None, steps=1, states=None,
-               exclude_states=None, **kwargs):
+               exclude_states=None, mode=None, **kwargs):
         """Rotates (or "shifts") the state of all the shots in this group.
         This is used for things like lane change, where hitting the flipper
         button shifts all the states of the shots in the group to the left or
@@ -251,20 +207,23 @@ class ShotGroup(Device):
         if states:
             states = Config.string_to_lowercase_list(states)
         else:
-            states = self.shots[0].active_profile['state_names_to_rotate']
+            states = self.shots[0].active_settings['settings']['state_names_to_rotate']
 
         if exclude_states:
             exclude_states = Config.string_to_lowercase_list(exclude_states)
         else:
             exclude_states = (
-                self.shots[0].active_profile['state_names_to_not_rotate'])
+                self.shots[0].active_settings['settings']['state_names_to_not_rotate'])
 
         shot_list = list()
 
         # build of a list of shots we're actually going to rotate
         for shot in self.shots:
-            if ((not states or shot.current_state_name in states) and
-                    shot.current_state_name not in exclude_states):
+
+            if ((not states or
+                    shot.enable_table[mode]['current_state_name'] in states)
+                    and shot.enable_table[mode]['current_state_name']
+                    not in exclude_states):
 
                 shot_list.append(shot)
 
@@ -279,18 +238,19 @@ class ShotGroup(Device):
                 current_state = -1
 
             shot_state_list.append(
-                (shot.player[shot.active_player_var],
+                (shot.player[shot.active_settings['settings']['player_variable']],
                  current_state))
 
         if self.debug:
-            self.log.debug('Rotating. Direction: %s, Include states: %s, '
-                           'Exclude states: %s, Shots to be rotated: %s',
-                           direction, states,
+            self.log.debug('Rotating. Mode: %s, Direction: %s, Include states: '
+                           '%s, Exclude states: %s, Shots to be rotated: %s',
+                           mode, direction, states,
                exclude_states, [x.name for x in shot_list])
 
             for shot in shot_list:
                 shot.log.debug("This shot is part of a rotation event. Current"
-                               " state: %s", shot.current_state_name)
+                               " state: %s",
+                               shot.enable_table[mode]['current_state_name'])
 
         # figure out which direction we're going to rotate
         if not direction:
@@ -309,10 +269,10 @@ class ShotGroup(Device):
 
         # step through all our shots and update their states
         for i in range(len(shot_list)):
-            shot_list[i].jump(state=shot_state_list[i][0],
+            shot_list[i].jump(mode=mode, state=shot_state_list[i][0],
                               lightshow_step=shot_state_list[i][1])
 
-    def rotate_right(self, steps=1, **kwargs):
+    def rotate_right(self, mode=None, steps=1, **kwargs):
         """Rotates the state of the shots to the right. This method is the
         same as calling rotate('right', steps)
 
@@ -320,9 +280,9 @@ class ShotGroup(Device):
             steps: Integer of how many steps you want to rotate. Default is 1.
 
         """
-        self.rotate(direction='right', steps=steps)
+        self.rotate(direction='right', steps=steps, mode=mode)
 
-    def rotate_left(self, steps=1, **kwargs):
+    def rotate_left(self, steps=1, mode=None, **kwargs):
         """Rotates the state of the shots to the left. This method is the
         same as calling rotate('left', steps)
 
@@ -330,44 +290,71 @@ class ShotGroup(Device):
             steps: Integer of how many steps you want to rotate. Default is 1.
 
         """
-        self.rotate(direction='left', steps=steps)
+        self.rotate(direction='left', steps=steps, mode=mode)
 
-    def check_for_complete(self):
+    def check_for_complete(self, mode):
         """Checks all the shots in this shot group. If they are all in the
         same state, then a complete event is posted.
 
         """
+
+        # TODO should be made to work for lower priority things too?
+
         shot_states = set()
 
-        if self.debug:
-            state_list = list()
-
         for shot in self.shots:
-            shot_states.add(shot.current_state_name)
-
-            if self.debug:
-                state_list.append(shot.current_state_name)
+            shot_states.add(shot.get_mode_state(mode))
 
         if self.debug:
-            self.log.debug("Checking for complete. Shot states: %s",
-                           state_list)
+            self.log.debug("Checking for complete. mode: %s", mode)
 
         # <name>_<profile>_<state>
-        if len(shot_states) == 1 and shot_states.pop():
+        if len(shot_states) == 1:
+
+            profile, state = shot_states.pop()
 
             if self.debug:
                 self.log.debug("Shot group is complete with profile :%s, state:"
-                               "%s", self.shots[0].active_profile_name,
-                               self.shots[0].current_state_name)
+                               "%s", profile, state)
 
-            self.machine.events.post(self.name + '_' +
-                                     self.shots[0].active_profile_name + '_' +
-                                     self.shots[0].current_state_name +
+            self.machine.events.post(self.name + '_' + profile + '_' + state +
                                      '_complete')
 
-    def device_added_to_mode(self, player):
-        if 'enable_events' not in self.config:
-            self.enable()
+    def device_added_to_mode(self, mode, player):
+        if not self.config['enable_events']:
+            self.enable(mode)
+
+        #     print self.name
+        #
+        # for shot in self.shots:
+        #     print shot.enable_table
+        #     if mode not in shot.enable_table:
+        #         shot.update_enable_table(profile=shot.config['profile'],
+        #                                  enable=False,
+        #                                  mode=mode)
+
+    def control_events_in_mode(self, mode):
+        for shot in self.shots:
+            if mode not in shot.enable_table:
+
+                if self.debug:
+                    self.log.debug('Control events found in %s '
+                                   'config. Adding enable_table entries to '
+                                   'member shots', mode)
+
+                if not self.config['enable_events']:
+                    enable = True
+                else:
+                    enable = False
+
+                if self.config['profile']:
+                    profile = self.config['profile']
+                else:
+                    profile = shot.config['profile']
+
+                shot.update_enable_table(profile=profile,
+                                         enable=enable,
+                                         mode=mode)
 
     def remove(self):
         if self.debug:

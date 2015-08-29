@@ -9,6 +9,9 @@
 import logging
 import operator
 import uuid
+from collections import OrderedDict
+
+import yaml
 
 from mpf.system.device import Device
 from mpf.system.config import Config
@@ -27,15 +30,12 @@ class Shot(Device):
     to track shots.
     """
 
-    def __init__(self, machine, name, config, collection=None):
-        super(Shot, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(Shot, self).__init__(machine, name, config, collection,
+                                   validate=validate)
 
         self.delay = DelayManager()
 
-        self.active_profile_name = None
-        self.active_profile = dict()
-        self.active_player_var = None
-        self.current_state_name = None
         self.running_light_show = None
         self.active_sequences = list()
         """List of tuples: (id, current_position_index, next_switch)"""
@@ -43,9 +43,11 @@ class Shot(Device):
         self.active_delay_switches = set()
         self.enabled = False
         self.switch_handlers_active = False
-        self.enable_table = list()
-        self.current_mode = None  # highest priority mode controlling this shot
-        self.current_priority = -1  # -1 is how we know we need to do a first time sort
+        self.enable_table = OrderedDict()
+        self.groups = set()  # shot_groups this shot belongs to
+
+        self.active_mode = None
+        self.active_settings = None
 
         if not self.config['profile']:
             self.config['profile'] = 'default'
@@ -113,41 +115,32 @@ class Shot(Device):
 
         self.switch_handlers_active = False
 
-    def advance(self, steps=1, profile=None, **kwargs):
-        """Advances a shot profile one step forward.
+    def advance(self, steps=1, mode=None, **kwargs):
+        """Advances a shot profile forward.
 
         If this profile is at the last step and configured to roll over, it will
         roll over to the first step. If this profile is at the last step and not
         configured to roll over, this method has no effect.
 
-        If profile is None, it works on the active profile. Otherwise it will
-        update other profiles.
-
         """
 
-        if not profile:
-            profile_name = self.active_profile_name
-            profile = self.active_profile
-        else:
-            profile_name = profile
-            profile = self.machine.shot_profile_manager.profiles[profile]
-
-        player_var = profile['player_variable'].replace('%', self.name)
+        profile_name = self.enable_table[mode]['profile']
+        profile = self.enable_table[mode]['settings']
+        player_var = profile['player_variable']
 
         if self.debug:
-            self.log.debug("Advancing profile '%s' %s state(s). Current active "
-                           "profile: %s", profile_name, steps,
-                           self.active_profile_name)
+            self.log.debug("Advancing %s step(s). Mode: %s, Profile: %s, "
+                           "Current State: %s", steps, mode, profile_name,
+                           self.player[player_var])
 
-        if (self.player[player_var] + steps >=
-                len(profile['states'])):
+        if (self.player[player_var] + steps >= len(profile['states'])):
 
             if profile['loop']:
                 if self.debug:
                     self.log.debug("Profile '%s' is in its final state "
                                    "based a player variable %s=%s. Profile "
                                    "setting for loop is True, so resetting to "
-                                   "the first state.", self.active_profile_name,
+                                   "the first state.", self.active_settings['profile'],
                                    player_var, self.player[player_var])
 
                 self.player[profile['player_variable']] = 0
@@ -157,7 +150,7 @@ class Shot(Device):
                     self.log.debug("Profile '%s' is in its final state "
                                     "based a player variable %s=%s. Profile "
                                     "setting for loop is False, so state is not "
-                                    "advancing.",self.active_profile_name,
+                                    "advancing.",self.active_settings['profile'],
                                     player_var, self.player[player_var])
                 return
         else:
@@ -167,15 +160,18 @@ class Shot(Device):
                                player_var, steps)
 
             self.player[player_var] += steps
+            self.update_current_state_name(mode)
 
-        if self.active_profile_name == profile_name:
+            for group in self.groups:
+                group.check_for_complete(mode)
+                # TODO should be made to work for lower priority things too?
+
+        if self.active_settings['profile'] == profile_name:
 
             if self.debug:
-                self.log.debug("Profile '%s' just advanced is the current "
-                               "profile. Updating lights & vars", profile_name)
+                self.log.debug("Profile '%s' just advanced is the active "
+                               "profile", profile_name)
 
-            self._stop_current_lights()
-            self._update_current_state_variables()
             self._update_lights()
 
     def _stop_current_lights(self):
@@ -194,45 +190,30 @@ class Shot(Device):
 
         self.running_light_show = None
 
-    def _update_current_state_variables(self):
-
-        if self.debug:
-            self.log.debug("Old '%s' value: Name: %s",
-                           self.active_player_var,
-                           self.current_state_name)
-
-        self.current_state_name = (self.active_profile['states']
-                                   [self.player[self.active_player_var]]['name'])
-
-        if self.debug:
-            self.log.debug("New '%s' value: Name: %s",
-                           self.active_player_var,
-                           self.current_state_name)
-
     def _update_lights(self, lightshow_step=0):
 
-        #self._stop_current_lights()
+        self._stop_current_lights()
 
         if self.debug:
             self.log.debug("Updating lights 1: Profile: %s, "
                            "lightshow_step: %s, Shot enabled: %s, Config "
                            "setting for 'lights_when_disabled': %s",
-                           self.active_profile_name, lightshow_step,
+                           self.active_settings['profile'], lightshow_step,
                            self.enabled,
-                           self.active_profile['lights_when_disabled'])
+                           self.active_settings['settings']['lights_when_disabled'])
 
-        if not self.enabled and not self.active_profile['lights_when_disabled']:
+        if not self.enabled and not self.active_settings['settings']['lights_when_disabled']:
             return
 
-        state_settings = (self.active_profile['states']
-                          [self.player[self.active_player_var]])
+        state_settings = (self.active_settings['settings']['states']
+                          [self.player[self.active_settings['settings']['player_variable']]])
 
         if self.debug:
             self.log.debug("Updating lights 2: Profile: '%s', State: %s, State "
                            "settings: %s, Lights: %s, LEDs: %s, Priority: %s",
-                           self.active_profile_name, self.current_state_name,
-                           state_settings, self.current_priority,
-                           self.config['light'], self.config['led'])
+                           self.active_settings['profile'], self.enable_table[self.active_mode]['current_state_name'],
+                           state_settings, self.config['light'],
+                           self.config['led'], self.active_settings['priority'])
 
         if state_settings['light_script'] and (self.config['light'] or
                                               self.config['led']):
@@ -243,7 +224,7 @@ class Shot(Device):
                     lights=[x.name for x in self.config['light']],
                     leds=[x.name for x in self.config['led']],
                     start_location=lightshow_step,
-                    priority=self.current_priority,
+                    priority=self.active_settings['priority'],
                     **state_settings))
 
         if self.debug:
@@ -266,14 +247,9 @@ class Shot(Device):
         """
         self.player = None
         self.remove_from_enable_table(None)
-        self.current_priority = -1
+        self.active_settings['priority'] = -1
 
-        # if len(self.enable_table) > 1:
-        #     print "enable table still has stuff even though player ended"
-        #     print self.enable_table
-        #     quit()
-
-    def device_added_to_mode(self, player):
+    def device_added_to_mode(self, mode, player):
         """Called when this shot is dynamically added to a mode that was
         already started. Automatically enables the shot and calls the the method
         that's usually called when a player's turn starts since that was missed
@@ -282,8 +258,21 @@ class Shot(Device):
         """
         self.player_turn_start(player)
 
-        if not self.config['enable_events']:
-            self.enable()
+        # if not self.config['enable_events']:
+        #     self.enable(mode)
+
+    def control_events_in_mode(self, mode):
+
+            if self.debug:
+                    self.log.debug('Control events found in %s config. Updating'
+                                   ' enable_table', mode)
+
+            if not self.config['enable_events']:
+                enable = self.enabled
+
+            self.update_enable_table(profile=None,
+                                     enable=enable,
+                                     mode=mode)
 
     def remove(self):
         """Remove this shot device. Destroys it and removes it from the shots
@@ -299,7 +288,7 @@ class Shot(Device):
 
         del self.machine.shots[self.name]
 
-    def hit(self, force=False, profile=None, **kwargs):
+    def hit(self, force=False, mode='default#$%', waterfall_hits=None, **kwargs):
         """Method which is called to indicate this shot was just hit. This
         method will advance the currently-active shot profile.
 
@@ -326,96 +315,81 @@ class Shot(Device):
         if self.active_delay_switches and not force:
             return
 
-        if not profile:
-            profile = self.active_profile_name
+        if mode == 'default#$%':
+            mode = self.active_mode
 
-        player_var_name = (self.machine.shot_profile_manager.profiles[profile]
-                           ['player_variable'].replace('%', self.name))
-
-        current_state_name = (self.machine.shot_profile_manager.profiles
-                              [profile]['states'][self.player[player_var_name]]
-                              ['name'])
+        profile, state = self.get_mode_state(mode)
 
         if self.debug:
-            self.log.debug("Hit! Profile: %s, Current State: %s",
-                          profile, current_state_name)
+            self.log.debug("Hit! Mode: %s, Profile: %s, State: %s",
+                          mode, profile, state)
 
         # post events
-        self.machine.events.post(self.name + '_hit',
-                                 profile=profile,
-                                 state=current_state_name)
+        self.machine.events.post(self.name + '_hit', profile=profile,
+                                 state=state)
 
-        self.machine.events.post(self.name + '_' +
-                                 self.active_profile_name + '_hit',
-                                 profile=profile,
-                                 state=current_state_name)
+        self.machine.events.post(self.name + '_' + profile + '_hit',
+                                 profile=profile, state=state)
 
-        self.machine.events.post(self.name + '_' + profile + '_' +
-                                 current_state_name + '_hit',
-                                 profile=profile,
-                                 state=current_state_name)
+        self.machine.events.post(self.name + '_' + profile + '_' + state +
+                                 '_hit', profile=profile, state=state)
+
+        for group in self.groups:
+            group.hit(mode, profile, state)
 
         if Shot.monitor_enabled:
             for callback in self.machine.monitors['shots']:
                 callback(name=self.name)
 
-        if self.active_profile['advance_on_hit']:
+        if self.enable_table[mode]['settings']['advance_on_hit']:
 
             if self.debug:
-                self.log.debug("Profile '%s' advance_on_hit is True.",
-                               self.active_profile_name)
+                self.log.debug("Mode '%s' advance_on_hit is True.", mode)
 
-            self.advance()
+            self.advance(mode=mode)
         elif self.debug:
             self.log.debug('Not advancing profile state since the current '
-                           'profile ("%s") has setting advance_on_hit set to '
-                           'False', profile)
+                           'mode ("%s") has setting advance_on_hit set to '
+                           'False', mode)
 
-    def _waterfall_hits(self, level=0, waterfall_hits=None):
-
-        if not waterfall_hits:
-            waterfall_hits = list()
-
-        if self.debug:
-            self.log.debug("Waterfall: Checking hits. Level: %s", level)
-
-        try:
-            next_profile = self.enable_table[level+1]
+        if not self.enable_table[mode]['settings']['block']:
 
             if self.debug:
-                self.log.debug("Waterfall: Next profile down: %",
-                               next_profile['name'])
+                self.log.debug('%s block: False. Waterfalling hits', mode)
 
-        except IndexError:
-            return  # no more profiles
+            if not waterfall_hits:
+                waterfall_hits = set()
 
-        # if profile is not set to block
-        if not self.enable_table[level]['block']:
-
-            if self.debug:
-                self.log.debug("Waterfall: Next profile is not blocked")
-
-            # if it's not the same profile name, post the hit
-            if (next_profile['name'] != self.enable_table[level]['name'] and
-                    next_profile['enable']):
-
-                if self.debug:
-                    self.log.debug("Waterfall: Next profile is different and "
-                                   "enabled")
-
-                self.hit(level=level)
-
-                # don't post the same profile hit twice
-                waterfall_hits.append(next_profile['name'])
-
-                if self.debug:
-                    self.log.debug("Waterfall hits: %s", waterfall_hits)
-
-            # repeat
-            self._waterfall_hits(level+1, waterfall_hits)
+            self._waterfall_hits(mode, waterfall_hits.add(profile))
 
         elif self.debug:
-            self.log.debug("Waterfall: Next profile is set to block. Done.")
+            self.log.debug('%s settings has block enabled', mode)
+
+    def _waterfall_hits(self, mode, waterfall_hits):
+        if self.enable_table[mode]['settings']['block']:
+            return
+
+        found = False
+
+        for _mode, settings in self.enable_table.iteritems():
+            # only care about hits lower than this mode
+
+            if found:
+                self.hit(_mode, waterfall_hits)
+                return
+
+            elif _mode != mode:
+                continue
+
+            elif _mode == mode:
+                found = True
+
+    def get_mode_state(self, mode):
+
+        # returns a tuple of profile_name, current_state_name
+
+        return (self.enable_table[mode]['profile'],
+                self.enable_table[mode]['current_state_name'])
 
     def _sequence_switch_hit(self, switch_name, state, ms):
         # Since we can track multiple simulatenous sequences (e.g. two balls
@@ -533,7 +507,7 @@ class Shot(Device):
 
         self.active_sequences = list()
 
-    def jump(self, state, lightshow_step=0):
+    def jump(self, mode, state, lightshow_step=0):
         """Jumps to a certain state in the active shot profile.
 
         Args:
@@ -548,44 +522,48 @@ class Shot(Device):
             return
 
         if self.debug:
-            self.log.debug('Jump: New state: %s, Current state: %s, Player var:'
-                           '%s, Lightshow_step: %s',
-                           state, self.player[self.active_player_var],
-                           self.active_player_var,
+            self.log.debug('Jump. Mode: %s, New state #: %s, Current state #: %s, Player var:'
+                           '%s, Lightshow_step: %s', mode, state,
+                           self.player[self.enable_table[mode]['settings']['player_variable']],
+                           self.enable_table[mode]['settings']['player_variable'],
                            lightshow_step)
 
-        if state == self.player[self.active_player_var]:
+        if state == self.player[self.enable_table[mode]['settings']['player_variable']]:
             # we're already at that state
             return
 
         if self.debug:
             self.log.debug("Jumping to profile state '%s'", state)
 
-        self._stop_current_lights()
-        self.player[self.active_player_var] = state
-        self._update_current_state_variables()  # curr_state_index, curr_state_name
+        self.player[self.enable_table[mode]['settings']['player_variable']] = state
+        self.update_current_state_name(mode)
 
-        self._update_lights(lightshow_step=lightshow_step)
+        if mode == self.active_mode:
+
+            if self.debug:
+                self.log.debug("Jump is for active mode. Updating lights")
+
+            self._update_lights(lightshow_step=lightshow_step)
+
+        elif self.debug:
+                self.log.debug("Jump mode: %s, Active mode: %s. Not updating "
+                               "lights", mode, self.active_mode)
 
     def enable(self, mode=None, profile=None, **kwargs):
         """
 
         """
 
+        if not profile:
+
+            try:
+                profile = self.enable_table[mode]['profile']
+            except KeyError:
+                pass  # we'll just keep it with none
+
         if self.debug:
             self.log.debug("Received command to enable this shot from mode: %s "
                            "with profile: %s", mode, profile)
-
-        # if there's no profile, see if there's one in the table for this mode
-        if not profile:
-            try:
-                profile = [x['profile'] for x in self.enable_table
-                           if x['mode'] == mode][0]
-            except IndexError:
-                try:
-                    profile = mode.config['shots'][self.name]['profile']
-                except (KeyError, AttributeError):
-                    profile = self.config['profile']
 
         self.update_enable_table(profile, True, mode)
 
@@ -601,7 +579,6 @@ class Shot(Device):
 
         # TODO should this see if this shot is configured to allow lights while
         # not enabled, and then not do this if they're already going?
-        self._stop_current_lights()
         self._update_lights()
 
     def disable(self, mode=None, **kwargs):
@@ -630,86 +607,62 @@ class Shot(Device):
         self.delay.clear()
         self.enabled = False
 
-        if not self.active_profile['lights_when_disabled']:
+        if not self.active_settings['settings']['lights_when_disabled']:
             self._stop_current_lights()
 
-    def reset(self, **kwargs):
+    def reset(self, mode, **kwargs):
         """Resets the active shot profile back to the first state (State 0).
         This method is the same as calling jump(0).
 
         """
         if self.debug:
-            self.log.debug("Resetting. Current profile '%s' will be reset to "
-                           "its initial state", self.active_profile_name)
+            self.log.debug("Resetting. Mode profile '%s' will be reset to "
+                           "its initial state", mode)
 
         self._reset_all_sequences()
-        self.jump(state=0)
+        self.jump(mode, state=0)
 
     def _sort_enable_table(self):
 
-        if not self.enable_table:
-            return
+        if self.debug:
+            self.log.debug("Sorting enable_table")
+
+        old_mode = self.active_mode
+        old_settings = self.active_settings
+
+        self.enable_table = OrderedDict(sorted(self.enable_table.items(),
+                                               key=lambda x: x[1]['priority'],
+                                               reverse=True))
+
+        # set a pointer to the highest entry
+        for mode, settings in self.enable_table.iteritems():
+            self.active_mode = mode
+            self.active_settings = settings
+
+            break
 
         if self.debug:
-            old_highest = self.enable_table[0]
+            self.log.debug("New enable_table order: %s", self.enable_table.keys())
 
-        # find the highest entry
-        self.enable_table.sort(key=operator.itemgetter('priority'),
-                               reverse=True)
-
-        if self.debug:
-            self.log.debug("Sorting the enable_table. New highest entry: %s, "
-                           "Previous highest: %s",
-                           self.enable_table[0], old_highest)
-
-        self.current_mode = self.enable_table[0]['mode']
-
-        if self.current_mode:
-            self.current_priority = self.current_mode.priority
-        else:
-            self.current_priority = 0
-
-
-        old_profile_name = self.active_profile_name
-
-        self.active_profile_name = self.enable_table[0]['profile']
-
-        if old_profile_name != self.active_profile_name:
+        # top profile has changed
+        if (not old_settings or
+                old_settings['profile'] != self.active_settings['profile']):
 
             if self.debug:
-                self.log.debug("New active profile: %s",
-                               self.active_profile_name)
-
-            try:
-                self.active_profile = (
-                    self.machine.shot_profile_manager.profiles
-                    [self.active_profile_name])
-                self.active_player_var = (self.active_profile['player_variable']
-                                          .replace('%',self.name))
-            except KeyError:
-                self.log.error("Cannot apply profile '%s' because that is not a"
-                               "valid profile name.", self.active_profile_name)
-                sys.exit()
-
-            self.active_profile_states = self.active_profile['states']
-
-            # need to call
-            self._stop_current_lights()
-            self._update_current_state_variables()
-                # self.current_state_name
+                self.log.debug("New top entry settings: %s", self.active_settings)
 
         if self.debug:
                 self.log.debug("Enabled already: %s, Highest enable_table "
                                "Enabled setting: %s", self.enabled,
-                               self.enable_table[0]['enable'])
+                               self.active_settings['enable'])
 
         # are we enabled when we weren't before?
-        if self.enable_table[0]['enable'] and not self.enabled:
+        if self.active_settings['enable'] and not self.enabled:
             self._enable()
 
-        elif self.enable_table[0]['enable'] and self.enabled:
-
-            if old_profile_name != self.active_profile_name:
+        # are we enabled and we were enabled, but a different profile now?
+        elif self.active_settings['enable'] and self.enabled:
+            if old_settings['profile'] != self.active_settings['profile']:
                 self._update_lights()
 
         else:
@@ -722,47 +675,109 @@ class Shot(Device):
         else:
             priority = 0
 
-        profile_settings = self.machine.shot_profile_manager.profiles[profile]
+        if not profile:
+            try:
+                profile = self.enable_table[mode]['profile']
+            except KeyError:
+                profile = self.config['profile']
 
-        this_entry = {'mode': mode,
-                      'priority': priority,
+        profile_settings = (
+            self.machine.shot_profile_manager.profiles[profile].copy())
+
+        profile_settings['player_variable'] = (
+            profile_settings['player_variable'].replace('%', self.name))
+
+        this_entry = {'priority': priority,
                       'profile': profile,
                       'enable': enable,
-                      'lights_when_disabled': profile_settings['lights_when_disabled'],
-                      'block': profile_settings['block'],
-                      'player_variable': profile_settings['player_variable'].replace('%', self.name)}
+                      'settings': profile_settings,
+                      'current_state_name': None
+                      }
 
         if self.debug:
-                self.log.debug("Updating the entry table: %s", this_entry)
+                self.log.debug("Updating the entry table with: %s:%s", mode,
+                               this_entry)
 
-        # Remove this mode's entry from the list if it's in there
-        self.enable_table = [x for x in self.enable_table if x['mode'] != mode]
-
-        self.enable_table.append(this_entry)
+        self.enable_table[mode] = this_entry
+        self.update_current_state_name(mode)
         self._sort_enable_table()
 
     def remove_from_enable_table(self, mode):
-        self.enable_table = [x for x in self.enable_table if x['mode'] != mode]
-        self._sort_enable_table()
+
+        if self.debug:
+            self.log.debug("Removing mode: %s from enable_table", mode)
+
+        try:
+            del self.enable_table[mode]
+            self._sort_enable_table()
+        except KeyError:
+            pass
+
+    def update_current_state_name(self, mode):
+        self.enable_table[mode]['current_state_name'] = (
+            self.enable_table[mode]['settings']['states']
+            [self.player[self.enable_table[mode]['settings']
+            ['player_variable']]]['name'])
 
     def remove_active_profile(self, mode, **kwargs):
         # this has the effect of changing out this mode's profile in the
         # enable_table with the next highest visable one.
 
-        temp_list = [x for x in self.enable_table
-                     if x['priority'] < mode.priority]
+        if self.debug:
+            self.log.debug("Removing active profile for mode %s", mode)
 
-        for entry in temp_list:
-            if entry['enable'] or (
-                    not entry['enable'] and entry['lights_when_disabled']):
+        for k, v in self.enable_table.iteritems():
+            if (v['priority'] < self.enable_table[mode]['priority'] and
+                    (v['enable'] or v['settings']['lights_when_disabled'])):
 
-                profile = entry['profile']
-                break
+                if self.debug:
+                    self.log.debug("Applying active profile from mode %s", k)
 
-        enable = [x['enable'] for x in self.enable_table if x['mode']==mode][0]
+                self.update_enable_table(profile=v['profile'],
+                                         enable=v['enable'],
+                                         mode=mode)
 
-        self.update_enable_table(profile, enable, mode)
+                return
 
+    def add_to_group(self, group):
+
+        if self.debug:
+            self.log.debug("Received request to add this shot to the %s group",
+                           group)
+
+        if type(group) is str:
+
+            try:
+                group = self.machine.shot_groups[group]
+            except KeyError:
+                if self.debug:
+                    self.log.debug("'%s' is not a valid shot_group name.",
+                                   group)
+                return
+
+        self.groups.add(group)
+
+    def remove_from_group(self, group):
+
+        if self.debug:
+            self.log.debug("Received request to remove this shot from the %s "
+                           "group", group)
+
+        if type(group) is str:
+
+            try:
+                group = self.machine.shot_groups[group]
+            except KeyError:
+                if self.debug:
+                    self.log.debug("'%s' is not a valid shot_group name.",
+                                   group)
+                return
+
+        self.groups.discard(group)
+
+    def _update_groups(self, profile, state):
+        for group in self.groups:
+            group.update_member_shot(shot=self, profile=profile, state=state)
 
 # The MIT License (MIT)
 

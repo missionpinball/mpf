@@ -26,8 +26,9 @@ class AutofireCoil(Device):
     collection = 'autofires'
     class_label = 'autofire'
 
-    def __init__(self, machine, name, config, collection=None):
-        super(AutofireCoil, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(AutofireCoil, self).__init__(machine, name, config, collection,
+                                           validate=validate)
 
         self.switch_activity = 1
 

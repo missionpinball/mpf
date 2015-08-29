@@ -55,8 +55,6 @@ class Mode(object):
         if 'mode' in self.config:
             self.configure_mode_settings(config['mode'])
 
-
-
         for asset_manager in self.machine.asset_managers.values():
 
             config_data = self.config.get(asset_manager.config_section, dict())
@@ -112,11 +110,18 @@ class Mode(object):
         else:
             config['stop_events'] = list()
 
+        if 'stop_priority' not in config:
+            config['stop_priority'] = 0
+
+        if 'start_priority' not in config:
+            config['start_priority'] = 0
+
         # register mode start events
         if 'start_events' in config:
             for event in config['start_events']:
                 self.machine.events.add_handler(event=event, handler=self.start,
-                                                priority=config['priority'])
+                                                priority=config['priority'] +
+                                                config['start_priority'])
 
         self.config['mode'] = config
 
@@ -168,12 +173,14 @@ class Mode(object):
 
         # register mode stop events
         if 'stop_events' in self.config['mode']:
+
             for event in self.config['mode']['stop_events']:
                 # stop priority is +1 so if two modes of the same priority
                 # start and stop on the same event, the one will stop before the
                 # other starts
                 self.add_mode_event_handler(event=event, handler=self.stop,
-                                            priority=self.priority + 1)
+                    priority=self.priority + 1 +
+                    self.config['mode']['stop_priority'])
 
         self.start_callback = callback
 
@@ -295,8 +302,11 @@ class Mode(object):
 
                         self.log.debug("Creating mode-based device: %s", device)
 
+                        # TODO this config is already validated, so add something
+                        # so it doesn't validate it again?
+
                         self.machine.device_manager.create_devices(
-                            collection.name, {device: settings})
+                            collection.name, {device: settings}, validate=False)
 
                         # change device from str to object
                         device = collection[device]
@@ -309,7 +319,8 @@ class Mode(object):
                         # instead of machine-wide, as some devices want to do
                         # certain things here. We also pass the player object in
                         # case this device wants to do something with that too.
-                        device.device_added_to_mode(self.player)
+                        device.device_added_to_mode(mode=self,
+                                                    player=self.player)
 
     def _remove_mode_devices(self):
 
@@ -319,17 +330,32 @@ class Mode(object):
         self.mode_devices = set()
 
     def _setup_device_control_events(self):
+        # registers mode handlers for control events for all devices specified
+        # in this mode's config (not just newly-created devices)
 
-        for event, method, delay in (
+        device_list = set()
+
+        for event, method, delay, device in (
                 self.machine.device_manager.get_device_control_events(
                 self.config)):
 
-            self.add_mode_event_handler(
-                event=event,
-                handler=self._control_event_handler,
-                priority=self.priority+2,
-                callback=method,
-                ms_delay=delay)
+            if event != '%auto%':
+
+                self.add_mode_event_handler(
+                    event=event,
+                    handler=self._control_event_handler,
+                    priority=self.priority+2,
+                    callback=method,
+                    ms_delay=delay)
+
+            # if there's an entry for %auto% then we call that method automatically
+            else:
+                method()
+
+            device_list.add(device)
+
+        for device in device_list:
+            device.control_events_in_mode(self)
 
     def _control_event_handler(self, callback, ms_delay=0, **kwargs):
         if ms_delay:

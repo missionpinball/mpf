@@ -22,10 +22,10 @@ class GI(Device):
     collection = 'gi'
     class_label = 'gi'
 
-    def __init__(self, machine, name, config, collection=None):
+    def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
         super(GI, self).__init__(machine, name, config, collection,
-                                 platform_section='gis')
+                                 platform_section='gis', validate=validate)
 
         self.hw_driver, self.number = self.platform.configure_gi(self.config)
 

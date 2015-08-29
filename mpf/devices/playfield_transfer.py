@@ -16,9 +16,9 @@ class PlayfieldTransfer(Device):
     collection = 'playfield_transfer'
     class_label = 'playfield_transfer'
 
-    def __init__(self, machine, name, config, collection=None):
+    def __init__(self, machine, name, config, collection=None, validate=True):
         super(PlayfieldTransfer, self).__init__(machine, name, config,
-                                                collection)
+                                                collection, validate)
 
         self.machine.switch_controller.add_switch_handler(
             switch_name=self.config['ball_switch'].name,

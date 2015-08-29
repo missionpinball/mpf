@@ -18,8 +18,9 @@ class Multiball(Device):
     collection = 'multiballs'
     class_label = 'multiball'
 
-    def __init__(self, machine, name, config, collection=None):
-        super(Multiball, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(Multiball, self).__init__(machine, name, config, collection,
+                                        validate=validate)
 
         self.delay = DelayManager()
 

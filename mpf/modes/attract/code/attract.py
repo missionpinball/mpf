@@ -102,7 +102,7 @@ class Attract(Mode):
 
         for switch in self.machine.switches.items_tagged('player'):
             if self.machine.switch_controller.is_active(switch.name):
-                self.start_buttons_held.add(switch.name)
+                self.start_buttons_held.append(switch.name)
 
         # todo test for active?
         # todo should this be a decorator?

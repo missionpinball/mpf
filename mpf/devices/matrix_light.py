@@ -25,11 +25,12 @@ class MatrixLight(Device):
     #todo need to get the handler stuff out of each of these I think and into
     # a parent class? Maybe this is a device thing?
 
-    def __init__(self, machine, name, config, collection=None):
+    def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
 
         super(MatrixLight, self).__init__(machine, name, config, collection,
-                                          platform_section='matrix_lights')
+                                          platform_section='matrix_lights',
+                                          validate=validate)
 
         self.hw_driver, self.number = (
             self.platform.configure_matrixlight(self.config))
