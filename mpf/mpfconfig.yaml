@@ -147,7 +147,7 @@ config_validator:
         confirm_eject_switch: single|self.machine.switches[%]|None
         confirm_eject_event: single|str|None
         balls_per_eject: single|int|1
-        max_eject_attempt: single|int|0
+        max_eject_attempts: single|int|0
         ball_switches: list|self.machine.switches[%]|None
         ball_capacity: single|int|None
         tags: list|str|None
