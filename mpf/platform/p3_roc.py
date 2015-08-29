@@ -632,11 +632,11 @@ class PDBSwitch(object):
         else:
             self.sw_type = 'proc'
             try:
-                self.sw_number = int(number_str)
+                (boardnum, banknum, inputnum) = decode_pdb_address(number_str, [])
+                self.sw_number = boardnum * 16 + banknum * 8 + inputnum
             except ValueError:
                 try:
-                    (boardnum, banknum, inputnum) = decode_pdb_address(number_str, [])
-                    self.sw_number = boardnum * 16 + banknum * 8 + inputnum
+                    self.sw_number = int(number_str)
                 except:
                     raise ValueError('Switch %s is invalid. Use either PDB '
                                      'format or an int', str(number_str))
