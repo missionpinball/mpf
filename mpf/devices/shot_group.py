@@ -45,6 +45,11 @@ class ShotGroup(Device):
             if 'reset_events' not in config:
                 config['reset_events'] = 'ball_ended'
 
+            if 'profile' in config:
+                for shot in self.shots:
+                    shot.update_enable_table(profile=config['profile'],
+                                      mode=None)
+
         super(ShotGroup, self).__init__(machine, name, config, collection,
                                         validate=validate)
 
@@ -88,7 +93,7 @@ class ShotGroup(Device):
         self.machine.events.post(self.name + '_' + profile + '_' + state +
                                  '_hit', profile=profile, state=state)
 
-        self.check_for_complete(mode)
+        #self.check_for_complete(mode)
 
     def enable(self, mode=None, **kwargs):
         """Enables this shot group. Also enables all the shots in this
@@ -316,11 +321,17 @@ class ShotGroup(Device):
 
         shot_states = set()
 
+        if self.debug:
+            self.log.debug("Checking for complete. mode: %s", mode)
+
         for shot in self.shots:
             shot_states.add(shot.get_mode_state(mode))
 
-        if self.debug:
-            self.log.debug("Checking for complete. mode: %s", mode)
+            if self.debug:
+                self.log.debug("%s state: %s", shot.name,
+                               shot.get_mode_state(mode))
+
+
 
         # <name>_<profile>_<state>
         if len(shot_states) == 1:
@@ -338,18 +349,28 @@ class ShotGroup(Device):
 
     def device_added_to_mode(self, mode, player):
         if not mode.config['shot_groups'][self.name]['enable_events']:
-                enable = True
+            enable = True
         else:
             enable = False
 
-        #     print self.name
-        #
-        # for shot in self.shots:
-        #     print shot.enable_table
-        #     if mode not in shot.enable_table:
-        #         shot.update_enable_table(profile=shot.config['profile'],
-        #                                  enable=False,
-        #                                  mode=mode)
+        if mode.config['shot_groups'][self.name]['profile']:
+            profile = mode.config['shot_groups'][self.name]['profile']
+        else:
+            profile = None
+
+        for shot in self.shots:
+            if mode not in shot.enable_table:
+
+                if profile:
+                    shot.update_enable_table(profile=profile,
+                                         enable=shot.enabled,
+                                         mode=mode)
+
+                else:
+                    shot.update_enable_table(profile=shot.config['profile'],
+                                             enable=shot.enabled,
+                                             mode=mode)
+
 
     def control_events_in_mode(self, mode):
         for shot in self.shots:

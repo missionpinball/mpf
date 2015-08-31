@@ -11,6 +11,7 @@ mpf:
         - timing: mpf.system.timing.Timing
         - events: mpf.system.events.EventManager
         - mode_controller: mpf.system.mode_controller.ModeController
+        - shot_profile_manager: mpf.system.shot_profile_manager.ShotProfileManager
         - device_manager: mpf.system.device_manager.DeviceManager
         - switch_controller: mpf.system.switch_controller.SwitchController
         - ball_controller: mpf.system.ball_controller.BallController
@@ -18,7 +19,7 @@ mpf:
         - bcp: mpf.system.bcp.BCP
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
         - scoring: mpf.system.scoring.ScoreController
-        - shot_profile_manager: mpf.system.shot_profile_manager.ShotProfileManager
+
 
     device_modules:
         driver.Driver

@@ -22,10 +22,10 @@ class ShotProfileManager(object):
 
         self.profiles = dict()
 
+        self.debug = True
+
         if 'shot_profiles' in self.machine.config:
-            self.machine.events.add_handler('init_phase_3',
-                self.register_profiles,
-                config=self.machine.config['shot_profiles'])
+            self.register_profiles(config=self.machine.config['shot_profiles'])
 
         self.machine.mode_controller.register_load_method(
             self.register_profiles, config_section_name="shot_profiles")
@@ -41,8 +41,6 @@ class ShotProfileManager(object):
         self.machine.events.add_handler('player_turn_stop',
                                         self._player_turn_stop,
                                         priority=0)
-
-        self.debug = True
 
     def register_profile(self, name, profile):
         """Registers a new shot profile with the shot controller which will
@@ -188,10 +186,6 @@ class ShotProfileManager(object):
                                settings['profile'], mode)
 
             for shot in self.machine.shot_groups[shot_group].shots:
-
-                enable = shot.enabled
-                # TODO do we base this on the group, or the shot?
-
                 if self.debug:
                     shot.log.debug("Updating shot's enable_table from"
                                " config: profile: %s, enable: %s, mode: %s",

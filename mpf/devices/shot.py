@@ -66,6 +66,11 @@ class Shot(Device):
         if not self.config['profile']:
             self.config['profile'] = 'default'
 
+        if not self.machine.modes:
+            self.update_enable_table(profile=self.config['profile'],
+                                     enable=False,
+                                     mode=None)
+
     def _enable_related_device_debugging(self):
 
         self.log.debug("Enabling debugging for this shot's leds and lights")
@@ -252,7 +257,7 @@ class Shot(Device):
 
         """
         self.player = player
-        self.update_enable_table(self.config['profile'], False)
+        #self.update_enable_table(self.config['profile'], False)
 
     def player_turn_stop(self):
         """Called by the shot profile manager when the player's turn ends.
@@ -286,8 +291,7 @@ class Shot(Device):
             else:
                 enable = False
 
-            self.update_enable_table(profile=None,
-                                     enable=enable,
+            self.update_enable_table(enable=enable,
                                      mode=mode)
 
     def remove(self):
@@ -355,7 +359,7 @@ class Shot(Device):
             self.advance(mode=mode)
         elif self.debug:
             self.log.debug('Not advancing profile state since the current '
-                           'mode ("%s") has setting advance_on_hit set to '
+                           'mode %s has setting advance_on_hit set to '
                            'False', mode)
 
         for group in self.groups:
@@ -380,6 +384,7 @@ class Shot(Device):
             self.log.debug('%s settings has block enabled', mode)
 
     def _waterfall_hits(self, mode, waterfall_hits):
+
         if self.enable_table[mode]['settings']['block']:
             return
 
@@ -389,7 +394,7 @@ class Shot(Device):
             # only care about hits lower than this mode
 
             if found:
-                self.hit(_mode, waterfall_hits)
+                self.hit(mode=_mode, waterfall_hits=waterfall_hits)
                 return
 
             elif _mode != mode:
@@ -568,18 +573,11 @@ class Shot(Device):
 
         """
 
-        if not profile:
-
-            try:
-                profile = self.enable_table[mode]['profile']
-            except KeyError:
-                pass  # we'll just keep it with none
-
         if self.debug:
             self.log.debug("Received command to enable this shot from mode: %s "
                            "with profile: %s", mode, profile)
 
-        self.update_enable_table(profile, True, mode)
+        self.update_enable_table(profile=profile, enable=True, mode=mode)
 
     def _enable(self):
 
@@ -604,12 +602,7 @@ class Shot(Device):
         # we still want the profile here in case the shot is configured to have
         # lights even when disabled
 
-        try:
-            profile = mode.config['shots'][self.name]['profile']
-        except (KeyError, AttributeError):
-            profile = self.config['profile']
-
-        self.update_enable_table(profile, False, mode)
+        self.update_enable_table(enable=False, mode=mode)
 
     def _disable(self):
 
@@ -682,7 +675,7 @@ class Shot(Device):
         else:
             self._disable()
 
-    def update_enable_table(self, profile, enable, mode=None):
+    def update_enable_table(self, profile=None, enable=None, mode=None):
 
         if mode:
             priority = mode.priority
@@ -694,6 +687,12 @@ class Shot(Device):
                 profile = self.enable_table[mode]['profile']
             except KeyError:
                 profile = self.config['profile']
+
+        if not enable:
+            try:
+                enable = self.enable_table[mode]['enable']
+            except KeyError:
+                enable = False
 
         profile_settings = (
             self.machine.shot_profile_manager.profiles[profile].copy())
@@ -729,6 +728,10 @@ class Shot(Device):
 
     def update_current_state_name(self, mode):
 
+        if self.debug:
+            self.log.debug("Old current state name for mode %s: %s",
+                           mode, self.enable_table[mode]['current_state_name'])
+
         try:
             self.enable_table[mode]['current_state_name'] = (
                 self.enable_table[mode]['settings']['states']
@@ -736,6 +739,10 @@ class Shot(Device):
                 ['player_variable']]]['name'])
         except TypeError:
             self.enable_table[mode]['current_state_name'] = None
+
+        if self.debug:
+            self.log.debug("New current state name for mode %s: %s",
+                           mode, self.enable_table[mode]['current_state_name'])
 
 
     def remove_active_profile(self, mode, **kwargs):
