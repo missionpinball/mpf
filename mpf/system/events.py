@@ -25,7 +25,7 @@ class EventManager(object):
         self.callback_queue = deque([])
         self.registered_monitors = set()  # callbacks that get every event
 
-        self.debug = self.machine.get_debug_status('system_modules|events')
+        self.debug = True
 
         self.add_handler('init_phase_1', self._initialize)
 
