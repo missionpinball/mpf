@@ -279,6 +279,10 @@ class SwitchController(object):
 
         """
 
+        self.log.debug("Processing switch. Name: %s, state: %s, logical: %s,"
+                       "num: %s, obj: %s, debounced: %s", name, state, logical,
+                       num, obj, debounced)
+
         # Find the switch name
 
         if num is not None:  # can't be 'if num:` in case the num is 0.
