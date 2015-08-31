@@ -281,8 +281,10 @@ class Shot(Device):
                     self.log.debug('Control events found in %s config. Updating'
                                    ' enable_table', mode)
 
-            if not self.config['enable_events']:
-                enable = self.enabled
+            if not mode.config['shots'][self.name]['enable_events']:
+                enable = True
+            else:
+                enable = False
 
             self.update_enable_table(profile=None,
                                      enable=enable,
