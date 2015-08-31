@@ -339,18 +339,17 @@ class Mode(object):
                 self.machine.device_manager.get_device_control_events(
                 self.config)):
 
-            if event != '%auto%':
+            try:
+                event, priority = event.split('|')
+            except ValueError:
+                priority = 0
 
                 self.add_mode_event_handler(
                     event=event,
                     handler=self._control_event_handler,
-                    priority=self.priority+2,
+                    priority=self.priority + 2 + int(priority),
                     callback=method,
                     ms_delay=delay)
-
-            # if there's an entry for %auto% then we call that method automatically
-            else:
-                method()
 
             device_list.add(device)
 

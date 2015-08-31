@@ -110,14 +110,18 @@ class DeviceManager(object):
         for event, method, delay, _ in (
                 self.get_device_control_events(self.machine.config)):
 
-            if event != '%auto%':
+            try:
+                event, priority = event.split('|')
+            except ValueError:
+                priority = 0
 
-                self.machine.events.add_handler(
-                    event=event,
-                    handler=self._control_event_handler,
-                    callback=method,
-                    ms_delay=delay,
-                    delay_mgr=self.machine.delay)
+            self.machine.events.add_handler(
+                event=event,
+                handler=self._control_event_handler,
+                priority=int(priority),
+                callback=method,
+                ms_delay=delay,
+                delay_mgr=self.machine.delay)
 
     def create_collection_control_events(self):
         for collection, events in (
