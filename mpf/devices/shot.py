@@ -31,6 +31,20 @@ class Shot(Device):
     """
 
     def __init__(self, machine, name, config, collection=None, validate=True):
+        # If this device is setup in a machine-wide config, make sure it has
+        # a default enable event.
+
+        # TODO add a mode parameter to the device constructor and do the logic
+        # there.
+        if not machine.modes:
+
+            if 'enable_events' not in config:
+                config['enable_events'] = 'ball_starting'
+            if 'disable_events' not in config:
+                config['disable_events'] = 'ball_ended'
+            if 'reset_events' not in config:
+                config['reset_events'] = 'ball_ended'
+
         super(Shot, self).__init__(machine, name, config, collection,
                                    validate=validate)
 
@@ -335,6 +349,7 @@ class Shot(Device):
                                  '_hit', profile=profile, state=state)
 
         for group in self.groups:
+            self.log.debug("Notifying shot_group %s of new hit", group)
             group.hit(mode, profile, state)
 
         if Shot.monitor_enabled:
@@ -610,8 +625,8 @@ class Shot(Device):
         if not self.active_settings['settings']['lights_when_disabled']:
             self._stop_current_lights()
 
-    def reset(self, mode, **kwargs):
-        """Resets the active shot profile back to the first state (State 0).
+    def reset(self, mode=None, **kwargs):
+        """Resets the shot profile for the passed mode back to the first state (State 0).
         This method is the same as calling jump(0).
 
         """
@@ -714,10 +729,15 @@ class Shot(Device):
             pass
 
     def update_current_state_name(self, mode):
-        self.enable_table[mode]['current_state_name'] = (
-            self.enable_table[mode]['settings']['states']
-            [self.player[self.enable_table[mode]['settings']
-            ['player_variable']]]['name'])
+
+        try:
+            self.enable_table[mode]['current_state_name'] = (
+                self.enable_table[mode]['settings']['states']
+                [self.player[self.enable_table[mode]['settings']
+                ['player_variable']]]['name'])
+        except TypeError:
+            self.enable_table[mode]['current_state_name'] = None
+
 
     def remove_active_profile(self, mode, **kwargs):
         # this has the effect of changing out this mode's profile in the

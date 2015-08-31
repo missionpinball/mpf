@@ -31,6 +31,20 @@ class ShotGroup(Device):
         for shot in Config.string_to_list(config['shots']):
             self.shots.append(machine.shots[shot])
 
+        # If this device is setup in a machine-wide config, make sure it has
+        # a default enable event.
+
+        # TODO add a mode parameter to the device constructor and do the logic
+        # there.
+        if not machine.modes:
+
+            if 'enable_events' not in config:
+                config['enable_events'] = 'ball_starting'
+            if 'disable_events' not in config:
+                config['disable_events'] = 'ball_ended'
+            if 'reset_events' not in config:
+                config['reset_events'] = 'ball_ended'
+
         super(ShotGroup, self).__init__(machine, name, config, collection,
                                         validate=validate)
 

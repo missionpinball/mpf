@@ -138,11 +138,11 @@ class DeviceManager(object):
             getattr(device, method)()
 
     def _control_event_handler(self, callback, ms_delay=0, delay_mgr=None,
-                               **kwargs):
+                               mode=None, **kwargs):
         if ms_delay:
-            delay_mgr.add(callback, ms_delay, callback)
+            delay_mgr.add(callback, ms_delay, callback, mode=mode)
         else:
-            callback()
+            callback(mode=mode)
 
     def _create_default_control_events(self, device_list):
         for device in device_list:
