@@ -43,7 +43,7 @@ class ModeController(object):
         self.machine = machine
         self.log = logging.getLogger('ModeController')
 
-        self.debug = self.machine.get_debug_status(self.debug_path)
+        self.debug = True
 
         self.queue = None  # ball ending event queue
 
