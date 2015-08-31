@@ -341,23 +341,12 @@ class Shot(Device):
         # post events
         self.machine.events.post(self.name + '_hit', profile=profile,
                                  state=state)
-
         self.machine.events.post(self.name + '_' + profile + '_hit',
                                  profile=profile, state=state)
-
         self.machine.events.post(self.name + '_' + profile + '_' + state +
                                  '_hit', profile=profile, state=state)
 
-        for group in self.groups:
-            self.log.debug("Notifying shot_group %s of new hit", group)
-            group.hit(mode, profile, state)
-
-        if Shot.monitor_enabled:
-            for callback in self.machine.monitors['shots']:
-                callback(name=self.name)
-
         if self.enable_table[mode]['settings']['advance_on_hit']:
-
             if self.debug:
                 self.log.debug("Mode '%s' advance_on_hit is True.", mode)
 
@@ -366,6 +355,14 @@ class Shot(Device):
             self.log.debug('Not advancing profile state since the current '
                            'mode ("%s") has setting advance_on_hit set to '
                            'False', mode)
+
+        for group in self.groups:
+            self.log.debug("Notifying shot_group %s of new hit", group)
+            group.hit(mode, profile, state)
+
+        if Shot.monitor_enabled:
+            for callback in self.machine.monitors['shots']:
+                callback(name=self.name)
 
         if not self.enable_table[mode]['settings']['block']:
 

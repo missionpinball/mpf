@@ -331,6 +331,8 @@ class ShotGroup(Device):
                 self.log.debug("Shot group is complete with profile :%s, state:"
                                "%s", profile, state)
 
+            self.machine.events.post(self.name + '_complete')
+            self.machine.events.post(self.name + '_' + profile + '_complete')
             self.machine.events.post(self.name + '_' + profile + '_' + state +
                                      '_complete')
 
