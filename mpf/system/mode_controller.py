@@ -179,6 +179,9 @@ class ModeController(object):
                 self.mode_stop_count += 1
                 mode.stop(callback=self._mode_stopped_callback)
 
+        if not self.mode_stop_count:
+            self.queue.clear()
+
     def _mode_stopped_callback(self):
         self.mode_stop_count -= 1
 
