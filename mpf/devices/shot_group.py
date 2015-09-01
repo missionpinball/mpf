@@ -53,7 +53,6 @@ class ShotGroup(Device):
         super(ShotGroup, self).__init__(machine, name, config, collection,
                                         validate=validate)
 
-        self.enabled = False
         self.rotation_enabled = True
 
         if self.debug:
@@ -93,21 +92,13 @@ class ShotGroup(Device):
         self.machine.events.post(self.name + '_' + profile + '_' + state +
                                  '_hit', profile=profile, state=state)
 
-        #self.check_for_complete(mode)
-
     def enable(self, mode=None, **kwargs):
         """Enables this shot group. Also enables all the shots in this
         group.
 
         """
-
-        if self.enabled:
-            return
-
         if self.debug:
-            self.log.debug('Enabling')
-
-        self.enabled = True
+            self.log.debug('Enabling from mode: %s', mode)
 
         for shot in self.shots:
             shot.enable(mode)
@@ -118,18 +109,12 @@ class ShotGroup(Device):
         group.
 
         """
-
-        if not self.enabled:
-            return
-
         if self.debug:
-            self.log.debug('Disabling')
+            self.log.debug('Disabling from mode: %s', mode)
 
         for shot in self.shots:
             shot.disable(mode)
             shot.remove_from_group(self)
-
-        self.enabled = False
 
     def enable_rotation(self, **kwargs):
         """Enables shot rotation. If disabled, rotation events do not actually
@@ -210,12 +195,12 @@ class ShotGroup(Device):
 
         """
 
-        if not self.enabled or not self.rotation_enabled:
+        if not self.rotation_enabled:
 
             if self.debug:
-                self.log.debug("Received rotation request. Shot group enabled:"
-                               "%s, Rotation Enabled: %s. Will NOT rotate",
-                               self.enabled, self.rotation_enabled)
+                self.log.debug("Received rotation request. "
+                               "Rotation Enabled: %s. Will NOT rotate",
+                               self.rotation_enabled)
 
             return
 
@@ -361,18 +346,26 @@ class ShotGroup(Device):
         for shot in self.shots:
             if mode not in shot.enable_table:
 
+                # if the mode is not in the shot's enable_table, that means we
+                # have no entry for this shot in this mode config. Therefore
+                # there is no chance of a blank enable_events:, which means we
+                # want to enable this shot.
+
                 if profile:
                     shot.update_enable_table(profile=profile,
-                                         enable=shot.enabled,
+                                         enable=True,
                                          mode=mode)
 
                 else:
                     shot.update_enable_table(profile=shot.config['profile'],
-                                             enable=shot.enabled,
+                                             enable=True,
                                              mode=mode)
 
 
     def control_events_in_mode(self, mode):
+        # called if any control_events for this shot_group exist in the mode
+        # config, regardless of whether or not the shot_group device was
+        # initially created in this mode
         for shot in self.shots:
             if mode not in shot.enable_table:
 

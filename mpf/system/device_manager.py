@@ -143,6 +143,10 @@ class DeviceManager(object):
 
     def _control_event_handler(self, callback, ms_delay=0, delay_mgr=None,
                                mode=None, **kwargs):
+
+        self.log.debug("_control_event_handler: mode: %s, callback: %s,", mode,
+                       callback)
+
         if ms_delay:
             delay_mgr.add(callback, ms_delay, callback, mode=mode)
         else:

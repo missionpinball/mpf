@@ -171,6 +171,8 @@ class Mode(object):
 
         self._create_mode_devices()
 
+        self.log.debug("Registering mode_stop handlers")
+
         # register mode stop events
         if 'stop_events' in self.config['mode']:
 
@@ -186,6 +188,8 @@ class Mode(object):
 
         if 'timers' in self.config:
             self._setup_timers()
+
+        self.log.debug("Calling mode_start handlers")
 
         for item in self.machine.mode_controller.start_methods:
             if item.config_section in self.config or not item.config_section:
@@ -221,6 +225,8 @@ class Mode(object):
 
         if self.start_callback:
             self.start_callback()
+
+        self.log.debug('Mode Start process complete.')
 
     def stop(self, callback=None, **kwargs):
         """Stops this mode.
@@ -290,6 +296,8 @@ class Mode(object):
         # Creates new devices that are specified in a mode config that haven't
         # been created in the machine-wide config
 
+        self.log.debug("Scanning config for mode-based devices")
+
         for collection_name, device_class in (
                 self.machine.device_manager.device_classes.iteritems()):
             if device_class.config_section in self.config:
@@ -333,6 +341,8 @@ class Mode(object):
         # registers mode handlers for control events for all devices specified
         # in this mode's config (not just newly-created devices)
 
+        self.log.debug("Scanning mode-based config for device control_events")
+
         device_list = set()
 
         for event, method, delay, device in (
@@ -344,12 +354,12 @@ class Mode(object):
             except ValueError:
                 priority = 0
 
-                self.add_mode_event_handler(
-                    event=event,
-                    handler=self._control_event_handler,
-                    priority=self.priority + 2 + int(priority),
-                    callback=method,
-                    ms_delay=delay)
+            self.add_mode_event_handler(
+                event=event,
+                handler=self._control_event_handler,
+                priority=self.priority + 2 + int(priority),
+                callback=method,
+                ms_delay=delay)
 
             device_list.add(device)
 
@@ -357,6 +367,9 @@ class Mode(object):
             device.control_events_in_mode(self)
 
     def _control_event_handler(self, callback, ms_delay=0, **kwargs):
+
+        self.log.debug("_control_event_handler: callback: %s,", callback)
+
         if ms_delay:
             self.delay.add(callback, ms_delay, callback, mode=self)
         else:
@@ -397,7 +410,7 @@ class Mode(object):
         """
 
         key = self.machine.events.add_handler(event, handler, priority,
-                                              **kwargs)
+                                              mode=self, **kwargs)
 
         self.event_handlers.add(key)
 

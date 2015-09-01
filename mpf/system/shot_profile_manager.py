@@ -31,7 +31,7 @@ class ShotProfileManager(object):
             self.register_profiles, config_section_name="shot_profiles")
 
         self.machine.mode_controller.register_start_method(
-            self.mode_start_for_shots, config_section_name="shots")
+            self.mode_start_for_shots, config_section_name="shots", priority=1)
         self.machine.mode_controller.register_start_method(
             self.mode_start_for_shot_groups, config_section_name="shot_groups")
 
@@ -171,9 +171,22 @@ class ShotProfileManager(object):
 
         for shot_group, settings in config.iteritems():
 
+            if self.debug:
+                self.log.debug("Checking config for shot_group: %s. Config: %s",
+                               shot_group, settings)
+
             if not settings['enable_events']:
+
+                if self.debug:
+                    self.log.debug("No 'enable_events', enable entry will be "
+                                   "True")
                 enable = True
             else:
+
+                if self.debug:
+                    self.log.debug("Found 'enable_events', enable entry will be"
+                                   " False")
+                
                 enable = False
 
             if self.debug:

@@ -424,7 +424,7 @@ class Game(Mode):
     def slam_tilt(self):
         self.game_ended()
 
-    def request_player_add(self):
+    def request_player_add(self, **kwargs):
         """Called by any module that wants to add a player to an active game.
 
         This method contains the logic to verify whether it's ok to add a

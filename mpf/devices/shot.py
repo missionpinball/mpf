@@ -587,7 +587,6 @@ class Shot(Device):
         self.enabled = True
 
         self._register_switch_handlers()
-        self.enabled = True
 
         # TODO should this see if this shot is configured to allow lights while
         # not enabled, and then not do this if they're already going?
