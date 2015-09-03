@@ -122,11 +122,12 @@ class BallDevice(Device):
                 self.log.debug("Waiting for %s balls", balls)
             self.num_balls_in_transit += balls
 
-            # set event handler to watch for receiving a ball
-            self.machine.events.add_handler('balldevice_' + self.name +
-                                            '_ball_enter',
-                                            self._requested_ball_received,
-                                            priority=1000)
+            if self.num_balls_requested:
+                # set event handler to watch for receiving a ball
+                self.machine.events.add_handler('balldevice_' + self.name +
+                                                '_ball_enter',
+                                                self._requested_ball_received,
+                                                priority=1000)
 
     def _source_device_eject_failed(self, balls, target, **kwargs):
         # A source device failed to eject a ball.
