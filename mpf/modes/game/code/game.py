@@ -196,7 +196,7 @@ class Game(Mode):
         except KeyError:
             self.machine.playfield.add_ball()
 
-    def ball_drained(self, balls=0):
+    def ball_drained(self, balls=0, **kwargs):
         self.log.debug("Entering Game.ball_drained()")
 
         if balls:
@@ -242,7 +242,7 @@ class Game(Mode):
         # properly after other existing events have been posted.
         self.machine.events.post('ball_ended')
 
-    def ball_ended(self, ev_result=True):
+    def ball_ended(self, ev_result=True, **kwargs):
         """Called when the ball has successfully ended.
 
         This method is called after all the registered handlers of the queue

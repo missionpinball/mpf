@@ -2,6 +2,7 @@
 logs/
 /machine_files/*/audits/
 *.local
+.idea
 docs/
 # docs have been moved to a branch called gh-pages
 
