@@ -14,23 +14,40 @@ from mpf.system.tasks import DelayManager
 
 class Playfield(BallDevice):
 
-    def __init__(self, machine, name, collection):
-        self.log = logging.getLogger('Playfield')
+    config_section = 'playfields'
+    collection = 'playfields'
+    class_label = 'playfield'
+
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        self.log = logging.getLogger('playfield')
 
         self.machine = machine
-        self.name = name
+        self.name = name.lower()
         self.tags = list()
-        self.config = defaultdict(lambda: None)
-        self.config['eject_targets'] = list()
+        self.label = None
+        self.debug = False
+        self.config = dict()
 
-        self.log.debug("Setting up playfield: '%s', name")
+        if validate:
+            self.config = self.machine.config_processor.process_config2(
+                self.config_section, config, self.name)
+        else:
+            self.config = config
 
-        self.ball_controller = self.machine.ball_controller
+        if self.config['debug']:
+            self.debug = True
+            self.log.debug("Enabling debug logging for this device")
+            self.log.debug("Configuring device with settings: '%s'", config)
+
+        self.tags = self.config['tags']
+        self.label = self.config['label']
 
         self.delay = DelayManager()
 
-        # Add the playfield ball device to the existing device collection
-        collection_object = getattr(self.machine, collection)[name] = self
+        self.machine.ball_devices[name] = self
+
+        if 'default' in self.config['tags']:
+            self.machine.playfield = self
 
         # Attributes
         self._balls = 0
@@ -60,6 +77,20 @@ class Playfield(BallDevice):
                         handler=self._source_device_eject_attempt)
                     break
 
+        # Watch for balls removed from the playfield
+        self.machine.events.add_handler('balldevice_captured_from_' + self.name,
+                                        self._ball_removed_handler)
+
+        # Watch for any switch hit which indicates a ball on the playfield
+        self.machine.events.add_handler('sw_' + self.name + '_active',
+                                        self.playfield_switch_hit)
+
+        self.machine.events.add_handler('init_phase_2',
+                                        self._initialize)
+
+    def _initialize(self):
+        self.ball_controller = self.machine.ball_controller
+
         for device in self.machine.playfield_transfer:
             if device.config['eject_target'] == self.name:
                 self.machine.events.add_handler(
@@ -70,14 +101,6 @@ class Playfield(BallDevice):
                     event='balldevice_' + device.name +
                     '_ball_eject_attempt',
                     handler=self._source_device_eject_attempt)
-
-        # Watch for balls removed from the playfield
-        self.machine.events.add_handler('balldevice_captured_from_' + self.name,
-                                        self._ball_removed_handler)
-
-        # Watch for any switch hit which indicates a ball on the playfield
-        self.machine.events.add_handler('sw_' + self.name + '_active',
-                                        self.playfield_switch_hit)
 
     @property
     def balls(self):
@@ -122,7 +145,7 @@ class Playfield(BallDevice):
         zero.
 
         Returns: 0
-        
+
         """
         return 0
 
@@ -313,10 +336,17 @@ class Playfield(BallDevice):
         if not self.balls:
 
             if not self.num_balls_requested:
-                self.log.debug("PF switch hit with no balls expected. Setting "
-                               "pf balls to 1.")
-                self.balls = 1
-                self.machine.events.post('unexpected_ball_on_' + self.name)
+                if self.machine.config['machine']['glass_off_mode']:
+                    self.log.debug("Playfield_active switch hit with no balls "
+                                   "expected. glass_off_mode is enabled, so "
+                                   "this will be ignored.")
+                else:
+                    self.log.debug("Playfield_active switch hit with no balls "
+                                   "expected. glass_off_mode is not enabled, "
+                                   "setting playfield ball count to 1")
+
+                    self.balls = 1
+                    self.machine.events.post('unexpected_ball_on_' + self.name)
 
     def _ball_added_handler(self, balls):
         self.log.debug("%s ball(s) added to the playfield", balls)
@@ -458,8 +488,8 @@ class Playfield(BallDevice):
     def ball_lost(self):
         """Mark a ball as lost"""
         self.num_balls_known = self.balls
-        self.num_balls_missing = self.machine.config['machine']\
-            ['balls installed'] - self.balls
+        self.num_balls_missing = (self.machine.config['machine']
+                                  ['balls installed'] - self.balls)
         self.num_balls_live = 0
         # since desired count doesn't change, this will relaunch them
         self.log.debug("Ball(s) Marked Lost. Known: %s, Missing: %s",

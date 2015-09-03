@@ -24,6 +24,7 @@ from distutils.version import LooseVersion
 import Queue
 import traceback
 
+
 import pygame
 
 from mpf.media_controller.core import *
@@ -32,7 +33,7 @@ from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.events import EventManager
 from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
-from mpf.game.player import Player
+from mpf.system.player import Player
 import mpf.system.bcp as bcp
 import version
 
@@ -44,17 +45,19 @@ class MediaController(object):
 
         self.log = logging.getLogger("MediaController")
         self.log.info("Media Controller Version %s", version.__version__)
-        self.log.info("Backbox Control Protocol Version %s",
+        self.log.debug("Backbox Control Protocol Version %s",
                       version.__bcp_version__)
-        self.log.info("Config File Version %s",
+        self.log.debug("Config File Version %s",
                       version.__config_version__)
 
         python_version = sys.version_info
-        self.log.info("Python version: %s.%s.%s", python_version[0],
+        self.log.debug("Python version: %s.%s.%s", python_version[0],
                       python_version[1], python_version[2])
-        self.log.info("Platform: %s", sys.platform)
-        self.log.info("Python executable location: %s", sys.executable)
-        self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
+        self.log.debug("Platform: %s", sys.platform)
+        self.log.debug("Python executable location: %s", sys.executable)
+        self.log.debug("32-bit Python? %s", sys.maxsize < 2**32)
+
+        self.active_debugger = dict()
 
         self.config = dict()
         self.done = False  # todo
@@ -71,7 +74,7 @@ class MediaController(object):
         self.receive_queue = Queue.Queue()
         self.sending_queue = Queue.Queue()
         self.crash_queue = Queue.Queue()
-        self.game_modes = CaseInsensitiveDict()
+        self.modes = CaseInsensitiveDict()
         self.player_list = list()
         self.player = None
         self.HZ = 0
@@ -145,7 +148,7 @@ class MediaController(object):
                                        ['config'],
                                        options['configfile'])
 
-        self.log.info("Base machine config file: %s", config_file)
+        self.log.debug("Base machine config file: %s", config_file)
 
         # Load the machine-specific config
         self.config = Config.load_config_yaml(config=self.config,
@@ -166,8 +169,9 @@ class MediaController(object):
         # Load the media controller modules
         self.config['media_controller']['modules'] = (
             self.config['media_controller']['modules'].split(' '))
+        self.log.info("Loading Modules...")
         for module in self.config['media_controller']['modules']:
-            self.log.info("Loading module: %s", module)
+            self.log.debug("Loading module: %s", module)
             module_parts = module.split('.')
             exec('self.' + module_parts[0] + '=' + module + '(self)')
 
@@ -429,8 +433,8 @@ class MediaController(object):
 
         name = name.lower()
 
-        if name in self.game_modes:
-            self.game_modes[name].start(priority=priority)
+        if name in self.modes:
+            self.modes[name].start(priority=priority)
 
     def bcp_mode_stop(self, name, **kwargs):
         """Processes an incoming BCP 'mode_stop' command."""
@@ -440,8 +444,8 @@ class MediaController(object):
 
         name = name.lower()
 
-        if name in self.game_modes:
-            self.game_modes[name].stop()
+        if name in self.modes:
+            self.modes[name].stop()
 
     def bcp_error(self, **kwargs):
         """Processes an incoming BCP 'error' command."""
@@ -459,7 +463,7 @@ class MediaController(object):
         """Processes an incoming BCP 'game_start' command."""
         self.player = None
         self.player_list = list()
-        Player.total_players = 0
+        self.num_players = 0
         self.events.post('game_started', **kargs)
 
     def bcp_game_end(self, **kwargs):
@@ -471,9 +475,7 @@ class MediaController(object):
         """Processes an incoming BCP 'player_add' command."""
 
         if number > len(self.player_list):
-            new_player = Player(self)
-            self.player_list.append(new_player)
-            new_player.score = 0
+            new_player = Player(self, self.player_list)
 
             self.events.post('player_add_success', num=number)
 
@@ -500,10 +502,17 @@ class MediaController(object):
     def bcp_player_turn_start(self, player, **kwargs):
         """Processes an incoming BCP 'player_turn_start' command."""
 
+        self.log.debug("bcp_player_turn_start")
+
         if ((self.player and self.player.number != player) or
                 not self.player):
 
-            self.player = self.player_list[int(player)-1]
+            try:
+                self.player = self.player_list[int(player)-1]
+            except IndexError:
+                self.log.error('Received player turn start for player %s, but '
+                               'only %s player(s) exist',
+                               player, len(self.player_list))
 
     def bcp_trigger(self, name, **kwargs):
         """Processes an incoming BCP 'trigger' command."""
@@ -585,6 +594,21 @@ class MediaController(object):
             #self.sound.tracks[track]
 
             # todo add per-track volume support to sound system
+
+    def get_debug_status(self, debug_path):
+
+        if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
+            return True
+
+        class_, module = debug_path.split('|')
+
+        try:
+            if module in self.active_debugger[class_]:
+                return True
+            else:
+                return False
+        except KeyError:
+            return False
 
 
 class BCPServer(threading.Thread):

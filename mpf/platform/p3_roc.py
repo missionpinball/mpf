@@ -128,6 +128,9 @@ class HardwarePlatform(Platform):
             or self.machine_type == pinproc.MachineTypeSternSAM\
             or self.machine_type == pinproc.MachineTypePDB
 
+    def __repr__(self):
+        return '<Platform.P3-ROC>'
+
     def configure_driver(self, config, device_type='coil'):
         """ Creates a P3-ROC driver.
 
@@ -152,8 +155,8 @@ class HardwarePlatform(Platform):
         proc_num = self.pdbconfig.get_proc_number(device_type,
                                                   str(config['number']))
         if proc_num == -1:
-            self.log.error("Coil cannot be controlled by the P3-ROC. "
-                           "Ignoring.")
+            self.log.error("Coil %s cannot be controlled by the P3-ROC. "
+                           "Ignoring.", str(config['number']))
             return
 
         if device_type == 'coil':
@@ -199,9 +202,9 @@ class HardwarePlatform(Platform):
         if self.machine_type == pinproc.MachineTypePDB:
             proc_num = self.pdbconfig.get_proc_number('switch',
                                                       str(config['number']))
-            if config['number'] == -1:
-                self.log.error("Switch cannot be controlled by the P3-ROC. "
-                               "Ignoring.")
+            if proc_num == -1:
+                self.log.error("Switch %s cannot be controlled by the P3-ROC. "
+                               "Ignoring.", str(config['number']))
                 return
         else:
             proc_num = pinproc.decode(self.machine_type, str(config['number']))
@@ -229,26 +232,27 @@ class HardwarePlatform(Platform):
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
 
+        return switch, proc_num
+
+    def get_hw_switch_states(self):
         # Read in and set the initial switch state
-        # The P3-ROC uses the following values for hw switch states:
+        # The P-ROC uses the following values for hw switch states:
         # 1 - closed (debounced)
         # 2 - open (debounced)
         # 3 - closed (not debounced)
         # 4 - open (not debounced)
 
-        # Note: The P3-ROC will return a state of "3" for switches from non-
-        # connected SW-16 boards, so that's why we only check for "1" below
         states = self.proc.switch_get_states()
-        if states[proc_num] == 1:
-            state = 1
-        else:
-            state = 0
 
-        self.log.debug("P3-ROC switch %s initial state: %s", proc_num,
-                       states[proc_num])
-        # Return the switch object and an integer of its current state.
-        # 1 = active, 0 = inactive
-        return switch, proc_num, state
+        for switch, state in enumerate(states):
+            # Note: The P3-ROC will return a state of "3" for switches from non-
+            # connected SW-16 boards, so that's why we only check for "1" below
+            if state == 1:
+                states[switch] = 1
+            else:
+                states[switch] = 0
+
+        return states
 
     def configure_led(self, config):
         """ Configures a P3-ROC RGB LED controlled via a PD-LED."""
@@ -627,7 +631,15 @@ class PDBSwitch(object):
             self.sw_number = self.parse_matrix_num(upper_str)
         else:
             self.sw_type = 'proc'
-            self.sw_number = int(number_str)
+            try:
+                (boardnum, banknum, inputnum) = decode_pdb_address(number_str, [])
+                self.sw_number = boardnum * 16 + banknum * 8 + inputnum
+            except ValueError:
+                try:
+                    self.sw_number = int(number_str)
+                except:
+                    raise ValueError('Switch %s is invalid. Use either PDB '
+                                     'format or an int', str(number_str))
 
     def proc_num(self):
         return self.sw_number

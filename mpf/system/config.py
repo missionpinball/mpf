@@ -44,12 +44,17 @@ class CaseInsensitiveDict(dict):
 
     def __delitem__(self, key):
         try:
-            return super(CaseInsensitiveDict, self).__del__(key.lower())
+            return super(CaseInsensitiveDict, self).__delitem__(key.lower())
         except AttributeError:
-            return super(CaseInsensitiveDict, self).__del__(key)
+            return super(CaseInsensitiveDict, self).__delitem__(key)
 
 
 class Config(object):
+
+    def __init__(self, machine):
+        self.machine = machine
+        self.log = logging.getLogger('Config')
+
 
     @staticmethod
     def load_config_yaml(config=None, yaml_file=None,
@@ -77,7 +82,7 @@ class Config(object):
                 first try to open it as a file directly (including any path
                 that's there). If that doesn't work, it will try to open the
                 file using the last path that worked. (This path is stored in
-                `config['Config_path']`.)
+                `config['config_path']`.)
             new_config_dict: A dictionary of settings to merge into the config
                 dictionary.
 
@@ -119,7 +124,7 @@ class Config(object):
         if config_location:
 
             try:
-                log.info("Loading configuration from file: %s", config_location)
+                log.debug("Loading configuration from file: %s", config_location)
                 new_updates = Config.keys_to_lower(yaml.load(open(
                                                    config_location, 'r')))
             except yaml.YAMLError, exc:
@@ -256,32 +261,346 @@ class Config(object):
 
         if item_type == 'list':
             return Config.string_to_list(item)
+
+        if item_type == 'list_of_dicts':
+            if type(item) is list:
+                return item
+            elif type(item) is dict:
+                return [item]
+
+        elif item_type == 'set':
+            return set(Config.string_to_list(item))
+
+        elif item_type == 'dict':
+            if type(item) is dict or type(item) is CaseInsensitiveDict:
+                return item
+            elif not default:
+                return dict()
+            else:
+                log.error('Config error. "%s" is not a dictionary', item)
+                sys.exit()
+
         elif item_type == 'int':
             try:
                 return int(item)
             except TypeError:
                 return None
+
         elif item_type == 'float':
             try:
                 return float(item)
             except TypeError:
                 return None
-        elif item_type == 'string':
-            try:
+
+        elif item_type in ('string', 'str'):
+
+            if item:
                 return str(item)
-            except TypeError:
+            else:
                 return None
-        elif item_type == 'boolean':
+
+        elif item_type in ('boolean', 'bool'):
             if type(item) is bool:
                 return item
             else:
                 return item.lower() in ('yes', 'true')
+
         elif item_type == 'ms':
             return Timing.string_to_ms(item)
+
         elif item_type == 'secs':
             return Timing.string_to_secs(item)
+
         elif item_type == 'list_of_lists':
             return Config.list_of_lists(item)
+
+    def process_config2(self, config_spec, source, section_name=None,
+                        target=None, result_type='dict'):
+        # config_spec, str i.e. "device:shot"
+        # source is dict
+        # section_name is str used for logging failures
+
+        if not section_name:
+            section_name = config_spec
+
+        validation_failure_info = (config_spec, section_name)
+
+        orig_spec = config_spec
+
+        config_spec = config_spec.split(':')
+        this_spec = self.machine.config['config_validator']
+
+        for i in range(len(config_spec)):
+            this_spec = this_spec[config_spec[i]]
+
+        self.check_for_invalid_sections(this_spec, source,
+                                        validation_failure_info)
+
+        processed_config = source
+
+        for k in this_spec.keys():
+            if k in source:  # validate the entry that exists
+
+                if type(this_spec[k]) is dict:
+                    # This means we're looking for a list of dicts
+
+                    final_list = list()
+                    if k in source:
+                        for i in source[k]:  # individual step
+                            final_list.append(self.process_config2(
+                                orig_spec + ':' + k, source=i, section_name=k))
+
+                    processed_config[k] = final_list
+
+                elif result_type == 'list':
+                    # spec is dict
+                    # item is source
+                    processed_config = self.validate_config_item2(
+                        spec=this_spec[k], item=source[k],
+                        validation_failure_info=(validation_failure_info, k))
+
+                else:
+                    processed_config[k] = self.validate_config_item2(
+                        this_spec[k], item=source[k],
+                        validation_failure_info=(validation_failure_info, k))
+
+            else:  # create the default entry
+
+                if type(this_spec[k]) is dict:
+                    processed_config[k] = list()
+
+                else:
+                    if result_type == 'list':
+                        processed_config = self.validate_config_item2(
+                            this_spec[k],
+                            validation_failure_info=(validation_failure_info,
+                                                     k))
+
+                    else:
+                        processed_config[k] = self.validate_config_item2(
+                            this_spec[k],
+                            validation_failure_info=(validation_failure_info,
+                                                     k))
+
+        if target:
+            processed_config = Config.dict_merge(target, processed_config)
+
+        #if result_type == 'list':
+            #quit()
+
+        return processed_config
+
+    def validate_config_item2(self, spec, validation_failure_info,
+                              item='item not in config!@#',):
+
+        default = 'default required!@#'
+
+        item_type, validation, default = spec.split('|')
+
+        if default.lower() == 'none':
+            default = None
+
+        if item == 'item not in config!@#':
+            if default == 'default required!@#':
+                log.error('Required setting missing from config file. Run with '
+                          'verbose logging and look for the last '
+                          'ConfigProcessor entry above this line to see where '
+                          'the problem is.')
+                sys.exit()
+            else:
+                item = default
+
+        if item_type == 'single':
+            item = self.validate_item(item, validation, validation_failure_info)
+
+
+        elif item_type == 'list':
+            item = Config.string_to_list(item)
+
+            new_list = list()
+
+            for i in item:
+                new_list.append(
+                    self.validate_item(i, validation, validation_failure_info))
+
+            item = new_list
+
+        elif item_type == 'set':
+            item = set(Config.string_to_list(item))
+
+            new_set = set()
+
+            for i in item:
+                new_set.add(
+                    self.validate_item(i, validation, validation_failure_info))
+
+            item = new_set
+
+        elif item_type == 'dict':
+
+            item = self.validate_item(item, validation,
+                                               validation_failure_info)
+
+            if not item:
+                item = dict()
+
+        else:
+            self.log.error("Invalid Type '%s' in config spec %s:%s", item_type,
+                           validation_failure_info[0][0],
+                           validation_failure_info[1])
+            sys.exit()
+
+        return item
+
+    def check_for_invalid_sections(self, spec, config, validation_failure_info):
+
+        for k, v in config.iteritems():
+            if type(k) is not dict:
+
+                if k not in spec:
+
+                    path_list = validation_failure_info[0].split(':')
+
+                    if len(path_list) > 1 and (
+                            path_list[-1] == validation_failure_info[1]):
+                        path_list.append('[list_item]')
+                    elif path_list[0] == validation_failure_info[1]:
+                        path_list = list()
+
+                    path_list.append(validation_failure_info[1])
+                    path_list.append(k)
+
+                    path_string = ':'.join(path_list)
+
+                    if (self.machine.config['mpf']
+                            ['allow_invalid_config_sections']):
+
+                        self.log.warning('Unrecognized config setting. "%s" is '
+                                         'not a valid setting name.',
+                                         path_string)
+
+                    else:
+                        self.log.error('Your config contains a value for the '
+                                       'setting "%s", but this is not a valid '
+                                       'setting name.', path_string)
+
+                        self.lookup_invalid_config_setting(path_string)
+
+                        sys.exit()
+
+    def validate_item(self, item, validator, validation_failure_info):
+
+        if '%' in validator:
+
+            if type(item) is str:
+
+                try:
+                    item = eval(validator.replace('%', "'" + item + "'"))
+                except KeyError:
+                    self.validation_error(item, validation_failure_info)
+            else:
+                item = None
+
+        elif validator == 'str':
+            if item is not None:
+                item = str(item)
+            else:
+                item = None
+
+        elif validator == 'float':
+            try:
+                item = float(item)
+            except TypeError:
+                # TODO error
+                pass
+
+        elif validator == 'int':
+            try:
+                item = int(item)
+            except TypeError:
+                # TODO error
+                pass
+
+        elif validator == 'bool':
+
+            if type(item) is str:
+                if item.lower() in ['false', 'f', 'no', 'disable', 'off']:
+                    item = False
+
+            elif not item:
+                item = False
+
+            else:
+                item = True
+
+        elif validator == 'ms':
+            item = Timing.string_to_ms(item)
+
+        elif validator == 'secs':
+            item = Timing.string_to_secs(item)
+
+        elif validator == 'ticks':
+            item = Timing.string_to_ticks(item)
+
+        elif ':' in validator:
+            validator = validator.split(':')
+            # item could be str, list, or list of dicts
+            item = Config.event_config_to_dict(item)
+
+            return_dict = dict()
+
+            for k, v in item.iteritems():
+                return_dict[self.validate_item(k, validator[0],
+                                               validation_failure_info)] = (
+                    self.validate_item(v, validator[1], validation_failure_info)
+                    )
+
+            item = return_dict
+
+        else:
+            self.log.error("Invalid Validator '%s' in config spec %s:%s",
+                           validator,
+                           validation_failure_info[0][0],
+                           validation_failure_info[1])
+            sys.exit()
+
+        return item
+
+    def validation_error(self, item, validation_failure_info):
+        self.log.error("Config validation error: Entry %s:%s:%s:%s is not valid",
+                       validation_failure_info[0][0],
+                       validation_failure_info[0][1],
+                       validation_failure_info[1],
+                       item)
+
+        sys.exit()
+
+    def lookup_invalid_config_setting(self, setting):
+
+        setting_key = setting.split(':')[-1]
+
+        with open(self.machine.config['mpf']['config_versions_file'],
+                  'r') as f:
+
+            config_file = yaml.load(f)
+
+        for ver, sections in config_file.iteritems():
+
+            ver_string = ''
+
+            if int(version.__config_version_info__) > int(ver):
+                ver_string = (' (The latest config version is config_version=' +
+                              version.__config_version_info__ + ').')
+
+            if setting_key in sections['section_replacements']:
+                self.log.info('The setting "%s" has been renamed to "%s" in '
+                              'config_version=%s%s', setting,
+                              sections['section_replacements'][setting_key],
+                              ver, ver_string)
+            if setting_key in sections['section_deprecations']:
+                self.log.info('The setting "%s" has been removed in '
+                              'config_version=%s%s', setting, ver, ver_string)
+
 
     @staticmethod
     def dict_merge(a, b, combine_lists=True):
@@ -405,6 +724,102 @@ class Config(object):
                 final_list.append(Config.string_to_list(item))
 
         return final_list
+
+    @staticmethod
+    def hexstring_to_list(input_string, output_length=3):
+        """Takes a string input of hex numbers and returns a list of integers.
+
+        This always groups the hex string in twos, so an input of ffff00 will
+        be returned as [255, 255, 0]
+
+        Args:
+            input_string: A string of incoming hex colors, like ffff00.
+            output_length: Integer value of the number of items you'd like in
+                your returned list. Default is 3. This method will ignore
+                extra characters if the input_string is too long, and it will
+                pad with zeros if the input string is too short.
+
+        Returns:
+            List of integers, like [255, 255, 0]
+
+        """
+        output = []
+        input_string = str(input_string).zfill(output_length*2)
+
+        for i in xrange(0, len(input_string), 2):  # step through every 2 chars
+            output.append(int(input_string[i:i+2], 16))
+
+        return output[0:output_length:]
+
+    @staticmethod
+    def hexstring_to_int(inputstring, maxvalue=255):
+        """Takes a string input of hex numbers and an integer.
+
+        Args:
+            input_string: A string of incoming hex colors, like ffff00.
+            maxvalue: Integer of the max value you'd like to return. Default is
+                255. (This is the real value of why this method exists.)
+
+        Returns:
+            Integer representation of the hex string.
+        """
+
+        return_int = int(inputstring, 16)
+
+        if return_int > maxvalue:
+            return_int = maxvalue
+
+        return return_int
+
+    @staticmethod
+    def event_config_to_dict(config):
+
+        return_dict = dict()
+
+        if type(config) is dict:
+            return config
+        elif type(config) is str:
+            config = Config.string_to_list(config)
+
+        # 'if' instead of 'elif' to pick up just-converted str
+        if type(config) is list:
+            for event in config:
+                return_dict[event] = 0
+
+        return return_dict
+
+    @staticmethod
+    def int_to_hex_string(source_int):
+        """Converts an int from 0-255 to a one-byte (2 chars) hex string, with
+        uppercase characters.
+
+        """
+
+        source_int = int(source_int)
+
+        if source_int >= 0 and source_int <= 255:
+            return format(source_int, 'x').upper().zfill(2)
+
+        else:
+            print "invalid source int:", source_int
+            raise ValueError
+
+    @staticmethod
+    def normalize_hex_string(source_hex, num_chars=2):
+        """Takes an incoming hex value and converts it to uppercase and fills in
+        leading zeros.
+
+        Args:
+            source_hex: Incoming source number. Can be any format.
+            num_chars: Total number of characters that will be returned. Default
+                is two.
+
+        Returns: String, uppercase, zero padded to the num_chars.
+
+        Example usage: Send "c" as source_hex, returns "0C".
+
+        """
+        return str(source_hex).upper().zfill(num_chars)
 
 # The MIT License (MIT)
 

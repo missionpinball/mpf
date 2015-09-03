@@ -84,7 +84,6 @@ class HardwarePlatform(Platform):
         self.receive_queue = Queue.Queue()
         self.fast_leds = set()
         self.flag_led_tick_registered = False
-        self.flag_switch_registered = False
         self.fast_io_boards = list()
         self.waiting_for_switch_data = False
 
@@ -306,6 +305,9 @@ class HardwarePlatform(Platform):
                               'WD': self.receive_wd,  # watchdog
                               }
 
+    def __repr__(self):
+        return '<Platform.FAST>'
+
     def process_received_message(self, msg):
         """Sends an incoming message from the FAST controller to the proper
         method for servicing.
@@ -374,13 +376,15 @@ class HardwarePlatform(Platform):
 
         self.rgb_connection.send(msg)
 
-    def get_switch_states(self):
-        self.waiting_for_switch_data = True
+    def get_hw_switch_states(self):
+        self.hw_switch_data = None
         self.net_connection.send('SA:')
 
-        while self.waiting_for_switch_data:
+        while not self.hw_switch_data:
             time.sleep(.01)
             self.tick()
+
+        return self.hw_switch_data
 
     def receive_id(self, msg):
         pass
@@ -427,28 +431,31 @@ class HardwarePlatform(Platform):
 
     def receive_sa(self, msg):
 
-        self.log.info("Received SA: %s", msg)
+        self.log.debug("Received SA: %s", msg)
+
+        hw_states = dict()
 
         num_local, local_states, num_nw, nw_states = msg.split(',')
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
+                num = Config.int_to_hex_string((offset * 8) + i)
                 if byte & (2**i):
-                    num = self.int_to_hex_string((offset * 8) + i)
-                    self.log.info("Found initial active network switch: %s",
-                                  num)
-                    self.machine.switch_controller.process_switch(num=(num, 1),
-                                                                  state=1)
+                    hw_states[(num, 1)] = 1
+                else:
+                    hw_states[(num, 1)] = 0
 
         for offset, byte in enumerate(bytearray.fromhex(local_states)):
             for i in range(8):
-                if byte & (2**i):
-                    num = self.int_to_hex_string((offset * 8) + i)
-                    self.log.info("Found initial active local switch: %s", num)
-                    self.machine.switch_controller.process_switch(num=(num, 0),
-                                                                  state=1)
 
-        self.waiting_for_switch_data = False
+                num = Config.int_to_hex_string((offset * 8) + i)
+
+                if byte & (2**i):
+                    hw_states[(num, 0)] = 1
+                else:
+                    hw_states[(num, 0)] = 0
+
+        self.hw_switch_data = hw_states
 
     def configure_driver(self, config, device_type='coil'):
 
@@ -472,9 +479,9 @@ class HardwarePlatform(Platform):
         elif self.machine_type == 'fast':
 
             if self.config['config_number_format'] == 'int':
-                config['number'] = self.int_to_hex_string(config['number'])
+                config['number'] = Config.int_to_hex_string(config['number'])
             else:
-                config['number'] = self.normalize_hex_string(config['number'])
+                config['number'] = Config.normalize_hex_string(config['number'])
 
             # Now figure out the connection type
             if ('connection' in config and
@@ -536,9 +543,9 @@ class HardwarePlatform(Platform):
                 config['connection'] = 0  # local switch
 
             if self.config['config_number_format'] == 'int':
-                config['number'] = self.int_to_hex_string(config['number'])
+                config['number'] = Config.int_to_hex_string(config['number'])
             else:
-                config['number'] = self.normalize_hex_string(config['number'])
+                config['number'] = Config.normalize_hex_string(config['number'])
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
@@ -557,16 +564,7 @@ class HardwarePlatform(Platform):
                             debounce_close=config['debounce_close'],
                             sender=self.net_connection.send)
 
-        state = 0  # todo
-
-        if not self.flag_switch_registered:
-            self.machine.events.add_handler('init_phase_2',
-                                            self.get_switch_states)
-            self.flag_switch_registered = True
-
-        # Return the switch object and an integer of its current state.
-        # 1 = active, 0 = inactive
-        return switch, config['number'], state
+        return switch, config['number']
 
     def configure_led(self, config):
 
@@ -589,9 +587,9 @@ class HardwarePlatform(Platform):
             config['number'] = str(config['number'])
 
         if self.config['config_number_format'] == 'int':
-            config['number'] = self.int_to_hex_string(config['number'])
+            config['number'] = Config.int_to_hex_string(config['number'])
         else:
-            config['number'] = self.normalize_hex_string(config['number'])
+            config['number'] = Config.normalize_hex_string(config['number'])
 
         this_fast_led = FASTDirectLED(config['number'])
         self.fast_leds.add(this_fast_led)
@@ -624,9 +622,9 @@ class HardwarePlatform(Platform):
             config['number'] = self.wpc_light_map.get(
                                                 config['number_str'].upper())
         elif self.config['config_number_format'] == 'int':
-            config['number'] = self.int_to_hex_string(config['number'])
+            config['number'] = Config.int_to_hex_string(config['number'])
         else:
-            config['number'] = self.normalize_hex_string(config['number'])
+            config['number'] = Config.normalize_hex_string(config['number'])
 
         return (FASTMatrixLight(config['number'], self.net_connection.send),
                 config['number'])
@@ -701,7 +699,7 @@ class HardwarePlatform(Platform):
         if not coil_action_ms:
             return  # with fast this is built into the main coil rule
 
-        self.log.info("Setting HW Rule. Switch:%s, Action ms:%s, Coil:%s, "
+        self.log.debug("Setting HW Rule. Switch:%s, Action ms:%s, Coil:%s, "
                        "Pulse:%s, pwm1:%s, pwm2:%s, Delay:%s, Recycle:%s,"
                        "Debounced:%s, Now:%s", sw.name, coil_action_ms,
                        coil.name, pulse_ms, pwm_on, pwm_off, delay,
@@ -723,7 +721,7 @@ class HardwarePlatform(Platform):
         if sw_activity == 0:
             control += 0x10
 
-        control = self.int_to_hex_string(int(control))
+        control = Config.int_to_hex_string(int(control))
         mode = '00'
         param1 = 0
         param2 = 0
@@ -754,11 +752,11 @@ class HardwarePlatform(Platform):
         else:
             cmd = 'DL:'
 
-        param1 = self.int_to_hex_string(param1)
-        param2 = self.int_to_hex_string(param2)
-        param3 = self.int_to_hex_string(param3)
-        param4 = self.int_to_hex_string(param4)
-        param5 = self.int_to_hex_string(param5)
+        param1 = Config.int_to_hex_string(param1)
+        param2 = Config.int_to_hex_string(param2)
+        param3 = Config.int_to_hex_string(param3)
+        param4 = Config.int_to_hex_string(param4)
+        param5 = Config.int_to_hex_string(param5)
 
         # hw_rules key = ('05', 1)
         # all values are strings
@@ -776,7 +774,7 @@ class HardwarePlatform(Platform):
                param4 + ',' + param5)  # todo change to join()
 
         coil.autofire = cmd
-        self.log.info("Writing hardware rule: %s", cmd)
+        self.log.debug("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
@@ -815,41 +813,12 @@ class HardwarePlatform(Platform):
 
             coil.autofire = None
 
-            self.log.info("Clearing hardware rule: %s",
+            self.log.debug("Clearing hardware rule: %s",
                           cmd + driver + ',' + mode)
 
             self.net_connection.send(cmd + driver + ',' + mode)
 
-    def int_to_hex_string(self, source_int):
-        """Converts an int from 0-255 to a one-byte (2 chars) hex string, with
-        uppercase characters.
 
-        """
-
-        source_int = int(source_int)
-
-        if source_int >= 0 and source_int <= 255:
-            return format(source_int, 'x').upper().zfill(2)
-
-        else:
-            print "invalid source int:", source_int
-            raise ValueError
-
-    def normalize_hex_string(self, source_hex, num_chars=2):
-        """Takes an incoming hex value and converts it to uppercase and fills in
-        leading zeros.
-
-        Args:
-            source_hex: Incoming source number. Can be any format.
-            num_chars: Total number of characters that will be returned. Default
-                is two.
-
-        Returns: String, uppercase, zero padded to the num_chars.
-
-        Example usage: Send "c" as source_hex, returns "0C".
-
-        """
-        return str(source_hex).upper().zfill(num_chars)
 
 
 class FASTSwitch(object):
@@ -938,7 +907,7 @@ class FASTDriver(object):
 
         cmd = self.config['trigger_cmd'] + self.config['number'] + ',' + '02'
 
-        self.log.info("Sending Disable Command: %s", cmd)
+        self.log.debug("Sending Disable Command: %s", cmd)
         self.send(cmd)
 
     def enable(self):
@@ -952,7 +921,7 @@ class FASTDriver(object):
                    ',C1,00,18,00,ff,' + self.config['hold_pwm'] + ',' +
                    self.config['recycle_ms'])
 
-        self.log.info("Sending Enable Command: %s", cmd)
+        self.log.debug("Sending Enable Command: %s", cmd)
         self.send(cmd)
         # todo change hold to pulse with re-ups
 
@@ -970,7 +939,7 @@ class FASTDriver(object):
                    ',89,00,10,' + str(milliseconds) + ',ff,00,00,' +
                    self.config['recycle_ms'])
 
-        self.log.info("Sending Pulse Command: %s", cmd)
+        self.log.debug("Sending Pulse Command: %s", cmd)
         self.send(cmd)
 
     def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
@@ -984,7 +953,7 @@ class FASTDriver(object):
                    ',89,00,18,' + str(original_on_ms) + ',' + str(on_ms) + ','
                    + str(off_ms) + ',' + self.config['recycle_ms'])
 
-        self.log.info("Sending PWM Hold Command: %s", cmd)
+        self.log.debug("Sending PWM Hold Command: %s", cmd)
         self.send(cmd)
 
 

@@ -24,7 +24,7 @@ class LogicBlocks(object):
 
         # Tell the mode controller that it should look for LogicBlock items in
         # modes.
-        self.machine.modes.register_start_method(self._process_config,
+        self.machine.mode_controller.register_start_method(self._process_config,
                                                  'logic_blocks')
 
         # Process game-wide (i.e. not in modes) logic blocks
@@ -157,7 +157,7 @@ class LogicBlock(object):
             if 'ball_starting' not in self.config['reset_events']:
                 self.config['reset_events'].append('ball_starting')
 
-    def __str__(self):
+    def __repr__(self):
         return self.name
 
     def _create_control_events(self):

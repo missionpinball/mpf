@@ -62,22 +62,13 @@ class SwitchController(object):
         self.machine.events.add_handler('machine_reset_phase_3',
                                         self.log_active_switches)
 
+        self.monitors = list()
+
     def _initialize_switches(self):
-
-        # Set "start active" switches
-        start_active = list()
-
-        if not self.machine.physical_hw:
-            try:
-                start_active = Config.string_to_lowercase_list(
-                    self.machine.config['virtual_platform_start_active_switches'])
-            except KeyError:
-                pass
+        self.update_switches_from_hw()
 
         for switch in self.machine.switches:
             # Populate self.switches
-            if switch.name in start_active:
-                switch.state = 1  # set state based on physical state
             self.set_state(switch.name, switch.state, reset_time=True)
 
             # Populate self.registered_switches
@@ -126,6 +117,28 @@ class SwitchController(object):
                     else:
                         switch.deactivation_events.add(event)
 
+    def update_switches_from_hw(self):
+        """Updates the states of all the switches be re-reading the states from
+        the hardware platform.
+
+        This method works silently and does not post any events if any switches
+        changed state.
+
+        """
+        # create a list of hw switch numbers, platforms, and switch objects
+        platforms = set()
+        switches = set()  # (switch_object, number)
+
+        for switch in self.machine.switches:
+            platforms.add(switch.platform)
+            switches.add((switch, switch.number))
+
+        for platform in platforms:
+            switch_states = platform.get_hw_switch_states()
+
+            for switch, number in switches:
+                switch.state = switch_states[number] ^ switch.invert
+
     def verify_switches(self):
         """Loops through all the switches and queries their hardware states via
         their platform interfaces and them compares that to the state that MPF
@@ -136,17 +149,19 @@ class SwitchController(object):
         This method is notification only. It doesn't fix anything.
 
         """
+        current_states = dict()
 
         for switch in self.machine.switches:
-            hw_state = switch.platform.get_switch_state(switch)
-            sw_state = self.machine.switches[switch.name].state
+            current_states[switch] = switch.state
 
-            if self.machine.switches[switch.name].type == 'NC':
-                sw_state = sw_state ^ 1
-            if sw_state != hw_state:
+        self.update_switches_from_hw()
+
+        for switch in self.machine.switches:
+            if switch.state ^ switch.invert != current_states[switch]:
                 self.log.warning("Switch State Error! Switch: %s, HW State: "
-                                 "%s, MPF State: %s", switch.name, hw_state,
-                                 sw_state)
+                                 "%s, MPF State: %s", switch.name,
+                                 current_states[switch],
+                                 switch.state ^ switch.invert)
 
     def is_state(self, switch_name, state, ms=0):
         """Queries whether a switch is in a given state and (optionally)
@@ -264,6 +279,10 @@ class SwitchController(object):
 
         """
 
+        self.log.debug("Processing switch. Name: %s, state: %s, logical: %s,"
+                       "num: %s, obj: %s, debounced: %s", name, state, logical,
+                       num, obj, debounced)
+
         # Find the switch name
 
         if num is not None:  # can't be 'if num:` in case the num is 0.
@@ -294,13 +313,13 @@ class SwitchController(object):
         # flip the logical & physical states for NC switches
         hw_state = state
 
-        if obj.type == 'NC':
+        if obj.invert:
             if logical:  # NC + logical means hw_state is opposite of state
-                hw_state = hw_state ^ 1
+                hw_state ^= 1
             else:
                 # NC w/o logical (i.e. hardware state was sent) means logical
                 # state is the opposite
-                state = state ^ 1
+                state ^= 1
 
         # If this update is not debounced, only proceed if this switch is
         # configured to not be debounced.
@@ -384,7 +403,15 @@ class SwitchController(object):
                     # ^1 in above line invertes the state
                     del self.active_timed_switches[k]
 
+        for monitor in self.monitors:
+            monitor(name, state)
+
         self._post_switch_events(name, state)
+
+    def add_monitor(self, monitor):
+        if monitor not in self.monitors:
+            self.monitors.append(monitor)
+
 
     def add_switch_handler(self, switch_name, callback, state=1, ms=0,
                            return_info=False, callback_kwargs=None):

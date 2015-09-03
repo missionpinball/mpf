@@ -71,12 +71,12 @@ class Text(DisplayElement):
 
     def process_text(self, text):
 
-        if '%' in text:
-            if self.machine.player:
-                for name, value in self.machine.player:
-                    if '%' + name + '%' in text:
-                        text = text.replace(
-                            '%' + name + '%', str(value))
+        if '%' in text and self.machine.player:
+            t = text.split('%')
+            if len(t) % 2 == 1:
+
+                for i in xrange(1, len(t)-1, 2):
+                    text = text.replace('%' + str(t[i]) + '%', str(self.machine.player[t[i]]))
 
         if 'min_digits' in self.config:
             text = text.zfill(self.config['min_digits'])

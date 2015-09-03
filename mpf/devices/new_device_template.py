@@ -4,8 +4,7 @@
 
 # Search this file for 'YourNewDevice' and replace with your device name
 
-import logging
-from mpf.system.devices import Device
+from mpf.system.device import Device
 
 class YourNewDevice(Device):
 
@@ -57,9 +56,10 @@ class YourNewDevice(Device):
         """
         pass
 
-    def __init__(self, machine, name, config, collection=None):
+    def __init__(self, machine, name, config, collection=None, validate=True):
         self.log = logging.getLogger('YourNewDevice.' + name)
-        super(YourNewDevice, self).__init__(machine, name, config, collection)
+        super(YourNewDevice, self).__init__(machine, name, config, collection,
+                                            validate=validate)
 
     # Since this new device class is a subclass of Device and you're calling
     # super(), several attributes are available to you, including:

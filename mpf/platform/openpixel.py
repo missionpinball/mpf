@@ -35,6 +35,9 @@ class HardwarePlatform(Platform):
         self.log.debug("Configuring Open Pixel hardware interface.")
         self.opc_client = None
 
+    def __repr__(self):
+        return '<Platform.OpenPixel>'
+
     def configure_led(self, config):
 
         if not self.opc_client:
@@ -238,21 +241,21 @@ class OPCThread(threading.Thread):
         if (self.max_connection_attempts > 0 and
                 self.connection_attempts > self.max_connection_attempts):
 
-            self.log.info("Max connection attempts reached")
+            self.log.debug("Max connection attempts reached")
             self.try_connecting = False
 
             if self.connection_required:
-                self.log.info("Configuration is set that OPC connection is "
+                self.log.debug("Configuration is set that OPC connection is "
                               "required. MPF exiting.")
                 self.done()
 
         try:
-            self.log.info('Trying to connect to OPC server: %s:%s. Attempt '
+            self.log.debug('Trying to connect to OPC server: %s:%s. Attempt '
                           'number %s', self.host, self.port,
                           self.connection_attempts)
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.connect((self.host, self.port))
-            self.log.info('Connected to the OPC server.')
+            self.log.debug('Connected to the OPC server.')
             self.connection_attempts = 0
 
         except socket.error:
