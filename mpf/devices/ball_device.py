@@ -194,24 +194,12 @@ class BallDevice(Device):
             # todo do we also need to add inactive and make a smarter
             # handler?
 
-        # handle hold_coil activation when a ball hits entrance switch
-        if (self.config['hold_coil'] and
-           self.config['enable_hold'] == 'entrance_or_ball_switch'):
-
-            if self.config['entrance_switch']:
-                self.machine.switch_controller.add_switch_handler(
-                    switch_name=self.config['entrance_switch'].name, state=1, ms=0,
-                    callback=self._enable_hold_coil)
-
-        # handle hold_coil activation when a ball hits ball switch
-        if (self.config['hold_coil'] and
-           self.config['enable_hold'] == 'entrance_or_ball_switch'):
-
-            for switch in self.config['ball_switches']:
-                self.machine.switch_controller.add_switch_handler(
-                    switch_name=switch.name, state=1,
-                    ms=0,
-                    callback=self._enable_hold_coil)
+        # handle hold_coil activation when a ball hits a switch
+        for switch in self.config['hold_switches']:
+            self.machine.switch_controller.add_switch_handler(
+                switch_name=switch.name, state=1,
+                ms=0,
+                callback=self._enable_hold_coil)
 
 
 
@@ -830,6 +818,8 @@ class BallDevice(Device):
             self.log.debug("Disabling hold coil. num_balls_ejecting: %s. New "
                            "balls: %s.", self.num_balls_ejecting, self.balls)
 
+    def hold(self, **kwargs):
+        self._enable_hold_coil()
 
     def _enable_hold_coil(self, **kwargs):
 
