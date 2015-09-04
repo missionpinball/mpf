@@ -126,7 +126,7 @@ class BallLock(Device):
     def _lock_ball(self, device, balls, **kwargs):
         # if full do not take any balls
         if self.is_full():
-            self.log.debug("Cannot lock balls. Lock is full.", balls_to_lock)
+            self.log.debug("Cannot lock balls. Lock is full.")
             return {'balls': balls}
 
         # if there are no balls do not claim anything
