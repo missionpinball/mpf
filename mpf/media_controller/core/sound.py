@@ -12,6 +12,7 @@ import time
 import Queue
 import uuid
 import copy
+import sys
 
 from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config
@@ -109,7 +110,13 @@ class SoundController(object):
         # Initialize the sound controller. Not done in __init__() because we
         # need Pygame to be setup first.
 
-        frequency, bits, channels = pygame.mixer.get_init()
+        try:
+            frequency, bits, channels = pygame.mixer.get_init()
+        except TypError:
+            self.log.error("Could not initialize audio. Does your computer "
+                           "have an audio device? Maybe it doesn't create one"
+                           "if there are no speakers plugged in?")
+            sys.exit()
 
         self.log.debug("Pygame Sound Mixer configuration. Freq: %s, Bits: %s, "
                        "Channels: %s", frequency, bits, channels)
