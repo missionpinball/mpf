@@ -80,8 +80,8 @@ if options_dict['version']:
 try:
     options_dict['machinepath'] = args[0]
 except:
-    print("Error: You need to specify the path to your machine_files folder "\
-         "for the game you want to run.")
+    print("Error: You need to specify the path to your machine_files folder "
+          "for the game you want to run.")
     sys.exit()
 
 # Configure logging. Creates a logfile and logs to the console.

@@ -112,7 +112,7 @@ class BallLock(Device):
 
     # return true if lock is full
     def is_full(self):
-        return (self.remaining_space_in_lock() == 0)
+        return self.remaining_space_in_lock() == 0
 
     # return the remaining capacity of the lock
     def remaining_space_in_lock(self):

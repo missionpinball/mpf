@@ -786,33 +786,6 @@ class LightController(object):
         except KeyError:
             pass
 
-    def load_shows(self, path):
-        """Automatically loads all the light shows in a path.
-
-        Light shows are added to the dictionary self.shows with they key
-        set to the value of the file name.
-
-        For example, the light show 'sweep.yaml' will be loaded as
-        self.shows['sweep']
-
-        This method will also loop through sub-directories, allowing the game
-        programmer to organize the light show files into folders as needed.
-
-        Args:
-            path: A string of the relative path to the folder, based from the
-                root from where the mpf.py file is running.
-        """
-
-        self.log.debug("Loading light shows from: %s", path)
-        for root, path, files in os.walk(path, followlinks=True):
-            for f in files:
-                if f.endswith('.yaml'):
-                    # todo Make this a config option in case people want to give
-                    # their show files a different extension?
-                    fullpath = os.path.join(root, f)
-                    self.machine.shows[str(os.path.splitext(f)[0])] = \
-                        Show(self.machine, fullpath)
-
 
 class Show(Asset):
 
@@ -921,12 +894,12 @@ class Show(Asset):
                     if type(value) is int and value > 255:
                         value = 255
 
-                    for light in light_list:
-                        light_actions[light] = value
+                    for light_ in light_list:
+                        light_actions[light_] = value
 
                         # make sure this light is in self.light_states
-                        if light not in self.light_states:
-                            self.light_states[light] = 0
+                        if light_ not in self.light_states:
+                            self.light_states[light_] = 0
 
                 step_actions['lights'] = light_actions
 
@@ -1000,8 +973,8 @@ class Show(Asset):
                                 flasher)
                             continue
 
-                    for flasher in flasher_list:
-                        flasher_set.add(flasher)
+                    for flasher_ in flasher_list:
+                        flasher_set.add(flasher_)
 
                 step_actions['flashers'] = flasher_set
 
@@ -1034,8 +1007,8 @@ class Show(Asset):
                     if type(value) is int and value > 255:
                         value = 255
 
-                    for gi in gi_list:
-                        gi_actions[gi] = value
+                    for gi_ in gi_list:
+                        gi_actions[gi_] = value
 
                 step_actions['gis'] = gi_actions
 
@@ -1079,12 +1052,12 @@ class Show(Asset):
                     value = Config.hexstring_to_list(value)
                     value.append(fade)
 
-                    for led in led_list:
-                        led_actions[led] = value
+                    for led_ in led_list:
+                        led_actions[led_] = value
 
                         # make sure this led is in self.led_states
-                        if led not in self.led_states:
-                            self.led_states[led] = {
+                        if led_ not in self.led_states:
+                            self.led_states[led_] = {
                                 'current_color': [0, 0, 0],
                                 'destination_color': [0, 0, 0],
                                 'start_color': [0, 0, 0],

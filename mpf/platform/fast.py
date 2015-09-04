@@ -928,7 +928,7 @@ class FASTDriver(object):
     def pulse(self, milliseconds=None):
         """Pulses this driver. """
 
-        if milliseconds >= 0 and milliseconds <= 255:
+        if 0 <= milliseconds <= 255:
             milliseconds = format(milliseconds, 'x').upper().zfill(2)
 
         if self.autofire:
@@ -1029,7 +1029,7 @@ class FASTDirectLED(object):
         return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
 
     def rgb_to_hex(self, rgb):
-        return '%02x%02x%02x' % ((rgb[0], rgb[1], rgb[2]))
+        return '%02x%02x%02x' % (rgb[0], rgb[1], rgb[2])
 
     def color(self, color):
         """Instantly sets this LED to the color passed.

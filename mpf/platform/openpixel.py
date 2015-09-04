@@ -238,8 +238,7 @@ class OPCThread(threading.Thread):
 
         self.connection_attempts += 1
 
-        if (self.max_connection_attempts > 0 and
-                self.connection_attempts > self.max_connection_attempts):
+        if 0 < self.max_connection_attempts < self.connection_attempts:
 
             self.log.debug("Max connection attempts reached")
             self.try_connecting = False
@@ -298,7 +297,7 @@ class OPCThread(threading.Thread):
 
     def done(self):
         """Exits the thread and causes MPF to shut down."""
-        self.disconnect
+        self.disconnect()
         self.machine.done = True
 
 

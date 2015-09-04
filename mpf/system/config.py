@@ -797,7 +797,7 @@ class Config(object):
 
         source_int = int(source_int)
 
-        if source_int >= 0 and source_int <= 255:
+        if 0 <= source_int <= 255:
             return format(source_int, 'x').upper().zfill(2)
 
         else:

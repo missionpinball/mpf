@@ -159,14 +159,14 @@ def update_screen():
     global x_offset
     global dmd_palette
 
-    new_image_dmd_surface = pygame.Surface((dmd_size), depth=8)
+    new_image_dmd_surface = pygame.Surface(dmd_size, depth=8)
     new_image_dmd_surface.set_palette(dmd_palette)
     new_image_dmd_surface.fill(dark_color)
 
     new_image_dmd_surface.blit(surface_to_dmd(source_image_surface),
                                               (x_offset, y_offset))
 
-    source_image_dmd_surface = pygame.Surface((dmd_size))
+    source_image_dmd_surface = pygame.Surface(dmd_size)
     source_image_dmd_surface.fill(dark_color)
     source_image_dmd_surface.blit(source_image_surface, (x_offset, y_offset))
 
@@ -214,7 +214,7 @@ def update_screen():
 def make_screen_surface(surface, dimensions, pixel_spacing=0):
 
     # scale it
-    new_surface = pygame.transform.scale(surface, (dimensions))
+    new_surface = pygame.transform.scale(surface, dimensions)
 
     # pixelize it
     if pixel_spacing:

@@ -229,7 +229,7 @@ class SlideBuilder(object):
 
         # Does this slide need to auto clear itself?
         if 'expire' not in settings[0]:
-            settings[0]['expire']
+            settings[0]['expire'] = 0
 
         # Does this slide name already exist for this display?
 

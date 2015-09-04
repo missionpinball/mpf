@@ -123,30 +123,30 @@ class Flipper(Device):
         if (self.config['hold_coil'] and self.config['use_eos'] and
                 self.config['eos_switch']):
 
-            self._enable_flipper_rule_A()
-            self._enable_flipper_rule_D()
-            self._enable_flipper_rule_E()
-            self._enable_flipper_rule_F()
-            self._enable_flipper_rule_G()
+            self._enable_flipper_rule_a()
+            self._enable_flipper_rule_d()
+            self._enable_flipper_rule_e()
+            self._enable_flipper_rule_f()
+            self._enable_flipper_rule_g()
 
         elif (not self.config['hold_coil'] and self.config['use_eos'] and
                 self.config['eos_switch']):
 
-            self._enable_flipper_rule_A()
-            self._enable_flipper_rule_H()
-            self._enable_flipper_rule_F()
+            self._enable_flipper_rule_a()
+            self._enable_flipper_rule_h()
+            self._enable_flipper_rule_f()
 
         elif self.config['hold_coil'] and not self.config['use_eos']:
 
-            self._enable_flipper_rule_B()
-            self._enable_flipper_rule_D()
-            self._enable_flipper_rule_F()
-            self._enable_flipper_rule_G()
+            self._enable_flipper_rule_b()
+            self._enable_flipper_rule_d()
+            self._enable_flipper_rule_f()
+            self._enable_flipper_rule_g()
 
         elif not self.config['hold_coil'] and not self.config['use_eos']:
 
-            self._enable_flipper_rule_C()
-            self._enable_flipper_rule_F()
+            self._enable_flipper_rule_c()
+            self._enable_flipper_rule_f()
 
             # todo detect bad EOS and program around it
 
@@ -162,7 +162,7 @@ class Flipper(Device):
         self.enable()
 
     @classmethod
-    def invert(self):  # todo niy
+    def invert(cls):  # todo niy
         """Enables inverted flippers.
 
         Inverted flippers is a novelty mode where the left flipper button
@@ -170,8 +170,8 @@ class Flipper(Device):
 
         This mode is not yet implemented.
         """
-        self.inverted = True
-        self.enable()
+        cls.inverted = True
+        cls.enable()
 
     def enable_partial_power(self, percent):  # todo niy
         """Enables flippers which operated at less than full power.
@@ -201,7 +201,7 @@ class Flipper(Device):
             for switch in self.flipper_switches:
                 self.platform.clear_hw_rule(switch)
 
-    def _enable_flipper_rule_A(self):
+    def _enable_flipper_rule_a(self):
         """
         Rule  Type     Coil  Switch  Action
         A.    Enable   Main  Button  active
@@ -218,7 +218,7 @@ class Flipper(Device):
 
         self.rules['a'] = True
 
-    def _enable_flipper_rule_B(self):
+    def _enable_flipper_rule_b(self):
         """
         Rule  Type     Coil  Switch  Action
         B.    Pulse    Main  Button  active
@@ -235,7 +235,7 @@ class Flipper(Device):
 
         self.rules['b'] = True
 
-    def _enable_flipper_rule_C(self):
+    def _enable_flipper_rule_c(self):
         """
         Rule  Type       Coil  Switch  Action
         C.    Pulse/PWM  Main  button  active
@@ -255,7 +255,7 @@ class Flipper(Device):
 
         self.rules['c'] = True
 
-    def _enable_flipper_rule_D(self):
+    def _enable_flipper_rule_d(self):
         """
         Rule  Type     Coil  Switch  Action
         D.    Enable   Hold  Button  active
@@ -272,7 +272,7 @@ class Flipper(Device):
 
         self.rules['d'] = True
 
-    def _enable_flipper_rule_E(self):
+    def _enable_flipper_rule_e(self):
         """
         Rule  Type     Coil  Switch  Action
         E.    Disable  Main  EOS     active
@@ -289,7 +289,7 @@ class Flipper(Device):
 
         self.rules['e'] = True
 
-    def _enable_flipper_rule_F(self):
+    def _enable_flipper_rule_f(self):
         """
         Rule  Type     Coil  Switch  Action
         F.    Disable  Main  Button  inactive
@@ -307,7 +307,7 @@ class Flipper(Device):
 
         self.rules['f'] = True
 
-    def _enable_flipper_rule_G(self):
+    def _enable_flipper_rule_g(self):
         """
         Rule  Type     Coil  Switch  Action
         G.    Disable  Hold  Button  inactive
@@ -325,7 +325,7 @@ class Flipper(Device):
 
         self.rules['g'] = True
 
-    def _enable_flipper_rule_H(self):
+    def _enable_flipper_rule_h(self):
         """
         Rule  Type     Coil  Switch  Action
         H.    PWM      Main  EOS     active

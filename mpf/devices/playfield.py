@@ -6,7 +6,6 @@ a pinball machine."""
 # Released under the MIT License. (See license info at the end of this file.)
 
 import logging
-from collections import defaultdict
 
 from mpf.devices.ball_device import BallDevice
 from mpf.system.tasks import DelayManager
@@ -160,7 +159,6 @@ class Playfield(BallDevice):
 
     def add_ball(self, balls=1, source_name=None, source_device=None,
                  trigger_event=None):
-
         """Adds live ball(s) to the playfield.
 
         Args:
@@ -241,7 +239,7 @@ class Playfield(BallDevice):
                        "Wait for event: %s", balls, source_device.name,
                        trigger_event)
 
-        # If we don't have a coil that's fired by the player, and we our source
+        # If we don't have a coil that's fired by the player, and our source
         # device has the ability to eject, then we do the eject now.
 
         # Some examples:
@@ -261,7 +259,7 @@ class Playfield(BallDevice):
                                                trigger_event)
 
         else:
-            # if there's no trigger, eject right away
+            # if there's no trigger_event, eject right away
             # if there's no eject coil, that's ok. We still need to setup the
             # eject so the device will be expecting the ball to disappear
             source_device.eject(balls=balls, target=self, get_ball=True)

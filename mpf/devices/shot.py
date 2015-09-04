@@ -6,17 +6,11 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
-import operator
 import uuid
 from collections import OrderedDict
 
-import yaml
-
 from mpf.system.device import Device
-from mpf.system.config import Config
-from mpf.system.timing import Timing
-from mpf.system.tasks import DelayManager
+import mpf.system.tasks
 
 
 class Shot(Device):
@@ -48,7 +42,7 @@ class Shot(Device):
         super(Shot, self).__init__(machine, name, config, collection,
                                    validate=validate)
 
-        self.delay = DelayManager()
+        self.delay = mpf.system.tasks.DelayManager()
 
         self.running_light_show = None
         self.active_sequences = list()
@@ -152,7 +146,7 @@ class Shot(Device):
                            "Current State: %s", steps, mode, profile_name,
                            self.player[player_var])
 
-        if (self.player[player_var] + steps >= len(profile['states'])):
+        if self.player[player_var] + steps >= len(profile['states']):
 
             if profile['loop']:
                 if self.debug:
@@ -344,6 +338,13 @@ class Shot(Device):
             self.log.debug("Hit! Mode: %s, Profile: %s, State: %s",
                           mode, profile, state)
 
+        # do this before the events are posted since events could change the
+        # profile
+        if not self.enable_table[mode]['settings']['block']:
+            need_to_waterfall = True
+        else:
+            need_to_waterfall = False
+
         # post events
         self.machine.events.post(self.name + '_hit', profile=profile,
                                  state=state)
@@ -355,7 +356,6 @@ class Shot(Device):
         if self.enable_table[mode]['settings']['advance_on_hit']:
             if self.debug:
                 self.log.debug("Mode '%s' advance_on_hit is True.", mode)
-
             self.advance(mode=mode)
         elif self.debug:
             self.log.debug('Not advancing profile state since the current '
@@ -370,7 +370,7 @@ class Shot(Device):
             for callback in self.machine.monitors['shots']:
                 callback(name=self.name)
 
-        if not self.enable_table[mode]['settings']['block']:
+        if need_to_waterfall:
 
             if self.debug:
                 self.log.debug('%s block: False. Waterfalling hits', mode)
@@ -385,7 +385,10 @@ class Shot(Device):
 
     def _waterfall_hits(self, mode, waterfall_hits):
 
-        if self.enable_table[mode]['settings']['block']:
+        # check for waterfall_hits here because the current active profile
+        # could have been changed and we know for sure we want to look for
+        # waterfall_hits regardless of what it is since we're here.
+        if waterfall_hits and mode.enable_table[mode]['settings']['block']:
             return
 
         found = False
@@ -509,7 +512,7 @@ class Shot(Device):
         self.active_delay_switches.add(switch_name)
 
     def _release_delay(self, switch):
-        self.active_delay_switches.remove(switch_name)
+        self.active_delay_switches.remove(switch)
 
     def _reset_sequence(self, seq_id):
         if self.debug:

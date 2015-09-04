@@ -249,10 +249,10 @@ class FadeCandyOPClient(OpenPixelClient):
         config_byte = 0x00
 
         if not self.dithering:
-            config_byte = config_byte | 0x01
+            config_byte |= 0x01
 
         if not self.keyframe_interpolation:
-            config_byte = config_byte | 0x02
+            config_byte |= 0x02
 
         # manual LED control
         # config_byte = config_byte | 0x04

@@ -58,7 +58,7 @@ class LogicBlocks(object):
         self.log.debug("Processing player_turn_start")
 
         for block in player.logic_blocks:
-            block._create_control_events()
+            block.create_control_events()
 
     def _player_turn_stop(self, player, **kwargs):
 
@@ -78,7 +78,7 @@ class LogicBlocks(object):
 
         if mode:
             for block in blocks_added:
-                block._create_control_events()
+                block.create_control_events()
 
         return self._unload_logic_blocks, blocks_added
 
@@ -160,7 +160,7 @@ class LogicBlock(object):
     def __repr__(self):
         return self.name
 
-    def _create_control_events(self):
+    def create_control_events(self):
 
         # todo need to run this when a mode start creates a logic block
 

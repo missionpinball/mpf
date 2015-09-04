@@ -27,7 +27,7 @@ while True:
         while True:
             data = connection.recv(255)
             if data:
-                commands = data.decode("utf-8").split("\n");
+                commands = data.decode("utf-8").split("\n")
                 for cmd in commands:
                     if cmd:
                         handleCommand( cmd )

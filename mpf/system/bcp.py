@@ -226,7 +226,7 @@ class BCP(object):
         self.machine.mode_controller.register_load_method(
             self.register_mpfmc_trigger_events)
 
-    def __repr(self):
+    def __repr__(self):
         return '<BCP Module>'
 
 

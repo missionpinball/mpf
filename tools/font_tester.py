@@ -228,14 +228,14 @@ def update_screen():
 
     # put that text on our 'dmd' surface in the way it will be in MPF
 
-    dmd_surface = pygame.Surface((dmd_size))
+    dmd_surface = pygame.Surface(dmd_size)
 
     dmd_surface.fill(dark_color)
 
     dmd_surface.blit(text_surface, (x, y))
 
     # scale it
-    dmd_screen_surface = pygame.transform.scale(dmd_surface, (dmd_screen_size))
+    dmd_screen_surface = pygame.transform.scale(dmd_surface, dmd_screen_size)
 
     # pixelize it
     if pixel_spacing:

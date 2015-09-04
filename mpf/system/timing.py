@@ -158,9 +158,9 @@ class Timing(object):
         for _i in range(length):
             count += ratio
             if int(count) > whole_num:
-                output = output | 1
+                output |= 1
                 whole_num += 1
-            output = output << 1
+            output <<= 1
 
         return output
 

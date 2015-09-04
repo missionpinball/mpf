@@ -88,7 +88,7 @@ class Platform(object):
                            pwm_on, pwm_off, delay, recycle_time, debounced,
                            drive_now)
 
-    def write_hw_rule(sw, sw_activity, coil_action_ms, coil, pulse_ms, pwm_on,
+    def write_hw_rule(self, sw, sw_activity, coil_action_ms, coil, pulse_ms, pwm_on,
                       pwm_off, delay, recycle_time, debounced, drive_now):
         """Subclass this method in a platform interface to write a hardware
         switch rule to the controller.

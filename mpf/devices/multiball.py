@@ -63,7 +63,7 @@ class Multiball(Device):
         if self.balls_ejected - balls_added > 0:
             self.source_playfield.add_ball(balls=self.balls_ejected - balls_added)
 
-        if self.config['shoot_again'] == False:
+        if not self.config['shoot_again']:
             # No shoot again. Just stop multiball right away
             self.stop()
         else:

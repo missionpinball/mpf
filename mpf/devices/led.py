@@ -217,7 +217,7 @@ class LED(Device):
             self.cache['fade_ms'] = fade_ms
             self.cache['priority'] = priority
             self.cache['destination_color'] = priority
-            self.cache['destination_time']
+            self.cache['destination_time'] = self.state['destination_time']
             self.cache['start_color'] = self.cache['color']
             self.cache['start_time'] = time.time()
 

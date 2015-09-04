@@ -181,7 +181,7 @@ class EventManager(object):
                     if rh[0] == handler:
                         self.registered_handlers[event].remove(rh)
 
-        self.add_handler(self, event, handler, priority, **kwargs)
+        self.add_handler(event, handler, priority, **kwargs)
 
     def remove_handler(self, method):
         """Removes an event handler from all events a method is registered to
