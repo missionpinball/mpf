@@ -16,7 +16,7 @@ from mpf.system.config import Config
 
 class EventManager(object):
 
-    def __init__(self, machine):
+    def __init__(self, machine, setup_event_player=True):
         self.log = logging.getLogger("Events")
         self.machine = machine
         self.registered_handlers = {}
@@ -27,9 +27,10 @@ class EventManager(object):
 
         self.debug = True
 
-        self.add_handler('init_phase_1', self._initialize)
+        self.add_handler('init_phase_1', self._initialize,
+                         setup_event_player=setup_event_player)
 
-    def _initialize(self):
+    def _initialize(self, setup_event_player):
         if 'event_player' in self.machine.config:
             self.process_event_player(self.machine.config['event_player'])
 
@@ -437,11 +438,11 @@ class EventManager(object):
                 if self.debug:
                     self.log.debug("XXXX There's an event in progress. Added to "
                                    "the queue.")
-                    self.log.debug("================== ACTIVE EVENTS =============")
+                    self.log.debug("============== ACTIVE EVENTS ============")
                     for event in list(self.event_queue):
                         self.log.debug("%s, %s, %s, %s", event[0], event[1],
                                     event[2], event[3])
-                    self.log.debug("==============================================")
+                    self.log.debug("=========================================")
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.

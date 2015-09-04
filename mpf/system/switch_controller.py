@@ -296,7 +296,14 @@ class SwitchController(object):
             name = obj.name
 
         elif name:
-            obj = self.machine.switches[name]
+
+            try:
+                obj = self.machine.switches[name]
+            except KeyError:
+                self.log.warning("Cannot process switch '%s' as this is not a"
+                                 "valid switch name.", name)
+                return
+
             name = obj.name  # switches this to the name MPF wants to use
 
         else:

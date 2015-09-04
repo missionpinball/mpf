@@ -163,7 +163,7 @@ class MediaController(object):
             Config.process_config(mediacontroller_config_spec,
                                   self.config['media_controller']))
 
-        self.events = EventManager(self)
+        self.events = EventManager(self, setup_event_player=False)
         self.timing = Timing(self)
 
         # Load the media controller modules
@@ -301,11 +301,15 @@ class MediaController(object):
     def _process_command(self, bcp_command, **kwargs):
         self.log.debug("Processing command: %s %s", bcp_command, kwargs)
 
-        try:
+
+        # Can't use try/except KeyError here becasue there could be a KeyError
+        # in the callback which we don't want it to swallow.
+        if bcp_command in self.bcp_commands:
             self.bcp_commands[bcp_command](**kwargs)
-        except KeyError:
+        else:
             self.log.warning("Received invalid BCP command: %s", bcp_command)
             self.send('error', message='invalid command', command=bcp_command)
+
 
     def send(self, bcp_command, callback=None, **kwargs):
         """Sends a BCP command to the connected pinball controller.
