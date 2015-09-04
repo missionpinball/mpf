@@ -84,9 +84,9 @@ class ShotProfileManager(object):
 
         for entry in config['rotation_pattern']:
             if entry.upper() == 'R' or entry.upper() == 'RIGHT':
-                rotation_pattern.append(1)
+                rotation_pattern.append('right')
             else:
-                rotation_pattern.append(-1)
+                rotation_pattern.append('left')
 
         config['rotation_pattern'] = rotation_pattern
 

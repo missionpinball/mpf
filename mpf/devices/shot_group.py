@@ -258,8 +258,8 @@ class ShotGroup(Device):
 
         # figure out which direction we're going to rotate
         if not direction:
-            direction = self.rotation_pattern[0]
-            self.rotation_pattern.rotate(-1)
+            direction = shot_list[0].enable_table[mode]['settings']['rotation_pattern'][0]
+            shot_list[0].enable_table[mode]['settings']['rotation_pattern'].rotate(-1)
 
             if self.debug:
                 self.log.debug("Since no direction was specified, pulling from"
