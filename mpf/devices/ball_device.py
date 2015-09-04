@@ -771,7 +771,7 @@ class BallDevice(Device):
                                          target=self.eject_in_progress_target,
                                          timeout=timeout,
                                          num_attempts=self.num_eject_attempts,
-                                         callback=self._fire_eject_coil)
+                                         callback=self._do_eject)
                 # Fire the coil via a callback in case there are events in the
                 # queue. This ensures that the coil pulse happens when this
                 # event is posted instead of firing right away.
@@ -787,11 +787,14 @@ class BallDevice(Device):
                 self.log.debug("DEBUG: Eject duration: %ss. Target: None",
                               round(time.time() - self.eject_start_time, 2))
 
-    def _fire_eject_coil(self, target, timeout=None, **kwargs):
-
+    def _do_eject(self, target, timeout=None, **kwargs):
         self._setup_eject_confirmation(target, timeout)
 
         self.balls -= self.num_balls_ejecting
+
+        self._fire_eject_coil()
+
+    def _fire_eject_coil(self):
 
         try:
             self.config['eject_coil'].pulse()
