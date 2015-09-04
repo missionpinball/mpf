@@ -500,7 +500,7 @@ class BallDevice(Device):
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch
 
-        if not self.config['ball_switches']:
+        if not self.config['ball_switches'] and not self.is_full():
             self.balls += 1
             self._balls_added(1)
 
