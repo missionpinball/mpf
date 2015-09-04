@@ -927,6 +927,12 @@ class BallDevice(Device):
                 self.log.debug("Will confirm eject via recount of ball switches.")
             self.flag_confirm_eject_via_count = True
 
+        elif self.config['confirm_eject_type'] == 'fake':
+            # for all ball locks or captive balls which just release a ball
+            # we use delay to keep the call order
+            self.delay.add(name='target_eject_confirmation_timeout',
+                           ms=1, callback=self._eject_success)
+
         else:
             self.log.error("Invalid confirm_eject_type setting: '%s'",
                            self.config['confirm_eject_type'])
