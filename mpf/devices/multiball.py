@@ -41,6 +41,7 @@ class Multiball(Device):
         if self.balls_ejected > 0:
             self.log.debug("Cannot start MB because %s are still in play",
                            self.balls_ejected)
+            return
 
         self.shoot_again = True
         self.log.debug("Starting multiball with %s balls",
