@@ -12,6 +12,7 @@ from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 from mpf.system.config import Config
 
+
 class Multiball(Device):
 
     config_section = 'multiballs'

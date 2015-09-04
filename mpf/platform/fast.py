@@ -1046,7 +1046,7 @@ class FASTDirectLED(object):
     def fade(self, color, fade_ms):
         # todo
         # not yet implemented. For now we'll just immediately set the color
-        self.color(color, fade_ms)
+        self.color(color)
 
     def disable(self):
         """Disables (turns off) this LED instantly. For multi-color LEDs it

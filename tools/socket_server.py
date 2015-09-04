@@ -1,7 +1,7 @@
 import socket
 import sys
 
-def handleCommand( cmd ):
+def handle_command( cmd ):
     print( "Received command " + cmd )
 
 # Create a TCP/IP socket
@@ -30,7 +30,7 @@ while True:
                 commands = data.decode("utf-8").split("\n")
                 for cmd in commands:
                     if cmd:
-                        handleCommand( cmd )
+                        handle_command( cmd )
             else:
                 print >>sys.stderr, 'no more data from', client_address
                 break

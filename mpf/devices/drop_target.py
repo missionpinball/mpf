@@ -182,9 +182,9 @@ class DropTargetBank(Device):
                            ' Total: %s', self.up, self.down,
                            len(self.drop_targets))
 
-        if down == len(self.drop_targets):
+        if self.down == len(self.drop_targets):
             self._bank_down()
-        if not down:
+        if not self.down:
             self._bank_up()
         else:
             self._bank_mixed()

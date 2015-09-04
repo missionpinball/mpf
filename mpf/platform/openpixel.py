@@ -52,9 +52,9 @@ class HardwarePlatform(Platform):
         if self.machine.config['open_pixel_control']['number_format'] == 'hex':
             led = int(str(led), 16)
 
-        return OpenPixelLED(self.opc_client, channel, led)
-
         self.opc_client.add_pixel(channel, led)
+
+        return OpenPixelLED(self.opc_client, channel, led)
 
     def _setup_opc_client(self):
         self.opc_client = OpenPixelClient(self.machine,

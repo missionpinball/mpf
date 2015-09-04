@@ -137,7 +137,6 @@ class Config(object):
             except:
                 log.critical("Couldn't load from file: %s", yaml_file)
                 raise
-                sys.exit()
 
         config = Config.dict_merge(config, new_updates)
 
@@ -160,7 +159,6 @@ class Config(object):
             log.critical("No configuration file found, or config file is empty."
                          " But congrats! MPF works! :)")
             raise
-            sys.exit()
 
         return config
 

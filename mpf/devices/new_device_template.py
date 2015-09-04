@@ -6,6 +6,7 @@
 
 from mpf.system.device import Device
 
+
 class YourNewDevice(Device):
 
     config_section = 'your_new_devices'

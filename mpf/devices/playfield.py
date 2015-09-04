@@ -17,6 +17,7 @@ class Playfield(BallDevice):
     collection = 'playfields'
     class_label = 'playfield'
 
+    # noinspection PyMissingConstructor
     def __init__(self, machine, name, config, collection=None, validate=True):
         self.log = logging.getLogger('playfield')
 
@@ -112,8 +113,8 @@ class Playfield(BallDevice):
         ball_change = balls - prior_balls
 
         if ball_change:
-            self.log.debug("Ball count change. Prior: %s, Current: %s, Change: "
-                           "%s", prior_balls, balls, ball_change)
+            self.log.debug("Ball count change. Prior: %s, Current: %s, Change:"
+                           " %s", prior_balls, balls, ball_change)
 
         if balls > 0:
             self._balls = balls
@@ -235,8 +236,8 @@ class Playfield(BallDevice):
                             "same device. Will queue the eject request")
             return True
 
-        self.log.debug("Received request to add %s ball(s). Source device: %s. "
-                       "Wait for event: %s", balls, source_device.name,
+        self.log.debug("Received request to add %s ball(s). Source device: %s."
+                       " Wait for event: %s", balls, source_device.name,
                        trigger_event)
 
         # If we don't have a coil that's fired by the player, and our source

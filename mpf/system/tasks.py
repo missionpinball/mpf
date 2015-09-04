@@ -52,7 +52,7 @@ class Task(object):
         return "callback=" + str(self.callback) + " wakeup=" + str(self.wakeup)
 
     @staticmethod
-    def Create(callback, args=tuple(), sleep=0):
+    def create(callback, args=tuple(), sleep=0):
         """Creates a new task and insert it into the runnable set."""
         task = Task(callback=callback, args=args, sleep=sleep)
         Task.NewTasks.add(task)

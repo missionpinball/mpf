@@ -66,7 +66,7 @@ class Image(Asset):
         """
         pass
 
-    def _load(self, callback):
+    def do_load(self, callback):
         if self.file_name.endswith('.dmd'):
             self.image_surface = (
                 mpf.media_controller.display_modules.dmd.load_dmd_file(

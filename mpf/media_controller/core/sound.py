@@ -798,7 +798,7 @@ class Sound(Asset):
         if 'end_time' not in self.config:  # todo
             self.config['end_time'] = None
 
-    def _load(self, callback):
+    def do_load(self, callback):
         try:
             self.sound_object = pygame.mixer.Sound(self.file_name)
         except pygame.error:

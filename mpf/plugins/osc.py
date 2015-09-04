@@ -29,6 +29,7 @@ from mpf.system.config import Config
 global import_success
 
 try:
+    # noinspection PyPep8Naming
     import OSC as OSCmodule
     socket.gethostbyname(socket.gethostname())
     import_success = True

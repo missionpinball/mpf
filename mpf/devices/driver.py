@@ -74,8 +74,8 @@ class Driver(Device):
             self.hw_driver.enable()
         else:
             self.log.warning("Received a command to enable this coil without "
-                             "pwm, but 'allow_enable' has not been set to True "
-                             "in this coil's configuration.")
+                             "pwm, but 'allow_enable' has not been set to True"
+                             " in this coil's configuration.")
 
         self.time_when_done = -1
         self.time_last_changed = time.time()
@@ -150,7 +150,6 @@ class Driver(Device):
         self.time_last_changed = time.time()
         self.time_when_done = -1
         # todo also disable the timer which reenables this
-
 
 
 # The MIT License (MIT)

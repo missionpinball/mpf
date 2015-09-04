@@ -8,6 +8,7 @@ from mpf.devices import *
 from mpf.system.config import CaseInsensitiveDict, Config
 from mpf.system.timing import Timing
 
+
 class DeviceManager(object):
 
     def __init__(self, machine):

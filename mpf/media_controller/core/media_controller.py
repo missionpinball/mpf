@@ -81,7 +81,7 @@ class MediaController(object):
         self.next_tick_time = 0
         self.secs_per_tick = 0
 
-        Task.Create(self._check_crash_queue)
+        Task.create(self._check_crash_queue)
 
         self.bcp_commands = {'hello': self.bcp_hello,
                              'goodbye': self.bcp_goodbye,

@@ -96,7 +96,7 @@ class LightController(object):
                                           path_string='shows',
                                           asset_class=Show,
                                           asset_attribute='shows',
-                                          file_extensions=('yaml')
+                                          file_extensions=('yaml',)
                                           )
 
     def _initialize(self):
@@ -453,7 +453,7 @@ class LightController(object):
                 # add the current location to the list to be serviced
                 # show.service_locations.append(show.current_location)
                 # advance the show to the current time
-                show._advance()
+                show.advance()
 
                 if show.ending:
                     break
@@ -480,7 +480,7 @@ class LightController(object):
                                              'priority': item['priority'],
                                              'color': item.get('color', None)})
                 elif item.get('playlist', None):
-                    item['playlist']._advance()
+                    item['playlist'].advance()
 
                 # We have to check again since one of these advances could have
                 # removed it already
@@ -800,7 +800,7 @@ class Show(Asset):
             self.asset_manager = asset_manager
 
             self._initialize_asset()
-            self._load(callback=None, show_actions=actions)
+            self.do_load(callback=None, show_actions=actions)
 
     def _initialize_asset(self):
 
@@ -838,7 +838,7 @@ class Show(Asset):
         self.loaded_callbacks = list()
         self.show_actions = list()
 
-    def _load(self, callback, show_actions=None):
+    def do_load(self, callback, show_actions=None):
 
         self.show_actions = list()
 
@@ -1255,7 +1255,7 @@ class Show(Asset):
         self.tocks_per_sec = tocks_per_sec
         self.ticks_per_tock = Timing.HZ/float(tocks_per_sec)
 
-    def _advance(self):
+    def advance(self):
 
         # Internal method which advances the show to the next step
         if self.ending:
@@ -1641,7 +1641,7 @@ class Playlist(object):
         # the pointer to the next step
 
         # If we stop at a step with a trigger show, the stopping of the trigger
-        # show will call _advance(), so we just return here so this last step
+        # show will call advance(), so we just return here so this last step
         # doesn't play.
         if not self.running:
             return

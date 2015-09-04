@@ -413,7 +413,7 @@ class AssetLoader(threading.Thread):
                 if not asset[1].loaded:
                     self.log.debug("Loading Asset: %s. Callback: %s", asset[1],
                                    asset[2])
-                    asset[1]._load(asset[2])
+                    asset[1].do_load(asset[2])
                     self.log.debug("Asset Finished Loading: %s. Remaining: %s",
                                    asset[1], self.queue.qsize())
 
@@ -462,6 +462,9 @@ class Asset(object):
 
     def load(self, callback=None):
         self.asset_manager.load_asset(self, callback)
+
+    def do_load(self, callback):
+        pass
 
     def unload(self):
         self._unload()

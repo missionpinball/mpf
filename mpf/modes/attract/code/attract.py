@@ -64,7 +64,7 @@ class Attract(Mode):
 
         self.machine.events.remove_handler(self._loading_tick)
 
-        #self.machine.events.post('attract_start')
+        # self.machine.events.post('attract_start')
 
         # register switch handlers for the start button press so we can
         # capture long presses

@@ -308,7 +308,7 @@ class LED(Device):
         if not self.fade_task:
             if self.debug:
                 print "setting up fade task"
-            self.fade_task = Task.Create(self._fade_task)
+            self.fade_task = Task.create(self._fade_task)
         elif self.debug:
                 print "already have a fade task"
 

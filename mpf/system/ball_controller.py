@@ -11,7 +11,6 @@ from mpf.system.tasks import DelayManager
 from mpf.system.device_manager import DeviceCollection
 
 
-
 class BallController(object):
     """Base class for the Ball Controller which is used to keep track of all
     the balls in a pinball machine.

@@ -70,7 +70,7 @@ class MachineController(object):
         self.delay = DelayManager()
 
         self.crash_queue = Queue.Queue()
-        Task.Create(self._check_crash_queue)
+        Task.create(self._check_crash_queue)
 
         self.config = dict()
         self._load_config()
