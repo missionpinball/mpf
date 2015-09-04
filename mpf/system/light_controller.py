@@ -82,11 +82,11 @@ class LightController(object):
 
         # Tell the mode controller that it should look for light_player items in
         # modes.
-        self.machine.modes.register_start_method(self.process_light_player,
+        self.machine.mode_controller.register_start_method(self.process_light_player,
                                                  'light_player')
 
         # Create scripts from config
-        self.machine.modes.register_start_method(self.process_light_scripts,
+        self.machine.mode_controller.register_start_method(self.process_light_scripts,
                                                  'light_scripts')
 
         # Create the show AssetManager
@@ -410,19 +410,19 @@ class LightController(object):
 
         for light in show.light_states:
 
-            if light.debug_logging:
-                light.log.info("Found this light in a restore_lower_lights meth "
-                              "in show.light_states. Light cache priority: %s,"
-                              "ending show priority: %s", light.cache['priority'],
-                              priority)
+            if light.debug:
+                light.log.debug("Found this light in a restore_lower_lights meth "
+                                "in show.light_states. Light cache priority: %s,"
+                                "ending show priority: %s", light.cache['priority'],
+                                priority)
 
             if light.cache['priority'] <= priority:
                 light.restore()
 
         for led in show.led_states:
 
-            if led.debug_logging:
-                led.log.info("Found this LED in a restore_lower_lights meth "
+            if led.debug:
+                led.log.debug("Found this LED in a restore_lower_lights meth "
                               "in show.led_states. LED cache priority: %s,"
                               "ending show priority: %s", led.cache['priority'],
                               priority)
@@ -594,9 +594,9 @@ class LightController(object):
 
                 # Now we're doing the actual update.
 
-                if item['led'].debug_logging:
-                    item['led'].log.info("Applying update to LED from the Show "
-                                         "Controller")
+                if item['led'].debug:
+                    item['led'].log.debug("Applying update to LED from the Show "
+                                          "Controller")
 
                 item['led'].color(color=item['color'],
                                   fade_ms=item['fade_ms'],
@@ -604,13 +604,13 @@ class LightController(object):
                                   blend=item['blend'],
                                   cache=False)
 
-            elif item['led'].debug_logging:
-                item['led'].log.info("Show Controller has an update for this "
-                                     "LED, but the update is priority %s while "
-                                     "the current priority of the LED is %s. "
-                                     "The update will not be applied.",
-                                     item['priority'],
-                                     item['led'].state['priority'])
+            elif item['led'].debug:
+                item['led'].log.debug("Show Controller has an update for this "
+                                      "LED, but the update is priority %s while "
+                                      "the current priority of the LED is %s. "
+                                      "The update will not be applied.",
+                                      item['priority'],
+                                      item['led'].state['priority'])
 
         self.led_update_list = []
 
@@ -786,78 +786,6 @@ class LightController(object):
         except KeyError:
             pass
 
-    def load_shows(self, path):
-        """Automatically loads all the light shows in a path.
-
-        Light shows are added to the dictionary self.shows with they key
-        set to the value of the file name.
-
-        For example, the light show 'sweep.yaml' will be loaded as
-        self.shows['sweep']
-
-        This method will also loop through sub-directories, allowing the game
-        programmer to organize the light show files into folders as needed.
-
-        Args:
-            path: A string of the relative path to the folder, based from the
-                root from where the mpf.py file is running.
-        """
-
-        self.log.debug("Loading light shows from: %s", path)
-        for root, path, files in os.walk(path, followlinks=True):
-            for f in files:
-                if f.endswith('.yaml'):
-                    # todo Make this a config option in case people want to give
-                    # their show files a different extension?
-                    fullpath = os.path.join(root, f)
-                    self.machine.shows[str(os.path.splitext(f)[0])] = \
-                        Show(self.machine, fullpath)
-
-    @staticmethod
-    def hexstring_to_list(input_string, output_length=3):
-        """Takes a string input of hex numbers and returns a list of integers.
-
-        This always groups the hex string in twos, so an input of ffff00 will
-        be returned as [255, 255, 0]
-
-        Args:
-            input_string: A string of incoming hex colors, like ffff00.
-            output_length: Integer value of the number of items you'd like in
-                your returned list. Default is 3. This method will ignore
-                extra characters if the input_string is too long, and it will
-                pad with zeros if the input string is too short.
-
-        Returns:
-            List of integers, like [255, 255, 0]
-        """
-        output = []
-        input_string = str(input_string).zfill(output_length*2)
-
-        for i in xrange(0, len(input_string), 2):  # step through every 2 chars
-            output.append(int(input_string[i:i+2], 16))
-
-        return output[0:output_length:]
-
-    @staticmethod
-    def hexstring_to_int(inputstring, maxvalue=255):
-        """Takes a string input of hex numbers and an integer.
-
-        Args:
-            input_string: A string of incoming hex colors, like ffff00.
-            maxvalue: Integer of the max value you'd like to return. Default is
-                255. (This is the real value of why this method exists.)
-
-        Returns:
-            Integer representation of the hex string.
-        """
-
-        return_int = int(inputstring, 16)
-
-        if return_int > maxvalue:
-            return_int = maxvalue
-
-        return return_int
-
 
 class Show(Asset):
 
@@ -960,18 +888,18 @@ class Show(Asset):
 
                     # convert / ensure lights are single ints
                     if type(value) is str:
-                        value = LightController.hexstring_to_int(
+                        value = Config.hexstring_to_int(
                             show_actions[step_num]['lights'][light])
 
                     if type(value) is int and value > 255:
                         value = 255
 
-                    for light in light_list:
-                        light_actions[light] = value
+                    for light_ in light_list:
+                        light_actions[light_] = value
 
                         # make sure this light is in self.light_states
-                        if light not in self.light_states:
-                            self.light_states[light] = 0
+                        if light_ not in self.light_states:
+                            self.light_states[light_] = 0
 
                 step_actions['lights'] = light_actions
 
@@ -1045,8 +973,8 @@ class Show(Asset):
                                 flasher)
                             continue
 
-                    for flasher in flasher_list:
-                        flasher_set.add(flasher)
+                    for flasher_ in flasher_list:
+                        flasher_set.add(flasher_)
 
                 step_actions['flashers'] = flasher_set
 
@@ -1074,13 +1002,13 @@ class Show(Asset):
 
                     # convert / ensure flashers are single ints
                     if type(value) is str:
-                        value = LightController.hexstring_to_int(value)
+                        value = Config.hexstring_to_int(value)
 
                     if type(value) is int and value > 255:
                         value = 255
 
-                    for gi in gi_list:
-                        gi_actions[gi] = value
+                    for gi_ in gi_list:
+                        gi_actions[gi_] = value
 
                 step_actions['gis'] = gi_actions
 
@@ -1121,15 +1049,15 @@ class Show(Asset):
                             fade = value.split('-f')
 
                     # convert our color of hexes to a list of ints
-                    value = LightController.hexstring_to_list(value)
+                    value = Config.hexstring_to_list(value)
                     value.append(fade)
 
-                    for led in led_list:
-                        led_actions[led] = value
+                    for led_ in led_list:
+                        led_actions[led_] = value
 
                         # make sure this led is in self.led_states
-                        if led not in self.led_states:
-                            self.led_states[led] = {
+                        if led_ not in self.led_states:
+                            self.led_states[led_] = {
                                 'current_color': [0, 0, 0],
                                 'destination_color': [0, 0, 0],
                                 'start_color': [0, 0, 0],

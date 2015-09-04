@@ -1,4 +1,4 @@
-# config_version=2
+# config_version=3
 mode:
     start_events: ball_starting
     stop_events: timer_mode_timer_complete, target_group_standups_hit
@@ -53,9 +53,9 @@ slide_player:
         shade: 0
         layer: 1
 
-target_profiles:
+shot_profiles:
     hit_me:
-        steps:
+        states:
             - name: active
               light_script: flash
               repeat: yes
@@ -63,20 +63,12 @@ target_profiles:
             - name: "off"
               light_script: "off"
 
-target_groups:
+shot_groups:
     standups:
-        target_profile: hit_me
+        profile: hit_me
         rotate_left_events: sw_left_flipper
         rotate_right_events: sw_right_flipper
 
 scoring:
-    target_standup_1_active_hit:
-        score: 200000
-    target_standup_2_active_hit:
-        score: 200000
-    target_standup_3_active_hit:
-        score: 200000
-    target_standup_4_active_hit:
-        score: 200000
-    target_standup_5_active_hit:
+    standups_hit_me_active_hit:
         score: 200000

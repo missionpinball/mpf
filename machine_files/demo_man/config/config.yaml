@@ -1,4 +1,4 @@
-# config_version=2
+# config_version=3
 
 config:
     - hardware.yaml
@@ -7,8 +7,8 @@ mpf:
   default_pulse_ms: 20
 
 game:
-    balls per game: 3
-    max players per game: 4
+    balls_per_game: 3
+    max_players: 4
     player_controlled_eject_tag: plunger
 
 modes:
@@ -21,114 +21,6 @@ scriptlets:
     attract.Attract
     add_a_ball.AddABall
     claw.Claw
-
-show_player:
-  attract_start:
-    - show: attract_dmd_loop
-      repeat: yes
-      tocks_per_sec: 1
-  attract_stop:
-    - show: attract_dmd_loop
-      action: stop
-
-light_player:
-  attract_start:
-    - show: multiball_sweep
-      repeat: yes
-      tocks_per_sec: 10
-    - show: random_flashing
-      repeat: yes
-      tocks_per_sec: 6
-    - show: freeze_sweep
-      repeat: yes
-      tocks_per_sec: 9
-    - show: car_crash_sweep
-      repeat: yes
-      tocks_per_sec: 7
-    - show: middle_circle_sweep
-      repeat: yes
-      tocks_per_sec: 12
-    - show: right_orbit_sweep
-      repeat: yes
-      tocks_per_sec: 12
-    - show: standup_sweep
-      repeat: yes
-      tocks_per_sec: 5
-    - show: center_red_sweep
-      repeat: yes
-      tocks_per_sec: 4
-    - show: center_ramp_sweep
-      repeat: yes
-      tocks_per_sec: 7
-    - show: top_lanes_sweep
-      repeat: yes
-      tocks_per_sec: 4
-    - show: claw_cycle
-      repeat: yes
-      tocks_per_sec: 9
-    - show: inlane_alternate
-      repeat: yes
-      tocks_per_sec: 8
-    - show: gi_on
-      repeat: no
-      hold: yes
-    #- show: flashers
-    #  repeat: yes
-    #  tocks_per_sec: 4
-
-  attract_stop:
-    - show: multiball_sweep
-      action: stop
-    - show: random_flashing
-      action: stop
-    - show: freeze_sweep
-      action: stop
-    - show: car_crash_sweep
-      action: stop
-    - show: middle_circle_sweep
-      action: stop
-    - show: right_orbit_sweep
-      action: stop
-    - show: standup_sweep
-      action: stop
-    - show: center_red_sweep
-      action: stop
-    - show: center_ramp_sweep
-      action: stop
-    - show: top_lanes_sweep
-      action: stop
-    - show: claw_cycle
-      action: stop
-      hold: false
-    - show: inlane_alternate
-      action: stop
-      hold: false
-    - show: flashers
-      action: stop
-
-shots:
-    left_orbit:
-        Type: Sequence
-        Switches: s_upper_left_flipper_gate, s_left_loop
-        Time: 3s
-    left_ramp:
-        Type: Sequence
-        Switches: s_left_ramp_enter, s_left_ramp_exit
-        Time: 3s
-    side_ramp:
-        Type: Sequence
-        Switches: s_side_ramp_enter, s_side_ramp_exit
-        Time: 3s
-    right_ramp:
-        Type: Sequence
-        Switches: s_right_ramp_enter, s_right_ramp_exit
-        Time: 3s
-    right_orbit:
-        Type: Sequence
-        Switches: s_right_freeway, s_left_loop, s_upper_left_flipper_gate,
-        Time: 3s
-    center_ramp:
-        Switch: s_center_ramp
 
 slide_player:
     volume_change:

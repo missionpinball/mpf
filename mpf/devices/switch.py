@@ -6,8 +6,7 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
-from mpf.system.devices import Device
+from mpf.system.device import Device
 from mpf.system.timing import Timing
 
 
@@ -18,14 +17,14 @@ class Switch(Device):
     collection = 'switches'
     class_label = 'switch'
 
-    def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('Switch.' + name)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        config['number_str'] = str(config['number']).upper()
         super(Switch, self).__init__(machine, name, config, collection,
-                                     platform_section='switches')
+                                     platform_section='switches',
+                                     validate=validate)
 
         self.machine = machine
         self.name = name
-        self.config = config
         self.deactivation_events = set()
         self.activation_events = set()
         self.state = 0
@@ -36,47 +35,24 @@ class Switch(Device):
         0 = inactive. This is what the actual hardware is reporting and does
         not consider whether a switch is NC or NO."""
 
-        # todo read these in and/or change to dict
-        self.type = 'NO'
-        """ Specifies whether the switch is normally open ('NO', default) or
-        normally closed ('NC')."""
+        self.invert = 0
 
         self.recycle_ticks = 0
         self.recycle_clear_tick = 0
         self.recycle_jitter_count = 0
 
-        if 'type' in config and config['type'].upper() == 'NC':
-            self.type = 'NC'
+        if self.config['type'].upper() == 'NC':
+            self.invert = 1
 
-        if 'debounce' not in config:
-            config['debounce'] = True
-
-        if 'recycle_time' in config:
-            self.recycle_ticks = Timing.string_to_ticks(config['recycle_time'])
-
-        # We save out number_str since the platform driver will convert the
-        # number into a hardware number, but we need the original number for
-        # some things later.
-        self.config['number_str'] = str(config['number']).upper()
+        self.recycle_ticks = self.config['recycle_time']
 
         self.last_changed = None
         self.hw_timestamp = None
 
-        self.log.debug("Creating '%s' with config: %s", name, config)
+        self.log.debug("Creating '%s' with config: %s", name, self.config)
 
-        self.hw_switch, self.number, self.hw_state = \
-            self.platform.configure_switch(config)
-
-        self.log.debug("Current hardware state of switch '%s': %s",
-                       self.name, self.hw_state)
-
-        # If we're using physical hardware, set the initial logical switch
-        # state based on the hw_state
-        if self.machine.physical_hw:
-            if self.type == 'NC':
-                self.state = self.hw_state ^ 1
-            else:
-                self.state = self.hw_state
+        self.hw_switch, self.number = (
+            self.platform.configure_switch(self.config))
 
 # The MIT License (MIT)
 

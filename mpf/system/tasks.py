@@ -48,7 +48,7 @@ class Task(object):
         and then deleting it."""
         Task.Tasks.remove(self)
 
-    def __str__(self):
+    def __repr__(self):
         return "callback=" + str(self.callback) + " wakeup=" + str(self.wakeup)
 
     @staticmethod

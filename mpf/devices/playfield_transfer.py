@@ -1,14 +1,13 @@
 """ Transfer a ball between two playfields. E.g. lower to upper playfield via a ramp"""
 # playfield_transfer.py
 # Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# This module originally created by JAB
+# MPF is written by Brian Madden & Gabe Knuth
+# This module originally created by Jan Kantert
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
-from mpf.system.devices import Device
+from mpf.system.device import Device
 
 
 class PlayfieldTransfer(Device):
@@ -17,24 +16,18 @@ class PlayfieldTransfer(Device):
     collection = 'playfield_transfer'
     class_label = 'playfield_transfer'
 
-    def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('PlayfieldTransfer.' + name)
+    def __init__(self, machine, name, config, collection=None, validate=True):
         super(PlayfieldTransfer, self).__init__(machine, name, config,
-                                                collection)
+                                                collection, validate)
 
-        self.machine.events.add_handler('machine_reset_phase_1',
-                                        self._initialize)
-
-    def _initialize(self):
-        # register switch handler
         self.machine.switch_controller.add_switch_handler(
-            switch_name=self.config['ball_switch'],
+            switch_name=self.config['ball_switch'].name,
             callback=self._ball_went_through,
             state=1, ms=0)
 
         # load target playfield
-        self.target = self.machine.ball_devices[self.config['eject_target']]
-        self.source = self.machine.ball_devices[self.config['captures_from']]
+        self.target = self.config['eject_target']
+        self.source = self.config['captures_from']
 
     def _ball_went_through(self):
         self.log.debug("Ball went from %s to %s", self.source.name,
@@ -71,6 +64,7 @@ class PlayfieldTransfer(Device):
     def _ball_went_through4(self, balls, target):
         # since we confirmed eject target playfield has to be active
         self.machine.events.post('sw_' + self.target.name + '_active')
+
 
 # The MIT License (MIT)
 

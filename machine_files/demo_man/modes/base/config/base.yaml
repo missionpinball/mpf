@@ -1,4 +1,4 @@
-# config_version=2
+# config_version=3
 mode:
     start_events: ball_starting
     priority: 100
@@ -48,10 +48,10 @@ sound_player:
         start_events: sw_ramp_2
         sound: ramp 2
     standup lit:
-        start_events: targets_standups_lit_hit
+        start_events: shots_standups_lit_hit
         sound: standup hit lit
     standup unlit:
-        start_events: targets_standups_unlit_hit
+        start_events: shots_standups_unlit_hit
         sound: standup hit unlit
     little metal:
         start_events: sw_slingshot
@@ -61,21 +61,21 @@ sound_player:
         sound: medium metal
 
 show_player:
-    shot_left_orbit:
+    left_orbit_default_unlit_hit:
         show: left orbit
 
 scoring:
-    shot_left_orbit:
+    left_orbit_unlit_hit:
         Score: 1000000
-    shot_left_ramp:
+    left_ramp_default_unlit_hit:
         Score: 1000000
-    shot_side_ramp:
+    side_ramp_default_unlit_hit:
         Score: 2000000
-    shot_right_ramp:
+    right_ramp_default_unlit_hit:
         Score: 1000000
-    shot_right_orbit:
+    right_orbit_default_unlit_hit:
         Score: 1500000
-    shot_center_ramp:
+    center_ramp_default_unlit_hit:
         Score: 250000
     sw_slingshot:
         Score: 5170
@@ -85,17 +85,17 @@ scoring:
         Score: 24440
     sw_inlane:
         Score: 47650
-    targets_standups_lit_hit:
+    standups_default_lit_hit:
         Score: 10000
-    targets_standups_unlit_hit:
+    standups_default_unlit_hit:
         Score: 50000
-    targets_standups_lit_complete:
+    standups_default_lit_complete:
         Score: 100000
-    targets_rollover_lanes_lit_hit:
+    rollover_default_lanes_lit_hit:
         Score: 5000
-    targets_rollover_lanes_unlit_hit:
+    rollover_default_lanes_unlit_hit:
         Score: 45000
-    targets_rollover_lanes_lit_complete:
+    rollover_default_lanes_lit_complete:
         Score: 375000
     sw_small_car_crash:
         Score: 25000
@@ -108,7 +108,7 @@ scoring:
     balldevice_retina_hole_ball_enter:
         Score: 225000
 
-target_groups:
+shot_groups:
     rollover_lanes:
         rotate_left_events: sw_left_flipper
         rotate_right_events: sw_right_flipper

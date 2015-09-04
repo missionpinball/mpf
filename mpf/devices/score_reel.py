@@ -10,7 +10,7 @@ import logging
 import time
 
 from collections import deque
-from mpf.system.devices import Device
+from mpf.system.device import Device
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 from mpf.system.config import Config
@@ -194,7 +194,7 @@ class ScoreReelGroup(Device):
     """Represents a logical grouping of score reels in a pinball machine, where
     multiple individual ScoreReel object make up the individual digits of this
     group. This group also has support for the blank zero "inserts" that some
-    machines use. This is a subclass of mpf.system.devices.Device.
+    machines use. This is a subclass of mpf.system.device.Device.
     """
     config_section = 'score_reel_groups'
     collection = 'score_reel_groups'
@@ -206,9 +206,9 @@ class ScoreReelGroup(Device):
         # ScoreReelController
         machine.score_reel_controller = ScoreReelController(machine)
 
-    def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('ScoreReelGroup.' + name)
-        super(ScoreReelGroup, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(ScoreReelGroup, self).__init__(machine, name, config, collection,
+                                             validate=validate)
 
         self.wait_for_valid_queue = None
         self.valid = True  # Confirmed reels are showing the right values
@@ -249,15 +249,6 @@ class ScoreReelGroup(Device):
         self.jump_in_progress = False
         # Boolean attribute that is True when a jump advance is in progress.
 
-        self.config['reels'] = Config.string_to_list(
-            self.config['reels'])
-
-        if 'max simultaneous coils' not in self.config:
-            self.config['max simultaneous coils'] = 2
-
-        if 'confirm' not in self.config:
-            self.config['confirm'] = 'strict'
-
         # convert self.config['reels'] from strings to objects
         for reel in self.config['reels']:
             # find the object
@@ -270,18 +261,13 @@ class ScoreReelGroup(Device):
         self.reels.reverse()  # We want our smallest digit in the 0th element
 
         # ---- temp chimes code. todo move this --------------------
-        if self.config['chimes']:
+        self.config['chimes'].reverse()
 
-            self.config['chimes'] = Config.string_to_list(
-                self.config['chimes'])
-
-            self.config['chimes'].reverse()
-
-            for i in range(len(self.config['chimes'])):
-                if self.config['chimes'][i] != 'None':
-                    self.machine.events.add_handler(event='reel_' +
-                        self.reels[i].name + '_advance', handler=self.chime,
-                        chime=self.config['chimes'][i])
+        for i in range(len(self.config['chimes'])):
+            if self.config['chimes'][i] != 'None':
+                self.machine.events.add_handler(event='reel_' +
+                    self.reels[i].name + '_advance', handler=self.chime,
+                    chime=self.config['chimes'][i])
         # ---- temp chimes code end --------------------------------
 
         # register for events
@@ -579,7 +565,7 @@ class ScoreReelGroup(Device):
 
                 # While we're in here let's get a count of the total number
                 # of reels that are energized
-                if (self.machine.coils[this_reel.config['coil_inc']].
+                if (this_reel.config['coil_inc'].
                         time_when_done > current_time):
                     num_energized += 1
 
@@ -900,34 +886,10 @@ class ScoreReel(Device):
     collection = 'score_reels'
     class_label = 'score_reel'
 
-    def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('ScoreReel.' + name)
-        super(ScoreReel, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(ScoreReel, self).__init__(machine, name, config, collection,
+                                        validate=validate)
         self.delay = DelayManager()
-
-        # set config defaults
-        if 'coil_inc' not in self.config:
-            self.config['coil_inc'] = None
-        if 'coil_dec' not in self.config:
-            self.config['coil_dec'] = None
-        if 'rollover' not in self.config:
-            self.config['rollover'] = True
-        if 'limit_lo' not in self.config:
-            self.config['limit_lo'] = 0
-        if 'limit_hi' not in self.config:
-            self.config['limit_hi'] = 9
-        if 'repeat_pulse_time' not in self.config:
-            self.config['repeat_pulse_time'] = '200ms'
-        if 'hw_confirm_time' not in self.config:
-            self.config['hw_confirm_time'] = '300ms'
-        if 'confirm' not in self.config:
-            self.config['confirm'] = 'lazy'
-
-        # Convert times strings to ms ints
-        self.config['repeat_pulse_time'] = \
-            Timing.string_to_ms(self.config['repeat_pulse_time'])
-        self.config['hw_confirm_time'] = \
-            Timing.string_to_ms(self.config['hw_confirm_time'])
 
         self.rollover_reel_advanced = False
         # True when a rollover pulse has been ordered
@@ -1020,9 +982,9 @@ class ScoreReel(Device):
             direction you specify, returns 0.
         """
         if direction == 1:
-            return self.machine.coils[self.config['coil_inc']].config['pulse_ms']
+            return self.config['coil_inc'].config['pulse_ms']
         elif self.config['coil_dec']:
-            return self.machine.coils[self.config['coil_dec']].config['pulse_ms']
+            return self.config['coil_dec'].config['pulse_ms']
         else:
             return 0
 
@@ -1130,7 +1092,7 @@ class ScoreReel(Device):
                 self.hw_sync = False
 
                 # fire the coil
-                self.machine.coils[self.config['coil_inc']].pulse()
+                self.config['coil_inc'].pulse()
 
                 # set delay to notify when this reel can be fired again
                 self.delay.add('ready_to_fire',
@@ -1203,7 +1165,7 @@ class ScoreReel(Device):
         """
         # check to make sure the 'hw_confirm_time' time has passed. If not then
         # we cannot trust any value we read from the switches
-        if (self.machine.coils[self.config['coil_inc']].time_last_changed +
+        if (self.config['coil_inc'].time_last_changed +
                 (self.config['hw_confirm_time'] / 1000.0) <= time.time()):
             self.log.debug("Checking hw switches to determine reel value")
             value = -999

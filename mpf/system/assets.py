@@ -43,7 +43,7 @@ class AssetManager(object):
                  asset_attribute, file_extensions):
 
         self.log = logging.getLogger(config_section + ' Asset Manager')
-        self.log.info("Initializing...")
+        self.log.debug("Initializing...")
 
         self.machine = machine
         self.max_memory = None
@@ -64,11 +64,11 @@ class AssetManager(object):
 
         self.create_loader_thread()
 
-        self.machine.modes.register_load_method(self.load_assets,
+        self.machine.mode_controller.register_load_method(self.load_assets,
                                                 self.config_section,
                                                 load_key='preload')
 
-        self.machine.modes.register_start_method(self.load_assets,
+        self.machine.mode_controller.register_start_method(self.load_assets,
                                                  self.config_section,
                                                  load_key='mode_start')
 
@@ -106,7 +106,7 @@ class AssetManager(object):
 
         root_path = os.path.join(path, self.path_string)
 
-        self.log.info("Processing assets from base folder: %s", root_path)
+        self.log.debug("Processing assets from base folder: %s", root_path)
 
         for path, _, files in os.walk(root_path, followlinks=True):
 
@@ -453,7 +453,7 @@ class Asset(object):
 
         self._initialize_asset()
 
-    # def __str__(self):
+    # def __repr__(self):
     #
     #     if self.file_name:
     #         return self.file_name

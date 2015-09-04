@@ -1,8 +1,8 @@
-# config_version=2
+# config_version=3
 media_controller:
     modules:
 
-        modes.ModeController
+        mode_controller.ModeController
         language.Language
         display.DisplayController
         show_controller.ShowController
@@ -40,6 +40,10 @@ media_controller:
 
 timing:
     hz: 30
+
+modes:
+    - attract
+    - game
 
 displaydefaults:
     Text:
@@ -150,3 +154,12 @@ slide_player:
         type: text
         text: ASSET LOADING COMPLETE
         font: small
+
+debug_profiles:
+    verbose:
+        system_modules:
+            events
+            mode_controller
+        device_collections:
+        individual_devices:
+        plugins:

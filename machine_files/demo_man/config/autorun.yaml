@@ -1,4 +1,4 @@
-# config_version=2
+# config_version=3
 Config:
     - config.yaml
 
@@ -6,9 +6,11 @@ switch_player:
     start_event: machine_reset_phase_3
     start_delay: 1s
     steps:
-      - time: 100ms
-        switch: s_trough_1
-        action: activate
+      #- time: 100ms
+      #  switch: s_trough_1
+      #  action: activate
+      
+      # player 1 ball 1
       - time: 600ms
         switch: s_start
         action: hit
@@ -36,6 +38,8 @@ switch_player:
       - time: 500ms
         switch: s_start
         action: hit
+
+      # Player 2 ball 1
       - time: 2.5s
         switch: s_trough_1
         action: activate
@@ -63,3 +67,93 @@ switch_player:
       - time: 2.5s
         switch: s_trough_1
         action: activate
+
+      # Player 1 ball 2
+      - time: 2.5s
+        switch: s_trough_1
+        action: activate
+      - time: 1s
+        switch: s_trough_1
+        action: deactivate
+      - time: 1s
+        switch: s_shooter_lane
+        action: activate
+      - time: 1s
+        switch: s_ball_launch
+        action: hit
+      - time: 100ms
+        switch: s_shooter_lane
+        action: deactivate
+      - time: 200ms
+        switch: s_right_inlane
+        action: hit
+
+      # Player 2 ball 2
+      - time: 2.5s
+        switch: s_trough_1
+        action: activate
+      - time: 1s
+        switch: s_trough_1
+        action: deactivate
+      - time: 1s
+        switch: s_shooter_lane
+        action: activate
+      - time: 1s
+        switch: s_ball_launch
+        action: hit
+      - time: 100ms
+        switch: s_shooter_lane
+        action: deactivate
+      - time: 200ms
+        switch: s_right_inlane
+        action: hit
+
+      # Player 1 ball 3
+      - time: 2.5s
+        switch: s_trough_1
+        action: activate
+      - time: 1s
+        switch: s_trough_1
+        action: deactivate
+      - time: 1s
+        switch: s_shooter_lane
+        action: activate
+      - time: 1s
+        switch: s_ball_launch
+        action: hit
+      - time: 100ms
+        switch: s_shooter_lane
+        action: deactivate
+      - time: 200ms
+        switch: s_right_inlane
+        action: hit
+        
+      # Player 2 ball 3
+      - time: 2.5s
+        switch: s_trough_1
+        action: activate
+      - time: 1s
+        switch: s_trough_1
+        action: deactivate
+      - time: 1s
+        switch: s_shooter_lane
+        action: activate
+      - time: 1s
+        switch: s_ball_launch
+        action: hit
+      - time: 100ms
+        switch: s_shooter_lane
+        action: deactivate
+      - time: 200ms
+        switch: s_right_inlane
+        action: hit
+
+    # game end
+      - time: 2.5s
+        switch: s_trough_1
+        action: activate
+    
+    # new game
+      - time: 2s
+        switch: s_start
+        action: hit
