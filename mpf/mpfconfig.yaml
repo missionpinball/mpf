@@ -136,6 +136,8 @@ config_validator:
         exit_count_delay: single|ms|500ms
         entrance_count_delay: single|ms|500ms
         eject_coil: single|self.machine.coils[%]|None
+        hold_coil: single|self.machine.coils[%]|None
+        enable_hold: single|str|entrance_or_ball_switch
         eject_switch: single|self.machine.switches[%]|None
         entrance_switch: single|self.machine.switches[%]|None
         jam_switch: single|self.machine.switches[%]|None
