@@ -43,7 +43,7 @@ mpf:
         ball_lock.BallLock
         multiball.Multiball
         ball_save.BallSave
-    
+
     plugins:
         auditor
         ball_save
@@ -69,7 +69,7 @@ mpf:
     switch_tag_event: sw_%
     allow_invalid_config_sections: false
     config_versions_file: tools/config_versions.yaml
-    
+
     device_collection_control_events:
         autofires:
             - enable
@@ -89,7 +89,7 @@ mpf:
         gi:
             - enable
             - disable
-    
+
     mode_config_sections:
       - autofire_coils
       - ball_devices
@@ -319,6 +319,16 @@ config_validator:
         repeat_pulse_time: single|ms|200
         hw_confirm_time: single|ms|300
         config: single|str|lazy
+        switch_0: single|self.machine.switches[%]|None
+        switch_1: single|self.machine.switches[%]|None
+        switch_2: single|self.machine.switches[%]|None
+        switch_3: single|self.machine.switches[%]|None
+        switch_4: single|self.machine.switches[%]|None
+        switch_5: single|self.machine.switches[%]|None
+        switch_6: single|self.machine.switches[%]|None
+        switch_7: single|self.machine.switches[%]|None
+        switch_8: single|self.machine.switches[%]|None
+        switch_9: single|self.machine.switches[%]|None
         # switch_x is also here but cannot be processed here
     score_reel_groups:
         max_simultaneous_coils: single|int|2
@@ -621,7 +631,7 @@ light_scripts:
 playfields:
     playfield:
         tags: default
-        
+
 debug_profiles:
     verbose:
         system_modules:
@@ -630,4 +640,3 @@ debug_profiles:
         device_collections:
         individual_devices:
         plugins:
-
