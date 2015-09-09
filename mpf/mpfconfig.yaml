@@ -271,6 +271,9 @@ config_validator:
         on_events:  dict|str:ms|None
         off_events:  dict|str:ms|None
         platform: single|str|None
+        x: single|int|None
+        y: single|int|None
+        z: single|int|None
     machine:
         hz: single|int|30
         balls_installed: single|int|1
@@ -285,6 +288,9 @@ config_validator:
         on_events:  dict|str:ms|None
         off_events:  dict|str:ms|None
         platform: single|str|None
+        x: single|int|None
+        y: single|int|None
+        z: single|int|None
     multiballs:
         ball_count: single|int|
         source_playfield: single|self.machine.ball_devices[%]|playfield
