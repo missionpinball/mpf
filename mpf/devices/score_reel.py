@@ -70,7 +70,7 @@ class ScoreReelController(object):
         # receives notifications of game starts to reset the reels
         self.machine.events.add_handler('game_starting', self.game_starting)
 
-    def rotate_player(self):
+    def rotate_player(self, **kwargs):
         """Called when a new player's turn starts.
 
         The main purpose of this method is to map the current player to their
@@ -253,9 +253,8 @@ class ScoreReelGroup(Device):
         # convert self.config['reels'] from strings to objects
         for reel in self.config['reels']:
             # find the object
-            if reel == 'None':
-                reel = None
-            else:
+
+            if reel:
                 reel = self.machine.score_reels[reel]
             self.reels.append(reel)
 
@@ -265,7 +264,8 @@ class ScoreReelGroup(Device):
         self.config['chimes'].reverse()
 
         for i in range(len(self.config['chimes'])):
-            if self.config['chimes'][i] != 'None':
+
+            if self.config['chimes'][i]:
                 self.machine.events.add_handler(event='reel_' +
                                                       self.reels[
                                                           i].name + '_advance',
@@ -274,7 +274,7 @@ class ScoreReelGroup(Device):
         # ---- temp chimes code end --------------------------------
 
         # register for events
-        self.machine.events.add_handler('init_phase_2',
+        self.machine.events.add_handler('init_phase_4',
                                         self.initialize)
 
         self.machine.events.add_handler('timer_tick', self.tick)
@@ -579,6 +579,7 @@ class ScoreReelGroup(Device):
                         this_reel.ready):
 
                     # Do we need (and have) hw_sync to advance this reel?
+
                     if (self.assumed_value_list[i] == -999 or
                                 this_reel.config['confirm'] == 'strict'):
 
@@ -589,7 +590,7 @@ class ScoreReelGroup(Device):
                         reels_needing_advance.append(this_reel)
 
         # How many reels can we advance now?
-        coils_this_round = (self.config['max simultaneous coils'] -
+        coils_this_round = (self.config['max_simultaneous_coils'] -
                             num_energized)
 
         # sort by last firing time, oldest first (so those are fired first)
@@ -1178,7 +1179,7 @@ class ScoreReel(Device):
             for i in range(len(self.value_switches)):
                 if self.value_switches[i]:  # not all values have a switch
                     if self.machine.switch_controller.is_active(
-                            self.value_switches[i]):
+                            self.value_switches[i].name):
                         value = i
 
             self.log.debug("+++Setting hw value to: %s", value)
