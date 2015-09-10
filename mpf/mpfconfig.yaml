@@ -291,6 +291,14 @@ config_validator:
         x: single|int|None
         y: single|int|None
         z: single|int|None
+    mode:
+        priority: single|int|0
+        start_events: list|str|None
+        stop_events: list|str|None
+        start_priority: single|int|0
+        stop_priority: single|int|0
+        use_wait_queue: single|bool|False
+        code: single|str|None
     multiballs:
         ball_count: single|int|
         source_playfield: single|self.machine.ball_devices[%]|playfield

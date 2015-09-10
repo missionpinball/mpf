@@ -32,6 +32,7 @@ class Mode(object):
 
         self.priority = 0
         self._active = False
+        self._mode_start_wait_queue = None
         self.stop_methods = list()
         self.timers = dict()
         self.start_callback = None
@@ -52,8 +53,7 @@ class Mode(object):
 
         self._validate_mode_config()
 
-        if 'mode' in self.config:
-            self.configure_mode_settings(config['mode'])
+        self.configure_mode_settings(config.get('mode', dict()))
 
         for asset_manager in self.machine.asset_managers.values():
 
@@ -95,35 +95,13 @@ class Mode(object):
         dictionary.
         """
 
-        if not ('priority' in config and type(config['priority']) is int):
-            config['priority'] = 0
+        self.config['mode'] = self.machine.config_processor.process_config2(
+            config_spec='mode', source=config, section_name='mode')
 
-        if 'start_events' in config:
-            config['start_events'] = Config.string_to_list(
-                config['start_events'])
-        else:
-            config['start_events'] = list()
-
-        if 'stop_events' in config:
-            config['stop_events'] = Config.string_to_list(
-                config['stop_events'])
-        else:
-            config['stop_events'] = list()
-
-        if 'stop_priority' not in config:
-            config['stop_priority'] = 0
-
-        if 'start_priority' not in config:
-            config['start_priority'] = 0
-
-        # register mode start events
-        if 'start_events' in config:
-            for event in config['start_events']:
-                self.machine.events.add_handler(event=event, handler=self.start,
-                                                priority=config['priority'] +
-                                                config['start_priority'])
-
-        self.config['mode'] = config
+        for event in self.config['mode']['start_events']:
+            self.machine.events.add_handler(event=event, handler=self.start,
+                                            priority=self.config['mode']['priority'] +
+                                            self.config['mode']['start_priority'])
 
     def _validate_mode_config(self):
         for section in self.machine.config['mpf']['mode_config_sections']:
@@ -159,6 +137,13 @@ class Mode(object):
 
         if self._active:
             return
+
+        if self.config['mode']['use_wait_queue'] and 'queue' in kwargs:
+
+            self.log.debug("Registering a mode start wait queue")
+
+            self._mode_start_wait_queue = kwargs['queue']
+            self._mode_start_wait_queue.wait()
 
         if type(priority) is int:
             self.priority = priority
@@ -279,6 +264,13 @@ class Mode(object):
 
         self.machine.events.post('mode_' + self.name + '_stopped',
                                  callback=self._mode_stopped_callback)
+
+        if self._mode_start_wait_queue:
+
+            self.log.debug("Clearing wait queue")
+
+            self._mode_start_wait_queue.clear()
+            self._mode_start_wait_queue = None
 
     def _mode_stopped_callback(self, **kwargs):
 
