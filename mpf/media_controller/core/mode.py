@@ -58,6 +58,9 @@ class Mode(object):
                             mode_path=self.path,
                             **item.kwargs)
 
+    def __repr__(self):
+        return '<Mode.' + self.name + '>'
+
     @property
     def active(self):
         return self._active
@@ -156,7 +159,14 @@ class Mode(object):
 
         self.stop_methods = list()
 
-        #self.machine.events.post('mode_' + self.name + '_stopped')
+        self.delete_slides_from_mode()
+
+    def delete_slides_from_mode(self):
+
+        for display_name, display_obj in self.machine.display.displays.iteritems():
+            for slide_obj in display_obj.slides.values():
+                if slide_obj.mode == self:
+                    del display_obj.slides[slide_obj.name]
 
 
 # The MIT License (MIT)
