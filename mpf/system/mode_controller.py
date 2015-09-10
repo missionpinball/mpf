@@ -116,22 +116,29 @@ class ModeController(object):
 
         if 'code' in config['mode']:
 
-            try:
-                # Is the code for this mode in the machine folder?
+            # need to figure out if this mode code is in the machine folder or
+            # the default mpf folder
+
+            mode_code_file = os.path.join(self.machine.machine_path,
+                self.machine.config['mpf']['paths']['modes'],
+                mode_string,
+                'code',
+                config['mode']['code'].split('.')[0] + '.py')
+
+            if os.path.isfile(mode_code_file):  # code is in the machine folder
                 import_str = (self.machine.config['mpf']['paths']['modes'] +
                               '.' + mode_string + '.code.' +
                               config['mode']['code'].split('.')[0])
                 i = __import__(import_str, fromlist=[''])
 
                 if self.debug:
-                        self.log.debug("Loading Mode class code from %s",
-                                       import_str)
+                    self.log.debug("Loading Mode class code from %s",
+                                   mode_code_file)
 
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
                     self.machine, config, mode_string, mode_path)
 
-            except ImportError:
-                # Is the code for this mode in the mpf folder?
+            else:  # code is in the mpf folder
                 import_str = ('mpf.' +
                               self.machine.config['mpf']['paths']['modes'] +
                               '.' + mode_string + '.code.' +
@@ -145,7 +152,7 @@ class ModeController(object):
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
                     self.machine, config, mode_string, mode_path)
 
-        else:
+        else:  # no code specified, so using the default Mode class
             if self.debug:
                 self.log.debug("Loading default Mode class code")
             mode_object = Mode(self.machine, config, mode_string, mode_path)
