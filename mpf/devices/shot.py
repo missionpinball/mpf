@@ -408,11 +408,19 @@ class Shot(Device):
                 found = True
 
     def get_mode_state(self, mode):
-
         # returns a tuple of profile_name, current_state_name
 
-        return (self.enable_table[mode]['profile'],
-                self.enable_table[mode]['current_state_name'])
+        # if the mode is not in the enable_table, that means this shot is not
+        # used in that mode, so we return False
+
+        if self.debug:
+            self.log.debug("Checking state of enable_table for %s", mode)
+
+        if mode in self.enable_table:
+            return (self.enable_table[mode]['profile'],
+                    self.enable_table[mode]['current_state_name'])
+        else:
+            return False
 
     def _sequence_switch_hit(self, switch_name, state, ms):
         # Since we can track multiple simulatenous sequences (e.g. two balls

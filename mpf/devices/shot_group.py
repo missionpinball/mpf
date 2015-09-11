@@ -310,17 +310,23 @@ class ShotGroup(Device):
             self.log.debug("Checking for complete. mode: %s", mode)
 
         for shot in self.shots:
-            shot_states.add(shot.get_mode_state(mode))
 
-            if self.debug:
-                self.log.debug("%s state: %s", shot.name,
-                               shot.get_mode_state(mode))
+            mode_state = shot.get_mode_state(mode)
 
+            if mode_state:
+                shot_states.add(mode_state)
 
+                if self.debug:
+                    self.log.debug("%s state: %s", shot.name,
+                                   shot.get_mode_state(mode))
 
-        # <name>_<profile>_<state>
+            else:
+                if self.debug:
+                    self.log.debug("Shot %s is not used in this mode. Aborting"
+                                   " check for complete", shot)
+                return
+
         if len(shot_states) == 1:
-
             profile, state = shot_states.pop()
 
             if self.debug:
