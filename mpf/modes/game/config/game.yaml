@@ -4,8 +4,3 @@ mode:
   stop_events: game_ended
   priority: 20
   code: game.Game
-
-slide_player:
-  mode_game_started:
-    type: text
-    text: GAME
