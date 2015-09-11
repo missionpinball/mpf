@@ -16,26 +16,12 @@ modes:
   - claw_lit_for_major_mode
   - mode1_acmag
   - skillshot
+  - bonus
 
 scriptlets:
     attract.Attract
     add_a_ball.AddABall
     claw.Claw
-
-slide_player:
-    volume_change:
-        type: Text
-        text: "VOLUME: %display_volume"
-        expire: 2s
-        slide_priority: 10000
-    assets_to_load:
-        type: text
-        text: "LOADING ASSETS: %assets TO GO"
-        font: small
-    assets_loading_complete:
-        type: text
-        text: ASSET LOADING COMPLETE
-        font: small
 
 images:
     demo_man_logo:

@@ -26,7 +26,7 @@ slide_player:
       - type: text
         text: PLAYER %num ADDED
         expire: 2s
-        priority: 1
+        slide_priority: 300 # so this goes on top of the skillshot mode slides
 
 sound_player:
     waiting to plunge loop:
