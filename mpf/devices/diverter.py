@@ -213,7 +213,7 @@ class Diverter(Device):
 
                 self.platform.set_hw_rule(
                     sw_name=switch.name,
-                    sw_activity='active',
+                    sw_activity=1,
                     coil_name=self.config['activation_coil'].name,
                     coil_action_ms=-1,
                     pulse_ms=self.config['activation_coil'].config['pulse_ms'],
@@ -235,7 +235,7 @@ class Diverter(Device):
 
                 self.platform.set_hw_rule(
                     sw_name=switch.name,
-                    sw_activity='active',
+                    sw_activity=1,
                     coil_name=self.config['activation_coil'].name,
                     coil_action_ms=self.config['activation_coil'].config['pulse_ms'],
                     pulse_ms=self.config['activation_coil'].config['pulse_ms'],
