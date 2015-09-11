@@ -435,7 +435,6 @@ class Config(object):
             item = new_set
 
         elif item_type == 'dict':
-
             item = self.validate_item(item, validation,
                                                validation_failure_info)
 
@@ -488,7 +487,22 @@ class Config(object):
 
     def validate_item(self, item, validator, validation_failure_info):
 
-        if '%' in validator:
+        if ':' in validator:
+            validator = validator.split(':')
+            # item could be str, list, or list of dicts
+            item = Config.event_config_to_dict(item)
+
+            return_dict = dict()
+
+            for k, v in item.iteritems():
+                return_dict[self.validate_item(k, validator[0],
+                                               validation_failure_info)] = (
+                    self.validate_item(v, validator[1], validation_failure_info)
+                    )
+
+            item = return_dict
+
+        elif '%' in validator:
 
             if type(item) is str:
 
@@ -539,21 +553,6 @@ class Config(object):
 
         elif validator == 'ticks':
             item = Timing.string_to_ticks(item)
-
-        elif ':' in validator:
-            validator = validator.split(':')
-            # item could be str, list, or list of dicts
-            item = Config.event_config_to_dict(item)
-
-            return_dict = dict()
-
-            for k, v in item.iteritems():
-                return_dict[self.validate_item(k, validator[0],
-                                               validation_failure_info)] = (
-                    self.validate_item(v, validator[1], validation_failure_info)
-                    )
-
-            item = return_dict
 
         else:
             self.log.error("Invalid Validator '%s' in config spec %s:%s",

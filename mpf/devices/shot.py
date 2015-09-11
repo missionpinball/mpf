@@ -64,7 +64,6 @@ class Shot(Device):
                                      mode=None)
 
     def _enable_related_device_debugging(self):
-
         self.log.debug("Enabling debugging for this shot's leds and lights")
 
         for led in self.config['led']:
@@ -81,7 +80,6 @@ class Shot(Device):
             light.disable_debugging()
 
     def _register_switch_handlers(self):
-
         if self.switch_handlers_active:
             return
 
@@ -104,7 +102,6 @@ class Shot(Device):
         self.switch_handlers_active = True
 
     def _remove_switch_handlers(self):
-
         if not self.switch_handlers_active:
             return
 
@@ -188,7 +185,6 @@ class Shot(Device):
             self._update_lights()
 
     def _stop_current_lights(self):
-
         if self.debug:
             self.log.debug("Stopping current lights. Show: %s",
                            self.running_light_show)
@@ -204,7 +200,6 @@ class Shot(Device):
         self.running_light_show = None
 
     def _update_lights(self, lightshow_step=0):
-
         self._stop_current_lights()
 
         if not self.player:
@@ -434,7 +429,6 @@ class Shot(Device):
 
             self._start_new_sequence()
 
-
         else:
             # Get the seq_id of the first sequence this switch is next for.
             # This is not a loop because we only want to advance 1 sequence
@@ -513,8 +507,9 @@ class Shot(Device):
         self._reset_all_sequences()
 
     def _delay_switch_hit(self, switch_name, state, ms):
-        self.delay.reset(name=switch_name + 'delay_timer',
-                         ms=self.config['delay_switch'][switch_name],
+        self.delay.reset(name=switch_name + '_delay_timer',
+                         ms=self.config['delay_switch']
+                                       [self.machine.switches[switch_name]],
                          callback=self._release_delay,
                          switch=switch_name)
 
