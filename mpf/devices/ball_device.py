@@ -194,6 +194,15 @@ class BallDevice(Device):
             # todo do we also need to add inactive and make a smarter
             # handler?
 
+        # handle hold_coil activation when a ball hits a switch
+        for switch in self.config['hold_switches']:
+            self.machine.switch_controller.add_switch_handler(
+                switch_name=switch.name, state=1,
+                ms=0,
+                callback=self._enable_hold_coil)
+
+
+
         # Configure event handlers to watch for target device status changes
         for target in self.config['eject_targets']:
             # Target device is requesting a ball
@@ -471,9 +480,9 @@ class BallDevice(Device):
         Returns: True or False
 
         """
-        if self.balls == self.config['ball_capacity']:
+        if self.config['ball_capacity'] and self.balls >= self.config['ball_capacity']:
             return True
-        elif self.balls == self.machine.ball_controller.num_balls_known:
+        elif self.balls >= self.machine.ball_controller.num_balls_known:
             return True
         else:
             return False
@@ -491,7 +500,7 @@ class BallDevice(Device):
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch
 
-        if not self.config['ball_switches']:
+        if not self.config['ball_switches'] and not self.is_full():
             self.balls += 1
             self._balls_added(1)
 
@@ -654,10 +663,10 @@ class BallDevice(Device):
             self.log.debug("Received request to eject %s ball(s) to target '%s'",
                            balls, target.name)
 
-        if not self.config['eject_coil']:
+        if not self.config['eject_coil'] and not self.config['hold_coil']:
             if self.debug:
-                self.log.debug("This device has no eject coil, so we're assuming "
-                               "a manual eject by the player.")
+                self.log.debug("This device has no eject and hold coil, so "
+                               "we're assuming a manual eject by the player.")
             timeout = 0  # unlimited since who knows how long the player waits
 
         # Set the timeout for this eject
@@ -771,7 +780,7 @@ class BallDevice(Device):
                                          target=self.eject_in_progress_target,
                                          timeout=timeout,
                                          num_attempts=self.num_eject_attempts,
-                                         callback=self._fire_eject_coil)
+                                         callback=self._perform_eject)
                 # Fire the coil via a callback in case there are events in the
                 # queue. This ensures that the coil pulse happens when this
                 # event is posted instead of firing right away.
@@ -787,22 +796,53 @@ class BallDevice(Device):
                 self.log.debug("DEBUG: Eject duration: %ss. Target: None",
                               round(time.time() - self.eject_start_time, 2))
 
-    def _fire_eject_coil(self, target, timeout=None, **kwargs):
-
+    def _perform_eject(self, target, timeout=None, **kwargs):
         self._setup_eject_confirmation(target, timeout)
 
         self.balls -= self.num_balls_ejecting
 
-        try:
-            self.config['eject_coil'].pulse()
-            # todo add support for hold coils with variable release times
-            if self.debug:
-                self.log.debug("Firing eject coil. num_balls_ejecting: %s. New "
-                           "balls: %s.",
-                           self.num_balls_ejecting, self.balls)
-        except AttributeError:
+        if self.config['eject_coil']:
+            self._fire_eject_coil()
+        elif self.config['hold_coil']:
+            self._disable_hold_coil()
+            # TODO: allow timed release of single balls and reenable coil after
+            # release. Disable coil when device is empty
+        else:
             if self.debug:
                 self.log.debug("Waiting for player to manually eject ball(s)")
+
+    def _disable_hold_coil(self):
+
+        self.config['hold_coil'].disable()
+        if self.debug:
+            self.log.debug("Disabling hold coil. num_balls_ejecting: %s. New "
+                           "balls: %s.", self.num_balls_ejecting, self.balls)
+
+    def hold(self, **kwargs):
+        self._enable_hold_coil()
+
+    def _enable_hold_coil(self, **kwargs):
+
+        # do not enable coil when we are ejecting. Currently, incoming balls
+        # will also be ejected.
+
+        # TODO: notice new balls during eject and do timed release for last
+        # ball also in that case.
+        if self.num_balls_ejecting:
+            return
+
+        self.config['hold_coil'].enable()
+        if self.debug:
+            self.log.debug("Disabling hold coil. num_balls_ejecting: %s. New "
+                           "balls: %s.", self.num_balls_ejecting, self.balls)
+
+
+
+    def _fire_eject_coil(self):
+        self.config['eject_coil'].pulse()
+        if self.debug:
+            self.log.debug("Firing eject coil. num_balls_ejecting: %s. New "
+                           "balls: %s.", self.num_balls_ejecting, self.balls)
 
     def _setup_eject_confirmation(self, target=None, timeout=0):
         # Called after an eject request to confirm the eject. The exact method
@@ -886,6 +926,12 @@ class BallDevice(Device):
             if self.debug:
                 self.log.debug("Will confirm eject via recount of ball switches.")
             self.flag_confirm_eject_via_count = True
+
+        elif self.config['confirm_eject_type'] == 'fake':
+            # for all ball locks or captive balls which just release a ball
+            # we use delay to keep the call order
+            self.delay.add(name='target_eject_confirmation_timeout',
+                           ms=1, callback=self._eject_success)
 
         else:
             self.log.error("Invalid confirm_eject_type setting: '%s'",

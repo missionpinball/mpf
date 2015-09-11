@@ -98,6 +98,7 @@ class BallLock(Device):
             self.machine.events.post('ball_lock_' + self.name + '_balls_released',
                                      balls_released=balls_released)
 
+        self.balls_locked -= balls_released
         return balls_released
 
     def _register_handlers(self):
@@ -125,6 +126,7 @@ class BallLock(Device):
     def _lock_ball(self, device, balls, **kwargs):
         # if full do not take any balls
         if self.is_full():
+            self.log.debug("Cannot lock balls. Lock is full.")
             return {'balls': balls}
 
         # if there are no balls do not claim anything
