@@ -137,10 +137,12 @@ slide_player:
       - type: Text
         text: CLIENT CONNECTED
         font: small
+        expire: 1s
     client_disconnected:
       - type: Text
         text: CLIENT DISCONNECTED
         font: small
+        expire: 1s
     volume_change:
         type: Text
         text: "VOLUME: %display_volume"
@@ -150,10 +152,12 @@ slide_player:
         type: text
         text: "LOADING ASSETS: %assets TO GO"
         font: small
+        expire: 1s
     assets_loading_complete:
         type: text
         text: ASSET LOADING COMPLETE
         font: small
+        expire: 1s
 
 debug_profiles:
     verbose:
