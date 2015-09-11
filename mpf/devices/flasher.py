@@ -6,8 +6,7 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
-from mpf.system.devices import Device
+from mpf.system.device import Device
 
 
 class Flasher(Device):
@@ -18,22 +17,17 @@ class Flasher(Device):
     collection = 'flashers'
     class_label = 'flasher'
 
-    def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('Flasher.' + name)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        config['number_str'] = str(config['number']).upper()
         super(Flasher, self).__init__(machine, name, config, collection,
-                                      platform_section='flashers')
-
-        # We save out number_str since the platform driver will convert the
-        # number into a hardware number, but we need the original number for
-        # some things later.
-        self.config['number_str'] = str(config['number']).upper()
+                                      platform_section='flashers',
+                                      validate=validate)
 
         self.hw_driver, self.number = (
             self.platform.configure_driver(config=self.config,
                                            device_type='flasher'))
-        self.log.debug("Creating '%s' with config: %s", name, config)
 
-        if 'flash_ms' not in self.config:
+        if self.config['flash_ms'] is None:
             self.config['flash_ms'] = (
                 self.machine.config['mpf']['default_flash_ms'])
 

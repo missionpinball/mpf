@@ -9,8 +9,8 @@
 import pygame
 # todo make it so this doesn't crash if pygame is not available
 
-from mpf.system.light_controller import LightController
 from mpf.media_controller.core.display import DisplayElement
+from mpf.system.config import Config
 import mpf.media_controller.display_modules.dmd
 
 
@@ -80,9 +80,9 @@ class VirtualDMD(DisplayElement):
                 self.config['pixel_spacing'] = 2
 
             # convert hex colors to list of ints
-            self.config['pixel_color'] = LightController.hexstring_to_list(
+            self.config['pixel_color'] = Config.hexstring_to_list(
                 self.config['pixel_color'])
-            self.config['dark_color'] = LightController.hexstring_to_list(
+            self.config['dark_color'] = Config.hexstring_to_list(
                 self.config['dark_color'])
 
             # This needs to match the source DMD or it could get weird

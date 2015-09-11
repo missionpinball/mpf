@@ -60,7 +60,7 @@ class ShowController(object):
 
         # Tell the mode controller that it should look for light_player items in
         # modes.
-        self.machine.modes.register_start_method(self.process_shows_from_config,
+        self.machine.mode_controller.register_start_method(self.process_shows_from_config,
                                                  'show_player')
 
         # Create the show AssetManager
@@ -70,7 +70,7 @@ class ShowController(object):
                                           path_string='shows',
                                           asset_class=Show,
                                           asset_attribute='shows',
-                                          file_extensions=('yaml')
+                                          file_extensions=('yaml',)
                                           )
 
     def _initialize(self):
@@ -226,7 +226,7 @@ class ShowController(object):
                 # add the current location to the list to be serviced
                 # show.service_locations.append(show.current_location)
                 # advance the show to the current time
-                show._advance()
+                show.advance()
 
                 if show.ending:
                     break
@@ -242,7 +242,7 @@ class ShowController(object):
             if item['action_time'] <= self.current_time:
                 # If the queue is for a fade, we ignore the current color
                 if item.get('playlist', None):
-                    item['playlist']._advance()
+                    item['playlist'].advance()
 
                 # We have to check again since one of these advances could have
                 # removed it already
@@ -279,7 +279,7 @@ class Show(Asset):
             self.asset_manager = asset_manager
 
             self._initialize_asset()
-            self._load(callback=None, show_actions=actions)
+            self.do_load(callback=None, show_actions=actions)
 
     def _initialize_asset(self):
 
@@ -313,7 +313,7 @@ class Show(Asset):
         self.loaded_callbacks = list()
         self.show_actions = list()
 
-    def _load(self, callback, show_actions=None):
+    def do_load(self, callback, show_actions=None):
 
         self.show_actions = list()
 
@@ -529,7 +529,7 @@ class Show(Asset):
         self.tocks_per_sec = tocks_per_sec
         self.secs_per_tock = 1/float(tocks_per_sec)
 
-    def _advance(self):
+    def advance(self):
         # Internal method which advances the show to the next step
         if self.ending:
             self.machine.show_controller._end_show(self)

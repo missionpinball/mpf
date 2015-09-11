@@ -23,7 +23,7 @@ import urlparse
 from Queue import Queue
 import copy
 
-from mpf.game.player import Player
+from mpf.system.player import Player
 from mpf.system.config import Config
 import version
 
@@ -220,11 +220,15 @@ class BCP(object):
         self.machine.events.add_handler('disable_volume_keys',
                                         self.disable_volume_keys)
 
-        self.machine.modes.register_start_method(self.bcp_mode_start, 'mode')
-        self.machine.modes.register_start_method(self.register_triggers,
+        self.machine.mode_controller.register_start_method(self.bcp_mode_start, 'mode')
+        self.machine.mode_controller.register_start_method(self.register_triggers,
                                                  'triggers')
-        self.machine.modes.register_load_method(
+        self.machine.mode_controller.register_load_method(
             self.register_mpfmc_trigger_events)
+
+    def __repr__(self):
+        return '<BCP Module>'
+
 
     def _setup_dmd(self):
 
@@ -608,7 +612,7 @@ class BCP(object):
         """
 
         for switch in self.machine.switches.items_tagged(tag):
-            self.enable_bcp_switch(switch)
+            self.enable_bcp_switch(switch.name)
 
     def disable_bcp_switch(self, name):
         """Disables sending BCP switch commands when this switch changes state.
@@ -784,7 +788,7 @@ class BCPClientSocket(object):
     def __init__(self, machine, name, config, receive_queue):
 
         self.log = logging.getLogger('BCPClientSocket.' + name)
-        self.log.info('Setting up BCP Client...')
+        self.log.debug('Setting up BCP Client...')
 
         self.machine = machine
         self.name = name

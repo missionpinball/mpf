@@ -68,14 +68,14 @@ class MoveOut(Transition):
                (self.slide_a_end_x < 0 and
                 self.slide_a_current_x > self.slide_a_end_x)):
             self.slide_a_current_x = int(
-                self.slide_a_end_x * (self.percent))
+                self.slide_a_end_x * self.percent)
 
         if ((self.slide_a_end_y > 0 and
                 self.slide_a_current_y < self.slide_a_end_y) or
                (self.slide_a_end_y < 0 and
                 self.slide_a_current_y > self.slide_a_end_y)):
             self.slide_a_current_y = int(
-                self.slide_a_end_y * (self.percent))
+                self.slide_a_end_y * self.percent)
 
         # blit slide_b as the background
         self.surface.blit(self.slide_b.surface, (0, 0))

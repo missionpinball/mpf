@@ -273,7 +273,7 @@ class Slide(object):
         # Sort the list by layer, lowest to highest. This ensures that when
         # it's rendered, the lower layer elements are rendered first and
         # therefore "under" the higher layer elements
-        self.elements.sort(key=lambda x: int(x.layer))
+        self.elements.sort(key=lambda i: int(i.layer))
 
         return element
 

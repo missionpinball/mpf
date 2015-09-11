@@ -6,8 +6,7 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
-from mpf.system.devices import Device
+from mpf.system.device import Device
 
 
 class MatrixLight(Device):
@@ -26,18 +25,12 @@ class MatrixLight(Device):
     #todo need to get the handler stuff out of each of these I think and into
     # a parent class? Maybe this is a device thing?
 
-    def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('Light.' + name)
-
-        self.log.debug('Creating device with config: %s', config)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        config['number_str'] = str(config['number']).upper()
 
         super(MatrixLight, self).__init__(machine, name, config, collection,
-                                          platform_section='matrix_lights')
-
-        # We save out number_str since the platform driver will convert the
-        # number into a hardware number, but we need the original number for
-        # some things later.
-        self.config['number_str'] = str(config['number']).upper()
+                                          platform_section='matrix_lights',
+                                          validate=validate)
 
         self.hw_driver, self.number = (
             self.platform.configure_matrixlight(self.config))
@@ -141,9 +134,9 @@ class MatrixLight(Device):
     def restore(self):
         """Restores the light state from cache."""
 
-        if self.debug_logging:
-            self.log.info("Received a restore command.")
-            self.log.info("Cached brightness: %s, Cached priority: %s",
+        if self.debug:
+            self.log.debug("Received a restore command.")
+            self.log.debug("Cached brightness: %s, Cached priority: %s",
                           self.cache['brightness'], self.cache['priority'])
 
         self.on(brightness=self.cache['brightness'],

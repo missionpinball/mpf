@@ -24,7 +24,7 @@ class LogicBlocks(object):
 
         # Tell the mode controller that it should look for LogicBlock items in
         # modes.
-        self.machine.modes.register_start_method(self._process_config,
+        self.machine.mode_controller.register_start_method(self._process_config,
                                                  'logic_blocks')
 
         # Process game-wide (i.e. not in modes) logic blocks
@@ -58,7 +58,7 @@ class LogicBlocks(object):
         self.log.debug("Processing player_turn_start")
 
         for block in player.logic_blocks:
-            block._create_control_events()
+            block.create_control_events()
 
     def _player_turn_stop(self, player, **kwargs):
 
@@ -78,7 +78,7 @@ class LogicBlocks(object):
 
         if mode:
             for block in blocks_added:
-                block._create_control_events()
+                block.create_control_events()
 
         return self._unload_logic_blocks, blocks_added
 
@@ -157,10 +157,10 @@ class LogicBlock(object):
             if 'ball_starting' not in self.config['reset_events']:
                 self.config['reset_events'].append('ball_starting')
 
-    def __str__(self):
+    def __repr__(self):
         return self.name
 
-    def _create_control_events(self):
+    def create_control_events(self):
 
         # todo need to run this when a mode start creates a logic block
 

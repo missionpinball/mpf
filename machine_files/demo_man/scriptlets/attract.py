@@ -21,6 +21,7 @@ class Attract(Scriptlet):
     def stop(self):
         self.machine.bcp.disable_bcp_switches('player')
 
+
 # The MIT License (MIT)
 
 # Copyright (c) 2013-2015 Brian Madden and Gabe Knuth

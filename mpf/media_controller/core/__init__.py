@@ -2,7 +2,7 @@ __all__ = [
            'display',
            'keyboard',
            'language',
-           'modes',
+           'mode_controller',
            'sound',
            'window',
            'show_controller',
