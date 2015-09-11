@@ -179,6 +179,12 @@ config_validator:
         debug: single|bool|False
         enable_events: dict|str:ms|None
         disable_events: dict|str:ms|ball_ending
+    bcp:
+      connections:
+        host: single|str|None
+        port: single|int|5050
+        connection_attempts: single|int|-1
+        require_connection: single|bool|False
     coils:
         number: single|str|
         number_str: single|str|
@@ -584,21 +590,15 @@ bcp:
         ball_ending:
             command: ball_end
 
-        attract_start:
-            command: attract_start
-
-        attract_stop:
-            command: attract_stop
-
-        game_ended:
-            command: game_end
-
         player_turn_start:
             command: player_turn_start
             params:
                 player: "%number"
 
     player_variables:
+      __all__
+
+    shots:
       __all__
 
 volume:

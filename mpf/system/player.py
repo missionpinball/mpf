@@ -74,14 +74,19 @@ class Player(object):
 
         player_list.append(self)
 
-        self.vars['index'] = len(player_list) - 1
-        self.vars['number'] = len(player_list)
+        index = len(player_list) - 1
+        number = len(player_list)
 
         self.log.debug("Creating new player: Player %s. (player index '%s')",
-                      self.vars['number'], self.vars['index'])
+                      number, index)
 
-        self.machine.events.post('player_add_success', player=self,
-                                 num=self.vars['number'])
+        self.machine.events.post('player_add_success', player=self, num=number)
+
+        # Set these after the player_add_success event so any player monitors
+        # get notification of the new player before they start seeing variable
+        # changes for it.
+        self.vars['index'] = index
+        self.vars['number'] = number
 
     def __repr__(self):
         return '<Player ' + str(self.vars['number']) + '>'
@@ -119,7 +124,8 @@ class Player(object):
         if Player.monitor_enabled:
             for callback in self.machine.monitors['player']:
                 callback(name=name, value=self.vars[name],
-                         prev_value=prev_value, change=change)
+                         prev_value=prev_value, change=change,
+                         player_num=self.vars['number'])
 
     def __getitem__(self, name):
         return self.__getattr__(name)
