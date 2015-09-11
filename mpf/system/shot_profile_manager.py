@@ -127,6 +127,9 @@ class ShotProfileManager(object):
             else:
                 enable = False
 
+            if settings['debug']:
+                self.machine.shots[shot].enable_debugging()
+
             if self.debug:
                 self.log.debug('Updating shot enable_table from config: profile'
                                ': %s, enable: %s, mode: %s', profile, enable,
@@ -174,6 +177,9 @@ class ShotProfileManager(object):
             if self.debug:
                 self.log.debug("Checking config for shot_group: %s. Config: %s",
                                shot_group, settings)
+
+            if settings['debug']:
+                self.machine.shot_groups[shot_group].enable_debugging()
 
             if not settings['enable_events']:
 
