@@ -593,7 +593,7 @@ bcp:
         ball_started:
             command: ball_start
             params:
-                player: "%player"
+                player_num: "%player"
                 ball: "%ball"
 
         ball_ending:
@@ -602,7 +602,7 @@ bcp:
         player_turn_start:
             command: player_turn_start
             params:
-                player: "%number"
+                player_num: "%number"
 
     player_variables:
       __all__
