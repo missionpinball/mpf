@@ -241,8 +241,6 @@ class HardwarePlatform(Platform):
 
             }
 
-
-
         self.wpc_light_map = {
             'L11': '00', 'L12': '01', 'L13': '02', 'L14': '03',
             'L15': '04', 'L16': '05', 'L17': '06', 'L18': '07',
@@ -583,6 +581,7 @@ class HardwarePlatform(Platform):
         if '-' in config['number_str']:
             num = config['number_str'].split('-')
             config['number'] = int((num[0] * 64) + num[1])
+            self.config['config_number_format'] = 'int'
         else:
             config['number'] = str(config['number'])
 
