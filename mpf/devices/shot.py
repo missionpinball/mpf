@@ -364,7 +364,7 @@ class Shot(Device):
 
         if Shot.monitor_enabled:
             for callback in self.machine.monitors['shots']:
-                callback(name=self.name)
+                callback(name=self.name, profile=profile, state=state)
 
         if need_to_waterfall:
 

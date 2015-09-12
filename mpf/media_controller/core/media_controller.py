@@ -537,7 +537,7 @@ class MediaController(object):
         """
         pass
 
-    def bcp_shot(self, name):
+    def bcp_shot(self, name, profile, state):
         """The MPF media controller uses triggers instead of shots for its
         display events, so we don't need to pay attention here."""
         pass

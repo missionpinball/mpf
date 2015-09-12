@@ -235,7 +235,6 @@ class BCP(object):
     def __repr__(self):
         return '<BCP Module>'
 
-
     def _setup_dmd(self):
 
         dmd_platform = self.machine.default_platform
@@ -254,7 +253,8 @@ class BCP(object):
                 break
 
             self.bcp_clients.append(BCPClientSocket(self.machine, name,
-                                              settings, self.receive_queue))
+                                                    settings,
+                                                    self.receive_queue))
 
     def remove_bcp_connection(self, bcp_client):
         """Removes a BCP connection to a remote BCP host.
@@ -306,12 +306,12 @@ class BCP(object):
                       change=change,
                       player_num=player_num)
 
-    def _shot(self, name):
+    def _shot(self, name, profile, state):
 
         if self.filter_shots and name not in self.config['shots']:
             return
 
-        self.send(bcp_command='shot', name=name)
+        self.send(bcp_command='shot', name=name, profile=profile, state=state)
 
     def process_bcp_events(self):
         """Processes the BCP Events from the config."""

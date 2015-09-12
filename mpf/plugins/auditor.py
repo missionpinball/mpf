@@ -143,7 +143,7 @@ class Auditor(object):
         if state and switch_name in self.switchnames_to_audit:
             self.audit('switches', switch_name)
 
-    def audit_shot(self, name):
+    def audit_shot(self, name, profile, state):
         self.audit('shots', name)
 
     def audit_event(self, eventname, **kwargs):

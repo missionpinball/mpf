@@ -15,7 +15,11 @@
 
 import logging
 import socket
+import sys
 import threading
+import time
+import traceback
+
 
 class BCPServer(threading.Thread):
     """Parent class for the BCP Server thread.
