@@ -342,6 +342,7 @@ config_validator:
         repeat_pulse_time: single|ms|200
         hw_confirm_time: single|ms|300
         config: single|str|lazy
+        confirm: single|str|strict
         switch_0: single|self.machine.switches[%]|None
         switch_1: single|self.machine.switches[%]|None
         switch_2: single|self.machine.switches[%]|None
@@ -352,15 +353,23 @@ config_validator:
         switch_7: single|self.machine.switches[%]|None
         switch_8: single|self.machine.switches[%]|None
         switch_9: single|self.machine.switches[%]|None
-        # switch_x is also here but cannot be processed here
+        switch_10: single|self.machine.switches[%]|None
+        switch_11: single|self.machine.switches[%]|None
+        switch_12: single|self.machine.switches[%]|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
     score_reel_groups:
         max_simultaneous_coils: single|int|2
-        confirm: single|str|strict
         reels: list|str|
         chimes: list|str|None
         repeat_pulse_time: single|ms|200
         hw_confirm_time: single|ms|300
         config: single|str|lazy
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        lights_tag: single|str|None
     shots:
         profile: single|str|None
         switch: list|self.machine.switches[%]|None
