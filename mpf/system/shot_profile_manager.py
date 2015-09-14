@@ -147,7 +147,9 @@ class ShotProfileManager(object):
 
         """
 
-        self.log.debug("Removing mode %s from all shots' enable_tables", mode)
+        if self.debug:
+            self.log.debug("Removing mode %s from all shots' enable_tables",
+                           mode)
 
         # pass the mode to remove it from the enable_table
 
@@ -168,9 +170,7 @@ class ShotProfileManager(object):
         """
 
         if self.debug:
-            self.log.debug("Scanning config from mode '%s' for shot_groups",
-                           mode.name)
-
+            self.log.debug("Scanning config %s for shot_groups", mode)
 
         for shot_group, settings in config.iteritems():
 
@@ -184,13 +184,13 @@ class ShotProfileManager(object):
             if not settings['enable_events']:
 
                 if self.debug:
-                    self.log.debug("No 'enable_events', enable entry will be "
+                    self.log.debug("No enable_events, enable entry will be "
                                    "True")
                 enable = True
             else:
 
                 if self.debug:
-                    self.log.debug("Found 'enable_events', enable entry will be"
+                    self.log.debug("Found enable_events, enable entry will be"
                                    " False")
                 
                 enable = False
@@ -224,11 +224,11 @@ class ShotProfileManager(object):
                 profiles should be removed.
 
         """
-        # for shot_group in self.machine.shot_groups:
-        #     for shot in shot_group.shots:
-        #         shot.remove_from_enable_table(mode)
+        # todo this should be smarter and only run on shots that are not in
+        # this mode's config? meh.. premature optimization though?
 
-        pass
+        for shot in self.machine.shots:
+            shot.remove_from_enable_table(mode)
 
 
 # The MIT License (MIT)
