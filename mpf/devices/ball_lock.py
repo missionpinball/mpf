@@ -64,6 +64,11 @@ class BallLock(Device):
         """
         self.release_all_balls()
 
+    def release_one(self, **kwargs):
+        """ Releases one ball
+        """
+        self.release_balls(balls_to_release=1)
+
     def release_all_balls(self):
         self.release_balls(self.balls_locked)
 
@@ -161,7 +166,8 @@ class BallLock(Device):
         return {'balls': balls - balls_to_lock}
 
     def request_new_balls(self, balls):
-        self.source_playfield.add_ball(balls=balls)
+        if self.config['request_new_balls_to_pf']:
+            self.source_playfield.add_ball(balls=balls)
 
 
 # The MIT License (MIT)
