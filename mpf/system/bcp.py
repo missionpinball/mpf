@@ -107,7 +107,7 @@ class BCP(object):
         machine: A reference to the main MPF machine object.
 
     The following BCP commands are currently implemented:
-        ball_start?player=x&ball=x
+        ball_start?player_num=x&ball=x
         ball_end
         config?volume=0.5
         error
@@ -116,9 +116,9 @@ class BCP(object):
         hello?version=xxx
         mode_start?name=xxx&priority=xxx
         mode_stop?name=xxx
-        player_added?number=x
+        player_added?player_num=x
         player_score?value=x&prev_value=x&change=x&player_num=x
-        player_turn_start?player=x
+        player_turn_start?player_num=x
         player_variable?name=x&value=x&prev_value=x&change=x&player_num=x
         set
         shot?name=x
@@ -576,7 +576,7 @@ class BCP(object):
 
     def bcp_player_added(self, player, num):
         """Sends BCP 'player_added' to the connected BCP hosts."""
-        self.send('player_added', number=num)
+        self.send('player_added', player_num=num)
 
     def bcp_trigger(self, name, **kwargs):
         """Sends BCP 'trigger' to the connected BCP hosts."""

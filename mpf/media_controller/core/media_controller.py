@@ -445,6 +445,8 @@ class MediaController(object):
 
     def bcp_ball_start(self, **kwargs):
         """Processes an incoming BCP 'ball_start' command."""
+        kwargs['player'] = kwargs.pop('player_num')
+
         self.events.post('ball_started', **kwargs)
 
     def bcp_ball_end(self, **kwargs):
@@ -463,13 +465,13 @@ class MediaController(object):
         self.player = None
         self.events.post('game_ended', **kwargs)
 
-    def bcp_player_add(self, number, **kwargs):
+    def bcp_player_add(self, player_num, **kwargs):
         """Processes an incoming BCP 'player_add' command."""
 
-        if number > len(self.player_list):
+        if player_num > len(self.player_list):
             new_player = Player(self, self.player_list)
 
-            self.events.post('player_add_success', num=number)
+            self.events.post('player_add_success', num=player_num)
 
     def bcp_player_variable(self, name, value, prev_value, change, player_num,
                             **kwargs):
@@ -489,20 +491,20 @@ class MediaController(object):
         except (IndexError, KeyError):
             pass
 
-    def bcp_player_turn_start(self, player, **kwargs):
+    def bcp_player_turn_start(self, player_num, **kwargs):
         """Processes an incoming BCP 'player_turn_start' command."""
 
         self.log.debug("bcp_player_turn_start")
 
-        if ((self.player and self.player.number != player) or
+        if ((self.player and self.player.number != player_num) or
                 not self.player):
 
             try:
-                self.player = self.player_list[int(player)-1]
+                self.player = self.player_list[int(player_num)-1]
             except IndexError:
                 self.log.error('Received player turn start for player %s, but '
                                'only %s player(s) exist',
-                               player, len(self.player_list))
+                               player_num, len(self.player_list))
 
     def bcp_trigger(self, name, **kwargs):
         """Processes an incoming BCP 'trigger' command."""

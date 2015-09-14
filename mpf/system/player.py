@@ -89,7 +89,10 @@ class Player(object):
         self.vars['number'] = number
 
     def __repr__(self):
-        return '<Player ' + str(self.vars['number']) + '>'
+        try:
+            return '<Player ' + str(self.vars['number']) + '>'
+        except KeyError:
+            return '<Player (new)>'
 
     def __getattr__(self, name):
         if name in self.vars:
