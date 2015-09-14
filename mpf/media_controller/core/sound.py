@@ -112,7 +112,7 @@ class SoundController(object):
 
         try:
             frequency, bits, channels = pygame.mixer.get_init()
-        except TypError:
+        except TypeError:
             self.log.error("Could not initialize audio. Does your computer "
                            "have an audio device? Maybe it doesn't create one"
                            "if there are no speakers plugged in?")
