@@ -1,4 +1,4 @@
-#config_version=2
+#config_version=3
 
 # Config file for Step 10 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
@@ -11,7 +11,7 @@ game:
     player_controlled_eject_tag: launch
 
 hardware:
-    platform: p_roc
+    platform: fast
     driverboards: wpc
 
 switches:
@@ -124,7 +124,7 @@ window:
         color: ee9900
 
 slide_player:
-    attract_start:
+    mode_attract_started:
         type: text
         text: PRESS START
 

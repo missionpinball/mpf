@@ -37,7 +37,7 @@ class SlideBuilder(object):
 
         # Tell the mode controller that it should look for slide_player items in
         # modes.
-        self.machine.modes.register_start_method(self.process_config,
+        self.machine.mode_controller.register_start_method(self.process_config,
                                                  'slide_player')
 
     def process_config(self, config, mode=None, priority=0):
@@ -229,7 +229,7 @@ class SlideBuilder(object):
 
         # Does this slide need to auto clear itself?
         if 'expire' not in settings[0]:
-            settings[0]['expire']
+            settings[0]['expire'] = 0
 
         # Does this slide name already exist for this display?
 
@@ -273,20 +273,10 @@ class SlideBuilder(object):
     def _add_element(self, slide, text_variables, **settings):
         # Internal method which actually adds the element to the slide
 
-        # Process any text
-        if 'text' in settings:
-            settings['text'] = str(settings['text'])
-
-            # Are there any kwarg variables to replace on the fly?
-            if '%' in settings['text']:
-                for kw in text_variables:
-                    if '%' + kw in settings['text']:
-                        settings['text'] = settings['text'].replace(
-                            '%' + kw, str(text_variables[kw]))
-
         element_type = settings.pop('type').lower()
 
-        element = slide.add_element(element_type, **settings)
+        element = slide.add_element(element_type,
+                                    text_variables=text_variables, **settings)
 
         if 'decorators' in settings:
 

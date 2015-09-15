@@ -30,6 +30,9 @@ class HardwarePlatform(OPHardwarePlatform):
         self.log = logging.getLogger("FadeCandy")
         self.log.debug("Configuring FadeCandy hardware interface.")
 
+    def __repr__(self):
+        return '<Platform.FadeCandy>'
+
     def _setup_opc_client(self):
         self.opc_client = FadeCandyOPClient(self.machine,
             self.machine.config['open_pixel_control'])
@@ -79,6 +82,9 @@ class FadeCandyOPClient(OpenPixelClient):
 
         self.set_global_color_correction()
         self.write_firmware_options()
+
+    def __repr__(self):
+        return '<Platform.FadeCandyOPClient>'
 
     def set_gamma(self, gamma):
         """Sets the gamma correction of the FadeCandy. Specifically this is the
@@ -243,10 +249,10 @@ class FadeCandyOPClient(OpenPixelClient):
         config_byte = 0x00
 
         if not self.dithering:
-            config_byte = config_byte | 0x01
+            config_byte |= 0x01
 
         if not self.keyframe_interpolation:
-            config_byte = config_byte | 0x02
+            config_byte |= 0x02
 
         # manual LED control
         # config_byte = config_byte | 0x04

@@ -10,10 +10,11 @@ import logging
 import time
 
 from collections import deque
-from mpf.system.devices import Device
+from mpf.system.device import Device
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 from mpf.system.config import Config
+
 
 # Known limitations of this module:
 # Assumes all score reels include a zero value
@@ -69,7 +70,7 @@ class ScoreReelController(object):
         # receives notifications of game starts to reset the reels
         self.machine.events.add_handler('game_starting', self.game_starting)
 
-    def rotate_player(self):
+    def rotate_player(self, **kwargs):
         """Called when a new player's turn starts.
 
         The main purpose of this method is to map the current player to their
@@ -120,7 +121,7 @@ class ScoreReelController(object):
 
         # do we have a reel group tagged for this player?
         for reel_group in self.machine.score_reel_groups.items_tagged(
-                "player" + str(self.machine.game.player.number)):
+                        "player" + str(self.machine.game.player.number)):
             self.player_to_scorereel_map.append(reel_group)
             self.log.debug("Found a mapping to add: %s", reel_group.name)
             return
@@ -194,7 +195,7 @@ class ScoreReelGroup(Device):
     """Represents a logical grouping of score reels in a pinball machine, where
     multiple individual ScoreReel object make up the individual digits of this
     group. This group also has support for the blank zero "inserts" that some
-    machines use. This is a subclass of mpf.system.devices.Device.
+    machines use. This is a subclass of mpf.system.device.Device.
     """
     config_section = 'score_reel_groups'
     collection = 'score_reel_groups'
@@ -206,9 +207,9 @@ class ScoreReelGroup(Device):
         # ScoreReelController
         machine.score_reel_controller = ScoreReelController(machine)
 
-    def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('ScoreReelGroup.' + name)
-        super(ScoreReelGroup, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(ScoreReelGroup, self).__init__(machine, name, config, collection,
+                                             validate=validate)
 
         self.wait_for_valid_queue = None
         self.valid = True  # Confirmed reels are showing the right values
@@ -249,43 +250,31 @@ class ScoreReelGroup(Device):
         self.jump_in_progress = False
         # Boolean attribute that is True when a jump advance is in progress.
 
-        self.config['reels'] = Config.string_to_list(
-            self.config['reels'])
-
-        if 'max simultaneous coils' not in self.config:
-            self.config['max simultaneous coils'] = 2
-
-        if 'confirm' not in self.config:
-            self.config['confirm'] = 'strict'
-
         # convert self.config['reels'] from strings to objects
         for reel in self.config['reels']:
             # find the object
-            if reel == 'None':
-                reel = None
-            else:
+
+            if reel:
                 reel = self.machine.score_reels[reel]
             self.reels.append(reel)
 
         self.reels.reverse()  # We want our smallest digit in the 0th element
 
         # ---- temp chimes code. todo move this --------------------
-        if self.config['chimes']:
+        self.config['chimes'].reverse()
 
-            self.config['chimes'] = Config.string_to_list(
-                self.config['chimes'])
+        for i in range(len(self.config['chimes'])):
 
-            self.config['chimes'].reverse()
-
-            for i in range(len(self.config['chimes'])):
-                if self.config['chimes'][i] != 'None':
-                    self.machine.events.add_handler(event='reel_' +
-                        self.reels[i].name + '_advance', handler=self.chime,
-                        chime=self.config['chimes'][i])
+            if self.config['chimes'][i]:
+                self.machine.events.add_handler(event='reel_' +
+                                                      self.reels[
+                                                          i].name + '_advance',
+                                                handler=self.chime,
+                                                chime=self.config['chimes'][i])
         # ---- temp chimes code end --------------------------------
 
         # register for events
-        self.machine.events.add_handler('init_phase_2',
+        self.machine.events.add_handler('init_phase_4',
                                         self.initialize)
 
         self.machine.events.add_handler('timer_tick', self.tick)
@@ -296,6 +285,7 @@ class ScoreReelGroup(Device):
     # ----- temp method for chime ------------------------------------
     def chime(self, chime):
         self.machine.coils[chime].pulse()
+
     # ---- temp chimes code end --------------------------------------
 
     @property
@@ -334,7 +324,7 @@ class ScoreReelGroup(Device):
         """
         for reel in range(len(self.reels)):
             if self.reels[reel] and (reel < len(self.reels) - 1):
-                self.reels[reel]._set_rollover_reel(self.reels[reel+1])
+                self.reels[reel]._set_rollover_reel(self.reels[reel + 1])
 
     def tick(self):
         """Automatically called once per machine tick and checks to see if there
@@ -411,7 +401,7 @@ class ScoreReelGroup(Device):
 
             if (reel and
                     (reel.config['confirm'] == 'lazy' or
-                     reel.config['confirm'] == 'strict') and
+                             reel.config['confirm'] == 'strict') and
                     not reel.hw_sync):
                 return False  # need hw_sync to proceed
 
@@ -579,17 +569,19 @@ class ScoreReelGroup(Device):
 
                 # While we're in here let's get a count of the total number
                 # of reels that are energized
-                if (self.machine.coils[this_reel.config['coil_inc']].
-                        time_when_done > current_time):
+                if (this_reel.config['coil_inc'].
+                            time_when_done > current_time):
                     num_energized += 1
 
                 # Does this reel want to be advanced, and is it ready?
-                if (self.desired_value_list[i] != self.assumed_value_list[i]
-                        and this_reel.ready):
+                if (self.desired_value_list[i] !=
+                        self.assumed_value_list[i] and
+                        this_reel.ready):
 
                     # Do we need (and have) hw_sync to advance this reel?
+
                     if (self.assumed_value_list[i] == -999 or
-                            this_reel.config['confirm'] == 'strict'):
+                                this_reel.config['confirm'] == 'strict'):
 
                         if this_reel.hw_sync:
                             reels_needing_advance.append(this_reel)
@@ -598,7 +590,7 @@ class ScoreReelGroup(Device):
                         reels_needing_advance.append(this_reel)
 
         # How many reels can we advance now?
-        coils_this_round = (self.config['max simultaneous coils'] -
+        coils_this_round = (self.config['max_simultaneous_coils'] -
                             num_energized)
 
         # sort by last firing time, oldest first (so those are fired first)
@@ -610,8 +602,8 @@ class ScoreReelGroup(Device):
         for i in range(coils_this_round):
             reels_needing_advance[i].advance(direction=1)
 
-        # Any leftover reels that don't get fired this time will get picked up
-        # whenever the next reel changes state and this method is called again.
+            # Any leftover reels that don't get fired this time will get picked up
+            # whenever the next reel changes state and this method is called again.
 
     def _jump_advance_complete(self):
         # Called when a jump advance routine is complete and the score reel
@@ -816,7 +808,7 @@ class ScoreReelGroup(Device):
         for item in reel_list:
             if type(item) is int:
                 if item == -999:  # if any reels are unknown, then our int
-                    return -999   # is unkown too.
+                    return -999  # is unkown too.
                 else:
                     output += str(item)
             elif type(item) is str and item.isdigit():
@@ -865,7 +857,8 @@ class ScoreReelGroup(Device):
                 self.light,
                 relight_on_valid=True)
         else:
-            self.machine.events.remove_handler_by_key(self.unlight_on_resync_key)
+            self.machine.events.remove_handler_by_key(
+                self.unlight_on_resync_key)
 
     def _ball_ending(self, queue=None):
         # We need to hook the ball_ending event in case the ball ends while the
@@ -900,34 +893,10 @@ class ScoreReel(Device):
     collection = 'score_reels'
     class_label = 'score_reel'
 
-    def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('ScoreReel.' + name)
-        super(ScoreReel, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(ScoreReel, self).__init__(machine, name, config, collection,
+                                        validate=validate)
         self.delay = DelayManager()
-
-        # set config defaults
-        if 'coil_inc' not in self.config:
-            self.config['coil_inc'] = None
-        if 'coil_dec' not in self.config:
-            self.config['coil_dec'] = None
-        if 'rollover' not in self.config:
-            self.config['rollover'] = True
-        if 'limit_lo' not in self.config:
-            self.config['limit_lo'] = 0
-        if 'limit_hi' not in self.config:
-            self.config['limit_hi'] = 9
-        if 'repeat_pulse_time' not in self.config:
-            self.config['repeat_pulse_time'] = '200ms'
-        if 'hw_confirm_time' not in self.config:
-            self.config['hw_confirm_time'] = '300ms'
-        if 'confirm' not in self.config:
-            self.config['confirm'] = 'lazy'
-
-        # Convert times strings to ms ints
-        self.config['repeat_pulse_time'] = \
-            Timing.string_to_ms(self.config['repeat_pulse_time'])
-        self.config['hw_confirm_time'] = \
-            Timing.string_to_ms(self.config['hw_confirm_time'])
 
         self.rollover_reel_advanced = False
         # True when a rollover pulse has been ordered
@@ -996,7 +965,7 @@ class ScoreReel(Device):
         # figure out how many values we have
         # Add 1 so range is inclusive of the lower limit
         self.num_values = self.config['limit_hi'] - \
-            self.config['limit_lo'] + 1
+                          self.config['limit_lo'] + 1
 
         self.log.debug("Total reel values: %s", self.num_values)
 
@@ -1020,9 +989,9 @@ class ScoreReel(Device):
             direction you specify, returns 0.
         """
         if direction == 1:
-            return self.machine.coils[self.config['coil_inc']].config['pulse_ms']
+            return self.config['coil_inc'].config['pulse_ms']
         elif self.config['coil_dec']:
-            return self.machine.coils[self.config['coil_dec']].config['pulse_ms']
+            return self.config['coil_dec'].config['pulse_ms']
         else:
             return 0
 
@@ -1097,7 +1066,7 @@ class ScoreReel(Device):
                     self.config['rollover']):
                 direction = 1
             elif (self._destination_index < self.assumed_value and
-                    self.config['coil_dec']):
+                      self.config['coil_dec']):
                 direction = -1
             else:  # no direction specified and everything seems ok
                 return
@@ -1106,31 +1075,31 @@ class ScoreReel(Device):
         # above line also sets self._destination_index
 
         if self.next_pulse_time > time.time():
-                # This reel is not ready to pulse again
-                # Note we don't allow this to be overridden. Figure the
-                # recycle time is there for a reason and we don't want to
-                # potentially break an old delicate mechanism
-                self.log.debug("Received advance request but this reel is not "
-                               "ready")
-                return False  # since we didn't advance...in case anyone cares?
+            # This reel is not ready to pulse again
+            # Note we don't allow this to be overridden. Figure the
+            # recycle time is there for a reason and we don't want to
+            # potentially break an old delicate mechanism
+            self.log.debug("Received advance request but this reel is not "
+                           "ready")
+            return False  # since we didn't advance...in case anyone cares?
 
         if direction == 1:
             # Ensure we're not at the limit of a reel that can't roll over
             if not ((self.physical_value == self.config['limit_hi']) and
-                    not self.config['rollover']):
+                        not self.config['rollover']):
                 self.log.debug("Ok to advance")
 
                 # Since we're firing, assume we're going to make it
                 self.assumed_value = self._destination_index
                 self.log.debug("+++Setting assumed value to: %s",
-                              self.assumed_value)
+                               self.assumed_value)
 
                 # Reset our statuses (stati?) :)
                 self.ready = False
                 self.hw_sync = False
 
                 # fire the coil
-                self.machine.coils[self.config['coil_inc']].pulse()
+                self.config['coil_inc'].pulse()
 
                 # set delay to notify when this reel can be fired again
                 self.delay.add('ready_to_fire',
@@ -1139,7 +1108,7 @@ class ScoreReel(Device):
 
                 self.next_pulse_time = (time.time() +
                                         (self.config['repeat_pulse_time'] /
-                                        1000.0))
+                                         1000.0))
                 self.log.debug("@@@ New Next pulse ready time: %s",
                                self.next_pulse_time)
 
@@ -1161,7 +1130,7 @@ class ScoreReel(Device):
         elif 'coil_dec' in self.config:
             return False  # since we haven't written this yet  todo
 
-        # todo log else error?
+            # todo log else error?
 
     def _pulse_done(self):
         # automatically called (via a delay) after the reel fires to post an
@@ -1203,14 +1172,14 @@ class ScoreReel(Device):
         """
         # check to make sure the 'hw_confirm_time' time has passed. If not then
         # we cannot trust any value we read from the switches
-        if (self.machine.coils[self.config['coil_inc']].time_last_changed +
+        if (self.config['coil_inc'].time_last_changed +
                 (self.config['hw_confirm_time'] / 1000.0) <= time.time()):
             self.log.debug("Checking hw switches to determine reel value")
             value = -999
             for i in range(len(self.value_switches)):
                 if self.value_switches[i]:  # not all values have a switch
                     if self.machine.switch_controller.is_active(
-                            self.value_switches[i]):
+                            self.value_switches[i].name):
                         value = i
 
             self.log.debug("+++Setting hw value to: %s", value)
@@ -1225,7 +1194,7 @@ class ScoreReel(Device):
             # then we're in the wrong position because our hw_value should be
             # at the assumed value
             elif (self.assumed_value != -999 and
-                    self.value_switches[self.assumed_value]):
+                      self.value_switches[self.assumed_value]):
                 self.assumed_value = -999
 
             if not no_event:
@@ -1256,7 +1225,7 @@ class ScoreReel(Device):
         if self.assumed_value != -999:
             if direction == 1:
                 self._destination_index = self.assumed_value + 1
-                if self._destination_index > (self.num_values-1):
+                if self._destination_index > (self.num_values - 1):
                     self._destination_index = 0
                 if self._destination_index == 1:
                     self.rollover_reel_advanced = False
@@ -1266,7 +1235,7 @@ class ScoreReel(Device):
             elif direction == -1:
                 self._destination_index = self.assumed_value - 1
                 if self._destination_index < 0:
-                    self._destination_index = (self.num_values-1)
+                    self._destination_index = (self.num_values - 1)
                 self.log.debug("@@@ new destination_index: %s",
                                self._destination_index)
                 return self._destination_index

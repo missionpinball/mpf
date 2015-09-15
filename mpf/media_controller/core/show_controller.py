@@ -60,7 +60,7 @@ class ShowController(object):
 
         # Tell the mode controller that it should look for light_player items in
         # modes.
-        self.machine.modes.register_start_method(self.process_shows_from_config,
+        self.machine.mode_controller.register_start_method(self.process_shows_from_config,
                                                  'show_player')
 
         # Create the show AssetManager
@@ -70,7 +70,7 @@ class ShowController(object):
                                           path_string='shows',
                                           asset_class=Show,
                                           asset_attribute='shows',
-                                          file_extensions=('yaml')
+                                          file_extensions=('yaml',)
                                           )
 
     def _initialize(self):
@@ -79,9 +79,9 @@ class ShowController(object):
         if 'show_player' in self.machine.config:
             self.process_shows_from_config(self.machine.config['show_player'])
 
-    def play_show(self, show, repeat=False, priority=0, blend=False, hold=False,
-                  tocks_per_sec=30, start_location=None, num_repeats=0,
-                  **kwargs):
+    def play_show(self, show, mode=None, repeat=False, priority=0, blend=False,
+                  hold=False, tocks_per_sec=30, start_location=None,
+                  num_repeats=0, **kwargs):
 
         if 'show_priority' in kwargs:
             priority += int(kwargs['show_priority'])
@@ -96,7 +96,8 @@ class ShowController(object):
                                           blend=blend, hold=hold,
                                           tocks_per_sec=tocks_per_sec,
                                           start_location=start_location,
-                                          num_repeats=num_repeats)
+                                          num_repeats=num_repeats,
+                                          mode=mode)
 
         elif isinstance(show, Show):
             if 'stop_key' in kwargs:
@@ -107,7 +108,8 @@ class ShowController(object):
 
             show.play(repeat=repeat, priority=priority, blend=blend, hold=hold,
                       tocks_per_sec=tocks_per_sec,
-                      start_location=start_location, num_repeats=num_repeats)
+                      start_location=start_location, num_repeats=num_repeats,
+                      mode=mode)
         else:  # no show by that name to play
             pass
 
@@ -134,12 +136,14 @@ class ShowController(object):
             if type(settings) is dict:
                 settings['priority'] = priority
                 settings['stop_key'] = mode
-                key_list.append(self.add_show_player_show(event, settings))
+                key_list.append(self.add_show_player_show(event, settings,
+                                                          mode))
             elif type(settings) is list:
                 for entry in settings:
                     entry['priority'] = priority
                     entry['stop_key'] = mode
-                    key_list.append(self.add_show_player_show(event, entry))
+                    key_list.append(self.add_show_player_show(event, entry,
+                                                              mode))
 
         return self.unload_show_player_shows, (key_list, mode)
 
@@ -153,7 +157,7 @@ class ShowController(object):
         if show_key:
             self.stop_shows_by_key(show_key)
 
-    def add_show_player_show(self, event, settings):
+    def add_show_player_show(self, event, settings, mode=None):
 
         if 'priority' in settings:
             settings['show_priority'] = settings['priority']
@@ -173,7 +177,7 @@ class ShowController(object):
 
         else:  # action = 'play'
             key = self.machine.events.add_handler(event, self.play_show,
-                                                  **settings)
+                                                  mode=mode, **settings)
 
         return key
 
@@ -226,7 +230,7 @@ class ShowController(object):
                 # add the current location to the list to be serviced
                 # show.service_locations.append(show.current_location)
                 # advance the show to the current time
-                show._advance()
+                show.advance()
 
                 if show.ending:
                     break
@@ -242,7 +246,7 @@ class ShowController(object):
             if item['action_time'] <= self.current_time:
                 # If the queue is for a fade, we ignore the current color
                 if item.get('playlist', None):
-                    item['playlist']._advance()
+                    item['playlist'].advance()
 
                 # We have to check again since one of these advances could have
                 # removed it already
@@ -279,7 +283,7 @@ class Show(Asset):
             self.asset_manager = asset_manager
 
             self._initialize_asset()
-            self._load(callback=None, show_actions=actions)
+            self.do_load(callback=None, show_actions=actions)
 
     def _initialize_asset(self):
 
@@ -313,7 +317,9 @@ class Show(Asset):
         self.loaded_callbacks = list()
         self.show_actions = list()
 
-    def _load(self, callback, show_actions=None):
+        self.mode = None
+
+    def do_load(self, callback, show_actions=None):
 
         self.show_actions = list()
 
@@ -393,7 +399,7 @@ class Show(Asset):
 
     def play(self, repeat=False, priority=0, blend=False, hold=False,
              tocks_per_sec=30, start_location=None, callback=None,
-             num_repeats=0):
+             num_repeats=0, mode=None):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
         speed, priority, whether this show blends with others, etc. These are
@@ -461,6 +467,7 @@ class Show(Asset):
         self.secs_per_tock = 1/float(tocks_per_sec)
         self.callback = callback
         self.num_repeats = num_repeats
+        self.mode = mode
         if start_location is not None:
             # if you don't specify a start location, it will start where it
             # left off (if you stopped it with reset=False). If the show has
@@ -529,7 +536,7 @@ class Show(Asset):
         self.tocks_per_sec = tocks_per_sec
         self.secs_per_tock = 1/float(tocks_per_sec)
 
-    def _advance(self):
+    def advance(self):
         # Internal method which advances the show to the next step
         if self.ending:
             self.machine.show_controller._end_show(self)
@@ -562,6 +569,7 @@ class Show(Asset):
 
                 self.last_slide = (
                     self.machine.display.slidebuilder.build_slide(item_dict,
+                    mode=self.mode,
                     priority=self.priority))
 
                 self.slide_removal_keys.add(self.last_slide.removal_key)

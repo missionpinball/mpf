@@ -45,7 +45,7 @@ class Timing(object):
         except KeyError:
             Timing.HZ = 30
 
-        self.log.info("Configuring system Timing for %sHz", Timing.HZ)
+        self.log.debug("Configuring system Timing for %sHz", Timing.HZ)
         Timing.secs_per_tick = 1 / float(Timing.HZ)
         Timing.ms_per_tick = 1000 * Timing.secs_per_tick
 
@@ -158,9 +158,9 @@ class Timing(object):
         for _i in range(length):
             count += ratio
             if int(count) > whole_num:
-                output = output | 1
+                output |= 1
                 whole_num += 1
-            output = output << 1
+            output <<= 1
 
         return output
 

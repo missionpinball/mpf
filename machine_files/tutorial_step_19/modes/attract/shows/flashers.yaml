@@ -1,0 +1,51 @@
+- tocks: 1
+  flashers:
+    f_claw
+- tocks: 1
+  flashers:
+    f_jets
+- tocks: 1
+  flashers:
+    f_side_ramp
+- tocks: 1
+  flashers:
+    f_left_ramp_upper
+- tocks: 1
+  flashers:
+    f_left_ramp_lower
+- tocks: 1
+  flashers:
+    f_car_chase_center
+- tocks: 1
+  flashers:
+    f_car_chase_lower
+- tocks: 1
+  flashers:
+    f_right_ramp
+- tocks: 1
+  flashers:
+    f_eject
+- tocks: 1
+  flashers:
+    f_car_chase_upper
+- tocks: 1
+  flashers:
+    f_lower_rebound
+- tocks: 1
+  flashers:
+    f_eyeball
+- tocks: 1
+  flashers:
+    f_center_ramp
+- tocks: 1
+  flashers:
+    f_elevator_2
+- tocks: 1
+  flashers:
+    f_elevator_1
+- tocks: 1
+  flashers:
+    f_diverter
+- tocks: 1
+  flashers:
+    f_right_ramp_upper

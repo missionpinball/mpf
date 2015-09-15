@@ -13,7 +13,6 @@ import sys
 import Queue
 
 from mpf.system import *
-from mpf.devices import *
 from mpf.system.config import Config
 from mpf.system.tasks import Task, DelayManager
 import version
@@ -61,19 +60,22 @@ class MachineController(object):
         self.monitors = dict()
         self.plugins = list()
         self.scriptlets = list()
-        self.game_modes = list()
+        self.modes = list()
         self.asset_managers = dict()
         self.game = None
+        self.active_debugger = dict()
 
         self.num_assets_to_load = 0
 
         self.delay = DelayManager()
 
         self.crash_queue = Queue.Queue()
-        Task.Create(self._check_crash_queue)
+        Task.create(self._check_crash_queue)
 
         self.config = dict()
         self._load_config()
+
+        self.configure_debugger()
 
         self.hardware_platforms = dict()
         self.default_platform = None
@@ -90,28 +92,31 @@ class MachineController(object):
         else:
             self.set_default_platform('virtual')
 
+
         self._load_system_modules()
 
+        self.config['machine'] = self.config_processor.process_config2(
+            'machine', self.config.get('machine', dict()), 'machine')
+
+        self._register_system_events()
+        self.events.post("init_phase_1")
+        self.events.post("init_phase_2")
+        self._load_plugins()
+        self.events.post("init_phase_3")
+        self._load_scriptlets()
+        self.events.post("init_phase_4")
+        self.events.post("init_phase_5")
+
+        self.reset()
+
+    def _register_system_events(self):
         self.events.add_handler('shutdown', self.power_off)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'shutdown'), self.power_off)
         self.events.add_handler('quit', self.quit)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.quit)
-        self.events.add_handler('machine_reset_phase_3', self.flow_advance,
-                                position=0)
 
-        self.events.post("init_phase_1")
-        self._load_device_modules()
-        self.events.post("init_phase_2")
-        self._load_plugins()
-        self.events.post("init_phase_3")
-        self._load_scriptlets()
-        self.events.post("init_phase_4")
-        self._init_machine_flow()
-        self.events.post("init_phase_5")
-
-        self.reset()
 
     def _check_crash_queue(self):
         try:
@@ -122,20 +127,6 @@ class MachineController(object):
             self.log.critical("MPF Shutting down due to child thread crash")
             self.log.critical("Crash details: %s", crash)
             self.done = True
-
-    def _init_machine_flow(self):
-        # sets up the machine flow
-        self.log.debug("Configuring Machine Flow")
-        self.config['machine_flow'] = self.config['machine_flow'].split(' ')
-        # Convert the MachineFlow config into a list of objects
-        i = 0
-        for machine_mode in self.config['machine_flow']:
-            name = machine_mode.split('.')[-1:]
-            self.config['machine_flow'][i] = self.string_to_class(machine_mode)(
-                                                                 self, name[0])
-            i += 1
-        # register event handlers
-        self.events.add_handler('machineflow_advance', self.flow_advance)
 
     def _load_config(self):
         # creates the main config dictionary from the YAML machine config files.
@@ -181,7 +172,7 @@ class MachineController(object):
                                        self.config['mpf']['paths']['config'],
                                        self.options['configfile'])
 
-        self.log.info("Base machine config file: %s", config_file)
+        self.log.debug("Base machine config file: %s", config_file)
 
         # Load the machine-specific config
         self.config = Config.load_config_yaml(config=self.config,
@@ -195,44 +186,21 @@ class MachineController(object):
 
         """
         python_version = sys.version_info
-        self.log.info("Python version: %s.%s.%s", python_version[0],
+        self.log.debug("Python version: %s.%s.%s", python_version[0],
                       python_version[1], python_version[2])
-        self.log.info("Platform: %s", sys.platform)
-        self.log.info("Python executable location: %s", sys.executable)
-        self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
-
-    def _load_device_modules(self):
-        self.config['mpf']['device_modules'] = (
-            self.config['mpf']['device_modules'].split(' '))
-        for device_type in self.config['mpf']['device_modules']:
-            device_cls = eval(device_type)
-
-            collection, config = device_cls.get_config_info()
-
-            # create the collection
-            setattr(self, collection, devices.DeviceCollection(self, collection,
-                                                               device_cls.config_section))
-
-            # Create this device
-            if config in self.config:
-                self.log.info("Loading '%s' devices", collection)
-                devices.Device.create_devices(device_cls,
-                                          getattr(self, collection),
-                                          self.config[config],
-                                          self
-                                          )
-            else:
-                self.log.debug("No '%s:' section found in machine configuration"
-                               ", so this collection will not be created.",
-                               config)
+        self.log.debug("Platform: %s", sys.platform)
+        self.log.debug("Python executable location: %s", sys.executable)
+        self.log.debug("32-bit Python? %s", sys.maxsize < 2**32)
 
     def _load_system_modules(self):
+        self.log.info("Loading system modules...")
         for module in self.config['mpf']['system_modules']:
-            self.log.info("Loading '%s' system module", module[1])
+            self.log.debug("Loading '%s' system module", module[1])
             m = self.string_to_class(module[1])(self)
             setattr(self, module[0], m)
 
     def _load_plugins(self):
+        self.log.info("Loading plugins...")
 
         # TODO: This should be cleaned up. Create a Plugins superclass and
         # classmethods to determine if the plugins should be used.
@@ -240,7 +208,8 @@ class MachineController(object):
         for plugin in Config.string_to_list(
                 self.config['mpf']['plugins']):
 
-            self.log.info("Loading '%s' plugin", plugin)
+
+            self.log.debug("Loading '%s' plugin", plugin)
 
             i = __import__('mpf.plugins.' + plugin, fromlist=[''])
             self.plugins.append(i.plugin_class(self))
@@ -249,9 +218,11 @@ class MachineController(object):
         if 'scriptlets' in self.config:
             self.config['scriptlets'] = self.config['scriptlets'].split(' ')
 
+            self.log.info("Loading scriptlets...")
+
             for scriptlet in self.config['scriptlets']:
 
-                self.log.info("Loading '%s' scriptlet", scriptlet)
+                self.log.debug("Loading '%s' scriptlet", scriptlet)
 
                 i = __import__(self.config['mpf']['paths']['scriptlets'] + '.'
                                + scriptlet.split('.')[0], fromlist=[''])
@@ -275,38 +246,11 @@ class MachineController(object):
         Note: This method is not yet implemented.
 
         """
+        self.events.post('Resetting...')
         self.events.post('machine_reset_phase_1')
         self.events.post('machine_reset_phase_2')
         self.events.post('machine_reset_phase_3')
-        self.log.info("Reset Complete")
-
-    def flow_advance(self, position=None, **kwargs):
-        """Advances the machine to the next machine mode as specified in the
-        machineflow. Typically this just advances between Attract mode and Game
-        mode.
-        """
-
-        # If there's a current machineflow position, stop that mode
-        if self.machineflow_index is not None:
-            self.config['machine_flow'][self.machineflow_index].stop()
-        else:
-            self.machineflow_index = 0
-
-        # Now find the new position and start it:
-        if position is None:  # A specific position was not passed, so just advance
-            if self.machineflow_index >= len(self.config['machine_flow']) - 1:
-                self.machineflow_index = 0
-            else:
-                self.machineflow_index += 1
-
-        else:  # Go to whatever position was passed
-            self.machineflow_index = position
-
-        self.log.debug("Advancing Machine Flow. New Index: %s",
-                       self.machineflow_index)
-
-        # Now start the new machine mode
-        self.config['machine_flow'][self.machineflow_index].start(**kwargs)
+        self.log.debug('Reset Complete')
 
     def add_platform(self, name):
         """Makes an additional hardware platform interface available to MPF.
@@ -468,6 +412,26 @@ class MachineController(object):
                                 (time.time() - self.loop_start_time), 2))
         except ZeroDivisionError:
             self.log.info("Actual MPF loop rate: 0 Hz")
+
+    def configure_debugger(self):
+        pass
+
+
+    def get_debug_status(self, debug_path):
+
+        if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
+            return True
+
+        class_, module = debug_path.split('|')
+
+        try:
+            if module in self.active_debugger[class_]:
+                return True
+            else:
+                return False
+        except KeyError:
+            return False
+
 
 
 # The MIT License (MIT)

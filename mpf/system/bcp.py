@@ -23,8 +23,10 @@ import urlparse
 from Queue import Queue
 import copy
 
-from mpf.game.player import Player
+from mpf.system.player import Player
 from mpf.system.config import Config
+from mpf.devices.shot import Shot
+from mpf.devices.shot_group import ShotGroup
 import version
 
 
@@ -105,24 +107,21 @@ class BCP(object):
         machine: A reference to the main MPF machine object.
 
     The following BCP commands are currently implemented:
-        attract_start
-        attract_stop
-        ball_start?player=x&ball=x
+        ball_start?player_num=x&ball=x
         ball_end
         config?volume=0.5
         error
-        game_start
-        game_end
         get
         goodbye
         hello?version=xxx
         mode_start?name=xxx&priority=xxx
         mode_stop?name=xxx
-        player_added?number=x
-        player_score?value=x&prev_value=x&change=x
-        player_turn_start?player=x
-        player_variable?name=x&value=x&prev_value=x&change=x
+        player_added?player_num=x
+        player_score?value=x&prev_value=x&change=x&player_num=x
+        player_turn_start?player_num=x
+        player_variable?name=x&value=x&prev_value=x&change=x&player_num=x
         set
+        shot?name=x
         switch?name=x&state=x
         timer
         trigger?name=xxx
@@ -151,8 +150,8 @@ class BCP(object):
                                     }
 
         self.dmd = None
-
         self.filter_player_events = True
+        self.filter_shots = True
         self.send_player_vars = False
         self.mpfmc_trigger_events = set()
         self.track_volumes = dict()
@@ -163,11 +162,7 @@ class BCP(object):
         self.mpfmc_trigger_events.add('timer_tick')
         self.mpfmc_trigger_events.add('ball_started')
         self.mpfmc_trigger_events.add('ball_ended')
-        self.mpfmc_trigger_events.add('game_starting')
-        self.mpfmc_trigger_events.add('game_ended')
         self.mpfmc_trigger_events.add('player_add_success')
-        self.mpfmc_trigger_events.add('attract_start')
-        self.mpfmc_trigger_events.add('attract_stop')
 
         try:
             if self.machine.config['dmd']['physical']:
@@ -198,6 +193,18 @@ class BCP(object):
                 self.filter_player_events = False
 
         self._setup_player_monitor()
+
+        if ('shots' in self.config and
+                self.config['shots']):
+
+            self.config['shots'] = (
+                Config.string_to_list(self.config['shots']))
+
+            if '__all__' in self.config['shots']:
+                self.filter_shots = False
+
+        self._setup_shot_monitor()
+
         self.register_mpfmc_trigger_events(self.machine.config)
 
         try:
@@ -208,7 +215,6 @@ class BCP(object):
         self.machine.events.add_handler('init_phase_2',
                                         self._setup_bcp_connections)
         self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
-        self.machine.events.add_handler('game_starting', self.bcp_game_start)
         self.machine.events.add_handler('player_add_success',
                                         self.bcp_player_added)
         self.machine.events.add_handler('machine_reset_phase_1',
@@ -220,11 +226,14 @@ class BCP(object):
         self.machine.events.add_handler('disable_volume_keys',
                                         self.disable_volume_keys)
 
-        self.machine.modes.register_start_method(self.bcp_mode_start, 'mode')
-        self.machine.modes.register_start_method(self.register_triggers,
+        self.machine.mode_controller.register_start_method(self.bcp_mode_start, 'mode')
+        self.machine.mode_controller.register_start_method(self.register_triggers,
                                                  'triggers')
-        self.machine.modes.register_load_method(
+        self.machine.mode_controller.register_load_method(
             self.register_mpfmc_trigger_events)
+
+    def __repr__(self):
+        return '<BCP Module>'
 
     def _setup_dmd(self):
 
@@ -244,7 +253,8 @@ class BCP(object):
                 break
 
             self.bcp_clients.append(BCPClientSocket(self.machine, name,
-                                              settings, self.receive_queue))
+                                                    settings,
+                                                    self.receive_queue))
 
     def remove_bcp_connection(self, bcp_client):
         """Removes a BCP connection to a remote BCP host.
@@ -276,11 +286,15 @@ class BCP(object):
             for event in self.config['player_variables']:
                 self.mpfmc_trigger_events.add('player_' + event.lower())
 
-    def _player_var_change(self, name, value, prev_value, change):
+    def _setup_shot_monitor(self):
+        Shot.monitor_enabled = True
+        self.machine.register_monitor('shots', self._shot)
+
+    def _player_var_change(self, name, value, prev_value, change, player_num):
 
         if name == 'score':
             self.send('player_score', value=value, prev_value=prev_value,
-                      change=change)
+                      change=change, player_num=player_num)
 
         elif self.send_player_vars and (
                 not self.filter_player_events or
@@ -289,7 +303,15 @@ class BCP(object):
                       name=name,
                       value=value,
                       prev_value=prev_value,
-                      change=change)
+                      change=change,
+                      player_num=player_num)
+
+    def _shot(self, name, profile, state):
+
+        if self.filter_shots and name not in self.config['shots']:
+            return
+
+        self.send(bcp_command='shot', name=name, profile=profile, state=state)
 
     def process_bcp_events(self):
         """Processes the BCP Events from the config."""
@@ -349,9 +371,6 @@ class BCP(object):
         """
 
         self.log.debug("Registering Trigger Events")
-
-        # todo should this be here? Or in the individual show_player, sound_player
-        # and slide_player modules?
 
         try:
             for event in config['show_player'].keys():
@@ -555,16 +574,9 @@ class BCP(object):
         """
         self.dmd.update(data)
 
-    def bcp_game_start(self, **kwargs):
-        """Sends the BCP 'game_start' and 'player_added?number=1' commands to
-        the remote BCP hosts.
-        """
-        self.send('game_start')
-        #self.send('player_added', number=1)
-
     def bcp_player_added(self, player, num):
         """Sends BCP 'player_added' to the connected BCP hosts."""
-        self.send('player_added', number=num)
+        self.send('player_added', player_num=num)
 
     def bcp_trigger(self, name, **kwargs):
         """Sends BCP 'trigger' to the connected BCP hosts."""
@@ -608,7 +620,7 @@ class BCP(object):
         """
 
         for switch in self.machine.switches.items_tagged(tag):
-            self.enable_bcp_switch(switch)
+            self.enable_bcp_switch(switch.name)
 
     def disable_bcp_switch(self, name):
         """Disables sending BCP switch commands when this switch changes state.
@@ -784,20 +796,14 @@ class BCPClientSocket(object):
     def __init__(self, machine, name, config, receive_queue):
 
         self.log = logging.getLogger('BCPClientSocket.' + name)
-        self.log.info('Setting up BCP Client...')
+        self.log.debug('Setting up BCP Client...')
 
         self.machine = machine
         self.name = name
         self.receive_queue = receive_queue
 
-        config_spec = '''
-                        host: string
-                        port: int|5050
-                        connection_attempts: int|-1
-                        require_connection: boolean|False
-                        '''
-
-        self.config = Config.process_config(config_spec, config)
+        self.config = self.machine.config_processor.process_config2(
+            'bcp:connections', config, 'bcp:connections')
 
         self.sending_queue = Queue()
         self.receive_thread = None

@@ -12,6 +12,7 @@ import time
 import Queue
 import uuid
 import copy
+import sys
 
 from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config
@@ -102,16 +103,22 @@ class SoundController(object):
                 self.register_sound_events,
                 config=self.machine.config['sound_player'])
 
-        self.machine.modes.register_start_method(self.register_sound_events,
+        self.machine.mode_controller.register_start_method(self.register_sound_events,
                                                  'sound_player')
 
     def _initialize(self):
         # Initialize the sound controller. Not done in __init__() because we
         # need Pygame to be setup first.
 
-        frequency, bits, channels = pygame.mixer.get_init()
+        try:
+            frequency, bits, channels = pygame.mixer.get_init()
+        except TypeError:
+            self.log.error("Could not initialize audio. Does your computer "
+                           "have an audio device? Maybe it doesn't create one"
+                           "if there are no speakers plugged in?")
+            sys.exit()
 
-        self.log.info("Pygame Sound Mixer configuration. Freq: %s, Bits: %s, "
+        self.log.debug("Pygame Sound Mixer configuration. Freq: %s, Bits: %s, "
                        "Channels: %s", frequency, bits, channels)
 
         # Configure Pygame to use the correct number of channels. We need one
@@ -624,7 +631,7 @@ class StreamTrack(object):
 
         pygame.mixer.music.set_volume(volume)
 
-        self.log.info("Playing Sound: %s Vol: %s", sound.file_name,
+        self.log.debug("Playing Sound: %s Vol: %s", sound.file_name,
                       pygame.mixer.music.get_volume())
 
         if 'loops' not in settings:
@@ -744,7 +751,7 @@ class Channel(object):
         # set the sound's current volume
         sound.sound_object.set_volume(volume)
 
-        self.log.info("Playing Sound: %s Vol: %s", sound.file_name,
+        self.log.debug("Playing Sound: %s Vol: %s", sound.file_name,
                       sound.sound_object.get_volume())
 
         self.pygame_channel.play(sound.sound_object, loops)
@@ -791,7 +798,7 @@ class Sound(Asset):
         if 'end_time' not in self.config:  # todo
             self.config['end_time'] = None
 
-    def _load(self, callback):
+    def do_load(self, callback):
         try:
             self.sound_object = pygame.mixer.Sound(self.file_name)
         except pygame.error:

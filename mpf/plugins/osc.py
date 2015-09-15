@@ -29,6 +29,7 @@ from mpf.system.config import Config
 global import_success
 
 try:
+    # noinspection PyPep8Naming
     import OSC as OSCmodule
     socket.gethostbyname(socket.gethostname())
     import_success = True
@@ -125,7 +126,7 @@ class OSC(object):
         """Receives OSC messages and acts on them."""
 
         if self.config['debug_messages']:
-            self.log.info("Incoming OSC message. Client IP: %s, Message: %s, %s"
+            self.log.debug("Incoming OSC message. Client IP: %s, Message: %s, %s"
                           ", %s", client_address, addr, tags, data)
 
         # Separate the incoming message into category and name parts.
@@ -140,7 +141,7 @@ class OSC(object):
 
         # if this client is not connected, set up a connection
         if client_address not in self.OSC_clients:
-            self.found_new_OSC_client(client_address)
+            self.found_new_osc_client(client_address)
 
         if cat.upper() == 'SW':
             self.process_switch(name, data)
@@ -257,15 +258,15 @@ class OSC(object):
 
     def update_player(self, **kwargs):
         self.update_score()
-        self.client_send_OSC_message("data", "player",
+        self.client_send_osc_message("data", "player",
                                      self.machine.game.player['number'])
 
     def update_ball(self, **kwargs):
-        self.client_send_OSC_message("data", "ball",
+        self.client_send_osc_message("data", "ball",
                                      self.machine.game.player['ball'])
 
     def update_score(self, **kwargs):
-        self.client_send_OSC_message("data", "score",
+        self.client_send_osc_message("data", "score",
                                      locale.format("%d",
                                      self.machine.game.player['score'],
                                      grouping=True))
@@ -282,24 +283,24 @@ class OSC(object):
         for category in self.machine.auditor.current_audits:
             for entry in self.machine.auditor.current_audits[category]:
                 if category != 'Player':
-                    self.client_send_OSC_message(category="audits",
+                    self.client_send_osc_message(category="audits",
                         name=category + '/' + entry,
                         data=self.machine.auditor.current_audits[category][entry])
 
         if 'Player' in self.machine.auditor.current_audits:
             for entry in self.machine.auditor.current_audits['Player']:
-                self.client_send_OSC_message(category="audits",
+                self.client_send_osc_message(category="audits",
                     name='Player/' + entry + '/average',
                     data=self.machine.auditor.current_audits['Player'][entry]
                         ['average'])
-                self.client_send_OSC_message(category="audits",
+                self.client_send_osc_message(category="audits",
                     name='Player/' + entry + '/total',
                     data=self.machine.auditor.current_audits['Player'][entry]
                         ['total'])
                 i = 0
                 for top in (self.machine.auditor.current_audits['Player']
                             [entry]['top']):
-                    self.client_send_OSC_message(category="audits",
+                    self.client_send_osc_message(category="audits",
                         name='Player/' + entry + '/top/' + str(i+1),
                         data=self.machine.auditor.current_audits[
                             'Player'][entry]['top'][i])
@@ -326,13 +327,13 @@ class OSC(object):
         if self.client_mode == 'wpc':
             switch_name = self.machine.switches[switch_name].config[
                                                         'number_str'].lower()
-        self.client_send_OSC_message("sw", switch_name, state)
+        self.client_send_osc_message("sw", switch_name, state)
 
     def client_update_light(self, light_name, brightness):
         if self.client_mode == 'wpc':
             light_name = self.machine.lights[light_name].config[
                                                         'number_str'].lower()
-        self.client_send_OSC_message("light", light_name, float(brightness/255))
+        self.client_send_osc_message("light", light_name, float(brightness/255))
 
     def client_update_all_switches(self):
         """ Updates all the switch states on the OSC client."""
@@ -343,7 +344,7 @@ class OSC(object):
                     data = 1
                 else:
                     data = 0
-                self.client_send_OSC_message("sw", switch.name, data)
+                self.client_send_osc_message("sw", switch.name, data)
 
         elif self.client_mode == 'wpc':
             for switch in self.machine.switches:
@@ -351,10 +352,10 @@ class OSC(object):
                     data = 1
                 else:
                     data = 0
-                self.client_send_OSC_message("sw", switch.config[
+                self.client_send_osc_message("sw", switch.config[
                                              'number_str'].lower(), data)
 
-    def client_send_OSC_message(self, category, name, data):
+    def client_send_osc_message(self, category, name, data):
         """Sends an OSC message to the client to update it
         Parameters:
         category - type of update, sw, coil, lamp, led, etc.
@@ -386,13 +387,13 @@ class OSC(object):
         self.clients_to_delete = []
 
         for client in self.clients_to_add:
-            self.setup_OSC_client(client)
+            self.setup_osc_client(client)
 
-    def found_new_OSC_client(self, address):
+    def found_new_osc_client(self, address):
         if address not in self.OSC_clients:
             self.clients_to_add.append(address)
 
-    def setup_OSC_client(self, address):
+    def setup_osc_client(self, address):
         """Setup a new OSC client"""
         self.log.info("OSC client at address %s connected", address[0])
         self.OSC_clients[address] = OSCmodule.OSCClient()

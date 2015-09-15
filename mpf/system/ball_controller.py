@@ -8,8 +8,7 @@ a pinball machine."""
 import logging
 
 from mpf.system.tasks import DelayManager
-from mpf.system.devices import DeviceCollection
-from mpf.devices.playfield import Playfield
+from mpf.system.device_manager import DeviceCollection
 
 
 class BallController(object):
@@ -31,8 +30,6 @@ class BallController(object):
 
         self.game = None
 
-        self.machine.playfield = None  # Configured in init_phase_2
-
         self._num_balls_known = -999
 
         self.num_balls_missing = 0
@@ -43,8 +40,8 @@ class BallController(object):
                                         self.request_to_start_game)
         self.machine.events.add_handler('machine_reset_phase_2',
                                         self._initialize)
-        self.machine.events.add_handler('init_phase_2',
-                                        self.create_playfield_device)
+        # self.machine.events.add_handler('init_phase_2',
+        #                                 self.create_playfield_device, 2)
 
     @property
     def balls(self):
@@ -77,16 +74,6 @@ class BallController(object):
         """
         self._num_balls_known = balls
 
-    def create_playfield_device(self):
-        """Creates the actual playfield ball device and assigns it to
-        self.playfield.
-        """
-        if not hasattr(self.machine, 'ball_devices'):
-            self.machine.ball_devices = DeviceCollection()
-
-        self.machine.playfield = Playfield(self.machine, name='playfield',
-                                           collection='ball_devices')
-
     def _initialize(self):
 
         # If there are no ball devices, then the ball controller has no work to
@@ -116,8 +103,8 @@ class BallController(object):
         self.log.debug("Received request to start game.")
         self.log.debug("Balls contained: %s, Min balls needed: %s",
                        self.balls,
-                       self.machine.config['machine']['min balls'])
-        if self.balls < self.machine.config['machine']['min balls']:
+                       self.machine.config['machine']['min_balls'])
+        if self.balls < self.machine.config['machine']['min_balls']:
             self.log.warning("BallController denies game start. Not enough "
                              "balls")
             return False
@@ -209,7 +196,7 @@ class BallController(object):
         elif antitarget:
             self.log.debug("Emptying balls from devices tagged '%s'",
                            antitarget)
-            for device in self.machine.devices:
+            for device in self.machine.ball_devices:
                 if target in device.tags and device.balls > 0:
                     device.eject(balls=device.balls)
 

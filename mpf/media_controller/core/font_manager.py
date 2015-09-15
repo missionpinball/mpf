@@ -12,6 +12,7 @@ import os
 
 import pygame
 
+
 class FontManager(object):
     """Parent class of the Font Manager.
 

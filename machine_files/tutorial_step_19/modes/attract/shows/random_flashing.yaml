@@ -1,0 +1,14 @@
+- tocks: 1
+  lights:
+    l_ball_save: ff
+    l_super_jackpot: ff
+    l_computer: ff
+    l_demo_time: ff
+    l_retina_scan: ff
+- tocks: 1
+  lights:
+    l_ball_save: 0
+    l_super_jackpot: 0
+    l_computer: 0
+    l_demo_time: 0
+    l_retina_scan: 0

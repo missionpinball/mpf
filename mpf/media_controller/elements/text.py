@@ -7,7 +7,7 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-
+import re
 from mpf.media_controller.core.display import DisplayElement
 
 
@@ -31,18 +31,23 @@ class Text(DisplayElement):
     """
 
     def __init__(self, slide, machine, text, x=None, y=None, h_pos=None,
-                 v_pos=None, layer=0, **kwargs):
+                 v_pos=None, layer=0, text_variables=None, **kwargs):
 
         super(Text, self).__init__(slide, x, y, h_pos, v_pos, layer)
 
-        # todo move these defaults to mpfconfing.yaml
-        self.text = ''
+        self.text = text
+        self.original_text = text
         self.fonts = machine.display.fonts
         self.language = machine.language
         self.slide = slide
         self.machine = machine
-        self.original_text = text
+
         self.config = kwargs
+
+        self.var_finder = re.compile("(?<=%)[a-zA-Z0-9|]+(?=%)")
+
+        if not text_variables:
+            text_variables = dict()
 
         self.adjust_colors(**self.config)
 
@@ -55,28 +60,43 @@ class Text(DisplayElement):
         else:
             self.name = text
 
-        if '%' in text:
-            t = text.split('%')
-            if len(t) % 2 == 1:
+        self.text = self._process_text(text, local_replacements=text_variables,
+                                       local_type='event')
 
-                for i in xrange(1, len(t)-1, 2):
-                    self.register_player_event_handler(t[i])
+        if self._get_text_vars():
+            self._setup_variable_monitors()
 
         self.layer = layer
-
-        self.text = self.process_text(text)
 
         self.element_surface = self.fonts.render(text=self.text, **self.config)
         self.set_position(self.x, self.y, self.h_pos, self.v_pos)
 
-    def process_text(self, text):
+    def _get_text_vars(self):
+        return self.var_finder.findall(self.original_text)
 
-        if '%' in text:
-            if self.machine.player:
-                for name, value in self.machine.player:
-                    if '%' + name + '%' in text:
-                        text = text.replace(
-                            '%' + name + '%', str(value))
+    def _process_text(self, text, local_replacements=None, local_type=None):
+        # text: source text with placeholder vars
+        # local_replacements: dict of var names & their replacements
+        # local_type: type specifier of local replacements. e.g. "event" means
+        # it will look for %event|var_name% in the text string
+
+        if not local_replacements:
+            local_replacements = list()
+
+        for var_string in self._get_text_vars():
+            if var_string in local_replacements:
+                text = text.replace('%' + var_string + '%',
+                                    str(local_replacements[var_string]))
+                self.original_text = text
+
+            elif local_type and var_string.startswith(local_type + '|'):
+                text = text.replace('%' + var_string + '%',
+                    str(local_replacements[var_string.split('|')[1]]))
+                self.original_text = text
+
+            elif self.machine.player:
+                text = text.replace('%' + var_string + '%',
+                                    str(self.machine.player[var_string]))
 
         if 'min_digits' in self.config:
             text = text.zfill(self.config['min_digits'])
@@ -100,6 +120,38 @@ class Text(DisplayElement):
 
         return text
 
+    def _player_var_change(self, player_num, target_player, **kwargs):
+        self.text = self._process_text(self.original_text)
+
+        self.render()
+
+    def _setup_variable_monitors(self):
+
+        for var_string in self._get_text_vars():
+            if '|' not in var_string:
+                self.add_player_var_handler(name=var_string,
+                                            player=self.machine.player['number'])
+            else:
+                source, name = var_string.split('|')
+
+                if source.lower().startswith('player'):
+
+                    if source.strip('player'):
+                        self.add_player_var_handler(name=name,
+                            player=source.strip('player'))
+                    else:
+                        self.add_player_var_handler(name=var_string,
+                            player=self.machine.player['number'])
+
+                elif source.lower() == 'machine':
+                    # add machine monitor
+                    pass
+
+    def add_player_var_handler(self, name, player):
+        self.machine.events.add_handler('player_' + name,
+                                        self._player_var_change,
+                                        target_player=player)
+
     def render(self):
 
         self.element_surface = self.fonts.render(text=self.text, **self.config)
@@ -111,16 +163,8 @@ class Text(DisplayElement):
         # todo add logic around color/shade
         # todo trim this to a certain size? Or force it to fit in the size?
 
-    def register_player_event_handler(self, player_var):
-        self.machine.events.add_handler('player_' + player_var,
-                                        self.player_var_change)
-
-    def player_var_change(self, value, prev_value, change):
-        self.text = self.process_text(self.original_text)
-        self.render()
-
     def scrub(self):
-        self.machine.events.remove_handler(self.player_var_change)
+        self.machine.events.remove_handler(self._player_var_change)
 
     def group_digits(self, text, separator=',', group_size=3):
         """Enables digit grouping (i.e. adds comma separators between

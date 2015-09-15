@@ -19,7 +19,7 @@ class Movie(Asset):
 
         self.movie_object = None
 
-    def _load(self, callback):
+    def do_load(self, callback):
 
         try:
             self.movie_object = pygame.movie.Movie(self.file_name)

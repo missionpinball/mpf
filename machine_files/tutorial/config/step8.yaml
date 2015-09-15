@@ -1,4 +1,4 @@
-#config_version=2
+#config_version=3
 
 # Config file for Step 8 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
@@ -7,9 +7,9 @@
 # use this file with your own hardware unless you change the coil and switch
 # numbers to match your actual hardware!
 
-Hardware:
-    Platform: p_roc
-    DriverBoards: wpc
+hardware:
+    platform: fast
+    driverboards: wpc
 
 switches:
     s_left_flipper:

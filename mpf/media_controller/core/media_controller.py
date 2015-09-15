@@ -1,38 +1,28 @@
-"""Pygame-based media controller for MPF, based on the Backbox Control Protocol
-(BCP) v1.0"""
+"""Pygame-based media controller for MPF (BCP) v1.0"""
 # media_controller.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
 
-# The Backbox Control Protocol was conceived and developed by:
-# Quinn Capen
-# Kevin Kelm
-# Gabe Knuth
-# Brian Madden
-# Mike ORourke
-
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import os
-import socket
 import sys
 import time
-import threading
 from distutils.version import LooseVersion
 import Queue
-import traceback
+
 
 import pygame
 
 from mpf.media_controller.core import *
-
+from mpf.media_controller.core.bcp_server import BCPServer
 from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.events import EventManager
 from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
-from mpf.game.player import Player
+from mpf.system.player import Player
 import mpf.system.bcp as bcp
 import version
 
@@ -44,17 +34,19 @@ class MediaController(object):
 
         self.log = logging.getLogger("MediaController")
         self.log.info("Media Controller Version %s", version.__version__)
-        self.log.info("Backbox Control Protocol Version %s",
+        self.log.debug("Backbox Control Protocol Version %s",
                       version.__bcp_version__)
-        self.log.info("Config File Version %s",
+        self.log.debug("Config File Version %s",
                       version.__config_version__)
 
         python_version = sys.version_info
-        self.log.info("Python version: %s.%s.%s", python_version[0],
+        self.log.debug("Python version: %s.%s.%s", python_version[0],
                       python_version[1], python_version[2])
-        self.log.info("Platform: %s", sys.platform)
-        self.log.info("Python executable location: %s", sys.executable)
-        self.log.info("32-bit Python? %s", sys.maxsize < 2**32)
+        self.log.debug("Platform: %s", sys.platform)
+        self.log.debug("Python executable location: %s", sys.executable)
+        self.log.debug("32-bit Python? %s", sys.maxsize < 2**32)
+
+        self.active_debugger = dict()
 
         self.config = dict()
         self.done = False  # todo
@@ -71,37 +63,34 @@ class MediaController(object):
         self.receive_queue = Queue.Queue()
         self.sending_queue = Queue.Queue()
         self.crash_queue = Queue.Queue()
-        self.game_modes = CaseInsensitiveDict()
+        self.modes = CaseInsensitiveDict()
         self.player_list = list()
         self.player = None
         self.HZ = 0
         self.next_tick_time = 0
         self.secs_per_tick = 0
 
-        Task.Create(self._check_crash_queue)
+        Task.create(self._check_crash_queue)
 
-        self.bcp_commands = {'hello': self.bcp_hello,
+        self.bcp_commands = {'ball_start': self.bcp_ball_start,
+                             'ball_end': self.bcp_ball_end,
+                             'config': self.bcp_config,
+                             'error': self.bcp_error,
+                             'get': self.bcp_get,
                              'goodbye': self.bcp_goodbye,
-                             'reset': self.reset,
+                             'hello': self.bcp_hello,
                              'mode_start': self.bcp_mode_start,
                              'mode_stop': self.bcp_mode_stop,
-                             'error': self.bcp_error,
-                             'ball_start': self.bcp_ball_start,
-                             'ball_end': self.bcp_ball_end,
-                             'game_start': self.bcp_game_start,
-                             'game_end': self.bcp_game_end,
                              'player_added': self.bcp_player_add,
-                             'player_variable': self.bcp_player_variable,
                              'player_score': self.bcp_player_score,
                              'player_turn_start': self.bcp_player_turn_start,
-                             'attract_start': self.bcp_attract_start,
-                             'attract_stop': self.bcp_attract_stop,
-                             'trigger': self.bcp_trigger,
-                             'switch': self.bcp_switch,
-                             'get': self.bcp_get,
+                             'player_variable': self.bcp_player_variable,
+                             'reset': self.reset,
                              'set': self.bcp_set,
-                             'config': self.bcp_config,
-                             'timer': self.bcp_timer
+                             'shot': self.bcp_shot,
+                             'switch': self.bcp_switch,
+                             'timer': self.bcp_timer,
+                             'trigger': self.bcp_trigger,
                             }
 
         # load the MPF config & machine defaults
@@ -145,7 +134,7 @@ class MediaController(object):
                                        ['config'],
                                        options['configfile'])
 
-        self.log.info("Base machine config file: %s", config_file)
+        self.log.debug("Base machine config file: %s", config_file)
 
         # Load the machine-specific config
         self.config = Config.load_config_yaml(config=self.config,
@@ -160,14 +149,15 @@ class MediaController(object):
             Config.process_config(mediacontroller_config_spec,
                                   self.config['media_controller']))
 
-        self.events = EventManager(self)
+        self.events = EventManager(self, setup_event_player=False)
         self.timing = Timing(self)
 
         # Load the media controller modules
         self.config['media_controller']['modules'] = (
             self.config['media_controller']['modules'].split(' '))
+        self.log.info("Loading Modules...")
         for module in self.config['media_controller']['modules']:
-            self.log.info("Loading module: %s", module)
+            self.log.debug("Loading module: %s", module)
             module_parts = module.split('.')
             exec('self.' + module_parts[0] + '=' + module + '(self)')
 
@@ -297,11 +287,15 @@ class MediaController(object):
     def _process_command(self, bcp_command, **kwargs):
         self.log.debug("Processing command: %s %s", bcp_command, kwargs)
 
-        try:
+
+        # Can't use try/except KeyError here becasue there could be a KeyError
+        # in the callback which we don't want it to swallow.
+        if bcp_command in self.bcp_commands:
             self.bcp_commands[bcp_command](**kwargs)
-        except KeyError:
+        else:
             self.log.warning("Received invalid BCP command: %s", bcp_command)
             self.send('error', message='invalid command', command=bcp_command)
+
 
     def send(self, bcp_command, callback=None, **kwargs):
         """Sends a BCP command to the connected pinball controller.
@@ -427,10 +421,11 @@ class MediaController(object):
             return
             #todo raise error
 
-        name = name.lower()
+        if name == 'game':
+            self._game_start()
 
-        if name in self.game_modes:
-            self.game_modes[name].start(priority=priority)
+        if name in self.modes:
+            self.modes[name].start(priority=priority)
 
     def bcp_mode_stop(self, name, **kwargs):
         """Processes an incoming BCP 'mode_stop' command."""
@@ -438,10 +433,11 @@ class MediaController(object):
             return
             #todo raise error
 
-        name = name.lower()
+        if name == 'game':
+            self._game_end()
 
-        if name in self.game_modes:
-            self.game_modes[name].stop()
+        if name in self.modes:
+            self.modes[name].stop()
 
     def bcp_error(self, **kwargs):
         """Processes an incoming BCP 'error' command."""
@@ -449,80 +445,69 @@ class MediaController(object):
 
     def bcp_ball_start(self, **kwargs):
         """Processes an incoming BCP 'ball_start' command."""
+        kwargs['player'] = kwargs.pop('player_num')
+
         self.events.post('ball_started', **kwargs)
 
     def bcp_ball_end(self, **kwargs):
         """Processes an incoming BCP 'ball_end' command."""
         self.events.post('ball_ended', **kwargs)
 
-    def bcp_game_start(self, **kargs):
+    def _game_start(self, **kargs):
         """Processes an incoming BCP 'game_start' command."""
         self.player = None
         self.player_list = list()
-        Player.total_players = 0
+        self.num_players = 0
         self.events.post('game_started', **kargs)
 
-    def bcp_game_end(self, **kwargs):
+    def _game_end(self, **kwargs):
         """Processes an incoming BCP 'game_end' command."""
         self.player = None
         self.events.post('game_ended', **kwargs)
 
-    def bcp_player_add(self, number, **kwargs):
+    def bcp_player_add(self, player_num, **kwargs):
         """Processes an incoming BCP 'player_add' command."""
 
-        if number > len(self.player_list):
-            new_player = Player(self)
-            self.player_list.append(new_player)
-            new_player.score = 0
+        if player_num > len(self.player_list):
+            new_player = Player(self, self.player_list)
 
-            self.events.post('player_add_success', num=number)
+            self.events.post('player_add_success', num=player_num)
 
-    def bcp_player_variable(self, name, value, prev_value, change, **kwargs):
+    def bcp_player_variable(self, name, value, prev_value, change, player_num,
+                            **kwargs):
         """Processes an incoming BCP 'player_variable' command."""
 
-        if self.player:
-            self.player[name] = value
+        try:
+            self.player_list[int(player_num)-1][name] = value
+        except (IndexError, KeyError):
+            pass
 
-    def bcp_player_score(self, value, prev_value, change, **kwargs):
+    def bcp_player_score(self, value, prev_value, change, player_num,
+                         **kwargs):
         """Processes an incoming BCP 'player_score' command."""
 
-        if self.player:
-            self.player['score'] = int(value)
+        try:
+            self.player_list[int(player_num)-1]['score'] = int(value)
+        except (IndexError, KeyError):
+            pass
 
-    def bcp_attract_start(self, **kwargs):
-        """Processes an incoming BCP 'attract_start' command."""
-        self.events.post('attract_start')
-
-    def bcp_attract_stop(self, **kwargs):
-        """Processes an incoming BCP 'attract_stop' command."""
-        self.events.post('attract_stop')
-
-    def bcp_player_turn_start(self, player, **kwargs):
+    def bcp_player_turn_start(self, player_num, **kwargs):
         """Processes an incoming BCP 'player_turn_start' command."""
 
-        if ((self.player and self.player.number != player) or
+        self.log.debug("bcp_player_turn_start")
+
+        if ((self.player and self.player.number != player_num) or
                 not self.player):
 
-            self.player = self.player_list[int(player)-1]
+            try:
+                self.player = self.player_list[int(player_num)-1]
+            except IndexError:
+                self.log.error('Received player turn start for player %s, but '
+                               'only %s player(s) exist',
+                               player_num, len(self.player_list))
 
     def bcp_trigger(self, name, **kwargs):
         """Processes an incoming BCP 'trigger' command."""
-
-        '''
-        blocked_event_prefixes = ('player_',
-                                  'machinemode_',
-                                 )
-
-        blocked_events = ('ball_started',
-                          'ball_ended',
-                          'game_started',
-                          'game_ended',
-                         )
-
-        if not (name.startswith(blocked_event_prefixes) and
-                name in blocked_events):
-        '''
-
         self.events.post(name, **kwargs)
 
     def bcp_switch(self, name, state, **kwargs):
@@ -554,6 +539,11 @@ class MediaController(object):
         """
         pass
 
+    def bcp_shot(self, name, profile, state):
+        """The MPF media controller uses triggers instead of shots for its
+        display events, so we don't need to pay attention here."""
+        pass
+
     def bcp_config(self, **kwargs):
         """Processes an incoming BCP 'config' command."""
         for k, v in kwargs.iteritems():
@@ -563,8 +553,6 @@ class MediaController(object):
     def bcp_timer(self, name, action, **kwargs):
         """Processes an incoming BCP 'timer' command."""
         pass
-
-        #self.events.post('timer_' + name + '_' + action, **kwargs)
 
     def bcp_set_volume(self, track, value):
         """Sets the volume based on an incoming BCP 'config' command.
@@ -577,7 +565,6 @@ class MediaController(object):
         Note: At this time only the master volume can be set with this method.
 
         """
-
         if track == 'master':
             self.sound.set_volume(value)
 
@@ -586,147 +573,20 @@ class MediaController(object):
 
             # todo add per-track volume support to sound system
 
+    def get_debug_status(self, debug_path):
 
-class BCPServer(threading.Thread):
-    """Parent class for the BCP Server thread.
+        if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
+            return True
 
-    Args:
-        mc: A reference to the main MediaController instance.
-        receiving_queue: A shared Queue() object which holds incoming BCP
-            commands.
-        sending_queue: A shared Queue() object which holds outgoing BCP
-            commands.
-
-    """
-
-    def __init__(self, mc, receiving_queue, sending_queue):
-
-        threading.Thread.__init__(self)
-        self.mc = mc
-        self.log = logging.getLogger('BCP')
-        self.receive_queue = receiving_queue
-        self.sending_queue = sending_queue
-        self.connection = None
-        self.socket = None
-        self.done = False
-
-        self.setup_server_socket()
-
-        self.sending_thread = threading.Thread(target=self.sending_loop)
-        self.sending_thread.daemon = True
-        self.sending_thread.start()
-
-    def setup_server_socket(self, interface='localhost', port=5050):
-        """Sets up the socket listener.
-
-        Args:
-            interface: String name of which interface this socket will listen
-                on.
-            port: Integer TCP port number the socket will listen on.
-
-        """
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        self.log.info('Starting up on %s port %s', interface, port)
+        class_, module = debug_path.split('|')
 
         try:
-            self.socket.bind((interface, port))
-        except IOError:
-            self.log.critical('Socket bind IOError')
-            raise
-
-        self.socket.listen(1)
-
-    def run(self):
-        """The socket thread's run loop."""
-
-        try:
-            while True:
-                self.log.info("Waiting for a connection...")
-                self.mc.events.post('client_disconnected')
-                self.connection, client_address = self.socket.accept()
-
-                self.log.info("Received connection from: %s:%s",
-                              client_address[0], client_address[1])
-                self.mc.events.post('client_connected',
-                                    address=client_address[0],
-                                    port=client_address[1])
-
-                # Receive the data in small chunks and retransmit it
-                while True:
-                    try:
-                        data = self.connection.recv(4096)
-                        if data:
-                            commands = data.split("\n")
-                            for cmd in commands:
-                                if cmd:
-                                    self.process_received_message(cmd)
-                        else:
-                            # no more data
-                            break
-
-                    except:
-                        if self.mc.config['media_controller']['exit_on_disconnect']:
-                            self.mc.shutdown()
-                        else:
-                            break
-
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.mc.crash_queue.put(msg)
-
-    def stop(self):
-        """ Stops and shuts down the BCP server."""
-        if not self.done:
-            self.log.info("Socket thread stopping.")
-            self.sending_queue.put('goodbye')
-            time.sleep(1)  # give it a chance to send goodbye before quitting
-            self.done = True
-            self.mc.done = True
-
-    def sending_loop(self):
-        """Sending loop which transmits data from the sending queue to the
-        remote socket.
-
-        This method is run as a thread.
-        """
-        try:
-            while not self.done:
-                msg = self.sending_queue.get()
-
-                if not msg.startswith('dmd_frame'):
-                    self.log.debug('Sending "%s"', msg)
-
-                try:
-                    self.connection.sendall(msg + '\n')
-                except (AttributeError, socket.error):
-                    pass
-                    # Do we just keep on trying, waiting until a new client
-                    # connects?
-
-            self.socket.close()
-            self.socket = None
-
-            self.mc.socket_thread_stopped()
-
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.mc.crash_queue.put(msg)
-
-    def process_received_message(self, message):
-        """Puts a received BCP message into the receiving queue.
-
-        Args:
-            message: The incoming BCP message
-
-        """
-        self.log.debug('Received "%s"', message)
-        self.receive_queue.put(message)
+            if module in self.active_debugger[class_]:
+                return True
+            else:
+                return False
+        except KeyError:
+            return False
 
 
 # The MIT License (MIT)

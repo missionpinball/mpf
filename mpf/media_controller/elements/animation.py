@@ -41,7 +41,7 @@ class Animation(Asset):
 
         self.surface_list = None
 
-    def _load(self, callback):
+    def do_load(self, callback):
 
         # todo:
         # depth
@@ -340,7 +340,7 @@ display_element_class = AnimationDisplayElement
 create_asset_manager = True
 path_string = 'animations'
 config_section = 'animations'
-file_extensions = ('dmd')
+file_extensions = ('dmd',)
 
 
 # The MIT License (MIT)

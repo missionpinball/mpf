@@ -1,4 +1,4 @@
-# config_version=2
+# config_version=3
 # This file contains configuration options for the MPF itself, including
 # default settings for your machine-wide game-specific config files.
 
@@ -7,17 +7,19 @@
 
 mpf:
     system_modules: !!omap  # order is important here
+        - config_processor: mpf.system.config.Config
         - timing: mpf.system.timing.Timing
         - events: mpf.system.events.EventManager
+        - mode_controller: mpf.system.mode_controller.ModeController
+        - shot_profile_manager: mpf.system.shot_profile_manager.ShotProfileManager
+        - device_manager: mpf.system.device_manager.DeviceManager
         - switch_controller: mpf.system.switch_controller.SwitchController
         - ball_controller: mpf.system.ball_controller.BallController
-        - modes: mpf.system.modes.ModeController
         - light_controller: mpf.system.light_controller.LightController
         - bcp: mpf.system.bcp.BCP
-        - shots: mpf.system.shots.ShotController
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
         - scoring: mpf.system.scoring.ScoreController
-        - target_controller: mpf.system.target_controller.TargetController
+
 
     device_modules:
         driver.Driver
@@ -27,17 +29,21 @@ mpf:
         gi.GI
         autofire.AutofireCoil
         ball_device.BallDevice
+        playfield.Playfield
         drop_target.DropTarget
         drop_target.DropTargetBank
-        target.Target
-        target.TargetGroup
+        shot.Shot
+        shot_group.ShotGroup
         flipper.Flipper
         diverter.Diverter
         score_reel.ScoreReel
         score_reel.ScoreReelGroup
         flasher.Flasher
         playfield_transfer.PlayfieldTransfer
-    
+        ball_lock.BallLock
+        multiball.Multiball
+        ball_save.BallSave
+
     plugins:
         auditor
         ball_save
@@ -61,73 +67,379 @@ mpf:
     switch_event_active: "%_active"
     switch_event_inactive: "%_inactive"
     switch_tag_event: sw_%
-    
-    device_events:
-        autofire_coils:
-            enable: ball_started
-            disable: ball_ending, tilt, slam_tilt
-        ball_devices:
-            request_ball:
-            stop:
-            eject:
-            eject_all:
-        diverters:
-            enable:
-            disable:
-            activate:
-            deactivate:
-        drop_targets:
-            enable: ball_started
-            disable: ball_ending, tilt, slam_tilt
-            reset: ball_starting, machine_reset_phase_3
-            knockdown:
-            hit:
-            remove_profile:
-            advance:
-        drop_target_banks:
-            enable: ball_started
-            disable: ball_ending, tilt, slam_tilt
-            reset: machine_reset_phase_3, ball_starting
-            advance:
-        coils:
-            enable:
-            disable:
-            pulse:
-        flashers:
-            flash:
-        flippers:
-            enable: ball_started
-            disable: ball_ending, tilt, slam_tilt
-            enable_no_hold:
-            invert:
-        gis:
-            enable: machine_reset_phase_3
-            disable:
-        matrix_lights:
-            "on":
-            "off":
-        targets:
-            enable: ball_started
-            disable: ball_ending, tilt, slam_tilt
-            reset:
-            advance:
-            hit:
-            remove_profile:
-        target_groups:
-            enable: ball_started
-            disable: ball_ending, tilt, slam_tilt
-            reset:
-            rotate_left:
-            rotate_right:
-            advance:
+    allow_invalid_config_sections: false
+    config_versions_file: tools/config_versions.yaml
 
+    device_collection_control_events:
+        autofires:
+            - enable
+            - disable
+        ball_devices:
+            - stop
+            - eject_all
+        coils:
+            - disable
+        flippers:
+            - enable
+            - disable
+        leds:
+            - "off"
+        lights:
+            - "off"
+        gi:
+            - enable
+            - disable
+
+    mode_config_sections:
+      - autofire_coils
+      - ball_devices
+      - ball_saves
+      - coils
+      - diverters
+      - drop_targets
+      - drop_target_banks
+      - flashers
+      - flippers
+      - gis
+      - leds
+      - matrix_lights
+      - multiballs
+      - playfields
+      - playfield_transfers
+      - score_reels
+      - score_reel_groups
+      - shots
+      - shot_groups
+      - shot_profiles
+      - switches
+
+config_validator:
+# values are type|validation|default
+    autofire_coils:
+        coil: single|self.machine.coils[%]|
+        switch: single|self.machine.switches[%]|
+        reverse_switch: single|bool|False
+        pulse_ms: single|int|None
+        pwm_on_ms: single|int|None
+        pwm_off_ms: single|int|None
+        coil_action_ms: single|int|None
+        delay: single|int|0
+        recycle_ms: single|int|125
+        debounced: single|bool|False
+        drive_now: single|bool|False
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        enable_events: dict|str:ms|ball_started
+        disable_events: dict|str:ms|ball_ending
+    ball_devices:
+        exit_count_delay: single|ms|500ms
+        entrance_count_delay: single|ms|500ms
+        eject_coil: single|self.machine.coils[%]|None
+        hold_coil: single|self.machine.coils[%]|None
+        hold_events: dict|str:ms|None
+        hold_switches: list|self.machine.switches[%]|None
+        eject_switch: single|self.machine.switches[%]|None
+        entrance_switch: single|self.machine.switches[%]|None
+        jam_switch: single|self.machine.switches[%]|None
+        eject_count_hold_times: list|ms|None
+        confirm_eject_type: single|str|count
+        captures_from: single|str|playfield
+        eject_targets: list|str|playfield
+        # can't convert eject_targets to objects til all ball_devices are setup
+        eject_timeouts: list|ms|None
+        confirm_eject_switch: single|self.machine.switches[%]|None
+        confirm_eject_event: single|str|None
+        balls_per_eject: single|int|1
+        max_eject_attempts: single|int|0
+        ball_switches: list|self.machine.switches[%]|None
+        ball_capacity: single|int|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        request_ball_events: list|str|None
+        stop_events: dict|str:ms|None
+        eject_events: dict|str:ms|None
+        eject_all_events: dict|str:ms|None
+    ball_locks:
+        balls_to_lock: single|int|
+        lock_devices: list|self.machine.ball_devices[%]|
+        source_playfield: single|self.machine.ball_devices[%]|playfield
+        request_new_balls_to_pf: single|bool|True
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        enable_events: dict|str:ms|ball_started
+        disable_events: dict|str:ms|ball_ending
+        reset_events: dict|str:ms|machine_reset_phase_3
+        release_one_events: dict|str:ms|None
+    ball_saves:
+        source_playfield: single|self.machine.ball_devices[%]|playfield
+        auto_disable_time: single|ms|0
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        enable_events: dict|str:ms|None
+        disable_events: dict|str:ms|ball_ending
+    bcp:
+      connections:
+        host: single|str|None
+        port: single|int|5050
+        connection_attempts: single|int|-1
+        require_connection: single|bool|False
+    coils:
+        number: single|str|
+        number_str: single|str|
+        pulse_ms: single|int|0
+        holdpatter: single|str|None
+        pwm_on: single|int|0
+        pwm_off: single|int|0
+        allow_enable: single|bool|False
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        enable_events: dict|str:ms|None
+        disable_events: dict|str:ms|None
+        pulse_events: dict|str:ms|None
+        platform: single|str|None
+    diverters:
+        type: single|str|pulse
+        activation_time: single|ms|0
+        activation_switches: list|self.machine.switches[%]|None
+        disable_switches: list|self.machine.switches[%]|None
+        deactivation_switches: list|self.machine.switches[%]|None
+        activation_coil: single|self.machine.coils[%]|None
+        deactivation_coil: single|self.machine.coils[%]|None
+        targets_when_active: list|self.machine.ball_devices[%]|playfield
+        targets_when_inactive: list|self.machine.ball_devices[%]|playfield
+        feeder_devices: list|self.machine.ball_devices[%]|playfield
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        enable_events: dict|str:ms|None
+        disable_events: dict|str:ms|None
+        activate_events: dict|str:ms|None
+        deactivate_events: dict|str:ms|None
+    drop_targets:
+        switch: single|self.machine.switches[%]|
+        reset_coil: single|self.machine.coils[%]|None
+        knockdown_coil: single|self.machine.coils[%]|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        reset_events: dict|str:ms|ball_starting, machine_reset_phase_3
+        knockdown_events: dict|str:ms|None
+    drop_target_banks:
+        drop_targets: set|self.machine.drop_targets[%]|
+        reset_coil: single|self.machine.coils[%]|None
+        reset_coils: list|self.machine.coils[%]|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
+    flashers:
+        number: single|str|
+        number_str: single|str|
+        flash_ms: single|ms|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        flash_events: dict|str:ms|None
+        platform: single|str|None
+    flippers:
+        main_coil: single|self.machine.coils[%]|
+        hold_coil: single|self.machine.coils[%]|None
+        activation_switch: single|self.machine.switches[%]|
+        eos_switch: single|self.machine.switches[%]|None
+        use_eos: single|bool|False
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        enable_events: dict|str:ms|ball_started
+        disable_events: dict|str:ms|ball_ending
+        enable_no_hold_events: dict|str:ms|None
+        invert_events: dict|str:ms|None
+    gis:
+        number: single|str|
+        number_str: single|str|
+        dimmable: single|bool|False
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        enable_events: dict|str:ms|machine_reset_phase_3
+        disable_events: dict|str:ms|None
+        platform: single|str|None
+    leds:
+        number: single|str|
+        number_str: single|str|
+        polarity: single|bool|False
+        default_color: single|str|ffffff
+        brightness_compensation: list|float|1.0
+        fade_ms: single|int|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        on_events:  dict|str:ms|None
+        off_events:  dict|str:ms|None
+        platform: single|str|None
+        x: single|int|None
+        y: single|int|None
+        z: single|int|None
+    machine:
+        hz: single|int|30
+        balls_installed: single|int|1
+        min_balls: single|int|1
+        glass_off_mode: single|bool|True
+    matrix_lights:
+        number: single|str|
+        number_str: single|str|
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        on_events:  dict|str:ms|None
+        off_events:  dict|str:ms|None
+        platform: single|str|None
+        x: single|int|None
+        y: single|int|None
+        z: single|int|None
+    mode:
+        priority: single|int|0
+        start_events: list|str|None
+        stop_events: list|str|None
+        start_priority: single|int|0
+        stop_priority: single|int|0
+        use_wait_queue: single|bool|False
+        code: single|str|None
+    multiballs:
+        ball_count: single|int|
+        source_playfield: single|self.machine.ball_devices[%]|playfield
+        shoot_again: single|ms|10s
+        ball_locks: list|self.machine.ball_locks[%]|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        enable_events:  dict|str:ms|ball_started
+        disable_events:  dict|str:ms|ball_ending
+        reset_events:  dict|str:ms|machine_reset_phase_3
+        start_events:  dict|str:ms|None
+        stop_events:  dict|str:ms|None
+    playfields:
+        eject_targets: list|str|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+    playfield_transfers:
+        ball_switch: single|self.machine.switches[%]|
+        eject_target: single|self.machine.ball_device[%]|
+        captures_from: single|self.machine.ball_devices[%]|
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+    score_reels:
+        coil_inc: single|self.machine.coils[%]|None
+        coil_dec: single|self.machine.coils[%]|None
+        rollover: single|bool|True
+        limit_lo: single|int|0
+        limit_hi: single|int|9
+        repeat_pulse_time: single|ms|200
+        hw_confirm_time: single|ms|300
+        config: single|str|lazy
+        confirm: single|str|strict
+        switch_0: single|self.machine.switches[%]|None
+        switch_1: single|self.machine.switches[%]|None
+        switch_2: single|self.machine.switches[%]|None
+        switch_3: single|self.machine.switches[%]|None
+        switch_4: single|self.machine.switches[%]|None
+        switch_5: single|self.machine.switches[%]|None
+        switch_6: single|self.machine.switches[%]|None
+        switch_7: single|self.machine.switches[%]|None
+        switch_8: single|self.machine.switches[%]|None
+        switch_9: single|self.machine.switches[%]|None
+        switch_10: single|self.machine.switches[%]|None
+        switch_11: single|self.machine.switches[%]|None
+        switch_12: single|self.machine.switches[%]|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+    score_reel_groups:
+        max_simultaneous_coils: single|int|2
+        reels: list|str|
+        chimes: list|str|None
+        repeat_pulse_time: single|ms|200
+        hw_confirm_time: single|ms|300
+        config: single|str|lazy
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        lights_tag: single|str|None
+    shots:
+        profile: single|str|None
+        switch: list|self.machine.switches[%]|None
+        switch_sequence: list|self.machine.switches[%]|None
+        cancel_switch: list|self.machine.switches[%]|None
+        delay_switch: dict|self.machine.switches[%]:ms|None
+        time: single|ms|0
+        light: list|self.machine.lights[%]|None
+        led: list|self.machine.leds[%]|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        enable_events: dict|str:ms|None
+        disable_events: dict|str:ms|None
+        reset_events: dict|str:ms|None
+        advance_events: dict|str:ms|None
+        hit_events: dict|str:ms|None
+        remove_active_profile_events: dict|str:ms|None
+    shot_groups:
+        shots: list|str|
+        profile: single|str|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        enable_events: dict|str:ms|None
+        disable_events: dict|str:ms|None
+        reset_events: dict|str:ms|None
+        rotate_left_events: dict|str:ms|None
+        rotate_right_events: dict|str:ms|None
+        rotate_events: dict|str:ms|None
+        enable_rotation_events: dict|str:ms|None
+        disable_rotation_events: dict|str:ms|None
+        advance_events: dict|str:ms|None
+        remove_active_profile_events: dict|str:ms|None
+    shot_profiles:
+            loop: single|bool|False
+            state_names_to_rotate: list|str|None
+            state_names_to_not_rotate: list|str|None
+            rotation_pattern: list|str|R
+            player_variable: single|str|None
+            advance_on_hit: single|bool|True
+            lights_when_disabled: single|bool|True
+            block: single|bool|true
+            states:
+                name: single|str|
+                light_script: single|str|None
+                hold: single|bool|True
+                reset: single|bool|False
+                repeat: single|bool|True
+                blend: single|bool|False
+                tocks_per_sec: single|int|10
+                num_repeats: single|int|0
+                sync_ms:  single|int|0
+    switches:
+        number: single|str|
+        number_str: single|str|
+        type: single|str|NO
+        debounce: single|bool|True
+        recycle_time: single|ticks|0
+        activation_events: list|str|None
+        deactivation_events: list|str|None
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        platform: single|str|None
 
 # Default settings for machines. All can be overridden
 
-machine:
-    Balls Installed: 1
-    Min Balls: 1
-    Max Balls: 6
 
 timing:
     hz: 30
@@ -149,10 +461,15 @@ p_roc:
     use_watchdog: True
 
 fast:
+    ports: com3, com4, com5
     baud: 921600
     watchdog: 1s
     default_debounce_close: 10ms
     default_debounce_open: 30ms
+
+modes:
+    - attract
+    - game
 
 
 led_settings:
@@ -166,12 +483,8 @@ led_settings:
     dithering: True
 
 game:
-    Balls per game: 3
-    Max players per game: 4
-
-machine_flow:
-    mpf.game.attract.Attract
-    mpf.game.game.Game
+    balls_per_game: 3
+    max_players: 4
 
 auditor:
     save_events:
@@ -283,27 +596,21 @@ bcp:
         ball_started:
             command: ball_start
             params:
-                player: "%player"
+                player_num: "%player"
                 ball: "%ball"
 
         ball_ending:
             command: ball_end
 
-        attract_start:
-            command: attract_start
-
-        attract_stop:
-            command: attract_stop
-
-        game_ended:
-            command: game_end
-
         player_turn_start:
             command: player_turn_start
             params:
-                player: "%number"
+                player_num: "%number"
 
     player_variables:
+      __all__
+
+    shots:
       __all__
 
 volume:
@@ -329,28 +636,13 @@ triggers:
     assets_loading_complete:
         bcp_name: assets_loading_complete
 
-target_profiles:
+shot_profiles:
     default:
-        steps:
+        states:
           - name: unlit
             light_script: "off"
           - name: lit
             light_script: "on"
-                
-    drop_target:
-        steps:
-          - name: up
-            light_script: "off"
-          - name: down
-            light_script: "on"
-    hit_me:
-        steps:
-            - name: active
-              light_script: flash
-              repeat: yes
-              tocks_per_sec: 5
-            - name: complete
-              light_script: "off"
 
 light_scripts:
     flash:
@@ -364,3 +656,16 @@ light_scripts:
     "off":
         - tocks: 1
           color: 0
+
+playfields:
+    playfield:
+        tags: default
+
+debug_profiles:
+    verbose:
+        system_modules:
+            events
+            mode_controller
+        device_collections:
+        individual_devices:
+        plugins:

@@ -1,4 +1,4 @@
-# config_version=2
+# config_version=3
 Mode:
     start_events: ball_starting
     stop_events: start_mode1_acmag
@@ -9,7 +9,7 @@ light_player:
         lights: l_claw_ready, l_right_ramp_arrow
         script: flash
         key: claw_lit
-        tocks_per_sec: 4
+        tocks_per_sec: 5
         repeat: yes
     balldevice_elevator_ball_enter:
         key: claw_lit

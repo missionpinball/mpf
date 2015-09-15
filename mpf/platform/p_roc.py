@@ -129,6 +129,9 @@ class HardwarePlatform(Platform):
             or self.machine_type == pinproc.MachineTypeSternSAM\
             or self.machine_type == pinproc.MachineTypePDB
 
+    def __repr__(self):
+        return '<Platform.P-ROC>'
+
     def configure_driver(self, config, device_type='coil'):
         """Creates a P-ROC driver.
 
@@ -235,6 +238,9 @@ class HardwarePlatform(Platform):
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
 
+        return switch, proc_num
+
+    def get_hw_switch_states(self):
         # Read in and set the initial switch state
         # The P-ROC uses the following values for hw switch states:
         # 1 - closed (debounced)
@@ -243,14 +249,14 @@ class HardwarePlatform(Platform):
         # 4 - open (not debounced)
 
         states = self.proc.switch_get_states()
-        if states[proc_num] == 1 or states[proc_num] == 3:
-            state = 1
-        else:
-            state = 0
 
-        # Return the switch object and an integer of its current state.
-        # 1 = active, 0 = inactive
-        return switch, proc_num, state
+        for switch, state in enumerate(states):
+            if state == 3 or state == 1:
+                states[switch] = 1
+            else:
+                states[switch] = 0
+
+        return states
 
     def configure_led(self, config):
         """ Configures a P-ROC RGB LED controlled via a PD-LED."""
@@ -397,11 +403,11 @@ class HardwarePlatform(Platform):
                        coil.name, pulse_ms, pwm_on, pwm_off, delay,
                        recycle_time, debounced, drive_now)
 
-        if (sw_activity == 0 and debounced):
+        if sw_activity == 0 and debounced:
             event_type = "open_debounced"
-        elif (sw_activity == 0 and not debounced):
+        elif sw_activity == 0 and not debounced:
             event_type = "open_nondebounced"
-        elif (sw_activity == 1 and debounced):
+        elif sw_activity == 1 and debounced:
             event_type = "closed_debounced"
         else:  # if sw_activity == 1 and not debounced:
             event_type = "closed_nondebounced"
@@ -409,20 +415,20 @@ class HardwarePlatform(Platform):
         # Note the P-ROC uses a 125ms non-configurable recycle time. So any
         # non-zero value passed here will enable the 125ms recycle.
 
-        reloadActive = False
+        reload_active = False
         if recycle_time:
-            reloadActive = True
+            reload_active = True
 
-        # We only want to notifyHost for debounced switch events. We use non-
+        # We only want to notify_host for debounced switch events. We use non-
         # debounced for hw_rules since they're faster, but we don't want to
         # notify the host on them since the host would then get two events
         # one for the nondebounced followed by one for the debounced.
 
-        notifyHost = False
+        notify_host = False
         if debounced:
-            notifyHost = True
+            notify_host = True
 
-        rule = {'notifyHost': notifyHost, 'reloadActive': reloadActive}
+        rule = {'notifyHost': notify_host, 'reloadActive': reload_active}
 
         # Now let's figure out what type of P-ROC action we need to take.
         # We're going to 'brtue force' this here because it's the easiest to
@@ -508,11 +514,9 @@ class HardwarePlatform(Platform):
         the flippers to flip), you'd call this method with your flipper button
         as the *sw_num*.
 
-        Parameters
-        ----------
-
-        sw_num : int
-            The number of the switch whose rule you want to clear.
+        Args:
+            sw_num : Int of the number of the switch whose rule you want to
+                clear.
 
         """
         sw_num = self.machine.switches[sw_name].number
@@ -634,7 +638,7 @@ class PDBSwitch(object):
 
     def parse_matrix_num(self, num_str):
         cr_list = num_str.split('/')
-        return (32 + int(cr_list[0])*16 + int(cr_list[1]))
+        return 32 + int(cr_list[0])*16 + int(cr_list[1])
 
 
 class PDBCoil(object):
@@ -1049,7 +1053,7 @@ class PDBConfig(object):
             # directly. Software can't really control lamp matrixes either
             # (need microsecond resolution).  Instead of doing crazy logic here
             # for a case that probably won't happen, just ignore these banks.
-            if (group_ctr >= num_proc_banks or lamp_dict['sink_bank'] >= 16):
+            if group_ctr >= num_proc_banks or lamp_dict['sink_bank'] >= 16:
                 self.log.error("Lamp matrix banks can't be mapped to index "
                                   "%d because that's outside of the banks the "
                                   "P-ROC can control.", lamp_dict['sink_bank'])
@@ -1081,7 +1085,7 @@ class PDBConfig(object):
             # as VirtualDrivers. Appending the bank avoids conflicts when
             # group_ctr gets too high.
 
-            if (group_ctr >= num_proc_banks or coil_bank >= 16):
+            if group_ctr >= num_proc_banks or coil_bank >= 16:
                 self.log.warning("Driver group %d mapped to driver index"
                                  "outside of P-ROC control.  These Drivers "
                                  "will become VirtualDrivers.  Note, the "
@@ -1148,7 +1152,7 @@ class PDBConfig(object):
             self.log.debug("Configuring PDB Driver Globals:  polarity = %s  "
                            "matrix column index 0 = %d  matrix column index "
                            "1 = %d", True, lamp_source_bank_list[0],
-                             lamp_source_bank_list[1]);
+                             lamp_source_bank_list[1])
         proc.driver_update_global_config(enable,  # Don't enable outputs yet
                                          True,  # Polarity
                                          False,  # N/A
@@ -1191,7 +1195,7 @@ class PDBConfig(object):
             coil = PDBCoil(self, number_str)
             bank = coil.bank()
             if bank == -1:
-                return (-1)
+                return -1
             index = self.indexes.index(coil.bank())
             num = index * 8 + coil.output()
             return num
@@ -1199,7 +1203,7 @@ class PDBConfig(object):
         if device_type == 'light':
             lamp = PDBLight(self, number_str)
             if lamp.lamp_type == 'unknown':
-                return (-1)
+                return -1
             elif lamp.lamp_type == 'dedicated':
                 return lamp.dedicated_output()
 
@@ -1259,7 +1263,7 @@ def decode_pdb_address(addr, aliases=[]):
         board = int(params[0][1:])
         bank = int(params[1][1:])
         output = int(params[2][0:])
-        return (board, bank, output)
+        return board, bank, output
 
     elif '/' in addr:  # x/y/z form
         params = addr.rsplit('/')
@@ -1268,7 +1272,7 @@ def decode_pdb_address(addr, aliases=[]):
         board = int(params[0])
         bank = int(params[1])
         output = int(params[2])
-        return (board, bank, output)
+        return board, bank, output
 
     else:
         raise ValueError('PDB address delimeter (- or /) not found.')

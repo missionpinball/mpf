@@ -1,0 +1,24 @@
+#config_version=3
+mode:
+    start_events: ball_starting
+    priority: 100
+
+slide_player:
+  mode_base_started:
+    - type: text
+      text: "%score%"
+      number_grouping: true
+      min_digits: 2
+      v_pos: center
+      transition:
+        type: move_in
+    - type: text
+      text: PLAYER %number%
+      v_pos: bottom
+      h_pos: left
+      font: small
+    - type: text
+      text: BALL %ball%
+      v_pos: bottom
+      h_pos: right
+      font: small

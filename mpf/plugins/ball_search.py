@@ -61,7 +61,7 @@ class BallSearch(object):
         self.log.debug("Starting the ball search")
 
         self.active = True
-        self.task = Task.Create(self.tick)
+        self.task = Task.create(self.tick)
 
     def end(self):
         """Ends the active ball search."""

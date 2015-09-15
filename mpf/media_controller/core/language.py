@@ -11,6 +11,7 @@ import re
 
 from mpf.system.config import Config
 
+
 class Language(object):
     """MPF module which handles text, audio, and video replacement of objects
     for multi-language environments.

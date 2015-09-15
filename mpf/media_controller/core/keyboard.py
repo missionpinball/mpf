@@ -204,7 +204,7 @@ class Keyboard(object):
             self.toggle_keys[key] = 0
 
             if invert:
-                self.toggle_keys[key] = self.toggle_keys[key] ^ 1
+                self.toggle_keys[key] ^= 1
 
     def process_key_press(self, symbol, modifiers):
         """Processes a key press (key down) event by setting the switch and/or
@@ -249,8 +249,9 @@ class Keyboard(object):
                         # we have an event
                         event_dict = self.key_map[key_press]
                         event_params = event_dict['params'] or {}
-                        self.mc.events.post(str(event_dict['event']),
-                                            **event_params)
+                        self.mc.send(bcp_command='trigger',
+                                     name=str(event_dict['event']),
+                                     **event_params)
 
     def process_key_release(self, symbol, modifiers):
         """Processes a key release (key up) event by setting the switch and/or

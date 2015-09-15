@@ -6,10 +6,9 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import logging
 from collections import deque
 
-from mpf.system.devices import Device
+from mpf.system.device import Device
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 from mpf.system.config import Config
@@ -25,9 +24,9 @@ class Diverter(Device):
     collection = 'diverters'
     class_label = 'diverter'
 
-    def __init__(self, machine, name, config, collection=None):
-        self.log = logging.getLogger('Diverter.' + name)
-        super(Diverter, self).__init__(machine, name, config, collection)
+    def __init__(self, machine, name, config, collection=None, validate=True):
+        super(Diverter, self).__init__(machine, name, config, collection,
+                                       validate=validate)
 
         self.delay = DelayManager()
 
@@ -40,107 +39,38 @@ class Diverter(Device):
         self.eject_state = False
         self.eject_attempt_queue = deque()
 
-        # configure defaults:
-        if 'type' not in self.config:
-            self.config['type'] = 'pulse'  # default to pulse to not fry coils
-        if 'activation_time' not in self.config:
-            self.config['activation_time'] = 0
-        if 'activation_switches' in self.config:
-            self.config['activation_switches'] = Config.string_to_list(
-                self.config['activation_switches'])
-        else:
-            self.config['activation_switches'] = list()
-
-        if 'disable_switches' in self.config:
-            self.config['disable_switches'] = Config.string_to_list(
-                self.config['disable_switches'])
-        else:
-            self.config['disable_switches'] = list()
-
-        if 'deactivation_switches' in self.config:
-            self.config['deactivation_switches'] = Config.string_to_list(
-                self.config['deactivation_switches'])
-        else:
-            self.config['deactivation_switches'] = list()
-
-        if 'activation_coil' in self.config:
-            self.config['activation_coil'] = (
-                self.machine.coils[self.config['activation_coil']])
-
-        if 'deactivation_coil' in self.config:
-            self.config['deactivation_coil'] = (
-                self.machine.coils[self.config['deactivation_coil']])
-        else:
-            self.config['deactivation_coil'] = None
-
-        if 'targets_when_active' in self.config:
-            self.config['targets_when_active'] = Config.string_to_list(
-                self.config['targets_when_active'])
-        else:
-            self.config['targets_when_active'] = ['playfield']
-
-        if 'targets_when_inactive' in self.config:
-            self.config['targets_when_inactive'] = Config.string_to_list(
-                self.config['targets_when_inactive'])
-        else:
-            self.config['targets_when_inactive'] = ['playfield']
-
-        if 'feeder_devices' in self.config:
-            self.config['feeder_devices'] = Config.string_to_list(
-                self.config['feeder_devices'])
-        else:
-            self.config['feeder_devices'] = list()
-
         # Create a list of ball device objects when active and inactive. We need
         # this because ball eject attempts pass the target device as an object
         # rather than by name.
 
-        self.config['active_objects'] = list()
-        self.config['inactive_objects'] = list()
-
-        # convert the activation_time to ms
-        self.config['activation_time'] = Timing.string_to_ms(self.config['activation_time'])
-
         # register for feeder device eject events
         for feeder_device in self.config['feeder_devices']:
-            self.machine.events.add_handler('balldevice_' + feeder_device +
+            self.machine.events.add_handler('balldevice_' + feeder_device.name +
                                             '_ball_eject_attempt',
                                             self._feeder_eject_attempt)
 
-            self.machine.events.add_handler('balldevice_' + feeder_device +
+            self.machine.events.add_handler('balldevice_' + feeder_device.name +
                                             '_ball_eject_failed',
                                             self._feeder_eject_count_decrease)
 
-            self.machine.events.add_handler('balldevice_' + feeder_device +
+            self.machine.events.add_handler('balldevice_' + feeder_device.name +
                                             '_ball_eject_success',
                                             self._feeder_eject_count_decrease)
-
-
-        self.machine.events.add_handler('init_phase_2', self._initialize)
 
         self.machine.events.add_handler('init_phase_3', self._register_switches)
 
         self.platform = self.config['activation_coil'].platform
 
-    def _initialize(self):
-        for target_device in self.config['targets_when_active']:
-            self.config['active_objects'].append(
-                self.machine.ball_devices[target_device])
-
-        for target_device in self.config['targets_when_inactive']:
-            self.config['inactive_objects'].append(
-                self.machine.ball_devices[target_device])
-
     def _register_switches(self):
                 # register for deactivation switches
         for switch in self.config['deactivation_switches']:
             self.machine.switch_controller.add_switch_handler(
-                switch, self.deactivate)
+                switch.name, self.deactivate)
 
         # register for disable switches:
         for switch in self.config['disable_switches']:
             self.machine.switch_controller.add_switch_handler(
-                switch, self.disable)
+                switch.name, self.disable)
 
     def enable(self, auto=False, activations=-1, **kwargs):
         """Enables this diverter.
@@ -282,8 +212,8 @@ class Diverter(Device):
             for switch in self.config['activation_switches']:
 
                 self.platform.set_hw_rule(
-                    sw_name=switch,
-                    sw_activity='active',
+                    sw_name=switch.name,
+                    sw_activity=1,
                     coil_name=self.config['activation_coil'].name,
                     coil_action_ms=-1,
                     pulse_ms=self.config['activation_coil'].config['pulse_ms'],
@@ -296,7 +226,7 @@ class Diverter(Device):
 
                 if self.config['activation_time']:
                     self.machine.switch_controller.add_switch_handler(
-                        switch,
+                        switch.name,
                         self.schedule_deactivation)
 
         elif self.config['type'] == 'pulse':
@@ -304,8 +234,8 @@ class Diverter(Device):
             for switch in self.config['activation_switches']:
 
                 self.platform.set_hw_rule(
-                    sw_name=switch,
-                    sw_activity='active',
+                    sw_name=switch.name,
+                    sw_activity=1,
                     coil_name=self.config['activation_coil'].name,
                     coil_action_ms=self.config['activation_coil'].config['pulse_ms'],
                     pulse_ms=self.config['activation_coil'].config['pulse_ms'],
@@ -317,7 +247,7 @@ class Diverter(Device):
         """
 
         for switch in self.config['activation_switches']:
-            self.platform.clear_hw_rule(switch)
+            self.platform.clear_hw_rule(switch.name)
 
         # todo this should not clear all the rules for this switch
 
@@ -360,10 +290,10 @@ class Diverter(Device):
         self.log.debug("Feeder device eject attempt for target: %s", target)
 
         desired_state = None
-        if target in self.config['active_objects']:
+        if target in self.config['targets_when_active']:
             desired_state = True
 
-        elif target in self.config['inactive_objects']:
+        elif target in self.config['targets_when_inactive']:
             desired_state = False
 
         if desired_state == None:

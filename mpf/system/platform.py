@@ -49,8 +49,8 @@ class Platform(object):
 
         Args:
             sw_name: String name of the switch.
-            sw_activity: String description of the switch activity this rule
-                will be set for, either 'active' or 'inactive'.
+            sw_activity: Int representing the switch state this rule will be set
+                for. 1 is active, 0 is inactive.
             coil_name: String name of the coil.
             coil_action_ms: Total time in ms the coil should activate for.
             pulse_ms: How long in ms the coil should activate for. Default is 0.
@@ -81,28 +81,14 @@ class Platform(object):
         sw = self.machine.switches[sw_name]  # todo make a nice error
         coil = self.machine.coils[coil_name]  # here too
 
-        # convert sw_activity to hardware. (The game framework uses the terms
-        # 'active' and 'inactive,' which take into consideration whether a
-        # switch is normally open or normally closed. For example if we want to
-        # fire a coil when a switch that is normally closed is activated, the
-        # actual hw_rule we setup has to be when that switch opens, not closes.
-
-        if sw_activity == 'active':
-            sw_activity = 1
-        elif sw_activity == 'inactive':
-            sw_activity = 0
-        else:
-            raise ValueError('Invalid "switch activity" option for '
-                             'AutofireCoil: %s. Valid options are "active"'
-                             ' or "inactive".' % (sw_name))
-        if self.machine.switches[sw_name].type == 'NC':
-            sw_activity = sw_activity ^ 1  # bitwise invert
+        if self.machine.switches[sw_name].invert:
+            sw_activity ^= 1
 
         self.write_hw_rule(sw, sw_activity, coil_action_ms, coil, pulse_ms,
                            pwm_on, pwm_off, delay, recycle_time, debounced,
                            drive_now)
 
-    def write_hw_rule(sw, sw_activity, coil_action_ms, coil, pulse_ms, pwm_on,
+    def write_hw_rule(self, sw, sw_activity, coil_action_ms, coil, pulse_ms, pwm_on,
                       pwm_off, delay, recycle_time, debounced, drive_now):
         """Subclass this method in a platform interface to write a hardware
         switch rule to the controller.
@@ -170,16 +156,15 @@ class Platform(object):
         """
         pass
 
-    def get_switch_state(self, switch):
-        """Subclass this method in a platform module to get the hardware state
+    def get_hw_switch_states(self):
+        """Subclass this method in a platform module to return the hardware
+        states of all the switches on that platform.
         of a switch.
 
-        Args:
-            switch: A class `Switch` object.
-
-        Return a value of 1 if the switch is active, and 0 if the switch is
-        inactive. This method should not compensate for NO or NC status, rather,
-        it should return the raw hardware state of the switch.
+        This method should return a dict with the switch numbers as keys and the
+        hardware state of the switches as values. (0 = inactive, 1 = active)
+        This method should not compensate for NO or NC status, rather, it
+        should return the raw hardware states of the switches.
 
         """
         pass

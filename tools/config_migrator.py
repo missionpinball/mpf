@@ -20,6 +20,7 @@ BACKUP_FOLDER_NAME = 'previous_config_files'
 
 file_list = list()
 section_replacements = dict()
+string_replacements = dict()
 section_warnings = dict()
 section_deprecations = set()
 root_folder = ''
@@ -35,8 +36,8 @@ parser = optparse.OptionParser()
 
 parser.add_option("-f", "--force",
                   action="store_true", dest="force", default=False,
-                  help="Force reprocessing of files thare are already the latest"
-                   "config version")
+                  help="Force reprocessing of files thare are already the "
+                  "latest config version")
 
 options, args = parser.parse_args()
 options = vars(options)
@@ -55,6 +56,7 @@ def load_config():
     global section_deprecations
     global section_replacements
     global section_warnings
+    global string_replacements
 
     config_dict = yaml.load(open(CONFIG_VERSION_FILE, 'r'))
 
@@ -75,7 +77,19 @@ def load_config():
     section_replacements = config_dict[new_config_version]['section_replacements']
     section_warnings = config_dict[new_config_version]['section_warnings']
     section_deprecations = config_dict[new_config_version]['section_deprecations']
+    string_replacements = config_dict[new_config_version]['string_replacements']
 
+    if not section_replacements:
+        section_replacements = dict()
+
+    if not section_warnings:
+        section_warnings = dict()
+
+    if not section_deprecations:
+        section_deprecations = set()
+
+    if not string_replacements:
+        string_replacements = dict()
 
 def create_file_list(source_str):
 
@@ -111,6 +125,7 @@ def process_file(file_name):
     global section_replacements
     global section_warnings
     global section_deprecations
+    global string_replacements
     global previous_config_version
     global new_config_version
     global skipped_files
@@ -131,7 +146,10 @@ def process_file(file_name):
 
         if file_version not in target_file_versions:
             skipped_files.append(file_name)
+            print "Skipping File:", file_name
             return
+
+    print "Processing File:", file_name
 
     create_backup_file(file_name)
 
@@ -140,10 +158,6 @@ def process_file(file_name):
 
     file_data = file_data.replace('config_version=' + str(previous_config_version),
                                   'config_version=' + str(new_config_version))
-
-    for k, v in section_replacements.iteritems():
-        pattern = re.compile(re.escape(k + ':'), re.IGNORECASE)
-        file_data = pattern.sub(v + ':', file_data)
 
     for warning in section_warnings:
 
@@ -173,6 +187,14 @@ def process_file(file_name):
 
         pattern = re.compile(re.escape(section + ':'), re.IGNORECASE)
         file_data = pattern.sub(new_string + section + ':', file_data)
+
+    for k, v in section_replacements.iteritems():
+        pattern = re.compile(re.escape(k + ':'), re.IGNORECASE)
+        file_data = pattern.sub(v + ':', file_data)
+
+    for k, v in string_replacements.iteritems():
+        pattern = re.compile(re.escape(k), re.IGNORECASE)
+        file_data = pattern.sub(v, file_data)
 
     with open(file_name, 'w') as f:
         f.write(file_data)
@@ -223,9 +245,11 @@ def display_results():
     print "Files migrated successfully:", len(migrated_files)
     print "Files skipped:", len(skipped_files)
     print "Files that require manual intervention:", len(warnings_files)
-    print
-    print ("Open up each of these files to see the details of the sections you "
-           "need to manually update:")
+
+    if warnings_files:
+        print
+        print ("Open up each of these files to see the details of the sections "
+               "you need to manually update:")
 
     for file_name in warnings_files:
         print file_name

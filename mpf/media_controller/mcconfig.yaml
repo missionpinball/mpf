@@ -1,8 +1,8 @@
-# config_version=2
+# config_version=3
 media_controller:
     modules:
 
-        modes.ModeController
+        mode_controller.ModeController
         language.Language
         display.DisplayController
         show_controller.ShowController
@@ -40,6 +40,10 @@ media_controller:
 
 timing:
     hz: 30
+
+modes:
+    - attract
+    - game
 
 displaydefaults:
     Text:
@@ -133,20 +137,33 @@ slide_player:
       - type: Text
         text: CLIENT CONNECTED
         font: small
+        expire: 1s
     client_disconnected:
       - type: Text
         text: CLIENT DISCONNECTED
         font: small
+        expire: 1s
     volume_change:
         type: Text
-        text: "VOLUME: %display_volume"
+        text: "VOLUME: %display_volume%"
         expire: 2s
         slide_priority: 10000
     assets_to_load:
         type: text
-        text: "LOADING ASSETS: %assets TO GO"
+        text: "LOADING ASSETS: %assets% TO GO"
         font: small
+        expire: 1s
     assets_loading_complete:
         type: text
         text: ASSET LOADING COMPLETE
         font: small
+        expire: 1s
+
+debug_profiles:
+    verbose:
+        system_modules:
+            events
+            mode_controller
+        device_collections:
+        individual_devices:
+        plugins:

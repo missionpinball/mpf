@@ -1,4 +1,11 @@
-# config_version=2
+# config_version=3
+
+# Skill shot mode
+# One of the five standup targets is lit, sweeping back-and-forth at a 1s interval. Hit the lit
+# standup for 200,000 points. Mode timer starts when the ball enters the playfield and stops 3s
+# after that so the player only gets one shot.
+
+
 mode:
     start_events: ball_starting
     stop_events: timer_mode_timer_complete, target_group_standups_hit
@@ -15,6 +22,9 @@ timers:
         control_events:
           - event: balldevice_playfield_ball_enter
             action: start
+    target_rotator:
+        start_running: yes
+        tick_interval: 1s
 
 slide_player:
     mode_skillshot_started:
@@ -42,7 +52,7 @@ slide_player:
         x: 0
         y: 0
       - type: text
-        text: "SKILLSHOT: LIT STANDUPS"
+        text: "SKILLSHOT: LIT STANDUP"
         decorators:
             type: blink
             repeats: -1
@@ -53,30 +63,29 @@ slide_player:
         shade: 0
         layer: 1
 
-target_profiles:
-    hit_me:
-        steps:
-            - name: active
+shot_profiles:
+    skill:
+        rotation_pattern: r, r, r, r, l, l, l, l
+        states:
+            - name: unlit
+              light_script: "off"
+            - name: lit
               light_script: flash
               repeat: yes
               tocks_per_sec: 10
-            - name: "off"
-              light_script: "off"
+            - name: hit
+              light_script: "on"
 
-target_groups:
+shots:
+  standup_1:
+    advance_events: mode_skillshot_started
+
+shot_groups:
     standups:
-        target_profile: hit_me
-        rotate_left_events: sw_left_flipper
-        rotate_right_events: sw_right_flipper
+        profile: skill
+        rotate_events: timer_target_rotator_tick
+        reset_events: mode_skillshot_started|1
 
 scoring:
-    target_standup_1_active_hit:
-        score: 200000
-    target_standup_2_active_hit:
-        score: 200000
-    target_standup_3_active_hit:
-        score: 200000
-    target_standup_4_active_hit:
-        score: 200000
-    target_standup_5_active_hit:
+    standups_hit_me_active_hit:
         score: 200000

@@ -14,10 +14,10 @@ import socket
 import os
 from optparse import OptionParser
 import errno
-import version
 import sys
 
 from mpf.media_controller.core.media_controller import MediaController
+import version
 
 # Allow command line options to do things
 # We use optparse instead of argpase so python 2.6 works
@@ -80,8 +80,8 @@ if options_dict['version']:
 try:
     options_dict['machinepath'] = args[0]
 except:
-    print("Error: You need to specify the path to your machine_files folder "\
-         "for the game you want to run.")
+    print("Error: You need to specify the path to your machine_files folder "
+          "for the game you want to run.")
     sys.exit()
 
 # Configure logging. Creates a logfile and logs to the console.

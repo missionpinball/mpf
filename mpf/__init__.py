@@ -1,7 +1,6 @@
 __all__ = [
            'platform',
            'system',
-           'game',
            'version',
            'window',
            'media_controller'
