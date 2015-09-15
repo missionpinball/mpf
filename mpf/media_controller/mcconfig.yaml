@@ -145,12 +145,12 @@ slide_player:
         expire: 1s
     volume_change:
         type: Text
-        text: "VOLUME: %display_volume"
+        text: "VOLUME: %display_volume%"
         expire: 2s
         slide_priority: 10000
     assets_to_load:
         type: text
-        text: "LOADING ASSETS: %assets TO GO"
+        text: "LOADING ASSETS: %assets% TO GO"
         font: small
         expire: 1s
     assets_loading_complete:

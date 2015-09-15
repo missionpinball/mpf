@@ -461,6 +461,7 @@ p_roc:
     use_watchdog: True
 
 fast:
+    ports: com3, com4, com5
     baud: 921600
     watchdog: 1s
     default_debounce_close: 10ms

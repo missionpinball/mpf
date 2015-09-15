@@ -18,12 +18,12 @@ slide_player:
     text: "MODES: %modes%"
   bonus_subtotal:
     type: text
-    text: "BONUS SCORE: %points"
+    text: "BONUS SCORE: %points%"
     number_grouping: true
   bonus_multiplier:
     type: text
     text: "%multiplier%X"
   bonus_total:
     type: text
-    text: "TOTAL BONUS: %points"
+    text: "TOTAL BONUS: %points%"
     number_grouping: true

@@ -273,27 +273,10 @@ class SlideBuilder(object):
     def _add_element(self, slide, text_variables, **settings):
         # Internal method which actually adds the element to the slide
 
-        # Process any text
-        if 'text' in settings:
-            settings['text'] = str(settings['text'])
-
-            # Are there any kwarg variables to replace on the fly?
-            if '%' in settings['text']:
-                # for kw in text_variables:
-                #     if '%' + kw in settings['text']:
-                #         settings['text'] = settings['text'].replace(
-                #             '%' + kw, str(text_variables[kw]))
-
-
-                for k, v in text_variables.iteritems():
-                    if '%' + k in settings['text']:
-                        settings['text'] = settings['text'].replace(
-                            '%' + k, str(v))
-
-
         element_type = settings.pop('type').lower()
 
-        element = slide.add_element(element_type, **settings)
+        element = slide.add_element(element_type,
+                                    text_variables=text_variables, **settings)
 
         if 'decorators' in settings:
 

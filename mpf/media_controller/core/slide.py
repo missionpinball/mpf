@@ -10,6 +10,8 @@
 import logging
 import uuid
 
+from mpf.system.timing import Timing
+
 try:
     import pygame
 except:
@@ -210,7 +212,7 @@ class Slide(object):
                                   (source_pa[x, y] >> 4) / 15.0))
 
     def add_element(self, element_type, name=None, x=None, y=None, h_pos=None,
-                    v_pos=None, **kwargs):
+                    v_pos=None, text_variables=None, **kwargs):
         """Adds a display element to the slide.
 
         Args:
@@ -260,6 +262,7 @@ class Slide(object):
                                 h_pos=h_pos,
                                 v_pos=v_pos,
                                 name=name,
+                                text_variables=text_variables,
                                 **kwargs)
 
         if not element.ready:

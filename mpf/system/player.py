@@ -122,7 +122,8 @@ class Player(object):
             self.machine.events.post('player_' + name,
                                      value=self.vars[name],
                                      prev_value=prev_value,
-                                     change=change)
+                                     change=change,
+                                     player_num=self.vars['number'])
 
         if Player.monitor_enabled:
             for callback in self.machine.monitors['player']:

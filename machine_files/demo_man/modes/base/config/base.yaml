@@ -24,7 +24,7 @@ slide_player:
 
     player_add_success:
       - type: text
-        text: PLAYER %num ADDED
+        text: PLAYER %num% ADDED
         expire: 2s
         slide_priority: 300 # so this goes on top of the skillshot mode slides
 
