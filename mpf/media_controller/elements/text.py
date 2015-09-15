@@ -35,8 +35,8 @@ class Text(DisplayElement):
 
         super(Text, self).__init__(slide, x, y, h_pos, v_pos, layer)
 
-        self.text = text
-        self.original_text = text
+        self.text = str(text)
+        self.original_text = self.text
         self.fonts = machine.display.fonts
         self.language = machine.language
         self.slide = slide
@@ -44,7 +44,7 @@ class Text(DisplayElement):
 
         self.config = kwargs
 
-        self.var_finder = re.compile("(?<=%)[a-zA-Z0-9|]+(?=%)")
+        self.var_finder = re.compile("(?<=%)[\S]+(?=%)")
 
         if not text_variables:
             text_variables = dict()
@@ -60,7 +60,8 @@ class Text(DisplayElement):
         else:
             self.name = text
 
-        self.text = self._process_text(text, local_replacements=text_variables,
+        self.text = self._process_text(self.text,
+                                       local_replacements=text_variables,
                                        local_type='event')
 
         if self._get_text_vars():

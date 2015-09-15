@@ -529,10 +529,9 @@ class MPFDisplay(object):
             return False
 
     def show_current_active_slide(self):
-        if (self.current_slide.priority <
-                self.get_highest_priority_slide().priority):
-            self.set_current_slide(slide=self.get_highest_priority_slide(),
-                                   force=True)
+        self.set_current_slide(slide=self.get_highest_priority_slide(),
+                               force=True)
+
 
     def get_highest_priority_slide(self):
 

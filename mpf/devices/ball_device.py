@@ -609,7 +609,7 @@ class BallDevice(Device):
         if not self.balls:
             self.request_ball()
 
-    def stop(self):
+    def stop(self, **kwargs):
         """Stops all activity in this device.
 
         Cancels all pending eject requests. Cancels eject confirmation checks.
@@ -626,7 +626,8 @@ class BallDevice(Device):
         self._cancel_eject_confirmation()
         self.count_balls()  # need this since we're canceling the eject conf
 
-    def eject(self, balls=1, target=None, timeout=None, get_ball=False):
+    def eject(self, balls=1, target=None, timeout=None, get_ball=False,
+              **kwargs):
         """Ejects one or more balls from the device.
 
         Args:

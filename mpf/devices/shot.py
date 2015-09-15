@@ -349,14 +349,22 @@ class Shot(Device):
         self.machine.events.post(self.name + '_' + profile + '_' + state +
                                  '_hit', profile=profile, state=state)
 
-        if self.enable_table[mode]['settings']['advance_on_hit']:
+        # Need to try because the event postings above could be used to stop
+        # the mode, in which case the mode entry won't be in the enable_table
+        try:
+            advance = self.enable_table[mode]['settings']['advance_on_hit']
+        except KeyError:
+            advance = False
+
+        if advance:
             if self.debug:
                 self.log.debug("Mode '%s' advance_on_hit is True.", mode)
             self.advance(mode=mode)
         elif self.debug:
             self.log.debug('Not advancing profile state since the current '
                            'mode %s has setting advance_on_hit set to '
-                           'False', mode)
+                           'False or this mode is not in the enable_table',
+                           mode)
 
         for group in self.groups:
             self.log.debug("Notifying shot_group %s of new hit", group)
