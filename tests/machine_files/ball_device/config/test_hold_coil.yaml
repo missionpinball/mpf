@@ -1,0 +1,15 @@
+#config_version=3
+
+coils:
+    eject_coil:
+        number:
+    hold_coil:
+        number:
+
+
+ball_devices:
+    test:
+        eject_coil: eject_coil
+        hold_coil: hold_coil
+        hold_events: test_hold_event
+        
