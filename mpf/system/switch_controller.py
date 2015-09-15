@@ -306,7 +306,7 @@ class SwitchController(object):
 
             name = obj.name  # switches this to the name MPF wants to use
 
-        else:
+        if not obj:
             self.log.warning("Received a state change from non-configured "
                              "switch. Number: %s, Name: %s", num, name)
             return
