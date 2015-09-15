@@ -386,7 +386,7 @@ class Slide(object):
         slide will automatically be shown.
         """
 
-        self.log.debug("Removing slide")
+        self.log.debug("Removing slide: %s", self.name)
 
         for element in self.elements:
             element.scrub()

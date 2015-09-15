@@ -123,11 +123,7 @@ class Text(DisplayElement):
         return text
 
     def _player_var_change(self, player_num, target_player, **kwargs):
-
-        print "player var change", player_num, target_player
-
         self.text = self._process_text(self.original_text)
-        print "new text", self.text
 
         self.render()
 
@@ -154,9 +150,6 @@ class Text(DisplayElement):
                     pass
 
     def add_player_var_handler(self, name, player):
-
-        print "adding player var handler for", player, name
-
         self.machine.events.add_handler('player_' + name,
                                         self._player_var_change,
                                         target_player=player)
