@@ -7,9 +7,9 @@
 # use this file with your own hardware unless you change the coil and switch
 # numbers to match your actual hardware!
 
-Hardware:
-    Platform: p_roc
-    DriverBoards: wpc
+hardware:
+    platform: fast
+    driverboards: wpc
 
 switches:
     s_left_flipper:
@@ -109,7 +109,7 @@ window:
         color: ee9900
 
 slide_player:
-    attract_start:
+    mode_attract_started:
         type: text
         text: PRESS START
 
