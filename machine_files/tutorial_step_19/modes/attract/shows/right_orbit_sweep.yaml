@@ -1,0 +1,18 @@
+- tocks: 1
+  lights:
+    l_right_loop_explode: ff
+- tocks: 1
+  lights:
+    l_right_loop_jackpot: ff
+- tocks: 3
+  lights:
+    l_right_loop_arrow: ff
+- tocks: 1
+  lights:
+    l_right_loop_explode: 0
+- tocks: 1
+  lights:
+    l_right_loop_jackpot: 0
+- tocks: 1
+  lights:
+    l_right_loop_arrow: 0

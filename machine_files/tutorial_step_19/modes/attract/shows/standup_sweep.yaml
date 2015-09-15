@@ -1,0 +1,20 @@
+- tocks: 1
+  lights:
+    l_standup_1: ff
+    l_standup_5: 0
+- tocks: 1
+  lights:
+    l_standup_2: ff
+    l_standup_1: 0
+- tocks: 1
+  lights:
+    l_standup_3: ff
+    l_standup_2: 0
+- tocks: 1
+  lights:
+    l_standup_4: ff
+    l_standup_3: 0
+- tocks: 1
+  lights:
+    l_standup_5: ff
+    l_standup_4: 0

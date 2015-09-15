@@ -1,6 +1,6 @@
 #config_version=3
 
-# Config file for Step 12 of our step-by-step tutorial.
+# Config file for Step 16 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
 
 # WARNING: This is for a Demolition Man machine controlled by a P-ROC. Do not
@@ -9,6 +9,9 @@
 
 game:
     player_controlled_eject_tag: launch
+
+modes:
+    - base
 
 hardware:
     platform: fast
@@ -22,7 +25,7 @@ switches:
         label:
     s_right_flipper:
         number: sf2
-        tags:
+        tags: player
         label:
         tags: right_flipper
     s_left_flipper_eos:
@@ -31,7 +34,7 @@ switches:
         label:
     s_left_flipper:
         number: sf4
-        tags:
+        tags: player
         label:
         tags: left_flipper
     s_flipper_upper_left_eos:
@@ -40,7 +43,7 @@ switches:
         label:
     s_flipper_upper_left:
         number: sf6
-        tags:
+        tags: player
         label:
     s_flipper_upper_right_eos:
         number: sf7
@@ -48,7 +51,7 @@ switches:
         label:
     s_flipper_upper_right:
         number: sf8
-        tags:
+        tags: player
         label:
 
 # Direct
@@ -89,15 +92,15 @@ switches:
     s_launch:
         number: s11
         label:
-        tags: launch
+        tags: launch, player
     s_left_handle_button:
         number: s12
         label:
-        tags:
+        tags: player
     s_start:
         number: s13
         label:
-        tags: start
+        tags: start, player
     s_plumb_bob:
         number: s14
         label:
@@ -529,9 +532,6 @@ slide_player:
     mode_attract_started:
         type: text
         text: PRESS START
-    ball_started:
-        type: text
-        text: PLAYER %number% BALL %ball%
 
 keyboard:
     z:
@@ -581,9 +581,41 @@ ball_devices:
     confirm_eject_type: count
     tags: ball_add_live
 
+  bd_retina_hole:
+    ball_switches: s_eject
+    eject_coil: c_retina_eject
+
+  bd_lower_vuk:
+    ball_switches: s_bottom_popper
+    eject_coil: c_bottom_popper
+
+  bd_upper_vuk:
+    ball_switches: s_top_popper
+    eject_coil: c_top_popper
+
+  bd_elevator:
+    ball_switches: s_elevator_hold
+
 virtual_platform_start_active_switches:
     s_trough1
     s_trough2
     s_trough3
     s_trough4
     s_trough5
+
+autofire_coils:
+  left_slingshot:
+    coil: c_left_slingshot
+    switch: s_left_slingshot
+  right_slingshot:
+    coil: c_right_slingshot
+    switch: s_right_slingshot
+  upper_slingshot:
+    coil: c_top_slingshot
+    switch: s_top_slingshot
+  left_jet:
+    coil: c_left_jet_bumper
+    switch: s_left_jet
+  right_jet:
+    coil: c_right_jet_bumper
+    switch: s_right_jet

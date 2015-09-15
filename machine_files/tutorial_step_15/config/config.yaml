@@ -1,6 +1,6 @@
 #config_version=3
 
-# Config file for Step 10 of our step-by-step tutorial.
+# Config file for Step 15 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
 
 # WARNING: This is for a Demolition Man machine controlled by a P-ROC. Do not
@@ -10,8 +10,11 @@
 game:
     player_controlled_eject_tag: launch
 
+modes:
+    - base
+
 hardware:
-    platform: p_roc
+    platform: fast
     driverboards: wpc
 
 switches:
@@ -483,265 +486,6 @@ coils:
     #    label:
     #    tags:
 
-matrix_lights:
-
-    l_ball_save:
-        number: l11
-        label:
-        tags:
-    l_fortress_multiball:
-        number: l12
-        label:
-        tags:
-    l_museum_multiball:
-        number: l13
-        label:
-        tags:
-    l_cryoprison_multiball:
-        number: l14
-        label:
-        tags:
-    l_wasteland_multiball:
-        number: l15
-        label:
-        tags:
-    l_shoot_again:
-        number: l16
-        label:
-        tags:
-    l_access_claw:
-        number: l17
-        label:
-        tags:
-    l_left_ramp_explode:
-        number: l18
-        label:
-        tags:
-    l_right_ramp_jackpot:
-        number: l21
-        label:
-        tags:
-    l_right_loop_explode:
-        number: l22
-        label:
-        tags:
-    l_light_quick_freeze:
-        number: l23
-        label:
-        tags:
-    l_freeze_4:
-        number: l24
-        label:
-        tags:
-    l_claw_ready:
-        number: l25
-        label:
-        tags:
-    l_freeze_3:
-        number: l26
-        label:
-        tags:
-    l_freeze_2:
-        number: l27
-        label:
-        tags:
-    l_freeze_1:
-        number: l28
-        label:
-        tags:
-    l_right_loop_jackpot:
-        number: l31
-        label:
-        tags:
-    l_standup_5:
-        number: l32
-        label:
-        tags:
-    l_right_ramp_arrow:
-        number: l33
-        label:
-        tags:
-    l_left_ramp_jackpot:
-        number: l34
-        label:
-        tags:
-    l_left_loop_jackpot:
-        number: l35
-        label:
-        tags:
-    l_car_crash_top:
-        number: l36
-        label:
-        tags:
-    l_standup_1:
-        number: l37
-        label:
-        tags:
-    l_car_crash_center:
-        number: l38
-        label:
-        tags:
-    l_right_ramp_explode:
-        number: l41
-        label:
-        tags:
-    l_right_ramp_car_chase:
-        number: l42
-        label:
-        tags:
-    l_quick_freeze:
-        number: l43
-        label:
-        tags:
-    l_left_ramp_car_chase:
-        number: l44
-        label:
-        tags:
-    l_extra_ball:
-        number: l45
-        label:
-        tags:
-    l_start_multiball:
-        number: l46
-        label:
-        tags:
-    l_car_crash_bottom:
-        number: l47
-        label:
-        tags:
-    l_left_loop_explode:
-        number: l48
-        label:
-        tags:
-    l_underground_arrow:
-        number: l51
-        label:
-        tags:
-    l_underground_jackpot:
-        number: l52
-        label:
-        tags:
-    l_standup_2:
-        number: l53
-        label:
-        tags:
-    l_left_ramp_arrow:
-        number: l54
-        label:
-        tags:
-    l_side_ramp_jackpot:
-        number: l55
-        label:
-        tags:
-    l_side_ramp_arrow:
-        number: l56
-        label:
-        tags:
-    l_left_loop_arrow:
-        number: l57
-        label:
-        tags:
-    l_center_ramp_jackpot:
-        number: l58
-        label:
-        tags:
-    l_claw_capture_simon:
-        number: l61
-        label:
-        tags:
-    l_claw_super_jets:
-        number: l62
-        label:
-        tags:
-    l_claw_prison_break:
-        number: l63
-        label:
-        tags:
-    l_claw_lock_freeze:
-        number: l64
-        label:
-        tags:
-    l_claw_start_acmag:
-        number: l65
-        label:
-        tags:
-    l_left_rollover:
-        number: l66
-        label:
-        tags:
-    l_middle_rollover:
-        number: l67
-        label:
-        tags:
-    l_right_rollover:
-        number: l68
-        label:
-        tags:
-    l_super_jackpot:
-        number: l71
-        label:
-        tags:
-    l_computer:
-        number: l72
-        label:
-        tags:
-    l_demo_time:
-        number: l73
-        label:
-        tags:
-    #name:
-    #    number: l74
-    #    label:
-    #    tags:
-    #name:
-    #    number: l75
-    #    label:
-    #    tags:
-    l_standup_4:
-        number: l76
-        label:
-        tags:
-    l_standup_3:
-        number: l77
-        label:
-        tags:
-    l_retina_scan:
-        number: l78
-        label:
-        tags:
-    l_center_ramp_middle:
-        number: l81
-        label:
-        tags:
-    l_center_ramp_outer:
-        number: l82
-        label:
-        tags:
-    l_center_ramp_inner:
-        number: l83
-        label:
-        tags:
-    l_center_ramp_arrow:
-        number: l84
-        label:
-        tags:
-    l_right_loop_arrow:
-        number: l85
-        label:
-        tags:
-    l_buy_in:
-        number: l86
-        label:
-        tags:
-    l_ball_launch:
-        number: l87
-        label:
-        tags:
-    l_start:
-        number: l88
-        label:
-        tags:
-
 flippers:
     left_flipper:
         main_coil: c_flipper_left_main
@@ -785,12 +529,9 @@ window:
         color: ee9900
 
 slide_player:
-    attract_start:
+    mode_attract_started:
         type: text
         text: PRESS START
-    ball_started:
-        type: text
-        text: PLAYER %player BALL %ball
 
 keyboard:
     z:

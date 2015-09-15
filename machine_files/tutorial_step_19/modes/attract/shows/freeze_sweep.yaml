@@ -1,0 +1,24 @@
+- tocks: 1
+  lights:
+    l_freeze_1: ff
+- tocks: 1
+  lights:
+    l_freeze_2: ff
+- tocks: 1
+  lights:
+    l_freeze_3: ff
+- tocks: 1
+  lights:
+    l_freeze_4: ff
+- tocks: 1
+  lights:
+    l_freeze_1: 0
+- tocks: 1
+  lights:
+    l_freeze_2: 0
+- tocks: 1
+  lights:
+    l_freeze_3: 0
+- tocks: 1
+  lights:
+    l_freeze_4: 0

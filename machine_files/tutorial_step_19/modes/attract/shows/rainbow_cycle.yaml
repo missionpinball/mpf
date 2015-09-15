@@ -1,0 +1,24 @@
+- tocks: 1
+  lights:
+    tag|red: ff
+    tag|purple: 00
+- tocks: 1
+  lights:
+    tag|orange: ff
+    tag|red: 00
+- tocks: 1
+  lights:
+    tag|yellow: ff
+    tag|orange: 00
+- tocks: 1
+  lights:
+    tag|green: ff
+    tag|yellow: 00
+- tocks: 1
+  lights:
+    tag|blue: ff
+    tag|green: 00
+- tocks: 1
+  lights:
+    tag|purple: ff
+    tag|blue: 00

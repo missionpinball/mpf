@@ -80,8 +80,6 @@ class Text(DisplayElement):
         # local_type: type specifier of local replacements. e.g. "event" means
         # it will look for %event|var_name% in the text string
 
-        print "process_text", self, text
-
         if not local_replacements:
             local_replacements = list()
 

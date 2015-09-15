@@ -1,6 +1,6 @@
 #config_version=3
 
-# Config file for Step 10 of our step-by-step tutorial.
+# Config file for Step 13 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
 
 # WARNING: This is for a Demolition Man machine controlled by a P-ROC. Do not
@@ -11,7 +11,7 @@ game:
     player_controlled_eject_tag: launch
 
 hardware:
-    platform: p_roc
+    platform: fast
     driverboards: wpc
 
 switches:
@@ -526,12 +526,12 @@ window:
         color: ee9900
 
 slide_player:
-    attract_start:
+    mode_attract_started:
         type: text
         text: PRESS START
     ball_started:
         type: text
-        text: PLAYER %player BALL %ball
+        text: PLAYER %number% BALL %ball%
 
 keyboard:
     z:

@@ -1,0 +1,14 @@
+- tocks: 1
+  lights:
+    l_car_crash_bottom: ff
+- tocks: 1
+  lights:
+    l_car_crash_center: ff
+- tocks: 1
+  lights:
+    l_car_crash_top: ff
+- tocks: 1
+  lights:
+    l_car_crash_top: 0
+    l_car_crash_center: 0
+    l_car_crash_bottom: 0
