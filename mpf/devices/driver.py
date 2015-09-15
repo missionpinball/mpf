@@ -54,7 +54,7 @@ class Driver(Device):
             self.config['pwm_on'] = int(config['holdpatter'].split('-')[0])
             self.config['pwm_off'] = int(config['holdpatter'].split('-')[1])
 
-    def enable(self):
+    def enable(self, **kwargs):
         """Enables a driver by holding it 'on'.
 
         If this driver is configured with a holdpatter, then this method will use
@@ -80,14 +80,14 @@ class Driver(Device):
         self.time_when_done = -1
         self.time_last_changed = time.time()
 
-    def disable(self):
+    def disable(self, **kwargs):
         """ Disables this driver """
         self.log.debug("Disabling Driver: %s", self.name)
         self.time_last_changed = time.time()
         self.hw_driver.disable()
         # todo also disable the timer which reenables this
 
-    def pulse(self, milliseconds=None, power=1.0):
+    def pulse(self, milliseconds=None, power=1.0, **kwargs):
         """ Pulses this driver.
 
         Args:
@@ -111,7 +111,7 @@ class Driver(Device):
         self.time_last_changed = time.time()
         self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
-    def pwm(self, on_ms, off_ms, orig_on_ms=0):
+    def pwm(self, on_ms, off_ms, orig_on_ms=0, **kwargs):
         """Quickly turns this driver on and off to have the effect of holding
         this driver 'on' without burning up the coil.
 
@@ -133,7 +133,7 @@ class Driver(Device):
         self.time_when_done = -1
         # todo also disable the timer which reenables this
 
-    def timed_pwm(self, on_ms, off_ms, runtime_ms):
+    def timed_pwm(self, on_ms, off_ms, runtime_ms, **kwargs):
         """Quickly pulses a driver on/off for a specified number of
         milliseconds.
 
