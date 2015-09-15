@@ -225,7 +225,7 @@ class Slide(object):
                 for details.
             y: 'y' position or offset, like x above.
             h_pos: Relative horizontal position: left, center, or right.
-            v_pos: Relative verical position: top, center, or bottom.
+            v_pos: Relative vertical position: top, center, or bottom.
             **kwargs: A list of key/value settings for the element you're
                 adding.
 
