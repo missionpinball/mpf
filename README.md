@@ -8,11 +8,10 @@ http://missionpinball.com/framework.
 Full documentation (available online or via a PDF) is available at
 http://missionpinball.com/docs.
 
-A Sphinx-based API reference is available in the /docs/generated/html
-directory of this project. (This is the API reference only. The full
-documentation is available via those other web links.)
+A Sphinx-based API reference is available in the gh-pages branch
 
 The Mission Pinball Framework is released via The MIT License. See LICENSE.md
 for details.
 
-The Mission Pinball Framework is created by Brian Madden and Gabe Knuth.
+The Mission Pinball Framework is created by Brian Madden and Gabe Knuth with help
+from lots of other awesome people.
