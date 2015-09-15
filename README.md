@@ -1,10 +1,3 @@
-Dev Branch Notes for August 16, 2015
-====================================
-
-Note that the dev branch contains many changes from master and requires that you
-update your config files to version 3. You will need to do this before you can
-run this dev version. Details here: https://missionpinball.com/docs/configuration-file-reference/config-version-3/
-
 Mission Pinball Framework (mpf)
 ===============================
 
