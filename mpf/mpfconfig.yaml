@@ -437,6 +437,8 @@ config_validator:
         label: single|str|%
         debug: single|bool|False
         platform: single|str|None
+        debounce_open: single|ms|None
+        debounce_close: single|ms|None
 
 # Default settings for machines. All can be overridden
 

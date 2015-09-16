@@ -549,10 +549,10 @@ class HardwarePlatform(Platform):
         # (switch number, connection)
         config['number'] = (config['number'], config['connection'])
 
-        if 'debounce_open' not in config:
+        if not config['debounce_open']:
             config['debounce_open'] = self.config['default_debounce_open']
 
-        if 'debounce_close' not in config:
+        if not config['debounce_close']:
             config['debounce_close'] = self.config['default_debounce_close']
 
         self.log.debug("FAST Switch hardware tuple: %s", config['number'])
@@ -816,8 +816,6 @@ class HardwarePlatform(Platform):
                           cmd + driver + ',' + mode)
 
             self.net_connection.send(cmd + driver + ',' + mode)
-
-
 
 
 class FASTSwitch(object):
