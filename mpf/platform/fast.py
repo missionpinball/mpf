@@ -580,7 +580,7 @@ class HardwarePlatform(Platform):
         # FAST hardware number
         if '-' in config['number_str']:
             num = config['number_str'].split('-')
-            config['number'] = int((num[0] * 64) + num[1])
+            config['number'] = (int(num[0]) * 64) + int(num[1])
             self.config['config_number_format'] = 'int'
         else:
             config['number'] = str(config['number'])
