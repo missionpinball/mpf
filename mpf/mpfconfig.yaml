@@ -56,7 +56,10 @@ mpf:
     paths:
         scriptlets: scriptlets
         shows: shows
-        audits: audits/audits.yaml
+        audits: data/audits.yaml
+        machine_vars: data/machine_vars.yaml
+        high_scores: data/high_scores.yaml
+        config_cache: data/config_cache.yaml
         machine_files: machine_files
         config: config
         modes: modes

@@ -1,6 +1,6 @@
 *.pyc
 logs/
-/machine_files/*/audits/
+/machine_files/*/data/
 *.local
 .idea
 docs/

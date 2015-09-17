@@ -8,13 +8,8 @@ etc."""
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import os
-import yaml
-import errno
-import thread
-import time
-
 from mpf.system.config import Config
+from mpf.system.data_manager import DataManager
 from mpf.devices.shot import Shot
 
 
@@ -45,11 +40,12 @@ class Auditor(object):
         disable() methods.
         """
 
+        self.data_manager = DataManager(self.machine, 'audits')
+
         self.machine.events.add_handler('init_phase_4', self._initialize)
 
     def __repr__(self):
         return '<Auditor>'
-
 
     def _initialize(self):
         # Initializes the auditor. We do this separate from __init__() since
@@ -66,17 +62,7 @@ class Auditor(object):
         self.config = Config.process_config(config,
                                             self.machine.config['auditor'])
 
-        self.filename = os.path.join(self.machine.machine_path,
-            self.machine.config['mpf']['paths']['audits'])
-
-        # todo add option for abs path outside of machine root
-
-        self.current_audits = self.load_from_disk(self.filename)
-
-        self.make_sure_path_exists(os.path.dirname(self.filename))
-
-        if not self.current_audits:
-            self.current_audits = dict()
+        self.current_audits = self.data_manager.get_data()
 
         # Make sure we have all the sections we need in our audit dict
         if 'switches' not in self.current_audits:
@@ -94,7 +80,7 @@ class Auditor(object):
                     'no_audit' not in switch.tags):
                 self.current_audits['switches'][switch.name] = 0
 
-        # build this list of swithces we should audit
+        # build the list of switches we should audit
         self.switchnames_to_audit = {x.name for x in self.machine.switches
                                      if 'no_audit' not in x.tags}
 
@@ -189,63 +175,18 @@ class Auditor(object):
         current_list.sort(reverse=True)
         return current_list[0:num_items]
 
-    def load_from_disk(self, filename):
-        """Loads an audit log from disk.
-
-        Args:
-            filename: The path and file of the audit file location.
-        """
-        self.log.debug("Loading audits from %s", filename)
-        if os.path.isfile(filename):
-            try:
-                audits_from_file = yaml.load(open(filename, 'r'))
-            except yaml.YAMLError, exc:
-                if hasattr(exc, 'problem_mark'):
-                    mark = exc.problem_mark
-                    self.log.error("Error found in config file %s. Line %, "
-                                   "Position %s", filename, mark.line+1,
-                                   mark.column+1)
-            except:
-                self.log.warning("Couldn't load audits from file: %s", filename)
-
-            return audits_from_file
-        else:
-            self.log.debug("Didn't find the audits file. No prob. We'll create "
-                          "it when we save.")
-
-    def save_to_disk(self, filename):
-        """Dumps the audits from memory to disk.
-
-        Args:
-            filename: The path and file the audits will be written to.
-        """
-        thread.start_new_thread(self._saving_thread, (filename,))
-
-    def _saving_thread(self, filename):
-        # Audits are usually saved to disk based on events that happen when MPF
-        # is really busy.. ball start, game end, etc. So we sleep for 3 secs to
-        # stay out of the way until things calm down a bit.
-        time.sleep(3)
-        self.log.debug("Writing audits to: %s", filename)
-        with open(filename, 'w') as output_file:
-            output_file.write(yaml.dump(self.current_audits,
-                                        default_flow_style=False))
-
-    def make_sure_path_exists(self, path):
-        """Checks to see if the audits folder exists and creates it if not."""
-        try:
-            os.makedirs(path)
-        except OSError as exception:
-            if exception.errno != errno.EEXIST:
-                raise
-
     def enable(self, **kwags):
         """Enables the auditor.
 
         This method lets you enable the auditor so it only records things when
         you want it to. Typically this is called at the beginning of a game.
-        """
 
+        Args:
+            **kwargs: No function here. They just exist to allow this method
+                to be registered as a handler for events that might contain
+                keyword arguments.
+
+        """
         if self.enabled:
             return  # this will happen if we get a mid game restart
 
@@ -264,14 +205,14 @@ class Auditor(object):
                     self.current_audits['events'][event] = 0
 
         for event in self.config['save_events']:
-            self.machine.events.add_handler(event,
-                                            self.save_to_disk,
-                                            filename=self.filename,
+            self.machine.events.add_handler(event, self._save_audits,
                                             priority=0)
 
+    def _save_audits(self, delay_secs=3):
+        self.data_manager.save(self.current_audits, delay_secs=delay_secs)
+
     def disable(self, **kwargs):
-        """Disables the auditor.
-        """
+        """Disables the auditor."""
         self.log.debug("Disabling the Auditor")
         self.enabled = False
 
