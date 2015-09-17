@@ -85,11 +85,11 @@ class DataManager(object):
         else:
             return self.data[section]
 
-    def save(self, data=None, delay_secs=0):
+    def save_all(self, data=None, delay_secs=0):
         """Writes this DataManager's data to the disk.
 
         Args:
-            data: A dict() of the data you want to write. If None (default),
+            data: An optional dict() of the data you want to write. If None
                 then it will write the data as it exists in its own data
                 attribute.
             delay_secs: Optional integer value of the amount of time you want
@@ -105,6 +105,20 @@ class DataManager(object):
             self.data = data
 
         thread.start_new_thread(self._writing_thread, (delay_secs, ))
+
+    def save_key(self, key, value, delay_secs=0):
+        """Updates an individual key and then writes the entire dictionary to
+        disk.
+
+        Args:
+            key: String name of the key to add/update.
+            value: Value of the key
+            delay_secs: Optional number of seconds to wait before writing the
+                data to disk. Default is 0.
+        """
+        
+        self.data[key] = value
+        self.save_all(delay_secs=delay_secs)
 
     def _writing_thread(self, delay_secs=0):
 

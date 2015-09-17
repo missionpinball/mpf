@@ -154,11 +154,11 @@ class Auditor(object):
         for item in self.config['player']:
             for player in self.machine.game.player_list:
 
-                self.current_audits['player'][item]['top'] = \
+                self.current_audits['player'][item]['top'] = (
                     self._merge_into_top_list(
                         player[item],
                         self.current_audits['player'][item]['top'],
-                        self.config['num_player_top_records'])
+                        self.config['num_player_top_records']))
 
                 self.current_audits['player'][item]['average'] = (
                     ((self.current_audits['player'][item]['total'] *
@@ -209,7 +209,8 @@ class Auditor(object):
                                             priority=0)
 
     def _save_audits(self, delay_secs=3):
-        self.data_manager.save(self.current_audits, delay_secs=delay_secs)
+        self.data_manager.save_all(data=self.current_audits,
+                                   delay_secs=delay_secs)
 
     def disable(self, **kwargs):
         """Disables the auditor."""
@@ -218,7 +219,7 @@ class Auditor(object):
 
         # remove switch and event handlers
         self.machine.events.remove_handler(self.audit_event)
-        self.machine.events.remove_handler(self.save_to_disk)
+        self.machine.events.remove_handler(self._save_audits)
 
         for switch in self.machine.switches:
             if 'no_audit' not in switch.tags:
