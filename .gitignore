@@ -1,6 +1,5 @@
 *.pyc
 logs/
-/machine_files/*/data/
 *.local
 .idea
 docs/

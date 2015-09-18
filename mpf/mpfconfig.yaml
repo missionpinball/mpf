@@ -677,3 +677,20 @@ debug_profiles:
         device_collections:
         individual_devices:
         plugins:
+
+high_score:
+  name_length: 3
+  characters: ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  categories:
+    score:
+      - GRAND CHAMPION
+      - 1
+      - 2
+      - 3
+      - 4
+    ramps:
+      - RAMP CHAMP
+    loops:
+      - MAJOR LOOPER
+      - MINOR LOOPER
+      - ASSOCIATE LOOPER

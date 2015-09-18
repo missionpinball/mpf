@@ -17,6 +17,7 @@ modes:
   - mode1_acmag
   - skillshot
   - bonus
+  - high_score
 
 scriptlets:
     attract.Attract
