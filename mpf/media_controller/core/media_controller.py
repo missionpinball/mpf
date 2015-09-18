@@ -69,6 +69,8 @@ class MediaController(object):
         self.HZ = 0
         self.next_tick_time = 0
         self.secs_per_tick = 0
+        self.machine_vars = CaseInsensitiveDict()
+        self.machine_var_monitor = False
 
         Task.create(self._check_crash_queue)
 
@@ -79,6 +81,7 @@ class MediaController(object):
                              'get': self.bcp_get,
                              'goodbye': self.bcp_goodbye,
                              'hello': self.bcp_hello,
+                             'machine_variable': self.bcp_machine_variable,
                              'mode_start': self.bcp_mode_start,
                              'mode_stop': self.bcp_mode_stop,
                              'player_added': self.bcp_player_add,
@@ -482,6 +485,11 @@ class MediaController(object):
         except (IndexError, KeyError):
             pass
 
+    def bcp_machine_variable(self, name, value, **kwargs):
+        """Processes an incoming BCP 'machine_variable' command."""
+
+        self._set_machine_var(name, value)
+
     def bcp_player_score(self, value, prev_value, change, player_num,
                          **kwargs):
         """Processes an incoming BCP 'player_score' command."""
@@ -587,6 +595,36 @@ class MediaController(object):
                 return False
         except KeyError:
             return False
+
+    def _set_machine_var(self, name, value):
+        try:
+            prev_value = self.machine_vars[name]
+        except KeyError:
+            prev_value = None
+
+        self.machine_vars[name] = value
+
+        try:
+            change = value-prev_value
+        except TypeError:
+            if prev_value != value:
+                change = True
+            else:
+                change = False
+
+        if change:
+            self.log.debug("Setting machine_var '%s' to: %s, (prior: %s, "
+                           "change: %s)", name, value, prev_value,
+                           change)
+            self.events.post('machine_var_' + name,
+                                     value=value,
+                                     prev_value=prev_value,
+                                     change=change)
+
+        if self.machine_var_monitor:
+            for callback in self.monitors['machine_var']:
+                callback(name=name, value=self.vars[name],
+                         prev_value=prev_value, change=change)
 
 
 # The MIT License (MIT)

@@ -6,6 +6,7 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
+import copy
 import logging
 import os
 import time
@@ -13,8 +14,9 @@ import sys
 import Queue
 
 from mpf.system import *
-from mpf.system.config import Config
+from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.tasks import Task, DelayManager
+from mpf.system.data_manager import DataManager
 import version
 
 
@@ -36,7 +38,6 @@ class MachineController(object):
         physical_hw: Boolean as to whether there is physical pinball controller
             hardware attached.
         done: Boolean. Set to True and MPF exits.
-        machineflow_index: What machineflow position the machine is currently in.
         machine_path: The root path of this machine_files folder
         display:
         plugins:
@@ -55,7 +56,6 @@ class MachineController(object):
         self.tick_num = 0
         self.physical_hw = options['physical_hw']
         self.done = False
-        self.machineflow_index = None
         self.machine_path = None  # Path to this machine's folder root
         self.monitors = dict()
         self.plugins = list()
@@ -64,6 +64,9 @@ class MachineController(object):
         self.asset_managers = dict()
         self.game = None
         self.active_debugger = dict()
+        self.machine_vars = CaseInsensitiveDict()
+        self.machine_var_monitor = False
+        self.machine_var_data_manager = None
 
         self.num_assets_to_load = 0
 
@@ -92,13 +95,13 @@ class MachineController(object):
         else:
             self.set_default_platform('virtual')
 
-
         self._load_system_modules()
 
         self.config['machine'] = self.config_processor.process_config2(
             'machine', self.config.get('machine', dict()), 'machine')
 
         self._register_system_events()
+        self._load_machine_vars()
         self.events.post("init_phase_1")
         self.events.post("init_phase_2")
         self._load_plugins()
@@ -117,6 +120,16 @@ class MachineController(object):
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.quit)
 
+    def _load_machine_vars(self):
+        self.machine_var_data_manager = DataManager(self, 'machine_vars')
+        self.machine_vars = self.machine_var_data_manager.get_data()
+
+        # If any of the saved vars have expired, clear them
+        current_time = time.time()
+        for name, settings in self.machine_vars.iteritems():
+            if ('expire' in settings and settings['expire'] and
+                        settings['expire'] < current_time):
+                self.machine_vars[name] = 0
 
     def _check_crash_queue(self):
         try:
@@ -432,6 +445,131 @@ class MachineController(object):
         except KeyError:
             return False
 
+    def set_machine_var(self, name, value, force_events=False):
+        """Sets the value of a machine variable.
+
+        Args:
+            name: String name of the variable you're setting the value for.
+            value: The value you're setting. This can be any Type.
+            force_events: Boolean which will force the event posting, the
+                machine monitor callback, and writing the variable to disk (if
+                it's set to persist). By default these things only happen if
+                the new value is different from the old value.
+
+        """
+        if name not in self.machine_vars:
+            self.log.warning("Received request to set machine_var '%s', but "
+                             "that is not a valid machine_var.", name)
+            return
+
+        prev_value = self.machine_vars[name]['value']
+        self.machine_vars[name]['value'] = value
+
+        try:
+            change = value-prev_value
+        except TypeError:
+            if prev_value != value:
+                change = True
+            else:
+                change = False
+
+        if change or force_events:
+
+            if self.machine_vars[name]['persist']:
+                disk_var = CaseInsensitiveDict()
+                disk_var['value'] = value
+
+                if self.machine_vars[name]['expire_secs']:
+                    disk_var['expire'] = (time.time() +
+                        self.machine_vars[name]['expire_secs'])
+
+                self.machine_var_data_manager.save_key(name, disk_var)
+
+            self.log.debug("Setting machine_var '%s' to: %s, (prior: %s, "
+                           "change: %s)", name, value, prev_value,
+                           change)
+            self.events.post('machine_var_' + name,
+                                     value=value,
+                                     prev_value=prev_value,
+                                     change=change)
+
+            if self.machine_var_monitor:
+                for callback in self.monitors['machine_vars']:
+                    callback(name=name, value=value,
+                             prev_value=prev_value, change=change)
+
+    def get_machine_var(self, name):
+        """Returns the value of a machine variable.
+
+        Args:
+            name: String name of the variable you want to get that value for.
+
+        Returns:
+            The value of the variable if it exists, or None if the variable
+            does not exist.
+
+        """
+        try:
+            return self.machine_vars[name]['value']
+        except KeyError:
+            return None
+
+    def create_machine_var(self, name, value=0, persist=False,
+                           expire_secs=None):
+        """Creates a new machine variable:
+
+        Args:
+            name: String name of the variable.
+            value: The value of the variable. This can be any Type.
+            persist: Boolean as to whether this variable should be saved to
+                disk so it's available the next time MPF boots.
+            expire_secs: Optional number of seconds you'd like this variable
+                to persist on disk for. When MPF boots, if the expiration time
+                of the variable is in the past, it will be loaded with a value
+                of 0. For example, this lets you write the number of credits on
+                the machine to disk to persist even during power off, but you
+                could set it so that those only stay persisted for an hour.
+
+        """
+        var = CaseInsensitiveDict()
+
+        var['value'] = value
+        var['persist'] = persist
+        var['expire_secs'] = expire_secs
+
+        self.machine_vars[name] = var
+
+        self.set_machine_var(name, value, force_events=True)
+
+    def remove_machine_var(self, name):
+        """Removes a machine variable by name. If this variable persists to
+        disk, it will remove it from there too.
+
+        Args:
+            name: String name of the variable you want to remove.
+
+        """
+        try:
+            del self.machine_vars[name]
+            self.machine_var_data_manager.remove_key(name)
+        except KeyError:
+            pass
+
+    def remove_machine_var_search(self, startswith='', endswith=''):
+        """Removes a machine variable by matching parts of its name.
+
+        Args:
+            startswith: Optional start of the variable name to match.
+            endswith: Optional end of the variable name to match.
+
+        For example, if you pass startswit='player' and endswith='score', this
+        method will match and remove player1_score, player2_score, etc.
+
+        """
+        for var in self.machine_vars.keys():
+            if var.startswith(startswith) and var.endswith(endswith):
+                del self.machine_vars[var]
+                self.machine_var_data_manager.remove_key(var)
 
 
 # The MIT License (MIT)

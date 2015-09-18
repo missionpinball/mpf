@@ -127,6 +127,9 @@ class Game(Mode):
 
         """
 
+        self.machine.remove_machine_var_search(startswith='player',
+                                                endswith='_score')
+
         self._player_add()
 
         self.machine.events.post('game_started')

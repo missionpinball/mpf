@@ -151,8 +151,10 @@ class BCP(object):
 
         self.dmd = None
         self.filter_player_events = True
+        self.filter_machine_vars = True
         self.filter_shots = True
         self.send_player_vars = False
+        self.send_machine_vars = False
         self.mpfmc_trigger_events = set()
         self.track_volumes = dict()
         self.volume_control_enabled = False
@@ -193,6 +195,19 @@ class BCP(object):
                 self.filter_player_events = False
 
         self._setup_player_monitor()
+
+        if ('machine_variables' in self.config and
+                self.config['machine_variables']):
+
+            self.send_machine_vars = True
+
+            self.config['machine_variables'] = (
+                Config.string_to_list(self.config['machine_variables']))
+
+            if '__all__' in self.config['machine_variables']:
+                self.filter_machine_vars = False
+
+        self._setup_machine_var_monitor()
 
         if ('shots' in self.config and
                 self.config['shots']):
@@ -256,6 +271,16 @@ class BCP(object):
                                                     settings,
                                                     self.receive_queue))
 
+        # todo should this be here?
+        self._send_machine_vars()
+
+    def _send_machine_vars(self):
+        for var_name, settings in self.machine.machine_vars.iteritems():
+
+            self.send(bcp_command='machine_variable',
+                      name=var_name,
+                      value=settings['value'])
+
     def remove_bcp_connection(self, bcp_client):
         """Removes a BCP connection to a remote BCP host.
 
@@ -286,12 +311,19 @@ class BCP(object):
             for event in self.config['player_variables']:
                 self.mpfmc_trigger_events.add('player_' + event.lower())
 
+    def _setup_machine_var_monitor(self):
+        self.machine.machine_var_monitor = True
+        self.machine.register_monitor('machine_vars', self._machine_var_change)
+
+        if self.filter_player_events:
+            for event in self.config['machine_variables']:
+                self.mpfmc_trigger_events.add('machine_var_' + event.lower())
+
     def _setup_shot_monitor(self):
         Shot.monitor_enabled = True
         self.machine.register_monitor('shots', self._shot)
 
     def _player_var_change(self, name, value, prev_value, change, player_num):
-
         if name == 'score':
             self.send('player_score', value=value, prev_value=prev_value,
                       change=change, player_num=player_num)
@@ -305,6 +337,16 @@ class BCP(object):
                       prev_value=prev_value,
                       change=change,
                       player_num=player_num)
+
+    def _machine_var_change(self, name, value, prev_value, change):
+        if self.send_machine_vars and (
+                not self.filter_machine_vars or
+                name in self.config['machine_variables']):
+            self.send(bcp_command='machine_variable',
+                      name=name,
+                      value=value,
+                      prev_value=prev_value,
+                      change=change)
 
     def _shot(self, name, profile, state):
 

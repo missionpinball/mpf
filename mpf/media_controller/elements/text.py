@@ -91,29 +91,41 @@ class Text(DisplayElement):
                 self.original_text = text
 
             elif local_type and var_string.startswith(local_type + '|'):
+
                 text = text.replace('%' + var_string + '%',
                     str(local_replacements[var_string.split('|')[1]]))
                 self.original_text = text
+
+            elif var_string.startswith('machine|'):
+
+                try:
+                    text = text.replace('%' + var_string + '%',
+                        str(self.machine.machine_vars[var_string.split('|')[1]]))
+                except KeyError:
+                    text = ''
 
             elif self.machine.player:
                 text = text.replace('%' + var_string + '%',
                                     str(self.machine.player[var_string]))
 
-        if 'min_digits' in self.config:
-            text = text.zfill(self.config['min_digits'])
+        if text:
 
-        if 'number_grouping' in self.config and self.config['number_grouping']:
+            if 'min_digits' in self.config:
+                    text = text.zfill(self.config['min_digits'])
 
-        # todo this only works for ints
-        # todo move enabling this and separator char to config
+            if ('number_grouping' in self.config and
+                    self.config['number_grouping']):
 
-            # find the numbers in the string
-            number_list = [s for s in text.split() if s.isdigit()]
+            # todo this only works for ints
+            # todo move enabling this and separator char to config
 
-            # group the numbers and replace them in the string
-            for item in number_list:
-                grouped_item = self.group_digits(item)
-                text = text.replace(str(item), grouped_item)
+                # find the numbers in the string
+                number_list = [s for s in text.split() if s.isdigit()]
+
+                # group the numbers and replace them in the string
+                for item in number_list:
+                    grouped_item = self.group_digits(item)
+                    text = text.replace(str(item), grouped_item)
 
         # Are we set up for multi-language>
         if self.language:
@@ -121,7 +133,7 @@ class Text(DisplayElement):
 
         return text
 
-    def _player_var_change(self, player_num, target_player, **kwargs):
+    def _text_var_change(self, **kwargs):
         self.text = self._process_text(self.original_text)
 
         self.render()
@@ -134,7 +146,6 @@ class Text(DisplayElement):
                                             player=self.machine.player['number'])
             else:
                 source, name = var_string.split('|')
-
                 if source.lower().startswith('player'):
 
                     if source.strip('player'):
@@ -145,13 +156,16 @@ class Text(DisplayElement):
                             player=self.machine.player['number'])
 
                 elif source.lower() == 'machine':
-                    # add machine monitor
-                    pass
+                    self.add_machine_var_handler(name=name)
 
     def add_player_var_handler(self, name, player):
         self.machine.events.add_handler('player_' + name,
-                                        self._player_var_change,
+                                        self._text_var_change,
                                         target_player=player)
+
+    def add_machine_var_handler(self, name):
+        self.machine.events.add_handler('machine_var_' + name,
+                                        self._text_var_change)
 
     def render(self):
 
@@ -165,7 +179,7 @@ class Text(DisplayElement):
         # todo trim this to a certain size? Or force it to fit in the size?
 
     def scrub(self):
-        self.machine.events.remove_handler(self._player_var_change)
+        self.machine.events.remove_handler(self._text_var_change)
 
     def group_digits(self, text, separator=',', group_size=3):
         """Enables digit grouping (i.e. adds comma separators between

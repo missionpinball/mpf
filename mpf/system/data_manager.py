@@ -6,6 +6,7 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
+import copy
 import logging
 import os
 import yaml
@@ -81,9 +82,9 @@ class DataManager(object):
 
         """
         if not section:
-            return self.data
+            return copy.copy(self.data)
         else:
-            return self.data[section]
+            return copy.copy(self.data[section])
 
     def save_all(self, data=None, delay_secs=0):
         """Writes this DataManager's data to the disk.
@@ -115,10 +116,17 @@ class DataManager(object):
             value: Value of the key
             delay_secs: Optional number of seconds to wait before writing the
                 data to disk. Default is 0.
+
         """
-        
         self.data[key] = value
         self.save_all(delay_secs=delay_secs)
+
+    def remove_key(self, key):
+        try:
+            del self.data[key]
+            self.save_all()
+        except KeyError:
+            pass
 
     def _writing_thread(self, delay_secs=0):
 

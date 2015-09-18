@@ -615,6 +615,9 @@ bcp:
     player_variables:
       __all__
 
+    machine_variables:
+      __all__
+
     shots:
       __all__
 

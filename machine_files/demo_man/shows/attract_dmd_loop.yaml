@@ -1,5 +1,49 @@
 - tocks: 3
   display:
+    - type: text
+      text: "%machine|player1_score%"
+      number_grouping: true
+      min_digits: 2
+      font: small
+      v_pos: top
+      h_pos: right
+      x: -80
+      y: 1
+    - type: text
+      text: "%machine|player2_score%"
+      number_grouping: true
+      min_digits: 2
+      font: small
+      v_pos: top
+      h_pos: right
+      x: -1
+      y: 1
+    - type: text
+      text: "%machine|player3_score%"
+      number_grouping: true
+      min_digits: 2
+      font: small
+      v_pos: bottom
+      h_pos: right
+      x: -80
+      y: -10
+    - type: text
+      text: "%machine|player4_score%"
+      number_grouping: true
+      min_digits: 2
+      font: small
+      v_pos: bottom
+      h_pos: right
+      x: -1
+      y: -10
+    - type: text
+      text: FREE PLAY
+      font: small
+      h_pos: center
+      v_pos: bottom
+
+- tocks: 3
+  display:
     - type: image
       image: demo_man_logo
       transition:
