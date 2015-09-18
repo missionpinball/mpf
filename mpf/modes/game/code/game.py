@@ -466,8 +466,13 @@ class Game(Mode):
         if ev_result is False:
             self.log.debug("Request to add player has been denied.")
         else:
-            Player(self.machine, self.player_list)
+            player = Player(self.machine, self.player_list)
             self.num_players = len(self.player_list)
+
+            self.machine.create_machine_var(name='player' +
+                                                 str(player.number) + '_score',
+                                            value=player.score,
+                                            persist=True)
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.
@@ -488,10 +493,13 @@ class Game(Mode):
                                  number=self.player.number,
                                  callback=self._player_turn_started)
 
-    def player_turn_stop(self, ):
+    def player_turn_stop(self):
 
         self.machine.events.post('player_turn_stop', player=self.player,
                                      number=self.player.number)
+
+        self.machine.set_machine_var(name='player' + str(self.player.number) +
+                                     '_score', value=self.player.score)
 
         if self.player.number < self.num_players:
             self.player = self.player_list[self.player.number]
@@ -531,11 +539,8 @@ class Game(Mode):
         self.log.debug("Player rotate: Now up is Player %s", self.player.number)
 
 
+# todo player events should come next, including tracking inc/dec, other values
 
-# player events should come next, including tracking inc/dec, other values
-
-# sub mode(s)?
-# bonus
 
 # The MIT License (MIT)
 
