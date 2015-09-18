@@ -74,22 +74,10 @@ def load_config():
         print ("Will also re-check v" + str(new_config_version) + " files")
         target_file_versions.add(new_config_version)
 
-    section_replacements = config_dict[new_config_version]['section_replacements']
-    section_warnings = config_dict[new_config_version]['section_warnings']
-    section_deprecations = config_dict[new_config_version]['section_deprecations']
-    string_replacements = config_dict[new_config_version]['string_replacements']
-
-    if not section_replacements:
-        section_replacements = dict()
-
-    if not section_warnings:
-        section_warnings = dict()
-
-    if not section_deprecations:
-        section_deprecations = set()
-
-    if not string_replacements:
-        string_replacements = dict()
+    section_replacements = config_dict[new_config_version].get('section_replacements', dict())
+    section_warnings = config_dict[new_config_version].get('section_warnings', dict())
+    section_deprecations = config_dict[new_config_version].get('section_deprecations', dict())
+    string_replacements = config_dict[new_config_version].get('string_replacements', dict())
 
 def create_file_list(source_str):
 
@@ -189,11 +177,11 @@ def process_file(file_name):
         file_data = pattern.sub(new_string + section + ':', file_data)
 
     for k, v in section_replacements.iteritems():
-        pattern = re.compile(re.escape(k + ':'), re.IGNORECASE)
+        pattern = re.compile('\\b(' + k + ')\\b:', re.IGNORECASE)
         file_data = pattern.sub(v + ':', file_data)
 
     for k, v in string_replacements.iteritems():
-        pattern = re.compile(re.escape(k), re.IGNORECASE)
+        pattern = re.compile(k, re.IGNORECASE)
         file_data = pattern.sub(v, file_data)
 
     with open(file_name, 'w') as f:
