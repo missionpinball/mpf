@@ -78,6 +78,7 @@ class Keyboard(object):
             # todo convert to True from true or TRUE
             invert = v.get('invert', None)
             event = v.get('event', None)
+            mc_event = v.get('mc_event', None)
             params = v.get('params', None)
             # todo add args processing?
             # will hold our key entry converted to pygame key format
@@ -170,6 +171,10 @@ class Keyboard(object):
                 event_dict = {'event': event, 'params': params}
                 self.add_key_map(str(key_code), event_dict=event_dict)
 
+            elif mc_event:  # we're processing an entry for an mc_event
+                event_dict = {'mc_event': mc_event, 'params': params}
+                self.add_key_map(str(key_code), event_dict=event_dict)
+
     def add_key_map(self, key, switch_name=None, toggle_key=False,
                     invert=False, event_dict=None):
         """Adds an entry to the key_map which is used to see what to do when
@@ -249,9 +254,15 @@ class Keyboard(object):
                         # we have an event
                         event_dict = self.key_map[key_press]
                         event_params = event_dict['params'] or {}
-                        self.mc.send(bcp_command='trigger',
-                                     name=str(event_dict['event']),
-                                     **event_params)
+
+                        if 'event' in event_dict:
+                            self.mc.send(bcp_command='trigger',
+                                         name=str(event_dict['event']),
+                                         **event_params)
+
+                        elif 'mc_event' in event_dict:
+                            self.mc.events.post(event_dict['mc_event'],
+                                                     **event_params)
 
     def process_key_release(self, symbol, modifiers):
         """Processes a key release (key up) event by setting the switch and/or
