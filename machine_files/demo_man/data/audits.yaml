@@ -1,17 +1,18 @@
 events:
   ball_search_begin_phase1: 0
-  game_ended: 1
-  game_started: 268
+  game_ended: 2
+  game_started: 269
 player:
   score:
-    average: 20680
+    average: 24126
     top:
+    - 31020
     - 20680
     - 15510
-    total: 2
+    total: 3
 switches:
   s_always_closed: 0
-  s_ball_launch: 1
+  s_ball_launch: 2
   s_bottom_popper: 0
   s_buy_in: 0
   s_car_chase_1: 0
@@ -35,9 +36,9 @@ switches:
   s_enter: 0
   s_esc: 0
   s_eyeball_standup: 0
-  s_flipper_lower_left: 0
+  s_flipper_lower_left: 16
   s_flipper_lower_left_eos: 0
-  s_flipper_lower_right: 4
+  s_flipper_lower_right: 50
   s_flipper_lower_right_eos: 0
   s_flipper_upper_left_eos: 0
   s_flipper_upper_right_eos: 0
@@ -53,7 +54,7 @@ switches:
   s_left_ramp_enter: 0
   s_left_ramp_exit: 0
   s_left_rollover: 0
-  s_left_slingshot: 1120
+  s_left_slingshot: 1126
   s_lower_rebound: 0
   s_plumb_bob: 0
   s_right_coin: 0
@@ -74,10 +75,10 @@ switches:
   s_standup_3: 0
   s_standup_4: 0
   s_standup_5: 0
-  s_start: 320
+  s_start: 330
   s_top_popper: 0
   s_top_slingshot: 0
-  s_trough_1: 25
+  s_trough_1: 28
   s_trough_2: 0
   s_trough_3: 0
   s_trough_4: 0

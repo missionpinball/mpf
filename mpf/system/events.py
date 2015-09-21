@@ -628,12 +628,13 @@ class QueuedEvent(object):
         self.num_waiting += 1
         if self.debug:
             self.log.debug("Registering a wait. Current count: %s",
-                       self.num_waiting)
+                           self.num_waiting)
 
     def clear(self):
         self.num_waiting -= 1
         if self.debug:
-            self.log.debug("Clearing a wait. Current count: %s", self.num_waiting)
+            self.log.debug("Clearing a wait. Current count: %s",
+                           self.num_waiting)
         if not self.num_waiting:
             if self.debug:
                 self.log.debug("Queue is empty. Calling %s", self.callback)

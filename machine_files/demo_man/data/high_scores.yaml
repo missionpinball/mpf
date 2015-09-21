@@ -1,6 +1,9 @@
 !!python/object/apply:collections.OrderedDict
 - - - score
     - - !!python/tuple
+        - BID
+        - 31020
+      - !!python/tuple
         - BRI
         - 4
       - !!python/tuple
@@ -12,6 +15,11 @@
       - !!python/tuple
         - BJ
         - 1
-      - !!python/tuple
-        - AAA
-        - 1
+  - - ramps
+    - - !!python/tuple
+        - HKO
+        - 0
+  - - loops
+    - - !!python/tuple
+        - TQN
+        - 0
