@@ -802,6 +802,48 @@ class Config(object):
             raise ValueError
 
     @staticmethod
+    def pwm8_to_hex_string(source_int):
+
+        lookup_table = {
+                        0: '00',  # 00000000
+                        1: '01',  # 00000001
+                        2: '88',  # 10001000
+                        3: '92',  # 10010010
+                        4: 'AA',  # 10101010
+                        5: 'BA',  # 10111010
+                        6: 'EE',  # 11101110
+                        7: 'FE',  # 11111110
+                        8: 'FF',  # 11111111
+                        }
+
+        if 0 <= source_int <= 8:
+            return lookup_table[source_int]
+        else:
+            print "Invalid pwm hex value. (Expected value 0-8)"
+            raise ValueError
+
+    @staticmethod
+    def pwm8_to_int(source_int):
+
+        lookup_table = {
+                        0: 0,    # 00000000
+                        1: 1,    # 00000001
+                        2: 136,  # 10001000
+                        3: 146,  # 10010010
+                        4: 170,  # 10101010
+                        5: 186,  # 10111010
+                        6: 238,  # 11101110
+                        7: 254,  # 11111110
+                        8: 255,  # 11111111
+                        }
+
+        if 0 <= source_int <= 8:
+            return lookup_table[source_int]
+        else:
+            print "Invalid pwm value. (Expected value 0-8)"
+            raise ValueError
+
+    @staticmethod
     def normalize_hex_string(source_hex, num_chars=2):
         """Takes an incoming hex value and converts it to uppercase and fills in
         leading zeros.
@@ -817,6 +859,7 @@ class Config(object):
 
         """
         return str(source_hex).upper().zfill(num_chars)
+
 
 # The MIT License (MIT)
 

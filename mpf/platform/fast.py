@@ -40,9 +40,6 @@ NET_LATEST_FW = '0.90'
 RGB_LATEST_FW = '0.87'
 IO_LATEST_FW = '0.89'
 
-PWM8_TO_HEX_STR = {0: '00', 1: '01', 2: '88', 3: '92', 4: 'AA',
-                   5: 'BA', 6: 'EE', 7: 'FE', 8: 'FF'}
-
 
 class HardwarePlatform(Platform):
     """Platform class for the FAST hardware controller.
@@ -280,11 +277,6 @@ class HardwarePlatform(Platform):
             'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
             'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
                            }
-
-        self.pwm8_to_int = {
-            0: 0, 1: 1, 2: 136, 3: 146, 4: 170, 5: 186, 6: 238,
-            7: 254, 8: 255
-                                  }
 
         # todo verify this list
         self.fast_commands = {'ID': self.receive_id,  # processor ID
@@ -710,8 +702,8 @@ class HardwarePlatform(Platform):
         if not pwm_off:
             pwm_off = 8
 
-        pwm_on = self.pwm8_to_int[pwm_on]
-        pwm_off = self.pwm8_to_int[pwm_off]
+        pwm_on = Config.pwm8_to_int(pwm_on)
+        pwm_off = Config.pwm8_to_int(pwm_off)
 
         control = 0x01  # Driver enabled
         if drive_now:
@@ -873,14 +865,25 @@ class FASTDriver(object):
             self.config['trigger_cmd'] = 'TL:'
 
         if 'recycle_ms' in config:
-            self.config['recycle_ms'] = str(config['recycle_ms'])
+            self.config['recycle_ms'] = (
+                Config.int_to_hex_string(config['recycle_ms']))
         else:
             self.config['recycle_ms'] = '00'
 
-        if 'hold_pwm' in config:
-            self.config['hold_pwm'] = PWM8_TO_HEX_STR[config['hold_pwm']]
+        if 'pwm_on' in config:
+            self.config['pwm_on'] = Config.pwm8_to_hex_string(config['pwm_on'])
         else:
-            self.config['hold_pwm'] = 'FF'
+            self.config['pwm_on'] = 'FF'
+
+        if 'pwm_off' in config:
+            self.config['pwm_off'] = Config.pwm8_to_hex_string(config['pwm_off'])
+        else:
+            self.config['pwm_off'] = 'FF'
+
+        if 'pulse_ms' in config:
+            self.config['pulse_ms'] = config['pulse_ms']
+        else:
+            self.config['pulse_ms'] = '20'
 
         # send this driver's pulse / pwm settings
 
@@ -911,29 +914,40 @@ class FASTDriver(object):
         """Enables (turns on) this driver. """
 
         if self.autofire:
-            cmd = (self.config['trigger_cmd'] + self.config['number'] + ',' +
+            cmd = (self.config['trigger_cmd'] +
+                   self.config['number'] + ',' +
                    '03')
         else:
-            cmd = (self.config['config_cmd'] + self.config['number'] +
-                   ',C1,00,18,00,ff,' + self.config['hold_pwm'] + ',' +
+            cmd = (self.config['config_cmd'] +
+                   self.config['number'] +
+                  ',C1,00,18,' +
+                   Config.int_to_hex_string(self.config['pulse_ms']) + ',' +
+                   self.config['pwm_on'] + ',' +
+                   self.config['pwm_off'] + ',' +
                    self.config['recycle_ms'])
 
         self.log.debug("Sending Enable Command: %s", cmd)
         self.send(cmd)
         # todo change hold to pulse with re-ups
 
-    def pulse(self, milliseconds=None):
+    def pulse(self, milliseconds):
         """Pulses this driver. """
 
         if 0 <= milliseconds <= 255:
-            milliseconds = format(milliseconds, 'x').upper().zfill(2)
+            hex_ms_string = Config.int_to_hex_string(self.config['pulse_ms'])
+        else:
+            raise ValueError
 
         if self.autofire:
-            cmd = (self.config['trigger_cmd'] + self.config['number'] + ',' +
-            '01')
+            cmd = (self.config['trigger_cmd'] +
+                   self.config['number'] + ',' +
+                  '01')
         else:
-            cmd = (self.config['config_cmd'] + self.config['number'] +
-                   ',89,00,10,' + str(milliseconds) + ',ff,00,00,' +
+            cmd = (self.config['config_cmd'] +
+                   self.config['number'] +
+                   ',89,00,10,' +
+                   hex_ms_string +
+                   ',ff,00,00,' +
                    self.config['recycle_ms'])
 
         self.log.debug("Sending Pulse Command: %s", cmd)
