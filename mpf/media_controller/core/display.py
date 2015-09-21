@@ -675,7 +675,6 @@ class DisplayElement(object):
         return updated
 
     def set_position(self, x=None, y=None, h_pos=None, v_pos=None):
-
         """Calculates the x,y position for the upper-left corner of this element
         based on several positioning parameters.
 
@@ -704,8 +703,8 @@ class DisplayElement(object):
                 between the bottom edge and the v_pos anchor for positive
                 values, and the top edge and the v_pos anchor for negative
                 values.
-        """
 
+        """
         base_w, base_h = self.slide.surface.get_size()
         element_w, element_h = self.element_surface.get_size()
 
@@ -888,6 +887,29 @@ class DisplayElement(object):
                                           color_list[2])
             else:
                 self.adjusted_bg_color = None
+
+    def adjust_color(self, color, transparent=False):
+        if self.slide.depth == 8:
+            if color:  # Non-black
+                return ((color, 0, 0))
+
+            elif transparent:
+                return None
+
+            else:  # Black
+                return ((0, 0, 0))
+
+        else:  # 24-bit
+            if color:  # Non-black
+                color_list = Config.hexstring_to_list(color)
+                return ((color_list[0], color_list[1], color_list[2]))
+
+            elif transparent:
+                return None
+
+            else:  # Black
+                return ((0, 0, 0))
+
 
     def scrub(self):
         pass

@@ -12,7 +12,7 @@ from mpf.media_controller.core.display import DisplayElement
 
 
 class Text(DisplayElement):
-    """Represents an animation display element.
+    """Represents an text display element.
 
     Args:
         slide: The Slide object this animation is being added to.
@@ -127,7 +127,7 @@ class Text(DisplayElement):
                     grouped_item = self.group_digits(item)
                     text = text.replace(str(item), grouped_item)
 
-        # Are we set up for multi-language>
+        # Are we set up for multi-language?
         if self.language:
             text = self.language.text(text)
 
@@ -173,7 +173,7 @@ class Text(DisplayElement):
         self.set_position(self.x, self.y, self.h_pos, self.v_pos)
         self.dirty = True
 
-        self.slide.refresh()
+        self.slide.refresh(force_dirty=True)
 
         # todo add logic around color/shade
         # todo trim this to a certain size? Or force it to fit in the size?

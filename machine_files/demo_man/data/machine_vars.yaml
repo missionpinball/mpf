@@ -1,12 +1,12 @@
 player1_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
   dictitems:
-    value: 56473820
+    value: 0
 player2_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
   dictitems:
-    value: 34586740
+    value: 0
 player3_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
   dictitems:
-    value: 1209800
+    value: 0
 player4_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
   dictitems:
-    value: 88759490
+    value: 0

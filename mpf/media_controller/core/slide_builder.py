@@ -9,6 +9,7 @@
 
 import logging
 import uuid
+from copy import deepcopy
 
 import mpf.media_controller.decorators
 from mpf.system.timing import Timing
@@ -100,6 +101,8 @@ class SlideBuilder(object):
         # turns a dict into a list, though I don't know how sometimes items are
         # getting the preprocessed entry in their dict but they're not a list???
         # todo
+
+        settings = deepcopy(settings)
 
         if type(settings) is list and 'preprocessed' in settings[0]:
             return settings

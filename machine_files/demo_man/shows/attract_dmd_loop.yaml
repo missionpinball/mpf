@@ -12,14 +12,14 @@
 - tocks: 2
   display:
     - type: text
-      text: "%machine|score2_label%. %machine|score2_name% %machine|score2_value%"
+      text: "1. %machine|score2_name% %machine|score2_value%"
       v_pos: top
       h_pos: left
       number_grouping: true
       y: 3
       x: 12
     - type: text
-      text: "%machine|score3_label%. %machine|score3_name% %machine|score3_value%"
+      text: "2. %machine|score3_name% %machine|score3_value%"
       v_pos: bottom
       h_pos: left
       number_grouping: true
@@ -28,13 +28,13 @@
 - tocks: 2
   display:
     - type: text
-      text: "%machine|score4_label%. %machine|score4_name% %machine|score4_value%"
+      text: "3. %machine|score4_name% %machine|score4_value%"
       v_pos: top
       y: 3
       x: 10
       number_grouping: true
     - type: text
-      text: "%machine|score5_label%. %machine|score5_name% %machine|score5_value%"
+      text: "4. %machine|score5_name% %machine|score5_value%"
       v_pos: bottom
       number_grouping: true
       y: -3

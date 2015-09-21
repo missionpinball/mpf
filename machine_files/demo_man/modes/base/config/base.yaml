@@ -21,12 +21,18 @@ slide_player:
         v_pos: bottom
         h_pos: right
         font: small
-
-    player_add_success:
       - type: text
-        text: PLAYER %num% ADDED
-        expire: 2s
-        slide_priority: 300 # so this goes on top of the skillshot mode slides
+        text: "%player2|score%"
+        font: small
+        v_pos: top
+        h_pos: right
+        number_grouping: true
+
+#    player_add_success:
+#      - type: text
+#        text: PLAYER %num% ADDED
+#        expire: 2s
+#        slide_priority: 300 # so this goes on top of the skillshot mode slides
 
 sound_player:
     waiting to plunge loop:

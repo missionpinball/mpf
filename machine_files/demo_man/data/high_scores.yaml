@@ -1,18 +1,17 @@
-score: !!omap
-  - BRI: 50000
-  - GHK: 40000
-  - SAM: 30000
-  - CJK: 20000
-  - LLK: 10000
-ramps: !!omap
-  - BRI: 5
-  - GHK: 4
-  - SAM: 3
-  - CJK: 2
-  - LLK: 1
-loops: !!omap
-  - BRI: 5
-  - GHK: 4
-  - SAM: 3
-  - CJK: 2
-  - LLK: 1
+!!python/object/apply:collections.OrderedDict
+- - - score
+    - - !!python/tuple
+        - BRI
+        - 4
+      - !!python/tuple
+        - GHK
+        - 3
+      - !!python/tuple
+        - EEE
+        - 2
+      - !!python/tuple
+        - BJ
+        - 1
+      - !!python/tuple
+        - AAA
+        - 1

@@ -679,18 +679,20 @@ debug_profiles:
         plugins:
 
 high_score:
-  name_length: 3
-  characters: ABCDEFGHIJKLMNOPQRSTUVWXYZ
+  shift_left_tag: left_flipper
+  shift_right_tag: right_flipper
+  select_tag: start
+  award_slide_display_time: 4s
   categories:
-    score:
+  - score:
       - GRAND CHAMPION
-      - 1
-      - 2
-      - 3
-      - 4
-    ramps:
+      - HIGH SCORE 1
+      - HIGH SCORE 2
+      - HIGH SCORE 3
+      - HIGH SCORE 4
+  - ramps:
       - RAMP CHAMP
-    loops:
+  - loops:
       - MAJOR LOOPER
       - MINOR LOOPER
       - ASSOCIATE LOOPER

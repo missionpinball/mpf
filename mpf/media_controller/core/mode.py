@@ -1,4 +1,4 @@
-""" """
+""" Contains the Mode parent class for the Media Controller"""
 # modes.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth

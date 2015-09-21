@@ -20,6 +20,8 @@ media_controller:
             - animation
             - shape
             - movie
+            - character_picker
+            - entered_chars
         modules:
             dmd.DMD
         transitions:

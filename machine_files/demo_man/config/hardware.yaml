@@ -1076,3 +1076,5 @@ keyboard:
     switch: s_center_rollover
   shift+0:
     switch: s_right_rollover
+  h:
+    event: start_high_score

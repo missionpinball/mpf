@@ -61,6 +61,15 @@ class FontManager(object):
 
         return surface.subsurface((0, start_y, surface.get_width(), end_y))
 
+    def metrics(self, text, font='default', size=None, **kwargs):
+        """
+
+        returns:
+            List of tuples, one for each letter in the text string:
+            (min_x, max_x, min_y, max_y, advance)
+        """
+        return self.get_font(font, size).metrics(text)
+
     def add_to_cache(self, font, size, font_obj):
         """Adds a Pygame font object to the font cache.
 
@@ -148,6 +157,7 @@ class FontManager(object):
             else:
                 self.log.warning("Could not locate font file '%s'. Default font"
                                  "will be used instead.", file_name)
+
 
 # The MIT License (MIT)
 
