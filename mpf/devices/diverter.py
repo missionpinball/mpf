@@ -217,7 +217,7 @@ class Diverter(Device):
                     coil_name=self.config['activation_coil'].name,
                     coil_action_ms=-1,
                     pulse_ms=self.config['activation_coil'].config['pulse_ms'],
-                    pwm_on=self.config['activation_coil'].config['pwm_on'],
+                    pwm1=self.config['activation_coil'].config['pwm_on'],
                     pwm_off=self.config['activation_coil'].config['pwm_off'],
                     debounced=False)
 

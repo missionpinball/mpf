@@ -194,10 +194,19 @@ config_validator:
         number: single|str|
         number_str: single|str|
         pulse_ms: single|int|0
-        holdpatter: single|str|None
-        pwm_on: single|int|0
-        pwm_off: single|int|0
-        allow_enable: single|bool|False
+#        holdpatter: single|str|None
+#        pwm_on: single|int|8
+#        pwm_off: single|int|3
+        pwm_on_ms: single|int|None
+        pwm_off_ms: single|int|None
+        pulse_power: single|int|8
+        hold_power: single|int|int|3
+        pulse_power32: single|int|None
+        hold_power32: single|int|None
+        pulse_pwm_mask: single|int|None
+        hold_pwm_mask: single|int|None
+
+#        allow_enable: single|bool|False
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False

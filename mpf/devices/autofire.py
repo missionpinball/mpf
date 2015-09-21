@@ -82,7 +82,7 @@ class AutofireCoil(Device):
                                   coil_name=self.coil.name,
                                   coil_action_ms=self.config['coil_action_ms'],
                                   pulse_ms=self.config['pulse_ms'],
-                                  pwm_on=self.config['pwm_on_ms'],
+                                  pwm1=self.config['pwm_on_ms'],
                                   pwm_off=self.config['pwm_off_ms'],
                                   delay=self.config['delay'],
                                   recycle_time=self.config['recycle_ms'],

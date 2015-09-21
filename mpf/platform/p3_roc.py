@@ -332,8 +332,9 @@ class HardwarePlatform(Platform):
                         coil_action_ms,  # 0 = disable, -1 = hold forever
                         coil=None,
                         pulse_ms=0,
-                        pwm_on=0,
-                        pwm_off=0,
+                        pwm1=0,
+                        pwm2=0,
+                        pwm_type='pwm8',
                         delay=0,
                         recycle_time=0,
                         debounced=True,
@@ -351,53 +352,13 @@ class HardwarePlatform(Platform):
         You can overwrite existing hardware rules at any time to change or
         remove them.
 
-        Args:
-            sw : switch object
-                Which switch you're creating this rule for. The parameter is a
-                reference to the switch object itsef.
-            sw_activity : int
-                Do you want this coil to fire when the switch becomes active
-                (1) or inactive (0)
-            coil_action_ms : int
-                The total time (in ms) that this coil action should take place.
-                A value of -1 means it's forever.
-            coil : coil object
-                Which coil is this rule controlling
-            pulse_ms : int
-                How long should the coil be pulsed (ms)
-            pwm_on : int
-                If the coil should be held on at less than 100% duty cycle,
-                this is the "on" time (in ms).
-            pwm_off : int
-                If the coil should be held on at less than 100% duty cycle,
-                this is the "off" time (in ms).
-            delay : int
-                Not currently implemented for the P3-ROC hardware
-            recycle_time : int
-                How long (in ms) should this switch rule wait before firing
-                again. Put another way, what's the "fastest" this rule can
-                fire? This is used to prevent "machine gunning" of slingshots
-                and pop bumpers. Do not use it with flippers. Note the P3-ROC
-                has a non-configurable delay time of 125ms. (So it's either
-                125ms or 0.) So if you set this delay to anything other than
-                0, it will be 125ms.
-            debounced : bool
-                Should the P3-ROC fire this coil after the switch has been
-                debounced? Typically no.
-            drive_now : bool
-                Should the P3-ROC check the state of the switches when this
-                rule is firts applied, and fire the coils if they should be?
-                Typically this is True, especially with flippers because you
-                want them to fire if the player is holding in the buttons when
-                the machine enables the flippers (which is done via several
-                calls to this method.)
+
 
         """
-
         self.log.debug("Setting HW Rule. Switch:%s, Action ms:%s, Coil:%s, "
-                       "Pulse:%s, pwm_on:%s, pwm_off:%s, Delay:%s, Recycle:%s,"
+                       "Pulse:%s, pwm1:%s, pwm2:%s, pwm_type: %s, Delay:%s, Recycle:%s,"
                        "Debounced:%s, Now:%s", sw.name, coil_action_ms,
-                       coil.name, pulse_ms, pwm_on, pwm_off, delay,
+                       coil.name, pulse_ms, pwm1, pwm2, pwm_type, delay,
                        recycle_time, debounced, drive_now)
 
         if sw_activity == 0 and debounced:

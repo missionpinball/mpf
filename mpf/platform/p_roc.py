@@ -18,6 +18,7 @@ need libpinproc and pypinproc. More info:
 http://www.pinballcontrollers.com/forum/index.php?board=10.0
 
 """
+
 # p_roc.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
@@ -334,8 +335,9 @@ class HardwarePlatform(Platform):
                         coil_action_ms,  # 0 = disable, -1 = hold forever
                         coil=None,
                         pulse_ms=0,
-                        pwm_on=0,
-                        pwm_off=0,
+                        pwm1=0,
+                        pwm2=0,
+                        pwm_type='pwm8',
                         delay=0,
                         recycle_time=0,
                         debounced=True,

@@ -43,8 +43,7 @@ class Platform(object):
         self.next_tick_time = time.time()
 
     def set_hw_rule(self, sw_name, sw_activity, coil_name=None,
-                    coil_action_ms=0, pulse_ms=0, pwm_on=0, pwm_off=0, delay=0,
-                    recycle_time=0, debounced=False, drive_now=False):
+                    debounced=False, drive_now=False, **driver_settings):
         """Writes a hardware rule to the controller.
 
         Args:
@@ -52,21 +51,13 @@ class Platform(object):
             sw_activity: Int representing the switch state this rule will be set
                 for. 1 is active, 0 is inactive.
             coil_name: String name of the coil.
-            coil_action_ms: Total time in ms the coil should activate for.
-            pulse_ms: How long in ms the coil should activate for. Default is 0.
-            pwn_on: The 'on' portion, in ms of a pwm-based patter. Default is 0.
-            pwm_off: The 'off' portion, in ms, of a pwm-based patter. Default is
-                0.
-            delay: The delay, in ms, the coil should wait before firing. Default
-                is 0.
-            recycle_time: How long the coil must be inactive, in ms, before it
-                can be fired again via this rule. Default is 0.
             debounced: Boolean which specifies whether this coil should activate
                 on a debounced or non-debounced switch change state. Default is
                 False (non-debounced).
-            drive_name: Boolean which controls whether the coil should activate
+            drive_now: Boolean which controls whether the coil should activate
                 immediately when this rule is applied if the switch currently in
                 in the state set in this rule.
+            **driver_settings: Platform-specific settings
 
         Note that this method provides several convenience processing to convert
         the incoming parameters into a format that is more widely-used by
@@ -75,21 +66,19 @@ class Platform(object):
         subclassed if you wish.
 
         """
-
         self.log.debug("Writing HW Rule to controller")
 
-        sw = self.machine.switches[sw_name]  # todo make a nice error
-        coil = self.machine.coils[coil_name]  # here too
+        switch_obj = self.machine.switches[sw_name]  # todo make a nice error
+        coil_obj = self.machine.coils[coil_name]  # here too
 
         if self.machine.switches[sw_name].invert:
             sw_activity ^= 1
 
-        self.write_hw_rule(sw, sw_activity, coil_action_ms, coil, pulse_ms,
-                           pwm_on, pwm_off, delay, recycle_time, debounced,
-                           drive_now)
+        self.write_hw_rule(switch_obj, sw_activity, coil_obj, debounced,
+                           drive_now, **driver_settings)
 
-    def write_hw_rule(self, sw, sw_activity, coil_action_ms, coil, pulse_ms, pwm_on,
-                      pwm_off, delay, recycle_time, debounced, drive_now):
+    def write_hw_rule(self, switch_obj, sw_activity, coil, debounced,
+                      drive_now, **driver_settings):
         """Subclass this method in a platform interface to write a hardware
         switch rule to the controller.
 
@@ -98,7 +87,7 @@ class Platform(object):
         it's a bit more convenient.
 
         """
-        pass
+        raise NotImplementedError
 
     def clear_hw_rule(self, sw_name):
         """Subclass this method in a platform module to clear a hardware switch
@@ -112,7 +101,7 @@ class Platform(object):
         tilt, game over, etc.
 
         """
-        pass
+        raise NotImplementedError
 
     def tick(self):
         """Subclass this method in a platform module to perform periodic updates
