@@ -816,9 +816,8 @@ class FASTDriver(object):
 
         self.autofire = None
         self.config = dict()
-        self.driver_settings = dict()
+        self.driver_settings = self.create_driver_settings(machine, **config)
 
-        self.driver_settings['trigger'] = '81'  # enabled with manual control
         self.driver_settings['mode'] = '10'     # pulsed
 
         self.log = logging.getLogger('FASTDriver')
@@ -834,8 +833,9 @@ class FASTDriver(object):
             self.driver_settings['config_cmd'] = 'DL:'
             self.driver_settings['trigger_cmd'] = 'TL:'
 
-        self.driver_settings = self.create_driver_settings(machine, **config)
         self.driver_settings.update(self.merge_driver_settings(**config))
+
+        self.log.info("Driver Settings: %s", self.driver_settings)
 
     def create_driver_settings(self, machine, pulse_ms=None, **kwargs):
         return_dict = dict()
@@ -846,6 +846,8 @@ class FASTDriver(object):
         return_dict['pulse_power'] = 'ff'
         return_dict['hold_power'] = 'ff'
         return_dict['recycle_ms'] = '00'
+
+        return return_dict
 
     def merge_driver_settings(self,
                             pulse_ms=None,
