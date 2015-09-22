@@ -865,9 +865,6 @@ class FASTDriver(object):
                              " instead.")
 
         return_dict = dict()
-        return_dict['pulse_ms'] = None
-        return_dict['pwm1'] = 'ff'
-        return_dict['pwm2'] = '92'  # 37.5% (hex) as the safe default hold
         return_dict['pwm32'] = None
 
         if activation_time:
@@ -883,13 +880,13 @@ class FASTDriver(object):
         else:
             return_dict['recycle_ms'] = '00'
 
-        pulse_hex_string = ''
-        hold_hex_string = ''
-
         if not pulse_ms:
             pulse_ms = machine.config['mpf']['default_pulse_ms']
 
         return_dict['pulse_ms'] = Config.int_to_hex_string(pulse_ms)
+
+        pulse_hex_string = 'ff'
+        hold_hex_string = 'ff'
 
         if pulse_pwm_mask:
             pulse_pwm_mask = str(pulse_pwm_mask)
@@ -917,14 +914,12 @@ class FASTDriver(object):
         elif hold_power:
             hold_hex_string = Config.pwm8_to_hex_string(hold_power)
 
-        if pulse_hex_string:
-            return_dict['pwm1'] = pulse_hex_string
+        return_dict['pwm1'] = pulse_hex_string
 
-        if hold_hex_string:
-            if len(hold_hex_string) == 2:
-                return_dict['pwm2'] = hold_hex_string
-            elif len(hold_hex_string) == 8:
-                return_dict['pwm32'] = hold_hex_string
+        if len(hold_hex_string) == 2:
+            return_dict['pwm2'] = hold_hex_string
+        elif len(hold_hex_string) == 8:
+            return_dict['pwm32'] = hold_hex_string
 
         return return_dict
 
