@@ -798,8 +798,7 @@ class Config(object):
             return format(source_int, 'x').upper().zfill(2)
 
         else:
-            print "invalid source int:", source_int
-            raise ValueError
+            raise ValueError("invalid source int: %s" % (source_int))
 
     @staticmethod
     def pwm8_to_hex_string(source_int):
@@ -933,8 +932,7 @@ class Config(object):
         if 0 <= source_int <= 8:
             return lookup_table[source_int]
         else:
-            print "Invalid pwm value. (Expected value 0-8)"
-            raise ValueError
+            raise ValueError("Invalid pwm value. (Expected value 0-8)")
 
     @staticmethod
     def pwm8_to_on_off(source_int):
@@ -955,8 +953,7 @@ class Config(object):
         if 0 <= source_int <= 8:
             return lookup_table[source_int]
         else:
-            print "Invalid pwm value. (Expected value 0-8)"
-            raise ValueError
+            raise ValueError("Invalid pwm value. (Expected value 0-8)")
 
     @staticmethod
     def bin_str_to_hex_str(source_int_str, num_chars):

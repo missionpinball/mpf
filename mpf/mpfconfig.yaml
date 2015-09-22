@@ -204,11 +204,11 @@ config_validator:
         number: single|str|
         number_str: single|str|
 
-        pulse_ms: single|int|0
+        pulse_ms: single|int|None
         pwm_on_ms: single|int|None
         pwm_off_ms: single|int|None
-        pulse_power: single|int|8
-        hold_power: single|int|8
+        pulse_power: single|int|None
+        hold_power: single|int|None
         pulse_power32: single|int|None
         hold_power32: single|int|None
         pulse_pwm_mask: single|int|None

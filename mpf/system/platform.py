@@ -43,7 +43,8 @@ class Platform(object):
         self.next_tick_time = time.time()
 
     def set_hw_rule(self, sw_name, sw_activity, driver_name, driver_action,
-                    drive_now=False, **driver_settings_overrides):
+                    disable_on_release=True, drive_now=False,
+                    **driver_settings_overrides):
         """Writes a hardware rule to the controller.
 
         Args:
@@ -77,10 +78,12 @@ class Platform(object):
             sw_activity ^= 1
 
         self.write_hw_rule(switch_obj, sw_activity, driver_obj, driver_action,
-                           drive_now, **driver_settings_overrides)
+                           disable_on_release, drive_now,
+                           **driver_settings_overrides)
 
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
-                      drive_now, **driver_settings_overrides):
+                      disable_on_release, drive_now,
+                      **driver_settings_overrides):
         """Subclass this method in a platform interface to write a hardware
         switch rule to the controller.
 

@@ -308,7 +308,7 @@ class HardwarePlatform(Platform):
             cmd = msg[0:2]
             payload = msg[3:].replace('\r','')
         else:
-            print msg
+            self.log.warning("Received maformed message: %s", msg)
             return
 
         # Can't use try since it swallows too many errors for now
@@ -545,7 +545,7 @@ class HardwarePlatform(Platform):
         if not config['debounce_close']:
             config['debounce_close'] = self.config['default_debounce_close']
 
-        self.log.info("FAST Switch hardware tuple: %s", config['number'])
+        self.log.debug("FAST Switch hardware tuple: %s", config['number'])
 
         switch = FASTSwitch(number=config['number'],
                             debounce_open=config['debounce_open'],
@@ -640,7 +640,8 @@ class HardwarePlatform(Platform):
         self.net_connection.send(self.watchdog_command)
 
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
-                      drive_now=False, **driver_settings_overrides):
+                      disable_on_release=True, drive_now=False,
+                      **driver_settings_overrides):
         """Used to write (or update) a hardware rule to the FAST controller.
 
         *Hardware Rules* are used to configure the hardware controller to
@@ -675,7 +676,7 @@ class HardwarePlatform(Platform):
         driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
             **driver_settings_overrides))
 
-        self.log.info("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
+        self.log.debug("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
                       " %s, Driver settings: %s", switch_obj.name, sw_activity,
                       driver_obj.name, driver_settings)
 
@@ -688,6 +689,8 @@ class HardwarePlatform(Platform):
 
         control = Config.int_to_hex_string(int(control))
 
+        # todo need to implement disable_on_release
+
         if driver_action == 'pulse':
             mode = '10'                               # Mode 10 settings
             param1 = driver_settings['pulse_ms']      # initial pulse ms
@@ -696,7 +699,7 @@ class HardwarePlatform(Platform):
             param4 = '00'                             # pulse 2 pwm
             param5 = driver_settings['recycle_ms']    # recycle ms
 
-        elif driver_action == 'link':
+        elif driver_action == 'hold':
             mode = '18'                               # Mode 18 settings
             param1 = driver_settings['pulse_ms']      # intiial pulse ms
             param2 = driver_settings['pwm1']          # intial pwm
@@ -717,8 +720,8 @@ class HardwarePlatform(Platform):
             param5 = driver_settings['recycle_ms']    # recycle ms
 
         else:
-            raise ValueError("Invalid driver action: '%s'. Expected 'pulse', "
-                             "'timed_hold', or 'link'" % (driver_action))
+            raise ValueError("Invalid driver action: '%s'. Expected 'hold', "
+                             "'timed_hold', or 'pulse'" % (driver_action))
 
         self.hw_rules[driver_obj] = {'mode': mode,
                                'param1': param1,
@@ -740,7 +743,7 @@ class HardwarePlatform(Platform):
                param5)
 
         driver_obj.autofire = cmd
-        self.log.info("Writing hardware rule: %s", cmd)
+        self.log.debug("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
@@ -762,7 +765,7 @@ class HardwarePlatform(Platform):
         # find the rule(s) based on this switch
         coils = [k for k, v in self.hw_rules.iteritems() if v['switch'] == sw_num]
 
-        self.log.info("Clearing HW Rule for switch: %s %s, coils: %s", sw_name,
+        self.log.debug("Clearing HW Rule for switch: %s %s, coils: %s", sw_name,
                        sw_num, coils)
 
         for coil in coils:
@@ -777,7 +780,7 @@ class HardwarePlatform(Platform):
 
             coil.autofire = None
 
-            self.log.info("Clearing hardware rule: %s", cmd)
+            self.log.debug("Clearing hardware rule: %s", cmd)
 
             self.net_connection.send(cmd)
 
@@ -834,7 +837,7 @@ class FASTDriver(object):
 
         self.driver_settings.update(self.merge_driver_settings(**config))
 
-        self.log.info("Driver Settings: %s", self.driver_settings)
+        self.log.debug("Driver Settings: %s", self.driver_settings)
 
     def create_driver_settings(self, machine, pulse_ms=None, **kwargs):
         return_dict = dict()
@@ -842,8 +845,8 @@ class FASTDriver(object):
             pulse_ms = machine.config['mpf']['default_pulse_ms']
 
         return_dict['pulse_ms'] = Config.int_to_hex_string(pulse_ms)
-        return_dict['pulse_power'] = 'ff'
-        return_dict['hold_power'] = 'ff'
+        return_dict['pwm1'] = 'ff'
+        return_dict['pwm2'] = 'ff'
         return_dict['recycle_ms'] = '00'
 
         return return_dict
@@ -930,7 +933,7 @@ class FASTDriver(object):
         cmd = (self.driver_settings['trigger_cmd'] +
                self.driver_settings['number'] + ',' + '02')
 
-        self.log.info("Sending Disable Command: %s", cmd)
+        self.log.debug("Sending Disable Command: %s", cmd)
         self.send(cmd)
         self.check_auto()
 
@@ -943,6 +946,11 @@ class FASTDriver(object):
             cmd = (self.driver_settings['trigger_cmd'] +
                    self.driver_settings['number'] + ',' +
                    '03')
+            self.log.warning("Recived a command to enable this driver, but "
+                             "this driver is configured with an autofire rule,"
+                             " so this enable will reset that rule. We need to"
+                             " change this behavior...")
+
         else:
             # Otherwise we send a full config command, trigger C1 (logic triggered
             # and drive now) switch ID 00, mode 18 (latched)
@@ -956,24 +964,28 @@ class FASTDriver(object):
 
         # todo pwm32
 
-        self.log.info("Sending Enable Command: %s", cmd)
+        self.log.debug("Sending Enable Command: %s", cmd)
         self.send(cmd)
         # todo change hold to pulse with re-ups
 
-        self.check_auto()
+        #self.check_auto()
 
-    def pulse(self, milliseconds):
+    def pulse(self, milliseconds=None):
         """Pulses this driver. """
 
-        if 0 <= milliseconds <= 255:
-            hex_ms_string = Config.int_to_hex_string(milliseconds)
+        if not milliseconds:
+            hex_ms_string = self.driver_settings['pulse_ms']
         else:
-            raise ValueError
+            hex_ms_string = Config.int_to_hex_string(milliseconds)
 
         if self.autofire:
             cmd = (self.driver_settings['trigger_cmd'] +
                    self.driver_settings['number'] + ',' +
                   '01')
+            if milliseconds:
+                self.log.debug("Received command to pulse driver for %sms, but"
+                              "this driver is configured with an autofire rule"
+                               ", so that pulse value will be used instead.")
         else:
             cmd = (self.driver_settings['config_cmd'] +
                    self.driver_settings['number'] +
@@ -982,27 +994,7 @@ class FASTDriver(object):
                    self.driver_settings['pwm1'] + ',00,00,' +
                    self.driver_settings['recycle_ms'])
 
-        self.log.info("Sending Pulse Command: %s", cmd)
-        self.send(cmd)
-        self.check_auto()
-
-    def pwm(self):
-        """Enables this driver in a pwm pattern.  """
-
-        if self.autofire:
-            cmd = (self.driver_settings['trigger_cmd'] +
-                   self.driver_settings['number'] + ',' +
-                   '03')
-        else:
-            cmd = (self.driver_settings['config_cmd'] +
-                   self.driver_settings['number'] +
-                   ',89,00,18,' +
-                   self.driver_settings['pulse_ms'] + ',' +
-                   self.driver_settings['pwm1'] + ','
-                   + self.driver_settings['pwm2'] + ',' +
-                   self.config['recycle_ms'])
-
-        self.log.info("Sending PWM Hold Command: %s", cmd)
+        self.log.debug("Sending Pulse Command: %s", cmd)
         self.send(cmd)
         self.check_auto()
 
@@ -1013,7 +1005,7 @@ class FASTDriver(object):
                    self.driver_settings['number'] +
                    ',00')
 
-            self.log.info("Re-enabling auto fire mode: %s", cmd)
+            self.log.debug("Re-enabling auto fire mode: %s", cmd)
             self.send(cmd)
 
 class FASTGIString(object):
@@ -1028,13 +1020,13 @@ class FASTGIString(object):
         self.send = sender
 
     def off(self):
-        self.log.info("Turning Off GI String")
+        self.log.debug("Turning Off GI String")
         self.send('GI:' + self.number + ',00')
         self.last_time_changed = time.time()
 
     def on(self, brightness=255, fade_ms=0, start=0):
         if brightness >= 255:
-            self.log.info("Turning On GI String")
+            self.log.debug("Turning On GI String")
             self.send('GI:' + self.number + ',FF')
         elif brightness == 0:
             self.off()
@@ -1080,7 +1072,7 @@ class FASTDirectLED(object):
 
         # All FAST LEDs are 3 element RGB
 
-        self.log.info("Creating FAST RGB LED at hardware address: %s",
+        self.log.debug("Creating FAST RGB LED at hardware address: %s",
                        self.number)
 
     def hex_to_rgb(self, value):

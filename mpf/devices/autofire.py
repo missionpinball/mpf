@@ -75,6 +75,7 @@ class AutofireCoil(Device):
                                   sw_activity=self.switch_activity,
                                   driver_name=self.coil.name,
                                   driver_action='pulse',
+                                  disable_on_release=False,
                                   **self.config)
 
     def disable(self, **kwargs):

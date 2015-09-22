@@ -209,7 +209,8 @@ class Diverter(Device):
                     sw_name=switch.name,
                     sw_activity=1,
                     driver_name=self.config['activation_coil'].name,
-                    driver_action='timed_hold',
+                    driver_action='hold',
+                    disable_on_release=False,
                     **self.config)
 
                 # If there's a activation_time then we need to watch for the hw
@@ -229,6 +230,7 @@ class Diverter(Device):
                     sw_activity=1,
                     driver_name=self.config['activation_coil'].name,
                     driver_action='pulse',
+                    disable_on_release=False,
                     **self.config)
 
     def disable_hw_switch(self):
