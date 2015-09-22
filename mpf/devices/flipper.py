@@ -49,9 +49,9 @@ class Flipper(Device):
         self.rules['c'] = False
         self.rules['d'] = False
         self.rules['e'] = False
-        self.rules['f'] = False
+        # self.rules['f'] = False
+        # self.rules['g'] = False
         self.rules['h'] = False
-        self.rules['g'] = False
 
         self.flipper_coils = []
         self.flipper_coils.append(self.config['main_coil'].name)
@@ -88,26 +88,26 @@ class Flipper(Device):
         A.    Enable   Main  Button  active
         D.    Enable   Hold  Button  active
         E.    Disable  Main  EOS     active
-        F.    Disable  Main  Button  inactive
-        G.    Disable  Hold  Button  inactive
+        # F.    Disable  Main  Button  inactive
+        # G.    Disable  Hold  Button  inactive
 
         One coil, using EOS switch
         Rule  Type     Coil  Switch  Action
         A.    Enable   Main  Button  active
         H.    PWM      Main  EOS     active
-        F.    Disable  Main  Button  inactive
+        # F.    Disable  Main  Button  inactive
 
         Two coils, not using EOS switch:
         Rule  Type     Coil  Switch  Action
         B.    Pulse    Main  Button  active
         D.    Enable   Hold  Button  active
-        F.    Disable  Main  Button  inactive
-        G.    Disable  Hold  Button  inactive
+        # F.    Disable  Main  Button  inactive
+        # G.    Disable  Hold  Button  inactive
 
         One coil, not using EOS switch
         Rule  Type       Coil  Switch  Action
         C.    Pulse/PWM  Main  button  active
-        F.    Disable    Main  button  inactive
+        # F.    Disable    Main  button  inactive
 
         Use EOS switch for safety (for platforms that support mutiple switch
         rules). Note that this rule is the letter "i", not a numeral 1.
@@ -126,27 +126,27 @@ class Flipper(Device):
             self._enable_flipper_rule_a()
             self._enable_flipper_rule_d()
             self._enable_flipper_rule_e()
-            self._enable_flipper_rule_f()
-            self._enable_flipper_rule_g()
+            # self._enable_flipper_rule_f()
+            # self._enable_flipper_rule_g()
 
         elif (not self.config['hold_coil'] and self.config['use_eos'] and
                 self.config['eos_switch']):
 
             self._enable_flipper_rule_a()
             self._enable_flipper_rule_h()
-            self._enable_flipper_rule_f()
+            # self._enable_flipper_rule_f()
 
         elif self.config['hold_coil'] and not self.config['use_eos']:
 
             self._enable_flipper_rule_b()
             self._enable_flipper_rule_d()
-            self._enable_flipper_rule_f()
-            self._enable_flipper_rule_g()
+            # self._enable_flipper_rule_f()
+            # self._enable_flipper_rule_g()
 
         elif not self.config['hold_coil'] and not self.config['use_eos']:
 
             self._enable_flipper_rule_c()
-            self._enable_flipper_rule_f()
+            # self._enable_flipper_rule_f()
 
             # todo detect bad EOS and program around it
 
@@ -213,7 +213,7 @@ class Flipper(Device):
             sw_name=self.config['activation_switch'].name,
             sw_activity=1,
             driver_name=self.config['main_coil'].name,
-            driver_action='hold',
+            driver_action='link',
             **self.config)
 
         self.rules['a'] = True
@@ -285,41 +285,41 @@ class Flipper(Device):
 
         self.rules['e'] = True
 
-    def _enable_flipper_rule_f(self):
-        """
-        Rule  Type     Coil  Switch  Action
-        F.    Disable  Main  Button  inactive
-        """
+    # def _enable_flipper_rule_f(self):
+    #     """
+    #     Rule  Type     Coil  Switch  Action
+    #     F.    Disable  Main  Button  inactive
+    #     """
+    #
+    #     self.log.debug('Enabling Flipper Rule F')
+    #
+    #     if not self.machine.config['platform']['hw_enable_auto_disable']:
+    #         self.platform.set_hw_rule(
+    #             sw_name=self.config['activation_switch'].name,
+    #             sw_activity=0,
+    #             driver_name=self.config['main_coil'].name,
+    #             driver_action='disable',
+    #             **self.config)
+    #
+    #     self.rules['f'] = True
 
-        self.log.debug('Enabling Flipper Rule F')
-
-        if not self.machine.config['platform']['hw_enable_auto_disable']:
-            self.platform.set_hw_rule(
-                sw_name=self.config['activation_switch'].name,
-                sw_activity=0,
-                driver_name=self.config['main_coil'].name,
-                driver_action='disable',
-                **self.config)
-
-        self.rules['f'] = True
-
-    def _enable_flipper_rule_g(self):
-        """
-        Rule  Type     Coil  Switch  Action
-        G.    Disable  Hold  Button  inactive
-        """
-
-        self.log.debug('Enabling Flipper Rule G')
-
-        if not self.machine.config['platform']['hw_enable_auto_disable']:
-            self.platform.set_hw_rule(
-                sw_name=self.config['activation_switch'].name,
-                sw_activity=0,
-                driver_name=self.config['hold_coil'].name,
-                driver_action='disable',
-                **self.config)
-
-        self.rules['g'] = True
+    # def _enable_flipper_rule_g(self):
+    #     """
+    #     Rule  Type     Coil  Switch  Action
+    #     G.    Disable  Hold  Button  inactive
+    #     """
+    #
+    #     self.log.debug('Enabling Flipper Rule G')
+    #
+    #     if not self.machine.config['platform']['hw_enable_auto_disable']:
+    #         self.platform.set_hw_rule(
+    #             sw_name=self.config['activation_switch'].name,
+    #             sw_activity=0,
+    #             driver_name=self.config['hold_coil'].name,
+    #             driver_action='disable',
+    #             **self.config)
+    #
+    #     self.rules['g'] = True
 
     def _enable_flipper_rule_h(self):
         """
