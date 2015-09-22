@@ -42,22 +42,24 @@ class Platform(object):
         """
         self.next_tick_time = time.time()
 
-    def set_hw_rule(self, sw_name, sw_activity, coil_name=None,
-                    debounced=False, drive_now=False, **driver_settings):
+    def set_hw_rule(self, sw_name, sw_activity, driver_name, driver_action,
+                    drive_now=False, **driver_settings_overrides):
         """Writes a hardware rule to the controller.
 
         Args:
             sw_name: String name of the switch.
             sw_activity: Int representing the switch state this rule will be set
                 for. 1 is active, 0 is inactive.
-            coil_name: String name of the coil.
+            driver_name: String name of the driver.
+            driver_action: String 'pulse', 'hold', or 'disable' which describe
+                what action will be applied to this driver
             debounced: Boolean which specifies whether this coil should activate
                 on a debounced or non-debounced switch change state. Default is
                 False (non-debounced).
             drive_now: Boolean which controls whether the coil should activate
                 immediately when this rule is applied if the switch currently in
                 in the state set in this rule.
-            **driver_settings: Platform-specific settings
+            **driver_settings_overrides: Platform-specific settings
 
         Note that this method provides several convenience processing to convert
         the incoming parameters into a format that is more widely-used by
@@ -69,16 +71,16 @@ class Platform(object):
         self.log.debug("Writing HW Rule to controller")
 
         switch_obj = self.machine.switches[sw_name]  # todo make a nice error
-        coil_obj = self.machine.coils[coil_name]  # here too
+        driver_obj = self.machine.coils[driver_name]  # here too
 
         if self.machine.switches[sw_name].invert:
             sw_activity ^= 1
 
-        self.write_hw_rule(switch_obj, sw_activity, coil_obj, debounced,
-                           drive_now, **driver_settings)
+        self.write_hw_rule(switch_obj, sw_activity, driver_obj, driver_action,
+                           drive_now, **driver_settings_overrides)
 
-    def write_hw_rule(self, switch_obj, sw_activity, coil, debounced,
-                      drive_now, **driver_settings):
+    def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
+                      drive_now, **driver_settings_overrides):
         """Subclass this method in a platform interface to write a hardware
         switch rule to the controller.
 

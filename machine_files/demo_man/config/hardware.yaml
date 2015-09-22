@@ -638,10 +638,9 @@ coils:
         number: c05
         label:
         tags:
-        #holdPatter: 2-9
-        pwm_on: 8
-        pwm_off: 4
+        hold_power: 4
         pulse_ms: 30
+        allow_enable: true
     #name:
     #    number: c06
     #    label:
@@ -692,16 +691,19 @@ coils:
         label:
         tags:
         allow_enable: true
+        hold_power: 8
     c_claw_motor_left:
         number: c19
         label:
         tags:
         allow_enable: true
+        hold_power: 8
     c_claw_motor_right:
         number: c20
         label:
         tags:
         allow_enable: true
+        hold_power: 8
 
 # Fliptronics coils
     c_flipper_left_main:
@@ -872,7 +874,7 @@ diverters:
     type: hold
     activation_time: 3s
     activation_switches: s_right_ramp_enter
-    deactivation_switches: s_elevator_hold
+    #deactivation_switches: s_elevator_hold
     targets_when_active: elevator
 
 autofire_coils:

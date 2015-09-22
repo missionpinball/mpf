@@ -167,7 +167,7 @@ class HardwarePlatform(Platform):
             proc_num = pinproc.decode(self.machine_type, str(config['number']))
 
         if device_type in ['coil', 'flasher']:
-            proc_driver_object = PROCDriver(proc_num, self.proc)
+            proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
         elif device_type == 'light':
             proc_driver_object = PROCMatrixLight(proc_num, self.proc)
 
@@ -779,10 +779,46 @@ class PROCDriver(object):
 
     """
 
-    def __init__(self, number, proc_driver):
+    def __init__(self, number, proc_driver, config, machine):
         self.log = logging.getLogger('PROCDriver')
         self.number = number
         self.proc = proc_driver
+
+        self.driver_settings = dict()
+
+        self.driver_settings['number'] = number
+
+        self.driver_settings.update(self.get_driver_settings(machine, **config))
+
+    def get_driver_settings(self,
+                            machine,
+                            pulse_ms=None,
+                            pwm_on_ms=None,
+                            pwm_off_ms=None,
+                            pulse_power=None,
+                            hold_power=None,
+                            pulse_power32=None,
+                            hold_power32=None,
+                            pulse_pwm_mask=None,
+                            hold_pwm_mask=None,
+                            recycle_ms=None,
+                            **kwargs
+                            ):
+
+        return_dict = dict():
+
+        # figure out what kind of enable we need:
+
+        if not pulse_ms and (hold_power or hold_power32):
+            return_dict['hold_type'] = 'schedule'
+
+        elif not pulse_ms and pwm_off_ms and pwm_on_ms:
+            return_dict['hold_type'] = 'patter'
+
+        elif pulse_ms and pwm_on_ms and pwm_off_ms:
+            return_dict['hold_type'] = 'pulsed_patter'
+
+
 
     def disable(self):
         """Disables (turns off) this driver."""

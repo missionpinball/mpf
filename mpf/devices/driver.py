@@ -38,21 +38,10 @@ class Driver(Device):
         self.time_last_changed = 0
         self.time_when_done = 0
 
-        self.hw_driver, self.number = (
-            self.platform.configure_driver(self.config))
+        self.hw_driver, self.number = (self.platform.configure_driver(self.config))
 
-        if not self.config['pulse_ms']:
-            # If there's a holdpatter and no pulse_ms, we'll keep it at zero
-            if self.config['holdpatter']:
-                self.config['pulse_ms'] = 0
-            # Otherwise we'll use the system default for pulse_ms
-            else:
-                self.config['pulse_ms'] = (
-                    self.machine.config['mpf']['default_pulse_ms'])
-
-        if self.config['holdpatter']:
-            self.config['pwm_on'] = int(config['holdpatter'].split('-')[0])
-            self.config['pwm_off'] = int(config['holdpatter'].split('-')[1])
+    def validate_driver_settings(self, **kwargs):
+        return self.hw_driver.validate_driver_settings(**kwargs)
 
     def enable(self, **kwargs):
         """Enables a driver by holding it 'on'.
@@ -67,10 +56,8 @@ class Driver(Device):
 
         allow_enable: True
         """
-        if self.config['pwm_on'] and self.config['pwm_off']:
-            self.pwm(self.config['pwm_on'], self.config['pwm_off'],
-                     self.config['pulse_ms'])
-        elif self.config['allow_enable']:
+
+        if self.config['allow_enable']:
             self.hw_driver.enable()
         else:
             self.log.warning("Received a command to enable this coil without "
@@ -111,7 +98,7 @@ class Driver(Device):
         self.time_last_changed = time.time()
         self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
-    def pwm(self, on_ms, off_ms, orig_on_ms=0, **kwargs):
+    def pwm(self, **kwargs):
         """Quickly turns this driver on and off to have the effect of holding
         this driver 'on' without burning up the coil.
 
@@ -126,30 +113,29 @@ class Driver(Device):
             values on_ms=1, off_ms=4.
 
         """
-        self.log.debug("PWM Driver. initial pulse: %s, on: %s, off: %s",
-                       orig_on_ms, on_ms, off_ms)
-        self.hw_driver.pwm(on_ms, off_ms, orig_on_ms)
+        self.log.debug("PWM Holding driver.")
+        self.hw_driver.pwm()
         self.time_last_changed = time.time()
         self.time_when_done = -1
         # todo also disable the timer which reenables this
 
-    def timed_pwm(self, on_ms, off_ms, runtime_ms, **kwargs):
-        """Quickly pulses a driver on/off for a specified number of
-        milliseconds.
-
-        Args:
-            on_ms: Integer of how long this driver is on in the 'on' portion.
-            off_ms: Integer of how long this driver is off in the 'off'
-                portion.
-            runtime_ms: Integer of the total number of milliseconds this driver
-                should pulse on and off for.
-        """
-        self.log.debug("Timed PWM Driver. on: %s, off: %s, total ms: %s",
-                       on_ms, off_ms, runtime_ms)
-        self.hw_driver.pwm(on_ms, off_ms, runtime_ms)
-        self.time_last_changed = time.time()
-        self.time_when_done = -1
-        # todo also disable the timer which reenables this
+    # def timed_pwm(self, on_ms, off_ms, runtime_ms, **kwargs):
+    #     """Quickly pulses a driver on/off for a specified number of
+    #     milliseconds.
+    #
+    #     Args:
+    #         on_ms: Integer of how long this driver is on in the 'on' portion.
+    #         off_ms: Integer of how long this driver is off in the 'off'
+    #             portion.
+    #         runtime_ms: Integer of the total number of milliseconds this driver
+    #             should pulse on and off for.
+    #     """
+    #     self.log.debug("Timed PWM Driver. on: %s, off: %s, total ms: %s",
+    #                    on_ms, off_ms, runtime_ms)
+    #     self.hw_driver.pwm(on_ms, off_ms, runtime_ms)
+    #     self.time_last_changed = time.time()
+    #     self.time_when_done = -1
+    #     # todo also disable the timer which reenables this
 
 
 # The MIT License (MIT)

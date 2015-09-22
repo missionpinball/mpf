@@ -2,6 +2,9 @@
 - - - score
     - - !!python/tuple
         - BRI
+        - GRAND CHAMPION
+      - !!python/tuple
+        - BRI
         - 4
       - !!python/tuple
         - GHK
@@ -12,6 +15,11 @@
       - !!python/tuple
         - BJ
         - 1
-      - !!python/tuple
-        - AAA
-        - 1
+  - - ramps
+    - - !!python/tuple
+        - BBB
+        - RAMP CHAMP
+  - - loops
+    - - !!python/tuple
+        - CDE
+        - MAJOR LOOPER

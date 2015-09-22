@@ -212,9 +212,9 @@ class Flipper(Device):
         self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'].name,
             sw_activity=1,
-            coil_name=self.config['main_coil'].name,
-            coil_action_ms=-1,
-            debounced=False)
+            driver_name=self.config['main_coil'].name,
+            driver_action='hold',
+            **self.config)
 
         self.rules['a'] = True
 
@@ -228,10 +228,9 @@ class Flipper(Device):
         self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'].name,
             sw_activity=1,
-            coil_name=self.config['main_coil'].name,
-            coil_action_ms=self.config['main_coil'].config['pulse_ms'],
-            pulse_ms=self.config['main_coil'].config['pulse_ms'],
-            debounced=False)
+            driver_name=self.config['main_coil'].name,
+            driver_action='pulse',
+            **self.config)
 
         self.rules['b'] = True
 
@@ -246,12 +245,9 @@ class Flipper(Device):
         self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'].name,
             sw_activity=1,
-            coil_name=self.config['main_coil'].name,
-            coil_action_ms=-1,
-            pulse_ms=self.config['main_coil'].config['pulse_ms'],
-            pwm_on=self.config['main_coil'].config['pwm_on'],
-            pwm_off=self.config['main_coil'].config['pwm_off'],
-            debounced=False)
+            driver_name=self.config['main_coil'].name,
+            driver_action='link',
+            **self.config)
 
         self.rules['c'] = True
 
@@ -266,9 +262,9 @@ class Flipper(Device):
         self.platform.set_hw_rule(
             sw_name=self.config['activation_switch'].name,
             sw_activity=1,
-            coil_name=self.config['hold_coil'].name,
-            coil_action_ms=-1,
-            debounced=False)
+            driver_name=self.config['hold_coil'].name,
+            driver_action='link',
+            **self.config)
 
         self.rules['d'] = True
 
@@ -283,9 +279,9 @@ class Flipper(Device):
         self.platform.set_hw_rule(
             sw_name=self.config['eos_switch'],
             sw_activity=1,
-            coil_name=self.config['main_coil'].name,
-            coil_action_ms=0,
-            debounced=False)
+            driver_name=self.config['main_coil'].name,
+            driver_action='disable',
+            **self.config)
 
         self.rules['e'] = True
 
@@ -301,9 +297,9 @@ class Flipper(Device):
             self.platform.set_hw_rule(
                 sw_name=self.config['activation_switch'].name,
                 sw_activity=0,
-                coil_name=self.config['main_coil'].name,
-                coil_action_ms=0,
-                debounced=False)
+                driver_name=self.config['main_coil'].name,
+                driver_action='disable',
+                **self.config)
 
         self.rules['f'] = True
 
@@ -319,9 +315,9 @@ class Flipper(Device):
             self.platform.set_hw_rule(
                 sw_name=self.config['activation_switch'].name,
                 sw_activity=0,
-                coil_name=self.config['hold_coil'].name,
-                coil_action_ms=0,
-                debounced=False)
+                driver_name=self.config['hold_coil'].name,
+                driver_action='disable',
+                **self.config)
 
         self.rules['g'] = True
 
@@ -336,10 +332,9 @@ class Flipper(Device):
         self.platform.set_hw_rule(
             sw_name=self.config['eos_switch'],
             sw_activity=1,
-            coil_name=self.config['main_coil'].name,
-            coil_action_ms=-1,
-            pwm_on=self.config['main_coil'].config['pwm_on'],
-            pwm_off=self.config['main_coil'].config['pwm_off'])
+            driver_name=self.config['main_coil'].name,
+            driver_action='link',
+            **self.config)
 
         self.rules['h'] = True
 

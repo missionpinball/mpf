@@ -171,6 +171,9 @@ class VirtualDriver(object):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
 
+    def validate_driver_settings(self, **kwargs):
+        return dict()
+
     def disable(self):
         pass
 

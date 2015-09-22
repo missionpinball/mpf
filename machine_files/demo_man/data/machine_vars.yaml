@@ -1,12 +1,3 @@
 player1_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
   dictitems:
     value: 0
-player2_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
-  dictitems:
-    value: 0
-player3_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
-  dictitems:
-    value: 0
-player4_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
-  dictitems:
-    value: 0
