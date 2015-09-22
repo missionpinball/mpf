@@ -1,25 +1,21 @@
 events:
   ball_search_begin_phase1: 0
   game_ended: 2
-  game_started: 282
+  game_started: 269
 player:
   score:
-    average: 878893
+    average: 24126
     top:
-    - 2595320
+    - 31020
     - 20680
     - 15510
     total: 3
-shots:
-  left_lane: 1
-  right_orbit: 1
-  standup_2: 1
 switches:
   s_always_closed: 0
-  s_ball_launch: 4
-  s_bottom_popper: 1
+  s_ball_launch: 2
+  s_bottom_popper: 0
   s_buy_in: 0
-  s_car_chase_1: 2
+  s_car_chase_1: 0
   s_car_chase_2: 0
   s_car_chase_standup: 0
   s_center_coin: 0
@@ -34,18 +30,18 @@ switches:
   s_claw_super_jets: 0
   s_coin_door_closed: 0
   s_down: 0
-  s_eject: 4
+  s_eject: 0
   s_elevator_hold: 0
   s_elevator_index: 0
   s_enter: 0
   s_esc: 0
   s_eyeball_standup: 0
-  s_flipper_lower_left: 19
-  s_flipper_lower_left_eos: 7
-  s_flipper_lower_right: 70
-  s_flipper_lower_right_eos: 35
+  s_flipper_lower_left: 16
+  s_flipper_lower_left_eos: 0
+  s_flipper_lower_right: 50
+  s_flipper_lower_right_eos: 0
   s_flipper_upper_left_eos: 0
-  s_flipper_upper_right_eos: 7
+  s_flipper_upper_right_eos: 0
   s_fourth_coin: 0
   s_handle_trigger_left: 0
   s_handle_trigger_right: 0
@@ -53,41 +49,41 @@ switches:
   s_left_handle_button: 0
   s_left_inlane: 0
   s_left_jet: 0
-  s_left_loop: 7
+  s_left_loop: 0
   s_left_outlane: 0
   s_left_ramp_enter: 0
   s_left_ramp_exit: 0
-  s_left_rollover: 1
-  s_left_slingshot: 1120
+  s_left_rollover: 0
+  s_left_slingshot: 1126
   s_lower_rebound: 0
   s_plumb_bob: 0
   s_right_coin: 0
-  s_right_freeway: 2
-  s_right_inlane: 2
+  s_right_freeway: 0
+  s_right_inlane: 0
   s_right_jet: 0
-  s_right_outlane: 1
-  s_right_ramp_enter: 19
+  s_right_outlane: 0
+  s_right_ramp_enter: 0
   s_right_ramp_exit: 0
   s_right_rollover: 0
   s_right_slingshot: 0
-  s_shooter_lane: 20
+  s_shooter_lane: 2
   s_side_ramp_enter: 0
   s_side_ramp_exit: 0
   s_slam_tilt: 0
   s_standup_1: 0
-  s_standup_2: 1
+  s_standup_2: 0
   s_standup_3: 0
   s_standup_4: 0
   s_standup_5: 0
-  s_start: 346
+  s_start: 330
   s_top_popper: 0
-  s_top_slingshot: 1
-  s_trough_1: 41
-  s_trough_2: 9
-  s_trough_3: 9
-  s_trough_4: 9
-  s_trough_5: 9
-  s_trough_jam: 9
+  s_top_slingshot: 0
+  s_trough_1: 28
+  s_trough_2: 0
+  s_trough_3: 0
+  s_trough_4: 0
+  s_trough_5: 0
+  s_trough_jam: 0
   s_up: 0
-  s_upper_left_flipper_gate: 7
+  s_upper_left_flipper_gate: 0
   s_upper_rebound: 0

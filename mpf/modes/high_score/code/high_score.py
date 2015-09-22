@@ -143,7 +143,7 @@ class HighScore(Mode):
                             value = (self.new_high_score_list[category_name]
                                                             [index][1])
                             self.new_high_score_list[category_name][index] = (
-                                (player_name, award))
+                                (player_name, value))
                         else:
                             valid_update = False
 
