@@ -276,7 +276,12 @@ class SlideBuilder(object):
     def _add_element(self, slide, text_variables, **settings):
         # Internal method which actually adds the element to the slide
 
-        element_type = settings.pop('type').lower()
+        try:
+            element_type = settings.pop('type').lower()
+        except KeyError:
+            self.log.error("_add_element failed to find 'type' in settings. "
+                           "Slide: %s, text_vars: %s, Settings: %s", slide,
+                           text_variables, settings)
 
         element = slide.add_element(element_type,
                                     text_variables=text_variables, **settings)
