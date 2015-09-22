@@ -918,7 +918,6 @@ class Config(object):
 
     @staticmethod
     def pwm8_to_int(source_int):
-
         lookup_table = {
                         0: 0,    # 00000000
                         1: 1,    # 00000001
@@ -930,6 +929,28 @@ class Config(object):
                         7: 254,  # 11111110
                         8: 255,  # 11111111
                         }
+
+        if 0 <= source_int <= 8:
+            return lookup_table[source_int]
+        else:
+            print "Invalid pwm value. (Expected value 0-8)"
+            raise ValueError
+
+    @staticmethod
+    def pwm8_to_on_off(source_int):
+        lookup_table = {
+                        0: (0,0),  # 0-0
+                        1: (1,7),  # 1-7
+                        2: (1,3),  # 2-6
+                        3: (3,5),  # 3-5
+                        4: (1,1),  # 4-4
+                        5: (5,3),  # 5-3
+                        6: (3,1),  # 6-2
+                        7: (7,1),  # 7-1
+                        8: (8,0),  # 8-0
+                        }
+
+        source_int = int(source_int)
 
         if 0 <= source_int <= 8:
             return lookup_table[source_int]
