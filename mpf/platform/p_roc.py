@@ -77,7 +77,6 @@ class HardwarePlatform(Platform):
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
         self.features['variable_debounce_time'] = False
-        self.features['hw_enable_auto_disable'] = False
         self.features['hw_led_fade'] = True
         # todo need to add differences between patter and pulsed_patter
 
@@ -400,79 +399,84 @@ class HardwarePlatform(Platform):
             need_hold = True
 
         elif driver_action == 'disable':
-            need_switch_disable = 'disable'
+            need_switch_disable = True
 
-        proc_action = None
+        proc_actions = set()
 
         if need_pulse:
             if (driver_settings['pwm_on_ms'] and
                     driver_settings['pwm_off_ms']):
-                proc_action = 'pulsed_patter'
+                proc_actions.add('pulsed_patter')
                 pulse_ms = driver_settings['pulse_ms']
                 pwm_on = driver_settings['pwm_on_ms']
                 pwm_off = driver_settings['pwm_off_ms']
             else:
-                proc_action = 'pulse'
+                proc_actions.add('pulse')
                 pulse_ms = driver_settings['pulse_ms']
 
         if need_hold:
-
             if (driver_settings['pwm_on_ms'] and
                     driver_settings['pwm_off_ms']):
-                proc_action = 'patter'
+                proc_actions.add('patter')
                 pulse_ms = driver_settings['pulse_ms']
                 pwm_on = driver_settings['pwm_on_ms']
                 pwm_off = driver_settings['pwm_off_ms']
             else:
-                proc_action = 'enable'
+                proc_actions.add('enable')
 
-        this_driver = list()
+        if need_switch_disable:
+            proc_actions.add('disable')
 
-        # The P-ROC ties hardware rules to switches, with a list of linked
-        # drivers that should change state based on a switch activity.
-        # Since our framework applies the rules one-at-a-time, we have to read
-        # the existing linked drivers from the hardware for that switch, add
-        # our new driver to the list, then re-update the rule on the hardware.
+        for proc_action in proc_actions:
 
-        if proc_action == 'pulse':
-            this_driver = [pinproc.driver_state_pulse(
-                driver_obj.hw_driver.state(), pulse_ms)]
+            this_driver = list()
 
-        elif proc_action == 'patter':
-            this_driver = [pinproc.driver_state_patter(
-                driver_obj.hw_driver.state(), pwm_on, pwm_off, pulse_ms, True)]
-            # todo above param True should not be there. Change to now?
+            # The P-ROC ties hardware rules to switches, with a list of linked
+            # drivers that should change state based on a switch activity.
+            # Since MPF applies the rules one-at-a-time, we have to read the
+            # existing linked drivers from the hardware for that switch, add
+            # our new driver to the list, then re-update the rule on the hw.
 
-        elif proc_action == 'enable':
-            this_driver = [pinproc.driver_state_pulse(
-                driver_obj.hw_driver.state(), 0)]
+            if proc_action == 'pulse':
+                this_driver = [pinproc.driver_state_pulse(
+                    driver_obj.hw_driver.state(), pulse_ms)]
 
-        elif proc_action == 'disable':
-            this_driver = [pinproc.driver_state_disable(
-                driver_obj.hw_driver.state())]
+            elif proc_action == 'patter':
+                this_driver = [pinproc.driver_state_patter(
+                    driver_obj.hw_driver.state(), pwm_on, pwm_off, pulse_ms,
+                    True)]
+                # todo above param True should not be there. Change to now?
 
-        elif proc_action == 'pulsed_patter':
-            this_driver = [pinproc.driver_state_pulsed_patter(
-                driver_obj.hw_driver.state(), pwm_on, pwm_off,
-                pulse_ms)]
+            elif proc_action == 'enable':
+                this_driver = [pinproc.driver_state_pulse(
+                    driver_obj.hw_driver.state(), 0)]
 
-        # merge in any previously-configured driver rules for this switch
+            elif proc_action == 'disable':
+                this_driver = [pinproc.driver_state_disable(
+                    driver_obj.hw_driver.state())]
 
-        final_driver = list(this_driver)  # need to make an actual copy
-        sw_rule_string = str(switch_obj.name)+str(event_type)
-        if sw_rule_string in self.hw_switch_rules:
-            for driver in self.hw_switch_rules[sw_rule_string]:
-                final_driver.append(driver)
-            self.hw_switch_rules[sw_rule_string].extend(this_driver)
-        else:
-            self.hw_switch_rules[sw_rule_string] = this_driver
+            elif proc_action == 'pulsed_patter':
+                this_driver = [pinproc.driver_state_pulsed_patter(
+                    driver_obj.hw_driver.state(), pwm_on, pwm_off,
+                    pulse_ms)]
 
-        self.log.debug("Writing HW rule for switch: %s, event_type: %s,"
-                       "rule: %s, final_driver: %s, drive now: %s",
-                       switch_obj.number, event_type,
-                       rule, final_driver, drive_now)
-        self.proc.switch_update_rule(switch_obj.number, event_type, rule,
-                                     final_driver, drive_now)
+            # merge in any previously-configured driver rules for this switch
+
+            final_driver = list(this_driver)  # need to make an actual copy
+            sw_rule_string = str(switch_obj.name)+str(event_type)
+            if sw_rule_string in self.hw_switch_rules:
+                for driver in self.hw_switch_rules[sw_rule_string]:
+                    final_driver.append(driver)
+                self.hw_switch_rules[sw_rule_string].extend(this_driver)
+            else:
+                self.hw_switch_rules[sw_rule_string] = this_driver
+
+            self.log.debug("Writing HW rule for switch: %s, event_type: %s,"
+                           "rule: %s, final_driver: %s, drive now: %s",
+                           switch_obj.number, event_type,
+                           rule, final_driver, drive_now)
+            self.proc.switch_update_rule(switch_obj.number, event_type, rule,
+                                         final_driver, drive_now)
 
     def clear_hw_rule(self, sw_name):
         """Clears a hardware rule.
@@ -769,21 +773,22 @@ class PROCDriver(object):
         return return_dict
 
     def merge_driver_settings(self,
-                            pulse_ms=None,
-                            pwm_on_ms=None,
-                            pwm_off_ms=None,
-                            pulse_power=None,
-                            hold_power=None,
-                            pulse_power32=None,
-                            hold_power32=None,
-                            pulse_pwm_mask=None,
-                            hold_pwm_mask=None,
-                            recycle_ms=None,
-                            **kwargs
-                            ):
+                              pulse_ms=None,
+                              pwm_on_ms=None,
+                              pwm_off_ms=None,
+                              pulse_power=None,
+                              hold_power=None,
+                              pulse_power32=None,
+                              hold_power32=None,
+                              pulse_pwm_mask=None,
+                              hold_pwm_mask=None,
+                              recycle_ms=None,
+                              **kwargs
+                              ):
 
         if pulse_power:
-            raise ValueError('P-ROC does not support "pulse_power"')
+            raise NotImplementedError('"pulse_power" has not been '
+                                      'implemented yet')
 
         if pulse_power32:
             raise NotImplementedError('"pulse_power32" has not been '
@@ -793,32 +798,33 @@ class PROCDriver(object):
             raise NotImplementedError('"hold_power32" has not been '
                                       'implemented yet')
 
+        if pulse_pwm_mask:
+            raise NotImplementedError('"pulse_pwm_mask" has not been '
+                                      'implemented yet')
+
+        if hold_pwm_mask:
+            raise NotImplementedError('"hold_pwm_mask" has not been '
+                                      'implemented yet')
+
         return_dict = dict()
 
         # figure out what kind of enable we need:
 
-        if not pulse_ms and hold_power:
-            return_dict['hold_type'] = 'schedule'
+        if hold_power:
             return_dict['pwm_on_ms'], return_dict['pwm_off_ms'] = (
-                Config.pwm8_to_on_off(hold_power)
-            )
+                Config.pwm8_to_on_off(hold_power))
 
-        elif not pulse_ms and pwm_off_ms and pwm_on_ms:
-            return_dict['hold_type'] = 'patter'
+        elif pwm_off_ms and pwm_on_ms:
             return_dict['pwm_on_ms'] = int(pwm_on_ms)
             return_dict['pwm_off_ms'] = int(pwm_off_ms)
 
-        elif pulse_ms and pwm_on_ms and pwm_off_ms:
-            return_dict['hold_type'] = 'pulsed_patter'
+        if pulse_ms is not None:
             return_dict['pulse_ms'] = int(pulse_ms)
-            return_dict['pwm_on_ms'] = int(pwm_on_ms)
-            return_dict['pwm_off_ms'] = int(pwm_off_ms)
 
         if int(recycle_ms) == 125:
             return_dict['recycle_ms'] = 125
         elif recycle_ms and recycle_ms is not None:
             raise ValueError('P-ROC requires recycle_ms of 0 or 125')
-
 
     def disable(self):
         """Disables (turns off) this driver."""
