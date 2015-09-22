@@ -38,6 +38,8 @@ class Diverter(Device):
         self.eject_state = False
         self.eject_attempt_queue = deque()
 
+        self.trigger_type = 'software'  # 'software' or 'hardware'
+
         # Create a list of ball device objects when active and inactive. We need
         # this because ball eject attempts pass the target device as an object
         # rather than by name.
@@ -96,7 +98,7 @@ class Diverter(Device):
                                  auto=auto)
 
         if self.config['activation_switches']:
-            self.enable_hw_switches()
+            self.enable_switches()
         else:
             self.activate()
 
@@ -122,7 +124,7 @@ class Diverter(Device):
 
         self.log.debug("Disabling Diverter")
         if self.config['activation_switches']:
-            self.disable_hw_switch()
+            self.disable_switches()
         else:
             self.deactivate()
 
@@ -183,6 +185,18 @@ class Diverter(Device):
         else:
             self.disable_held_coil()
 
+    def enable_switches(self):
+        if self.trigger_type == 'hardware':
+            self.enable_hw_switches()
+        else:
+            self.enable_sw_switches()
+
+    def disable_switches(self):
+        if self.trigger_type == 'hardware':
+            self.disable_hw_switches()
+        else:
+            self.disable_sw_switches()
+
     def enable_hw_switches(self):
         """Enables the hardware switch rule which causes this diverter to
         activate when the switch is hit.
@@ -233,7 +247,23 @@ class Diverter(Device):
                     disable_on_release=False,
                     **self.config)
 
-    def disable_hw_switch(self):
+    def enable_sw_switches(self):
+        self.log.debug("Enabling Diverter sw switches: %s",
+                       self.config['activation_switches'])
+
+        for switch in self.config['activation_switches']:
+            self.machine.switch_controller.add_switch_handler(
+                switch_name=switch.name, callback=self.activate)
+
+    def disable_sw_switches(self):
+        self.log.debug("Disabling Diverter sw switches: %s",
+                       self.config['activation_switches'])
+
+        for switch in self.config['activation_switches']:
+            self.machine.switch_controller.remove_switch_handler(
+                switch_name=switch.name, callback=self.activate)
+
+    def disable_hw_switches(self):
         """Removes the hardware rule to disable the hardware activation switch
         for this diverter.
         """
@@ -244,8 +274,8 @@ class Diverter(Device):
 
     def disable_held_coil(self):
         """Physically disables the coil holding this diverter open."""
+        self.log.debug("Disabling Activation Coil")
         self.config['activation_coil'].disable()
-
 
     def _feeder_eject_count_decrease(self, target, **kwargs):
         self.diverting_ejects_count -= 1
