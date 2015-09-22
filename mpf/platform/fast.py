@@ -673,8 +673,8 @@ class HardwarePlatform(Platform):
 
         driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
 
-        driver_settings.update(driver_obj.hw_driver.get_driver_settings(
-            self.machine, **driver_settings_overrides))
+        driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
+            **driver_settings_overrides))
 
         self.log.info("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
                       " %s, Driver settings: %s", switch_obj.name, sw_activity,
@@ -758,7 +758,6 @@ class HardwarePlatform(Platform):
             sw_name: The string name of the switch whose rule you want to clear.
 
         """
-
         sw_num = self.machine.switches[sw_name].number
 
         # find the rule(s) based on this switch
@@ -771,19 +770,17 @@ class HardwarePlatform(Platform):
 
             del self.hw_rules[coil]
 
-            if coil.number[1] == 1:
-                cmd = 'DN:'
-            else:
-                cmd = 'DL:'
-            driver = coil.number[0]
-            mode = '81'
+            driver_settings = coil.hw_driver.driver_settings
+
+            cmd = (driver_settings['config_cmd'] +
+                   driver_settings['number'] + ',' +
+                   '81')
 
             coil.autofire = None
 
-            self.log.info("Clearing hardware rule: %s",
-                          cmd + driver + ',' + mode)
+            self.log.info("Clearing hardware rule: %s", cmd)
 
-            self.net_connection.send(cmd + driver + ',' + mode)
+            self.net_connection.send(cmd)
 
 
 class FASTSwitch(object):
@@ -837,10 +834,20 @@ class FASTDriver(object):
             self.driver_settings['config_cmd'] = 'DL:'
             self.driver_settings['trigger_cmd'] = 'TL:'
 
-        self.driver_settings.update(self.get_driver_settings(machine, **config))
+        self.driver_settings = self.create_driver_settings(machine, **config)
+        self.driver_settings.update(self.merge_driver_settings(**config))
 
-    def get_driver_settings(self,
-                            machine,
+    def create_driver_settings(self, machine, pulse_ms=None, **kwargs):
+        return_dict = dict()
+        if pulse_ms is None:
+            pulse_ms = machine.config['mpf']['default_pulse_ms']
+
+        return_dict['pulse_ms'] = Config.int_to_hex_string(pulse_ms)
+        return_dict['pulse_power'] = 'ff'
+        return_dict['hold_power'] = 'ff'
+        return_dict['recycle_ms'] = '00'
+
+    def merge_driver_settings(self,
                             pulse_ms=None,
                             pwm_on_ms=None,
                             pwm_off_ms=None,
@@ -867,59 +874,44 @@ class FASTDriver(object):
         return_dict = dict()
         return_dict['pwm32'] = None
 
-        if activation_time:
-
+        if activation_time is not None:
             if activation_time > 25500:
                 raise ValueError('Max FAST timed_hold time is 25.5s')
 
             # FAST activation times are ms * 100
             return_dict['activation_time'] = str(activation_time / 100)
 
-        if recycle_ms:
+        if recycle_ms is not None:
             return_dict['recycle_ms'] = (Config.int_to_hex_string(recycle_ms))
-        else:
-            return_dict['recycle_ms'] = '00'
 
-        if not pulse_ms:
-            pulse_ms = machine.config['mpf']['default_pulse_ms']
-
-        return_dict['pulse_ms'] = Config.int_to_hex_string(pulse_ms)
-
-        pulse_hex_string = 'ff'
-        hold_hex_string = 'ff'
+        if pulse_ms is not None:
+            return_dict['pulse_ms'] = Config.int_to_hex_string(pulse_ms)
 
         if pulse_pwm_mask:
             pulse_pwm_mask = str(pulse_pwm_mask)
             if len(pulse_pwm_mask) == 32:
-                pulse_hex_string = Config.bin_str_to_hex_str(pulse_pwm_mask, 8)
+                return_dict['pwm1'] = Config.bin_str_to_hex_str(pulse_pwm_mask, 8)
             elif len(pulse_pwm_mask) == 8:
-                pulse_hex_string = Config.bin_str_to_hex_str(pulse_pwm_mask, 2)
+                return_dict['pwm1'] = Config.bin_str_to_hex_str(pulse_pwm_mask, 2)
             else:
                 raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
-        elif pulse_power32:
-            pulse_hex_string = Config.pwm32_to_hex_string(pulse_power32)
-        elif pulse_power:
-            pulse_hex_string = Config.pwm8_to_hex_string(pulse_power)
+        elif pulse_power32 is not None:
+            return_dict['pwm32']  = Config.pwm32_to_hex_string(pulse_power32)
+        elif pulse_power is not None:
+            return_dict['pwm1']  = Config.pwm8_to_hex_string(pulse_power)
 
         if hold_pwm_mask:
             hold_pwm_mask = str(hold_pwm_mask)
             if len(hold_pwm_mask) == 32:
-                hold_hex_string = Config.bin_str_to_hex_str(hold_pwm_mask, 8)
+                return_dict['pwm2'] = Config.bin_str_to_hex_str(hold_pwm_mask, 8)
             elif len(hold_pwm_mask) == 8:
-                hold_hex_string = Config.bin_str_to_hex_str(hold_pwm_mask, 2)
+                return_dict['pwm2'] = Config.bin_str_to_hex_str(hold_pwm_mask, 2)
             else:
                 raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
-        elif hold_power32:
-            hold_hex_string = Config.pwm32_to_hex_string(hold_power32)
-        elif hold_power:
-            hold_hex_string = Config.pwm8_to_hex_string(hold_power)
-
-        return_dict['pwm1'] = pulse_hex_string
-
-        if len(hold_hex_string) == 2:
-            return_dict['pwm2'] = hold_hex_string
-        elif len(hold_hex_string) == 8:
-            return_dict['pwm32'] = hold_hex_string
+        elif hold_power32 is not None:
+            return_dict['pwm32'] = Config.pwm32_to_hex_string(hold_power32)
+        elif hold_power is not None:
+            return_dict['pwm2'] = Config.pwm8_to_hex_string(hold_power)
 
         return return_dict
 
@@ -963,8 +955,6 @@ class FASTDriver(object):
 
     def pulse(self, milliseconds):
         """Pulses this driver. """
-
-        print "pulsing", milliseconds
 
         if 0 <= milliseconds <= 255:
             hex_ms_string = Config.int_to_hex_string(milliseconds)
