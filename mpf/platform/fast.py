@@ -990,7 +990,7 @@ class FASTDriver(object):
 
         self.log.info("Sending Pulse Command: %s", cmd)
         self.send(cmd)
-        self.enable_auto()
+        #self.enable_auto()
 
     def pwm(self):
         """Enables this driver in a pwm pattern.  """
@@ -1010,7 +1010,7 @@ class FASTDriver(object):
 
         self.log.info("Sending PWM Hold Command: %s", cmd)
         self.send(cmd)
-        self.enable_auto()
+        #self.enable_auto()
 
     def enable_auto(self):
         cmd = (self.driver_settings['trigger_cmd'] +
