@@ -74,7 +74,6 @@ class HardwarePlatform(Platform):
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
         self.features['variable_debounce_time'] = False
-        self.features['hw_enable_auto_disable'] = False
         self.features['hw_led_fade'] = True
         # todo need to add differences between patter and pulsed_patter
 

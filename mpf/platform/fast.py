@@ -68,7 +68,6 @@ class HardwarePlatform(Platform):
         self.features['hw_rule_coil_delay'] = True  # todo
         self.features['variable_recycle_time'] = True  # todo
         self.features['variable_debounce_time'] = True  # todo
-        self.features['hw_enable_auto_disable'] = True
         # Make the platform features available to everyone
         self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
