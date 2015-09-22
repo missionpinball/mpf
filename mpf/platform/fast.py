@@ -873,6 +873,14 @@ class FASTDriver(object):
                              "FAST platform. Use a hold_power or hold_pwm_mask"
                              " instead.")
 
+        if pulse_power32:
+            raise NotImplementedError('"pulse_power32" has not been '
+                                      'implemented yet')
+
+        if hold_power32:
+            raise NotImplementedError('"hold_power32" has not been '
+                                      'implemented yet')
+
         return_dict = dict()
         return_dict['pwm32'] = None
 
@@ -925,7 +933,7 @@ class FASTDriver(object):
 
         self.log.info("Sending Disable Command: %s", cmd)
         self.send(cmd)
-        self.enable_auto()
+        self.check_auto()
 
     def enable(self):
         """Enables (turns on) this driver. """
@@ -953,7 +961,7 @@ class FASTDriver(object):
         self.send(cmd)
         # todo change hold to pulse with re-ups
 
-        #self.enable_auto()
+        self.check_auto()
 
     def pulse(self, milliseconds):
         """Pulses this driver. """
@@ -977,7 +985,7 @@ class FASTDriver(object):
 
         self.log.info("Sending Pulse Command: %s", cmd)
         self.send(cmd)
-        #self.enable_auto()
+        self.check_auto()
 
     def pwm(self):
         """Enables this driver in a pwm pattern.  """
@@ -997,15 +1005,17 @@ class FASTDriver(object):
 
         self.log.info("Sending PWM Hold Command: %s", cmd)
         self.send(cmd)
-        #self.enable_auto()
+        self.check_auto()
 
-    def enable_auto(self):
-        cmd = (self.driver_settings['trigger_cmd'] +
-               self.driver_settings['number'] +
-               ',00')
+    def check_auto(self):
 
-        self.log.info("Sending Command to Enable auto mode: %s", cmd)
-        self.send(cmd)
+        if self.autofire:
+            cmd = (self.driver_settings['trigger_cmd'] +
+                   self.driver_settings['number'] +
+                   ',00')
+
+            self.log.info("Re-enabling auto fire mode: %s", cmd)
+            self.send(cmd)
 
 class FASTGIString(object):
     def __init__(self, number, sender):
