@@ -50,7 +50,7 @@ class MachineController(object):
         self.options = options
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework v%s", version.__version__)
-        self.log_system_info()
+        self.verify_system_info()
 
         self.loop_start_time = 0
         self.tick_num = 0
@@ -191,7 +191,7 @@ class MachineController(object):
         self.config = Config.load_config_yaml(config=self.config,
                                             yaml_file=config_file)
 
-    def log_system_info(self):
+    def verify_system_info(self):
         """Dumps information about the Python installation to the log.
 
         Information includes Python version, Python executable, platform, and
@@ -199,6 +199,13 @@ class MachineController(object):
 
         """
         python_version = sys.version_info
+
+        if python_version[0] != 2 or python_version[1] != 7:
+            self.log.error("Incorrect Python version. MPF requires Python 2.7."
+                           "x. You have Python %s.%s.%s.", python_version[0],
+                           python_version[1], python_version[2])
+            sys.exit()
+
         self.log.debug("Python version: %s.%s.%s", python_version[0],
                       python_version[1], python_version[2])
         self.log.debug("Platform: %s", sys.platform)

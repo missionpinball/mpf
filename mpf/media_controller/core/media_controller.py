@@ -40,6 +40,13 @@ class MediaController(object):
                       version.__config_version__)
 
         python_version = sys.version_info
+
+        if python_version[0] != 2 or python_version[1] != 7:
+            self.log.error("Incorrect Python version. MPF requires Python 2.7."
+                           "x. You have Python %s.%s.%s.", python_version[0],
+                           python_version[1], python_version[2])
+            sys.exit()
+
         self.log.debug("Python version: %s.%s.%s", python_version[0],
                       python_version[1], python_version[2])
         self.log.debug("Platform: %s", sys.platform)
