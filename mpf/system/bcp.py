@@ -455,7 +455,8 @@ class BCP(object):
 
         """
 
-        if not self.filter_player_events and event.startswith('player_'):
+        if not self.filter_player_events and (event.startswith('player_') and
+                not event.endswith('_ball_started')):
             return  # since all player events are already being sent
 
         if event not in self.mpfmc_trigger_events:

@@ -192,6 +192,13 @@ class Game(Mode):
         self.machine.events.post('ball_started', ball=self.player.ball,
                                  player=self.player.number)
 
+        if self.num_players == 1:
+            self.machine.events.post('single_player_ball_started')
+        else:
+            self.machine.events.post('multi_player_ball_started')
+            self.machine.events.post('player_' + str(self.player.number) +
+                                     '_ball_started')
+
         try:
             self.machine.playfield.add_ball(trigger_event=self.machine.config
                 ['mpf']['switch_tag_event'].replace('%',
@@ -513,9 +520,9 @@ class Game(Mode):
         else:
             self.player = self.player_list[0]
 
-
     def _player_turn_started(self, **kwargs):
         self.player.ball += 1
+
         self.ball_starting()
 
     def player_rotate(self, player_num=None):
