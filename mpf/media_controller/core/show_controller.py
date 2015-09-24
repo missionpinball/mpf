@@ -201,11 +201,6 @@ class ShowController(object):
 
         self.running_shows = filter(lambda x: x != show, self.running_shows)
 
-        for key in show.slide_removal_keys:
-            self.machine.display.remove_slides(key)
-
-        show.slide_removal_keys = set()
-
         if reset:
             show.current_location = 0
 
@@ -309,7 +304,6 @@ class Show(Asset):
         # naturally. (Not invoked if show is manually stopped)
 
         self.last_slide = None
-        self.slide_removal_keys = set()
         self.stop_key = None
 
         self.loaded = False
@@ -356,7 +350,7 @@ class Show(Asset):
                     show_actions[step_num]['display']):
 
                 step_actions['display'] = (
-                    self.machine.display.slidebuilder.preprocess_settings(
+                    self.machine.display.slide_builder.preprocess_settings(
                         show_actions[step_num]['display']))
 
             # Sounds
@@ -568,13 +562,9 @@ class Show(Asset):
             elif item_type == 'display':
 
                 self.last_slide = (
-                    self.machine.display.slidebuilder.build_slide(item_dict,
+                    self.machine.display.slide_builder.build_slide(item_dict,
                     mode=self.mode,
                     priority=self.priority))
-
-                self.slide_removal_keys.add(self.last_slide.removal_key)
-
-                # todo make it so they don't all have the same name?
 
             elif item_type == 'sounds':
 

@@ -163,10 +163,13 @@ class Mode(object):
 
     def delete_slides_from_mode(self):
 
-        for display_name, display_obj in self.machine.display.displays.iteritems():
-            for slide_obj in display_obj.slides.values():
-                if slide_obj.mode == self:
-                    del display_obj.slides[slide_obj.name]
+        for display in self.machine.display.displays.values():
+            for slide in display.slides:
+                if slide.mode == self:
+                    print "--3"
+                    slide.remove(refresh_display=False)
+
+            display.refresh()
 
 
 # The MIT License (MIT)

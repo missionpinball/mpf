@@ -31,14 +31,18 @@ class MoveOut(Transition):
 
     """
 
-    def __init__(self, mpfdisplay, machine, slide_a, slide_b, duration='1s',
-                 direction='top', **kwargs):
+    def __init__(self, mpfdisplay, machine, priority, mode, slide_a, slide_b,
+                 duration='1s', direction='top', **transition_settings):
         # Assumes slides are the same size
 
-        self.name = 'Slide_Transition_' + slide_a.name + '_' + slide_b.name
-
-        super(MoveOut, self).__init__(mpfdisplay, machine, slide_a, slide_b,
-                                      duration, **kwargs)
+        super(MoveOut, self).__init__(mpfdisplay=mpfdisplay,
+                                     machine=machine,
+                                     priority=priority,
+                                     mode=mode,
+                                     slide_a=slide_a,
+                                     slide_b=slide_b,
+                                     duration=duration,
+                                     **transition_settings)
 
         self.slide_a_end_y = 0
         self.slide_a_end_x = 0
@@ -58,7 +62,6 @@ class MoveOut(Transition):
 
     def update(self):
         """Called each display loop to update the slide positions."""
-
         super(MoveOut, self).update()
 
         # figure out which direction is non-zero and move it towards zero
@@ -77,12 +80,15 @@ class MoveOut(Transition):
             self.slide_a_current_y = int(
                 self.slide_a_end_y * self.percent)
 
-        # blit slide_b as the background
-        self.surface.blit(self.slide_b.surface, (0, 0))
+        try:  # try in case super() completed the transition
+            # blit slide_b as the background
+            self.surface.blit(self.slide_b.surface, (0, 0))
 
-        # blit slide_a on top of it
-        self.surface.blit(self.slide_a.surface,
-                          (self.slide_a_current_x, self.slide_a_current_y))
+            # blit slide_a on top of it
+            self.surface.blit(self.slide_a.surface,
+                              (self.slide_a_current_x, self.slide_a_current_y))
+        except (TypeError, AttributeError):
+            pass
 
 # The MIT License (MIT)
 

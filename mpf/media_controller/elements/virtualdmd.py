@@ -119,7 +119,6 @@ class VirtualDMD(DisplayElement):
         """Updates the on screen representation of the physical DMD. This
         method automatically scales the surface as needed.
         """
-
         source_surface = pygame.PixelArray(self.dmd_object.get_surface()).surface
 
         pygame.transform.scale(source_surface,

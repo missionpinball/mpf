@@ -26,7 +26,6 @@ from mpf.system.player import Player
 import mpf.system.bcp as bcp
 import version
 
-
 class MediaController(object):
 
     def __init__(self, options):
@@ -78,6 +77,8 @@ class MediaController(object):
         self.secs_per_tick = 0
         self.machine_vars = CaseInsensitiveDict()
         self.machine_var_monitor = False
+        self.tick_num = 0
+        self.delay = DelayManager()
 
         Task.create(self._check_crash_queue)
 
@@ -342,6 +343,7 @@ class MediaController(object):
         """Called by the platform each machine tick based on self.HZ"""
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
+        self.tick_num += 1
         Task.timer_tick()  # notifies tasks
         DelayManager.timer_tick()
 
