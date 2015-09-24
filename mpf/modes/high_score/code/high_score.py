@@ -25,8 +25,6 @@ class HighScore(Mode):
             Timing.string_to_ms(
                 self.high_score_config['award_slide_display_time']))
 
-
-
         self._create_machine_vars()
         self.pending_request = False
 
@@ -52,7 +50,11 @@ class HighScore(Mode):
                     self.high_scores[entries] = list()
 
     def mode_start(self, **kwargs):
-        self._check_for_high_scores()
+        if self._check_for_high_scores():
+            self._start_sending_switches()
+            self._get_player_names()
+        else:
+            self.stop()
 
     def _check_for_high_scores(self):
 
@@ -86,9 +88,7 @@ class HighScore(Mode):
                 if player in [x[0] for x in new_list]:
                     high_score_change = True
 
-        if high_score_change:
-            self._start_sending_switches()
-            self._get_player_names()
+        return high_score_change
 
     def _get_player_names(self):
         if not self.player_name_handler:
@@ -127,8 +127,11 @@ class HighScore(Mode):
                                   player_num=player.number,
                                   value=value)
 
-    def _receive_player_name(self, player_name, award, **kwargs):
+    def _receive_player_name(self, award, player_name=None, **kwargs):
         self.pending_request = False
+
+        if not player_name:
+            player_name = ''
 
         for category_scores in self.high_score_config['categories']:
 
@@ -164,9 +167,9 @@ class HighScore(Mode):
                     award=award,
                     value=value)
 
-                self.delay.add('award_timer',
-                    self.high_score_config['award_slide_display_time'],
-                    self._get_player_names)
+                self.delay.add(name='award_timer',
+                    ms=self.high_score_config['award_slide_display_time'],
+                    callback=self._get_player_names)
 
             else:
                 self._get_player_names()

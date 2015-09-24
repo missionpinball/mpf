@@ -263,6 +263,10 @@ class CharacterPicker(DisplayElement):
         self.scrub()
 
         name = self.machine.machine_vars[self.name + '_chars_entered']
+
+        if not name:
+            name = ' '
+
         self.machine.machine_vars[self.name + '_chars_entered'] = ''
 
         return_param = {self.config['return_param']:
