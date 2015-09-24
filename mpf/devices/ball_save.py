@@ -36,8 +36,9 @@ class BallSave(Device):
                                         priority=1000)
 
         if self.config['auto_disable_time'] > 0:
-            self.delay.add('disable_shoot_again',
-                           self.config['auto_disable_time'], self.disable)
+            self.delay.add(name='disable_shoot_again',
+                           ms=self.config['auto_disable_time'],
+                           callback=self.disable)
 
         self.machine.events.post('ball_save_' + self.name + '_enabled')
 

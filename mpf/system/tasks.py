@@ -8,6 +8,7 @@
 import logging
 from copy import copy
 import time
+import uuid
 
 
 class Task(object):
@@ -105,13 +106,10 @@ class DelayManager(object):
     def __del__(self):
         DelayManager.dead_delay_managers.add(self)  # todo I don't like this
 
-    def add(self, name, ms, callback, **kwargs):
+    def add(self, ms, callback, name=None, **kwargs):
         """Adds a delay.
 
         Args:
-            name: String name of this delay. This name is arbitrary and only
-                used to identify the delay later if you want to remove or change
-                it.
             ms: Int of the number of milliseconds you want this delay to be for.
                 Note that the resolution of this time is based on your
                 machine's tick rate. The callback will be called on the
@@ -120,14 +118,26 @@ class DelayManager(object):
                 per tick. So if you set a delay for 40ms, the actual delay will
                 be 66.66ms since that's the next tick time after the delay ends.
             callback: The method that is called when this delay ends.
+            name: String name of this delay. This name is arbitrary and only
+                used to identify the delay later if you want to remove or change
+                it. If you don't provide it, a UUID4 name will be created.
             **kwargs: Any other (optional) kwarg pairs you pass will be
                 passed along as kwargs to the callback method.
+
+        Returns:
+            String name of the delay which you can use to remove it later.
+
         """
+        if not name:
+            name = uuid.uuid4()
+
         self.log.debug("Adding delay. Name: '%s' ms: %s, callback: %s, "
                        "kwargs: %s", name, ms, callback, kwargs)
         self.delays[name] = ({'action_ms': time.time() + (ms / 1000.0),
                               'callback': callback,
                               'kwargs': kwargs})
+
+        return name
 
     def remove(self, name):
         """Removes a delay. (i.e. prevents the callback from being fired and

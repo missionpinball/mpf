@@ -184,7 +184,8 @@ class Diverter(Device):
             delay = False
 
         if delay:
-            self.delay.add('disable_held_coil', delay, self.disable_held_coil)
+            self.delay.add(name='disable_held_coil', ms=delay,
+                           callback=self.disable_held_coil)
         else:
             self.disable_held_coil()
 

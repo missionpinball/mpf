@@ -363,7 +363,8 @@ class Mode(object):
         self.log.debug("_control_event_handler: callback: %s,", callback)
 
         if ms_delay:
-            self.delay.add(callback, ms_delay, callback, mode=self)
+            self.delay.add(name=callback, ms=ms_delay, callback=callback,
+                           mode=self)
         else:
             callback(mode=self)
 
@@ -730,7 +731,7 @@ class ModeTimer(object):
                                   ticks_remaining=self.ticks_remaining)
 
         if pause_secs > 0:
-            self.delay.add('pause', pause_secs, self.start)
+            self.delay.add(name='pause', ms=pause_secs, callback=self.start)
 
     def timer_complete(self):
         """Automatically called when this timer completes. Posts the

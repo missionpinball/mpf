@@ -1102,9 +1102,9 @@ class ScoreReel(Device):
                 self.config['coil_inc'].pulse()
 
                 # set delay to notify when this reel can be fired again
-                self.delay.add('ready_to_fire',
-                               self.config['repeat_pulse_time'],
-                               self._ready_to_fire)
+                self.delay.add(name='ready_to_fire',
+                               ms=self.config['repeat_pulse_time'],
+                               callback=self._ready_to_fire)
 
                 self.next_pulse_time = (time.time() +
                                         (self.config['repeat_pulse_time'] /
@@ -1113,9 +1113,9 @@ class ScoreReel(Device):
                                self.next_pulse_time)
 
                 # set delay to check the hw switches
-                self.delay.add('hw_switch_check',
-                               self.config['hw_confirm_time'],
-                               self.check_hw_switches)
+                self.delay.add(name='hw_switch_check',
+                               ms=self.config['hw_confirm_time'],
+                               callback=self.check_hw_switches)
 
                 return True
 
