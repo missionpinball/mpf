@@ -30,15 +30,19 @@ class AutofireCoil(Device):
         super(AutofireCoil, self).__init__(machine, name, config, collection,
                                            validate=validate)
 
-        self.switch_activity = 1
 
         self.coil = self.config['coil']
         self.switch = self.config['switch']
 
-        if self.config['reverse_switch']:
+        self.validate()
+
+        self.switch_activity = 1
+
+        if self.switch.invert:
             self.switch_activity = 0
 
-        self.validate()
+        if self.config['reverse_switch']:
+            self.switch_activity ^= 1
 
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
@@ -65,29 +69,14 @@ class AutofireCoil(Device):
 
         self.log.debug("Enabling")
 
-        if self.config['pulse_ms'] is None:
-            self.config['pulse_ms'] = self.coil.config['pulse_ms']
-
-        if self.config['pwm_on_ms'] is None:
-            self.pwm_on_ms = self.coil.config['pwm_on']
-
-        if self.config['pwm_off_ms'] is None:
-            self.config['pwm_on_ms'] = self.coil.config['pwm_off']
-
-        if self.config['coil_action_ms'] is None:
-            self.config['coil_action_ms'] = self.config['pulse_ms']
+        # todo make this work for holds too?
 
         self.platform.set_hw_rule(sw_name=self.switch.name,
                                   sw_activity=self.switch_activity,
-                                  coil_name=self.coil.name,
-                                  coil_action_ms=self.config['coil_action_ms'],
-                                  pulse_ms=self.config['pulse_ms'],
-                                  pwm_on=self.config['pwm_on_ms'],
-                                  pwm_off=self.config['pwm_off_ms'],
-                                  delay=self.config['delay'],
-                                  recycle_time=self.config['recycle_ms'],
-                                  debounced=self.config['debounced'],
-                                  drive_now=self.config['drive_now'])
+                                  driver_name=self.coil.name,
+                                  driver_action='pulse',
+                                  disable_on_release=False,
+                                  **self.config)
 
     def disable(self, **kwargs):
         """Disables the autofire coil rule."""

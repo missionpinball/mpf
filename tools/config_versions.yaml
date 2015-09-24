@@ -1,3 +1,10 @@
+# 4:  # changes we'll make in v4, but we're not making them yet until we have enough to go to v4
+
+# section_deprecations:
+#   - holdpatter
+#   - pwm_on
+#   - pwm_off
+
 3:
   
   section_deprecations:

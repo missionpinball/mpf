@@ -121,20 +121,30 @@ config_validator:
     autofire_coils:
         coil: single|self.machine.coils[%]|
         switch: single|self.machine.switches[%]|
+        latch: single|bool|False
         reverse_switch: single|bool|False
-        pulse_ms: single|int|None
-        pwm_on_ms: single|int|None
-        pwm_off_ms: single|int|None
-        coil_action_ms: single|int|None
         delay: single|int|0
         recycle_ms: single|int|125
-        debounced: single|bool|False
-        drive_now: single|bool|False
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False
         enable_events: dict|str:ms|ball_started
         disable_events: dict|str:ms|ball_ending
+
+        # hw rules settings overrides
+        pulse_ms: single|int|None
+        pwm_on_ms: single|int|None
+        pwm_off_ms: single|int|None
+        pulse_power: single|int|None
+        hold_power: single|int|None
+        pulse_power32: single|int|None
+        hold_power32: single|int|None
+        pulse_pwm_mask: single|int|None
+        hold_pwm_mask: single|int|None
+        recycle_ms: single|int|None
+        debounced: single|bool|False
+        drive_now: single|bool|False
+
     ball_devices:
         exit_count_delay: single|ms|500ms
         entrance_count_delay: single|ms|500ms
@@ -193,10 +203,18 @@ config_validator:
     coils:
         number: single|str|
         number_str: single|str|
-        pulse_ms: single|int|0
-        holdpatter: single|str|None
-        pwm_on: single|int|0
-        pwm_off: single|int|0
+
+        pulse_ms: single|int|None
+        pwm_on_ms: single|int|None
+        pwm_off_ms: single|int|None
+        pulse_power: single|int|None
+        hold_power: single|int|None
+        pulse_power32: single|int|None
+        hold_power32: single|int|None
+        pulse_pwm_mask: single|int|None
+        hold_pwm_mask: single|int|None
+        recycle_ms: single|int|None
+
         allow_enable: single|bool|False
         tags: list|str|None
         label: single|str|%
@@ -206,7 +224,7 @@ config_validator:
         pulse_events: dict|str:ms|None
         platform: single|str|None
     diverters:
-        type: single|str|pulse
+        type: single|str|hold
         activation_time: single|ms|0
         activation_switches: list|self.machine.switches[%]|None
         disable_switches: list|self.machine.switches[%]|None
@@ -223,6 +241,21 @@ config_validator:
         disable_events: dict|str:ms|None
         activate_events: dict|str:ms|None
         deactivate_events: dict|str:ms|None
+
+        # hw rules settings overrides
+        pulse_ms: single|int|None
+        pwm_on_ms: single|int|None
+        pwm_off_ms: single|int|None
+        pulse_power: single|int|None
+        hold_power: single|int|None
+        pulse_power32: single|int|None
+        hold_power32: single|int|None
+        pulse_pwm_mask: single|int|None
+        hold_pwm_mask: single|int|None
+        recycle_ms: single|int|None
+        debounced: single|bool|False
+        drive_now: single|bool|False
+
     drop_targets:
         switch: single|self.machine.switches[%]|
         reset_coil: single|self.machine.coils[%]|None
@@ -249,6 +282,19 @@ config_validator:
         debug: single|bool|False
         flash_events: dict|str:ms|None
         platform: single|str|None
+
+        # driver settings
+        pulse_ms: single|int|None
+        pwm_on_ms: single|int|None
+        pwm_off_ms: single|int|None
+        pulse_power: single|int|None
+        hold_power: single|int|None
+        pulse_power32: single|int|None
+        hold_power32: single|int|None
+        pulse_pwm_mask: single|int|None
+        hold_pwm_mask: single|int|None
+        recycle_ms: single|int|None
+
     flippers:
         main_coil: single|self.machine.coils[%]|
         hold_coil: single|self.machine.coils[%]|None
@@ -262,6 +308,21 @@ config_validator:
         disable_events: dict|str:ms|ball_ending
         enable_no_hold_events: dict|str:ms|None
         invert_events: dict|str:ms|None
+
+        # hw rules settings overrides
+        pulse_ms: single|int|None
+        pwm_on_ms: single|int|None
+        pwm_off_ms: single|int|None
+        pulse_power: single|int|None
+        hold_power: single|int|None
+        pulse_power32: single|int|None
+        hold_power32: single|int|None
+        pulse_pwm_mask: single|int|None
+        hold_pwm_mask: single|int|None
+        recycle_ms: single|int|None
+        debounced: single|bool|False
+        drive_now: single|bool|False
+
     gis:
         number: single|str|
         number_str: single|str|
@@ -470,7 +531,7 @@ fast:
     baud: 921600
     watchdog: 1s
     default_debounce_close: 10ms
-    default_debounce_open: 30ms
+    default_debounce_open: 10ms
 
 modes:
     - attract
