@@ -173,7 +173,7 @@ class DelayManager(object):
             same as add()
         """
         self.remove(name)
-        self.add(name, ms, callback, **kwargs)
+        self.add(ms, callback, name, **kwargs)
 
     def clear(self):
         """Removes (clears) all the delays associated with this DelayManager."""
