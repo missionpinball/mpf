@@ -348,9 +348,9 @@ class Counter(LogicBlock):
             if self.config['multiple_hit_window']:
                 self.log.debug("Beginning Ignore Hits")
                 self.ignore_hits = True
-                self.delay.add('ignore_hits_within_window',
-                               self.config['multiple_hit_window'],
-                               self.stop_ignoring_hits)
+                self.delay.add(name='ignore_hits_within_window',
+                               ms=self.config['multiple_hit_window'],
+                               callback=self.stop_ignoring_hits)
 
     def stop_ignoring_hits(self, **kwargs):
         """Causes the Counter to stop ignoring subsequent hits that occur

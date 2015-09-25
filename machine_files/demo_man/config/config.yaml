@@ -2,6 +2,8 @@
 
 config:
     - hardware.yaml
+    - shots.yaml
+    - keyboard.yaml
 
 mpf:
   default_pulse_ms: 20
@@ -17,6 +19,7 @@ modes:
   - mode1_acmag
   - skillshot
   - bonus
+  - high_score
 
 scriptlets:
     attract.Attract

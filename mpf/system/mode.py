@@ -255,10 +255,14 @@ class Mode(object):
         self.active = False
 
         for item in self.stop_methods:
+            print item
             try:
                 item[0](item[1])
             except TypeError:
-                pass
+                try:
+                    item()
+                except TypeError:
+                    pass
 
         self.stop_methods = list()
 
@@ -363,7 +367,8 @@ class Mode(object):
         self.log.debug("_control_event_handler: callback: %s,", callback)
 
         if ms_delay:
-            self.delay.add(callback, ms_delay, callback, mode=self)
+            self.delay.add(name=callback, ms=ms_delay, callback=callback,
+                           mode=self)
         else:
             callback(mode=self)
 
@@ -730,7 +735,7 @@ class ModeTimer(object):
                                   ticks_remaining=self.ticks_remaining)
 
         if pause_secs > 0:
-            self.delay.add('pause', pause_secs, self.start)
+            self.delay.add(name='pause', ms=pause_secs, callback=self.start)
 
     def timer_complete(self):
         """Automatically called when this timer completes. Posts the

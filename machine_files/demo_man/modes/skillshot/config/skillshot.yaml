@@ -26,42 +26,19 @@ timers:
         start_running: yes
         tick_interval: 1s
 
-slide_player:
-    mode_skillshot_started:
-      - type: Text
-        text: "%score%"
-        number_grouping: true
-        min_digits: 2
-        v_pos: center
-      - type: Text
-        text: PLAYER %number%
-        v_pos: bottom
-        h_pos: left
-        font: small
-      - type: Text
-        text: BALL %ball%
-        v_pos: bottom
-        h_pos: right
-        font: small
-      - type: shape
-        shape: box
-        thickness: 0
-        shade: 8
-        width: 128
-        height: 7
-        x: 0
-        y: 0
-      - type: text
-        text: "SKILLSHOT: LIT STANDUP"
-        decorators:
-            type: blink
-            repeats: -1
-            on_secs: .5
-            off_secs: .5
-        font: small
-        y: 1
-        shade: 0
-        layer: 1
+#slide_player:
+#    mode_skillshot_started:
+#      - type: text
+#        text: "SKILLSHOT: LIT STANDUP"
+#        decorators:
+#            type: blink
+#            repeats: -1
+#            on_secs: .5
+#            off_secs: .5
+#        font: small
+#        y: 1
+#        shade: 0
+#        layer: 1
 
 shot_profiles:
     skill:

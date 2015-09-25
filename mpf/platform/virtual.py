@@ -42,7 +42,6 @@ class HardwarePlatform(Platform):
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
         self.features['variable_debounce_time'] = False
-        self.features['hw_enable_auto_disable'] = False
 
         # Make the platform features available to everyone
         self.machine.config['platform'] = self.features
@@ -170,6 +169,9 @@ class VirtualDriver(object):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
+
+    def validate_driver_settings(self, **kwargs):
+        return dict()
 
     def disable(self):
         pass

@@ -9,9 +9,11 @@
 
 import logging
 import uuid
+from copy import deepcopy
 
 import mpf.media_controller.decorators
 from mpf.system.timing import Timing
+from mpf.media_controller.core.slide import Slide
 
 
 class SlideBuilder(object):
@@ -48,7 +50,6 @@ class SlideBuilder(object):
 
         for event, settings in config.iteritems():
                 settings = self.preprocess_settings(settings, priority)
-                settings[0]['removal_key'] = mode
                 # todo maybe a better way to add the removal key?
 
                 key_list.append(self.machine.events.add_handler(
@@ -57,17 +58,11 @@ class SlideBuilder(object):
                                 mode=mode,
                                 settings=settings))
 
-        return self.unload_slide_events, (key_list, mode)
+        return self.unload_slide_events, key_list
 
-    def unload_slide_events(self, removal_tuple):
-
-        key_list, slide_key = removal_tuple
-
+    def unload_slide_events(self, key_list):
         self.log.debug("Removing SlideBuilder events")
         self.machine.events.remove_handlers_by_keys(key_list)
-
-        if slide_key:
-            self.machine.display.remove_slides(slide_key)
 
     def preprocess_settings(self, settings, base_priority=0):
         """Takes an unstructured list of slide_player settings and processed them
@@ -101,6 +96,8 @@ class SlideBuilder(object):
         # getting the preprocessed entry in their dict but they're not a list???
         # todo
 
+        settings = deepcopy(settings)
+
         if type(settings) is list and 'preprocessed' in settings[0]:
             return settings
         elif type(settings) is dict and 'preprocessed' in settings:
@@ -114,17 +111,16 @@ class SlideBuilder(object):
         last_settings = dict()
         first_settings = dict()
 
-        # Drop this key into the settings so we know they've been preprocessed.
         first_settings['preprocessed'] = True
+        first_settings['persist_slide'] = False
+        first_settings['clear_slide'] = False
+        first_settings['expire'] = 0
+        first_settings['slide_name'] = None
 
         for element in settings:
-
             # Create a slide name based on the event name if one isn't specified
             if 'slide_name' in element:
                 first_settings['slide_name'] = element.pop('slide_name')
-
-            if 'removal_key' in element:
-                first_settings['removal_key'] = element.pop('removal_key')
 
             # If the config doesn't specify whether this slide should be made
             # active when this event is called, set a default value of True
@@ -132,17 +128,14 @@ class SlideBuilder(object):
                 first_settings['slide_priority'] = (
                     element.pop('slide_priority') + base_priority)
 
-            # If a 'clear_slide' setting isn't specified, set a default of True
             if 'clear_slide' in element:
                 first_settings['clear_slide'] = element.pop('clear_slide')
-            else:
-                first_settings['clear_slide'] = True
 
-            # If a 'persist_slide' setting isn't specified, set default of False
+            if 'slide' in element:
+                first_settings['slide_name'] = element.pop('slide')
+
             if 'persist_slide' in element:
                 first_settings['persist_slide'] = element.pop('persist_slide')
-            else:
-                first_settings['persist_slide'] = False
 
             if 'display' in element:
                 first_settings['display'] = element.pop('display')
@@ -150,22 +143,14 @@ class SlideBuilder(object):
             if 'transition' in element:
                 last_settings['transition'] = element.pop('transition')
 
-            if 'name' not in element:
-                element['name'] = None
-
             if 'expire' in element:
                 first_settings['expire'] = Timing.string_to_ms(
                     element.pop('expire'))
-            else:
-                first_settings['expire'] = 0
 
             processed_settings.append(element)
 
         if 'slide_priority' not in first_settings:
             first_settings['slide_priority'] = base_priority
-
-        if 'removal_key' not in first_settings:
-            first_settings['removal_key'] = None
 
         # Now add back in the items that need to be in the first element
         processed_settings[0].update(first_settings)
@@ -175,8 +160,8 @@ class SlideBuilder(object):
 
         return processed_settings
 
-    def build_slide(self, settings, display=None, slide_name=None,
-                    priority=None, mode=None, **kwargs):
+    def build_slide(self, settings, display=None, priority=None, mode=None,
+                    **kwargs):
         """Builds a slide from a SlideBuilder set of keyword arguments.
 
         Args:
@@ -184,10 +169,6 @@ class SlideBuilder(object):
                 includes settings for the various Display Elements as well as
                 any transition.
             display: String name of the display this slide is being built for.
-            slide_name: String name of the slide that's being built. If this
-                slide exists, the elements here will be added to that slide. If
-                it doesn't exist, a new slide will be created. If no slide name
-                is passed, a new slide will be created and given a UUID4 name.
             priority: Integer of the priority of this slide.
             mode: A reference to the Mode instance that built this slide. Used
                 to make sure that each mode keeps at least one active slide.
@@ -199,7 +180,6 @@ class SlideBuilder(object):
             showing now).
 
         """
-
         if 'preprocessed' not in settings[0]:
             settings = self.preprocess_settings(settings)
 
@@ -208,7 +188,6 @@ class SlideBuilder(object):
                 display = self.machine.display.displays[display]
             except KeyError:
                 pass
-
         elif 'display' in settings[0]:
             try:
                 display = self.machine.display.displays[settings[0]['display']]
@@ -220,63 +199,59 @@ class SlideBuilder(object):
         if not display:
             return
 
-        # Figure out which slide we're dealing with
-        if not slide_name:
-            if 'slide_name' in settings[0]:
-                slide_name = settings[0]['slide_name']
-            else:
-                slide_name = str(uuid.uuid4())
+        # What priority?
+        if priority is None:
+            priority = settings[0]['slide_priority']
 
-        # Does this slide need to auto clear itself?
-        if 'expire' not in settings[0]:
-            settings[0]['expire'] = 0
+        # Do we have a slide name?
+        slide_obj = None
+        slide_name = settings[0]['slide_name']
 
-        # Does this slide name already exist for this display?
+        if slide_name:  # Is there an existing slide with that name?
+            slide_obj = display.get_slide_by_name(slide_name)
 
-        if slide_name and slide_name in display.slides:  # Found existing slide
-            slide = display.slides[slide_name]
-            if 'clear_slide' in settings[0] and settings[0]['clear_slide']:
-                slide.clear()
-        else:  # Need to create a new slide
-            # What priority?
-            if priority is None:
-                priority = settings[0]['slide_priority']
+            # do we need to clear it?
+            if settings[0]['clear_slide'] and slide_obj:
+                slide_obj.clear()
 
-            slide = display.add_slide(name=slide_name, priority=priority,
-                                      persist=settings[0]['persist_slide'],
-                                      removal_key=settings[0]['removal_key'],
-                                      expire_ms=settings[0]['expire'],
-                                      mode=mode)
+        if not slide_obj:  # No name or no existing slide. Build a new one
+            slide_obj = Slide(mpfdisplay=display,
+                              machine=self.machine,
+                              priority=priority,
+                              expire_ms=settings[0]['expire'],
+                              persist=settings[0]['persist_slide'],
+                              mode=mode,
+                              name=settings[0]['slide_name'])
 
         # loop through and add the elements
+
         for element in settings:
-            self._add_element(slide, text_variables=kwargs, **element)
+            self._add_element(slide_obj, text_variables=kwargs, **element)
 
-        # do the transition
         if 'transition' in settings[-1]:
-            if type(settings[-1]['transition']) is dict:  # We have settings
-                slide = display.transition(new_slide=slide,
-                                           transition=settings[-1]
-                                           ['transition']['type'],
-                                           **settings[-1]['transition'])
-            else:  # no transition settings, just use defaults
-                slide = display.transition(new_slide=slide,
-                                           transition=settings[-1]
-                                           ['transition'])
-            slide.show()
-
+            if type(settings[-1]['transition']) is str:
+                display.add_slide(slide=slide_obj,
+                                  transition_name=settings[-1]['transition'])
+            else:
+                display.add_slide(slide=slide_obj,
+                    transition_settings=settings[-1]['transition'])
         else:
-            slide.show()
+            display.add_slide(slide_obj)
 
-        return slide
+        return slide_obj
 
-    def _add_element(self, slide, text_variables, **settings):
+    def _add_element(self, slide_obj, text_variables, **settings):
         # Internal method which actually adds the element to the slide
 
-        element_type = settings.pop('type').lower()
+        try:
+            element_type = settings.pop('type').lower()
+        except KeyError:
+            self.log.error("_add_element failed to find 'type' in settings. "
+                           "Slide: %s, text_vars: %s, Settings: %s", slide,
+                           text_variables, settings)
 
-        element = slide.add_element(element_type,
-                                    text_variables=text_variables, **settings)
+        element = slide_obj.add_element(element_type,
+            text_variables=text_variables, **settings)
 
         if 'decorators' in settings:
 

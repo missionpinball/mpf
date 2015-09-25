@@ -592,7 +592,7 @@ class EventManager(object):
         self.machine.events.remove_handlers_by_keys(event_keys)
 
     def _event_player_callback(self, event_to_call, **kwargs):
-        self.machine.events.post(event_to_call)
+        self.machine.events.post(event_to_call, **kwargs)
 
     def _random_event_player_callback(self, event_list, **kwargs):
         self.machine.events.post(random.choice(event_list))
@@ -628,12 +628,13 @@ class QueuedEvent(object):
         self.num_waiting += 1
         if self.debug:
             self.log.debug("Registering a wait. Current count: %s",
-                       self.num_waiting)
+                           self.num_waiting)
 
     def clear(self):
         self.num_waiting -= 1
         if self.debug:
-            self.log.debug("Clearing a wait. Current count: %s", self.num_waiting)
+            self.log.debug("Clearing a wait. Current count: %s",
+                           self.num_waiting)
         if not self.num_waiting:
             if self.debug:
                 self.log.debug("Queue is empty. Calling %s", self.callback)

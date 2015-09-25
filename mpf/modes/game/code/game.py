@@ -127,6 +127,9 @@ class Game(Mode):
 
         """
 
+        self.machine.remove_machine_var_search(startswith='player',
+                                                endswith='_score')
+
         self._player_add()
 
         self.machine.events.post('game_started')
@@ -188,6 +191,13 @@ class Game(Mode):
 
         self.machine.events.post('ball_started', ball=self.player.ball,
                                  player=self.player.number)
+
+        if self.num_players == 1:
+            self.machine.events.post('single_player_ball_started')
+        else:
+            self.machine.events.post('multi_player_ball_started')
+            self.machine.events.post('player_' + str(self.player.number) +
+                                     '_ball_started')
 
         try:
             self.machine.playfield.add_ball(trigger_event=self.machine.config
@@ -466,8 +476,13 @@ class Game(Mode):
         if ev_result is False:
             self.log.debug("Request to add player has been denied.")
         else:
-            Player(self.machine, self.player_list)
+            player = Player(self.machine, self.player_list)
             self.num_players = len(self.player_list)
+
+            self.machine.create_machine_var(name='player' +
+                                                 str(player.number) + '_score',
+                                            value=player.score,
+                                            persist=True)
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.
@@ -488,10 +503,13 @@ class Game(Mode):
                                  number=self.player.number,
                                  callback=self._player_turn_started)
 
-    def player_turn_stop(self, ):
+    def player_turn_stop(self):
 
         self.machine.events.post('player_turn_stop', player=self.player,
                                      number=self.player.number)
+
+        self.machine.set_machine_var(name='player' + str(self.player.number) +
+                                     '_score', value=self.player.score)
 
         if self.player.number < self.num_players:
             self.player = self.player_list[self.player.number]
@@ -502,9 +520,9 @@ class Game(Mode):
         else:
             self.player = self.player_list[0]
 
-
     def _player_turn_started(self, **kwargs):
         self.player.ball += 1
+
         self.ball_starting()
 
     def player_rotate(self, player_num=None):
@@ -531,11 +549,8 @@ class Game(Mode):
         self.log.debug("Player rotate: Now up is Player %s", self.player.number)
 
 
+# todo player events should come next, including tracking inc/dec, other values
 
-# player events should come next, including tracking inc/dec, other values
-
-# sub mode(s)?
-# bonus
 
 # The MIT License (MIT)
 

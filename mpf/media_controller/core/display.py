@@ -75,7 +75,7 @@ class DisplayController(object):
 
         self.displays = dict()
         self.default_display = None
-        self.slidebuilder = SlideBuilder(self.machine)
+        self.slide_builder = SlideBuilder(self.machine)
 
         # Register for events
         if 'window' in self.machine.config:
@@ -93,16 +93,15 @@ class DisplayController(object):
                                         self._load_transitions)
         self.machine.events.add_handler('init_phase_1',
                                         self._load_decorators)
-        self.machine.events.add_handler('action_show_slide', self.show_slide)
 
         if 'slide_player' in self.machine.config:
             self.machine.events.add_handler('pygame_initialized',
-                self._load_slidebuilder_config)
+                self._load_slide_builder_config)
 
-    def _load_slidebuilder_config(self):
-        # This has to be a separate method since slidebuilder.process config
+    def _load_slide_builder_config(self):
+        # This has to be a separate method since slide_builder.process config
         # returns an unloader method so we can't use it as an event handler
-        self.slidebuilder.process_config(
+        self.slide_builder.process_config(
             self.machine.config['slide_player'], priority=0)
 
     def _load_display_modules(self):
@@ -196,36 +195,7 @@ class DisplayController(object):
         else:
             return False
 
-    def show_slide(self, slide, display=None, **kwargs):
-        """ Shows a slide. This method assumes the slide exists for this display
-        already.
 
-        Args:
-            slide: The Slide object you want to show.
-            display: The name of the display you'd like to show this slide on.
-            **kwargs: Optional dictionary of settings which could add a
-                transition. See the documentation on the SlideBuilder for all
-                the options.
-        """
-
-        # figure out which display we're dealing with
-        if not display:
-            display = self.default_display
-        else:
-            display = self.displays[display]
-
-        if 'transition' in kwargs:
-            transition_settings = kwargs['transition']
-            transition_type = kwargs['transition'].pop('type')
-
-            display.transition(new_slide=display.slides[slide],
-                               transition=transition_type,
-                               **transition_settings)
-
-    def remove_slides(self, removal_key):
-
-        for display_obj in self.displays.values():
-            display_obj.remove_slides_by_key(removal_key)
 
 
 class MPFDisplay(object):
@@ -261,6 +231,11 @@ class MPFDisplay(object):
         else:
             self.config = dict()
 
+        if 'debug' in config and config['debug']:
+            self.debug = True
+        else:
+            self.debug = False
+
         if 'width' not in self.config:
             self.width = 800
         else:
@@ -274,7 +249,7 @@ class MPFDisplay(object):
         if 'fps' not in self.config or self.config['fps'] == 'auto':
             self.config['fps'] = Timing.HZ
 
-        self.slides = dict()
+        self.slides = list()
         self.current_slide = None
         self.flag_active_transition = False
         self.transitions = self.machine.display.transitions
@@ -309,206 +284,127 @@ class MPFDisplay(object):
         if not self.machine.display.default_display:
             self.machine.display.default_display = self
 
-        self.current_slide = self.add_slide(name='blank', persist=True)
+        self.create_blank_slide()
 
         self.machine.timing.add(
             Timer(self.update, frequency=1/float(self.config['fps'])))
 
-    def add_slide(self, name, priority=0, persist=False, removal_key=None,
-                  expire_ms=0, mode=None):
-        """Creates a new slide and adds it to the list of slides for this
+    def create_blank_slide(self):
+        """Creates a new blank slide and adds it to the list of slides for this
         display.
 
-        Args:
-            name: String name of the new slide.
-            priority: Relative priority of this slide versus others. Slides
-                can only be shown if they are equal or higher priority than the
-                priority of the display's current slide.
-            presist: Boolean as to whether this slide should be saved when it
-                is no longer being shown.
-            removal_key: Unique identifier that can be used later to remove this
-                slide.
-            expire_ms: Integer of ms that will cause this slide to automatically
-                remove itself. The timer doesn't start until the slide is shown.
-            mode: A reference to the Mode which created this slide
-
-        Returns: Reference to the new slide object that was just created.
-
         """
-        self.slides[name] = Slide(mpfdisplay=self, name=name, priority=priority,
-                                  persist=persist, machine=self.machine,
-                                  removal_key=removal_key,
-                                  expire_ms=expire_ms,
-                                  mode=mode)
+        self.add_slide(Slide(mpfdisplay=self, priority=0, persist=True,
+                             machine=self.machine, name='blank'))
 
-        return self.slides[name]
+    def add_slide(self, slide, transition_name=None, transition_settings=None):
 
-    def remove_slides_by_key(self, removal_key):
-        """Removes any slides with the removal key passed.
-
-        Args:
-            removal_key: Key for the slides you want to remove.
-
-        Removing an active slide will automatically cause the next highest
-        priority slide to be shown.
-
-        You can safely call this method even if the removal key doesn't match
-        any slides.
-        """
-
-        self.log.debug("Removing slides by key: %s", removal_key)
-
-        if removal_key:
-            for slide_obj in self.slides.values():
-                if slide_obj.removal_key == removal_key:
-                    slide_obj.remove()
-
-    def transition(self, new_slide, transition=None, **kwargs):
-        """Transitions this display to a new slide.
-
-        Args:
-            new_slide: Reference to the Slide object you'd like to transition
-                to.
-            tranisition: String name of the transition type you'd like to use.
-                Note if this is `None`, it just switches to the new slide
-                instantly. (i.e. No transition.)
-            **kwargs: Optional key/value pairs which control settings for the
-                transition. See the documentation for each transition type, as
-                there are lots of different settings and they're all different
-                depending on the type of transition.
-
-        Returns: A reference to the new slide this display will use. If the
-            new_slide passed is lower than the priority of the current_slide,
-            then this transition won't happen and the display will continue to
-            show the current slide. If no transition is specified, this method
-            returns a reference to the new_slide. And if there will be a
-            transition, this method will return a reference to the temporary
-            slide which the transition uses to actually perform the transition.
-        """
-
-        if not new_slide.ready():
-
-            kwargs['transition'] = transition
-            new_slide.add_ready_callback(self.transition, new_slide=new_slide,
-                                         **kwargs)
-            return self.current_slide
-
-        if new_slide.priority >= self.current_slide.priority:
-
-            if transition:
-
-                self.transition_dest_slide = new_slide
-
-                transition_class = eval('mpf.media_controller.transitions.' +
-                                        transition + '.' +
-                                        self.transitions[transition][1])
-                self.transition_slide = (
-                    transition_class(mpfdisplay=self,
-                                     machine=self.machine,
-                                     slide_a=self.current_slide,
-                                     slide_b=self.transition_dest_slide,
-                                     **kwargs))
-                self.flag_active_transition = True
-
-                return self.transition_slide
-
-            else:
-                return new_slide
+        if transition_name or transition_settings:
+            self._create_transition(slide, transition_name,
+                                    transition_settings)
 
         else:
-            return self.current_slide
+            self.slides.append(slide)
+        self.sort_slides()
+        self.refresh()
+
+    def sort_slides(self):
+        self.slides.sort(key=lambda x: (x.priority, x.creation_tick),
+                         reverse=True)
+
+    def remove_slide(self, slide, force=False, refresh_display=True):
+        """Removes a slide by slide object, but only if that slide (1) is not
+        set to persist, (2) is not involved in an active transition, and (3) is
+        not the only slide from its mode.
+
+        """
+
+        if slide in self.slides and (force or (not slide.persist and
+                                     not slide.active_transition and
+                                     not self.is_only_slide_from_mode(slide))):
+            slide.remove(refresh_display=refresh_display)
+
+    def refresh(self):
+        self.remove_stale_slides()
+        self.current_slide = self.slides[0]
+        self.log.debug("Total number of slides: %s", len(self.slides))
+
+    def remove_stale_slides(self):
+        """Searches through all the active slides and only keeps one slide per
+        mode. Will also keep slides that are set to persist=True and will keep
+        slides that are actively involved in a transition.
+
+        """
+        found_slides_from_modes = list()
+        slides_to_remove = list()
+        slides_to_kill = list()
+
+        for slide in self.slides:
+            if (not slide.persist and
+                    not slide.active_transition and
+                    slide.mode in found_slides_from_modes):
+                slides_to_remove.append(slide)
+            else:
+                found_slides_from_modes.append(slide.mode)
+
+            if not slide.surface:
+                slides_to_kill.append(slide)
+
+        for slide in slides_to_remove:
+            slide.remove(refresh_display=False)
+
+        for slide in slides_to_kill:
+            self.slides.remove(slide)
+
+
+
+    def get_slide_by_name(self, name):
+
+        try:
+            return next(x for x in self.slides if x.name == name)
+
+        except StopIteration:
+            return None
+
+    def _create_transition(self, new_slide, transition_name=None,
+                           transition_settings=None):
+
+        if not transition_name:
+            transition_name = transition_settings['type']
+
+        if not new_slide.ready():
+            new_slide.add_ready_callback(self._create_transition,
+                                         new_slide=new_slide,
+                                         transition_name=transition_name,
+                                         transition_settings=transition_settings)
+        else:
+            transition_class = eval('mpf.media_controller.transitions.' +
+                                    transition_name + '.' +
+                                    self.transitions[transition_name][1])
+            self.transition_slide = (
+                transition_class(mpfdisplay=self,
+                                 machine=self.machine,
+                                 slide_a=self.current_slide,
+                                 slide_b=new_slide,
+                                 priority=new_slide.priority + 1,
+                                 mode=new_slide.mode,
+                                 **transition_settings))
+
+            self.slides.append(self.transition_slide)
+            self.slides.append(new_slide)
 
     def transition_complete(self):
         """Tells the display that the current transition is complete and
-        swithces the display over to the destination slide.
+        switches the display over to the destination slide.
 
         This method is automatically called when a transition ends. It can
         safely be called during a transition to end it early.
 
         """
         self.flag_active_transition = False
-        self.set_current_slide(slide=self.transition_dest_slide)
+        self.transition_dest_slide = None
+        self.transition_slide = None
         self.transition_object = None
-
-    def set_current_slide(self, name=None, slide=None, force=False):
-        """Tells the display to instantly set the current slide to the slide
-        you pass.
-
-        Args:
-            name: The string name of the slide you want to make current.
-            slide: The slide object you want to make current.
-            force: Boolean to force the slide you're passing to show even if
-                it's a lower priority than what's currently showing. In general
-                you shouldn't use this. It only exists so MPF can cleanly remove
-                higher priority slides if they're killed while active.
-
-        Note: You only need to pass one parameter, either the slide name or the
-        slide object itself. If you pass both, it will use teh slide object.
-
-        If the new slide is not equal or higher priority than the current_slide,
-        this method will do nothing.
-
-        You can safely pass the existing current_slide which will have no
-        effect.
-
-        This method will destroy the old slide unless that slide's `persist`
-        attribute is True.
-
-        If you want to show the new slide with a transition, use the
-        'transition()' method instead of this method.
-
-        """
-
-        old_slide = None
-
-        if self.current_slide:
-            old_slide = self.current_slide
-            old_slide.active = False
-
-        if slide:
-            new_slide = slide
-        elif name and name in self.slides:
-            new_slide = self.slides[name]
-        else:
-            if 'blank' in self.slides:
-                new_slide = self.slides['blank']
-            else:
-                new_slide = self.add_slide(name='blank', persist=True)
-
-        self.log.debug('Setting current slide to: %s', new_slide.name)
-
-        if new_slide is old_slide:
-            return
-        elif (not force and old_slide and
-                new_slide.priority < old_slide.priority):
-            self.log.debug('New slide has a lower priority (%s) than the '
-                           'existing slide (%s). Not showing new slide.',
-                           new_slide.priority, old_slide.priority)
-            return
-
-        if not new_slide.ready():
-            new_slide.add_ready_callback(self.set_current_slide,
-                                         slide=new_slide)
-        else:
-            self.current_slide = new_slide
-            self.current_slide.update()
-            self.current_slide.active = True
-            new_slide.schedule_removal()
-
-        # We will delete the existing (old slide) if:
-        # - it's not set to persist
-        # - the new slide doesn't expire (meaning we need the old slide)
-        # - we have a record of the old slide
-        # - it's not the last slide in a mode (so we have something to show if
-        #   this mode ends)
-        if (    old_slide and
-                not old_slide.persist and
-                not new_slide.expire_ms and
-                old_slide.name in self.slides and
-                not self.is_only_slide_from_mode(old_slide)):
-            # Not all slides are in self.slides, e.g. temp transition ones
-
-            del self.slides[old_slide.name]
 
     def is_only_slide_from_mode(self, slide):
         """Checks to see if the slide passed is the only slide in a mode.
@@ -521,45 +417,23 @@ class MPFDisplay(object):
 
         """
 
-        slides = [self.slides[x].mode for x in self.slides]
+        slides = [x.mode for x in self.slides]
 
-        if slides.count(self.slides[x].mode) == 1:
+        if slides.count(slide.mode) == 1:
             return True
         else:
             return False
 
-    def show_current_active_slide(self):
-        self.set_current_slide(slide=self.get_highest_priority_slide(),
-                               force=True)
-
-
-    def get_highest_priority_slide(self):
-
-        max_value = 0
-        current_slide = None
-
-        for _, slide_obj in self.slides.iteritems():
-            if slide_obj.priority >= max_value:
-                max_value = slide_obj.priority
-                current_slide = slide_obj
-
-        return current_slide
-
     def update(self):
         """Updates the contents of the current slide. This method can safely
         be called frequently.
+
         """
         self.current_slide.update()
 
     def get_surface(self):
         """Returns the surface of the current slide."""
         return self.current_slide.surface
-
-    def clear(self):
-        """Clears (blanks) the display."""
-
-        self.log.debug("Clearing the display")
-        self.set_current_slide(name='blank', force=True)
 
 
 class DisplayElement(object):
@@ -675,7 +549,6 @@ class DisplayElement(object):
         return updated
 
     def set_position(self, x=None, y=None, h_pos=None, v_pos=None):
-
         """Calculates the x,y position for the upper-left corner of this element
         based on several positioning parameters.
 
@@ -704,8 +577,8 @@ class DisplayElement(object):
                 between the bottom edge and the v_pos anchor for positive
                 values, and the top edge and the v_pos anchor for negative
                 values.
-        """
 
+        """
         base_w, base_h = self.slide.surface.get_size()
         element_w, element_h = self.element_surface.get_size()
 
@@ -889,86 +762,34 @@ class DisplayElement(object):
             else:
                 self.adjusted_bg_color = None
 
+    def adjust_color(self, color, transparent=False):
+        if self.slide.depth == 8:
+            if color:  # Non-black
+                return ((color, 0, 0))
+
+            elif transparent:
+                return None
+
+            else:  # Black
+                return ((0, 0, 0))
+
+        else:  # 24-bit
+            if color:  # Non-black
+                color_list = Config.hexstring_to_list(color)
+                return ((color_list[0], color_list[1], color_list[2]))
+
+            elif transparent:
+                return None
+
+            else:  # Black
+                return ((0, 0, 0))
+
+
     def scrub(self):
-        pass
-
-
-class Transition(Slide):
-    """Parent class for all slide Transition objects. Subclasses Slide.
-
-    Args:
-        mpfdisplay: The MPFDisplay object this transition is for.
-        machine: The main MachineController object.
-        slide_a: The current (outgoing) Slide.
-        slide_b: The new (incoming) Slide.
-        duration: MPF timing string for how long this transition will take.
-            Default is 1 second.
-        **kwargs: Any additional key/value settings for this transition. (All
-            transitions are different and have different settings.)
-
-    Attributes:
-        slide_a: Outgoing slide.
-        slide_b: Incomding slide.
-        duration: Duration in seconds (float or int).
-        start_time: Real world time when this transition began.
-        end_time: Real world time when this transition will complete.
-    """
-
-    def __init__(self, mpfdisplay, machine, slide_a, slide_b, duration='1s',
-                 **kwargs):
-
-        super(Transition, self).__init__(mpfdisplay, machine, name=self.name)
-
-        self.slide_a = slide_a
-        self.slide_b = slide_b
-        self.priority = slide_b.priority
-        self.duration = Timing.string_to_secs(duration)
-
-        # Need to make sure both the slides have rendered in case they're new
-        self.slide_b.update()
-        self.slide_a.update()
-
-        self.start_time = time.time()
-        self.end_time = self.start_time + self.duration
-
-        # mark both slides as active
-        self.slide_a.active = True
-        self.slide_b.active = True
-
-        # todo if an element is not loaded on the B slide when this transition
-        # is called, it will crash. Need to probably not call transition
-        # directly and switch to some kind of loader method for it that can
-        # delay this as needed.
-
-    def update(self):
-        """Called to update the slide with the latest transition animation.
-
-        Completely replaces the update() method in the parent class since the
-        transition class is a special type of slide.
-        """
-
-        # Update the slides (so animations keep playing during the transition)
-        self.slide_a.update()
-        self.slide_b.update()
-
-        # figure out what percentage along we are
-        self.percent = (time.time() - self.start_time) / self.duration
-
-        if self.percent >= 1.0:
-            self.complete()
-
-        if self.active:
-            self.mpfdisplay.dirty = True
-
-        # don't set self._dirty since this transition slide is always dirty as
-        # long as it's active
-
-    def complete(self):
-        """Mark this transition as complete."""
-        # this transition is done
-        self.slide_a.active = False
-        self.mpfdisplay.transition_complete()
-
+        self.decorators = None
+        self.rect = None
+        self.slide = None
+        self.element_surface = None
 
 class Decorator(object):
     """Parent class of all Decorators."""
@@ -976,6 +797,7 @@ class Decorator(object):
     def unload(self):
         """Removes this decorator from the parent element."""
         self.parent_element.decorators.remove(self)
+        self.parent_element = None
 
 
 # The MIT License (MIT)

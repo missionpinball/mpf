@@ -64,6 +64,13 @@ class ModeController(object):
 
         config = dict()
 
+        # find the folder for this mode:
+        mode_path = os.path.join(self.machine.machine_path,
+            self.machine.config['media_controller']['paths']['modes'], mode_string)
+
+        if not os.path.exists(mode_path):
+            mode_path = os.path.abspath(os.path.join('mpf', self.machine.config['media_controller']['paths']['modes'], mode_string))
+
         # Is there an MPF default config for this mode? If so, load it first
         mpf_mode_config = os.path.join(
             'mpf',
@@ -77,8 +84,7 @@ class ModeController(object):
 
         # Now figure out if there's a machine-specific config for this mode, and
         # if so, merge it into the config
-        mode_path = os.path.join(self.machine.machine_path,
-            self.machine.config['media_controller']['paths']['modes'], mode_string)
+
         mode_config_file = os.path.join(self.machine.machine_path,
             self.machine.config['media_controller']['paths']['modes'], mode_string, 'config',
             mode_string + '.yaml')

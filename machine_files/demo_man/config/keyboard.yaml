@@ -1,0 +1,40 @@
+#config_version=3
+keyboard:
+  s:
+    switch: s_start
+  l:
+    switch: s_ball_launch
+  1:
+    switch: s_trough_1
+    toggle: yes
+  8:
+    switch: s_shooter_lane
+    toggle: yes
+  x:
+    switch: s_left_slingshot
+  equals:
+    switch: s_up
+  minus:
+    switch: s_down
+  z:
+    switch: s_flipper_lower_left
+  /:
+    switch: s_flipper_lower_right
+  shift+1:
+    switch: s_standup_1
+  shift+2:
+    switch: s_standup_2
+  shift+3:
+    switch: s_standup_3
+  shift+4:
+    switch: s_standup_4
+  shift+5:
+    switch: s_standup_5
+  shift+8:
+    switch: s_left_rollover
+  shift+9:
+    switch: s_center_rollover
+  shift+0:
+    switch: s_right_rollover
+  h:
+    event: start_high_score
