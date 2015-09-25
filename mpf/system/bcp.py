@@ -113,7 +113,7 @@ class BCP(object):
         error
         get
         goodbye
-        hello?version=xxx
+        hello?version=xxx&controller_name=xxx&controller_version=xxx
         mode_start?name=xxx&priority=xxx
         mode_stop?name=xxx
         player_added?player_num=x
@@ -1055,7 +1055,10 @@ class BCPClientSocket(object):
 
     def send_hello(self):
         """Sends BCP 'hello' command."""
-        self.send('hello?version=' + version.__bcp_version__)
+        self.send(encode_command_string('hello',
+                                        version=version.__bcp_version__,
+                                        controller_name='Mission Pinball Framework',
+                                        controller_version=version.__version__))
 
     def send_goodbye(self):
         """Sends BCP 'goodbye' command."""
