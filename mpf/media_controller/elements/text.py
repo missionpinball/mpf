@@ -73,56 +73,39 @@ class Text(DisplayElement):
         # local_type: type specifier of local replacements. e.g. "event" means
         # it will look for %event|var_name% in the text string
 
-        print "A", text, local_replacements, local_type
-
         text = str(text)
 
         if not local_replacements:
             local_replacements = list()
 
         for var_string in self._get_text_vars():
-            print "B", var_string
             if var_string in local_replacements:
-                print "C"
                 text = text.replace('%' + var_string + '%',
                                     str(local_replacements[var_string]))
                 self.original_text = text
-                print "D", text
 
             elif local_type and var_string.startswith(local_type + '|'):
-                print "E"
                 text = text.replace('%' + var_string + '%',
                     str(local_replacements[var_string.split('|')[1]]))
                 self.original_text = text
-                print "F", text
             elif var_string.startswith('machine|'):
-                print "G"
                 try:
                     text = text.replace('%' + var_string + '%',
                         str(self.machine.machine_vars[var_string.split('|')[1]]))
-                    print "H", text
                 except KeyError:
                     text = ''
-                    print "J", text
 
             elif self.machine.player:
-                print "K", var_string
                 if var_string.startswith('player|'):
                     text = text.replace('%' + var_string + '%',
                                         str(self.machine.player[var_string.split('|')[1]]))
-                    print "L", text
                 elif var_string.startswith('player'):
-                    print "L.0", var_string
                     player_num, var_name = var_string.lstrip('player').split('|')
                     try:
-                        print "L.1", player_num, var_name
-                        print "L.2", self.machine.player_list[int(player_num)-1]
-                        print "L.3", self.machine.player_list[int(player_num)-1][var_name]
                         value = self.machine.player_list[int(player_num)-1][var_name]
 
                         if value is not None:
                             text = text.replace('%' + var_string + '%', str(value))
-                            print "M", text
                         else:
                             text = ''
                     except IndexError:
@@ -130,8 +113,6 @@ class Text(DisplayElement):
                 else:
                     text = text.replace('%' + var_string + '%',
                                         str(self.machine.player[var_string]))
-                    print "N", text
-                print "P", text
 
         if self._get_text_vars():
             self._setup_variable_monitors()
@@ -139,9 +120,6 @@ class Text(DisplayElement):
         self.update_text(text)
 
     def update_text(self, text):
-
-        print "1", text
-
         # todo auto-fit text to a certain size bounding box
 
         text = str(text)
@@ -166,28 +144,18 @@ class Text(DisplayElement):
                 text = self.language.text(text)
 
         self.text = text
-
-        print "2", text
-
         self.render()
 
     def _text_var_change(self, player_num, target_player, var_name, value,
                          **kwargs):
 
-        print "a", player_num, target_player, var_name, value, kwargs
-
         if int(player_num) == int(target_player):
-            print "b"
-            print self.original_text
             player_num = str(player_num)
             value = str(value)
             new_text = self.original_text.replace(
                 '%player' + player_num + '|' + var_name + '%', value)
-            print "c", new_text
             new_text = new_text.replace('%player|' + var_name + '%', value)
-            print "d", new_text
             new_text = new_text.replace('%' + var_name + '%', value)
-            print "e", new_text
 
             self.update_text(new_text)
 
