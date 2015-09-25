@@ -592,7 +592,7 @@ class EventManager(object):
         self.machine.events.remove_handlers_by_keys(event_keys)
 
     def _event_player_callback(self, event_to_call, **kwargs):
-        self.machine.events.post(event_to_call)
+        self.machine.events.post(event_to_call, **kwargs)
 
     def _random_event_player_callback(self, event_list, **kwargs):
         self.machine.events.post(random.choice(event_list))
