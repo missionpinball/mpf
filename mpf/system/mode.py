@@ -255,10 +255,14 @@ class Mode(object):
         self.active = False
 
         for item in self.stop_methods:
+            print item
             try:
                 item[0](item[1])
             except TypeError:
-                item()
+                try:
+                    item()
+                except TypeError:
+                    pass
 
         self.stop_methods = list()
 
