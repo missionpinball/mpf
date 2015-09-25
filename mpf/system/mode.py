@@ -258,7 +258,7 @@ class Mode(object):
             try:
                 item[0](item[1])
             except TypeError:
-                pass
+                item()
 
         self.stop_methods = list()
 
