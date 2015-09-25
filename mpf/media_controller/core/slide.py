@@ -14,7 +14,7 @@ from mpf.system.timing import Timing
 
 try:
     import pygame
-except:
+except ImportError:
     pass
 
 
@@ -98,6 +98,9 @@ class Slide(object):
 
         if self.expire_ms:
             self.schedule_removal()
+
+    def __repr__(self):
+        return '<Slide:' + self.name + ', Mode:' + str(self.mode) + ', Priority:' + str(self.priority) + '.' + str(self.creation_tick) + ', ' + str(self.mpfdisplay) + '>'
 
     def tickle(self):
         self.creation_tick = self.machine.tick_num
@@ -381,7 +384,8 @@ class Slide(object):
         except ValueError:
             pass
 
-        self.mpfdisplay.refresh()
+        if refresh_display:
+            self.mpfdisplay.refresh()
 
         # todo where is this used? Should we force removal?
 
