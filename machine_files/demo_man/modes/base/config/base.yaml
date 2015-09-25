@@ -4,35 +4,201 @@ mode:
     priority: 100
     code: base.Base
 
-slide_player:
-    mode_base_started:
-      - type: Text
-        text: "%score%"
-        number_grouping: true
-        min_digits: 2
-        v_pos: center
-      - type: Text
-        text: PLAYER %number%
-        v_pos: bottom
-        h_pos: left
-        font: small
-      - type: Text
-        text: BALL %ball%
-        v_pos: bottom
-        h_pos: right
-        font: small
-      - type: text
-        text: "%player2|score%"
-        font: small
-        v_pos: top
-        h_pos: right
-        number_grouping: true
+event_player:
+  player_add_success:
+    player_1_multiplayer_slide
+  player_1_ball_started:
+    player_1_multiplayer_slide
 
-#    player_add_success:
-#      - type: text
-#        text: PLAYER %num% ADDED
-#        expire: 2s
-#        slide_priority: 300 # so this goes on top of the skillshot mode slides
+slide_player:
+  single_player_ball_started:
+    - type: text
+      text: "%score%"
+      number_grouping: true
+      min_digits: 2
+      v_pos: center
+      h_pos: center
+      y: -2
+      slide: score_display
+      #persist_slide: yes
+      font: tall title
+    - type: text
+      text: BALL %ball%    FREE PLAY
+      v_pos: bottom
+      font: small
+      y: -1
+
+  player_1_multiplayer_slide:
+    - type: text
+      text: "%player1|score%"
+      #font: medium
+      number_grouping: true
+      min_digits: 2
+      v_pos: top
+      h_pos: right
+      x: -60
+      y: 2
+    - type: text
+      text: "%player2|score%"
+      font: medium
+      v_pos: top
+      h_pos: right
+      number_grouping: true
+      min_digits: 2
+      x: -2
+      y: 2
+    - type: text
+      text: "%player3|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -60
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: "%player4|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -2
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: BALL %ball%    FREE PLAY
+      v_pos: bottom
+      font: small
+      y: -1
+
+  player_2_ball_started:
+    - type: text
+      text: "%player1|score%"
+      font: medium
+      number_grouping: true
+      min_digits: 2
+      v_pos: top
+      h_pos: right
+      x: -60
+      y: 2
+    - type: text
+      text: "%player2|score%"
+#      font: medium
+      v_pos: top
+      h_pos: right
+      number_grouping: true
+      min_digits: 2
+      x: -2
+      y: 2
+    - type: text
+      text: "%player3|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -60
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: "%player4|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -2
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: BALL %ball%    FREE PLAY
+      v_pos: bottom
+      font: small
+      y: -1
+
+  player_3_ball_started:
+    - type: text
+      text: "%player1|score%"
+      font: medium
+      number_grouping: true
+      min_digits: 2
+      v_pos: top
+      h_pos: right
+      x: -60
+      y: 2
+    - type: text
+      text: "%player2|score%"
+      font: medium
+      v_pos: top
+      h_pos: right
+      number_grouping: true
+      min_digits: 2
+      x: -2
+      y: 2
+    - type: text
+      text: "%player3|score%"
+#      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -60
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: "%player4|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -2
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: BALL %ball%    FREE PLAY
+      v_pos: bottom
+      font: small
+      y: -1
+
+  player_4_ball_started:
+    - type: text
+      text: "%player1|score%"
+      font: medium
+      number_grouping: true
+      min_digits: 2
+      v_pos: top
+      h_pos: right
+      x: -60
+      y: 2
+    - type: text
+      text: "%player2|score%"
+      font: medium
+      v_pos: top
+      h_pos: right
+      number_grouping: true
+      min_digits: 2
+      x: -2
+      y: 2
+    - type: text
+      text: "%player3|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -60
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: "%player4|score%"
+#      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -2
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: BALL %ball%    FREE PLAY
+      v_pos: bottom
+      font: small
+      y: -1
 
 sound_player:
     waiting to plunge loop:

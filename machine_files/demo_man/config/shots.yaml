@@ -1,0 +1,50 @@
+#config_version=3
+shots:
+  left_lane:
+    switch: s_left_rollover
+    light: l_left_rollover
+  middle_lane:
+    switch: s_center_rollover
+    light: l_middle_rollover
+  right_lane:
+    switch: s_right_rollover
+    light: l_right_rollover
+  standup_1:
+    switch: s_standup_1
+    light: l_standup_1
+  standup_2:
+    switch: s_standup_2
+    light: l_standup_2
+  standup_3:
+    switch: s_standup_3
+    light: l_standup_3
+  standup_4:
+    switch: s_standup_4
+    light: l_standup_4
+  standup_5:
+    switch: s_standup_5
+    light: l_standup_5
+  left_orbit:
+    switch_sequence: s_upper_left_flipper_gate, s_left_loop
+    time: 3s
+  left_ramp:
+    switch_sequence: s_left_ramp_enter, s_left_ramp_exit
+    time: 3s
+  side_ramp:
+    switch_sequence: s_side_ramp_enter, s_side_ramp_exit
+    time: 3s
+  right_ramp:
+    switch_sequence: s_right_ramp_enter, s_right_ramp_exit
+    time: 3s
+  right_orbit:
+    switch_sequence: s_right_freeway, s_left_loop, s_upper_left_flipper_gate,
+    time: 3s
+  center_ramp:
+    switch: s_center_ramp
+
+shot_groups:
+  rollover_lanes:
+    shots: left_lane, middle_lane, right_lane
+
+  standups:
+    shots: standup_1, standup_2, standup_3, standup_4, standup_5

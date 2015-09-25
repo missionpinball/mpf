@@ -1,89 +1,99 @@
 events:
   ball_search_begin_phase1: 0
-  game_ended: 2
-  game_started: 269
+  game_ended: 3
+  game_started: 281
 player:
   score:
-    average: 24126
+    average: 1780732
     top:
+    - 7050550
     - 31020
     - 20680
     - 15510
-    total: 3
+    total: 4
+shots:
+  center_ramp: 2
+  left_lane: 1
+  left_ramp: 3
+  right_orbit: 2
+  side_ramp: 1
+  standup_1: 11
+  standup_3: 1
+  standup_4: 1
 switches:
   s_always_closed: 0
-  s_ball_launch: 2
+  s_ball_launch: 8
   s_bottom_popper: 0
   s_buy_in: 0
   s_car_chase_1: 0
   s_car_chase_2: 0
   s_car_chase_standup: 0
   s_center_coin: 0
-  s_center_ramp: 0
+  s_center_ramp: 2
   s_center_rollover: 0
   s_claw_capture_simon: 0
   s_claw_lock_freeze: 0
-  s_claw_position_1: 0
+  s_claw_position_1: 2
   s_claw_position_2: 0
   s_claw_prison_break: 0
-  s_claw_start_acmag: 0
+  s_claw_start_acmag: 2
   s_claw_super_jets: 0
   s_coin_door_closed: 0
   s_down: 0
-  s_eject: 0
-  s_elevator_hold: 0
-  s_elevator_index: 0
+  s_eject: 3
+  s_elevator_hold: 3
+  s_elevator_index: 2
   s_enter: 0
   s_esc: 0
   s_eyeball_standup: 0
-  s_flipper_lower_left: 16
-  s_flipper_lower_left_eos: 0
-  s_flipper_lower_right: 50
-  s_flipper_lower_right_eos: 0
+  s_flipper_lower_left: 72
+  s_flipper_lower_left_eos: 20
+  s_flipper_lower_right: 86
+  s_flipper_lower_right_eos: 15
   s_flipper_upper_left_eos: 0
-  s_flipper_upper_right_eos: 0
+  s_flipper_upper_right_eos: 20
   s_fourth_coin: 0
   s_handle_trigger_left: 0
   s_handle_trigger_right: 0
   s_left_coin: 0
   s_left_handle_button: 0
-  s_left_inlane: 0
+  s_left_inlane: 5
   s_left_jet: 0
-  s_left_loop: 0
+  s_left_loop: 3
   s_left_outlane: 0
-  s_left_ramp_enter: 0
-  s_left_ramp_exit: 0
-  s_left_rollover: 0
-  s_left_slingshot: 1126
-  s_lower_rebound: 0
+  s_left_ramp_enter: 8
+  s_left_ramp_exit: 3
+  s_left_rollover: 1
+  s_left_slingshot: 1154
+  s_lower_rebound: 1
   s_plumb_bob: 0
   s_right_coin: 0
-  s_right_freeway: 0
-  s_right_inlane: 0
+  s_right_freeway: 2
+  s_right_inlane: 1
   s_right_jet: 0
-  s_right_outlane: 0
-  s_right_ramp_enter: 0
+  s_right_outlane: 1
+  s_right_ramp_enter: 12
   s_right_ramp_exit: 0
   s_right_rollover: 0
   s_right_slingshot: 0
-  s_shooter_lane: 2
-  s_side_ramp_enter: 0
-  s_side_ramp_exit: 0
+  s_shooter_lane: 8
+  s_side_ramp_enter: 2
+  s_side_ramp_exit: 1
   s_slam_tilt: 0
-  s_standup_1: 0
+  s_standup_1: 11
   s_standup_2: 0
-  s_standup_3: 0
-  s_standup_4: 0
+  s_standup_3: 1
+  s_standup_4: 1
   s_standup_5: 0
-  s_start: 330
+  s_start: 363
   s_top_popper: 0
-  s_top_slingshot: 0
-  s_trough_1: 28
-  s_trough_2: 0
-  s_trough_3: 0
-  s_trough_4: 0
-  s_trough_5: 0
-  s_trough_jam: 0
+  s_top_slingshot: 2
+  s_trough_1: 37
+  s_trough_2: 3
+  s_trough_3: 3
+  s_trough_4: 3
+  s_trough_5: 3
+  s_trough_jam: 3
   s_up: 0
-  s_upper_left_flipper_gate: 0
-  s_upper_rebound: 0
+  s_upper_left_flipper_gate: 3
+  s_upper_rebound: 2
