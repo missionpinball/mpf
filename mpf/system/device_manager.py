@@ -149,7 +149,7 @@ class DeviceManager(object):
                        callback)
 
         if ms_delay:
-            delay_mgr.add(callback, ms_delay, callback, mode=mode)
+            delay_mgr.add(ms=ms_delay, callback=callback, mode=mode)
         else:
             callback(mode=mode)
 
