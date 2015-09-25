@@ -72,7 +72,7 @@ if options_dict['version']:
 # add the first positional argument into the options dict as the machine path
 try:
     options_dict['machinepath'] = args[0]
-except:
+except KeyError:
     print "Error: You need to specify the path to your machine_files folder "\
         "for the game you want to run."
     sys.exit()

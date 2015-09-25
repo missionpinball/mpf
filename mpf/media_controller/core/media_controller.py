@@ -417,7 +417,7 @@ class MediaController(object):
                 self.send('hello', version=version.__bcp_version__)
             else:
                 self.send('hello', version='unknown protocol version')
-        except:
+        except KeyError:
             self.log.warning("Received invalid 'version' parameter with "
                              "'hello'")
 
