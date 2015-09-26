@@ -141,6 +141,7 @@ class LogicBlock(object):
                     restart_events: list|None
                     restart_on_complete: boolean|False
                     disable_on_complete: boolean|True
+                    persist_state: boolean|False
                     '''
 
         self.config = Config.process_config(config_spec=config_spec,
@@ -153,12 +154,8 @@ class LogicBlock(object):
             self.config['events_when_complete'] = Config.string_to_list(
                 config['events_when_complete'])
 
-        if 'reset_each_ball' in config and config['reset_each_ball']:
-            if 'ball_starting' not in self.config['reset_events']:
-                self.config['reset_events'].append('ball_starting')
-
     def __repr__(self):
-        return self.name
+        return '<LogicBlock.{}>'.format(self.name)
 
     def create_control_events(self):
 
@@ -299,8 +296,9 @@ class Counter(LogicBlock):
         elif self.config['direction'] == 'up' and self.hit_value < 0:
             self.hit_value *= -1
 
-        self.player[self.config['player_variable']] = (
-            self.config['starting_count'])
+        if not self.config['persist_state']:
+            self.player[self.config['player_variable']] = (
+                self.config['starting_count'])
 
     def enable(self, **kwargs):
         """Enables this counter. Automatically called when one of the
@@ -382,9 +380,13 @@ class Accrual(LogicBlock):
         if 'player_variable' not in config:
             self.config['player_variable'] = self.name + '_status'
 
-        # populate status list
-        self.player[self.config['player_variable']] = (
-            [False] * len(self.config['events']))
+        if not self.player[self.config['player_variable']]:
+            self.player[self.config['player_variable']] = (
+                [False] * len(self.config['events']))
+
+        elif not self.config['persist_state']:
+            self.player[self.config['player_variable']] = (
+                [False] * len(self.config['events']))
 
     def enable(self, **kwargs):
         """Enables this accrual. Automatically called when one of the
@@ -448,7 +450,8 @@ class Sequence(LogicBlock):
         if 'player_variable' not in config:
                 self.config['player_variable'] = self.name + '_step'
 
-        self.player[self.config['player_variable']] = 0
+        if not self.config['persist_state']:
+            self.player[self.config['player_variable']] = 0
 
     def enable(self, step=0, **kwargs):
         """Enables this Sequence. Automatically called when one of the
