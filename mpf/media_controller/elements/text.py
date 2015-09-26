@@ -146,18 +146,24 @@ class Text(DisplayElement):
         self.text = text
         self.render()
 
-    def _text_var_change(self, player_num, target_player, var_name, value,
+    def _player_var_change(self, player_num, target_player, var_name, value,
                          **kwargs):
 
         if int(player_num) == int(target_player):
             player_num = str(player_num)
             value = str(value)
             new_text = self.original_text.replace(
-                '%player' + player_num + '|' + var_name + '%', value)
-            new_text = new_text.replace('%player|' + var_name + '%', value)
-            new_text = new_text.replace('%' + var_name + '%', value)
+                '%player{}|{}%'.format(player_num, var_name), value)
+            new_text = new_text.replace('%player|{}%'.format(var_name), value)
+            new_text = new_text.replace('%{}%'.format(var_name), value)
 
             self.update_text(new_text)
+
+    def _machine_var_change(self, value, change, prev_value, var_name,
+                            **kwargs):
+
+        return self.update_text(self.original_text.replace(
+            '%machine|{}%'.format(var_name), str(value)))
 
     def _setup_variable_monitors(self):
 
@@ -181,13 +187,14 @@ class Text(DisplayElement):
 
     def add_player_var_handler(self, name, player):
         self.machine.events.add_handler('player_' + name,
-                                        self._text_var_change,
+                                        self._player_var_change,
                                         target_player=player,
                                         var_name=name)
 
     def add_machine_var_handler(self, name):
         self.machine.events.add_handler('machine_var_' + name,
-                                        self._text_var_change)
+                                        self._machine_var_change,
+                                        var_name=name)
 
     def render(self):
         self.element_surface = self.fonts.render(text=self.text, **self.config)
@@ -197,7 +204,8 @@ class Text(DisplayElement):
         self.slide.refresh(force_dirty=True)
 
     def scrub(self):
-        self.machine.events.remove_handler(self._text_var_change)
+        self.machine.events.remove_handler(self._player_var_change)
+        self.machine.events.remove_handler(self._machine_var_change)
 
     def group_digits(self, text, separator=',', group_size=3):
         """Enables digit grouping (i.e. adds comma separators between
