@@ -301,7 +301,7 @@ class Config(object):
             if type(item) is bool:
                 return item
             else:
-                return item.lower() in ('yes', 'true')
+                return str(item).lower() in ('yes', 'true')
 
         elif item_type == 'ms':
             return Timing.string_to_ms(item)
