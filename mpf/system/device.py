@@ -71,7 +71,7 @@ class Device(object):
             collection[name] = self
 
     def __repr__(self):
-        return '<' + self.class_label + '.' + self.name + '>'
+        return '<' + self.class_label + '.' + str(self.name) + '>'
 
     def enable_debugging(self):
         self.log.debug("Enabling debug logging")
