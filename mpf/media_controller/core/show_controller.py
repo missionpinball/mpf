@@ -158,12 +158,8 @@ class ShowController(object):
             self.stop_shows_by_key(show_key)
 
     def add_show_player_show(self, event, settings, mode=None):
-
         if 'priority' in settings:
             settings['show_priority'] = settings['priority']
-
-        if 'hold' not in settings:
-            settings['hold'] = False
 
         if 'show' in settings:
             settings['show'] = settings['show'].lower()
@@ -437,19 +433,20 @@ class Show(Asset):
                 stopped.
             num_repeats: Integer of how many times you want this show to repeat
                 before stopping. A value of 0 means that it repeats
-                indefinitely. Note this only works if you also have repeat=True.
-        """
+                indefinitely. Note this only works if you also have
+                repeat=True.
 
+        """
         if not self.loaded:
             self.add_loaded_callback(self.play,
-                                    repeat=repeat,
-                                    priority=priority,
-                                    blend=blend,
-                                    hold=hold,
-                                    tocks_per_sec=tocks_per_sec,
-                                    start_location=start_location,
-                                    callback=callback,
-                                    num_repeats=num_repeats)
+                                     repeat=repeat,
+                                     priority=priority,
+                                     blend=blend,
+                                     hold=hold,
+                                     tocks_per_sec=tocks_per_sec,
+                                     start_location=start_location,
+                                     callback=callback,
+                                     num_repeats=num_repeats)
             self.load()
             return False
 
@@ -507,9 +504,22 @@ class Show(Asset):
         Args:
             reset: Boolean which controls whether the show will reset its
                 current position back to zero. Default is True.
+            hold: Boolean which controls whether the current slide will be kept
+                in the display's list of slides once the show stops. If None,
+                it will use the Show's 'hold' attribute value. (That value
+                defaults to False, which is what you want in most cases since
+                you typically don't want the show's slide(s) hanging around
+                once the show ends.
 
         """
         self.machine.show_controller._end_show(self, reset)
+
+        if hold is False or (not hold and not self.hold):
+            self.clear_display()
+
+    def clear_display(self):
+        self.last_slide.remove()
+        self.last_slide = None
 
     def change_speed(self, tocks_per_sec=1):
         """Changes the playback speed of a running Show.
@@ -533,7 +543,7 @@ class Show(Asset):
     def advance(self):
         # Internal method which advances the show to the next step
         if self.ending:
-            self.machine.show_controller._end_show(self)
+            self.stop()
             return
 
         action_loop_count = 0  # Tracks how many loops we've done here
