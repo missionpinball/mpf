@@ -148,7 +148,6 @@ class Text(DisplayElement):
 
     def _player_var_change(self, player_num, target_player, var_name, value,
                          **kwargs):
-
         value = str(value)
 
         if (player_num and target_player and
@@ -159,12 +158,14 @@ class Text(DisplayElement):
             new_text = new_text.replace('%player|{}%'.format(var_name), value)
             new_text = new_text.replace('%{}%'.format(var_name), value)
 
-        else:
+            self.update_text(new_text)
+
+        elif player_num and not target_player:
             new_text = self.original_text.replace(
                 '%player|{}%'.format(var_name), value)
             new_text = new_text.replace('%{}%'.format(var_name), value)
 
-        self.update_text(new_text)
+            self.update_text(new_text)
 
     def _machine_var_change(self, value, change, prev_value, var_name,
                             **kwargs):
