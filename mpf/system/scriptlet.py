@@ -19,8 +19,7 @@ class Scriptlet(object):
         self.on_load()
 
     def __repr__(self):
-        return '<Scriptlet.' + self.name + '>'
-
+        return '<Scriptlet.{}>'.format(self.name)
 
     def on_load(self):
         """Automatically called when this Scriptlet loads. It's the intention

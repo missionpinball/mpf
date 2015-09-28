@@ -117,7 +117,7 @@ class MediaController(object):
         # Find the machine_files location. If it starts with a forward or
         # backward slash, then we assume it's from the mpf root. Otherwise we
         # assume it's from the subfolder location specified in the
-        # mpfconfigfile location
+        # mpfconfig file location
 
         if (options['machinepath'].startswith('/') or
                 options['machinepath'].startswith('\\')):

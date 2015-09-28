@@ -93,9 +93,8 @@ class BallDevice(Device):
         self.need_first_time_count = True
         self._playfield = False
 
-        self.machine.events.add_handler('balldevice_' + self.name +
-                                        '_ball_eject_request',
-                                        self.eject)
+        self.machine.events.add_handler(
+            'balldevice_{}_ball_eject_request'.format(self.name), self.eject)
 
         self.machine.events.add_handler('init_phase_2',
                                         self.configure_eject_targets)
@@ -124,10 +123,10 @@ class BallDevice(Device):
 
             if self.num_balls_requested:
                 # set event handler to watch for receiving a ball
-                self.machine.events.add_handler('balldevice_' + self.name +
-                                                '_ball_enter',
-                                                self._requested_ball_received,
-                                                priority=1000)
+                self.machine.events.add_handler(
+                    'balldevice_{}_ball_enter'.format(self.name),
+                    self._requested_ball_received,
+                    priority=1000)
 
     def _source_device_eject_failed(self, balls, target, **kwargs):
         # A source device failed to eject a ball.
@@ -206,18 +205,16 @@ class BallDevice(Device):
         # Configure event handlers to watch for target device status changes
         for target in self.config['eject_targets']:
             # Target device is requesting a ball
-            self.machine.events.add_handler('balldevice_' +
-                                            target.name
-                                            + '_ball_request',
-                                            self.eject,
-                                            target=target,
-                                            get_ball=True)
+
+            self.machine.events.add_handler(
+                'balldevice_{}_ball_request'.format(target.name),
+                self.eject, target=target, get_ball=True)
+
 
             # Target device is now able to receive a ball
-            self.machine.events.add_handler('balldevice_' +
-                                            target.name
-                                            + '_ok_to_receive',
-                                            self._do_eject)
+            self.machine.events.add_handler(
+                'balldevice_{}_ok_to_receive'.format(target.name),
+                self._do_eject)
 
         # Get an initial ball count
         self.count_balls(stealth=True)
@@ -228,17 +225,15 @@ class BallDevice(Device):
             for target in device.config['eject_targets']:
                 if target.name == self.name:
                     if self.debug:
-                        self.log.debug("EVENT: %s to %s", device.name,
-                                       target.name)
+                        self.log.debug("EVENT: {} to {}".format(device.name,
+                                       target.name))
                     self.machine.events.add_handler(
-                        event='balldevice_' + device.name +
-                        '_ball_eject_failed',
-                        handler=self._source_device_eject_failed)
+                        'balldevice_{}_ball_eject_failed'.format(device.name),
+                        self._source_device_eject_failed)
 
                     self.machine.events.add_handler(
-                        event='balldevice_' + device.name +
-                        '_ball_eject_attempt',
-                        handler=self._source_device_eject_attempt)
+                        'balldevice_{}_ball_eject_attempt'.format(device.name),
+                        self._source_device_eject_attempt)
                     break
 
     def get_status(self, request=None):

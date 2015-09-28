@@ -78,7 +78,7 @@ class Mode(object):
         self.mode_init()
 
     def __repr__(self):
-        return '<Mode.' + self.name + '>'
+        return '<Mode.{}>'.format(self.name)
 
     @property
     def active(self):

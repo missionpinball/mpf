@@ -59,7 +59,7 @@ class Mode(object):
                             **item.kwargs)
 
     def __repr__(self):
-        return '<Mode.' + self.name + '>'
+        return '<Mode.{}>'.format(self.name)
 
     @property
     def active(self):
@@ -130,8 +130,6 @@ class Mode(object):
                                 priority=self.priority,
                                 mode=self,
                                 **item.kwargs))
-
-        #self.machine.events.post('mode_' + self.name + '_started')
 
     def stop(self, callback=None, **kwargs):
         """Stops this mode.

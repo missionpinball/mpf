@@ -108,7 +108,9 @@ class Slide(object):
             self.schedule_removal()
 
     def __repr__(self):
-        return '<Slide:' + str(self.name) + ', Mode:' + str(self.mode) + ', Priority:' + str(self.priority) + '.' + str(self.id) + ', ' + str(self.mpfdisplay) + '>'
+        return ('<Slide:{self.name}, Mode: {self.mode}, Priority: '
+               '{self.priority}.{self.creation_tick}, {self.mpfdisplay}'.
+                format(self=self))
 
     def tickle(self):
         self.id = self.machine.tick_num

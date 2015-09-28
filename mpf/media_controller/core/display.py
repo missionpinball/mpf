@@ -268,7 +268,7 @@ class MPFDisplay(object):
         self.machine.events.add_handler('pygame_initialized', self._initialize)
 
     def __repr__(self):
-        return '<Display: ' + self.name + '>'
+        return '<Display.{}>'.format(self.name)
 
     def _initialize(self):
         """Internal method which initializes this display. This is separate from
@@ -329,6 +329,10 @@ class MPFDisplay(object):
                                      not self.is_only_slide_from_mode(slide))):
 
             slide.remove(refresh_display=refresh_display)
+
+    def remove_slides(self, slides, force=False, refresh_display=True):
+        for slide in slides:
+            self.remove_slide(slide, force, refresh_display)
 
     def refresh(self):
         self.remove_stale_slides()

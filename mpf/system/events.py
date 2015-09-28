@@ -621,7 +621,7 @@ class QueuedEvent(object):
         self.num_waiting = 0
 
     def __repr__(self):
-        return '<QueuedEvent for callback ' + str(self.callback) + '>'
+        return '<QueuedEvent for callback {}>'.format(self.callback)
 
 
     def wait(self):

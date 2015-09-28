@@ -90,7 +90,7 @@ class Player(object):
 
     def __repr__(self):
         try:
-            return '<Player ' + str(self.vars['number']) + '>'
+            return "<Player {}>".format(self.vars['number'])
         except KeyError:
             return '<Player (new)>'
 
