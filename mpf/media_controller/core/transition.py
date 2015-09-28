@@ -50,14 +50,16 @@ class Transition(Slide):
         self.slide_b.active_transition = True
         self.name = str(slide_a.name) + "_transition_" + str(slide_b.name)
 
-        self.slide_a.update()
-
         self.start_time = time.time()
         self.end_time = self.start_time + self.duration
 
         # mark both slides as active
         self.slide_a.active = True
         self.slide_b.active = True
+
+        # Need to set the initial surface of the transition slide to the
+        # existing slide's surface since the transition slide will be active
+        self.surface.blit(self.slide_a.surface, (0, 0))
 
         # todo if an element is not loaded on the B slide when this transition
         # is called, it will crash. Need to probably not call transition
