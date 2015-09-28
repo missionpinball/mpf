@@ -162,11 +162,9 @@ class Mode(object):
         self.delete_slides_from_mode()
 
     def delete_slides_from_mode(self):
-
         for display in self.machine.display.displays.values():
-            for slide in display.slides:
-                if slide.mode == self:
-                    slide.remove(refresh_display=False)
+            for slide in [x for x in display.slides if x.mode == self]:
+                slide.remove(refresh_display=False)
 
             display.refresh()
 
