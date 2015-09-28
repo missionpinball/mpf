@@ -94,6 +94,11 @@ class SoundController(object):
         # Note pygame docs says pre_init() kwarg should be 'buffersize', but
         # it's actually 'buffer'.
 
+        self.log.debug("Configuring Pygame Mixer. Frequency: %s, Size: %s, "
+                       "channels: %s, buffer: %s", self.config['frequency'],
+                       self.config['bits'], self.config['channels'],
+                       self.config['buffer'])
+
         # Register events
         self.machine.events.add_handler('action_set_volume', self.set_volume)
         self.machine.events.add_handler('pygame_initialized', self._initialize)
@@ -103,8 +108,8 @@ class SoundController(object):
                 self.register_sound_events,
                 config=self.machine.config['sound_player'])
 
-        self.machine.mode_controller.register_start_method(self.register_sound_events,
-                                                 'sound_player')
+        self.machine.mode_controller.register_start_method(
+            self.register_sound_events, 'sound_player')
 
     def _initialize(self):
         # Initialize the sound controller. Not done in __init__() because we
@@ -210,6 +215,8 @@ class SoundController(object):
             config: Python dictionary which contains the game sounds settings.
         """
 
+        self.log.debug("Registering sound events from config: %s", config)
+
         if 'sound' not in config:
             return False
         elif type(config['sound']) is str:
@@ -261,6 +268,7 @@ class SoundController(object):
         #config['event_keys'] = set()
 
         for event in config['start_events']:
+            self.log.debug("Checking config for event '%s'", event)
             settings = copy.copy(config)
 
             settings.pop('start_events')
@@ -268,6 +276,7 @@ class SoundController(object):
 
             if event not in self.sound_events:
                     self.sound_events[event] = list()
+                    self.log.debug("Adding '%s' to sound_events list", event)
                     self.machine.events.add_handler(event,
                                                     self._sound_event_callback,
                                                     event_name=event)
@@ -281,6 +290,9 @@ class SoundController(object):
             sound_event_entry['priority'] = priority
             sound_event_entry['block'] = block
             sound_event_entry['type'] = 'start'
+
+            self.log.debug("Registering Sound for Event: %s. Settings: %s",
+                           event, settings)
 
             self.sound_events[event].append(sound_event_entry)
 
@@ -307,6 +319,9 @@ class SoundController(object):
             sound_event_entry['block'] = block
             sound_event_entry['type'] = 'stop'
 
+            self.log.debug("Registering Sound for Event: %s. Settings: %s",
+                           event, settings)
+
             self.sound_events[event].append(sound_event_entry)
 
             # todo sort by priority
@@ -314,9 +329,13 @@ class SoundController(object):
         return config['key']
 
     def unregister_sound_event(self, key):
+
+        self.log.debug("Unregistering sound events")
+
         for event in self.sound_events.keys():
             for entry in self.sound_events[event][:]:
                 if entry['settings']['key'] == key:
+                    self.log.debug("Remvoing %s from event %s", entry, event)
                     self.sound_events[event].remove(entry)
 
                 if not self.sound_events[event]:
@@ -334,14 +353,19 @@ class SoundController(object):
 
         sound_list = self.sound_events[event_name]
 
+        self.log.debug("Sound event callback. Sound list: %s", sound_list)
+
         for sound in sound_list:
 
+            self.log.debug("Checking sound: %s", sound)
             sound_obj = sound['settings']['sound']
             kwargs = sound['settings']
 
             if sound['type'] == 'start':
+                self.log.debug("Playing sound")
                 sound_obj.play(**kwargs)
             elif sound['type'] == 'stop':
+                self.log.debug("Stopping sound")
                 sound_obj.stop(**kwargs)
 
     def set_volume(self, volume=None, change=None, **kwargs):
@@ -448,6 +472,9 @@ class Track(object):
 
         machine.events.add_handler('timer_tick', self._tick)
 
+    def __repr__(self):
+        return '<Track.{}>'.format(self.name)
+
     def create_channel(self, machine, global_channel_list):
         """Factory method which creates a Pygame sound channel to be used with
         this track.
@@ -479,10 +506,14 @@ class Track(object):
 
         """
 
+        self.log.debug("Received request to play sound %s. Priority %s, "
+                       "settings: %s", sound, priority, settings)
+
         # Make sure we have a sound object. If not we assume the sound is being
         # loaded (is that dumb?) and we add it to the queue so it will be
         # picked up on the next loop.
         if not sound.sound_object:
+            self.log.debug("Sound is not loaded. Queueing...")
             self.queue_sound(sound, priority, **settings)
             return
 
@@ -495,6 +526,7 @@ class Track(object):
         for channel in self.pygame_channels:  # todo change to generator
             if channel.current_sound_priority == -1:
                 found_available_channel = True
+                self.log.debug("Found an available channel: %s", channel)
                 channel.play(sound, priority=priority, **settings)
                 break
 
@@ -504,8 +536,11 @@ class Track(object):
         # 2. Add this to the queue, arranged by priority
 
         if not found_available_channel:
+            self.log.debug("Did not find an available channel")
             lowest_channel = min(self.pygame_channels)
             if lowest_channel.current_sound_priority < priority:
+                self.log.debug("New sound is higher priority than the current "
+                               "lowest priority sound. Pre-empting")
                 lowest_channel.play(sound, priority=priority, **settings)
             else:
                 if sound.expiration_time:
@@ -540,6 +575,8 @@ class Track(object):
         # Note the negative operator in front of priority since this queue
         # retrieves the lowest values first, and MPF uses higher values for
         # higher priorities.
+        self.log.debug("Queueing sound %s, priority: %s, exp_time: %s",
+                       sound, priority, exp_time)
         self.queue.put([-priority, sound, exp_time, settings])
 
     def get_sound(self):
@@ -606,6 +643,9 @@ class StreamTrack(object):
 
         self.config['preload'] = False
 
+    def __repr__(self):
+        return '<StreamTrack.{}>'.format(self.name)
+
     def play(self, sound, **settings):
         """Plays a sound on this track.
 
@@ -631,7 +671,7 @@ class StreamTrack(object):
 
         pygame.mixer.music.set_volume(volume)
 
-        self.log.debug("Playing Sound: %s Vol: %s", sound.file_name,
+        self.log.debug("Playing Sound: %s Vol: %s", sound,
                       pygame.mixer.music.get_volume())
 
         if 'loops' not in settings:
@@ -686,7 +726,8 @@ class Channel(object):
 
     def __init__(self, machine, parent_track, channel_number):
 
-        self.log = logging.getLogger('Sound Channel ' + str(channel_number))
+        self.log = logging.getLogger('Sound Channel {}'.format(channel_number))
+        self.channel_number = channel_number
         self.machine_sound = machine.sound
         self.current_sound_priority = -1
         self.current_sound = None
@@ -702,6 +743,10 @@ class Channel(object):
         # the above
         machine.register_pygame_handler(
             pygame.locals.USEREVENT + channel_number, self.sound_is_done)
+
+    def __repr__(self):
+        return '<Channel {}, Parent:{}>'.format(self.channel_number,
+                                                self.parent_track)
 
     def __cmp__(self, other):
         # Used so we can sort the channel list by the priority of the current
@@ -751,7 +796,7 @@ class Channel(object):
         # set the sound's current volume
         sound.sound_object.set_volume(volume)
 
-        self.log.debug("Playing Sound: %s Vol: %s", sound.file_name,
+        self.log.debug("Playing Sound: %s Vol: %s", sound,
                       sound.sound_object.get_volume())
 
         self.pygame_channel.play(sound.sound_object, loops)
@@ -798,6 +843,9 @@ class Sound(Asset):
         if 'end_time' not in self.config:  # todo
             self.config['end_time'] = None
 
+    def __repr__(self):
+        return '<Sound: {}>'.format(self.file_name)
+
     def do_load(self, callback):
         try:
             self.sound_object = pygame.mixer.Sound(self.file_name)
@@ -830,8 +878,8 @@ class Sound(Asset):
                 callback which could include random kwargs.
         """
 
-        self.asset_manager.log.debug("Playing sound. Loops: %s, Priority: %s, "
-                                     "Fade in: %s, Vol: %s, kwargs: %s",
+        self.asset_manager.log.debug("Playing sound %s. Loops: %s, Priority: %s, "
+                                     "Fade in: %s, Vol: %s, kwargs: %s", self,
                                      loops, priority, fade_in, volume, kwargs)
 
         if not self.sound_object:
