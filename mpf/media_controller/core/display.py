@@ -365,7 +365,10 @@ class MPFDisplay(object):
             slide.remove(refresh_display=False)
 
         for slide in slides_to_kill:
-            self.slides.remove(slide)
+            try:
+                self.slides.remove(slide)
+            except ValueError:
+                pass
 
     def get_slide_by_name(self, name):
         try:
