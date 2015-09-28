@@ -96,7 +96,11 @@ class SlideBuilder(object):
         # getting the preprocessed entry in their dict but they're not a list???
         # todo
 
-        settings = deepcopy(settings)
+        if not settings:
+            settings = list()
+            settings.append(dict())
+        else:
+            settings = deepcopy(settings)
 
         if type(settings) is list and 'preprocessed' in settings[0]:
             return settings
@@ -249,9 +253,10 @@ class SlideBuilder(object):
         try:
             element_type = settings.pop('type').lower()
         except KeyError:
-            self.log.error("_add_element failed to find 'type' in settings. "
-                           "Slide: %s, text_vars: %s, Settings: %s", slide,
+            self.log.debug("_add_element failed to find 'type' in settings. "
+                           "Slide: %s, text_vars: %s, Settings: %s", slide_obj,
                            text_variables, settings)
+            return
 
         element = slide_obj.add_element(element_type,
             text_variables=text_variables, **settings)
