@@ -180,6 +180,9 @@ class SlideBuilder(object):
             showing now).
 
         """
+        if mode and not mode.active:
+            return
+
         if 'preprocessed' not in settings[0]:
             settings = self.preprocess_settings(settings)
 
