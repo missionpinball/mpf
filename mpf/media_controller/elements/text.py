@@ -45,7 +45,7 @@ class Text(DisplayElement):
 
         self.config = kwargs
 
-        self.var_finder = re.compile("(?<=%)[\S]+(?=%)")
+        self.var_finder = re.compile("(?<=%)[a-zA-Z_0-9|]+(?=%)")
 
         if not text_variables:
             text_variables = dict()
