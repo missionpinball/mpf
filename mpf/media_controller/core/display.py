@@ -331,7 +331,6 @@ class MPFDisplay(object):
             slide.remove(refresh_display=refresh_display)
 
     def refresh(self):
-        old_slide = self.current_slide
         self.remove_stale_slides()
         self.current_slide = self.slides[0]
 
@@ -792,7 +791,6 @@ class DisplayElement(object):
 
             else:  # Black
                 return ((0, 0, 0))
-
 
     def scrub(self):
         self.decorators = None

@@ -387,8 +387,6 @@ class Slide(object):
         if refresh_display:
             self.mpfdisplay.refresh()
 
-        # todo where is this used? Should we force removal?
-
 
 # The MIT License (MIT)
 

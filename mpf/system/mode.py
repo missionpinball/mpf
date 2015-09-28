@@ -248,14 +248,12 @@ class Mode(object):
                                        callback=self._stopped)
 
     def _stopped(self):
-
         self.log.debug('Mode Stopped.')
 
         self.priority = 0
         self.active = False
 
         for item in self.stop_methods:
-            print item
             try:
                 item[0](item[1])
             except TypeError:
@@ -277,7 +275,6 @@ class Mode(object):
             self._mode_start_wait_queue = None
 
     def _mode_stopped_callback(self, **kwargs):
-
         self._remove_mode_event_handlers()
         self._remove_mode_devices()
 

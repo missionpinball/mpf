@@ -830,9 +830,9 @@ class Sound(Asset):
                 callback which could include random kwargs.
         """
 
-        self.asset_manager.log.info("Playing sound. Loops: %s, Priority: %s, "
-                                    "Fade in: %s, Vol: %s, kwargs: %s",
-                                    loops, priority, fade_in, volume, kwargs)
+        self.asset_manager.log.debug("Playing sound. Loops: %s, Priority: %s, "
+                                     "Fade in: %s, Vol: %s, kwargs: %s",
+                                     loops, priority, fade_in, volume, kwargs)
 
         if not self.sound_object:
             self.load()
