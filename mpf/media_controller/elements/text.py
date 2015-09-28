@@ -149,15 +149,22 @@ class Text(DisplayElement):
     def _player_var_change(self, player_num, target_player, var_name, value,
                          **kwargs):
 
-        if int(player_num) == int(target_player):
+        value = str(value)
+
+        if (player_num and target_player and
+                int(player_num) == int(target_player)):
             player_num = str(player_num)
-            value = str(value)
             new_text = self.original_text.replace(
                 '%player{}|{}%'.format(player_num, var_name), value)
             new_text = new_text.replace('%player|{}%'.format(var_name), value)
             new_text = new_text.replace('%{}%'.format(var_name), value)
 
-            self.update_text(new_text)
+        else:
+            new_text = self.original_text.replace(
+                '%player|{}%'.format(var_name), value)
+            new_text = new_text.replace('%{}%'.format(var_name), value)
+
+        self.update_text(new_text)
 
     def _machine_var_change(self, value, change, prev_value, var_name,
                             **kwargs):
@@ -169,8 +176,7 @@ class Text(DisplayElement):
 
         for var_string in self._get_text_vars():
             if '|' not in var_string:
-                self.add_player_var_handler(name=var_string,
-                                            player=self.machine.player['number'])
+                self.add_player_var_handler(name=var_string, player=None)
             else:
                 source, variable_name = var_string.split('|')
                 if source.lower().startswith('player'):
