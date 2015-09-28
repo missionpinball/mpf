@@ -311,7 +311,7 @@ class MPFDisplay(object):
         self.refresh()
 
     def sort_slides(self):
-        self.slides.sort(key=lambda x: (x.priority, x.creation_tick),
+        self.slides.sort(key=lambda x: (x.priority, x.id),
                          reverse=True)
 
     def remove_slide(self, slide, force=False, refresh_display=True):

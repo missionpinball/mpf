@@ -17,7 +17,6 @@ try:
 except ImportError:
     pass
 
-
 class Slide(object):
     """Parent class for a Slide object.
 
@@ -60,6 +59,15 @@ class Slide(object):
             remove itself. The timer doesn't start until the slide is shown.
 
     """
+
+    creation_id = 0
+
+    @classmethod
+    def get_creation_id(cls):
+        Slide.creation_id += 1
+        return Slide.creation_id
+
+
     def __init__(self, mpfdisplay, machine, priority=0, persist=False,
                  expire_ms=0, mode=None, name=None):
 
@@ -74,7 +82,7 @@ class Slide(object):
         self.name = name
         self.active_transition = False
         self.removal_delay = None
-        self.creation_tick = self.machine.tick_num
+        self.id = Slide.get_creation_id()
 
         self.elements = list()
         self.pending_elements = set()
@@ -100,10 +108,10 @@ class Slide(object):
             self.schedule_removal()
 
     def __repr__(self):
-        return '<Slide:' + str(self.name) + ', Mode:' + str(self.mode) + ', Priority:' + str(self.priority) + '.' + str(self.creation_tick) + ', ' + str(self.mpfdisplay) + '>'
+        return '<Slide:' + str(self.name) + ', Mode:' + str(self.mode) + ', Priority:' + str(self.priority) + '.' + str(self.id) + ', ' + str(self.mpfdisplay) + '>'
 
     def tickle(self):
-        self.creation_tick = self.machine.tick_num
+        self.id = self.machine.tick_num
         self.mpfdisplay.refresh()
 
     def ready(self):
