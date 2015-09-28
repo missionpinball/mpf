@@ -590,7 +590,6 @@ class BCP(object):
         pass
 
     def bcp_receive_reset_complete(self, **kwargs):
-        print "bcp module received reset complete"
         self.machine.bcp_reset_complete()
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):

@@ -152,8 +152,22 @@ slide_player:
         slide_priority: 10000
     asset_loader:
       type: text
-      text: "LOADING: %percent%"
+      text: "LOADING: %percent%%"
       font: small
+    asset_loading_complete:
+
+    waiting_for_client_connection:
+      - type: text
+        text: WAITING FOR
+        font: small
+        v_pos: center
+        y: -4
+        slide: waiting
+      - type: text
+        text: CLIENT CONNECTION...
+        font: small
+        v_pos: center
+        y: 4
 
 debug_profiles:
     verbose:

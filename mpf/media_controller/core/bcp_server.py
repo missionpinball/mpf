@@ -79,6 +79,7 @@ class BCPServer(threading.Thread):
             while True:
                 self.log.info("Waiting for a connection...")
                 self.mc.events.post('client_disconnected')
+                self.mc.pc_connected = False
                 self.connection, client_address = self.socket.accept()
 
                 self.log.info("Received connection from: %s:%s",
@@ -86,6 +87,7 @@ class BCPServer(threading.Thread):
                 self.mc.events.post('client_connected',
                                     address=client_address[0],
                                     port=client_address[1])
+                self.mc.pc_connected = True
 
                 # Receive the data in small chunks and retransmit it
                 while True:

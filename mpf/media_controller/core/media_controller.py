@@ -27,6 +27,7 @@ from mpf.system.assets import AssetManager
 import mpf.system.bcp as bcp
 import version
 
+
 class MediaController(object):
 
     def __init__(self, options):
@@ -79,10 +80,10 @@ class MediaController(object):
         self.machine_var_monitor = False
         self.tick_num = 0
         self.delay = DelayManager()
-        self.last_asset_loading_tick = 0
 
         self._pc_assets_to_load = 0
         self._pc_total_assets = 0
+        self.pc_connected = False
 
         Task.create(self._check_crash_queue)
 
@@ -181,8 +182,6 @@ class MediaController(object):
             # malicious files in the system folder then you have access to this
             # code too.
 
-        self.events.add_handler('assets_to_load', self.asset_loading_counter)
-
         self.start_socket_thread()
 
         self.events.post("init_phase_1")
@@ -207,6 +206,10 @@ class MediaController(object):
         """Processes an incoming BCP 'reset' command."""
         self.player = None
         self.player_list = list()
+
+        self.events.add_handler('assets_to_load',
+                                self._bcp_client_asset_loader_tick)
+        self.events.replace_handler('timer_tick', self.asset_loading_counter)
 
         self.events.post('mc_reset_phase_1')
         self.events.post('mc_reset_phase_2')
@@ -598,7 +601,6 @@ class MediaController(object):
             # todo add per-track volume support to sound system
 
     def get_debug_status(self, debug_path):
-
         if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
             return True
 
@@ -642,22 +644,16 @@ class MediaController(object):
                 callback(name=name, value=self.vars[name],
                          prev_value=prev_value, change=change)
 
-    def asset_loading_counter(self, remaining=None, total=None):
+    def _bcp_client_asset_loader_tick(self, total, remaining):
+        self._pc_assets_to_load = int(remaining)
+        self._pc_total_assets = int(total)
 
-        # Updates from the pinball controller can come in real fast, and this
-        # method responding to them all can get in a loop that makes the MC
-        # unresponsive. So we make sure we only do this here once per tick
-        if self.tick_num == self.last_asset_loading_tick:
+    def asset_loading_counter(self):
+
+        if self.tick_num % 5 != 0:
             return
 
-        self.last_asset_loading_tick = self.tick_num
-
-        if remaining is not None:
-            self._pc_assets_to_load = int(remaining)
-            self._pc_total_assets = int(total)
-
-
-        if AssetManager.total_assets:
+        if AssetManager.total_assets or self._pc_total_assets:
             # max because this could go negative at first
             percent = max(0, int(float(AssetManager.total_assets -
                                        self._pc_assets_to_load -
@@ -678,11 +674,18 @@ class MediaController(object):
                          mc=AssetManager.assets_to_load,
                          percent=percent)
 
-        if not self._pc_assets_to_load and not AssetManager.assets_to_load:
-            self.log.debug("Asset Loading Complete")
-            self.send('reset_complete')
+        if not AssetManager.assets_to_load:
 
-            self.events.remove_handler(self.asset_loading_counter)
+            if not self.pc_connected:
+                self.events.post("waiting_for_client_connection")
+                self.events.remove_handler(self.asset_loading_counter)
+
+            elif not self._pc_assets_to_load:
+                self.log.debug("Asset Loading Complete")
+                self.events.post("asset_loading_complete")
+                self.send('reset_complete')
+
+                self.events.remove_handler(self.asset_loading_counter)
 
 # The MIT License (MIT)
 
