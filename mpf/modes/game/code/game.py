@@ -144,6 +144,9 @@ class Game(Mode):
         self.log.info("Player added successfully. Total players: %s",
                       self.num_players)
 
+        if self.num_players > 1 and self.player.number == 1:
+            self.machine.events.post('multiplayer_game')
+
     def ball_starting(self):
         """Called when a new ball is starting.
 
@@ -196,8 +199,8 @@ class Game(Mode):
             self.machine.events.post('single_player_ball_started')
         else:
             self.machine.events.post('multi_player_ball_started')
-            self.machine.events.post('player_' + str(self.player.number) +
-                                     '_ball_started')
+            self.machine.events.post(
+                'player_{}_ball_started'.format(self.player.number))
 
         try:
             self.machine.playfield.add_ball(trigger_event=self.machine.config

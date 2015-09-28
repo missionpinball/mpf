@@ -5,7 +5,7 @@ mode:
     code: base.Base
 
 event_player:
-  player_add_success:
+  multiplayer_game:
     player_1_multiplayer_slide
   player_1_ball_started:
     player_1_multiplayer_slide
