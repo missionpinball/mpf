@@ -109,7 +109,7 @@ class Slide(object):
 
     def __repr__(self):
         return ('<Slide:{self.name}, Mode: {self.mode}, Priority: '
-               '{self.priority}.{self.creation_tick}, {self.mpfdisplay}'.
+               '{self.priority}.{self.id}, {self.mpfdisplay}'.
                 format(self=self))
 
     def tickle(self):
