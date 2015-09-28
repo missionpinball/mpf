@@ -518,7 +518,8 @@ class Show(Asset):
             self.clear_display()
 
     def clear_display(self):
-        self.last_slide.remove()
+        if self.last_slide:
+            self.last_slide.remove()
         self.last_slide = None
 
     def change_speed(self, tocks_per_sec=1):
