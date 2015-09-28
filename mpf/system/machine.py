@@ -17,6 +17,8 @@ from mpf.system import *
 from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.tasks import Task, DelayManager
 from mpf.system.data_manager import DataManager
+from mpf.system.timing import Timing
+from mpf.system.assets import AssetManager
 import version
 
 
@@ -68,7 +70,8 @@ class MachineController(object):
         self.machine_var_monitor = False
         self.machine_var_data_manager = None
 
-        self.num_assets_to_load = 0
+        self.flag_bcp_reset_complete = False
+        self.asset_loader_complete = False
 
         self.delay = DelayManager()
 
@@ -119,6 +122,7 @@ class MachineController(object):
         self.events.add_handler('quit', self.quit)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.quit)
+        self.events.add_handler('timer_tick', self._loading_tick)
 
     def _load_machine_vars(self):
         self.machine_var_data_manager = DataManager(self, 'machine_vars')
@@ -433,6 +437,54 @@ class MachineController(object):
         except ZeroDivisionError:
             self.log.info("Actual MPF loop rate: 0 Hz")
 
+    def _loading_tick(self):
+        if not self.asset_loader_complete:
+
+            if AssetManager.assets_to_load:
+                self.log.debug("Holding Attract start while MPF assets load. "
+                               "Remaining: %s", AssetManager.assets_to_load)
+                self.bcp.bcp_trigger('assets_to_load',
+                                     total=AssetManager.total_assets,
+                                     remaining=AssetManager.assets_to_load)
+            else:
+                self.bcp.bcp_trigger('assets_to_load',
+                                     total=AssetManager.total_assets,
+                                     remaining=0)
+                self.asset_loader_complete = True
+
+        elif not self.flag_bcp_reset_complete:
+            if self.tick_num % Timing.HZ == 0:
+                self.log.info("Waiting for BCP reset_complete...")
+
+        else:
+            self.log.debug("Asset loading complete")
+            self._reset_complete()
+
+    def bcp_reset_complete(self):
+        self.flag_bcp_reset_complete = True
+        if self.asset_loader_complete:
+            self.events.remove_handler(self._loading_tick)
+        self.flag_bcp_reset_complete = True
+
+    def _reset_complete(self):
+        self.log.debug('Reset Complete')
+        self.events.post('reset_complete')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def configure_debugger(self):
         pass
 
@@ -577,6 +629,7 @@ class MachineController(object):
             if var.startswith(startswith) and var.endswith(endswith):
                 del self.machine_vars[var]
                 self.machine_var_data_manager.remove_key(var)
+
 
 
 # The MIT License (MIT)

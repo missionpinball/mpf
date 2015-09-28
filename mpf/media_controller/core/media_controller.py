@@ -23,6 +23,7 @@ from mpf.system.events import EventManager
 from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
 from mpf.system.player import Player
+from mpf.system.assets import AssetManager
 import mpf.system.bcp as bcp
 import version
 
@@ -58,7 +59,6 @@ class MediaController(object):
         self.done = False  # todo
         self.machine_path = None
         self.asset_managers = dict()
-        self.num_assets_to_load = 0
         self.window = None
         self.window_manager = None
         self.pygame = False
@@ -79,6 +79,10 @@ class MediaController(object):
         self.machine_var_monitor = False
         self.tick_num = 0
         self.delay = DelayManager()
+        self.last_asset_loading_tick = 0
+
+        self._pc_assets_to_load = 0
+        self._pc_total_assets = 0
 
         Task.create(self._check_crash_queue)
 
@@ -177,6 +181,8 @@ class MediaController(object):
             # malicious files in the system folder then you have access to this
             # code too.
 
+        self.events.add_handler('assets_to_load', self.asset_loading_counter)
+
         self.start_socket_thread()
 
         self.events.post("init_phase_1")
@@ -214,8 +220,8 @@ class MediaController(object):
         may want to use a window, but we don't know which combinations might
         be used, so we centralize the creation and management of an onscreen
         window here.
-        """
 
+        """
         if not self.window:
             self.window_manager = window.WindowManager(self)
             self.window = self.window_manager.window
@@ -257,6 +263,7 @@ class MediaController(object):
 
             self.events.add_handler('timer_tick', self.get_pygame_events,
                                     priority=1000)
+            self.events.add_handler('timer_tick', self.asset_loading_counter)
 
             self.events.post('pygame_initialized')
 
@@ -320,7 +327,7 @@ class MediaController(object):
 
         """
         self.sending_queue.put(bcp.encode_command_string(bcp_command,
-                                                          **kwargs))
+                                                         **kwargs))
         if callback:
             callback()
 
@@ -635,6 +642,47 @@ class MediaController(object):
                 callback(name=name, value=self.vars[name],
                          prev_value=prev_value, change=change)
 
+    def asset_loading_counter(self, remaining=None, total=None):
+
+        # Updates from the pinball controller can come in real fast, and this
+        # method responding to them all can get in a loop that makes the MC
+        # unresponsive. So we make sure we only do this here once per tick
+        if self.tick_num == self.last_asset_loading_tick:
+            return
+
+        self.last_asset_loading_tick = self.tick_num
+
+        if remaining is not None:
+            self._pc_assets_to_load = int(remaining)
+            self._pc_total_assets = int(total)
+
+
+        if AssetManager.total_assets:
+            # max because this could go negative at first
+            percent = max(0, int(float(AssetManager.total_assets -
+                                       self._pc_assets_to_load -
+                                       AssetManager.assets_to_load) /
+                                       AssetManager.total_assets * 100))
+        else:
+            percent = 100
+
+        self.log.debug("Asset Loading Counter. PC remaining:{}, MC remaining:"
+                       "{}, Percent Complete: {}".format(
+                       self._pc_assets_to_load, AssetManager.assets_to_load,
+                       percent))
+
+        self.events.post('asset_loader',
+                         total=AssetManager.assets_to_load +
+                               self._pc_assets_to_load,
+                         pc=self._pc_assets_to_load,
+                         mc=AssetManager.assets_to_load,
+                         percent=percent)
+
+        if not self._pc_assets_to_load and not AssetManager.assets_to_load:
+            self.log.debug("Asset Loading Complete")
+            self.send('reset_complete')
+
+            self.events.remove_handler(self.asset_loading_counter)
 
 # The MIT License (MIT)
 

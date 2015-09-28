@@ -146,7 +146,9 @@ class BCP(object):
                                      'switch': self.bcp_receive_switch,
                                      'trigger': self.bcp_receive_trigger,
                                      'get': self.bcp_receive_get,
-                                     'set': self.bcp_receive_set
+                                     'set': self.bcp_receive_set,
+                                     'reset_complete':
+                                         self.bcp_receive_reset_complete,
                                     }
 
         self.dmd = None
@@ -586,6 +588,10 @@ class BCP(object):
 
         """
         pass
+
+    def bcp_receive_reset_complete(self, **kwargs):
+        print "bcp module received reset complete"
+        self.machine.bcp_reset_complete()
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
         """Sends BCP 'mode_start' to the connected BCP hosts and schedules

@@ -150,16 +150,10 @@ slide_player:
         text: "VOLUME: %display_volume%"
         expire: 2s
         slide_priority: 10000
-    assets_to_load:
-        type: text
-        text: "LOADING ASSETS: %assets% TO GO"
-        font: small
-        expire: 1s
-    assets_loading_complete:
-        type: text
-        text: ASSET LOADING COMPLETE
-        font: small
-        expire: 1s
+    asset_loader:
+      type: text
+      text: "LOADING: %percent%"
+      font: small
 
 debug_profiles:
     verbose:

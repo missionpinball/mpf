@@ -39,6 +39,18 @@ class AssetManager(object):
     for images, one for movies, one for sounds, etc.)
     """
 
+    assets_to_load = 0
+    total_assets = 0
+
+    @classmethod
+    def add_asset_to_load(cls):
+        AssetManager.assets_to_load += 1
+        AssetManager.total_assets += 1
+
+    @classmethod
+    def remove_asset_to_load(cls):
+        AssetManager.assets_to_load -= 1
+
     def __init__(self, machine, config_section, path_string, asset_class,
                  asset_attribute, file_extensions):
 
@@ -346,7 +358,7 @@ class AssetManager(object):
         # priority above is negative so this becomes a LIFO queue
         self.log.debug("Adding %s to loader queue at priority %s. New queue "
                        "size: %s", asset, priority, self.loader_queue.qsize())
-        self.machine.num_assets_to_load += 1
+        AssetManager.add_asset_to_load()
 
     def locate_asset_file(self, file_name, path=None):
         """Takes a file name and a root path and returns a link to the absolute
@@ -425,7 +437,7 @@ class AssetLoader(threading.Thread):
                                    asset[2])
                     asset[2]()
 
-                self.machine.num_assets_to_load -= 1
+                AssetManager.remove_asset_to_load()
 
                 # If the asset is already loaded, just ignore it and move on.
                 # I thought about trying to make sure that an asset isn't
