@@ -87,6 +87,7 @@ class Player(object):
         # changes for it.
         self.vars['index'] = index
         self.vars['number'] = number
+        self.score = 0  # do it this way so we get the player_score event
 
     def __repr__(self):
         try:
@@ -102,9 +103,14 @@ class Player(object):
             return 0
 
     def __setattr__(self, name, value):
+        new_entry = False
         prev_value = 0
         if name in self.vars:
             prev_value = self.vars[name]
+        else:
+            new_entry = True
+
+
         self.vars[name] = value
 
         try:
@@ -115,7 +121,7 @@ class Player(object):
             else:
                 change = False
 
-        if change:
+        if change or new_entry:
 
             self.log.debug("Setting '%s' to: %s, (prior: %s, change: %s)",
                            name, self.vars[name], prev_value, change)
