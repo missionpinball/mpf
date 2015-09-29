@@ -317,7 +317,7 @@ class BCP(object):
         self.machine.machine_var_monitor = True
         self.machine.register_monitor('machine_vars', self._machine_var_change)
 
-        if self.filter_player_events:
+        if self.filter_machine_vars:
             for event in self.config['machine_variables']:
                 self.mpfmc_trigger_events.add('machine_var_' + event.lower())
 
