@@ -98,6 +98,11 @@ class MachineController(object):
         else:
             self.set_default_platform('virtual')
 
+        # Do this here so there's a credit_string var even if they're not using
+        # the credits mode
+        self.create_machine_var('credits_string',
+            self.config['credits']['free_play_string'], silent=True)
+
         self._load_system_modules()
 
         self.config['machine'] = self.config_processor.process_config2(
@@ -462,32 +467,14 @@ class MachineController(object):
 
     def bcp_reset_complete(self):
         self.flag_bcp_reset_complete = True
-        if self.asset_loader_complete:
-            self.events.remove_handler(self._loading_tick)
-        self.flag_bcp_reset_complete = True
 
     def _reset_complete(self):
         self.log.debug('Reset Complete')
         self.events.post('reset_complete')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        self.events.remove_handler(self._loading_tick)
 
     def configure_debugger(self):
         pass
-
 
     def get_debug_status(self, debug_path):
 
@@ -574,7 +561,7 @@ class MachineController(object):
             return None
 
     def create_machine_var(self, name, value=0, persist=False,
-                           expire_secs=None):
+                           expire_secs=None, silent=False):
         """Creates a new machine variable:
 
         Args:
@@ -598,7 +585,8 @@ class MachineController(object):
 
         self.machine_vars[name] = var
 
-        self.set_machine_var(name, value, force_events=True)
+        if not silent:
+            self.set_machine_var(name, value, force_events=True)
 
     def remove_machine_var(self, name):
         """Removes a machine variable by name. If this variable persists to
