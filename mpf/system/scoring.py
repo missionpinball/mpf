@@ -44,8 +44,15 @@ class ScoreController(object):
         return self.mode_stop, mode
 
     def mode_stop(self, mode, **kwargs):
-        del self.mode_configs[mode]
-        del self.mode_scores[mode]
+        try:
+            del self.mode_configs[mode]
+        except KeyError:
+            pass
+
+        try:
+            del self.mode_scores[mode]
+        except KeyError:
+            pass
 
     def _score_event_callback(self, event_name, mode, **kwargs):
         if not (self.machine.game.player and self.machine.game.balls_in_play):
