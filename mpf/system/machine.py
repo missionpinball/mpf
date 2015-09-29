@@ -131,14 +131,18 @@ class MachineController(object):
 
     def _load_machine_vars(self):
         self.machine_var_data_manager = DataManager(self, 'machine_vars')
-        self.machine_vars = self.machine_var_data_manager.get_data()
 
-        # If any of the saved vars have expired, clear them
         current_time = time.time()
-        for name, settings in self.machine_vars.iteritems():
+
+        for name, settings in (
+                self.machine_var_data_manager.get_data().iteritems()):
+
             if ('expire' in settings and settings['expire'] and
-                        settings['expire'] < current_time):
-                self.machine_vars[name] = 0
+                    settings['expire'] < current_time):
+
+                settings['value'] = 0
+
+            self.create_machine_var(name=name, value=settings['value'])
 
     def _check_crash_queue(self):
         try:
