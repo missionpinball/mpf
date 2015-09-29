@@ -51,3 +51,16 @@ slide_player:
       repeats: -1
       on_secs: .2
       off_secs: .2
+  enabling_free_play:
+    type: text
+    text: ENABLING FREE PLAY
+    expire: 2s
+  enabling_credit_play:
+  - type: text
+    text: ENABLING CREDIT PLAY
+    expire: 2s
+  - type: text
+    text: "%machine|credits_string%"
+    expire: 2s
+    font: small
+    v_pos: bottom

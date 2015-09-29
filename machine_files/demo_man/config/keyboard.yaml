@@ -52,3 +52,5 @@ keyboard:
     switch: s_fourth_coin
   ctrl+5:
     switch: s_esc
+  ctrl+8:
+    event: toggle_credit_play

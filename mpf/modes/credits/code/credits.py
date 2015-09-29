@@ -37,12 +37,25 @@ class Credits(Mode):
             'credits', self.credits_config, 'credits')
 
     def mode_start(self, **kwargs):
+        self.machine.events.add_handler('enable_free_play',
+                                        self.enable_free_play)
+        self.machine.events.add_handler('enable_credit_play',
+                                        self.enable_credit_play)
+        self.machine.events.add_handler('toggle_credit_play',
+                                        self.toggle_credit_play)
+
         if self.credits_config['free_play']:
-            self.stop()
+            self.enable_free_play(post_event=False)
         else:
             self._calculate_credit_units()
             self._calculate_pricing_tiers()
-            self.enable_coin_play()
+            self.enable_credit_play(post_event=False)
+
+    def mode_stop(self, **kwargs):
+        self.machine.events.remove_handler(self.enable_free_play)
+        self.machine.events.remove_handler(self.enable_credit_play)
+        self.machine.events.remove_handler(self.toggle_credit_play)
+        self.enable_free_play()
 
     def _calculate_credit_units(self):
         # "credit units" are how we handle fractional credits (since most
@@ -104,7 +117,9 @@ class Credits(Mode):
 
             self.pricing_tiers.add((credit_units, bonus))
 
-    def enable_coin_play(self):
+    def enable_credit_play(self, post_event=True, **kwargs):
+
+        self.credits_config['free_play'] = False
 
         if self.machine.is_machine_var('credit_units'):
             credit_units = self.machine.get_machine_var('credit_units')
@@ -144,6 +159,32 @@ class Credits(Mode):
                                         self._game_started)
         self.machine.events.add_handler('ball_starting',
                                         self._ball_starting)
+        if post_event:
+            self.machine.events.post('enabling_credit_play')
+
+    def enable_free_play(self, post_event=True, **kwargs):
+        self.credits_config['free_play'] = True
+
+        self.machine.events.remove_handler(self._player_add_request)
+        self.machine.events.remove_handler(self._request_to_start_game)
+        self.machine.events.remove_handler(self._player_add_success)
+        self.machine.events.remove_handler(self._game_ended)
+        self.machine.events.remove_handler(self._game_started)
+        self.machine.events.remove_handler(self._ball_starting)
+
+        self._disable_credit_switch_handlers()
+
+        self._update_credit_strings()
+
+        if post_event:
+            self.machine.events.post('enabling_free_play')
+
+    def toggle_credit_play(self, **kwargs):
+
+        if self.credits_config['free_play']:
+            self.enable_credit_play()
+        else:
+            self.enable_free_play()
 
     def _player_add_request(self):
         if (self.machine.get_machine_var('credit_units') >=
@@ -189,6 +230,17 @@ class Credits(Mode):
 
         for switch in self.credits_config['service_credits_switch']:
             self.machine.switch_controller.add_switch_handler(
+                switch_name=switch.name,
+                callback=self._service_credit_callback)
+
+    def _disable_credit_switch_handlers(self):
+        for switch_settings in self.credits_config['switches']:
+            self.machine.switch_controller.remove_switch_handler(
+                switch_name=switch_settings['switch'].name,
+                callback=self._credit_switch_callback)
+
+        for switch in self.credits_config['service_credits_switch']:
+            self.machine.switch_controller.remove_switch_handler(
                 switch_name=switch.name,
                 callback=self._service_credit_callback)
 
@@ -238,7 +290,7 @@ class Credits(Mode):
 
         Args:
             price_tiering: Boolean which controls whether this credit will be
-            eligible for the pricing tier bonuses. Default is True.
+                eligible for the pricing tier bonuses. Default is True.
 
         """
         self._add_credit_units(self.credit_units_per_game, price_tiering)
@@ -262,7 +314,8 @@ class Credits(Mode):
 
         if numerator:
             if whole_num:
-                display_fraction = '{} {}/{}'.format(whole_num, numerator, denominator)
+                display_fraction = '{} {}/{}'.format(whole_num, numerator,
+                                                     denominator)
             else:
                 display_fraction = '{}/{}'.format(numerator, denominator)
 
