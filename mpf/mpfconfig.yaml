@@ -228,7 +228,6 @@ config_validator:
       max_credits: single|int|0
       free_play: single|bool|yes
       service_credits_switch: list|self.machine.switches[%]|None
-      pricing_tier_reset: single|str|ball2
       fractional_credit_expiration_time: single|ms|0
       credit_expiration_time: single|ms|0
       persist_credits_while_off_time: single|secs|1h

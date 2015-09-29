@@ -30,9 +30,8 @@ credits:
   fractional_credit_expiration_time: 15m
   credit_expiration_time: 2h
   persist_credits_while_off_time: 1h
-
-  # timestamp in audits
-  # earnings data file?
+  free_play_string: FREE PLAY
+  credits_string: CREDITS
 
 slide_player:
   credits_added:
