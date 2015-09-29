@@ -60,6 +60,7 @@ mpf:
         machine_vars: data/machine_vars.yaml
         high_scores: data/high_scores.yaml
         config_cache: data/config_cache.yaml
+        earnings: data/earnings.yaml
         machine_files: machine_files
         config: config
         modes: modes
@@ -223,6 +224,23 @@ config_validator:
         disable_events: dict|str:ms|None
         pulse_events: dict|str:ms|None
         platform: single|str|None
+    credits:
+      max_credits: single|int|0
+      free_play: single|bool|yes
+      service_credits_switch: list|self.machine.switches[%]|None
+      pricing_tier_reset: single|str|ball2
+      fractional_credit_expiration_time: single|ms|0
+      credit_expiration_time: single|ms|0
+      persist_credits_while_off_time: single|secs|1h
+      free_play_string: single|str|FREE PLAY
+      credits_string: single|str|CREDITS
+      switches:
+        switch: single|self.machine.switches[%]|None
+        value: single|float|0.25
+        type: single|str|money
+      pricing_tiers:
+        price: single|float|.50
+        credits: single|int|1
     diverters:
         type: single|str|hold
         activation_time: single|ms|0
@@ -576,23 +594,6 @@ ball_search:
     Secs between ball search coils: .15
     If ball search fails: Keep Looking
 
-logic_blocks:
-
-    counters:
-
-        tilt:
-            count_events: sw_tilt
-            event_when_hit: tilt_hit
-            count_complete_value: 3
-            events_when_complete: tilt
-            multiple_hit_window: 500ms
-            reset_each_ball: yes
-
-        slam_tilt:
-            count_events: sw_slamTilt
-            count_complete_value: 1
-            events_when_complete: slam_tilt
-
 displaydefaults:
     text:
         font: default
@@ -743,3 +744,7 @@ high_score:
       - HIGH SCORE 2
       - HIGH SCORE 3
       - HIGH SCORE 4
+
+credits:
+  free_play: yes
+  free_play_string: FREE PLAY
