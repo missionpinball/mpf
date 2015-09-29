@@ -88,7 +88,18 @@ class Text(DisplayElement):
                 text = text.replace('%' + var_string + '%',
                     str(local_replacements[var_string.split('|')[1]]))
                 self.original_text = text
-            elif var_string.startswith('machine|'):
+
+        if self._get_text_vars():
+            self._setup_variable_monitors()
+
+        self.update_vars_in_text()
+
+    def update_vars_in_text(self):
+
+        text = self.original_text
+
+        for var_string in self._get_text_vars():
+            if var_string.startswith('machine|'):
                 try:
                     text = text.replace('%' + var_string + '%',
                         str(self.machine.machine_vars[var_string.split('|')[1]]))
@@ -113,9 +124,6 @@ class Text(DisplayElement):
                 else:
                     text = text.replace('%' + var_string + '%',
                                         str(self.machine.player[var_string]))
-
-        if self._get_text_vars():
-            self._setup_variable_monitors()
 
         self.update_text(text)
 
@@ -148,30 +156,34 @@ class Text(DisplayElement):
 
     def _player_var_change(self, player_num, target_player, var_name, value,
                          **kwargs):
-        value = str(value)
+        # value = str(value)
+        #
+        # if (player_num and target_player and
+        #         int(player_num) == int(target_player)):
+        #     player_num = str(player_num)
+        #     new_text = self.original_text.replace(
+        #         '%player{}|{}%'.format(player_num, var_name), value)
+        #     new_text = new_text.replace('%player|{}%'.format(var_name), value)
+        #     new_text = new_text.replace('%{}%'.format(var_name), value)
+        #
+        #     self.update_text(new_text)
+        #
+        # elif player_num and not target_player:
+        #     new_text = self.original_text.replace(
+        #         '%player|{}%'.format(var_name), value)
+        #     new_text = new_text.replace('%{}%'.format(var_name), value)
+        #
+        #     self.update_text(new_text)
 
-        if (player_num and target_player and
-                int(player_num) == int(target_player)):
-            player_num = str(player_num)
-            new_text = self.original_text.replace(
-                '%player{}|{}%'.format(player_num, var_name), value)
-            new_text = new_text.replace('%player|{}%'.format(var_name), value)
-            new_text = new_text.replace('%{}%'.format(var_name), value)
-
-            self.update_text(new_text)
-
-        elif player_num and not target_player:
-            new_text = self.original_text.replace(
-                '%player|{}%'.format(var_name), value)
-            new_text = new_text.replace('%{}%'.format(var_name), value)
-
-            self.update_text(new_text)
+        self.update_vars_in_text()
 
     def _machine_var_change(self, value, change, prev_value, var_name,
                             **kwargs):
 
-        return self.update_text(self.original_text.replace(
-            '%machine|{}%'.format(var_name), str(value)))
+        self.update_vars_in_text()
+
+        # return self.update_text(self.original_text.replace(
+        #     '%machine|{}%'.format(var_name), str(value)))
 
     def _setup_variable_monitors(self):
 
