@@ -560,6 +560,12 @@ class MachineController(object):
         except KeyError:
             return None
 
+    def is_machine_var(self, name):
+        if name in self.machine_vars:
+            return True
+        else:
+            return False
+
     def create_machine_var(self, name, value=0, persist=False,
                            expire_secs=None, silent=False):
         """Creates a new machine variable:

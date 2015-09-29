@@ -1,0 +1,9 @@
+money:
+  count: 17
+  total_value: 5.75
+service_credit:
+  count: 4
+  total_value: 4
+token:
+  count: 1
+  total_value: 1.0

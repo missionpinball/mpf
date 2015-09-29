@@ -19,22 +19,8 @@
 
 - tocks: 2
   display:
-    - type: Text
-      text: PRESS START
-      decorators:
-        type: blink
-        repeats: -1
-        on_secs: .5
-        off_secs: .5
-    - type: Text
-      text: FREE PLAY
-      color: 00ff00
-      v_pos: bottom
-      font: small
-      transition:
-        type: move_in
-        duration: 1s
-        direction: right
+    type: text
+    text: "%machine|credits_string%"
 
 - tocks: 2
   display:
@@ -56,7 +42,6 @@
       width: 126
       height: 30
       shade: 8
-      slide: Show slide 1
 - tocks: 2
   display:
     - type: text
@@ -77,7 +62,6 @@
         type: move_out
         duration: 1s
         direction: top
-      slide: Show slide 2
 - tocks: 2
   display:
     - type: text
@@ -136,7 +120,7 @@
       x: -1
       y: -10
     - type: text
-      text: FREE PLAY
+      text: "%machine|credits_string%"
       font: small
       h_pos: center
       v_pos: bottom

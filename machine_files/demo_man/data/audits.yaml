@@ -1,7 +1,7 @@
 events:
   ball_search_begin_phase1: 0
   game_ended: 3
-  game_started: 281
+  game_started: 314
 player:
   score:
     average: 1780732
@@ -55,7 +55,7 @@ switches:
   s_fourth_coin: 0
   s_handle_trigger_left: 0
   s_handle_trigger_right: 0
-  s_left_coin: 0
+  s_left_coin: 14
   s_left_handle_button: 0
   s_left_inlane: 5
   s_left_jet: 0
@@ -64,9 +64,9 @@ switches:
   s_left_ramp_enter: 8
   s_left_ramp_exit: 3
   s_left_rollover: 1
-  s_left_slingshot: 1154
+  s_left_slingshot: 1178
   s_lower_rebound: 1
-  s_plumb_bob: 0
+  s_plumb_bob: 12
   s_right_coin: 0
   s_right_freeway: 2
   s_right_inlane: 1
@@ -85,10 +85,10 @@ switches:
   s_standup_3: 1
   s_standup_4: 1
   s_standup_5: 0
-  s_start: 363
+  s_start: 416
   s_top_popper: 0
   s_top_slingshot: 2
-  s_trough_1: 37
+  s_trough_1: 42
   s_trough_2: 3
   s_trough_3: 3
   s_trough_4: 3

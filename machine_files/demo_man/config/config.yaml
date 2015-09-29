@@ -20,9 +20,10 @@ modes:
   - skillshot
   - bonus
   - high_score
+#  - tilt
+  - credits
 
 scriptlets:
-    attract.Attract
     add_a_ball.AddABall
     claw.Claw
 
