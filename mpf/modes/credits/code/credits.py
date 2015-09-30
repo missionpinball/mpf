@@ -19,8 +19,6 @@ class Credits(Mode):
         self.data_manager = DataManager(self.machine, 'earnings')
         self.earnings = self.data_manager.get_data()
 
-        self.auto_stop_on_ball_end = False
-
         self.credit_units_per_game = 0
         self.credit_units_inserted = 0
         self.credit_unit = 0

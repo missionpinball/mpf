@@ -391,6 +391,7 @@ config_validator:
         stop_priority: single|int|0
         use_wait_queue: single|bool|False
         code: single|str|None
+        stop_on_ball_end: single|bool|True
     multiballs:
         ball_count: single|int|
         source_playfield: single|self.machine.ball_devices[%]|playfield

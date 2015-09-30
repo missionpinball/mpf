@@ -43,17 +43,17 @@ class Mode(object):
         self.mode_stop_kwargs = dict()
         self.mode_devices = set()
 
-        self.auto_stop_on_ball_end = True
-        '''Controls whether this mode is stopped when the ball ends,
-        regardless of its stop_events settings.
-        '''
-
         self.player = None
         '''Reference to the current player object.'''
 
         self._validate_mode_config()
 
         self.configure_mode_settings(config.get('mode', dict()))
+
+        self.auto_stop_on_ball_end = self.config['mode']['stop_on_ball_end']
+        '''Controls whether this mode is stopped when the ball ends,
+        regardless of its stop_events settings.
+        '''
 
         for asset_manager in self.machine.asset_managers.values():
 

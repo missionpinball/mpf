@@ -28,7 +28,6 @@ class Game(Mode):
 
     def __init__(self, machine, config, name, path):
         super(Game, self).__init__(machine, config, name, path)
-        self.auto_stop_on_ball_end = False
         self._balls_in_play = 0
         self.tilted = False
         self.player_list = list()
