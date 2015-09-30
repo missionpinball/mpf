@@ -194,7 +194,6 @@ class ShotGroup(Device):
         shot group, must both be enabled for the rotation events to work.
 
         """
-
         if not self.rotation_enabled:
 
             if self.debug:
@@ -211,13 +210,13 @@ class ShotGroup(Device):
         if states:
             states = Config.string_to_lowercase_list(states)
         else:
-            states = self.shots[0].active_settings['settings']['state_names_to_rotate']
+            states = self.shots[0].enable_table[mode]['settings']['state_names_to_rotate']
 
         if exclude_states:
             exclude_states = Config.string_to_lowercase_list(exclude_states)
         else:
             exclude_states = (
-                self.shots[0].active_settings['settings']['state_names_to_not_rotate'])
+                self.shots[0].enable_table[mode]['settings']['state_names_to_not_rotate'])
 
         shot_list = list()
 
@@ -231,6 +230,7 @@ class ShotGroup(Device):
 
                 shot_list.append(shot)
 
+        # shot_state_list is deque of tuples (state num, light show step num)
         shot_state_list = deque()
 
         for shot in shot_list:
@@ -242,12 +242,12 @@ class ShotGroup(Device):
                 current_state = -1
 
             shot_state_list.append(
-                (shot.player[shot.active_settings['settings']['player_variable']],
+                (shot.player[shot.enable_table[mode]['settings']['player_variable']],
                  current_state))
 
         if self.debug:
-            self.log.debug('Rotating. Mode: %s, Direction: %s, Include states: '
-                           '%s, Exclude states: %s, Shots to be rotated: %s',
+            self.log.debug('Rotating. Mode: %s, Direction: %s, Include states:'
+                           ' %s, Exclude states: %s, Shots to be rotated: %s',
                            mode, direction, states,
                exclude_states, [x.name for x in shot_list])
 
