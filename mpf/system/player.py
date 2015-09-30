@@ -71,6 +71,7 @@ class Player(object):
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
         self.__dict__['vars'] = dict()
+        self.__dict__['uvars'] = dict()  # for "untracked" player vars
 
         player_list.append(self)
 
