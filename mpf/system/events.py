@@ -27,10 +27,11 @@ class EventManager(object):
 
         self.debug = True
 
-        self.add_handler('init_phase_1', self._initialize,
-                         setup_event_player=setup_event_player)
+        if setup_event_player:
+            self.add_handler('init_phase_1', self._setup_event_player)
 
-    def _initialize(self, setup_event_player):
+    def _setup_event_player(self):
+
         if 'event_player' in self.machine.config:
             self.process_event_player(self.machine.config['event_player'])
 
