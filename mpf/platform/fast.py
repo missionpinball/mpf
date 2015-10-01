@@ -1164,6 +1164,7 @@ class SerialCommunicator(object):
                                  'L1:P',
                                  'GI:P',
                                  'TL:P',
+                                 'TN:P'
                                  'XX:U',
                                  'XX:N',
                                  ]
