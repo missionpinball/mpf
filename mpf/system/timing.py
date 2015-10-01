@@ -110,30 +110,30 @@ class Timing(object):
         time_string = str(time_string).upper()
 
         if time_string.endswith('MS') or time_string.endswith('MSEC'):
-            time_string = ''.join(i for i in time_string if i.isdigit())
+            time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(time_string)
 
         elif 'D' in time_string:
-            time_string = ''.join(i for i in time_string if i.isdigit())
+            time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(float(time_string) * 86400 * 1000)
 
         elif 'H' in time_string:
-            time_string = ''.join(i for i in time_string if i.isdigit())
+            time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(float(time_string) * 3600 * 1000)
 
         elif 'M' in time_string:
-            time_string = ''.join(i for i in time_string if i.isdigit())
+            time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(float(time_string) * 60 * 1000)
 
         elif time_string.endswith('S') or time_string.endswith('SEC'):
-            time_string = ''.join(i for i in time_string if i.isdigit())
+            time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(float(time_string) * 1000)
 
         elif not time_string or time_string == 'NONE':
             return 0
 
         else:
-            time_string = ''.join(i for i in time_string if i.isdigit())
+            time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(time_string)
 
     @staticmethod
