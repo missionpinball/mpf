@@ -461,11 +461,10 @@ class BallDevice(Device):
     def _balls_missing(self, balls):
         # Called when ball_count finds that balls are missing from this device
 
-        self.log.warning("%s ball(s) missing from device", abs(balls))
-
-        # todo dunno if there's any action we should take here? This should
-        # never happen unless someone takes the glass off and steals a ball or
-        # unless there's a ball switch or a ball randomly falls out of a device?
+        if self.debug:
+            self.log.debug("%s ball(s) missing from device", abs(balls))
+            self.machine.events.post('balldevice_{}_ball_missing'.format(
+                abs(balls)))
 
     def is_full(self):
         """Checks to see if this device is full, meaning it is holding either

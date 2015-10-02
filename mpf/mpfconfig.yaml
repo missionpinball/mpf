@@ -569,6 +569,7 @@ led_settings:
 game:
     balls_per_game: 3
     max_players: 4
+    player_controlled_eject_tag: False
 
 auditor:
     save_events:
