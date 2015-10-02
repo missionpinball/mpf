@@ -200,6 +200,8 @@ class BallController(object):
             if device not in target_devices:
                 source_devices.add(device)
 
+        self.log.debug("Ejecting all balls from: %s", source_devices)
+
         for device in source_devices:
             device.eject_all()
 
@@ -208,6 +210,8 @@ class BallController(object):
     def _collecting_balls_entered_callback(self, target, balls):
         if self.are_balls_collected(target=target):
             self._collecting_balls_complete()
+
+        return {'balls': balls}
 
     def _collecting_balls_complete(self):
         self.machine.events.remove_handler(self._collecting_balls_complete)

@@ -446,13 +446,17 @@ class BallDevice(Device):
                                             callback=self._balls_added_callback)
 
         if self.waiting_for_manual_eject or self.waiting_for_eject_trigger:
+
+            if self.debug:
+                self.log.debug("Ball added while wait for player eject. "
+                               "Assuming eject failed")
+
             self.machine.events.post(
                 'balldevice_{}_player_controlled_eject_failed'
                 .format(self.name))
 
     def _balls_added_callback(self, balls, **kwargs):
         # Callback event for the balldevice_<name>_ball_enter relay event
-
         if self.waiting_for_manual_eject or self.waiting_for_eject_trigger:
             return
 
@@ -471,8 +475,8 @@ class BallDevice(Device):
 
         if self.eject_queue:
             if self.debug:
-                self.log.debug("A ball was added and we have an eject_queue, so"
-                               " we're going to process that eject now.")
+                self.log.debug("A ball was added and we have an eject_queue, "
+                               "so we're going to process that eject now.")
             self._do_eject()
 
     def _balls_missing(self, balls):
@@ -491,8 +495,8 @@ class BallDevice(Device):
 
     def is_full(self):
         """Checks to see if this device is full, meaning it is holding either
-        the max number of balls it can hold, or it's holding all the known balls
-        in the machine.
+        the max number of balls it can hold, or it's holding all the known
+        balls in the machine.
 
         Returns: True or False
 
@@ -716,6 +720,11 @@ class BallDevice(Device):
 
         """
         # Figure out the eject target
+
+        if self.debug:
+            self.log.debug("Received eject request. Balls: %s, target: %s, "
+                           "timeout: %s, get_ball: %s", balls, target, timeout,
+                           get_ball)
 
         if balls < 1:
             self.log.warning("Received request to eject %s balls, which doesn't"
