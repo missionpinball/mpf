@@ -201,12 +201,14 @@ class Game(Mode):
             self.machine.events.post(
                 'player_{}_ball_started'.format(self.player.number))
 
-        try:
-            self.machine.playfield.add_ball(trigger_event=self.machine.config
-                ['mpf']['switch_tag_event'].replace('%',
-                self.machine.config['game']['player_controlled_eject_tag']))
-        except KeyError:
-            self.machine.playfield.add_ball()
+        self.machine.playfield.add_ball(player_controlled=True)
+
+        # try:
+        #     self.machine.playfield.add_ball(trigger_event=self.machine.config
+        #         ['mpf']['switch_tag_event'].replace('%',
+        #         self.machine.config['game']['player_controlled_eject_tag']))
+        # except KeyError:
+        #     self.machine.playfield.add_ball()
 
     def ball_drained(self, balls=0, **kwargs):
         self.log.debug("Entering Game.ball_drained()")
