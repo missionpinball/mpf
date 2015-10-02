@@ -189,12 +189,17 @@ config_validator:
         release_one_events: dict|str:ms|None
     ball_saves:
         source_playfield: single|self.machine.ball_devices[%]|playfield
-        auto_disable_time: single|ms|0
+        active_time: single|ms|0
+        hurry_up_time: single|ms|0
+        grace_period: single|ms|0
+        auto_launch: single|bool|True
+        balls_to_save: single|int|1
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False
         enable_events: dict|str:ms|None
         disable_events: dict|str:ms|ball_ending
+        timer_start_events: dict|str:ms|None
     bcp:
       connections:
         host: single|str|None

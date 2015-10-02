@@ -114,6 +114,10 @@ class Device(object):
         # Called on mode start if this device has any control events in that mode
         pass
 
+    def remove(self):
+        raise NotImplementedError(
+            '{} does not have a remove() method'.format(self.name))
+
 
 # The MIT License (MIT)
 
