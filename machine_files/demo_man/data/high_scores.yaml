@@ -4,25 +4,14 @@
         - BRI
         - 7050550
       - !!python/tuple
+        - BRI
+        - 93060
+      - !!python/tuple
+        - BRI
+        - 87890
+      - !!python/tuple
         - BID
         - 31020
       - !!python/tuple
         - BRI
         - 14210
-      - !!python/tuple
-        - GHK
-        - 12340
-      - !!python/tuple
-        - EEE
-        - 4560
-  - - ramps
-    - - !!python/tuple
-        - HKO
-        - 5
-  - - loops
-    - - !!python/tuple
-        - TQN
-        - 4
-      - !!python/tuple
-        - BRI
-        - 2
