@@ -52,7 +52,6 @@ class Playfield(BallDevice):
         # Attributes
         self._balls = 0
         self.num_balls_requested = 0
-        self.player_controlled_eject_in_progress = None
         self.queued_balls = list()
         self._playfield = True
 
@@ -70,7 +69,6 @@ class Playfield(BallDevice):
                         event='balldevice_' + device.name +
                         '_ball_eject_failed',
                         handler=self._source_device_eject_failed)
-
                     self.machine.events.add_handler(
                         event='balldevice_' + device.name +
                         '_ball_eject_attempt',
@@ -248,103 +246,17 @@ class Playfield(BallDevice):
                               " add a ball.")
             return False
 
-        # If there's a player controlled eject in progress for this device, we
-        # hold this request until it's over.
-        if self.player_controlled_eject_in_progress == source_device:
-            self.queued_balls.append((balls, source_device, trigger_event,
-                                      player_controlled))
-            self.log.debug("An add_ball() request came in while there was a "
-                           "current player-controlled eject in progress for the"
-                            "same device. Will queue the eject request")
-            return True
-
         self.log.debug("Received request to add %s ball(s). Source device: %s."
                        " Wait for event: %s. Player-controlled: %s", balls,
                        source_device.name, trigger_event, player_controlled)
 
-        # If the source device doesn't have an eject coil, then it's a player-
-        # controlled eject regardless of the player_controlled parameter.
-        if not source_device.config['eject_coil']:
-            player_controlled = True
-
         if player_controlled:
-
-            if not trigger_event:
-                trigger_event = (self.machine.config
-                                 ['game']['player_controlled_eject_tag'])
-
-            if trigger_event and source_device.config['eject_coil']:
-                self.setup_player_controlled_eject(balls, source_device,
-                                                   trigger_event)
-
-        else:  # not player-controlled, eject right away
+            source_device.setup_player_controlled_eject(balls=balls,
+                target=self, get_ball=True, trigger_event=trigger_event)
+        else:
             source_device.eject(balls=balls, target=self, get_ball=True)
 
         return True
-
-    def setup_player_controlled_eject(self, balls, device, trigger_event):
-        """Used to set up an eject from a ball device which will eject a ball to
-        the playfield.
-
-        Args:
-            balls: Integer of the number of balls this device should eject.
-            device: The ball device object that will eject the ball(s) when a
-                switch with the player-controlled eject tag is hit.
-            trigger_event: The name of the MPF event that will trigger the
-                eject.
-
-        When this method it called, MPF will set up an event handler to look for
-        the trigger_event.
-
-        """
-        self.log.debug("Setting up a player controlled eject. Balls: %s, "
-                       "Device: %s, Trigger Event: %s", balls, device,
-                       trigger_event)
-
-        if not device.balls:
-            device.request_ball(balls=balls)
-
-        if trigger_event:
-            self.machine.events.add_handler(trigger_event,
-                                            self.player_eject_request,
-                                            balls=balls, device=device)
-        else:
-            device._setup_eject_confirmation(target=self)
-
-        self.player_controlled_eject_in_progress = device
-
-    def remove_player_controlled_eject(self):
-        """Removed the player-controlled eject so a player hitting a switch
-        no longer calls the device(s) to eject a ball.
-
-        """
-        self.log.debug("Removing player-controlled eject.")
-
-        self.machine.events.remove_handler(self.player_eject_request)
-        self.player_controlled_eject_in_progress = None
-
-        # Need to do this in case one of these queued balls is also a player
-        # controlled eject which would re-add it to the queue while iterating.
-        # So we clear it and pass them all to add_ball() and then let the queue
-        # rebuild with what's left if it needs to.
-        ball_list = self.queued_balls
-        self.queued_balls = list()
-
-        for item in ball_list:
-            self.add_ball(balls=item[0], source_device=item[1],
-                          trigger_event=item[2], player_controlled=item[3])
-
-    def player_eject_request(self, balls, device):
-        """A player has hit a switch tagged with the player_eject_request_tag.
-
-        Args:
-            balls: Integer of the number of balls that will be ejected.
-            device: The ball device object that will eject the ball(s).
-
-        """
-        self.log.debug("Received player eject request. Balls: %s, Device: %s",
-                       balls, device.name)
-        device.eject(balls, target=self)
 
     def playfield_switch_hit(self):
         """A switch tagged with '<this playfield name>_active' was just hit,
@@ -408,7 +320,6 @@ class Playfield(BallDevice):
                 raise Exception("num_balls_requested is %s, which doesn't make "
                                 "sense. Quitting...", self.num_balls_requested)
 
-            self.remove_player_controlled_eject()
 
     def ok_to_confirm_ball_via_playfield_switch(self):
         """Used to check whether it's ok for a ball device which ejects to the
