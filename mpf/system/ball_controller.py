@@ -185,27 +185,33 @@ class BallController(object):
 
         target_devices = set()
         source_devices = set()
+        balls_to_collect = False
 
         for tag in tag_list:
             for device in self.machine.ball_devices.items_tagged(tag):
                 target_devices.add(device)
 
-        for device in target_devices:
-            self.machine.events.replace_handler(
-                'balldevice_{}_ball_enter'.format(device.name),
-                self._collecting_balls_entered_callback,
-                target=target)
-
         for device in self.machine.ball_devices:
             if device not in target_devices:
-                source_devices.add(device)
+                if device.balls:
+                    source_devices.add(device)
+                    balls_to_collect = True
 
         self.log.debug("Ejecting all balls from: %s", source_devices)
 
-        for device in source_devices:
-            device.eject_all()
+        if balls_to_collect:
+            self.machine.events.post('collecting_balls')
 
-        self.machine.events.post('collecting_balls')
+            for device in target_devices:
+                self.machine.events.replace_handler(
+                    'balldevice_{}_ball_enter'.format(device.name),
+                    self._collecting_balls_entered_callback,
+                    target=target)
+
+            for device in source_devices:
+                device.eject_all()
+        else:
+            self.log.debug("All balls are collected")
 
     def _collecting_balls_entered_callback(self, target, balls):
         if self.are_balls_collected(target=target):
