@@ -89,8 +89,8 @@ class BallDevice(Device):
         -based confirmations.
         """
 
-        self.waiting_for_manual_eject = False
-        """Whether this device is waiting for a non-controlled (e.g. spring
+        self.waiting_for_manual_eject = 0
+        """How many balls are waiting for a non-controlled (e.g. spring
         plunger) eject.
         """
 
@@ -445,11 +445,13 @@ class BallDevice(Device):
                                             balls=balls,
                                             callback=self._balls_added_callback)
 
-        if self.waiting_for_manual_eject or self.waiting_for_eject_trigger:
+        if self.waiting_for_manual_eject and self.eject_in_progress_target:
 
             if self.debug:
                 self.log.debug("Ball added while wait for player eject. "
                                "Assuming eject failed")
+
+            self._manual_eject_failed()
 
             self.machine.events.post(
                 'balldevice_{}_player_controlled_eject_failed'
@@ -483,7 +485,9 @@ class BallDevice(Device):
         # Called when ball_count finds that balls are missing from this device
 
         if self.debug:
-            self.log.debug("%s ball(s) missing from device", abs(balls))
+            self.log.debug("%s ball(s) missing from device. Balls waiting for "
+                           "manual eject: %s", abs(balls),
+                           self.waiting_for_manual_eject)
 
         # _do_eject here will setup the confirmations and stuff
         if self.waiting_for_manual_eject:
@@ -678,7 +682,7 @@ class BallDevice(Device):
             # now need to get this thing ready for a ball to randomly vanish
             # This way when _balls_missing() is called, it will know what's up
             # instead of freaking out
-            self.waiting_for_manual_eject = True
+            self.waiting_for_manual_eject = balls
 
         if balls > self.balls:
             if not get_ball:
@@ -807,7 +811,7 @@ class BallDevice(Device):
             # will re-start this _do_eject() process
             return False
 
-        elif self.balls:
+        elif self.balls or self.waiting_for_manual_eject:
             if self.debug:
                 self.log.debug("We have an eject queue: %s", self.eject_queue)
 
@@ -844,7 +848,7 @@ class BallDevice(Device):
                 if self.config['balls_per_eject'] == 1:
                     self.num_balls_ejecting = 1
                 else:
-                    self.num_balls_ejecting = self.balls
+                    self.num_balls_ejecting = self.balls + self.waiting_for_manual_eject
 
 
                 self.machine.events.post_queue('balldevice_' + self.name +
@@ -873,7 +877,8 @@ class BallDevice(Device):
     def _perform_eject(self, target, timeout=None, **kwargs):
         self._setup_eject_confirmation(target, timeout)
 
-        self.balls -= self.num_balls_ejecting
+        if not self.waiting_for_manual_eject:
+            self.balls -= self.num_balls_ejecting
 
         if self.waiting_for_manual_eject:
             pass
@@ -1018,7 +1023,7 @@ class BallDevice(Device):
         # Remove any event watching for success
         self.machine.events.remove_handler(self._eject_success)
         self.machine.events.remove_handler(self.player_eject_request)
-        self.waiting_for_manual_eject = False
+        self.waiting_for_manual_eject = 0
         self.waiting_for_eject_trigger = False
 
         # Remove any switch handlers
@@ -1098,9 +1103,6 @@ class BallDevice(Device):
                 'max_eject_attempts' has been exceeded. Default is False.
 
         """
-        if self.debug:
-            self.log.debug("Eject Failed")
-
         # Put the current target back in the queue so we can try again
         # This sets up the timeout back to the default. Wonder if we should
         # add some intelligence to make this longer or shorter?
@@ -1126,25 +1128,54 @@ class BallDevice(Device):
                                  balls=balls,
                                  num_attempts=self.num_eject_attempts)
 
-        if not self.waiting_for_manual_eject:
-            self._cancel_eject_confirmation()
+        self._cancel_eject_confirmation()
 
-            if (retry and (not self.config['max_eject_attempts'] or
-                    self.num_eject_attempts <
-                    self.config['max_eject_attempts'])):
-                self._do_eject()
+        if (retry and (not self.config['max_eject_attempts'] or
+                self.num_eject_attempts <
+                self.config['max_eject_attempts'])):
+            self._do_eject()
 
-            elif force_retry:
-                self._do_eject()
+        elif force_retry:
+            self._do_eject()
 
-            else:
-                self._eject_permanently_failed()
+        else:
+            self._eject_permanently_failed()
 
     def _eject_permanently_failed(self):
         self.log.warning("Eject failed %s times. Permanently giving up.",
                          self.config['max_eject_attempts'])
         self.machine.events.post('balldevice_' + self.name +
                                  'ball_eject_permanent_failure')
+
+    def _manual_eject_failed(self):
+        if self.debug:
+            self.log.debug("Manual Eject Failed")
+
+        self.eject_queue.appendleft((self.eject_in_progress_target,
+            self.config['eject_timeouts'][self.eject_in_progress_target]))
+
+        self.machine.events.post('balldevice_' + self.name +
+                                 '_ball_eject_failed',
+                                 target=self.eject_in_progress_target,
+                                 balls=self.num_balls_ejecting,
+                                 num_attempts=self.num_eject_attempts)
+
+        self.eject_in_progress_target = None
+        self.num_balls_ejecting = 0
+        self.num_eject_attempts += 1
+
+        self.machine.events.remove_handler(self._eject_success)
+        # Remove any switch handlers
+        if self.config['confirm_eject_type'] == 'switch':
+            self.machine.switch_controller.remove_switch_handler(
+                switch_name=self.config['confirm_eject_switch'].name,
+                callback=self._eject_success,
+                state=1, ms=0)
+
+        # Remove any delays that were watching for failures
+        self.delay.remove('target_eject_confirmation_timeout')
+
+        self.machine.events.remove_handler(self._eject_status)
 
     def _ok_to_receive(self):
         # Post an event announcing that it's ok for this device to receive a

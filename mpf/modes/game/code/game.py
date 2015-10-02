@@ -54,6 +54,10 @@ class Game(Mode):
         self.log.debug("Balls in Play change. New value: %s, (Previous: %s)",
                        self._balls_in_play, prev_balls_in_play)
 
+        if self._balls_in_play > 0:
+            self.machine.events.post('balls_in_play',
+                                     balls=self._balls_in_play)
+
         if prev_balls_in_play and not self._balls_in_play:
             self.ball_ending()
 
@@ -202,13 +206,6 @@ class Game(Mode):
                 'player_{}_ball_started'.format(self.player.number))
 
         self.machine.playfield.add_ball(player_controlled=True)
-
-        # try:
-        #     self.machine.playfield.add_ball(trigger_event=self.machine.config
-        #         ['mpf']['switch_tag_event'].replace('%',
-        #         self.machine.config['game']['player_controlled_eject_tag']))
-        # except KeyError:
-        #     self.machine.playfield.add_ball()
 
     def ball_drained(self, balls=0, **kwargs):
         self.log.debug("Entering Game.ball_drained()")
