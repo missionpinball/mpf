@@ -49,9 +49,8 @@ class Attract(Mode):
                 self.machine.switch_controller.add_switch_handler(
                     switch.name, self.start_button_released, 0))
 
-        if (hasattr(self.machine, 'ball_devices') and
-                self.machine.ball_devices.items_tagged('home')):
-            self.machine.ball_controller.gather_balls('home')
+        if hasattr(self.machine, 'ball_devices'):
+            self.machine.ball_controller.collect_balls()
 
         self.machine.events.post('enable_volume_keys')
         # move volume to its own mode?
