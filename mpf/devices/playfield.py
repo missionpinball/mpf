@@ -252,7 +252,7 @@ class Playfield(BallDevice):
 
         if player_controlled:
             source_device.setup_player_controlled_eject(balls=balls,
-                target=self, get_ball=True, trigger_event=trigger_event)
+                target=self, trigger_event=trigger_event)
         else:
             source_device.eject(balls=balls, target=self, get_ball=True)
 

@@ -46,7 +46,6 @@ mpf:
 
     plugins:
         auditor
-        ball_save
         ball_search
         info_lights
         osc
@@ -175,6 +174,7 @@ config_validator:
         stop_events: dict|str:ms|None
         eject_events: dict|str:ms|None
         eject_all_events: dict|str:ms|None
+        mechanical_eject: single|bool|False
     ball_locks:
         balls_to_lock: single|int|
         lock_devices: list|self.machine.ball_devices[%]|
