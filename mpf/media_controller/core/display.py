@@ -345,6 +345,10 @@ class MPFDisplay(object):
         mode. Will also keep slides that are set to persist=True and will keep
         slides that are actively involved in a transition.
 
+        Slides that have an expire time do not count as the "one slide per
+        mode" since we want to make sure a permanent slide is there when the
+        expiring slide expires.
+
         """
         found_slides_from_modes = list()
         slides_to_remove = list()
@@ -352,10 +356,11 @@ class MPFDisplay(object):
 
         for slide in self.slides:
             if (not slide.persist and
+                    not slide.expire_ms and
                     not slide.active_transition and
                     slide.mode in found_slides_from_modes):
                 slides_to_remove.append(slide)
-            else:
+            elif not slide.expire_ms:
                 found_slides_from_modes.append(slide.mode)
 
             if not slide.surface:
