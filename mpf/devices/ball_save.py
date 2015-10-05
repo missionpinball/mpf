@@ -38,9 +38,6 @@ class BallSave(Device):
         # events, but that will require moving timers out of mode conde
 
     def enable(self, **kwargs):
-
-        print "enabling ball save"
-
         if self.enabled:
             return
 
@@ -62,9 +59,6 @@ class BallSave(Device):
         self.machine.events.post('ball_save_{}_enabled'.format(self.name))
 
     def disable(self, **kwargs):
-
-        print "disabling ball save"
-
         if not self.enabled:
             return
 
@@ -108,9 +102,6 @@ class BallSave(Device):
         self.machine.events.post('ball_save_{}_grace_period'.format(self.name))
 
     def _ball_drain_while_active(self, balls, **kwargs):
-
-        print "ball save drain"
-
         if balls <= 0:
             return {'balls': balls}
 
@@ -132,8 +123,6 @@ class BallSave(Device):
 
         self.machine.events.post('ball_save_{}_saving_ball'.format(self.name),
                                  balls=balls)
-
-        print "saving ball"
 
         self.source_playfield.add_ball(balls=balls,
             player_controlled=self.config['auto_launch']^1)
