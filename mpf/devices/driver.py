@@ -57,6 +57,7 @@ class Driver(Device):
 
         if self.config['allow_enable']:
             self.time_last_changed = time.time()
+            self.log.debug("Enabling Driver")
             self.hw_driver.enable()
         else:
             self.log.warning("Received a command to enable this coil without "
@@ -65,7 +66,7 @@ class Driver(Device):
 
     def disable(self, **kwargs):
         """ Disables this driver """
-        self.log.debug("Disabling Driver: %s", self.name)
+        self.log.debug("Disabling Driver")
         self.time_last_changed = time.time()
         self.hw_driver.disable()
         # todo also disable the timer which reenables this
