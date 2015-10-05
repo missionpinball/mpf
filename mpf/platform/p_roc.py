@@ -848,19 +848,20 @@ class PROCDriver(object):
     def enable(self):
         """Enables (turns on) this driver."""
 
-        try:
-            if (self.driver_settings['pwm_on_ms'] and
-                    self.driver_settings['pwm_off_ms']):
-                self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
-                               'pwm_off_ms: %s',
-                               self.driver_settings['pwm_on_ms'],
-                               self.driver_settings['pwm_off_ms'],
-                               self.driver_settings['pulse_ms'])
-                self.proc.driver_patter(self.number,
-                                        self.driver_settings['pwm_on_ms'],
-                                        self.driver_settings['pwm_off_ms'],
-                                        self.driver_settings['pulse_ms'], True)
-        except KeyError:
+        if (self.driver_settings['pwm_on_ms'] and
+                self.driver_settings['pwm_off_ms']):
+
+            self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
+                           'pwm_off_ms: %s',
+                           self.driver_settings['pwm_on_ms'],
+                           self.driver_settings['pwm_off_ms'],
+                           self.driver_settings['pulse_ms'])
+
+            self.proc.driver_patter(self.number,
+                                    self.driver_settings['pwm_on_ms'],
+                                    self.driver_settings['pwm_off_ms'],
+                                    self.driver_settings['pulse_ms'], True)
+        else:
             self.log.debug('Enabling at 100%')
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
