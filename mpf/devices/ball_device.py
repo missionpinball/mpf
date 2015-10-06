@@ -493,7 +493,7 @@ class BallDevice(Device):
 
         # _do_eject here will setup the confirmations and stuff
         if self.manual_eject_target:
-            self._mechanical_eject_in_progress(balls)
+            self._mechanical_eject_in_progress(abs(balls))
         else:
             self.machine.events.post('balldevice_{}_ball_missing'.format(
                 abs(balls)))
@@ -503,7 +503,7 @@ class BallDevice(Device):
         # missing
 
         if self.debug:
-            self.log.debug("Mechinal eject in progress. Balls: %s", balls)
+            self.log.debug("Mechanical eject in progress. Balls: %s", balls)
 
         target = self.manual_eject_target
 
@@ -515,9 +515,19 @@ class BallDevice(Device):
         self.machine.events.post(
             'balldevice_{}_mechanical_eject_attempt'.format(self.name),
             balls=balls)
+        self.machine.events.post_queue(
+            'balldevice_{}_ball_eject_attempt'.format(self.name),
+             balls=balls,
+             target=target,
+             timeout=0,
+             num_attempts=0,
+             callback=self._mechanical_eject_attempt_callback)
 
         self._setup_eject_confirmation(
             target=target, timeout=0)
+
+    def _mechanical_eject_attempt_callback(self, **kwargs):
+        pass
 
     def is_full(self):
         """Checks to see if this device is full, meaning it is holding either
@@ -721,7 +731,7 @@ class BallDevice(Device):
 
             if self.debug:
                 self.log.debug("No eject_events or mechanical_eject specified,"
-                               " proceding with the eject now.")
+                               " proceeding with the eject now.")
 
             self.eject(balls=balls, target=target, get_ball=True)
 
@@ -969,8 +979,8 @@ class BallDevice(Device):
                                "target. This shouldn't happen. Post to the "
                                "forum if you see this.")
                 raise Exception("we got an eject confirmation request with no "
-                               "target. This shouldn't happen. Post to the "
-                               "forum if you see this.")
+                                "target. This shouldn't happen. Post to the "
+                                "forum if you see this.")
 
             if self.debug:
                 self.log.debug("Will confirm eject via recount of ball "
@@ -1093,7 +1103,7 @@ class BallDevice(Device):
             if self.debug:
                 self.log.debug("Confirmed successful eject")
 
-            # Creat a temp attribute here so the real one is None when the
+            # Create a temp attribute here so the real one is None when the
             # event is posted.
             eject_target = self.eject_in_progress_target
             self.num_jam_switch_count = 0
