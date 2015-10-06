@@ -49,8 +49,8 @@ slide_player:
     decorators:
       type: blink
       repeats: -1
-      on_secs: .2
-      off_secs: .2
+      on_secs: .1
+      off_secs: .1
   enabling_free_play:
     type: text
     text: ENABLING FREE PLAY
