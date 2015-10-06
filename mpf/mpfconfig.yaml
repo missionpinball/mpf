@@ -20,7 +20,6 @@ mpf:
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
         - scoring: mpf.system.scoring.ScoreController
 
-
     device_modules:
         driver.Driver
         switch.Switch
@@ -51,6 +50,9 @@ mpf:
         osc
         socket_events
         switch_player
+
+    driver_overlays:
+        - snux: mpf.platform.snux.Snux
 
     paths:
         scriptlets: scriptlets
@@ -175,6 +177,7 @@ config_validator:
         eject_events: dict|str:ms|None
         eject_all_events: dict|str:ms|None
         mechanical_eject: single|bool|False
+        mechanical_eject_trigger_time: single|ms|200ms
     ball_locks:
         balls_to_lock: single|int|
         lock_devices: list|self.machine.ball_devices[%]|
@@ -526,6 +529,16 @@ config_validator:
         platform: single|str|None
         debounce_open: single|ms|None
         debounce_close: single|ms|None
+
+    tilt:
+      tilt_warning_switch_tag: single|str|None
+      tilt_switch_tag: single|str|None
+      slam_tilt_switch_tag: single|str|slam_tilt
+      warnings_to_tilt: single|int|3
+      reset_warnings_events: dict|str:ms|ball_ending
+      multiple_hit_window: single|ticks|200ms
+      ball_start_settle_time: single|ms|5s
+      tilt_warnings_player_var: single|str|tilt_warnings
 
 # Default settings for machines. All can be overridden
 
