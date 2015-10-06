@@ -286,29 +286,28 @@ class BallDevice(Device):
                     }
 
     def status_dump(self):
-        """Dumps the full current status of the device to the log."""
-
-        if self.eject_in_progress_target:
-            eject_name = self.eject_in_progress_target.name
-        else:
-            eject_name = 'None'
+        """Dumps the full current status of the ball device to the log."""
 
         if self.debug:
             self.log.debug("+-----------------------------------------+")
-            self.log.debug("| balls: %s                  |",
-                           self.balls)
-            self.log.debug("| eject_in_progress_target: %s",
-                           eject_name)
-            self.log.debug("| num_balls_ejecting: %s                   |",
-                           self.num_balls_ejecting)
-            self.log.debug("| num_jam_switch_count: %s                     |",
-                           self.num_jam_switch_count)
-            self.log.debug("| num_eject_attempts: %s                   |",
-                           self.num_eject_attempts)
-            self.log.debug("| num_balls_requested: %s                  |",
-                           self.num_balls_requested)
-            self.log.debug("| eject queue: %s",
-                           self.eject_queue)
+            self.log.debug("| balls: {}".format(
+                self.balls).ljust(42) + "|")
+            self.log.debug("| eject_in_progress_target: {}".format(
+                self.eject_in_progress_target).ljust(42) + "|")
+            self.log.debug("| num_balls_ejecting: {}".format(
+                self.num_balls_ejecting).ljust(42) + "|")
+            self.log.debug("| num_jam_switch_count: {}".format(
+                self.num_jam_switch_count).ljust(42) + "|")
+            self.log.debug("| num_eject_attempts: {}".format(
+                self.num_eject_attempts).ljust(42) + "|")
+            self.log.debug("| num_balls_requested: {}".format(
+                self.num_balls_requested).ljust(42) + "|")
+            self.log.debug("| eject queue: {}".format(
+                self.eject_queue).ljust(42) + "|")
+            self.log.debug("| manual_eject_target: {}".format(
+                self.manual_eject_target).ljust(42) + "|")
+            self.log.debug("| mechanical_eject_in_progress: {}".format(
+                self.mechanical_eject_in_progress).ljust(42) + "|")
             self.log.debug("+-----------------------------------------+")
 
     def _invalidate(self):
@@ -394,9 +393,12 @@ class BallDevice(Device):
             self.status_dump()
 
             if ball_change > 0:
-                self._balls_added(ball_change)
+                if self.mechanical_eject_in_progress and self.eject_in_progress_target:
+                    self._mechanical_eject_failed()
+                else:
+                    self._balls_added(ball_change)
             elif ball_change < 0:
-                    self._balls_missing(ball_change)
+                self._balls_missing(ball_change)
 
         else:  # this device doesn't have any ball switches
             if self.debug:
@@ -522,7 +524,8 @@ class BallDevice(Device):
         self.eject_queue = deque()
 
         self.balls = 0
-        self.num_balls_ejecting = self.mechanical_eject_in_progress
+        self.num_balls_ejecting = 1
+        self.mechanical_eject_in_progress = 1
 
         self.machine.events.post(
             'balldevice_{}_mechanical_eject_attempt'.format(self.name),
@@ -1225,7 +1228,7 @@ class BallDevice(Device):
         self.eject_in_progress_target = None
         self.num_balls_ejecting = 0
         self.num_eject_attempts += 1
-        self. mechanical_eject_in_progress = 0
+        self.mechanical_eject_in_progress = 0
 
         self.machine.events.remove_handler(self._eject_success)
         # Remove any switch handlers
