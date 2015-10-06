@@ -10,8 +10,8 @@
         - BRI
         - 87890
       - !!python/tuple
+        - BRI
+        - 87890
+      - !!python/tuple
         - BID
         - 31020
-      - !!python/tuple
-        - BRI
-        - 14210

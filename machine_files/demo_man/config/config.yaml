@@ -11,7 +11,7 @@ mpf:
 game:
     balls_per_game: 3
     max_players: 4
-    player_controlled_eject_tag: plunger
+#    player_controlled_eject_tag: plunger
 
 modes:
   - base

@@ -6,9 +6,9 @@ mode:
 
 event_player:
   multiplayer_game:
-    player_1_multiplayer_slide
+    _player_1_multiplayer_slide
   player_1_ball_started:
-    player_1_multiplayer_slide
+    _player_1_multiplayer_slide
 
 slide_player:
   single_player_ball_started:
@@ -28,7 +28,7 @@ slide_player:
       font: small
       y: -1
 
-  player_1_multiplayer_slide:
+  _player_1_multiplayer_slide:
     - type: text
       text: "%player1|score%"
       #font: medium
