@@ -188,6 +188,15 @@ class BallDevice(Device):
                 ms=0,
                 callback=self._invalidate)
 
+        if self.config['mechanical_eject']:
+            for switch in self.config['ball_switches']:
+                self.machine.switch_controller.add_switch_handler(
+                    switch_name=switch.name,
+                    callback=self._mechanical_eject_in_progress,
+                    state=0,
+                    ms=self.config['mechanical_eject_trigger_time']
+                )
+
         # Configure switch handlers for jam switch activity
         if self.config['jam_switch']:
             self.machine.switch_controller.add_switch_handler(
@@ -492,32 +501,32 @@ class BallDevice(Device):
                            self.manual_eject_target)
 
         # _do_eject here will setup the confirmations and stuff
-        if self.manual_eject_target:
-            self._mechanical_eject_in_progress(abs(balls))
-        else:
+        if not self.manual_eject_target:
             self.machine.events.post('balldevice_{}_ball_missing'.format(
                 abs(balls)))
 
-    def _mechanical_eject_in_progress(self, balls):
+    def _mechanical_eject_in_progress(self):
         # Called when we're looking out for a mechanical eject and balls are
         # missing
 
         if self.debug:
-            self.log.debug("Mechanical eject in progress. Balls: %s", balls)
+            self.log.debug("Mechanical eject switch open. Balls: %s",
+                           self.mechanical_eject_in_progress)
+
+        if not self.manual_eject_target:
+            return
 
         target = self.manual_eject_target
 
-        self.mechanical_eject_in_progress = balls
-
-        for i in range(balls):
+        for i in range(self.mechanical_eject_in_progress):
             self.eject_queue.append((target, 0))  # no timeout since manual
 
         self.machine.events.post(
             'balldevice_{}_mechanical_eject_attempt'.format(self.name),
-            balls=balls)
+            balls=self.mechanical_eject_in_progress)
         self.machine.events.post_queue(
             'balldevice_{}_ball_eject_attempt'.format(self.name),
-             balls=balls,
+             balls=self.mechanical_eject_in_progress,
              target=target,
              timeout=0,
              num_attempts=0,
@@ -743,6 +752,7 @@ class BallDevice(Device):
                                    balls-self.balls)
 
                 self.request_ball(balls-self.balls)
+                self.mechanical_eject_in_progress = balls
 
     def eject(self, balls=1, target=None, timeout=None, get_ball=False,
               **kwargs):
