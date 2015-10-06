@@ -43,6 +43,7 @@ from mpf.system.config import Config
 
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00
+# driverboards = ['wpc', 'wpc95', 'sternSAM', 'sternWhitestar']
 
 
 class HardwarePlatform(Platform):

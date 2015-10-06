@@ -9,6 +9,7 @@
 import time
 
 
+
 class Platform(object):
     """Parent class for the a hardware platform interface.
 
@@ -33,6 +34,9 @@ class Platform(object):
         self.features['hw_timer'] = False
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
+
+        from mpf.platform.snux import Snux
+        self.driver_overlay = Snux(self.machine)
 
     def timer_initialize(self):
         """ Run this before the machine loop starts. I want to do it here so we
@@ -217,6 +221,30 @@ class Platform(object):
 
         """
         pass
+
+
+class DriverOverlay(object):
+
+    @classmethod
+    def write_hw_rule(cls, func):
+
+        def _decorated_write_hw_rule(self, *args, **kwargs):
+            print "decorated driver"
+            print self
+            print args
+            print kwargs
+            print
+            print func
+            print
+
+            if self.driver_overlay:
+                self.driver_overlay.write_hw_rule(*args, **kwargs)
+            else:
+                func(*args, **kwargs)
+
+        return _decorated_write_hw_rule
+
+
 
 # The MIT License (MIT)
 

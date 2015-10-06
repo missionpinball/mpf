@@ -14,7 +14,7 @@ that it doesn't require any P-ROC drivers or modules to be installed.
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-from mpf.system.platform import Platform
+from mpf.system.platform import Platform, DriverOverlay
 from mpf.system.config import Config
 
 
@@ -104,8 +104,9 @@ class HardwarePlatform(Platform):
     def configure_dmd(self):
         return VirtualDMD(self.machine)
 
+    @DriverOverlay.write_hw_rule
     def write_hw_rule(self, *args, **kwargs):
-        pass
+        print "*** writing hw rule ***"
 
     def clear_hw_rule(self, sw_name):
         sw_num = self.machine.switches[sw_name].number

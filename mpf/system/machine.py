@@ -294,10 +294,13 @@ class MachineController(object):
                 extension).
 
         """
-
         if name not in self.hardware_platforms:
             hardware_platform = __import__('mpf.platform.%s' % name,
                                            fromlist=["HardwarePlatform"])
+
+            from mpf.system.platform import DriverOverlay
+            overlay = DriverOverlay
+
             self.hardware_platforms[name] = hardware_platform.HardwarePlatform(self)
 
     def set_default_platform(self, name):
