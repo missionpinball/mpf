@@ -517,9 +517,12 @@ class BallDevice(Device):
             return
 
         target = self.manual_eject_target
+        self.eject_in_progress_target = target
 
-        for i in range(self.mechanical_eject_in_progress):
-            self.eject_queue.append((target, 0))  # no timeout since manual
+        self.eject_queue = deque()
+
+        self.balls = 0
+        self.num_balls_ejecting = self.mechanical_eject_in_progress
 
         self.machine.events.post(
             'balldevice_{}_mechanical_eject_attempt'.format(self.name),
@@ -531,6 +534,8 @@ class BallDevice(Device):
              timeout=0,
              num_attempts=0,
              callback=self._mechanical_eject_attempt_callback)
+
+        self.machine.events.remove_handler(self._eject_success)
 
         self._setup_eject_confirmation(
             target=target, timeout=0)
@@ -966,7 +971,7 @@ class BallDevice(Device):
             self.log.debug("Firing eject coil. num_balls_ejecting: %s. New "
                            "balls: %s.", self.num_balls_ejecting, self.balls)
 
-    def _setup_eject_confirmation(self, target=None, timeout=0, manual=False):
+    def _setup_eject_confirmation(self, target=None, timeout=0):
         # Called after an eject request to confirm the eject. The exact method
         # of confirmation depends on how this ball device has been configured
         # and what target it's ejecting to
@@ -974,8 +979,7 @@ class BallDevice(Device):
         # args are target device and timeout in ms
 
         if self.debug:
-            self.log.debug("Setting up eject confirmation. Manual: %s",
-                           manual)
+            self.log.debug("Setting up eject confirmation")
             self.eject_start_time = time.time()
             self.log.debug("Eject start time: %s", self.eject_start_time)
             self.machine.events.add_handler('timer_tick', self._eject_status)
@@ -1005,7 +1009,7 @@ class BallDevice(Device):
                 self.machine.events.add_handler(
                     'sw_{}_active'.format(target.name), self._eject_success)
 
-            if timeout and not manual:
+            if timeout:
                 # set up the delay to check for the failed the eject
                 self.delay.add(name='target_eject_confirmation_timeout',
                                ms=timeout,
@@ -1020,7 +1024,7 @@ class BallDevice(Device):
             # Note this must be higher priority than the failed eject handler
             self.machine.events.add_handler(
                 'balldevice_' + target.name +
-                '_ball_enter', self._eject_success, priority=1000)
+                '_ball_enter', self._eject_success, priority=100000)
 
         elif self.config['confirm_eject_type'] == 'switch':
             if self.debug:
@@ -1160,6 +1164,10 @@ class BallDevice(Device):
         # Put the current target back in the queue so we can try again
         # This sets up the timeout back to the default. Wonder if we should
         # add some intelligence to make this longer or shorter?
+
+        if self.debug:
+            self.log.debug("Eject failed")
+
         self.eject_queue.appendleft((self.eject_in_progress_target,
             self.config['eject_timeouts'][self.eject_in_progress_target]))
 
@@ -1235,9 +1243,9 @@ class BallDevice(Device):
     def _ok_to_receive(self):
         # Post an event announcing that it's ok for this device to receive a
         # ball
-        self.machine.events.post('balldevice_' + self.name +
-                                 '_ok_to_receive',
-                                 balls=self.get_additional_ball_capacity())
+        self.machine.events.post(
+            'balldevice_{}_ok_to_receive'.format(self.name),
+            balls=self.get_additional_ball_capacity())
 
     def is_playfield(self):
         """Returns True if this ball device is a Playfield-type device, False
