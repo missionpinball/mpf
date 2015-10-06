@@ -20,7 +20,7 @@ modes:
   - skillshot
   - bonus
   - high_score
-#  - tilt
+  - tilt
   - credits
 
 scriptlets:

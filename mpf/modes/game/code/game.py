@@ -29,9 +29,7 @@ class Game(Mode):
     def __init__(self, machine, config, name, path):
         super(Game, self).__init__(machine, config, name, path)
         self._balls_in_play = 0
-        self.tilted = False
         self.player_list = list()
-
         self.machine.game = None
 
     @property
@@ -74,7 +72,6 @@ class Game(Mode):
         self.player_list = list()
         self.machine.game = self
         self._balls_in_play = 0
-        self.tilted = False
 
         # todo register for request_to_start_game so you can deny it, or allow
         # it with a long press
@@ -87,8 +84,6 @@ class Game(Mode):
 
         self.add_mode_event_handler('ball_ended', self.ball_ended)
         self.add_mode_event_handler('game_ended', self.game_ended)
-        self.add_mode_event_handler('tilt', self.tilt, priority=1000)
-        self.add_mode_event_handler('slam_tilt', self.slam_tilt, priority=1000)
 
         if ('restart on long press' in self.machine.config['game'] and
                 self.machine.config['game']['restart on long press']):
@@ -170,8 +165,6 @@ class Game(Mode):
         self.log.info("***************************************************")
         self.log.info("***************************************************")
 
-        self.tilted = False
-
         self.machine.events.post_queue('ball_starting',
                                        callback=self.ball_started)
 
@@ -227,7 +220,6 @@ class Game(Mode):
         Currently this method also disables the autofire_coils and flippers,
         though that's temporary as we'll move those into config file options.
         """
-        # todo check tilt
 
         # remove the handlers that were looking for ball drain since they'll
         # be re-added on next ball start
@@ -385,55 +377,6 @@ class Game(Mode):
 
         """
         self.balls_in_play -= balls
-
-    def tilt(self):
-        """Called when the 'tilt' event is posted indicated the ball has tilted.
-        """
-
-        # todo add support to catch if the player tilts during ball ending?
-
-        self.log.debug("Processing Tilt")
-        self.tilted = True
-
-        self.add_mode_event_handler('ball_ending',
-                                        self._tilt_ball_ending_wait)
-
-        self.balls_in_play = 0
-
-    def _tilt_ball_ending_wait(self, queue):
-        # Method that hooks ball_ending which happens from a tilt. Used so we
-        # can wait for the balls to drain before allowing the game to move on.
-
-        self.add_mode_event_handler('tilted_ball_drain',
-                                        self._tilt_ball_ending_clear)
-
-        self.tilt_ball_ending_queue = queue
-        self.tilt_ball_ending_queue.wait()
-
-    def _tilt_ball_ending_clear(self, **kwargs):
-
-        # If there are still live balls out there, wait for them to drain too.
-        if self.machine.playfield.balls:
-            return
-
-        # todo there's a bug here. If there are multiple balls live when the
-        # tilt occurs and one of the balls enters a device at the same time
-        # another drains, in that instant there will technically be no balls
-        # live and this queue will be cleared, though really it should wait
-        # to see if another ball will be ejected to be drained.
-
-        # Potential solution is to have ball devices check tilt status when
-        # they find new balls, and if so to just eject them without posting
-        # the ball_enter events.
-
-        self.tilt_ball_ending_queue.clear()
-        self.tilt_ball_ending_queue = None
-
-        self.machine.events.remove_handler(self._tilt_ball_ending_wait)
-        self.machine.events.remove_handler(self._tilt_ball_ending_clear)
-
-    def slam_tilt(self):
-        self.game_ended()
 
     def request_player_add(self, **kwargs):
         """Called by any module that wants to add a player to an active game.

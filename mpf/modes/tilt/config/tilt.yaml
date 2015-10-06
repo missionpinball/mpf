@@ -1,0 +1,22 @@
+#config_version=3
+mode:
+  code: tilt.Tilt
+  priority: 10000
+  start_events: ball_starting
+
+slide_player:
+  tilt_warning_1:
+    type: text
+    text: WARNING
+    expire: 1s
+  tilt_warning_2:
+    - type: text
+      text: WARNING
+      y: 2
+    - type: text
+      text: WARNING
+      y: 18
+      expire: 1s
+  tilt:
+    type: text
+    text: TILT
