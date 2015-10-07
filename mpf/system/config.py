@@ -554,6 +554,9 @@ class Config(object):
         elif validator == 'ticks':
             item = Timing.string_to_ticks(item)
 
+        elif validator == 'ticks_int':
+            item = int(Timing.string_to_ticks(item))
+
         else:
             self.log.error("Invalid Validator '%s' in config spec %s:%s",
                            validator,
