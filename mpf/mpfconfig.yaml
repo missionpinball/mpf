@@ -400,6 +400,7 @@ config_validator:
         use_wait_queue: single|bool|False
         code: single|str|None
         stop_on_ball_end: single|bool|True
+        restart_on_next_ball: single|bool|False
     multiballs:
         ball_count: single|int|
         source_playfield: single|self.machine.ball_devices[%]|playfield
