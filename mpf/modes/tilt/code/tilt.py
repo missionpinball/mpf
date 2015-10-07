@@ -9,12 +9,17 @@
 
 from collections import OrderedDict
 from mpf.system.mode import Mode
+from mpf.system.timing import Timing
+
 
 class Tilt(Mode):
 
     def mode_init(self):
         self._balls_to_collect = 0
         self._last_warning_tick = 0
+        self.ball_ending_tilted_queue = None
+        self.tilt_event_handlers = set()
+        self.last_tilt_warning_switch_tick = 0
 
         self.tilt_config = self.machine.config['tilt']
 
@@ -25,12 +30,14 @@ class Tilt(Mode):
             'tilt', self.tilt_config, 'tilt')
 
     def mode_start(self, **kwargs):
-        self.add_mode_event_handler('tilt', self.tilt)
-        self.add_mode_event_handler('slam_tilt', self.slam_tilt)
         self._register_switch_handlers()
+
+        for event in self.tilt_config['reset_warnings_events']:
+            self.add_mode_event_handler(event, self.reset_warnings)
 
     def mode_stop(self, **kwargs):
         self._remove_switch_handlers()
+        self.reset_warnings_handlers = set()
 
     def _register_switch_handlers(self):
         for switch in self.machine.switches.items_tagged(
@@ -38,11 +45,13 @@ class Tilt(Mode):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch.name,
                 callback=self._tilt_warning_switch_handler)
+
         for switch in self.machine.switches.items_tagged(
                 self.tilt_config['tilt_switch_tag']):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch.name,
                 callback=self.tilt)
+
         for switch in self.machine.switches.items_tagged(
                 self.tilt_config['slam_tilt_switch_tag']):
             self.machine.switch_controller.add_switch_handler(
@@ -67,6 +76,17 @@ class Tilt(Mode):
                 callback=self.slam_tilt)
 
     def tilt_warning(self):
+        """Processes a tilt warning. If the number of warnings is the number to
+        cause a tilt, a tilt will be processed.
+
+        """
+        self.last_tilt_warning_switch_tick = self.machine.tick_num
+
+        if not self.player:
+            return
+
+        self.log.debug("Tilt Warning")
+
         self._last_warning_tick = self.machine.tick_num
         self.player[self.tilt_config['tilt_warnings_player_var']] += 1
 
@@ -82,27 +102,45 @@ class Tilt(Mode):
             self.machine.events.post('tilt_warning_{}'.format(warnings))
 
     def reset_warnings(self, **kwargs):
-        self.player[self.tilt_config['tilt_warnings_player_var']] = 0
+        """Resets the tilt warnings for the current player."""
+        try:
+            self.player[self.tilt_config['tilt_warnings_player_var']] = 0
+        except AttributeError:
+            pass
 
-    def tilt(self):
-        """Called when the 'tilt' event is posted indicated the ball has
-        tilted.
+    def tilt(self, **kwargs):
+        """Causes the ball to tilt."""
+        if not self.machine.game:
+            return
 
-        """
-        self.log.debug("Processing Tilt")
         self._balls_to_collect = self.machine.playfield.balls
-        self.balls_in_play = 0
+        # todo use collection
+
+        self.log.debug("Processing Tilt. Balls to collect: %s",
+                       self._balls_to_collect)
+
+        self.machine.game.tilted = True
+        self.machine.events.post('tilt')
         self._disable_autofires()
         self._disable_flippers()
 
-        self.machine.events.add_handler('playfield_ball_count_change',
-                                        self._tilted_pf_ball_count_change)
-        self.machine.events.add_handler('tilted_all_balls_drained',
-                                        self._tilted_all_balls_drained)
-        self.machine.events.add_handler('ball_ending',
-                                        self._ball_ending_tilted)
+        self.tilt_event_handlers.add(
+            self.machine.events.add_handler('ball_ending',
+                                            self._ball_ending_tilted))
 
-        self.machine.events.post('tilt')
+        for device in self.machine.ball_devices:
+            if 'drain' in device.tags:
+                self.tilt_event_handlers.add(
+                    self.machine.events.add_handler(
+                        'balldevice_{}_ball_enter'.format(device.name),
+                        self._tilted_ball_drain))
+            else:
+                self.tilt_event_handlers.add(
+                    self.machine.events.add_handler(
+                        'balldevice_{}_ball_enter'.format(device.name),
+                        self._tilted_ball_entered_non_drain_device))
+
+        self.machine.game.ball_ending()
 
     def _disable_flippers(self):
         for flipper in self.machine.flippers:
@@ -115,42 +153,58 @@ class Tilt(Mode):
     def _tilted_ball_drain(self, balls):
         self._balls_to_collect -= balls
 
+        self.log.debug("Tilted ball drain. Balls to collect: %s",
+                       self._balls_to_collect)
+
         if self._balls_to_collect <= 0:
-            self.machine.events.post('tilted_all_balls_drained')
+            self._tilt_done()
 
         return {'balls': 0}
 
-    def _tilted_all_balls_drained(self):
-        # todo wait for settle time
-
-        self.machine.game.ball_ending()
+    def _tilted_ball_entered_non_drain_device(self, balls):
+        return {'balls': balls}
 
     def _tilt_switch_handler(self):
-        pass
+        self.tilt()
 
     def _tilt_warning_switch_handler(self):
-
         if (self._last_warning_tick + self.tilt_config['multiple_hit_window']
                 <= self.machine.tick_num):
 
             self.tilt_warning()
 
-    def _ball_ending_tilted(self):
+    def _ball_ending_tilted(self, queue):
+        self.ball_ending_tilted_queue = queue
+        queue.wait()
 
-        self.machine.post_queue('ball_ending_tilted',
-                                self._ball_ending_tilted_ending_done)
+    def _tilt_done(self):
+        if self.tilt_settle_ms_remaining():
+            self.delay.add(ms=self.tilt_settle_ms_remaining(),
+                           callback=self._tilt_done)
 
+        else:
+            self.machine.game.tilted = False
 
-        return False
+            self.machine.events.post('tilt_clear')
 
-    def _ball_ending_tilted_ending_done(self):
-        self.machine.game._ball_ending_done()
+            self.ball_ending_tilted_queue.clear()
 
-        self.machine.events.remove_handler(self._ball_ending_tilted)
+            self.machine.events.remove_handlers_by_keys(self.tilt_event_handlers)
+            self.tilt_event_handlers = set()
 
-    def _tilted_pf_ball_count_change(self):
-        pass
+    def tilt_settle_ms_remaining(self):
+        """Returns the amount of milliseconds remaining until the tilt settle
+        time has cleared.
 
+        """
+        ticks = (self.machine.tick_num - self.last_tilt_warning_switch_tick -
+                self.tilt_config['settle_time'])
+
+        if ticks >= 0:
+            return 0
+        else:
+            return abs(ticks * Timing.ms_per_tick)
 
     def slam_tilt(self):
+        self.machine.events.post('slam_tilt')
         self.game_ended()

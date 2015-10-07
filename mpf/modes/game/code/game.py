@@ -31,6 +31,7 @@ class Game(Mode):
         self._balls_in_play = 0
         self.player_list = list()
         self.machine.game = None
+        self.tilted = False
 
     @property
     def balls_in_play(self):
@@ -71,6 +72,7 @@ class Game(Mode):
         self.num_players = 0
         self.player_list = list()
         self.machine.game = self
+        self.tilted = False
         self._balls_in_play = 0
 
         # todo register for request_to_start_game so you can deny it, or allow

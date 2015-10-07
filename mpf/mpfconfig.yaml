@@ -532,13 +532,13 @@ config_validator:
         debounce_close: single|ms|None
 
     tilt:
-      tilt_warning_switch_tag: single|str|None
-      tilt_switch_tag: single|str|None
+      tilt_warning_switch_tag: single|str|tilt_warning
+      tilt_switch_tag: single|str|tilt
       slam_tilt_switch_tag: single|str|slam_tilt
       warnings_to_tilt: single|int|3
-      reset_warnings_events: dict|str:ms|ball_ending
-      multiple_hit_window: single|ticks|200ms
-      ball_start_settle_time: single|ms|5s
+      reset_warnings_events: list|str|ball_ending
+      multiple_hit_window: single|ticks_int|300ms
+      settle_time: single|ticks_int|5s
       tilt_warnings_player_var: single|str|tilt_warnings
 
 # Default settings for machines. All can be overridden
@@ -770,11 +770,11 @@ credits:
   free_play_string: FREE PLAY
 
 tilt:
-  tilt_warning_switch_tag: tilt
-#  tilt_switch_tag: None
+  tilt_warning_switch_tag: tilt_warning
+  tilt_switch_tag: tilt
   slam_tilt_switch_tag: slam_tilt
   warnings_to_tilt: 3
   reset_warnings_events: ball_ended
-  multiple_hit_window: 200ms
-  ball_start_settle_time: 5s
+  multiple_hit_window: 300ms
+  settle_time: 5s
   tilt_warnings_player_var: tilt_warnings
