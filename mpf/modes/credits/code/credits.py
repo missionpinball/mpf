@@ -15,7 +15,6 @@ from mpf.system.mode import Mode
 class Credits(Mode):
 
     def mode_init(self):
-
         self.data_manager = DataManager(self.machine, 'earnings')
         self.earnings = self.data_manager.get_data()
 
@@ -35,12 +34,14 @@ class Credits(Mode):
             'credits', self.credits_config, 'credits')
 
     def mode_start(self, **kwargs):
-        self.machine.events.add_handler('enable_free_play',
-                                        self.enable_free_play)
-        self.machine.events.add_handler('enable_credit_play',
-                                        self.enable_credit_play)
-        self.machine.events.add_handler('toggle_credit_play',
-                                        self.toggle_credit_play)
+        self.add_mode_event_handler('enable_free_play',
+                                    self.enable_free_play)
+        self.add_mode_event_handler('enable_credit_play',
+                                    self.enable_credit_play)
+        self.add_mode_event_handler('toggle_credit_play',
+                                    self.toggle_credit_play)
+        self.add_mode_event_handler('slam_tilt',
+                                    self.clear_all_credits)
 
         if self.credits_config['free_play']:
             self.enable_free_play(post_event=False)
@@ -50,9 +51,6 @@ class Credits(Mode):
             self.enable_credit_play(post_event=False)
 
     def mode_stop(self, **kwargs):
-        self.machine.events.remove_handler(self.enable_free_play)
-        self.machine.events.remove_handler(self.enable_credit_play)
-        self.machine.events.remove_handler(self.toggle_credit_play)
         self.enable_free_play()
 
     def _calculate_credit_units(self):
