@@ -105,7 +105,7 @@ class Slide(object):
         self.surface = pygame.Surface.copy(self.mpfdisplay.surface)
 
         if self.expire_ms:
-            self.schedule_removal()
+            self.schedule_expire()
 
     def __repr__(self):
         return ('<Slide:{self.name}, Mode: {self.mode}, Priority: '
@@ -345,7 +345,7 @@ class Slide(object):
                 element.dirty = True
         self.update()
 
-    def schedule_removal(self, removal_time=None):
+    def schedule_expire(self, removal_time=None):
         """Schedules this slide to automatically be removed.
 
         Args:
@@ -358,10 +358,11 @@ class Slide(object):
             self.expire_ms = Timing.string_to_ms(removal_time)
 
         if self.expire_ms:
-            self.active_delay = self.machine.delay.add(ms=self.expire_ms,
-                                                       callback=self.remove)
+            self.removal_delay = self.machine.delay.add(ms=self.expire_ms,
+                                                       callback=self.remove,
+                                                       post_event=True)
 
-    def remove(self, refresh_display=True):
+    def remove(self, refresh_display=True, post_event=False):
         """Removes the slide.
 
         Args:
@@ -385,6 +386,11 @@ class Slide(object):
         self.persist = False
         self.active_transition = False
         self.surface = None
+
+        if post_event and self.name:
+            # self.machine.events.post('removing_slide_{}'.format(self.name))
+            self.machine.send(bcp_command='trigger',
+                              name='removing_slide_{}'.format(self.name))
 
         if self.removal_delay:
             self.machine.delay.remove(self.removal_delay)
