@@ -502,7 +502,7 @@ class BCP(object):
 
         return self.machine.events.remove_handlers_by_keys, event_list
 
-    def send_trigger(self, name):
+    def send_trigger(self, name, **kwargs):
         # Since player variables are sent automatically, if we get a trigger
         # for an event that starts with "player_", we need to only send it here
         # if there's *not* a player variable with that name, since if there is
