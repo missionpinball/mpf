@@ -128,6 +128,8 @@ class BCP(object):
 
     """
 
+    active_connections = 0
+
     def __init__(self, machine):
         if ('bcp' not in machine.config or
                 'connections' not in machine.config['bcp']):
@@ -885,6 +887,8 @@ class BCPClientSocket(object):
                 self.socket.connect((self.config['host'], self.config['port']))
                 self.log.info("Connected to remote BCP host %s:%s",
                               self.config['host'], self.config['port'])
+
+                BCP.active_connections += 1
                 self.connection_attempts = 0
 
             except socket.error, v:
@@ -937,6 +941,7 @@ class BCPClientSocket(object):
                 self.send('goodbye')
 
             self.socket.close()
+            BCP.active_connections -= 1
             self.socket = None  # Socket threads will exit on this
 
     def send(self, message):

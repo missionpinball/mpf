@@ -461,7 +461,7 @@ class MachineController(object):
                                      remaining=0)
                 self.asset_loader_complete = True
 
-        elif not self.flag_bcp_reset_complete:
+        elif self.bcp.active_connections and not self.flag_bcp_reset_complete:
             if self.tick_num % Timing.HZ == 0:
                 self.log.info("Waiting for BCP reset_complete...")
 
