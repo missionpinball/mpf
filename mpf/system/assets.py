@@ -17,6 +17,64 @@ import traceback
 from mpf.system.config import CaseInsensitiveDict
 
 
+class AssetLoader(threading.Thread):
+    """Base class for the Asset Loader with runs as a separate thread and
+    actually loads the assets from disk.
+
+    Args:
+        name: String name of what this loader will be called. (Only really used
+            to give a friendly name to it in logs.)
+        queue: A reference to the asset loader ``Queue`` which holds assets
+            waiting to be loaded.
+        machine: The main ``MachineController`` object.
+
+    """
+
+    def __init__(self, queue):
+
+        threading.Thread.__init__(self)
+        self.log = logging.getLogger('Asset Loader')
+        self.queue = queue
+
+    def run(self):
+        """Run loop for the loader thread."""
+
+        try:
+            while True:
+                asset = self.queue.get()
+
+                if not asset[1].loaded:
+                    self.log.debug("Loading Asset: %s. Callback: %s", asset[1],
+                                   asset[2])
+                    asset[1].do_load(asset[2])
+                    self.log.debug("Asset Finished Loading: %s. Remaining: %s",
+                                   asset[1], self.queue.qsize())
+
+                # If the asset is already loaded and we don't need to load it
+                # again, we still need to call the callback.
+                elif asset[2]:
+                    self.log.debug("Calling callback for asset %s since it's "
+                                   "already loaded. Callback: %s", asset[1],
+                                   asset[2])
+                    asset[2]()
+
+                # AssetManager.remove_asset_to_load()
+
+                # If the asset is already loaded, just ignore it and move on.
+                # I thought about trying to make sure that an asset isn't
+                # in the queue before it gets added. But since this is separate
+                # threads that would require all sorts of work. It's actually
+                # more efficient to add it to the queue anyway and then just
+                # skip it if it's already loaded by the time the loader gets to
+                # it.
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.machine.crash_queue.put(msg)
+
+
 class AssetManager(object):
     """Base class for an Asset Manager.
 
@@ -37,19 +95,17 @@ class AssetManager(object):
 
     There will be one Asset Manager for each different type of asset. (e.g. one
     for images, one for movies, one for sounds, etc.)
-    """
 
-    assets_to_load = 0
+    All asset managers share a single loader thread.
+
+    """
     total_assets = 0
 
-    @classmethod
-    def add_asset_to_load(cls):
-        AssetManager.assets_to_load += 1
-        AssetManager.total_assets += 1
+    loader_queue = PriorityQueue()
 
-    @classmethod
-    def remove_asset_to_load(cls):
-        AssetManager.assets_to_load -= 1
+    loader_thread = AssetLoader(loader_queue)
+    loader_thread.daemon = True
+    loader_thread.start()
 
     def __init__(self, machine, config_section, path_string, asset_class,
                  asset_attribute, file_extensions):
@@ -64,8 +120,6 @@ class AssetManager(object):
         self.config_section = config_section
         self.asset_class = asset_class
         self.file_extensions = file_extensions
-        self.loader_queue = PriorityQueue()
-        self.loader_thread = None
 
         self.machine.asset_managers[config_section] = self
 
@@ -74,19 +128,20 @@ class AssetManager(object):
 
         self.asset_list = getattr(self.machine, asset_attribute)
 
-        self.create_loader_thread()
-
         self.machine.mode_controller.register_load_method(self.load_assets,
-                                                self.config_section,
-                                                load_key='preload')
+                                            self.config_section,
+                                            load_key='preload',
+                                            priority=asset_class.load_priority)
 
         self.machine.mode_controller.register_start_method(self.load_assets,
-                                                 self.config_section,
-                                                 load_key='mode_start')
+                                            self.config_section,
+                                            load_key='mode_start',
+                                            priority=asset_class.load_priority)
 
         # register & load systemwide assets
         self.machine.events.add_handler('init_phase_4',
-                                        self.register_and_load_machine_assets)
+                                        self.register_and_load_machine_assets,
+                                        priority=self.asset_class.load_priority)
 
         self.defaults = self.setup_defaults(self.machine.config)
 
@@ -108,8 +163,8 @@ class AssetManager(object):
                 for assetsk. This should *not* include the asset-specific path
                 string. If omitted, only the machine's root folder will be
                 searched.
-        """
 
+        """
         if not path:
             path = self.machine.machine_path
 
@@ -171,8 +226,8 @@ class AssetManager(object):
 
         If an asset is set with the load type of 'preload', this method will
         also load the asset file into memory.
-        """
 
+        """
         self.log.debug("Registering machine-wide %s", self.config_section)
 
         if self.config_section in self.machine.config:
@@ -194,7 +249,6 @@ class AssetManager(object):
         files.
 
         """
-
         default_config_dict = dict()
 
         if 'asset_defaults' in config and config['asset_defaults']:
@@ -219,27 +273,6 @@ class AssetManager(object):
 
         return default_config_dict
 
-    def create_loader_thread(self):
-        """Creates a loader thread which will handle the actual reading from
-        disk and loading into memory for assets of this class. Note that one
-        loader thread is created for each class of assets used in your game.
-
-        Note that this asset loader as a separate *thread*, not a separate
-        *process*. It will run on the same core as your main MPF Python
-        instance.
-
-        Note that it's possible to call this method multiple times to create
-        multiple loader threads, but that will not make things load any faster
-        since this process is limited by CPU and disk I/O. In fact if it's a
-        magnetic disk, think multiple threads would make it slower.
-        """
-
-        self.loader_thread = AssetLoader(name=self.config_section,
-                                         queue=self.loader_queue,
-                                         machine=self.machine)
-        self.loader_thread.daemon = True
-        self.loader_thread.start()
-
     def register_assets(self, config, mode_path=None):
         """Scans a config dictionary and registers any asset entries it finds.
 
@@ -256,8 +289,8 @@ class AssetManager(object):
         Note that this method merely registers the assets so they can be
         referenced in MPF. It does not actually load the asset files into
         memory.
-        """
 
+        """
         # config here is already localized
 
         config = self.process_assets_from_disk(config=config, path=mode_path)
@@ -358,7 +391,7 @@ class AssetManager(object):
         # priority above is negative so this becomes a LIFO queue
         self.log.debug("Adding %s to loader queue at priority %s. New queue "
                        "size: %s", asset, priority, self.loader_queue.qsize())
-        AssetManager.add_asset_to_load()
+        AssetManager.total_assets += 1
 
     def locate_asset_file(self, file_name, path=None):
         """Takes a file name and a root path and returns a link to the absolute
@@ -376,7 +409,6 @@ class AssetManager(object):
         look for the file in the machine root plus the path string location.
 
         """
-
         if path:
             path_list = [path]
         else:
@@ -394,67 +426,14 @@ class AssetManager(object):
                           file_name)
         raise Exception()
 
-
-class AssetLoader(threading.Thread):
-    """Base class for the Asset Loader with runs as a separate thread and
-    actually loads the assets from disk.
-
-    Args:
-        name: String name of what this loader will be called. (Only really used
-            to give a friendly name to it in logs.)
-        queue: A reference to the asset loader ``Queue`` which holds assets
-            waiting to be loaded.
-        machine: The main ``MachineController`` object.
-
-    """
-
-    def __init__(self, name, queue, machine):
-
-        threading.Thread.__init__(self)
-        self.log = logging.getLogger(name + ' Asset Loader')
-        self.queue = queue
-        self.machine = machine
-
-    def run(self):
-        """Run loop for the loader thread."""
-
-        try:
-            while True:
-                asset = self.queue.get()
-
-                if not asset[1].loaded:
-                    self.log.debug("Loading Asset: %s. Callback: %s", asset[1],
-                                   asset[2])
-                    asset[1].do_load(asset[2])
-                    self.log.debug("Asset Finished Loading: %s. Remaining: %s",
-                                   asset[1], self.queue.qsize())
-
-                # If the asset is already loaded and we don't need to load it
-                # again, we still need to call the callback.
-                elif asset[2]:
-                    self.log.debug("Calling callback for asset %s since it's "
-                                   "already loaded. Callback: %s", asset[1],
-                                   asset[2])
-                    asset[2]()
-
-                AssetManager.remove_asset_to_load()
-
-                # If the asset is already loaded, just ignore it and move on.
-                # I thought about trying to make sure that an asset isn't
-                # in the queue before it gets added. But since this is separate
-                # threads that would require all sorts of work. It's actually
-                # more efficient to add it to the queue anyway and then just
-                # skip it if it's already loaded by the time the loader gets to
-                # it.
-
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
-
-
 class Asset(object):
+
+    load_priority = 100
+    """Specifies the priority order that assets will be loaded in. (Higher
+    numbers load first.) This is useful because some assets are built on
+    others, so we need a way to ensure that certain asset classes are loaded
+    first. (e.g. images, sounds, and videos need to be loaded before shows.).
+    """
 
     def __init__(self, machine, config, file_name, asset_manager):
         self.machine = machine
@@ -465,13 +444,6 @@ class Asset(object):
 
         self._initialize_asset()
 
-    # def __repr__(self):
-    #
-    #     if self.file_name:
-    #         return self.file_name
-    #     else:
-    #         return self
-
     def load(self, callback=None):
         self.asset_manager.load_asset(self, callback)
 
@@ -481,8 +453,6 @@ class Asset(object):
     def unload(self):
         self._unload()
         self.loaded = False
-
-        # todo also check the loader queue to remove this asset from there
 
 
 # The MIT License (MIT)

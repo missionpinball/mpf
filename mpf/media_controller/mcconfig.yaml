@@ -1,13 +1,12 @@
 # config_version=3
 media_controller:
     modules:
-
         mode_controller.ModeController
         language.Language
         display.DisplayController
+        sound.SoundController
         show_controller.ShowController
         keyboard.Keyboard
-        sound.SoundController
     
     port: 5050
     exit_on_disconnect: yes

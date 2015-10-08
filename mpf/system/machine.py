@@ -449,12 +449,12 @@ class MachineController(object):
     def _loading_tick(self):
         if not self.asset_loader_complete:
 
-            if AssetManager.assets_to_load:
+            if AssetManager.loader_queue.qsize():
                 self.log.debug("Holding Attract start while MPF assets load. "
-                               "Remaining: %s", AssetManager.assets_to_load)
+                               "Remaining: %s", AssetManager.loader_queue.qsize())
                 self.bcp.bcp_trigger('assets_to_load',
                                      total=AssetManager.total_assets,
-                                     remaining=AssetManager.assets_to_load)
+                                     remaining=AssetManager.loader_queue.qsize())
             else:
                 self.bcp.bcp_trigger('assets_to_load',
                                      total=AssetManager.total_assets,

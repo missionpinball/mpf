@@ -657,24 +657,24 @@ class MediaController(object):
             # max because this could go negative at first
             percent = max(0, int(float(AssetManager.total_assets -
                                        self._pc_assets_to_load -
-                                       AssetManager.assets_to_load) /
+                                       AssetManager.loader_queue.qsize()) /
                                        AssetManager.total_assets * 100))
         else:
             percent = 100
 
         self.log.debug("Asset Loading Counter. PC remaining:{}, MC remaining:"
                        "{}, Percent Complete: {}".format(
-                       self._pc_assets_to_load, AssetManager.assets_to_load,
+                       self._pc_assets_to_load, AssetManager.loader_queue.qsize(),
                        percent))
 
         self.events.post('asset_loader',
-                         total=AssetManager.assets_to_load +
+                         total=AssetManager.loader_queue.qsize() +
                                self._pc_assets_to_load,
                          pc=self._pc_assets_to_load,
-                         mc=AssetManager.assets_to_load,
+                         mc=AssetManager.loader_queue.qsize(),
                          percent=percent)
 
-        if not AssetManager.assets_to_load:
+        if not AssetManager.loader_queue.qsize():
 
             if not self.pc_connected:
                 self.events.post("waiting_for_client_connection")
