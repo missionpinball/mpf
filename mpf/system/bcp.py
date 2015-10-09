@@ -515,7 +515,7 @@ class BCP(object):
             except AttributeError:
                 pass
 
-        self.send(bcp_command='trigger', name=name)
+        self.send(bcp_command='trigger', name=name, **kwargs)
 
     def send(self, bcp_command, callback=None, **kwargs):
         """Sends a BCP message.
