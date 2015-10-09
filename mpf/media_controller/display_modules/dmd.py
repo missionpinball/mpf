@@ -306,10 +306,17 @@ class DMD(MPFDisplay):
 
         super(DMD, self).update()
 
-        if self.use_physical:
+        if self.use_physical and self.depth == 8:
             try:
                 self.machine.send_dmd_frame(
                     pygame.image.tostring(self.current_slide.surface, 'P'))
+            except TypeError:
+                return False
+
+        elif self.use_physical and self.depth == 24:
+            try:
+                self.machine.send_dmd_frame(
+                    pygame.image.tostring(self.current_slide.surface, 'RGB'))
             except TypeError:
                 return False
 

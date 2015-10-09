@@ -261,8 +261,9 @@ class BCP(object):
         if self.machine.physical_hw:
 
             if self.machine.config['hardware']['dmd'] != 'default':
+
                 dmd_platform = (self.machine.hardware_platforms
-                                [self.machine.config['platform']['dmd']])
+                                [self.machine.config['hardware']['dmd']])
 
         self.dmd = dmd_platform.configure_dmd()
 
@@ -977,6 +978,19 @@ class BCPClientSocket(object):
         """
 
         socket_bytes = ''
+        bytes_per_pixel = 1
+
+        try:
+            if self.machine.config['dmd']['type'] == 'color':
+                bytes_per_pixel = 3
+        except KeyError:
+            pass
+
+        dmd_byte_length = (self.machine.config['dmd']['width'] *
+                           self.machine.config['dmd']['height'] *
+                           bytes_per_pixel)
+
+        self.log.debug("DMD Frame Byte Length: %s", dmd_byte_length)
 
         try:
             while self.socket:
@@ -989,16 +1003,16 @@ class BCPClientSocket(object):
                         # trim the `dmd_frame?` so we have just the data
                         socket_bytes = socket_bytes[10:]
 
-                        while len(socket_bytes) < 4096:
+                        while len(socket_bytes) < dmd_byte_length:
                             # If we don't have the full data, loop until we
                             # have it.
                             socket_bytes += self.get_from_socket()
 
                         # trim the first 4096 bytes for the dmd data
-                        dmd_data = socket_bytes[:4096]
+                        dmd_data = socket_bytes[:dmd_byte_length]
                         # Save the rest. This is +1 over the last step since we
                         # need to skip the \n separator
-                        socket_bytes = socket_bytes[4097:]
+                        socket_bytes = socket_bytes[dmd_byte_length+1:]
                         self.machine.bcp.dmd.update(dmd_data)
 
                     if '\n' in socket_bytes:
