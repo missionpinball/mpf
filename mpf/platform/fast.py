@@ -844,6 +844,7 @@ class FASTDriver(object):
         if pulse_ms is None:
             pulse_ms = machine.config['mpf']['default_pulse_ms']
 
+        return_dict['allow_enable'] = kwargs['allow_enable']
         return_dict['pulse_ms'] = Config.int_to_hex_string(pulse_ms)
         return_dict['pwm1'] = 'ff'
         return_dict['pwm2'] = 'ff'
