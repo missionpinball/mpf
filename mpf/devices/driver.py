@@ -88,7 +88,33 @@ class Driver(Device):
         self.time_last_changed = time.time()
         self.hw_driver.pulse(milliseconds)
 
+    def timed_enable(self, milliseconds, **kwargs):
+        """Lets you enable a driver for a specific time duration that's longer
+        than 255ms. (If you want to enable a driver for 255ms or less, just use
+        the pulse() method.)
 
+        Args:
+            milliseconds: Integer of the number of milliseconds you'd like to
+                enable this driver for.
+
+        Note if this driver is currently enabled via an earlier call to this
+        method, this method will extend it for the duration of milliseconds
+        you pass here.
+
+        Note that the "resolution" of this will be based on your machine's HZ
+        setting. In other words, if your machine's HZ is set to 30 (the
+        default) and you set this timed_enable for 550ms, the actual enable
+        time will be to the nearest 33ms after 550 (566ms, in this case).
+
+        """
+        if 0 > milliseconds >= 255:
+            self.pulse(milliseconds)
+
+        else:
+            self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
+                                     ms=milliseconds,
+                                     callback=self.disable)
+            self.enable()
 
 
 # The MIT License (MIT)
