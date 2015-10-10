@@ -81,11 +81,12 @@ class Driver(Device):
         if milliseconds:
             self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
                            "%sms", milliseconds)
+            self.hw_driver.pulse(milliseconds)
         else:
-            self.log.debug("Pulsing Driver. Using default pulse_ms: %sms",
-                           milliseconds)
+            self.log.debug("Pulsing Driver. Using default pulse_ms.")
+            self.hw_driver.pulse()
         self.time_last_changed = time.time()
-        self.hw_driver.pulse(milliseconds)
+
 
     def timed_enable(self, milliseconds, **kwargs):
         """Lets you enable a driver for a specific time duration that's longer
