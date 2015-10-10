@@ -44,12 +44,12 @@ mpf:
         ball_save.BallSave
 
     plugins:
-        auditor
-        ball_search
-        info_lights
-        osc
-        socket_events
-        switch_player
+        mpf.plugins.auditor.Auditor
+        mpf.plugins.ball_search.BallSearch
+        mpf.plugins.info_lights.InfoLights
+        mpf.plugins.osc.OSC
+        mpf.plugins.socket_events.SocketClient
+        mpf.plugins.switch_player.SwitchPlayer
 
     driver_overlays:
         - snux: mpf.platform.snux.Snux

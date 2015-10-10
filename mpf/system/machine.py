@@ -244,8 +244,8 @@ class MachineController(object):
 
             self.log.debug("Loading '%s' plugin", plugin)
 
-            i = __import__('mpf.plugins.' + plugin, fromlist=[''])
-            self.plugins.append(i.plugin_class(self))
+            pluginObj = self.string_to_class(plugin)(self)
+            self.plugins.append(pluginObj)
 
     def _load_scriptlets(self):
         if 'scriptlets' in self.config:
