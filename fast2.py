@@ -328,6 +328,10 @@ class HardwarePlatform(Platform):
                 platform=self, port=port, baud=self.config['baud'],
                 send_queue=Queue.Queue(), receive_queue=self.receive_queue))
 
+        for i in self.connection_threads:
+            if i.serial_connection.port == 'com4':
+                self.machine.dmd_port = i
+
     def register_processor_connection(self, name, communicator):
         """Once a communication link has been established with one of the
         processors on the FAST board, this method lets the communicator let MPF
@@ -954,26 +958,13 @@ class FASTDriver(object):
         else:
             # Otherwise we send a full config command, trigger C1 (logic triggered
             # and drive now) switch ID 00, mode 18 (latched)
-
-            if (self.driver_settings['pwm1'] == 'ff' and
-                    self.driver_settings['pwm2'] == 'ff' and
-                    not ('allow_enable' in self.driver_settings or not
-                    self.driver_settings['allow_enable'])):
-
-                self.log.warning("Received a command to enable this coil "
-                                 "without pwm, but 'allow_enable' has not been"
-                                 "set to True in this coil's configuration.")
-                return
-
-            else:
-
-                cmd = (self.driver_settings['config_cmd'] +
-                       self.driver_settings['number'] +
-                      ',C1,00,18,' +
-                       self.driver_settings['pulse_ms'] + ',' +
-                       self.driver_settings['pwm1'] + ',' +
-                       self.driver_settings['pwm2'] + ',' +
-                       self.driver_settings['recycle_ms'])
+            cmd = (self.driver_settings['config_cmd'] +
+                   self.driver_settings['number'] +
+                  ',C1,00,18,' +
+                   self.driver_settings['pulse_ms'] + ',' +
+                   self.driver_settings['pwm1'] + ',' +
+                   self.driver_settings['pwm2'] + ',' +
+                   self.driver_settings['recycle_ms'])
 
         # todo pwm32
 
@@ -1144,7 +1135,12 @@ class FASTDMD(object):
             pass
 
     def tick(self):
-        self.send('BM:' + self.dmd_frame)
+
+        if len(self.dmd_frame) == 4096:
+            self.send('BM:' + self.dmd_frame)
+        else:
+            print len(self.dmd_frame)
+        # print self.machine.dmd_port.serial_connection
 
 
 class SerialCommunicator(object):
@@ -1315,6 +1311,7 @@ class SerialCommunicator(object):
                 be added automatically.
 
         """
+
         if self.dmd:
             self.send_queue.put(msg)
         else:
@@ -1327,7 +1324,12 @@ class SerialCommunicator(object):
         try:
             while self.serial_connection:
                 msg = self.send_queue.get()
-                self.serial_connection.write(msg)
+
+                if self.dmd:
+                    self.serial_connection.write(msg)
+                    print len(msg)
+                else:
+                    self.serial_connection.write(msg)
 
                 if debug:
                     self.platform.log.info("Sending: %s", msg)
@@ -1356,10 +1358,10 @@ class SerialCommunicator(object):
 
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                lines = traceback.format_exception(exc_type, exc_value,
-                                                   exc_traceback)
+                lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
                 msg = ''.join(line for line in lines)
                 self.machine.crash_queue.put(msg)
+
 
 # The MIT License (MIT)
 
@@ -1385,3 +1387,4 @@ class SerialCommunicator(object):
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+
