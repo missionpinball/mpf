@@ -886,8 +886,6 @@ class PROCDriver(object):
 
         self.log.debug('Pulsing for %sms', milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
-        print self.driver_settings
-        quit()
 
     def state(self):
         """Returns a dictionary representing this driver's current
