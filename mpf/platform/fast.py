@@ -954,13 +954,26 @@ class FASTDriver(object):
         else:
             # Otherwise we send a full config command, trigger C1 (logic triggered
             # and drive now) switch ID 00, mode 18 (latched)
-            cmd = (self.driver_settings['config_cmd'] +
-                   self.driver_settings['number'] +
-                  ',C1,00,18,' +
-                   self.driver_settings['pulse_ms'] + ',' +
-                   self.driver_settings['pwm1'] + ',' +
-                   self.driver_settings['pwm2'] + ',' +
-                   self.driver_settings['recycle_ms'])
+
+            if (self.driver_settings['pwm1'] == 'ff' and
+                    self.driver_settings['pwm2'] == 'ff' and
+                    not ('allow_enable' in self.driver_settings or not
+                    self.driver_settings['allow_enable'])):
+
+                self.log.warning("Received a command to enable this coil "
+                                 "without pwm, but 'allow_enable' has not been"
+                                 "set to True in this coil's configuration.")
+                return
+
+            else:
+
+                cmd = (self.driver_settings['config_cmd'] +
+                       self.driver_settings['number'] +
+                      ',C1,00,18,' +
+                       self.driver_settings['pulse_ms'] + ',' +
+                       self.driver_settings['pwm1'] + ',' +
+                       self.driver_settings['pwm2'] + ',' +
+                       self.driver_settings['recycle_ms'])
 
         # todo pwm32
 

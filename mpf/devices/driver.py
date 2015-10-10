@@ -53,16 +53,11 @@ class Driver(Device):
         configuration files:
 
         allow_enable: True
-        """
 
-        if self.config['allow_enable']:
-            self.time_last_changed = time.time()
-            self.log.debug("Enabling Driver")
-            self.hw_driver.enable()
-        else:
-            self.log.warning("Received a command to enable this coil without "
-                             "pwm, but 'allow_enable' has not been set to True"
-                             " in this coil's configuration.")
+        """
+        self.time_last_changed = time.time()
+        self.log.debug("Enabling Driver")
+        self.hw_driver.enable()
 
     def disable(self, **kwargs):
         """ Disables this driver """
@@ -83,8 +78,12 @@ class Driver(Device):
                 if milliseconds is not specified.)
         """
 
-        self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
-                       "%sms", milliseconds)
+        if milliseconds:
+            self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
+                           "%sms", milliseconds)
+        else:
+            self.log.debug("Pulsing Driver. Using default pulse_ms: %sms",
+                           milliseconds)
         self.time_last_changed = time.time()
         self.hw_driver.pulse(milliseconds)
 
