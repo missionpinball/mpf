@@ -195,12 +195,17 @@ class SlideBuilder(object):
             try:
                 display = self.machine.display.displays[display]
             except KeyError:
-                pass
+                display = self.machine.display.default_display
+                self.log.warning("Display :%s is not a valid display. Using "
+                                 "default",display)
+
         elif 'display' in settings[0]:
             try:
                 display = self.machine.display.displays[settings[0]['display']]
             except KeyError:
-                pass
+                display = self.machine.display.default_display
+                self.log.warning("Display :%s is not a valid display. Using "
+                                 "default", display)
         else:
             display = self.machine.display.default_display
 
