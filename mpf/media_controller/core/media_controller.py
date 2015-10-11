@@ -551,7 +551,7 @@ class MediaController(object):
 
         """
         for name in Config.string_to_list(names):
-            self.machine.events.post('bcp_get_{}'.format(name))
+            self.events.post('bcp_get_{}'.format(name))
 
     def bcp_set(self, **kwargs):
         """Processes an incoming BCP 'set' command by posting an event
@@ -563,7 +563,7 @@ class MediaController(object):
 
         """
         for k, v in kwargs.iteritems():
-            self.machine.events.post('bcp_set_{}'.format(k), value=v)
+            self.events.post('bcp_set_{}'.format(k), value=v)
 
     def bcp_shot(self, name, profile, state):
         """The MPF media controller uses triggers instead of shots for its

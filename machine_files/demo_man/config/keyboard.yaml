@@ -2,6 +2,8 @@
 keyboard:
   s:
     switch: s_start
+  b:
+    switch: s_buy_in
   l:
     switch: s_ball_launch
   1:
