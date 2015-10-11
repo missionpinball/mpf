@@ -2,6 +2,7 @@
 # smartmatrix.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
+# Thanks to Eli Curtz for finding and figuring the pieces to make this happen!
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/mpf
@@ -40,9 +41,9 @@ class HardwarePlatform(Platform):
         return '<Platform.SmartMatrix>'
 
     def configure_dmd(self):
-
-        self.log.debug("configuring smart matrix dmd")
-        self.serial_port = serial.Serial(port='com12', baudrate=2500000)
+        self.log.debug("Configuring SmartMatrix DMD")
+        self.serial_port = serial.Serial(port=self.config['port'],
+                                         baudrate=2500000)
 
         if self.config['use_separate_thread']:
             self.update = self.update_separate_thread
@@ -55,7 +56,7 @@ class HardwarePlatform(Platform):
         else:
             self.update = self.update_non_thread
             self.machine.events.add_handler('timer_tick', self.tick,
-                                            priority=0)
+                                            priority=0)  # p0 so this runs last
 
         return self
 
@@ -69,20 +70,13 @@ class HardwarePlatform(Platform):
         self.queue.put(bytearray(data))
 
     def tick(self):
-        try:
-            self.serial_port.write(bytearray([0x01]))
-            self.serial_port.write(self.dmd_frame)
-
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
+        self.serial_port.write(bytearray([0x01]))
+        self.serial_port.write(self.dmd_frame)
 
     def dmd_sender_thread(self):
 
         while True:
-            data = self.queue.get()
+            data = self.queue.get()  # this will block
 
             try:
                 self.serial_port.write(bytearray([0x01]))
