@@ -978,61 +978,89 @@ class BCPClientSocket(object):
         """
 
         socket_bytes = ''
-        bytes_per_pixel = 1
-        dmd_byte_length = 4096
 
-        try:
-            if self.machine.config['dmd']['type'] == 'color':
-                bytes_per_pixel = 3
+        if 'dmd' in self.machine.config:
 
-                dmd_byte_length = (self.machine.config['dmd']['width'] *
-                                   self.machine.config['dmd']['height'] *
-                                   bytes_per_pixel)
+            bytes_per_pixel = 1
+            dmd_byte_length = 4096
 
-        except KeyError:
-            pass
+            try:
+                if self.machine.config['dmd']['type'] == 'color':
+                    bytes_per_pixel = 3
 
-        self.log.debug("DMD Frame Byte Length: %s", dmd_byte_length)
+                    dmd_byte_length = (self.machine.config['dmd']['width'] *
+                                       self.machine.config['dmd']['height'] *
+                                       bytes_per_pixel)
+            except KeyError:
+                pass
 
-        try:
-            while self.socket:
+            self.log.debug("DMD Frame Byte Length: %s", dmd_byte_length)
 
-                socket_bytes += self.get_from_socket()
+            try:
+                while self.socket:
 
-                if socket_bytes:
+                    socket_bytes += self.get_from_socket()
 
-                    while socket_bytes.startswith('dmd_frame'):
-                        # trim the `dmd_frame?` so we have just the data
-                        socket_bytes = socket_bytes[10:]
+                    if socket_bytes:
 
-                        while len(socket_bytes) < dmd_byte_length:
-                            # If we don't have the full data, loop until we
-                            # have it.
-                            socket_bytes += self.get_from_socket()
+                        while socket_bytes.startswith('dmd_frame'):
+                            # trim the `dmd_frame?` so we have just the data
+                            socket_bytes = socket_bytes[10:]
 
-                        # trim the first 4096 bytes for the dmd data
-                        dmd_data = socket_bytes[:dmd_byte_length]
-                        # Save the rest. This is +1 over the last step since we
-                        # need to skip the \n separator
-                        socket_bytes = socket_bytes[dmd_byte_length+1:]
-                        self.machine.bcp.dmd.update(dmd_data)
+                            while len(socket_bytes) < dmd_byte_length:
+                                # If we don't have the full data, loop until we
+                                # have it.
+                                socket_bytes += self.get_from_socket()
 
-                    if '\n' in socket_bytes:
-                        message, socket_bytes = socket_bytes.split('\n', 1)
+                            # trim the dmd bytes for the dmd data
+                            dmd_data = socket_bytes[:dmd_byte_length]
+                            # Save the rest. This is +1 over the last step
+                            # since we need to skip the \n separator
+                            socket_bytes = socket_bytes[dmd_byte_length+1:]
+                            self.machine.bcp.dmd.update(dmd_data)
 
-                        self.log.debug('Received "%s"', message)
-                        cmd, kwargs = decode_command_string(message)
+                        if '\n' in socket_bytes:
+                            message, socket_bytes = socket_bytes.split('\n', 1)
 
-                        if cmd in self.bcp_commands:
-                            self.bcp_commands[cmd](**kwargs)
-                        else:
-                            self.receive_queue.put((cmd, kwargs))
+                            self.log.debug('Received "%s"', message)
+                            cmd, kwargs = decode_command_string(message)
 
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
+                            if cmd in self.bcp_commands:
+                                self.bcp_commands[cmd](**kwargs)
+                            else:
+                                self.receive_queue.put((cmd, kwargs))
+
+            except Exception:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                lines = traceback.format_exception(exc_type, exc_value,
+                                                   exc_traceback)
+                msg = ''.join(line for line in lines)
+                self.machine.crash_queue.put(msg)
+
+        else:
+            try:
+                while self.socket:
+
+                    socket_bytes += self.get_from_socket()
+
+                    if socket_bytes and '\n' in socket_bytes:
+                            message, socket_bytes = socket_bytes.split('\n', 1)
+
+                            self.log.debug('Received "%s"', message)
+                            cmd, kwargs = decode_command_string(message)
+
+                            if cmd in self.bcp_commands:
+                                self.bcp_commands[cmd](**kwargs)
+                            else:
+                                self.receive_queue.put((cmd, kwargs))
+
+            except Exception:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                lines = traceback.format_exception(exc_type, exc_value,
+                                                   exc_traceback)
+                msg = ''.join(line for line in lines)
+                self.machine.crash_queue.put(msg)
+
 
     def get_from_socket(self, num_bytes=8192):
         """Reads and returns whatever data is sitting in the receiving socket.
