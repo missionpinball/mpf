@@ -32,6 +32,7 @@ class Game(Mode):
         self.player_list = list()
         self.machine.game = None
         self.tilted = False
+        self.player = None
 
     @property
     def balls_in_play(self):
@@ -70,6 +71,7 @@ class Game(Mode):
 
         # Intialize variables
         self.num_players = 0
+        self.player = None
         self.player_list = list()
         self.machine.game = self
         self.tilted = False
@@ -130,7 +132,10 @@ class Game(Mode):
         self.machine.remove_machine_var_search(startswith='player',
                                                 endswith='_score')
 
-        self._player_add()
+        if not self.player_list:
+            # Sometimes game_starting handlers will add players, so we only
+            # have to here if there aren't any players yet.
+            self._player_add()
 
         self.machine.events.post('game_started')
 
@@ -425,10 +430,10 @@ class Game(Mode):
             player = Player(self.machine, self.player_list)
             self.num_players = len(self.player_list)
 
-            self.machine.create_machine_var(name='player' +
-                                                 str(player.number) + '_score',
-                                            value=player.score,
-                                            persist=True)
+            self.machine.create_machine_var(
+                name='player_{}_score'.format(player.score),
+                value=player.score,
+                persist=True)
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.
