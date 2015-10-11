@@ -979,16 +979,18 @@ class BCPClientSocket(object):
 
         socket_bytes = ''
         bytes_per_pixel = 1
+        dmd_byte_length = 4096
 
         try:
             if self.machine.config['dmd']['type'] == 'color':
                 bytes_per_pixel = 3
+
+                dmd_byte_length = (self.machine.config['dmd']['width'] *
+                                   self.machine.config['dmd']['height'] *
+                                   bytes_per_pixel)
+
         except KeyError:
             pass
-
-        dmd_byte_length = (self.machine.config['dmd']['width'] *
-                           self.machine.config['dmd']['height'] *
-                           bytes_per_pixel)
 
         self.log.debug("DMD Frame Byte Length: %s", dmd_byte_length)
 
