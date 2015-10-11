@@ -144,7 +144,7 @@ class Game(Mode):
         self.log.info("Player added successfully. Total players: %s",
                       self.num_players)
 
-        if self.num_players > 1 and self.player.number == 1:
+        if self.num_players == 2:
             self.machine.events.post('multiplayer_game')
 
     def ball_starting(self):
