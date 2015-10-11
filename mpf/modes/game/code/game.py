@@ -436,7 +436,7 @@ class Game(Mode):
                 value=player.score,
                 persist=True)
 
-            return True
+            return player
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.
