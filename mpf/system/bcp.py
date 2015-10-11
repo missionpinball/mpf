@@ -581,27 +581,26 @@ class BCP(object):
         self.log.warning('Received Error command from host with parameters: %s',
                          kwargs)
 
-    def bcp_receive_get(self, **kwargs):
-        """Processes an incoming BCP 'get' command.
-
-        Note that this media controller doesn't implement the 'get' command at
-        this time, but it's included here for completeness since the 'get'
-        command is part of the BCP 1.0 specification so we don't want to return
-        an error if we receive an incoming 'get' command.
+    def bcp_receive_get(self, names, **kwargs):
+        """Processes an incoming BCP 'get' command by posting an event
+        'bcp_get_<name>'. It's up to an event handler to register for that
+        event and to send the response BCP 'set' command.
 
         """
-        pass
+        for name in Config.string_to_list(names):
+            self.machine.events.post('bcp_get_{}'.format(name))
 
     def bcp_receive_set(self, **kwargs):
-        """Processes an incoming BCP 'set' command.
+        """Processes an incoming BCP 'set' command by posting an event
+        'bcp_set_<name>' with a parameter value=<value>. It's up to an event
+        handler to register for that event and to do something with it.
 
-        Note that this media controller doesn't implement the 'set' command at
-        this time, but it's included here for completeness since the 'set'
-        command is part of the BCP 1.0 specification so we don't want to return
-        an error if we receive an incoming 'set' command.
+        Note that BCP set commands can contain multiple key/value pairs, and
+        this method will post one event for each pair.
 
         """
-        pass
+        for k, v in kwargs.iteritems():
+            self.machine.events.post('bcp_set_{}'.format(k), value=v)
 
     def bcp_receive_reset_complete(self, **kwargs):
         self.machine.bcp_reset_complete()
