@@ -195,7 +195,10 @@ class LogicBlock(object):
     def unload(self):
         self.disable()
         self._remove_all_event_handlers()
-        self.machine.game.player.logic_blocks.remove(self)
+        try:
+            self.machine.game.player.logic_blocks.remove(self)
+        except KeyError:
+            pass
 
     def enable(self, **kwargs):
         """Enables this logic block. Automatically called when one of the
