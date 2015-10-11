@@ -763,7 +763,11 @@ class PROCDriver(object):
         if pulse_ms is None:
             pulse_ms = machine.config['mpf']['default_pulse_ms']
 
-        return_dict['allow_enable'] = kwargs['allow_enable']
+        try:
+            return_dict['allow_enable'] = kwargs['allow_enable']
+        except KeyError:
+            return_dict['allow_enable'] = False
+
         return_dict['pulse_ms'] = int(pulse_ms)
         return_dict['recycle_ms'] = 0
         return_dict['pwm_on_ms'] = 0
