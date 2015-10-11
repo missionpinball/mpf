@@ -417,8 +417,8 @@ class Game(Mode):
             self.log.debug("Current ball is after Ball 1. Cannot add player.")
             return False
 
-        self.machine.events.post_boolean('player_add_request',
-                                         callback=self._player_add)
+        return self.machine.events.post_boolean('player_add_request',
+                                                callback=self._player_add)
 
     def _player_add(self, ev_result=True):
         # This is the callback from our request player add event.
@@ -426,6 +426,7 @@ class Game(Mode):
 
         if ev_result is False:
             self.log.debug("Request to add player has been denied.")
+            return False
         else:
             player = Player(self.machine, self.player_list)
             self.num_players = len(self.player_list)
@@ -434,6 +435,8 @@ class Game(Mode):
                 name='player_{}_score'.format(player.score),
                 value=player.score,
                 persist=True)
+
+            return True
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.
