@@ -522,14 +522,14 @@ class Config(object):
         elif validator == 'float':
             try:
                 item = float(item)
-            except TypeError:
+            except (TypeError, ValueError):
                 # TODO error
                 pass
 
         elif validator == 'int':
             try:
                 item = int(item)
-            except TypeError:
+            except (TypeError, ValueError):
                 # TODO error
                 pass
 
