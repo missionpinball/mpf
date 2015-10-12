@@ -64,8 +64,13 @@ class Credits(Mode):
         # We need to calculate it differently depending on how the coin switch
         # values relate to game cost.
 
-        min_currency_value = min(x['value'] for x in
-                                 self.credits_config['switches'])
+        if self.credits_config['switches']:
+            min_currency_value = min(x['value'] for x in
+                                     self.credits_config['switches'])
+        else:
+            min_currency_value = (
+                self.credits_config['pricing_tiers'][0]['price'])
+
         price_per_game = self.credits_config['pricing_tiers'][0]['price']
 
         if min_currency_value == price_per_game:
