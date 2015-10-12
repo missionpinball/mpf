@@ -41,7 +41,9 @@ class Attract(Mode):
         # capture long presses
 
         # add these to the switch_handlers set so they'll be removed
-        for switch in self.machine.switches.items_tagged('start'):
+
+        for switch in self.machine.switches.items_tagged(
+                self.machine.config['game']['start_game_switch_tag']):
             self.switch_handlers.append(
                 self.machine.switch_controller.add_switch_handler(
                     switch.name, self.start_button_pressed, 1))

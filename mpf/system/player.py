@@ -148,6 +148,12 @@ class Player(object):
         for name, value in self.vars.iteritems():
             yield name, value
 
+    def is_player_var(self, var_name):
+        if var_name in self.vars:
+            return True
+        else:
+            return False
+
     # todo method to dump the player vars to disk?
 
 # The MIT License (MIT)

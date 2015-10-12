@@ -44,12 +44,12 @@ mpf:
         ball_save.BallSave
 
     plugins:
-        auditor
-        ball_search
-        info_lights
-        osc
-        socket_events
-        switch_player
+        mpf.plugins.auditor.Auditor
+        mpf.plugins.ball_search.BallSearch
+        mpf.plugins.info_lights.InfoLights
+        mpf.plugins.osc.OSC
+        mpf.plugins.socket_events.SocketClient
+        mpf.plugins.switch_player.SwitchPlayer
 
     driver_overlays:
         - snux: mpf.platform.snux.Snux
@@ -333,6 +333,7 @@ config_validator:
         disable_events: dict|str:ms|ball_ending
         enable_no_hold_events: dict|str:ms|None
         invert_events: dict|str:ms|None
+        enable_driver: single|self.machine.coils[%]|None
 
         # hw rules settings overrides
         pulse_ms: single|int|None
@@ -348,6 +349,12 @@ config_validator:
         debounced: single|bool|False
         drive_now: single|bool|False
 
+    game:
+      balls_per_game: single|int|3
+      max_players: single|int|4
+      start_game_switch_tag: single|str|start
+      add_player_switch_tag: single|str|start
+
     gis:
         number: single|str|
         number_str: single|str|
@@ -358,12 +365,24 @@ config_validator:
         enable_events: dict|str:ms|machine_reset_phase_3
         disable_events: dict|str:ms|None
         platform: single|str|None
+
+    hardware:
+      platform: single|str|virtual
+      coils: single|str|default
+      switches: single|str|default
+      matrix_lights: single|str|default
+      leds: single|str|default
+      dmd: single|str|default
+      gis: single|str|default
+      flashers: single|str|default
+      driverboards: single|str|
+
     leds:
         number: single|str|
         number_str: single|str|
         polarity: single|bool|False
         default_color: single|str|ffffff
-        brightness_compensation: list|float|1.0
+        brightness_compensation: list|float|1.0, 1.0, 1.0
         fade_ms: single|int|None
         tags: list|str|None
         label: single|str|%
@@ -374,8 +393,18 @@ config_validator:
         x: single|int|None
         y: single|int|None
         z: single|int|None
+
+    led_settings:
+        brightness_compensation: list|float|1.0, 1.0, 1.0
+        default_led_fade_ms: single|int|100
+        gamma: single|float|2.5
+        whitepoint: list|float|1.0, 1.0, 1.0
+        linear_slope: single|float|1.0
+        linear_cutoff: single|float|0.0
+        keyframe_interpolation: single|bool|True
+        dithering: single|bool|True
+
     machine:
-        hz: single|int|30
         balls_installed: single|int|1
         min_balls: single|int|1
         glass_off_mode: single|bool|True
@@ -400,6 +429,7 @@ config_validator:
         use_wait_queue: single|bool|False
         code: single|str|None
         stop_on_ball_end: single|bool|True
+        restart_on_next_ball: single|bool|False
     multiballs:
         ball_count: single|int|
         source_playfield: single|self.machine.ball_devices[%]|playfield
@@ -497,24 +527,25 @@ config_validator:
         advance_events: dict|str:ms|None
         remove_active_profile_events: dict|str:ms|None
     shot_profiles:
-            loop: single|bool|False
-            state_names_to_rotate: list|str|None
-            state_names_to_not_rotate: list|str|None
-            rotation_pattern: list|str|R
-            player_variable: single|str|None
-            advance_on_hit: single|bool|True
-            lights_when_disabled: single|bool|True
-            block: single|bool|true
-            states:
-                name: single|str|
-                light_script: single|str|None
-                hold: single|bool|True
-                reset: single|bool|False
-                repeat: single|bool|True
-                blend: single|bool|False
-                tocks_per_sec: single|int|10
-                num_repeats: single|int|0
-                sync_ms:  single|int|0
+        loop: single|bool|False
+        state_names_to_rotate: list|str|None
+        state_names_to_not_rotate: list|str|None
+        rotation_pattern: list|str|R
+        player_variable: single|str|None
+        advance_on_hit: single|bool|True
+        lights_when_disabled: single|bool|True
+        block: single|bool|true
+        states:
+            name: single|str|
+            light_script: single|str|None
+            hold: single|bool|True
+            reset: single|bool|False
+            repeat: single|bool|True
+            blend: single|bool|False
+            tocks_per_sec: single|int|10
+            num_repeats: single|int|0
+            sync_ms:  single|int|0
+
     switches:
         number: single|str|
         number_str: single|str|
@@ -531,31 +562,20 @@ config_validator:
         debounce_close: single|ms|None
 
     tilt:
-      tilt_warning_switch_tag: single|str|None
-      tilt_switch_tag: single|str|None
+      tilt_warning_switch_tag: single|str|tilt_warning
+      tilt_switch_tag: single|str|tilt
       slam_tilt_switch_tag: single|str|slam_tilt
       warnings_to_tilt: single|int|3
-      reset_warnings_events: dict|str:ms|ball_ending
-      multiple_hit_window: single|ticks|200ms
-      ball_start_settle_time: single|ms|5s
+      reset_warnings_events: list|str|ball_ending
+      multiple_hit_window: single|ticks_int|300ms
+      settle_time: single|ticks_int|5s
       tilt_warnings_player_var: single|str|tilt_warnings
 
+    timing:
+      hz: single|int|30
+      hw_thread_sleep_ms: single|int|1
+
 # Default settings for machines. All can be overridden
-
-
-timing:
-    hz: 30
-    hw_thread_sleep_ms: 1
-
-hardware:
-    platform: virtual
-    coils: default
-    switches: default
-    matrix_lights: default
-    leds: default
-    dmd: default
-    gis: default
-    flashers: default
 
 p_roc:
     lamp_matrix_strobe_time: 100
@@ -574,20 +594,7 @@ modes:
     - game
 
 
-led_settings:
-    brightness_compensation: 1.0
-    default_led_fade_ms: 100
-    gamma: 2.5
-    whitepoint: 1.0, 1.0, 1.0
-    linear_slope: 1.0
-    linear_cutoff: 0.0
-    keyframe_interpolation: True
-    dithering: True
 
-game:
-    balls_per_game: 3
-    max_players: 4
-    player_controlled_eject_tag: False
 
 auditor:
     save_events:
@@ -693,6 +700,18 @@ bcp:
             params:
                 player_num: "%number"
 
+        tilt:
+            command: tilt
+
+        slam_tilt:
+            command: slam_tilt
+
+        tilt_warning:
+            command: tilt_warning
+            params:
+                warnings: "%warnings"
+                warnings_remaining: "%warnings_remaining"
+
     player_variables:
       __all__
 
@@ -769,11 +788,22 @@ credits:
   free_play_string: FREE PLAY
 
 tilt:
-  tilt_warning_switch_tag: tilt
-#  tilt_switch_tag: None
+  tilt_warning_switch_tag: tilt_warning
+  tilt_switch_tag: tilt
   slam_tilt_switch_tag: slam_tilt
   warnings_to_tilt: 3
   reset_warnings_events: ball_ended
-  multiple_hit_window: 200ms
-  ball_start_settle_time: 5s
+  multiple_hit_window: 300ms
+  settle_time: 5s
   tilt_warnings_player_var: tilt_warnings
+
+hardware:
+  platform: virtual
+  coils: default
+  switches: default
+  matrix_lights: default
+  leds: default
+  dmd: default
+  gis: default
+  flashers: default
+  driverboards: virtual

@@ -545,26 +545,25 @@ class MediaController(object):
             self.events.post('switch_' + name + '_inactive')
 
     def bcp_get(self, **kwargs):
-        """Processes an incoming BCP 'get' command.
-
-        Note that this media controller doesn't implement the 'get' command at
-        this time, but it's included here for completeness since the 'get'
-        command is part of the BCP 1.0 specification so we don't want to return
-        an error if we receive an incoming 'get' command.
+        """Processes an incoming BCP 'get' command by posting an event
+        'bcp_get_<name>'. It's up to an event handler to register for that
+        event and to send the response BCP 'set' command.
 
         """
-        pass
+        for name in Config.string_to_list(names):
+            self.events.post('bcp_get_{}'.format(name))
 
     def bcp_set(self, **kwargs):
-        """Processes an incoming BCP 'set' command.
+        """Processes an incoming BCP 'set' command by posting an event
+        'bcp_set_<name>' with a parameter value=<value>. It's up to an event
+        handler to register for that event and to do something with it.
 
-        Note that this media controller doesn't implement the 'set' command at
-        this time, but it's included here for completeness since the 'set'
-        command is part of the BCP 1.0 specification so we don't want to return
-        an error if we receive an incoming 'set' command.
+        Note that BCP set commands can contain multiple key/value pairs, and
+        this method will post one event for each pair.
 
         """
-        pass
+        for k, v in kwargs.iteritems():
+            self.events.post('bcp_set_{}'.format(k), value=v)
 
     def bcp_shot(self, name, profile, state):
         """The MPF media controller uses triggers instead of shots for its
@@ -657,24 +656,24 @@ class MediaController(object):
             # max because this could go negative at first
             percent = max(0, int(float(AssetManager.total_assets -
                                        self._pc_assets_to_load -
-                                       AssetManager.assets_to_load) /
+                                       AssetManager.loader_queue.qsize()) /
                                        AssetManager.total_assets * 100))
         else:
             percent = 100
 
         self.log.debug("Asset Loading Counter. PC remaining:{}, MC remaining:"
                        "{}, Percent Complete: {}".format(
-                       self._pc_assets_to_load, AssetManager.assets_to_load,
+                       self._pc_assets_to_load, AssetManager.loader_queue.qsize(),
                        percent))
 
         self.events.post('asset_loader',
-                         total=AssetManager.assets_to_load +
+                         total=AssetManager.loader_queue.qsize() +
                                self._pc_assets_to_load,
                          pc=self._pc_assets_to_load,
-                         mc=AssetManager.assets_to_load,
+                         mc=AssetManager.loader_queue.qsize(),
                          percent=percent)
 
-        if not AssetManager.assets_to_load:
+        if not AssetManager.loader_queue.qsize():
 
             if not self.pc_connected:
                 self.events.post("waiting_for_client_connection")

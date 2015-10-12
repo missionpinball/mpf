@@ -55,6 +55,13 @@ class Mode(object):
         regardless of its stop_events settings.
         '''
 
+        self.restart_on_next_ball = self.config['mode']['restart_on_next_ball']
+        '''Controls whether this mode will restart on the next ball. This only
+        works if the mode was running when the ball ended. It's tracked per-
+        player in the '_restart_modes_on_next_ball' untracked player variable.
+        '''
+
+
         for asset_manager in self.machine.asset_managers.values():
 
             config_data = self.config.get(asset_manager.config_section, dict())

@@ -21,7 +21,7 @@ modes:
   - bonus
   - high_score
   - tilt
-  - credits
+#  - credits
 
 scriptlets:
     add_a_ball.AddABall

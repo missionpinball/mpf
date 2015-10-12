@@ -55,7 +55,7 @@ class ShowController(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick)
-        self.machine.events.add_handler('init_phase_4',
+        self.machine.events.add_handler('init_phase_5',
                                         self._initialize)
 
         # Tell the mode controller that it should look for light_player items in
@@ -262,6 +262,8 @@ class ShowController(object):
 
 
 class Show(Asset):
+
+    load_priority = 50  # lower than default (100) so shows go second
 
     def __init__(self, machine, config, file_name, asset_manager, actions=None):
         if not actions:

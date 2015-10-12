@@ -122,6 +122,8 @@ class ModeController(object):
             config_section=config_section_name, kwargs=kwargs,
             priority=priority))
 
+        self.loader_methods.sort(key=lambda x: x.priority, reverse=True)
+
     def register_start_method(self, start_method, config_section_name=None,
                               priority=0, **kwargs):
         """Used by system components, plugins, etc. to register themselves with

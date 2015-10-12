@@ -60,6 +60,10 @@ def load_config():
 
     config_dict = yaml.load(open(CONFIG_VERSION_FILE, 'r'))
 
+    for key in config_dict.keys():
+        if type(key) is not int:
+            del config_dict[key]
+
     # todo could add support for command line param to specify version
     new_config_version = max(config_dict)
     previous_config_version = new_config_version-1

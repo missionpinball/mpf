@@ -334,6 +334,13 @@ class MPFDisplay(object):
         for slide in slides:
             self.remove_slide(slide, force, refresh_display)
 
+    def remove_slides_from_mode(self, mode):
+        for slide in self.slides:
+            if slide.mode == mode:
+                self.remove_slide(slide, force=True, refresh_display=False)
+
+        self.refresh()
+
     def refresh(self):
         self.remove_stale_slides()
         self.current_slide = self.slides[0]

@@ -844,6 +844,11 @@ class FASTDriver(object):
         if pulse_ms is None:
             pulse_ms = machine.config['mpf']['default_pulse_ms']
 
+        try:
+            return_dict['allow_enable'] = kwargs['allow_enable']
+        except KeyError:
+            return_dict['allow_enable'] = False
+
         return_dict['pulse_ms'] = Config.int_to_hex_string(pulse_ms)
         return_dict['pwm1'] = 'ff'
         return_dict['pwm2'] = 'ff'
@@ -954,13 +959,26 @@ class FASTDriver(object):
         else:
             # Otherwise we send a full config command, trigger C1 (logic triggered
             # and drive now) switch ID 00, mode 18 (latched)
-            cmd = (self.driver_settings['config_cmd'] +
-                   self.driver_settings['number'] +
-                  ',C1,00,18,' +
-                   self.driver_settings['pulse_ms'] + ',' +
-                   self.driver_settings['pwm1'] + ',' +
-                   self.driver_settings['pwm2'] + ',' +
-                   self.driver_settings['recycle_ms'])
+
+            if (self.driver_settings['pwm1'] == 'ff' and
+                    self.driver_settings['pwm2'] == 'ff' and
+                    not ('allow_enable' in self.driver_settings or not
+                    self.driver_settings['allow_enable'])):
+
+                self.log.warning("Received a command to enable this coil "
+                                 "without pwm, but 'allow_enable' has not been"
+                                 "set to True in this coil's configuration.")
+                return
+
+            else:
+
+                cmd = (self.driver_settings['config_cmd'] +
+                       self.driver_settings['number'] +
+                      ',C1,00,18,' +
+                       self.driver_settings['pulse_ms'] + ',' +
+                       self.driver_settings['pwm1'] + ',' +
+                       self.driver_settings['pwm2'] + ',' +
+                       self.driver_settings['recycle_ms'])
 
         # todo pwm32
 
@@ -1143,6 +1161,7 @@ class SerialCommunicator(object):
         self.receive_queue = receive_queue
         self.debug = False
         self.log = None
+        self.dmd = False
 
         self.remote_processor = None
         self.remote_model = None
@@ -1214,6 +1233,7 @@ class SerialCommunicator(object):
         if self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
             latest_version = DMD_LATEST_FW
+            self.dmd = True
         elif self.remote_processor == 'NET':
             min_version = NET_MIN_FW
             latest_version = NET_LATEST_FW
@@ -1300,7 +1320,10 @@ class SerialCommunicator(object):
                 be added automatically.
 
         """
-        self.send_queue.put(msg + '\r')
+        if self.dmd:
+            self.send_queue.put(msg)
+        else:
+            self.send_queue.put(msg + '\r')
 
     def _sending_loop(self):
 
@@ -1324,21 +1347,24 @@ class SerialCommunicator(object):
 
         debug = self.platform.config['debug']
 
-        try:
-            while self.serial_connection:
-                msg = self.serial_io.readline()[:-1]  # strip the \r
+        if not self.dmd:
 
-                if debug:
-                    self.platform.log.info("Received: %s", msg)
+            try:
+                while self.serial_connection:
+                    msg = self.serial_io.readline()[:-1]  # strip the \r
 
-                if msg not in self.ignored_messages:
-                    self.receive_queue.put(msg)
+                    if debug:
+                        self.platform.log.info("Received: %s", msg)
 
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
+                    if msg not in self.ignored_messages:
+                        self.receive_queue.put(msg)
+
+            except Exception:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                lines = traceback.format_exception(exc_type, exc_value,
+                                                   exc_traceback)
+                msg = ''.join(line for line in lines)
+                self.machine.crash_queue.put(msg)
 
 # The MIT License (MIT)
 

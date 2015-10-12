@@ -105,8 +105,10 @@ class MachineController(object):
 
         self._load_system_modules()
 
-        self.config['machine'] = self.config_processor.process_config2(
-            'machine', self.config.get('machine', dict()), 'machine')
+        self.validate_machine_config_section('machine')
+        self.validate_machine_config_section('timing')
+        self.validate_machine_config_section('hardware')
+        self.validate_machine_config_section('game')
 
         self._register_system_events()
         self._load_machine_vars()
@@ -119,6 +121,16 @@ class MachineController(object):
         self.events.post("init_phase_5")
 
         self.reset()
+
+    def validate_machine_config_section(self, section):
+        if section not in self.config['config_validator']:
+            return
+
+        if section not in self.config:
+            self.config[section] = dict()
+
+        self.config[section] = self.config_processor.process_config2(
+            section, self.config[section], section)
 
     def _register_system_events(self):
         self.events.add_handler('shutdown', self.power_off)
@@ -244,8 +256,8 @@ class MachineController(object):
 
             self.log.debug("Loading '%s' plugin", plugin)
 
-            i = __import__('mpf.plugins.' + plugin, fromlist=[''])
-            self.plugins.append(i.plugin_class(self))
+            pluginObj = self.string_to_class(plugin)(self)
+            self.plugins.append(pluginObj)
 
     def _load_scriptlets(self):
         if 'scriptlets' in self.config:
@@ -452,19 +464,19 @@ class MachineController(object):
     def _loading_tick(self):
         if not self.asset_loader_complete:
 
-            if AssetManager.assets_to_load:
+            if AssetManager.loader_queue.qsize():
                 self.log.debug("Holding Attract start while MPF assets load. "
-                               "Remaining: %s", AssetManager.assets_to_load)
+                               "Remaining: %s", AssetManager.loader_queue.qsize())
                 self.bcp.bcp_trigger('assets_to_load',
                                      total=AssetManager.total_assets,
-                                     remaining=AssetManager.assets_to_load)
+                                     remaining=AssetManager.loader_queue.qsize())
             else:
                 self.bcp.bcp_trigger('assets_to_load',
                                      total=AssetManager.total_assets,
                                      remaining=0)
                 self.asset_loader_complete = True
 
-        elif not self.flag_bcp_reset_complete:
+        elif self.bcp.active_connections and not self.flag_bcp_reset_complete:
             if self.tick_num % Timing.HZ == 0:
                 self.log.info("Waiting for BCP reset_complete...")
 

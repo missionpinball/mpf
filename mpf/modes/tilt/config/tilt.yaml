@@ -2,7 +2,8 @@
 mode:
   code: tilt.Tilt
   priority: 10000
-  start_events: ball_starting
+  start_events: machine_reset_phase_3
+  stop_on_ball_end: False
 
 slide_player:
   tilt_warning_1:
@@ -20,3 +21,5 @@ slide_player:
   tilt:
     type: text
     text: TILT
+  tilt_clear:
+    clear_slides: yes

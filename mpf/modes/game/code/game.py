@@ -31,6 +31,8 @@ class Game(Mode):
         self._balls_in_play = 0
         self.player_list = list()
         self.machine.game = None
+        self.tilted = False
+        self.player = None
 
     @property
     def balls_in_play(self):
@@ -69,8 +71,10 @@ class Game(Mode):
 
         # Intialize variables
         self.num_players = 0
+        self.player = None
         self.player_list = list()
         self.machine.game = self
+        self.tilted = False
         self._balls_in_play = 0
 
         # todo register for request_to_start_game so you can deny it, or allow
@@ -78,9 +82,13 @@ class Game(Mode):
 
         self.add_mode_event_handler('player_add_success',
                                     self.player_add_success)
-        self.add_mode_event_handler(
-            self.machine.config['mpf']['switch_tag_event'].
-            replace('%', 'start'), self.request_player_add)
+
+        if self.machine.config['game']['add_player_switch_tag']:
+
+            self.add_mode_event_handler(
+                self.machine.config['mpf']['switch_tag_event'].replace('%',
+                self.machine.config['game']['add_player_switch_tag']),
+                self.request_player_add)
 
         self.add_mode_event_handler('ball_ended', self.ball_ended)
         self.add_mode_event_handler('game_ended', self.game_ended)
@@ -125,14 +133,21 @@ class Game(Mode):
 
         """
 
-        self.machine.remove_machine_var_search(startswith='player',
-                                                endswith='_score')
+        if ev_result:
+            self.machine.remove_machine_var_search(startswith='player',
+                                                    endswith='_score')
 
-        self._player_add()
+            if not self.player_list:
+                # Sometimes game_starting handlers will add players, so we only
+                # have to here if there aren't any players yet.
+                self._player_add()
 
-        self.machine.events.post('game_started')
+            self.machine.events.post('game_started')
 
-        self.player_turn_start()
+            self.player_turn_start()
+
+        else:  # something canceled the game start
+            self.game_ending()
 
     def player_add_success(self, player, **kwargs):
         """Called when a new player is successfully added to the current game
@@ -142,7 +157,7 @@ class Game(Mode):
         self.log.info("Player added successfully. Total players: %s",
                       self.num_players)
 
-        if self.num_players > 1 and self.player.number == 1:
+        if self.num_players == 2:
             self.machine.events.post('multiplayer_game')
 
     def ball_starting(self):
@@ -410,8 +425,8 @@ class Game(Mode):
             self.log.debug("Current ball is after Ball 1. Cannot add player.")
             return False
 
-        self.machine.events.post_boolean('player_add_request',
-                                         callback=self._player_add)
+        return self.machine.events.post_boolean('player_add_request',
+                                                callback=self._player_add)
 
     def _player_add(self, ev_result=True):
         # This is the callback from our request player add event.
@@ -419,14 +434,17 @@ class Game(Mode):
 
         if ev_result is False:
             self.log.debug("Request to add player has been denied.")
+            return False
         else:
             player = Player(self.machine, self.player_list)
             self.num_players = len(self.player_list)
 
-            self.machine.create_machine_var(name='player' +
-                                                 str(player.number) + '_score',
-                                            value=player.score,
-                                            persist=True)
+            self.machine.create_machine_var(
+                name='player_{}_score'.format(player.number),
+                value=player.score,
+                persist=True)
+
+            return player
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.
@@ -448,6 +466,9 @@ class Game(Mode):
                                  callback=self._player_turn_started)
 
     def player_turn_stop(self):
+
+        if not self.player:
+            return
 
         self.machine.events.post('player_turn_stop', player=self.player,
                                      number=self.player.number)

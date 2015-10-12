@@ -1,0 +1,45 @@
+#config_version=3
+keyboard:
+  z:
+    switch: left_flipper
+  /:
+    switch: right_flipper
+  x:
+    switch: left_sling
+  .:
+    switch: right_sling
+  s:
+    switch: start
+  l:
+    switch: launch
+  t:
+    switch: plumb_bob
+  shift-t:
+    switch: slam_tilt
+  c:
+    switch: left_outlane
+  v:
+    switch: left_inlane
+  n:
+    switch: right_inlane
+  m:
+    switch: right_outlane
+
+  1:
+    switch: trough_1
+    toggle: true
+  2:
+    switch: trough_2
+    toggle: true
+  3:
+    switch: trough_3
+    toggle: true
+  4:
+    switch: trough_4
+    toggle: true
+  5:
+    switch: trough_5
+    toggle: true
+  8:
+    switch: trough_8
+    toggle: true

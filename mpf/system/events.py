@@ -481,8 +481,8 @@ class EventManager(object):
 
                 # log if debug is enabled and this event is not the timer tick
                 if self.debug and event != 'timer_tick':
-                    self.log.debug("%s (priority: %s) responding to event '%s' "
-                                   "with args %s",
+                    self.log.debug("%s (priority: %s) responding to event '%s'"
+                                   " with args %s",
                                    (str(handler[0]).split(' '))[2], handler[1],
                                    event, merged_kwargs)
 

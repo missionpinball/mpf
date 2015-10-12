@@ -764,6 +764,11 @@ class PROCDriver(object):
         if pulse_ms is None:
             pulse_ms = machine.config['mpf']['default_pulse_ms']
 
+        try:
+            return_dict['allow_enable'] = kwargs['allow_enable']
+        except KeyError:
+            return_dict['allow_enable'] = False
+
         return_dict['pulse_ms'] = int(pulse_ms)
         return_dict['recycle_ms'] = 0
         return_dict['pwm_on_ms'] = 0
@@ -864,6 +869,14 @@ class PROCDriver(object):
                                     self.driver_settings['pulse_ms'], True)
         else:
             self.log.debug('Enabling at 100%')
+
+            if not ('allow_enable' in self.driver_settings and
+                    self.driver_settings['allow_enable']):
+                self.log.warning("Received a command to enable this coil "
+                                 "without pwm, but 'allow_enable' has not been"
+                                 "set to True in this coil's configuration.")
+                return
+
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
 

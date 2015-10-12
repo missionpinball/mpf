@@ -122,6 +122,7 @@ class SlideBuilder(object):
         first_settings['slide_name'] = None
 
         for element in settings:
+
             # Create a slide name based on the event name if one isn't specified
             if 'slide_name' in element:
                 first_settings['slide_name'] = element.pop('slide_name')
@@ -194,16 +195,25 @@ class SlideBuilder(object):
             try:
                 display = self.machine.display.displays[display]
             except KeyError:
-                pass
+                display = self.machine.display.default_display
+                self.log.warning("Display :%s is not a valid display. Using "
+                                 "default",display)
+
         elif 'display' in settings[0]:
             try:
                 display = self.machine.display.displays[settings[0]['display']]
             except KeyError:
-                pass
+                display = self.machine.display.default_display
+                self.log.warning("Display :%s is not a valid display. Using "
+                                 "default", display)
         else:
             display = self.machine.display.default_display
 
         if not display:
+            return
+
+        if 'clear_slides' in settings[0] and settings[0]['clear_slides']:
+            display.remove_slides_from_mode(mode)
             return
 
         # What priority?

@@ -68,31 +68,32 @@ class ScoreController(object):
                     if (type(value) is int and
                             entry_mode == mode and
                             var_name not in blocked_variables):
-                        self._add_value(mode, var_name, value)
-                        break
+                        self.add(value, var_name, mode)
                     elif type(value) is str:
                         value, block = value.split('|')
 
-                        if entry_mode == mode and value not in blocked_variables:
-                            self._add_value(mode, var_name, value)
-                            break
+                        if (entry_mode == mode and
+                                    var_name not in blocked_variables):
+                            self.add(value, var_name, mode)
 
                         if block.lower() == 'block':
                             blocked_variables.add(var_name)
 
-    def _add_value(self, mode, var_name, value):
+    def add(self, value, var_name='score', mode=None):
         if not value:
             return
 
         value = int(value)
         prev_value = value
         self.machine.game.player[var_name] += value
-        self.mode_scores[mode][var_name] = (
-            self.mode_scores[mode].get(var_name, 0) + value)
-        self.machine.events.post('_'.join(('mode', mode.name, var_name,
-                                           'score')), value=value,
-                                 prev_value=prev_value,
-                                 change=value-prev_value)
+
+        if mode:
+            self.mode_scores[mode][var_name] = (
+                self.mode_scores[mode].get(var_name, 0) + value)
+            self.machine.events.post('_'.join(('mode', mode.name, var_name,
+                                               'score')), value=value,
+                                     prev_value=prev_value,
+                                     change=value-prev_value)
 
 
 # The MIT License (MIT)
