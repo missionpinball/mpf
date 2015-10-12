@@ -29,11 +29,7 @@ class LED(Device):
 
     @classmethod
     def device_class_init(cls, machine):
-        if 'brightness_compensation' in machine.config['hardware']:
-            machine.config['hardware']['brightness_compensation'] = (
-                float(machine.config['hardware']['brightness_compensation']))
-        else:
-            machine.config['hardware']['brightness_compensation'] = 1.0
+        machine.validate_machine_config_section('led_settings')
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
@@ -95,10 +91,13 @@ class LED(Device):
         item.
 
         """
-        if type(value) is not list:
-            value = Config.string_to_list(value)
 
-        value = [float(x) for x in value]
+        print "incoming value", value
+
+        if not value:
+            value = self.machine.config['led_settings']['brightness_compensation']
+
+        print "value from default", value
 
         if len(value) == 1:
             value.extend([value[0], value[0]])
@@ -106,6 +105,9 @@ class LED(Device):
             value.append(1.0)
 
         self.config['brightness_compensation'] = value
+
+        print value
+        quit()
 
     def color(self, color, fade_ms=None, brightness_compensation=True,
               priority=0, cache=True, force=False, blend=False):

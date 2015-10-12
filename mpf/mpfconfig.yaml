@@ -375,13 +375,14 @@ config_validator:
       dmd: single|str|default
       gis: single|str|default
       flashers: single|str|default
+      driverboards: single|str|
 
     leds:
         number: single|str|
         number_str: single|str|
         polarity: single|bool|False
         default_color: single|str|ffffff
-        brightness_compensation: list|float|1.0
+        brightness_compensation: list|float|None
         fade_ms: single|int|None
         tags: list|str|None
         label: single|str|%
@@ -392,6 +393,17 @@ config_validator:
         x: single|int|None
         y: single|int|None
         z: single|int|None
+
+    led_settings:
+        brightness_compensation: list|float|1.0
+        default_led_fade_ms: single|int|100
+        gamma: single|float|2.5
+        whitepoint: list|float|1.0, 1.0, 1.0
+        linear_slope: single|float|1.0
+        linear_cutoff: single|float|0.0
+        keyframe_interpolation: single|bool|True
+        dithering: single|bool|True
+
     machine:
         balls_installed: single|int|1
         min_balls: single|int|1
@@ -582,15 +594,7 @@ modes:
     - game
 
 
-led_settings:
-    brightness_compensation: 1.0
-    default_led_fade_ms: 100
-    gamma: 2.5
-    whitepoint: 1.0, 1.0, 1.0
-    linear_slope: 1.0
-    linear_cutoff: 0.0
-    keyframe_interpolation: True
-    dithering: True
+
 
 auditor:
     save_events:
@@ -802,3 +806,4 @@ hardware:
   dmd: default
   gis: default
   flashers: default
+  driverboards: virtual
