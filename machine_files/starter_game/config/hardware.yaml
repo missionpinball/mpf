@@ -1,0 +1,177 @@
+# config_version=3
+
+virtual_platform_start_active_switches:
+    trough_1
+    trough_2
+    trough_3
+    trough_4
+    trough_5
+
+switches:
+
+# Cabinet
+  left_flipper:
+    number: XX0
+    tags: left_flipper
+  right_flipper:
+    number: XX1
+    tags: right_flipper
+  start:
+    number: XX2
+    tags: start
+  launch:
+    number: XX3
+    tags: launch
+
+# Tilt
+  plumb_bob:
+    number: XX3
+    tags: tilt_warning
+  slam_tilt:
+    number: XX4
+    tags: slam_tilt
+
+
+# Playfield Italian Bottom
+  left_outlane:
+    number: XX5
+    tags: playfield_active
+  left_inlane:
+    number: XX6
+    tags: playfield_active
+  right_inlane:
+    number: XX7
+    tags: playfield_active
+  right_outlane:
+    number: XX8
+    tags: playfield_active
+  left_sling:
+    number: XX9
+    tags: playfield_active
+  right_sling:
+    number: XX10
+    tags: playfield_active
+
+# Plunger lane
+  plunger_lane:
+    number: XX11
+    tags:
+
+# Trough
+  trough_1:
+    number: XX12
+    type: NC
+  trough_2:
+    number: XX13
+    type: NC
+  trough_3:
+    number: XX14
+    type: NC
+  trough_4:
+    number: XX15
+    type: NC
+  trough_5:
+    number: XX16
+    type: NC
+
+coils:
+
+# Note: If you have single-wound (e.g. pulse/pwm) flippers, remove the
+# dual-wound section below and un-comment the single-wound section
+
+# -------- Dual wound flippers ----------
+  left_flipper_main:
+    number: XX1
+    # pulse_ms: 30
+  left_flipper_hold:
+    number: XX2
+  right_flipper_main:
+    number: XX3
+    # pulse_ms: 30
+  right_flipper_hold:
+    number: XX4
+# ---------------------------------------
+
+# ------ Single wound flippers ----------
+#  left_flipper_main:
+#    number:
+#    # pulse_ms: 30
+#    hold_power: 2
+#  right_flipper_main:
+#    number:
+#    # pulse_ms: 30
+#    hold_power: 2
+# ---------------------------------------
+
+  left_slingshot:
+    number: XX5
+    # pulse_ms: 30
+  right_slingshot:
+    number: XX6
+    # pulse_ms: 30
+
+  trough_eject:
+    number: XX7
+    # pulse_ms: 30
+
+  plunger_lane_eject:
+    number: XX8
+    # pulse_ms: 30
+
+ball_devices:
+  trough:
+    tags: trough, home, drain
+    ball_switches: trough_1, trough_2, trough_3, trough_4, trough_5
+    eject_coil: trough_eject
+    confirm_eject_type: target
+    eject_targets: plunger_lane
+
+
+  plunger_lane:
+    tags: ball_add_live
+    ball_switches: plunger_lane
+    eject_coil: plunger_lane_eject  # remove if you do not have a coil
+    eject_events: launch_active  # remove if you do not have a button to launch
+#    mechanical_eject: true  # uncomment if you have a mechanical plunger
+
+flippers:
+
+  left:
+    main_coil: left_flipper_main
+    hold_coil: left_flipper_hold  # remove for single-wound pulse/pwm flippers
+    activation_switch: left_flipper
+
+  right:
+    main_coil: right_flipper_main
+    hold_coil: right_flipper_hold  # remove for single-wound pulse/pwm flippers
+    activation_switch: right_flipper
+
+sound_system:
+    tracks:
+        voice:
+            volume: 1
+            priority: 2
+            simultaneous_sounds: 1
+            preload: yes
+        sfx:
+            volume: 1
+            priority: 1
+            preload: yes
+            simultaneous_sounds: 7
+    stream:
+        name: music
+        priority: 0
+
+    buffer: 512
+    frequency: 44100
+    channels: 1
+    initial_volume: 1
+    volume_steps: 20
+
+dmd:
+    physical: no
+    width: 128
+    height: 32
+    shades: 16
+    fps: auto
+#    type: color
