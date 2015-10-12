@@ -69,13 +69,12 @@ class ScoreController(object):
                             entry_mode == mode and
                             var_name not in blocked_variables):
                         self.add(value, var_name, mode)
-                        break
                     elif type(value) is str:
                         value, block = value.split('|')
 
-                        if entry_mode == mode and value not in blocked_variables:
+                        if (entry_mode == mode and
+                                    var_name not in blocked_variables):
                             self.add(value, var_name, mode)
-                            break
 
                         if block.lower() == 'block':
                             blocked_variables.add(var_name)
