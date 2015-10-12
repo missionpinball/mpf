@@ -348,6 +348,12 @@ config_validator:
         debounced: single|bool|False
         drive_now: single|bool|False
 
+    game:
+      balls_per_game: single|int|3
+      max_players: single|int|4
+      start_game_switch_tag: single|str|start
+      add_player_switch_tag: single|str|start
+
     gis:
         number: single|str|
         number_str: single|str|
@@ -358,6 +364,17 @@ config_validator:
         enable_events: dict|str:ms|machine_reset_phase_3
         disable_events: dict|str:ms|None
         platform: single|str|None
+
+    hardware:
+      platform: single|str|virtual
+      coils: single|str|default
+      switches: single|str|default
+      matrix_lights: single|str|default
+      leds: single|str|default
+      dmd: single|str|default
+      gis: single|str|default
+      flashers: single|str|default
+
     leds:
         number: single|str|
         number_str: single|str|
@@ -375,7 +392,6 @@ config_validator:
         y: single|int|None
         z: single|int|None
     machine:
-        hz: single|int|30
         balls_installed: single|int|1
         min_balls: single|int|1
         glass_off_mode: single|bool|True
@@ -498,24 +514,25 @@ config_validator:
         advance_events: dict|str:ms|None
         remove_active_profile_events: dict|str:ms|None
     shot_profiles:
-            loop: single|bool|False
-            state_names_to_rotate: list|str|None
-            state_names_to_not_rotate: list|str|None
-            rotation_pattern: list|str|R
-            player_variable: single|str|None
-            advance_on_hit: single|bool|True
-            lights_when_disabled: single|bool|True
-            block: single|bool|true
-            states:
-                name: single|str|
-                light_script: single|str|None
-                hold: single|bool|True
-                reset: single|bool|False
-                repeat: single|bool|True
-                blend: single|bool|False
-                tocks_per_sec: single|int|10
-                num_repeats: single|int|0
-                sync_ms:  single|int|0
+        loop: single|bool|False
+        state_names_to_rotate: list|str|None
+        state_names_to_not_rotate: list|str|None
+        rotation_pattern: list|str|R
+        player_variable: single|str|None
+        advance_on_hit: single|bool|True
+        lights_when_disabled: single|bool|True
+        block: single|bool|true
+        states:
+            name: single|str|
+            light_script: single|str|None
+            hold: single|bool|True
+            reset: single|bool|False
+            repeat: single|bool|True
+            blend: single|bool|False
+            tocks_per_sec: single|int|10
+            num_repeats: single|int|0
+            sync_ms:  single|int|0
+
     switches:
         number: single|str|
         number_str: single|str|
@@ -541,22 +558,11 @@ config_validator:
       settle_time: single|ticks_int|5s
       tilt_warnings_player_var: single|str|tilt_warnings
 
+    timing:
+      hz: single|int|30
+      hw_thread_sleep_ms: single|int|1
+
 # Default settings for machines. All can be overridden
-
-
-timing:
-    hz: 30
-    hw_thread_sleep_ms: 1
-
-hardware:
-    platform: virtual
-    coils: default
-    switches: default
-    matrix_lights: default
-    leds: default
-    dmd: default
-    gis: default
-    flashers: default
 
 p_roc:
     lamp_matrix_strobe_time: 100

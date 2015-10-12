@@ -105,8 +105,10 @@ class MachineController(object):
 
         self._load_system_modules()
 
-        self.config['machine'] = self.config_processor.process_config2(
-            'machine', self.config.get('machine', dict()), 'machine')
+        self.validate_machine_config_section('machine')
+        self.validate_machine_config_section('timing')
+        self.validate_machine_config_section('hardware')
+        self.validate_machine_config_section('game')
 
         self._register_system_events()
         self._load_machine_vars()
@@ -119,6 +121,13 @@ class MachineController(object):
         self.events.post("init_phase_5")
 
         self.reset()
+
+    def validate_machine_config_section(self, section):
+        if section not in self.config['config_validator']:
+            return
+
+        self.config[section] = self.config_processor.process_config2(
+            section, self.config[section], section)
 
     def _register_system_events(self):
         self.events.add_handler('shutdown', self.power_off)
@@ -294,7 +303,6 @@ class MachineController(object):
                 extension).
 
         """
-
         if name not in self.hardware_platforms:
             hardware_platform = __import__('mpf.platform.%s' % name,
                                            fromlist=["HardwarePlatform"])
