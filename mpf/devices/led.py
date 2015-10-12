@@ -287,13 +287,13 @@ class LED(Device):
 
         color[0] = (int(color[0] *
                     self.config['brightness_compensation'][0] *
-                    global_settings['brightness_compensation']))
+                    global_settings['brightness_compensation'][0]))
         color[1] = (int(color[1] *
                     self.config['brightness_compensation'][1] *
-                    global_settings['brightness_compensation']))
+                    global_settings['brightness_compensation'][1]))
         color[2] = (int(color[2] *
                     self.config['brightness_compensation'][2] *
-                    global_settings['brightness_compensation']))
+                    global_settings['brightness_compensation'][2]))
 
         return color
 
