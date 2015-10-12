@@ -177,10 +177,14 @@ class Tilt(Mode):
         self.ball_ending_tilted_queue = queue
         queue.wait()
 
+        if not self._balls_to_collect:
+            self._tilt_done()
+
     def _tilt_done(self):
         if self.tilt_settle_ms_remaining():
-            self.delay.add(ms=self.tilt_settle_ms_remaining(),
-                           callback=self._tilt_done)
+            self.delay.reset(ms=self.tilt_settle_ms_remaining(),
+                             callback=self._tilt_done,
+                             name='tilt')
 
         else:
             self.machine.game.tilted = False
