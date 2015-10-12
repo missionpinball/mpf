@@ -382,7 +382,7 @@ config_validator:
         number_str: single|str|
         polarity: single|bool|False
         default_color: single|str|ffffff
-        brightness_compensation: list|float|None
+        brightness_compensation: list|float|1.0, 1.0, 1.0
         fade_ms: single|int|None
         tags: list|str|None
         label: single|str|%
@@ -395,7 +395,7 @@ config_validator:
         z: single|int|None
 
     led_settings:
-        brightness_compensation: list|float|1.0
+        brightness_compensation: list|float|1.0, 1.0, 1.0
         default_led_fade_ms: single|int|100
         gamma: single|float|2.5
         whitepoint: list|float|1.0, 1.0, 1.0

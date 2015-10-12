@@ -93,7 +93,7 @@ class LED(Device):
         """
 
         if not value:
-            value = self.machine.config['led_settings']['brightness_compensation']
+            value = [1.0, 1.0, 1.0]
 
         if len(value) == 1:
             value.extend([value[0], value[0]])
