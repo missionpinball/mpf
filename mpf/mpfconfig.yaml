@@ -333,6 +333,7 @@ config_validator:
         disable_events: dict|str:ms|ball_ending
         enable_no_hold_events: dict|str:ms|None
         invert_events: dict|str:ms|None
+        enable_driver: single|self.machine.coils[%]|None
 
         # hw rules settings overrides
         pulse_ms: single|int|None
@@ -791,3 +792,13 @@ tilt:
   multiple_hit_window: 300ms
   settle_time: 5s
   tilt_warnings_player_var: tilt_warnings
+
+hardware:
+  platform: virtual
+  coils: default
+  switches: default
+  matrix_lights: default
+  leds: default
+  dmd: default
+  gis: default
+  flashers: default

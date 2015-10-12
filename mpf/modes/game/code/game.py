@@ -127,7 +127,7 @@ class Game(Mode):
 
         # todo this should post the request to start game event first
 
-    def game_started(self, ev_result, **kwargs):
+    def game_started(self, ev_result=True, **kwargs):
         """All the modules that needed to do something on game start are done,
         so our game is officially 'started'.
 

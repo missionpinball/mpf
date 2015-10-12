@@ -210,6 +210,12 @@ class Config(object):
         Returns:
             A dictionary with lowercase keys.
         """
+
+        if type(source_dict) is None:
+            return dict()
+        elif not source_dict:
+            return
+
         for k in source_dict.keys():
             if type(source_dict[k]) is dict:
                 source_dict[k] = Config.keys_to_lower(source_dict[k])

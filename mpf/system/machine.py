@@ -126,6 +126,9 @@ class MachineController(object):
         if section not in self.config['config_validator']:
             return
 
+        if section not in self.config:
+            self.config[section] = dict()
+
         self.config[section] = self.config_processor.process_config2(
             section, self.config[section], section)
 
