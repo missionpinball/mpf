@@ -591,11 +591,6 @@ led_settings:
     keyframe_interpolation: True
     dithering: True
 
-game:
-    balls_per_game: 3
-    max_players: 4
-    player_controlled_eject_tag: False
-
 auditor:
     save_events:
         game_started

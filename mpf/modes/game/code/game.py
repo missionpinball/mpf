@@ -82,9 +82,13 @@ class Game(Mode):
 
         self.add_mode_event_handler('player_add_success',
                                     self.player_add_success)
-        self.add_mode_event_handler(
-            self.machine.config['mpf']['switch_tag_event'].
-            replace('%', 'start'), self.request_player_add)
+
+        if self.machine.config['game']['add_player_switch_tag']:
+
+            self.add_mode_event_handler(
+                self.machine.config['mpf']['switch_tag_event'].replace('%',
+                self.machine.config['game']['add_player_switch_tag']),
+                self.request_player_add)
 
         self.add_mode_event_handler('ball_ended', self.ball_ended)
         self.add_mode_event_handler('game_ended', self.game_ended)
@@ -123,23 +127,27 @@ class Game(Mode):
 
         # todo this should post the request to start game event first
 
-    def game_started(self, ev_result=True, **kwargs):
+    def game_started(self, ev_result, **kwargs):
         """All the modules that needed to do something on game start are done,
         so our game is officially 'started'.
 
         """
 
-        self.machine.remove_machine_var_search(startswith='player',
-                                                endswith='_score')
+        if ev_result:
+            self.machine.remove_machine_var_search(startswith='player',
+                                                    endswith='_score')
 
-        if not self.player_list:
-            # Sometimes game_starting handlers will add players, so we only
-            # have to here if there aren't any players yet.
-            self._player_add()
+            if not self.player_list:
+                # Sometimes game_starting handlers will add players, so we only
+                # have to here if there aren't any players yet.
+                self._player_add()
 
-        self.machine.events.post('game_started')
+            self.machine.events.post('game_started')
 
-        self.player_turn_start()
+            self.player_turn_start()
+
+        else:  # something canceled the game start
+            self.game_ending()
 
     def player_add_success(self, player, **kwargs):
         """Called when a new player is successfully added to the current game
@@ -432,7 +440,7 @@ class Game(Mode):
             self.num_players = len(self.player_list)
 
             self.machine.create_machine_var(
-                name='player_{}_score'.format(player.score),
+                name='player_{}_score'.format(player.number),
                 value=player.score,
                 persist=True)
 
@@ -458,6 +466,9 @@ class Game(Mode):
                                  callback=self._player_turn_started)
 
     def player_turn_stop(self):
+
+        if not self.player:
+            return
 
         self.machine.events.post('player_turn_stop', player=self.player,
                                      number=self.player.number)

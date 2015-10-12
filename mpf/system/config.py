@@ -238,6 +238,12 @@ class Config(object):
     @staticmethod
     def validate_config_item(spec, item='item not in config!@#'):
 
+        try:
+            if item.lower() == 'none':
+                item = None
+        except AttributeError:
+            pass
+
         default = 'default required!@#'
 
         if '|' in spec:
@@ -311,6 +317,8 @@ class Config(object):
 
         elif item_type == 'list_of_lists':
             return Config.list_of_lists(item)
+
+
 
     def process_config2(self, config_spec, source, section_name=None,
                         target=None, result_type='dict'):
@@ -487,6 +495,12 @@ class Config(object):
 
     def validate_item(self, item, validator, validation_failure_info):
 
+        try:
+            if item.lower() == 'none':
+                item = None
+        except AttributeError:
+            pass
+
         if ':' in validator:
             validator = validator.split(':')
             # item could be str, list, or list of dicts
@@ -586,6 +600,9 @@ class Config(object):
 
         for ver, sections in config_file.iteritems():
 
+            if type(ver) is not int:
+                continue
+
             ver_string = ''
 
             if int(version.__config_version_info__) > int(ver):
@@ -600,6 +617,9 @@ class Config(object):
             if setting_key in sections['section_deprecations']:
                 self.log.info('The setting "%s" has been removed in '
                               'config_version=%s%s', setting, ver, ver_string)
+
+        if setting in config_file['custom_messages']:
+            self.log.info(config_file['custom_messages'][setting])
 
 
     @staticmethod

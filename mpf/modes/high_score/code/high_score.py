@@ -58,6 +58,9 @@ class HighScore(Mode):
 
     def _check_for_high_scores(self):
 
+        if not self.machine.game.player_list:
+            return False
+
         high_score_change = False
 
         self.new_high_score_list = OrderedDict()
