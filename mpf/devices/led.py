@@ -92,12 +92,8 @@ class LED(Device):
 
         """
 
-        print "incoming value", value
-
         if not value:
             value = self.machine.config['led_settings']['brightness_compensation']
-
-        print "value from default", value
 
         if len(value) == 1:
             value.extend([value[0], value[0]])
@@ -105,9 +101,6 @@ class LED(Device):
             value.append(1.0)
 
         self.config['brightness_compensation'] = value
-
-        print value
-        quit()
 
     def color(self, color, fade_ms=None, brightness_compensation=True,
               priority=0, cache=True, force=False, blend=False):
