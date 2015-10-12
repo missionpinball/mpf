@@ -1,7 +1,7 @@
 credit_units: !!python/object/new:mpf.system.config.CaseInsensitiveDict
   dictitems:
     expire: 1444104602.399552
-    value: 0.0
-player1_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
+    value: 0
+player_1_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
   dictitems:
     value: 0
