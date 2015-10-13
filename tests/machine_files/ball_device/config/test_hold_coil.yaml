@@ -1,15 +1,30 @@
 #config_version=3
 
 coils:
-    eject_coil:
-        number:
     hold_coil:
         number:
+    hold_coil2:
+        number:
 
+switches:
+    s_entrance:
+        number:
+    s_entrance2:
+        number:
 
 ball_devices:
     test:
-        eject_coil: eject_coil
         hold_coil: hold_coil
+        entrance_switch: s_entrance
         hold_events: test_hold_event
-        
+        debug: true
+        confirm_eject_type: fake
+
+    test2:
+        hold_coil: hold_coil2
+        entrance_switch: s_entrance2
+        hold_events: test_hold_event2
+        tags: trough, home
+        debug: true
+        confirm_eject_type: fake
+

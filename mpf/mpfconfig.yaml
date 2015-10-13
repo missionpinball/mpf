@@ -152,6 +152,7 @@ config_validator:
         entrance_count_delay: single|ms|500ms
         eject_coil: single|self.machine.coils[%]|None
         hold_coil: single|self.machine.coils[%]|None
+        hold_coil_release_time: single|ms|1s
         hold_events: dict|str:ms|None
         hold_switches: list|self.machine.switches[%]|None
         eject_switch: single|self.machine.switches[%]|None
