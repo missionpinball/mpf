@@ -81,14 +81,19 @@ class Player(object):
         self.log.debug("Creating new player: Player %s. (player index '%s')",
                       number, index)
 
-        self.machine.events.post('player_add_success', player=self, num=number)
-
         # Set these after the player_add_success event so any player monitors
         # get notification of the new player before they start seeing variable
         # changes for it.
         self.vars['index'] = index
         self.vars['number'] = number
-        self.score = 0  # do it this way so we get the player_score event
+
+        self.machine.events.post('player_add_success', player=self, num=number,
+                                 callback=self._player_add_done)
+
+    def _player_add_done(self, **kwargs):
+         # do it this way so we get the player_score event
+         # use a callback so this event is posted after the player add event
+        self.score = 0
 
     def __repr__(self):
         try:
@@ -110,7 +115,6 @@ class Player(object):
             prev_value = self.vars[name]
         else:
             new_entry = True
-
 
         self.vars[name] = value
 
