@@ -104,6 +104,8 @@ class BallDevice(Device):
         self._playfield = False
         self.pending_eject_event_keys = set()
 
+        self.hold_release_in_progress = False
+
         self.machine.events.add_handler(
             'balldevice_{}_ball_eject_request'.format(self.name), self.eject)
 
@@ -218,7 +220,7 @@ class BallDevice(Device):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch.name, state=1,
                 ms=0,
-                callback=self._enable_hold_coil)
+                callback=self.hold)
 
 
 
@@ -575,7 +577,12 @@ class BallDevice(Device):
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch
 
-        if not self.config['ball_switches'] and not self.is_full():
+        if not self.config['ball_switches']:
+            if self.is_full():
+                self.log.warning("Device received balls but is already full. "
+                                 "Ignoring!")
+                return
+
             self.balls += 1
             self._balls_added(1)
 
@@ -935,14 +942,30 @@ class BallDevice(Device):
     def _perform_eject(self, target, timeout=None, **kwargs):
         self._setup_eject_confirmation(target, timeout)
 
+        # currently num_balls_ejecting is always 1
         self.balls -= self.num_balls_ejecting
 
         if self.config['eject_coil']:
             self._fire_eject_coil()
         elif self.config['hold_coil']:
+            # TODO: wait for some time to allow balls to settle for
+            #       both entrance and after a release
+
             self._disable_hold_coil()
-            # TODO: allow timed release of single balls and reenable coil after
+            self.hold_release_in_progress = True
+
+            # allow timed release of single balls and reenable coil after
             # release. Disable coil when device is empty
+            self.delay.add(name='hold_coil_release',
+                           ms=self.config['hold_coil_release_time'],
+                           callback=self._hole_release_done)
+
+    def _hole_release_done(self):
+        self.hold_release_in_progress = False
+
+        # reenable hold coil if there are balls left
+        if self.balls > 0:
+            self._enable_hold_coil()
 
     def _disable_hold_coil(self):
         self.config['hold_coil'].disable()
@@ -951,21 +974,16 @@ class BallDevice(Device):
                            "balls: %s.", self.num_balls_ejecting, self.balls)
 
     def hold(self, **kwargs):
-        self._enable_hold_coil()
-
-    def _enable_hold_coil(self, **kwargs):
-
-        # do not enable coil when we are ejecting. Currently, incoming balls
-        # will also be ejected.
-
-        # TODO: notice new balls during eject and do timed release for last
-        # ball also in that case.
-        if self.num_balls_ejecting:
+        # do not enable coil when we are ejecting
+        if self.hold_release_in_progress:
             return
 
+        self._enable_hold_coil()
+
+    def _enable_hold_coil(self):
         self.config['hold_coil'].enable()
         if self.debug:
-            self.log.debug("Disabling hold coil. num_balls_ejecting: %s. New "
+            self.log.debug("Enabling hold coil. num_balls_ejecting: %s. New "
                            "balls: %s.", self.num_balls_ejecting, self.balls)
 
     def _fire_eject_coil(self):
