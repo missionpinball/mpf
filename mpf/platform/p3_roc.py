@@ -193,8 +193,7 @@ class HardwarePlatform(Platform):
         self.log.debug("Configuring switch's host notification settings. P3-ROC"
                        "number: %s, debounce: %s", proc_num,
                        config['debounce'])
-        if config['debounce'] is False or \
-                proc_num >= pinproc.SwitchNeverDebounceFirst:
+        if config['debounce'] is False:
             self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
@@ -1075,7 +1074,7 @@ class PDBConfig(object):
             # as VirtualDrivers. Appending the bank avoids conflicts when
             # group_ctr gets too high.
 
-            if group_ctr >= num_proc_banks or coil_bank >= 16:
+            if group_ctr >= num_proc_banks or coil_bank >= 32:
                 self.log.warning("Driver group %d mapped to driver index"
                                  "outside of P3-ROC control.  These Drivers "
                                  "will become VirtualDrivers.  Note, the "
@@ -1122,7 +1121,7 @@ class PDBConfig(object):
 
     def initialize_drivers(self, proc):
         # Loop through all of the drivers, initializing them with the polarity.
-        for i in range(0, 208):
+        for i in range(0, 255):
             state = {'driverNum': i,
                      'outputDriveTime': 0,
                      'polarity': True,
