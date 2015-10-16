@@ -223,15 +223,16 @@ class BallController(object):
         self.machine.events.remove_handler(self._collecting_balls_complete)
         self.machine.events.post('collecting_balls_complete')
 
-    def _ball_drained_handler(self, balls):
+    def _ball_drained_handler(self, balls, device, **kwargs):
         self.machine.events.post_relay('ball_drain',
                                        callback=self._process_ball_drained,
+                                       device=device,
                                        balls=balls)
 
         # What happens if the ball enters the trough but the ball_add_live
         # event hasn't confirmed its eject? todo
 
-    def _process_ball_drained(self, balls=None, ev_result=None):
+    def _process_ball_drained(self, balls=None, ev_result=None, **kwargs):
         # We don't need to do anything here because other modules (ball save,
         # the game, etc. should jump in and do whatever they need to do when a
         # ball is drained.
