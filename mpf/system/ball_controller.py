@@ -213,7 +213,7 @@ class BallController(object):
         else:
             self.log.debug("All balls are collected")
 
-    def _collecting_balls_entered_callback(self, target, balls):
+    def _collecting_balls_entered_callback(self, target, balls, **kwargs):
         if self.are_balls_collected(target=target):
             self._collecting_balls_complete()
 
