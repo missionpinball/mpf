@@ -946,13 +946,17 @@ class BallDevice(Device):
 
     def _ball_left_device(self, balls, **kwargs):
             self.balls -= balls
+            if self.balls < 0:
+                self.balls = 0
+
             self._ejected_ball_did_leave_device = True
 
             # remove handler
             for switch in self.config['ball_switches']:
                 self.machine.switch_controller.remove_switch_handler(
                     switch_name=switch.name,
-                    callback=self._ball_left_device)
+                    callback=self._ball_left_device,
+                    state=0)
 
     def _perform_eject(self, target, timeout=None, **kwargs):
         self._setup_eject_confirmation(target, timeout)
