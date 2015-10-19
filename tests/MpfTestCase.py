@@ -25,6 +25,7 @@ class MpfTestCase(unittest.TestCase):
         time.time.return_value = self.testTime
 
     def advance_time_and_run(self, delta):
+        self.machine_run()
         self.advance_time(delta)
         self.machine_run()
 
