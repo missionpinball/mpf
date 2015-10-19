@@ -5,7 +5,7 @@ from MpfTestCase import MpfTestCase
 from mock import MagicMock
 import time
 
-class TestBallDevices(MpfTestCase):
+class TestBallDevicesHoldCoil(MpfTestCase):
 
   def getConfigFile(self):
       return 'test_hold_coil.yaml'
