@@ -99,6 +99,8 @@ class BallDevice(Device):
         """Whether this device is waiting for an event to trigger the eject.
         """
 
+        self._ejected_ball_did_leave_device = False
+
         self.valid = False
         self.need_first_time_count = True
         self._playfield = False
@@ -382,8 +384,11 @@ class BallDevice(Device):
 
             # If we were waiting for a count-based eject confirmation, let's
             # confirm it now
+            # TODO: honor exit_count_delay here. if switch stayed active it will
+            #       instantly go through the check above
             if (not ball_change and self.flag_confirm_eject_via_count and
-                    self.eject_in_progress_target):
+                    self.eject_in_progress_target and
+                    self._ejected_ball_did_leave_device):
                 self._eject_success()
                 # todo I think this is ok with `not ball_change`. If ball_change
                 # is positive that means the ball fell back in or a new one came
@@ -941,6 +946,7 @@ class BallDevice(Device):
 
     def _ball_left_device(self, balls, **kwargs):
             self.balls -= balls
+            self._ejected_ball_did_leave_device = True
 
             # remove handler
             for switch in self.config['ball_switches']:
@@ -950,15 +956,19 @@ class BallDevice(Device):
 
     def _perform_eject(self, target, timeout=None, **kwargs):
         self._setup_eject_confirmation(target, timeout)
+        self._ejected_ball_did_leave_device = False
 
         if len(self.config['ball_switches']) == 0:
             # no ball_switches. we dont know when it actually leaves the device
+            # assume its instant
             self.balls -= self.num_balls_ejecting
+            self._ejected_ball_did_leave_device = True
         else:
             # wait until one of the active switches turns off
             for switch in self.config['ball_switches']:
                 # only consider active switches
-                if switch.state == 1:
+                if self.machine.switch_controller.is_active(switch.name,
+                        ms=self.config['entrance_count_delay']):
                     self.machine.switch_controller.add_switch_handler(
                         switch_name=switch.name,
                         callback=self._ball_left_device,
@@ -1038,18 +1048,19 @@ class BallDevice(Device):
                                 "target. This shouldn't happen. Post to the "
                                 "forum if you see this.")
 
-            if self.debug:
-                self.log.debug("Will confirm eject via recount of ball "
-                               "switches.")
-            self.flag_confirm_eject_via_count = True
 
-            if (target.is_playfield() and
-                    target.ok_to_confirm_ball_via_playfield_switch()):
+            if target.is_playfield():
                 if self.debug:
-                    self.log.debug("Will confirm eject when a %s switch is "
-                                   "hit (additionally)", target.name)
-                self.machine.events.add_handler(
-                    'sw_{}_active'.format(target.name), self._eject_success)
+                    self.log.debug("Will confirm eject via recount of ball "
+                                   "switches.")
+                self.flag_confirm_eject_via_count = True
+
+                if target.ok_to_confirm_ball_via_playfield_switch():
+                    if self.debug:
+                        self.log.debug("Will confirm eject when a %s switch is "
+                                       "hit (additionally)", target.name)
+                    self.machine.events.add_handler(
+                        'sw_{}_active'.format(target.name), self._eject_success)
 
             if timeout:
                 # set up the delay to check for the failed the eject
@@ -1221,6 +1232,10 @@ class BallDevice(Device):
         self.eject_in_progress_target = None
         self.num_balls_ejecting = 0
         self.num_eject_attempts += 1
+
+        if not self._ejected_ball_did_leave_device:
+            self.log.warn("Ball did not leave device during eject. There may "
+                          "be mechanical or electrical problems!")
 
         if self.debug:
             self.log.debug("Eject duration: %ss",
