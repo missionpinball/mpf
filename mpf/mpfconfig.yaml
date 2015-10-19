@@ -451,7 +451,7 @@ config_validator:
         debug: single|bool|False
     playfield_transfers:
         ball_switch: single|self.machine.switches[%]|
-        eject_target: single|self.machine.ball_device[%]|
+        eject_target: single|self.machine.ball_devices[%]|
         captures_from: single|self.machine.ball_devices[%]|
         tags: list|str|None
         label: single|str|%
