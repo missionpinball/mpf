@@ -939,14 +939,35 @@ class BallDevice(Device):
                     self.log.debug("DEBUG: Eject duration: %ss. Target: None",
                                   round(time.time()-self.eject_start_time, 2))
 
+    def _ball_left_device(self, balls, **kwargs):
+            self.balls -= balls
+
+            # remove handler
+            for switch in self.config['ball_switches']:
+                self.machine.switch_controller.remove_switch_handler(
+                    switch_name=switch.name,
+                    callback=self._ball_left_device)
+
     def _perform_eject(self, target, timeout=None, **kwargs):
         self._setup_eject_confirmation(target, timeout)
 
-        # currently num_balls_ejecting is always 1
-        self.balls -= self.num_balls_ejecting
+        if len(self.config['ball_switches']) == 0:
+            # no ball_switches. we dont know when it actually leaves the device
+            self.balls -= self.num_balls_ejecting
+        else:
+            # wait until one of the active switches turns off
+            for switch in self.config['ball_switches']:
+                # only consider active switches
+                if switch.state == 1:
+                    self.machine.switch_controller.add_switch_handler(
+                        switch_name=switch.name,
+                        callback=self._ball_left_device,
+                        callback_kwargs={'balls': self.num_balls_ejecting},
+                        state=0)
 
         if self.config['eject_coil']:
             self._fire_eject_coil()
+
         elif self.config['hold_coil']:
             # TODO: wait for some time to allow balls to settle for
             #       both entrance and after a release
