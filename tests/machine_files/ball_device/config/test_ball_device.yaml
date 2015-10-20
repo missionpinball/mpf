@@ -48,11 +48,13 @@ ball_devices:
     test_target1:
         eject_coil: eject_coil3
         ball_switches: s_ball_switch_target1
+        debug: true
         tags: ball_add_live
-        confirm_eject_type: fake
+        confirm_eject_type: count
     test_target2:
         eject_coil: eject_coil4
         ball_switches: s_ball_switch_target2
+        debug: true
         tags: trough, drain, home
 
 diverters:
