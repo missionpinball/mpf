@@ -56,6 +56,8 @@ class MpfTestCase(unittest.TestCase):
 
 
     def tearDown(self):
+        # fire all delays
+        self.advance_time_and_run(10000)
         self.machine = None
         time.time = self.realTime
         self.realTime = None
