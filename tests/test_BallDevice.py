@@ -324,7 +324,6 @@ class TestBallDevice(MpfTestCase):
 
 
         coil1.pulse.assert_called_once_with()
-        # TODO: currently breaks here!
         coil2.pulse.assert_called_once_with()
         assert not coil3.pulse.called
         assert not coil4.pulse.called
