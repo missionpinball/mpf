@@ -164,6 +164,7 @@ config_validator:
         eject_targets: list|str|playfield
         # can't convert eject_targets to objects til all ball_devices are setup
         eject_timeouts: list|ms|None
+        ball_missing_timeouts: list|ms|None
         confirm_eject_switch: single|self.machine.switches[%]|None
         confirm_eject_event: single|str|None
         balls_per_eject: single|int|1
