@@ -89,7 +89,7 @@ class Playfield(BallDevice):
     def _initialize(self):
         self.ball_controller = self.machine.ball_controller
 
-        for device in self.machine.playfield_transfer:
+        for device in self.machine.playfield_transfers:
             if device.config['eject_target'] == self.name:
                 self.machine.events.add_handler(
                     event='balldevice_' + device.name +
