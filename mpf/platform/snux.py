@@ -355,6 +355,7 @@ class SnuxDriver(object):
     def __init__(self, number, platform_driver, overlay):
         self.number = number
         self.platform_driver = platform_driver
+        self.driver_settings = platform_driver.driver_settings
         self.overlay = overlay
 
     def __repr__(self):
