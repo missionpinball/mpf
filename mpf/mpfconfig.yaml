@@ -20,6 +20,9 @@ mpf:
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
         - scoring: mpf.system.scoring.ScoreController
 
+    platform_overlays:
+        - snux: mpf.platform.snux.Snux
+
     device_modules:
         driver.Driver
         switch.Switch
@@ -51,8 +54,15 @@ mpf:
         mpf.plugins.socket_events.SocketClient
         mpf.plugins.switch_player.SwitchPlayer
 
-    driver_overlays:
-        - snux: mpf.platform.snux.Snux
+    platforms:
+        fadecandy: mpf.platform.fadecandy.HardwarePlatform
+        fast: mpf.platform.fast.HardwarePlatform
+        p_roc:  mpf.platform.p_roc.HardwarePlatform
+        p3_roc:  mpf.platform.p3_roc.HardwarePlatform
+        smartmatrix: mpf.platform.smartmatrix.HardwarePlatform
+        snux: mpf.platform.snux.Snux
+        virtual: mpf.platform.virtual.HardwarePlatform
+
 
     paths:
         scriptlets: scriptlets
@@ -280,6 +290,14 @@ config_validator:
         recycle_ms: single|int|None
         debounced: single|bool|False
         drive_now: single|bool|False
+    driver_enabled:
+        enable_coil_name: single|self.machine.coils[%]|
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        platform: single|str|None
+        enable_events: dict|str:ms|ball_started
+        disable_events: dict|str:ms|ball_ending
 
     drop_targets:
         switch: single|self.machine.switches[%]|
@@ -545,7 +563,9 @@ config_validator:
             tocks_per_sec: single|int|10
             num_repeats: single|int|0
             sync_ms:  single|int|0
-
+    snux:
+        flipper_enable_driver_number: single|int|c23
+        diag_led_driver_number: single|str|c24
     switches:
         number: single|str|
         number_str: single|str|
@@ -560,6 +580,9 @@ config_validator:
         platform: single|str|None
         debounce_open: single|ms|None
         debounce_close: single|ms|None
+    system11:
+        ac_relay_delay_ms: single|int|75
+        ac_relay_driver_number: single|str|
 
     tilt:
       tilt_warning_switch_tag: single|str|tilt_warning

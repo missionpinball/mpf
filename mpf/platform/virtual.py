@@ -14,7 +14,7 @@ that it doesn't require any P-ROC drivers or modules to be installed.
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-from mpf.system.platform import Platform, DriverOverlay
+from mpf.system.platform import Platform
 from mpf.system.config import Config
 
 
@@ -53,7 +53,13 @@ class HardwarePlatform(Platform):
     def configure_driver(self, config, device_type='coil'):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
-        return VirtualDriver(config['number']), config['number']
+
+        driver = VirtualDriver(config['number'])
+
+        driver.driver_settings = config
+        driver.driver_settings['pulse_ms'] = 30
+
+        return driver, config['number']
 
     def configure_switch(self, config):
         # We want to have the virtual platform set all the initial switch states
@@ -66,7 +72,11 @@ class HardwarePlatform(Platform):
 
         self.hw_switches[config['number']] = state
 
-        return VirtualSwitch(config['number']), config['number']
+        switch = VirtualSwitch(config['number'])
+
+        switch.driver_settings = config
+
+        return switch, config['number']
 
     def get_hw_switch_states(self):
 
@@ -87,8 +97,8 @@ class HardwarePlatform(Platform):
         else:
             switches = [x for x in self.machine.switches if x.platform == self]
 
-            for switch in list_of_switch_numbers:
-                self.hw_switches[x.number] = x.state ^ x.invert
+            for switch in switches:
+                self.hw_switches[switch.number] = switch.state ^ switch.invert
 
         return self.hw_switches
 
@@ -104,9 +114,8 @@ class HardwarePlatform(Platform):
     def configure_dmd(self):
         return VirtualDMD(self.machine)
 
-    @DriverOverlay.write_hw_rule
     def write_hw_rule(self, *args, **kwargs):
-        print "*** writing hw rule ***"
+        pass
 
     def clear_hw_rule(self, sw_name):
         sw_num = self.machine.switches[sw_name].number
@@ -170,6 +179,9 @@ class VirtualDriver(object):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
+
+    def __repr__(self):
+        return "VirtualDriver.{}".format(self.number)
 
     def validate_driver_settings(self, **kwargs):
         return dict()
