@@ -36,6 +36,7 @@ class Driver(Device):
                                      validate=validate)
 
         self.time_last_changed = 0
+        self.time_when_done = 0
         self.hw_driver, self.number = (self.platform.configure_driver(self.config))
 
     def validate_driver_settings(self, **kwargs):
@@ -55,6 +56,7 @@ class Driver(Device):
         allow_enable: True
 
         """
+        self.time_when_done = -1
         self.time_last_changed = time.time()
         self.log.debug("Enabling Driver")
         self.hw_driver.enable()
@@ -87,6 +89,9 @@ class Driver(Device):
             self.hw_driver.pulse()
         self.time_last_changed = time.time()
 
+        if not milliseconds:
+            milliseconds = self.hw_driver.driver_settings['pulse_ms']
+        self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
     def timed_enable(self, milliseconds, **kwargs):
         """Lets you enable a driver for a specific time duration that's longer
@@ -115,6 +120,7 @@ class Driver(Device):
                                      ms=milliseconds,
                                      callback=self.disable)
             self.enable()
+            self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
 
 # The MIT License (MIT)
