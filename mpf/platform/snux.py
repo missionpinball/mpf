@@ -110,7 +110,7 @@ class Snux(object):
         self.special_drivers.add(
             self.system11_config['ac_relay_driver_number'].lower())
 
-        self.log.debug("Configuring A/C Select Relay transition delay for ",
+        self.log.debug("Configuring A/C Select Relay transition delay for "
                        "%sms", self.system11_config['ac_relay_delay_ms'])
 
         self.ac_relay_delay_ms = self.system11_config['ac_relay_delay_ms']
@@ -121,9 +121,6 @@ class Snux(object):
 
         self.log.debug("Configuring Flipper Enable for driver %s",
                        self.snux_config['flipper_enable_driver_number'])
-
-        self.special_drivers.add(
-            self.snux_config['flipper_enable_driver_number'].lower())
 
         self.machine.events.add_handler('init_phase_5',
                                         self._initialize_phase_2)
