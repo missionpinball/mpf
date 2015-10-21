@@ -450,6 +450,9 @@ class Playfield(BallDevice):
     def eject_all(self, *args, **kwargs):
         pass
 
+    def is_playfield(self):
+        return True
+
 # The MIT License (MIT)
 
 # Copyright (c) 2013-2015 Brian Madden and Gabe Knuth

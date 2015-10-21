@@ -68,6 +68,10 @@ class BallDevice(Device):
         self.machine.events.add_handler('machine_reset_phase_2',
                                         self._initialize2)
 
+        self.machine.events.add_handler('machine_reset_phase_3',
+                                        self._initialize3)
+
+
         self.num_balls_ejecting = 0
         """ The number of balls that are currently in the process of being
         ejected. This is either 0, 1, or whatever the balls was
@@ -91,7 +95,12 @@ class BallDevice(Device):
         """Whether this device is waiting for an event to trigger the eject.
         """
 
-        self._playfield = False
+        self._source_devices = []
+
+        self._is_connected_to_ball_source_state = None
+
+        self._blocked_eject_attempts = []
+
         self.pending_eject_event_keys = set()
 
         self.hold_release_in_progress = False
@@ -152,12 +161,6 @@ class BallDevice(Device):
         if self._idle_counted:
             return self._handle_eject_queue()
 
-    def _state_idle_source_device_eject_attempt(self):
-        raise Exception("Noo")
-        # TODO: as bonus make sure ball switches are stable and wait otherwise
-        return self._switch_state("waiting_for_ball")
-
-
     def _state_idle_counted_balls(self, balls):
         self._idle_counted = True
         if self.balls < 0:
@@ -180,10 +183,17 @@ class BallDevice(Device):
                                       self.config['captures_from'],
                                       balls=unexpected_balls)
 
-        if self.get_additional_ball_capacity():
-            self._ok_to_receive()
 
-        # TODO: unblock blocked source_device_eject_attempts
+        if self.get_additional_ball_capacity():
+            # unblock blocked source_device_eject_attempts
+            if self._blocked_eject_attempts:
+                queue = self._blocked_eject_attempts.popleft()
+                queue.clear()
+                return self._switch_state("waiting_for_balls")
+
+            if not self.eject_queue:
+                self._ok_to_receive()
+
 
         # No new balls
         # In idle those things can happen:
@@ -205,17 +215,40 @@ class BallDevice(Device):
 
     def _state_missing_balls_start(self, balls, during_eject):
         if during_eject:
-            # TODO: during eject we got two options: request a new ball or ignore
-            self.eject(1, self.eject_in_progress_target)
+            # Request a new ball depending on setting
+            if  self.config['ball_missing_action'] == "retry":
+                self.log.debug("Lost %s balls during eject. Will retry the "
+                               "eject.", balls)
+                self.eject(balls, self.eject_in_progress_target)
+            else:
+                self.log.debug("Lost %s balls during eject. Will ignore the "
+                               "loss.", balls)
+
+            # Rest target
             self.eject_in_progress_target = None
-            pass
         self._balls_missing(balls)
         return self._switch_state("idle")
+
+    def _state_requesting_ball_start(self):
+        # In this state we request a ball:
+        # 1. Wait for the eject to happen
+        # 2. We can receive or loose a ball before the attempt
+        if self.debug:
+            self.log.debug("Don't have any balls. Requesting one.")
+        self._request_one_ball()
+
+    def _state_requesting_ball_counted_balls(self, balls):
+        # if we received or lost a ball go to idle state. it will handle that
+        # when the eject attempt eventually happens we will either queue it or
+        # process it right away in case we are still in idle
+        if balls != self.balls:
+            return self._switch_state("idle")
+
 
     def _state_waiting_for_ball_start(self):
         # This can happen
         # 1. ball counts can change (via _counted_balls)
-        # 2. eject can fail (via _eject_attempt_failed)
+        # 2. eject can fail (via _eject_failed)
         # TODO: implement 2
         pass
 
@@ -228,9 +261,12 @@ class BallDevice(Device):
             self.balls = balls
             return
         elif self.balls < balls:
-            # got new balls but claim one
-            self._handle_new_balls(balls - self.balls - 1)
-            self.balls = balls
+            # got new balls but only handle one. If we got more they arrived
+            # unexpectedly and state idle will handle them
+            self.balls += 1
+            # this event will carry 0 unclaimed balls but is needed for eject
+            # confirmation 
+            self._handle_new_balls(0)
             return self._switch_state("idle")
 
         # Default: wait
@@ -282,14 +318,6 @@ class BallDevice(Device):
                                  num_attempts=self.num_eject_attempts,
                                  callback=self._perform_eject)
 
-
-    def _state_requesting_ball_start(self):
-        if self.debug:
-            self.log.debug("Don't have any balls. Requesting one.")
-        if not self.request_ball():
-            raise Exception("Requesting ball failed")
-
-        return self._switch_state("waiting_for_ball")
 
     def _state_failed_eject_start(self):
         # TODO: handle retry limit
@@ -345,21 +373,27 @@ class BallDevice(Device):
 
         self.config['eject_targets'] = new_list
 
-    def _source_device_eject_attempt(self, balls, target, **kwargs):
+    def _source_device_eject_attempt(self, balls, target, queue, **kwargs):
         if target != self:
             return
 
         if self.is_ready_to_receive():
-            if self._state == "idle":
-                return self._switch_state("waiting_for_ball")
+            return self._switch_state("waiting_for_ball")
         else:
-            # TODO: block the attempt until we are ready again
-            raise Exception("Unimplemented")
+            # block the attempt until we are ready again
+            self._blocked_eject_attempts.append(queue)
+            queue.wait()
             return
 
     def _source_device_eject_failed(self, balls, target, **kwargs):
-        pass
-        # TODO: change state if we are in waiting_for_ball
+        if target != self:
+            return
+
+        if self._state != "waiting_for_ball":
+            raise Exception("There was no ongoing eject")
+
+        # go to idle. it will know what to do
+        self._switch_state("idle")
 
     def _initialize(self):
         # convert names to objects
@@ -461,6 +495,7 @@ class BallDevice(Device):
         for device in self.machine.ball_devices:
             for target in device.config['eject_targets']:
                 if target.name == self.name:
+                    self._source_devices.append(device)
                     if self.debug:
                         self.log.debug("EVENT: {} to {}".format(device.name,
                                        target.name))
@@ -472,6 +507,18 @@ class BallDevice(Device):
                         'balldevice_{}_ball_eject_attempt'.format(device.name),
                         self._source_device_eject_attempt)
                     break
+
+
+    def _initialize3(self):
+        if not self.config['ball_missing_action']:
+            if self.is_connected_to_ball_source():
+                self.config['ball_missing_action'] = "retry"
+            else:
+                self.config['ball_missing_action'] = "ignore"
+        elif (not self.is_connected_to_ball_source() and 
+            self.config['ball_missing_action'] == "retry"):
+            raise Exception("Cannot use retry as ball_missing_action " +
+                            "when not connected to a ball source")
 
         self._switch_state("initial")
 
@@ -691,7 +738,7 @@ class BallDevice(Device):
 
     def is_ready_to_receive(self):
         return (((self._state == "idle" and self._idle_counted)
-                or self._state == "waiting_for_ball")
+                or self._state == "requesting_ball")
                 and self.balls < self.config['ball_capacity'])
 
     def get_real_additional_capacity(self):
@@ -718,38 +765,34 @@ class BallDevice(Device):
 
         return self.get_real_additional_capacity()
 
+    def is_connected_to_ball_source(self):
+        if "drain" in self.tags:
+            return True
+
+        if self._is_connected_to_ball_source_state == None:
+            self._is_connected_to_ball_source_state = False
+            for source in self._source_devices:
+                if source.is_connected_to_ball_source():
+                    self._is_connected_to_ball_source_state = True
+                    break
+        return self._is_connected_to_ball_source_state
+
+    def _request_one_ball(self):
+        # this will request a ball. no matter what
+        self.machine.events.post('balldevice_' + self.name +
+                                 '_ball_request', balls=1)
+
 
     def request_ball(self, balls=1):
-        # TODO: make this more robust
-        # TODO: do we need all those restrictions? the device can always request
-        #       balls but it will only receive them when idle/waiting_for_balls
         """Request that one or more balls is added to this device.
 
         Args:
             balls: Integer of the number of balls that should be added to this
                 device. A value of -1 will cause this device to try to fill
                 itself.
-
-        Note that a device will never request more balls than it can hold. Also,
-        only devices that are fed by other ball devices (or a combination of
-        ball devices and diverters) can make this request. e.g. if this device
-        is fed from the playfield, then this request won't work.
-
         """
         if self.debug:
             self.log.debug("In request_ball. balls: %s", balls)
-
-        if self.eject_in_progress_target:
-            if self.debug:
-                self.log.debug("Received request to request a ball, but we "
-                               "can't since there's an eject in progress.")
-            return False
-
-        if not self.get_real_additional_capacity():
-            if self.debug:
-                self.log.debug("Received request to request a ball, but we "
-                               "can't since it's not ok to receive.")
-            return False
 
         # How many balls are we requesting?
         remaining_capacity = (self.config['ball_capacity'] -
@@ -768,22 +811,14 @@ class BallDevice(Device):
         if self.debug:
             self.log.debug("Requesting Ball(s). Balls=%s", balls)
 
-        self.machine.events.post('balldevice_' + self.name +
-                                 '_ball_request', balls=balls)
+        for i in range(balls):
+            self._request_one_ball()
 
         return balls
 
-    def _cancel_request_ball(self):
-        self.machine.events.post('balldevice_' + self.name +
-                                 '_cancel_ball_request')
-
-    def _eject_event_handler(self):
-        # We received the event that should eject this ball.
-
-        if not self.balls:
-            self.request_ball()
-
     def stop(self, **kwargs):
+        # TODO: convert
+        raise Exception("broken")
         """Stops all activity in this device.
 
         Cancels all pending eject requests. Cancels eject confirmation checks.
@@ -803,6 +838,8 @@ class BallDevice(Device):
     def setup_player_controlled_eject(self, balls=1, target=None,
                                       trigger_event=None):
 
+        # TODO: convert that method into the new structure
+        raise Exception("broken")
         if self.debug:
             self.log.debug("Setting up player-controlled eject. Balls: %s, "
                            "Target: %s, trigger_event: %s",
@@ -864,9 +901,8 @@ class BallDevice(Device):
 
     def _eject_request(self, balls=1, target=None, **kwargs):
         # TODO: make sure only one device ejects
-        # TODO: what to do when we cannot satisfy the request?
         if balls:
-            ejecting_balls = self.eject(balls, target, **kwargs)
+            self.eject(balls, target, **kwargs)
 
     def eject(self, balls=1, target=None, **kwargs):
         if not target:
@@ -1249,12 +1285,14 @@ class BallDevice(Device):
 
 
     def _eject_permanently_failed(self):
+        # TODO: use again
         self.log.warning("Eject failed %s times. Permanently giving up.",
                          self.config['max_eject_attempts'])
         self.machine.events.post('balldevice_' + self.name +
                                  'ball_eject_permanent_failure')
 
     def _mechanical_eject_failed(self):
+        # TODO: use again
         if self.debug:
             self.log.debug("Mechanical Eject Failed")
 
@@ -1297,7 +1335,7 @@ class BallDevice(Device):
         if it's a regular ball device.
 
         """
-        return self._playfield
+        return False
 
 
 # The MIT License (MIT)
