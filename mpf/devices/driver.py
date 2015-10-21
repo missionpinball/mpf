@@ -87,7 +87,6 @@ class Driver(Device):
             self.hw_driver.pulse()
         self.time_last_changed = time.time()
 
-
     def timed_enable(self, milliseconds, **kwargs):
         """Lets you enable a driver for a specific time duration that's longer
         than 255ms. (If you want to enable a driver for 255ms or less, just use

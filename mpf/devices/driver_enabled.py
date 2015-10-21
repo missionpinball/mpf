@@ -6,29 +6,11 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-from mpf.system.device import Device
+from mpf.devices.driver import Driver
 
 
-class DriverEnabled(Device):
-    """Represents a flipper in a pinball machine. Subclass of Device.
-
-    Contains several methods for actions that can be performed on this flipper,
-    like :meth:`enable`, :meth:`disable`, etc.
-
-    Flippers have several options, including player buttons, EOS swtiches,
-    multiple coil options (pulsing, hold coils, etc.)
-
-    More details: http://missionpinball.com/docs/devices/flippers/
-
-    Args:
-        machine: A reference to the machine controller instance.
-        name: A string of the name you'll refer to this flipper object as.
-        config: A dictionary that holds the configuration values which specify
-            how this flipper should be configured. If this is None, it will use
-            the system config settings that were read in from the config files
-            when the machine was reset.
-        collection: A reference to the collection list this device will be added
-        to.
+class DriverEnabled(Driver):
+    """Represents a "driver-enabled" device in a pinball machine.
     """
     config_section = 'driver_enabled'
     collection = 'driver_enabled'
@@ -47,26 +29,36 @@ class DriverEnabled(Device):
         super(DriverEnabled, self).__init__(machine, name, config, collection,
                                             validate=validate)
 
-        self.driver = self.config['enable_coil_name']
-        DriverEnabled.add_driver_enabled_device(self.driver, self)
+        DriverEnabled.add_driver_enabled_device(self.hw_driver, self)
 
-    def enable(self):
-        self.driver.enable()
-        for device in DriverEnabled.enable_driver_mappings[self.driver]:
+    def enable(self, **kwargs):
+        super(DriverEnabled, self).enable()
+        for device in DriverEnabled.enable_driver_mappings[self.hw_driver]:
             device._enable()
 
     def _enable(self):
+        pass
         self.log.debug('Enabling')
-        print self, "enabling"
+        # print self, "enabling"
 
-    def disable(self):
-        self.driver.disable()
-        for device in DriverEnabled.enable_driver_mappings[self.driver]:
+    def disable(self, **kwargs):
+        super(DriverEnabled, self).disable()
+        # self.driver.disable()
+        for device in DriverEnabled.enable_driver_mappings[self.hw_driver]:
             device._disable()
 
     def _disable(self):
+        pass
         self.log.debug('Disabling')
-        print self, "disabling"
+        # print self, "disabling"
+
+    def pulse(self, *args, **kwargs):
+        self.log.warning("Received request to pulse a driver-enabled device. "
+                         "Ignoring...")
+
+    def timed_enable(self, *args, **kwargs):
+        self.log.warning("Received request to timed-enable a driver-enabled "
+                         "device. Ignoring...")
 
 
 # The MIT License (MIT)

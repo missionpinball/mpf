@@ -45,6 +45,7 @@ mpf:
         ball_lock.BallLock
         multiball.Multiball
         ball_save.BallSave
+        driver_enabled.DriverEnabled
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -222,7 +223,6 @@ config_validator:
     coils:
         number: single|str|
         number_str: single|str|
-
         pulse_ms: single|int|None
         pwm_on_ms: single|int|None
         pwm_off_ms: single|int|None
@@ -291,7 +291,9 @@ config_validator:
         debounced: single|bool|False
         drive_now: single|bool|False
     driver_enabled:
-        enable_coil_name: single|self.machine.coils[%]|
+        number: single|str|
+        number_str: single|str|
+        allow_enable: single|bool|True
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False
