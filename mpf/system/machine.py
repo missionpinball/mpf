@@ -44,7 +44,6 @@ class MachineController(object):
         display:
         plugins:
         scriptlets:
-        tilted:
         platform:
         events:
     """
