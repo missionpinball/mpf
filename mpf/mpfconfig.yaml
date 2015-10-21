@@ -292,7 +292,7 @@ config_validator:
         reset_events: dict|str:ms|ball_starting, machine_reset_phase_3
         knockdown_events: dict|str:ms|None
     drop_target_banks:
-        drop_targets: set|self.machine.drop_targets[%]|
+        drop_targets: list|self.machine.drop_targets[%]|
         reset_coil: single|self.machine.coils[%]|None
         reset_coils: list|self.machine.coils[%]|None
         tags: list|str|None
