@@ -46,6 +46,9 @@ coils:
         pulse_ms: 25
     c_flipper_right_hold: 
         number: FLRH
+    c_trough_eject:
+        number: c01
+        pulse_ms: 25
 
 flippers:
     left_flipper:
