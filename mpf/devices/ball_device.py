@@ -458,6 +458,7 @@ class BallDevice(Device):
             self.machine.events.post_relay('balldevice_' + self.name +
                                            '_ball_enter',
                                             balls=balls,
+                                            device=self,
                                             callback=self._balls_added_callback)
 
         if self.mechanical_eject_in_progress and self.eject_in_progress_target:
@@ -659,7 +660,7 @@ class BallDevice(Device):
 
         return balls
 
-    def _requested_ball_received(self, balls):
+    def _requested_ball_received(self, balls, **kwargs):
         # Responds to its own balldevice_<name>_ball_enter relay event
         # We do this since we need something to act on the balls being received,
         # otherwise it would think they were unexpected and eject them.
