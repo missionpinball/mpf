@@ -20,7 +20,6 @@ from mpf.system.timing import Timer
 class Snux(object):
 
     def __init__(self, machine, platform):
-
         self.log = logging.getLogger('Platform.Snux')
         self.delay = DelayManager()
 
@@ -38,7 +37,6 @@ class Snux(object):
         self.ac_relay = None
         self.flipper_relay = None
         self.ac_relay_enabled = False  # disabled = A, enabled = C
-        self.c_enabled_switch = None
 
         self.a_side_queue = set()
         self.c_side_queue = set()
@@ -152,7 +150,6 @@ class Snux(object):
         self.diag_led.pulse(250)
 
     def configure_driver(self, config, device_type='coil'):
-
         # If the user has configured one of the special drivers in their
         # machine config, don't set it up since that could let them do weird
         # things.
@@ -188,7 +185,6 @@ class Snux(object):
         autofire hardware rules.
         
         """
-        
         if driver_obj in self.a_drivers or driver_obj in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"
                              "switched driver. Ignoring")
@@ -200,7 +196,7 @@ class Snux(object):
 
     def driver_action(self, driver, milliseconds):
         """Adds a driver action for a switched driver to the queue (for either
-        the A-side or C-side queue.
+        the A-side or C-side queue).
 
         Args:
             driver: A reference to the original platform class Driver instance.
@@ -357,7 +353,6 @@ class Snux(object):
 class SnuxDriver(object):
 
     def __init__(self, number, platform_driver, overlay):
-
         self.number = number
         self.platform_driver = platform_driver
         self.overlay = overlay
@@ -366,7 +361,6 @@ class SnuxDriver(object):
         return "SnuxDriver.{}".format(self.number)
 
     def pulse(self, milliseconds=None, **kwargs):
-
         if milliseconds is None:
             milliseconds = self.platform_driver.driver_settings['pulse_ms']
 
