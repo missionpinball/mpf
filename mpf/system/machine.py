@@ -104,6 +104,12 @@ class MachineController(object):
 
         self._load_system_modules()
 
+        # This is called so hw platforms have a change to register for events,
+        # and/or anything else they need to do with system modules since
+        # they're not set up yet when the hw platforms are constructed.
+        for platform in self.hardware_platforms.values():
+            platform.initialize()
+
         self.validate_machine_config_section('machine')
         self.validate_machine_config_section('timing')
         self.validate_machine_config_section('hardware')
@@ -308,6 +314,7 @@ class MachineController(object):
         if name not in self.hardware_platforms:
             hardware_platform = __import__('mpf.platform.%s' % name,
                                            fromlist=["HardwarePlatform"])
+
             self.hardware_platforms[name] = hardware_platform.HardwarePlatform(self)
 
     def set_default_platform(self, name):

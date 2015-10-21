@@ -359,8 +359,8 @@ class EventManager(object):
         added to a queue and processed after the current event is done.
 
         You can control the order the handlers will be called by optionally
-        specifying a priority when the handlers were registed. (Higher priority
-        values will be processed first.)
+        specifying a priority when the handlers were registered. (Higher
+        numeric values will be processed first.)
 
         Args:
             event: A string name of the event you're posting. Note that you can

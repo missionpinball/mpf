@@ -19,6 +19,7 @@ class Platform(object):
     will subclass to talk to their hardware.
 
     """
+
     def __init__(self, machine):
         self.machine = machine
         self.HZ = None
@@ -26,6 +27,7 @@ class Platform(object):
         self.next_tick_time = None
         self.features = {}
         self.hw_switch_rules = {}
+        self.driver_overlay = None
 
         # Set default platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
@@ -33,6 +35,16 @@ class Platform(object):
         self.features['hw_timer'] = False
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
+
+        # todo change this to be dynamic for any overlay
+        if self.machine.config['hardware']['driverboards'] == 'snux':
+            from mpf.platform.snux import Snux
+            self.driver_overlay = Snux(self.machine, self)
+            self.machine.config['hardware']['driverboards'] = 'wpc'
+
+    def initialize(self):
+        if self.driver_overlay:  # can't use try since it could swallow errors
+            self.driver_overlay.initialize()
 
     def timer_initialize(self):
         """ Run this before the machine loop starts. I want to do it here so we
@@ -217,6 +229,7 @@ class Platform(object):
 
         """
         pass
+
 
 # The MIT License (MIT)
 
