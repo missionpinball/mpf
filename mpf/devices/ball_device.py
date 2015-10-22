@@ -1176,6 +1176,9 @@ class BallDevice(Device):
         elif self.config['confirm_eject_type'] == 'fake':
             # for all ball locks or captive balls which just release a ball
             # we use delay to keep the call order
+            if self.config['ball_switches']:
+                raise Exception("Cannot use fake with ball switches")
+
             self.delay.add(name='target_eject_confirmation_timeout',
                            ms=1, callback=self._eject_success)
 
