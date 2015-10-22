@@ -55,6 +55,8 @@ class DropTarget(Device):
         else:
             self._up()
 
+        self._update_banks()
+
     def _down(self):
         self.complete = True
         self.machine.events.post(self.name + '_down')
@@ -64,9 +66,8 @@ class DropTarget(Device):
         self.machine.events.post(self.name + '_up')
 
     def _update_banks(self):
-
         for bank in self.banks:
-            bank.update_member_target(self, self.complete)
+            bank.member_target_change()
 
     def add_to_bank(self, bank):
         """Adds this drop target to a drop target bank, which allows the bank to
@@ -123,6 +124,8 @@ class DropTargetBank(Device):
         for target in self.drop_targets:
             target.add_to_bank(self)
 
+        self.member_target_change()
+
         if self.debug:
             self.log.debug('Drop Targets: %s', self.drop_targets)
 
@@ -137,7 +140,6 @@ class DropTargetBank(Device):
         coil, even if each drop target is configured with its own coil.)
 
         """
-
         if self.debug:
             self.log.debug('Resetting')
 
