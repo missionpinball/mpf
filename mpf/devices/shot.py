@@ -366,7 +366,7 @@ class Shot(Device):
                            'False or this mode is not in the enable_table',
                            mode)
 
-        for group in self.groups:
+        for group in [x for x in self.groups]:
             self.log.debug("Notifying shot_group %s of new hit", group)
             group.hit(mode, profile, state)
 
