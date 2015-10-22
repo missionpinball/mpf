@@ -31,6 +31,8 @@ class DropTarget(Device):
         # can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_4',
                                         self._update_state_from_switch)
+        self.machine.events.add_handler('init_phase_4',
+                                        self._register_switch_handlers)
 
     def _register_switch_handlers(self):
         # register for notification of switch state
@@ -107,7 +109,7 @@ class DropTargetBank(Device):
         super(DropTargetBank, self).__init__(machine, name, config, collection,
                                              validate=validate)
 
-        self.drop_targets = set()
+        self.drop_targets = list()
         self.reset_coil = None
         self.reset_coils = set()
         self.complete = False

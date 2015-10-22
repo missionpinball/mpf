@@ -53,7 +53,13 @@ class HardwarePlatform(Platform):
     def configure_driver(self, config, device_type='coil'):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
-        return VirtualDriver(config['number']), config['number']
+
+        driver = VirtualDriver(config['number'])
+
+        driver.driver_settings = config
+        driver.driver_settings['pulse_ms'] = 30
+
+        return driver, config['number']
 
     def configure_switch(self, config):
         # We want to have the virtual platform set all the initial switch states
@@ -66,7 +72,11 @@ class HardwarePlatform(Platform):
 
         self.hw_switches[config['number']] = state
 
-        return VirtualSwitch(config['number']), config['number']
+        switch = VirtualSwitch(config['number'])
+
+        switch.driver_settings = config
+
+        return switch, config['number']
 
     def get_hw_switch_states(self):
 
@@ -87,8 +97,8 @@ class HardwarePlatform(Platform):
         else:
             switches = [x for x in self.machine.switches if x.platform == self]
 
-            for switch in list_of_switch_numbers:
-                self.hw_switches[x.number] = x.state ^ x.invert
+            for switch in switches:
+                self.hw_switches[switch.number] = switch.state ^ switch.invert
 
         return self.hw_switches
 
@@ -169,6 +179,9 @@ class VirtualDriver(object):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
+
+    def __repr__(self):
+        return "VirtualDriver.{}".format(self.number)
 
     def validate_driver_settings(self, **kwargs):
         return dict()

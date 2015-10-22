@@ -207,6 +207,7 @@ class BallDevice(Device):
         self.machine.events.post_relay('balldevice_' + self.name +
                                        '_ball_enter',
                                         balls=balls,
+                                        device=self,
                                         callback=self._balls_added_callback)
 
 
