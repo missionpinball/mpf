@@ -8,7 +8,6 @@
 
 from collections import deque
 import time
-import sys
 
 from mpf.system.tasks import DelayManager
 from mpf.system.device import Device
@@ -1155,9 +1154,8 @@ class BallDevice(Device):
                            ms=1, callback=self._eject_success)
 
         else:
-            self.log.error("Invalid confirm_eject_type setting: '%s'",
-                           self.config['confirm_eject_type'])
-            sys.exit()
+            raise Exception("Invalid confirm_eject_type setting: " +
+                            self.config['confirm_eject_type'])
 
     def _setup_count_eject_confirmation(self):
         # wait until one of the active switches turns off
