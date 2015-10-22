@@ -46,7 +46,7 @@ class LogicBlocks(object):
         Note that this method is automatically added as a handler to the
         'player_add_success' event.
         """
-        player.logic_blocks = set()
+        player.uvars['logic_blocks'] = set()
 
         if 'logic_blocks' in self.machine.config:
             self._create_logic_blocks(config=self.machine.config['logic_blocks'],
@@ -57,14 +57,14 @@ class LogicBlocks(object):
 
         self.log.debug("Processing player_turn_start")
 
-        for block in player.logic_blocks:
+        for block in player.uvars['logic_blocks']:
             block.create_control_events()
 
     def _player_turn_stop(self, player, **kwargs):
 
-        self.log.debug("Player logic blocks: %s", player.logic_blocks)
+        self.log.debug("Player logic blocks: %s", player.uvars['logic_blocks'])
 
-        for block in player.logic_blocks.copy():
+        for block in player.uvars['logic_blocks'].copy():
             # copy since each logic block will remove itself from the list
             # we're iterating over
             block._player_turn_stop()
@@ -111,7 +111,7 @@ class LogicBlocks(object):
                 if not block.config['enable_events']:
                     block.enable()
 
-        player.logic_blocks |= blocks_added
+        player.uvars['logic_blocks'] |= blocks_added
 
         return blocks_added
 
@@ -196,7 +196,7 @@ class LogicBlock(object):
         self.disable()
         self._remove_all_event_handlers()
         try:
-            self.machine.game.player.logic_blocks.remove(self)
+            self.machine.game.player.uvars['logic_blocks'].remove(self)
         except KeyError:
             pass
 
