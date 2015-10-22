@@ -948,7 +948,6 @@ class BallDevice(Device):
         method()
 
     def eject_all(self, target=None):
-        raise Exception("do not use")
         """Ejects all the balls from this device
 
         Args:
