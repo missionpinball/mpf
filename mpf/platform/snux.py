@@ -73,6 +73,9 @@ class Snux(object):
         else:
             return False
 
+    def null_log_handler(self, *args, **kwargs):
+        pass
+
     def _morph(self):
         self.platform_configure_driver = self.platform.configure_driver
         self.platform.configure_driver = self.configure_driver
@@ -93,6 +96,10 @@ class Snux(object):
         self.diag_led, _ = self.platform_configure_driver(
             {'number': self.snux_config['diag_led_driver_number'],
              'allow_enable': True})
+
+        self.diag_led.log.info = self.null_log_handler
+        self.diag_led.log.debug = self.null_log_handler
+
         self.diag_led.enable()
 
         self.special_drivers.add(
