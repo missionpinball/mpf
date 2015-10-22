@@ -3,6 +3,7 @@ import unittest
 from mpf.system.machine import MachineController
 import logging
 import time
+import sys
 from mock import *
 from datetime import datetime, timedelta
 
@@ -56,6 +57,9 @@ class MpfTestCase(unittest.TestCase):
 
 
     def tearDown(self):
+        if sys.exc_info != (None, None, None):
+            # disable teardown logging after error
+            logging.basicConfig(level=99)
         # fire all delays
         self.advance_time_and_run(10000)
         self.machine = None

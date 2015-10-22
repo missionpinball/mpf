@@ -423,11 +423,14 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(1, device2.count_balls())
 
-
         coil1.pulse.assert_called_twice_with()
         coil2.pulse.assert_called_twice_with()
         assert not coil3.pulse.called
         assert not coil4.pulse.called
+
+        # ball leaves launcher
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+        self.advance_time_and_run(1)
 
         # ball passes diverter switch
         # second ball should not be diverted
@@ -588,6 +591,11 @@ class TestBallDevice(MpfTestCase):
         coil2.pulse.assert_called_twice_with()
         coil3.pulse.assert_called_once_with()
 
+        # ball leaves launcher
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+        self.advance_time_and_run(1)
+
+
         # ball passes diverter switch
         # second ball should not be diverted
         coil_diverter.enable = MagicMock()
@@ -617,6 +625,8 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(2, playfield.balls)
         self.assertEquals(0, self._missing)
 
+        # check that timeout behave well
+        self.advance_time_and_run(1000)
 
     def test_missing_ball_idle(self):
         coil1 = self.machine.coils['eject_coil1']
@@ -677,3 +687,112 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(1, self._missing)
         self.assertEquals(1, self._captured)
 
+
+    def test_ball_entry_during_eject(self):
+        coil1 = self.machine.coils['eject_coil1']
+        coil2 = self.machine.coils['eject_coil2']
+        coil3 = self.machine.coils['eject_coil3']
+        coil_diverter = self.machine.coils['c_diverter']
+        device1 = self.machine.ball_devices['test_trough']
+        device2 = self.machine.ball_devices['test_launcher']
+        device3 = self.machine.ball_devices['test_target1']
+        playfield = self.machine.ball_devices['playfield']
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self._captured = -1
+        self._missing = 0
+
+
+        # add two initial balls to trough
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(2, self._captured)
+        self._captured = -1
+
+        self.assertEquals(0, playfield.balls)
+
+        # it should keep the ball
+        coil1.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+        coil3.pulse = MagicMock()
+        self.assertEquals(2, device1.count_balls())
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+
+        # assume there are already two balls on the playfield
+        playfield.balls = 2
+
+        # request an ball to pf
+        playfield.add_ball()
+        self.advance_time_and_run(1)
+
+        # trough eject
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+
+
+        self.machine.switch_controller.process_switch("s_ball_switch2", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device1.count_balls())
+
+
+        # launcher receives and ejects ball
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device2.count_balls())
+
+        coil1.pulse.assert_called_once_with()
+        coil2.pulse.assert_called_once_with()
+        assert not coil3.pulse.called
+
+        # important: ball does not leave launcher here
+
+        # ball passes diverter switch
+        # second ball should not be diverted
+        coil_diverter.enable = MagicMock()
+        coil_diverter.disable = MagicMock()
+        self.machine.switch_controller.process_switch("s_diverter", 1)
+        self.advance_time_and_run(0.01)
+        self.machine.switch_controller.process_switch("s_diverter", 0)
+        self.advance_time_and_run(1)
+        assert not coil_diverter.enable.called
+
+        # target1 receives and ejects
+        self.machine.switch_controller.process_switch("s_ball_switch_target1", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device3.count_balls())
+
+        coil1.pulse.assert_called_twice_with()
+        coil2.pulse.assert_called_twice_with()
+        coil3.pulse.assert_called_twice_with()
+
+        # ball left target1
+        self.machine.switch_controller.process_switch("s_ball_switch_target1", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, device3.count_balls())
+
+        # target captured one ball because it did not leave the launcher
+        self.assertEquals(1, self._captured)
+
+        # there is no new ball on the playfield because the ball is still in the launcher
+        self.assertEquals(2, playfield.balls)
+        self.assertEquals(0, self._missing)
+
+        # ball disappears from launcher
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, device2.count_balls())
+
+        # eject times out
+        self.advance_time_and_run(15)
+        # ball goes missing and magically the playfield count is right again
+        self.advance_time_and_run(40)
+        self.assertEquals(1, self._missing)
+        self.assertEquals(3, playfield.balls)
+
+        # check that timeout behave well
+        self.advance_time_and_run(1000)
