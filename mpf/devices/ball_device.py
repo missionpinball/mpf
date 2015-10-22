@@ -253,34 +253,6 @@ class BallDevice(Device):
         self._switch_state("waiting_for_ball")
 
 
-    def _state_waiting_for_ball1_start(self, source):
-        # In this state the source device ejected the ball
-        # 1. Wait for the ball to leave the source device
-        # 2. We can receive or loose a ball before that which is unrelated
-        # 3. Eject can fail
-        # TODO: handle 2
-        # TODO: handle 3
-        self.machine.events.add_handler('balldevice_' + source.name +
-                                 '_ball_left',
-                                 self._source_ball_left)
-
-        pass
-
-    def _state_waiting_for_ball1_counted_balls(self, balls):
-        if balls < self.balls:
-            self.balls = balls
-            #lost a ball
-            self._switch_state("missing_balls",
-                    balls = balls - self.balls,
-                    context="waiting_for_ball")
-        elif balls > self.balls:
-            # unfortunately, we cannot go back to idle here
-            unexpected_balls = balls-self.balls
-            self.balls = balls
-            self._handle_new_balls(balls=unexpected_balls)
-            self._handle_unexpected_balls(balls=unexpected_balls)
-
-
     def _state_waiting_for_ball_start(self):
         # This can happen
         # 1. ball counts can change (via _counted_balls)
