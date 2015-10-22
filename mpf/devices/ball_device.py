@@ -349,7 +349,7 @@ class BallDevice(Device):
                        ms=timeout,
                        callback=self._ball_missing_timout)
 
-    def _state_failed_eject_counted_balls(self, balls):
+    def _state_failed_confirm_counted_balls(self, balls):
         if self.balls > balls:
             # we lost even more balls? if the do not come back until timeout
             # we will go to state "missing_balls" and forget about the first
