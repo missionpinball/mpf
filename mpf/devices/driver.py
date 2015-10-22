@@ -65,6 +65,7 @@ class Driver(Device):
         """ Disables this driver """
         self.log.debug("Disabling Driver")
         self.time_last_changed = time.time()
+        self.time_when_done = self.time_last_changed
         self.hw_driver.disable()
         # todo also disable the timer which reenables this
 
@@ -83,15 +84,15 @@ class Driver(Device):
         if milliseconds:
             self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
                            "%sms", milliseconds)
-            self.hw_driver.pulse(milliseconds)
+            ms_actual = self.hw_driver.pulse(milliseconds)
         else:
             self.log.debug("Pulsing Driver. Using default pulse_ms.")
-            self.hw_driver.pulse()
-        self.time_last_changed = time.time()
+            ms_actual = self.hw_driver.pulse()
 
-        if not milliseconds:
-            milliseconds = self.hw_driver.driver_settings['pulse_ms']
-        self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
+        if ms_actual != -1:
+            self.time_when_done = self.time_last_changed + (ms_actual / 1000.0)
+        else:
+            self.time_when_done = -1
 
     def timed_enable(self, milliseconds, **kwargs):
         """Lets you enable a driver for a specific time duration that's longer

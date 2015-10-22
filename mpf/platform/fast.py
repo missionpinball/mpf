@@ -1014,6 +1014,11 @@ class FASTDriver(object):
         self.send(cmd)
         self.check_auto()
 
+        return Config.hexstring_to_int(hex_ms_string)
+
+    def get_pulse_ms(self):
+        return Config.hexstring_to_int(self.driver_settings['pulse_ms'])
+
     def check_auto(self):
 
         if self.autofire:
