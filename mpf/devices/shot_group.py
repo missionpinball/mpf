@@ -359,12 +359,12 @@ class ShotGroup(Device):
 
                 if profile:
                     shot.update_enable_table(profile=profile,
-                                         enable=True,
+                                         enable=enable,
                                          mode=mode)
 
                 else:
                     shot.update_enable_table(profile=shot.config['profile'],
-                                             enable=True,
+                                             enable=enable,
                                              mode=mode)
 
 
