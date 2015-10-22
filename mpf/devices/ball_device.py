@@ -244,14 +244,6 @@ class BallDevice(Device):
         if balls != self.balls:
             return self._switch_state("idle")
 
-    def _source_ball_left(self, target, **kwargs):
-        if target != self:
-            return
-
-        self.machine.events.remove_handler(self._source_ball_left)
-        self._switch_state("waiting_for_ball")
-
-
     def _state_waiting_for_ball_start(self):
         # This can happen
         # 1. ball counts can change (via _counted_balls)
