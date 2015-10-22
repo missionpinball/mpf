@@ -370,9 +370,14 @@ class SnuxDriver(object):
 
     def pulse(self, milliseconds=None, **kwargs):
         if milliseconds is None:
-            milliseconds = self.platform_driver.driver_settings['pulse_ms']
+            milliseconds = self.platform_driver.get_pulse_ms()
 
         self.overlay.driver_action(self.platform_driver, milliseconds)
+
+        # Usually pulse() returns the value (in ms) that the driver will pulse
+        # for so we can update Driver.time_when_done. But with A/C switched
+        # coils, we don't know when exactly that will be, so we return -1
+        return -1
 
     def enable(self, **kwargs):
         self.overlay.driver_action(self.platform_driver, -1)
