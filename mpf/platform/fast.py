@@ -458,7 +458,7 @@ class HardwarePlatform(Platform):
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
             config['number'] = self.wpc_driver_map.get(
-                                                config['number_str'].upper())
+                                                config['number'].upper())
             if ('connection' in config and
                     config['connection'].lower() == 'network'):
                 config['connection'] = 1
@@ -586,6 +586,7 @@ class HardwarePlatform(Platform):
         return this_fast_led
 
     def configure_gi(self, config):
+        # TODO: Add support for driver-based GI strings
 
         if not self.net_connection:
             self.log.critical("A request was made to configure a FAST GI, "
@@ -934,7 +935,6 @@ class FASTDriver(object):
 
     def disable(self):
         """Disables (turns off) this driver. """
-
         cmd = (self.driver_settings['trigger_cmd'] +
                self.driver_settings['number'] + ',' + '02')
 
@@ -944,7 +944,6 @@ class FASTDriver(object):
 
     def enable(self):
         """Enables (turns on) this driver. """
-
         if self.autofire:
             # If this driver is also configured for an autofire rule, we just
             # manually trigger it with the trigger_cmd and manual on ('03')
@@ -995,7 +994,6 @@ class FASTDriver(object):
             hex_ms_string = self.driver_settings['pulse_ms']
         else:
             hex_ms_string = Config.int_to_hex_string(milliseconds)
-
         if self.autofire:
             cmd = (self.driver_settings['trigger_cmd'] +
                    self.driver_settings['number'] + ',' +
