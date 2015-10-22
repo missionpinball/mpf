@@ -111,7 +111,7 @@ class BallDevice(Device):
 
         method_name = "_state_" + self._state + "_start"
         if not hasattr(self, method_name):
-            raise Exception("Went to invalid state %s", self._state)
+            raise AssertionError("Went to invalid state %s", self._state)
         method = getattr(self, method_name, lambda *args: None)
         method(**kwargs)
 
@@ -157,7 +157,7 @@ class BallDevice(Device):
     def _state_idle_counted_balls(self, balls):
         self._idle_counted = True
         if self.balls < 0:
-            raise Exception("Ball count went negative")
+            raise AssertionError("Ball count went negative")
 
         if self.balls > balls:
             # balls went missing. we are idle
@@ -409,7 +409,7 @@ class BallDevice(Device):
             return
 
         if self._state != "waiting_for_ball":
-            raise Exception("There was no ongoing eject")
+            raise AssertionError("There was no ongoing eject")
 
         # go to idle. it will know what to do
         self._switch_state("idle")
@@ -536,7 +536,7 @@ class BallDevice(Device):
                 self.config['ball_missing_action'] = "ignore"
         elif (not self.is_connected_to_ball_source() and 
             self.config['ball_missing_action'] == "retry"):
-            raise Exception("Cannot use retry as ball_missing_action " +
+            raise AssertionError("Cannot use retry as ball_missing_action " +
                             "when not connected to a ball source")
 
         self._switch_state("initial")
@@ -837,7 +837,7 @@ class BallDevice(Device):
 
     def stop(self, **kwargs):
         # TODO: convert
-        raise Exception("broken")
+        raise AssertionError("broken")
         """Stops all activity in this device.
 
         Cancels all pending eject requests. Cancels eject confirmation checks.
@@ -858,7 +858,7 @@ class BallDevice(Device):
                                       trigger_event=None):
 
         # TODO: convert that method into the new structure
-        raise Exception("broken")
+        raise AssertionError("broken")
         if self.debug:
             self.log.debug("Setting up player-controlled eject. Balls: %s, "
                            "Target: %s, trigger_event: %s",
@@ -1077,10 +1077,7 @@ class BallDevice(Device):
         if self.config['confirm_eject_type'] == 'target':
 
             if not target:
-                self.log.error("we got an eject confirmation request with no "
-                               "target. This shouldn't happen. Post to the "
-                               "forum if you see this.")
-                raise Exception("we got an eject confirmation request with no "
+                raise AssertionError("we got an eject confirmation request with no "
                                 "target. This shouldn't happen. Post to the "
                                 "forum if you see this.")
 
@@ -1148,13 +1145,13 @@ class BallDevice(Device):
             # for all ball locks or captive balls which just release a ball
             # we use delay to keep the call order
             if self.config['ball_switches']:
-                raise Exception("Cannot use fake with ball switches")
+                raise AssertionError("Cannot use fake with ball switches")
 
             self.delay.add(name='target_eject_confirmation_timeout',
                            ms=1, callback=self._eject_success)
 
         else:
-            raise Exception("Invalid confirm_eject_type setting: " +
+            raise AssertionError("Invalid confirm_eject_type setting: " +
                             self.config['confirm_eject_type'])
 
     def _setup_count_eject_confirmation(self):
@@ -1229,7 +1226,7 @@ class BallDevice(Device):
         elif self._state != "ball_left" and self._state != "failed_confirm":
             self.log.debug("Got an eject_success in wrong state %s!",
                     self._state)
-            raise Exception("Invalid state " + self._state + " for _eject_success")
+            raise AssertionError("Invalid state " + self._state + " for _eject_success")
 
 
         if self.debug:
@@ -1275,7 +1272,7 @@ class BallDevice(Device):
             self.eject_failed()
             return self._switch_state("failed_eject")
         else:
-            raise Exception("Invalid state")
+            raise AssertionError("Invalid state")
 
 
     def eject_failed(self, retry=True, force_retry=False):
