@@ -169,6 +169,8 @@ class BCP(object):
         self.track_volumes = dict()
         self.volume_control_enabled = False
         self.external_shows = dict()
+        self.external_show_queue = Queue()
+        self.light_controller_connected = False
 
         # Add the following to the set of events that already have mpf mc
         # triggers since these are all posted on the mc side already
@@ -847,22 +849,44 @@ class BCP(object):
         except KeyError:
             self.log.warning('Received volume for unknown track "%s"', track)
 
+    def connect_to_light_controller(self):
+        # Called by worker thread
+        self.machine.light_controller.register_tick_handler(
+            self.update_external_shows)
+
+        self.light_controller_connected = True
+
+    def disconnect_from_light_controller(self):
+        # Called by worker thread
+        self.machine.light_controller.deregister_tick_handler(
+            self.update_external_shows)
+        self.light_controller_connected = False
+
     def external_show_start(self, name, priority=0, blend=True, leds=None,
                             lights=None, flashers=None, gis=None):
-        self.external_shows['name'] = ExternalShow(self.machine, name, priority,
-                                                   blend, leds, lights,
-                                                   flashers, gis)
+        # Called by worker thread
+        if not self.light_controller_connected:
+            self.connect_to_light_controller()
+
+        self.external_shows['name'] = ExternalShow(self.machine,
+                                                   self.external_show_queue,
+                                                   name, priority, blend, leds,
+                                                   lights, flashers, gis)
 
     def external_show_stop(self, name):
+        # Called by worker thread
         try:
             self.external_shows[name].stop()
             del self.external_shows[name]
         except KeyError:
             pass
 
+        if not self.external_shows:
+            self.disconnect_from_light_controller()
+
     def external_show_frame(self, name, led_data=None, light_data=None,
                             flasher_data=None, gi_data=None):
-
+        # Called by worker thread
         if name not in self.external_shows:
             return
 
@@ -877,6 +901,13 @@ class BCP(object):
 
         if gi_data:
             self.external_shows[name].update_flashers(gi_data)
+
+    def update_external_shows(self):
+        # Called by the main thread
+        while not self.external_show_queue.empty():
+            update_meth, args = self.external_show_queue.get(False)
+            update_meth(*args)
+
 
 class BCPClientSocket(object):
     """Parent class for a BCP client socket. (There can be multiple of these to
