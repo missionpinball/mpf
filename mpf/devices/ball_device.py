@@ -97,6 +97,8 @@ class BallDevice(Device):
 
         self.hold_release_in_progress = False
 
+        self._state = "invalid"
+
         self.machine.events.add_handler('init_phase_2',
                                         self.configure_eject_targets)
 
@@ -104,6 +106,11 @@ class BallDevice(Device):
 
     def _switch_state(self, new_state, **kwargs):
         # TODO: check if transition is legal
+        if new_state == self._state:
+            self.log.debug("Tried to switch state. But already in state %s",
+                           new_state)
+            return
+
 
         self._state = new_state
 
@@ -361,8 +368,7 @@ class BallDevice(Device):
 
     def _ball_missing_timout(self):
         if self._state != "failed_confirm":
-            self.log.warn("Invalid state")
-            return
+            raise AssertionError("Invalid state " + self._state)
 
         # We are screwed now!
         return self._switch_state("missing_balls",
