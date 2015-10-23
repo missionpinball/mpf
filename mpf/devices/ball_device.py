@@ -228,7 +228,7 @@ class BallDevice(Device):
                 self.log.debug("Lost %s balls during eject. Will ignore the "
                                "loss.", balls)
 
-            # Rest target
+            # Reset target
             self.eject_in_progress_target = None
         self._balls_missing(balls)
 
