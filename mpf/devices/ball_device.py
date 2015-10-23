@@ -102,6 +102,11 @@ class BallDevice(Device):
         self.machine.events.add_handler('init_phase_2',
                                         self.configure_eject_targets)
 
+        if (self.config['confirm_eject_type'] == "switch" and
+                not self.config['confirm_eject_switch']):
+            raise AssertionError("When using confirm_eject_type switch you " +
+                                 "to specify a confirm_eject_switch")
+
     # Logic and dispatchers
 
     def _switch_state(self, new_state, **kwargs):
