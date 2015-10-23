@@ -9,6 +9,8 @@ coils:
         number:
     eject_coil4:
         number:
+    eject_coil5:
+        number:
     c_diverter:
         number:
 
@@ -23,7 +25,11 @@ switches:
         number:
     s_ball_switch_target1:
         number:
-    s_ball_switch_target2:
+    s_ball_switch_target2_1:
+        number:
+    s_ball_switch_target2_2:
+        number:
+    s_ball_switch_target3:
         number:
     s_diverter:
         number:
@@ -53,9 +59,15 @@ ball_devices:
         confirm_eject_type: count
     test_target2:
         eject_coil: eject_coil4
-        ball_switches: s_ball_switch_target2
+        ball_switches: s_ball_switch_target2_1, s_ball_switch_target2_2
         debug: true
         tags: trough, drain, home
+        confirm_eject_type: target
+        eject_targets: test_target3
+    test_target3:
+        eject_coil: eject_coil5
+        ball_switches: s_ball_switch_target3
+        debug: true
 
 diverters:
     d_test:
