@@ -26,6 +26,7 @@ import copy
 from mpf.system.player import Player
 from mpf.system.config import Config
 from mpf.devices.shot import Shot
+from mpf.system.light_controller import ExternalShow
 import version
 
 
@@ -150,6 +151,12 @@ class BCP(object):
                                      'set': self.bcp_receive_set,
                                      'reset_complete':
                                          self.bcp_receive_reset_complete,
+                                     'external_show_start':
+                                        self.external_show_start,
+                                     'external_show_stop':
+                                        self.external_show_stop,
+                                     'external_show_frame':
+                                        self.external_show_frame,
                                     }
 
         self.dmd = None
@@ -161,6 +168,7 @@ class BCP(object):
         self.mpfmc_trigger_events = set()
         self.track_volumes = dict()
         self.volume_control_enabled = False
+        self.external_shows = dict()
 
         # Add the following to the set of events that already have mpf mc
         # triggers since these are all posted on the mc side already
@@ -839,6 +847,36 @@ class BCP(object):
         except KeyError:
             self.log.warning('Received volume for unknown track "%s"', track)
 
+    def external_show_start(self, name, priority=0, blend=True, leds=None,
+                            lights=None, flashers=None, gis=None):
+        self.external_shows['name'] = ExternalShow(self.machine, name, priority,
+                                                   blend, leds, lights,
+                                                   flashers, gis)
+
+    def external_show_stop(self, name):
+        try:
+            self.external_shows[name].stop()
+            del self.external_shows[name]
+        except KeyError:
+            pass
+
+    def external_show_frame(self, name, led_data, light_data, flasher_data,
+                            gi_data):
+
+        if name not in self.external_shows:
+            return
+
+        if led_data:
+            self.external_shows[name].update_leds(led_data)
+
+        if light_data:
+            self.external_shows[name].update_lights(light_data)
+
+        if flasher_data:
+            self.external_shows[name].update_gis(flasher_data)
+
+        if gi_data:
+            self.external_shows[name].update_flashers(gi_data)
 
 class BCPClientSocket(object):
     """Parent class for a BCP client socket. (There can be multiple of these to

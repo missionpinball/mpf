@@ -1735,6 +1735,77 @@ class Playlist(object):
         else:
             self.current_step_position += 1
 
+
+class ExternalShow(object):
+
+    def __init__(self, machine, name, priority=0, blend=True, leds=None,
+                 lights=None, flashers=None, gis=None):
+
+        self.machine = machine
+        self.priority = priority
+        self.blend = blend
+        self.name = None
+        self.leds = list()
+        self.lights = list()
+        self.flashers = list()
+        self.gis = list()
+
+        if leds:
+            self.leds = Config.string_to_list(leds)
+            self.leds = [self.machine.leds[x] for x in self.leds]
+
+        if lights:
+            self.lights = Config.string_to_list(lights)
+            self.lights = [self.machine.lights[x] for x in self.lights]
+
+        if flashers:
+            self.flashers = Config.string_to_list(flashers)
+            self.flashers = [self.machine.flashers[x] for x in self.flashers]
+
+        if gis:
+            self.gis = Config.string_to_list(gis)
+            self.gis = [self.machine.gis[x] for x in self.gis]
+
+    def update_leds(self, data):
+        for led, color in zip(self.leds, Config.chunker(data, 6)):
+            self.machine.light_controller._add_to_led_update_list(
+                led=led,
+                color=(color[0:2], color[2:4], color[4:6]),
+                fade_ms=0,
+                priority=self.priority,
+                blend=self.blend)
+
+    def update_lights(self, data):
+        for light, brightness in zip(self.lights, Config.chunker(data, 2)):
+            self.machine.light_controller._add_to_light_update_list(
+                light=light,
+                brightness=brightness,
+                priority=self.priority,
+                blend=self.blend)
+
+    def update_gis(self, data):
+        for gi, brightness in zip(self.lights, Config.chunker(data, 2)):
+            self.machine.light_controller._add_to_gi_queue(
+                gi=gi,
+                value=Config.hexstring_to_int(brightness))
+
+    def update_flashers(self, data):
+        for flasher, flash in zip(self.flashers, data):
+            if flash:
+                self.machine.light_controller._add_to_flasher_queue(
+                    flasher=flasher)
+
+    def stop(self):
+        for led in self.leds:
+            if led.cache['priority'] <= self.priority:
+                led.restore()
+
+        for light in self.lights:
+            if light.cache['priority'] <= self.priority:
+                light.restore()
+
+
+
 # The MIT License (MIT)
 
 # Copyright (c) 2013-2015 Brian Madden and Gabe Knuth

@@ -324,7 +324,11 @@ class Config(object):
         elif item_type == 'list_of_lists':
             return Config.list_of_lists(item)
 
-
+    @staticmethod
+    def chunker(l, n):
+        """Yields successive n-sized chunks from l."""
+        for i in xrange(0, len(l), n):
+            yield l[i:i+n]
 
     def process_config2(self, config_spec, source, section_name=None,
                         target=None, result_type='dict'):
