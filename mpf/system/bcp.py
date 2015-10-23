@@ -26,7 +26,6 @@ import copy
 from mpf.system.player import Player
 from mpf.system.config import Config
 from mpf.devices.shot import Shot
-from mpf.devices.shot_group import ShotGroup
 import version
 
 
@@ -981,19 +980,22 @@ class BCPClientSocket(object):
         if 'dmd' in self.machine.config:
 
             bytes_per_pixel = 1
-            dmd_byte_length = 4096
 
             try:
                 if self.machine.config['dmd']['type'] == 'color':
                     bytes_per_pixel = 3
 
-                    dmd_byte_length = (self.machine.config['dmd']['width'] *
-                                       self.machine.config['dmd']['height'] *
-                                       bytes_per_pixel)
             except KeyError:
                 pass
 
-            self.log.debug("DMD Frame Byte Length: %s", dmd_byte_length)
+            dmd_byte_length = (self.machine.config['dmd']['width'] *
+                               self.machine.config['dmd']['height'] *
+                               bytes_per_pixel)
+
+            self.log.debug("DMD frame byte length: %s*%s*%s = %s",
+                           self.machine.config['dmd']['width'],
+                           self.machine.config['dmd']['height'],
+                           bytes_per_pixel, dmd_byte_length)
 
             try:
                 while self.socket:
