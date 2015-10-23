@@ -91,7 +91,7 @@ class BallDevice(Device):
 
         self._is_connected_to_ball_source_state = None
 
-        self._blocked_eject_attempts = []
+        self._blocked_eject_attempts = deque()
 
         self.pending_eject_event_keys = set()
 
@@ -297,7 +297,7 @@ class BallDevice(Device):
     def _state_wait_for_eject_start(self):
         target = self.eject_queue[0][0]
         if target.get_additional_ball_capacity():
-           return self._switch_state("ejecting")
+            return self._switch_state("ejecting")
 
     def _state_ejecting_start(self):
         self.eject_in_progress_target, timeout = (self.eject_queue.popleft())

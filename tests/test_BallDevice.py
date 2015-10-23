@@ -926,3 +926,136 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(0, self._missing)
 
 
+
+    def test_eject_attempt_blocking(self):
+        # this test is a bit plastic. we hack get_additional_ball_capacity
+        # the launcher device will try to do an eject while device4 is busy.
+        # at the moment we cannot trigger this case but it may happen with
+        # devices which wait before they eject
+        coil1 = self.machine.coils['eject_coil1']
+        coil2 = self.machine.coils['eject_coil2']
+        coil3 = self.machine.coils['eject_coil3']
+        coil4 = self.machine.coils['eject_coil4']
+        coil5 = self.machine.coils['eject_coil5']
+        coil_diverter = self.machine.coils['c_diverter']
+        device1 = self.machine.ball_devices['test_trough']
+        device2 = self.machine.ball_devices['test_launcher']
+        device3 = self.machine.ball_devices['test_target1']
+        device4 = self.machine.ball_devices['test_target2']
+        target3 = self.machine.ball_devices['test_target3']
+        playfield = self.machine.ball_devices['playfield']
+
+        device4.get_additional_ball_capacity = lambda *args: 10
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self._captured = 0
+        self._missing = 0
+
+
+        # add two initial balls to trough
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(2, self._captured)
+        self._captured = 0
+
+        self.assertEquals(0, playfield.balls)
+
+        # it should keep the ball
+        coil1.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+        coil3.pulse = MagicMock()
+        coil4.pulse = MagicMock()
+        coil5.pulse = MagicMock()
+        self.assertEquals(2, device1.count_balls())
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+        assert not coil4.pulse.called
+        assert not coil5.pulse.called
+
+        # request ball
+        target3.request_ball()
+        self.advance_time_and_run(1)
+
+        # trough eject
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+        assert not coil4.pulse.called
+        assert not coil5.pulse.called
+
+        self.machine.switch_controller.process_switch("s_ball_switch2", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device1.count_balls())
+
+
+        # in the meantime device4 receives a (drained) ball
+        self.machine.switch_controller.process_switch("s_ball_switch_target2_1", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device4.count_balls())
+        self.assertEquals(1, self._captured)
+        self._captured = 0
+
+
+        # launcher receives but cannot ejects ball yet
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device2.count_balls())
+
+        # however launcher will try to eject because we hacked
+        # get_additional_ball_capacity. device4 should block the eject
+
+        # target 2 ejects to target 3
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+        coil4.pulse.assert_called_once_with()
+        assert not coil5.pulse.called
+
+        self.machine.switch_controller.process_switch("s_ball_switch_target2_1", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, device4.count_balls())
+
+        # still no eject of launcher
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+        coil4.pulse.assert_called_once_with()
+        assert not coil5.pulse.called
+
+        # target 3 receives
+        self.machine.switch_controller.process_switch("s_ball_switch_target3", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, device4.count_balls())
+
+        # launcher should eject
+        coil1.pulse.assert_called_once_with()
+        coil2.pulse.assert_called_once_with()
+        assert not coil3.pulse.called
+        coil4.pulse.assert_called_once_with()
+        assert not coil5.pulse.called
+
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, device2.count_balls())
+
+        # ball passes diverter switch
+        # first ball to trough. diverter should be enabled
+        coil_diverter.enable = MagicMock()
+        coil_diverter.disable = MagicMock()
+        self.machine.switch_controller.process_switch("s_diverter", 1)
+        self.advance_time_and_run(0.01)
+        self.machine.switch_controller.process_switch("s_diverter", 0)
+        self.advance_time_and_run(1)
+        coil_diverter.enable.assert_called_once_with()
+        assert not coil_diverter.disable.called
+
+        # target2 receives and keeps ball
+        self.machine.switch_controller.process_switch("s_ball_switch_target2_2", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device4.count_balls())
+        self.assertEquals(0, self._captured)
+        self.assertEquals(0, self._missing)
+
