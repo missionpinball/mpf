@@ -409,7 +409,8 @@ class SwitchController(object):
             for item in v:
                 if item['switch_action'] == str(name) + '-' + str(state ^ 1):
                     # ^1 in above line invertes the state
-                    del self.active_timed_switches[k]
+                    if self.active_timed_switches[k]:
+                        del self.active_timed_switches[k]
 
         for monitor in self.monitors:
             monitor(name, state)
