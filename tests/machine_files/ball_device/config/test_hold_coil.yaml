@@ -5,11 +5,22 @@ coils:
         number:
     hold_coil2:
         number:
+    hold_coil3:
+        number:
+    hold_coil4:
+        number:
+
 
 switches:
     s_entrance:
         number:
     s_entrance2:
+        number:
+    s_entrance_and_hold3:
+        number:
+    s_ball4_1:
+        number:
+    s_ball4_2:
         number:
 
 ball_devices:
@@ -19,7 +30,6 @@ ball_devices:
         hold_events: test_hold_event
         debug: true
         confirm_eject_type: fake
-
     test2:
         hold_coil: hold_coil2
         entrance_switch: s_entrance2
@@ -27,4 +37,17 @@ ball_devices:
         tags: trough, home
         debug: true
         confirm_eject_type: fake
+    test3:
+        hold_coil: hold_coil3
+        entrance_switch: s_entrance_and_hold3
+        hold_switches: s_entrance_and_hold3
+        tags: trough, home
+        debug: true
+        confirm_eject_type: fake
+    test4:
+        hold_coil: hold_coil4
+        hold_switches: s_ball4_1, s_ball4_2
+        ball_switches: s_ball4_1, s_ball4_2
+        tags: trough, home
+        debug: true
 
