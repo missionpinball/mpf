@@ -1077,6 +1077,13 @@ class BallDevice(Device):
             self.log.debug("Eject start time: %s", self.eject_start_time)
             self.machine.events.add_handler('timer_tick', self._eject_status)
 
+        if timeout:
+            # set up the delay to check for the failed the eject
+            self.delay.add(name='target_eject_confirmation_timeout',
+                           ms=timeout,
+                           callback=self._eject_timeout)
+
+
         if self.config['confirm_eject_type'] == 'target':
 
             if not target:
@@ -1098,11 +1105,6 @@ class BallDevice(Device):
                     self.machine.events.add_handler(
                         'sw_{}_active'.format(target.name), self._eject_success)
 
-            if timeout:
-                # set up the delay to check for the failed the eject
-                self.delay.add(name='target_eject_confirmation_timeout',
-                               ms=timeout,
-                               callback=self._eject_timeout)
 
             if self.debug:
                 self.log.debug("Will confirm eject via ball entry into '%s' "
