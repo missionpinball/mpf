@@ -860,8 +860,8 @@ class BCP(object):
         except KeyError:
             pass
 
-    def external_show_frame(self, name, led_data, light_data, flasher_data,
-                            gi_data):
+    def external_show_frame(self, name, led_data=None, light_data=None,
+                            flasher_data=None, gi_data=None):
 
         if name not in self.external_shows:
             return
