@@ -309,6 +309,12 @@ class ModeController(object):
 
         self.log.info('+-------------------------------------+')
 
+    def is_active(self, mode_name):
+        if mode_name in [x.name for x in self.active_modes if x._active is True]:
+            return True
+        else:
+            return False
+
 
 
 # The MIT License (MIT)
