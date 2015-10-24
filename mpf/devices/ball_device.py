@@ -99,6 +99,8 @@ class BallDevice(Device):
 
         self._state = "invalid"
 
+        self._incoming_balls = 0
+
         self.machine.events.add_handler('init_phase_2',
                                         self.configure_eject_targets)
 
@@ -183,7 +185,6 @@ class BallDevice(Device):
             unexpected_balls = balls-self.balls
             self.balls = balls
             self._handle_new_balls(balls=unexpected_balls)
-            self._handle_unexpected_balls(balls=unexpected_balls)
 
 
         if self.get_additional_ball_capacity():
@@ -214,12 +215,19 @@ class BallDevice(Device):
                                   balls=balls)
 
     def _handle_new_balls(self, balls):
+        while self._incoming_balls > 0 and balls > 0:
+            balls -= 1
+            self._incoming_balls -= 1
+
         self.log.debug("Processing %s new balls", balls)
         self.machine.events.post_relay('balldevice_' + self.name +
                                        '_ball_enter',
                                         balls=balls,
                                         device=self,
                                         callback=self._balls_added_callback)
+
+        if balls > 0:
+            self._handle_unexpected_balls(balls)
 
 
     def _state_missing_balls_start(self, balls, context):
@@ -228,7 +236,7 @@ class BallDevice(Device):
             if  self.config['ball_missing_action'] == "retry":
                 self.log.debug("Lost %s balls during eject. Will retry the "
                                "eject.", balls)
-                self.eject(balls, self.eject_in_progress_target)
+                self.eject_failed()
             else:
                 self.log.debug("Lost %s balls during eject. Will ignore the "
                                "loss.", balls)
@@ -259,27 +267,22 @@ class BallDevice(Device):
     def _state_waiting_for_ball_start(self):
         # This can happen
         # 1. ball counts can change (via _counted_balls)
-        # 2. eject can fail (via _eject_failed)
         pass
 
     def _state_waiting_for_ball_counted_balls(self, balls):
         if self.balls > balls:
-            # ball went missing but we were waiting for an incoming ball
-            # this is strange. To keep things working we will forget about
-            # the ball and hope for the best
-            self._balls_missing(self.balls - balls)
-            self.balls = balls
-            return
+            # We dont have balls. How can that happen?
+            raise AssertionError("We dont have balls but lose one!")
         elif self.balls < balls:
-            # got new balls but only handle one. If we got more they arrived
-            # unexpectedly and state idle will handle them
-            self.balls += 1
-            # this event will carry 0 unclaimed balls but is needed for eject
-            # confirmation 
-            self._handle_new_balls(0)
+            # Go to idle state
             return self._switch_state("idle")
 
         # Default: wait
+
+    def can_arrive(self):
+        # TODO: replace by an event
+        self._incoming_balls += 1
+
 
     def _state_ball_left_start(self):
 
@@ -296,6 +299,9 @@ class BallDevice(Device):
                                  balls=self.num_balls_ejecting,
                                  target=self.eject_in_progress_target,
                                  num_attempts=self.num_eject_attempts)
+
+        if not self.config['confirm_eject_type'] == 'switch':
+            self._inform_target_about_incoming_ball(self.eject_in_progress_target)
 
 
 
@@ -399,15 +405,15 @@ class BallDevice(Device):
         if target != self:
             return
 
-        if self.is_ready_to_receive():
-            return self._switch_state("waiting_for_ball")
-        else:
+        if not self.is_ready_to_receive():
             # block the attempt until we are ready again
             self._blocked_eject_attempts.append((queue, source))
             queue.wait()
             return
 
     def _source_device_eject_failed(self, balls, target, **kwargs):
+        # TODO: do we need this?
+        return
         if target != self:
             return
 
@@ -537,7 +543,7 @@ class BallDevice(Device):
                 self.config['ball_missing_action'] = "retry"
             else:
                 self.config['ball_missing_action'] = "ignore"
-        elif (not self.is_connected_to_ball_source() and 
+        elif (not self.is_connected_to_ball_source() and
             self.config['ball_missing_action'] == "retry"):
             raise AssertionError("Cannot use retry as ball_missing_action " +
                             "when not connected to a ball source")
@@ -1025,7 +1031,7 @@ class BallDevice(Device):
             self.delay.add(name='hold_coil_release',
                            ms=self.config['hold_coil_release_time'],
                            callback=self._hold_release_done)
-        
+
         if not self.config['ball_switches']:
             # no ball_switches. we dont know when it actually leaves the device
             # assume its instant
@@ -1215,19 +1221,23 @@ class BallDevice(Device):
         self.delay.remove('ball_missing_timeout')
 
 
+    def _inform_target_about_incoming_ball(self, target):
+        target.can_arrive() 
+
     def _eject_success(self, **kwargs):
         # We got an eject success for this device.
         # **kwargs because there are many ways to get here, some with kwargs
         # and some without. Also, since there are many ways we can get here,
         # let's first make sure we actually had an eject in progress
 
+        if self.config['confirm_eject_type'] == 'switch':
+            self._inform_target_about_incoming_ball(self.eject_in_progress_target)
+
+
         if self._state == "ejecting":
             self.log.debug("Got an eject_success before the switch left the "
-                           "device. May be there was a second ball.")
-            # idle will see this ball as a new ball
-            # if it leaves anyway it will get counted as missing
-            self.balls -= 1
-            pass
+                           "device. Ignoring!")
+            return
         elif self._state != "ball_left" and self._state != "failed_confirm":
             self.log.debug("Got an eject_success in wrong state %s!",
                     self._state)

@@ -453,6 +453,9 @@ class Playfield(BallDevice):
     def is_playfield(self):
         return True
 
+    def can_arrive(self):
+        pass
+
 # The MIT License (MIT)
 
 # Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
