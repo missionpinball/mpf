@@ -200,7 +200,7 @@ config_validator:
         debug: single|bool|False
         enable_events: dict|str:ms|ball_started
         disable_events: dict|str:ms|ball_ending
-        reset_events: dict|str:ms|machine_reset_phase_3
+        reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
         release_one_events: dict|str:ms|None
     ball_saves:
         source_playfield: single|self.machine.ball_devices[%]|playfield
@@ -461,7 +461,7 @@ config_validator:
         debug: single|bool|False
         enable_events:  dict|str:ms|ball_started
         disable_events:  dict|str:ms|ball_ending
-        reset_events:  dict|str:ms|machine_reset_phase_3
+        reset_events:  dict|str:ms|machine_reset_phase_3, ball_starting
         start_events:  dict|str:ms|None
         stop_events:  dict|str:ms|None
     playfields:
