@@ -237,4 +237,3 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertEquals(1, playfield.balls)
         self.assertEquals(1, self._missing)
 
-
