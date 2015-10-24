@@ -24,6 +24,7 @@ class Multiball(Device):
                                         validate=validate)
 
         self.delay = DelayManager()
+        self.balls_ejected = 0
 
         # let ball devices initialise first
         self.machine.events.add_handler('init_phase_3',
