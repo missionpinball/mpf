@@ -212,7 +212,10 @@ class TestBallDevice(MpfTestCase):
 
 
     def _ball_enter(self, balls, **kwargs):
-        self._enter = balls
+        if balls < 0:
+            raise Exception("Balls went negative")
+
+        self._enter += balls
 
     def _captured_from_pf(self, balls, **kwargs):
         self._captured += balls
@@ -308,7 +311,7 @@ class TestBallDevice(MpfTestCase):
 
         assert not coil_diverter.disable.called
 
-        self.assertEquals(0, self._enter)
+        self.assertEquals(-1, self._enter)
         self.assertEquals(-1, self._captured)
 
         self.assertEquals(0, playfield.balls)
