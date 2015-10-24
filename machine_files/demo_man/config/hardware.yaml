@@ -362,6 +362,8 @@ matrix_lights:
         number: l11
         label:
         tags: red
+        x: 0
+        y: 0
     l_fortress_multiball:
         number: l12
         label:

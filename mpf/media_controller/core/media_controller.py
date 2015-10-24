@@ -109,10 +109,11 @@ class MediaController(object):
                              'trigger': self.bcp_trigger,
                             }
 
-        # load the MPF config & machine defaults
-        self.config = (
-            Config.load_config_yaml(config=self.config,
-                                    yaml_file=self.options['mcconfigfile']))
+        Config.init()
+        self.config = dict()
+        self._load_mc_config()
+        self._set_machine_path()
+        self._load_machine_config()
 
         # Find the machine_files location. If it starts with a forward or
         # backward slash, then we assume it's from the mpf root. Otherwise we
@@ -137,24 +138,24 @@ class MediaController(object):
         # Now find the config file location. Same as machine_file with the
         # slash uses to specify an absolute path
 
-        if (options['configfile'].startswith('/') or
-                options['configfile'].startswith('\\')):
-            config_file = options['configfile']
-        else:
-
-            if not options['configfile'].endswith('.yaml'):
-                options['configfile'] += '.yaml'
-
-            config_file = os.path.join(self.machine_path,
-                                       self.config['media_controller']['paths']
-                                       ['config'],
-                                       options['configfile'])
-
-        self.log.debug("Base machine config file: %s", config_file)
-
-        # Load the machine-specific config
-        self.config = Config.load_config_yaml(config=self.config,
-                                              yaml_file=config_file)
+        # if (options['configfile'].startswith('/') or
+        #         options['configfile'].startswith('\\')):
+        #     config_file = options['configfile']
+        # else:
+        #
+        #     if not options['configfile'].endswith('.yaml'):
+        #         options['configfile'] += '.yaml'
+        #
+        #     config_file = os.path.join(self.machine_path,
+        #                                self.config['media_controller']['paths']
+        #                                ['config'],
+        #                                options['configfile'])
+        #
+        # self.log.debug("Base machine config file: %s", config_file)
+        #
+        # # Load the machine-specific config
+        # self.config = Config.load_config_yaml(config=self.config,
+        #                                       yaml_file=config_file)
 
         mediacontroller_config_spec = '''
                         exit_on_disconnect: boolean|True
@@ -191,6 +192,43 @@ class MediaController(object):
         self.events.post("init_phase_5")
 
         self.reset()
+
+    def _load_mc_config(self):
+        self.config = Config.load_config_file(self.options['mcconfigfile'])
+
+        # Find the machine_files location. If it starts with a forward or
+        # backward slash, then we assume it's from the mpf root. Otherwise we
+        # assume it's from the subfolder location specified in the
+        # mpfconfigfile location
+
+    def _set_machine_path(self):
+        if (self.options['machinepath'].startswith('/') or
+                self.options['machinepath'].startswith('\\')):
+            machine_path = self.options['machinepath']
+        else:
+            machine_path = os.path.join(self.config['media_controller']['paths']
+                                        ['machine_files'],
+                                        self.options['machinepath'])
+
+        self.machine_path = os.path.abspath(machine_path)
+        self.log.debug("Machine path: {}".format(self.machine_path))
+
+        # Add the machine folder to sys.path so we can import modules from it
+        sys.path.append(self.machine_path)
+
+    def _load_machine_config(self):
+        for num, config_file in enumerate(self.options['configfile']):
+
+            if not (config_file.startswith('/') or
+                    config_file.startswith('\\')):
+
+                config_file = os.path.join(self.machine_path,
+                    self.config['media_controller']['paths']['config'], config_file)
+
+            self.log.info("Machine config file #%s: %s", num, config_file)
+
+            self.config = Config.dict_merge(self.config,
+                Config.load_config_file(config_file))
 
     def _check_crash_queue(self):
         try:

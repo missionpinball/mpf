@@ -1,4 +1,4 @@
-"""The main machine object for the Mission Pinball Framework."""
+"""Contains the MachineController base class"""
 # machine.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
@@ -19,6 +19,7 @@ from mpf.system.tasks import Task, DelayManager
 from mpf.system.data_manager import DataManager
 from mpf.system.timing import Timing
 from mpf.system.assets import AssetManager
+import mpf.config_file_interfaces
 import version
 
 
@@ -77,8 +78,11 @@ class MachineController(object):
         self.crash_queue = Queue.Queue()
         Task.create(self._check_crash_queue)
 
+        Config.init()
         self.config = dict()
-        self._load_config()
+        self._load_mpf_config()
+        self._set_machine_path()
+        self._load_machine_config()
 
         self.configure_debugger()
 
@@ -127,6 +131,22 @@ class MachineController(object):
 
         self.reset()
 
+    # def _setup_config_file_processors(self):
+    #     # step through modules in config_file_interfaces
+    #     # pull out the list of file types
+    #
+    #     for module in mpf.config_file_interfaces.__all__:
+    #
+    #         __import__('mpf.config_file_interfaces.{}'.format(module))
+    #
+    #         interface_class = eval(
+    #             'mpf.config_file_interfaces.{}.file_interface_class'.format(module))
+    #
+    #         this_instance = interface_class(self)
+    #
+    #         for file_type in interface_class.file_types:
+    #             self.config_file_processors[file_type] = this_instance
+
     def validate_machine_config_section(self, section):
         if section not in self.config['config_validator']:
             return
@@ -171,20 +191,13 @@ class MachineController(object):
             self.log.critical("Crash details: %s", crash)
             self.done = True
 
-    def _load_config(self):
-        # creates the main config dictionary from the YAML machine config files.
+    def _load_mpf_config(self):
+        self.config = Config.load_config_file(self.options['mpfconfigfile'])
 
-        self.config = dict()
-
-        # load the MPF config & machine defaults
-        self.config = Config.load_config_yaml(config=self.config,
-            yaml_file=self.options['mpfconfigfile'])
-
-        # Find the machine_files location. If it starts with a forward or
+    def _set_machine_path(self):
+        # If the machine folder value passed starts with a forward or
         # backward slash, then we assume it's from the mpf root. Otherwise we
-        # assume it's from the subfolder location specified in the
-        # mpfconfigfile location
-
+        # assume it's in the mpf/machine_files folder
         if (self.options['machinepath'].startswith('/') or
                 self.options['machinepath'].startswith('\\')):
             machine_path = self.options['machinepath']
@@ -194,32 +207,24 @@ class MachineController(object):
                                         self.options['machinepath'])
 
         self.machine_path = os.path.abspath(machine_path)
+        self.log.debug("Machine path: {}".format(self.machine_path))
 
-        # Add the machine folder to our path so we can import modules from it
+        # Add the machine folder to sys.path so we can import modules from it
         sys.path.append(self.machine_path)
 
-        self.log.info("Machine folder: %s", machine_path)
+    def _load_machine_config(self):
+        for num, config_file in enumerate(self.options['configfile']):
 
-        # Now find the config file location. Same as machine_file with the
-        # slash uses to specify an absolute path
+            if not (config_file.startswith('/') or
+                    config_file.startswith('\\')):
 
-        if (self.options['configfile'].startswith('/') or
-                self.options['configfile'].startswith('\\')):
-            config_file = self.options['configfile']
-        else:
+                config_file = os.path.join(self.machine_path,
+                    self.config['mpf']['paths']['config'], config_file)
 
-            if not self.options['configfile'].endswith('.yaml'):
-                self.options['configfile'] += '.yaml'
+            self.log.info("Machine config file #%s: %s", num, config_file)
 
-            config_file = os.path.join(machine_path,
-                                       self.config['mpf']['paths']['config'],
-                                       self.options['configfile'])
-
-        self.log.debug("Base machine config file: %s", config_file)
-
-        # Load the machine-specific config
-        self.config = Config.load_config_yaml(config=self.config,
-                                            yaml_file=config_file)
+            self.config = Config.dict_merge(self.config,
+                Config.load_config_file(config_file))
 
     def verify_system_info(self):
         """Dumps information about the Python installation to the log.
@@ -311,11 +316,13 @@ class MachineController(object):
                 extension).
 
         """
+
         if name not in self.hardware_platforms:
             hardware_platform = __import__('mpf.platform.%s' % name,
                                            fromlist=["HardwarePlatform"])
 
-            self.hardware_platforms[name] = hardware_platform.HardwarePlatform(self)
+            self.hardware_platforms[name] = (
+                hardware_platform.HardwarePlatform(self))
 
     def set_default_platform(self, name):
         """Sets the default platform which is used if a device class-specific or
@@ -324,14 +331,14 @@ class MachineController(object):
 
         Args:
             name: String name of the platform to set to default.
-        """
 
+        """
         try:
             self.default_platform = self.hardware_platforms[name]
             self.log.debug("Setting default platform to '%s'", name)
         except KeyError:
-            self.log.error("Cannot set default platform to '%s', as that's not "
-                           "a currently active platform", name)
+            self.log.error("Cannot set default platform to '%s', as that's not"
+                           " a currently active platform", name)
 
     def string_to_class(self, class_string):
         """Converts a string like mpf.system.events.EventManager into a python
@@ -346,6 +353,7 @@ class MachineController(object):
         This function came from here:
         http://stackoverflow.com/questions/452969/
         does-python-have-an-equivalent-to-java-class-forname
+
         """
         parts = class_string.split('.')
         module = ".".join(parts[:-1])
@@ -375,7 +383,6 @@ class MachineController(object):
         a central registry of monitors.
 
         """
-
         if monitor_class not in self.monitors:
             self.monitors[monitor_class] = set()
 
@@ -453,7 +460,6 @@ class MachineController(object):
         self.done = True
 
     def log_loop_rate(self):
-
         self.log.info("Target MPF loop rate: %s Hz", timing.Timing.HZ)
 
         try:
@@ -468,14 +474,15 @@ class MachineController(object):
 
             if AssetManager.loader_queue.qsize():
                 self.log.debug("Holding Attract start while MPF assets load. "
-                               "Remaining: %s", AssetManager.loader_queue.qsize())
+                               "Remaining: %s",
+                               AssetManager.loader_queue.qsize())
                 self.bcp.bcp_trigger('assets_to_load',
-                                     total=AssetManager.total_assets,
-                                     remaining=AssetManager.loader_queue.qsize())
+                     total=AssetManager.total_assets,
+                     remaining=AssetManager.loader_queue.qsize())
             else:
                 self.bcp.bcp_trigger('assets_to_load',
-                                     total=AssetManager.total_assets,
-                                     remaining=0)
+                     total=AssetManager.total_assets,
+                     remaining=0)
                 self.asset_loader_complete = True
 
         elif self.bcp.active_connections and not self.flag_bcp_reset_complete:
@@ -499,7 +506,8 @@ class MachineController(object):
 
     def get_debug_status(self, debug_path):
 
-        if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
+        if (self.options['loglevel'] > 10 or
+                    self.options['consoleloglevel'] > 10):
             return True
 
         class_, module = debug_path.split('|')

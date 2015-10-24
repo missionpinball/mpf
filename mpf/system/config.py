@@ -6,6 +6,7 @@
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/mpf
+
 import logging
 import os
 import sys
@@ -14,6 +15,7 @@ import yaml
 from copy import deepcopy
 
 from mpf.system.timing import Timing
+import mpf.config_file_interfaces
 import version
 
 log = logging.getLogger('ConfigProcessor')
@@ -53,152 +55,77 @@ class Config(object):
 
     def __init__(self, machine):
         self.machine = machine
-        self.log = logging.getLogger('Config')
+
+    @classmethod
+    def init(cls):
+        cls.config_file_processors = dict()
+
+        for module in mpf.config_file_interfaces.__all__:
+
+                __import__('mpf.config_file_interfaces.{}'.format(module))
+
+                interface_class = eval(
+                    'mpf.config_file_interfaces.{}.file_interface_class'.format(module))
+
+                this_instance = interface_class()
+
+                for file_type in interface_class.file_types:
+                    cls.config_file_processors[file_type] = this_instance
+
 
 
     @staticmethod
-    def load_config_yaml(config=None, yaml_file=None,
-                         new_config_dict=None):
-        """Merges a new config dictionary into an existing one.
+    def load_config_file(filename):
+        ext = os.path.splitext(filename)[1]
 
-        This method does what we call a "deep merge" which means it merges
-        together subdictionaries instead of overwriting them. See the
-        documentation for `meth:dict_merge` for a description of how this
-        works.
-
-        If the config dictionary you're merging in also contains links to
-        additional config files, it will also merge those in.
-
-        At this point this method loads YAML files, but it would be simple to
-        load them from JSON, XML, INI, or existing python dictionaires.
-
-        Args:
-            config: The optional current version of the config dictionary that
-                you're building up. If you don't pass a dictionary, this method
-                will create one.
-            yaml_file: A YAML file containing the settings to deep merge into
-                the config dictionary. This method will try to find a file
-                with that name and open it to read in the settings. It will
-                first try to open it as a file directly (including any path
-                that's there). If that doesn't work, it will try to open the
-                file using the last path that worked. (This path is stored in
-                `config['config_path']`.)
-            new_config_dict: A dictionary of settings to merge into the config
-                dictionary.
-
-        Note that you only need to specify a yaml_file or new_config_dictionary,
-        not both.
-
-        Returns: Python dictionary which is your source with all the new config
-            options merged in.
-
-        """
-
-        if not config:
-            config = dict()
-        else:
-            config = Config.keys_to_lower(config)
-
-        new_updates = dict()
-
-        # If we were passed a config dict, load from there
-        if type(new_config_dict) == dict:
-            new_updates = Config.keys_to_lower(new_config_dict)
-
-        # If not, do we have a yaml_file?
-        elif yaml_file:
-            if os.path.isfile(yaml_file):
-                Config.check_config_file_version(yaml_file)
-                config_location = yaml_file
-                # Pull out the path in case we need it later
-                config['config_path'] = os.path.split(yaml_file)[0]
-            elif ('config_path' in config and
-                    os.path.isfile(os.path.join(config['config_path'],
-                                                yaml_file))):
-                config_location = os.path.join(config['config_path'],
-                                               yaml_file)
-            else:
-                log.critical("Couldn't find file: %s.", yaml_file)
-                sys.exit()
-
-        if config_location:
-
-            try:
-                log.debug("Loading configuration from file: %s", config_location)
-                new_updates = Config.keys_to_lower(yaml.load(open(
-                                                   config_location, 'r')))
-            except yaml.YAMLError, exc:
-                if hasattr(exc, 'problem_mark'):
-                    mark = exc.problem_mark
-                    log.critical("Error found in config file %s. Line %s, "
-                                 "Position %s", config_location, mark.line+1,
-                                 mark.column+1)
-                    sys.exit()
-            except:
-                log.critical("Couldn't load from file: %s", yaml_file)
-                raise
-
-        config = Config.dict_merge(config, new_updates)
-
-        # now check if there are any more updates to do.
-        # iterate and remove them
+        if not os.path.isfile(filename):
+            # If the file doesn't have an extension, let's see if we can find
+            # one
+            if not ext:
+                for config_processor in set(Config.config_file_processors.values()):
+                    questionable_file, ext = config_processor.find_file(filename)
+                    if questionable_file:
+                        filename = questionable_file
+                        break
 
         try:
-            if 'config' in config:
-
-                if type(config['config']) is not list:
-                    config['config'] = Config.string_to_list(config['config'])
-
-                if yaml_file in config['config']:
-                    config['config'].remove(yaml_file)
-
-                if config['config']:
-                    config = Config.load_config_yaml(config=config,
-                                              yaml_file=config['config'][0])
-        except:
-            log.critical("No configuration file found, or config file is empty."
-                         " But congrats! MPF works! :)")
-            raise
-
-        return config
+            return Config.config_file_processors[ext].load(filename)
+        except KeyError:
+            # todo convert to exception
+            print "No config file processor available for file type {}".format(ext)
+            sys.exit()
 
     @staticmethod
-    def check_config_file_version(file_location):
-        """Checks a configuration file to see if it's the proper version for
-        this version of MPF.
+    def load_config_file(filename):
+        ext = os.path.splitext(filename)[1]
 
-        Args:
-            file_location: The path to the file to check.
+        if not os.path.isfile(filename):
+            # If the file doesn't have an extension, let's see if we can find
+            # one
+            if not ext:
+                for config_processor in set(Config.config_file_processors.values()):
+                    questionable_file, ext = config_processor.find_file(filename)
+                    if questionable_file:
+                        filename = questionable_file
+                        break
 
-        Returns: True if the config version of the file matches. False if not.
+        try:
+            config =  Config.config_file_processors[ext].load(filename)
+        except KeyError:
+            # todo convert to exception
+            log.error("No config file processor available for file type {}"
+                      .format(ext))
+            sys.exit()
 
-        This method checks that the a string 'config_version=x' exists in the
-        first line of the file. If so, it checks that 'x' matches MPF's
-        config_version specification.
+        if 'config' in config:
+            path = os.path.split(filename)[0]
 
-        This check is done as integers.
+            for file in Config.string_to_list(config['config']):
+                full_file = os.path.join(path, file)
+                config = Config.dict_merge(config,
+                                           Config.load_config_file(full_file))
 
-        """
-        with open(file_location) as f:
-            file_version = f.readline().split('config_version=')[-1:][0]
-
-            try:
-                file_version = int(file_version)
-            except ValueError:
-                file_version = 0
-
-            if file_version != int(version.__config_version__):
-                log.error("Config file %s is version %s. MPF %s requires "
-                          "version %s", file_location, file_version,
-                          version.__version__, version.__config_version__)
-                log.error("Use the Config File Migrator to automatically "
-                          "migrate your config file to the latest version.")
-                log.error("Migration tool: "
-                           "https://missionpinball.com/docs/tools/config-file-migrator/")
-                log.error("More info on config version %s: %s",
-                          version.__config_version__,
-                          version.__config_version_url__)
-                sys.exit()
+        return config
 
     @staticmethod
     def keys_to_lower(source_dict):

@@ -80,19 +80,27 @@ class ModeController(object):
             mode_string + '.yaml')
 
         if os.path.isfile(mpf_mode_config):
-            config = Config.load_config_yaml(yaml_file=mpf_mode_config)
+            config = Config.load_config_file(mpf_mode_config)
 
         # Now figure out if there's a machine-specific config for this mode, and
         # if so, merge it into the config
 
-        mode_config_file = os.path.join(self.machine.machine_path,
-            self.machine.config['media_controller']['paths']['modes'], mode_string, 'config',
-            mode_string + '.yaml')
+        mode_config_folder = os.path.join(self.machine.machine_path,
+            self.machine.config['media_controller']['paths']['modes'], mode_string, 'config')
 
-        if os.path.isfile(mode_config_file):
+        found_file = False
+        for path, _, files in os.walk(mode_config_folder):
+            for file in files:
+                file_root, file_ext = os.path.splitext(file)
 
-            config = Config.load_config_yaml(config=config,
-                                             yaml_file=mode_config_file)
+                if file_root == mode_string:
+                    config = Config.dict_merge(config,
+                        Config.load_config_file(os.path.join(path, file)))
+                    found_file = True
+                    break
+
+            if found_file:
+                break
 
         return Mode(self.machine, config, mode_string, mode_path)
 
