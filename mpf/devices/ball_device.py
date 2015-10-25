@@ -311,7 +311,7 @@ class BallDevice(Device):
                                  target=self.eject_in_progress_target,
                                  num_attempts=self.num_eject_attempts)
 
-        if not self.config['confirm_eject_type'] == 'switch':
+        if self.config['confirm_eject_type'] == 'target':
             self._inform_target_about_incoming_ball(self.eject_in_progress_target)
 
 
@@ -1251,7 +1251,7 @@ class BallDevice(Device):
         # and some without. Also, since there are many ways we can get here,
         # let's first make sure we actually had an eject in progress
 
-        if self.config['confirm_eject_type'] == 'switch':
+        if self.config['confirm_eject_type'] != 'target':
             self._inform_target_about_incoming_ball(self.eject_in_progress_target)
 
 
