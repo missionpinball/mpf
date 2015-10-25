@@ -279,9 +279,14 @@ class BallDevice(Device):
 
         # Default: wait
 
-    def can_arrive(self):
+    def add_incoming_ball(self):
         # TODO: replace by an event
         self._incoming_balls += 1
+
+    def emove_incoming_ball(self):
+        # TODO: replace by an event
+        self._incoming_balls -= 1
+
 
 
     def _state_ball_left_start(self):
@@ -337,6 +342,7 @@ class BallDevice(Device):
 
 
     def _state_failed_eject_start(self):
+        # TODO: either do this check in eject_failure or always go to this state
         # handle retry limit
         if (self.config['max_eject_attempts'] != 0 and
             self.num_eject_attempts > self.config['max_eject_attempts']):
@@ -369,7 +375,9 @@ class BallDevice(Device):
         elif self.balls < balls:
             # TODO: check if entry switch was active.
             # ball probably returned
+            self.eject_in_progress_target.remove_incoming_ball()
             self.balls += 1
+            self.eject_failed()
             self._switch_state("ejecting")
 
     def _state_eject_confirmed_start(self):
@@ -380,6 +388,8 @@ class BallDevice(Device):
     def _ball_missing_timout(self):
         if self._state != "failed_confirm":
             raise AssertionError("Invalid state " + self._state)
+
+        self.eject_in_progress_target.remove_incoming_ball()
 
         # We are screwed now!
         return self._switch_state("missing_balls",
@@ -412,10 +422,12 @@ class BallDevice(Device):
             return
 
     def _source_device_eject_failed(self, balls, target, **kwargs):
-        # TODO: do we need this?
-        return
         if target != self:
             return
+
+        # TODO: do we need this?
+        return
+
 
         if self._state != "waiting_for_ball":
             raise AssertionError("There was no ongoing eject")
@@ -1222,7 +1234,7 @@ class BallDevice(Device):
 
 
     def _inform_target_about_incoming_ball(self, target):
-        target.can_arrive() 
+        target.add_incoming_ball() 
 
     def _eject_success(self, **kwargs):
         # We got an eject success for this device.

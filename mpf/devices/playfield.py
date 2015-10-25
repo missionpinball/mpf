@@ -453,8 +453,12 @@ class Playfield(BallDevice):
     def is_playfield(self):
         return True
 
-    def can_arrive(self):
+    def add_incoming_ball(self):
         pass
+
+    def remove_incoming_ball(self):
+        pass
+
 
 # The MIT License (MIT)
 
