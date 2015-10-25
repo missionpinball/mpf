@@ -283,7 +283,7 @@ class BallDevice(Device):
         # TODO: replace by an event
         self._incoming_balls += 1
 
-    def emove_incoming_ball(self):
+    def remove_incoming_ball(self):
         # TODO: replace by an event
         self._incoming_balls -= 1
 
@@ -375,7 +375,7 @@ class BallDevice(Device):
         elif self.balls < balls:
             # TODO: check if entry switch was active.
             # ball probably returned
-            self.eject_in_progress_target.remove_incoming_ball()
+            self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
             self.balls += 1
             self.eject_failed()
             self._switch_state("ejecting")
@@ -389,7 +389,7 @@ class BallDevice(Device):
         if self._state != "failed_confirm":
             raise AssertionError("Invalid state " + self._state)
 
-        self.eject_in_progress_target.remove_incoming_ball()
+        self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
 
         # We are screwed now!
         return self._switch_state("missing_balls",
@@ -1234,7 +1234,10 @@ class BallDevice(Device):
 
 
     def _inform_target_about_incoming_ball(self, target):
-        target.add_incoming_ball() 
+        target.add_incoming_ball()
+
+    def _cancel_incoming_ball_at_target(self, target):
+        target.remove_incoming_ball()
 
     def _eject_success(self, **kwargs):
         # We got an eject success for this device.
