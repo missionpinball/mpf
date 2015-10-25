@@ -99,7 +99,7 @@ class BallDevice(Device):
 
         self._state = "invalid"
 
-        self._incoming_balls = 0
+        self._incoming_balls = deque()
 
         self.machine.events.add_handler('init_phase_2',
                                         self.configure_eject_targets)
@@ -215,9 +215,9 @@ class BallDevice(Device):
                                   balls=balls)
 
     def _handle_new_balls(self, balls):
-        while self._incoming_balls > 0 and balls > 0:
+        while len(self._incoming_balls) > 0 and balls > 0:
             balls -= 1
-            self._incoming_balls -= 1
+            self._incoming_balls.popleft()
 
         self.log.debug("Processing %s new balls", balls)
         self.machine.events.post_relay('balldevice_' + self.name +
@@ -281,11 +281,12 @@ class BallDevice(Device):
 
     def add_incoming_ball(self):
         # TODO: replace by an event
-        self._incoming_balls += 1
+        timeout = 60
+        self._incoming_balls.append(time.time() + timeout)
 
     def remove_incoming_ball(self):
         # TODO: replace by an event
-        self._incoming_balls -= 1
+        self._incoming_balls.popleft()
 
 
 
@@ -389,7 +390,8 @@ class BallDevice(Device):
         if self._state != "failed_confirm":
             raise AssertionError("Invalid state " + self._state)
 
-        self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
+        if not self.config['confirm_eject_type'] == 'switch':
+            self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
 
         # We are screwed now!
         return self._switch_state("missing_balls",
