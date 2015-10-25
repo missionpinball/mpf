@@ -101,6 +101,8 @@ class BallDevice(Device):
 
         self._incoming_balls = deque()
 
+        self._source_ejecting_balls = 0
+
         self.machine.events.add_handler('init_phase_2',
                                         self.configure_eject_targets)
 
@@ -156,9 +158,7 @@ class BallDevice(Device):
                 return self._switch_state("wait_for_eject")
             else:
                 # only request ball if we have no incomings
-                if not len(self._incoming_balls):
-                    # TODO: consider ongoing ejects
-                    # TODO: consider blocked ejects
+                if not len(self._incoming_balls) and not self._source_ejecting_balls:
                     if self.debug:
                         self.log.debug("Don't have any balls. Requesting one.")
                     self._request_one_ball()
@@ -207,7 +207,7 @@ class BallDevice(Device):
 
         if self.get_additional_ball_capacity():
             # unblock blocked source_device_eject_attempts
-            if not self.eject_queue:
+            if not self.eject_queue or not self.balls:
                 if self._blocked_eject_attempts:
                     (queue, source) = self._blocked_eject_attempts.popleft()
                     queue.clear()
@@ -441,19 +441,23 @@ class BallDevice(Device):
             queue.wait()
             return
 
+        # track ejects
+        self._source_ejecting_balls += 1
+
     def _source_device_eject_failed(self, balls, target, **kwargs):
         if target != self:
             return
 
-        # TODO: do we need this?
-        return
+        # track ejects
+        self._source_ejecting_balls -= 1
 
+    def _source_device_eject_success(self, balls, target, **kwargs):
+        if target != self:
+            return
 
-        if self._state != "waiting_for_ball":
-            raise AssertionError("There was no ongoing eject")
+        # track ejects
+        self._source_ejecting_balls -= 1
 
-        # go to idle. it will know what to do
-        self._switch_state("idle")
 
     def _initialize(self):
         # convert names to objects
@@ -566,6 +570,11 @@ class BallDevice(Device):
                     self.machine.events.add_handler(
                         'balldevice_{}_ball_eject_attempt'.format(device.name),
                         self._source_device_eject_attempt)
+
+                    self.machine.events.add_handler(
+                        'balldevice_{}_ball_eject_success'.format(device.name),
+                        self._source_device_eject_success)
+
                     break
 
 
