@@ -152,6 +152,7 @@ class BallDevice(Device):
         if self.eject_queue:
             self.num_eject_attempts = 0
             self.num_jam_switch_count = 0
+            # TODO: only request ball if we have no incomings
             if self.balls > 0:
                 return self._switch_state("wait_for_eject")
             else:
@@ -186,12 +187,22 @@ class BallDevice(Device):
             self.balls = balls
             self._handle_new_balls(balls=unexpected_balls)
 
+        # handle timeout incoming balls
+        missing_balls = 0
+        while len(self._incoming_balls) and self._incoming_balls[0] <= time.time():
+            self._incoming_balls.popleft()
+            missing_balls += 1
+        if missing_balls > 0:
+            return self._switch_state("missing_balls",
+                                balls=missing_balls,
+                                context="idle")
 
         if self.get_additional_ball_capacity():
             # unblock blocked source_device_eject_attempts
             if self._blocked_eject_attempts:
                 (queue, source) = self._blocked_eject_attempts.popleft()
                 queue.clear()
+                # TODO: should we do this is we have an eject queue and enough balls?
                 return self._switch_state("waiting_for_ball")
 
             if not self.eject_queue:
@@ -283,6 +294,12 @@ class BallDevice(Device):
         # TODO: replace by an event
         timeout = 60
         self._incoming_balls.append(time.time() + timeout)
+        self.delay.add(ms=timeout * 1000, callback=self._timeout_incoming)
+
+    def _timeout_incoming(self):
+        self.log.debug("Handling timeouts of incoming balls")
+        if len(self._incoming_balls) and self._state == "idle":
+            self._count_balls()
 
     def remove_incoming_ball(self):
         # TODO: replace by an event

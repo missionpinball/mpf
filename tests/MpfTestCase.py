@@ -27,8 +27,21 @@ class MpfTestCase(unittest.TestCase):
 
     def advance_time_and_run(self, delta):
         self.machine_run()
-        self.advance_time(delta)
-        self.machine_run()
+        if delta > 10:
+            self.advance_time(10)
+            self.machine_run()
+            delta -= 10
+        if delta > 10:
+            self.advance_time(10)
+            self.machine_run()
+            delta -= 10
+        if delta > 10:
+            self.advance_time(10)
+            self.machine_run()
+            delta -= 10
+        if delta > 0:
+            self.advance_time(delta)
+            self.machine_run()
 
     def machine_run(self):
         self.machine.default_platform.tick()

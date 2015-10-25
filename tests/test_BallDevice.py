@@ -45,6 +45,10 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEquals(0, self._missing)
+        self.advance_time_and_run(10000)
+        self.advance_time_and_run(10000)
+        self.assertEquals(1, self._missing)
+
 
     def _requesting_ball(self, balls, **kwargs):
         self._requesting += balls
@@ -78,6 +82,14 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(1, self._captured)
 
+#        self.advance_time_and_run(300)
+#        self.advance_time_and_run(300)
+#        self.advance_time_and_run(300)
+#        self.advance_time_and_run(300)
+#        self.advance_time_and_run(300)
+#        self.advance_time_and_run(300)
+#        self.advance_time_and_run(300)
+        self.advance_time_and_run(10000)
 
     def test_ball_eject_timeout_and_late_confirm(self):
         self._requesting = 0
