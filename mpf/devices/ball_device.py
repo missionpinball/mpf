@@ -152,11 +152,17 @@ class BallDevice(Device):
         if self.eject_queue:
             self.num_eject_attempts = 0
             self.num_jam_switch_count = 0
-            # TODO: only request ball if we have no incomings
             if self.balls > 0:
                 return self._switch_state("wait_for_eject")
             else:
-                return self._switch_state("requesting_ball")
+                # only request ball if we have no incomings
+                if not len(self._incoming_balls):
+                    if self.debug:
+                        self.log.debug("Don't have any balls. Requesting one.")
+                    self._request_one_ball()
+
+                return self._switch_state("waiting_for_ball")
+
 
 
     def _state_idle_start(self):
@@ -199,13 +205,12 @@ class BallDevice(Device):
 
         if self.get_additional_ball_capacity():
             # unblock blocked source_device_eject_attempts
-            if self._blocked_eject_attempts:
-                (queue, source) = self._blocked_eject_attempts.popleft()
-                queue.clear()
-                # TODO: should we do this is we have an eject queue and enough balls?
-                return self._switch_state("waiting_for_ball")
-
             if not self.eject_queue:
+                if self._blocked_eject_attempts:
+                    (queue, source) = self._blocked_eject_attempts.popleft()
+                    queue.clear()
+                    return self._switch_state("waiting_for_ball")
+
                 self._ok_to_receive()
 
 
@@ -257,23 +262,6 @@ class BallDevice(Device):
         self._balls_missing(balls)
 
         return self._switch_state("idle")
-
-    def _state_requesting_ball_start(self):
-        # In this state we request a ball:
-        # 1. Wait for the eject to happen
-        # 2. We can receive or loose a ball before the attempt
-        if self.debug:
-            self.log.debug("Don't have any balls. Requesting one.")
-
-        self._request_one_ball()
-
-
-    def _state_requesting_ball_counted_balls(self, balls):
-        # if we received or lost a ball go to idle state. it will handle that
-        # when the eject attempt eventually happens we will either queue it or
-        # process it right away in case we are still in idle
-        if balls != self.balls:
-            return self._switch_state("idle")
 
     def _state_waiting_for_ball_start(self):
         # This can happen
@@ -796,8 +784,7 @@ class BallDevice(Device):
             self._handle_new_balls(1)
 
     def is_ready_to_receive(self):
-        return (((self._state == "idle" and self._idle_counted)
-                or self._state == "requesting_ball")
+        return ((self._state == "idle" and self._idle_counted) or (self._state == "waiting_for_ball")
                 and self.balls < self.config['ball_capacity'])
 
     def get_real_additional_capacity(self):
@@ -816,13 +803,13 @@ class BallDevice(Device):
             current eject_in_progress.
 
         """
-        if not self.is_ready_to_receive():
-            # This device is in the process of ejecting a ball, so it shouldn't
-            # receive any now.
-
+        capacity = self.get_real_additional_capacity()
+        capacity -= len(self._incoming_balls)
+        capacity -= self.num_balls_ejecting
+        if capacity < 0:
             return 0
-
-        return self.get_real_additional_capacity()
+        else:
+            return capacity
 
     def is_connected_to_ball_source(self):
         if "drain" in self.tags:
