@@ -278,6 +278,8 @@ class BallDevice(Device):
     def _state_waiting_for_ball_start(self):
         # This can happen
         # 1. ball counts can change (via _counted_balls)
+        # 2. if mechanical_eject and the ball leaves source we go to
+        #    waiting_for_ball_mechnical
         pass
 
     def _state_waiting_for_ball_counted_balls(self, balls):
@@ -290,11 +292,41 @@ class BallDevice(Device):
 
         # Default: wait
 
+    def _state_waiting_for_ball_mechanical_start(self):
+        # This can happen
+        # 1. ball counts can change (via _counted_balls)
+        # 2. eject can be confirmed
+        # 2. eject of source can fail
+        self.eject_in_progress_target = self.config['eject_targets'][0]
+        self.num_balls_ejecting = 1
+        self.mechanical_eject_in_progress = True
+        #self._setup_eject_confirmation(self.eject_in_progress_target)
+        self._inform_target_about_incoming_ball(self.eject_in_progress_target)
+        self._do_eject_attempt()
+
+
+    def _state_waiting_for_ball_mechanical_counted_balls(self, balls):
+        if self.balls > balls:
+            # We dont have balls. How can that happen?
+            raise AssertionError("We dont have balls but lose one!")
+        elif self.balls < balls:
+            self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
+            self._cancel_eject_confirmation()
+
+            # Go to idle state
+            return self._switch_state("idle")
+
+        # Default: wait
+
     def add_incoming_ball(self):
         # TODO: replace by an event
         timeout = 60
         self._incoming_balls.append(time.time() + timeout)
         self.delay.add(ms=timeout * 1000, callback=self._timeout_incoming)
+
+        if self._state == "waiting_for_ball" and self.config['mechanical_eject']:
+            self._switch_state("waiting_for_ball_mechanical")
+
 
     def _timeout_incoming(self):
         self.log.debug("Handling timeouts of incoming balls")
@@ -304,6 +336,11 @@ class BallDevice(Device):
     def remove_incoming_ball(self):
         # TODO: replace by an event
         self._incoming_balls.popleft()
+
+        if self._state == "waiting_for_ball_mechanical":
+            self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
+            self._cancel_eject_confirmation()
+            self._switch_state("idle")
 
 
 
@@ -446,6 +483,14 @@ class BallDevice(Device):
         # track ejects
         self._source_ejecting_balls += 1
 
+    def _source_device_ball_left(self, target, **kwargs):
+        if target != self:
+            return
+
+#        if self._state == "waiting_for_ball" and self.config['mechanical_eject']:
+#            self._switch_state("waiting_for_ball_mechanical")
+
+
     def _source_device_eject_failed(self, balls, target, **kwargs):
         if target != self:
             return
@@ -568,16 +613,15 @@ class BallDevice(Device):
                         'balldevice_{}_ball_eject_success'.format(device.name),
                         self._source_device_eject_success)
 
+                    self.machine.events.add_handler(
+                        'balldevice_{}_ball_left'.format(device.name),
+                        self._source_device_ball_left)
+
                     break
 
 
     def _initialize3(self):
-        if not self.config['ball_missing_action']:
-            if self.is_connected_to_ball_source():
-                self.config['ball_missing_action'] = "retry"
-            else:
-                self.config['ball_missing_action'] = "ignore"
-        elif (not self.is_connected_to_ball_source() and
+        if (not self.is_connected_to_ball_source() and
             self.config['ball_missing_action'] == "retry"):
             raise AssertionError("Cannot use retry as ball_missing_action " +
                             "when not connected to a ball source")
@@ -1245,6 +1289,8 @@ class BallDevice(Device):
             self.log.debug("Got an eject_success before the switch left the "
                            "device. Ignoring!")
             return
+        elif self._state == "waiting_for_ball_mechanical":
+            pass
         elif self._state != "ball_left" and self._state != "failed_confirm":
             self.log.debug("Got an eject_success in wrong state %s!",
                     self._state)
@@ -1294,8 +1340,10 @@ class BallDevice(Device):
             if not self.mechanical_eject_in_progress:
                 self.eject_failed()
                 return self._switch_state("failed_eject")
+        elif self._state == "waiting_for_ball_mechanical":
+            return
         else:
-            raise AssertionError("Invalid state")
+            raise AssertionError("Invalid state " + self._state)
 
 
     def eject_failed(self, retry=True, force_retry=False):
