@@ -560,12 +560,27 @@ class BCP(object):
         """Sends the 'reset' command to the remote BCP host."""
         self.send('reset')
 
-    def bcp_receive_switch(self, **kwargs):
+    def bcp_receive_switch(self, name, state, **kwargs):
         """Processes an incoming switch state change request from a remote BCP
         host.
+
+        Args:
+            name: String name of the switch to set.
+            state: Integer representing the state this switch will be set to.
+                1 = active, 0 = inactive, -1 means this switch will be flipped
+                from whatever its current state is to the opposite state.
+
         """
-        self.machine.switch_controller.process_switch(name=kwargs['name'],
-                                                      state=int(kwargs['state']),
+        state = int(state)
+
+        if state == -1:
+            if self.machine.switch_controller.is_active(name):
+                state = 0
+            else:
+                state = 1
+
+        self.machine.switch_controller.process_switch(name=name,
+                                                      state=state,
                                                       logical=True)
 
     def bcp_receive_dmd_frame(self, data):
