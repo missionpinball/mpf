@@ -338,8 +338,11 @@ class BallDevice(Device):
     def _state_ejecting_start(self):
         self.eject_in_progress_target, self.mechanical_eject_in_progress, self.trigger_event = (self.eject_queue.popleft())
         if self.debug:
-            self.log.debug("Setting eject_in_progress_target: %s, ",
-                           self.eject_in_progress_target.name)
+            self.log.debug("Setting eject_in_progress_target: %s, " +
+                           "mechanical: %s, trigger_events %s",
+                           self.eject_in_progress_target.name,
+                           self.mechanical_eject_in_progress,
+                           self.trigger_event)
 
         self.num_eject_attempts += 1
 
@@ -853,6 +856,12 @@ class BallDevice(Device):
     def setup_player_controlled_eject(self, balls=1, target=None,
                                       trigger_event=None):
 
+        # TODO: handle trigger_event
+        if not self.config['mechanical_eject']:
+            self.eject(balls)
+            return
+
+
         assert balls == 1
 
         self.eject_queue.append((target, True, trigger_event))
@@ -1005,8 +1014,11 @@ class BallDevice(Device):
                         callback_kwargs={'balls': self.num_balls_ejecting},
                         state=0)
 
-        if self.config['eject_coil'] and not self.mechanical_eject_in_progress:
-            self._fire_eject_coil()
+        if self.config['eject_coil']:
+            if self.mechanical_eject_in_progress:
+                self.log.debug("Will not fire eject coil because of mechanical eject")
+            else:
+                self._fire_eject_coil()
 
         elif self.config['hold_coil']:
             # TODO: wait for some time to allow balls to settle for
