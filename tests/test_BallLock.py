@@ -25,6 +25,11 @@ class TestBallLock(MpfTestCase):
     def _captured_from_pf(self, balls, **kwargs):
         self._captured += balls
 
+    def _captured_from_pf(self, balls, **kwargs):
+        self._captured += balls
+
+    def _collecting_balls_complete_handler(self, **kwargs):
+        self._collecting_balls_complete = 1
 
     def test_lock_and_release_at_game_end(self):
         coil1 = self.machine.coils['eject_coil1']
@@ -39,10 +44,15 @@ class TestBallLock(MpfTestCase):
         self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
         self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
         self.machine.events.add_handler('balldevice_test_launcher_ball_request', self._requesting_ball)
+        self.machine.events.add_handler('collecting_balls_complete', self._collecting_balls_complete_handler)
+
+
         self._enter = 0
         self._captured = 0
         self._missing = 0
         self._requesting = 0
+        self._collecting_balls_complete = 0
+        self.machine.ball_controller.num_balls_known = 2
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -60,7 +70,6 @@ class TestBallLock(MpfTestCase):
         assert not coil1.pulse.called
         assert not coil2.pulse.called
         assert not coil3.pulse.called
-        self.machine.ball_controller.num_balls_known = 2
 
         # start a game
         self.machine.switch_controller.process_switch("s_start", 1)
@@ -175,6 +184,8 @@ class TestBallLock(MpfTestCase):
         self.assertEquals(0, self._captured)
         self.assertEquals(0, self._missing)
 
+        self.assertEquals(0, self._collecting_balls_complete)
+
         # ball also drains
         self.machine.switch_controller.process_switch("s_ball_switch2", 1)
         self.advance_time_and_run(1)
@@ -183,7 +194,6 @@ class TestBallLock(MpfTestCase):
         self.assertEquals(0, self._missing)
         self.assertEquals(0, self._requesting)
 
-
-
-
+        self.assertEquals(2, self.machine.ball_controller.num_balls_known)
+        self.assertEquals(1, self._collecting_balls_complete)
 

@@ -237,16 +237,15 @@ class BallDevice(Device):
             balls -= 1
             self._incoming_balls.popleft()
 
+        if balls > 0:
+            self._handle_unexpected_balls(balls)
+
         self.log.debug("Processing %s new balls", balls)
         self.machine.events.post_relay('balldevice_' + self.name +
                                        '_ball_enter',
                                         balls=balls,
                                         device=self,
                                         callback=self._balls_added_callback)
-
-        if balls > 0:
-            self._handle_unexpected_balls(balls)
-
 
     def _state_missing_balls_start(self, balls, context):
         if context == "eject":
