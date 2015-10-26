@@ -63,6 +63,7 @@ class BallLock(Device):
         stay the same (enabled/disabled)
         """
         self.release_all_balls()
+        self.balls_locked = 0
 
     def release_one(self, **kwargs):
         """ Releases one ball

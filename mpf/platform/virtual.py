@@ -193,7 +193,11 @@ class VirtualDriver(object):
         pass
 
     def pulse(self, milliseconds=None):
-        pass
+
+        if milliseconds:
+            return milliseconds
+        else:
+            return self.driver_settings['pulse_ms']
 
     def state(self):
         pass

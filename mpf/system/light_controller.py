@@ -6,10 +6,10 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
+
 import logging
 import yaml
 import time
-import os
 
 from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config, CaseInsensitiveDict
@@ -44,6 +44,7 @@ class LightController(object):
         self.led_update_list = []
 
         self.running_shows = []
+        self.registered_tick_handlers = set()
 
         self.initialized = False
 
@@ -440,6 +441,13 @@ class LightController(object):
         # todo the above code could be better. It could only order the restores
         # for the lights and leds that were in this show that just ended?
 
+    def register_tick_handler(self, handler):
+        self.registered_tick_handlers.add(handler)
+
+    def deregister_tick_handler(self, handler):
+        if handler in self.registered_tick_handers:
+            self.registered_tick_handlers.remove(handler)
+
     def _tick(self):
         # Runs once per machine loop and services any light updates that are
         # needed.
@@ -457,6 +465,9 @@ class LightController(object):
 
                 if show.ending:
                     break
+
+        for handler in self.registered_tick_handlers:
+            handler()
 
         # Check to see if we need to service any items from our queue. This can
         # be single commands or playlists
@@ -1734,6 +1745,93 @@ class Playlist(object):
                 return
         else:
             self.current_step_position += 1
+
+
+class ExternalShow(object):
+
+    def __init__(self, machine, queue, name, priority=0, blend=True, leds=None,
+                 lights=None, flashers=None, gis=None):
+
+        self.machine = machine
+        self.external_show_queue = queue
+        self.name = name
+        self.priority = priority
+        self.blend = blend
+        self.name = None
+        self.leds = list()
+        self.lights = list()
+        self.flashers = list()
+        self.gis = list()
+
+
+        self.machine.light_controller.external_shows.add(self)
+
+        if leds:
+            self.leds = Config.string_to_list(leds)
+            self.leds = [self.machine.leds[x] for x in self.leds]
+
+        if lights:
+            self.lights = Config.string_to_list(lights)
+            self.lights = [self.machine.lights[x] for x in self.lights]
+
+        if flashers:
+            self.flashers = Config.string_to_list(flashers)
+            self.flashers = [self.machine.flashers[x] for x in self.flashers]
+
+        if gis:
+            self.gis = Config.string_to_list(gis)
+            self.gis = [self.machine.gis[x] for x in self.gis]
+
+    def update_leds(self, data):
+        # Called by worker thread
+        for led, color in zip(self.leds, Config.chunker(data, 6)):
+
+            self.external_show_queue.add(
+                (self.machine.light_controller._add_to_led_update_list,
+                  (led, (color[0:2], color[2:4], color[4:6]), 0, self.priority,
+                   self.blend)
+                 )
+            )
+
+    def update_lights(self, data):
+        # Called by worker thread
+        for light, brightness in zip(self.lights, Config.chunker(data, 2)):
+            self.external_show_queue.add(
+                (self.machine.light_controller._add_to_light_update_list,
+                  (light, brightness, self.priority, self.blend)
+                )
+            )
+
+    def update_gis(self, data):
+        # Called by worker thread
+        for gi, brightness in zip(self.lights, Config.chunker(data, 2)):
+            self.external_show_queue.add(
+                (self.machine.light_controller._add_to_gi_queue,
+                  (gi, Config.hexstring_to_int(brightness))
+                 )
+            )
+
+    def update_flashers(self, data):
+        # Called by worker thread
+        for flasher, flash in zip(self.flashers, data):
+            if flash:
+                self.external_show_queue.add(
+                    (self.machine.light_controller._add_to_flasher_queue,
+                     flasher)
+                )
+
+    def stop(self):
+        # Called by worker thread
+        for led in self.leds:
+            if led.cache['priority'] <= self.priority:
+                led.restore()
+
+        for light in self.lights:
+            if light.cache['priority'] <= self.priority:
+                light.restore()
+
+        self.machine.light_controller.external_shows.remove(self)
+
 
 # The MIT License (MIT)
 

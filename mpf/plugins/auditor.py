@@ -64,6 +64,9 @@ class Auditor(object):
 
         self.current_audits = self.data_manager.get_data()
 
+        if not self.current_audits:
+            self.current_audits = dict()
+
         # Make sure we have all the sections we need in our audit dict
         if 'switches' not in self.current_audits:
             self.current_audits['switches'] = dict()

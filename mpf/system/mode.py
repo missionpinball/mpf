@@ -142,7 +142,10 @@ class Mode(object):
         mode_start method which will be called automatically.
         """
 
+        self.log.debug("Received request to start")
+
         if self._active:
+            self.log.debug("Mode is already active. Aborting start")
             return
 
         if self.config['mode']['use_wait_queue'] and 'queue' in kwargs:

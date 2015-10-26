@@ -893,6 +893,11 @@ class PROCDriver(object):
         self.log.debug('Pulsing for %sms', milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
 
+        return milliseconds
+
+    def get_pulse_ms(self):
+        return self.driver_settings['pulse_ms']
+
     def state(self):
         """Returns a dictionary representing this driver's current
         configuration state.
