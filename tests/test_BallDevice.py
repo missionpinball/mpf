@@ -197,7 +197,7 @@ class TestBallDevice(MpfTestCase):
 
         self.advance_time_and_run(30)
 
-        self.assertEquals(1, self._requesting)
+        self.assertEquals(0, self._requesting)
         self.assertEquals(1, self._missing)
         self.assertEquals(1, playfield.balls)
 

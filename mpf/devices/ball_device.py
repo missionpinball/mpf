@@ -257,6 +257,7 @@ class BallDevice(Device):
             else:
                 self.log.debug("Lost %s balls during eject. Will ignore the "
                                "loss.", balls)
+                self.eject_failed(retry=False)
 
             # Reset target
             self.eject_in_progress_target = None
@@ -1370,7 +1371,8 @@ class BallDevice(Device):
         if self.debug:
             self.log.debug("Eject failed")
 
-        self.eject_queue.appendleft((self.eject_in_progress_target, self.mechanical_eject_in_progress, self.trigger_event))
+        if retry:
+            self.eject_queue.appendleft((self.eject_in_progress_target, self.mechanical_eject_in_progress, self.trigger_event))
 
         # Remember variables for event
         target = self.eject_in_progress_target
