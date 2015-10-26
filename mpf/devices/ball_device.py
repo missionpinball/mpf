@@ -140,15 +140,6 @@ class BallDevice(Device):
         if self._state == "wait_for_eject":
             self._state_wait_for_eject_start()
 
-    # State initial
-    def _state_initial_start(self):
-        return self._count_balls()
-
-    def _state_initial_counted_balls(self, balls):
-        # set ball count and proceed to next step
-        self.balls = balls
-        return self._switch_state("idle")
-
     # State idle
     def _handle_eject_queue(self):
         if self.eject_queue:
@@ -627,7 +618,7 @@ class BallDevice(Device):
             raise AssertionError("Cannot use retry as ball_missing_action " +
                             "when not connected to a ball source")
 
-        self._switch_state("initial")
+        self._switch_state("idle")
 
     def get_status(self, request=None):
         """Returns a dictionary of current status of this ball device.
