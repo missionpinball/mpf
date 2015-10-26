@@ -503,15 +503,6 @@ class BallDevice(Device):
                 ms=self.config['exit_count_delay'],
                 callback=self._switch_changed)
 
-#        if self.config['mechanical_eject']:
-#            for switch in self.config['ball_switches']:
-#                self.machine.switch_controller.add_switch_handler(
-#                    switch_name=switch.name,
-#                    callback=self._mechanical_eject_in_progress,
-#                    state=0,
-#                    ms=self.config['mechanical_eject_trigger_time']
-#                )
-
         # Configure switch handlers for jam switch activity
         if self.config['jam_switch']:
             self.machine.switch_controller.add_switch_handler(
@@ -722,46 +713,6 @@ class BallDevice(Device):
 
         # add ball to default target
         self.machine.ball_devices[self.config['ball_missing_target']].balls += balls
-
-
-    def _mechanical_eject_in_progress(self):
-        # Called when we're looking out for a mechanical eject and balls are
-        # missing
-
-        if self.debug:
-            self.log.debug("Mechanical eject switch open. Balls: %s",
-                           self.mechanical_eject_in_progress)
-
-        if not self.manual_eject_target:
-            return
-
-        target = self.manual_eject_target
-        self.eject_in_progress_target = target
-
-        self.eject_queue = deque()
-
-        self.balls = 0
-        self.num_balls_ejecting = 1
-        self.mechanical_eject_in_progress = 1
-
-        self.machine.events.post(
-            'balldevice_{}_mechanical_eject_attempt'.format(self.name),
-            balls=self.mechanical_eject_in_progress)
-        self.machine.events.post_queue(
-            'balldevice_{}_ball_eject_attempt'.format(self.name),
-             balls=self.mechanical_eject_in_progress,
-             target=target,
-             timeout=0,
-             num_attempts=0,
-             callback=self._mechanical_eject_attempt_callback)
-
-        self.machine.events.remove_handler(self._eject_success)
-
-        self._setup_eject_confirmation(
-            target=target, timeout=0)
-
-    def _mechanical_eject_attempt_callback(self, **kwargs):
-        pass
 
     def is_full(self):
         """Checks to see if this device is full, meaning it is holding either
