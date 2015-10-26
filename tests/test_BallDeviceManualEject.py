@@ -339,10 +339,17 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.advance_time_and_run(0.1)
         self.machine.switch_controller.process_switch("s_playfield", 0)
         self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
 
         self.assertEquals(1, playfield.balls)
         self.assertEquals(0, self._captured)
         self.assertEquals(0, self._missing)
+
+        self.advance_time_and_run(100)
+        self.assertEquals(1, playfield.balls)
+        self.assertEquals(0, self._captured)
+        self.assertEquals(0, self._missing)
+        assert not coil2.pulse.called
 
     def test_capture_random_ball(self):
         coil1 = self.machine.coils['eject_coil1']

@@ -453,10 +453,10 @@ class Playfield(BallDevice):
     def is_playfield(self):
         return True
 
-    def add_incoming_ball(self):
+    def add_incoming_ball(self, source):
         pass
 
-    def remove_incoming_ball(self):
+    def remove_incoming_ball(self, source):
         pass
 
 

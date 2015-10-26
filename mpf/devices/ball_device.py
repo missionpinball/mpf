@@ -188,7 +188,7 @@ class BallDevice(Device):
 
         # handle timeout incoming balls
         missing_balls = 0
-        while len(self._incoming_balls) and self._incoming_balls[0] <= time.time():
+        while len(self._incoming_balls) and self._incoming_balls[0][0] <= time.time():
             self._incoming_balls.popleft()
             missing_balls += 1
         if missing_balls > 0:
@@ -310,10 +310,10 @@ class BallDevice(Device):
 
         # Default: wait
 
-    def add_incoming_ball(self):
+    def add_incoming_ball(self, source):
         # TODO: replace by an event
         timeout = 60
-        self._incoming_balls.append(time.time() + timeout)
+        self._incoming_balls.append((time.time() + timeout, source))
         self.delay.add(ms=timeout * 1000, callback=self._timeout_incoming)
 
         if self._state == "waiting_for_ball" and self.config['mechanical_eject']:
@@ -325,7 +325,7 @@ class BallDevice(Device):
         if len(self._incoming_balls) and self._state == "idle":
             self._count_balls()
 
-    def remove_incoming_ball(self):
+    def remove_incoming_ball(self, source):
         # TODO: replace by an event
         self._incoming_balls.popleft()
 
@@ -1262,10 +1262,10 @@ class BallDevice(Device):
 
 
     def _inform_target_about_incoming_ball(self, target):
-        target.add_incoming_ball()
+        target.add_incoming_ball(self)
 
     def _cancel_incoming_ball_at_target(self, target):
-        target.remove_incoming_ball()
+        target.remove_incoming_ball(self)
 
     def _eject_success(self, **kwargs):
         # We got an eject success for this device.
@@ -1282,7 +1282,8 @@ class BallDevice(Device):
                            "device. Ignoring!")
             return
         elif self._state == "waiting_for_ball_mechanical":
-            pass
+            # confirm eject of our source device
+            self._incoming_balls[0][1]._eject_success()
         elif self._state != "ball_left" and self._state != "failed_confirm":
             self.log.debug("Got an eject_success in wrong state %s!",
                     self._state)
