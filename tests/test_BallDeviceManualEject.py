@@ -344,3 +344,40 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.assertEquals(0, self._captured)
         self.assertEquals(0, self._missing)
 
+    def test_capture_random_ball(self):
+        coil1 = self.machine.coils['eject_coil1']
+        coil2 = self.machine.coils['eject_coil2']
+        device1 = self.machine.ball_devices['test_trough']
+        device2 = self.machine.ball_devices['test_launcher']
+        playfield = self.machine.ball_devices['playfield']
+
+        coil1.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self._enter = 0
+        self._captured = 0
+        self._missing = 0
+
+        # launcher receives a random ball
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device2.count_balls())
+
+        coil2.pulse.assert_called_once_with()
+
+        # launcher should eject
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, device2.count_balls())
+
+        self.machine.switch_controller.process_switch("s_playfield", 1)
+        self.advance_time_and_run(0.1)
+        self.machine.switch_controller.process_switch("s_playfield", 0)
+        self.advance_time_and_run(1)
+
+        self.assertEquals(1, playfield.balls)
+        self.assertEquals(1, self._captured)
+        self.assertEquals(0, self._missing)
+
