@@ -204,15 +204,7 @@ class Keyboard(object):
             self.key_map[key] = event_dict
 
         if toggle_key:
-<<<<<<< Updated upstream
-            key = str(key)
-            self.toggle_keys[key] = 0
-
-            if invert:
-                self.toggle_keys[key] ^= 1
-=======
             self.toggle_keys.add(str(key))
->>>>>>> Stashed changes
 
     def process_key_press(self, symbol, modifiers):
         """Processes a key press (key down) event by setting the switch and/or
@@ -251,11 +243,6 @@ class Keyboard(object):
                         # we have an event
                         event_dict = self.key_map[key_press]
                         event_params = event_dict['params'] or {}
-<<<<<<< Updated upstream
-                        self.mc.send(bcp_command='trigger',
-                                     name=str(event_dict['event']),
-                                     **event_params)
-=======
 
                         if 'event' in event_dict:
                             self.mc.send(bcp_command='trigger',
@@ -265,7 +252,6 @@ class Keyboard(object):
                         elif 'mc_event' in event_dict:
                             self.mc.events.post(event_dict['mc_event'],
                                                      **event_params)
->>>>>>> Stashed changes
 
     def process_key_release(self, symbol, modifiers):
         """Processes a key release (key up) event by setting the switch and/or
