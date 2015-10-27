@@ -1,3 +1,10 @@
+"""Contains the Util class which includes many utility functions"""
+# utility_functions.py
+# Mission Pinball Framework
+# Written by Brian Madden & Gabe Knuth
+# Released under the MIT License. (See license info at the end of this file.)
+
+# Documentation and more info at http://missionpinball.com/mpf
 
 from copy import deepcopy
 from collections import OrderedDict
@@ -39,6 +46,7 @@ class Util(object):
         Returns:
             A python list object containing whatever was between commas and/or
             spaces in the string.
+
         """
         if type(string) is str:
             # Convert commas to spaces, then split the string into a list
@@ -69,6 +77,7 @@ class Util(object):
         Returns:
             A python list object containing whatever was between commas and/or
             spaces in the string, with each item converted to lowercase.
+
         """
         new_list = Util.string_to_list(string)
 
@@ -141,6 +150,7 @@ class Util(object):
 
         Returns:
             The merged dictionaries.
+
         """
         #log.info("Dict Merge incoming A %s", a)
         #log.info("Dict Merge incoming B %s", b)
@@ -194,8 +204,8 @@ class Util(object):
 
         Returns:
             Integer representation of the hex string.
-        """
 
+        """
         return_int = int(inputstring, 16)
 
         if return_int > maxvalue:
@@ -226,7 +236,6 @@ class Util(object):
         uppercase characters.
 
         """
-
         source_int = int(source_int)
 
         if 0 <= source_int <= 255:
@@ -413,3 +422,26 @@ class Util(object):
     def bin_str_to_hex_str(source_int_str, num_chars):
         return Util.normalize_hex_string('%0X' % int(source_int_str, 2),
                                            num_chars)
+
+
+# The MIT License (MIT)
+
+# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
