@@ -328,13 +328,6 @@ class BallDevice(Device):
         # TODO: replace by an event
         self._incoming_balls.popleft()
 
-        if self._state == "waiting_for_ball_mechanical":
-            self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
-            self._cancel_eject_confirmation()
-            self._switch_state("idle")
-
-
-
     def _state_ball_left_start(self):
 
         # TODO: handle entry switch here -> definitely new ball
@@ -488,6 +481,11 @@ class BallDevice(Device):
 
         # track ejects
         self._source_ejecting_balls -= 1
+
+        if self._state == "waiting_for_ball_mechanical":
+            self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
+            self._cancel_eject_confirmation()
+            self._switch_state("idle")
 
     def _source_device_eject_success(self, balls, target, **kwargs):
         if target != self:
