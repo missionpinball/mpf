@@ -16,7 +16,7 @@ from copy import deepcopy
 from collections import OrderedDict
 
 from mpf.system.timing import Timing
-import mpf.config_file_interfaces
+import mpf.file_interfaces
 import version
 
 log = logging.getLogger('ConfigProcessor')
@@ -141,12 +141,12 @@ class Config(object):
     def init(cls):
         cls.config_file_processors = dict()
 
-        for module in mpf.config_file_interfaces.__all__:
+        for module in mpf.file_interfaces.__all__:
 
-                __import__('mpf.config_file_interfaces.{}'.format(module))
+                __import__('mpf.file_interfaces.{}'.format(module))
 
                 interface_class = eval(
-                    'mpf.config_file_interfaces.{}.file_interface_class'.format(module))
+                    'mpf.file_interfaces.{}.file_interface_class'.format(module))
 
                 this_instance = interface_class()
 

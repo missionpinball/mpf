@@ -19,7 +19,6 @@ from mpf.system.tasks import Task, DelayManager
 from mpf.system.data_manager import DataManager
 from mpf.system.timing import Timing
 from mpf.system.assets import AssetManager
-import mpf.config_file_interfaces
 import version
 
 
