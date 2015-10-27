@@ -177,8 +177,7 @@ class BallDevice(Device):
             missing_balls = self.balls - balls
             self.balls = balls
             return self._switch_state("missing_balls",
-                                balls=missing_balls,
-                                context="idle")
+                                balls=missing_balls)
         elif self.balls < balls:
             # unexpected balls
             unexpected_balls = balls-self.balls
@@ -191,9 +190,9 @@ class BallDevice(Device):
             self._incoming_balls.popleft()
             missing_balls += 1
         if missing_balls > 0:
+            # TODO: handle this more list lost_balls. we may have to cancel ejects
             return self._switch_state("missing_balls",
-                                balls=missing_balls,
-                                context="idle")
+                                balls=missing_balls)
 
         if self.get_additional_ball_capacity():
             # unblock blocked source_device_eject_attempts
@@ -237,30 +236,41 @@ class BallDevice(Device):
                                         device=self,
                                         callback=self._balls_added_callback)
 
-    def _state_missing_balls_start(self, balls, context):
-        if context == "eject":
-            # Request a new ball depending on setting
-            if  self.config['ball_missing_action'] == "retry":
-                self.log.debug("Lost %s balls during eject. Will retry the "
-                               "eject.", balls)
-                self.eject_failed()
-            else:
-                self.log.debug("Lost %s balls during eject. Will ignore the "
-                               "loss.", balls)
-                self.eject_failed(retry=False)
 
-            # Reset target
-            self.eject_in_progress_target = None
+    def _state_lost_balls_start(self, balls):
+        # Request a new ball depending on setting
+        if  self.config['ball_missing_action'] == "retry":
+            self.log.debug("Lost %s balls during eject. Will retry the "
+                           "eject.", balls)
+            self.eject_failed()
         else:
-            if self.config['mechanical_eject']:
-                # if the device supports mechanical eject we assume it was one
-                self.mechanical_eject_in_progress = True
-                # TODO: use target from setup_player_controlled_eject
-                self.eject_in_progress_target = self.config['eject_targets'][0]
-                self.num_balls_ejecting = 1
-                #self.eject_queue.append((target, 0))
-                self._do_eject_attempt()
-                return self._switch_state("ball_left")
+            self.log.debug("Lost %s balls during eject. Will ignore the "
+                           "loss.", balls)
+            self.eject_failed(retry=False)
+
+        self._balls_missing(balls)
+
+        self.machine.events.post('balldevice_' + self.name + '_ball_lost',
+            balls=abs(balls), target=self.eject_in_progress_target)
+
+        # Reset target
+        self.eject_in_progress_target = None
+
+
+
+        return self._switch_state("idle")
+
+
+    def _state_missing_balls_start(self, balls):
+        if self.config['mechanical_eject']:
+            # if the device supports mechanical eject we assume it was one
+            self.mechanical_eject_in_progress = True
+            # TODO: use target from setup_player_controlled_eject
+            self.eject_in_progress_target = self.config['eject_targets'][0]
+            self.num_balls_ejecting = 1
+            #self.eject_queue.append((target, 0))
+            self._do_eject_attempt()
+            return self._switch_state("ball_left")
 
         self._balls_missing(balls)
 
@@ -435,9 +445,8 @@ class BallDevice(Device):
 
         # We are screwed now!
         # TODO: this is not missing. its lost balls. separate!
-        return self._switch_state("missing_balls",
-                    balls=1,
-                    context="eject")
+        return self._switch_state("lost_balls",
+                    balls=1)
 
     @property
     def num_balls_ejectable(self):
@@ -466,6 +475,11 @@ class BallDevice(Device):
 
         # track ejects
         self._source_ejecting_balls += 1
+
+    def _source_device_ball_lost(self, target, **kwargs):
+        if target != self:
+            return
+
 
     def _source_device_ball_left(self, target, **kwargs):
         if target != self:
@@ -605,6 +619,11 @@ class BallDevice(Device):
                     self.machine.events.add_handler(
                         'balldevice_{}_ball_left'.format(device.name),
                         self._source_device_ball_left)
+
+                    self.machine.events.add_handler(
+                        'balldevice_{}_ball_lost'.format(device.name),
+                        self._source_device_ball_lost)
+
 
                     break
 
@@ -1327,6 +1346,7 @@ class BallDevice(Device):
                                  '_ball_eject_failed',
                                  target=target,
                                  balls=balls,
+                                 retry=retry,
                                  num_attempts=self.num_eject_attempts)
 
     def _eject_permanently_failed(self):
