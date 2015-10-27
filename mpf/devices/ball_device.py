@@ -247,11 +247,12 @@ class BallDevice(Device):
             self.log.debug("Lost %s balls during eject. Will ignore the "
                            "loss.", balls)
             self.eject_failed(retry=False)
+            self.machine.events.post('balldevice_' + self.name + '_ball_lost',
+                balls=abs(balls), target=self.eject_in_progress_target)
+
 
         self._balls_missing(balls)
 
-        self.machine.events.post('balldevice_' + self.name + '_ball_lost',
-            balls=abs(balls), target=self.eject_in_progress_target)
 
         # Reset target
         self.eject_in_progress_target = None
@@ -476,20 +477,7 @@ class BallDevice(Device):
         # track ejects
         self._source_ejecting_balls += 1
 
-    def _source_device_ball_lost(self, target, **kwargs):
-        if target != self:
-            return
-
-
-    def _source_device_ball_left(self, target, **kwargs):
-        if target != self:
-            return
-
-#        if self._state == "waiting_for_ball" and self.config['mechanical_eject']:
-#            self._switch_state("waiting_for_ball_mechanical")
-
-
-    def _source_device_eject_failed(self, balls, target, **kwargs):
+    def _source_device_eject_failed(self, balls, target, retry, **kwargs):
         if target != self:
             return
 
@@ -499,7 +487,15 @@ class BallDevice(Device):
         if self._state == "waiting_for_ball_mechanical":
             self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
             self._cancel_eject_confirmation()
-            self._switch_state("idle")
+            if not retry:
+                self.eject_queue.popleft()
+                # TODO: ripple this to the next device
+            return self._switch_state("idle")
+
+        if self._state == "waiting_for_ball" and not retry:
+            self.eject_queue.popleft()
+            # TODO: ripple this to the next device
+            return self._switch_state("idle")
 
     def _source_device_eject_success(self, balls, target, **kwargs):
         if target != self:
@@ -615,15 +611,6 @@ class BallDevice(Device):
                     self.machine.events.add_handler(
                         'balldevice_{}_ball_eject_success'.format(device.name),
                         self._source_device_eject_success)
-
-                    self.machine.events.add_handler(
-                        'balldevice_{}_ball_left'.format(device.name),
-                        self._source_device_ball_left)
-
-                    self.machine.events.add_handler(
-                        'balldevice_{}_ball_lost'.format(device.name),
-                        self._source_device_ball_lost)
-
 
                     break
 

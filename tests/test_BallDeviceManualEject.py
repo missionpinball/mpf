@@ -443,6 +443,6 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.assertEquals(1, playfield.balls)
         self.assertEquals(0, self._captured)
         self.assertEquals(1, self._missing)
-        self.assertEquals("waiting_for_ball", device1._state)
-        self.assertEquals("waiting_for_ball", device2._state)
+        self.assertEquals("idle", device1._state)
+        self.assertEquals("idle", device2._state)
 
