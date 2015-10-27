@@ -12,6 +12,7 @@ import time
 
 from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.file_manager import FileManager
 from mpf.system.timing import Timing
 from mpf.system.utility_functions import Util
 
@@ -1198,7 +1199,7 @@ class Show(Asset):
         self.machine.light_controller._run_show(self)
 
     def load_show_from_disk(self):
-        return Config.load_file(self.file_name)
+        return FileManager.load(self.file_name)
 
     def add_loaded_callback(self, loaded_callback, **kwargs):
         self.asset_manager.log.debug("Adding a loaded callback: %s, %s",

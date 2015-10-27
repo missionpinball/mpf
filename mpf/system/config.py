@@ -12,9 +12,9 @@ import os
 import sys
 
 import yaml
+from mpf.system.file_manager import FileManager
 
 from mpf.system.timing import Timing
-import mpf.file_interfaces
 import version
 from mpf.system.utility_functions import Util
 
@@ -50,55 +50,27 @@ class CaseInsensitiveDict(dict):
         except AttributeError:
             return super(CaseInsensitiveDict, self).__delitem__(key)
 
+class Config(object):
 
-class FileInterface(object):
+    def __init__(self, machine):
+        self.machine = machine
 
-    file_types = list()
+    @staticmethod
+    def load_config_file(filename, verify_version=True):
 
-    def __init__(self):
-        self.log = logging.getLogger('{} Config Processor'.format(
-            self.file_types[0][1:].upper()))
+        config = FileManager.load(filename, verify_version)
 
-    def find_file(self, filename):
-        """Tests whether the passed file is valid. If the file does not have an
-        externsion, this method will test for files with that base name with
-        all the extensions it can read.
+        if 'config' in config:
+            path = os.path.split(filename)[0]
 
-        Args:
-            filename: Full absolute path of a file to check, with or without
-                an extension.
+            for file in Util.string_to_list(config['config']):
+                full_file = os.path.join(path, file)
+                config = Util.dict_merge(config,
+                                           Config.load_config_file(full_file))
+        return config
 
-        Returns:
-            False if a file is not found.
-            Tuple of (full file with path, extension) if a file is found
-
-        """
-        if not os.path.splitext(filename)[1]:
-            # file has no extension
-
-            for extension in self.file_types:
-                if os.path.isfile(filename + extension):
-                    return os.path.abspath(filename + extension), extension
-            else:
-                return False, None
-        else:
-            return filename, os.path.splitext(filename)[1]
-
-    def get_config_file_version(self, filename):
-        """Gets the config version number from a file. Since this technique
-        varies depending on the file type, it needs to be implemented in the
-        chile class
-
-        Args:
-            filename: The file with path to check.
-
-        Returns:
-            An int of the config file version
-
-        """
-        raise NotImplementedError
-
-    def check_config_file_version(self, filename):
+    @staticmethod
+    def check_config_file_version(filename):
         """Checks to see if the version of the file name passed matches the
         config version MPF needs.
 
@@ -109,123 +81,24 @@ class FileInterface(object):
             exception if the version of the file doesn't match what MPF needs.
 
         """
-        file_version = self.get_config_file_version(filename)
+        filename = FileManager.locate_file(filename)
+        file_interface = FileManager.get_file_interface(filename)
+        file_version = file_interface.get_config_file_version(filename)
 
         if file_version != int(version.__config_version__):
-            self.log.error("Config file %s is version %s. MPF %s requires "
+            log.error("Config file %s is version %s. MPF %s requires "
                       "version %s", filename, file_version,
                       version.__version__, version.__config_version__)
-            self.log.error("Use the Config File Migrator to automatically "
+            log.error("Use the Config File Migrator to automatically "
                       "migrate your config file to the latest version.")
-            self.log.error("Migration tool: "
+            log.error("Migration tool: "
                        "https://missionpinball.com/docs/tools/config-file-migrator/")
-            self.log.error("More info on config version %s: %s",
+            log.error("More info on config version %s: %s",
                       version.__config_version__,
                       version.__config_version_url__)
-            raise Exception('Config file version mismatch: {}'.format(filename))
-
-    def load(self, filename, verify_version=True):
-        raise NotImplementedError
-
-    def save(self, filename, data):
-        raise NotImplementedError
-
-
-class Config(object):
-
-    def __init__(self, machine):
-        self.machine = machine
-
-    @classmethod
-    def init(cls):
-        cls.config_file_processors = dict()
-
-        for module in mpf.file_interfaces.__all__:
-
-                __import__('mpf.file_interfaces.{}'.format(module))
-
-                interface_class = eval(
-                    'mpf.file_interfaces.{}.file_interface_class'.format(module))
-
-                this_instance = interface_class()
-
-                for file_type in interface_class.file_types:
-                    cls.config_file_processors[file_type] = this_instance
-
-    @staticmethod
-    def load_config_file(filename):
-        ext = os.path.splitext(filename)[1]
-
-        if not os.path.isfile(filename):
-            # If the file doesn't have an extension, let's see if we can find
-            # one
-            if not ext:
-                for config_processor in set(Config.config_file_processors.values()):
-                    questionable_file, ext = config_processor.find_file(filename)
-                    if questionable_file:
-                        filename = questionable_file
-                        break
-
-        try:
-            return Config.config_file_processors[ext].load(filename)
-        except KeyError:
-            # todo convert to exception
-            print "No config file processor available for file type {}".format(ext)
-            sys.exit()
-
-    @staticmethod
-    def load_config_file(filename, verify_version=True):
-
-        config = Config.load_file(filename, verify_version)
-
-        if 'config' in config:
-            path = os.path.split(filename)[0]
-
-            for file in Util.string_to_list(config['config']):
-                full_file = os.path.join(path, file)
-                config = Util.dict_merge(config,
-                                           Config.load_config_file(full_file))
-
-        return config
-
-    @staticmethod
-    def load_file(filename, verify_version=False):
-        ext = os.path.splitext(filename)[1]
-
-        if not os.path.isfile(filename):
-            # If the file doesn't have an extension, let's see if we can find
-            # one
-            if not ext:
-                for config_processor in set(Config.config_file_processors.values()):
-                    try:
-                        questionable_file, ext = config_processor.find_file(filename)
-                        if questionable_file:
-                            filename = questionable_file
-                            break
-                    except TypeError:
-                        pass
-
-        try:
-            config = Config.config_file_processors[ext].load(filename, verify_version)
-        except KeyError:
-            # todo convert to exception
-            log.error("No config file processor available for file type {}"
-                      .format(ext))
-            sys.exit()
-
-        return config
-
-    @staticmethod
-    def save_file(filename, data):
-        ext = os.path.splitext(filename)[1]
-
-        try:
-            Config.config_file_processors[ext].save(filename, data)
-        except KeyError:
-            # todo convert to exception
-            log.error("No config file processor available for file type {}"
-                      .format(ext))
-            sys.exit()
+            return False
+        else:
+            return True
 
     @staticmethod
     def process_config(config_spec, source, target=None):

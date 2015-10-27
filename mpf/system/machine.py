@@ -19,6 +19,7 @@ from mpf.system.data_manager import DataManager
 from mpf.system.timing import Timing
 from mpf.system.assets import AssetManager
 from mpf.system.utility_functions import Util
+from mpf.system.file_manager import FileManager
 import version
 
 
@@ -77,7 +78,7 @@ class MachineController(object):
         self.crash_queue = Queue.Queue()
         Task.create(self._check_crash_queue)
 
-        Config.init()
+        FileManager.init()
         self.config = dict()
         self._load_mpf_config()
         self._set_machine_path()

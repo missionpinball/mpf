@@ -13,6 +13,7 @@ import datetime
 import re
 
 from mpf.system.config import Config
+from mpf.system.file_manager import FileManager
 
 EXTENSION = '.yaml'
 CONFIG_VERSION_FILE = 'config_versions.yaml'
@@ -58,7 +59,7 @@ def load_config():
     global section_warnings
     global string_replacements
 
-    config_dict = Config.load_file(CONFIG_VERSION_FILE)
+    config_dict = FileManager.load(CONFIG_VERSION_FILE)
 
     for key in config_dict.keys():
         if type(key) is not int:

@@ -14,6 +14,7 @@ import thread
 import time
 
 from mpf.system.config import Config
+from mpf.system.file_manager import FileManager
 
 
 class DataManager(object):
@@ -57,7 +58,7 @@ class DataManager(object):
     def _load(self):
         self.log.debug("Loading %s from %s", self.name, self.filename)
         if os.path.isfile(self.filename):
-            self.data = Config.load_file(self.filename)
+            self.data = FileManager.load(self.filename)
 
         else:
             self.log.debug("Didn't find the %s file. No prob. We'll create "
@@ -125,7 +126,7 @@ class DataManager(object):
             time.sleep(delay_secs)
         self.log.debug("Writing %s to: %s", self.name, self.filename)
 
-        Config.save_file(self.filename, self.data)
+        FileManager.save(self.filename, self.data)
 
 
 # The MIT License (MIT)

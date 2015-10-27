@@ -9,15 +9,17 @@
 
 import sys
 import yaml
-from mpf.system.config import FileInterface
+from mpf.system.file_manager import FileInterface
 from mpf.system.utility_functions import Util
+from mpf.system.config import Config
 
 
 class YamlInterface(FileInterface):
 
     file_types = ['.yaml', '.yml']
 
-    def get_config_file_version(self, filename):
+    @staticmethod
+    def get_config_file_version(filename):
 
         with open(filename) as f:
             file_version = f.readline().split('config_version=')[-1:][0]
@@ -40,8 +42,9 @@ class YamlInterface(FileInterface):
             A dictionary of the settings from this YAML file.
 
         """
-        if verify_version:
-            self.check_config_file_version(filename)
+        if verify_version and not Config.check_config_file_version(filename):
+            raise Exception("Config file version mismatch: {}".
+                            format(filename))
 
         try:
             self.log.debug("Loading configuration file: %s", filename)

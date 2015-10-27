@@ -25,6 +25,7 @@ from mpf.system.tasks import Task, DelayManager
 from mpf.system.player import Player
 from mpf.system.assets import AssetManager
 from mpf.system.utility_functions import Util
+from mpf.system.file_manager import FileManager
 import mpf.system.bcp as bcp
 import version
 
@@ -110,7 +111,7 @@ class MediaController(object):
                              'trigger': self.bcp_trigger,
                             }
 
-        Config.init()
+        FileManager.init()
         self.config = dict()
         self._load_mc_config()
         self._set_machine_path()

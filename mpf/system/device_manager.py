@@ -4,7 +4,8 @@ import logging
 from collections import OrderedDict
 
 from mpf.devices import *
-from mpf.system.config import CaseInsensitiveDict, Config
+from mpf.system.config import CaseInsensitiveDict
+from mpf.system.file_manager import FileManager
 
 
 class DeviceManager(object):
@@ -167,7 +168,7 @@ class DeviceManager(object):
 
     def save_tree_to_file(self, filename):
         print "Exporting file..."
-        Config.save_file(filename, self.collections)
+        FileManager.save(filename, self.collections)
         print "Export complete!"
 
 

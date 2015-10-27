@@ -13,7 +13,7 @@ import version
 
 import json
 
-from mpf.system.config import FileInterface
+from mpf.system.file_manager import FileInterface
 from mpf.system.utility_functions import Util
 
 
@@ -21,7 +21,7 @@ class JsonInterface(FileInterface):
 
     file_types = ['.json']
 
-    def check_config_file_version(self, filename):
+    def get_config_file_version(self, filename):
         """Checks to see if the filename passed matches the config version MPF
         needs.
 
