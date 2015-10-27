@@ -359,6 +359,50 @@ class TestBallDeviceManualEject(MpfTestCase):
         assert not coil1.pulse.called
         assert not coil2.pulse.called
 
+        coil1.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+        self.assertEquals(1, device1.count_balls())
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+
+        # will request a second ball. launcher has to use count eject confirmation
+        playfield.add_ball(player_controlled=True)
+        self.advance_time_and_run(1)
+
+        # trough eject
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
+
+        self.machine.switch_controller.process_switch("s_ball_switch2", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, device1.count_balls())
+
+        # launcher does not see the ball. player ejects it right away
+        self.advance_time_and_run(1)
+
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
+
+        coil1.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+
+        self.assertEquals(1, playfield.balls)
+        # since it will use count as eject confirm we have to wait for eject_timout
+        self.advance_time_and_run(6)
+
+
+        self.assertEquals(2, playfield.balls)
+        self.assertEquals(0, self._captured)
+        self.assertEquals(0, self._missing)
+
+        self.advance_time_and_run(100)
+        self.assertEquals(2, playfield.balls)
+        self.assertEquals(0, self._captured)
+        self.assertEquals(0, self._missing)
+        self.assertEquals("idle", device1._state)
+        self.assertEquals("idle", device2._state)
+
+
     def test_capture_random_ball(self):
         coil1 = self.machine.coils['eject_coil1']
         coil2 = self.machine.coils['eject_coil2']

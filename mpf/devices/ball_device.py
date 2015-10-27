@@ -1093,7 +1093,7 @@ class BallDevice(Device):
                     if self.debug:
                         self.log.debug("Will confirm eject via recount of ball "
                                        "switches.")
-                    self._setup_count_eject_confirmation()
+                    self._setup_count_eject_confirmation(timeout)
 
 
 
@@ -1135,7 +1135,7 @@ class BallDevice(Device):
             if self.debug:
                 self.log.debug("Will confirm eject via recount of ball "
                                "switches.")
-            self._setup_count_eject_confirmation()
+            self._setup_count_eject_confirmation(timeout)
 
         elif self.config['confirm_eject_type'] == 'fake':
             # for all ball locks or captive balls which just release a ball
@@ -1150,17 +1150,24 @@ class BallDevice(Device):
             raise AssertionError("Invalid confirm_eject_type setting: " +
                             self.config['confirm_eject_type'])
 
-    def _setup_count_eject_confirmation(self):
-        # wait until one of the active switches turns off
-        for switch in self.config['ball_switches']:
-            # only consider active switches
-            if self.machine.switch_controller.is_active(switch.name,
-                    ms=self.config['entrance_count_delay']):
-                self.machine.switch_controller.add_switch_handler(
-                    switch_name=switch.name,
-                    ms=self.config['exit_count_delay'],
-                    callback=self._eject_success,
-                    state=0)
+    def _setup_count_eject_confirmation(self, timeout):
+        if self._state == "waiting_for_ball_mechanical":
+            # ball did not enter. if it does not enter
+            self.delay.add(name='count_confirmation',
+                            ms=timeout,
+                            callback=self._eject_success)
+
+        else:
+            # wait until one of the active switches turns off
+            for switch in self.config['ball_switches']:
+                # only consider active switches
+                if self.machine.switch_controller.is_active(switch.name,
+                        ms=self.config['entrance_count_delay']):
+                    self.machine.switch_controller.add_switch_handler(
+                        switch_name=switch.name,
+                        ms=self.config['exit_count_delay'],
+                        callback=self._eject_success,
+                        state=0)
 
 
     def _cancel_eject_confirmation(self):
@@ -1203,7 +1210,8 @@ class BallDevice(Device):
         # Remove any delays that were watching for failures
         self.delay.remove('target_eject_confirmation_timeout')
         self.delay.remove('ball_missing_timeout')
-
+        if self.config['mechanical_eject']:
+            self.delay.remove('count_confirmation')
 
     def _inform_target_about_incoming_ball(self, target):
         target.add_incoming_ball(self)
@@ -1217,15 +1225,17 @@ class BallDevice(Device):
         # and some without. Also, since there are many ways we can get here,
         # let's first make sure we actually had an eject in progress
 
-        if self.config['confirm_eject_type'] != 'target':
-            self._inform_target_about_incoming_ball(self.eject_in_progress_target)
-
 
         if self._state == "ejecting":
             self.log.debug("Got an eject_success before the switch left the "
                            "device. Ignoring!")
             return
-        elif self._state == "waiting_for_ball_mechanical":
+
+        if self.config['confirm_eject_type'] != 'target':
+            self._inform_target_about_incoming_ball(self.eject_in_progress_target)
+
+
+        if self._state == "waiting_for_ball_mechanical":
             # confirm eject of our source device
             self._incoming_balls[0][1]._eject_success()
             # remove eject from queue
@@ -1259,13 +1269,12 @@ class BallDevice(Device):
         self.num_balls_ejecting = 0
 
         # todo cancel post eject check delay
+        self._cancel_eject_confirmation()
 
         self.machine.events.post('balldevice_' + self.name +
                                  '_ball_eject_success',
                                  balls=balls_ejected,
                                  target=eject_target)
-
-        self._cancel_eject_confirmation()
 
         return self._switch_state("eject_confirmed")
 
