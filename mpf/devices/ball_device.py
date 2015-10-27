@@ -1224,6 +1224,9 @@ class BallDevice(Device):
         elif self._state == "waiting_for_ball_mechanical":
             # confirm eject of our source device
             self._incoming_balls[0][1]._eject_success()
+            # remove eject from queue
+            self.eject_queue.popleft()
+            self._incoming_balls.popleft()
         elif self._state != "ball_left" and self._state != "failed_confirm":
             self.log.debug("Got an eject_success in wrong state %s!",
                     self._state)
@@ -1333,38 +1336,6 @@ class BallDevice(Device):
                          self.config['max_eject_attempts'])
         self.machine.events.post('balldevice_' + self.name +
                                  'ball_eject_permanent_failure')
-
-    def _mechanical_eject_failed(self):
-        # TODO: use again
-        if self.debug:
-            self.log.debug("Mechanical Eject Failed")
-
-        self.eject_queue.appendleft((self.eject_in_progress_target,
-            self.config['eject_timeouts'][self.eject_in_progress_target]))
-
-        self.machine.events.post('balldevice_' + self.name +
-                                 '_mechanical_eject_failed',
-                                 target=self.eject_in_progress_target,
-                                 balls=self.num_balls_ejecting,
-                                 num_attempts=self.num_eject_attempts)
-
-        self.eject_in_progress_target = None
-        self.num_balls_ejecting = 0
-        self.num_eject_attempts += 1
-        self.mechanical_eject_in_progress = 0
-
-        self.machine.events.remove_handler(self._eject_success)
-        # Remove any switch handlers
-        if self.config['confirm_eject_type'] == 'switch':
-            self.machine.switch_controller.remove_switch_handler(
-                switch_name=self.config['confirm_eject_switch'].name,
-                callback=self._eject_success,
-                state=1, ms=0)
-
-        # Remove any delays that were watching for failures
-        self.delay.remove('target_eject_confirmation_timeout')
-
-        self.machine.events.remove_handler(self._eject_status)
 
     def _ok_to_receive(self):
         # Post an event announcing that it's ok for this device to receive a

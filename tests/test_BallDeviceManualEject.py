@@ -303,15 +303,16 @@ class TestBallDeviceManualEject(MpfTestCase):
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
         self.advance_time_and_run(1)
-        self.assertEquals(1, self._captured)
+        self.assertEquals(2, self._captured)
         self._captured = 0
         self.assertEquals(0, playfield.balls)
 
         # it should keep the ball
         coil1.pulse = MagicMock()
         coil2.pulse = MagicMock()
-        self.assertEquals(1, device1.count_balls())
+        self.assertEquals(2, device1.count_balls())
         assert not coil1.pulse.called
         assert not coil2.pulse.called
 
@@ -325,7 +326,7 @@ class TestBallDeviceManualEject(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
         self.advance_time_and_run(1)
-        self.assertEquals(0, device1.count_balls())
+        self.assertEquals(1, device1.count_balls())
 
 
         # launcher does not see the ball. player ejects it right away
@@ -333,6 +334,10 @@ class TestBallDeviceManualEject(MpfTestCase):
 
         coil1.pulse.assert_called_once_with()
         assert not coil2.pulse.called
+
+        coil1.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+
 
         # ball hits the playfield
         self.machine.switch_controller.process_switch("s_playfield", 1)
@@ -349,6 +354,9 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.assertEquals(1, playfield.balls)
         self.assertEquals(0, self._captured)
         self.assertEquals(0, self._missing)
+        self.assertEquals("idle", device1._state)
+        self.assertEquals("idle", device2._state)
+        assert not coil1.pulse.called
         assert not coil2.pulse.called
 
     def test_capture_random_ball(self):
