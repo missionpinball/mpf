@@ -12,4 +12,4 @@ import os
 import sys
 import version
 
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util

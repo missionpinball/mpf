@@ -11,6 +11,7 @@ import logging
 
 from mpf.system.tasks import DelayManager
 from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class LogicBlocks(object):
@@ -151,7 +152,7 @@ class LogicBlock(object):
             self.config['events_when_complete'] = ([
                 'logicblock_' + self.name + '_complete'])
         else:
-            self.config['events_when_complete'] = Config.string_to_list(
+            self.config['events_when_complete'] = Util.string_to_list(
                 config['events_when_complete'])
 
     def __repr__(self):

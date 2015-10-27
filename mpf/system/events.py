@@ -11,7 +11,7 @@ from collections import deque
 import random
 import uuid
 
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class EventManager(object):
@@ -563,7 +563,7 @@ class EventManager(object):
 
         for event_name, events in config.iteritems():
             if type(events) is not list:
-                events = Config.string_to_list(events)
+                events = Util.string_to_list(events)
 
             for event in events:
                 event_keys.add(self.machine.events.add_handler(event_name,
@@ -581,7 +581,7 @@ class EventManager(object):
 
         for event_name, events in config.iteritems():
             if type(events) is not list:
-                events = Config.string_to_list(events)
+                events = Util.string_to_list(events)
 
             event_keys.add(self.machine.events.add_handler(event_name,
                 self._random_event_player_callback, priority,

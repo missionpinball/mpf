@@ -15,7 +15,7 @@ import copy
 import sys
 
 from mpf.system.assets import Asset, AssetManager
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 global import_success
 
@@ -231,13 +231,13 @@ class SoundController(object):
         if 'start_events' not in config:
             config['start_events'] = list()
         else:
-            config['start_events'] = Config.string_to_list(
+            config['start_events'] = Util.string_to_list(
                 config['start_events'])
 
         if 'stop_events' not in config:
             config['stop_events'] = list()
         else:
-            config['stop_events'] = Config.string_to_list(
+            config['stop_events'] = Util.string_to_list(
                 config['stop_events'])
 
         if 'duration' not in config or config['duration'] is None:

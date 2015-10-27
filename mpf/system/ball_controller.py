@@ -8,7 +8,7 @@ a pinball machine."""
 import logging
 
 from mpf.system.tasks import DelayManager
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class BallController(object):
@@ -135,7 +135,7 @@ class BallController(object):
                        " with '%s'", target)
 
         if type(target) is str:
-            target = Config.string_to_list(target)
+            target = Util.string_to_list(target)
 
         count = 0
         devices = set()
@@ -178,7 +178,7 @@ class BallController(object):
         """
         # I'm embarrassed at how ugly this code is. But meh, it works...
 
-        tag_list = Config.string_to_list(target)
+        tag_list = Util.string_to_list(target)
 
         self.log.debug("Collecting all balls to devices with tags '%s'",
                        tag_list)

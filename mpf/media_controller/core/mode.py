@@ -11,9 +11,7 @@ import os
 
 from collections import namedtuple
 
-from mpf.system.timing import Timing, Timer
-from mpf.system.tasks import DelayManager
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs priority',
                           verbose=False)
@@ -80,13 +78,13 @@ class Mode(object):
             config['priority'] = 0
 
         if 'start_events' in config:
-            config['start_events'] = Config.string_to_list(
+            config['start_events'] = Util.string_to_list(
                 config['start_events'])
         else:
             config['start_events'] = list()
 
         if 'stop_events' in config:
-            config['stop_events'] = Config.string_to_list(
+            config['stop_events'] = Util.string_to_list(
                 config['stop_events'])
         else:
             config['stop_events'] = list()

@@ -9,8 +9,7 @@
 from collections import deque
 
 from mpf.system.device import Device
-from mpf.system.config import Config
-
+from mpf.system.utility_functions import Util
 
 class ShotGroup(Device):
     """Represents a group of shots in a pinball machine by grouping
@@ -28,7 +27,7 @@ class ShotGroup(Device):
 
         self.shots = list()  # list of strings
 
-        for shot in Config.string_to_list(config['shots']):
+        for shot in Util.string_to_list(config['shots']):
             self.shots.append(machine.shots[shot])
 
         # If this device is setup in a machine-wide config, make sure it has
@@ -208,12 +207,12 @@ class ShotGroup(Device):
         # the same profile applied, it's ok to just pick from the first one.
 
         if states:
-            states = Config.string_to_lowercase_list(states)
+            states = Util.string_to_lowercase_list(states)
         else:
             states = self.shots[0].enable_table[mode]['settings']['state_names_to_rotate']
 
         if exclude_states:
-            exclude_states = Config.string_to_lowercase_list(exclude_states)
+            exclude_states = Util.string_to_lowercase_list(exclude_states)
         else:
             exclude_states = (
                 self.shots[0].enable_table[mode]['settings']['state_names_to_not_rotate'])

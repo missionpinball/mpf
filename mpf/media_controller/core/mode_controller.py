@@ -11,8 +11,7 @@ import os
 
 from collections import namedtuple
 
-from mpf.system.timing import Timing, Timer
-from mpf.system.tasks import DelayManager
+from mpf.system.utility_functions import Util
 from mpf.system.config import Config
 from mpf.media_controller.core.mode import Mode
 
@@ -94,7 +93,7 @@ class ModeController(object):
                 file_root, file_ext = os.path.splitext(file)
 
                 if file_root == mode_string:
-                    config = Config.dict_merge(config,
+                    config = Util.dict_merge(config,
                         Config.load_config_file(os.path.join(path, file)))
                     found_file = True
                     break

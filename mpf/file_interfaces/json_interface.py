@@ -13,7 +13,8 @@ import version
 
 import json
 
-from mpf.system.config import Config, FileInterface
+from mpf.system.config import FileInterface
+from mpf.system.utility_functions import Util
 
 
 class JsonInterface(FileInterface):
@@ -53,14 +54,14 @@ class JsonInterface(FileInterface):
 
         """
 
-        config = Config.keys_to_lower(self.byteify(json.load(open(filename, 'r'))))
+        config = Util.keys_to_lower(self.byteify(json.load(open(filename, 'r'))))
 
         # if verify_version:
         #     self.check_config_file_version(filename)
         #
         # try:
         #     self.log.debug("Loading configuration file: %s", filename)
-        #     config = Config.keys_to_lower(json.loads(open(filename, 'r')))
+        #     config = Util.keys_to_lower(json.loads(open(filename, 'r')))
         # except yaml.YAMLError, exc:
         #     if hasattr(exc, 'problem_mark'):
         #         mark = exc.problem_mark

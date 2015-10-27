@@ -24,7 +24,7 @@ from Queue import Queue
 import copy
 
 from mpf.system.player import Player
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 from mpf.devices.shot import Shot
 from mpf.system.light_controller import ExternalShow
 import version
@@ -202,7 +202,7 @@ class BCP(object):
             self.send_player_vars = True
 
             self.config['player_variables'] = (
-                Config.string_to_list(self.config['player_variables']))
+                Util.string_to_list(self.config['player_variables']))
 
             if '__all__' in self.config['player_variables']:
                 self.filter_player_events = False
@@ -215,7 +215,7 @@ class BCP(object):
             self.send_machine_vars = True
 
             self.config['machine_variables'] = (
-                Config.string_to_list(self.config['machine_variables']))
+                Util.string_to_list(self.config['machine_variables']))
 
             if '__all__' in self.config['machine_variables']:
                 self.filter_machine_vars = False
@@ -226,7 +226,7 @@ class BCP(object):
                 self.config['shots']):
 
             self.config['shots'] = (
-                Config.string_to_list(self.config['shots']))
+                Util.string_to_list(self.config['shots']))
 
             if '__all__' in self.config['shots']:
                 self.filter_shots = False
@@ -449,10 +449,10 @@ class BCP(object):
         try:
             for k, v in config['sound_player'].iteritems():
                 if 'start_events' in v:
-                    for event in Config.string_to_list(v['start_events']):
+                    for event in Util.string_to_list(v['start_events']):
                         self.create_trigger_event(event)
                 if 'stop_events' in v:
-                    for event in Config.string_to_list(v['stop_events']):
+                    for event in Util.string_to_list(v['stop_events']):
                         self.create_trigger_event(event)
         except KeyError:
             pass
@@ -596,7 +596,7 @@ class BCP(object):
         event and to send the response BCP 'set' command.
 
         """
-        for name in Config.string_to_list(names):
+        for name in Util.string_to_list(names):
             self.machine.events.post('bcp_get_{}'.format(name))
 
     def bcp_receive_set(self, **kwargs):

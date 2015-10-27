@@ -17,7 +17,7 @@ import errno
 import sys
 
 from mpf.media_controller.core.media_controller import MediaController
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 import version
 
 # Allow command line options to do things
@@ -85,7 +85,7 @@ except KeyError:
           "for the game you want to run.")
     sys.exit()
 
-options_dict['configfile'] = Config.string_to_list(options_dict['configfile'])
+options_dict['configfile'] = Util.string_to_list(options_dict['configfile'])
 
 # Configure logging. Creates a logfile and logs to the console.
 # Formating options are documented here:

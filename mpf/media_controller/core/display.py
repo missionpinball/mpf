@@ -10,7 +10,6 @@ DisplayController, MPFDisplay, DisplayElement, Transition, and Decorator.
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import time
 
 try:
     import pygame
@@ -22,7 +21,7 @@ except ImportError:
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing, Timer
 from mpf.system.assets import AssetManager
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 from mpf.media_controller.core.slide import Slide
 from mpf.media_controller.core.font_manager import FontManager
 from mpf.media_controller.core.slide_builder import SlideBuilder
@@ -776,14 +775,14 @@ class DisplayElement(object):
 
         else:  # 24-bit
             if 'color' in kwargs:
-                color_list = Config.hexstring_to_list(kwargs['color'])
+                color_list = Util.hex_string_to_list(kwargs['color'])
                 self.adjusted_color = (color_list[0], color_list[1],
                                        color_list[2])
             else:
                 self.adjusted_color = (255, 255, 255)  # todo default config
 
             if 'bg_color' in kwargs:
-                color_list = Config.hexstring_to_list(kwargs['color'])
+                color_list = Util.hex_string_to_list(kwargs['color'])
                 self.adjusted_bg_color = (color_list[0], color_list[1],
                                           color_list[2])
             else:
@@ -802,7 +801,7 @@ class DisplayElement(object):
 
         else:  # 24-bit
             if color:  # Non-black
-                color_list = Config.hexstring_to_list(color)
+                color_list = Util.hex_string_to_list(color)
                 return ((color_list[0], color_list[1], color_list[2]))
 
             elif transparent:

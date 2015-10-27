@@ -9,7 +9,8 @@
 
 import sys
 import yaml
-from mpf.system.config import Config, FileInterface
+from mpf.system.config import FileInterface
+from mpf.system.utility_functions import Util
 
 
 class YamlInterface(FileInterface):
@@ -44,7 +45,7 @@ class YamlInterface(FileInterface):
 
         try:
             self.log.debug("Loading configuration file: %s", filename)
-            config = Config.keys_to_lower(yaml.load(open(filename, 'r')))
+            config = Util.keys_to_lower(yaml.load(open(filename, 'r')))
         except yaml.YAMLError, exc:
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark

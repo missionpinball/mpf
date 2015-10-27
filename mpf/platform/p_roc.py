@@ -39,7 +39,7 @@ except:
     pinproc_imported = False
 
 from mpf.system.platform import Platform
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00
@@ -816,7 +816,7 @@ class PROCDriver(object):
 
         if hold_power:
             return_dict['pwm_on_ms'], return_dict['pwm_off_ms'] = (
-                Config.pwm8_to_on_off(hold_power))
+                Util.pwm8_to_on_off(hold_power))
 
         elif pwm_off_ms and pwm_on_ms:
             return_dict['pwm_on_ms'] = int(pwm_on_ms)
@@ -1330,7 +1330,7 @@ class PROCDMD(object):
         if 'P_ROC' in self.machine.config and (
             'dmd_timing_cycles' in self.machine.config['P_ROC']):
 
-            dmd_timing = Config.string_to_list(
+            dmd_timing = Util.string_to_list(
                 self.machine.config['P_ROC']['dmd_timing_cycles'])
 
             dmd_timing = [int(i) for i in dmd_timing]

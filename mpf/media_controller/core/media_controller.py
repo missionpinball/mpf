@@ -24,6 +24,7 @@ from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
 from mpf.system.player import Player
 from mpf.system.assets import AssetManager
+from mpf.system.utility_functions import Util
 import mpf.system.bcp as bcp
 import version
 
@@ -205,7 +206,7 @@ class MediaController(object):
 
             self.log.info("Machine config file #%s: %s", num+1, config_file)
 
-            self.config = Config.dict_merge(self.config,
+            self.config = Util.dict_merge(self.config,
                 Config.load_config_file(config_file))
 
     def _check_crash_queue(self):
@@ -566,7 +567,7 @@ class MediaController(object):
         event and to send the response BCP 'set' command.
 
         """
-        for name in Config.string_to_list(names):
+        for name in Util.string_to_list(names):
             self.events.post('bcp_get_{}'.format(name))
 
     def bcp_set(self, **kwargs):

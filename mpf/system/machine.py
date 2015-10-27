@@ -6,7 +6,6 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import copy
 import logging
 import os
 import time
@@ -19,6 +18,7 @@ from mpf.system.tasks import Task, DelayManager
 from mpf.system.data_manager import DataManager
 from mpf.system.timing import Timing
 from mpf.system.assets import AssetManager
+from mpf.system.utility_functions import Util
 import version
 
 
@@ -206,7 +206,7 @@ class MachineController(object):
 
             self.log.info("Machine config file #%s: %s", num+1, config_file)
 
-            self.config = Config.dict_merge(self.config,
+            self.config = Util.dict_merge(self.config,
                 Config.load_config_file(config_file))
 
     def verify_system_info(self):
@@ -243,7 +243,7 @@ class MachineController(object):
         # TODO: This should be cleaned up. Create a Plugins superclass and
         # classmethods to determine if the plugins should be used.
 
-        for plugin in Config.string_to_list(
+        for plugin in Util.string_to_list(
                 self.config['mpf']['plugins']):
 
 

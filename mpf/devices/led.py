@@ -10,7 +10,7 @@ import time
 
 from mpf.system.device import Device
 from mpf.system.tasks import Task
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class LED(Device):
@@ -36,7 +36,7 @@ class LED(Device):
         super(LED, self).__init__(machine, name, config, collection,
                                   platform_section='leds', validate=validate)
 
-        self.config['default_color'] = Config.hexstring_to_list(
+        self.config['default_color'] = Util.hex_string_to_list(
             input_string=self.config['default_color'],
             output_length=3)
 
