@@ -135,28 +135,6 @@ class MediaController(object):
 
         self.log.info("Machine folder: %s", machine_path)
 
-        # Now find the config file location. Same as machine_file with the
-        # slash uses to specify an absolute path
-
-        # if (options['configfile'].startswith('/') or
-        #         options['configfile'].startswith('\\')):
-        #     config_file = options['configfile']
-        # else:
-        #
-        #     if not options['configfile'].endswith('.yaml'):
-        #         options['configfile'] += '.yaml'
-        #
-        #     config_file = os.path.join(self.machine_path,
-        #                                self.config['media_controller']['paths']
-        #                                ['config'],
-        #                                options['configfile'])
-        #
-        # self.log.debug("Base machine config file: %s", config_file)
-        #
-        # # Load the machine-specific config
-        # self.config = Config.load_config_yaml(config=self.config,
-        #                                       yaml_file=config_file)
-
         mediacontroller_config_spec = '''
                         exit_on_disconnect: boolean|True
                         port: int|5050
@@ -225,7 +203,7 @@ class MediaController(object):
                 config_file = os.path.join(self.machine_path,
                     self.config['media_controller']['paths']['config'], config_file)
 
-            self.log.info("Machine config file #%s: %s", num, config_file)
+            self.log.info("Machine config file #%s: %s", num+1, config_file)
 
             self.config = Config.dict_merge(self.config,
                 Config.load_config_file(config_file))

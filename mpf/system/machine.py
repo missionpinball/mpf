@@ -131,22 +131,6 @@ class MachineController(object):
 
         self.reset()
 
-    # def _setup_config_file_processors(self):
-    #     # step through modules in config_file_interfaces
-    #     # pull out the list of file types
-    #
-    #     for module in mpf.config_file_interfaces.__all__:
-    #
-    #         __import__('mpf.config_file_interfaces.{}'.format(module))
-    #
-    #         interface_class = eval(
-    #             'mpf.config_file_interfaces.{}.file_interface_class'.format(module))
-    #
-    #         this_instance = interface_class(self)
-    #
-    #         for file_type in interface_class.file_types:
-    #             self.config_file_processors[file_type] = this_instance
-
     def validate_machine_config_section(self, section):
         if section not in self.config['config_validator']:
             return
@@ -221,7 +205,7 @@ class MachineController(object):
                 config_file = os.path.join(self.machine_path,
                     self.config['mpf']['paths']['config'], config_file)
 
-            self.log.info("Machine config file #%s: %s", num, config_file)
+            self.log.info("Machine config file #%s: %s", num+1, config_file)
 
             self.config = Config.dict_merge(self.config,
                 Config.load_config_file(config_file))
