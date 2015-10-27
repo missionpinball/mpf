@@ -2,6 +2,6 @@ language: python
 python:
   - "2.7"
 # command to install dependencies
-install: "pip install coverage pyyaml"
+install: "pip install pyyaml"
 # command to run tests
 script: make unit
