@@ -8,7 +8,6 @@
 
 
 import logging
-import yaml
 import time
 
 from mpf.system.assets import Asset, AssetManager
@@ -1198,12 +1197,7 @@ class Show(Asset):
         self.machine.light_controller._run_show(self)
 
     def load_show_from_disk(self):
-        # todo add exception handling
-        # create central yaml loader, or, even better, config loader
-
-        show_actions = yaml.load(open(self.file_name, 'r'))
-
-        return show_actions
+        return Config.load_file(self.file_name)
 
     def add_loaded_callback(self, loaded_callback, **kwargs):
         self.asset_manager.log.debug("Adding a loaded callback: %s, %s",
