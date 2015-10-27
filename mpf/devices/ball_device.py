@@ -77,7 +77,6 @@ class BallDevice(Device):
         for devices that eject all their balls at once.
         """
 
-        self.manual_eject_target = False
         self.mechanical_eject_in_progress = False
         """How many balls are waiting for a non-controlled (e.g. spring
         plunger) eject.
@@ -620,7 +619,7 @@ class BallDevice(Device):
 
         self._switch_state("idle")
 
-    def get_status(self, request=None):
+    def get_status(self, request=None): # pragma: no cover
         """Returns a dictionary of current status of this ball device.
 
         Args:
@@ -649,7 +648,7 @@ class BallDevice(Device):
                     'eject_queue': self.eject_queue,
                     }
 
-    def status_dump(self):
+    def status_dump(self): # pragma: no cover
         """Dumps the full current status of the ball device to the log."""
 
         if self.debug:
@@ -666,8 +665,6 @@ class BallDevice(Device):
                 self.num_eject_attempts).ljust(42) + "|")
             self.log.debug("| eject queue: {}".format(
                 self.eject_queue).ljust(42) + "|")
-            self.log.debug("| manual_eject_target: {}".format(
-                self.manual_eject_target).ljust(42) + "|")
             self.log.debug("| mechanical_eject_in_progress: {}".format(
                 self.mechanical_eject_in_progress).ljust(42) + "|")
             self.log.debug("+-----------------------------------------+")
@@ -739,11 +736,8 @@ class BallDevice(Device):
         if self.debug:
             self.log.debug("%s ball(s) missing from device. Mechanical eject?"
                            " %s", abs(balls),
-                           self.manual_eject_target)
+                           self.mechanical_eject_in_progress)
 
-        # _do_eject here will setup the confirmations and stuff
-        if self.manual_eject_target:
-            return
         self.machine.events.post('balldevice_{}_ball_missing'.format(
             abs(balls)))
         self.machine.events.post('balldevice_ball_missing',
@@ -890,10 +884,15 @@ class BallDevice(Device):
 
     def setup_player_controlled_eject(self, balls=1, target=None,
                                       trigger_event=None):
-
         # TODO: handle trigger_event
+
+        if self.debug:
+            self.log.debug("Setting up player-controlled eject. Balls: %s, "
+                           "Target: %s, trigger_event: %s",
+                           balls, target, trigger_event)
+
         if not self.config['mechanical_eject']:
-            self.eject(balls)
+            self.eject(balls, target=target)
             return
 
 
@@ -901,64 +900,6 @@ class BallDevice(Device):
 
         self.eject_queue.append((target, True, trigger_event))
         self._count_balls()
-        return
-
-        # TODO: find out what the difference between eject_events and trigger_events is
-
-        if self.debug:
-            self.log.debug("Setting up player-controlled eject. Balls: %s, "
-                           "Target: %s, trigger_event: %s",
-                           balls, target, trigger_event)
-
-        if balls < 1:
-            self.log.warning("Received request to eject %s balls, which doesn't"
-                             " make sense. Ignoring...")
-            return False
-
-        if not target:
-            target = self.config['eject_targets'][0]
-
-        elif type(target) is str:
-            target = self.machine.ball_devices[target]
-
-        if self.debug:
-            self.log.debug("Setting eject target to %s", target)
-
-        self.waiting_for_eject_trigger = True
-
-        # TODO: write test for this
-        if trigger_event:
-            if self.debug:
-                self.log.debug("Received trigger event '%s' and will use it as"
-                               " the trigger for this eject.", trigger_event)
-
-            self.pending_eject_event_keys.add(
-                self.machine.events.add_handler(trigger_event, self.eject))
-
-        # TODO: eject_events have no function currently
-        if self.debug:
-            self.log.debug("Will use this device's eject_events to trigger the"
-                           " eject: %s", self.config['eject_events'])
-
-        if self.config['mechanical_eject']:
-            self.manual_eject_target = target
-
-        if (not self.config['mechanical_eject'] and
-                not self.config['eject_events']):  # auto-eject
-            raise AssertionError("Need to specify either mechanical_eject " +
-                                 "or eject_events")
-
-        else:  # manual eject
-            if balls > self.balls:
-                if self.debug:
-                    self.log.debug("Number of balls contained is less than the "
-                                   "number to eject. Requesting %s ball(s)",
-                                   balls-self.balls)
-
-                # TODO: request_balls can fail...
-                self.request_ball(balls-self.balls)
-                self.mechanical_eject_in_progress = balls
-
 
     def _eject_request(self, balls=1, target=None, **kwargs):
         # TODO: make sure only one device ejects
@@ -1232,7 +1173,6 @@ class BallDevice(Device):
 
         self.pending_eject_event_keys = set()
 
-        self.manual_eject_target = False
         self.waiting_for_eject_trigger = False
         self.mechanical_eject_in_progress = False
 
