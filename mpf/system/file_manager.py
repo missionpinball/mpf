@@ -17,7 +17,7 @@ class FileInterface(object):
     file_types = list()
 
     def __init__(self):
-        self.log = logging.getLogger('{} Config Processor'.format(
+        self.log = logging.getLogger('{} File Interface'.format(
             self.file_types[0][1:].upper()))
 
     def find_file(self, filename):

@@ -9,9 +9,9 @@
 
 import sys
 import yaml
+from mpf.system.config import Config
 from mpf.system.file_manager import FileInterface
 from mpf.system.utility_functions import Util
-from mpf.system.config import Config
 
 
 class YamlInterface(FileInterface):
