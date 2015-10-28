@@ -216,6 +216,10 @@ class BallDevice(Device):
 
 
     def _handle_unexpected_balls(self, balls):
+        self.machine.events.post('sw_' + self.config['captures_from'] + "_active")
+        self.delay.add(callback=self._handle_unexpected_balls2, ms=0, balls=balls)
+
+    def _handle_unexpected_balls2(self, balls):
         self.log.debug("Received %s unexpected balls", balls)
         self.machine.events.post('balldevice_captured_from_' +
                                   self.config['captures_from'],
