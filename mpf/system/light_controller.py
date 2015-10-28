@@ -8,12 +8,13 @@
 
 
 import logging
-import yaml
 import time
 
 from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.file_manager import FileManager
 from mpf.system.timing import Timing
+from mpf.system.utility_functions import Util
 
 
 class LightController(object):
@@ -173,7 +174,7 @@ class LightController(object):
 
         for event_name, actions in config.iteritems():
             if type(actions) is not list:
-                actions = Config.string_to_list(actions)
+                actions = Util.string_to_list(actions)
 
             for this_action in actions:
 
@@ -233,7 +234,7 @@ class LightController(object):
         """
 
         if type(script) is not list:
-            script = Config.string_to_list(script)
+            script = Util.string_to_list(script)
 
         action_list = list()
 
@@ -245,13 +246,13 @@ class LightController(object):
             if lights:
                 this_step['lights'] = dict()
 
-                for light in Config.string_to_list(lights):
+                for light in Util.string_to_list(lights):
                     this_step['lights'][light] = step['color']
 
             if leds:
                 this_step['leds'] = dict()
 
-                for led in Config.string_to_list(leds):
+                for led in Util.string_to_list(leds):
                     this_step['leds'][led] = step['color']
 
             if light_tags:
@@ -259,7 +260,7 @@ class LightController(object):
                 if 'lights' not in this_step:
                     this_step['lights'] = dict()
 
-                for tag in Config.string_to_lowercase_list(light_tags):
+                for tag in Util.string_to_lowercase_list(light_tags):
                     this_step['lights']['tag|' + tag] = step['color']
 
             if led_tags:
@@ -267,7 +268,7 @@ class LightController(object):
                 if 'leds' not in this_step:
                     this_step['leds'] = dict()
 
-                for tag in Config.string_to_lowercase_list(led_tags):
+                for tag in Util.string_to_lowercase_list(led_tags):
                     this_step['leds']['tag|' + tag] = step['color']
 
             action_list.append(this_step)
@@ -762,12 +763,12 @@ class LightController(object):
 
             if lights:
                 current_action['lights'] = dict()
-                for light in Config.string_to_list(lights):
+                for light in Util.string_to_list(lights):
                     current_action['lights'][light] = color
 
             if leds:
                 current_action['leds'] = dict()
-                for led in Config.string_to_list(leds):
+                for led in Util.string_to_list(leds):
                     current_action['leds'][led] = color
 
             show_actions.append(current_action)
@@ -899,7 +900,7 @@ class Show(Asset):
 
                     # convert / ensure lights are single ints
                     if type(value) is str:
-                        value = Config.hexstring_to_int(
+                        value = Util.hex_string_to_int(
                             show_actions[step_num]['lights'][light])
 
                     if type(value) is int and value > 255:
@@ -919,7 +920,7 @@ class Show(Asset):
             if ('events' in show_actions[step_num] and
                     show_actions[step_num]['events']):
 
-                event_list = (Config.string_to_list(
+                event_list = (Util.string_to_list(
                     show_actions[step_num]['events']))
 
                 step_actions['events'] = event_list
@@ -969,7 +970,7 @@ class Show(Asset):
 
                 flasher_set = set()
 
-                for flasher in Config.string_to_list(
+                for flasher in Util.string_to_list(
                         show_actions[step_num]['flashers']):
 
                     if 'tag|' in flasher:
@@ -1013,7 +1014,7 @@ class Show(Asset):
 
                     # convert / ensure flashers are single ints
                     if type(value) is str:
-                        value = Config.hexstring_to_int(value)
+                        value = Util.hex_string_to_int(value)
 
                     if type(value) is int and value > 255:
                         value = 255
@@ -1060,7 +1061,7 @@ class Show(Asset):
                             fade = value.split('-f')
 
                     # convert our color of hexes to a list of ints
-                    value = Config.hexstring_to_list(value)
+                    value = Util.hex_string_to_list(value)
                     value.append(fade)
 
                     for led_ in led_list:
@@ -1198,12 +1199,7 @@ class Show(Asset):
         self.machine.light_controller._run_show(self)
 
     def load_show_from_disk(self):
-        # todo add exception handling
-        # create central yaml loader, or, even better, config loader
-
-        show_actions = yaml.load(open(self.file_name, 'r'))
-
-        return show_actions
+        return FileManager.load(self.file_name)
 
     def add_loaded_callback(self, loaded_callback, **kwargs):
         self.asset_manager.log.debug("Adding a loaded callback: %s, %s",
@@ -1767,24 +1763,24 @@ class ExternalShow(object):
         self.machine.light_controller.external_shows.add(self)
 
         if leds:
-            self.leds = Config.string_to_list(leds)
+            self.leds = Util.string_to_list(leds)
             self.leds = [self.machine.leds[x] for x in self.leds]
 
         if lights:
-            self.lights = Config.string_to_list(lights)
+            self.lights = Util.string_to_list(lights)
             self.lights = [self.machine.lights[x] for x in self.lights]
 
         if flashers:
-            self.flashers = Config.string_to_list(flashers)
+            self.flashers = Util.string_to_list(flashers)
             self.flashers = [self.machine.flashers[x] for x in self.flashers]
 
         if gis:
-            self.gis = Config.string_to_list(gis)
+            self.gis = Util.string_to_list(gis)
             self.gis = [self.machine.gis[x] for x in self.gis]
 
     def update_leds(self, data):
         # Called by worker thread
-        for led, color in zip(self.leds, Config.chunker(data, 6)):
+        for led, color in zip(self.leds, Util.chunker(data, 6)):
 
             self.external_show_queue.add(
                 (self.machine.light_controller._add_to_led_update_list,
@@ -1795,7 +1791,7 @@ class ExternalShow(object):
 
     def update_lights(self, data):
         # Called by worker thread
-        for light, brightness in zip(self.lights, Config.chunker(data, 2)):
+        for light, brightness in zip(self.lights, Util.chunker(data, 2)):
             self.external_show_queue.add(
                 (self.machine.light_controller._add_to_light_update_list,
                   (light, brightness, self.priority, self.blend)
@@ -1804,10 +1800,10 @@ class ExternalShow(object):
 
     def update_gis(self, data):
         # Called by worker thread
-        for gi, brightness in zip(self.lights, Config.chunker(data, 2)):
+        for gi, brightness in zip(self.lights, Util.chunker(data, 2)):
             self.external_show_queue.add(
                 (self.machine.light_controller._add_to_gi_queue,
-                  (gi, Config.hexstring_to_int(brightness))
+                  (gi, Util.hex_string_to_int(brightness))
                  )
             )
 

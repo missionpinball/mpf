@@ -15,7 +15,7 @@ that it doesn't require any P-ROC drivers or modules to be installed.
 
 import logging
 from mpf.system.platform import Platform
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class HardwarePlatform(Platform):
@@ -85,7 +85,7 @@ class HardwarePlatform(Platform):
             if 'virtual_platform_start_active_switches' in self.machine.config:
 
                 initial_active_switches = [self.machine.switches[x].number for x in
-                    Config.string_to_list(
+                    Util.string_to_list(
                         self.machine.config['virtual_platform_start_active_switches'])]
 
                 for k, v in self.hw_switches.iteritems():

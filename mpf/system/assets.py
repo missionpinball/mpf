@@ -72,7 +72,7 @@ class AssetLoader(threading.Thread):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
             msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
+            self.exception_queue.put(msg)
 
 
 class AssetManager(object):
@@ -114,6 +114,7 @@ class AssetManager(object):
         self.log.debug("Initializing...")
 
         self.machine = machine
+        self.loader_thread.exception_queue = self.machine.crash_queue
         self.max_memory = None
         self.registered_assets = set()
         self.path_string = path_string

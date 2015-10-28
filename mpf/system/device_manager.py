@@ -2,11 +2,10 @@
 
 import logging
 from collections import OrderedDict
-import yaml
 
 from mpf.devices import *
-from mpf.system.config import CaseInsensitiveDict, Config
-from mpf.system.timing import Timing
+from mpf.system.config import CaseInsensitiveDict
+from mpf.system.file_manager import FileManager
 
 
 class DeviceManager(object):
@@ -169,11 +168,7 @@ class DeviceManager(object):
 
     def save_tree_to_file(self, filename):
         print "Exporting file..."
-
-        with open(filename, 'w') as output_file:
-            output_file.write(yaml.dump(self.collections,
-                                        default_flow_style=False))
-
+        FileManager.save(filename, self.collections)
         print "Export complete!"
 
 

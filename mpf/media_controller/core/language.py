@@ -9,7 +9,7 @@
 import logging
 import re
 
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class Language(object):
@@ -37,7 +37,7 @@ class Language(object):
     def _configure(self):
         self.config = self.machine.config['languages']
         self.machine.language = self
-        self.languages = Config.string_to_lowercase_list(
+        self.languages = Util.string_to_lowercase_list(
             self.machine.config['languages'])
 
         # Set the default language to the first entry in the list

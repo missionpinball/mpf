@@ -7,12 +7,12 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import yaml
 import time
-import sys
 
 from mpf.system.assets import AssetManager, Asset
 from mpf.system.config import Config
+from mpf.system.file_manager import FileManager
+from mpf.system.utility_functions import Util
 
 
 class ShowController(object):
@@ -338,7 +338,7 @@ class Show(Asset):
             if ('events' in show_actions[step_num] and
                     show_actions[step_num]['events']):
 
-                event_list = (Config.string_to_lowercase_list(
+                event_list = (Util.string_to_lowercase_list(
                     show_actions[step_num]['events']))
 
                 step_actions['events'] = event_list
@@ -470,13 +470,7 @@ class Show(Asset):
         self.machine.show_controller._run_show(self)
 
     def load_show_from_disk(self):
-
-        # todo add exception handling
-        # create central yaml loader, or, even better, config loader
-
-        show_actions = yaml.load(open(self.file_name, 'r'))
-
-        return show_actions
+        return FileManager.load(self.file_name)
 
     def add_loaded_callback(self, loaded_callback, **kwargs):
         self.asset_manager.log.debug("Adding a loaded callback: %s, %s",

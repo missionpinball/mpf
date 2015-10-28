@@ -24,6 +24,8 @@ import time
 import sys
 from copy import deepcopy
 
+from mpf.system.utility_functions import Util
+
 try:
     import pinproc
     pinproc_imported = True
@@ -790,7 +792,7 @@ class PROCDriver(object):
 
         if hold_power:
             return_dict['pwm_on_ms'], return_dict['pwm_off_ms'] = (
-                Config.pwm8_to_on_off(hold_power))
+                Util.pwm8_to_on_off(hold_power))
 
         elif pwm_off_ms and pwm_on_ms:
             return_dict['pwm_on_ms'] = int(pwm_on_ms)

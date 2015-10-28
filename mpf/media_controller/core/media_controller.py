@@ -24,6 +24,8 @@ from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
 from mpf.system.player import Player
 from mpf.system.assets import AssetManager
+from mpf.system.utility_functions import Util
+from mpf.system.file_manager import FileManager
 import mpf.system.bcp as bcp
 import version
 
@@ -109,10 +111,11 @@ class MediaController(object):
                              'trigger': self.bcp_trigger,
                             }
 
-        # load the MPF config & machine defaults
-        self.config = (
-            Config.load_config_yaml(config=self.config,
-                                    yaml_file=self.options['mcconfigfile']))
+        FileManager.init()
+        self.config = dict()
+        self._load_mc_config()
+        self._set_machine_path()
+        self._load_machine_config()
 
         # Find the machine_files location. If it starts with a forward or
         # backward slash, then we assume it's from the mpf root. Otherwise we
@@ -133,28 +136,6 @@ class MediaController(object):
         sys.path.append(self.machine_path)
 
         self.log.info("Machine folder: %s", machine_path)
-
-        # Now find the config file location. Same as machine_file with the
-        # slash uses to specify an absolute path
-
-        if (options['configfile'].startswith('/') or
-                options['configfile'].startswith('\\')):
-            config_file = options['configfile']
-        else:
-
-            if not options['configfile'].endswith('.yaml'):
-                options['configfile'] += '.yaml'
-
-            config_file = os.path.join(self.machine_path,
-                                       self.config['media_controller']['paths']
-                                       ['config'],
-                                       options['configfile'])
-
-        self.log.debug("Base machine config file: %s", config_file)
-
-        # Load the machine-specific config
-        self.config = Config.load_config_yaml(config=self.config,
-                                              yaml_file=config_file)
 
         mediacontroller_config_spec = '''
                         exit_on_disconnect: boolean|True
@@ -191,6 +172,43 @@ class MediaController(object):
         self.events.post("init_phase_5")
 
         self.reset()
+
+    def _load_mc_config(self):
+        self.config = Config.load_config_file(self.options['mcconfigfile'])
+
+        # Find the machine_files location. If it starts with a forward or
+        # backward slash, then we assume it's from the mpf root. Otherwise we
+        # assume it's from the subfolder location specified in the
+        # mpfconfigfile location
+
+    def _set_machine_path(self):
+        if (self.options['machinepath'].startswith('/') or
+                self.options['machinepath'].startswith('\\')):
+            machine_path = self.options['machinepath']
+        else:
+            machine_path = os.path.join(self.config['media_controller']['paths']
+                                        ['machine_files'],
+                                        self.options['machinepath'])
+
+        self.machine_path = os.path.abspath(machine_path)
+        self.log.debug("Machine path: {}".format(self.machine_path))
+
+        # Add the machine folder to sys.path so we can import modules from it
+        sys.path.append(self.machine_path)
+
+    def _load_machine_config(self):
+        for num, config_file in enumerate(self.options['configfile']):
+
+            if not (config_file.startswith('/') or
+                    config_file.startswith('\\')):
+
+                config_file = os.path.join(self.machine_path,
+                    self.config['media_controller']['paths']['config'], config_file)
+
+            self.log.info("Machine config file #%s: %s", num+1, config_file)
+
+            self.config = Util.dict_merge(self.config,
+                Config.load_config_file(config_file))
 
     def _check_crash_queue(self):
         try:
@@ -550,7 +568,7 @@ class MediaController(object):
         event and to send the response BCP 'set' command.
 
         """
-        for name in Config.string_to_list(names):
+        for name in Util.string_to_list(names):
             self.events.post('bcp_get_{}'.format(name))
 
     def bcp_set(self, **kwargs):
