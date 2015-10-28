@@ -27,6 +27,7 @@ class Playfield(BallDevice):
         self.label = None
         self.debug = False
         self.config = dict()
+        self._count_consistent = True
 
         if validate:
             self.config = self.machine.config_processor.process_config2(
@@ -283,12 +284,14 @@ class Playfield(BallDevice):
         self.balls += balls
 
     def _ball_removed_handler(self, balls, **kwargs):
+        self._count_consistent = False
         # somebody got a ball from us so we obviously had one
         self.machine.events.post('sw_' + self.name + "_active", callback=self._ball_removed_handler2, balls=balls)
 
     def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
+        self._count_consistent = True
 
     def _source_device_eject_attempt(self, balls, target, **kwargs):
         # A source device is attempting to eject a ball. We need to know if it's

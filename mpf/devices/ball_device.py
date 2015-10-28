@@ -110,6 +110,8 @@ class BallDevice(Device):
             raise AssertionError("When using confirm_eject_type switch you " +
                                  "to specify a confirm_eject_switch")
 
+        self._count_consistent = True
+
     # Logic and dispatchers
 
     def _switch_state(self, new_state, **kwargs):
@@ -222,6 +224,7 @@ class BallDevice(Device):
                                   balls=balls)
 
     def _handle_new_balls(self, balls):
+        self._count_consistent = False
         while len(self._incoming_balls) > 0 and balls > 0:
             balls -= 1
             self._incoming_balls.popleft()
@@ -738,6 +741,8 @@ class BallDevice(Device):
         # device is tagged 'trough' in which case we let it keep them.
         if balls and 'trough' not in self.tags:
             self._eject_request(balls)
+
+        self._count_consistent = True
 
     def _balls_missing(self, balls):
         # Called when ball_count finds that balls are missing from this device

@@ -43,16 +43,19 @@ class BallController(object):
         # self.machine.events.add_handler('init_phase_2',
         #                                 self.create_playfield_device, 2)
 
-    @property
-    def balls(self):
+    def _count_balls(self):
         self.log.debug("Counting Balls")
         balls = 0
         for device in self.machine.ball_devices:
+            if not device._count_consistent:
+                return -999
             self.log.debug("Found %s ball(s) in %s", device.balls, device.name)
             balls += device.balls
-            if balls > self._num_balls_known:
-                self.log.debug("Setting known balls to %s", balls)
-                self.num_balls_known = balls
+
+        if balls > self._num_balls_known:
+            self.log.debug("Setting known balls to %s", balls)
+            self.num_balls_known = balls
+
         if balls < 0:
             return -999
         else:
@@ -61,10 +64,19 @@ class BallController(object):
 
     @property
     def num_balls_known(self):
-        if self.balls > self._num_balls_known:
-            self._num_balls_known = self.balls
+        self._update_num_balls_known()
 
         return self._num_balls_known
+
+    def _update_num_balls_known(self):
+        balls = self._count_balls() 
+
+        if balls < 0:
+            self.delay.add(callback=self._update_num_balls_known, ms=10)
+
+        if balls > self._num_balls_known:
+            self._num_balls_known = balls
+
 
     @num_balls_known.setter
     def num_balls_known(self, balls):
@@ -81,7 +93,7 @@ class BallController(object):
         if not hasattr(self.machine, 'ball_devices'):
             return
 
-        self.num_balls_known = self.balls
+        self._update_num_balls_known()
 
         for device in self.machine.ball_devices:
             if 'drain' in device.tags:  # device is used to drain balls from pf
@@ -100,11 +112,12 @@ class BallController(object):
         returns. If too many balls are missing (based on the config files 'Min
         Balls' setting), it will return False to reject the game start request.
         """
+        balls = self._count_balls()
         self.log.debug("Received request to start game.")
         self.log.debug("Balls contained: %s, Min balls needed: %s",
-                       self.balls,
+                       balls,
                        self.machine.config['machine']['min_balls'])
-        if self.balls < self.machine.config['machine']['min_balls']:
+        if balls < self.machine.config['machine']['min_balls']:
             self.log.warning("BallController denies game start. Not enough "
                              "balls")
             return False
