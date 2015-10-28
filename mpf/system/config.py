@@ -54,6 +54,7 @@ class Config(object):
 
     def __init__(self, machine):
         self.machine = machine
+        self.log = logging.getLogger('ConfigProcessor')
 
     @staticmethod
     def load_config_file(filename, verify_version=True):
