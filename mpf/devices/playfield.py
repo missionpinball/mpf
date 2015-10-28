@@ -258,7 +258,7 @@ class Playfield(BallDevice):
 
         return True
 
-    def playfield_switch_hit(self):
+    def playfield_switch_hit(self, **kwargs):
         """A switch tagged with '<this playfield name>_active' was just hit,
         indicating that there is at least one ball on the playfield.
 
@@ -282,7 +282,11 @@ class Playfield(BallDevice):
         self.log.debug("%s ball(s) added to the playfield", balls)
         self.balls += balls
 
-    def _ball_removed_handler(self, balls):
+    def _ball_removed_handler(self, balls, **kwargs):
+        # somebody got a ball from us so we obviously had one
+        self.machine.events.post('sw_' + self.name + "_active", callback=self._ball_removed_handler2, balls=balls)
+
+    def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
 
