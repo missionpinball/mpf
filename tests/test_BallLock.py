@@ -61,6 +61,7 @@ class TestBallLock(MpfTestCase):
         self.assertEquals(2, self._captured)
         self._captured = 0
         self.assertEquals(0, playfield.balls)
+        self.assertEquals(2, self.machine.ball_controller.num_balls_known)
 
         # it should keep the ball
         coil1.pulse = MagicMock()
@@ -170,6 +171,7 @@ class TestBallLock(MpfTestCase):
         self.assertEquals(1, self._captured)
         self.assertEquals(0, self._missing)
         self._captured = 0
+        self.assertEquals(2, self.machine.ball_controller.num_balls_known)
 
         # lock should eject all balls
         coil1.pulse.assert_called_once_with()

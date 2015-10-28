@@ -49,6 +49,7 @@ ball_devices:
     test_lock:
         eject_coil: eject_coil3
         ball_switches: s_ball_switch_lock1, s_ball_switch_lock2, s_ball_switch_lock3
+        confirm_eject_type: target
         debug: true
 
 ball_locks:
