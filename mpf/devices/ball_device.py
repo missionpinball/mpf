@@ -490,7 +490,9 @@ class BallDevice(Device):
             if not retry:
                 self.eject_queue.popleft()
                 # TODO: ripple this to the next device
-            return self._switch_state("idle")
+                return self._switch_state("idle")
+            else:
+                return self._switch_state("waiting_for_ball")
 
         if self._state == "waiting_for_ball" and not retry:
             self.eject_queue.popleft()
