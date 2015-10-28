@@ -299,10 +299,9 @@ class BallDevice(Device):
         # 1. ball counts can change (via _counted_balls)
         # 2. eject can be confirmed
         # 2. eject of source can fail
-        self.eject_in_progress_target = self.config['eject_targets'][0]
+        self.eject_in_progress_target = self.eject_queue[0][0]
         self.num_balls_ejecting = 1
         self.mechanical_eject_in_progress = True
-        #self._setup_eject_confirmation(self.eject_in_progress_target)
         self._inform_target_about_incoming_ball(self.eject_in_progress_target)
         self._do_eject_attempt()
 
@@ -326,7 +325,8 @@ class BallDevice(Device):
         self._incoming_balls.append((time.time() + timeout, source))
         self.delay.add(ms=timeout * 1000, callback=self._timeout_incoming)
 
-        if self._state == "waiting_for_ball" and self.config['mechanical_eject']:
+        if (self._state == "waiting_for_ball" and
+                self.config['mechanical_eject'] and len(self.eject_queue)):
             self._switch_state("waiting_for_ball_mechanical")
 
 
@@ -1085,6 +1085,16 @@ class BallDevice(Device):
                            ms=timeout,
                            callback=self._eject_timeout)
 
+        if target and target.is_playfield():
+            if self.debug:
+                self.log.debug("Target is a playfield. Will confirm eject " +
+                               "when a %s switch is hit", target.name)
+
+            self.machine.events.add_handler(
+                'sw_{}_active'.format(target.name),
+                self._playfield_active, playfield=target)
+
+
 
         if self.config['confirm_eject_type'] == 'target':
 
@@ -1093,22 +1103,11 @@ class BallDevice(Device):
                                 "target. This shouldn't happen. Post to the "
                                 "forum if you see this.")
 
-
             if target.is_playfield():
                 if self.debug:
-                    self.log.debug("Will confirm eject when a %s switch is "
-                                   "hit", target.name)
-
-                self.machine.events.add_handler(
-                    'sw_{}_active'.format(target.name),
-                    self._playfield_active, playfield=target)
-
-
-                if not target.ok_to_confirm_ball_via_playfield_switch():
-                    if self.debug:
-                        self.log.debug("Will confirm eject via recount of ball "
-                                       "switches.")
-                    self._setup_count_eject_confirmation(timeout)
+                    self.log.debug("Target is playfield. Will confirm eject "
+                                   "via recount of ball switches.")
+                self._setup_count_eject_confirmation(timeout)
 
 
 
