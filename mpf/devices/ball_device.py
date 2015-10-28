@@ -216,10 +216,6 @@ class BallDevice(Device):
 
 
     def _handle_unexpected_balls(self, balls):
-        self.machine.events.post('sw_' + self.config['captures_from'] + "_active")
-        self.delay.add(callback=self._handle_unexpected_balls2, ms=0, balls=balls)
-
-    def _handle_unexpected_balls2(self, balls):
         self.log.debug("Received %s unexpected balls", balls)
         self.machine.events.post('balldevice_captured_from_' +
                                   self.config['captures_from'],
@@ -251,9 +247,6 @@ class BallDevice(Device):
             self.log.debug("Lost %s balls during eject. Will ignore the "
                            "loss.", balls)
             self.eject_failed(retry=False)
-            self.machine.events.post('balldevice_' + self.name + '_ball_lost',
-                balls=abs(balls), target=self.eject_in_progress_target)
-
 
         self._balls_missing(balls)
 
@@ -481,6 +474,13 @@ class BallDevice(Device):
         # track ejects
         self._source_ejecting_balls += 1
 
+    def _cancel_eject(self, balls):
+        self.eject_queue.popleft()
+        # TODO: ripple this to the next device/register handler
+        self.machine.events.post('balldevice_' + self.name + '_ball_lost',
+            balls=abs(balls), target=self.eject_in_progress_target)
+
+
     def _source_device_eject_failed(self, balls, target, retry, **kwargs):
         if target != self:
             return
@@ -492,15 +492,13 @@ class BallDevice(Device):
             self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
             self._cancel_eject_confirmation()
             if not retry:
-                self.eject_queue.popleft()
-                # TODO: ripple this to the next device
+                self._cancel_eject(balls)
                 return self._switch_state("idle")
             else:
                 return self._switch_state("waiting_for_ball")
 
         if self._state == "waiting_for_ball" and not retry:
-            self.eject_queue.popleft()
-            # TODO: ripple this to the next device
+            self._cancel_eject(balls)
             return self._switch_state("idle")
 
     def _source_device_eject_success(self, balls, target, **kwargs):
@@ -1057,6 +1055,10 @@ class BallDevice(Device):
             self.log.debug("Firing eject coil. num_balls_ejecting: %s. New "
                            "balls: %s.", self.num_balls_ejecting, self.balls)
 
+    def _playfield_active(self, playfield, **kwargs):
+        if playfield.ok_to_confirm_ball_via_playfield_switch():
+            self._eject_success()
+
     def _setup_eject_confirmation(self, target):
         # Called after an eject request to confirm the eject. The exact method
         # of confirmation depends on how this ball device has been configured
@@ -1088,14 +1090,16 @@ class BallDevice(Device):
 
 
             if target.is_playfield():
+                if self.debug:
+                    self.log.debug("Will confirm eject when a %s switch is "
+                                   "hit", target.name)
 
-                if target.ok_to_confirm_ball_via_playfield_switch():
-                    if self.debug:
-                        self.log.debug("Will confirm eject when a %s switch is "
-                                       "hit", target.name)
-                    self.machine.events.add_handler(
-                        'sw_{}_active'.format(target.name), self._eject_success)
-                else:
+                self.machine.events.add_handler(
+                    'sw_{}_active'.format(target.name),
+                    self._playfield_active, playfield=target)
+
+
+                if not target.ok_to_confirm_ball_via_playfield_switch():
                     if self.debug:
                         self.log.debug("Will confirm eject via recount of ball "
                                        "switches.")
@@ -1184,6 +1188,7 @@ class BallDevice(Device):
 
         # Remove any event watching for success
         self.machine.events.remove_handler(self._eject_success)
+        self.machine.events.remove_handler(self._playfield_active)
 
         self.machine.events.remove_handlers_by_keys(
             self.pending_eject_event_keys)
