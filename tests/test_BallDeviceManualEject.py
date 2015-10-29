@@ -472,7 +472,7 @@ class TestBallDeviceManualEject(MpfTestCase):
         assert not coil2.pulse.called
 
         # request an ball
-        device2.setup_player_controlled_eject(target=target)
+        playfield.add_ball(source_device=target, player_controlled=True)
         self.advance_time_and_run(1)
 
         # trough eject
@@ -491,6 +491,7 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.assertEquals(1, self._missing)
         self.assertEquals("idle", device1._state)
         self.assertEquals("idle", device2._state)
+        self.assertEquals("idle", target._state)
 
 
     def test_trough_eject_failed_with_manual(self):

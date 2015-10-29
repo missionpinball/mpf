@@ -480,11 +480,12 @@ class BallDevice(Device):
         # track ejects
         self._source_ejecting_balls += 1
 
-    def _cancel_eject(self, balls):
+    def _cancel_eject(self):
+        target = self.eject_queue[0][0]
         self.eject_queue.popleft()
         # TODO: ripple this to the next device/register handler
         self.machine.events.post('balldevice_' + self.name + '_ball_lost',
-            balls=abs(balls), target=self.eject_in_progress_target)
+            target=target)
 
 
     def _source_device_eject_failed(self, balls, target, retry, **kwargs):
@@ -498,13 +499,21 @@ class BallDevice(Device):
             self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
             self._cancel_eject_confirmation()
             if not retry:
-                self._cancel_eject(balls)
+                self._cancel_eject()
                 return self._switch_state("idle")
             else:
                 return self._switch_state("waiting_for_ball")
 
         if self._state == "waiting_for_ball" and not retry:
-            self._cancel_eject(balls)
+            self._cancel_eject()
+            return self._switch_state("idle")
+
+    def _source_device_ball_lost(self, target, **kwargs):
+        if target != self:
+            return
+
+        if self._state == "waiting_for_ball":
+            self._cancel_eject()
             return self._switch_state("idle")
 
     def _source_device_eject_success(self, balls, target, **kwargs):
@@ -621,6 +630,11 @@ class BallDevice(Device):
                     self.machine.events.add_handler(
                         'balldevice_{}_ball_eject_success'.format(device.name),
                         self._source_device_eject_success)
+
+                    self.machine.events.add_handler(
+                        'balldevice_{}_ball_lost'.format(device.name),
+                        self._source_device_ball_lost)
+
 
                     break
 
