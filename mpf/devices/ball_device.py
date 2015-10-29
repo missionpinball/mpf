@@ -116,7 +116,7 @@ class BallDevice(Device):
 
     def _switch_state(self, new_state, **kwargs):
         # TODO: check if transition is legal
-        if new_state == self._state:
+        if new_state == self._state: # pragma: no cover
             self.log.debug("Tried to switch state. But already in state %s",
                            new_state)
             return
@@ -458,13 +458,6 @@ class BallDevice(Device):
         # TODO: this is not missing. its lost balls. separate!
         return self._switch_state("lost_balls",
                     balls=1)
-
-    @property
-    def num_balls_ejectable(self):
-        """How many balls are in this device that could be ejected."""
-        return self.balls
-
-        # todo look at upstream devices
 
     def configure_eject_targets(self, config=None):
         new_list = list()
@@ -1264,9 +1257,7 @@ class BallDevice(Device):
             self.eject_queue.popleft()
             self._incoming_balls.popleft()
         elif self._state != "ball_left" and self._state != "failed_confirm":
-            self.log.debug("Got an eject_success in wrong state %s!",
-                    self._state)
-            raise AssertionError("Invalid state " + self._state + " for _eject_success")
+            raise AssertionError("Got an eject_success in wrong state " + self._state)
 
 
         if self.debug:
