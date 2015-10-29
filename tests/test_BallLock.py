@@ -182,7 +182,6 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(0, lock.count_balls())
         self.assertEquals(0, lock_logic.balls_locked)
-        self.assertEquals(1, playfield.balls)
         self.assertEquals(0, self._captured)
         self.assertEquals(0, self._missing)
 
@@ -191,6 +190,15 @@ class TestBallLock(MpfTestCase):
         # ball also drains
         self.machine.switch_controller.process_switch("s_ball_switch2", 1)
         self.advance_time_and_run(1)
+        self.assertEquals(0, playfield.balls)
+        self.assertEquals(1, self._captured)
+        self.assertEquals(0, self._missing)
+        self.assertEquals(0, self._requesting)
+
+        self.assertEquals(2, self.machine.ball_controller.num_balls_known)
+        self.assertEquals(1, self._collecting_balls_complete)
+
+        self.advance_time_and_run(100)
         self.assertEquals(0, playfield.balls)
         self.assertEquals(1, self._captured)
         self.assertEquals(0, self._missing)
