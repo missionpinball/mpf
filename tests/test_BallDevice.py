@@ -216,6 +216,10 @@ class TestBallDevice(MpfTestCase):
         # and ejects it
         self.machine.switch_controller.process_switch("s_ball_switch_target1", 0)
         self.advance_time_and_run(1)
+        self.machine.switch_controller.process_switch("s_playfield", 1)
+        self.advance_time_and_run(0.1)
+        self.machine.switch_controller.process_switch("s_playfield", 0)
+        self.advance_time_and_run(1)
         self.assertEquals(1, playfield.balls)
 
         self._captured = 0
@@ -326,6 +330,13 @@ class TestBallDevice(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch_target1", 0)
         self.advance_time_and_run(1)
         self.assertEquals(0, device3.count_balls())
+
+        # a ball hits a playfield switch
+        self.machine.switch_controller.process_switch("s_playfield", 1)
+        self.advance_time_and_run(0.1)
+        self.machine.switch_controller.process_switch("s_playfield", 0)
+        self.advance_time_and_run(1)
+
 
         self.assertEquals(1, playfield.balls)
 
@@ -580,6 +591,13 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(0, device3.count_balls())
 
+        # a ball hits a playfield switch
+        self.machine.switch_controller.process_switch("s_playfield", 1)
+        self.advance_time_and_run(0.1)
+        self.machine.switch_controller.process_switch("s_playfield", 0)
+        self.advance_time_and_run(1)
+
+
         self.assertEquals(-1, self._captured)
 
         self.assertEquals(1, playfield.balls)
@@ -695,6 +713,9 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(0, device3.count_balls())
 
+        # wait for confirm
+        self.advance_time_and_run(10)
+
         coil1.pulse.assert_called_once_with()
         assert not coil2.pulse.called
         coil3.pulse.assert_called_once_with()
@@ -742,6 +763,9 @@ class TestBallDevice(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch_target1", 0)
         self.advance_time_and_run(1)
         self.assertEquals(0, device3.count_balls())
+
+        # wait for confirm
+        self.advance_time_and_run(10)
 
         self.assertEquals(-1, self._captured)
 
@@ -897,6 +921,9 @@ class TestBallDevice(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch_target1", 0)
         self.advance_time_and_run(1)
         self.assertEquals(0, device3.count_balls())
+
+        # wait for confirm via timeout
+        self.advance_time_and_run(10)
 
         # target captured one ball because it did not leave the launcher
         self.assertEquals(1, self._captured)
@@ -1178,6 +1205,60 @@ class TestBallDevice(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch_target2_2", 1)
         self.advance_time_and_run(1)
         self.assertEquals(1, device4.count_balls())
+        self.assertEquals(0, self._captured)
+        self.assertEquals(0, self._missing)
+
+
+    def test_two_concurrent_eject_to_pf_with_no_balls(self):
+        coil3 = self.machine.coils['eject_coil3']
+        coil5 = self.machine.coils['eject_coil5']
+        target1 = self.machine.ball_devices['test_target1']
+        target3 = self.machine.ball_devices['test_target3']
+        playfield = self.machine.ball_devices['playfield']
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+
+
+        coil3.pulse = MagicMock()
+        coil5.pulse = MagicMock()
+
+        # add a ball to target1
+        self.machine.switch_controller.process_switch("s_ball_switch_target1", 1)
+        # add a ball to target3
+        self.machine.switch_controller.process_switch("s_ball_switch_target3", 1)
+        self.advance_time_and_run(1)
+
+        self._captured = 0
+        self._missing = 0
+
+        # both should eject to pf
+        self.assertEquals(0, playfield.balls)
+        self.assertEquals(1, target1.balls)
+        self.assertEquals(1, target3.balls)
+
+        coil3.pulse.assert_called_once_with()
+        coil5.pulse.assert_called_once_with()
+        self.advance_time_and_run(1)
+
+        self.machine.switch_controller.process_switch("s_ball_switch_target1", 0)
+        # add a ball to target3
+        self.machine.switch_controller.process_switch("s_ball_switch_target3", 0)
+        self.advance_time_and_run(1)
+
+        # a ball hits a playfield switch
+        self.machine.switch_controller.process_switch("s_playfield", 1)
+        self.advance_time_and_run(0.1)
+        self.machine.switch_controller.process_switch("s_playfield", 0)
+        self.advance_time_and_run(1)
+
+        # it should confirm only one device (no matter which one)
+        self.assertEquals(1, playfield.balls)
+
+        # second ball should be confirmed via timeout
+        self.advance_time_and_run(10)
+        self.assertEquals(2, playfield.balls)
+
         self.assertEquals(0, self._captured)
         self.assertEquals(0, self._missing)
 

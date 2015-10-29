@@ -259,12 +259,16 @@ class Playfield(BallDevice):
 
         return True
 
+    def mark_playfield_active(self):
+        self.machine.events.post_boolean(self.name + "_active")
+
     def playfield_switch_hit(self, **kwargs):
         """A switch tagged with '<this playfield name>_active' was just hit,
         indicating that there is at least one ball on the playfield.
 
         """
         if not self.balls:
+            self.mark_playfield_active()
 
             if not self.num_balls_requested:
                 if self.machine.config['machine']['glass_off_mode']:
@@ -286,7 +290,8 @@ class Playfield(BallDevice):
     def _ball_removed_handler(self, balls, **kwargs):
         self._count_consistent = False
         # somebody got a ball from us so we obviously had one
-        self.machine.events.post('sw_' + self.name + "_active", callback=self._ball_removed_handler2, balls=balls)
+        self.machine.events.post('sw_' + self.name + "_active",
+                callback=self._ball_removed_handler2, balls=balls)
 
     def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)

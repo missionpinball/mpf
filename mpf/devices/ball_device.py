@@ -1078,8 +1078,8 @@ class BallDevice(Device):
                            "balls: %s.", self.num_balls_ejecting, self.balls)
 
     def _playfield_active(self, playfield, **kwargs):
-        if playfield.ok_to_confirm_ball_via_playfield_switch():
-            self._eject_success()
+        self._eject_success()
+        return False
 
     def _setup_eject_confirmation(self, target):
         # Called after an eject request to confirm the eject. The exact method
@@ -1108,7 +1108,7 @@ class BallDevice(Device):
                                "when a %s switch is hit", target.name)
 
             self.machine.events.add_handler(
-                'sw_{}_active'.format(target.name),
+                '{}_active'.format(target.name),
                 self._playfield_active, playfield=target)
 
             if self.mechanical_eject_in_progress:
@@ -1131,11 +1131,14 @@ class BallDevice(Device):
                                "with a confirmation timeout of %sms",
                                target.name, timeout)
 
-            # watch for ball entry event on the target device
-            # Note this must be higher priority than the failed eject handler
-            self.machine.events.add_handler(
-                'balldevice_' + target.name +
-                '_ball_enter', self._eject_success, priority=100000)
+            # ball_enter does mean sth different for the playfield.
+            # TODO: also use ball_enter on the playfield
+            if not target.is_playfield():
+                # watch for ball entry event on the target device
+                # Note this must be higher priority than the failed eject handler
+                self.machine.events.add_handler(
+                    'balldevice_' + target.name +
+                    '_ball_enter', self._eject_success, priority=100000)
 
         elif self.config['confirm_eject_type'] == 'switch':
             if self.debug:
