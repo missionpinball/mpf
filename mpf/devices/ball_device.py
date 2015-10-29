@@ -266,7 +266,7 @@ class BallDevice(Device):
         if self.config['mechanical_eject']:
             # if the device supports mechanical eject we assume it was one
             self.mechanical_eject_in_progress = True
-            # TODO: use target from setup_player_controlled_eject
+            # this is an unexpected eject. use default target
             self.eject_in_progress_target = self.config['eject_targets'][0]
             self.num_balls_ejecting = 1
             #self.eject_queue.append((target, 0))
@@ -299,7 +299,11 @@ class BallDevice(Device):
         # 1. ball counts can change (via _counted_balls)
         # 2. eject can be confirmed
         # 2. eject of source can fail
-        self.eject_in_progress_target = self.eject_queue[0][0]
+        if len(self.eject_queue):
+            self.eject_in_progress_target = self.eject_queue[0][0]
+        else:
+            self.eject_in_progress_target = self.config['eject_targets'][0]
+
         self.num_balls_ejecting = 1
         self.mechanical_eject_in_progress = True
         self._inform_target_about_incoming_ball(self.eject_in_progress_target)
@@ -325,11 +329,17 @@ class BallDevice(Device):
         self._incoming_balls.append((time.time() + timeout, source))
         self.delay.add(ms=timeout * 1000, callback=self._timeout_incoming)
 
-        # TODO: if we have no queue? add one?
         if (self._state == "waiting_for_ball" and
-                self.config['mechanical_eject'] and len(self.eject_queue)):
-            self._switch_state("waiting_for_ball_mechanical")
+                self.config['mechanical_eject']):
+            # if we are in waiting_for_ball we always have a eject queue
 
+            return self._switch_state("waiting_for_ball_mechanical")
+
+        elif (self._state == "idle" and
+                self.config['mechanical_eject']):
+            # we have no eject queue in that case. will use default target
+
+            return self._switch_state("waiting_for_ball_mechanical")
 
     def _timeout_incoming(self):
         self.log.debug("Handling timeouts of incoming balls")
@@ -483,7 +493,7 @@ class BallDevice(Device):
     def _cancel_eject(self):
         target = self.eject_queue[0][0]
         self.eject_queue.popleft()
-        # TODO: ripple this to the next device/register handler
+        # ripple this to the next device/register handler
         self.machine.events.post('balldevice_' + self.name + '_ball_lost',
             target=target)
 
@@ -869,23 +879,6 @@ class BallDevice(Device):
                 itself.
         """
         if self.debug:
-            self.log.debug("In request_ball. balls: %s", balls)
-
-        # How many balls are we requesting?
-        remaining_capacity = (self.config['ball_capacity'] -
-                              self.balls)
-
-        if remaining_capacity < 0:
-            remaining_capacity = 0
-
-        # Figure out how many balls we can request
-        if balls == -1 or balls > remaining_capacity:
-            balls = remaining_capacity
-
-        if not balls:
-            return False
-
-        if self.debug:
             self.log.debug("Requesting Ball(s). Balls=%s", balls)
 
         for i in range(balls):
@@ -1270,8 +1263,9 @@ class BallDevice(Device):
         if self._state == "waiting_for_ball_mechanical":
             # confirm eject of our source device
             self._incoming_balls[0][1]._eject_success()
-            # remove eject from queue
-            self.eject_queue.popleft()
+            # remove eject from queue if we have one
+            if len(self.eject_queue):
+                self.eject_queue.popleft()
             self._incoming_balls.popleft()
         elif self._state != "ball_left" and self._state != "failed_confirm":
             raise AssertionError("Got an eject_success in wrong state " + self._state)
