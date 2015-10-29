@@ -152,11 +152,11 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(0, device2.count_balls())
 
-        self.advance_time_and_run(10)
+        self.advance_time_and_run(3)
 
         # too soft and it comes back
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(3)
         self.assertEquals(1, device2.count_balls())
 
         # player drinks his coffee
@@ -212,7 +212,7 @@ class TestBallDeviceManualEject(MpfTestCase):
 
         # request an ball
         playfield.add_ball(player_controlled=True)
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(0.1)
 
         # trough eject
         coil1.pulse.assert_called_once_with()
@@ -232,7 +232,7 @@ class TestBallDeviceManualEject(MpfTestCase):
         assert not coil2.pulse.called
 
         # it retries after a timeout
-        self.advance_time_and_run(10)
+        self.advance_time_and_run(1)
         self.assertEquals(1, device1.count_balls())
         coil1.pulse.assert_called_once_with()
         assert not coil2.pulse.called
@@ -256,11 +256,11 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(0, device2.count_balls())
 
-        self.advance_time_and_run(10)
+        self.advance_time_and_run(3)
 
         # too soft and it comes back
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(3)
         self.assertEquals(1, device2.count_balls())
 
         # player drinks his coffee
@@ -444,8 +444,10 @@ class TestBallDeviceManualEject(MpfTestCase):
     def test_manual_ball_missing(self):
         coil1 = self.machine.coils['eject_coil1']
         coil2 = self.machine.coils['eject_coil2']
+        coil3 = self.machine.coils['eject_coil3']
         device1 = self.machine.ball_devices['test_trough']
         device2 = self.machine.ball_devices['test_launcher']
+        target = self.machine.ball_devices['test_target']
         playfield = self.machine.ball_devices['playfield']
 
         self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
@@ -470,7 +472,7 @@ class TestBallDeviceManualEject(MpfTestCase):
         assert not coil2.pulse.called
 
         # request an ball
-        playfield.add_ball(player_controlled=True)
+        device2.setup_player_controlled_eject(target=target)
         self.advance_time_and_run(1)
 
         # trough eject
@@ -522,7 +524,7 @@ class TestBallDeviceManualEject(MpfTestCase):
 
         # request an ball
         playfield.add_ball(player_controlled=True)
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(0.1)
 
         # trough eject
         coil1.pulse.assert_called_once_with()
@@ -540,7 +542,7 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.assertEquals(1, device1.count_balls())
 
         # wait until timeout reached
-        self.advance_time_and_run(10)
+        self.advance_time_and_run(1)
         self.assertEquals(2, device1.count_balls())
 
         # trough ejects again
