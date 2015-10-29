@@ -325,6 +325,7 @@ class BallDevice(Device):
         self._incoming_balls.append((time.time() + timeout, source))
         self.delay.add(ms=timeout * 1000, callback=self._timeout_incoming)
 
+        # TODO: if we have no queue? add one?
         if (self._state == "waiting_for_ball" and
                 self.config['mechanical_eject'] and len(self.eject_queue)):
             self._switch_state("waiting_for_ball_mechanical")
@@ -333,7 +334,7 @@ class BallDevice(Device):
     def _timeout_incoming(self):
         self.log.debug("Handling timeouts of incoming balls")
         if len(self._incoming_balls) and self._state == "idle":
-            self._count_balls()
+            return self._count_balls()
 
     def remove_incoming_ball(self, source):
         # TODO: replace by an event
@@ -359,7 +360,15 @@ class BallDevice(Device):
         if self.config['confirm_eject_type'] == 'target':
             self._inform_target_about_incoming_ball(self.eject_in_progress_target)
 
-
+        if (self.eject_in_progress_target.is_playfield()
+                and not self.mechanical_eject_in_progress):
+            if self.debug:
+                self.log.debug("Target is playfield. Will confirm after "
+                               "timeout if it did not return.")
+            timeout = self.config['eject_timeouts'][self.eject_in_progress_target]
+            self.delay.add(name='count_confirmation',
+                            ms=timeout,
+                            callback=self._eject_success)
 
     def _state_wait_for_eject_start(self):
         target = self.eject_queue[0][0]
@@ -409,12 +418,13 @@ class BallDevice(Device):
         return self._switch_state("ejecting")
 
     def _state_failed_confirm_start(self):
-        # count balls to see if the ball returns
-        self._count_balls()
         timeout = self.config['ball_missing_timeouts'][self.eject_in_progress_target]
         self.delay.add(name='ball_missing_timeout',
                        ms=timeout,
                        callback=self._ball_missing_timout)
+        # count balls to see if the ball returns
+        return self._count_balls()
+
 
     def _state_failed_confirm_counted_balls(self, balls):
         if self.balls > balls:
@@ -681,7 +691,7 @@ class BallDevice(Device):
             self.log.debug("+-----------------------------------------+")
 
     def _switch_changed(self, **kwargs):
-        self._count_balls()
+        return self._count_balls()
 
     def count_balls(self, **kwargs):
         # deprecated
@@ -912,7 +922,7 @@ class BallDevice(Device):
         assert balls == 1
 
         self.eject_queue.append((target, True, trigger_event))
-        self._count_balls()
+        return self._count_balls()
 
     def _eject_request(self, balls=1, target=None, **kwargs):
         # TODO: make sure only one device ejects
@@ -1094,7 +1104,13 @@ class BallDevice(Device):
                 'sw_{}_active'.format(target.name),
                 self._playfield_active, playfield=target)
 
-
+            if self.mechanical_eject_in_progress:
+                if self.debug:
+                    self.log.debug("Target is playfield. Will confirm after "
+                                   "timeout if it did not return.")
+                self.delay.add(name='count_confirmation',
+                                ms=timeout,
+                                callback=self._eject_success)
 
         if self.config['confirm_eject_type'] == 'target':
 
@@ -1102,14 +1118,6 @@ class BallDevice(Device):
                 raise AssertionError("we got an eject confirmation request with no "
                                 "target. This shouldn't happen. Post to the "
                                 "forum if you see this.")
-
-            if target.is_playfield():
-                if self.debug:
-                    self.log.debug("Target is playfield. Will confirm eject "
-                                   "via recount of ball switches.")
-                self._setup_count_eject_confirmation(timeout)
-
-
 
             if self.debug:
                 self.log.debug("Will confirm eject via ball entry into '%s' "
@@ -1166,7 +1174,7 @@ class BallDevice(Device):
 
     def _setup_count_eject_confirmation(self, timeout):
         if self._state == "waiting_for_ball_mechanical":
-            # ball did not enter. if it does not enter
+            # ball did not enter. if it does not return then confirm
             self.delay.add(name='count_confirmation',
                             ms=timeout,
                             callback=self._eject_success)
@@ -1225,8 +1233,7 @@ class BallDevice(Device):
         # Remove any delays that were watching for failures
         self.delay.remove('target_eject_confirmation_timeout')
         self.delay.remove('ball_missing_timeout')
-        if self.config['mechanical_eject']:
-            self.delay.remove('count_confirmation')
+        self.delay.remove('count_confirmation')
 
     def _inform_target_about_incoming_ball(self, target):
         target.add_incoming_ball(self)
