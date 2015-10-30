@@ -824,6 +824,7 @@ class BallDevice(Device):
             if self.is_full():
                 self.log.warning("Device received balls but is already full. "
                                  "Ignoring!")
+                # TODO: ball should be added to pf instead
                 return
 
             self.balls += 1
@@ -892,23 +893,27 @@ class BallDevice(Device):
         return balls
 
     def stop(self, **kwargs):
-        # TODO: convert
-        raise AssertionError("broken")
         """Stops all activity in this device.
 
         Cancels all pending eject requests. Cancels eject confirmation checks.
+        You have to call stop on all connected devices to really reset everything
 
         """
         if self.debug:
             self.log.debug("Stopping all activity via stop()")
+
+        # this will just work if you reset all devices
+        # TODO: properly cancel at target depending on state
+
         self.eject_in_progress_target = None
+        self.num_balls_ejecting = 0
+        self.balls = 0
         self.eject_queue = deque()
-        self.num_jam_switch_count = 0
-
-        # todo jan19 anything to add here?
-
+        self._incoming_balls = deque()
+        self._source_ejecting_balls = 0
         self._cancel_eject_confirmation()
-        self.count_balls()  # need this since we're canceling the eject conf
+
+        return self._switch_state("idle")
 
     def setup_player_controlled_eject(self, balls=1, target=None,
                                       trigger_event=None):
