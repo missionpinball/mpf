@@ -257,10 +257,7 @@ class BallDevice(Device):
         # Reset target
         self.eject_in_progress_target = None
 
-
-
         return self._switch_state("idle")
-
 
     def _state_missing_balls_start(self, balls):
         if self.config['mechanical_eject']:
@@ -413,8 +410,7 @@ class BallDevice(Device):
 
 
     def _state_failed_eject_start(self):
-        # TODO: either do this check in eject_failure or always go to this state
-        # handle retry limit
+        self.eject_failed()
         if (self.config['max_eject_attempts'] != 0 and
             self.num_eject_attempts > self.config['max_eject_attempts']):
             self._eject_permanently_failed()
@@ -449,8 +445,7 @@ class BallDevice(Device):
             # ball probably returned
             self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
             self.balls += 1
-            self.eject_failed()
-            self._switch_state("ejecting")
+            return self._switch_state("failed_eject")
 
     def _state_eject_confirmed_start(self):
         self.eject_in_progress_target = None
@@ -655,7 +650,7 @@ class BallDevice(Device):
             raise AssertionError("Cannot use retry as ball_missing_action " +
                             "when not connected to a ball source")
 
-        self._switch_state("idle")
+        return self._switch_state("idle")
 
     def get_status(self, request=None): # pragma: no cover
         """Returns a dictionary of current status of this ball device.
@@ -995,7 +990,7 @@ class BallDevice(Device):
         self.balls -= 1
 
         self.log.debug("Ball left. New count %s", self.balls)
-        self._switch_state("ball_left")
+        return self._switch_state("ball_left")
 
     def _perform_eject(self, target, **kwargs):
         self._setup_eject_confirmation(target)
@@ -1199,7 +1194,6 @@ class BallDevice(Device):
         if self.debug:
             self.log.debug("Canceling eject confirmations")
         self.eject_in_progress_target = None
-        self.num_eject_attempts = 0
 
         # Remove any event watching for success
         self.machine.events.remove_handler(self._eject_success)
@@ -1311,7 +1305,6 @@ class BallDevice(Device):
             return self._switch_state("failed_confirm")
         elif self._state == "ejecting":
             if not self.mechanical_eject_in_progress:
-                self.eject_failed()
                 return self._switch_state("failed_eject")
         elif self._state == "waiting_for_ball_mechanical":
             return
@@ -1319,7 +1312,7 @@ class BallDevice(Device):
             raise AssertionError("Invalid state " + self._state)
 
 
-    def eject_failed(self, retry=True, force_retry=False):
+    def eject_failed(self, retry=True):
         """Marks the current eject in progress as 'failed.'
 
         Note this is not typically a method that would be called manually. It's
@@ -1332,9 +1325,6 @@ class BallDevice(Device):
             retry: Boolean as to whether this eject should be retried. If True,
                 the ball device will retry the eject again as long as the
                 'max_eject_attempts' has not been exceeded. Default is True.
-            force_retry: Boolean that forces a retry even if the
-                'max_eject_attempts' has been exceeded. Default is False.
-
         """
         # Put the current target back in the queue so we can try again
         # This sets up the timeout back to the default. Wonder if we should
@@ -1353,7 +1343,6 @@ class BallDevice(Device):
         # Reset the stuff that showed a current eject in progress
         self.eject_in_progress_target = None
         self.num_balls_ejecting = 0
-        self.num_eject_attempts += 1
 
         if self.debug:
             self.log.debug("Eject duration: %ss",
