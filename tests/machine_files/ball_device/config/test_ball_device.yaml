@@ -45,6 +45,7 @@ ball_devices:
         ball_switches: s_ball_switch1, s_ball_switch2
         debug: true
         confirm_eject_type: target
+        max_eject_attempts: 3
         eject_targets: test_launcher
         tags: trough, drain, home
     test_launcher:

@@ -412,16 +412,26 @@ class BallDevice(Device):
     def _state_failed_eject_start(self):
         self.eject_failed()
         if (self.config['max_eject_attempts'] != 0 and
-            self.num_eject_attempts > self.config['max_eject_attempts']):
+            self.num_eject_attempts >= self.config['max_eject_attempts']):
             self._eject_permanently_failed()
             # What now? Ball is still in device or switch just broke. At least
             # we are unable to get rid of it
-            return self._switch_state("broken")
+            return self._switch_state("eject_broken")
 
         # TODO: timer for retry
 
         # ball did not leave. eject it again
         return self._switch_state("ejecting")
+
+
+    def _state_eject_broken_start(self):
+        self.log.warn("Ball device is unable to eject ball. Stopping device")
+        # TODO: reactivate after timers? what to do?
+        # TODO: cancel all ejects balls
+        # TODO: cancel all balls
+        self.machine.events.post('balldevice_' + self.name +
+                                 '_eject_broken', source=self)
+
 
     def _state_failed_confirm_start(self):
         timeout = self.config['ball_missing_timeouts'][self.eject_in_progress_target]

@@ -1322,3 +1322,77 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(0, playfield.balls)
         self.assertEquals(0, self._missing)
         self.assertEquals("idle", device1._state)
+
+    def test_permanent_eject_failure(self):
+        coil1 = self.machine.coils['eject_coil1']
+        device1 = self.machine.ball_devices['test_trough']
+        playfield = self.machine.ball_devices['playfield']
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self._captured = 0
+        self._missing = 0
+
+
+        # add two initial balls to trough
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(2, self._captured)
+        self._captured = 0
+        self.assertEquals(0, playfield.balls)
+
+        # it should keep the ball
+        coil1.pulse = MagicMock()
+        self.assertEquals(2, device1.count_balls())
+        assert not coil1.pulse.called
+
+        # request ball
+        playfield.add_ball()
+        self.advance_time_and_run(1)
+
+        # trough eject
+        coil1.pulse.assert_called_once_with()
+        coil1.pulse = MagicMock()
+
+        # timeout is 10s and max 3 retries
+        # ball leaves (1st)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device1.count_balls())
+
+        # and comes back before timeout
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        # after the timeout it should retry
+        self.advance_time_and_run(10)
+        coil1.pulse.assert_called_once_with()
+        coil1.pulse = MagicMock()
+
+
+        # ball leaves (2nd) for more than timeout
+        self.machine.switch_controller.process_switch("s_ball_switch2", 0)
+        self.advance_time_and_run(11)
+        self.assertEquals(1, device1.count_balls())
+
+        # and comes back
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        # trough should retry nearly instantly
+        self.advance_time_and_run(1)
+        coil1.pulse.assert_called_once_with()
+        coil1.pulse = MagicMock()
+
+
+        # ball leaves (3rd)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device1.count_balls())
+
+        # and comes back before timeout
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        # after the timeout the device marks itself as broken and will give up
+        self.advance_time_and_run(10)
+        assert not coil1.pulse.called
+
+        self.assertEquals(0, self._captured)
+        self.assertEquals(0, self._missing)
+        self.assertEquals("eject_broken", device1._state)
