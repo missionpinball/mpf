@@ -1262,3 +1262,63 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(0, self._captured)
         self.assertEquals(0, self._missing)
 
+
+    def test_unstable_switches(self):
+        device1 = self.machine.ball_devices['test_trough']
+        playfield = self.machine.ball_devices['playfield']
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self._captured = 0
+        self._missing = 0
+
+
+        # add two initial balls to trough
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(0.4)
+        # however, second switch is unstable
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.advance_time_and_run(0.4)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 0)
+        self.advance_time_and_run(0.4)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.advance_time_and_run(0.4)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 0)
+        self.advance_time_and_run(0.4)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.advance_time_and_run(0.4)
+
+        self.assertEquals(0, self._captured)
+        self.assertEquals(0, device1.balls)
+        self.assertEquals(0, playfield.balls)
+        self.assertRaises(ValueError, device1._count_balls())
+
+        # the the other one
+        self.machine.switch_controller.process_switch("s_ball_switch1", 0)
+        self.advance_time_and_run(0.4)
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(0.4)
+        self.machine.switch_controller.process_switch("s_ball_switch1", 0)
+        self.advance_time_and_run(0.4)
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(0.4)
+
+        self.assertEquals(0, self._captured)
+        self.assertEquals(0, device1.balls)
+        self.assertEquals(0, playfield.balls)
+        self.assertRaises(ValueError, device1._count_balls())
+
+        self.advance_time_and_run(1)
+        # but finally both are stable
+
+        self.assertEquals(2, self._captured)
+        self.assertEquals(2, device1.balls)
+        self.assertEquals(0, playfield.balls)
+        self.assertEquals(0, self._missing)
+
+        self.advance_time_and_run(100)
+        self.assertEquals(2, self._captured)
+        self.assertEquals(2, device1.balls)
+        self.assertEquals(0, playfield.balls)
+        self.assertEquals(0, self._missing)
+        self.assertEquals("idle", device1._state)
