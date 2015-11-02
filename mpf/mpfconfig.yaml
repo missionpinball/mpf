@@ -177,7 +177,6 @@ config_validator:
         eject_timeouts: list|ms|None
         ball_missing_timeouts: list|ms|None
         ball_missing_target: single|str|playfield
-        ball_missing_action: single|str|ignore
         confirm_eject_switch: single|self.machine.switches[%]|None
         confirm_eject_event: single|str|None
         balls_per_eject: single|int|1

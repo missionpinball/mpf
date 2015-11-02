@@ -90,8 +90,6 @@ class BallDevice(Device):
 
         self._source_devices = []
 
-        self._is_connected_to_ball_source_state = None
-
         self._blocked_eject_attempts = deque()
 
         self.pending_eject_event_keys = set()
@@ -241,15 +239,10 @@ class BallDevice(Device):
 
 
     def _state_lost_balls_start(self, balls):
-        # Request a new ball depending on setting
-        if  self.config['ball_missing_action'] == "retry":
-            self.log.debug("Lost %s balls during eject. Will retry the "
-                           "eject.", balls)
-            self.eject_failed()
-        else:
-            self.log.debug("Lost %s balls during eject. Will ignore the "
-                           "loss.", balls)
-            self.eject_failed(retry=False)
+        # Handle lost ball
+        self.log.debug("Lost %s balls during eject. Will ignore the "
+                       "loss.", balls)
+        self.eject_failed(retry=False)
 
         self._balls_missing(balls)
 
@@ -665,11 +658,6 @@ class BallDevice(Device):
 
 
     def _initialize3(self):
-        if (not self.is_connected_to_ball_source() and
-            self.config['ball_missing_action'] == "retry"):
-            raise AssertionError("Cannot use retry as ball_missing_action " +
-                            "when not connected to a ball source")
-
         return self._switch_state("idle")
 
     def get_status(self, request=None): # pragma: no cover
@@ -877,18 +865,6 @@ class BallDevice(Device):
             return 0
         else:
             return capacity
-
-    def is_connected_to_ball_source(self):
-        if "drain" in self.tags:
-            return True
-
-        if self._is_connected_to_ball_source_state == None:
-            self._is_connected_to_ball_source_state = False
-            for source in self._source_devices:
-                if source.is_connected_to_ball_source():
-                    self._is_connected_to_ball_source_state = True
-                    break
-        return self._is_connected_to_ball_source_state
 
     def _find_one_available_ball(self, path=deque()):
         # copy path
