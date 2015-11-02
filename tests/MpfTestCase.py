@@ -49,8 +49,10 @@ class MpfTestCase(unittest.TestCase):
 
 
     def setUp(self):
-        # TODO: more unittest way of logging
-    
+        # no logging by default
+        #logging.basicConfig(level=99)
+
+        # uncomment for debug
         logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
 
