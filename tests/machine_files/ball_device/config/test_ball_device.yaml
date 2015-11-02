@@ -71,6 +71,7 @@ ball_devices:
     test_target3:
         eject_coil: eject_coil5
         ball_switches: s_ball_switch_target3
+        eject_targets: playfield, test_trough
         confirm_eject_type: target
         debug: true
 

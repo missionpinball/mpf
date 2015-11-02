@@ -52,6 +52,7 @@ class Playfield(BallDevice):
 
         # Attributes
         self._balls = 0
+        self.available_balls=0
         self.num_balls_requested = 0
         self.queued_balls = list()
         self._playfield = True

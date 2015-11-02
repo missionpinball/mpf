@@ -42,6 +42,8 @@ class BallDevice(Device):
         self.balls = 0
         """Number of balls currently contained (held) in this device."""
 
+        self.available_balls = 0
+
         self.eject_queue = deque()
         """ Queue of the list of eject targets (ball devices) for the balls this
         device is trying to eject.
@@ -100,6 +102,8 @@ class BallDevice(Device):
 
         self._incoming_balls = deque()
 
+        self.ball_requests = deque()
+
         self._source_ejecting_balls = 0
 
         self.machine.events.add_handler('init_phase_2',
@@ -149,12 +153,6 @@ class BallDevice(Device):
             if self.balls > 0:
                 return self._switch_state("wait_for_eject")
             else:
-                # only request ball if we have no incomings
-                if not len(self._incoming_balls) and not self._source_ejecting_balls:
-                    if self.debug:
-                        self.log.debug("Don't have any balls. Requesting one.")
-                    self._request_one_ball()
-
                 return self._switch_state("waiting_for_ball")
 
 
@@ -192,7 +190,7 @@ class BallDevice(Device):
             self._incoming_balls.popleft()
             missing_balls += 1
         if missing_balls > 0:
-            # TODO: handle this more list lost_balls. we may have to cancel ejects
+            # TODO: handle this more like lost_balls. we may have to cancel ejects
             return self._switch_state("missing_balls",
                                 balls=missing_balls)
 
@@ -231,6 +229,8 @@ class BallDevice(Device):
 
         if balls > 0:
             self._handle_unexpected_balls(balls)
+
+        self.available_balls += balls
 
         self.log.debug("Processing %s new balls", balls)
         self.machine.events.post_relay('balldevice_' + self.name +
@@ -321,7 +321,6 @@ class BallDevice(Device):
         # Default: wait
 
     def add_incoming_ball(self, source):
-        # TODO: replace by an event
         timeout = 60
         self._incoming_balls.append((time.time() + timeout, source))
         self.delay.add(ms=timeout * 1000, callback=self._timeout_incoming)
@@ -344,7 +343,6 @@ class BallDevice(Device):
             return self._count_balls()
 
     def remove_incoming_ball(self, source):
-        # TODO: replace by an event
         self._incoming_balls.popleft()
 
     def _state_ball_left_start(self):
@@ -363,7 +361,6 @@ class BallDevice(Device):
                                  target=self.eject_in_progress_target,
                                  num_attempts=self.num_eject_attempts)
 
-        # TODO: do this also for player controlled eject
         if self.config['confirm_eject_type'] == 'target':
             self._inform_target_about_incoming_ball(self.eject_in_progress_target)
 
@@ -470,7 +467,6 @@ class BallDevice(Device):
             self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
 
         # We are screwed now!
-        # TODO: this is not missing. its lost balls. separate!
         return self._switch_state("lost_balls",
                     balls=1)
 
@@ -481,6 +477,13 @@ class BallDevice(Device):
             new_list.append(self.machine.ball_devices[target])
 
         self.config['eject_targets'] = new_list
+
+
+    def _source_device_balls_available(self, **kwargs):
+        if len(self.ball_requests):
+            (target, callback) = self.ball_requests.popleft()
+            if self._setup_or_queue_eject_to_target(target, callback):
+                return False
 
     def _source_device_eject_attempt(self, balls, target, source, queue, **kwargs):
         if target != self:
@@ -527,8 +530,16 @@ class BallDevice(Device):
         if target != self:
             return
 
+        if self.available_balls > 0:
+            self.available_balls -= 1
+            return
+
+        if not len(self.eject_queue):
+            raise AssertionError("Should have eject_queue")
+
+        self._cancel_eject()
+
         if self._state == "waiting_for_ball":
-            self._cancel_eject()
             return self._switch_state("idle")
 
     def _source_device_eject_success(self, balls, target, **kwargs):
@@ -612,11 +623,6 @@ class BallDevice(Device):
         for target in self.config['eject_targets']:
             # Target device is requesting a ball
 
-            self.machine.events.add_handler(
-                'balldevice_{}_ball_request'.format(target.name),
-                self._eject_request, target=target)
-
-
             # Target device is now able to receive a ball
             self.machine.events.add_handler(
                 'balldevice_{}_ok_to_receive'.format(target.name),
@@ -649,6 +655,10 @@ class BallDevice(Device):
                     self.machine.events.add_handler(
                         'balldevice_{}_ball_lost'.format(device.name),
                         self._source_device_ball_lost)
+
+                    self.machine.events.add_handler(
+                        'balldevice_balls_available'.format(device.name),
+                        self._source_device_balls_available)
 
 
                     break
@@ -771,8 +781,20 @@ class BallDevice(Device):
         # If we still have balls here, that means that no one claimed them, so
         # essentially they're "stuck." So we just eject them... unless this
         # device is tagged 'trough' in which case we let it keep them.
-        if balls and 'trough' not in self.tags:
-            self._eject_request(balls)
+        if balls:
+            if 'trough' not in self.tags:
+                target = self.machine.ball_devices[self.config['captures_from']]
+                path = self._find_path_to_target(target)
+                if not path:
+                    raise AssertionError("Could not find path to target")
+                for i in range(balls):
+                    self.setup_eject_chain(path)
+            else:
+                # tell targets that we have balls available
+                for i in range(balls):
+                    self.machine.events.post_boolean('balldevice_balls_available')
+
+
 
         self._count_consistent = True
 
@@ -841,9 +863,7 @@ class BallDevice(Device):
 
         return self.config['ball_capacity'] - self.balls
 
-
     def get_additional_ball_capacity(self):
-        # TODO: deprecated. Name is missleading
         """Returns an integer value of the number of balls this device can
             receive. A return value of 0 means that this device is full and/or
             that it's not able to receive any balls at this time due to a
@@ -870,11 +890,25 @@ class BallDevice(Device):
                     break
         return self._is_connected_to_ball_source_state
 
-    def _request_one_ball(self):
-        # this will request a ball. no matter what
-        self.machine.events.post('balldevice_' + self.name +
-                                 '_ball_request', balls=1)
+    def _find_one_available_ball(self, path=deque()):
+        # copy path
+        path = deque(path)
 
+        # prevent loops
+        if self in path:
+            return False
+
+        path.appendleft(self)
+
+        if self.available_balls > 0:
+            return path
+
+        for source in self._source_devices:
+            full_path = source._find_one_available_ball(path=path)
+            if full_path:
+                return full_path
+
+        return False
 
     def request_ball(self, balls=1):
         """Request that one or more balls is added to this device.
@@ -888,7 +922,7 @@ class BallDevice(Device):
             self.log.debug("Requesting Ball(s). Balls=%s", balls)
 
         for i in range(balls):
-            self._request_one_ball()
+            self._setup_or_queue_eject_to_target(self)
 
         return balls
 
@@ -915,6 +949,29 @@ class BallDevice(Device):
 
         return self._switch_state("idle")
 
+    def _setup_or_queue_eject_to_target(self, target, callback=None):
+        if self.available_balls > 0 and self != target:
+            path = deque()
+            path.append(self)
+            path.append(target)
+        else:
+
+            path = self._find_one_available_ball()
+            if not path:
+                # TODO: put into queue here
+                self.ball_requests.append((target, callback))
+                return False
+
+            if target != self:
+                if target not in self.config['eject_targets']:
+                    raise AssertionError("Do not know how to eject to " + target.name)
+
+                path.append(target)
+
+        path[0].setup_eject_chain(path=path)
+
+        return True
+
     def setup_player_controlled_eject(self, balls=1, target=None,
                                       trigger_event=None):
         # TODO: handle trigger_event
@@ -931,13 +988,67 @@ class BallDevice(Device):
 
         assert balls == 1
 
+        self._setup_or_queue_eject_to_target(self)
+
+        # TODO: use callback here!
+        self.available_balls -= 1
+        target.available_balls += 1
+
         self.eject_queue.append((target, True, trigger_event))
+
         return self._count_balls()
 
-    def _eject_request(self, balls=1, target=None, **kwargs):
-        # TODO: make sure only one device ejects
-        if balls:
-            self.eject(balls, target, **kwargs)
+    def setup_eject_chain(self, path):
+        if self.available_balls <= 0:
+            raise AssertionError("Do not have balls")
+
+        self.available_balls -= 1
+
+        target = path[len(path)-1]
+        source = path.popleft()
+        if source != self:
+            raise AssertionError("Path starts somewhere else!")
+
+        self._setup_eject_chain(path=path)
+
+        target.available_balls += 1
+
+
+    def _setup_eject_chain(self, path):
+
+        next_hop = path.popleft()
+
+        if next_hop not in self.config['eject_targets']:
+            raise AssertionError("Broken path")
+
+        # append to queue
+        self.eject_queue.append((next_hop, False, None))
+
+        # check if we traversed the whole path
+        if len(path) > 0:
+            next_hop._setup_eject_chain(path)
+
+        method_name = "_state_" + self._state + "_eject_request"
+        method = getattr(self, method_name, lambda: None)
+        method()
+
+
+    def _find_path_to_target(self, target):
+        # if we can eject to target directly just do it
+        if target in self.config['eject_targets']:
+            path = deque()
+            path.appendleft(target)
+            path.appendleft(self)
+            return path
+        else:
+            # otherwise find any target which can
+            for target_device in self.config['eject_targets']:
+                path = target_device._find_path_to_target(target)
+                if path:
+                    path.appendleft(self)
+                    return path
+
+        return False
 
     def eject(self, balls=1, target=None, **kwargs):
         if not target:
@@ -952,15 +1063,10 @@ class BallDevice(Device):
 
         # add request to queue
         for i in range(balls):
-            self.eject_queue.append((target, False, None))
+            self._setup_or_queue_eject_to_target(target)
 
         if self.debug:
             self.log.debug('Queue %s.', self.eject_queue)
-
-        # call status handler if any
-        method_name = "_state_" + self._state + "_eject_request"
-        method = getattr(self, method_name, lambda: None)
-        method()
 
     def eject_all(self, target=None):
         """Ejects all the balls from this device

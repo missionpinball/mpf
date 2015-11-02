@@ -263,8 +263,14 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.advance_time_and_run(3)
         self.assertEquals(1, device2.count_balls())
 
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
+
         # player drinks his coffee
         self.advance_time_and_run(300)
+
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
 
         # player shoots the ball again
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)

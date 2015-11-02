@@ -695,15 +695,28 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(1, device3.count_balls())
 
 
-        # eject of launcher should be confirmed now but target1 did not request
+        # eject of launcher should be confirmed now and trough can eject
         # the next ball
-        assert not coil1.pulse.called
+        coil1.pulse.assert_called_once_with()
         assert not coil2.pulse.called
         coil3.pulse.assert_called_once_with()
         self.advance_time_and_run(1)
 
-        self.assertEquals(-1, self._captured)
+        self.machine.switch_controller.process_switch("s_ball_switch1", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, device1.count_balls())
 
+        # launcher receives a ball but cannot send it to target1 because its busy
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device2.count_balls())
+
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
+        coil3.pulse.assert_called_once_with()
+
+
+        self.assertEquals(-1, self._captured)
         self.assertEquals(0, playfield.balls)
         self.assertEquals(0, self._missing)
 
@@ -715,20 +728,6 @@ class TestBallDevice(MpfTestCase):
 
         # wait for confirm
         self.advance_time_and_run(10)
-
-        coil1.pulse.assert_called_once_with()
-        assert not coil2.pulse.called
-        coil3.pulse.assert_called_once_with()
-
-        self.machine.switch_controller.process_switch("s_ball_switch1", 0)
-        self.advance_time_and_run(1)
-        self.assertEquals(0, device1.count_balls())
-
-        # launcher receives a ball and should send it to target1
-        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
-        self.advance_time_and_run(1)
-        self.assertEquals(1, device2.count_balls())
-        self.assertEquals(-1, self._captured)
 
         # launcher should now eject the second ball
         coil1.pulse.assert_called_twice_with()
@@ -1396,3 +1395,176 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(0, self._captured)
         self.assertEquals(0, self._missing)
         self.assertEquals("eject_broken", device1._state)
+
+
+    def test_request_loops(self):
+        # nobody has a ball and we request one. then we add a ball in the chain
+        trough = self.machine.ball_devices['test_trough']
+        trough2 = self.machine.ball_devices['test_target2']
+        launcher = self.machine.ball_devices['test_launcher']
+        target1 = self.machine.ball_devices['test_target1']
+        target3 = self.machine.ball_devices['test_target3']
+        playfield = self.machine.ball_devices['playfield']
+
+        coil1 = self.machine.coils['eject_coil1']
+        coil2 = self.machine.coils['eject_coil2']
+        coil3 = self.machine.coils['eject_coil3']
+        coil4 = self.machine.coils['eject_coil4']
+        coil5 = self.machine.coils['eject_coil5']
+
+        coil1.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+        coil3.pulse = MagicMock()
+        coil4.pulse = MagicMock()
+        coil5.pulse = MagicMock()
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self._captured = 0
+        self._missing = 0
+
+
+        # no initial balls
+        # request ball
+        playfield.add_ball()
+        self.advance_time_and_run(1)
+
+        self.assertEquals(1, len(target1.ball_requests))
+        # should not crash
+
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+        assert not coil4.pulse.called
+        assert not coil5.pulse.called
+
+        # trough captures2 a ball
+        self.machine.switch_controller.process_switch("s_ball_switch_target2_1", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, self._captured)
+        self._captured = 0
+
+        self.assertEquals(0, len(target1.ball_requests))
+
+        # trough2 eject
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+        coil4.pulse.assert_called_once_with()
+        assert not coil5.pulse.called
+        self.machine.switch_controller.process_switch("s_ball_switch_target2_1", 0)
+        self.advance_time_and_run(1)
+
+        # ball enters launcher2
+        self.machine.switch_controller.process_switch("s_ball_switch_target3", 1)
+        self.advance_time_and_run(1)
+
+
+        # launcher2 eject
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+        coil4.pulse.assert_called_once_with()
+        coil5.pulse.assert_called_once_with()
+        self.machine.switch_controller.process_switch("s_ball_switch_target3", 0)
+        self.advance_time_and_run(1)
+
+
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(1)
+
+
+        # trough eject
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+        coil4.pulse.assert_called_once_with()
+        coil5.pulse.assert_called_once_with()
+
+        self.machine.switch_controller.process_switch("s_ball_switch1", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, trough.count_balls())
+
+        # launcher receives and ejects ball
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, launcher.count_balls())
+
+        coil1.pulse.assert_called_once_with()
+        coil2.pulse.assert_called_once_with()
+        assert not coil3.pulse.called
+        coil4.pulse.assert_called_once_with()
+        coil5.pulse.assert_called_once_with()
+
+
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+
+        # target1 receives and ejects ball
+        self.machine.switch_controller.process_switch("s_ball_switch_target1", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, target1.count_balls())
+
+        coil1.pulse.assert_called_once_with()
+        coil2.pulse.assert_called_once_with()
+        coil3.pulse.assert_called_once_with()
+        coil4.pulse.assert_called_once_with()
+        coil5.pulse.assert_called_once_with()
+
+
+        self.assertEquals(0, playfield.balls)
+        self.machine.switch_controller.process_switch("s_ball_switch_target1", 0)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(10)
+
+        # TODO:
+#        self.assertEquals("idle", launcher._state)
+
+        self.assertEquals(1, playfield.balls)
+        self.assertEquals(0, self._captured)
+
+    def test_unexpected_balls(self):
+        launcher = self.machine.ball_devices['test_launcher']
+        target1 = self.machine.ball_devices['test_target1']
+        playfield = self.machine.ball_devices['playfield']
+
+        coil2 = self.machine.coils['eject_coil2']
+        coil3 = self.machine.coils['eject_coil3']
+
+        coil2.pulse = MagicMock()
+        coil3.pulse = MagicMock()
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self._captured = 0
+        self._missing = 0
+
+
+        # launcher catches a random ball
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, self._captured)
+        self._captured = 0
+
+        # trough2 eject
+        coil2.pulse.assert_called_once_with()
+        assert not coil3.pulse.called
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+        self.advance_time_and_run(1)
+
+        # ball enters target1
+        self.machine.switch_controller.process_switch("s_ball_switch_target1", 1)
+        self.advance_time_and_run(1)
+
+        # target1 should put it to the playfield
+        coil2.pulse.assert_called_once_with()
+        coil3.pulse.assert_called_once_with()
+
+        self.assertEquals(0, playfield.balls)
+        self.machine.switch_controller.process_switch("s_ball_switch_target1", 0)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(10)
+
+        self.assertEquals("idle", launcher._state)
+
+        self.assertEquals(1, playfield.balls)
+        self.assertEquals(0, self._captured)
