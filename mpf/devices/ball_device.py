@@ -230,6 +230,10 @@ class BallDevice(Device):
 
         self.available_balls += balls
 
+        # tell targets that we have balls available
+        for i in range(balls):
+            self.machine.events.post_boolean('balldevice_balls_available')
+
         self.log.debug("Processing %s new balls", balls)
         self.machine.events.post_relay('balldevice_' + self.name +
                                        '_ball_enter',
@@ -474,8 +478,8 @@ class BallDevice(Device):
 
     def _source_device_balls_available(self, **kwargs):
         if len(self.ball_requests):
-            (target, callback) = self.ball_requests.popleft()
-            if self._setup_or_queue_eject_to_target(target, callback):
+            (target, player_controlled) = self.ball_requests.popleft()
+            if self._setup_or_queue_eject_to_target(target, player_controlled):
                 return False
 
     def _source_device_eject_attempt(self, balls, target, source, queue, **kwargs):
@@ -777,10 +781,6 @@ class BallDevice(Device):
                     raise AssertionError("Could not find path to target")
                 for i in range(balls):
                     self.setup_eject_chain(path)
-            else:
-                # tell targets that we have balls available
-                for i in range(balls):
-                    self.machine.events.post_boolean('balldevice_balls_available')
 
 
 
@@ -925,7 +925,7 @@ class BallDevice(Device):
 
         return self._switch_state("idle")
 
-    def _setup_or_queue_eject_to_target(self, target, callback=None):
+    def _setup_or_queue_eject_to_target(self, target, player_controlled=False):
         if self.available_balls > 0 and self != target:
             path = deque()
             path.append(self)
@@ -935,7 +935,7 @@ class BallDevice(Device):
             path = self._find_one_available_ball()
             if not path:
                 # TODO: put into queue here
-                self.ball_requests.append((target, callback))
+                self.ball_requests.append((target, player_controlled))
                 return False
 
             if target != self:
@@ -944,7 +944,7 @@ class BallDevice(Device):
 
                 path.append(target)
 
-        path[0].setup_eject_chain(path=path)
+        path[0].setup_eject_chain(path, player_controlled)
 
         return True
 
@@ -964,7 +964,7 @@ class BallDevice(Device):
 
         assert balls == 1
 
-        self._setup_or_queue_eject_to_target(self)
+        self._setup_or_queue_eject_to_target(self, True)
 
         # TODO: use callback here!
         self.available_balls -= 1
@@ -974,7 +974,7 @@ class BallDevice(Device):
 
         return self._count_balls()
 
-    def setup_eject_chain(self, path):
+    def setup_eject_chain(self, path, player_controlled=False):
         if self.available_balls <= 0:
             raise AssertionError("Do not have balls")
 
@@ -985,12 +985,13 @@ class BallDevice(Device):
         if source != self:
             raise AssertionError("Path starts somewhere else!")
 
-        self._setup_eject_chain(path=path)
+        self._setup_eject_chain(path, player_controlled)
 
         target.available_balls += 1
 
+        self.machine.events.post_boolean('balldevice_balls_available')
 
-    def _setup_eject_chain(self, path):
+    def _setup_eject_chain(self, path, player_controlled):
 
         next_hop = path.popleft()
 
@@ -998,11 +999,14 @@ class BallDevice(Device):
             raise AssertionError("Broken path")
 
         # append to queue
-        self.eject_queue.append((next_hop, False, None))
+        if player_controlled and self.config['mechanical_eject']:
+            self.eject_queue.append((next_hop, True, None))
+        else:
+            self.eject_queue.append((next_hop, False, None))
 
         # check if we traversed the whole path
         if len(path) > 0:
-            next_hop._setup_eject_chain(path)
+            next_hop._setup_eject_chain(path, player_controlled)
 
         method_name = "_state_" + self._state + "_eject_request"
         method = getattr(self, method_name, lambda: None)
