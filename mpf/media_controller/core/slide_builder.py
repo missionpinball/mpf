@@ -96,7 +96,11 @@ class SlideBuilder(object):
         # getting the preprocessed entry in their dict but they're not a list???
         # todo
 
-        settings = deepcopy(settings)
+        if not settings:
+            settings = list()
+            settings.append(dict())
+        else:
+            settings = deepcopy(settings)
 
         if type(settings) is list and 'preprocessed' in settings[0]:
             return settings
@@ -118,6 +122,7 @@ class SlideBuilder(object):
         first_settings['slide_name'] = None
 
         for element in settings:
+
             # Create a slide name based on the event name if one isn't specified
             if 'slide_name' in element:
                 first_settings['slide_name'] = element.pop('slide_name')
@@ -180,6 +185,9 @@ class SlideBuilder(object):
             showing now).
 
         """
+        if mode and not mode.active:
+            return
+
         if 'preprocessed' not in settings[0]:
             settings = self.preprocess_settings(settings)
 
@@ -187,16 +195,25 @@ class SlideBuilder(object):
             try:
                 display = self.machine.display.displays[display]
             except KeyError:
-                pass
+                display = self.machine.display.default_display
+                self.log.warning("Display :%s is not a valid display. Using "
+                                 "default",display)
+
         elif 'display' in settings[0]:
             try:
                 display = self.machine.display.displays[settings[0]['display']]
             except KeyError:
-                pass
+                display = self.machine.display.default_display
+                self.log.warning("Display :%s is not a valid display. Using "
+                                 "default", display)
         else:
             display = self.machine.display.default_display
 
         if not display:
+            return
+
+        if 'clear_slides' in settings[0] and settings[0]['clear_slides']:
+            display.remove_slides_from_mode(mode)
             return
 
         # What priority?
@@ -246,9 +263,10 @@ class SlideBuilder(object):
         try:
             element_type = settings.pop('type').lower()
         except KeyError:
-            self.log.error("_add_element failed to find 'type' in settings. "
-                           "Slide: %s, text_vars: %s, Settings: %s", slide,
+            self.log.debug("_add_element failed to find 'type' in settings. "
+                           "Slide: %s, text_vars: %s, Settings: %s", slide_obj,
                            text_variables, settings)
+            return
 
         element = slide_obj.add_element(element_type,
             text_variables=text_variables, **settings)

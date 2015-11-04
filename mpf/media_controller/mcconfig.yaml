@@ -1,13 +1,12 @@
 # config_version=3
 media_controller:
     modules:
-
         mode_controller.ModeController
         language.Language
         display.DisplayController
+        sound.SoundController
         show_controller.ShowController
         keyboard.Keyboard
-        sound.SoundController
     
     port: 5050
     exit_on_disconnect: yes
@@ -150,16 +149,24 @@ slide_player:
         text: "VOLUME: %display_volume%"
         expire: 2s
         slide_priority: 10000
-    assets_to_load:
-        type: text
-        text: "LOADING ASSETS: %assets% TO GO"
+    asset_loader:
+      type: text
+      text: "LOADING: %percent%%"
+      font: small
+    asset_loading_complete:
+
+    waiting_for_client_connection:
+      - type: text
+        text: WAITING FOR
         font: small
-        expire: 1s
-    assets_loading_complete:
-        type: text
-        text: ASSET LOADING COMPLETE
+        v_pos: center
+        y: -4
+        slide: waiting
+      - type: text
+        text: CLIENT CONNECTION...
         font: small
-        expire: 1s
+        v_pos: center
+        y: 4
 
 debug_profiles:
     verbose:

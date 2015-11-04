@@ -20,6 +20,8 @@ mpf:
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
         - scoring: mpf.system.scoring.ScoreController
 
+    platform_overlays:
+        - snux: mpf.platform.snux.Snux
 
     device_modules:
         driver.Driver
@@ -43,15 +45,25 @@ mpf:
         ball_lock.BallLock
         multiball.Multiball
         ball_save.BallSave
+        driver_enabled.DriverEnabled
 
     plugins:
-        auditor
-        ball_save
-        ball_search
-        info_lights
-        osc
-        socket_events
-        switch_player
+        mpf.plugins.auditor.Auditor
+        mpf.plugins.ball_search.BallSearch
+        mpf.plugins.info_lights.InfoLights
+        mpf.plugins.osc.OSC
+        mpf.plugins.socket_events.SocketClient
+        mpf.plugins.switch_player.SwitchPlayer
+
+    platforms:
+        fadecandy: mpf.platform.fadecandy.HardwarePlatform
+        fast: mpf.platform.fast.HardwarePlatform
+        p_roc:  mpf.platform.p_roc.HardwarePlatform
+        p3_roc:  mpf.platform.p3_roc.HardwarePlatform
+        smartmatrix: mpf.platform.smartmatrix.HardwarePlatform
+        snux: mpf.platform.snux.Snux
+        virtual: mpf.platform.virtual.HardwarePlatform
+
 
     paths:
         scriptlets: scriptlets
@@ -60,6 +72,7 @@ mpf:
         machine_vars: data/machine_vars.yaml
         high_scores: data/high_scores.yaml
         config_cache: data/config_cache.yaml
+        earnings: data/earnings.yaml
         machine_files: machine_files
         config: config
         modes: modes
@@ -150,6 +163,7 @@ config_validator:
         entrance_count_delay: single|ms|500ms
         eject_coil: single|self.machine.coils[%]|None
         hold_coil: single|self.machine.coils[%]|None
+        hold_coil_release_time: single|ms|1s
         hold_events: dict|str:ms|None
         hold_switches: list|self.machine.switches[%]|None
         eject_switch: single|self.machine.switches[%]|None
@@ -174,6 +188,8 @@ config_validator:
         stop_events: dict|str:ms|None
         eject_events: dict|str:ms|None
         eject_all_events: dict|str:ms|None
+        mechanical_eject: single|bool|False
+        mechanical_eject_trigger_time: single|ms|200ms
     ball_locks:
         balls_to_lock: single|int|
         lock_devices: list|self.machine.ball_devices[%]|
@@ -184,16 +200,21 @@ config_validator:
         debug: single|bool|False
         enable_events: dict|str:ms|ball_started
         disable_events: dict|str:ms|ball_ending
-        reset_events: dict|str:ms|machine_reset_phase_3
+        reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
         release_one_events: dict|str:ms|None
     ball_saves:
         source_playfield: single|self.machine.ball_devices[%]|playfield
-        auto_disable_time: single|ms|0
+        active_time: single|ms|0
+        hurry_up_time: single|ms|0
+        grace_period: single|ms|0
+        auto_launch: single|bool|True
+        balls_to_save: single|int|1
         tags: list|str|None
         label: single|str|%
         debug: single|bool|False
         enable_events: dict|str:ms|None
         disable_events: dict|str:ms|ball_ending
+        timer_start_events: dict|str:ms|None
     bcp:
       connections:
         host: single|str|None
@@ -203,7 +224,6 @@ config_validator:
     coils:
         number: single|str|
         number_str: single|str|
-
         pulse_ms: single|int|None
         pwm_on_ms: single|int|None
         pwm_off_ms: single|int|None
@@ -223,6 +243,22 @@ config_validator:
         disable_events: dict|str:ms|None
         pulse_events: dict|str:ms|None
         platform: single|str|None
+    credits:
+      max_credits: single|int|0
+      free_play: single|bool|yes
+      service_credits_switch: list|self.machine.switches[%]|None
+      fractional_credit_expiration_time: single|ms|0
+      credit_expiration_time: single|ms|0
+      persist_credits_while_off_time: single|secs|1h
+      free_play_string: single|str|FREE PLAY
+      credits_string: single|str|CREDITS
+      switches:
+        switch: single|self.machine.switches[%]|None
+        value: single|float|0.25
+        type: single|str|money
+      pricing_tiers:
+        price: single|float|.50
+        credits: single|int|1
     diverters:
         type: single|str|hold
         activation_time: single|ms|0
@@ -255,6 +291,16 @@ config_validator:
         recycle_ms: single|int|None
         debounced: single|bool|False
         drive_now: single|bool|False
+    driver_enabled:
+        number: single|str|
+        number_str: single|str|
+        allow_enable: single|bool|True
+        tags: list|str|None
+        label: single|str|%
+        debug: single|bool|False
+        platform: single|str|None
+        enable_events: dict|str:ms|ball_started
+        disable_events: dict|str:ms|ball_ending
 
     drop_targets:
         switch: single|self.machine.switches[%]|
@@ -266,7 +312,7 @@ config_validator:
         reset_events: dict|str:ms|ball_starting, machine_reset_phase_3
         knockdown_events: dict|str:ms|None
     drop_target_banks:
-        drop_targets: set|self.machine.drop_targets[%]|
+        drop_targets: list|self.machine.drop_targets[%]|
         reset_coil: single|self.machine.coils[%]|None
         reset_coils: list|self.machine.coils[%]|None
         tags: list|str|None
@@ -308,6 +354,7 @@ config_validator:
         disable_events: dict|str:ms|ball_ending
         enable_no_hold_events: dict|str:ms|None
         invert_events: dict|str:ms|None
+        enable_driver: single|self.machine.coils[%]|None
 
         # hw rules settings overrides
         pulse_ms: single|int|None
@@ -323,6 +370,12 @@ config_validator:
         debounced: single|bool|False
         drive_now: single|bool|False
 
+    game:
+      balls_per_game: single|int|3
+      max_players: single|int|4
+      start_game_switch_tag: single|str|start
+      add_player_switch_tag: single|str|start
+
     gis:
         number: single|str|
         number_str: single|str|
@@ -333,12 +386,24 @@ config_validator:
         enable_events: dict|str:ms|machine_reset_phase_3
         disable_events: dict|str:ms|None
         platform: single|str|None
+
+    hardware:
+      platform: single|str|virtual
+      coils: single|str|default
+      switches: single|str|default
+      matrix_lights: single|str|default
+      leds: single|str|default
+      dmd: single|str|default
+      gis: single|str|default
+      flashers: single|str|default
+      driverboards: single|str|
+
     leds:
         number: single|str|
         number_str: single|str|
         polarity: single|bool|False
         default_color: single|str|ffffff
-        brightness_compensation: list|float|1.0
+        brightness_compensation: list|float|1.0, 1.0, 1.0
         fade_ms: single|int|None
         tags: list|str|None
         label: single|str|%
@@ -349,8 +414,18 @@ config_validator:
         x: single|int|None
         y: single|int|None
         z: single|int|None
+
+    led_settings:
+        brightness_compensation: list|float|1.0, 1.0, 1.0
+        default_led_fade_ms: single|int|100
+        gamma: single|float|2.5
+        whitepoint: list|float|1.0, 1.0, 1.0
+        linear_slope: single|float|1.0
+        linear_cutoff: single|float|0.0
+        keyframe_interpolation: single|bool|True
+        dithering: single|bool|True
+
     machine:
-        hz: single|int|30
         balls_installed: single|int|1
         min_balls: single|int|1
         glass_off_mode: single|bool|True
@@ -374,6 +449,8 @@ config_validator:
         stop_priority: single|int|0
         use_wait_queue: single|bool|False
         code: single|str|None
+        stop_on_ball_end: single|bool|True
+        restart_on_next_ball: single|bool|False
     multiballs:
         ball_count: single|int|
         source_playfield: single|self.machine.ball_devices[%]|playfield
@@ -384,7 +461,7 @@ config_validator:
         debug: single|bool|False
         enable_events:  dict|str:ms|ball_started
         disable_events:  dict|str:ms|ball_ending
-        reset_events:  dict|str:ms|machine_reset_phase_3
+        reset_events:  dict|str:ms|machine_reset_phase_3, ball_starting
         start_events:  dict|str:ms|None
         stop_events:  dict|str:ms|None
     playfields:
@@ -394,7 +471,7 @@ config_validator:
         debug: single|bool|False
     playfield_transfers:
         ball_switch: single|self.machine.switches[%]|
-        eject_target: single|self.machine.ball_device[%]|
+        eject_target: single|self.machine.ball_devices[%]|
         captures_from: single|self.machine.ball_devices[%]|
         tags: list|str|None
         label: single|str|%
@@ -471,24 +548,27 @@ config_validator:
         advance_events: dict|str:ms|None
         remove_active_profile_events: dict|str:ms|None
     shot_profiles:
-            loop: single|bool|False
-            state_names_to_rotate: list|str|None
-            state_names_to_not_rotate: list|str|None
-            rotation_pattern: list|str|R
-            player_variable: single|str|None
-            advance_on_hit: single|bool|True
-            lights_when_disabled: single|bool|True
-            block: single|bool|true
-            states:
-                name: single|str|
-                light_script: single|str|None
-                hold: single|bool|True
-                reset: single|bool|False
-                repeat: single|bool|True
-                blend: single|bool|False
-                tocks_per_sec: single|int|10
-                num_repeats: single|int|0
-                sync_ms:  single|int|0
+        loop: single|bool|False
+        state_names_to_rotate: list|str|None
+        state_names_to_not_rotate: list|str|None
+        rotation_pattern: list|str|R
+        player_variable: single|str|None
+        advance_on_hit: single|bool|True
+        lights_when_disabled: single|bool|True
+        block: single|bool|true
+        states:
+            name: single|str|
+            light_script: single|str|None
+            hold: single|bool|True
+            reset: single|bool|False
+            repeat: single|bool|True
+            blend: single|bool|False
+            tocks_per_sec: single|int|10
+            num_repeats: single|int|0
+            sync_ms:  single|int|0
+    snux:
+        flipper_enable_driver_number: single|int|c23
+        diag_led_driver_number: single|str|c24
     switches:
         number: single|str|
         number_str: single|str|
@@ -503,23 +583,25 @@ config_validator:
         platform: single|str|None
         debounce_open: single|ms|None
         debounce_close: single|ms|None
+    system11:
+        ac_relay_delay_ms: single|int|75
+        ac_relay_driver_number: single|str|
+
+    tilt:
+      tilt_warning_switch_tag: single|str|tilt_warning
+      tilt_switch_tag: single|str|tilt
+      slam_tilt_switch_tag: single|str|slam_tilt
+      warnings_to_tilt: single|int|3
+      reset_warnings_events: list|str|ball_ending
+      multiple_hit_window: single|ticks_int|300ms
+      settle_time: single|ticks_int|5s
+      tilt_warnings_player_var: single|str|tilt_warnings
+
+    timing:
+      hz: single|int|30
+      hw_thread_sleep_ms: single|int|1
 
 # Default settings for machines. All can be overridden
-
-
-timing:
-    hz: 30
-    hw_thread_sleep_ms: 1
-
-hardware:
-    platform: virtual
-    coils: default
-    switches: default
-    matrix_lights: default
-    leds: default
-    dmd: default
-    gis: default
-    flashers: default
 
 p_roc:
     lamp_matrix_strobe_time: 100
@@ -538,19 +620,7 @@ modes:
     - game
 
 
-led_settings:
-    brightness_compensation: 1.0
-    default_led_fade_ms: 100
-    gamma: 2.5
-    whitepoint: 1.0, 1.0, 1.0
-    linear_slope: 1.0
-    linear_cutoff: 0.0
-    keyframe_interpolation: True
-    dithering: True
 
-game:
-    balls_per_game: 3
-    max_players: 4
 
 auditor:
     save_events:
@@ -575,23 +645,6 @@ ball_search:
     Secs between ball search rounds: 3
     Secs between ball search coils: .15
     If ball search fails: Keep Looking
-
-logic_blocks:
-
-    counters:
-
-        tilt:
-            count_events: sw_tilt
-            event_when_hit: tilt_hit
-            count_complete_value: 3
-            events_when_complete: tilt
-            multiple_hit_window: 500ms
-            reset_each_ball: yes
-
-        slam_tilt:
-            count_events: sw_slamTilt
-            count_complete_value: 1
-            events_when_complete: slam_tilt
 
 displaydefaults:
     text:
@@ -673,6 +726,18 @@ bcp:
             params:
                 player_num: "%number"
 
+        tilt:
+            command: tilt
+
+        slam_tilt:
+            command: slam_tilt
+
+        tilt_warning:
+            command: tilt_warning
+            params:
+                warnings: "%warnings"
+                warnings_remaining: "%warnings_remaining"
+
     player_variables:
       __all__
 
@@ -696,14 +761,6 @@ open_pixel_control:
     connection_required: no
     connection_attempts: -1
     number_format: int
-
-triggers:
-    assets_to_load:
-        bcp_name: assets_to_load
-        params:
-            assets: "%assets"
-    assets_loading_complete:
-        bcp_name: assets_loading_complete
 
 shot_profiles:
     default:
@@ -751,3 +808,28 @@ high_score:
       - HIGH SCORE 2
       - HIGH SCORE 3
       - HIGH SCORE 4
+
+credits:
+  free_play: yes
+  free_play_string: FREE PLAY
+
+tilt:
+  tilt_warning_switch_tag: tilt_warning
+  tilt_switch_tag: tilt
+  slam_tilt_switch_tag: slam_tilt
+  warnings_to_tilt: 3
+  reset_warnings_events: ball_ended
+  multiple_hit_window: 300ms
+  settle_time: 5s
+  tilt_warnings_player_var: tilt_warnings
+
+hardware:
+  platform: virtual
+  coils: default
+  switches: default
+  matrix_lights: default
+  leds: default
+  dmd: default
+  gis: default
+  flashers: default
+  driverboards: virtual

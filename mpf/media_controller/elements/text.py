@@ -45,7 +45,7 @@ class Text(DisplayElement):
 
         self.config = kwargs
 
-        self.var_finder = re.compile("(?<=%)[\S]+(?=%)")
+        self.var_finder = re.compile("(?<=%)[a-zA-Z_0-9|]+(?=%)")
 
         if not text_variables:
             text_variables = dict()
@@ -88,7 +88,18 @@ class Text(DisplayElement):
                 text = text.replace('%' + var_string + '%',
                     str(local_replacements[var_string.split('|')[1]]))
                 self.original_text = text
-            elif var_string.startswith('machine|'):
+
+        if self._get_text_vars():
+            self._setup_variable_monitors()
+
+        self.update_vars_in_text()
+
+    def update_vars_in_text(self):
+
+        text = self.original_text
+
+        for var_string in self._get_text_vars():
+            if var_string.startswith('machine|'):
                 try:
                     text = text.replace('%' + var_string + '%',
                         str(self.machine.machine_vars[var_string.split('|')[1]]))
@@ -113,9 +124,6 @@ class Text(DisplayElement):
                 else:
                     text = text.replace('%' + var_string + '%',
                                         str(self.machine.player[var_string]))
-
-        if self._get_text_vars():
-            self._setup_variable_monitors()
 
         self.update_text(text)
 
@@ -146,25 +154,42 @@ class Text(DisplayElement):
         self.text = text
         self.render()
 
-    def _text_var_change(self, player_num, target_player, var_name, value,
+    def _player_var_change(self, player_num, target_player, var_name, value,
                          **kwargs):
+        # value = str(value)
+        #
+        # if (player_num and target_player and
+        #         int(player_num) == int(target_player)):
+        #     player_num = str(player_num)
+        #     new_text = self.original_text.replace(
+        #         '%player{}|{}%'.format(player_num, var_name), value)
+        #     new_text = new_text.replace('%player|{}%'.format(var_name), value)
+        #     new_text = new_text.replace('%{}%'.format(var_name), value)
+        #
+        #     self.update_text(new_text)
+        #
+        # elif player_num and not target_player:
+        #     new_text = self.original_text.replace(
+        #         '%player|{}%'.format(var_name), value)
+        #     new_text = new_text.replace('%{}%'.format(var_name), value)
+        #
+        #     self.update_text(new_text)
 
-        if int(player_num) == int(target_player):
-            player_num = str(player_num)
-            value = str(value)
-            new_text = self.original_text.replace(
-                '%player' + player_num + '|' + var_name + '%', value)
-            new_text = new_text.replace('%player|' + var_name + '%', value)
-            new_text = new_text.replace('%' + var_name + '%', value)
+        self.update_vars_in_text()
 
-            self.update_text(new_text)
+    def _machine_var_change(self, value, change, prev_value, var_name,
+                            **kwargs):
+
+        self.update_vars_in_text()
+
+        # return self.update_text(self.original_text.replace(
+        #     '%machine|{}%'.format(var_name), str(value)))
 
     def _setup_variable_monitors(self):
 
         for var_string in self._get_text_vars():
             if '|' not in var_string:
-                self.add_player_var_handler(name=var_string,
-                                            player=self.machine.player['number'])
+                self.add_player_var_handler(name=var_string, player=None)
             else:
                 source, variable_name = var_string.split('|')
                 if source.lower().startswith('player'):
@@ -181,13 +206,14 @@ class Text(DisplayElement):
 
     def add_player_var_handler(self, name, player):
         self.machine.events.add_handler('player_' + name,
-                                        self._text_var_change,
+                                        self._player_var_change,
                                         target_player=player,
                                         var_name=name)
 
     def add_machine_var_handler(self, name):
         self.machine.events.add_handler('machine_var_' + name,
-                                        self._text_var_change)
+                                        self._machine_var_change,
+                                        var_name=name)
 
     def render(self):
         self.element_surface = self.fonts.render(text=self.text, **self.config)
@@ -197,7 +223,8 @@ class Text(DisplayElement):
         self.slide.refresh(force_dirty=True)
 
     def scrub(self):
-        self.machine.events.remove_handler(self._text_var_change)
+        self.machine.events.remove_handler(self._player_var_change)
+        self.machine.events.remove_handler(self._machine_var_change)
 
     def group_digits(self, text, separator=',', group_size=3):
         """Enables digit grouping (i.e. adds comma separators between

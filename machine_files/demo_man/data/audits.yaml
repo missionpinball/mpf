@@ -1,16 +1,18 @@
 events:
   ball_search_begin_phase1: 0
-  game_ended: 3
-  game_started: 281
+  game_ended: 4
+  game_started: 334
 player:
   score:
-    average: 1780732
+    average: 1210419
     top:
     - 7050550
+    - 87890
+    - 51700
     - 31020
     - 20680
     - 15510
-    total: 4
+    total: 6
 shots:
   center_ramp: 2
   left_lane: 1
@@ -22,7 +24,7 @@ shots:
   standup_4: 1
 switches:
   s_always_closed: 0
-  s_ball_launch: 8
+  s_ball_launch: 10
   s_bottom_popper: 0
   s_buy_in: 0
   s_car_chase_1: 0
@@ -46,16 +48,16 @@ switches:
   s_enter: 0
   s_esc: 0
   s_eyeball_standup: 0
-  s_flipper_lower_left: 72
+  s_flipper_lower_left: 84
   s_flipper_lower_left_eos: 20
-  s_flipper_lower_right: 86
+  s_flipper_lower_right: 106
   s_flipper_lower_right_eos: 15
   s_flipper_upper_left_eos: 0
   s_flipper_upper_right_eos: 20
   s_fourth_coin: 0
   s_handle_trigger_left: 0
   s_handle_trigger_right: 0
-  s_left_coin: 0
+  s_left_coin: 31
   s_left_handle_button: 0
   s_left_inlane: 5
   s_left_jet: 0
@@ -64,7 +66,7 @@ switches:
   s_left_ramp_enter: 8
   s_left_ramp_exit: 3
   s_left_rollover: 1
-  s_left_slingshot: 1154
+  s_left_slingshot: 1329
   s_lower_rebound: 1
   s_plumb_bob: 0
   s_right_coin: 0
@@ -76,7 +78,7 @@ switches:
   s_right_ramp_exit: 0
   s_right_rollover: 0
   s_right_slingshot: 0
-  s_shooter_lane: 8
+  s_shooter_lane: 12
   s_side_ramp_enter: 2
   s_side_ramp_exit: 1
   s_slam_tilt: 0
@@ -85,10 +87,10 @@ switches:
   s_standup_3: 1
   s_standup_4: 1
   s_standup_5: 0
-  s_start: 363
+  s_start: 444
   s_top_popper: 0
   s_top_slingshot: 2
-  s_trough_1: 37
+  s_trough_1: 57
   s_trough_2: 3
   s_trough_3: 3
   s_trough_4: 3

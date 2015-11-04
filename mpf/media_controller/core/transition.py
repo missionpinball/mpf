@@ -48,8 +48,7 @@ class Transition(Slide):
         self.active_transition = True
         self.slide_a.active_transition = True
         self.slide_b.active_transition = True
-
-        self.slide_a.update()
+        self.name = str(slide_a.name) + "_transition_" + str(slide_b.name)
 
         self.start_time = time.time()
         self.end_time = self.start_time + self.duration
@@ -57,6 +56,10 @@ class Transition(Slide):
         # mark both slides as active
         self.slide_a.active = True
         self.slide_b.active = True
+
+        # Need to set the initial surface of the transition slide to the
+        # existing slide's surface since the transition slide will be active
+        self.surface.blit(self.slide_a.surface, (0, 0))
 
         # todo if an element is not loaded on the B slide when this transition
         # is called, it will crash. Need to probably not call transition
@@ -78,15 +81,13 @@ class Transition(Slide):
         try:
             self.slide_a.update()
         except AttributeError:
-            # print "slide a", self.slide_a
-            # self.complete()
+            #self.complete()
             pass
 
         try:
             self.slide_b.update()
         except AttributeError:
-            # print "slide b", self.slide_b
-            # self.complete()
+            #self.complete()
             pass
 
         # figure out what percentage along we are
@@ -101,7 +102,6 @@ class Transition(Slide):
     def complete(self):
         """Mark this transition as complete."""
         # this transition is done
-
         self.active_transition = False
 
         try:
@@ -109,13 +109,15 @@ class Transition(Slide):
         except AttributeError:
             pass
 
+        self.mpfdisplay.remove_slide(self.slide_a, refresh_display=False)
+        self.remove()
+
         try:
             self.slide_b.active_transition = False
         except AttributeError:
             pass
 
-        self.mpfdisplay.remove_slide(self.slide_a, refresh_display=False)
-        self.mpfdisplay.remove_slide(self, refresh_display=False)
+
         # Can't clear the transition on the b slide until after the others are
         # removed or else the refresh will kill this one.
 

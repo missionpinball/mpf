@@ -43,17 +43,24 @@ class Mode(object):
         self.mode_stop_kwargs = dict()
         self.mode_devices = set()
 
-        self.auto_stop_on_ball_end = True
-        '''Controls whether this mode is stopped when the ball ends,
-        regardless of its stop_events settings.
-        '''
-
         self.player = None
         '''Reference to the current player object.'''
 
         self._validate_mode_config()
 
         self.configure_mode_settings(config.get('mode', dict()))
+
+        self.auto_stop_on_ball_end = self.config['mode']['stop_on_ball_end']
+        '''Controls whether this mode is stopped when the ball ends,
+        regardless of its stop_events settings.
+        '''
+
+        self.restart_on_next_ball = self.config['mode']['restart_on_next_ball']
+        '''Controls whether this mode will restart on the next ball. This only
+        works if the mode was running when the ball ended. It's tracked per-
+        player in the '_restart_modes_on_next_ball' untracked player variable.
+        '''
+
 
         for asset_manager in self.machine.asset_managers.values():
 
@@ -78,7 +85,7 @@ class Mode(object):
         self.mode_init()
 
     def __repr__(self):
-        return '<Mode.' + self.name + '>'
+        return '<Mode.{}>'.format(self.name)
 
     @property
     def active(self):
@@ -135,7 +142,10 @@ class Mode(object):
         mode_start method which will be called automatically.
         """
 
+        self.log.debug("Received request to start")
+
         if self._active:
+            self.log.debug("Mode is already active. Aborting start")
             return
 
         if self.config['mode']['use_wait_queue'] and 'queue' in kwargs:
@@ -248,14 +258,12 @@ class Mode(object):
                                        callback=self._stopped)
 
     def _stopped(self):
-
         self.log.debug('Mode Stopped.')
 
         self.priority = 0
         self.active = False
 
         for item in self.stop_methods:
-            print item
             try:
                 item[0](item[1])
             except TypeError:
@@ -277,7 +285,6 @@ class Mode(object):
             self._mode_start_wait_queue = None
 
     def _mode_stopped_callback(self, **kwargs):
-
         self._remove_mode_event_handlers()
         self._remove_mode_devices()
 

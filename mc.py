@@ -17,6 +17,7 @@ import errno
 import sys
 
 from mpf.media_controller.core.media_controller import MediaController
+from mpf.system.utility_functions import Util
 import version
 
 # Allow command line options to do things
@@ -31,7 +32,7 @@ parser.add_option("-C", "--mcconfigfile",
 
 parser.add_option("-c", "--configfile",
                   action="store", type="string", dest="configfile",
-                  default="config.yaml",
+                  default="config",
                   help="Specifies the location of the first machine config "
                   "file")
 
@@ -79,10 +80,12 @@ if options_dict['version']:
 # add the first positional argument into the options dict as the machine path
 try:
     options_dict['machinepath'] = args[0]
-except:
+except KeyError:
     print("Error: You need to specify the path to your machine_files folder "
           "for the game you want to run.")
     sys.exit()
+
+options_dict['configfile'] = Util.string_to_list(options_dict['configfile'])
 
 # Configure logging. Creates a logfile and logs to the console.
 # Formating options are documented here:

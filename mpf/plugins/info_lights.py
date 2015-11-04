@@ -17,16 +17,16 @@ class InfoLights(object):
         self.machine = machine
 
         try:
-            self.config = self.machine.config['infolights']
+            self.config = self.machine.config['info_lights']
         except KeyError:
-            self.machine.log.debug('"infolights:" section not found in machine '
+            self.machine.log.debug('"info_lights:" section not found in machine '
                                    'configuration, so the Info Lights plugin '
                                    'will not be used.')
             return
 
         self.flash = [
-            {'color': 'ff', 'time': 1},
-            {'color': '0', 'time': 1},
+            {'color': 'ff', 'tocks': 1},
+            {'color': '0', 'tocks': 1},
         ]
 
         # convert any light names we find to objects
@@ -55,7 +55,7 @@ class InfoLights(object):
             if k.startswith('match_'):
                 v['light'].off()
 
-    def ball_started(self):
+    def ball_started(self, **kwargs):
         self.log.debug("ball_started")
         # turn off all the ball lights
         for k, v in self.config.iteritems():
@@ -71,41 +71,36 @@ class InfoLights(object):
         if 'tilt' in self.config:
             self.config['tilt']['light'].off()
 
-    def game_ended(self):
+    def game_ended(self, **kwargs):
         self.log.debug("game_ended")
         self.reset_game_lights()
 
         # turn on game over
         if 'game_over' in self.config:
-            self.machine.show_controller.run_script(
-                lightname=self.config['game_over']['light'].name,
+            self.machine.light_controller.run_script(
+                lights=self.config['game_over']['light'].name,
                 script=self.flash,
-                tocks_per_sec=2)
+                tocks_per_sec=2,
+                key='game_over')
 
     def game_starting(self, **kwargs):
         self.log.debug("game_starting")
         self.reset_game_lights()
+        self.machine.light_controller.stop_script(key='game_over')
 
-        # turn off game over
-        if 'game_over' in self.config:
-            self.machine.show_controller.stop_script(
-                lightname=self.config['game_over']['light'].name)
-            self.config['game_over']['light'].off()
-            # todo is the above right? Should add hold=False to script?
-
-    def player_added(self, player):
+    def player_added(self, player, **kwargs):
         self.log.debug("player_added. player=%s", player)
         player_str = 'player_' + str(player.number)
         self.log.debug("player_str: %s", player_str)
         if player_str in self.config:
             self.config[player_str]['light'].on()
 
-    def tilt(self):
+    def tilt(self, **kwargs):
         self.log.debug("tilt")
         if 'tilt' in self.config:
             self.config['tilt']['light'].on()
 
-    def match(self, match):
+    def match(self, match, **kwargs):
         self.log.debug("Match")
         match_str = 'match_' + str(match)
         if match_str in self.config:

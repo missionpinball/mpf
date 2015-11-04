@@ -12,6 +12,7 @@ import os
 from collections import namedtuple
 
 from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs priority',
@@ -62,6 +63,12 @@ class ModeController(object):
         self.machine.events.add_handler('ball_ending', self._ball_ending,
                                         priority=0)
 
+        self.machine.events.add_handler('ball_starting', self._ball_starting,
+                                        priority=0)
+
+        self.machine.events.add_handler('player_add_success',
+                                        self._player_added, priority=0)
+
         self.machine.events.add_handler('player_turn_start',
                                         self._player_turn_start,
                                         priority=1000000)
@@ -107,19 +114,27 @@ class ModeController(object):
             mode_string + '.yaml')
 
         if os.path.isfile(mpf_mode_config):
-            config = Config.load_config_yaml(yaml_file=mpf_mode_config)
+            config = Config.load_config_file(mpf_mode_config)
 
         # Now figure out if there's a machine-specific config for this mode, and
         # if so, merge it into the config
 
-        mode_config_file = os.path.join(self.machine.machine_path,
-            self.machine.config['mpf']['paths']['modes'], mode_string, 'config',
-            mode_string + '.yaml')
+        mode_config_folder = os.path.join(self.machine.machine_path,
+            self.machine.config['mpf']['paths']['modes'], mode_string, 'config')
 
-        if os.path.isfile(mode_config_file):
+        found_file = False
+        for path, _, files in os.walk(mode_config_folder):
+            for file in files:
+                file_root, file_ext = os.path.splitext(file)
 
-            config = Config.load_config_yaml(config=config,
-                                             yaml_file=mode_config_file)
+                if file_root == mode_string:
+                    config = Util.dict_merge(config,
+                        Config.load_config_file(os.path.join(path, file)))
+                    found_file = True
+                    break
+
+            if found_file:
+                break
 
         if 'code' in config['mode']:
 
@@ -166,6 +181,9 @@ class ModeController(object):
 
         return mode_object
 
+    def _player_added(self, player, num):
+        player.uvars['_restart_modes_on_next_ball'] = list()
+
     def _player_turn_start(self, player, **kwargs):
 
         for mode in self.machine.modes:
@@ -175,6 +193,16 @@ class ModeController(object):
 
         for mode in self.machine.modes:
             mode.player = None
+
+    def _ball_starting(self, queue):
+        for mode in self.machine.game.player.uvars['_restart_modes_on_next_ball']:
+
+            self.log.debug("Restarting mode %s based on 'restart_on_next_ball"
+                           "' setting", mode)
+
+            mode.start()
+
+        self.machine.game.player.uvars['_restart_modes_on_next_ball'] = list()
 
     def _ball_ending(self, queue):
         # unloads all the active modes
@@ -189,9 +217,13 @@ class ModeController(object):
         for mode in self.active_modes:
 
             if mode.auto_stop_on_ball_end:
-
                 self.mode_stop_count += 1
                 mode.stop(callback=self._mode_stopped_callback)
+
+            if mode.restart_on_next_ball:
+                self.log.debug("Will Restart mode %s on next ball, mode")
+                self.machine.game.player.uvars[
+                    '_restart_modes_on_next_ball'].append(mode)
 
         if not self.mode_stop_count:
             self.queue.clear()
@@ -285,6 +317,12 @@ class ModeController(object):
                                                  mode.priority).ljust(38) + '|')
 
         self.log.info('+-------------------------------------+')
+
+    def is_active(self, mode_name):
+        if mode_name in [x.name for x in self.active_modes if x._active is True]:
+            return True
+        else:
+            return False
 
 
 

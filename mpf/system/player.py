@@ -71,6 +71,7 @@ class Player(object):
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
         self.__dict__['vars'] = dict()
+        self.__dict__['uvars'] = dict()  # for "untracked" player vars
 
         player_list.append(self)
 
@@ -80,17 +81,23 @@ class Player(object):
         self.log.debug("Creating new player: Player %s. (player index '%s')",
                       number, index)
 
-        self.machine.events.post('player_add_success', player=self, num=number)
-
         # Set these after the player_add_success event so any player monitors
         # get notification of the new player before they start seeing variable
         # changes for it.
         self.vars['index'] = index
         self.vars['number'] = number
 
+        self.machine.events.post('player_add_success', player=self, num=number,
+                                 callback=self._player_add_done)
+
+    def _player_add_done(self, **kwargs):
+         # do it this way so we get the player_score event
+         # use a callback so this event is posted after the player add event
+        self.score = 0
+
     def __repr__(self):
         try:
-            return '<Player ' + str(self.vars['number']) + '>'
+            return "<Player {}>".format(self.vars['number'])
         except KeyError:
             return '<Player (new)>'
 
@@ -102,9 +109,13 @@ class Player(object):
             return 0
 
     def __setattr__(self, name, value):
+        new_entry = False
         prev_value = 0
         if name in self.vars:
             prev_value = self.vars[name]
+        else:
+            new_entry = True
+
         self.vars[name] = value
 
         try:
@@ -115,7 +126,7 @@ class Player(object):
             else:
                 change = False
 
-        if change:
+        if change or new_entry:
 
             self.log.debug("Setting '%s' to: %s, (prior: %s, change: %s)",
                            name, self.vars[name], prev_value, change)
@@ -140,6 +151,12 @@ class Player(object):
     def __iter__(self):
         for name, value in self.vars.iteritems():
             yield name, value
+
+    def is_player_var(self, var_name):
+        if var_name in self.vars:
+            return True
+        else:
+            return False
 
     # todo method to dump the player vars to disk?
 

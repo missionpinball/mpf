@@ -11,9 +11,7 @@ import os
 
 from collections import namedtuple
 
-from mpf.system.timing import Timing, Timer
-from mpf.system.tasks import DelayManager
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs priority',
                           verbose=False)
@@ -59,7 +57,7 @@ class Mode(object):
                             **item.kwargs)
 
     def __repr__(self):
-        return '<Mode.' + self.name + '>'
+        return '<Mode.{}>'.format(self.name)
 
     @property
     def active(self):
@@ -80,13 +78,13 @@ class Mode(object):
             config['priority'] = 0
 
         if 'start_events' in config:
-            config['start_events'] = Config.string_to_list(
+            config['start_events'] = Util.string_to_list(
                 config['start_events'])
         else:
             config['start_events'] = list()
 
         if 'stop_events' in config:
-            config['stop_events'] = Config.string_to_list(
+            config['stop_events'] = Util.string_to_list(
                 config['stop_events'])
         else:
             config['stop_events'] = list()
@@ -131,8 +129,6 @@ class Mode(object):
                                 mode=self,
                                 **item.kwargs))
 
-        #self.machine.events.post('mode_' + self.name + '_started')
-
     def stop(self, callback=None, **kwargs):
         """Stops this mode.
 
@@ -162,11 +158,9 @@ class Mode(object):
         self.delete_slides_from_mode()
 
     def delete_slides_from_mode(self):
-
         for display in self.machine.display.displays.values():
-            for slide in display.slides:
-                if slide.mode == self:
-                    slide.remove(refresh_display=False)
+            for slide in [x for x in display.slides if x.mode == self]:
+                slide.remove(refresh_display=False)
 
             display.refresh()
 

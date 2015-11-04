@@ -2,9 +2,11 @@
 # Demolition Man
 
 machine:
-    hz: 30
     balls_installed: 6
     min_balls: 1
+
+timing:
+    hz: 30
 
 virtual_platform_start_active_switches:
     s_trough_1
@@ -360,6 +362,8 @@ matrix_lights:
         number: l11
         label:
         tags: red
+        x: 0
+        y: 0
     l_fortress_multiball:
         number: l12
         label:
@@ -914,12 +918,12 @@ sound_system:
             volume: 1
             priority: 2
             simultaneous_sounds: 1
-            preload: no
+            preload: yes
         sfx:
             volume: 1
             priority: 1
-            preload: no
-            simultaneous_sounds: 3
+            preload: yes
+            simultaneous_sounds: 7
     stream:
         name: music
         priority: 0

@@ -82,3 +82,6 @@
 
   section_deprecations:
     - plugins
+
+custom_messages:
+  "game:hz": "Move the 'hz:' setting out of the 'game:' section and into a new section called 'timing:'"

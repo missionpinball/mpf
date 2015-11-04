@@ -10,7 +10,7 @@ import logging
 import json
 import struct
 
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 from mpf.platform.openpixel import OpenPixelClient
 from mpf.platform.openpixel import HardwarePlatform as OPHardwarePlatform
 
@@ -59,7 +59,7 @@ class FadeCandyOPClient(OpenPixelClient):
         self.update_every_tick = True
 
         self.gamma = self.machine.config['led_settings']['gamma']
-        self.whitepoint = Config.string_to_list(
+        self.whitepoint = Util.string_to_list(
             self.machine.config['led_settings']['whitepoint'])
 
         self.whitepoint[0] = float(self.whitepoint[0])

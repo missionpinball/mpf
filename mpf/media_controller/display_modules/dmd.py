@@ -79,7 +79,7 @@ def load_dmd_file(file_name, palette=None, alpha_color=None,
 
         return surface_list
 
-    except:
+    except IOError:
         raise Exception()
 
 
@@ -306,10 +306,19 @@ class DMD(MPFDisplay):
 
         super(DMD, self).update()
 
-        if self.use_physical:
-            self.machine.send_dmd_frame(
-                pygame.image.tostring(self.current_slide.surface, 'P'))
+        if self.use_physical and self.depth == 8:
+            try:
+                self.machine.send_dmd_frame(
+                    pygame.image.tostring(self.current_slide.surface, 'P'))
+            except TypeError:
+                return False
 
+        elif self.use_physical and self.depth == 24:
+            try:
+                self.machine.send_dmd_frame(
+                    pygame.image.tostring(self.current_slide.surface, 'RGB'))
+            except TypeError:
+                return False
 
 # The MIT License (MIT)
 

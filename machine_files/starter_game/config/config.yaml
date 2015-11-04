@@ -1,0 +1,19 @@
+# config_version=3
+
+config:
+    - hardware.yaml
+    - keyboard.yaml
+    - window.yaml
+
+modes:
+  - base
+  - tilt
+  - high_score
+  - bonus
+
+game:
+  balls_per_game: 3
+  max_players: 4
+
+machine:
+  glass_off_mode: true
