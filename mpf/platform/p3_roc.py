@@ -24,6 +24,8 @@ import time
 import sys
 from copy import deepcopy
 
+from mpf.system.utility_functions import Util
+
 try:
     import pinproc
     pinproc_imported = True
@@ -193,8 +195,7 @@ class HardwarePlatform(Platform):
         self.log.debug("Configuring switch's host notification settings. P3-ROC"
                        "number: %s, debounce: %s", proc_num,
                        config['debounce'])
-        if config['debounce'] is False or \
-                proc_num >= pinproc.SwitchNeverDebounceFirst:
+        if config['debounce'] is False:
             self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
@@ -791,7 +792,7 @@ class PROCDriver(object):
 
         if hold_power:
             return_dict['pwm_on_ms'], return_dict['pwm_off_ms'] = (
-                Config.pwm8_to_on_off(hold_power))
+                Util.pwm8_to_on_off(hold_power))
 
         elif pwm_off_ms and pwm_on_ms:
             return_dict['pwm_on_ms'] = int(pwm_on_ms)
@@ -858,6 +859,11 @@ class PROCDriver(object):
 
         self.log.debug('Pulsing for %sms', milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
+
+        return milliseconds
+
+    def get_pulse_ms(self):
+        return self.driver_settings['pulse_ms']
 
     def state(self):
         """Returns a dictionary representing this driver's current
@@ -1075,7 +1081,7 @@ class PDBConfig(object):
             # as VirtualDrivers. Appending the bank avoids conflicts when
             # group_ctr gets too high.
 
-            if group_ctr >= num_proc_banks or coil_bank >= 16:
+            if group_ctr >= num_proc_banks or coil_bank >= 32:
                 self.log.warning("Driver group %d mapped to driver index"
                                  "outside of P3-ROC control.  These Drivers "
                                  "will become VirtualDrivers.  Note, the "
@@ -1122,7 +1128,7 @@ class PDBConfig(object):
 
     def initialize_drivers(self, proc):
         # Loop through all of the drivers, initializing them with the polarity.
-        for i in range(0, 208):
+        for i in range(0, 255):
             state = {'driverNum': i,
                      'outputDriveTime': 0,
                      'polarity': True,

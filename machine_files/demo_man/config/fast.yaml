@@ -2,6 +2,9 @@
 fast:
     ports: COM4, COM5, COM6
 
+timing:
+    hz: 20
+
 hardware:
     driverboards: wpc
     platform: fast

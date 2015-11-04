@@ -12,22 +12,27 @@ from mpf.system.device import Device
 
 class PlayfieldTransfer(Device):
 
-    config_section = 'playfield_transfer'
-    collection = 'playfield_transfer'
+    config_section = 'playfield_transfers'
+    collection = 'playfield_transfers'
     class_label = 'playfield_transfer'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         super(PlayfieldTransfer, self).__init__(machine, name, config,
-                                                collection, validate)
+                                                collection, validate=validate)
 
-        self.machine.switch_controller.add_switch_handler(
-            switch_name=self.config['ball_switch'].name,
-            callback=self._ball_went_through,
-            state=1, ms=0)
+
+        self.machine.events.add_handler('init_phase_2',
+                                        self.configure_switch)
 
         # load target playfield
         self.target = self.config['eject_target']
         self.source = self.config['captures_from']
+
+    def configure_switch(self):
+        self.machine.switch_controller.add_switch_handler(
+            switch_name=self.config['ball_switch'].name,
+            callback=self._ball_went_through,
+            state=1, ms=0)
 
     def _ball_went_through(self):
         self.log.debug("Ball went from %s to %s", self.source.name,

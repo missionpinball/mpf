@@ -1,0 +1,29 @@
+#config_version=3
+
+mode:
+  start_events: ball_ending
+  code: bonus.Bonus
+  priority: 500
+  use_wait_queue: true
+
+slide_player:
+  bonus_start:
+    type: text
+    text: END OF BALL BONUS
+  bonus_hits:
+    type: text
+    text: "SLINGSHOTS: %slings%"
+  bonus_slings:
+    type: text
+    text: "TOTAL HITS: %hits%"
+  bonus_subtotal:
+    type: text
+    text: "BONUS SCORE: %points%"
+    number_grouping: true
+  bonus_multiplier:
+    type: text
+    text: "%bonus_multiplier%X"
+  bonus_total:
+    type: text
+    text: "TOTAL BONUS: %points%"
+    number_grouping: true

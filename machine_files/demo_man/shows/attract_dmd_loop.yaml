@@ -1,14 +1,47 @@
 - tocks: 2
   display:
+    - type: Text
+      text: MISSION PINBALL
+      color: ff0000
+    - type: shape
+      shape: box
+      width: 128
+      height: 32
+
+- tocks: 2
+  display:
+    - type: image
+      image: demo_man_logo
+      transition:
+        type: move_out
+        duration: 1s
+        direction: top
+
+- tocks: 2
+  display:
+    type: text
+    text: "%machine|credits_string%"
+
+- tocks: 2
+  display:
     - type: text
       text: "%machine|score1_label%"
       v_pos: top
-      y: 3
+      y: 4
     - type: text
       text: "%machine|score1_name% %machine|score1_value%"
       v_pos: bottom
       number_grouping: true
       y: -3
+    - type: shape
+      shape: box
+      width: 128
+      height: 32
+    - type: shape
+      shape: box
+      width: 126
+      height: 30
+      shade: 8
 - tocks: 2
   display:
     - type: text
@@ -25,6 +58,10 @@
       number_grouping: true
       y: -3
       x: 10
+      transition:
+        type: move_out
+        duration: 1s
+        direction: top
 - tocks: 2
   display:
     - type: text
@@ -39,17 +76,10 @@
       number_grouping: true
       y: -3
       x: 10
-- tocks: 2
-  display:
-    - type: text
-      text: "%machine|ramps1_label%"
-      v_pos: top
-      y: 3
-    - type: text
-      text: "%machine|ramps1_name% - %machine|ramps1_value%"
-      v_pos: bottom
-      number_grouping: true
-      y: -3
+      transition:
+        type: move_in
+        duration: 1s
+        direction: bottom
 
 - tocks: 2
   display:
@@ -90,50 +120,13 @@
       x: -1
       y: -10
     - type: text
-      text: FREE PLAY
+      text: "%machine|credits_string%"
       font: small
       h_pos: center
       v_pos: bottom
 
-- tocks: 2
-  display:
-    - type: image
-      image: demo_man_logo
-      transition:
-        type: move_out
-        duration: 1s
-        direction: left
 
-- tocks: 2
-  display:
-    - type: Text
-      text: PRESS START
-      decorators:
-        type: blink
-        repeats: -1
-        on_secs: .5
-        off_secs: .5
-    - type: Text
-      text: FREE PLAY
-      color: 00ff00
-      v_pos: bottom
-      font: small
-      transition:
-        type: move_in
-        duration: 1s
-        direction: right
 
-- tocks: 2
-  display:
-    - type: Text
-      text: MISSION PINBALL
-      color: ff0000
-      transition:
-        type: move_in
-        duration: 1s
-        direction: top
-    - type: shape
-      shape: box
-      width: 128
-      height: 32
+
+
 

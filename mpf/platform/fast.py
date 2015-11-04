@@ -23,6 +23,7 @@ from copy import deepcopy
 
 from mpf.system.platform import Platform
 from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 try:
     import serial
@@ -429,7 +430,7 @@ class HardwarePlatform(Platform):
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
-                num = Config.int_to_hex_string((offset * 8) + i)
+                num = Util.int_to_hex_string((offset * 8) + i)
                 if byte & (2**i):
                     hw_states[(num, 1)] = 1
                 else:
@@ -438,7 +439,7 @@ class HardwarePlatform(Platform):
         for offset, byte in enumerate(bytearray.fromhex(local_states)):
             for i in range(8):
 
-                num = Config.int_to_hex_string((offset * 8) + i)
+                num = Util.int_to_hex_string((offset * 8) + i)
 
                 if byte & (2**i):
                     hw_states[(num, 0)] = 1
@@ -458,7 +459,7 @@ class HardwarePlatform(Platform):
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
             config['number'] = self.wpc_driver_map.get(
-                                                config['number_str'].upper())
+                                                config['number'].upper())
             if ('connection' in config and
                     config['connection'].lower() == 'network'):
                 config['connection'] = 1
@@ -469,9 +470,9 @@ class HardwarePlatform(Platform):
         elif self.machine_type == 'fast':
 
             if self.config['config_number_format'] == 'int':
-                config['number'] = Config.int_to_hex_string(config['number'])
+                config['number'] = Util.int_to_hex_string(config['number'])
             else:
-                config['number'] = Config.normalize_hex_string(config['number'])
+                config['number'] = Util.normalize_hex_string(config['number'])
 
             # Now figure out the connection type
             if ('connection' in config and
@@ -531,9 +532,9 @@ class HardwarePlatform(Platform):
                 config['connection'] = 0  # local switch
 
             if self.config['config_number_format'] == 'int':
-                config['number'] = Config.int_to_hex_string(config['number'])
+                config['number'] = Util.int_to_hex_string(config['number'])
             else:
-                config['number'] = Config.normalize_hex_string(config['number'])
+                config['number'] = Util.normalize_hex_string(config['number'])
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
@@ -576,9 +577,9 @@ class HardwarePlatform(Platform):
             config['number'] = str(config['number'])
 
         if self.config['config_number_format'] == 'int':
-            config['number'] = Config.int_to_hex_string(config['number'])
+            config['number'] = Util.int_to_hex_string(config['number'])
         else:
-            config['number'] = Config.normalize_hex_string(config['number'])
+            config['number'] = Util.normalize_hex_string(config['number'])
 
         this_fast_led = FASTDirectLED(config['number'])
         self.fast_leds.add(this_fast_led)
@@ -586,6 +587,7 @@ class HardwarePlatform(Platform):
         return this_fast_led
 
     def configure_gi(self, config):
+        # TODO: Add support for driver-based GI strings
 
         if not self.net_connection:
             self.log.critical("A request was made to configure a FAST GI, "
@@ -611,9 +613,9 @@ class HardwarePlatform(Platform):
             config['number'] = self.wpc_light_map.get(
                                                 config['number_str'].upper())
         elif self.config['config_number_format'] == 'int':
-            config['number'] = Config.int_to_hex_string(config['number'])
+            config['number'] = Util.int_to_hex_string(config['number'])
         else:
-            config['number'] = Config.normalize_hex_string(config['number'])
+            config['number'] = Util.normalize_hex_string(config['number'])
 
         return (FASTMatrixLight(config['number'], self.net_connection.send),
                 config['number'])
@@ -687,7 +689,7 @@ class HardwarePlatform(Platform):
         if sw_activity == 0:
             control += 0x10
 
-        control = Config.int_to_hex_string(int(control))
+        control = Util.int_to_hex_string(int(control))
 
         # todo need to implement disable_on_release
 
@@ -844,7 +846,12 @@ class FASTDriver(object):
         if pulse_ms is None:
             pulse_ms = machine.config['mpf']['default_pulse_ms']
 
-        return_dict['pulse_ms'] = Config.int_to_hex_string(pulse_ms)
+        try:
+            return_dict['allow_enable'] = kwargs['allow_enable']
+        except KeyError:
+            return_dict['allow_enable'] = False
+
+        return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
         return_dict['pwm1'] = 'ff'
         return_dict['pwm2'] = 'ff'
         return_dict['recycle_ms'] = '00'
@@ -894,42 +901,41 @@ class FASTDriver(object):
             return_dict['activation_time'] = str(activation_time / 100)
 
         if recycle_ms is not None:
-            return_dict['recycle_ms'] = (Config.int_to_hex_string(recycle_ms))
+            return_dict['recycle_ms'] = (Util.int_to_hex_string(recycle_ms))
 
         if pulse_ms is not None:
-            return_dict['pulse_ms'] = Config.int_to_hex_string(pulse_ms)
+            return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
 
         if pulse_pwm_mask:
             pulse_pwm_mask = str(pulse_pwm_mask)
             if len(pulse_pwm_mask) == 32:
-                return_dict['pwm1'] = Config.bin_str_to_hex_str(pulse_pwm_mask, 8)
+                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
             elif len(pulse_pwm_mask) == 8:
-                return_dict['pwm1'] = Config.bin_str_to_hex_str(pulse_pwm_mask, 2)
+                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
             else:
                 raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
         elif pulse_power32 is not None:
-            return_dict['pwm32']  = Config.pwm32_to_hex_string(pulse_power32)
+            return_dict['pwm32']  = Util.pwm32_to_hex_string(pulse_power32)
         elif pulse_power is not None:
-            return_dict['pwm1']  = Config.pwm8_to_hex_string(pulse_power)
+            return_dict['pwm1']  = Util.pwm8_to_hex_string(pulse_power)
 
         if hold_pwm_mask:
             hold_pwm_mask = str(hold_pwm_mask)
             if len(hold_pwm_mask) == 32:
-                return_dict['pwm2'] = Config.bin_str_to_hex_str(hold_pwm_mask, 8)
+                return_dict['pwm2'] = Util.bin_str_to_hex_str(hold_pwm_mask, 8)
             elif len(hold_pwm_mask) == 8:
-                return_dict['pwm2'] = Config.bin_str_to_hex_str(hold_pwm_mask, 2)
+                return_dict['pwm2'] = Util.bin_str_to_hex_str(hold_pwm_mask, 2)
             else:
                 raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
         elif hold_power32 is not None:
-            return_dict['pwm32'] = Config.pwm32_to_hex_string(hold_power32)
+            return_dict['pwm32'] = Util.pwm32_to_hex_string(hold_power32)
         elif hold_power is not None:
-            return_dict['pwm2'] = Config.pwm8_to_hex_string(hold_power)
+            return_dict['pwm2'] = Util.pwm8_to_hex_string(hold_power)
 
         return return_dict
 
     def disable(self):
         """Disables (turns off) this driver. """
-
         cmd = (self.driver_settings['trigger_cmd'] +
                self.driver_settings['number'] + ',' + '02')
 
@@ -939,7 +945,6 @@ class FASTDriver(object):
 
     def enable(self):
         """Enables (turns on) this driver. """
-
         if self.autofire:
             # If this driver is also configured for an autofire rule, we just
             # manually trigger it with the trigger_cmd and manual on ('03')
@@ -954,13 +959,26 @@ class FASTDriver(object):
         else:
             # Otherwise we send a full config command, trigger C1 (logic triggered
             # and drive now) switch ID 00, mode 18 (latched)
-            cmd = (self.driver_settings['config_cmd'] +
-                   self.driver_settings['number'] +
-                  ',C1,00,18,' +
-                   self.driver_settings['pulse_ms'] + ',' +
-                   self.driver_settings['pwm1'] + ',' +
-                   self.driver_settings['pwm2'] + ',' +
-                   self.driver_settings['recycle_ms'])
+
+            if (self.driver_settings['pwm1'] == 'ff' and
+                    self.driver_settings['pwm2'] == 'ff' and
+                    not ('allow_enable' in self.driver_settings or not
+                    self.driver_settings['allow_enable'])):
+
+                self.log.warning("Received a command to enable this coil "
+                                 "without pwm, but 'allow_enable' has not been"
+                                 "set to True in this coil's configuration.")
+                return
+
+            else:
+
+                cmd = (self.driver_settings['config_cmd'] +
+                       self.driver_settings['number'] +
+                      ',C1,00,18,' +
+                       self.driver_settings['pulse_ms'] + ',' +
+                       self.driver_settings['pwm1'] + ',' +
+                       self.driver_settings['pwm2'] + ',' +
+                       self.driver_settings['recycle_ms'])
 
         # todo pwm32
 
@@ -976,8 +994,7 @@ class FASTDriver(object):
         if not milliseconds:
             hex_ms_string = self.driver_settings['pulse_ms']
         else:
-            hex_ms_string = Config.int_to_hex_string(milliseconds)
-
+            hex_ms_string = Util.int_to_hex_string(milliseconds)
         if self.autofire:
             cmd = (self.driver_settings['trigger_cmd'] +
                    self.driver_settings['number'] + ',' +
@@ -997,6 +1014,11 @@ class FASTDriver(object):
         self.log.debug("Sending Pulse Command: %s", cmd)
         self.send(cmd)
         self.check_auto()
+
+        return Util.hex_string_to_int(hex_ms_string)
+
+    def get_pulse_ms(self):
+        return Util.hex_string_to_int(self.driver_settings['pulse_ms'])
 
     def check_auto(self):
 
@@ -1143,6 +1165,7 @@ class SerialCommunicator(object):
         self.receive_queue = receive_queue
         self.debug = False
         self.log = None
+        self.dmd = False
 
         self.remote_processor = None
         self.remote_model = None
@@ -1164,6 +1187,7 @@ class SerialCommunicator(object):
                                  'L1:P',
                                  'GI:P',
                                  'TL:P',
+                                 'TN:P'
                                  'XX:U',
                                  'XX:N',
                                  ]
@@ -1213,6 +1237,7 @@ class SerialCommunicator(object):
         if self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
             latest_version = DMD_LATEST_FW
+            self.dmd = True
         elif self.remote_processor == 'NET':
             min_version = NET_MIN_FW
             latest_version = NET_LATEST_FW
@@ -1299,7 +1324,10 @@ class SerialCommunicator(object):
                 be added automatically.
 
         """
-        self.send_queue.put(msg + '\r')
+        if self.dmd:
+            self.send_queue.put(msg)
+        else:
+            self.send_queue.put(msg + '\r')
 
     def _sending_loop(self):
 
@@ -1323,21 +1351,24 @@ class SerialCommunicator(object):
 
         debug = self.platform.config['debug']
 
-        try:
-            while self.serial_connection:
-                msg = self.serial_io.readline()[:-1]  # strip the \r
+        if not self.dmd:
 
-                if debug:
-                    self.platform.log.info("Received: %s", msg)
+            try:
+                while self.serial_connection:
+                    msg = self.serial_io.readline()[:-1]  # strip the \r
 
-                if msg not in self.ignored_messages:
-                    self.receive_queue.put(msg)
+                    if debug:
+                        self.platform.log.info("Received: %s", msg)
 
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
+                    if msg not in self.ignored_messages:
+                        self.receive_queue.put(msg)
+
+            except Exception:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                lines = traceback.format_exception(exc_type, exc_value,
+                                                   exc_traceback)
+                msg = ''.join(line for line in lines)
+                self.machine.crash_queue.put(msg)
 
 # The MIT License (MIT)
 

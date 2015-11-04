@@ -13,7 +13,6 @@
 # GIs
 
 Machine:
-    HZ: 60
     balls_installed: 4
     min_balls: 1
 

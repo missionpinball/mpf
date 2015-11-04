@@ -9,10 +9,12 @@
 import copy
 import logging
 import os
-import yaml
 import errno
 import thread
 import time
+
+from mpf.system.config import Config
+from mpf.system.file_manager import FileManager
 
 
 class DataManager(object):
@@ -56,17 +58,7 @@ class DataManager(object):
     def _load(self):
         self.log.debug("Loading %s from %s", self.name, self.filename)
         if os.path.isfile(self.filename):
-            try:
-                self.data = yaml.load(open(self.filename, 'r'))
-            except yaml.YAMLError, exc:
-                if hasattr(exc, 'problem_mark'):
-                    mark = exc.problem_mark
-                    self.log.error("Error found in data file %s. Line %, "
-                                   "Position %s", self.filename, mark.line+1,
-                                   mark.column+1)
-            except:
-                self.log.warning("Couldn't load data from file: %s",
-                                 self.filename)
+            self.data = FileManager.load(self.filename)
 
         else:
             self.log.debug("Didn't find the %s file. No prob. We'll create "
@@ -133,9 +125,8 @@ class DataManager(object):
         if delay_secs:
             time.sleep(delay_secs)
         self.log.debug("Writing %s to: %s", self.name, self.filename)
-        with open(self.filename, 'w') as output_file:
-            output_file.write(yaml.dump(self.data,
-                                        default_flow_style=False))
+
+        FileManager.save(self.filename, self.data)
 
 
 # The MIT License (MIT)

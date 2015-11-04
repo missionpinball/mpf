@@ -99,6 +99,7 @@ class WindowManager(MPFDisplay):
             return
 
         self.config['elements'][0]['persist_slide'] = True
+        self.config['elements'][0]['slide'] = 'default_window_slide'
 
         self.machine.display.slide_builder.build_slide(
             settings=self.config['elements'],

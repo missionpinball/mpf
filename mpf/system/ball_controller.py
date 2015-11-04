@@ -8,7 +8,7 @@ a pinball machine."""
 import logging
 
 from mpf.system.tasks import DelayManager
-from mpf.system.device_manager import DeviceCollection
+from mpf.system.utility_functions import Util
 
 
 class BallController(object):
@@ -112,13 +112,13 @@ class BallController(object):
         if self.machine.config['game']['Allow start with loose balls']:
             return
 
-        elif not self.are_balls_gathered(['home', 'trough']):
-            self.gather_balls('home')
+        elif not self.are_balls_collected(['home', 'trough']):
+            self.collect_balls('home')
             self.log.warning("BallController denies game start. Balls are not "
                              "in their home positions.")
             return False
 
-    def are_balls_gathered(self, target=['home', 'trough']):
+    def are_balls_collected(self, target=['home', 'trough'], antitarget=None):
         """Checks to see if all the balls are contained in devices tagged with
         the parameter that was passed.
 
@@ -135,7 +135,7 @@ class BallController(object):
                        " with '%s'", target)
 
         if type(target) is str:
-            target = [target]
+            target = Util.string_to_list(target)
 
         count = 0
         devices = set()
@@ -154,61 +154,85 @@ class BallController(object):
                            device.get_status('balls'), device.name, count)
 
         if count == self.machine.ball_controller.num_balls_known:
-            self.log.debug("Yes, all balls are gathered")
+            self.log.debug("Yes, all balls are collected")
             return True
         else:
-            self.log.debug("No, all balls are not gathered. Balls Counted: %s. "
+            self.log.debug("No, all balls are not collected. Balls Counted: %s. "
                            "Total balls known: %s", count,
                            self.machine.ball_controller.num_balls_known)
             return False
 
-    def gather_balls(self, target='home', antitarget=None):
-        """Used to ensure that all balls are in (or not in) ball devices with
-        the tag you pass.
+    def collect_balls(self, target='home, trough'):
+        """Used to ensure that all balls are in contained in ball devices with
+        the tag or list of tags you pass.
 
         Typically this would be used after a game ends, or when the machine is
         reset or first starts up, to ensure that all balls are in devices
-        tagged with 'home'.
+        tagged with 'home' and/or 'trough'.
 
         Args:
-            target: A string of the tag name of the ball devices you want all
-                the balls to end up in. Default is 'home'.
-            antitarget: The opposite of target. Will eject all balls from
-                all devices with the string you pass. Default is None.
+            target: A string of the tag name or a list of tags names of the
+                ball devices you want all the balls to end up in. Default is
+                ['home', 'trough'].
 
-        Note you can't pass both a target and antitarget in the same call. (If
-        you do it will just use the target and ignore the antitarget.)
-
-        TODO: Add support to actually move balls into position. e.g. STTNG, the
-        lock at the top of the playfield wants to hold a ball before a game
-        starts, so when a game ends the machine will auto eject one from the
-        plunger with the diverter set so it's held in the rear lock.
         """
+        # I'm embarrassed at how ugly this code is. But meh, it works...
 
-        if not antitarget:
-            # todo do we add the option of making the target a list?
-            self.log.debug("Gathering all balls to devices tagged '%s'",
-                           target)
-            for device in self.machine.ball_devices:
-                if target not in device.tags and device.balls > 0:
-                    device.eject_all()
+        tag_list = Util.string_to_list(target)
 
-        elif antitarget:
-            self.log.debug("Emptying balls from devices tagged '%s'",
-                           antitarget)
-            for device in self.machine.ball_devices:
-                if target in device.tags and device.balls > 0:
-                    device.eject(balls=device.balls)
+        self.log.debug("Collecting all balls to devices with tags '%s'",
+                       tag_list)
 
-    def _ball_drained_handler(self, balls):
+        target_devices = set()
+        source_devices = set()
+        balls_to_collect = False
+
+        for tag in tag_list:
+            for device in self.machine.ball_devices.items_tagged(tag):
+                target_devices.add(device)
+
+        for device in self.machine.ball_devices:
+            if device not in target_devices:
+                if device.balls:
+                    source_devices.add(device)
+                    balls_to_collect = True
+
+        self.log.debug("Ejecting all balls from: %s", source_devices)
+
+        if balls_to_collect:
+            self.machine.events.post('collecting_balls')
+
+            for device in target_devices:
+                self.machine.events.replace_handler(
+                    'balldevice_{}_ball_enter'.format(device.name),
+                    self._collecting_balls_entered_callback,
+                    target=target)
+
+            for device in source_devices:
+                device.eject_all()
+        else:
+            self.log.debug("All balls are collected")
+
+    def _collecting_balls_entered_callback(self, target, balls, **kwargs):
+        if self.are_balls_collected(target=target):
+            self._collecting_balls_complete()
+
+        return {'balls': balls}
+
+    def _collecting_balls_complete(self):
+        self.machine.events.remove_handler(self._collecting_balls_complete)
+        self.machine.events.post('collecting_balls_complete')
+
+    def _ball_drained_handler(self, balls, device, **kwargs):
         self.machine.events.post_relay('ball_drain',
                                        callback=self._process_ball_drained,
+                                       device=device,
                                        balls=balls)
 
         # What happens if the ball enters the trough but the ball_add_live
         # event hasn't confirmed its eject? todo
 
-    def _process_ball_drained(self, balls=None, ev_result=None):
+    def _process_ball_drained(self, balls=None, ev_result=None, **kwargs):
         # We don't need to do anything here because other modules (ball save,
         # the game, etc. should jump in and do whatever they need to do when a
         # ball is drained.

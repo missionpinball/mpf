@@ -65,7 +65,7 @@ class ScoreReelController(object):
                                         self.rotate_player)
 
         # receive notification of score changes
-        self.machine.events.add_handler('score_change', self.score_change)
+        self.machine.events.add_handler('player_score', self.score_change)
 
         # receives notifications of game starts to reset the reels
         self.machine.events.add_handler('game_starting', self.game_starting)
@@ -134,7 +134,7 @@ class ScoreReelController(object):
 
         self.player_to_scorereel_map.append(self.player_to_scorereel_map[0])
 
-    def score_change(self, score, change):
+    def score_change(self, value, change, **kwargs):
         """Called whenever the score changes and adds the score increase to the
         current active ScoreReelGroup.
 
@@ -146,7 +146,7 @@ class ScoreReelController(object):
                 and included only because the score change event passes it.
             change: Interget value of the change to the score.
         """
-        self.active_scorereelgroup.add_value(value=change, target=score)
+        self.active_scorereelgroup.add_value(value=change, target=value)
 
     def game_starting(self, queue, game):
         """Resets the score reels when a new game starts.

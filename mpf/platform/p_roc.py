@@ -39,10 +39,11 @@ except:
     pinproc_imported = False
 
 from mpf.system.platform import Platform
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00
+# driverboards = ['wpc', 'wpc95', 'sternSAM', 'sternWhitestar']
 
 
 class HardwarePlatform(Platform):
@@ -763,6 +764,11 @@ class PROCDriver(object):
         if pulse_ms is None:
             pulse_ms = machine.config['mpf']['default_pulse_ms']
 
+        try:
+            return_dict['allow_enable'] = kwargs['allow_enable']
+        except KeyError:
+            return_dict['allow_enable'] = False
+
         return_dict['pulse_ms'] = int(pulse_ms)
         return_dict['recycle_ms'] = 0
         return_dict['pwm_on_ms'] = 0
@@ -810,7 +816,7 @@ class PROCDriver(object):
 
         if hold_power:
             return_dict['pwm_on_ms'], return_dict['pwm_off_ms'] = (
-                Config.pwm8_to_on_off(hold_power))
+                Util.pwm8_to_on_off(hold_power))
 
         elif pwm_off_ms and pwm_on_ms:
             return_dict['pwm_on_ms'] = int(pwm_on_ms)
@@ -848,20 +854,29 @@ class PROCDriver(object):
     def enable(self):
         """Enables (turns on) this driver."""
 
-        try:
-            if (self.driver_settings['pwm_on_ms'] and
-                    self.driver_settings['pwm_off_ms']):
-                self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
-                               'pwm_off_ms: %s',
-                               self.driver_settings['pwm_on_ms'],
-                               self.driver_settings['pwm_off_ms'],
-                               self.driver_settings['pulse_ms'])
-                self.proc.driver_patter(self.number,
-                                        self.driver_settings['pwm_on_ms'],
-                                        self.driver_settings['pwm_off_ms'],
-                                        self.driver_settings['pulse_ms'], True)
-        except KeyError:
+        if (self.driver_settings['pwm_on_ms'] and
+                self.driver_settings['pwm_off_ms']):
+
+            self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
+                           'pwm_off_ms: %s',
+                           self.driver_settings['pwm_on_ms'],
+                           self.driver_settings['pwm_off_ms'],
+                           self.driver_settings['pulse_ms'])
+
+            self.proc.driver_patter(self.number,
+                                    self.driver_settings['pwm_on_ms'],
+                                    self.driver_settings['pwm_off_ms'],
+                                    self.driver_settings['pulse_ms'], True)
+        else:
             self.log.debug('Enabling at 100%')
+
+            if not ('allow_enable' in self.driver_settings and
+                    self.driver_settings['allow_enable']):
+                self.log.warning("Received a command to enable this coil "
+                                 "without pwm, but 'allow_enable' has not been"
+                                 "set to True in this coil's configuration.")
+                return
+
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
 
@@ -877,6 +892,11 @@ class PROCDriver(object):
 
         self.log.debug('Pulsing for %sms', milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
+
+        return milliseconds
+
+    def get_pulse_ms(self):
+        return self.driver_settings['pulse_ms']
 
     def state(self):
         """Returns a dictionary representing this driver's current
@@ -1310,7 +1330,7 @@ class PROCDMD(object):
         if 'P_ROC' in self.machine.config and (
             'dmd_timing_cycles' in self.machine.config['P_ROC']):
 
-            dmd_timing = Config.string_to_list(
+            dmd_timing = Util.string_to_list(
                 self.machine.config['P_ROC']['dmd_timing_cycles'])
 
             dmd_timing = [int(i) for i in dmd_timing]

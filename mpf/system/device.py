@@ -71,7 +71,7 @@ class Device(object):
             collection[name] = self
 
     def __repr__(self):
-        return '<' + self.class_label + '.' + self.name + '>'
+        return '<{self.class_label}.{self.name}>'.format(self=self)
 
     def enable_debugging(self):
         self.log.debug("Enabling debug logging")
@@ -113,6 +113,10 @@ class Device(object):
     def control_events_in_mode(self, mode):
         # Called on mode start if this device has any control events in that mode
         pass
+
+    def remove(self):
+        raise NotImplementedError(
+            '{} does not have a remove() method'.format(self.name))
 
 
 # The MIT License (MIT)

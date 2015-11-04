@@ -1,0 +1,10 @@
+#config_version=3
+fast:
+    ports: COM4, COM5, COM6
+
+hardware:
+    driverboards: fast
+    platform: fast
+
+config:
+    - config.yaml

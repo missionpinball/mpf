@@ -16,7 +16,7 @@ try:
     import pygame
     import pygame.locals
     import_success = True
-except:
+except ImportError:
     import_success = False
 
 
@@ -47,10 +47,10 @@ class Keyboard(object):
         self.log = logging.getLogger('keyboard')
         self.mc = mc
 
-        self.keyboard_events = []
-        self.key_map = {}
-        self.toggle_keys = {}
-        self.inverted_keys = []
+        self.keyboard_events = list()
+        self.key_map = dict()
+        self.toggle_keys = set()
+        self.inverted_keys = list()
 
         self.mc.request_pygame()
         self.window = self.mc.get_window()
@@ -75,7 +75,6 @@ class Keyboard(object):
             switch_name = v.get('switch', None)
             # set whether a key is the push on / push off type
             toggle_key = v.get('toggle', None)
-            # todo convert to True from true or TRUE
             invert = v.get('invert', None)
             event = v.get('event', None)
             mc_event = v.get('mc_event', None)
@@ -163,7 +162,7 @@ class Keyboard(object):
                 if invert:
                     self.inverted_keys.append(switch_name)
 
-                # Add the new Pygane  code / switch number pair to the key map
+                # Add the new Pygame code / switch number pair to the key map
                 self.add_key_map(str(key_code), switch_name, toggle_key,
                                  invert)
 
@@ -205,11 +204,7 @@ class Keyboard(object):
             self.key_map[key] = event_dict
 
         if toggle_key:
-            key = str(key)
-            self.toggle_keys[key] = 0
-
-            if invert:
-                self.toggle_keys[key] ^= 1
+            self.toggle_keys.add(str(key))
 
     def process_key_press(self, symbol, modifiers):
         """Processes a key press (key down) event by setting the switch and/or
@@ -231,13 +226,7 @@ class Keyboard(object):
             # check our built-up key_press string against the existing
             # key_map dictionary
             if key_press in self.toggle_keys:  # is this is a toggle key?
-                if self.toggle_keys.get(key_press) == 1:
-                    # Switch is currently closed, so open it
-                    self.send_switch(state=0, name=self.key_map[key_press])
-                    self.toggle_keys[key_press] = 0
-                else:  # Switch is currently open, so close it
-                    self.toggle_keys[key_press] = 1
-                    self.send_switch(state=1, name=self.key_map[key_press])
+                self.send_switch(state=-1, name=self.key_map[key_press])
 
             elif key_press in self.key_map:
                 # for non-toggle keys, still want to make sure the key is
@@ -276,8 +265,8 @@ class Keyboard(object):
         """
         key_press = self.get_key_press_string(symbol, modifiers)
 
-        # if our key is valid and not in the toggle_keys dictionary,
-        # process the key up event
+        # if our key is valid and not in the toggle_keys set, process the key
+        # up event
 
         if key_press in self.key_map and key_press not in self.toggle_keys:
             if self.key_map[key_press] in self.inverted_keys:
@@ -320,6 +309,7 @@ class Keyboard(object):
 
     def send_switch(self, name, state):
         self.mc.send('switch', name=name, state=state)
+
 
 # The MIT License (MIT)
 

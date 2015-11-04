@@ -2,6 +2,8 @@
 keyboard:
   s:
     switch: s_start
+  b:
+    switch: s_buy_in
   l:
     switch: s_ball_launch
   1:
@@ -38,3 +40,19 @@ keyboard:
     switch: s_right_rollover
   h:
     event: start_high_score
+  t:
+    switch: s_plumb_bob
+  shift+t:
+    switch: s_slam_tilt
+  ctrl+1:
+    switch: s_left_coin
+  ctrl+2:
+    switch: s_center_coin
+  ctrl+3:
+    switch: s_right_coin
+  ctrl+4:
+    switch: s_fourth_coin
+  ctrl+5:
+    switch: s_esc
+  ctrl+8:
+    event: toggle_credit_play

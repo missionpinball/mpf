@@ -13,8 +13,9 @@ import logging
 from collections import defaultdict
 import time
 
-from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.config import CaseInsensitiveDict
 from mpf.system.timing import Timing
+from mpf.system.utility_functions import Util
 
 
 class SwitchController(object):
@@ -86,7 +87,7 @@ class SwitchController(object):
                         '%', switch.name))
 
             if 'activation_events' in switch.config:
-                for event in Config.string_to_lowercase_list(
+                for event in Util.string_to_lowercase_list(
                         switch.config['activation_events']):
 
                     if "|" in event:
@@ -102,7 +103,7 @@ class SwitchController(object):
                         switch.activation_events.add(event)
 
             if 'deactivation_events' in switch.config:
-                for event in Config.string_to_lowercase_list(
+                for event in Util.string_to_lowercase_list(
                         switch.config['deactivation_events']):
 
                     if "|" in event:
@@ -409,7 +410,8 @@ class SwitchController(object):
             for item in v:
                 if item['switch_action'] == str(name) + '-' + str(state ^ 1):
                     # ^1 in above line invertes the state
-                    del self.active_timed_switches[k]
+                    if self.active_timed_switches[k]:
+                        del self.active_timed_switches[k]
 
         for monitor in self.monitors:
             monitor(name, state)

@@ -36,6 +36,7 @@ class Driver(Device):
                                      validate=validate)
 
         self.time_last_changed = 0
+        self.time_when_done = 0
         self.hw_driver, self.number = (self.platform.configure_driver(self.config))
 
     def validate_driver_settings(self, **kwargs):
@@ -53,20 +54,18 @@ class Driver(Device):
         configuration files:
 
         allow_enable: True
-        """
 
-        if self.config['allow_enable']:
-            self.time_last_changed = time.time()
-            self.hw_driver.enable()
-        else:
-            self.log.warning("Received a command to enable this coil without "
-                             "pwm, but 'allow_enable' has not been set to True"
-                             " in this coil's configuration.")
+        """
+        self.time_when_done = -1
+        self.time_last_changed = time.time()
+        self.log.debug("Enabling Driver")
+        self.hw_driver.enable()
 
     def disable(self, **kwargs):
         """ Disables this driver """
-        self.log.debug("Disabling Driver: %s", self.name)
+        self.log.debug("Disabling Driver")
         self.time_last_changed = time.time()
+        self.time_when_done = self.time_last_changed
         self.hw_driver.disable()
         # todo also disable the timer which reenables this
 
@@ -82,12 +81,47 @@ class Driver(Device):
                 if milliseconds is not specified.)
         """
 
-        self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
-                       "%sms", milliseconds)
-        self.time_last_changed = time.time()
-        self.hw_driver.pulse(milliseconds)
+        if milliseconds:
+            self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
+                           "%sms", milliseconds)
+            ms_actual = self.hw_driver.pulse(milliseconds)
+        else:
+            self.log.debug("Pulsing Driver. Using default pulse_ms.")
+            ms_actual = self.hw_driver.pulse()
 
+        if ms_actual != -1:
+            self.time_when_done = self.time_last_changed + (ms_actual / 1000.0)
+        else:
+            self.time_when_done = -1
 
+    def timed_enable(self, milliseconds, **kwargs):
+        """Lets you enable a driver for a specific time duration that's longer
+        than 255ms. (If you want to enable a driver for 255ms or less, just use
+        the pulse() method.)
+
+        Args:
+            milliseconds: Integer of the number of milliseconds you'd like to
+                enable this driver for.
+
+        Note if this driver is currently enabled via an earlier call to this
+        method, this method will extend it for the duration of milliseconds
+        you pass here.
+
+        Note that the "resolution" of this will be based on your machine's HZ
+        setting. In other words, if your machine's HZ is set to 30 (the
+        default) and you set this timed_enable for 550ms, the actual enable
+        time will be to the nearest 33ms after 550 (566ms, in this case).
+
+        """
+        if 0 > milliseconds >= 255:
+            self.pulse(milliseconds)
+
+        else:
+            self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
+                                     ms=milliseconds,
+                                     callback=self.disable)
+            self.enable()
+            self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
 
 # The MIT License (MIT)

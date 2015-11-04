@@ -4,3 +4,4 @@ mode:
   stop_events: game_ended
   priority: 20
   code: game.Game
+  stop_on_ball_end: False

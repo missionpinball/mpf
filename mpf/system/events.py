@@ -11,7 +11,7 @@ from collections import deque
 import random
 import uuid
 
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class EventManager(object):
@@ -27,10 +27,11 @@ class EventManager(object):
 
         self.debug = True
 
-        self.add_handler('init_phase_1', self._initialize,
-                         setup_event_player=setup_event_player)
+        if setup_event_player:
+            self.add_handler('init_phase_1', self._setup_event_player)
 
-    def _initialize(self, setup_event_player):
+    def _setup_event_player(self):
+
         if 'event_player' in self.machine.config:
             self.process_event_player(self.machine.config['event_player'])
 
@@ -358,8 +359,8 @@ class EventManager(object):
         added to a queue and processed after the current event is done.
 
         You can control the order the handlers will be called by optionally
-        specifying a priority when the handlers were registed. (Higher priority
-        values will be processed first.)
+        specifying a priority when the handlers were registered. (Higher
+        numeric values will be processed first.)
 
         Args:
             event: A string name of the event you're posting. Note that you can
@@ -480,8 +481,8 @@ class EventManager(object):
 
                 # log if debug is enabled and this event is not the timer tick
                 if self.debug and event != 'timer_tick':
-                    self.log.debug("%s (priority: %s) responding to event '%s' "
-                                   "with args %s",
+                    self.log.debug("%s (priority: %s) responding to event '%s'"
+                                   " with args %s",
                                    (str(handler[0]).split(' '))[2], handler[1],
                                    event, merged_kwargs)
 
@@ -562,7 +563,7 @@ class EventManager(object):
 
         for event_name, events in config.iteritems():
             if type(events) is not list:
-                events = Config.string_to_list(events)
+                events = Util.string_to_list(events)
 
             for event in events:
                 event_keys.add(self.machine.events.add_handler(event_name,
@@ -580,7 +581,7 @@ class EventManager(object):
 
         for event_name, events in config.iteritems():
             if type(events) is not list:
-                events = Config.string_to_list(events)
+                events = Util.string_to_list(events)
 
             event_keys.add(self.machine.events.add_handler(event_name,
                 self._random_event_player_callback, priority,
@@ -621,7 +622,7 @@ class QueuedEvent(object):
         self.num_waiting = 0
 
     def __repr__(self):
-        return '<QueuedEvent for callback ' + str(self.callback) + '>'
+        return '<QueuedEvent for callback {}>'.format(self.callback)
 
 
     def wait(self):

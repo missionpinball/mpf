@@ -10,19 +10,18 @@ DisplayController, MPFDisplay, DisplayElement, Transition, and Decorator.
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import time
 
 try:
     import pygame
     import pygame.locals
 
-except:
+except ImportError:
     pass
 
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing, Timer
 from mpf.system.assets import AssetManager
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 from mpf.media_controller.core.slide import Slide
 from mpf.media_controller.core.font_manager import FontManager
 from mpf.media_controller.core.slide_builder import SlideBuilder
@@ -267,6 +266,9 @@ class MPFDisplay(object):
 
         self.machine.events.add_handler('pygame_initialized', self._initialize)
 
+    def __repr__(self):
+        return '<Display.{}>'.format(self.name)
+
     def _initialize(self):
         """Internal method which initializes this display. This is separate from
         # __init__ because we have to wait until Pygame has been initialized.
@@ -298,7 +300,6 @@ class MPFDisplay(object):
                              machine=self.machine, name='blank'))
 
     def add_slide(self, slide, transition_name=None, transition_settings=None):
-
         if transition_name or transition_settings:
             self._create_transition(slide, transition_name,
                                     transition_settings)
@@ -309,7 +310,7 @@ class MPFDisplay(object):
         self.refresh()
 
     def sort_slides(self):
-        self.slides.sort(key=lambda x: (x.priority, x.creation_tick),
+        self.slides.sort(key=lambda x: (x.priority, x.id),
                          reverse=True)
 
     def remove_slide(self, slide, force=False, refresh_display=True):
@@ -319,20 +320,40 @@ class MPFDisplay(object):
 
         """
 
+        if not slide:
+            return
+
         if slide in self.slides and (force or (not slide.persist and
                                      not slide.active_transition and
                                      not self.is_only_slide_from_mode(slide))):
+
             slide.remove(refresh_display=refresh_display)
+
+    def remove_slides(self, slides, force=False, refresh_display=True):
+        for slide in slides:
+            self.remove_slide(slide, force, refresh_display)
+
+    def remove_slides_from_mode(self, mode):
+        for slide in self.slides:
+            if slide.mode == mode:
+                self.remove_slide(slide, force=True, refresh_display=False)
+
+        self.refresh()
 
     def refresh(self):
         self.remove_stale_slides()
         self.current_slide = self.slides[0]
+
         self.log.debug("Total number of slides: %s", len(self.slides))
 
     def remove_stale_slides(self):
         """Searches through all the active slides and only keeps one slide per
         mode. Will also keep slides that are set to persist=True and will keep
         slides that are actively involved in a transition.
+
+        Slides that have an expire time do not count as the "one slide per
+        mode" since we want to make sure a permanent slide is there when the
+        expiring slide expires.
 
         """
         found_slides_from_modes = list()
@@ -341,10 +362,11 @@ class MPFDisplay(object):
 
         for slide in self.slides:
             if (not slide.persist and
+                    not slide.expire_ms and
                     not slide.active_transition and
                     slide.mode in found_slides_from_modes):
                 slides_to_remove.append(slide)
-            else:
+            elif not slide.expire_ms:
                 found_slides_from_modes.append(slide.mode)
 
             if not slide.surface:
@@ -354,12 +376,12 @@ class MPFDisplay(object):
             slide.remove(refresh_display=False)
 
         for slide in slides_to_kill:
-            self.slides.remove(slide)
-
-
+            try:
+                self.slides.remove(slide)
+            except ValueError:
+                pass
 
     def get_slide_by_name(self, name):
-
         try:
             return next(x for x in self.slides if x.name == name)
 
@@ -368,7 +390,6 @@ class MPFDisplay(object):
 
     def _create_transition(self, new_slide, transition_name=None,
                            transition_settings=None):
-
         if not transition_name:
             transition_name = transition_settings['type']
 
@@ -377,6 +398,8 @@ class MPFDisplay(object):
                                          new_slide=new_slide,
                                          transition_name=transition_name,
                                          transition_settings=transition_settings)
+            new_slide.active_transition = True
+
         else:
             transition_class = eval('mpf.media_controller.transitions.' +
                                     transition_name + '.' +
@@ -579,8 +602,11 @@ class DisplayElement(object):
                 values.
 
         """
-        base_w, base_h = self.slide.surface.get_size()
-        element_w, element_h = self.element_surface.get_size()
+        try:
+            base_w, base_h = self.slide.surface.get_size()
+            element_w, element_h = self.element_surface.get_size()
+        except AttributeError:
+            return
 
         # First figure out our anchor:
 
@@ -749,14 +775,14 @@ class DisplayElement(object):
 
         else:  # 24-bit
             if 'color' in kwargs:
-                color_list = Config.hexstring_to_list(kwargs['color'])
+                color_list = Util.hex_string_to_list(kwargs['color'])
                 self.adjusted_color = (color_list[0], color_list[1],
                                        color_list[2])
             else:
                 self.adjusted_color = (255, 255, 255)  # todo default config
 
             if 'bg_color' in kwargs:
-                color_list = Config.hexstring_to_list(kwargs['color'])
+                color_list = Util.hex_string_to_list(kwargs['color'])
                 self.adjusted_bg_color = (color_list[0], color_list[1],
                                           color_list[2])
             else:
@@ -775,7 +801,7 @@ class DisplayElement(object):
 
         else:  # 24-bit
             if color:  # Non-black
-                color_list = Config.hexstring_to_list(color)
+                color_list = Util.hex_string_to_list(color)
                 return ((color_list[0], color_list[1], color_list[2]))
 
             elif transparent:
@@ -783,7 +809,6 @@ class DisplayElement(object):
 
             else:  # Black
                 return ((0, 0, 0))
-
 
     def scrub(self):
         self.decorators = None
