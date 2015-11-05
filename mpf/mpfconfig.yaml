@@ -166,7 +166,7 @@ config_validator:
         hold_coil_release_time: single|ms|1s
         hold_events: dict|str:ms|None
         hold_switches: list|self.machine.switches[%]|None
-        eject_switch: single|self.machine.switches[%]|None
+#        eject_switch: single|self.machine.switches[%]|None
         entrance_switch: single|self.machine.switches[%]|None
         jam_switch: single|self.machine.switches[%]|None
         eject_count_hold_times: list|ms|None
@@ -356,7 +356,7 @@ config_validator:
         disable_events: dict|str:ms|ball_ending
         enable_no_hold_events: dict|str:ms|None
         invert_events: dict|str:ms|None
-        enable_driver: single|self.machine.coils[%]|None
+#        enable_driver: single|self.machine.coils[%]|None
 
         # hw rules settings overrides
         pulse_ms: single|int|None
@@ -486,7 +486,7 @@ config_validator:
         limit_hi: single|int|9
         repeat_pulse_time: single|ms|200
         hw_confirm_time: single|ms|300
-        config: single|str|lazy
+#        config: single|str|lazy
         confirm: single|str|strict
         switch_0: single|self.machine.switches[%]|None
         switch_1: single|self.machine.switches[%]|None
