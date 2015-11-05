@@ -619,9 +619,6 @@ modes:
     - attract
     - game
 
-
-
-
 auditor:
     save_events:
         game_started
@@ -639,12 +636,6 @@ auditor:
         game_ended
     player:
         score
-
-ball_search:
-    Secs until ball search start: 10
-    Secs between ball search rounds: 3
-    Secs between ball search coils: .15
-    If ball search fails: Keep Looking
 
 displaydefaults:
     text:

@@ -1,7 +1,7 @@
 events:
   ball_search_begin_phase1: 0
   game_ended: 4
-  game_started: 334
+  game_started: 335
 player:
   score:
     average: 1210419
@@ -87,7 +87,7 @@ switches:
   s_standup_3: 1
   s_standup_4: 1
   s_standup_5: 0
-  s_start: 444
+  s_start: 445
   s_top_popper: 0
   s_top_slingshot: 2
   s_trough_1: 57

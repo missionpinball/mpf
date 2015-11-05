@@ -15,7 +15,8 @@ from mpf.system.config import Config
 from mpf.system.utility_functions import Util
 
 
-RemoteMethod = namedtuple('RemoteMethod', 'method config_section kwargs priority',
+RemoteMethod = namedtuple('RemoteMethod',
+                          'method config_section kwargs priority',
                           verbose=False)
 """RemotedMethod is used by other modules that want to register a method to
 be called on mode_start or mode_stop.
@@ -97,13 +98,14 @@ class ModeController(object):
 
         config = dict()
 
-        # find the folder for this mode:
+        # Find the folder for this mode. First check the machine folder/modes,
+        # if that's not a valid folder, check the mpf/modes folder.
         mode_path = os.path.join(self.machine.machine_path,
             self.machine.config['mpf']['paths']['modes'], mode_string)
 
         if not os.path.exists(mode_path):
-            mode_path = os.path.abspath(os.path.join('mpf', self.machine.config['mpf']['paths']['modes'], mode_string))
-
+            mode_path = os.path.abspath(os.path.join('mpf',
+                self.machine.config['mpf']['paths']['modes'], mode_string))
 
         # Is there an MPF default config for this mode? If so, load it first
         mpf_mode_config = os.path.join(
@@ -116,11 +118,12 @@ class ModeController(object):
         if os.path.isfile(mpf_mode_config):
             config = Config.load_config_file(mpf_mode_config)
 
-        # Now figure out if there's a machine-specific config for this mode, and
-        # if so, merge it into the config
+        # Now figure out if there's a machine-specific config for this mode,
+        # and if so, merge it into the config
 
         mode_config_folder = os.path.join(self.machine.machine_path,
-            self.machine.config['mpf']['paths']['modes'], mode_string, 'config')
+            self.machine.config['mpf']['paths']['modes'],
+            mode_string, 'config')
 
         found_file = False
         for path, _, files in os.walk(mode_config_folder):
@@ -136,11 +139,12 @@ class ModeController(object):
             if found_file:
                 break
 
+        # Figure out where the code is for this mode.
+
+        # If a custom 'code' setting exists, first look in the machine folder
+        # for it, and if it's not there, then look in mpf/modes for it.
+
         if 'code' in config['mode']:
-
-            # need to figure out if this mode code is in the machine folder or
-            # the default mpf folder
-
             mode_code_file = os.path.join(self.machine.machine_path,
                 self.machine.config['mpf']['paths']['modes'],
                 mode_string,
@@ -195,7 +199,8 @@ class ModeController(object):
             mode.player = None
 
     def _ball_starting(self, queue):
-        for mode in self.machine.game.player.uvars['_restart_modes_on_next_ball']:
+        for mode in self.machine.game.player.uvars[
+                '_restart_modes_on_next_ball']:
 
             self.log.debug("Restarting mode %s based on 'restart_on_next_ball"
                            "' setting", mode)
@@ -283,9 +288,9 @@ class ModeController(object):
         """
 
         if self.debug:
-            self.log.debug('Registering %s as a mode start method. Config section:'
-                       '%s, priority: %s, kwargs: %s', start_method,
-                       config_section_name, priority, kwargs)
+            self.log.debug('Registering %s as a mode start method. Config '
+                           'section: %s, priority: %s, kwargs: %s',
+                           start_method, config_section_name, priority, kwargs)
 
         self.start_methods.append(RemoteMethod(method=start_method,
             config_section=config_section_name, priority=priority,
@@ -313,17 +318,17 @@ class ModeController(object):
 
         for mode in self.active_modes:
             if mode.active:
-                self.log.info('| {} : {}'.format(mode.name,
-                                                 mode.priority).ljust(38) + '|')
+                self.log.info('| {} : {}'.format(
+                    mode.name, mode.priority).ljust(38) + '|')
 
         self.log.info('+-------------------------------------+')
 
     def is_active(self, mode_name):
-        if mode_name in [x.name for x in self.active_modes if x._active is True]:
+        if mode_name in [x.name for x in self.active_modes
+                         if x._active is True]:
             return True
         else:
             return False
-
 
 
 # The MIT License (MIT)
