@@ -36,8 +36,9 @@ class BallDevice(Device):
         if self.config['ball_capacity'] is None:
             self.config['ball_capacity'] = len(self.config['ball_switches'])
 
-        self.balls = 0
-        """Number of balls currently contained (held) in this device."""
+        self.balls = -999
+        """Number of balls currently contained (held) in this device. A value
+        of -999 means that the device is not yet initialized"""
 
         self.available_balls = 0
         """Number of balls that are available to be ejected. This differes from
@@ -166,14 +167,16 @@ class BallDevice(Device):
     def _switch_state(self, new_state, **kwargs):
         # Changes this device to the new state (if the transition is valid)
 
-        if new_state == self._state: # pragma: no cover
-            self.log.debug("Tried to switch state. But already in state %s",
-                           new_state)
-            return
+        if new_state != 'invalid':
 
-        if new_state not in self._state_transitions[self._state]:
-            raise AssertionError("Cannot transition from state {} to {}"
-                                 .format(self._state, new_state))
+            if new_state == self._state: # pragma: no cover
+                self.log.debug("Tried to switch state. But already in state "
+                               "%s", new_state)
+                return
+
+            if new_state not in self._state_transitions[self._state]:
+                raise AssertionError("Cannot transition from state {} to {}"
+                                     .format(self._state, new_state))
 
         self._state = new_state
 
@@ -181,8 +184,6 @@ class BallDevice(Device):
 
         if new_state not in self._state_transitions:
             raise AssertionError("Went to invalid state %s", self._state)
-
-
 
         method_name = "_state_" + self._state + "_start"
         method = getattr(self, method_name, lambda *args: None)
@@ -200,6 +201,21 @@ class BallDevice(Device):
         # be ready to receive balls
         if self._state == "wait_for_eject":
             self._state_wait_for_eject_start()
+
+    # ---------------------------- State: invalid -----------------------------
+    def _state_invalid_start(self):
+        # Need to get an initial ball count
+        if self.config['ball_switches']:
+            self.balls = -999
+        else:
+            self.balls = 0
+
+        return self._count_balls()
+
+    def _state_invalid_counted_balls(self, balls):
+        if balls != -999:
+            self.balls = balls
+            return self._switch_state("idle")
 
     # ----------------------------- State: idle -------------------------------
 
@@ -741,7 +757,7 @@ class BallDevice(Device):
                     break
 
     def _initialize3(self):
-        return self._switch_state("idle")
+        self._state_invalid_start()
 
     def get_status(self, request=None):  # pragma: no cover
         """Returns a dictionary of current status of this ball device.
@@ -814,7 +830,7 @@ class BallDevice(Device):
         self._counted_balls(balls)
 
     def _count_ball_switches(self):
-        # only count. do not change any state here!
+        # Count only. Do not change any state here!
         ball_count = 0
 
         for switch in self.config['ball_switches']:
@@ -1002,7 +1018,7 @@ class BallDevice(Device):
         self._source_ejecting_balls = 0
         self._cancel_eject_confirmation()
 
-        return self._switch_state("idle")
+        return self._switch_state("invalid")
 
     def _setup_or_queue_eject_to_target(self, target, player_controlled=False):
         if self.available_balls > 0 and self != target:
