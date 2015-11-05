@@ -7,7 +7,7 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-from collections import OrderedDict
+from mpf.system.config import CaseInsensitiveDict
 from mpf.system.mode import Mode
 from mpf.system.timing import Timing
 
@@ -21,10 +21,15 @@ class Tilt(Mode):
         self.tilt_event_handlers = set()
         self.last_tilt_warning_switch_tick = 0
 
-        self.tilt_config = self.machine.config['tilt']
+        try:
+            self.tilt_config = self.machine.config['tilt']
+        except KeyError:
+            self.tilt_config = CaseInsensitiveDict()
 
-        if 'tilt' in self.config:
+        try:
             self.tilt_config.update(self.config['tilt'])
+        except KeyError:
+            pass
 
         self.tilt_config = self.machine.config_processor.process_config2(
             'tilt', self.tilt_config, 'tilt')

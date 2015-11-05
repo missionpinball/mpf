@@ -18,7 +18,7 @@ class HighScore(Mode):
     def mode_init(self):
         self.data_manager = DataManager(self.machine, 'high_scores')
         self.high_scores = self.data_manager.get_data()
-        self.high_score_config = self.machine.config['high_score']
+        self.high_score_config = self.config['high_score']
         self.player_name_handler = None
 
         self.high_score_config['award_slide_display_time'] = (

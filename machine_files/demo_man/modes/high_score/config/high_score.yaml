@@ -5,6 +5,19 @@ mode:
   start_events: game_ending, start_high_score
   use_wait_queue: true
 
+high_score:
+  shift_left_tag: left_flipper
+  shift_right_tag: right_flipper
+  select_tag: start
+  award_slide_display_time: 4s
+  categories:
+  - score:
+      - GRAND CHAMPION
+      - HIGH SCORE 1
+      - HIGH SCORE 2
+      - HIGH SCORE 3
+      - HIGH SCORE 4
+
 slide_player:
   high_score:
     - type: text
@@ -76,7 +89,3 @@ slide_player:
       font: medium
       v_pos: top
       y: 2
-
-#images:
-#  back_arrow:
-#    al

@@ -120,7 +120,7 @@ switches:
     s_slam_tilt:
         number: s21
         label:
-        tags: slamtilt
+        tags: slam_tilt
     s_coin_door_closed:
         number: s22
         label:

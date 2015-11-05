@@ -103,8 +103,13 @@ class MachineController(object):
 
         # Do this here so there's a credit_string var even if they're not using
         # the credits mode
-        self.create_machine_var('credits_string',
-            self.config['credits']['free_play_string'], silent=True)
+
+        try:
+            credit_string = self.config['credits']['free_play_string']
+        except KeyError:
+            credit_string = 'FREE PLAY'
+
+        self.create_machine_var('credits_string', credit_string, silent=True)
 
         self._load_system_modules()
 
