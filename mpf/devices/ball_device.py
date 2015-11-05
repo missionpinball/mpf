@@ -119,34 +119,72 @@ class BallDevice(Device):
         # the number of balls that a source device is in the process of
         # ejecting to this device
 
+        self._count_consistent = True
+        # flag that indicates whether the balls in the device is stable. Goes
+        # false when a new ball appears in the device and then true again once
+        # it's been processed
 
-        self.machine.events.add_handler('init_phase_2',
-                                        self.configure_eject_targets)
+        self._state_transitions = dict(
+
+            invalid=['idle'],
+
+            idle=['waiting_for_ball', 'wait_for_eject', 'missing_balls',
+                  'waiting_for_ball_mechanical'],
+
+            lost_balls=['idle'],
+
+            missing_balls=['ball_left', 'idle'],
+
+            waiting_for_ball=['idle', 'waiting_for_ball_mechanical'],
+
+            waiting_for_ball_mechanical=['idle', 'waiting_for_ball',
+                                         'eject_confirmed'],
+
+            ball_left=['eject_confirmed', 'failed_confirm'],
+
+            wait_for_eject=['ejecting'],
+
+            ejecting=['ball_left', 'failed_eject'],
+
+            failed_eject=['eject_broken', 'ejecting'],
+
+            eject_broken=[],
+
+            failed_confirm=['failed_eject', 'eject_confirmed', 'lost_balls'],
+
+            eject_confirmed=['idle', 'lost_balls'],
+            )
+
 
         if (self.config['confirm_eject_type'] == "switch" and
                 not self.config['confirm_eject_switch']):
             raise AssertionError("When using confirm_eject_type switch you " +
                                  "to specify a confirm_eject_switch")
 
-        self._count_consistent = True
-
     # Logic and dispatchers
 
     def _switch_state(self, new_state, **kwargs):
-        # TODO: check if transition is legal
+        # Changes this device to the new state (if the transition is valid)
+
         if new_state == self._state: # pragma: no cover
             self.log.debug("Tried to switch state. But already in state %s",
                            new_state)
             return
 
+        if new_state not in self._state_transitions[self._state]:
+            raise AssertionError("Cannot transition from state {} to {}"
+                                 .format(self._state, new_state))
 
         self._state = new_state
 
         self.log.debug("Switching to state %s", new_state)
 
-        method_name = "_state_" + self._state + "_start"
-        if not hasattr(self, method_name):
+        if new_state not in self._state_transitions:
             raise AssertionError("Went to invalid state %s", self._state)
+
+
+
+        method_name = "_state_" + self._state + "_start"
         method = getattr(self, method_name, lambda *args: None)
         method(**kwargs)
 
