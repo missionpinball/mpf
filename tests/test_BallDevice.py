@@ -71,7 +71,7 @@ class TestBallDevice(MpfTestCase):
         self._captured = 0
 
         # launcher should retry eject
-        self.advance_time_and_run(20)
+        self.advance_time_and_run(10)
         # coil2.pulse.assert_called_twice_with()
         self.assertEquals(2, coil2.pulse.call_count)
 
@@ -740,9 +740,10 @@ class TestBallDevice(MpfTestCase):
         # launcher should now eject the second ball
         # coil1.pulse.assert_called_twice_with()
         # coil2.pulse.assert_called_twice_with()
-        self.assertEquals(2, coil1.pulse.call_count)
-        self.assertEquals(2, coil2.pulse.call_count)
+        coil1.pulse.assert_called_once_with()
+        coil2.pulse.assert_called_once_with()
         coil3.pulse.assert_called_once_with()
+
 
         # ball leaves launcher
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
@@ -767,8 +768,8 @@ class TestBallDevice(MpfTestCase):
         # coil1.pulse.assert_called_twice_with()
         # coil2.pulse.assert_called_twice_with()
         # coil3.pulse.assert_called_twice_with()
-        self.assertEquals(2, coil1.pulse.call_count)
-        self.assertEquals(2, coil2.pulse.call_count)
+        self.assertEquals(1, coil1.pulse.call_count)
+        self.assertEquals(1, coil2.pulse.call_count)
         self.assertEquals(2, coil3.pulse.call_count)
 
         # ball left target1
@@ -928,9 +929,10 @@ class TestBallDevice(MpfTestCase):
         # coil1.pulse.assert_called_twice_with()
         # coil2.pulse.assert_called_twice_with()
         # coil3.pulse.assert_called_twice_with()
-        self.assertEquals(2, coil1.pulse.call_count)
-        self.assertEquals(2, coil2.pulse.call_count)
-        self.assertEquals(2, coil3.pulse.call_count)
+        self.assertEquals(1, coil1.pulse.call_count)
+        self.assertEquals(1, coil2.pulse.call_count)
+        self.assertEquals(1, coil3.pulse.call_count)
+
 
         # ball left target1
         self.machine.switch_controller.process_switch("s_ball_switch_target1", 0)
