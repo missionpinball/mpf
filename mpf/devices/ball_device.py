@@ -758,10 +758,6 @@ class BallDevice(Device):
     def _switch_changed(self, **kwargs):
         return self._count_balls()
 
-    def count_balls(self, **kwargs):
-        # deprecated
-        return self.balls
-
     def _count_balls(self, **kwargs):
         if self.debug:
             self.log.debug("Counting balls")

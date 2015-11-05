@@ -86,7 +86,7 @@ class BallLock(Device):
         while len(self.lock_queue) > 0:
             device, balls_locked = self.lock_queue.pop()
             balls = balls_locked
-            balls_in_device = device.count_balls(stealth=True)
+            balls_in_device = device.balls
             if balls > balls_in_device:
                 balls = balls_in_device
 

@@ -68,7 +68,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         coil2.pulse = MagicMock()
         coil3.pulse = MagicMock()
         coil4.pulse = MagicMock()
-        self.assertEquals(1, device1.count_balls())
+        self.assertEquals(1, device1.balls)
         assert not coil1.pulse.called
         assert not coil2.pulse.called
         assert not coil3.pulse.called
@@ -86,13 +86,13 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
         self.advance_time_and_run(1)
-        self.assertEquals(0, device1.count_balls())
+        self.assertEquals(0, device1.balls)
 
 
         # launcher receives and ejects ball
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
         self.advance_time_and_run(1)
-        self.assertEquals(1, device2.count_balls())
+        self.assertEquals(1, device2.balls)
 
         coil1.pulse.assert_called_once_with()
         coil2.pulse.assert_called_once_with()
@@ -101,7 +101,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
         self.advance_time_and_run(1)
-        self.assertEquals(0, device2.count_balls())
+        self.assertEquals(0, device2.balls)
 
         self.machine.switch_controller.process_switch("s_launcher_confirm", 1)
         self.machine.switch_controller.process_switch("s_launcher_confirm", 0)
@@ -120,7 +120,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         # target2 receives and keeps ball
         self.machine.switch_controller.process_switch("s_ball_switch_target2_1", 1)
         self.advance_time_and_run(1)
-        self.assertEquals(1, device4.count_balls())
+        self.assertEquals(1, device4.balls)
 
         coil1.pulse.assert_called_once_with()
         coil2.pulse.assert_called_once_with()
@@ -169,7 +169,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         coil2.pulse = MagicMock()
         coil3.pulse = MagicMock()
         coil4.pulse = MagicMock()
-        self.assertEquals(1, device1.count_balls())
+        self.assertEquals(1, device1.balls)
         assert not coil1.pulse.called
         assert not coil2.pulse.called
         assert not coil3.pulse.called
@@ -187,13 +187,13 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
         self.advance_time_and_run(1)
-        self.assertEquals(0, device1.count_balls())
+        self.assertEquals(0, device1.balls)
 
 
         # launcher receives and ejects ball
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
         self.advance_time_and_run(1)
-        self.assertEquals(1, device2.count_balls())
+        self.assertEquals(1, device2.balls)
 
         coil1.pulse.assert_called_once_with()
         coil2.pulse.assert_called_once_with()
@@ -202,7 +202,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
         self.advance_time_and_run(1)
-        self.assertEquals(0, device2.count_balls())
+        self.assertEquals(0, device2.balls)
 
 
         # ball passes diverter switch
@@ -219,7 +219,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         # target2 receives and keeps ball
         self.machine.switch_controller.process_switch("s_ball_switch_target2_1", 1)
         self.advance_time_and_run(1)
-        self.assertEquals(1, device4.count_balls())
+        self.assertEquals(1, device4.balls)
 
         # eject will fail since the eject_confirm switch was not hit
         self.advance_time_and_run(30)
@@ -270,7 +270,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         coil2.pulse = MagicMock()
         coil3.pulse = MagicMock()
         coil4.pulse = MagicMock()
-        self.assertEquals(1, device1.count_balls())
+        self.assertEquals(1, device1.balls)
         assert not coil1.pulse.called
         assert not coil2.pulse.called
         assert not coil3.pulse.called
@@ -288,13 +288,13 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
         self.advance_time_and_run(1)
-        self.assertEquals(0, device1.count_balls())
+        self.assertEquals(0, device1.balls)
 
 
         # launcher receives and ejects ball
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
         self.advance_time_and_run(1)
-        self.assertEquals(1, device2.count_balls())
+        self.assertEquals(1, device2.balls)
 
         coil1.pulse.assert_called_once_with()
         coil2.pulse.assert_called_once_with()
@@ -303,7 +303,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
         self.advance_time_and_run(1)
-        self.assertEquals(0, device2.count_balls())
+        self.assertEquals(0, device2.balls)
 
         self.machine.switch_controller.process_switch("s_launcher_confirm", 1)
         self.machine.switch_controller.process_switch("s_launcher_confirm", 0)
@@ -320,7 +320,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         # target2 captures and keeps ball
         self.machine.switch_controller.process_switch("s_ball_switch_target2_1", 1)
         self.advance_time_and_run(1)
-        self.assertEquals(1, device4.count_balls())
+        self.assertEquals(1, device4.balls)
 
         coil1.pulse.assert_called_once_with()
         coil2.pulse.assert_called_once_with()
