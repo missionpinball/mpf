@@ -250,6 +250,8 @@ class BCP(object):
                                         self.enable_volume_keys)
         self.machine.events.add_handler('disable_volume_keys',
                                         self.disable_volume_keys)
+        self.machine.events.add_handler('bcp_get_led_coordinates',
+                                        self.get_led_coordinates)
 
         self.machine.mode_controller.register_start_method(self.bcp_mode_start, 'mode')
         self.machine.mode_controller.register_start_method(self.register_triggers,
@@ -860,6 +862,19 @@ class BCP(object):
             self.send('config', **kwargs)
         except KeyError:
             self.log.warning('Received volume for unknown track "%s"', track)
+
+    def get_led_coordinates(self):
+        """Creates a list of all LEDs with their corresponding x and y coordinates.  Only
+        LEDs that have been configured with both x and y coordinates are included in the
+        list.  The list is sent via BCP set command in the following delimited format:
+            led_coordinates=led_01:x,y;led_02:x,y;led_03:x,y;...
+        """
+        coordinates = []
+        for led in self.machine.leds:
+            if led.config['x'] is not None and led.config['y'] is not None:
+                coordinates.append(led.name + ':' + str(led.config['x']) + ',' + str(led.config['y']))
+
+        self.send('set', led_coordinates=';'.join(coordinates))
 
     def external_show_start(self, name, **kwargs):
         # Called by worker thread
