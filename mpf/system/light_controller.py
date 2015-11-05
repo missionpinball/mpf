@@ -1919,7 +1919,7 @@ class ExternalShow(object):
     def update_lights(self, data):
         for light, brightness in zip(self.lights, Util.chunker(data, 2)):
             self.machine.light_controller._add_to_light_update_list(
-                light, brightness, self.priority, self.blend)
+                light, Util.hex_string_to_int(brightness), self.priority, self.blend)
 
     def update_gis(self, data):
         for gi, brightness in zip(self.lights, Util.chunker(data, 2)):
