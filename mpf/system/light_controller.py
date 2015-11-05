@@ -9,6 +9,7 @@
 
 import logging
 import time
+from Queue import Queue
 
 from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config, CaseInsensitiveDict
@@ -46,6 +47,18 @@ class LightController(object):
 
         self.running_shows = []
         self.registered_tick_handlers = set()
+
+        self.external_show_connected = False
+        self.external_show_command_queue = Queue()
+        """A thread-safe queue that receives BCP external show commands in the BCP worker
+        thread. The light controller reads and proecesses these commands in the main
+        thread via a tick handler.
+        """
+        self.running_external_show_keys = {}
+        """Dict of active external light shows that were created via BCP commands. This is
+        useful for stopping shows later. Keys are based on the 'name' parameter specified
+        when an external show was started, values are references to the external show object.
+        """
 
         self.initialized = False
 
@@ -446,7 +459,7 @@ class LightController(object):
         self.registered_tick_handlers.add(handler)
 
     def deregister_tick_handler(self, handler):
-        if handler in self.registered_tick_handers:
+        if handler in self.registered_tick_handlers:
             self.registered_tick_handlers.remove(handler)
 
     def _tick(self):
@@ -797,6 +810,129 @@ class LightController(object):
             del self.running_show_keys[key]
         except KeyError:
             pass
+
+    def add_external_show_start_command_to_queue(self, name, priority=0, blend=True, leds=None,
+                            lights=None, flashers=None, gis=None):
+        """Called by BCP worker thread when an external show start command is received
+        via BCP.  Adds the command to a thread-safe queue where it will be processed
+        by the main thread.
+
+        Args:
+            name: The name of the external show, used as a key for subsequent show commands.
+            priority: Integer value of the relative priority of this show.
+            blend: When an light is off in this show, should it allow lower
+                priority lights to show through?
+            leds: A list of led device names that will be used in this show.
+            lights: A list of light device names that will be used in this show.
+            flashers: A list of flasher device names that will be used in this show.
+            gis: A list of GI device names that will be used in this show.
+        """
+        if not self.external_show_connected:
+            self.register_tick_handler(
+                self._update_external_shows)
+            self.external_show_connected = True
+
+        self.external_show_command_queue.put((self._process_external_show_start_command,
+                                              (name, priority, blend, leds,
+                                               lights, flashers, gis)))
+
+    def add_external_show_stop_command_to_queue(self, name):
+        """Called by BCP worker thread when an external show stop command is received
+        via BCP.  Adds the command to a thread-safe queue where it will be processed
+        by the main thread.
+
+        Args:
+            name: The name of the external show.
+        """
+        self.external_show_command_queue.put((self._process_external_show_stop_command, (name,)))
+
+    def add_external_show_frame_command_to_queue(self, name, led_data=None, light_data=None,
+                                                 flasher_data=None, gi_data=None):
+        """Called by BCP worker thread when an external show frame command is received
+        via BCP.  Adds the command to a thread-safe queue where it will be processed
+        by the main thread.
+
+        Args:
+            name: The name of the external show.
+            led_data: A string of concatenated hex color values for the leds in the show.
+            light_data: A string of concatenated hex brightness values for the lights in the show.
+            flasher_data: A string of concatenated pulse time (ms) values for the flashers in the show.
+            gi_data: A string of concatenated hex brightness values for the GI in the show.
+        """
+        self.external_show_command_queue.put((self._process_external_show_frame_command,
+                                              (name, led_data, light_data,
+                                               flasher_data, gi_data)))
+
+    def _update_external_shows(self):
+        """Processes any pending BCP external show commands.  This function is called
+        in the main processing thread and is a tick handler function.
+        """
+        while not self.external_show_command_queue.empty():
+            update_method, args = self.external_show_command_queue.get(False)
+            update_method(*args)
+
+    def _process_external_show_start_command(self, name, priority, blend, leds,
+                                             lights, flashers, gis):
+        """Processes an external show start command.  Runs in the main processing thread.
+
+        Args:
+            name: The name of the external show, used as a key for subsequent show commands.
+            priority: Integer value of the relative priority of this show.
+            blend: When an light is off in this show, should it allow lower
+                priority lights to show through?
+            leds: A list of led device names that will be used in this show.
+            lights: A list of light device names that will be used in this show.
+            flashers: A list of flasher device names that will be used in this show.
+            gis: A list of GI device names that will be used in this show.
+        """
+        if name not in self.running_external_show_keys:
+            self.running_external_show_keys[name] = ExternalShow(self.machine,
+                                                                 name, priority, blend, leds,
+                                                                 lights, flashers, gis)
+
+    def _process_external_show_stop_command(self, name):
+        """Processes an external show stop command.  Runs in the main processing thread.
+
+        Args:
+            name: The name of the external show.
+        """
+        try:
+            self.running_external_show_keys[name].stop()
+            del self.running_external_show_keys[name]
+        except KeyError:
+            pass
+
+        # TODO: Would like to de-register the tick handler for external shows here
+        # However, since this function is called from the tick handler while
+        # iterating over the set of handlers, the list cannot be modified at
+        # this point in time.  Since this function is so quick, it's probably
+        # okay to leave it for now rather than figure out a complicated way to
+        # remove it.
+
+    def _process_external_show_frame_command(self, name, led_data, light_data,
+                                             flasher_data, gi_data):
+        """Processes an external show frame command.  Runs in the main processing thread.
+
+        Args:
+            name: The name of the external show.
+            led_data: A string of concatenated hex color values for the leds in the show.
+            light_data: A string of concatenated hex brightness values for the lights in the show.
+            flasher_data: A string of concatenated pulse time (ms) values for the flashers in the show.
+            gi_data: A string of concatenated hex brightness values for the GI in the show.        """
+        if name not in self.running_external_show_keys:
+            return
+
+        if led_data:
+            self.running_external_show_keys[name].update_leds(led_data)
+
+        if light_data:
+            self.running_external_show_keys[name].update_lights(light_data)
+
+        if flasher_data:
+            self.running_external_show_keys[name].update_gis(flasher_data)
+
+        if gi_data:
+            self.running_external_show_keys[name].update_flashers(gi_data)
 
 
 class Show(Asset):
@@ -1745,11 +1881,10 @@ class Playlist(object):
 
 class ExternalShow(object):
 
-    def __init__(self, machine, queue, name, priority=0, blend=True, leds=None,
+    def __init__(self, machine, name, priority=0, blend=True, leds=None,
                  lights=None, flashers=None, gis=None):
 
         self.machine = machine
-        self.external_show_queue = queue
         self.name = name
         self.priority = priority
         self.blend = blend
@@ -1758,9 +1893,6 @@ class ExternalShow(object):
         self.lights = list()
         self.flashers = list()
         self.gis = list()
-
-
-        self.machine.light_controller.external_shows.add(self)
 
         if leds:
             self.leds = Util.string_to_list(leds)
@@ -1779,45 +1911,27 @@ class ExternalShow(object):
             self.gis = [self.machine.gis[x] for x in self.gis]
 
     def update_leds(self, data):
-        # Called by worker thread
         for led, color in zip(self.leds, Util.chunker(data, 6)):
-
-            self.external_show_queue.add(
-                (self.machine.light_controller._add_to_led_update_list,
-                  (led, (color[0:2], color[2:4], color[4:6]), 0, self.priority,
-                   self.blend)
-                 )
-            )
+            self.machine.light_controller._add_to_led_update_list(
+                led, Util.hex_string_to_list(color), 0, self.priority,
+                self.blend)
 
     def update_lights(self, data):
-        # Called by worker thread
         for light, brightness in zip(self.lights, Util.chunker(data, 2)):
-            self.external_show_queue.add(
-                (self.machine.light_controller._add_to_light_update_list,
-                  (light, brightness, self.priority, self.blend)
-                )
-            )
+            self.machine.light_controller._add_to_light_update_list(
+                light, brightness, self.priority, self.blend)
 
     def update_gis(self, data):
-        # Called by worker thread
         for gi, brightness in zip(self.lights, Util.chunker(data, 2)):
-            self.external_show_queue.add(
-                (self.machine.light_controller._add_to_gi_queue,
-                  (gi, Util.hex_string_to_int(brightness))
-                 )
-            )
+            self.machine.light_controller._add_to_gi_queue(
+                gi, Util.hex_string_to_int(brightness))
 
     def update_flashers(self, data):
-        # Called by worker thread
         for flasher, flash in zip(self.flashers, data):
             if flash:
-                self.external_show_queue.add(
-                    (self.machine.light_controller._add_to_flasher_queue,
-                     flasher)
-                )
+                self.machine.light_controller._add_to_flasher_queue(flasher)
 
     def stop(self):
-        # Called by worker thread
         for led in self.leds:
             if led.cache['priority'] <= self.priority:
                 led.restore()
@@ -1825,9 +1939,6 @@ class ExternalShow(object):
         for light in self.lights:
             if light.cache['priority'] <= self.priority:
                 light.restore()
-
-        self.machine.light_controller.external_shows.remove(self)
-
 
 # The MIT License (MIT)
 
