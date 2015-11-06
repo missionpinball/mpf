@@ -143,7 +143,6 @@ config_validator:
         debug: single|bool|False
         enable_events: dict|str:ms|ball_started
         disable_events: dict|str:ms|ball_ending
-
         # hw rules settings overrides
         pulse_ms: single|int|None
         pwm_on_ms: single|int|None
@@ -157,7 +156,6 @@ config_validator:
         recycle_ms: single|int|None
         debounced: single|bool|False
         drive_now: single|bool|False
-
     ball_devices:
         exit_count_delay: single|ms|500ms
         entrance_count_delay: single|ms|500ms
@@ -216,11 +214,11 @@ config_validator:
         disable_events: dict|str:ms|ball_ending
         timer_start_events: dict|str:ms|None
     bcp:
-      connections:
-        host: single|str|None
-        port: single|int|5050
-        connection_attempts: single|int|-1
-        require_connection: single|bool|False
+        connections:
+            host: single|str|None
+            port: single|int|5050
+            connection_attempts: single|int|-1
+            require_connection: single|bool|False
     coils:
         number: single|str|
         number_str: single|str|
@@ -234,7 +232,6 @@ config_validator:
         pulse_pwm_mask: single|int|None
         hold_pwm_mask: single|int|None
         recycle_ms: single|int|None
-
         allow_enable: single|bool|False
         tags: list|str|None
         label: single|str|%
@@ -244,21 +241,21 @@ config_validator:
         pulse_events: dict|str:ms|None
         platform: single|str|None
     credits:
-      max_credits: single|int|0
-      free_play: single|bool|yes
-      service_credits_switch: list|self.machine.switches[%]|None
-      fractional_credit_expiration_time: single|ms|0
-      credit_expiration_time: single|ms|0
-      persist_credits_while_off_time: single|secs|1h
-      free_play_string: single|str|FREE PLAY
-      credits_string: single|str|CREDITS
-      switches:
-        switch: single|self.machine.switches[%]|None
-        value: single|float|0.25
-        type: single|str|money
-      pricing_tiers:
-        price: single|float|.50
-        credits: single|int|1
+        max_credits: single|int|0
+        free_play: single|bool|yes
+        service_credits_switch: list|self.machine.switches[%]|None
+        fractional_credit_expiration_time: single|ms|0
+        credit_expiration_time: single|ms|0
+        persist_credits_while_off_time: single|secs|1h
+        free_play_string: single|str|FREE PLAY
+        credits_string: single|str|CREDITS
+        switches:
+            switch: single|self.machine.switches[%]|None
+            value: single|float|0.25
+            type: single|str|money
+        pricing_tiers:
+            price: single|float|.50
+            credits: single|int|1
     diverters:
         type: single|str|hold
         activation_time: single|ms|0
@@ -277,7 +274,6 @@ config_validator:
         disable_events: dict|str:ms|None
         activate_events: dict|str:ms|None
         deactivate_events: dict|str:ms|None
-
         # hw rules settings overrides
         pulse_ms: single|int|None
         pwm_on_ms: single|int|None
@@ -301,7 +297,6 @@ config_validator:
         platform: single|str|None
         enable_events: dict|str:ms|ball_started
         disable_events: dict|str:ms|ball_ending
-
     drop_targets:
         switch: single|self.machine.switches[%]|
         reset_coil: single|self.machine.coils[%]|None
@@ -328,7 +323,6 @@ config_validator:
         debug: single|bool|False
         flash_events: dict|str:ms|None
         platform: single|str|None
-
         # driver settings
         pulse_ms: single|int|None
         pwm_on_ms: single|int|None
@@ -340,7 +334,6 @@ config_validator:
         pulse_pwm_mask: single|int|None
         hold_pwm_mask: single|int|None
         recycle_ms: single|int|None
-
     flippers:
         main_coil: single|self.machine.coils[%]|
         hold_coil: single|self.machine.coils[%]|None
@@ -355,7 +348,6 @@ config_validator:
         enable_no_hold_events: dict|str:ms|None
         invert_events: dict|str:ms|None
         enable_driver: single|self.machine.coils[%]|None
-
         # hw rules settings overrides
         pulse_ms: single|int|None
         pwm_on_ms: single|int|None
@@ -369,13 +361,11 @@ config_validator:
         recycle_ms: single|int|None
         debounced: single|bool|False
         drive_now: single|bool|False
-
     game:
-      balls_per_game: single|int|3
-      max_players: single|int|4
-      start_game_switch_tag: single|str|start
-      add_player_switch_tag: single|str|start
-
+        balls_per_game: single|int|3
+        max_players: single|int|4
+        start_game_switch_tag: single|str|start
+        add_player_switch_tag: single|str|start
     gis:
         number: single|str|
         number_str: single|str|
@@ -386,18 +376,22 @@ config_validator:
         enable_events: dict|str:ms|machine_reset_phase_3
         disable_events: dict|str:ms|None
         platform: single|str|None
-
     hardware:
-      platform: single|str|virtual
-      coils: single|str|default
-      switches: single|str|default
-      matrix_lights: single|str|default
-      leds: single|str|default
-      dmd: single|str|default
-      gis: single|str|default
-      flashers: single|str|default
-      driverboards: single|str|
-
+        platform: single|str|virtual
+        coils: single|str|default
+        switches: single|str|default
+        matrix_lights: single|str|default
+        leds: single|str|default
+        dmd: single|str|default
+        gis: single|str|default
+        flashers: single|str|default
+        driverboards: single|str|
+    high_score:
+        award_slide_display_time: single|ms|4s
+        categories: list|str:list|
+        shift_left_tag: single|str|left_flipper
+        shift_right_tag: single|str|right_flipper
+        select_tag: single|str|start
     leds:
         number: single|str|
         number_str: single|str|
@@ -414,7 +408,6 @@ config_validator:
         x: single|int|None
         y: single|int|None
         z: single|int|None
-
     led_settings:
         brightness_compensation: list|float|1.0, 1.0, 1.0
         default_led_fade_ms: single|int|100
@@ -424,7 +417,6 @@ config_validator:
         linear_cutoff: single|float|0.0
         keyframe_interpolation: single|bool|True
         dithering: single|bool|True
-
     machine:
         balls_installed: single|int|1
         min_balls: single|int|1
@@ -586,7 +578,6 @@ config_validator:
     system11:
         ac_relay_delay_ms: single|int|75
         ac_relay_driver_number: single|str|
-
     tilt:
       tilt_warning_switch_tag: single|str|tilt_warning
       tilt_switch_tag: single|str|tilt
@@ -596,7 +587,6 @@ config_validator:
       multiple_hit_window: single|ticks_int|300ms
       settle_time: single|ticks_int|5s
       tilt_warnings_player_var: single|str|tilt_warnings
-
     timing:
       hz: single|int|30
       hw_thread_sleep_ms: single|int|1
