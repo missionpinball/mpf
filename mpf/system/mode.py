@@ -5,17 +5,18 @@
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/mpf
-
+import copy
 import logging
 
+from mpf.system.config import CaseInsensitiveDict
 from mpf.system.timing import Timing, Timer
 from mpf.system.tasks import DelayManager
-from mpf.system.config import Config
-from mpf.system.mode_controller import RemoteMethod
 
 # todo
 # override player var
 # override event strings
+from mpf.system.utility_functions import Util
+
 
 class Mode(object):
     """Parent class for in-game mode code."""
@@ -60,7 +61,6 @@ class Mode(object):
         works if the mode was running when the ball ended. It's tracked per-
         player in the '_restart_modes_on_next_ball' untracked player variable.
         '''
-
 
         for asset_manager in self.machine.asset_managers.values():
 
@@ -107,8 +107,8 @@ class Mode(object):
 
         for event in self.config['mode']['start_events']:
             self.machine.events.add_handler(event=event, handler=self.start,
-                                            priority=self.config['mode']['priority'] +
-                                            self.config['mode']['start_priority'])
+                priority=self.config['mode']['priority'] +
+                self.config['mode']['start_priority'])
 
     def _validate_mode_config(self):
         for section in self.machine.config['mpf']['mode_config_sections']:
@@ -124,7 +124,24 @@ class Mode(object):
                 else:
                     self.config[section] = (
                         self.machine.config_processor.process_config2(section,
-                                                                      this_section))
+                        this_section))
+
+    def _get_merged_settings(self, section_name):
+        # Returns a dict_merged dict of a config section from the machine-wide
+        # config with the mode-specific config merged in.
+
+        if section_name in self.machine.config:
+            return_dict = copy.deepcopy(self.machine.config[section_name])
+        else:
+            return_dict = CaseInsensitiveDict()
+
+        if section_name in self.config:
+            return_dict = Util.dict_merge(return_dict,
+                                          self.config[section_name],
+                                          combine_lists=False)
+
+        return return_dict
+
 
     def start(self, priority=None, callback=None, **kwargs):
         """Starts this mode.
@@ -173,8 +190,8 @@ class Mode(object):
 
             for event in self.config['mode']['stop_events']:
                 # stop priority is +1 so if two modes of the same priority
-                # start and stop on the same event, the one will stop before the
-                # other starts
+                # start and stop on the same event, the one will stop before
+                # the other starts
                 self.add_mode_event_handler(event=event, handler=self.stop,
                     priority=self.priority + 1 +
                     self.config['mode']['stop_priority'])
@@ -309,15 +326,17 @@ class Mode(object):
 
                     collection = getattr(self.machine, collection_name)
 
-                    if device not in collection:  # no existing device, create now
+                    if device not in collection:  # no existing device, create
 
-                        self.log.debug("Creating mode-based device: %s", device)
+                        self.log.debug("Creating mode-based device: %s",
+                                       device)
 
-                        # TODO this config is already validated, so add something
-                        # so it doesn't validate it again?
+                        # TODO this config is already validated, so add
+                        # something so it doesn't validate it again?
 
                         self.machine.device_manager.create_devices(
-                            collection.name, {device: settings}, validate=False)
+                            collection.name, {device: settings},
+                            validate=False)
 
                         # change device from str to object
                         device = collection[device]
@@ -328,8 +347,9 @@ class Mode(object):
 
                         # This lets the device know it was created by a mode
                         # instead of machine-wide, as some devices want to do
-                        # certain things here. We also pass the player object in
-                        # case this device wants to do something with that too.
+                        # certain things here. We also pass the player object
+                        # in case this device wants to do something with that
+                        # too.
                         device.device_added_to_mode(mode=self,
                                                     player=self.player)
 
@@ -536,7 +556,8 @@ class ModeTimer(object):
                 self.end_value = 0  # need it to be 0 not None
 
         if 'tick_interval' in self.config:
-            self.tick_secs = Timing.string_to_secs(self.config['tick_interval'])
+            self.tick_secs = Timing.string_to_secs(self.config[
+                                                       'tick_interval'])
 
         if 'max_value' in self.config:
             self.max_value = self.config['max_value']
