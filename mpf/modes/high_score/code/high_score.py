@@ -134,6 +134,8 @@ class HighScore(Mode):
     def _receive_player_name(self, award, player_name=None, **kwargs):
         self.pending_request = False
 
+        valid_update = False
+
         if not player_name:
             player_name = ''
 
@@ -151,8 +153,6 @@ class HighScore(Mode):
                                                             [index][1])
                             self.new_high_score_list[category_name][index] = (
                                 (player_name, value))
-                        else:
-                            valid_update = False
 
         # valid update is because if the MC sends multiple complete events for
         # the same award then this will send multiple requests for the next one
