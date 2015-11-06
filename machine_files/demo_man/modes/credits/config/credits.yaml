@@ -3,20 +3,20 @@
 credits:
   max_credits: 12
   free_play: no
-#  service_credits_switch: s_esc
-#  switches:
-#    - switch: s_left_coin
-#      type: money
-#      value: .25
-#    - switch: s_center_coin
-#      type: money
-#      value: .25
-#    - switch: s_right_coin
-#      type: token
-#      value: 1
-#    - switch: s_fourth_coin
-#      value: 1
-#      type: money
+  service_credits_switch: s_esc
+  switches:
+    - switch: s_left_coin
+      type: money
+      value: .25
+    - switch: s_center_coin
+      type: money
+      value: .25
+    - switch: s_right_coin
+      type: token
+      value: 1
+    - switch: s_fourth_coin
+      value: 1
+      type: money
   pricing_tiers:
     - price: .50
       credits: 1
