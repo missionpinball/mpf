@@ -43,7 +43,7 @@ class ModeController(object):
 
     def __init__(self, machine):
         self.machine = machine
-        self.log = logging.getLogger('ModeController')
+        self.log = logging.getLogger('Mode Controller')
 
         self.debug = True
 
@@ -52,8 +52,9 @@ class ModeController(object):
         self.active_modes = list()
         self.mode_stop_count = 0
 
-        # The following two lists hold namedtuples of any remote components that
-        # need to be notified when a mode object is created and/or started.
+        # The following two lists hold namedtuples of any remote components
+        # that need to be notified when a mode object is created and/or
+        # started.
         self.loader_methods = list()
         self.start_methods = list()
 
@@ -79,8 +80,8 @@ class ModeController(object):
                                         priority=1000000)
 
     def _load_modes(self):
-        #Loads the modes from the Modes: section of the machine configuration
-        #file.
+        # Loads the modes from the modes: section of the machine configuration
+        # file.
 
         for mode in set(self.machine.config['modes']):
             self.machine.modes.append(self._load_mode(mode))

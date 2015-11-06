@@ -18,12 +18,13 @@ class HighScore(Mode):
     def mode_init(self):
         self.data_manager = DataManager(self.machine, 'high_scores')
         self.high_scores = self.data_manager.get_data()
-        self.high_score_config = self.config['high_score']
-        self.player_name_handler = None
 
-        self.high_score_config['award_slide_display_time'] = (
-            Timing.string_to_ms(
-                self.high_score_config['award_slide_display_time']))
+        self.high_score_config = self.machine.config_processor.process_config2(
+            config_spec='high_score',
+            source=self._get_merged_settings('high_score'),
+            section_name='high_score')
+
+        self.player_name_handler = None
 
         self._create_machine_vars()
         self.pending_request = False
@@ -191,58 +192,55 @@ class HighScore(Mode):
 
     def _start_sending_switches(self):
         for switch in self.machine.switches.items_tagged(
-            self.machine.config['high_score']['shift_left_tag']):
+            self.high_score_config['shift_left_tag']):
                 self.machine.switch_controller.add_switch_handler(
                     switch_name=switch.name,
                     callback=self.send_left)
 
         for switch in self.machine.switches.items_tagged(
-            self.machine.config['high_score']['shift_right_tag']):
+            self.high_score_config['shift_right_tag']):
                 self.machine.switch_controller.add_switch_handler(
                     switch_name=switch.name,
                     callback=self.send_right)
 
         for switch in self.machine.switches.items_tagged(
-            self.machine.config['high_score']['select_tag']):
+            self.high_score_config['select_tag']):
                 self.machine.switch_controller.add_switch_handler(
                     switch_name=switch.name,
                     callback=self.send_select)
 
     def _stop_sending_switches(self):
         for switch in self.machine.switches.items_tagged(
-            self.machine.config['high_score']['shift_left_tag']):
+            self.high_score_config['shift_left_tag']):
                 self.machine.switch_controller.remove_switch_handler(
                     switch_name=switch.name,
                     callback=self.send_left)
         for switch in self.machine.switches.items_tagged(
-            self.machine.config['high_score']['shift_right_tag']):
+            self.high_score_config['shift_right_tag']):
                 self.machine.switch_controller.remove_switch_handler(
                     switch_name=switch.name,
                     callback=self.send_right)
 
         for switch in self.machine.switches.items_tagged(
-            self.machine.config['high_score']['select_tag']):
+            self.high_score_config['select_tag']):
                 self.machine.switch_controller.remove_switch_handler(
                     switch_name=switch.name,
                     callback=self.send_select)
 
     def send_left(self):
         self.machine.bcp.send(bcp_command='trigger',
-                      name='switch_' +
-                      self.machine.config['high_score']['shift_left_tag'] +
-                      '_active')
+                              name='switch_{}_active'.format(
+                                  self.high_score_config['shift_left_tag']))
 
     def send_right(self):
         self.machine.bcp.send(bcp_command='trigger',
-                      name='switch_' +
-                      self.machine.config['high_score']['shift_right_tag'] +
-                      '_active')
+                              name='switch_{}_active'.format(
+                                  self.high_score_config['shift_right_tag']))
 
     def send_select(self):
         self.machine.bcp.send(bcp_command='trigger',
-                      name='switch_' +
-                      self.machine.config['high_score']['select_tag'] +
-                      '_active')
+                              name='switch_{}_active'.format(
+                                  self.high_score_config['select_tag']))
 
     def send_award_slide_event(self, award_slide_name, player_name, award,
                                value):
@@ -251,6 +249,7 @@ class HighScore(Mode):
                               player_name=player_name,
                               award=award,
                               value=value)
+
 
 # The MIT License (MIT)
 

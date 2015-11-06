@@ -21,18 +21,10 @@ class Tilt(Mode):
         self.tilt_event_handlers = set()
         self.last_tilt_warning_switch_tick = 0
 
-        try:
-            self.tilt_config = self.machine.config['tilt']
-        except KeyError:
-            self.tilt_config = CaseInsensitiveDict()
-
-        try:
-            self.tilt_config.update(self.config['tilt'])
-        except KeyError:
-            pass
-
         self.tilt_config = self.machine.config_processor.process_config2(
-            'tilt', self.tilt_config, 'tilt')
+            config_spec='tilt',
+            source=self._get_merged_settings('tilt'),
+            section_name='tilt')
 
     def mode_start(self, **kwargs):
         self._register_switch_handlers()

@@ -25,13 +25,10 @@ class Credits(Mode):
         self.pricing_tiers = set()
         self.credit_units_for_pricing_tiers = 0
 
-        self.credits_config = self.machine.config['credits']
-
-        if 'credits' in self.config:
-            self.credits_config.update(self.config['credits'])
-
         self.credits_config = self.machine.config_processor.process_config2(
-            'credits', self.credits_config, 'credits')
+            config_spec='credits',
+            source=self._get_merged_settings('credits'),
+            section_name='credits')
 
     def mode_start(self, **kwargs):
         self.add_mode_event_handler('enable_free_play',
