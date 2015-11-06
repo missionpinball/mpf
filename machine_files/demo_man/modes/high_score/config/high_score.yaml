@@ -8,6 +8,8 @@ high_score:
       - HIGH SCORE 2
       - HIGH SCORE 3
       - HIGH SCORE 4
+  - loops:
+      - MOST LOOPS
 
 slide_player:
   high_score:

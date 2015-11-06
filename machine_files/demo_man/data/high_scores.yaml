@@ -15,3 +15,7 @@
       - !!python/tuple
         - BID
         - 31020
+  - - loops
+    - - !!python/tuple
+        - BRI
+        - 42

@@ -83,6 +83,25 @@
 
 - tocks: 2
   display:
+   - type: text
+     text: MASTER LOOPER
+     v_pos: top
+     font: medium
+   - type: text
+     text: "%machine|loops1_name%"
+     font: tall title
+   - type: text
+     text: "%machine|loops1_value% LOOPS"
+     v_pos: bottom
+     font: medium
+     number_grouping: true
+     transition:
+       type: move_in
+       duration: 1s
+       direction: bottom
+
+- tocks: 2
+  display:
     - type: text
       text: "%machine|player1_score%"
       number_grouping: true

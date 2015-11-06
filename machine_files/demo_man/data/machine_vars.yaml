@@ -4,4 +4,13 @@ credit_units: !!python/object/new:mpf.system.config.CaseInsensitiveDict
     value: 0
 player_1_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
   dictitems:
-    value: 0
+    value: 140450
+player_2_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
+  dictitems:
+    value: 427210
+player_3_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
+  dictitems:
+    value: 5860780
+player_4_score: !!python/object/new:mpf.system.config.CaseInsensitiveDict
+  dictitems:
+    value: 3495860
