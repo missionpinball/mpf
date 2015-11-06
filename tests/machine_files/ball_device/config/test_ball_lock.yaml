@@ -1,5 +1,10 @@
 #config_version=3
 
+bcp:
+    connections:
+        local_display:
+            connection_attempts: 0
+
 game:
     balls_per_game: 1
 

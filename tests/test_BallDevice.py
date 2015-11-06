@@ -1586,3 +1586,29 @@ class TestBallDevice(MpfTestCase):
 
         self.assertEquals(1, playfield.balls)
         self.assertEquals(0, self._captured)
+
+    def test_balls_in_device_on_boot(self):
+        # The device without the home tag should eject the ball
+        # The device with the home tag should not eject the ball
+
+        target1 = self.machine.ball_devices['test_target1']
+        target2 = self.machine.ball_devices['test_target2']
+
+        assert 'home' not in target1.tags
+        assert 'home' in target2.tags
+
+        # Put balls in both devices
+        self.machine.switch_controller.process_switch("s_ball_switch_target1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch_target2", 1)
+
+        coil3 = self.machine.coils['eject_coil3']
+        coil4 = self.machine.coils['eject_coil4']
+
+        coil3.pulse = MagicMock()
+        coil4.pulse = MagicMock()
+
+        self.advance_time_and_run(10)
+
+        coil3.pulse.assert_called_once_with()
+        assert not coil4.pulse.called
+
