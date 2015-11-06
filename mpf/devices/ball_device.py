@@ -36,9 +36,8 @@ class BallDevice(Device):
         if self.config['ball_capacity'] is None:
             self.config['ball_capacity'] = len(self.config['ball_switches'])
 
-        self.balls = -999
-        """Number of balls currently contained (held) in this device. A value
-        of -999 means that the device is not yet initialized"""
+        self.balls = 0
+        """Number of balls currently contained (held) in this device."""
 
         self.available_balls = 0
         """Number of balls that are available to be ejected. This differes from
@@ -204,18 +203,12 @@ class BallDevice(Device):
 
     # ---------------------------- State: invalid -----------------------------
     def _state_invalid_start(self):
-        # Need to get an initial ball count
-        if self.config['ball_switches']:
-            self.balls = -999
-        else:
-            self.balls = 0
-
         return self._count_balls()
 
     def _state_invalid_counted_balls(self, balls):
-        if balls != -999:
-            self.balls = balls
-            return self._switch_state("idle")
+        self.balls = balls
+        self.available_balls = balls
+        return self._switch_state("idle")
 
     # ----------------------------- State: idle -------------------------------
 
