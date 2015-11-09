@@ -1,8 +1,10 @@
 import unittest
 
 from mpf.system.machine import MachineController
+from mpf.system.utility_functions import Util
 import logging
 import time
+import sys
 from mock import *
 from datetime import datetime, timedelta
 
@@ -16,7 +18,7 @@ class MpfTestCase(unittest.TestCase):
             'physical_hw': False,
             'mpfconfigfile': "mpf/mpfconfig.yaml",
             'machinepath': self.getMachinePath(),
-            'configfile': self.getConfigFile(),
+            'configfile': Util.string_to_list(self.getConfigFile()),
             'debug': True
                }
 
@@ -26,20 +28,33 @@ class MpfTestCase(unittest.TestCase):
 
     def advance_time_and_run(self, delta):
         self.machine_run()
-        self.advance_time(delta)
-        self.machine_run()
+        if delta > 10:
+            self.advance_time(10)
+            self.machine_run()
+            delta -= 10
+        if delta > 10:
+            self.advance_time(10)
+            self.machine_run()
+            delta -= 10
+        if delta > 10:
+            self.advance_time(10)
+            self.machine_run()
+            delta -= 10
+        if delta > 0:
+            self.advance_time(delta)
+            self.machine_run()
 
     def machine_run(self):
         self.machine.default_platform.tick()
         self.machine.timer_tick()
 
-
     def setUp(self):
-        # TODO: more unittest way of logging
-    
+        # no logging by default
+        #logging.basicConfig(level=99)
+
+        # uncomment for debug
         logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
-
 
         self.realTime = time.time
         self.testTime = self.realTime()
@@ -54,8 +69,12 @@ class MpfTestCase(unittest.TestCase):
         self.machine.ball_controller.num_balls_known = 99
         self.advance_time_and_run(300)
 
-
     def tearDown(self):
+        if sys.exc_info != (None, None, None):
+            # disable teardown logging after error
+            logging.basicConfig(level=99)
+        # fire all delays
+        self.advance_time_and_run(10000)
         self.machine = None
         time.time = self.realTime
         self.realTime = None

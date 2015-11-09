@@ -86,6 +86,7 @@ class TestBallDevicesHoldCoil(MpfTestCase):
   def test_holdcoil_which_keeps_ball_multiple_entries(self):
       # add one ball
       self.machine.ball_devices['test2'].balls = 1
+      self.machine.ball_devices['test2'].available_balls = 1
 
       # eject one ball
       self.machine.coils['hold_coil2'].enable = MagicMock()
@@ -121,4 +122,101 @@ class TestBallDevicesHoldCoil(MpfTestCase):
       self.machine.coils['hold_coil2'].disable.assert_called_once_with()
       assert not self.machine.coils['hold_coil2'].enable.called
       self.assertEqual(0, self.machine.ball_devices['test2'].balls)
+
+  def test_holdcoil_with_hold_and_entry_switch(self):
+      # add one ball
+      self.assertEqual(0, self.machine.ball_devices['test3'].balls)
+      self.machine.coils['hold_coil3'].enable = MagicMock()
+      self.machine.coils['hold_coil3'].disable = MagicMock()
+      self.machine.switch_controller.process_switch(name='s_entrance_and_hold3',state=1);
+      self.machine.switch_controller.process_switch(name='s_entrance_and_hold3',state=0);
+
+      self.advance_time_and_run(300)
+      self.machine.coils['hold_coil3'].enable.assert_called_once_with()
+      assert not self.machine.coils['hold_coil3'].disable.called
+      self.assertEqual(1, self.machine.ball_devices['test3'].balls)
+
+      # add a second ball
+      self.machine.coils['hold_coil3'].enable = MagicMock()
+      self.machine.coils['hold_coil3'].disable = MagicMock()
+      self.machine.switch_controller.process_switch(name='s_entrance_and_hold3',state=1);
+      self.machine.switch_controller.process_switch(name='s_entrance_and_hold3',state=0);
+      self.advance_time_and_run(300)
+      self.machine_run()
+      self.machine.coils['hold_coil3'].enable.assert_called_once_with()
+      assert not self.machine.coils['hold_coil3'].disable.called
+      self.assertEqual(2, self.machine.ball_devices['test3'].balls)
+
+      # eject one ball
+      self.machine.coils['hold_coil3'].enable = MagicMock()
+      self.machine.coils['hold_coil3'].disable = MagicMock()
+      self.machine.ball_devices['test3'].eject()
+      self.advance_time_and_run(0.2)
+      self.machine.coils['hold_coil3'].disable.assert_called_once_with()
+      assert not self.machine.coils['hold_coil3'].enable.called
+
+      # it should reenable the hold coil after 1s because there is a second ball
+      self.machine.coils['hold_coil3'].enable = MagicMock()
+      self.machine.coils['hold_coil3'].disable = MagicMock()
+      self.advance_time_and_run(2)
+      assert not self.machine.coils['hold_coil3'].disable.called
+      self.machine.coils['hold_coil3'].enable.assert_called_once_with()
+      self.assertEqual(1, self.machine.ball_devices['test3'].balls)
+
+      # eject another ball
+      self.machine.coils['hold_coil3'].enable = MagicMock()
+      self.machine.coils['hold_coil3'].disable = MagicMock()
+      self.machine.ball_devices['test3'].eject()
+      self.advance_time_and_run(0.2)
+      self.machine.coils['hold_coil3'].disable.assert_called_once_with()
+      assert not self.machine.coils['hold_coil3'].enable.called
+      self.assertEqual(0, self.machine.ball_devices['test3'].balls)
+
+      # coil should not reenable
+      self.machine.coils['hold_coil3'].enable = MagicMock()
+      self.machine.coils['hold_coil3'].disable = MagicMock()
+      self.advance_time_and_run(30)
+      assert not self.machine.coils['hold_coil3'].enable.called
+
+
+  def test_holdcoil_with_ball_switches(self):
+      # add one ball
+      self.assertEqual(0, self.machine.ball_devices['test4'].balls)
+      self.machine.coils['hold_coil4'].enable = MagicMock()
+      self.machine.coils['hold_coil4'].disable = MagicMock()
+      self.machine.switch_controller.process_switch(name='s_ball4_1',state=1);
+
+      self.advance_time_and_run(300)
+      self.machine.coils['hold_coil4'].enable.assert_called_once_with()
+      assert not self.machine.coils['hold_coil4'].disable.called
+      self.assertEqual(1, self.machine.ball_devices['test4'].balls)
+
+      # add a second ball
+      self.machine.coils['hold_coil4'].enable = MagicMock()
+      self.machine.coils['hold_coil4'].disable = MagicMock()
+      self.machine.switch_controller.process_switch(name='s_ball4_2',state=1);
+      self.advance_time_and_run(300)
+      self.machine_run()
+      self.machine.coils['hold_coil4'].enable.assert_called_once_with()
+      assert not self.machine.coils['hold_coil4'].disable.called
+      self.assertEqual(2, self.machine.ball_devices['test4'].balls)
+
+      # eject one ball
+      self.machine.coils['hold_coil4'].enable = MagicMock()
+      self.machine.coils['hold_coil4'].disable = MagicMock()
+      self.machine.ball_devices['test4'].eject()
+      self.advance_time_and_run(0.2)
+      self.machine.coils['hold_coil4'].disable.assert_called_once_with()
+      assert not self.machine.coils['hold_coil4'].enable.called
+      self.machine.switch_controller.process_switch(name='s_ball4_1',state=0);
+      self.machine.switch_controller.process_switch(name='s_ball4_2',state=0);
+      self.machine.switch_controller.process_switch(name='s_ball4_1',state=1);
+
+      # it should reenable the hold coil after 1s because there is a second ball
+      self.machine.coils['hold_coil4'].enable = MagicMock()
+      self.machine.coils['hold_coil4'].disable = MagicMock()
+      self.advance_time_and_run(2)
+      assert not self.machine.coils['hold_coil4'].disable.called
+      self.machine.coils['hold_coil4'].enable.assert_called_once_with()
+      self.assertEqual(1, self.machine.ball_devices['test4'].balls)
 

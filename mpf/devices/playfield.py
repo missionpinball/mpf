@@ -27,6 +27,7 @@ class Playfield(BallDevice):
         self.label = None
         self.debug = False
         self.config = dict()
+        self._count_consistent = True
 
         if validate:
             self.config = self.machine.config_processor.process_config2(
@@ -51,6 +52,7 @@ class Playfield(BallDevice):
 
         # Attributes
         self._balls = 0
+        self.available_balls=0
         self.num_balls_requested = 0
         self.queued_balls = list()
         self._playfield = True
@@ -131,7 +133,8 @@ class Playfield(BallDevice):
 
         if ball_change > 0:
             self.machine.events.post_relay('balldevice_' + self.name +
-                                           '_ball_enter', balls=ball_change)
+                                           '_ball_enter', new_balls=ball_change,
+                                           unclaimed_balls=ball_change)
 
         if ball_change:
             self.machine.events.post(self.name + '_ball_count_change',
@@ -258,12 +261,16 @@ class Playfield(BallDevice):
 
         return True
 
-    def playfield_switch_hit(self):
+    def mark_playfield_active(self):
+        self.machine.events.post_boolean(self.name + "_active")
+
+    def playfield_switch_hit(self, **kwargs):
         """A switch tagged with '<this playfield name>_active' was just hit,
         indicating that there is at least one ball on the playfield.
 
         """
-        if not self.balls:
+        if (not self.balls or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0)):
+            self.mark_playfield_active()
 
             if not self.num_balls_requested:
                 if self.machine.config['machine']['glass_off_mode']:
@@ -282,9 +289,16 @@ class Playfield(BallDevice):
         self.log.debug("%s ball(s) added to the playfield", balls)
         self.balls += balls
 
-    def _ball_removed_handler(self, balls):
+    def _ball_removed_handler(self, balls, **kwargs):
+        self._count_consistent = False
+        # somebody got a ball from us so we obviously had one
+        self.machine.events.post('sw_' + self.name + "_active",
+                callback=self._ball_removed_handler2, balls=balls)
+
+    def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
+        self._count_consistent = True
 
     def _source_device_eject_attempt(self, balls, target, **kwargs):
         # A source device is attempting to eject a ball. We need to know if it's
@@ -449,6 +463,16 @@ class Playfield(BallDevice):
 
     def eject_all(self, *args, **kwargs):
         pass
+
+    def is_playfield(self):
+        return True
+
+    def add_incoming_ball(self, source):
+        pass
+
+    def remove_incoming_ball(self, source):
+        pass
+
 
 # The MIT License (MIT)
 

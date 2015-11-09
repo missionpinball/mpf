@@ -182,6 +182,9 @@ class DelayManager(object):
     def _process_delays(self):
         # Processes any delays that should fire now
         for delay in self.delays.keys():
+            # previous delay may have deleted it
+            if not delay in self.delays:
+                continue
             if self.delays[delay]['action_ms'] <= time.time():
                 # Delete the delay first in case the processing of it adds a
                 # new delay with the same name. If we delete as the final step

@@ -147,8 +147,8 @@ class Tilt(Mode):
         for autofire in self.machine.autofires:
             autofire.disable()
 
-    def _tilted_ball_drain(self, balls, device):
-        self._balls_to_collect -= balls
+    def _tilted_ball_drain(self, new_balls, unclaimed_balls, device):
+        self._balls_to_collect -= unclaimed_balls
 
         self.log.debug("Tilted ball drain. Balls to collect: %s",
                        self._balls_to_collect)
@@ -156,10 +156,11 @@ class Tilt(Mode):
         if self._balls_to_collect <= 0:
             self._tilt_done()
 
-        return {'balls': 0}
+        return {'unclaimed_balls': 0}
 
-    def _tilted_ball_entered_non_drain_device(self, balls):
-        return {'balls': balls}
+    def _tilted_ball_entered_non_drain_device(self, new_balls, unclaimed_balls,
+                                              device):
+        return {'unclaimed_balls': unclaimed_balls}
 
     def _tilt_switch_handler(self):
         self.tilt()

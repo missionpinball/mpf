@@ -8,9 +8,6 @@
 
 import logging
 
-from mpf.system.timing import Timing
-from mpf.system.config import Config, CaseInsensitiveDict
-
 
 class Device(object):
     """ Generic parent class of for every hardware device in a pinball machine.
