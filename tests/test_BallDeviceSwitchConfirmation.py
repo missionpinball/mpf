@@ -28,12 +28,11 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
     def _requesting_ball(self, balls, **kwargs):
         self._requesting += balls
 
-    def _ball_enter(self, balls, **kwargs):
-        self._enter += balls
+    def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):
+        self._enter += new_balls
 
     def _captured_from_pf(self, balls, **kwargs):
         self._captured += balls
-
 
     def test_eject_successful_to_other_trough(self):
         coil1 = self.machine.coils['eject_coil1']

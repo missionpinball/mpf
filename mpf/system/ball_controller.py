@@ -226,21 +226,23 @@ class BallController(object):
         else:
             self.log.debug("All balls are collected")
 
-    def _collecting_balls_entered_callback(self, target, balls, **kwargs):
+    def _collecting_balls_entered_callback(self, target, new_balls,
+                                           unclaimed_balls, **kwargs):
         if self.are_balls_collected(target=target):
             self._collecting_balls_complete()
 
-        return {'balls': balls}
+        return {'unclaimed_balls': unclaimed_balls}
 
     def _collecting_balls_complete(self):
         self.machine.events.remove_handler(self._collecting_balls_complete)
         self.machine.events.post('collecting_balls_complete')
 
-    def _ball_drained_handler(self, balls, device, **kwargs):
+    def _ball_drained_handler(self, new_balls, unclaimed_balls, device,
+                              **kwargs):
         self.machine.events.post_relay('ball_drain',
                                        callback=self._process_ball_drained,
                                        device=device,
-                                       balls=balls)
+                                       balls=unclaimed_balls)
 
         # What happens if the ball enters the trough but the ball_add_live
         # event hasn't confirmed its eject? todo

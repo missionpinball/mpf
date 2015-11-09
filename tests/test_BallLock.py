@@ -16,8 +16,8 @@ class TestBallLock(MpfTestCase):
     def _missing_ball(self):
         self._missing += 1
 
-    def _ball_enter(self, balls, **kwargs):
-        self._enter += balls
+    def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):
+        self._enter += new_balls
 
     def _captured_from_pf(self, balls, **kwargs):
         self._captured += balls

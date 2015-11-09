@@ -291,7 +291,8 @@ class BallDevice(Device):
         self.log.debug("Processing %s new balls", balls)
         self.machine.events.post_relay('balldevice_{}_ball_enter'.format(
                                        self.name),
-                                       balls=balls,
+                                       new_balls=balls,
+                                       unclaimed_balls=balls,
                                        device=self,
                                        callback=self._balls_added_callback)
 
@@ -855,18 +856,18 @@ class BallDevice(Device):
 
         return ball_count
 
-    def _balls_added_callback(self, balls, **kwargs):
-        # If we still have balls here, that means that no one claimed them, so
-        # essentially they're "stuck." So we just eject them... unless this
-        # device is tagged 'trough' in which case we let it keep them.
-        if balls:
+    def _balls_added_callback(self, new_balls, unclaimed_balls, **kwargs):
+        # If we still have unclaimed_balls here, that means that no one claimed
+        # them, so essentially they're "stuck." So we just eject them unless
+        # this device is tagged 'trough' in which case we let it keep them.
+        if unclaimed_balls:
             if 'trough' not in self.tags:
                 target = self.machine.ball_devices[self.config
                                                    ['captures_from']]
                 path = self.find_path_to_target(target)
                 if not path:
                     raise AssertionError("Could not find path to target")
-                for i in range(balls):
+                for i in range(unclaimed_balls):
                     self.setup_eject_chain(path)
 
         self._count_consistent = True
@@ -1424,6 +1425,9 @@ class BallDevice(Device):
         # **kwargs because there are many ways to get here, some with kwargs
         # and some without. Also, since there are many ways we can get here,
         # let's first make sure we actually had an eject in progress
+
+        # todo verify the number of new_balls matches the number of balls
+        # ejecting?
 
         if self._state == "ejecting":
             self.log.debug("Got an eject_success before the switch changed"

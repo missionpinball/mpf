@@ -129,22 +129,22 @@ class BallLock(Device):
         return balls
 
     # callback for _ball_enter event of lock_devices
-    def _lock_ball(self, device, balls, **kwargs):
+    def _lock_ball(self, device, new_balls, unclaimed_balls, **kwargs):
         # if full do not take any balls
         if self.is_full():
             self.log.debug("Cannot lock balls. Lock is full.")
-            return {'balls': balls}
+            return {'unclaimed_balls': unclaimed_balls}
 
         # if there are no balls do not claim anything
-        if balls <= 0:
-            return {'balls': balls}
+        if unclaimed_balls <= 0:
+            return {'unclaimed_balls': unclaimed_balls}
 
         capacity = self.remaining_space_in_lock()
         # take ball up to capacity limit
-        if balls > capacity:
+        if unclaimed_balls > capacity:
             balls_to_lock = capacity
         else:
-            balls_to_lock = balls
+            balls_to_lock = unclaimed_balls
 
         self.balls_locked += balls_to_lock
         self.log.debug("Locked %s balls", balls_to_lock)
@@ -159,12 +159,12 @@ class BallLock(Device):
             self.machine.events.post('ball_lock_' + self.name + '_full',
                                      balls=self.balls_locked)
 
-        self.lock_queue.append((device, balls))
+        self.lock_queue.append((device, unclaimed_balls))
 
         # schedule eject of new balls
         self.request_new_balls(balls_to_lock)
 
-        return {'balls': balls - balls_to_lock}
+        return {'unclaimed_balls': unclaimed_balls - balls_to_lock}
 
     def request_new_balls(self, balls):
         if self.config['request_new_balls_to_pf']:

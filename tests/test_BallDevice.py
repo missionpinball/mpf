@@ -344,11 +344,11 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(1, playfield.balls)
 
 
-    def _ball_enter(self, balls, **kwargs):
-        if balls < 0:
+    def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):
+        if new_balls < 0:
             raise Exception("Balls went negative")
 
-        self._enter += balls
+        self._enter += new_balls
 
     def _captured_from_pf(self, balls, **kwargs):
         self._captured += balls
