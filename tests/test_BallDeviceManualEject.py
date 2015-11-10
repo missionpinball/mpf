@@ -256,11 +256,11 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(0, device2.balls)
 
-        self.advance_time_and_run(3)
+        self.advance_time_and_run(1)
 
         # too soft and it comes back
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
-        self.advance_time_and_run(3)
+        self.advance_time_and_run(6)
         self.assertEquals(1, device2.balls)
 
         coil1.pulse.assert_called_once_with()
