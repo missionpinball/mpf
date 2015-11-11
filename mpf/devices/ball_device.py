@@ -124,6 +124,8 @@ class BallDevice(Device):
         # false when a new ball appears in the device and then true again once
         # it's been processed
 
+        self.trigger_event = None
+
         self._state_transitions = dict(
 
             invalid=['idle'],
@@ -475,9 +477,24 @@ class BallDevice(Device):
         self.num_eject_attempts += 1
         self.num_balls_ejecting = 1
 
-        self._do_eject_attempt()
+        if not self.trigger_event:
+            # no trigger_event. just eject
+            self._do_eject_attempt()
+        else:
+            # TODO: implement the combination
+            assert not self.mechanical_eject_in_progress
+
+            # wait for trigger event
+            self.machine.events.add_handler(
+                self.trigger_event,
+                self._do_eject_attempt)
+
+            
 
     def _do_eject_attempt(self):
+        if self.trigger_event:
+            self.machine.events.remove_handler(self._do_eject_attempt)
+
 
         # Reachable from the following states:
         # ejecting
@@ -1040,28 +1057,39 @@ class BallDevice(Device):
 
     def setup_player_controlled_eject(self, balls=1, target=None,
                                       trigger_event=None):
-        # TODO: handle trigger_event
-
         if self.debug:
             self.log.debug("Setting up player-controlled eject. Balls: %s, "
                            "Target: %s, trigger_event: %s",
                            balls, target, trigger_event)
 
-        if not self.config['mechanical_eject']:
-            self.eject(balls, target=target)
-            return
 
         assert balls == 1
 
-        self._setup_or_queue_eject_to_target(self, True)
+        if self.config['mechanical_eject']:
+            # TODO: fix
+            assert not trigger_event            
 
-        # TODO: use callback here!
-        self.available_balls -= 1
-        target.available_balls += 1
+            self._setup_or_queue_eject_to_target(self, True)
 
-        self.eject_queue.append((target, True, trigger_event))
+            self.available_balls -= 1
+            target.available_balls += 1
 
-        return self._count_balls()
+            self.eject_queue.append((target, True, trigger_event))
+            return self._count_balls()
+
+        elif trigger_event:
+            self._setup_or_queue_eject_to_target(self, False)
+
+            self.available_balls -= 1
+            target.available_balls += 1
+
+            self.eject_queue.append((target, False, trigger_event))
+            return self._count_balls()
+
+        else:
+            self.eject(balls, target=target)
+            return
+
 
     def setup_eject_chain(self, path, player_controlled=False):
         if self.available_balls <= 0:
