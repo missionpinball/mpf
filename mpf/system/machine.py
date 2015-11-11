@@ -414,6 +414,7 @@ class MachineController(object):
             pass
 
         self.log_loop_rate()
+        self._platform_stop()
 
         try:
             self.log.info("Hardware loop rate: %s Hz",
@@ -434,6 +435,10 @@ class MachineController(object):
         self.events.post('timer_tick')  # sends the timer_tick system event
         tasks.Task.timer_tick()  # notifies tasks
         tasks.DelayManager.timer_tick()
+
+    def _platform_stop(self):
+        for platform in self.hardware_platforms.values():
+            platform.stop()
 
     def power_off(self):
         """Attempts to perform a power down of the pinball machine and ends MPF.

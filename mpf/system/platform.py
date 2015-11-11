@@ -162,6 +162,18 @@ class Platform(object):
         """
         pass
 
+    def stop(self):
+        """Subclass this method in the platform module if you need to perform
+        any actions to gracefully stop the platform interface.
+
+        This could do things like reseting it, stopping events, etc.
+
+        This method will be called when MPF stops, including when an MPF thread
+        crashes.
+
+        """
+        pass
+
     def get_hw_switch_states(self):
         """Subclass this method in a platform module to return the hardware
         states of all the switches on that platform.

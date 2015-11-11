@@ -112,6 +112,9 @@ class HardwarePlatform(Platform):
     def __repr__(self):
         return '<Platform.P3-ROC>'
 
+    def stop(self):
+        self.proc.reset(1)
+
     def configure_driver(self, config, device_type='coil'):
         """ Creates a P3-ROC driver.
 
