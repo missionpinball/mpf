@@ -5,6 +5,11 @@ bcp:
         local_display:
             connection_attempts: 0
 
+game:
+    balls_per_game: 1
+machine:
+    glass_off_mode: False
+
 coils:
     eject_coil1:
         number:
@@ -22,6 +27,9 @@ coils:
 
 
 switches:
+    s_start:
+        number:
+        tags: start
     s_ball_switch1:
         number:
     s_ball_switch2:

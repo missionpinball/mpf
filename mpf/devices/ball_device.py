@@ -903,7 +903,7 @@ class BallDevice(Device):
 
         # add ball to default target
         self.machine.ball_devices[self.config
-                                  ['ball_missing_target']].balls += balls
+                                  ['ball_missing_target']].add_missing_balls(balls)
 
     def is_full(self):
         """Checks to see if this device is full, meaning it is holding either
