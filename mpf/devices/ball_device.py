@@ -1055,41 +1055,30 @@ class BallDevice(Device):
 
         return True
 
-    def setup_player_controlled_eject(self, balls=1, target=None,
-                                      trigger_event=None):
+    def setup_player_controlled_eject(self, balls=1, target=None):
         if self.debug:
             self.log.debug("Setting up player-controlled eject. Balls: %s, "
-                           "Target: %s, trigger_event: %s",
-                           balls, target, trigger_event)
-
+                           "Target: %s, player_controlled_eject_event: %s",
+                           balls, target,
+                           self.config['player_controlled_eject_event'])
 
         assert balls == 1
 
-        if self.config['mechanical_eject']:
-            # TODO: fix
-            assert not trigger_event            
+        if self.config['mechanical_eject'] or (
+                self.config['player_controlled_eject_event'] and (
+                        self.config['eject_coil'] or self.config['hold_coil'])):
 
             self._setup_or_queue_eject_to_target(self, True)
 
             self.available_balls -= 1
             target.available_balls += 1
 
-            self.eject_queue.append((target, True, trigger_event))
-            return self._count_balls()
-
-        elif trigger_event:
-            self._setup_or_queue_eject_to_target(self, False)
-
-            self.available_balls -= 1
-            target.available_balls += 1
-
-            self.eject_queue.append((target, False, trigger_event))
+            self.eject_queue.append(
+                (target, self.config['mechanical_eject'], self.config['player_controlled_eject_event']))
             return self._count_balls()
 
         else:
             self.eject(balls, target=target)
-            return
-
 
     def setup_eject_chain(self, path, player_controlled=False):
         if self.available_balls <= 0:

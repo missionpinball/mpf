@@ -192,6 +192,7 @@ config_validator:
         eject_all_events: dict|str:ms|None
         mechanical_eject: single|bool|False
         mechanical_eject_trigger_time: single|ms|200ms
+        player_controlled_eject_event: single|str|None
     ball_locks:
         balls_to_lock: single|int|
         lock_devices: list|self.machine.ball_devices[%]|
