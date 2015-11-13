@@ -245,9 +245,11 @@ class BallDevice(Device):
         while (len(self._incoming_balls) and
                 self._incoming_balls[0][0] <= time.time()):
             self._incoming_balls.popleft()
+            self._handle_lost_incoming_ball()
             missing_balls += 1
         if missing_balls > 0:
             # TODO: handle this more like lost_balls. we may have to cancel ejects
+            self.log.info("Incoming ball expired!")
             return self._switch_state("missing_balls", balls=missing_balls)
 
         if self.get_additional_ball_capacity():
@@ -416,6 +418,9 @@ class BallDevice(Device):
         self.log.debug("Handling timeouts of incoming balls")
         if len(self._incoming_balls) and self._state == "idle":
             return self._count_balls()
+
+        if self._state == "waiting_for_ball":
+            return self._switch_state("idle")
 
     def remove_incoming_ball(self, source):
         # Removes a ball from the incoming balls queue
@@ -632,6 +637,12 @@ class BallDevice(Device):
         if target != self:
             return
 
+        self._handle_lost_incoming_ball()
+
+        if self._state == "waiting_for_ball":
+            return self._switch_state("idle")
+
+    def _handle_lost_incoming_ball(self):
         if self.available_balls > 0:
             self.available_balls -= 1
             return
@@ -640,9 +651,6 @@ class BallDevice(Device):
             raise AssertionError("Should have eject_queue")
 
         self._cancel_eject()
-
-        if self._state == "waiting_for_ball":
-            return self._switch_state("idle")
 
     def _source_device_eject_success(self, balls, target, **kwargs):
         if target != self:
