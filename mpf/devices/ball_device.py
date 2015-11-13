@@ -482,23 +482,26 @@ class BallDevice(Device):
         self.num_eject_attempts += 1
         self.num_balls_ejecting = 1
 
-        if not self.trigger_event:
-            # no trigger_event. just eject
+        if not self.trigger_event or self.mechanical_eject_in_progress:
+            # no trigger_event -> just eject
+            # mechanical eject -> will not eject. but be prepared
             self._do_eject_attempt()
-        else:
-            # TODO: implement the combination
-            assert not self.mechanical_eject_in_progress
 
+        if self.trigger_event:
             # wait for trigger event
             self.machine.events.add_handler(
                 self.trigger_event,
-                self._do_eject_attempt)
+                self._mechanical_eject_trigger)
 
+
+    def _mechanical_eject_trigger(self):
+        self.machine.events.remove_handler(self._mechanical_eject_trigger)
+        self.mechanical_eject_in_progress = False
+
+        self._do_eject_attempt()
             
 
     def _do_eject_attempt(self):
-        if self.trigger_event:
-            self.machine.events.remove_handler(self._do_eject_attempt)
 
 
         # Reachable from the following states:

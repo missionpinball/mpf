@@ -105,6 +105,5 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         self.machine.switch_controller.process_switch('s_playfield', 1)
         self.machine.switch_controller.process_switch('s_playfield', 0)
 
-        assert not plunger_coil.pulse.called
         self.assertEquals(0, plunger.balls)
         self.assertEquals(1, playfield.balls)
