@@ -55,9 +55,11 @@ ball_devices:
         eject_targets: playfield, test_target
         confirm_eject_type: target
         tags: ball_add_live
+        player_controlled_eject_event: sw_launch
     test_target:
         eject_coil: eject_coil3
         ball_switches: s_ball_switch_target
         debug: true
         eject_timeouts: 6s
         confirm_eject_type: count
+

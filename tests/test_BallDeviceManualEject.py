@@ -21,7 +21,6 @@ class TestBallDeviceManualEject(MpfTestCase):
     def getMachinePath(self):
         return '../tests/machine_files/ball_device/'
 
-
     def _missing_ball(self):
         self._missing += 1
 
@@ -33,7 +32,6 @@ class TestBallDeviceManualEject(MpfTestCase):
 
     def _captured_from_pf(self, balls, **kwargs):
         self._captured += balls
-
 
     def test_manual_successful_eject_to_pf(self):
         coil1 = self.machine.coils['eject_coil1']
@@ -47,7 +45,6 @@ class TestBallDeviceManualEject(MpfTestCase):
         self._enter = 0
         self._captured = 0
         self._missing = 0
-
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -74,7 +71,6 @@ class TestBallDeviceManualEject(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
         self.advance_time_and_run(1)
         self.assertEquals(0, device1.balls)
-
 
         # launcher receives but waits for player to eject
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)

@@ -33,7 +33,6 @@ class TestBallDeviceTriggerEvents(MpfTestCase):
     def _captured_from_pf(self, balls, **kwargs):
         self._captured += balls
 
-
     def test_manual_successful_eject_to_pf(self):
         coil1 = self.machine.coils['eject_coil1']
         coil2 = self.machine.coils['eject_coil2']
@@ -46,7 +45,6 @@ class TestBallDeviceTriggerEvents(MpfTestCase):
         self._enter = 0
         self._captured = 0
         self._missing = 0
-
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -63,7 +61,7 @@ class TestBallDeviceTriggerEvents(MpfTestCase):
         assert not coil2.pulse.called
 
         # request an ball
-        playfield.add_ball(player_controlled=True, trigger_event='sw_launch')
+        playfield.add_ball(player_controlled=True)
         self.advance_time_and_run(1)
 
         # trough eject
@@ -73,7 +71,6 @@ class TestBallDeviceTriggerEvents(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
         self.advance_time_and_run(1)
         self.assertEquals(0, device1.balls)
-
 
         # launcher receives but waits for player to eject
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
@@ -115,7 +112,6 @@ class TestBallDeviceTriggerEvents(MpfTestCase):
         self._captured = 0
         self._missing = 0
 
-
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.advance_time_and_run(1)
@@ -131,7 +127,7 @@ class TestBallDeviceTriggerEvents(MpfTestCase):
         assert not coil2.pulse.called
 
         # request an ball
-        playfield.add_ball(player_controlled=True, trigger_event='sw_launch')
+        playfield.add_ball(player_controlled=True)
         self.advance_time_and_run(1)
 
         # trough eject
