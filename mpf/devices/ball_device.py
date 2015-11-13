@@ -429,6 +429,7 @@ class BallDevice(Device):
     # -------------------------- State: ball_left -----------------------------
 
     def _state_ball_left_start(self):
+        self.machine.events.remove_handler(self._trigger_eject_by_event)
         # TODO: handle entry switch here -> definitely new ball
         # TODO: handle jam switch here -> ball did not leave
         if self.config['jam_switch']:
@@ -491,19 +492,20 @@ class BallDevice(Device):
             # wait for trigger event
             self.machine.events.add_handler(
                 self.trigger_event,
-                self._mechanical_eject_trigger)
+                self._trigger_eject_by_event)
 
 
-    def _mechanical_eject_trigger(self):
-        self.machine.events.remove_handler(self._mechanical_eject_trigger)
-        self.mechanical_eject_in_progress = False
+    def _trigger_eject_by_event(self):
+        self.machine.events.remove_handler(self._trigger_eject_by_event)
 
-        self._do_eject_attempt()
+        if self.mechanical_eject_in_progress:
+            self.mechanical_eject_in_progress = False
+            self._fire_eject_coil()
+        else:
+            self._do_eject_attempt()
             
 
     def _do_eject_attempt(self):
-
-
         # Reachable from the following states:
         # ejecting
         # missing_balls
