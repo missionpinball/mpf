@@ -1394,7 +1394,7 @@ class BallDevice(Device):
             # ball did not enter. if it does not return then confirm
             self.delay.add(name='count_confirmation',
                            ms=timeout,
-                           callback=self.eject_success)
+                           callback=self._count_confirm)
 
         else:
             # wait until one of the active switches turns off
@@ -1405,8 +1405,11 @@ class BallDevice(Device):
                     self.machine.switch_controller.add_switch_handler(
                         switch_name=switch.name,
                         ms=self.config['exit_count_delay'],
-                        callback=self.eject_success,
+                        callback=self._count_confirm,
                         state=0)
+
+    def _count_confirm(self):
+        self.eject_success()
 
     def _cancel_eject_confirmation(self):
         if self.debug:
@@ -1416,6 +1419,8 @@ class BallDevice(Device):
         # Remove any event watching for success
         self.machine.events.remove_handler(self.eject_success)
         self.machine.events.remove_handler(self._playfield_active)
+        self.machine.events.remove_handler(self._trigger_eject_by_event)
+        self.machine.events.remove_handler(self._count_confirm)
 
         self.waiting_for_eject_trigger = False
         self.mechanical_eject_in_progress = False
@@ -1431,6 +1436,12 @@ class BallDevice(Device):
                 callback=self.eject_success,
                 ms=self.config['exit_count_delay'],
                 state=0)
+            self.machine.switch_controller.remove_switch_handler(
+                switch_name=switch.name,
+                callback=self._count_confirm,
+                ms=self.config['exit_count_delay'],
+                state=0)
+
 
         # Remove any switch handlers
         if self.config['confirm_eject_type'] == 'switch':
@@ -1464,10 +1475,6 @@ class BallDevice(Device):
                            "state in the device. Ignoring!")
             return
 
-        if self.config['confirm_eject_type'] != 'target':
-            self._notify_target_of_incoming_ball(
-                self.eject_in_progress_target)
-
         if self._state == "waiting_for_ball_mechanical":
             # confirm eject of our source device
             self._incoming_balls[0][1].eject_success()
@@ -1478,6 +1485,11 @@ class BallDevice(Device):
         elif self._state != "ball_left" and self._state != "failed_confirm":
             raise AssertionError(
                 "Got an eject_success in wrong state " + self._state)
+        elif self.config['confirm_eject_type'] != 'target':
+            # notify if not in waiting_for_ball_mechanical
+            self._notify_target_of_incoming_ball(
+                self.eject_in_progress_target)
+
 
         if self.debug:
             self.log.debug("In eject_success(). Eject target: %s",
