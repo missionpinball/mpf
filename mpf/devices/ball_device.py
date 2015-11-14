@@ -1081,13 +1081,13 @@ class BallDevice(Device):
                 self.config['player_controlled_eject_event'] and (
                         self.config['eject_coil'] or self.config['hold_coil'])):
 
-            self._setup_or_queue_eject_to_target(self, True)
+            self._setup_or_queue_eject_to_target(target, True)
 
-            self.available_balls -= 1
-            target.available_balls += 1
-
-            self.eject_queue.append(
-                (target, self.config['mechanical_eject'], self.config['player_controlled_eject_event']))
+#            self.available_balls -= 1
+#            target.available_balls += 1
+#
+#            self.eject_queue.append(
+#                (target, self.config['mechanical_eject'], self.config['player_controlled_eject_event']))
             return self._count_balls()
 
         else:
@@ -1118,8 +1118,8 @@ class BallDevice(Device):
             raise AssertionError("Broken path")
 
         # append to queue
-        if player_controlled and self.config['mechanical_eject']:
-            self.eject_queue.append((next_hop, True, None))
+        if player_controlled and (self.config['mechanical_eject'] or self.config['player_controlled_eject_event']):
+            self.eject_queue.append((next_hop, self.config['mechanical_eject'], self.config['player_controlled_eject_event']))
         else:
             self.eject_queue.append((next_hop, False, None))
 
