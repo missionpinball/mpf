@@ -585,7 +585,7 @@ class BallDevice(Device):
         if self._state != "failed_confirm":
             raise AssertionError("Invalid state " + self._state)
 
-        if not self.config['confirm_eject_type'] == 'switch':
+        if self.config['confirm_eject_type'] == 'target':
             self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
 
         # We are screwed now!
