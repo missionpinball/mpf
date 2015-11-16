@@ -34,6 +34,12 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
     def _captured_from_pf(self, balls, **kwargs):
         self._captured += balls
 
+    def _hit_confirm(self):
+        self.machine.switch_controller.process_switch("s_launcher_confirm", 1)
+        self.advance_time_and_run(0.1)
+        self.machine.switch_controller.process_switch("s_launcher_confirm", 0)
+        self.advance_time_and_run(0.1)
+
     def test_eject_successful_to_other_trough(self):
         coil1 = self.machine.coils['eject_coil1']
         coil2 = self.machine.coils['eject_coil2']
@@ -102,8 +108,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(0, device2.balls)
 
-        self.machine.switch_controller.process_switch("s_launcher_confirm", 1)
-        self.machine.switch_controller.process_switch("s_launcher_confirm", 0)
+        self._hit_confirm()
         self.advance_time_and_run(1)
 
         # ball passes diverter switch
@@ -304,8 +309,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(0, device2.balls)
 
-        self.machine.switch_controller.process_switch("s_launcher_confirm", 1)
-        self.machine.switch_controller.process_switch("s_launcher_confirm", 0)
+        self._hit_confirm()
         self.advance_time_and_run(1)
         self.assertEquals(0, playfield.balls)
 
@@ -408,7 +412,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertEquals("waiting_for_ball", device3._state)
         self.assertEquals("idle", device4._state)
 
-
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
         self.advance_time_and_run(1)
         self.assertEquals(0, device2.balls)
@@ -418,9 +421,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertEquals("waiting_for_ball", device3._state)
         self.assertEquals("idle", device4._state)
 
-
-        self.machine.switch_controller.process_switch("s_launcher_confirm", 1)
-        self.machine.switch_controller.process_switch("s_launcher_confirm", 0)
+        self._hit_confirm()
         self.advance_time_and_run(1)
         self.assertEquals(0, playfield.balls)
 
