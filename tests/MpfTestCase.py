@@ -6,6 +6,7 @@ import time
 import sys
 from mock import *
 from datetime import datetime, timedelta
+import inspect
 
 # TODO: mock BCP and prevent logs
 
@@ -47,15 +48,26 @@ class MpfTestCase(unittest.TestCase):
         self.machine.default_platform.tick()
         self.machine.timer_tick()
 
+    def unittest_verbosity(self):
+        """Return the verbosity setting of the currently running unittest
+        program, or 0 if none is running.
+
+        """
+        frame = inspect.currentframe()
+        while frame:
+            self = frame.f_locals.get('self')
+            if isinstance(self, unittest.TestProgram):
+                return self.verbosity
+            frame = frame.f_back
+        return 0
 
     def setUp(self):
-        # no logging by default
-        #logging.basicConfig(level=99)
-
-        # uncomment for debug
-        logging.basicConfig(level=logging.DEBUG,
+        if self.unittest_verbosity() > 1:
+                logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
-
+        else:
+                # no logging by default
+                logging.basicConfig(level=99)
 
         self.realTime = time.time
         self.testTime = self.realTime()
