@@ -20,7 +20,6 @@ class EventManager(object):
         self.log = logging.getLogger("Events")
         self.machine = machine
         self.registered_handlers = {}
-        self.busy = False
         self.event_queue = deque([])
         self.callback_queue = deque([])
         self.registered_monitors = set()  # callbacks that get every event
@@ -431,19 +430,15 @@ class EventManager(object):
                            friendly_kwargs)
 
         self.event_queue.append((event, ev_type, callback, kwargs))
-        if not self.busy:
-            # process event queue right away
-            self._process_event_queue()
-        else:
-            if self.debug and event != 'timer_tick':
-                if self.debug:
-                    self.log.debug("XXXX There's an event in progress. Added to "
-                                   "the queue.")
-                    self.log.debug("============== ACTIVE EVENTS ============")
-                    for event in list(self.event_queue):
-                        self.log.debug("%s, %s, %s, %s", event[0], event[1],
-                                    event[2], event[3])
-                    self.log.debug("=========================================")
+        if self.debug and event != 'timer_tick':
+            if self.debug:
+                self.log.debug("XXXX There's an event in progress. Added to "
+                               "the queue.")
+                self.log.debug("============== ACTIVE EVENTS ============")
+                for event in list(self.event_queue):
+                    self.log.debug("%s, %s, %s, %s", event[0], event[1],
+                                event[2], event[3])
+                self.log.debug("=========================================")
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
@@ -531,7 +526,6 @@ class EventManager(object):
             self.callback_queue.append((callback, kwargs))
 
     def _process_event_queue(self):
-        self.busy = True
         # Internal method which checks to see if there are any other events
         # that need to be processed, and then processes them.
         while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
@@ -550,8 +544,6 @@ class EventManager(object):
             if len(self.callback_queue) > 0:
                 callback, kwargs = self.callback_queue.pop()
                 callback(**kwargs)
-
-        self.busy = False
 
     def process_event_player(self, config, mode=None, priority=0):
         # config is localized to 'event_player'

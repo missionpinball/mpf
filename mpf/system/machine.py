@@ -437,7 +437,8 @@ class MachineController(object):
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
         tasks.Task.timer_tick()  # notifies tasks
-        tasks.DelayManager.timer_tick()
+        tasks.DelayManager.timer_tick(self)
+        self.events._process_event_queue()
 
     def power_off(self):
         """Attempts to perform a power down of the pinball machine and ends MPF.
