@@ -907,6 +907,7 @@ class TestBallDeviceManualWithCount(MpfTestCase):
 
         # request an ball to launcher
         device2.request_ball()
+        self.advance_time_and_run(0.1)
 
         # trough eject
         coil1.pulse.assert_called_once_with()

@@ -18,6 +18,7 @@ class TestBallDevicesHoldCoil(MpfTestCase):
       self.machine.coils['hold_coil'].disable = MagicMock()
       # after hold switch was posted it should enable the hold_coil
       self.machine.events.post('test_hold_event')
+      self.advance_time_and_run(0.1)
       self.machine.coils['hold_coil'].enable.assert_called_once_with()
       assert not self.machine.coils['hold_coil'].disable.called
 
