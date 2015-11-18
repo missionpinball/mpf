@@ -432,9 +432,7 @@ class EventManager(object):
         self.event_queue.append((event, ev_type, callback, kwargs))
         if self.debug and event != 'timer_tick':
             if self.debug:
-                self.log.debug("XXXX There's an event in progress. Added to "
-                               "the queue.")
-                self.log.debug("============== ACTIVE EVENTS ============")
+                self.log.debug("============== EVENTS QUEUE =============")
                 for event in list(self.event_queue):
                     self.log.debug("%s, %s, %s, %s", event[0], event[1],
                                 event[2], event[3])
