@@ -1390,10 +1390,13 @@ class BallDevice(Device):
                             self.config['confirm_eject_type'])
 
     def _setup_count_eject_confirmation(self, timeout):
+
         if self._state == "waiting_for_ball_mechanical":
+            # add timeout of source device
+            timeout += self._incoming_balls[0][1].config['eject_timeouts'][self]
             # ball did not enter. if it does not return then confirm
             self.delay.add(name='count_confirmation',
-                           ms=timeout,
+                           ms=timeout + 1000,
                            callback=self._count_confirm)
 
         else:

@@ -383,8 +383,8 @@ class TestBallDeviceManualWithCount(MpfTestCase):
         coil2.pulse = MagicMock()
 
         self.assertEquals(1, playfield.balls)
-        # since it will use count as eject confirm we have to wait for eject_timout
-        self.advance_time_and_run(6)
+        # since it will use count as eject confirm we have to wait for eject_timout of both devices
+        self.advance_time_and_run(6 + 3)
 
 
         self.assertEquals(2, playfield.balls)
