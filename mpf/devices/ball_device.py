@@ -674,6 +674,16 @@ class BallDevice(Device):
 
         self.config['eject_targets'] = new_list
 
+        # ensure mechanical_eject
+
+        if not self.config['eject_coil'] and not self.config['hold_coil']:
+            self.config['mechanical_eject'] = True
+
+            if self.debug:
+                self.log.debug("Device not configured with eject_coil or "
+                               "hold_coil, so setting mechanical_eject to "
+                               "True")
+
         # ensure eject timeouts list matches the length of the eject targets
         if (len(self.config['eject_timeouts']) <
                 len(self.config['eject_targets'])):
