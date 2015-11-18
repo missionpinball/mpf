@@ -118,12 +118,17 @@ class MachineController(object):
         self._register_system_events()
         self._load_machine_vars()
         self.events.post("init_phase_1")
+        self.events._process_event_queue()
         self.events.post("init_phase_2")
+        self.events._process_event_queue()
         self._load_plugins()
         self.events.post("init_phase_3")
+        self.events._process_event_queue()
         self._load_scriptlets()
         self.events.post("init_phase_4")
+        self.events._process_event_queue()
         self.events.post("init_phase_5")
+        self.events._process_event_queue()
 
         self.reset()
 
@@ -297,9 +302,13 @@ class MachineController(object):
 
         """
         self.events.post('Resetting...')
+        self.events._process_event_queue()
         self.events.post('machine_reset_phase_1')
+        self.events._process_event_queue()
         self.events.post('machine_reset_phase_2')
+        self.events._process_event_queue()
         self.events.post('machine_reset_phase_3')
+        self.events._process_event_queue()
         self.log.debug('Reset Complete')
 
     def add_platform(self, name):
@@ -451,6 +460,7 @@ class MachineController(object):
         """Performs a graceful exit of MPF."""
         self.log.info("Shutting down...")
         self.events.post('shutdown')
+        self.events._process_event_queue()
         self.done = True
 
     def log_loop_rate(self):
