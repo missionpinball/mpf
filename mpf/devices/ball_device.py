@@ -63,11 +63,6 @@ class BallDevice(Device):
         self.eject_in_progress_target = None
         """The device this device is currently trying to eject to."""
 
-        self.num_jam_switch_count = 0
-        """How many times the jam switch has been activated since the last
-        successful eject.
-        """
-
         self.machine.events.add_handler('init_phase_2',
                                         self._initialize)
 
@@ -248,7 +243,6 @@ class BallDevice(Device):
             self._handle_lost_incoming_ball()
             missing_balls += 1
         if missing_balls > 0:
-            # TODO: handle this more like lost_balls. we may have to cancel ejects
             self.log.info("Incoming ball expired!")
             return self._switch_state("missing_balls", balls=missing_balls)
 
@@ -303,7 +297,6 @@ class BallDevice(Device):
     def _handle_eject_queue(self):
         if self.eject_queue:
             self.num_eject_attempts = 0
-            self.num_jam_switch_count = 0
             if self.balls > 0:
                 return self._switch_state("wait_for_eject")
             else:
@@ -431,14 +424,6 @@ class BallDevice(Device):
     def _state_ball_left_start(self):
         self.machine.events.remove_handler(self._trigger_eject_by_event)
         # TODO: handle entry switch here -> definitely new ball
-        # TODO: handle jam switch here -> ball did not leave
-        if self.config['jam_switch']:
-            self.num_jam_switch_count = 0
-            if self.machine.switch_controller.is_active(
-                    self.config['jam_switch'].name):
-                self.num_jam_switch_count += 1
-                # catches if the ball is blocking the switch to
-                # begin with, todo we have to get smart here
         self.machine.events.post('balldevice_' + self.name + '_ball_left',
                                  balls=self.num_balls_ejecting,
                                  target=self.eject_in_progress_target,
@@ -482,6 +467,13 @@ class BallDevice(Device):
 
         self.num_eject_attempts += 1
         self.num_balls_ejecting = 1
+
+        if (self.config['jam_switch'] and
+            self.machine.switch_controller.is_active(self.config['jam_switch'].name,
+                ms=self.config['entrance_count_delay'])):
+            self.jam_switch_state_during_eject = True
+        else:
+            self.jam_switch_state_during_eject = False
 
         if not self.trigger_event or self.mechanical_eject_in_progress:
             # no trigger_event -> just eject
@@ -532,18 +524,14 @@ class BallDevice(Device):
             # we are unable to get rid of it
             return self._switch_state("eject_broken")
 
-        # TODO: timer for retry
-
         # ball did not leave. eject it again
         return self._switch_state("ejecting")
 
     # -------------------------- State: eject_broken --------------------------
 
     def _state_eject_broken_start(self):
+        # The only way to get out of this state it to call reset on the device
         self.log.warn("Ball device is unable to eject ball. Stopping device")
-        # TODO: reactivate after timers? what to do?
-        # TODO: cancel all ejects balls
-        # TODO: cancel all balls
         self.machine.events.post('balldevice_' + self.name +
                                  '_eject_broken', source=self)
 
@@ -561,12 +549,22 @@ class BallDevice(Device):
         return self._count_balls()
 
     def _state_failed_confirm_counted_balls(self, balls):
+
+        if (not self.jam_switch_state_during_eject and
+                self.config['jam_switch'] and
+            self.machine.switch_controller.is_active(self.config['jam_switch'].name,
+                    ms=self.config['entrance_count_delay'])):
+            # jam switch is active and was not active during eject.
+            # assume failed eject!
+            self.balls += 1
+            return self._switch_state("failed_eject")
+
+
         if self.balls > balls:
-            # we lost even more balls? if the do not come back until timeout
+            # we lost even more balls? if they do not come back until timeout
             # we will go to state "missing_balls" and forget about the first
             # one. Afterwards, we will go to state "idle" and it will handle
             # all additional missing balls
-            # TODO: can we use state missing_balls here?
             pass
         elif self.balls < balls:
             # TODO: check if entry switch was active.
@@ -717,14 +715,6 @@ class BallDevice(Device):
                 ms=self.config['exit_count_delay'],
                 callback=self._switch_changed)
 
-        # Configure switch handlers for jam switch activity
-        if self.config['jam_switch']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=self.config['jam_switch'].name, state=1, ms=0,
-                callback=self._jam_switch_handler)
-            # todo do we also need to add inactive and make a smarter
-            # handler?
-
         # Configure switch handlers for entrance switch activity
         if self.config['entrance_switch']:
             self.machine.switch_controller.add_switch_handler(
@@ -823,8 +813,6 @@ class BallDevice(Device):
                 self.eject_in_progress_target).ljust(42) + "|")
             self.log.debug("| num_balls_ejecting: {}".format(
                 self.num_balls_ejecting).ljust(42) + "|")
-            self.log.debug("| num_jam_switch_count: {}".format(
-                self.num_jam_switch_count).ljust(42) + "|")
             self.log.debug("| num_eject_attempts: {}".format(
                 self.num_eject_attempts).ljust(42) + "|")
             self.log.debug("| eject queue: {}".format(
@@ -933,16 +921,6 @@ class BallDevice(Device):
             return True
         else:
             return False
-
-    def _jam_switch_handler(self):
-        # The device's jam switch was just activated.
-        # This method is typically used with trough devices to figure out if
-        # balls fell back in.
-
-        self.num_jam_switch_count += 1
-        if self.debug:
-            self.log.debug("Ball device %s jam switch hit. New count: %s",
-                           self.name, self.num_jam_switch_count)
 
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch
@@ -1053,7 +1031,7 @@ class BallDevice(Device):
 
             path = self.find_one_available_ball()
             if not path:
-                # TODO: put into queue here
+                # put into queue here
                 self.ball_requests.append((target, player_controlled))
                 return False
 
@@ -1279,7 +1257,20 @@ class BallDevice(Device):
                            "balls: %s.", self.num_balls_ejecting, self.balls)
 
     def _fire_eject_coil(self):
-        self.config['eject_coil'].pulse()
+
+        if (self.num_eject_attempts <= 2 and
+            self.config['eject_coil_jam_pulse'] and
+            self.config['jam_switch'] and
+            self.machine.switch_controller.is_active(self.config['jam_switch'].name,
+                    ms=self.config['entrance_count_delay'])):
+            self.config['eject_coil'].pulse(self.config['eject_coil_jam_pulse'])
+        elif (self.num_eject_attempts >= 4 and
+                self.config['eject_coil_retry_pulse']):
+            self.config['eject_coil'].pulse(self.config['eject_coil_retry_pulse'])
+        else:
+            self.config['eject_coil'].pulse()
+
+
         if self.debug:
             self.log.debug("Firing eject coil. num_balls_ejecting: %s. New "
                            "balls: %s.", self.num_balls_ejecting, self.balls)
@@ -1339,7 +1330,6 @@ class BallDevice(Device):
                                target.name, timeout)
 
             # ball_enter does mean sth different for the playfield.
-            # TODO: also use ball_enter on the playfield
             if not target.is_playfield():
                 # watch for ball entry event on the target device
                 # This must be higher priority than the failed eject handler
@@ -1509,7 +1499,6 @@ class BallDevice(Device):
         # Create a temp attribute here so the real one is None when the
         # event is posted.
         eject_target = self.eject_in_progress_target
-        self.num_jam_switch_count = 0
         self.num_eject_attempts = 0
         self.eject_in_progress_target = None
         balls_ejected = self.num_balls_ejecting
