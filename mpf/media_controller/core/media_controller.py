@@ -185,10 +185,15 @@ class MediaController(object):
         self.start_socket_thread()
 
         self.events.post("init_phase_1")
+        self.events._process_event_queue()
         self.events.post("init_phase_2")
+        self.events._process_event_queue()
         self.events.post("init_phase_3")
+        self.events._process_event_queue()
         self.events.post("init_phase_4")
+        self.events._process_event_queue()
         self.events.post("init_phase_5")
+        self.events._process_event_queue()
 
         self.reset()
 
@@ -212,8 +217,11 @@ class MediaController(object):
         self.events.replace_handler('timer_tick', self.asset_loading_counter)
 
         self.events.post('mc_reset_phase_1')
+        self.events._process_event_queue()
         self.events.post('mc_reset_phase_2')
+        self.events._process_event_queue()
         self.events.post('mc_reset_phase_3')
+        self.events._process_event_queue()
 
     def get_window(self):
         """ Returns a reference to the onscreen display window.
@@ -269,6 +277,7 @@ class MediaController(object):
             self.events.add_handler('timer_tick', self.asset_loading_counter)
 
             self.events.post('pygame_initialized')
+            self.events._process_event_queue()
 
     def register_pygame_handler(self, event, handler):
         """Registers a method to be a handler for a certain type of Pygame
@@ -355,7 +364,8 @@ class MediaController(object):
         self.events.post('timer_tick')  # sends the timer_tick system event
         self.tick_num += 1
         Task.timer_tick()  # notifies tasks
-        DelayManager.timer_tick()
+        DelayManager.timer_tick(self)
+        self.events._process_event_queue()
 
     def run(self):
         """Main run loop."""
