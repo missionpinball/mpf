@@ -137,8 +137,6 @@ class DelayManager(object):
                               'callback': callback,
                               'kwargs': kwargs})
 
-        self.log.debug("Next wakeup %s", self.get_next_event())
-
         return name
 
     def remove(self, name):
