@@ -22,27 +22,27 @@ class MpfTestCase(unittest.TestCase):
             'debug': True
                }
 
+    def set_time(self, new_time):
+        self.testTime = new_time
+        time.time.return_value = self.testTime
+
     def advance_time(self, delta):
         self.testTime += delta
         time.time.return_value = self.testTime
 
     def advance_time_and_run(self, delta):
+        end_time = time.time() + delta
         self.machine_run()
-        if delta > 10:
-            self.advance_time(10)
-            self.machine_run()
-            delta -= 10
-        if delta > 10:
-            self.advance_time(10)
-            self.machine_run()
-            delta -= 10
-        if delta > 10:
-            self.advance_time(10)
-            self.machine_run()
-            delta -= 10
-        if delta > 0:
-            self.advance_time(delta)
-            self.machine_run()
+        while True:
+            next_event = self.machine.delay.get_next_event()
+            if next_event and next_event <= end_time:
+                self.set_time(next_event)
+                self.machine_run()
+            else:
+                break
+
+        self.set_time(end_time)
+        self.machine_run()
 
     def machine_run(self):
         self.machine.default_platform.tick()
@@ -88,7 +88,7 @@ class MpfTestCase(unittest.TestCase):
             # disable teardown logging after error
             logging.basicConfig(level=99)
         # fire all delays
-        self.advance_time_and_run(10000)
+        self.advance_time_and_run(300)
         self.machine = None
         time.time = self.realTime
         self.realTime = None

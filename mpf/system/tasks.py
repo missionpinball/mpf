@@ -137,6 +137,8 @@ class DelayManager(object):
                               'callback': callback,
                               'kwargs': kwargs})
 
+        self.log.debug("Next wakeup %s", self.get_next_event())
+
         return name
 
     def remove(self, name):
@@ -178,6 +180,23 @@ class DelayManager(object):
     def clear(self):
         """Removes (clears) all the delays associated with this DelayManager."""
         self.delays = {}
+
+    def get_next_event(self):
+        next_event_time = False
+        for delay_manager in DelayManager.delay_managers:
+            next_event_time_single = delay_manager._get_next_event()
+            if not next_event_time or (next_event_time > next_event_time_single and next_event_time_single):
+                next_event_time = next_event_time_single
+
+        return next_event_time
+
+    def _get_next_event(self):
+        next_event_time = False
+        for delay in self.delays.keys():
+            if not next_event_time or next_event_time > self.delays[delay]['action_ms']:
+                next_event_time = self.delays[delay]['action_ms']
+
+        return next_event_time
 
     def _process_delays(self, machine):
         # Processes any delays that should fire now
