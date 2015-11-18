@@ -250,7 +250,7 @@ class TestBallDeviceManualWithCount(MpfTestCase):
 
         # too soft and it comes back
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
-        self.advance_time_and_run(10)
+        self.advance_time_and_run(11)
         self.assertEquals(1, device2.balls)
 
         coil1.pulse.assert_called_once_with()

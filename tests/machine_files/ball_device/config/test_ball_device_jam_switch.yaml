@@ -34,12 +34,14 @@ switches:
 ball_devices:
     trough:
         eject_coil: trough_eject
-        ball_switches: s_trough_1, s_trough_2, s_trough_3, s_trough_4
+        ball_switches: s_trough_1, s_trough_2, s_trough_3, s_trough_4, s_trough_jam
         jam_switch: s_trough_jam
         debug: true
         tags: trough, drain, home
         eject_targets: plunger
         confirm_eject_type: target
+        eject_coil_jam_pulse: 5
+        eject_coil_retry_pulse: 15
     plunger:
         eject_coil: plunger_eject
         ball_switches: s_plunger

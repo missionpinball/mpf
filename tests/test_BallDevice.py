@@ -45,8 +45,7 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEquals(0, self._missing)
-        self.advance_time_and_run(10000)
-        self.advance_time_and_run(10000)
+        self.advance_time_and_run(300)
         self.assertEquals(1, self._missing)
 
 
@@ -83,14 +82,7 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEquals(1, self._captured)
 
-#        self.advance_time_and_run(300)
-#        self.advance_time_and_run(300)
-#        self.advance_time_and_run(300)
-#        self.advance_time_and_run(300)
-#        self.advance_time_and_run(300)
-#        self.advance_time_and_run(300)
-#        self.advance_time_and_run(300)
-        self.advance_time_and_run(10000)
+        self.advance_time_and_run(300)
 
     def test_ball_eject_timeout_and_late_confirm(self):
         self._requesting = 0
@@ -786,7 +778,7 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(0, self._missing)
 
         # check that timeout behave well
-        self.advance_time_and_run(1000)
+        self.advance_time_and_run(300)
 
     def test_missing_ball_idle(self):
         coil1 = self.machine.coils['eject_coil1']
@@ -962,7 +954,7 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(3, playfield.balls)
 
         # check that timeout behave well
-        self.advance_time_and_run(1000)
+        self.advance_time_and_run(300)
 
     def _block_eject(self, queue, **kwargs):
         self._queue = queue
