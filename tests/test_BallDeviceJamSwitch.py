@@ -31,6 +31,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.put_four_balls_in_trough()
 
         self.machine.playfield.add_ball(player_controlled=True)
+        self.advance_time_and_run(.1)
 
         self.assertEqual(1, self.trough_coil.pulse.called)
 
@@ -81,6 +82,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.put_four_balls_in_trough()
 
         self.machine.playfield.add_ball(player_controlled=True)
+        self.advance_time_and_run(.1)
 
         self.assertEqual(1, self.trough_coil.pulse.called)
 
@@ -132,6 +134,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.put_four_balls_in_trough()
 
         self.machine.playfield.add_ball(player_controlled=True)
+        self.advance_time_and_run(.1)
 
         self.assertEqual(1, self.trough_coil.pulse.called)
 
@@ -151,6 +154,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.put_four_balls_in_trough()
 
         self.machine.playfield.add_ball(player_controlled=True)
+        self.advance_time_and_run(.1)
 
         self.assertEqual(1, self.trough_coil.pulse.called)
 
@@ -181,6 +185,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.put_four_balls_in_trough()
 
         self.machine.playfield.add_ball(player_controlled=True)
+        self.advance_time_and_run(.1)
 
         self.assertEqual(1, self.trough_coil.pulse.called)
 
@@ -214,6 +219,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.put_four_balls_in_trough()
 
         self.machine.playfield.add_ball(player_controlled=True)
+        self.advance_time_and_run(.1)
 
         self.assertEqual(1, self.trough_coil.pulse.called)
 
@@ -286,6 +292,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.put_four_balls_in_trough()
 
         self.machine.playfield.add_ball(player_controlled=True)
+        self.advance_time_and_run(.1)
 
         self.assertEqual(1, self.trough_coil.pulse.called)
 
