@@ -674,15 +674,20 @@ class BallDevice(Device):
 
         self.config['eject_targets'] = new_list
 
-        # ensure mechanical_eject
+        # perform logical validation
 
-        if not self.config['eject_coil'] and not self.config['hold_coil']:
-            self.config['mechanical_eject'] = True
+        if (not self.config['eject_coil'] and not self.config['hold_coil'] and
+                not self.config['mechanical_eject']):
+            raise AssertionError('Configuration error in {} ball device. '
+                                 'Device needs an eject_coil, a hold_coil, or '
+                                 '"mechanical_eject: True"'.format(self.name))
 
-            if self.debug:
-                self.log.debug("Device not configured with eject_coil or "
-                               "hold_coil, so setting mechanical_eject to "
-                               "True")
+        if (len(self.config['ball_switches']) > 1 and
+                self.config['mechanical_eject']):
+            raise AssertionError('Configuration error in {} ball device. '
+                                 'mechanical_eject can only be used with '
+                                 'devices that have 1 ball switch'.
+                                 format(self.name))
 
         # ensure eject timeouts list matches the length of the eject targets
         if (len(self.config['eject_timeouts']) <
