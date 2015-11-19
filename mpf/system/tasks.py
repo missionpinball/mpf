@@ -179,7 +179,24 @@ class DelayManager(object):
         """Removes (clears) all the delays associated with this DelayManager."""
         self.delays = {}
 
-    def _process_delays(self):
+    def get_next_event(self):
+        next_event_time = False
+        for delay_manager in DelayManager.delay_managers:
+            next_event_time_single = delay_manager._get_next_event()
+            if not next_event_time or (next_event_time > next_event_time_single and next_event_time_single):
+                next_event_time = next_event_time_single
+
+        return next_event_time
+
+    def _get_next_event(self):
+        next_event_time = False
+        for delay in self.delays.keys():
+            if not next_event_time or next_event_time > self.delays[delay]['action_ms']:
+                next_event_time = self.delays[delay]['action_ms']
+
+        return next_event_time
+
+    def _process_delays(self, machine):
         # Processes any delays that should fire now
         for delay in self.delays.keys():
             # previous delay may have deleted it
@@ -197,15 +214,18 @@ class DelayManager(object):
                 else:
                     this_delay['callback']()
 
+            # Process event queue after delay
+            machine.events._process_event_queue()
+
     @staticmethod
-    def timer_tick():
+    def timer_tick(machine):
         # This is kind of complex because we have to account for a delay
         # manager being deleted while we're iterating.
         live_delay_managers = set()
         while DelayManager.delay_managers:
             i = DelayManager.delay_managers.pop()
             if i not in DelayManager.dead_delay_managers:
-                i._process_delays()
+                i._process_delays(machine)
                 live_delay_managers.add(i)
         DelayManager.delay_managers = live_delay_managers
 

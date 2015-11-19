@@ -56,6 +56,13 @@ class Timing(object):
     def remove(self, timer):
         self.timers_to_remove.add(timer)
 
+    def get_next_timer(self):
+        next_timer = False
+        for timer in self.timers:
+            if not next_timer or next_timer > timer.wakeup:
+                next_timer = timer.wakeup
+        return next_timer
+
     def timer_tick(self):
         global tick
         Timing.tick += 1

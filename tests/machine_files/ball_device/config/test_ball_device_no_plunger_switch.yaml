@@ -1,0 +1,32 @@
+#config_version=3
+
+bcp:
+    connections:
+        local_display:
+            connection_attempts: 0
+
+coils:
+    trough_eject:
+        number:
+
+switches:
+    s_trough_1:
+        number:
+    s_trough_2:
+        number:
+    s_trough_3:
+        number:
+    s_trough_4:
+        number:
+    s_trough_jam:
+        number:
+    s_playfield:
+        number:
+        tags: playfield_active
+
+ball_devices:
+    trough:
+        eject_coil: trough_eject
+        ball_switches: s_trough_1, s_trough_2, s_trough_3, s_trough_4
+        debug: true
+        tags: trough, drain, home, ball_add_live

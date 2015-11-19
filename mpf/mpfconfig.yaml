@@ -160,6 +160,8 @@ config_validator:
         exit_count_delay: single|ms|500ms
         entrance_count_delay: single|ms|500ms
         eject_coil: single|self.machine.coils[%]|None
+        eject_coil_jam_pulse: single|ms|None
+        eject_coil_retry_pulse: single|ms|None
         hold_coil: single|self.machine.coils[%]|None
         hold_coil_release_time: single|ms|1s
         hold_events: dict|str:ms|None
@@ -190,6 +192,7 @@ config_validator:
         eject_all_events: dict|str:ms|None
         mechanical_eject: single|bool|False
         mechanical_eject_trigger_time: single|ms|200ms
+        player_controlled_eject_event: single|str|None
     ball_locks:
         balls_to_lock: single|int|
         lock_devices: list|self.machine.ball_devices[%]|

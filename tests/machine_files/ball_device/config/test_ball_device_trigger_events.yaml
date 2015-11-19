@@ -1,0 +1,65 @@
+#config_version=3
+
+bcp:
+    connections:
+        local_display:
+            connection_attempts: 0
+
+coils:
+    eject_coil1:
+        number:
+    eject_coil2:
+        number:
+    eject_coil3:
+        number:
+    eject_coil4:
+        number:
+    eject_coil5:
+        number:
+    c_diverter:
+        number:
+
+
+
+switches:
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+    s_ball_switch_launcher:
+        number:
+    s_ball_switch_target:
+        number:
+    s_playfield:
+        number:
+        tags: playfield_active
+    s_launch:
+        number:
+        tags: launch
+
+
+ball_devices:
+    test_trough:
+        eject_coil: eject_coil1
+        ball_switches: s_ball_switch1, s_ball_switch2
+        debug: true
+        confirm_eject_type: target
+        eject_targets: test_launcher
+        eject_timeouts: 3s
+        tags: trough, drain, home
+    test_launcher:
+        eject_coil: eject_coil2
+        ball_switches: s_ball_switch_launcher
+        debug: true
+        eject_timeouts: 6s, 10s
+        eject_targets: playfield, test_target
+        confirm_eject_type: target
+        tags: ball_add_live
+        player_controlled_eject_event: sw_launch
+    test_target:
+        eject_coil: eject_coil3
+        ball_switches: s_ball_switch_target
+        debug: true
+        eject_timeouts: 6s
+        confirm_eject_type: count
+

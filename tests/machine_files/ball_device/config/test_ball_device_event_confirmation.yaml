@@ -10,6 +10,7 @@ game:
 machine:
     glass_off_mode: False
 
+
 coils:
     eject_coil1:
         number:
@@ -58,14 +59,14 @@ ball_devices:
         ball_switches: s_ball_switch1, s_ball_switch2
         debug: true
         confirm_eject_type: target
-        max_eject_attempts: 3
         eject_targets: test_launcher
         tags: trough, drain, home
     test_launcher:
         eject_coil: eject_coil2
         ball_switches: s_ball_switch_launcher
         debug: true
-        confirm_eject_type: target
+        confirm_eject_type: event
+        confirm_eject_event: launcher_confirm
         eject_targets: test_target1, test_target2
         eject_timeouts: 6s, 10s
     test_target1:
@@ -73,7 +74,7 @@ ball_devices:
         ball_switches: s_ball_switch_target1
         debug: true
         tags: ball_add_live
-        confirm_eject_type: target
+        confirm_eject_type: count
     test_target2:
         eject_coil: eject_coil4
         ball_switches: s_ball_switch_target2_1, s_ball_switch_target2_2
@@ -84,8 +85,6 @@ ball_devices:
     test_target3:
         eject_coil: eject_coil5
         ball_switches: s_ball_switch_target3
-        eject_targets: playfield, test_trough
-        confirm_eject_type: target
         debug: true
 
 diverters:

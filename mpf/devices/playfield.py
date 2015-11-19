@@ -28,6 +28,7 @@ class Playfield(BallDevice):
         self.debug = False
         self.config = dict()
         self._count_consistent = True
+        self.unexpected_balls = 0
 
         if validate:
             self.config = self.machine.config_processor.process_config2(
@@ -102,6 +103,14 @@ class Playfield(BallDevice):
                     '_ball_eject_attempt',
                     handler=self._source_device_eject_attempt)
 
+    def add_missing_balls(self, balls):
+        # if we catched an unexpected balls before do not add a ball
+        if self.unexpected_balls:
+            self.unexpected_balls -= 1
+            balls -= 1
+
+        self.balls += balls
+
     @property
     def balls(self):
         return self._balls
@@ -116,17 +125,13 @@ class Playfield(BallDevice):
             self.log.debug("Ball count change. Prior: %s, Current: %s, Change:"
                            " %s", prior_balls, balls, ball_change)
 
-        if balls > 0:
+        if balls >= 0:
             self._balls = balls
-            #self.ball_search_schedule()
-        elif balls == 0:
-            self._balls = 0
-            #self.ball_search_disable()
         else:
             self.log.warning("Playfield balls went to %s. Resetting to 0, but "
                              "FYI that something's weird", balls)
             self._balls = 0
-            #self.ball_search_disable()
+            self.unexpected_balls = 0
 
         self.log.debug("New Ball Count: %s. (Prior count: %s)",
                        self._balls, prior_balls)
@@ -160,7 +165,7 @@ class Playfield(BallDevice):
         return 999
 
     def add_ball(self, balls=1, source_name=None, source_device=None,
-                 trigger_event=None, player_controlled=False):
+                 player_controlled=False):
         """Adds live ball(s) to the playfield.
 
         Args:
@@ -169,10 +174,6 @@ class Playfield(BallDevice):
                 add the ball(s) from.
             source_device: Optional ball device object you'd like to add the
                 ball(s) from.
-            trigger_event: The optional name of an event that MPF will wait for
-                before adding the ball into play. Typically used with player-
-                controlled eject tag events. If None, the ball will be added
-                immediately.
             player_controlled: Boolean which specifies whether this event is
                 player controlled. (See not below for details)
 
@@ -250,12 +251,12 @@ class Playfield(BallDevice):
             return False
 
         self.log.debug("Received request to add %s ball(s). Source device: %s."
-                       " Wait for event: %s. Player-controlled: %s", balls,
-                       source_device.name, trigger_event, player_controlled)
+                       " Player-controlled: %s", balls,
+                       source_device.name, player_controlled)
 
         if player_controlled:
             source_device.setup_player_controlled_eject(balls=balls,
-                target=self, trigger_event=trigger_event)
+                                                        target=self)
         else:
             source_device.eject(balls=balls, target=self, get_ball=True)
 
@@ -273,6 +274,8 @@ class Playfield(BallDevice):
             self.mark_playfield_active()
 
             if not self.num_balls_requested:
+                if self.machine.game:
+                    self.unexpected_balls = 1
                 if self.machine.config['machine']['glass_off_mode']:
                     self.log.debug("Playfield_active switch hit with no balls "
                                    "expected. glass_off_mode is enabled, so "

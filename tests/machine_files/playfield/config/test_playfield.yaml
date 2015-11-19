@@ -1,0 +1,14 @@
+#config_version=3
+
+bcp:
+    connections:
+        local_display:
+            connection_attempts: 0
+
+machine:
+    glass_off_mode: False
+
+switches:
+  s_playfield:
+    number:
+    tags: playfield_active
