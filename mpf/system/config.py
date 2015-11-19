@@ -58,9 +58,6 @@ class Config(object):
 
     @staticmethod
     def load_config_file(filename, verify_version=True):
-
-        print filename
-
         config = FileManager.load(filename, verify_version)
 
         if 'config' in config:
