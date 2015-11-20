@@ -46,6 +46,9 @@ coils:
         pulse_ms: 25
     c_flipper_right_hold: 
         number: FLRH
+    c_trough_eject:
+        number: c01
+        pulse_ms: 25
 
 flippers:
     left_flipper:
@@ -126,6 +129,7 @@ ball_devices:
     entrance_count_delay: 300ms
     exit_count_delay: 2s
     jam_switch: s_trough_jam
+    debug: true
 
 virtual_platform_start_active_switches:
     s_trough1
