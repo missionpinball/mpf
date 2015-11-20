@@ -7,9 +7,6 @@
 # use this file with your own hardware unless you change the coil and switch
 # numbers to match your actual hardware!
 
-game:
-    player_controlled_eject_tag: launch
-
 hardware:
     platform: fast
     driverboards: wpc
@@ -579,6 +576,7 @@ ball_devices:
     exit_count_delay: 3s
     eject_coil: c_plunger_eject
     tags: ball_add_live
+    player_controlled_eject_event: sw_launch
 
   bd_retina_hole:
     ball_switches: s_eject

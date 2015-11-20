@@ -63,6 +63,9 @@ coils:
     c_trough_eject:
         number: c01
         pulse_ms: 25
+    c_plunger_eject:
+        number: c03
+        pulse_ms: 25
 
 flippers:
     left_flipper:
@@ -151,8 +154,8 @@ ball_devices:
     entrance_count_delay: 300ms
     exit_count_delay: 3s
     eject_coil: c_plunger_eject
-    confirm_eject_type: count
     tags: ball_add_live
+    player_controlled_eject_event: sw_launch
 
 virtual_platform_start_active_switches:
     s_trough1
