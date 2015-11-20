@@ -58,7 +58,6 @@ class BallDevice(Device):
         """ Counter of how many attempts to eject the this device has tried.
          Eventually it will give up.
         """
-        # todo log attempts more than one?
 
         self.eject_in_progress_target = None
         """The device this device is currently trying to eject to."""
@@ -72,19 +71,9 @@ class BallDevice(Device):
         self.machine.events.add_handler('init_phase_4',
                                         self._initialize3)
 
-        self.num_balls_ejecting = 0
-        """ The number of balls that are currently in the process of being
-        ejected. This is either 0, 1, or whatever the ball count was for
-        devices that eject all their balls at once.
-        """
-
         self.mechanical_eject_in_progress = False
         """How many balls are waiting for a mechanical (e.g. non coil fired /
         spring plunger) eject.
-        """
-
-        self.waiting_for_eject_trigger = False
-        """Whether this device is waiting for an event to trigger the eject.
         """
 
         self._source_devices = list()
@@ -109,10 +98,6 @@ class BallDevice(Device):
         # deque of tuples that holds requests from target devices for balls
         # that this device could fulfil
         # each tuple is (target device, boolean player_controlled flag)
-
-        self._source_ejecting_balls = 0
-        # the number of balls that a source device is in the process of
-        # ejecting to this device
 
         self._count_consistent = True
         # flag that indicates whether the balls in the device is stable. Goes
@@ -325,7 +310,6 @@ class BallDevice(Device):
             self.mechanical_eject_in_progress = True
             # this is an unexpected eject. use default target
             self.eject_in_progress_target = self.config['eject_targets'][0]
-            self.num_balls_ejecting = 1
             # self.eject_queue.append((target, 0))
             self._do_eject_attempt()
             return self._switch_state("ball_left")
@@ -365,7 +349,6 @@ class BallDevice(Device):
         else:
             self.eject_in_progress_target = self.config['eject_targets'][0]
 
-        self.num_balls_ejecting = 1
         self.mechanical_eject_in_progress = True
         self._notify_target_of_incoming_ball(self.eject_in_progress_target)
         self._do_eject_attempt()
@@ -425,7 +408,7 @@ class BallDevice(Device):
         self.machine.events.remove_handler(self._trigger_eject_by_event)
         # TODO: handle entry switch here -> definitely new ball
         self.machine.events.post('balldevice_' + self.name + '_ball_left',
-                                 balls=self.num_balls_ejecting,
+                                 balls=1,
                                  target=self.eject_in_progress_target,
                                  num_attempts=self.num_eject_attempts)
 
@@ -466,7 +449,6 @@ class BallDevice(Device):
                            self.trigger_event)
 
         self.num_eject_attempts += 1
-        self.num_balls_ejecting = 1
 
         if (self.config['jam_switch'] and
             self.machine.switch_controller.is_active(self.config['jam_switch'].name,
@@ -495,7 +477,7 @@ class BallDevice(Device):
             self._fire_eject_coil()
         else:
             self._do_eject_attempt()
-            
+
 
     def _do_eject_attempt(self):
         # Reachable from the following states:
@@ -505,7 +487,7 @@ class BallDevice(Device):
 
         self.machine.events.post_queue('balldevice_{}_ball_eject_attempt'
                                        .format(self.name),
-                                       balls=self.num_balls_ejecting,
+                                       balls=1,
                                        target=self.eject_in_progress_target,
                                        source=self,
                                        mechanical_eject=(
@@ -606,9 +588,6 @@ class BallDevice(Device):
             queue.wait()
             return
 
-        # track ejects
-        self._source_ejecting_balls += 1
-
     def _cancel_eject(self):
         target = self.eject_queue[0][0]
         self.eject_queue.popleft()
@@ -619,9 +598,6 @@ class BallDevice(Device):
     def _source_device_eject_failed(self, balls, target, retry, **kwargs):
         if target != self:
             return
-
-        # track ejects
-        self._source_ejecting_balls -= 1
 
         if self._state == "waiting_for_ball_mechanical":
             self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
@@ -654,13 +630,6 @@ class BallDevice(Device):
             raise AssertionError("Should have eject_queue")
 
         self._cancel_eject()
-
-    def _source_device_eject_success(self, balls, target, **kwargs):
-        if target != self:
-            return
-
-        # track ejects
-        self._source_ejecting_balls -= 1
 
     # ---------------------- End of state handling code -----------------------
 
@@ -718,6 +687,35 @@ class BallDevice(Device):
                 Timing.string_to_ms(timeouts_list[i]))
         # End code to create timeouts list ------------------------------------
 
+        # make sure timeouts are reasonable:
+        # exit_count_delay < all eject_timeout
+        if self.config['exit_count_delay'] > min(self.config['eject_timeouts'].values()):
+            raise AssertionError('Configuration error in {} ball device. '
+                                 'all eject_timeouts have to be larger than '
+                                 'exit_count_delay'.
+                                 format(self.name))
+
+        # entrance_count_delay < all eject_timeout
+        if self.config['entrance_count_delay'] >  min(self.config['eject_timeouts'].values()):
+            raise AssertionError('Configuration error in {} ball device. '
+                                 'all eject_timeouts have to be larger than '
+                                 'entrance_count_delay'.
+                                 format(self.name))
+
+        # all eject_timeout < all ball_missing_timeouts
+        if max(self.config['eject_timeouts'].values()) > min(self.config['ball_missing_timeouts'].values()):
+            raise AssertionError('Configuration error in {} ball device. '
+                                 'all ball_missing_timeouts have to be larger '
+                                 'than all eject_timeouts'.
+                                 format(self.name))
+
+        # all ball_missing_timeouts < incoming ball timeout
+        if max(self.config['ball_missing_timeouts'].values()) > 60000:
+            raise AssertionError('Configuration error in {} ball device. '
+                                 'incoming ball timeout has to be larger '
+                                 'than all ball_missing_timeouts'.
+                                 format(self.name))
+
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
             self.machine.switch_controller.add_switch_handler(
@@ -735,8 +733,6 @@ class BallDevice(Device):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=self.config['entrance_switch'].name, state=1, ms=0,
                 callback=self._entrance_switch_handler)
-            # todo do we also need to add inactive and make a smarter
-            # handler?
 
         # handle hold_coil activation when a ball hits a switch
         for switch in self.config['hold_switches']:
@@ -770,10 +766,6 @@ class BallDevice(Device):
                     self.machine.events.add_handler(
                         'balldevice_{}_ball_eject_attempt'.format(device.name),
                         self._source_device_eject_attempt)
-
-                    self.machine.events.add_handler(
-                        'balldevice_{}_ball_eject_success'.format(device.name),
-                        self._source_device_eject_success)
 
                     self.machine.events.add_handler(
                         'balldevice_{}_ball_lost'.format(device.name),
@@ -826,8 +818,6 @@ class BallDevice(Device):
                 self.balls).ljust(42) + "|")
             self.log.debug("| eject_in_progress_target: {}".format(
                 self.eject_in_progress_target).ljust(42) + "|")
-            self.log.debug("| num_balls_ejecting: {}".format(
-                self.num_balls_ejecting).ljust(42) + "|")
             self.log.debug("| num_eject_attempts: {}".format(
                 self.num_eject_attempts).ljust(42) + "|")
             self.log.debug("| eject queue: {}".format(
@@ -971,7 +961,8 @@ class BallDevice(Device):
         """
         capacity = self.get_real_additional_capacity()
         capacity -= len(self._incoming_balls)
-        capacity -= self.num_balls_ejecting
+        if self.eject_in_progress_target:
+            capacity -= 1
         if capacity < 0:
             return 0
         else:
@@ -1028,11 +1019,9 @@ class BallDevice(Device):
         # TODO: properly cancel at target depending on state
 
         self.eject_in_progress_target = None
-        self.num_balls_ejecting = 0
         self.balls = 0
         self.eject_queue = deque()
         self._incoming_balls = deque()
-        self._source_ejecting_balls = 0
         self._cancel_eject_confirmation()
 
         return self._switch_state("invalid")
@@ -1076,11 +1065,6 @@ class BallDevice(Device):
 
             self._setup_or_queue_eject_to_target(target, True)
 
-#            self.available_balls -= 1
-#            target.available_balls += 1
-#
-#            self.eject_queue.append(
-#                (target, self.config['mechanical_eject'], self.config['player_controlled_eject_event']))
             return self._count_balls()
 
         else:
@@ -1216,7 +1200,7 @@ class BallDevice(Device):
                     self.machine.switch_controller.add_switch_handler(
                         switch_name=switch.name,
                         callback=self._ball_left_device,
-                        callback_kwargs={'balls': self.num_balls_ejecting},
+                        callback_kwargs={'balls': 1},
                         state=0)
 
         if self.config['eject_coil']:
@@ -1242,7 +1226,7 @@ class BallDevice(Device):
         if not self.config['ball_switches']:
             # no ball_switches. we dont know when it actually leaves the device
             # assume its instant
-            self.balls -= self.num_balls_ejecting
+            self.balls -= 1
             return self._switch_state("ball_left")
 
     def _hold_release_done(self):
@@ -1255,8 +1239,8 @@ class BallDevice(Device):
     def _disable_hold_coil(self):
         self.config['hold_coil'].disable()
         if self.debug:
-            self.log.debug("Disabling hold coil. num_balls_ejecting: %s. New "
-                           "balls: %s.", self.num_balls_ejecting, self.balls)
+            self.log.debug("Disabling hold coil. New "
+                           "balls: %s.", self.balls)
 
     def hold(self, **kwargs):
         # do not enable coil when we are ejecting
@@ -1268,8 +1252,8 @@ class BallDevice(Device):
     def _enable_hold_coil(self):
         self.config['hold_coil'].enable()
         if self.debug:
-            self.log.debug("Enabling hold coil. num_balls_ejecting: %s. New "
-                           "balls: %s.", self.num_balls_ejecting, self.balls)
+            self.log.debug("Enabling hold coil. New "
+                           "balls: %s.", self.balls)
 
     def _fire_eject_coil(self):
 
@@ -1287,8 +1271,8 @@ class BallDevice(Device):
 
 
         if self.debug:
-            self.log.debug("Firing eject coil. num_balls_ejecting: %s. New "
-                           "balls: %s.", self.num_balls_ejecting, self.balls)
+            self.log.debug("Firing eject coil. New "
+                           "balls: %s.", self.balls)
 
     def _playfield_active(self, playfield, **kwargs):
         self.eject_success()
@@ -1347,7 +1331,6 @@ class BallDevice(Device):
             # ball_enter does mean sth different for the playfield.
             if not target.is_playfield():
                 # watch for ball entry event on the target device
-                # This must be higher priority than the failed eject handler
                 self.machine.events.add_handler(
                     'balldevice_' + target.name +
                     '_ball_enter', self.eject_success, priority=100000)
@@ -1358,7 +1341,7 @@ class BallDevice(Device):
                                "'%s'",
                                self.config['confirm_eject_switch'].name)
             # watch for that switch to activate momentarily
-            # todo add support for a timed switch here
+            # for more complex scenarios use logic_block + event confirmation
             self.machine.switch_controller.add_switch_handler(
                 switch_name=self.config['confirm_eject_switch'].name,
                 callback=self.eject_success,
@@ -1373,16 +1356,14 @@ class BallDevice(Device):
                 self.config['confirm_eject_event'], self.eject_success)
 
         elif self.config['confirm_eject_type'] == 'count':
-            # todo I think we need to set a delay to recount? Because if the
-            # ball re-enters in less time than the exit delay, then the switch
-            # handler won't have time to reregister it.
+            # deprecated. there is no usecase for count confirmation!
             if self.debug:
                 self.log.debug("Will confirm eject via recount of ball "
                                "switches.")
             self._setup_count_eject_confirmation(timeout)
 
         elif self.config['confirm_eject_type'] == 'fake':
-            # for all ball locks or captive balls which just release a ball
+            # for devices without ball_switches and entry_switch
             # we use delay to keep the call order
             if self.config['ball_switches']:
                 raise AssertionError("Cannot use fake with ball switches")
@@ -1401,7 +1382,7 @@ class BallDevice(Device):
             timeout += self._incoming_balls[0][1].config['eject_timeouts'][self]
             # ball did not enter. if it does not return then confirm
             self.delay.add(name='count_confirmation',
-                           ms=timeout + 1000,
+                           ms=timeout,
                            callback=self._count_confirm)
 
         else:
@@ -1430,7 +1411,6 @@ class BallDevice(Device):
         self.machine.events.remove_handler(self._trigger_eject_by_event)
         self.machine.events.remove_handler(self._count_confirm)
 
-        self.waiting_for_eject_trigger = False
         self.mechanical_eject_in_progress = False
 
         # remove handler for ball left device
@@ -1475,9 +1455,6 @@ class BallDevice(Device):
         # and some without. Also, since there are many ways we can get here,
         # let's first make sure we actually had an eject in progress
 
-        # todo verify the number of new_balls matches the number of balls
-        # ejecting?
-
         if self._state == "ejecting":
             self.log.debug("Got an eject_success before the switch changed"
                            "state in the device. Ignoring!")
@@ -1516,10 +1493,8 @@ class BallDevice(Device):
         eject_target = self.eject_in_progress_target
         self.num_eject_attempts = 0
         self.eject_in_progress_target = None
-        balls_ejected = self.num_balls_ejecting
-        self.num_balls_ejecting = 0
+        balls_ejected = 1
 
-        # todo cancel post eject check delay
         self._cancel_eject_confirmation()
 
         self.machine.events.post('balldevice_' + self.name +
@@ -1572,11 +1547,10 @@ class BallDevice(Device):
 
         # Remember variables for event
         target = self.eject_in_progress_target
-        balls = self.num_balls_ejecting
+        balls = 1
 
         # Reset the stuff that showed a current eject in progress
         self.eject_in_progress_target = None
-        self.num_balls_ejecting = 0
 
         if self.debug:
             self.log.debug("Eject duration: %ss",
