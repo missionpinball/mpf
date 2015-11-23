@@ -142,7 +142,6 @@ class Mode(object):
 
         return return_dict
 
-
     def start(self, priority=None, callback=None, **kwargs):
         """Starts this mode.
 

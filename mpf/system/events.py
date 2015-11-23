@@ -619,12 +619,17 @@ class QueuedEvent(object):
         return '<QueuedEvent for callback {}>'.format(self.callback)
 
     def wait(self):
+        """Registers a wait for this QueueEvent."""
         self.num_waiting += 1
         if self.debug:
             self.log.debug("Registering a wait. Current count: %s",
                            self.num_waiting)
 
     def clear(self):
+        """Clears a wait. If the number of waits drops to 0, the callbacks will
+        be called.
+
+        """
         self.num_waiting -= 1
         if self.debug:
             self.log.debug("Clearing a wait. Current count: %s",
@@ -638,10 +643,20 @@ class QueuedEvent(object):
             callback(**self.kwargs)
 
     def kill(self):
-        # kills this queue without processing the callback
+        """Kills this QueuedEvent by removing all waits. Does not process the
+        callback.
+
+        """
         self.num_waiting = 0
 
     def is_empty(self):
+        """Checks to see if this QueuedEvent has any waits.
+
+        Returns:
+            True is there are 1 or more waits, False if there are no more
+            waits.
+
+        """
         if not self.num_waiting:
             return True
         else:
