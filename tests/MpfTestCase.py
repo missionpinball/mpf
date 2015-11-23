@@ -16,7 +16,7 @@ class MpfTestCase(unittest.TestCase):
 
     def getOptions(self):
         return {
-            'physical_hw': False,
+            'physical_hw': True,
             'mpfconfigfile': "mpf/mpfconfig.yaml",
             'machinepath': self.getMachinePath(),
             'configfile': Util.string_to_list(self.getConfigFile()),
