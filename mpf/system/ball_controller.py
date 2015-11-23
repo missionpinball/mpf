@@ -131,7 +131,7 @@ class BallController(object):
                              "in their home positions.")
             return False
 
-    def are_balls_collected(self, target=['home', 'trough'], antitarget=None):
+    def are_balls_collected(self, target=None, antitarget=None):
         """Checks to see if all the balls are contained in devices tagged with
         the parameter that was passed.
 
@@ -140,9 +140,13 @@ class BallController(object):
         nowhere, and they always are. :)
 
         Args:
-            target: String value of the tag you'd like to check. Default is
-            'home'
+            target: String or list of strings of the tags you'd like to
+                collect the balls to. Default of None will be replaced with
+                'home' and 'trough'.
+
         """
+        if not target:
+            target = ['home', 'trough']
 
         self.log.debug("Checking to see if all the balls are in devices tagged"
                        " with '%s'", target)
