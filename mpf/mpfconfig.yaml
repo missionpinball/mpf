@@ -63,6 +63,7 @@ mpf:
         smartmatrix: mpf.platform.smartmatrix.HardwarePlatform
         snux: mpf.platform.snux.Snux
         virtual: mpf.platform.virtual.HardwarePlatform
+        smart_virtual: mpf.platform.smart_virtual.HardwarePlatform
 
 
     paths:
