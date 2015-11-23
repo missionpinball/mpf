@@ -871,6 +871,7 @@ ball_devices:
 
   elevator:
     ball_switches: s_elevator_hold
+    mechanical_eject: true
 
 diverters:
   diverter:
