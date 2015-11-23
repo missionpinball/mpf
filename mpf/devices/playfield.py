@@ -165,7 +165,7 @@ class Playfield(BallDevice):
         return 999
 
     def add_ball(self, balls=1, source_name=None, source_device=None,
-                 player_controlled=False):
+                 player_controlled=False, reset=False):
         """Adds live ball(s) to the playfield.
 
         Args:
@@ -176,6 +176,8 @@ class Playfield(BallDevice):
                 ball(s) from.
             player_controlled: Boolean which specifies whether this event is
                 player controlled. (See not below for details)
+            reset: Boolean which controls whether the source device should
+                reset its state to idle
 
         Returns:
             True if it's able to process the add_ball() request, False if it
@@ -250,6 +252,9 @@ class Playfield(BallDevice):
                               " add a ball.")
             return False
 
+        if reset:
+            source_device.stop()
+
         self.log.debug("Received request to add %s ball(s). Source device: %s."
                        " Player-controlled: %s", balls,
                        source_device.name, player_controlled)
@@ -276,6 +281,7 @@ class Playfield(BallDevice):
             if not self.num_balls_requested:
                 if self.machine.game:
                     self.unexpected_balls = 1
+
                 if self.machine.config['machine']['glass_off_mode']:
                     self.log.debug("Playfield_active switch hit with no balls "
                                    "expected. glass_off_mode is enabled, so "
@@ -288,9 +294,9 @@ class Playfield(BallDevice):
                     self.balls = 1
                     self.machine.events.post('unexpected_ball_on_' + self.name)
 
-    def _ball_added_handler(self, balls):
-        self.log.debug("%s ball(s) added to the playfield", balls)
-        self.balls += balls
+    # def _ball_added_handler(self, balls):
+    #     self.log.debug("%s ball(s) added to the playfield", balls)
+    #     self.balls += balls
 
     def _ball_removed_handler(self, balls, **kwargs):
         self._count_consistent = False
@@ -336,7 +342,6 @@ class Playfield(BallDevice):
                                   self.num_balls_requested)
                 raise Exception("num_balls_requested is %s, which doesn't make "
                                 "sense. Quitting...", self.num_balls_requested)
-
 
     def ok_to_confirm_ball_via_playfield_switch(self):
         """Used to check whether it's ok for a ball device which ejects to the
