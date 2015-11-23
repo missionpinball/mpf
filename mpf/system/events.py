@@ -257,6 +257,9 @@ class EventManager(object):
         # Checks to see if the event doesn't have any more registered handlers,
         # removes it if so.
 
+        if not event in self.registered_handlers:
+            return
+
         if not self.registered_handlers[event]:  # if value is empty list
                 del self.registered_handlers[event]
                 if self.debug:
@@ -487,7 +490,7 @@ class EventManager(object):
                 if ((ev_type == 'boolean' or ev_type == 'queue') and
                         result is False):
 
-                    # add a False result so our callbacl knows something failed
+                    # add a False result so our callback knows something failed
                     kwargs['ev_result'] = False
 
                     if self.debug and event != 'timer_tick':
@@ -502,20 +505,26 @@ class EventManager(object):
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
                            "Args: %s", event, ev_type, callback, kwargs)
 
-        # If that event had a callback, let's call it now. We'll also
-        # send the result if it's False. Note this means our callback has to
-        # expect something.
-        # todo is this ok? Should we also pass kwargs?
+        if ev_type is 'queue' and not queue:
+            # If this was a queue event but there were no registered handlers,
+            # then we need to do the callback now
+            callback(**kwargs)
 
-        # If we had a queue event, we need to see if any handlers asked us to
-        # wait for them
-        if queue and queue.is_empty():
-            if self.debug:
-                self.log.debug("Queue is empty. Deleting.")
-            queue = None
+        elif queue and queue.is_empty():
+            # If we had a queue event that had handlers and a queue was created
+            # we need to see if any the queue is empty now, and if so, do the
+            # callback
+
             del kwargs['queue']  # ditch this since we don't need it now
 
-        if callback and not queue:
+            if queue.callback:
+                # if there's still a callback, that means it wasn't called yet
+                queue.callback(**kwargs)
+
+        if callback and ev_type != 'queue':
+            # For event types other than queue, we'll handle the callback here.
+            # Queue events with active waits will do the callback when the
+            # waits clear
 
             if result:
                 # if our last handler returned something, add it to kwargs
@@ -590,15 +599,10 @@ class EventManager(object):
 
 
 class QueuedEvent(object):
-    """The base class for an event queue which is created each time a queue
+    """Base class for an event queue which is created each time a queue
     event is called.
 
-    See the documentation at
-    http://missionpinball.com/docs/system-components/events/
-    for a description of how queue events work.
-
     """
-
     def __init__(self, callback, **kwargs):
         self.log = logging.getLogger("Queue")
 
@@ -613,7 +617,6 @@ class QueuedEvent(object):
 
     def __repr__(self):
         return '<QueuedEvent for callback {}>'.format(self.callback)
-
 
     def wait(self):
         self.num_waiting += 1
@@ -630,10 +633,12 @@ class QueuedEvent(object):
             if self.debug:
                 self.log.debug("Queue is empty. Calling %s", self.callback)
             #del self.kwargs['queue']  # ditch this since we don't need it now
-            self.callback(**self.kwargs)
+            callback = self.callback
+            self.callback = None
+            callback(**self.kwargs)
 
     def kill(self):
-        # kils this queue without processing the callback
+        # kills this queue without processing the callback
         self.num_waiting = 0
 
     def is_empty(self):
