@@ -43,15 +43,18 @@ ball_devices:
         eject_coil: outhole
         eject_targets: trough
         confirm_eject_type: target
+        debug: true
     trough:
         tags: trough, home
         ball_switches: trough1, trough2, trough3
         eject_coil: trough
         eject_targets: plunger
         confirm_eject_type: target
+        debug: true
     plunger:
-        tags: ball_add_live
+        tags: ball_add_live, home
         ball_switches: plunger
         mechanical_eject: true
         eject_timeouts: 4s
 #        ball_missing_timeouts: 1s
+        debug: true
