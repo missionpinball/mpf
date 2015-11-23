@@ -180,6 +180,7 @@ class BallDevice(Device):
     def _target_ready(self, target, **kwargs):
         # Called whenever one of this device's target devices changes state to
         # be ready to receive balls
+
         if self._state == "wait_for_eject":
             self._state_wait_for_eject_start()
 
@@ -883,11 +884,18 @@ class BallDevice(Device):
         # If we still have unclaimed_balls here, that means that no one claimed
         # them, so essentially they're "stuck." So we just eject them unless
         # this device is tagged 'trough' in which case we let it keep them.
+
         if unclaimed_balls:
             if 'trough' not in self.tags:
                 target = self.machine.ball_devices[self.config
                                                    ['captures_from']]
                 path = self.find_path_to_target(target)
+
+                for device in path:
+                    if 'trough' in device.tags:
+                        target = device
+                        path = self.find_path_to_target(target)
+
                 if not path:
                     raise AssertionError("Could not find path to target")
                 for i in range(unclaimed_balls):
@@ -1088,7 +1096,6 @@ class BallDevice(Device):
         self.machine.events.post_boolean('balldevice_balls_available')
 
     def _setup_eject_chain(self, path, player_controlled):
-
         next_hop = path.popleft()
 
         if next_hop not in self.config['eject_targets']:
