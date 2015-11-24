@@ -889,15 +889,16 @@ class BallDevice(Device):
             if 'trough' not in self.tags:
                 target = self.machine.ball_devices[self.config
                                                    ['captures_from']]
-                path = self.find_path_to_target(target)
 
-                for device in path:
-                    if 'trough' in device.tags:
-                        target = device
-                        path = self.find_path_to_target(target)
+                # try to eject to pf
+                path = self.find_path_to_target(target, True)
 
                 if not path:
-                    raise AssertionError("Could not find path to target")
+                    # did not work. try to eject to next trough
+                    path = self.find_path_to_target(target, False)
+
+                    if not path:
+                        raise AssertionError("Could not find path to target")
                 for i in range(unclaimed_balls):
                     self.setup_eject_chain(path)
 
@@ -1115,7 +1116,15 @@ class BallDevice(Device):
         method = getattr(self, method_name, lambda: None)
         method()
 
-    def find_path_to_target(self, target):
+    def find_path_to_target(self, target, eject_to_pf):
+        if 'trough' in self.tags:
+            if eject_to_pf:
+                return False
+            else:
+                path = deque()
+                path.appendleft(self)
+                return path
+
         # if we can eject to target directly just do it
         if target in self.config['eject_targets']:
             path = deque()
@@ -1125,7 +1134,7 @@ class BallDevice(Device):
         else:
             # otherwise find any target which can
             for target_device in self.config['eject_targets']:
-                path = target_device.find_path_to_target(target)
+                path = target_device.find_path_to_target(target, eject_to_pf)
                 if path:
                     path.appendleft(self)
                     return path
