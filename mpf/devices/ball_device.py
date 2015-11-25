@@ -1328,8 +1328,12 @@ class BallDevice(Device):
                 if self.debug:
                     self.log.debug("Target is playfield. Will confirm after "
                                    "timeout if it did not return.")
+                timeout_combined = timeout
+                if self._state == "waiting_for_ball_mechanical":
+                    timeout_combined += self._incoming_balls[0][1].config['eject_timeouts'][self]
+
                 self.delay.add(name='count_confirmation',
-                                ms=timeout,
+                                ms=timeout_combined,
                                 callback=self.eject_success)
 
         if self.config['confirm_eject_type'] == 'target':

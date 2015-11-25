@@ -169,7 +169,7 @@ config_validator:
         hold_switches: list|self.machine.switches[%]|None
         entrance_switch: single|self.machine.switches[%]|None
         jam_switch: single|self.machine.switches[%]|None
-        confirm_eject_type: single|str|count
+        confirm_eject_type: single|str|target
         captures_from: single|str|playfield
         eject_targets: list|str|playfield
         # can't convert eject_targets to objects til all ball_devices are setup

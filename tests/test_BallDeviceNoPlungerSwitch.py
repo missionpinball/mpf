@@ -30,7 +30,7 @@ class TestBallDeviceNoPlungerSwitch(MpfTestCase):
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
 
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(10)
 
         self.assertEqual(self.machine.ball_devices.trough.balls, 0)
         self.assertEqual(self.machine.ball_devices.playfield.balls, 1)

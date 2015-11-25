@@ -76,6 +76,7 @@ class TestTooLongExitCountDelay(MpfTestCase):
         # ball moves from plunger lane to playfield
         self.machine.switch_controller.process_switch('s_playfield', 1)
         self.machine.switch_controller.process_switch('s_playfield', 0)
+        self.advance_time_and_run(.1)
 
         self.plunger_coil.pulse.assert_called_once_with()
         self.assertEqual(self.machine.ball_devices.trough.balls, 3)
