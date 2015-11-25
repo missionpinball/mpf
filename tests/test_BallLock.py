@@ -197,6 +197,79 @@ class TestBallLock(MpfTestCase):
         self.assertEquals(1, self._collecting_balls_complete)
 
 
+    def test_lock_full_and_release(self):
+        coil1 = self.machine.coils['eject_coil1']
+        coil2 = self.machine.coils['eject_coil2']
+        coil3 = self.machine.coils['eject_coil3']
+        trough = self.machine.ball_devices['test_trough']
+        launcher = self.machine.ball_devices['test_launcher']
+        lock = self.machine.ball_devices['test_lock']
+        lock_logic = self.machine.ball_locks['lock_test']
+        playfield = self.machine.ball_devices['playfield']
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self.machine.events.add_handler('collecting_balls_complete', self._collecting_balls_complete_handler)
+
+        lock_logic.enable()
+
+        self._enter = 0
+        self._captured = 0
+        self._missing = 0
+        self._collecting_balls_complete = 0
+        self.machine.ball_controller.num_balls_known = 2
+
+        # add an initial ball to trough
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(2, self._captured)
+        self._captured = 0
+        self.assertEquals(0, playfield.balls)
+        self.assertEquals(2, self.machine.ball_controller.num_balls_known)
+
+        # it should keep the ball
+        coil1.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+        coil3.pulse = MagicMock()
+        self.assertEquals(2, trough.balls)
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+        self.assertFalse(lock_logic.is_full())
+        self.assertEquals(2, trough.available_balls)
+
+        # lock captures a first random ball
+        self.machine.switch_controller.process_switch("s_ball_switch_lock1", 1)
+        self.advance_time_and_run(1)
+        assert not coil3.pulse.called
+        self.assertFalse(lock_logic.is_full())
+        self.assertFalse(lock.is_full())
+        self.assertEquals(1, trough.available_balls)
+
+        # lock captures a second random ball
+        self.machine.switch_controller.process_switch("s_ball_switch_lock2", 1)
+        self.advance_time_and_run(1)
+        assert not coil3.pulse.called
+        self.assertTrue(lock_logic.is_full())
+        self.assertFalse(lock.is_full())
+        self.assertEquals(0, trough.available_balls)
+
+        # lock captures a third random ball
+        self.machine.switch_controller.process_switch("s_ball_switch_lock3", 1)
+        self.advance_time_and_run(1)
+
+        # it should eject it right away
+        coil3.pulse.assert_called_once_with()
+        self.assertTrue(lock_logic.is_full())
+        self.assertTrue(lock.is_full())
+        self.advance_time_and_run(1)
+
+        self.machine.switch_controller.process_switch("s_ball_switch_lock3", 0)
+        self.advance_time_and_run(.1)
+        self.assertTrue(lock_logic.is_full())
+        self.assertFalse(lock.is_full())
+
     def test_eject_to_lock(self):
         coil1 = self.machine.coils['eject_coil1']
         coil2 = self.machine.coils['eject_coil2']
