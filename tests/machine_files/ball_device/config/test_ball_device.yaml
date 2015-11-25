@@ -44,6 +44,8 @@ switches:
         number:
     s_ball_switch_target3:
         number:
+    s_ball_switch_target3_2:
+        number:
     s_diverter:
         number:
     s_playfield:
@@ -83,7 +85,7 @@ ball_devices:
         eject_targets: test_target3
     test_target3:
         eject_coil: eject_coil5
-        ball_switches: s_ball_switch_target3
+        ball_switches: s_ball_switch_target3, s_ball_switch_target3_2
         eject_targets: playfield, test_trough
         confirm_eject_type: target
         debug: true

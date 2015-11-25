@@ -1795,3 +1795,40 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(30)
 
         self.assertEquals(2, self.machine.ball_controller.num_balls_known)
+
+    def test_concurrent_capture_and_eject_unclaimed_balls(self):
+        playfield = self.machine.ball_devices['playfield']
+        coil5 = self.machine.coils['eject_coil5']
+        coil5.pulse = MagicMock()
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self._captured = 0
+
+        # device captures two balls
+        self.machine.switch_controller.process_switch("s_ball_switch_target3", 1)
+        self.advance_time_and_run(.1)
+        self.machine.switch_controller.process_switch("s_ball_switch_target3_2", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(2, self._captured)
+        self._captured = 0
+
+        # it should eject one
+        coil5.pulse.assert_called_once_with()
+        coil5.pulse = MagicMock()
+        self.advance_time_and_run(.1)
+        self.machine.switch_controller.process_switch("s_ball_switch_target3", 0)
+
+        # wait for confirm
+        self.advance_time_and_run(11)
+        self.assertEquals(1, playfield.balls)
+
+        # it should eject the second
+        coil5.pulse.assert_called_once_with()
+        coil5.pulse = MagicMock()
+        self.advance_time_and_run(.1)
+        self.machine.switch_controller.process_switch("s_ball_switch_target3_2", 0)
+
+        # wait for confirm
+        self.advance_time_and_run(11)
+        self.assertEquals(2, playfield.balls)
+        self.assertEquals(0, self._captured)

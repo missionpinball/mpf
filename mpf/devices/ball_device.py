@@ -1080,6 +1080,7 @@ class BallDevice(Device):
             self.eject(balls, target=target)
 
     def setup_eject_chain(self, path, player_controlled=False):
+        path = deque(path)
         if self.available_balls <= 0:
             raise AssertionError("Do not have balls")
 
