@@ -1377,6 +1377,10 @@ class BallDevice(Device):
 
         elif self.config['confirm_eject_type'] == 'count':
             # deprecated. there is no usecase for count confirmation!
+            self.log.warn("confirm_eject_type = count is deprecated and will "
+                          "get removed in the next release. Switch to target "
+                          "or complain in forum if you really need it!")
+
             if self.debug:
                 self.log.debug("Will confirm eject via recount of ball "
                                "switches.")
