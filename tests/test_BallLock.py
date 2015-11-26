@@ -246,6 +246,7 @@ class TestBallLock(MpfTestCase):
         self.assertFalse(lock_logic.is_full())
         self.assertFalse(lock.is_full())
         self.assertEquals(1, trough.available_balls)
+        self.assertEquals(1, lock.available_balls)
 
         # lock captures a second random ball
         self.machine.switch_controller.process_switch("s_ball_switch_lock2", 1)
@@ -254,6 +255,7 @@ class TestBallLock(MpfTestCase):
         self.assertTrue(lock_logic.is_full())
         self.assertFalse(lock.is_full())
         self.assertEquals(0, trough.available_balls)
+        self.assertEquals(2, lock.available_balls)
 
         # lock captures a third random ball
         self.machine.switch_controller.process_switch("s_ball_switch_lock3", 1)
@@ -261,14 +263,35 @@ class TestBallLock(MpfTestCase):
 
         # it should eject it right away
         coil3.pulse.assert_called_once_with()
+        coil3.pulse = MagicMock()
         self.assertTrue(lock_logic.is_full())
         self.assertTrue(lock.is_full())
         self.advance_time_and_run(1)
 
         self.machine.switch_controller.process_switch("s_ball_switch_lock3", 0)
-        self.advance_time_and_run(.1)
+        self.advance_time_and_run(11)
         self.assertTrue(lock_logic.is_full())
         self.assertFalse(lock.is_full())
+        self.assertEquals(2, lock.available_balls)
+
+        lock_logic.release_all_balls()
+        self.advance_time_and_run(1)
+        self.assertEquals(0, lock.available_balls)
+        coil3.pulse.assert_called_once_with()
+        coil3.pulse = MagicMock()
+        self.advance_time_and_run(1)
+        self.machine.switch_controller.process_switch("s_ball_switch_lock2", 0)
+        self.advance_time_and_run(1)
+        self.assertFalse(lock_logic.is_full())
+        self.assertFalse(lock.is_full())
+
+        self.advance_time_and_run(11)
+        coil3.pulse.assert_called_once_with()
+        coil3.pulse = MagicMock()
+        self.advance_time_and_run(1)
+        self.machine.switch_controller.process_switch("s_ball_switch_lock1", 0)
+        self.advance_time_and_run(11)
+        assert not coil3.pulse.called
 
     def test_eject_to_lock(self):
         coil1 = self.machine.coils['eject_coil1']
