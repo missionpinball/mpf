@@ -221,3 +221,42 @@ class TestBallDevicesHoldCoil(MpfTestCase):
       self.machine.coils['hold_coil4'].enable.assert_called_once_with()
       self.assertEqual(1, self.machine.ball_devices['test4'].balls)
 
+
+  def test_entrance_switch_and_device_is_full(self):
+      # add one ball
+      self.assertEqual(0, self.machine.ball_devices['test3'].balls)
+      self.machine.coils['hold_coil3'].enable = MagicMock()
+      self.machine.coils['hold_coil3'].disable = MagicMock()
+      self.machine.switch_controller.process_switch(name='s_entrance_and_hold3',state=1);
+      self.machine.switch_controller.process_switch(name='s_entrance_and_hold3',state=0);
+
+      self.advance_time_and_run(300)
+      self.machine.coils['hold_coil3'].enable.assert_called_once_with()
+      assert not self.machine.coils['hold_coil3'].disable.called
+      self.assertEqual(1, self.machine.ball_devices['test3'].balls)
+      self.assertFalse(self.machine.ball_devices['test3'].is_full())
+
+      # add a second ball
+      self.machine.coils['hold_coil3'].enable = MagicMock()
+      self.machine.coils['hold_coil3'].disable = MagicMock()
+      self.machine.switch_controller.process_switch(name='s_entrance_and_hold3',state=1);
+      self.machine.switch_controller.process_switch(name='s_entrance_and_hold3',state=0);
+      self.advance_time_and_run(300)
+      self.machine_run()
+      self.machine.coils['hold_coil3'].enable.assert_called_once_with()
+      assert not self.machine.coils['hold_coil3'].disable.called
+      self.assertEqual(2, self.machine.ball_devices['test3'].balls)
+      self.assertTrue(self.machine.ball_devices['test3'].is_full())
+
+      # add a third ball
+      self.machine.coils['hold_coil3'].enable = MagicMock()
+      self.machine.coils['hold_coil3'].disable = MagicMock()
+      self.machine.switch_controller.process_switch(name='s_entrance_and_hold3',state=1);
+      self.machine.switch_controller.process_switch(name='s_entrance_and_hold3',state=0);
+      self.advance_time_and_run(300)
+      self.machine_run()
+      self.machine.coils['hold_coil3'].enable.assert_called_once_with()
+      assert not self.machine.coils['hold_coil3'].disable.called
+      self.assertEqual(2, self.machine.ball_devices['test3'].balls)
+      self.assertTrue(self.machine.ball_devices['test3'].is_full())
+
