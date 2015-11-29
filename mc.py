@@ -62,6 +62,11 @@ parser.add_option("-x", "--nohw",
                   help="Not used, but included since mpf.py uses it and people "
                   "keep adding -x by mistake.")
 
+parser.add_option("-b", "--bcp",
+                  action="store_false", dest="physical_hw", default=True,
+                  help="Not used, but included since mpf.py uses it and people "
+                  "keep adding -b by mistake.")
+
 parser.add_option("--versions",
                   action="store_true", dest="version", default=False,
                   help="Shows the MC version and quits")

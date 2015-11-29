@@ -57,6 +57,10 @@ parser.add_option("-x", "--nohw",
                   action="store_false", dest="physical_hw", default=True,
                   help="Specifies physical game hardware is not connected")
 
+parser.add_option("-b", "--nobcp",
+                  action="store_false", dest="bcp", default=True,
+                  help="Specifies whether the BCP client will be active")
+
 parser.add_option("--versions",
                   action="store_true", dest="version", default=False,
                   help="Shows the MPF version and quits")

@@ -117,7 +117,7 @@ class FileManager(object):
                 return None
 
     @staticmethod
-    def load(filename, verify_version=False):
+    def load(filename, verify_version=False, halt_on_error=False):
 
         file = FileManager.locate_file(filename)
 
@@ -125,7 +125,9 @@ class FileManager(object):
             ext = os.path.splitext(file)[1]
 
             try:
-                config = FileManager.file_interfaces[ext].load(file, verify_version)
+                config = FileManager.file_interfaces[ext].load(file,
+                                                               verify_version,
+                                                               halt_on_error)
             except KeyError:
                 # todo convert to exception
                 FileManager.log.error("No config file processor available for file type {}"

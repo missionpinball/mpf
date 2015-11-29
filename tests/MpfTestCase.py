@@ -23,7 +23,8 @@ class MpfTestCase(unittest.TestCase):
             'mpfconfigfile': "mpf/mpfconfig.yaml",
             'machinepath': self.getMachinePath(),
             'configfile': Util.string_to_list(self.getConfigFile()),
-            'debug': True
+            'debug': True,
+            'bcp': False
                }
 
     def set_time(self, new_time):
@@ -91,7 +92,6 @@ class MpfTestCase(unittest.TestCase):
 
         self.machine.ball_controller.num_balls_known = 99
         self.advance_time_and_run(300)
-
 
     def tearDown(self):
         if sys.exc_info != (None, None, None):

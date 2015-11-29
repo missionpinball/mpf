@@ -58,7 +58,7 @@ class DataManager(object):
     def _load(self):
         self.log.debug("Loading %s from %s", self.name, self.filename)
         if os.path.isfile(self.filename):
-            self.data = FileManager.load(self.filename)
+            self.data = FileManager.load(self.filename, halt_on_error=False)
 
         else:
             self.log.debug("Didn't find the %s file. No prob. We'll create "
