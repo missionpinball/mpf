@@ -392,7 +392,6 @@ class BallDevice(Device):
 
     def _timeout_incoming(self):
         # An incoming ball has not arrives in the time expected
-        self.log.debug("Handling timeouts of incoming balls")
         if len(self._incoming_balls) and self._state == "idle":
             return self._count_balls()
 
@@ -623,6 +622,8 @@ class BallDevice(Device):
             return self._switch_state("idle")
 
     def _handle_lost_incoming_ball(self):
+        if self.debug:
+            self.log.debug("Handling timeouts of incoming balls")
         if self.available_balls > 0:
             self.available_balls -= 1
             return
