@@ -52,7 +52,9 @@ class YamlInterface(FileInterface):
 
         try:
             self.log.debug("Loading configuration file: %s", filename)
-            config = Util.keys_to_lower(yaml.load(open(filename, 'r')))
+
+            with open(filename, 'r') as f:
+                config = Util.keys_to_lower(yaml.load(f))
         except yaml.YAMLError, exc:
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark
