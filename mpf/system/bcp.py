@@ -276,6 +276,10 @@ class BCP(object):
         self.dmd = dmd_platform.configure_dmd()
 
     def _setup_bcp_connections(self):
+
+        if not self.machine.options['bcp']:
+            return
+
         for name, settings in self.connection_config.iteritems():
             if 'host' not in settings:
                 break
