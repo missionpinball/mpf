@@ -8,7 +8,7 @@
 # numbers to match your actual hardware!
 
 hardware:
-    platform: fast
+    platform: smart_virtual
     driverboards: wpc
 
 switches:
