@@ -29,7 +29,7 @@ class YamlInterface(FileInterface):
         except ValueError:
             return 0
 
-    def load(self, filename, verify_version=True):
+    def load(self, filename, verify_version=True, halt_on_error=False):
         """Loads a YAML file from disk.
 
         Args:
@@ -37,6 +37,10 @@ class YamlInterface(FileInterface):
             verify_version: Boolean which specifies whether this method should
                 verify whether this file's config_version is compatible with
                 this version of MPF. Default is True.
+            halt_on_error: Boolean which controls what happens if the file
+                can't be loaded. (Not found, invalid format, etc. If True, MPF
+                will raise an error and exit. If False, an empty config
+                dictionary will be returned.
 
         Returns:
             A dictionary of the settings from this YAML file.
@@ -55,10 +59,19 @@ class YamlInterface(FileInterface):
                 self.log.critical("Error found in config file %s. Line %s, "
                              "Position %s", filename, mark.line+1,
                              mark.column+1)
+
+            if halt_on_error:
                 sys.exit()
+            else:
+                config = dict()
+
         except:
             self.log.critical("Couldn't load from file: %s", filename)
-            raise
+
+            if halt_on_error:
+                sys.exit()
+            else:
+                config = dict()
 
         return config
 
