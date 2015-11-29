@@ -14,9 +14,12 @@ import inspect
 
 class MpfTestCase(unittest.TestCase):
 
+    def get_use_phyical_hw(self):
+        return True
+
     def getOptions(self):
         return {
-            'physical_hw': True,
+            'physical_hw': self.get_use_phyical_hw(),
             'mpfconfigfile': "mpf/mpfconfig.yaml",
             'machinepath': self.getMachinePath(),
             'configfile': Util.string_to_list(self.getConfigFile()),

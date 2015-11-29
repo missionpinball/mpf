@@ -1,4 +1,5 @@
 __all__ = [
+           'MpfTestCase',
            'test_BallDevice',
            'test_BallDeviceHoldCoil',
            'test_BallDeviceManualEject',
