@@ -131,9 +131,9 @@ ball_devices:
     jam_switch: s_trough_jam
     debug: true
 
-#virtual_platform_start_active_switches:
-#    s_trough1
-#    s_trough2
-#    s_trough3
-#    s_trough4
-#    s_trough5
+virtual_platform_start_active_switches:
+    s_trough1
+    s_trough2
+    s_trough3
+    s_trough4
+    s_trough5
