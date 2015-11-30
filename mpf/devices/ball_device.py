@@ -988,7 +988,7 @@ class BallDevice(Device):
 
         path.appendleft(self)
 
-        if self.available_balls > 0:
+        if self.available_balls > 0 and len(path) > 1:
             return path
 
         for source in self._source_devices:

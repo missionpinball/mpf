@@ -1083,7 +1083,12 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(0, self._captured)
         self.assertEquals(0, self._missing)
 
+        self.assertEquals(1, target3.available_balls)
 
+        # request another ball to target3 which already has a ball
+        target3.request_ball()
+        self.advance_time_and_run(1)
+        self.assertEquals(2, target3.available_balls)
 
     def test_eject_attempt_blocking(self):
         # this test is a bit plastic. we hack get_additional_ball_capacity

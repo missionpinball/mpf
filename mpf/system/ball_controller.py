@@ -48,6 +48,7 @@ class BallController(object):
         balls = 0
         for device in self.machine.ball_devices:
             if not device._count_consistent:
+                self.log.debug("Device %s is inconsistent", device.name)
                 return -999
             self.log.debug("Found %s ball(s) in %s", device.balls, device.name)
             balls += device.balls
