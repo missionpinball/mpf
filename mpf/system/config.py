@@ -57,8 +57,8 @@ class Config(object):
         self.log = logging.getLogger('ConfigProcessor')
 
     @staticmethod
-    def load_config_file(filename, verify_version=True):
-        config = FileManager.load(filename, verify_version)
+    def load_config_file(filename, verify_version=True, halt_on_error=True):
+        config = FileManager.load(filename, verify_version, halt_on_error)
 
         if 'config' in config:
             path = os.path.split(filename)[0]
