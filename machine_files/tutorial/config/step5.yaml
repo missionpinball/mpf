@@ -3,13 +3,9 @@
 # Config file for Step 5 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
 
-# WARNING: This is for a Demolition Man machine controlled by a P-ROC. Do not
-# use this file with your own hardware unless you change the coil and switch
-# numbers to match your actual hardware!
-
-hardware:
-    platform: smart_virtual
-    driverboards: wpc
+# WARNING: The switch and coil numbers in this configuration file are for a Demolition Man machine.
+# Do not use this file with your own hardware unless you change the coil and switch numbers to match your actual
+# hardware!
 
 switches:
     s_left_flipper:

@@ -1,13 +1,5 @@
 #config_version=3
 
-bcp:
-    connections:
-        local_display:
-            connection_attempts: 0
-
-hardware:
-    platform: smart_virtual
-
 virtual_platform_start_active_switches:
   trough1
   trough2

@@ -1,10 +1,5 @@
 #config_version=3
 
-bcp:
-    connections:
-        local_display:
-            connection_attempts: 0
-
 coils:
     trough_eject:
         number:

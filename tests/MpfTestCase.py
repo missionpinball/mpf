@@ -14,17 +14,20 @@ import inspect
 
 class MpfTestCase(unittest.TestCase):
 
-    def get_use_phyical_hw(self):
-        return True
+    def get_platform(self):
+        return 'virtual'
+
+    def get_use_bcp(self):
+        return False
 
     def getOptions(self):
         return {
-            'physical_hw': self.get_use_phyical_hw(),
+            'force_platform': self.get_platform(),
             'mpfconfigfile': "mpf/mpfconfig.yaml",
-            'machinepath': self.getMachinePath(),
+            'machine_path': self.getMachinePath(),
             'configfile': Util.string_to_list(self.getConfigFile()),
             'debug': True,
-            'bcp': False
+            'bcp': self.get_use_bcp()
                }
 
     def set_time(self, new_time):

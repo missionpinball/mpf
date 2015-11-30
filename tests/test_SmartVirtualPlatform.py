@@ -10,6 +10,9 @@ class TestSmartVirtualPlatform(MpfTestCase):
     def getMachinePath(self):
         return '../tests/machine_files/platform/'
 
+    def get_platform(self):
+        return 'smart_virtual'
+
     def test_eject(self):
         # tests that firing a coil in a ball device with a ball in it
         # successfully activates the right switches to simulate the ball
