@@ -780,7 +780,7 @@ debug_profiles:
         plugins:
 
 hardware:
-  platform: virtual
+  platform: smart_virtual
   coils: default
   switches: default
   matrix_lights: default
