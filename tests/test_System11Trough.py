@@ -169,3 +169,52 @@ class TestSystem11Trough(MpfTestCase):
         self.assertEquals('idle', self.machine.ball_devices.outhole._state)
         self.assertEquals('idle', self.machine.ball_devices.trough._state)
         self.assertEquals('ejecting', self.machine.ball_devices.plunger._state)
+
+    def test_single_ball_drain_and_eject(self):
+        # tests that when a ball drains into the outhole and is in the process
+        # of being ejected to the trough, MPF is able to also request a ball
+        # to the plunger even though the ball hasn't made it into the trough
+        # yet
+
+        self.machine.ball_controller.num_balls_known = 1
+        self.machine.switch_controller.process_switch("trough1", 1)
+        self.advance_time_and_run(1)
+
+        self.assertEquals(0, self.machine.ball_devices.outhole.balls)
+        self.assertEquals(1, self.machine.ball_devices.trough.balls)
+        self.assertEquals(0, self.machine.ball_devices.plunger.balls)
+        self.assertEquals(0, self.machine.ball_devices.playfield.balls)
+
+        # start a game, ball goes to plunger
+        self.machine.switch_controller.process_switch("start", 1)
+        self.machine.switch_controller.process_switch("start", 0)
+        self.advance_time_and_run(.1)
+        self.machine.switch_controller.process_switch("trough1", 0)
+        self.advance_time_and_run(.1)
+        self.machine.switch_controller.process_switch("plunger", 1)
+        self.advance_time_and_run(2)
+
+        self.assertIsNotNone(self.machine.game)
+
+        # plunge to playfield
+        self.machine.switch_controller.process_switch("plunger", 0)
+        self.advance_time_and_run(2)
+        self.machine.switch_controller.process_switch("playfield", 1)
+        self.machine.switch_controller.process_switch("playfield", 0)
+        self.advance_time_and_run(2)
+
+        self.assertEquals(0, self.machine.ball_devices.outhole.balls)
+        self.assertEquals(0, self.machine.ball_devices.trough.balls)
+        self.assertEquals(0, self.machine.ball_devices.plunger.balls)
+        self.assertEquals(1, self.machine.ball_devices.playfield.balls)
+
+        # drain
+        self.machine.switch_controller.process_switch("outhole", 1)
+        # self.advance_time_and_run(.6)
+        # self.assertEquals(0, self.machine.ball_devices.playfield.balls)
+        # self.assertEquals(2, self.machine.game.player.ball)
+        #
+        # self.machine.switch_controller.process_switch("outhole", 0)
+        # self.advance_time_and_run(.1)
+        # self.machine.switch_controller.process_switch("trough1", 1)
+
