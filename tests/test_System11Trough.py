@@ -210,11 +210,11 @@ class TestSystem11Trough(MpfTestCase):
 
         # drain
         self.machine.switch_controller.process_switch("outhole", 1)
-        # self.advance_time_and_run(.6)
-        # self.assertEquals(0, self.machine.ball_devices.playfield.balls)
-        # self.assertEquals(2, self.machine.game.player.ball)
-        #
-        # self.machine.switch_controller.process_switch("outhole", 0)
-        # self.advance_time_and_run(.1)
-        # self.machine.switch_controller.process_switch("trough1", 1)
+        self.advance_time_and_run(.6)
+        self.assertEquals(0, self.machine.ball_devices.playfield.balls)
+        self.assertEquals(2, self.machine.game.player.ball)
+
+        self.machine.switch_controller.process_switch("outhole", 0)
+        self.advance_time_and_run(.1)
+        self.machine.switch_controller.process_switch("trough1", 1)
 

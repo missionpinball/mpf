@@ -266,12 +266,6 @@ class BallDevice(Device):
         if balls > 0:
             self._handle_unexpected_balls(balls)
 
-        self.available_balls += balls
-
-        # tell targets that we have balls available
-        for i in range(balls):
-            self.machine.events.post_boolean('balldevice_balls_available')
-
         self.log.debug("Processing %s new balls", balls)
         self.machine.events.post_relay('balldevice_{}_ball_enter'.format(
                                        self.name),
@@ -886,6 +880,9 @@ class BallDevice(Device):
         # them, so essentially they're "stuck." So we just eject them unless
         # this device is tagged 'trough' in which case we let it keep them.
 
+        self.available_balls += new_balls
+
+
         if unclaimed_balls:
             if 'trough' not in self.tags:
                 target = self.machine.ball_devices[self.config
@@ -902,6 +899,10 @@ class BallDevice(Device):
                         raise AssertionError("Could not find path to target")
                 for i in range(unclaimed_balls):
                     self.setup_eject_chain(path)
+
+        # tell targets that we have balls available
+        for i in range(new_balls):
+            self.machine.events.post_boolean('balldevice_balls_available')
 
         self._count_consistent = True
 
