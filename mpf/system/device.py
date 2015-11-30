@@ -7,6 +7,7 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
+from config import CaseInsensitiveDict
 
 
 class Device(object):
@@ -101,6 +102,15 @@ class Device(object):
 
         if config:
             for device in config:
+
+                if not config[device]:
+                    raise AssertionError("Device '{}' has an empty config."
+                                         .format(device))
+
+                elif type(config[device]) is not dict:
+                    raise AssertionError("Device '{}' does not have a valid config."
+                                         .format(device))
+
                 cls(machine, device, config[device], collection, validate)
 
     def device_added_to_mode(self, mode, player):

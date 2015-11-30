@@ -136,8 +136,11 @@ class FileManager(object):
 
             return config
 
+        elif halt_on_error:
+            raise IOError("Could not find file {}".format(filename))
+
         else:
-            print "Could not locate file:", filename
+            return dict()
 
     @staticmethod
     def save(filename, data):
