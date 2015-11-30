@@ -74,7 +74,8 @@ window:
         color: ee9900
 
 slide_player:
-    attract_start:
+    mode_attract_started:
         type: text
         text: PRESS START
+        slide_priority: 10
         
