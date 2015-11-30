@@ -38,8 +38,6 @@ class MachineController(object):
             used to launch mpf.py.
         config: A dictionary of machine's configuration settings, merged from
             various sources.
-        physical_hw: Boolean as to whether there is physical pinball controller
-            hardware attached.
         done: Boolean. Set to True and MPF exits.
         machine_path: The root path of this machine_files folder
         display:
@@ -52,11 +50,11 @@ class MachineController(object):
         self.options = options
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework v%s", version.__version__)
+        self.log.debug("Command line arguments: {}".format(self.options))
         self.verify_system_info()
 
         self.loop_start_time = 0
         self.tick_num = 0
-        self.physical_hw = options['physical_hw']
         self.done = False
         self.machine_path = None  # Path to this machine's folder root
         self.monitors = dict()
@@ -89,21 +87,18 @@ class MachineController(object):
         self.hardware_platforms = dict()
         self.default_platform = None
 
-        if self.physical_hw:
+        if not self.options['force_platform']:
             for section, platform in self.config['hardware'].iteritems():
                 if platform.lower() != 'default' and section != 'driverboards':
                         self.add_platform(platform)
-        else:
-            self.add_platform('virtual')
-
-        if self.physical_hw:
             self.set_default_platform(self.config['hardware']['platform'])
+
         else:
-            self.set_default_platform('virtual')
+            self.add_platform(self.options['force_platform'])
+            self.set_default_platform(self.options['force_platform'])
 
         # Do this here so there's a credit_string var even if they're not using
         # the credits mode
-
         try:
             credit_string = self.config['credits']['free_play_string']
         except KeyError:
@@ -192,13 +187,13 @@ class MachineController(object):
         # If the machine folder value passed starts with a forward or
         # backward slash, then we assume it's from the mpf root. Otherwise we
         # assume it's in the mpf/machine_files folder
-        if (self.options['machinepath'].startswith('/') or
-                self.options['machinepath'].startswith('\\')):
-            machine_path = self.options['machinepath']
+        if (self.options['machine_path'].startswith('/') or
+                self.options['machine_path'].startswith('\\')):
+            machine_path = self.options['machine_path']
         else:
             machine_path = os.path.join(self.config['mpf']['paths']
                                         ['machine_files'],
-                                        self.options['machinepath'])
+                                        self.options['machine_path'])
 
         self.machine_path = os.path.abspath(machine_path)
         self.log.debug("Machine path: {}".format(self.machine_path))

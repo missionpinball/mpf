@@ -8,92 +8,81 @@
 
 from __future__ import print_function
 
-import logging
+import argparse
 from datetime import datetime
-import socket
-import os
-from optparse import OptionParser
 import errno
+import logging
+import os
+import socket
 import sys
 
 from mpf.media_controller.core.media_controller import MediaController
 from mpf.system.utility_functions import Util
 import version
 
-# Allow command line options to do things
-# We use optparse instead of argpase so python 2.6 works
-parser = OptionParser()
+parser = argparse.ArgumentParser(description='Starts the MPF Media Controller')
 
-parser.add_option("-C", "--mcconfigfile",
-                  action="store", type="string", dest="mcconfigfile",
-                  default=os.path.join("mpf", "media_controller",
-                                       "mcconfig.yaml"),
-                  help="The MPF framework config file")
+parser.add_argument("machine_path", nargs='*',
+                    help="Path of the machine folder.")
 
-parser.add_option("-c", "--configfile",
-                  action="store", type="string", dest="configfile",
-                  default="config",
-                  help="Specifies the location of the first machine config "
-                  "file")
+parser.add_argument("-C",
+                    action="store", dest="mcconfigfile",
+                    default=os.path.join("mpf", "media_controller",
+                                         "mcconfig.yaml"),
+                    help="The MPF framework default config file. Default is "
+                    "mpf/mpfconfig.yaml")
 
-parser.add_option("-l", "--logfile",
-                  action="store", type="string", dest="logfile",
-                  default=os.path.join("logs", datetime.now().strftime(
-                  "%Y-%m-%d-%H-%M-%S-mc-" + socket.gethostname() + ".log")),
-                  help="Specifies the name (and path) of the log file")
+parser.add_argument("-c",
+                    action="store", dest="configfile",
+                    default="config",
+                    help="The name of a config file to load. Default is "
+                    "config.yaml. Multiple files can be used via a comma-"
+                    "separated list (no spaces between)")
 
-parser.add_option("-v", "--verbose",
-                  action="store_const", dest="loglevel", const=logging.DEBUG,
-                  default=logging.INFO, help="Enables verbose logging to the "
-                  "log file")
+parser.add_argument("-l",
+                    action="store", dest="logfile",
+                    default=os.path.join("logs", datetime.now().strftime(
+                    "%Y-%m-%d-%H-%M-%S-mc-" + socket.gethostname() + ".log")),
+                    help="The name (and path) of the log file")
 
-parser.add_option("-V", "--verboseconsole",
-                  action="store_true", dest="consoleloglevel",
-                  default=logging.INFO,
-                  help="Enables verbose logging to the console. Do NOT on "
-                  "Windows platforms")
+parser.add_argument("-v",
+                    action="store_const", dest="loglevel", const=logging.DEBUG,
+                    default=logging.INFO, help="Enables verbose logging to the"
+                    " log file")
 
-parser.add_option("-o", "--optimized",
-                  action="store_true", dest="optimized", default=False,
-                  help="Enables performance optimized game loop")
+parser.add_argument("-V",
+                    action="store_true", dest="consoleloglevel",
+                    default=logging.INFO,
+                    help="Enables verbose logging to the console. Do NOT on "
+                    "Windows platforms")
 
-parser.add_option("-x", "--nohw",
-                  action="store_false", dest="physical_hw", default=True,
-                  help="Not used, but included since mpf.py uses it and people "
-                  "keep adding -x by mistake.")
+parser.add_argument("--version",
+                    action="store_true", dest="version", default=False,
+                    help="Shows the MC version and quits")
 
-parser.add_option("-b", "--bcp",
-                  action="store_false", dest="physical_hw", default=True,
-                  help="Not used, but included since mpf.py uses it and people "
-                  "keep adding -b by mistake.")
-
-parser.add_option("--versions",
-                  action="store_true", dest="version", default=False,
-                  help="Shows the MC version and quits")
-
-(options, args) = parser.parse_args()
-options_dict = vars(options)  # convert the values instance to python dict
+args, _ = parser.parse_known_args()
 
 # if --version was passed, print the version and quit
-if options_dict['version']:
+if args.version:
     print("Mission Pinball Framework Media Controller Version:",
           version.__version__)
     print("Requires config file version:", version.__config_version__)
     print("Backbox Control Protocol (BCP) Version:", version.__bcp_version__)
     sys.exit()
 
-# add the first positional argument into the options dict as the machine path
-try:
-    options_dict['machinepath'] = args[0]
-except KeyError:
-    print("Error: You need to specify the path to your machine_files folder "
-          "for the game you want to run.")
-    sys.exit()
+# make sure there is at least one positional argument. Have to do this manually
+# since we also want it --version to work with no args
 
-options_dict['configfile'] = Util.string_to_list(options_dict['configfile'])
+if not args.machine_path:
+    print("Error: No machine path specified")
+    sys.exit()
+else:
+    args.machine_path = args.machine_path[0]
+
+args.configfile = Util.string_to_list(args.configfile)
 
 # Configure logging. Creates a logfile and logs to the console.
-# Formating options are documented here:
+# Formatting options are documented here:
 # https://docs.python.org/2.7/library/logging.html#logrecord-attributes
 
 try:
@@ -102,14 +91,14 @@ except OSError as exception:
     if exception.errno != errno.EEXIST:
         raise
 
-logging.basicConfig(level=options.loglevel,
+logging.basicConfig(level=args.loglevel,
                     format='%(asctime)s : %(levelname)s : %(name)s : %(message)s',
-                    filename=options.logfile,
+                    filename=args.logfile,
                     filemode='w')
 
 # define a Handler which writes INFO messages or higher to the sys.stderr
 console = logging.StreamHandler()
-console.setLevel(options.consoleloglevel)
+console.setLevel(args.consoleloglevel)
 
 # set a format which is simpler for console use
 formatter = logging.Formatter('%(levelname)s : %(name)s : %(message)s')
@@ -123,7 +112,7 @@ logging.getLogger('').addHandler(console)
 
 def main():
     try:
-        mc = MediaController(options_dict)
+        mc = MediaController(vars(args))
         mc.run()
         logging.info("MC run loop ended.")
     except Exception, e:

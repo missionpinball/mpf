@@ -22,7 +22,7 @@ class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever yo
 
         # you can access the machine object via self.machine, like this:
         print self.machine
-        print self.machine.physical_hw
+        print self.machine.game
         # etc.
 
         # you can access this Scriptlet's name (based on the class name above):

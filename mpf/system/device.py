@@ -46,7 +46,7 @@ class Device(object):
         self.label = self.config['label']
 
         if platform_section:
-            if self.machine.physical_hw:
+            if not self.machine.options['force_platform']:
                 if not config['platform']:
                     if self.machine.config['hardware'][platform_section] != 'default':
                         self.platform = (

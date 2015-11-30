@@ -266,10 +266,8 @@ class BCP(object):
 
         dmd_platform = self.machine.default_platform
 
-        if self.machine.physical_hw:
-
-            if self.machine.config['hardware']['dmd'] != 'default':
-
+        if (not self.machine.options['force_platform'] and
+                    self.machine.config['hardware']['dmd'] != 'default'):
                 dmd_platform = (self.machine.hardware_platforms
                                 [self.machine.config['hardware']['dmd']])
 

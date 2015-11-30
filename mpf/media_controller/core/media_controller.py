@@ -36,6 +36,7 @@ class MediaController(object):
         self.options = options
 
         self.log = logging.getLogger("MediaController")
+        self.log.debug("Command line arguments: {}".format(self.options))
         self.log.info("Media Controller Version %s", version.__version__)
         self.log.debug("Backbox Control Protocol Version %s",
                       version.__bcp_version__)
@@ -122,13 +123,13 @@ class MediaController(object):
         # assume it's from the subfolder location specified in the
         # mpfconfig file location
 
-        if (options['machinepath'].startswith('/') or
-                options['machinepath'].startswith('\\')):
-            machine_path = options['machinepath']
+        if (options['machine_path'].startswith('/') or
+                options['machine_path'].startswith('\\')):
+            machine_path = options['machine_path']
         else:
             machine_path = os.path.join(self.config['media_controller']['paths']
                                         ['machine_files'],
-                                        options['machinepath'])
+                                        options['machine_path'])
 
         self.machine_path = os.path.abspath(machine_path)
 
@@ -187,13 +188,13 @@ class MediaController(object):
         # mpfconfigfile location
 
     def _set_machine_path(self):
-        if (self.options['machinepath'].startswith('/') or
-                self.options['machinepath'].startswith('\\')):
-            machine_path = self.options['machinepath']
+        if (self.options['machine_path'].startswith('/') or
+                self.options['machine_path'].startswith('\\')):
+            machine_path = self.options['machine_path']
         else:
             machine_path = os.path.join(self.config['media_controller']['paths']
                                         ['machine_files'],
-                                        self.options['machinepath'])
+                                        self.options['machine_path'])
 
         self.machine_path = os.path.abspath(machine_path)
         self.log.debug("Machine path: {}".format(self.machine_path))
