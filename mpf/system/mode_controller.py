@@ -325,6 +325,16 @@ class ModeController(object):
         self.log.info('+-------------------------------------+')
 
     def is_active(self, mode_name):
+        """
+        Checks where a model is active
+
+        Args:
+            mode_name: String name of the mode to check.
+
+        Returns:
+            True if the mode is active, False if it is not.
+
+        """
         if mode_name in [x.name for x in self.active_modes
                          if x._active is True]:
             return True
