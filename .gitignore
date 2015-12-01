@@ -4,6 +4,10 @@ logs/
 *.local
 .idea
 docs/
+htmlcov
+.coverage
+data
+
 # docs have been moved to a branch called gh-pages
 
 # Note, if you want to exclude your own machine files from git, you can move the
