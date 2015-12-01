@@ -21,24 +21,12 @@ parser = argparse.ArgumentParser(description='Starts the MPF core engine')
 
 parser.add_argument("machine_path", help="Path of the machine folder.")
 
-parser.add_argument("-C",
-                    action="store", dest="mpfconfigfile",
-                    default=os.path.join("mpf", "mpfconfig.yaml"),
-                    help="The MPF framework default config file. Default is "
-                    "mpf/mpfconfig.yaml")
-
 parser.add_argument("-c",
                     action="store", dest="configfile",
-                    default="config",
+                    default="config", metavar='config_file',
                     help="The name of a config file to load. Default is "
                     "config.yaml. Multiple files can be used via a comma-"
                     "separated list (no spaces between)")
-
-parser.add_argument("-l",
-                    action="store", dest="logfile",
-                    default=os.path.join("logs", datetime.now().strftime(
-                    "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
-                    help="The name (and path) of the log file")
 
 parser.add_argument("-v",
                     action="store_const", dest="loglevel", const=logging.DEBUG,
@@ -66,6 +54,19 @@ parser.add_argument("-b",
                     action="store_false", dest="bcp", default=True,
                     help="Runs MPF without making a connection attempt to a "
                     "BCP Server")
+
+parser.add_argument("-l",
+                    action="store", dest="logfile", metavar='file_name',
+                    default=os.path.join("logs", datetime.now().strftime(
+                    "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
+                    help="The name (and path) of the log file")
+
+parser.add_argument("-C",
+                    action="store", dest="mpfconfigfile",
+                    default=os.path.join("mpf", "mpfconfig.yaml"),
+                    metavar='config_file',
+                    help="The MPF framework default config file. Default is "
+                    "mpf/mpfconfig.yaml")
 
 parser.add_argument("--version",
                     action="version", version=version.version_str,

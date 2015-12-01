@@ -24,25 +24,19 @@ parser = argparse.ArgumentParser(description='Starts the MPF Media Controller')
 
 parser.add_argument("machine_path", help="Path of the machine folder.")
 
-parser.add_argument("-C",
-                    action="store", dest="mcconfigfile",
-                    default=os.path.join("mpf", "media_controller",
-                                         "mcconfig.yaml"),
-                    help="The MPF framework default config file. Default is "
-                    "mpf/mpfconfig.yaml")
-
-parser.add_argument("-c",
-                    action="store", dest="configfile",
-                    default="config",
-                    help="The name of a config file to load. Default is "
-                    "config.yaml. Multiple files can be used via a comma-"
-                    "separated list (no spaces between)")
-
 parser.add_argument("-l",
                     action="store", dest="logfile",
+                    metavar='file_name',
                     default=os.path.join("logs", datetime.now().strftime(
                     "%Y-%m-%d-%H-%M-%S-mc-" + socket.gethostname() + ".log")),
                     help="The name (and path) of the log file")
+
+parser.add_argument("-c",
+                    action="store", dest="configfile",
+                    default="config", metavar='config_file(s)',
+                    help="The name of a config file to load. Default is "
+                    "config.yaml. Multiple files can be used via a comma-"
+                    "separated list (no spaces between)")
 
 parser.add_argument("-v",
                     action="store_const", dest="loglevel", const=logging.DEBUG,
@@ -55,12 +49,34 @@ parser.add_argument("-V",
                     help="Enables verbose logging to the console. Do NOT on "
                     "Windows platforms")
 
+parser.add_argument("-C",
+                    action="store", dest="mcconfigfile",
+                    default=os.path.join("mpf", "media_controller",
+                                         "mcconfig.yaml"),
+                    metavar='config_file',
+                    help="The MPF framework default config file. Default is "
+                    "mpf/mpfconfig.yaml")
+
 parser.add_argument("--version",
                     action="version", version=version.version_str,
                     help="Displays the MPF, config file, and BCP version info "
                          "and exits")
 
-args, _ = parser.parse_known_args()
+# The following are just included for full compatibility with mpf.py which is
+# needed when launching from a batch file or shell script.
+parser.add_argument("-x",
+                    action="store_const", dest="force_platform",
+                    const='virtual', help=argparse.SUPPRESS)
+
+parser.add_argument("-X",
+                    action="store_const", dest="force_platform",
+                    const='smart_virtual', help=argparse.SUPPRESS)
+
+parser.add_argument("-b",
+                    action="store_false", dest="bcp", default=True,
+                    help=argparse.SUPPRESS)
+
+args = parser.parse_args()
 args.configfile = Util.string_to_list(args.configfile)
 
 # Configure logging. Creates a logfile and logs to the console.
