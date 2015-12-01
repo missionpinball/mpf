@@ -24,7 +24,7 @@ slide_player:
       font: small
 
 scoring:
-  ball_started:
+  s_right_inlane_active:
     score: 100
   s_left_flipper_active:
     score: 1000

@@ -21,5 +21,11 @@ class TestTutorialStep8(MpfTestCase):
         self.assertIn('right_flipper', self.machine.flippers)
 
     def test_ball_devices(self):
-        self.assertEqual(self.machine.ball_devices.bd_trough.balls,
-                         5)
+        # start active switches should start with 5 balls in the trough
+        self.assertEqual(5, self.machine.ball_devices.bd_trough.balls)
+
+    def test_trough_eject(self):
+        self.machine.ball_devices.bd_trough.eject()
+        self.advance_time_and_run(10)
+        self.assertEqual(4, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(1, self.machine.ball_devices.playfield.balls)

@@ -375,7 +375,7 @@ coils:
         number: c05
         label:
         tags:
-        holdPatter: 2-9
+        hold_power: 2
         pulse_ms: 30
     #name:
     #    number: c06
@@ -522,9 +522,11 @@ slide_player:
     mode_attract_started:
         type: text
         text: PRESS START
+        slide_priority: 10
     ball_started:
         type: text
         text: PLAYER %number% BALL %ball%
+        slide_priority: 10
 
 keyboard:
     z:
@@ -561,33 +563,38 @@ ball_devices:
     tags: trough, home, drain
     ball_switches: s_trough1, s_trough2, s_trough3, s_trough4, s_trough5, s_trough_jam
     eject_coil: c_trough_eject
-    confirm_eject_type: target
     entrance_count_delay: 300ms
     jam_switch: s_trough_jam
     eject_targets: bd_plunger
+    debug: yes
 
   bd_plunger:
     ball_switches: s_plunger_lane
     entrance_count_delay: 300ms
-    exit_count_delay: 3s
-    eject_coil: c_plunger_eject
+    eject_timeouts: 3s
     tags: ball_add_live
+    eject_coil: c_plunger_eject
     player_controlled_eject_event: sw_launch
 
   bd_retina_hole:
     ball_switches: s_eject
     eject_coil: c_retina_eject
+    eject_timeouts: 1s
 
   bd_lower_vuk:
     ball_switches: s_bottom_popper
     eject_coil: c_bottom_popper
+    eject_timeouts: 2s
 
   bd_upper_vuk:
     ball_switches: s_top_popper
     eject_coil: c_top_popper
+    eject_timeouts: 2s
 
   bd_elevator:
     ball_switches: s_elevator_hold
+    mechanical_eject: true
+    eject_timeouts: 500ms
 
 virtual_platform_start_active_switches:
     s_trough1

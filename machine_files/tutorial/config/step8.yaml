@@ -121,9 +121,7 @@ ball_devices:
     tags: trough, home, drain
     ball_switches: s_trough1, s_trough2, s_trough3, s_trough4, s_trough5, s_trough_jam
     eject_coil: c_trough_eject
-    confirm_eject_type: count
     entrance_count_delay: 300ms
-    exit_count_delay: 2s
     jam_switch: s_trough_jam
     debug: true
 
