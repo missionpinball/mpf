@@ -17,11 +17,9 @@ import sys
 from mpf.system.machine import MachineController
 from mpf.system.utility_functions import Util
 
-
 parser = argparse.ArgumentParser(description='Starts the MPF core engine')
 
-parser.add_argument("machine_path", nargs='*',
-                    help="Path of the machine folder.")
+parser.add_argument("machine_path", help="Path of the machine folder.")
 
 parser.add_argument("-C",
                     action="store", dest="mpfconfigfile",
@@ -70,27 +68,11 @@ parser.add_argument("-b",
                     "BCP Server")
 
 parser.add_argument("--version",
-                    action="store_true", dest="version", default=False,
-                    help="Shows the MPF version and quits")
+                    action="version", version=version.version_str,
+                    help="Displays the MPF, config file, and BCP version info "
+                         "and exits")
 
 args = parser.parse_args()
-
-# if --version was passed, print the version and quit
-if args.version:
-    print "Mission Pinball Framework Core Engine version:", version.__version__
-    print "Requires Config File version:", version.__config_version__
-    print "Backbox Control Protocol (BCP) Version:", version.__bcp_version__
-    sys.exit()
-
-# make sure there is at least one positional argument. Have to do this manually
-# since we also want it --version to work with no args
-
-if not args.machine_path:
-    print "Error: No machine path specified"
-    sys.exit()
-else:
-    args.machine_path = args.machine_path[0]
-
 args.configfile = Util.string_to_list(args.configfile)
 
 # Configure logging. Creates a logfile and logs to the console.
