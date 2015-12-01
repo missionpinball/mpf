@@ -27,6 +27,8 @@ class Playfield(BallDevice):
         self.label = None
         self.debug = False
         self.config = dict()
+        self._count_consistent = True
+        self.unexpected_balls = 0
 
         if validate:
             self.config = self.machine.config_processor.process_config2(
@@ -51,8 +53,8 @@ class Playfield(BallDevice):
 
         # Attributes
         self._balls = 0
+        self.available_balls=0
         self.num_balls_requested = 0
-        self.player_controlled_eject_in_progress = None
         self.queued_balls = list()
         self._playfield = True
 
@@ -70,7 +72,6 @@ class Playfield(BallDevice):
                         event='balldevice_' + device.name +
                         '_ball_eject_failed',
                         handler=self._source_device_eject_failed)
-
                     self.machine.events.add_handler(
                         event='balldevice_' + device.name +
                         '_ball_eject_attempt',
@@ -91,7 +92,7 @@ class Playfield(BallDevice):
     def _initialize(self):
         self.ball_controller = self.machine.ball_controller
 
-        for device in self.machine.playfield_transfer:
+        for device in self.machine.playfield_transfers:
             if device.config['eject_target'] == self.name:
                 self.machine.events.add_handler(
                     event='balldevice_' + device.name +
@@ -101,6 +102,14 @@ class Playfield(BallDevice):
                     event='balldevice_' + device.name +
                     '_ball_eject_attempt',
                     handler=self._source_device_eject_attempt)
+
+    def add_missing_balls(self, balls):
+        # if we catched an unexpected balls before do not add a ball
+        if self.unexpected_balls:
+            self.unexpected_balls -= 1
+            balls -= 1
+
+        self.balls += balls
 
     @property
     def balls(self):
@@ -116,24 +125,21 @@ class Playfield(BallDevice):
             self.log.debug("Ball count change. Prior: %s, Current: %s, Change:"
                            " %s", prior_balls, balls, ball_change)
 
-        if balls > 0:
+        if balls >= 0:
             self._balls = balls
-            #self.ball_search_schedule()
-        elif balls == 0:
-            self._balls = 0
-            #self.ball_search_disable()
         else:
             self.log.warning("Playfield balls went to %s. Resetting to 0, but "
                              "FYI that something's weird", balls)
             self._balls = 0
-            #self.ball_search_disable()
+            self.unexpected_balls = 0
 
         self.log.debug("New Ball Count: %s. (Prior count: %s)",
                        self._balls, prior_balls)
 
         if ball_change > 0:
             self.machine.events.post_relay('balldevice_' + self.name +
-                                           '_ball_enter', balls=ball_change)
+                                           '_ball_enter', new_balls=ball_change,
+                                           unclaimed_balls=ball_change)
 
         if ball_change:
             self.machine.events.post(self.name + '_ball_count_change',
@@ -159,7 +165,7 @@ class Playfield(BallDevice):
         return 999
 
     def add_ball(self, balls=1, source_name=None, source_device=None,
-                 trigger_event=None):
+                 player_controlled=False, reset=False):
         """Adds live ball(s) to the playfield.
 
         Args:
@@ -168,10 +174,10 @@ class Playfield(BallDevice):
                 add the ball(s) from.
             source_device: Optional ball device object you'd like to add the
                 ball(s) from.
-            trigger_event: The optional name of an event that MPF will wait for
-                before adding the ball into play. Typically used with player-
-                controlled eject tag events. If None, the ball will be added
-                immediately.
+            player_controlled: Boolean which specifies whether this event is
+                player controlled. (See not below for details)
+            reset: Boolean which controls whether the source device should
+                reset its state to idle
 
         Returns:
             True if it's able to process the add_ball() request, False if it
@@ -186,7 +192,7 @@ class Playfield(BallDevice):
 
         This method does *not* increase the game controller's count of the
         number of balls in play. So if you want to add balls (like in a
-        ball scenario(, you need to call this method along with
+        multiball scenario), you need to call this method along with
         ``self.machine.game.add_balls_in_play()``.)
 
         MPF tracks the number of balls in play separately from the actual balls
@@ -195,8 +201,31 @@ class Playfield(BallDevice):
         animation is playing, there are no balls on the playfield but still one
         ball in play, or if the player has a two-ball multiball and they shoot
         them both into locks, there are still two balls in play even though
-        there are no balls on the playfield, or if the player tilts then there
-        are still balls on the playfield but no balls in play.
+        there are no balls on the playfield. The opposite can also be true,
+        like when the player tilts then there are still balls on the playfield
+        but no balls in play.
+
+        Explanation of the player_controlled parameter:
+
+        Set player_controlled to True to indicate that MPF should wait for the
+        player to eject the ball from the source_device rather than firing a
+        coil. The logic works like this:
+
+        If the source_device does not have an eject_coil defined, then it's
+        assumed that player_controlled is the only option. (e.g. this is a
+        traditional plunger.) If the source_device does have an eject_coil
+        defined, then there are two ways the eject could work. (1) there could
+        be a "launch" button of some kind that's used to fire the eject coil,
+        or (2) the device could be the auto/manual combo style where there's a
+        mechanical plunger but also a coil which can eject the ball.
+
+        If player_controlled is true and the device has an eject_coil, MPF will
+        look for the player_controlled_eject_tag and eject the ball when a
+        switch with that tag is activated.
+
+        If there is no player_controlled_eject_tag, MPF assumes it's a manual
+        plunger and will wait for the ball to disappear from the device based
+        on the device's ball count decreasing.
 
         """
         if balls < 1:
@@ -217,124 +246,42 @@ class Playfield(BallDevice):
                     break
 
         if not source_device:
-            self.log.critical("Received request to add a ball to the playfield, "
-                              "but no source device was passed and no ball "
-                              "devices are tagged with 'ball_add_live'. Cannot "
-                              "add a ball.")
-            raise Exception("Received request to add a ball to the playfield, "
-                            "but no source device was passed and no ball "
-                            "devices are tagged with 'ball_add_live'. Cannot "
-                            "add a ball.")
+            self.log.critical("Received request to add a ball to the playfield"
+                              ", but no source device was passed and no ball "
+                              "devices are tagged with 'ball_add_live'. Cannot"
+                              " add a ball.")
+            return False
 
-        # If there's a player controlled eject in progress for this device, we
-        # hold this request until it's over.
-        if self.player_controlled_eject_in_progress == source_device:
-            self.queued_balls.append((balls, source_name, source_device,
-                                      trigger_event))
-            self.log.debug("An add_ball() request came in while there was a "
-                           "current player-controlled eject in progress for the"
-                            "same device. Will queue the eject request")
-            return True
+        if reset:
+            source_device.stop()
 
         self.log.debug("Received request to add %s ball(s). Source device: %s."
-                       " Wait for event: %s", balls, source_device.name,
-                       trigger_event)
+                       " Player-controlled: %s", balls,
+                       source_device.name, player_controlled)
 
-        # If we don't have a coil that's fired by the player, and our source
-        # device has the ability to eject, then we do the eject now.
-
-        # Some examples:
-
-        # Plunger lane w/ switch and coil: ball_add_live device is plunger lane,
-        # we don't eject now since *not* player_controlled is true.
-
-        # Plunger lane w/ switch. No coil: ball_add_live device is plunger lane,
-        # we don't eject now since there's no eject_coil for that device.
-
-        # Plunger lane has no switch: ball_add_live device is trough, we do
-        # eject now since there's no player_controlled tag and the device has an
-        # eject coil.
-
-        if trigger_event and source_device.config['eject_coil']:
-            self.setup_player_controlled_eject(balls, source_device,
-                                               trigger_event)
-
+        if player_controlled:
+            source_device.setup_player_controlled_eject(balls=balls,
+                                                        target=self)
         else:
-            # if there's no trigger_event, eject right away
-            # if there's no eject coil, that's ok. We still need to setup the
-            # eject so the device will be expecting the ball to disappear
             source_device.eject(balls=balls, target=self, get_ball=True)
 
         return True
 
-    def setup_player_controlled_eject(self, balls, device, trigger_event):
-        """Used to set up an eject from a ball device which will eject a ball to
-        the playfield.
+    def mark_playfield_active(self):
+        self.machine.events.post_boolean(self.name + "_active")
 
-        Args:
-            balls: Integer of the number of balls this device should eject.
-            device: The ball device object that will eject the ball(s) when a
-                switch with the player-controlled eject tag is hit.
-            trigger_event: The name of the MPF event that will trigger the
-                eject.
-
-        When this method it called, MPF will set up an event handler to look for
-        the trigger_event.
-
-        """
-        self.log.debug("Setting up a player controlled eject. Balls: %s, Device"
-                       ": %s, Trigger Event: %s", balls, device, trigger_event)
-
-        if not device.balls:
-            device.request_ball(balls=balls)
-
-        self.machine.events.add_handler(trigger_event,
-                                        self.player_eject_request,
-                                        balls=balls, device=device)
-
-        self.player_controlled_eject_in_progress = device
-
-    def remove_player_controlled_eject(self):
-        """Removed the player-controlled eject so a player hitting a switch
-        no longer calls the device(s) to eject a ball.
-
-        """
-        self.log.debug("Removing player-controlled eject.")
-
-        self.machine.events.remove_handler(self.player_eject_request)
-        self.player_controlled_eject_in_progress = None
-
-        # Need to do this in case one of these queued balls is also a player
-        # controlled eject which would re-add it to the queue while iterating.
-        # So we clear it and pass them all to add_ball() and then let the queue
-        # rebuild with what's left if it needs to.
-        ball_list = self.queued_balls
-        self.queued_balls = list()
-
-        for item in ball_list:
-            self.add_ball(balls=item[0], source_name=item[1],
-                          source_device=item[2], trigger_event=item[3])
-
-    def player_eject_request(self, balls, device):
-        """A player has hit a switch tagged with the player_eject_request_tag.
-
-        Args:
-            balls: Integer of the number of balls that will be ejected.
-            device: The ball device object that will eject the ball(s).
-
-        """
-        self.log.debug("Received player eject request. Balls: %s, Device: %s",
-                       balls, device.name)
-        device.eject(balls, target=self)
-
-    def playfield_switch_hit(self):
+    def playfield_switch_hit(self, **kwargs):
         """A switch tagged with '<this playfield name>_active' was just hit,
         indicating that there is at least one ball on the playfield.
 
         """
-        if not self.balls:
+        if (not self.balls or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0)):
+            self.mark_playfield_active()
 
             if not self.num_balls_requested:
+                if self.machine.game:
+                    self.unexpected_balls = 1
+
                 if self.machine.config['machine']['glass_off_mode']:
                     self.log.debug("Playfield_active switch hit with no balls "
                                    "expected. glass_off_mode is enabled, so "
@@ -347,13 +294,20 @@ class Playfield(BallDevice):
                     self.balls = 1
                     self.machine.events.post('unexpected_ball_on_' + self.name)
 
-    def _ball_added_handler(self, balls):
-        self.log.debug("%s ball(s) added to the playfield", balls)
-        self.balls += balls
+    # def _ball_added_handler(self, balls):
+    #     self.log.debug("%s ball(s) added to the playfield", balls)
+    #     self.balls += balls
 
-    def _ball_removed_handler(self, balls):
+    def _ball_removed_handler(self, balls, **kwargs):
+        self._count_consistent = False
+        # somebody got a ball from us so we obviously had one
+        self.machine.events.post('sw_' + self.name + "_active",
+                callback=self._ball_removed_handler2, balls=balls)
+
+    def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
+        self._count_consistent = True
 
     def _source_device_eject_attempt(self, balls, target, **kwargs):
         # A source device is attempting to eject a ball. We need to know if it's
@@ -388,8 +342,6 @@ class Playfield(BallDevice):
                                   self.num_balls_requested)
                 raise Exception("num_balls_requested is %s, which doesn't make "
                                 "sense. Quitting...", self.num_balls_requested)
-
-            self.remove_player_controlled_eject()
 
     def ok_to_confirm_ball_via_playfield_switch(self):
         """Used to check whether it's ok for a ball device which ejects to the
@@ -519,6 +471,16 @@ class Playfield(BallDevice):
 
     def eject_all(self, *args, **kwargs):
         pass
+
+    def is_playfield(self):
+        return True
+
+    def add_incoming_ball(self, source):
+        pass
+
+    def remove_incoming_ball(self, source):
+        pass
+
 
 # The MIT License (MIT)
 

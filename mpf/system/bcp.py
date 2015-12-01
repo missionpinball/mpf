@@ -24,9 +24,9 @@ from Queue import Queue
 import copy
 
 from mpf.system.player import Player
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 from mpf.devices.shot import Shot
-from mpf.devices.shot_group import ShotGroup
+from mpf.system.light_controller import ExternalShow
 import version
 
 
@@ -113,7 +113,7 @@ class BCP(object):
         error
         get
         goodbye
-        hello?version=xxx
+        hello?version=xxx&controller_name=xxx&controller_version=xxx
         mode_start?name=xxx&priority=xxx
         mode_stop?name=xxx
         player_added?player_num=x
@@ -127,6 +127,8 @@ class BCP(object):
         trigger?name=xxx
 
     """
+
+    active_connections = 0
 
     def __init__(self, machine):
         if ('bcp' not in machine.config or
@@ -146,13 +148,23 @@ class BCP(object):
                                      'switch': self.bcp_receive_switch,
                                      'trigger': self.bcp_receive_trigger,
                                      'get': self.bcp_receive_get,
-                                     'set': self.bcp_receive_set
+                                     'set': self.bcp_receive_set,
+                                     'reset_complete':
+                                         self.bcp_receive_reset_complete,
+                                     'external_show_start':
+                                        self.external_show_start,
+                                     'external_show_stop':
+                                        self.external_show_stop,
+                                     'external_show_frame':
+                                        self.external_show_frame,
                                     }
 
         self.dmd = None
         self.filter_player_events = True
+        self.filter_machine_vars = True
         self.filter_shots = True
         self.send_player_vars = False
+        self.send_machine_vars = False
         self.mpfmc_trigger_events = set()
         self.track_volumes = dict()
         self.volume_control_enabled = False
@@ -187,18 +199,31 @@ class BCP(object):
             self.send_player_vars = True
 
             self.config['player_variables'] = (
-                Config.string_to_list(self.config['player_variables']))
+                Util.string_to_list(self.config['player_variables']))
 
             if '__all__' in self.config['player_variables']:
                 self.filter_player_events = False
 
         self._setup_player_monitor()
 
+        if ('machine_variables' in self.config and
+                self.config['machine_variables']):
+
+            self.send_machine_vars = True
+
+            self.config['machine_variables'] = (
+                Util.string_to_list(self.config['machine_variables']))
+
+            if '__all__' in self.config['machine_variables']:
+                self.filter_machine_vars = False
+
+        self._setup_machine_var_monitor()
+
         if ('shots' in self.config and
                 self.config['shots']):
 
             self.config['shots'] = (
-                Config.string_to_list(self.config['shots']))
+                Util.string_to_list(self.config['shots']))
 
             if '__all__' in self.config['shots']:
                 self.filter_shots = False
@@ -225,6 +250,8 @@ class BCP(object):
                                         self.enable_volume_keys)
         self.machine.events.add_handler('disable_volume_keys',
                                         self.disable_volume_keys)
+        self.machine.events.add_handler('bcp_get_led_coordinates',
+                                        self.get_led_coordinates)
 
         self.machine.mode_controller.register_start_method(self.bcp_mode_start, 'mode')
         self.machine.mode_controller.register_start_method(self.register_triggers,
@@ -239,15 +266,18 @@ class BCP(object):
 
         dmd_platform = self.machine.default_platform
 
-        if self.machine.physical_hw:
-
-            if self.machine.config['hardware']['dmd'] != 'default':
+        if (not self.machine.options['force_platform'] and
+                    self.machine.config['hardware']['dmd'] != 'default'):
                 dmd_platform = (self.machine.hardware_platforms
-                                [self.machine.config['platform']['dmd']])
+                                [self.machine.config['hardware']['dmd']])
 
         self.dmd = dmd_platform.configure_dmd()
 
     def _setup_bcp_connections(self):
+
+        if not self.machine.options['bcp']:
+            return
+
         for name, settings in self.connection_config.iteritems():
             if 'host' not in settings:
                 break
@@ -255,6 +285,16 @@ class BCP(object):
             self.bcp_clients.append(BCPClientSocket(self.machine, name,
                                                     settings,
                                                     self.receive_queue))
+
+        # todo should this be here?
+        self._send_machine_vars()
+
+    def _send_machine_vars(self):
+        for var_name, settings in self.machine.machine_vars.iteritems():
+
+            self.send(bcp_command='machine_variable',
+                      name=var_name,
+                      value=settings['value'])
 
     def remove_bcp_connection(self, bcp_client):
         """Removes a BCP connection to a remote BCP host.
@@ -286,12 +326,19 @@ class BCP(object):
             for event in self.config['player_variables']:
                 self.mpfmc_trigger_events.add('player_' + event.lower())
 
+    def _setup_machine_var_monitor(self):
+        self.machine.machine_var_monitor = True
+        self.machine.register_monitor('machine_vars', self._machine_var_change)
+
+        if self.filter_machine_vars:
+            for event in self.config['machine_variables']:
+                self.mpfmc_trigger_events.add('machine_var_' + event.lower())
+
     def _setup_shot_monitor(self):
         Shot.monitor_enabled = True
         self.machine.register_monitor('shots', self._shot)
 
     def _player_var_change(self, name, value, prev_value, change, player_num):
-
         if name == 'score':
             self.send('player_score', value=value, prev_value=prev_value,
                       change=change, player_num=player_num)
@@ -305,6 +352,16 @@ class BCP(object):
                       prev_value=prev_value,
                       change=change,
                       player_num=player_num)
+
+    def _machine_var_change(self, name, value, prev_value, change):
+        if self.send_machine_vars and (
+                not self.filter_machine_vars or
+                name in self.config['machine_variables']):
+            self.send(bcp_command='machine_variable',
+                      name=name,
+                      value=value,
+                      prev_value=prev_value,
+                      change=change)
 
     def _shot(self, name, profile, state):
 
@@ -393,10 +450,10 @@ class BCP(object):
         try:
             for k, v in config['sound_player'].iteritems():
                 if 'start_events' in v:
-                    for event in Config.string_to_list(v['start_events']):
+                    for event in Util.string_to_list(v['start_events']):
                         self.create_trigger_event(event)
                 if 'stop_events' in v:
-                    for event in Config.string_to_list(v['stop_events']):
+                    for event in Util.string_to_list(v['stop_events']):
                         self.create_trigger_event(event)
         except KeyError:
             pass
@@ -413,13 +470,10 @@ class BCP(object):
 
         """
 
-        if not self.filter_player_events and event.startswith('player_'):
-            return  # since all player events are already being sent
-
         if event not in self.mpfmc_trigger_events:
 
-            self.machine.events.add_handler(event, handler=self.send,
-                                            bcp_command='trigger',
+            self.machine.events.add_handler(event,
+                                            handler=self.send_trigger,
                                             name=event)
             self.mpfmc_trigger_events.add(event)
 
@@ -458,6 +512,21 @@ class BCP(object):
                                  event, settings)
 
         return self.machine.events.remove_handlers_by_keys, event_list
+
+    def send_trigger(self, name, **kwargs):
+        # Since player variables are sent automatically, if we get a trigger
+        # for an event that starts with "player_", we need to only send it here
+        # if there's *not* a player variable with that name, since if there is
+        # a player variable then the player variable handler will send it.
+        if name.startswith('player_'):
+            try:
+                if self.machine.game.player.is_player_var(name.lstrip('player_')):
+                    return
+
+            except AttributeError:
+                pass
+
+        self.send(bcp_command='trigger', name=name, **kwargs)
 
     def send(self, bcp_command, callback=None, **kwargs):
         """Sends a BCP message.
@@ -522,27 +591,29 @@ class BCP(object):
         self.log.warning('Received Error command from host with parameters: %s',
                          kwargs)
 
-    def bcp_receive_get(self, **kwargs):
-        """Processes an incoming BCP 'get' command.
-
-        Note that this media controller doesn't implement the 'get' command at
-        this time, but it's included here for completeness since the 'get'
-        command is part of the BCP 1.0 specification so we don't want to return
-        an error if we receive an incoming 'get' command.
+    def bcp_receive_get(self, names, **kwargs):
+        """Processes an incoming BCP 'get' command by posting an event
+        'bcp_get_<name>'. It's up to an event handler to register for that
+        event and to send the response BCP 'set' command.
 
         """
-        pass
+        for name in Util.string_to_list(names):
+            self.machine.events.post('bcp_get_{}'.format(name))
 
     def bcp_receive_set(self, **kwargs):
-        """Processes an incoming BCP 'set' command.
+        """Processes an incoming BCP 'set' command by posting an event
+        'bcp_set_<name>' with a parameter value=<value>. It's up to an event
+        handler to register for that event and to do something with it.
 
-        Note that this media controller doesn't implement the 'set' command at
-        this time, but it's included here for completeness since the 'set'
-        command is part of the BCP 1.0 specification so we don't want to return
-        an error if we receive an incoming 'set' command.
+        Note that BCP set commands can contain multiple key/value pairs, and
+        this method will post one event for each pair.
 
         """
-        pass
+        for k, v in kwargs.iteritems():
+            self.machine.events.post('bcp_set_{}'.format(k), value=v)
+
+    def bcp_receive_reset_complete(self, **kwargs):
+        self.machine.bcp_reset_complete()
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
         """Sends BCP 'mode_start' to the connected BCP hosts and schedules
@@ -794,6 +865,31 @@ class BCP(object):
         except KeyError:
             self.log.warning('Received volume for unknown track "%s"', track)
 
+    def get_led_coordinates(self):
+        """Creates a list of all LEDs with their corresponding x and y coordinates.  Only
+        LEDs that have been configured with both x and y coordinates are included in the
+        list.  The list is sent via BCP set command in the following delimited format:
+            led_coordinates=led_01:x,y;led_02:x,y;led_03:x,y;...
+        """
+        coordinates = []
+        for led in self.machine.leds:
+            if led.config['x'] is not None and led.config['y'] is not None:
+                coordinates.append(led.name + ':' + str(led.config['x']) + ',' + str(led.config['y']))
+
+        self.send('set', led_coordinates=';'.join(coordinates))
+
+    def external_show_start(self, name, **kwargs):
+        # Called by worker thread
+        self.machine.light_controller.add_external_show_start_command_to_queue(name, **kwargs)
+
+    def external_show_stop(self, name):
+        # Called by worker thread
+        self.machine.light_controller.add_external_show_stop_command_to_queue(name)
+
+    def external_show_frame(self, name, **kwargs):
+        # Called by worker thread
+        self.machine.light_controller.add_external_show_frame_command_to_queue(name, **kwargs)
+
 
 class BCPClientSocket(object):
     """Parent class for a BCP client socket. (There can be multiple of these to
@@ -852,6 +948,8 @@ class BCPClientSocket(object):
                 self.socket.connect((self.config['host'], self.config['port']))
                 self.log.info("Connected to remote BCP host %s:%s",
                               self.config['host'], self.config['port'])
+
+                BCP.active_connections += 1
                 self.connection_attempts = 0
 
             except socket.error, v:
@@ -904,6 +1002,7 @@ class BCPClientSocket(object):
                 self.send('goodbye')
 
             self.socket.close()
+            BCP.active_connections -= 1
             self.socket = None  # Socket threads will exit on this
 
     def send(self, message):
@@ -929,45 +1028,91 @@ class BCPClientSocket(object):
 
         socket_bytes = ''
 
-        try:
-            while self.socket:
+        if 'dmd' in self.machine.config:
 
-                socket_bytes += self.get_from_socket()
+            bytes_per_pixel = 1
 
-                if socket_bytes:
+            try:
+                if self.machine.config['dmd']['type'] == 'color':
+                    bytes_per_pixel = 3
 
-                    while socket_bytes.startswith('dmd_frame'):
-                        # trim the `dmd_frame?` so we have just the data
-                        socket_bytes = socket_bytes[10:]
+            except KeyError:
+                pass
 
-                        while len(socket_bytes) < 4096:
-                            # If we don't have the full data, loop until we
-                            # have it.
-                            socket_bytes += self.get_from_socket()
+            dmd_byte_length = (self.machine.config['dmd']['width'] *
+                               self.machine.config['dmd']['height'] *
+                               bytes_per_pixel)
 
-                        # trim the first 4096 bytes for the dmd data
-                        dmd_data = socket_bytes[:4096]
-                        # Save the rest. This is +1 over the last step since we
-                        # need to skip the \n separator
-                        socket_bytes = socket_bytes[4097:]
-                        self.machine.bcp.dmd.update(dmd_data)
+            self.log.debug("DMD frame byte length: %s*%s*%s = %s",
+                           self.machine.config['dmd']['width'],
+                           self.machine.config['dmd']['height'],
+                           bytes_per_pixel, dmd_byte_length)
 
-                    if '\n' in socket_bytes:
-                        message, socket_bytes = socket_bytes.split('\n', 1)
+            try:
+                while self.socket:
 
-                        self.log.debug('Received "%s"', message)
-                        cmd, kwargs = decode_command_string(message)
+                    socket_bytes += self.get_from_socket()
 
-                        if cmd in self.bcp_commands:
-                            self.bcp_commands[cmd](**kwargs)
-                        else:
-                            self.receive_queue.put((cmd, kwargs))
+                    if socket_bytes:
 
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
+                        while socket_bytes.startswith('dmd_frame'):
+                            # trim the `dmd_frame?` so we have just the data
+                            socket_bytes = socket_bytes[10:]
+
+                            while len(socket_bytes) < dmd_byte_length:
+                                # If we don't have the full data, loop until we
+                                # have it.
+                                socket_bytes += self.get_from_socket()
+
+                            # trim the dmd bytes for the dmd data
+                            dmd_data = socket_bytes[:dmd_byte_length]
+                            # Save the rest. This is +1 over the last step
+                            # since we need to skip the \n separator
+                            socket_bytes = socket_bytes[dmd_byte_length+1:]
+                            self.machine.bcp.dmd.update(dmd_data)
+
+                        if '\n' in socket_bytes:
+                            message, socket_bytes = socket_bytes.split('\n', 1)
+
+                            self.log.debug('Received "%s"', message)
+                            cmd, kwargs = decode_command_string(message)
+
+                            if cmd in self.bcp_commands:
+                                self.bcp_commands[cmd](**kwargs)
+                            else:
+                                self.receive_queue.put((cmd, kwargs))
+
+            except Exception:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                lines = traceback.format_exception(exc_type, exc_value,
+                                                   exc_traceback)
+                msg = ''.join(line for line in lines)
+                self.machine.crash_queue.put(msg)
+
+        else:
+            try:
+                while self.socket:
+
+                    socket_bytes += self.get_from_socket()
+
+                    if socket_bytes and '\n' in socket_bytes:
+                            message, socket_bytes = socket_bytes.split('\n', 1)
+
+                            self.log.debug('Received "%s"', message)
+                            cmd, kwargs = decode_command_string(message)
+
+                            if cmd in self.bcp_commands:
+                                self.bcp_commands[cmd](**kwargs)
+                            else:
+                                self.receive_queue.put((cmd, kwargs))
+
+            except Exception:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                lines = traceback.format_exception(exc_type, exc_value,
+                                                   exc_traceback)
+                msg = ''.join(line for line in lines)
+                self.machine.crash_queue.put(msg)
+
 
     def get_from_socket(self, num_bytes=8192):
         """Reads and returns whatever data is sitting in the receiving socket.
@@ -1027,7 +1172,10 @@ class BCPClientSocket(object):
 
     def send_hello(self):
         """Sends BCP 'hello' command."""
-        self.send('hello?version=' + version.__bcp_version__)
+        self.send(encode_command_string('hello',
+                                        version=version.__bcp_version__,
+                                        controller_name='Mission Pinball Framework',
+                                        controller_version=version.__version__))
 
     def send_goodbye(self):
         """Sends BCP 'goodbye' command."""

@@ -23,6 +23,9 @@ from mpf.system.events import EventManager
 from mpf.system.timing import Timing
 from mpf.system.tasks import Task, DelayManager
 from mpf.system.player import Player
+from mpf.system.assets import AssetManager
+from mpf.system.utility_functions import Util
+from mpf.system.file_manager import FileManager
 import mpf.system.bcp as bcp
 import version
 
@@ -33,6 +36,7 @@ class MediaController(object):
         self.options = options
 
         self.log = logging.getLogger("MediaController")
+        self.log.debug("Command line arguments: {}".format(self.options))
         self.log.info("Media Controller Version %s", version.__version__)
         self.log.debug("Backbox Control Protocol Version %s",
                       version.__bcp_version__)
@@ -40,6 +44,13 @@ class MediaController(object):
                       version.__config_version__)
 
         python_version = sys.version_info
+
+        if python_version[0] != 2 or python_version[1] != 7:
+            self.log.error("Incorrect Python version. MPF requires Python 2.7."
+                           "x. You have Python %s.%s.%s.", python_version[0],
+                           python_version[1], python_version[2])
+            sys.exit()
+
         self.log.debug("Python version: %s.%s.%s", python_version[0],
                       python_version[1], python_version[2])
         self.log.debug("Platform: %s", sys.platform)
@@ -52,7 +63,6 @@ class MediaController(object):
         self.done = False  # todo
         self.machine_path = None
         self.asset_managers = dict()
-        self.num_assets_to_load = 0
         self.window = None
         self.window_manager = None
         self.pygame = False
@@ -69,6 +79,14 @@ class MediaController(object):
         self.HZ = 0
         self.next_tick_time = 0
         self.secs_per_tick = 0
+        self.machine_vars = CaseInsensitiveDict()
+        self.machine_var_monitor = False
+        self.tick_num = 0
+        self.delay = DelayManager()
+
+        self._pc_assets_to_load = 0
+        self._pc_total_assets = 0
+        self.pc_connected = False
 
         Task.create(self._check_crash_queue)
 
@@ -79,6 +97,7 @@ class MediaController(object):
                              'get': self.bcp_get,
                              'goodbye': self.bcp_goodbye,
                              'hello': self.bcp_hello,
+                             'machine_variable': self.bcp_machine_variable,
                              'mode_start': self.bcp_mode_start,
                              'mode_stop': self.bcp_mode_stop,
                              'player_added': self.bcp_player_add,
@@ -93,23 +112,24 @@ class MediaController(object):
                              'trigger': self.bcp_trigger,
                             }
 
-        # load the MPF config & machine defaults
-        self.config = (
-            Config.load_config_yaml(config=self.config,
-                                    yaml_file=self.options['mcconfigfile']))
+        FileManager.init()
+        self.config = dict()
+        self._load_mc_config()
+        self._set_machine_path()
+        self._load_machine_config()
 
         # Find the machine_files location. If it starts with a forward or
         # backward slash, then we assume it's from the mpf root. Otherwise we
         # assume it's from the subfolder location specified in the
-        # mpfconfigfile location
+        # mpfconfig file location
 
-        if (options['machinepath'].startswith('/') or
-                options['machinepath'].startswith('\\')):
-            machine_path = options['machinepath']
+        if (options['machine_path'].startswith('/') or
+                options['machine_path'].startswith('\\')):
+            machine_path = options['machine_path']
         else:
             machine_path = os.path.join(self.config['media_controller']['paths']
                                         ['machine_files'],
-                                        options['machinepath'])
+                                        options['machine_path'])
 
         self.machine_path = os.path.abspath(machine_path)
 
@@ -117,28 +137,6 @@ class MediaController(object):
         sys.path.append(self.machine_path)
 
         self.log.info("Machine folder: %s", machine_path)
-
-        # Now find the config file location. Same as machine_file with the
-        # slash uses to specify an absolute path
-
-        if (options['configfile'].startswith('/') or
-                options['configfile'].startswith('\\')):
-            config_file = options['configfile']
-        else:
-
-            if not options['configfile'].endswith('.yaml'):
-                options['configfile'] += '.yaml'
-
-            config_file = os.path.join(self.machine_path,
-                                       self.config['media_controller']['paths']
-                                       ['config'],
-                                       options['configfile'])
-
-        self.log.debug("Base machine config file: %s", config_file)
-
-        # Load the machine-specific config
-        self.config = Config.load_config_yaml(config=self.config,
-                                              yaml_file=config_file)
 
         mediacontroller_config_spec = '''
                         exit_on_disconnect: boolean|True
@@ -169,12 +167,54 @@ class MediaController(object):
         self.start_socket_thread()
 
         self.events.post("init_phase_1")
+        self.events._process_event_queue()
         self.events.post("init_phase_2")
+        self.events._process_event_queue()
         self.events.post("init_phase_3")
+        self.events._process_event_queue()
         self.events.post("init_phase_4")
+        self.events._process_event_queue()
         self.events.post("init_phase_5")
+        self.events._process_event_queue()
 
         self.reset()
+
+    def _load_mc_config(self):
+        self.config = Config.load_config_file(self.options['mcconfigfile'])
+
+        # Find the machine_files location. If it starts with a forward or
+        # backward slash, then we assume it's from the mpf root. Otherwise we
+        # assume it's from the subfolder location specified in the
+        # mpfconfigfile location
+
+    def _set_machine_path(self):
+        if (self.options['machine_path'].startswith('/') or
+                self.options['machine_path'].startswith('\\')):
+            machine_path = self.options['machine_path']
+        else:
+            machine_path = os.path.join(self.config['media_controller']['paths']
+                                        ['machine_files'],
+                                        self.options['machine_path'])
+
+        self.machine_path = os.path.abspath(machine_path)
+        self.log.debug("Machine path: {}".format(self.machine_path))
+
+        # Add the machine folder to sys.path so we can import modules from it
+        sys.path.append(self.machine_path)
+
+    def _load_machine_config(self):
+        for num, config_file in enumerate(self.options['configfile']):
+
+            if not (config_file.startswith('/') or
+                    config_file.startswith('\\')):
+
+                config_file = os.path.join(self.machine_path,
+                    self.config['media_controller']['paths']['config'], config_file)
+
+            self.log.info("Machine config file #%s: %s", num+1, config_file)
+
+            self.config = Util.dict_merge(self.config,
+                Config.load_config_file(config_file))
 
     def _check_crash_queue(self):
         try:
@@ -191,9 +231,16 @@ class MediaController(object):
         self.player = None
         self.player_list = list()
 
+        self.events.add_handler('assets_to_load',
+                                self._bcp_client_asset_loader_tick)
+        self.events.replace_handler('timer_tick', self.asset_loading_counter)
+
         self.events.post('mc_reset_phase_1')
+        self.events._process_event_queue()
         self.events.post('mc_reset_phase_2')
+        self.events._process_event_queue()
         self.events.post('mc_reset_phase_3')
+        self.events._process_event_queue()
 
     def get_window(self):
         """ Returns a reference to the onscreen display window.
@@ -203,8 +250,8 @@ class MediaController(object):
         may want to use a window, but we don't know which combinations might
         be used, so we centralize the creation and management of an onscreen
         window here.
-        """
 
+        """
         if not self.window:
             self.window_manager = window.WindowManager(self)
             self.window = self.window_manager.window
@@ -246,8 +293,10 @@ class MediaController(object):
 
             self.events.add_handler('timer_tick', self.get_pygame_events,
                                     priority=1000)
+            self.events.add_handler('timer_tick', self.asset_loading_counter)
 
             self.events.post('pygame_initialized')
+            self.events._process_event_queue()
 
     def register_pygame_handler(self, event, handler):
         """Registers a method to be a handler for a certain type of Pygame
@@ -309,7 +358,7 @@ class MediaController(object):
 
         """
         self.sending_queue.put(bcp.encode_command_string(bcp_command,
-                                                          **kwargs))
+                                                         **kwargs))
         if callback:
             callback()
 
@@ -332,8 +381,10 @@ class MediaController(object):
         """Called by the platform each machine tick based on self.HZ"""
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
+        self.tick_num += 1
         Task.timer_tick()  # notifies tasks
-        DelayManager.timer_tick()
+        DelayManager.timer_tick(self)
+        self.events._process_event_queue()
 
     def run(self):
         """Main run loop."""
@@ -405,7 +456,7 @@ class MediaController(object):
                 self.send('hello', version=version.__bcp_version__)
             else:
                 self.send('hello', version='unknown protocol version')
-        except:
+        except KeyError:
             self.log.warning("Received invalid 'version' parameter with "
                              "'hello'")
 
@@ -482,6 +533,11 @@ class MediaController(object):
         except (IndexError, KeyError):
             pass
 
+    def bcp_machine_variable(self, name, value, **kwargs):
+        """Processes an incoming BCP 'machine_variable' command."""
+
+        self._set_machine_var(name, value)
+
     def bcp_player_score(self, value, prev_value, change, player_num,
                          **kwargs):
         """Processes an incoming BCP 'player_score' command."""
@@ -518,26 +574,25 @@ class MediaController(object):
             self.events.post('switch_' + name + '_inactive')
 
     def bcp_get(self, **kwargs):
-        """Processes an incoming BCP 'get' command.
-
-        Note that this media controller doesn't implement the 'get' command at
-        this time, but it's included here for completeness since the 'get'
-        command is part of the BCP 1.0 specification so we don't want to return
-        an error if we receive an incoming 'get' command.
+        """Processes an incoming BCP 'get' command by posting an event
+        'bcp_get_<name>'. It's up to an event handler to register for that
+        event and to send the response BCP 'set' command.
 
         """
-        pass
+        for name in Util.string_to_list(names):
+            self.events.post('bcp_get_{}'.format(name))
 
     def bcp_set(self, **kwargs):
-        """Processes an incoming BCP 'set' command.
+        """Processes an incoming BCP 'set' command by posting an event
+        'bcp_set_<name>' with a parameter value=<value>. It's up to an event
+        handler to register for that event and to do something with it.
 
-        Note that this media controller doesn't implement the 'set' command at
-        this time, but it's included here for completeness since the 'set'
-        command is part of the BCP 1.0 specification so we don't want to return
-        an error if we receive an incoming 'set' command.
+        Note that BCP set commands can contain multiple key/value pairs, and
+        this method will post one event for each pair.
 
         """
-        pass
+        for k, v in kwargs.iteritems():
+            self.events.post('bcp_set_{}'.format(k), value=v)
 
     def bcp_shot(self, name, profile, state):
         """The MPF media controller uses triggers instead of shots for its
@@ -574,7 +629,6 @@ class MediaController(object):
             # todo add per-track volume support to sound system
 
     def get_debug_status(self, debug_path):
-
         if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
             return True
 
@@ -588,6 +642,78 @@ class MediaController(object):
         except KeyError:
             return False
 
+    def _set_machine_var(self, name, value):
+        try:
+            prev_value = self.machine_vars[name]
+        except KeyError:
+            prev_value = None
+
+        self.machine_vars[name] = value
+
+        try:
+            change = value-prev_value
+        except TypeError:
+            if prev_value != value:
+                change = True
+            else:
+                change = False
+
+        if change:
+            self.log.debug("Setting machine_var '%s' to: %s, (prior: %s, "
+                           "change: %s)", name, value, prev_value,
+                           change)
+            self.events.post('machine_var_' + name,
+                                     value=value,
+                                     prev_value=prev_value,
+                                     change=change)
+
+        if self.machine_var_monitor:
+            for callback in self.monitors['machine_var']:
+                callback(name=name, value=self.vars[name],
+                         prev_value=prev_value, change=change)
+
+    def _bcp_client_asset_loader_tick(self, total, remaining):
+        self._pc_assets_to_load = int(remaining)
+        self._pc_total_assets = int(total)
+
+    def asset_loading_counter(self):
+
+        if self.tick_num % 5 != 0:
+            return
+
+        if AssetManager.total_assets or self._pc_total_assets:
+            # max because this could go negative at first
+            percent = max(0, int(float(AssetManager.total_assets -
+                                       self._pc_assets_to_load -
+                                       AssetManager.loader_queue.qsize()) /
+                                       AssetManager.total_assets * 100))
+        else:
+            percent = 100
+
+        self.log.debug("Asset Loading Counter. PC remaining:{}, MC remaining:"
+                       "{}, Percent Complete: {}".format(
+                       self._pc_assets_to_load, AssetManager.loader_queue.qsize(),
+                       percent))
+
+        self.events.post('asset_loader',
+                         total=AssetManager.loader_queue.qsize() +
+                               self._pc_assets_to_load,
+                         pc=self._pc_assets_to_load,
+                         mc=AssetManager.loader_queue.qsize(),
+                         percent=percent)
+
+        if not AssetManager.loader_queue.qsize():
+
+            if not self.pc_connected:
+                self.events.post("waiting_for_client_connection")
+                self.events.remove_handler(self.asset_loading_counter)
+
+            elif not self._pc_assets_to_load:
+                self.log.debug("Asset Loading Complete")
+                self.events.post("asset_loading_complete")
+                self.send('reset_complete')
+
+                self.events.remove_handler(self.asset_loading_counter)
 
 # The MIT License (MIT)
 

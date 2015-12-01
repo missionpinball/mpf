@@ -11,6 +11,7 @@ import logging
 
 from mpf.system.tasks import DelayManager
 from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class LogicBlocks(object):
@@ -46,7 +47,7 @@ class LogicBlocks(object):
         Note that this method is automatically added as a handler to the
         'player_add_success' event.
         """
-        player.logic_blocks = set()
+        player.uvars['logic_blocks'] = set()
 
         if 'logic_blocks' in self.machine.config:
             self._create_logic_blocks(config=self.machine.config['logic_blocks'],
@@ -57,14 +58,14 @@ class LogicBlocks(object):
 
         self.log.debug("Processing player_turn_start")
 
-        for block in player.logic_blocks:
+        for block in player.uvars['logic_blocks']:
             block.create_control_events()
 
     def _player_turn_stop(self, player, **kwargs):
 
-        self.log.debug("Player logic blocks: %s", player.logic_blocks)
+        self.log.debug("Player logic blocks: %s", player.uvars['logic_blocks'])
 
-        for block in player.logic_blocks.copy():
+        for block in player.uvars['logic_blocks'].copy():
             # copy since each logic block will remove itself from the list
             # we're iterating over
             block._player_turn_stop()
@@ -111,7 +112,7 @@ class LogicBlocks(object):
                 if not block.config['enable_events']:
                     block.enable()
 
-        player.logic_blocks |= blocks_added
+        player.uvars['logic_blocks'] |= blocks_added
 
         return blocks_added
 
@@ -141,6 +142,7 @@ class LogicBlock(object):
                     restart_events: list|None
                     restart_on_complete: boolean|False
                     disable_on_complete: boolean|True
+                    persist_state: boolean|False
                     '''
 
         self.config = Config.process_config(config_spec=config_spec,
@@ -150,15 +152,11 @@ class LogicBlock(object):
             self.config['events_when_complete'] = ([
                 'logicblock_' + self.name + '_complete'])
         else:
-            self.config['events_when_complete'] = Config.string_to_list(
+            self.config['events_when_complete'] = Util.string_to_list(
                 config['events_when_complete'])
 
-        if 'reset_each_ball' in config and config['reset_each_ball']:
-            if 'ball_starting' not in self.config['reset_events']:
-                self.config['reset_events'].append('ball_starting')
-
     def __repr__(self):
-        return self.name
+        return '<LogicBlock.{}>'.format(self.name)
 
     def create_control_events(self):
 
@@ -198,7 +196,10 @@ class LogicBlock(object):
     def unload(self):
         self.disable()
         self._remove_all_event_handlers()
-        self.machine.game.player.logic_blocks.remove(self)
+        try:
+            self.machine.game.player.uvars['logic_blocks'].remove(self)
+        except KeyError:
+            pass
 
     def enable(self, **kwargs):
         """Enables this logic block. Automatically called when one of the
@@ -299,8 +300,9 @@ class Counter(LogicBlock):
         elif self.config['direction'] == 'up' and self.hit_value < 0:
             self.hit_value *= -1
 
-        self.player[self.config['player_variable']] = (
-            self.config['starting_count'])
+        if not self.config['persist_state']:
+            self.player[self.config['player_variable']] = (
+                self.config['starting_count'])
 
     def enable(self, **kwargs):
         """Enables this counter. Automatically called when one of the
@@ -348,9 +350,9 @@ class Counter(LogicBlock):
             if self.config['multiple_hit_window']:
                 self.log.debug("Beginning Ignore Hits")
                 self.ignore_hits = True
-                self.delay.add('ignore_hits_within_window',
-                               self.config['multiple_hit_window'],
-                               self.stop_ignoring_hits)
+                self.delay.add(name='ignore_hits_within_window',
+                               ms=self.config['multiple_hit_window'],
+                               callback=self.stop_ignoring_hits)
 
     def stop_ignoring_hits(self, **kwargs):
         """Causes the Counter to stop ignoring subsequent hits that occur
@@ -382,9 +384,13 @@ class Accrual(LogicBlock):
         if 'player_variable' not in config:
             self.config['player_variable'] = self.name + '_status'
 
-        # populate status list
-        self.player[self.config['player_variable']] = (
-            [False] * len(self.config['events']))
+        if not self.player[self.config['player_variable']]:
+            self.player[self.config['player_variable']] = (
+                [False] * len(self.config['events']))
+
+        elif not self.config['persist_state']:
+            self.player[self.config['player_variable']] = (
+                [False] * len(self.config['events']))
 
     def enable(self, **kwargs):
         """Enables this accrual. Automatically called when one of the
@@ -448,7 +454,8 @@ class Sequence(LogicBlock):
         if 'player_variable' not in config:
                 self.config['player_variable'] = self.name + '_step'
 
-        self.player[self.config['player_variable']] = 0
+        if not self.config['persist_state']:
+            self.player[self.config['player_variable']] = 0
 
     def enable(self, step=0, **kwargs):
         """Enables this Sequence. Automatically called when one of the

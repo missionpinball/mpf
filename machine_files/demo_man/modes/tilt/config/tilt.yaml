@@ -1,0 +1,30 @@
+#config_version=3
+
+tilt:
+  tilt_warning_switch_tag: tilt_warning
+  tilt_switch_tag: tilt
+  slam_tilt_switch_tag: slam_tilt
+  warnings_to_tilt: 3
+  reset_warnings_events: ball_ended
+  multiple_hit_window: 300ms
+  settle_time: 5s
+  tilt_warnings_player_var: tilt_warnings
+
+slide_player:
+  tilt_warning_1:
+    type: text
+    text: WARNING
+    expire: 1s
+  tilt_warning_2:
+    - type: text
+      text: WARNING
+      y: 2
+    - type: text
+      text: WARNING
+      y: 18
+      expire: 1s
+  tilt:
+    type: text
+    text: TILT
+  tilt_clear:
+    clear_slides: yes

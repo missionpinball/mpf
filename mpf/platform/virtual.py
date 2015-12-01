@@ -15,7 +15,7 @@ that it doesn't require any P-ROC drivers or modules to be installed.
 
 import logging
 from mpf.system.platform import Platform
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class HardwarePlatform(Platform):
@@ -25,7 +25,6 @@ class HardwarePlatform(Platform):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring virtual hardware interface.")
-        self.machine.physical_hw = False
 
         # Since the virtual platform doesn't have real hardware, we need to
         # maintain an internal list of switches that were confirmed so we have
@@ -42,7 +41,6 @@ class HardwarePlatform(Platform):
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
         self.features['variable_debounce_time'] = False
-        self.features['hw_enable_auto_disable'] = False
 
         # Make the platform features available to everyone
         self.machine.config['platform'] = self.features
@@ -54,7 +52,13 @@ class HardwarePlatform(Platform):
     def configure_driver(self, config, device_type='coil'):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
-        return VirtualDriver(config['number']), config['number']
+
+        driver = VirtualDriver(config['number'])
+
+        driver.driver_settings = config
+        driver.driver_settings['pulse_ms'] = 30
+
+        return driver, config['number']
 
     def configure_switch(self, config):
         # We want to have the virtual platform set all the initial switch states
@@ -67,7 +71,11 @@ class HardwarePlatform(Platform):
 
         self.hw_switches[config['number']] = state
 
-        return VirtualSwitch(config['number']), config['number']
+        switch = VirtualSwitch(config['number'])
+
+        switch.driver_settings = config
+
+        return switch, config['number']
 
     def get_hw_switch_states(self):
 
@@ -76,7 +84,7 @@ class HardwarePlatform(Platform):
             if 'virtual_platform_start_active_switches' in self.machine.config:
 
                 initial_active_switches = [self.machine.switches[x].number for x in
-                    Config.string_to_list(
+                    Util.string_to_list(
                         self.machine.config['virtual_platform_start_active_switches'])]
 
                 for k, v in self.hw_switches.iteritems():
@@ -88,8 +96,8 @@ class HardwarePlatform(Platform):
         else:
             switches = [x for x in self.machine.switches if x.platform == self]
 
-            for switch in list_of_switch_numbers:
-                self.hw_switches[x.number] = x.state ^ x.invert
+            for switch in switches:
+                self.hw_switches[switch.number] = switch.state ^ switch.invert
 
         return self.hw_switches
 
@@ -171,6 +179,12 @@ class VirtualDriver(object):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
 
+    def __repr__(self):
+        return "VirtualDriver.{}".format(self.number)
+
+    def validate_driver_settings(self, **kwargs):
+        return dict()
+
     def disable(self):
         pass
 
@@ -178,19 +192,11 @@ class VirtualDriver(object):
         pass
 
     def pulse(self, milliseconds=None):
-        pass
 
-    def future_pulse(self, milliseconds=None, timestamp=0):
-        pass
-
-    def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
-        pass
-
-    def pulsed_patter(self, on_ms=10, off_ms=10, run_time=0, now=True):
-        pass
-
-    def schedule(self, schedule, cycle_seconds=0, now=True):
-        pass
+        if milliseconds:
+            return milliseconds
+        else:
+            return self.driver_settings['pulse_ms']
 
     def state(self):
         pass

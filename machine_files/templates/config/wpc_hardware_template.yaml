@@ -1,0 +1,814 @@
+# config_version=3
+
+# WPC hardware config file template
+
+# Sections in this config file
+
+# Machine
+
+# Switches
+# Coils
+# matrix_lights
+# Flashers
+# GIs
+
+Machine:
+    balls_installed: 4
+    min_balls: 1
+
+Hardware:
+    DriverBoards: wpc
+
+Switches:
+# Fliptronics
+    flipper_lower_right_eos:
+        number: sf1
+        tags:
+        label:
+    flipper_lower_right:
+        number: sf2
+        tags:
+        label:
+    flipper_lower_left_eos:
+        number: sf3
+        tags:
+        label:
+    flipper_lower_left:
+        number: sf4
+        tags:
+        label:
+    flipper_upper_left_eos:
+        number: sf5
+        tags:
+        label:
+    flipper_upper_left:
+        number: sf6
+        tags:
+        label:
+    flipper_upper_right_eos:
+        number: sf7
+        tags:
+        label:
+    flipper_upper_right:
+        number: sf8
+        tags:
+        label:
+
+# Direct
+    left_coin:
+        number: sd1
+        tags:
+        label:
+    center_coin:
+        number: sd2
+        tags:
+        label:
+    right_coin:
+        number: sd3
+        tags:
+        label:
+    fourth_coin:
+        number: sd4
+        tags:
+        label:
+    esc:
+        number: sd5
+        tags:
+        label:
+    down:
+        number: sd6
+        tags:
+        label:
+    up:
+        number: sd7
+        tags:
+        label:
+    enter:
+        number: sd8
+        tags:
+        label:
+
+# Matrix
+    name:
+        number: s11
+        label:
+        tags:
+    name:
+        number: s12
+        label:
+        tags:
+    name:
+        number: s13
+        label:
+        tags:
+    name:
+        number: s14
+        label:
+        tags:
+    name:
+        number: s15
+        label:
+        tags:
+    name:
+        number: s16
+        label:
+        tags:
+    name:
+        number: s17
+        label:
+        tags:
+    name:
+        number: s18
+        label:
+        tags:
+    name:
+        number: s21
+        label:
+        tags:
+    name:
+        number: s22
+        label:
+        tags:
+    name:
+        number: s23
+        label:
+        tags:
+    name:
+        number: s24
+        label:
+        tags:
+    name:
+        number: s25
+        label:
+        tags:
+    name:
+        number: s26
+        label:
+        tags:
+    name:
+        number: s27
+        label:
+        tags:
+    name:
+        number: s28
+        label:
+        tags:
+    name:
+        number: s31
+        label:
+        tags:
+    name:
+        number: s32
+        label:
+        tags:
+    name:
+        number: s33
+        label:
+        tags:
+    name:
+        number: s34
+        label:
+        tags:
+    name:
+        number: s35
+        label:
+        tags:
+    name:
+        number: s36
+        label:
+        tags:
+    name:
+        number: s37
+        label:
+        tags:
+    name:
+        number: s38
+        label:
+        tags:
+    name:
+        number: s41
+        label:
+        tags:
+    name:
+        number: s42
+        label:
+        tags:
+    name:
+        number: s43
+        label:
+        tags:
+    name:
+        number: s44
+        label:
+        tags:
+    name:
+        number: s45
+        label:
+        tags:
+    name:
+        number: s46
+        label:
+        tags:
+    name:
+        number: s47
+        label:
+        tags:
+    name:
+        number: s48
+        label:
+        tags:
+    name:
+        number: s51
+        label:
+        tags:
+    name:
+        number: s52
+        label:
+        tags:
+    name:
+        number: s53
+        label:
+        tags:
+    name:
+        number: s54
+        label:
+        tags:
+    name:
+        number: s55
+        label:
+        tags:
+    name:
+        number: s56
+        label:
+        tags:
+    name:
+        number: s57
+        label:
+        tags:
+    name:
+        number: s58
+        label:
+        tags:
+    name:
+        number: s61
+        label:
+        tags:
+    name:
+        number: s62
+        label:
+        tags:
+    name:
+        number: s63
+        label:
+        tags:
+    name:
+        number: s64
+        label:
+        tags:
+    name:
+        number: s65
+        label:
+        tags:
+    name:
+        number: s66
+        label:
+        tags:
+    name:
+        number: s67
+        label:
+        tags:
+    name:
+        number: s68
+        label:
+        tags:
+    name:
+        number: s71
+        label:
+        tags:
+    name:
+        number: s72
+        label:
+        tags:
+    name:
+        number: s73
+        label:
+        tags:
+    name:
+        number: s74
+        label:
+        tags:
+    name:
+        number: s75
+        label:
+        tags:
+    name:
+        number: s76
+        label:
+        tags:
+    name:
+        number: s77
+        label:
+        tags:
+    name:
+        number: s78
+        label:
+        tags:
+    name:
+        number: s81
+        label:
+        tags:
+    name:
+        number: s82
+        label:
+        tags:
+    name:
+        number: s83
+        label:
+        tags:
+    name:
+        number: s84
+        label:
+        tags:
+    name:
+        number: s85
+        label:
+        tags:
+    name:
+        number: s86
+        label:
+        tags:
+    name:
+        number: s87
+        label:
+        tags:
+    name:
+        number: s88
+        label:
+        tags:
+
+matrix_lights:
+
+    name:
+        number: l11
+        label:
+        tags:
+    name:
+        number: l12
+        label:
+        tags:
+    name:
+        number: l13
+        label:
+        tags:
+    name:
+        number: l14
+        label:
+        tags:
+    name:
+        number: l15
+        label:
+        tags:
+    name:
+        number: l16
+        label:
+        tags:
+    name:
+        number: l17
+        label:
+        tags:
+    name:
+        number: l18
+        label:
+        tags:
+    name:
+        number: l21
+        label:
+        tags:
+    name:
+        number: l22
+        label:
+        tags:
+    name:
+        number: l23
+        label:
+        tags:
+    name:
+        number: l24
+        label:
+        tags:
+    name:
+        number: l25
+        label:
+        tags:
+    name:
+        number: l26
+        label:
+        tags:
+    name:
+        number: l27
+        label:
+        tags:
+    name:
+        number: l28
+        label:
+        tags:
+    name:
+        number: l31
+        label:
+        tags:
+    name:
+        number: l32
+        label:
+        tags:
+    name:
+        number: l33
+        label:
+        tags:
+    name:
+        number: l34
+        label:
+        tags:
+    name:
+        number: l35
+        label:
+        tags:
+    name:
+        number: l36
+        label:
+        tags:
+    name:
+        number: l37
+        label:
+        tags:
+    name:
+        number: l38
+        label:
+        tags:
+    name:
+        number: l41
+        label:
+        tags:
+    name:
+        number: l42
+        label:
+        tags:
+    name:
+        number: l43
+        label:
+        tags:
+    name:
+        number: l44
+        label:
+        tags:
+    name:
+        number: l45
+        label:
+        tags:
+    name:
+        number: l46
+        label:
+        tags:
+    name:
+        number: l47
+        label:
+        tags:
+    name:
+        number: l48
+        label:
+        tags:
+    name:
+        number: l51
+        label:
+        tags:
+    name:
+        number: l52
+        label:
+        tags:
+    name:
+        number: l53
+        label:
+        tags:
+    name:
+        number: l54
+        label:
+        tags:
+    name:
+        number: l55
+        label:
+        tags:
+    name:
+        number: l56
+        label:
+        tags:
+    name:
+        number: l57
+        label:
+        tags:
+    name:
+        number: l58
+        label:
+        tags:
+    name:
+        number: l61
+        label:
+        tags:
+    name:
+        number: l62
+        label:
+        tags:
+    name:
+        number: l63
+        label:
+        tags:
+    name:
+        number: l64
+        label:
+        tags:
+    name:
+        number: l65
+        label:
+        tags:
+    name:
+        number: l66
+        label:
+        tags:
+    name:
+        number: l67
+        label:
+        tags:
+    name:
+        number: l68
+        label:
+        tags:
+    name:
+        number: l71
+        label:
+        tags:
+    name:
+        number: l72
+        label:
+        tags:
+    name:
+        number: l73
+        label:
+        tags:
+    name:
+        number: l74
+        label:
+        tags:
+    name:
+        number: l75
+        label:
+        tags:
+    name:
+        number: l76
+        label:
+        tags:
+    name:
+        number: l77
+        label:
+        tags:
+    name:
+        number: l78
+        label:
+        tags:
+    name:
+        number: l81
+        label:
+        tags:
+    name:
+        number: l82
+        label:
+        tags:
+    name:
+        number: l83
+        label:
+        tags:
+    name:
+        number: l84
+        label:
+        tags:
+    name:
+        number: l85
+        label:
+        tags:
+    name:
+        number: l86
+        label:
+        tags:
+    name:
+        number: l87
+        label:
+        tags:
+    name:
+        number: l88
+        label:
+        tags:
+
+Coils:
+    name:
+        number: c01
+        label:
+        tags:
+    name:
+        number: c02
+        label:
+        tags:
+    name:
+        number: c03
+        label:
+        tags:
+    name:
+        number: c04
+        label:
+        tags:
+    name:
+        number: c05
+        label:
+        tags:
+    name:
+        number: c06
+        label:
+        tags:
+    name:
+        number: c07
+        label:
+        tags:
+    name:
+        number: c08
+        label:
+        tags:
+    name:
+        number: c09
+        label:
+        tags:
+    name:
+        number: c10
+        label:
+        tags:
+    name:
+        number: c11
+        label:
+        tags:
+    name:
+        number: c12
+        label:
+        tags:
+    name:
+        number: c13
+        label:
+        tags:
+    name:
+        number: c14
+        label:
+        tags:
+    name:
+        number: c15
+        label:
+        tags:
+    name:
+        number: c16
+        label:
+        tags:
+    name:
+        number: c17
+        label:
+        tags:
+    name:
+        number: c18
+        label:
+        tags:
+    name:
+        number: c19
+        label:
+        tags:
+    name:
+        number: c20
+        label:
+        tags:
+    name:
+        number: c21
+        label:
+        tags:
+    name:
+        number: c22
+        label:
+        tags:
+    name:
+        number: c23
+        label:
+        tags:
+    name:
+        number: c24
+        label:
+        tags:
+    name:
+        number: c25
+        label:
+        tags:
+    name:
+        number: c26
+        label:
+        tags:
+    name:
+        number: c27
+        label:
+        tags:
+    name:
+        number: c28
+        label:
+        tags:
+
+# Fliptronics coils
+    name:
+        number: fllm
+        label:
+        tags:
+    name:
+        number: fllh
+        label:
+        tags:
+    name:
+        number: flrm
+        label:
+        tags:
+    name:
+        number: flrh
+        label:
+        tags:
+    name:
+        number: fulm
+        label:
+        tags:
+    name:
+        number: fulh
+        label:
+        tags:
+    name:
+        number: furm
+        label:
+        tags:
+    name:
+        number: furh
+        label:
+        tags:
+
+Flashers:
+    name:
+        number: c37
+        label:
+        tags:
+    name:
+        number: c38
+        label:
+        tags:
+    name:
+        number: c39
+        label:
+        tags:
+    name:
+        number: c40
+        label:
+        tags:
+    name:
+        number: c41
+        label:
+        tags:
+    name:
+        number: c42
+        label:
+        tags:
+    name:
+        number: c43
+        label:
+        tags:
+    name:
+        number: c44
+        label:
+        tags:
+
+GIs:
+    gi01:
+        number: g01
+        label:
+        tags:
+    gi02:
+        number: g02
+        label:
+        tags:
+    gi03:
+        number: g03
+        label:
+        tags:
+    gi04:
+        number: g04
+        label:
+        tags:
+    gi05:
+        number: g05
+        label:
+        tags:
+    gi06:
+        number: g06
+        label:
+        tags:

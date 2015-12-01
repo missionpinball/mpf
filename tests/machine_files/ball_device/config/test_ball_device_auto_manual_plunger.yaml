@@ -1,0 +1,37 @@
+#config_version=3
+
+coils:
+    trough_eject:
+        number:
+    plunger_eject:
+        number:
+
+switches:
+    s_trough_1:
+        number:
+    s_trough_2:
+        number:
+    s_plunger:
+        number:
+    s_playfield:
+        number:
+        tags: playfield_active
+    s_launch:
+        number:
+        tags: launch
+
+ball_devices:
+    trough:
+        eject_coil: trough_eject
+        ball_switches: s_trough_1, s_trough_2
+        debug: true
+        tags: trough, drain, home
+        eject_targets: plunger
+        confirm_eject_type: target
+    plunger:
+        eject_coil: plunger_eject
+        ball_switches: s_plunger
+        debug: true
+        mechanical_eject: true
+        tags: ball_add_live
+        player_controlled_eject_event: sw_launch

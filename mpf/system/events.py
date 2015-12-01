@@ -11,7 +11,7 @@ from collections import deque
 import random
 import uuid
 
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class EventManager(object):
@@ -20,17 +20,17 @@ class EventManager(object):
         self.log = logging.getLogger("Events")
         self.machine = machine
         self.registered_handlers = {}
-        self.busy = False
         self.event_queue = deque([])
         self.callback_queue = deque([])
         self.registered_monitors = set()  # callbacks that get every event
 
         self.debug = True
 
-        self.add_handler('init_phase_1', self._initialize,
-                         setup_event_player=setup_event_player)
+        if setup_event_player:
+            self.add_handler('init_phase_1', self._setup_event_player)
 
-    def _initialize(self, setup_event_player):
+    def _setup_event_player(self):
+
         if 'event_player' in self.machine.config:
             self.process_event_player(self.machine.config['event_player'])
 
@@ -257,6 +257,9 @@ class EventManager(object):
         # Checks to see if the event doesn't have any more registered handlers,
         # removes it if so.
 
+        if not event in self.registered_handlers:
+            return
+
         if not self.registered_handlers[event]:  # if value is empty list
                 del self.registered_handlers[event]
                 if self.debug:
@@ -358,8 +361,8 @@ class EventManager(object):
         added to a queue and processed after the current event is done.
 
         You can control the order the handlers will be called by optionally
-        specifying a priority when the handlers were registed. (Higher priority
-        values will be processed first.)
+        specifying a priority when the handlers were registered. (Higher
+        numeric values will be processed first.)
 
         Args:
             event: A string name of the event you're posting. Note that you can
@@ -430,19 +433,13 @@ class EventManager(object):
                            friendly_kwargs)
 
         self.event_queue.append((event, ev_type, callback, kwargs))
-        if not self.busy:
-            # process event queue right away
-            self._process_event_queue()
-        else:
-            if self.debug and event != 'timer_tick':
-                if self.debug:
-                    self.log.debug("XXXX There's an event in progress. Added to "
-                                   "the queue.")
-                    self.log.debug("============== ACTIVE EVENTS ============")
-                    for event in list(self.event_queue):
-                        self.log.debug("%s, %s, %s, %s", event[0], event[1],
-                                    event[2], event[3])
-                    self.log.debug("=========================================")
+        if self.debug and event != 'timer_tick':
+            if self.debug:
+                self.log.debug("============== EVENTS QUEUE =============")
+                for event in list(self.event_queue):
+                    self.log.debug("%s, %s, %s, %s", event[0], event[1],
+                                event[2], event[3])
+                self.log.debug("=========================================")
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
@@ -480,8 +477,8 @@ class EventManager(object):
 
                 # log if debug is enabled and this event is not the timer tick
                 if self.debug and event != 'timer_tick':
-                    self.log.debug("%s (priority: %s) responding to event '%s' "
-                                   "with args %s",
+                    self.log.debug("%s (priority: %s) responding to event '%s'"
+                                   " with args %s",
                                    (str(handler[0]).split(' '))[2], handler[1],
                                    event, merged_kwargs)
 
@@ -493,7 +490,7 @@ class EventManager(object):
                 if ((ev_type == 'boolean' or ev_type == 'queue') and
                         result is False):
 
-                    # add a False result so our callbacl knows something failed
+                    # add a False result so our callback knows something failed
                     kwargs['ev_result'] = False
 
                     if self.debug and event != 'timer_tick':
@@ -508,20 +505,26 @@ class EventManager(object):
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
                            "Args: %s", event, ev_type, callback, kwargs)
 
-        # If that event had a callback, let's call it now. We'll also
-        # send the result if it's False. Note this means our callback has to
-        # expect something.
-        # todo is this ok? Should we also pass kwargs?
+        if ev_type is 'queue' and not queue:
+            # If this was a queue event but there were no registered handlers,
+            # then we need to do the callback now
+            callback(**kwargs)
 
-        # If we had a queue event, we need to see if any handlers asked us to
-        # wait for them
-        if queue and queue.is_empty():
-            if self.debug:
-                self.log.debug("Queue is empty. Deleting.")
-            queue = None
+        elif queue and queue.is_empty():
+            # If we had a queue event that had handlers and a queue was created
+            # we need to see if any the queue is empty now, and if so, do the
+            # callback
+
             del kwargs['queue']  # ditch this since we don't need it now
 
-        if callback and not queue:
+            if queue.callback:
+                # if there's still a callback, that means it wasn't called yet
+                queue.callback(**kwargs)
+
+        if callback and ev_type != 'queue':
+            # For event types other than queue, we'll handle the callback here.
+            # Queue events with active waits will do the callback when the
+            # waits clear
 
             if result:
                 # if our last handler returned something, add it to kwargs
@@ -530,7 +533,6 @@ class EventManager(object):
             self.callback_queue.append((callback, kwargs))
 
     def _process_event_queue(self):
-        self.busy = True
         # Internal method which checks to see if there are any other events
         # that need to be processed, and then processes them.
         while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
@@ -550,8 +552,6 @@ class EventManager(object):
                 callback, kwargs = self.callback_queue.pop()
                 callback(**kwargs)
 
-        self.busy = False
-
     def process_event_player(self, config, mode=None, priority=0):
         # config is localized to 'event_player'
         if self.debug:
@@ -562,7 +562,7 @@ class EventManager(object):
 
         for event_name, events in config.iteritems():
             if type(events) is not list:
-                events = Config.string_to_list(events)
+                events = Util.string_to_list(events)
 
             for event in events:
                 event_keys.add(self.machine.events.add_handler(event_name,
@@ -580,7 +580,7 @@ class EventManager(object):
 
         for event_name, events in config.iteritems():
             if type(events) is not list:
-                events = Config.string_to_list(events)
+                events = Util.string_to_list(events)
 
             event_keys.add(self.machine.events.add_handler(event_name,
                 self._random_event_player_callback, priority,
@@ -592,22 +592,17 @@ class EventManager(object):
         self.machine.events.remove_handlers_by_keys(event_keys)
 
     def _event_player_callback(self, event_to_call, **kwargs):
-        self.machine.events.post(event_to_call)
+        self.machine.events.post(event_to_call, **kwargs)
 
     def _random_event_player_callback(self, event_list, **kwargs):
         self.machine.events.post(random.choice(event_list))
 
 
 class QueuedEvent(object):
-    """The base class for an event queue which is created each time a queue
+    """Base class for an event queue which is created each time a queue
     event is called.
 
-    See the documentation at
-    http://missionpinball.com/docs/system-components/events/
-    for a description of how queue events work.
-
     """
-
     def __init__(self, callback, **kwargs):
         self.log = logging.getLogger("Queue")
 
@@ -621,30 +616,47 @@ class QueuedEvent(object):
         self.num_waiting = 0
 
     def __repr__(self):
-        return '<QueuedEvent for callback ' + str(self.callback) + '>'
-
+        return '<QueuedEvent for callback {}>'.format(self.callback)
 
     def wait(self):
+        """Registers a wait for this QueueEvent."""
         self.num_waiting += 1
         if self.debug:
             self.log.debug("Registering a wait. Current count: %s",
-                       self.num_waiting)
+                           self.num_waiting)
 
     def clear(self):
+        """Clears a wait. If the number of waits drops to 0, the callbacks will
+        be called.
+
+        """
         self.num_waiting -= 1
         if self.debug:
-            self.log.debug("Clearing a wait. Current count: %s", self.num_waiting)
+            self.log.debug("Clearing a wait. Current count: %s",
+                           self.num_waiting)
         if not self.num_waiting:
             if self.debug:
                 self.log.debug("Queue is empty. Calling %s", self.callback)
             #del self.kwargs['queue']  # ditch this since we don't need it now
-            self.callback(**self.kwargs)
+            callback = self.callback
+            self.callback = None
+            callback(**self.kwargs)
 
     def kill(self):
-        # kils this queue without processing the callback
+        """Kills this QueuedEvent by removing all waits. Does not process the
+        callback.
+
+        """
         self.num_waiting = 0
 
     def is_empty(self):
+        """Checks to see if this QueuedEvent has any waits.
+
+        Returns:
+            True is there are 1 or more waits, False if there are no more
+            waits.
+
+        """
         if not self.num_waiting:
             return True
         else:

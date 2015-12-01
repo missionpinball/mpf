@@ -19,6 +19,7 @@ class Platform(object):
     will subclass to talk to their hardware.
 
     """
+
     def __init__(self, machine):
         self.machine = machine
         self.HZ = None
@@ -26,6 +27,7 @@ class Platform(object):
         self.next_tick_time = None
         self.features = {}
         self.hw_switch_rules = {}
+        self.driver_overlay = None
 
         # Set default platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
@@ -33,6 +35,16 @@ class Platform(object):
         self.features['hw_timer'] = False
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
+
+        # todo change this to be dynamic for any overlay
+        if self.machine.config['hardware']['driverboards'] == 'snux':
+            from mpf.platform.snux import Snux
+            self.driver_overlay = Snux(self.machine, self)
+            self.machine.config['hardware']['driverboards'] = 'wpc'
+
+    def initialize(self):
+        if self.driver_overlay:  # can't use try since it could swallow errors
+            self.driver_overlay.initialize()
 
     def timer_initialize(self):
         """ Run this before the machine loop starts. I want to do it here so we
@@ -42,31 +54,25 @@ class Platform(object):
         """
         self.next_tick_time = time.time()
 
-    def set_hw_rule(self, sw_name, sw_activity, coil_name=None,
-                    coil_action_ms=0, pulse_ms=0, pwm_on=0, pwm_off=0, delay=0,
-                    recycle_time=0, debounced=False, drive_now=False):
+    def set_hw_rule(self, sw_name, sw_activity, driver_name, driver_action,
+                    disable_on_release=True, drive_now=False,
+                    **driver_settings_overrides):
         """Writes a hardware rule to the controller.
 
         Args:
             sw_name: String name of the switch.
             sw_activity: Int representing the switch state this rule will be set
                 for. 1 is active, 0 is inactive.
-            coil_name: String name of the coil.
-            coil_action_ms: Total time in ms the coil should activate for.
-            pulse_ms: How long in ms the coil should activate for. Default is 0.
-            pwn_on: The 'on' portion, in ms of a pwm-based patter. Default is 0.
-            pwm_off: The 'off' portion, in ms, of a pwm-based patter. Default is
-                0.
-            delay: The delay, in ms, the coil should wait before firing. Default
-                is 0.
-            recycle_time: How long the coil must be inactive, in ms, before it
-                can be fired again via this rule. Default is 0.
+            driver_name: String name of the driver.
+            driver_action: String 'pulse', 'hold', or 'disable' which describe
+                what action will be applied to this driver
             debounced: Boolean which specifies whether this coil should activate
                 on a debounced or non-debounced switch change state. Default is
                 False (non-debounced).
-            drive_name: Boolean which controls whether the coil should activate
+            drive_now: Boolean which controls whether the coil should activate
                 immediately when this rule is applied if the switch currently in
                 in the state set in this rule.
+            **driver_settings_overrides: Platform-specific settings
 
         Note that this method provides several convenience processing to convert
         the incoming parameters into a format that is more widely-used by
@@ -75,21 +81,21 @@ class Platform(object):
         subclassed if you wish.
 
         """
-
         self.log.debug("Writing HW Rule to controller")
 
-        sw = self.machine.switches[sw_name]  # todo make a nice error
-        coil = self.machine.coils[coil_name]  # here too
+        switch_obj = self.machine.switches[sw_name]  # todo make a nice error
+        driver_obj = self.machine.coils[driver_name]  # here too
 
         if self.machine.switches[sw_name].invert:
             sw_activity ^= 1
 
-        self.write_hw_rule(sw, sw_activity, coil_action_ms, coil, pulse_ms,
-                           pwm_on, pwm_off, delay, recycle_time, debounced,
-                           drive_now)
+        self.write_hw_rule(switch_obj, sw_activity, driver_obj, driver_action,
+                           disable_on_release, drive_now,
+                           **driver_settings_overrides)
 
-    def write_hw_rule(self, sw, sw_activity, coil_action_ms, coil, pulse_ms, pwm_on,
-                      pwm_off, delay, recycle_time, debounced, drive_now):
+    def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
+                      disable_on_release, drive_now,
+                      **driver_settings_overrides):
         """Subclass this method in a platform interface to write a hardware
         switch rule to the controller.
 
@@ -98,7 +104,7 @@ class Platform(object):
         it's a bit more convenient.
 
         """
-        pass
+        raise NotImplementedError
 
     def clear_hw_rule(self, sw_name):
         """Subclass this method in a platform module to clear a hardware switch
@@ -112,7 +118,7 @@ class Platform(object):
         tilt, game over, etc.
 
         """
-        pass
+        raise NotImplementedError
 
     def tick(self):
         """Subclass this method in a platform module to perform periodic updates
@@ -152,6 +158,18 @@ class Platform(object):
         This loop can safely block. If the call to the hardware does not block,
         there should be a small pause in the loop (e.g. `time.sleep(.001)` to
         prevent 100% CPU utilization.)
+
+        """
+        pass
+
+    def stop(self):
+        """Subclass this method in the platform module if you need to perform
+        any actions to gracefully stop the platform interface.
+
+        This could do things like reseting it, stopping events, etc.
+
+        This method will be called when MPF stops, including when an MPF thread
+        crashes.
 
         """
         pass
@@ -223,6 +241,7 @@ class Platform(object):
 
         """
         pass
+
 
 # The MIT License (MIT)
 

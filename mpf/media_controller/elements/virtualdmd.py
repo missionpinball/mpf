@@ -10,7 +10,7 @@ import pygame
 # todo make it so this doesn't crash if pygame is not available
 
 from mpf.media_controller.core.display import DisplayElement
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 import mpf.media_controller.display_modules.dmd
 
 
@@ -80,9 +80,9 @@ class VirtualDMD(DisplayElement):
                 self.config['pixel_spacing'] = 2
 
             # convert hex colors to list of ints
-            self.config['pixel_color'] = Config.hexstring_to_list(
+            self.config['pixel_color'] = Util.hex_string_to_list(
                 self.config['pixel_color'])
-            self.config['dark_color'] = Config.hexstring_to_list(
+            self.config['dark_color'] = Util.hex_string_to_list(
                 self.config['dark_color'])
 
             # This needs to match the source DMD or it could get weird
@@ -120,7 +120,10 @@ class VirtualDMD(DisplayElement):
         method automatically scales the surface as needed.
         """
 
-        source_surface = pygame.PixelArray(self.dmd_object.get_surface()).surface
+        try:
+            source_surface = pygame.PixelArray(self.dmd_object.get_surface()).surface
+        except TypeError:
+            return False
 
         pygame.transform.scale(source_surface,
                                (self.config['width'],

@@ -1,7 +1,13 @@
 # config_version=3
 
+hardware:
+  platform: smart_virtual
+  driverboards: virtual
+
 config:
     - hardware.yaml
+    - shots.yaml
+    - keyboard.yaml
 
 mpf:
   default_pulse_ms: 20
@@ -9,7 +15,7 @@ mpf:
 game:
     balls_per_game: 3
     max_players: 4
-    player_controlled_eject_tag: plunger
+#    player_controlled_eject_tag: plunger
 
 modes:
   - base
@@ -17,9 +23,11 @@ modes:
   - mode1_acmag
   - skillshot
   - bonus
+  - high_score
+  - tilt
+#  - credits
 
 scriptlets:
-    attract.Attract
     add_a_ball.AddABall
     claw.Claw
 

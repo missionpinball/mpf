@@ -8,6 +8,7 @@
 import logging
 from copy import copy
 import time
+import uuid
 
 
 class Task(object):
@@ -105,13 +106,10 @@ class DelayManager(object):
     def __del__(self):
         DelayManager.dead_delay_managers.add(self)  # todo I don't like this
 
-    def add(self, name, ms, callback, **kwargs):
+    def add(self, ms, callback, name=None, **kwargs):
         """Adds a delay.
 
         Args:
-            name: String name of this delay. This name is arbitrary and only
-                used to identify the delay later if you want to remove or change
-                it.
             ms: Int of the number of milliseconds you want this delay to be for.
                 Note that the resolution of this time is based on your
                 machine's tick rate. The callback will be called on the
@@ -120,14 +118,26 @@ class DelayManager(object):
                 per tick. So if you set a delay for 40ms, the actual delay will
                 be 66.66ms since that's the next tick time after the delay ends.
             callback: The method that is called when this delay ends.
+            name: String name of this delay. This name is arbitrary and only
+                used to identify the delay later if you want to remove or change
+                it. If you don't provide it, a UUID4 name will be created.
             **kwargs: Any other (optional) kwarg pairs you pass will be
                 passed along as kwargs to the callback method.
+
+        Returns:
+            String name of the delay which you can use to remove it later.
+
         """
+        if not name:
+            name = uuid.uuid4()
+
         self.log.debug("Adding delay. Name: '%s' ms: %s, callback: %s, "
                        "kwargs: %s", name, ms, callback, kwargs)
         self.delays[name] = ({'action_ms': time.time() + (ms / 1000.0),
                               'callback': callback,
                               'kwargs': kwargs})
+
+        return name
 
     def remove(self, name):
         """Removes a delay. (i.e. prevents the callback from being fired and
@@ -163,15 +173,35 @@ class DelayManager(object):
             same as add()
         """
         self.remove(name)
-        self.add(name, ms, callback, **kwargs)
+        self.add(ms, callback, name, **kwargs)
 
     def clear(self):
         """Removes (clears) all the delays associated with this DelayManager."""
         self.delays = {}
 
-    def _process_delays(self):
+    def get_next_event(self):
+        next_event_time = False
+        for delay_manager in DelayManager.delay_managers:
+            next_event_time_single = delay_manager._get_next_event()
+            if not next_event_time or (next_event_time > next_event_time_single and next_event_time_single):
+                next_event_time = next_event_time_single
+
+        return next_event_time
+
+    def _get_next_event(self):
+        next_event_time = False
+        for delay in self.delays.keys():
+            if not next_event_time or next_event_time > self.delays[delay]['action_ms']:
+                next_event_time = self.delays[delay]['action_ms']
+
+        return next_event_time
+
+    def _process_delays(self, machine):
         # Processes any delays that should fire now
         for delay in self.delays.keys():
+            # previous delay may have deleted it
+            if not delay in self.delays:
+                continue
             if self.delays[delay]['action_ms'] <= time.time():
                 # Delete the delay first in case the processing of it adds a
                 # new delay with the same name. If we delete as the final step
@@ -184,15 +214,18 @@ class DelayManager(object):
                 else:
                     this_delay['callback']()
 
+            # Process event queue after delay
+            machine.events._process_event_queue()
+
     @staticmethod
-    def timer_tick():
+    def timer_tick(machine):
         # This is kind of complex because we have to account for a delay
         # manager being deleted while we're iterating.
         live_delay_managers = set()
         while DelayManager.delay_managers:
             i = DelayManager.delay_managers.pop()
             if i not in DelayManager.dead_delay_managers:
-                i._process_delays()
+                i._process_delays(machine)
                 live_delay_managers.add(i)
         DelayManager.delay_managers = live_delay_managers
 

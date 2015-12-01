@@ -11,8 +11,7 @@ import os
 
 from collections import namedtuple
 
-from mpf.system.timing import Timing, Timer
-from mpf.system.tasks import DelayManager
+from mpf.system.utility_functions import Util
 from mpf.system.config import Config
 from mpf.media_controller.core.mode import Mode
 
@@ -64,6 +63,13 @@ class ModeController(object):
 
         config = dict()
 
+        # find the folder for this mode:
+        mode_path = os.path.join(self.machine.machine_path,
+            self.machine.config['media_controller']['paths']['modes'], mode_string)
+
+        if not os.path.exists(mode_path):
+            mode_path = os.path.abspath(os.path.join('mpf', self.machine.config['media_controller']['paths']['modes'], mode_string))
+
         # Is there an MPF default config for this mode? If so, load it first
         mpf_mode_config = os.path.join(
             'mpf',
@@ -73,20 +79,27 @@ class ModeController(object):
             mode_string + '.yaml')
 
         if os.path.isfile(mpf_mode_config):
-            config = Config.load_config_yaml(yaml_file=mpf_mode_config)
+            config = Config.load_config_file(mpf_mode_config)
 
         # Now figure out if there's a machine-specific config for this mode, and
         # if so, merge it into the config
-        mode_path = os.path.join(self.machine.machine_path,
-            self.machine.config['media_controller']['paths']['modes'], mode_string)
-        mode_config_file = os.path.join(self.machine.machine_path,
-            self.machine.config['media_controller']['paths']['modes'], mode_string, 'config',
-            mode_string + '.yaml')
 
-        if os.path.isfile(mode_config_file):
+        mode_config_folder = os.path.join(self.machine.machine_path,
+            self.machine.config['media_controller']['paths']['modes'], mode_string, 'config')
 
-            config = Config.load_config_yaml(config=config,
-                                             yaml_file=mode_config_file)
+        found_file = False
+        for path, _, files in os.walk(mode_config_folder):
+            for file in files:
+                file_root, file_ext = os.path.splitext(file)
+
+                if file_root == mode_string:
+                    config = Util.dict_merge(config,
+                        Config.load_config_file(os.path.join(path, file)))
+                    found_file = True
+                    break
+
+            if found_file:
+                break
 
         return Mode(self.machine, config, mode_string, mode_path)
 
@@ -115,6 +128,8 @@ class ModeController(object):
         self.loader_methods.append(RemoteMethod(method=load_method,
             config_section=config_section_name, kwargs=kwargs,
             priority=priority))
+
+        self.loader_methods.sort(key=lambda x: x.priority, reverse=True)
 
     def register_start_method(self, start_method, config_section_name=None,
                               priority=0, **kwargs):

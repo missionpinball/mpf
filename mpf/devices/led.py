@@ -10,7 +10,7 @@ import time
 
 from mpf.system.device import Device
 from mpf.system.tasks import Task
-from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 
 class LED(Device):
@@ -29,18 +29,14 @@ class LED(Device):
 
     @classmethod
     def device_class_init(cls, machine):
-        if 'brightness_compensation' in machine.config['hardware']:
-            machine.config['hardware']['brightness_compensation'] = (
-                float(machine.config['hardware']['brightness_compensation']))
-        else:
-            machine.config['hardware']['brightness_compensation'] = 1.0
+        machine.validate_machine_config_section('led_settings')
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
         super(LED, self).__init__(machine, name, config, collection,
                                   platform_section='leds', validate=validate)
 
-        self.config['default_color'] = Config.hexstring_to_list(
+        self.config['default_color'] = Util.hex_string_to_list(
             input_string=self.config['default_color'],
             output_length=3)
 
@@ -95,10 +91,9 @@ class LED(Device):
         item.
 
         """
-        if type(value) is not list:
-            value = Config.string_to_list(value)
 
-        value = [float(x) for x in value]
+        if not value:
+            value = [1.0, 1.0, 1.0]
 
         if len(value) == 1:
             value.extend([value[0], value[0]])
@@ -292,13 +287,13 @@ class LED(Device):
 
         color[0] = (int(color[0] *
                     self.config['brightness_compensation'][0] *
-                    global_settings['brightness_compensation']))
+                    global_settings['brightness_compensation'][0]))
         color[1] = (int(color[1] *
                     self.config['brightness_compensation'][1] *
-                    global_settings['brightness_compensation']))
+                    global_settings['brightness_compensation'][1]))
         color[2] = (int(color[2] *
                     self.config['brightness_compensation'][2] *
-                    global_settings['brightness_compensation']))
+                    global_settings['brightness_compensation'][2]))
 
         return color
 

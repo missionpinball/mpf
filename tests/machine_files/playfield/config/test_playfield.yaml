@@ -1,0 +1,9 @@
+#config_version=3
+
+machine:
+    glass_off_mode: False
+
+switches:
+  s_playfield:
+    number:
+    tags: playfield_active

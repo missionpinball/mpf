@@ -28,12 +28,11 @@ class Game(Mode):
 
     def __init__(self, machine, config, name, path):
         super(Game, self).__init__(machine, config, name, path)
-        self.auto_stop_on_ball_end = False
         self._balls_in_play = 0
-        self.tilted = False
         self.player_list = list()
-
         self.machine.game = None
+        self.tilted = False
+        self.player = None
 
     @property
     def balls_in_play(self):
@@ -55,6 +54,10 @@ class Game(Mode):
         self.log.debug("Balls in Play change. New value: %s, (Previous: %s)",
                        self._balls_in_play, prev_balls_in_play)
 
+        if self._balls_in_play > 0:
+            self.machine.events.post('balls_in_play',
+                                     balls=self._balls_in_play)
+
         if prev_balls_in_play and not self._balls_in_play:
             self.ball_ending()
 
@@ -68,24 +71,27 @@ class Game(Mode):
 
         # Intialize variables
         self.num_players = 0
+        self.player = None
         self.player_list = list()
         self.machine.game = self
-        self._balls_in_play = 0
         self.tilted = False
+        self._balls_in_play = 0
 
         # todo register for request_to_start_game so you can deny it, or allow
         # it with a long press
 
         self.add_mode_event_handler('player_add_success',
                                     self.player_add_success)
-        self.add_mode_event_handler(
-            self.machine.config['mpf']['switch_tag_event'].
-            replace('%', 'start'), self.request_player_add)
+
+        if self.machine.config['game']['add_player_switch_tag']:
+
+            self.add_mode_event_handler(
+                self.machine.config['mpf']['switch_tag_event'].replace('%',
+                self.machine.config['game']['add_player_switch_tag']),
+                self.request_player_add)
 
         self.add_mode_event_handler('ball_ended', self.ball_ended)
         self.add_mode_event_handler('game_ended', self.game_ended)
-        self.add_mode_event_handler('tilt', self.tilt, priority=1000)
-        self.add_mode_event_handler('slam_tilt', self.slam_tilt, priority=1000)
 
         if ('restart on long press' in self.machine.config['game'] and
                 self.machine.config['game']['restart on long press']):
@@ -127,11 +133,21 @@ class Game(Mode):
 
         """
 
-        self._player_add()
+        if ev_result:
+            self.machine.remove_machine_var_search(startswith='player',
+                                                    endswith='_score')
 
-        self.machine.events.post('game_started')
+            if not self.player_list:
+                # Sometimes game_starting handlers will add players, so we only
+                # have to here if there aren't any players yet.
+                self._player_add()
 
-        self.player_turn_start()
+            self.machine.events.post('game_started')
+
+            self.player_turn_start()
+
+        else:  # something canceled the game start
+            self.game_ending()
 
     def player_add_success(self, player, **kwargs):
         """Called when a new player is successfully added to the current game
@@ -140,6 +156,9 @@ class Game(Mode):
         """
         self.log.info("Player added successfully. Total players: %s",
                       self.num_players)
+
+        if self.num_players == 2:
+            self.machine.events.post('multiplayer_game')
 
     def ball_starting(self):
         """Called when a new ball is starting.
@@ -160,8 +179,6 @@ class Game(Mode):
         self.log.info("**                                               **")
         self.log.info("***************************************************")
         self.log.info("***************************************************")
-
-        self.tilted = False
 
         self.machine.events.post_queue('ball_starting',
                                        callback=self.ball_started)
@@ -189,12 +206,14 @@ class Game(Mode):
         self.machine.events.post('ball_started', ball=self.player.ball,
                                  player=self.player.number)
 
-        try:
-            self.machine.playfield.add_ball(trigger_event=self.machine.config
-                ['mpf']['switch_tag_event'].replace('%',
-                self.machine.config['game']['player_controlled_eject_tag']))
-        except KeyError:
-            self.machine.playfield.add_ball()
+        if self.num_players == 1:
+            self.machine.events.post('single_player_ball_started')
+        else:
+            self.machine.events.post('multi_player_ball_started')
+            self.machine.events.post(
+                'player_{}_ball_started'.format(self.player.number))
+
+        self.machine.playfield.add_ball(player_controlled=True, reset=True)
 
     def ball_drained(self, balls=0, **kwargs):
         self.log.debug("Entering Game.ball_drained()")
@@ -216,7 +235,6 @@ class Game(Mode):
         Currently this method also disables the autofire_coils and flippers,
         though that's temporary as we'll move those into config file options.
         """
-        # todo check tilt
 
         # remove the handlers that were looking for ball drain since they'll
         # be re-added on next ball start
@@ -375,55 +393,6 @@ class Game(Mode):
         """
         self.balls_in_play -= balls
 
-    def tilt(self):
-        """Called when the 'tilt' event is posted indicated the ball has tilted.
-        """
-
-        # todo add support to catch if the player tilts during ball ending?
-
-        self.log.debug("Processing Tilt")
-        self.tilted = True
-
-        self.add_mode_event_handler('ball_ending',
-                                        self._tilt_ball_ending_wait)
-
-        self.balls_in_play = 0
-
-    def _tilt_ball_ending_wait(self, queue):
-        # Method that hooks ball_ending which happens from a tilt. Used so we
-        # can wait for the balls to drain before allowing the game to move on.
-
-        self.add_mode_event_handler('tilted_ball_drain',
-                                        self._tilt_ball_ending_clear)
-
-        self.tilt_ball_ending_queue = queue
-        self.tilt_ball_ending_queue.wait()
-
-    def _tilt_ball_ending_clear(self, **kwargs):
-
-        # If there are still live balls out there, wait for them to drain too.
-        if self.machine.playfield.balls:
-            return
-
-        # todo there's a bug here. If there are multiple balls live when the
-        # tilt occurs and one of the balls enters a device at the same time
-        # another drains, in that instant there will technically be no balls
-        # live and this queue will be cleared, though really it should wait
-        # to see if another ball will be ejected to be drained.
-
-        # Potential solution is to have ball devices check tilt status when
-        # they find new balls, and if so to just eject them without posting
-        # the ball_enter events.
-
-        self.tilt_ball_ending_queue.clear()
-        self.tilt_ball_ending_queue = None
-
-        self.machine.events.remove_handler(self._tilt_ball_ending_wait)
-        self.machine.events.remove_handler(self._tilt_ball_ending_clear)
-
-    def slam_tilt(self):
-        self.game_ended()
-
     def request_player_add(self, **kwargs):
         """Called by any module that wants to add a player to an active game.
 
@@ -456,8 +425,8 @@ class Game(Mode):
             self.log.debug("Current ball is after Ball 1. Cannot add player.")
             return False
 
-        self.machine.events.post_boolean('player_add_request',
-                                         callback=self._player_add)
+        return self.machine.events.post_boolean('player_add_request',
+                                                callback=self._player_add)
 
     def _player_add(self, ev_result=True):
         # This is the callback from our request player add event.
@@ -465,9 +434,17 @@ class Game(Mode):
 
         if ev_result is False:
             self.log.debug("Request to add player has been denied.")
+            return False
         else:
-            Player(self.machine, self.player_list)
+            player = Player(self.machine, self.player_list)
             self.num_players = len(self.player_list)
+
+            self.machine.create_machine_var(
+                name='player_{}_score'.format(player.number),
+                value=player.score,
+                persist=True)
+
+            return player
 
     def player_turn_start(self):
         """Called at the beginning of a player's turn.
@@ -488,10 +465,16 @@ class Game(Mode):
                                  number=self.player.number,
                                  callback=self._player_turn_started)
 
-    def player_turn_stop(self, ):
+    def player_turn_stop(self):
+
+        if not self.player:
+            return
 
         self.machine.events.post('player_turn_stop', player=self.player,
                                      number=self.player.number)
+
+        self.machine.set_machine_var(name='player' + str(self.player.number) +
+                                     '_score', value=self.player.score)
 
         if self.player.number < self.num_players:
             self.player = self.player_list[self.player.number]
@@ -502,9 +485,9 @@ class Game(Mode):
         else:
             self.player = self.player_list[0]
 
-
     def _player_turn_started(self, **kwargs):
         self.player.ball += 1
+
         self.ball_starting()
 
     def player_rotate(self, player_num=None):
@@ -531,11 +514,8 @@ class Game(Mode):
         self.log.debug("Player rotate: Now up is Player %s", self.player.number)
 
 
+# todo player events should come next, including tracking inc/dec, other values
 
-# player events should come next, including tracking inc/dec, other values
-
-# sub mode(s)?
-# bonus
 
 # The MIT License (MIT)
 

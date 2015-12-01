@@ -65,7 +65,7 @@ class ScoreReelController(object):
                                         self.rotate_player)
 
         # receive notification of score changes
-        self.machine.events.add_handler('score_change', self.score_change)
+        self.machine.events.add_handler('player_score', self.score_change)
 
         # receives notifications of game starts to reset the reels
         self.machine.events.add_handler('game_starting', self.game_starting)
@@ -134,7 +134,7 @@ class ScoreReelController(object):
 
         self.player_to_scorereel_map.append(self.player_to_scorereel_map[0])
 
-    def score_change(self, score, change):
+    def score_change(self, value, change, **kwargs):
         """Called whenever the score changes and adds the score increase to the
         current active ScoreReelGroup.
 
@@ -146,7 +146,7 @@ class ScoreReelController(object):
                 and included only because the score change event passes it.
             change: Interget value of the change to the score.
         """
-        self.active_scorereelgroup.add_value(value=change, target=score)
+        self.active_scorereelgroup.add_value(value=change, target=value)
 
     def game_starting(self, queue, game):
         """Resets the score reels when a new game starts.
@@ -1102,9 +1102,9 @@ class ScoreReel(Device):
                 self.config['coil_inc'].pulse()
 
                 # set delay to notify when this reel can be fired again
-                self.delay.add('ready_to_fire',
-                               self.config['repeat_pulse_time'],
-                               self._ready_to_fire)
+                self.delay.add(name='ready_to_fire',
+                               ms=self.config['repeat_pulse_time'],
+                               callback=self._ready_to_fire)
 
                 self.next_pulse_time = (time.time() +
                                         (self.config['repeat_pulse_time'] /
@@ -1113,9 +1113,9 @@ class ScoreReel(Device):
                                self.next_pulse_time)
 
                 # set delay to check the hw switches
-                self.delay.add('hw_switch_check',
-                               self.config['hw_confirm_time'],
-                               self.check_hw_switches)
+                self.delay.add(name='hw_switch_check',
+                               ms=self.config['hw_confirm_time'],
+                               callback=self.check_hw_switches)
 
                 return True
 

@@ -53,7 +53,7 @@ class WindowManager(MPFDisplay):
         else:
             self.config = dict()
 
-        self.slides = dict()
+        self.slides = list()
         self.current_slide = None
 
         if 'title' not in self.config:
@@ -99,12 +99,12 @@ class WindowManager(MPFDisplay):
             return
 
         self.config['elements'][0]['persist_slide'] = True
+        self.config['elements'][0]['slide'] = 'default_window_slide'
 
-        self.machine.display.slidebuilder.build_slide(
+        self.machine.display.slide_builder.build_slide(
             settings=self.config['elements'],
             display='window',
-            slide_name='default',
-            priority=0)
+            priority=1)
 
     def _setup_window(self):
         # Sets up the Pygame window based on the settings in the config file.

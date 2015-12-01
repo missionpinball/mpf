@@ -12,7 +12,8 @@ import time
 import datetime
 import re
 
-import yaml
+from mpf.system.config import Config
+from mpf.system.file_manager import FileManager
 
 EXTENSION = '.yaml'
 CONFIG_VERSION_FILE = 'config_versions.yaml'
@@ -58,7 +59,11 @@ def load_config():
     global section_warnings
     global string_replacements
 
-    config_dict = yaml.load(open(CONFIG_VERSION_FILE, 'r'))
+    config_dict = FileManager.load(CONFIG_VERSION_FILE)
+
+    for key in config_dict.keys():
+        if type(key) is not int:
+            del config_dict[key]
 
     # todo could add support for command line param to specify version
     new_config_version = max(config_dict)
@@ -74,22 +79,10 @@ def load_config():
         print ("Will also re-check v" + str(new_config_version) + " files")
         target_file_versions.add(new_config_version)
 
-    section_replacements = config_dict[new_config_version]['section_replacements']
-    section_warnings = config_dict[new_config_version]['section_warnings']
-    section_deprecations = config_dict[new_config_version]['section_deprecations']
-    string_replacements = config_dict[new_config_version]['string_replacements']
-
-    if not section_replacements:
-        section_replacements = dict()
-
-    if not section_warnings:
-        section_warnings = dict()
-
-    if not section_deprecations:
-        section_deprecations = set()
-
-    if not string_replacements:
-        string_replacements = dict()
+    section_replacements = config_dict[new_config_version].get('section_replacements', dict())
+    section_warnings = config_dict[new_config_version].get('section_warnings', dict())
+    section_deprecations = config_dict[new_config_version].get('section_deprecations', dict())
+    string_replacements = config_dict[new_config_version].get('string_replacements', dict())
 
 def create_file_list(source_str):
 
@@ -189,11 +182,11 @@ def process_file(file_name):
         file_data = pattern.sub(new_string + section + ':', file_data)
 
     for k, v in section_replacements.iteritems():
-        pattern = re.compile(re.escape(k + ':'), re.IGNORECASE)
+        pattern = re.compile('\\b(' + k + ')\\b:', re.IGNORECASE)
         file_data = pattern.sub(v + ':', file_data)
 
     for k, v in string_replacements.iteritems():
-        pattern = re.compile(re.escape(k), re.IGNORECASE)
+        pattern = re.compile(k, re.IGNORECASE)
         file_data = pattern.sub(v, file_data)
 
     with open(file_name, 'w') as f:

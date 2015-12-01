@@ -7,12 +7,12 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import yaml
 import time
-import sys
 
 from mpf.system.assets import AssetManager, Asset
 from mpf.system.config import Config
+from mpf.system.file_manager import FileManager
+from mpf.system.utility_functions import Util
 
 
 class ShowController(object):
@@ -55,7 +55,7 @@ class ShowController(object):
 
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick)
-        self.machine.events.add_handler('init_phase_4',
+        self.machine.events.add_handler('init_phase_5',
                                         self._initialize)
 
         # Tell the mode controller that it should look for light_player items in
@@ -158,12 +158,8 @@ class ShowController(object):
             self.stop_shows_by_key(show_key)
 
     def add_show_player_show(self, event, settings, mode=None):
-
         if 'priority' in settings:
             settings['show_priority'] = settings['priority']
-
-        if 'hold' not in settings:
-            settings['hold'] = False
 
         if 'show' in settings:
             settings['show'] = settings['show'].lower()
@@ -200,11 +196,6 @@ class ShowController(object):
         # Internal method which ends a running Show
 
         self.running_shows = filter(lambda x: x != show, self.running_shows)
-
-        for key in show.slide_removal_keys:
-            self.machine.display.remove_slides(key)
-
-        show.slide_removal_keys = set()
 
         if reset:
             show.current_location = 0
@@ -272,6 +263,8 @@ class ShowController(object):
 
 class Show(Asset):
 
+    load_priority = 50  # lower than default (100) so shows go second
+
     def __init__(self, machine, config, file_name, asset_manager, actions=None):
         if not actions:
             super(Show, self).__init__(machine, config, file_name,
@@ -309,7 +302,6 @@ class Show(Asset):
         # naturally. (Not invoked if show is manually stopped)
 
         self.last_slide = None
-        self.slide_removal_keys = set()
         self.stop_key = None
 
         self.loaded = False
@@ -346,7 +338,7 @@ class Show(Asset):
             if ('events' in show_actions[step_num] and
                     show_actions[step_num]['events']):
 
-                event_list = (Config.string_to_lowercase_list(
+                event_list = (Util.string_to_lowercase_list(
                     show_actions[step_num]['events']))
 
                 step_actions['events'] = event_list
@@ -356,7 +348,7 @@ class Show(Asset):
                     show_actions[step_num]['display']):
 
                 step_actions['display'] = (
-                    self.machine.display.slidebuilder.preprocess_settings(
+                    self.machine.display.slide_builder.preprocess_settings(
                         show_actions[step_num]['display']))
 
             # Sounds
@@ -443,19 +435,20 @@ class Show(Asset):
                 stopped.
             num_repeats: Integer of how many times you want this show to repeat
                 before stopping. A value of 0 means that it repeats
-                indefinitely. Note this only works if you also have repeat=True.
-        """
+                indefinitely. Note this only works if you also have
+                repeat=True.
 
+        """
         if not self.loaded:
             self.add_loaded_callback(self.play,
-                                    repeat=repeat,
-                                    priority=priority,
-                                    blend=blend,
-                                    hold=hold,
-                                    tocks_per_sec=tocks_per_sec,
-                                    start_location=start_location,
-                                    callback=callback,
-                                    num_repeats=num_repeats)
+                                     repeat=repeat,
+                                     priority=priority,
+                                     blend=blend,
+                                     hold=hold,
+                                     tocks_per_sec=tocks_per_sec,
+                                     start_location=start_location,
+                                     callback=callback,
+                                     num_repeats=num_repeats)
             self.load()
             return False
 
@@ -477,13 +470,7 @@ class Show(Asset):
         self.machine.show_controller._run_show(self)
 
     def load_show_from_disk(self):
-
-        # todo add exception handling
-        # create central yaml loader, or, even better, config loader
-
-        show_actions = yaml.load(open(self.file_name, 'r'))
-
-        return show_actions
+        return FileManager.load(self.file_name)
 
     def add_loaded_callback(self, loaded_callback, **kwargs):
         self.asset_manager.log.debug("Adding a loaded callback: %s, %s",
@@ -513,9 +500,23 @@ class Show(Asset):
         Args:
             reset: Boolean which controls whether the show will reset its
                 current position back to zero. Default is True.
+            hold: Boolean which controls whether the current slide will be kept
+                in the display's list of slides once the show stops. If None,
+                it will use the Show's 'hold' attribute value. (That value
+                defaults to False, which is what you want in most cases since
+                you typically don't want the show's slide(s) hanging around
+                once the show ends.
 
         """
         self.machine.show_controller._end_show(self, reset)
+
+        if hold is False or (not hold and not self.hold):
+            self.clear_display()
+
+    def clear_display(self):
+        if self.last_slide:
+            self.last_slide.remove()
+        self.last_slide = None
 
     def change_speed(self, tocks_per_sec=1):
         """Changes the playback speed of a running Show.
@@ -539,7 +540,7 @@ class Show(Asset):
     def advance(self):
         # Internal method which advances the show to the next step
         if self.ending:
-            self.machine.show_controller._end_show(self)
+            self.stop()
             return
 
         action_loop_count = 0  # Tracks how many loops we've done here
@@ -568,13 +569,9 @@ class Show(Asset):
             elif item_type == 'display':
 
                 self.last_slide = (
-                    self.machine.display.slidebuilder.build_slide(item_dict,
+                    self.machine.display.slide_builder.build_slide(item_dict,
                     mode=self.mode,
                     priority=self.priority))
-
-                self.slide_removal_keys.add(self.last_slide.removal_key)
-
-                # todo make it so they don't all have the same name?
 
             elif item_type == 'sounds':
 

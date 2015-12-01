@@ -19,9 +19,11 @@ import Queue
 import traceback
 import io
 from distutils.version import StrictVersion
+from copy import deepcopy
 
 from mpf.system.platform import Platform
 from mpf.system.config import Config
+from mpf.system.utility_functions import Util
 
 try:
     import serial
@@ -40,9 +42,6 @@ NET_LATEST_FW = '0.90'
 RGB_LATEST_FW = '0.87'
 IO_LATEST_FW = '0.89'
 
-PWM8_TO_HEX_STR = {0: '00', 1: '01', 2: '88', 3: '92', 4: 'AA',
-                   5: 'BA', 6: 'EE', 7: 'FE', 8: 'FF'}
-
 
 class HardwarePlatform(Platform):
     """Platform class for the FAST hardware controller.
@@ -55,7 +54,7 @@ class HardwarePlatform(Platform):
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('FAST')
-        self.log.debug("Configuring FAST hardware.")
+        self.log.info("Configuring FAST hardware.")
 
         if not serial_imported:
             self.log.error('Could not import "pySerial". This is required for '
@@ -70,7 +69,6 @@ class HardwarePlatform(Platform):
         self.features['hw_rule_coil_delay'] = True  # todo
         self.features['variable_recycle_time'] = True  # todo
         self.features['variable_debounce_time'] = True  # todo
-        self.features['hw_enable_auto_disable'] = True
         # Make the platform features available to everyone
         self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
@@ -106,10 +104,10 @@ class HardwarePlatform(Platform):
             self.machine.config['hardware']['driverboards'].lower())
 
         if self.machine_type == 'wpc':
-            self.log.debug("Configuring the FAST Controller for WPC driver "
+            self.log.info("Configuring the FAST Controller for WPC driver "
                            "board")
         else:
-            self.log.debug("Configuring FAST Controller for FAST IO boards.")
+            self.log.info("Configuring FAST Controller for FAST IO boards.")
 
         self._connect_to_hardware()
 
@@ -281,11 +279,6 @@ class HardwarePlatform(Platform):
             'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
                            }
 
-        self.pwm8_to_int = {
-            0: 0, 1: 1, 2: 136, 3: 146, 4: 170, 5: 186, 6: 238,
-            7: 254, 8: 255
-                                  }
-
         # todo verify this list
         self.fast_commands = {'ID': self.receive_id,  # processor ID
                               'WX': self.receive_wx,  # watchdog
@@ -316,7 +309,7 @@ class HardwarePlatform(Platform):
             cmd = msg[0:2]
             payload = msg[3:].replace('\r','')
         else:
-            print msg
+            self.log.warning("Received maformed message: %s", msg)
             return
 
         # Can't use try since it swallows too many errors for now
@@ -429,7 +422,7 @@ class HardwarePlatform(Platform):
 
     def receive_sa(self, msg):
 
-        self.log.debug("Received SA: %s", msg)
+        self.log.info("Received SA: %s", msg)
 
         hw_states = dict()
 
@@ -437,7 +430,7 @@ class HardwarePlatform(Platform):
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
-                num = Config.int_to_hex_string((offset * 8) + i)
+                num = Util.int_to_hex_string((offset * 8) + i)
                 if byte & (2**i):
                     hw_states[(num, 1)] = 1
                 else:
@@ -446,7 +439,7 @@ class HardwarePlatform(Platform):
         for offset, byte in enumerate(bytearray.fromhex(local_states)):
             for i in range(8):
 
-                num = Config.int_to_hex_string((offset * 8) + i)
+                num = Util.int_to_hex_string((offset * 8) + i)
 
                 if byte & (2**i):
                     hw_states[(num, 0)] = 1
@@ -466,20 +459,20 @@ class HardwarePlatform(Platform):
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
             config['number'] = self.wpc_driver_map.get(
-                                                config['number_str'].upper())
+                                                config['number'].upper())
             if ('connection' in config and
                     config['connection'].lower() == 'network'):
                 config['connection'] = 1
             else:
                 config['connection'] = 0  # local driver (default for WPC)
 
-        # If we have fast driver boards, we need to make sure we have hex strs
+        # If we have FAST IO boards, we need to make sure we have hex strings
         elif self.machine_type == 'fast':
 
             if self.config['config_number_format'] == 'int':
-                config['number'] = Config.int_to_hex_string(config['number'])
+                config['number'] = Util.int_to_hex_string(config['number'])
             else:
-                config['number'] = Config.normalize_hex_string(config['number'])
+                config['number'] = Util.normalize_hex_string(config['number'])
 
             # Now figure out the connection type
             if ('connection' in config and
@@ -493,10 +486,8 @@ class HardwarePlatform(Platform):
                 self.machine_type))
             sys.exit()
 
-        return (FASTDriver(config, self.net_connection.send),
-            (config['number'], config['connection']))
-
-        # todo set the rest time, default pulse times, etc.?
+        return (FASTDriver(config, self.net_connection.send, self.machine),
+                (config['number'], config['connection']))
 
     def configure_switch(self, config):
         """Configures the switch object for a FAST Pinball controller.
@@ -541,18 +532,18 @@ class HardwarePlatform(Platform):
                 config['connection'] = 0  # local switch
 
             if self.config['config_number_format'] == 'int':
-                config['number'] = Config.int_to_hex_string(config['number'])
+                config['number'] = Util.int_to_hex_string(config['number'])
             else:
-                config['number'] = Config.normalize_hex_string(config['number'])
+                config['number'] = Util.normalize_hex_string(config['number'])
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
         config['number'] = (config['number'], config['connection'])
 
-        if 'debounce_open' not in config:
+        if not config['debounce_open']:
             config['debounce_open'] = self.config['default_debounce_open']
 
-        if 'debounce_close' not in config:
+        if not config['debounce_close']:
             config['debounce_close'] = self.config['default_debounce_close']
 
         self.log.debug("FAST Switch hardware tuple: %s", config['number'])
@@ -580,15 +571,15 @@ class HardwarePlatform(Platform):
         # FAST hardware number
         if '-' in config['number_str']:
             num = config['number_str'].split('-')
-            config['number'] = int((num[0] * 64) + num[1])
+            config['number'] = (int(num[0]) * 64) + int(num[1])
             self.config['config_number_format'] = 'int'
         else:
             config['number'] = str(config['number'])
 
         if self.config['config_number_format'] == 'int':
-            config['number'] = Config.int_to_hex_string(config['number'])
+            config['number'] = Util.int_to_hex_string(config['number'])
         else:
-            config['number'] = Config.normalize_hex_string(config['number'])
+            config['number'] = Util.normalize_hex_string(config['number'])
 
         this_fast_led = FASTDirectLED(config['number'])
         self.fast_leds.add(this_fast_led)
@@ -596,6 +587,7 @@ class HardwarePlatform(Platform):
         return this_fast_led
 
     def configure_gi(self, config):
+        # TODO: Add support for driver-based GI strings
 
         if not self.net_connection:
             self.log.critical("A request was made to configure a FAST GI, "
@@ -621,9 +613,9 @@ class HardwarePlatform(Platform):
             config['number'] = self.wpc_light_map.get(
                                                 config['number_str'].upper())
         elif self.config['config_number_format'] == 'int':
-            config['number'] = Config.int_to_hex_string(config['number'])
+            config['number'] = Util.int_to_hex_string(config['number'])
         else:
-            config['number'] = Config.normalize_hex_string(config['number'])
+            config['number'] = Util.normalize_hex_string(config['number'])
 
         return (FASTMatrixLight(config['number'], self.net_connection.send),
                 config['number'])
@@ -649,9 +641,9 @@ class HardwarePlatform(Platform):
 
         self.net_connection.send(self.watchdog_command)
 
-    def write_hw_rule(self, sw, sw_activity, coil_action_ms, coil=None,
-                      pulse_ms=0, pwm_on=8, pwm_off=8, delay=0, recycle_time=0,
-                      debounced=True, drive_now=False):
+    def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
+                      disable_on_release=True, drive_now=False,
+                      **driver_settings_overrides):
         """Used to write (or update) a hardware rule to the FAST controller.
 
         *Hardware Rules* are used to configure the hardware controller to
@@ -665,29 +657,15 @@ class HardwarePlatform(Platform):
         remove them.
 
         Args:
-            sw: Which switch you're creating this rule for. The parameter is a
-                reference to the switch object itsef.
+            switch_obj: Which switch you're creating this rule for. The
+                parameter is a reference to the switch object itself.
             sw_activity: Int which specifies whether this coil should fire when
                 the switch becomes active (1) or inactive (0)
-            coil_action_ms: Int of the total time (in ms) that this coil action
-                should take place. A value of -1 means it's forever. A value of
-                0 means the coil disables itself when this switch goes into the
-                state specified.
-            coil: The coil object this rule is for.
-            pulse_ms: How long should the coil be pulsed (ms)
-            pwm_on: Integer 0 (off) through 8 (100% on) for the initial pwm
-                power of this coil
-            pwm_off: pwm level 0-8 of the power of this coil during the hold
-                phase (after the initial kick).
-            delay: Not currently implemented
-            recycle_time: How long (in ms) should this switch rule wait before
-                firing again. Put another way, what's the "fastest" this rule
-                can fire? This is used to prevent "machine gunning" of
-                slingshots and pop bumpers. Do not use it with flippers.
-            debounced: Should the hardware fire this coil after the switch has
-                been debounced?
+            driver_obj: Driver object this rule is being set for.
+            driver_action: String 'pulse' or 'hold' which describe what action
+                will be applied to this driver
             drive_now: Should the hardware check the state of the switches when
-                this rule is firts applied, and fire the coils if they should
+                this rule is first applied, and fire the coils if they should
                 be? Typically this is True, especially with flippers because you
                 want them to fire if the player is holding in the buttons when
                 the machine enables the flippers (which is done via several
@@ -695,23 +673,14 @@ class HardwarePlatform(Platform):
 
         """
 
-        if not coil_action_ms:
-            return  # with fast this is built into the main coil rule
+        driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
 
-        self.log.debug("Setting HW Rule. Switch:%s, Action ms:%s, Coil:%s, "
-                       "Pulse:%s, pwm1:%s, pwm2:%s, Delay:%s, Recycle:%s,"
-                       "Debounced:%s, Now:%s", sw.name, coil_action_ms,
-                       coil.name, pulse_ms, pwm_on, pwm_off, delay,
-                       recycle_time, debounced, drive_now)
+        driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
+            **driver_settings_overrides))
 
-        if not pwm_on:
-            pwm_on = 8
-
-        if not pwm_off:
-            pwm_off = 8
-
-        pwm_on = self.pwm8_to_int[pwm_on]
-        pwm_off = self.pwm8_to_int[pwm_off]
+        self.log.debug("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
+                      " %s, Driver settings: %s", switch_obj.name, sw_activity,
+                      driver_obj.name, driver_settings)
 
         control = 0x01  # Driver enabled
         if drive_now:
@@ -720,59 +689,62 @@ class HardwarePlatform(Platform):
         if sw_activity == 0:
             control += 0x10
 
-        control = Config.int_to_hex_string(int(control))
-        mode = '00'
-        param1 = 0
-        param2 = 0
-        param3 = 0
-        param4 = 0
-        param5 = 0
+        control = Util.int_to_hex_string(int(control))
 
-        # First figure out if this is pulse (timed) or latched
+        # todo need to implement disable_on_release
 
-        if coil_action_ms == -1:  # Latched
-            mode = '18'
-            param1 = pulse_ms   # max on time
-            param2 = pwm_on     # pwm 1
-            param3 = pwm_off    # pwm 2
-            param4 = recycle_time
-            #param5
+        if driver_action == 'pulse':
+            mode = '10'                               # Mode 10 settings
+            param1 = driver_settings['pulse_ms']      # initial pulse ms
+            param2 = driver_settings['pwm1']          # intial pwm
+            param3 = '00'                             # pulse 2 time
+            param4 = '00'                             # pulse 2 pwm
+            param5 = driver_settings['recycle_ms']    # recycle ms
 
-        elif coil_action_ms > 0:  # Pulsed
-            mode = '10'
-            param1 = pulse_ms                   # initial pulse
-            param2 = pwm_on                     # pwm for initial pulse
-            param3 = coil_action_ms - pulse_ms  # second on time
-            param4 = pwm_off                    # pwm for second pulse
-            param5 = recycle_time
+        elif driver_action == 'hold':
+            mode = '18'                               # Mode 18 settings
+            param1 = driver_settings['pulse_ms']      # intiial pulse ms
+            param2 = driver_settings['pwm1']          # intial pwm
+            param3 = driver_settings['pwm2']          # hold pwm
+            param4 = driver_settings['recycle_ms']    # recycle ms
+            param5 = '00'                             # not used with Mode 18
 
-        if coil.number[1] == 1:
-            cmd = 'DN:'
+        elif driver_action == 'timed_hold':
+
+            # fast hold time is ms*100
+            hold_value = driver_settings['activation_time']
+
+            mode = '70'                               # Mode 70 settings
+            param1 = driver_settings['pulse_ms']      # intiial pulse ms
+            param2 = driver_settings['pwm1']          # intial pwm
+            param3 = hold_value                       # hold time
+            param4 = driver_settings['pwm2']          # hold pwm
+            param5 = driver_settings['recycle_ms']    # recycle ms
+
         else:
-            cmd = 'DL:'
+            raise ValueError("Invalid driver action: '%s'. Expected 'hold', "
+                             "'timed_hold', or 'pulse'" % (driver_action))
 
-        param1 = Config.int_to_hex_string(param1)
-        param2 = Config.int_to_hex_string(param2)
-        param3 = Config.int_to_hex_string(param3)
-        param4 = Config.int_to_hex_string(param4)
-        param5 = Config.int_to_hex_string(param5)
-
-        # hw_rules key = ('05', 1)
-        # all values are strings
-
-        self.hw_rules[coil] = {'mode': mode,
+        self.hw_rules[driver_obj] = {'mode': mode,
                                'param1': param1,
                                'param2': param2,
                                'param3': param3,
                                'param4': param4,
                                'param5': param5,
-                               'switch': sw.number}
+                               'switch': switch_obj.number}
 
-        cmd = (cmd + coil.number[0] + ',' + control  + ',' + sw.number[0] + ','
-               + mode + ',' + param1 + ',' + param2 + ',' + param3 + ',' +
-               param4 + ',' + param5)  # todo change to join()
+        cmd = (driver_settings['config_cmd'] +
+               driver_obj.number[0] + ',' +
+               control  + ',' +
+               switch_obj.number[0] + ',' +
+               mode + ',' +
+               param1 + ',' +
+               param2 + ',' +
+               param3 + ',' +
+               param4 + ',' +
+               param5)
 
-        coil.autofire = cmd
+        driver_obj.autofire = cmd
         self.log.debug("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -790,7 +762,6 @@ class HardwarePlatform(Platform):
             sw_name: The string name of the switch whose rule you want to clear.
 
         """
-
         sw_num = self.machine.switches[sw_name].number
 
         # find the rule(s) based on this switch
@@ -803,21 +774,17 @@ class HardwarePlatform(Platform):
 
             del self.hw_rules[coil]
 
-            if coil.number[1] == 1:
-                cmd = 'DN:'
-            else:
-                cmd = 'DL:'
-            driver = coil.number[0]
-            mode = '81'
+            driver_settings = coil.hw_driver.driver_settings
+
+            cmd = (driver_settings['config_cmd'] +
+                   driver_settings['number'] + ',' +
+                   '81')
 
             coil.autofire = None
 
-            self.log.debug("Clearing hardware rule: %s",
-                          cmd + driver + ',' + mode)
+            self.log.debug("Clearing hardware rule: %s", cmd)
 
-            self.net_connection.send(cmd + driver + ',' + mode)
-
-
+            self.net_connection.send(cmd)
 
 
 class FASTSwitch(object):
@@ -846,115 +813,222 @@ class FASTDriver(object):
 
     """
 
-    def __init__(self, config, sender):
+    def __init__(self, config, sender, machine):
         """
 
         """
 
         self.autofire = None
-
         self.config = dict()
+        self.driver_settings = self.create_driver_settings(machine, **config)
 
-        self.config['trigger'] = '81'  # enabled, but with manual control
-        self.config['mode'] = '10'  # pulsed
-        self.config['param1'] = '00'
-        self.config['param2'] = '00'
-        self.config['param3'] = '00'
-        self.config['param4'] = '00'
-        self.config['param5'] = '00'
+        self.driver_settings['mode'] = '10'     # pulsed
 
         self.log = logging.getLogger('FASTDriver')
-        self.config['number'] = config['number']
+
+        # Number is already normalized FAST hex string at this point
+        self.driver_settings['number'] = config['number']
         self.send = sender
 
         if config['connection'] == 1:
-            self.config['config_cmd'] = 'DN:'
-            self.config['trigger_cmd'] = 'TN:'
+            self.driver_settings['config_cmd'] = 'DN:'
+            self.driver_settings['trigger_cmd'] = 'TN:'
         else:
-            self.config['config_cmd'] = 'DL:'
-            self.config['trigger_cmd'] = 'TL:'
+            self.driver_settings['config_cmd'] = 'DL:'
+            self.driver_settings['trigger_cmd'] = 'TL:'
 
-        if 'recycle_ms' in config:
-            self.config['recycle_ms'] = str(config['recycle_ms'])
-        else:
-            self.config['recycle_ms'] = '00'
+        self.driver_settings.update(self.merge_driver_settings(**config))
 
-        if 'hold_pwm' in config:
-            self.config['hold_pwm'] = PWM8_TO_HEX_STR[config['hold_pwm']]
-        else:
-            self.config['hold_pwm'] = 'FF'
+        self.log.debug("Driver Settings: %s", self.driver_settings)
 
-        # send this driver's pulse / pwm settings
+    def create_driver_settings(self, machine, pulse_ms=None, **kwargs):
+        return_dict = dict()
+        if pulse_ms is None:
+            pulse_ms = machine.config['mpf']['default_pulse_ms']
 
-        if 'fast_param1' in config:
-            self.config['param1'] = config['fast_param1']
+        try:
+            return_dict['allow_enable'] = kwargs['allow_enable']
+        except KeyError:
+            return_dict['allow_enable'] = False
 
-        if 'fast_param2' in config:
-            self.config['param2'] = config['fast_param2']
+        return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
+        return_dict['pwm1'] = 'ff'
+        return_dict['pwm2'] = 'ff'
+        return_dict['recycle_ms'] = '00'
 
-        if 'fast_param3' in config:
-            self.config['param3'] = config['fast_param3']
+        return return_dict
 
-        if 'fast_param4' in config:
-            self.config['param4'] = config['fast_param4']
+    def merge_driver_settings(self,
+                            pulse_ms=None,
+                            pwm_on_ms=None,
+                            pwm_off_ms=None,
+                            pulse_power=None,
+                            hold_power=None,
+                            pulse_power32=None,
+                            hold_power32=None,
+                            pulse_pwm_mask=None,
+                            hold_pwm_mask=None,
+                            recycle_ms=None,
+                            activation_time=None,
+                            **kwargs
+                            ):
 
-        if 'fast_param5' in config:
-            self.config['param5'] = config['fast_param5']
+        if pwm_on_ms:
+            raise ValueError("The setting 'pwm_on_ms' is not valid with the "
+                             "FAST platform. Use a hold_power or hold_pwm_mask"
+                             " instead.")
+        if pwm_off_ms:
+            raise ValueError("The setting 'pwm_off_ms' is not valid with the "
+                             "FAST platform. Use a hold_power or hold_pwm_mask"
+                             " instead.")
+
+        if pulse_power32:
+            raise NotImplementedError('"pulse_power32" has not been '
+                                      'implemented yet')
+
+        if hold_power32:
+            raise NotImplementedError('"hold_power32" has not been '
+                                      'implemented yet')
+
+        return_dict = dict()
+        return_dict['pwm32'] = None
+
+        if activation_time is not None:
+            if activation_time > 25500:
+                raise ValueError('Max FAST timed_hold time is 25.5s')
+
+            # FAST activation times are ms * 100
+            return_dict['activation_time'] = str(activation_time / 100)
+
+        if recycle_ms is not None:
+            return_dict['recycle_ms'] = (Util.int_to_hex_string(recycle_ms))
+
+        if pulse_ms is not None:
+            return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
+
+        if pulse_pwm_mask:
+            pulse_pwm_mask = str(pulse_pwm_mask)
+            if len(pulse_pwm_mask) == 32:
+                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
+            elif len(pulse_pwm_mask) == 8:
+                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
+            else:
+                raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
+        elif pulse_power32 is not None:
+            return_dict['pwm32']  = Util.pwm32_to_hex_string(pulse_power32)
+        elif pulse_power is not None:
+            return_dict['pwm1']  = Util.pwm8_to_hex_string(pulse_power)
+
+        if hold_pwm_mask:
+            hold_pwm_mask = str(hold_pwm_mask)
+            if len(hold_pwm_mask) == 32:
+                return_dict['pwm2'] = Util.bin_str_to_hex_str(hold_pwm_mask, 8)
+            elif len(hold_pwm_mask) == 8:
+                return_dict['pwm2'] = Util.bin_str_to_hex_str(hold_pwm_mask, 2)
+            else:
+                raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
+        elif hold_power32 is not None:
+            return_dict['pwm32'] = Util.pwm32_to_hex_string(hold_power32)
+        elif hold_power is not None:
+            return_dict['pwm2'] = Util.pwm8_to_hex_string(hold_power)
+
+        return return_dict
 
     def disable(self):
         """Disables (turns off) this driver. """
-
-        cmd = self.config['trigger_cmd'] + self.config['number'] + ',' + '02'
+        cmd = (self.driver_settings['trigger_cmd'] +
+               self.driver_settings['number'] + ',' + '02')
 
         self.log.debug("Sending Disable Command: %s", cmd)
         self.send(cmd)
+        self.check_auto()
 
     def enable(self):
         """Enables (turns on) this driver. """
-
         if self.autofire:
-            cmd = (self.config['trigger_cmd'] + self.config['number'] + ',' +
+            # If this driver is also configured for an autofire rule, we just
+            # manually trigger it with the trigger_cmd and manual on ('03')
+            cmd = (self.driver_settings['trigger_cmd'] +
+                   self.driver_settings['number'] + ',' +
                    '03')
+            self.log.warning("Recived a command to enable this driver, but "
+                             "this driver is configured with an autofire rule,"
+                             " so this enable will reset that rule. We need to"
+                             " change this behavior...")
+
         else:
-            cmd = (self.config['config_cmd'] + self.config['number'] +
-                   ',C1,00,18,00,ff,' + self.config['hold_pwm'] + ',' +
-                   self.config['recycle_ms'])
+            # Otherwise we send a full config command, trigger C1 (logic triggered
+            # and drive now) switch ID 00, mode 18 (latched)
+
+            if (self.driver_settings['pwm1'] == 'ff' and
+                    self.driver_settings['pwm2'] == 'ff' and
+                    not ('allow_enable' in self.driver_settings or not
+                    self.driver_settings['allow_enable'])):
+
+                self.log.warning("Received a command to enable this coil "
+                                 "without pwm, but 'allow_enable' has not been"
+                                 "set to True in this coil's configuration.")
+                return
+
+            else:
+
+                cmd = (self.driver_settings['config_cmd'] +
+                       self.driver_settings['number'] +
+                      ',C1,00,18,' +
+                       self.driver_settings['pulse_ms'] + ',' +
+                       self.driver_settings['pwm1'] + ',' +
+                       self.driver_settings['pwm2'] + ',' +
+                       self.driver_settings['recycle_ms'])
+
+        # todo pwm32
 
         self.log.debug("Sending Enable Command: %s", cmd)
         self.send(cmd)
         # todo change hold to pulse with re-ups
 
+        #self.check_auto()
+
     def pulse(self, milliseconds=None):
         """Pulses this driver. """
 
-        if 0 <= milliseconds <= 255:
-            milliseconds = format(milliseconds, 'x').upper().zfill(2)
-
-        if self.autofire:
-            cmd = (self.config['trigger_cmd'] + self.config['number'] + ',' +
-            '01')
+        if not milliseconds:
+            hex_ms_string = self.driver_settings['pulse_ms']
         else:
-            cmd = (self.config['config_cmd'] + self.config['number'] +
-                   ',89,00,10,' + str(milliseconds) + ',ff,00,00,' +
-                   self.config['recycle_ms'])
+            hex_ms_string = Util.int_to_hex_string(milliseconds)
+        if self.autofire:
+            cmd = (self.driver_settings['trigger_cmd'] +
+                   self.driver_settings['number'] + ',' +
+                  '01')
+            if milliseconds:
+                self.log.debug("Received command to pulse driver for %sms, but"
+                              "this driver is configured with an autofire rule"
+                               ", so that pulse value will be used instead.")
+        else:
+            cmd = (self.driver_settings['config_cmd'] +
+                   self.driver_settings['number'] +
+                   ',89,00,10,' +
+                   hex_ms_string + ',' +
+                   self.driver_settings['pwm1'] + ',00,00,' +
+                   self.driver_settings['recycle_ms'])
 
         self.log.debug("Sending Pulse Command: %s", cmd)
         self.send(cmd)
+        self.check_auto()
 
-    def pwm(self, on_ms=10, off_ms=10, original_on_ms=0, now=True):
-        """Enables this driver in a pwm pattern.  """
+        return Util.hex_string_to_int(hex_ms_string)
+
+    def get_pulse_ms(self):
+        return Util.hex_string_to_int(self.driver_settings['pulse_ms'])
+
+    def check_auto(self):
 
         if self.autofire:
-            cmd = (self.config['trigger_cmd'] + self.config['number'] + ',' +
-                   '03')
-        else:
-            cmd = (self.config['config_cmd'] + self.config['number'] +
-                   ',89,00,18,' + str(original_on_ms) + ',' + str(on_ms) + ','
-                   + str(off_ms) + ',' + self.config['recycle_ms'])
+            cmd = (self.driver_settings['trigger_cmd'] +
+                   self.driver_settings['number'] +
+                   ',00')
 
-        self.log.debug("Sending PWM Hold Command: %s", cmd)
-        self.send(cmd)
-
+            self.log.debug("Re-enabling auto fire mode: %s", cmd)
+            self.send(cmd)
 
 class FASTGIString(object):
     def __init__(self, number, sender):
@@ -1091,6 +1165,7 @@ class SerialCommunicator(object):
         self.receive_queue = receive_queue
         self.debug = False
         self.log = None
+        self.dmd = False
 
         self.remote_processor = None
         self.remote_model = None
@@ -1112,6 +1187,7 @@ class SerialCommunicator(object):
                                  'L1:P',
                                  'GI:P',
                                  'TL:P',
+                                 'TN:P'
                                  'XX:U',
                                  'XX:N',
                                  ]
@@ -1161,6 +1237,7 @@ class SerialCommunicator(object):
         if self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
             latest_version = DMD_LATEST_FW
+            self.dmd = True
         elif self.remote_processor == 'NET':
             min_version = NET_MIN_FW
             latest_version = NET_LATEST_FW
@@ -1247,7 +1324,10 @@ class SerialCommunicator(object):
                 be added automatically.
 
         """
-        self.send_queue.put(msg + '\r')
+        if self.dmd:
+            self.send_queue.put(msg)
+        else:
+            self.send_queue.put(msg + '\r')
 
     def _sending_loop(self):
 
@@ -1271,21 +1351,24 @@ class SerialCommunicator(object):
 
         debug = self.platform.config['debug']
 
-        try:
-            while self.serial_connection:
-                msg = self.serial_io.readline()[:-1]  # strip the \r
+        if not self.dmd:
 
-                if debug:
-                    self.platform.log.info("Received: %s", msg)
+            try:
+                while self.serial_connection:
+                    msg = self.serial_io.readline()[:-1]  # strip the \r
 
-                if msg not in self.ignored_messages:
-                    self.receive_queue.put(msg)
+                    if debug:
+                        self.platform.log.info("Received: %s", msg)
 
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
+                    if msg not in self.ignored_messages:
+                        self.receive_queue.put(msg)
+
+            except Exception:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                lines = traceback.format_exception(exc_type, exc_value,
+                                                   exc_traceback)
+                msg = ''.join(line for line in lines)
+                self.machine.crash_queue.put(msg)
 
 # The MIT License (MIT)
 

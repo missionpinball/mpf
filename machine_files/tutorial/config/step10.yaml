@@ -3,16 +3,9 @@
 # Config file for Step 10 of our step-by-step tutorial.
 # https://missionpinball.com/docs/tutorial/
 
-# WARNING: This is for a Demolition Man machine controlled by a P-ROC. Do not
-# use this file with your own hardware unless you change the coil and switch
-# numbers to match your actual hardware!
-
-game:
-    player_controlled_eject_tag: launch
-
-hardware:
-    platform: fast
-    driverboards: wpc
+# WARNING: The switch and coil numbers in this configuration file are for a Demolition Man machine.
+# Do not use this file with your own hardware unless you change the coil and switch numbers to match your actual
+# hardware!
 
 switches:
     s_left_flipper:
@@ -127,6 +120,7 @@ slide_player:
     mode_attract_started:
         type: text
         text: PRESS START
+        slide_priority: 10
 
 keyboard:
     z:
@@ -163,17 +157,17 @@ ball_devices:
     tags: trough, home, drain
     ball_switches: s_trough1, s_trough2, s_trough3, s_trough4, s_trough5, s_trough_jam
     eject_coil: c_trough_eject
-    confirm_eject_type: target
     entrance_count_delay: 300ms
     jam_switch: s_trough_jam
     eject_targets: bd_plunger
+    debug: yes
   bd_plunger:
     ball_switches: s_plunger_lane
     entrance_count_delay: 300ms
-    exit_count_delay: 3s
-    eject_coil: c_plunger_eject
-    confirm_eject_type: count
+    eject_timeouts: 3s
     tags: ball_add_live
+    eject_coil: c_plunger_eject
+    player_controlled_eject_event: sw_launch
 
 virtual_platform_start_active_switches:
     s_trough1

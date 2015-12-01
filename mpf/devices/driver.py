@@ -37,22 +37,10 @@ class Driver(Device):
 
         self.time_last_changed = 0
         self.time_when_done = 0
+        self.hw_driver, self.number = (self.platform.configure_driver(self.config))
 
-        self.hw_driver, self.number = (
-            self.platform.configure_driver(self.config))
-
-        if not self.config['pulse_ms']:
-            # If there's a holdpatter and no pulse_ms, we'll keep it at zero
-            if self.config['holdpatter']:
-                self.config['pulse_ms'] = 0
-            # Otherwise we'll use the system default for pulse_ms
-            else:
-                self.config['pulse_ms'] = (
-                    self.machine.config['mpf']['default_pulse_ms'])
-
-        if self.config['holdpatter']:
-            self.config['pwm_on'] = int(config['holdpatter'].split('-')[0])
-            self.config['pwm_off'] = int(config['holdpatter'].split('-')[1])
+    def validate_driver_settings(self, **kwargs):
+        return self.hw_driver.validate_driver_settings(**kwargs)
 
     def enable(self, **kwargs):
         """Enables a driver by holding it 'on'.
@@ -66,24 +54,18 @@ class Driver(Device):
         configuration files:
 
         allow_enable: True
-        """
-        if self.config['pwm_on'] and self.config['pwm_off']:
-            self.pwm(self.config['pwm_on'], self.config['pwm_off'],
-                     self.config['pulse_ms'])
-        elif self.config['allow_enable']:
-            self.hw_driver.enable()
-        else:
-            self.log.warning("Received a command to enable this coil without "
-                             "pwm, but 'allow_enable' has not been set to True"
-                             " in this coil's configuration.")
 
+        """
         self.time_when_done = -1
         self.time_last_changed = time.time()
+        self.log.debug("Enabling Driver")
+        self.hw_driver.enable()
 
     def disable(self, **kwargs):
         """ Disables this driver """
-        self.log.debug("Disabling Driver: %s", self.name)
+        self.log.debug("Disabling Driver")
         self.time_last_changed = time.time()
+        self.time_when_done = self.time_last_changed
         self.hw_driver.disable()
         # todo also disable the timer which reenables this
 
@@ -98,58 +80,48 @@ class Driver(Device):
                 typically a float between 0.0 and 1.0. (Note this is only used
                 if milliseconds is not specified.)
         """
-        if milliseconds is None:
-            milliseconds = int(self.config['pulse_ms']) * power
-        elif milliseconds < 1:
-            self.log.warning("Received command to pulse  Driver %s for %dms, "
-                             "but ms is less than 1, so we're doing nothing.",
-                             self.name, milliseconds)
-            return
-        # todo also disable the timer which reenables this
-        self.log.debug("Pulsing Driver for %sms", milliseconds)
-        self.hw_driver.pulse(int(milliseconds))
-        self.time_last_changed = time.time()
-        self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
-    def pwm(self, on_ms, off_ms, orig_on_ms=0, **kwargs):
-        """Quickly turns this driver on and off to have the effect of holding
-        this driver 'on' without burning up the coil.
+        if milliseconds:
+            self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
+                           "%sms", milliseconds)
+            ms_actual = self.hw_driver.pulse(milliseconds)
+        else:
+            self.log.debug("Pulsing Driver. Using default pulse_ms.")
+            ms_actual = self.hw_driver.pulse()
 
-        Args:
-            on_ms: Integer of how long this driver is on in the 'on' portion.
-            off_ms: Integer of how long this driver is off in the 'off'
-                portion.
-            orig_on_ms: Integer of how long this driver should be held on
-                initially before the on/off pulsing starts.
+        if ms_actual != -1:
+            self.time_when_done = self.time_last_changed + (ms_actual / 1000.0)
+        else:
+            self.time_when_done = -1
 
-        For example, to rapidly pulse a driver 1ms and then off 4ms, pass the
-            values on_ms=1, off_ms=4.
-
-        """
-        self.log.debug("PWM Driver. initial pulse: %s, on: %s, off: %s",
-                       orig_on_ms, on_ms, off_ms)
-        self.hw_driver.pwm(on_ms, off_ms, orig_on_ms)
-        self.time_last_changed = time.time()
-        self.time_when_done = -1
-        # todo also disable the timer which reenables this
-
-    def timed_pwm(self, on_ms, off_ms, runtime_ms, **kwargs):
-        """Quickly pulses a driver on/off for a specified number of
-        milliseconds.
+    def timed_enable(self, milliseconds, **kwargs):
+        """Lets you enable a driver for a specific time duration that's longer
+        than 255ms. (If you want to enable a driver for 255ms or less, just use
+        the pulse() method.)
 
         Args:
-            on_ms: Integer of how long this driver is on in the 'on' portion.
-            off_ms: Integer of how long this driver is off in the 'off'
-                portion.
-            runtime_ms: Integer of the total number of milliseconds this driver
-                should pulse on and off for.
+            milliseconds: Integer of the number of milliseconds you'd like to
+                enable this driver for.
+
+        Note if this driver is currently enabled via an earlier call to this
+        method, this method will extend it for the duration of milliseconds
+        you pass here.
+
+        Note that the "resolution" of this will be based on your machine's HZ
+        setting. In other words, if your machine's HZ is set to 30 (the
+        default) and you set this timed_enable for 550ms, the actual enable
+        time will be to the nearest 33ms after 550 (566ms, in this case).
+
         """
-        self.log.debug("Timed PWM Driver. on: %s, off: %s, total ms: %s",
-                       on_ms, off_ms, runtime_ms)
-        self.hw_driver.pwm(on_ms, off_ms, runtime_ms)
-        self.time_last_changed = time.time()
-        self.time_when_done = -1
-        # todo also disable the timer which reenables this
+        if 0 > milliseconds >= 255:
+            self.pulse(milliseconds)
+
+        else:
+            self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
+                                     ms=milliseconds,
+                                     callback=self.disable)
+            self.enable()
+            self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
 
 
 # The MIT License (MIT)

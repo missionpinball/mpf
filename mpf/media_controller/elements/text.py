@@ -12,7 +12,7 @@ from mpf.media_controller.core.display import DisplayElement
 
 
 class Text(DisplayElement):
-    """Represents an animation display element.
+    """Represents an text display element.
 
     Args:
         slide: The Slide object this animation is being added to.
@@ -41,10 +41,11 @@ class Text(DisplayElement):
         self.language = machine.language
         self.slide = slide
         self.machine = machine
+        self.layer = layer
 
         self.config = kwargs
 
-        self.var_finder = re.compile("(?<=%)[\S]+(?=%)")
+        self.var_finder = re.compile("(?<=%)[a-zA-Z_0-9|]+(?=%)")
 
         if not text_variables:
             text_variables = dict()
@@ -60,17 +61,8 @@ class Text(DisplayElement):
         else:
             self.name = text
 
-        self.text = self._process_text(self.text,
-                                       local_replacements=text_variables,
-                                       local_type='event')
-
-        if self._get_text_vars():
-            self._setup_variable_monitors()
-
-        self.layer = layer
-
-        self.element_surface = self.fonts.render(text=self.text, **self.config)
-        self.set_position(self.x, self.y, self.h_pos, self.v_pos)
+        self._process_text(self.text, local_replacements=text_variables,
+                           local_type='event')
 
     def _get_text_vars(self):
         return self.var_finder.findall(self.original_text)
@@ -80,6 +72,8 @@ class Text(DisplayElement):
         # local_replacements: dict of var names & their replacements
         # local_type: type specifier of local replacements. e.g. "event" means
         # it will look for %event|var_name% in the text string
+
+        text = str(text)
 
         if not local_replacements:
             local_replacements = list()
@@ -95,77 +89,142 @@ class Text(DisplayElement):
                     str(local_replacements[var_string.split('|')[1]]))
                 self.original_text = text
 
+        if self._get_text_vars():
+            self._setup_variable_monitors()
+
+        self.update_vars_in_text()
+
+    def update_vars_in_text(self):
+
+        text = self.original_text
+
+        for var_string in self._get_text_vars():
+            if var_string.startswith('machine|'):
+                try:
+                    text = text.replace('%' + var_string + '%',
+                        str(self.machine.machine_vars[var_string.split('|')[1]]))
+                except KeyError:
+                    text = ''
+
             elif self.machine.player:
-                text = text.replace('%' + var_string + '%',
-                                    str(self.machine.player[var_string]))
+                if var_string.startswith('player|'):
+                    text = text.replace('%' + var_string + '%',
+                                        str(self.machine.player[var_string.split('|')[1]]))
+                elif var_string.startswith('player'):
+                    player_num, var_name = var_string.lstrip('player').split('|')
+                    try:
+                        value = self.machine.player_list[int(player_num)-1][var_name]
 
-        if 'min_digits' in self.config:
-            text = text.zfill(self.config['min_digits'])
+                        if value is not None:
+                            text = text.replace('%' + var_string + '%', str(value))
+                        else:
+                            text = ''
+                    except IndexError:
+                        text = ''
+                else:
+                    text = text.replace('%' + var_string + '%',
+                                        str(self.machine.player[var_string]))
 
-        if 'number_grouping' in self.config and self.config['number_grouping']:
+        self.update_text(text)
 
-        # todo this only works for ints
-        # todo move enabling this and separator char to config
+    def update_text(self, text):
+        # todo auto-fit text to a certain size bounding box
 
-            # find the numbers in the string
-            number_list = [s for s in text.split() if s.isdigit()]
+        text = str(text)
 
-            # group the numbers and replace them in the string
-            for item in number_list:
-                grouped_item = self.group_digits(item)
-                text = text.replace(str(item), grouped_item)
+        if text:
+            if 'min_digits' in self.config:
+                text = text.zfill(self.config['min_digits'])
 
-        # Are we set up for multi-language>
-        if self.language:
-            text = self.language.text(text)
+            if ('number_grouping' in self.config and
+                    self.config['number_grouping']):
 
-        return text
+                # find the numbers in the string
+                number_list = [s for s in text.split() if s.isdigit()]
 
-    def _player_var_change(self, player_num, target_player, **kwargs):
-        self.text = self._process_text(self.original_text)
+                # group the numbers and replace them in the string
+                for item in number_list:
+                    grouped_item = self.group_digits(item)
+                    text = text.replace(str(item), grouped_item)
 
+            # Are we set up for multi-language?
+            if self.language:
+                text = self.language.text(text)
+
+        self.text = text
         self.render()
+
+    def _player_var_change(self, player_num, target_player, var_name, value,
+                         **kwargs):
+        # value = str(value)
+        #
+        # if (player_num and target_player and
+        #         int(player_num) == int(target_player)):
+        #     player_num = str(player_num)
+        #     new_text = self.original_text.replace(
+        #         '%player{}|{}%'.format(player_num, var_name), value)
+        #     new_text = new_text.replace('%player|{}%'.format(var_name), value)
+        #     new_text = new_text.replace('%{}%'.format(var_name), value)
+        #
+        #     self.update_text(new_text)
+        #
+        # elif player_num and not target_player:
+        #     new_text = self.original_text.replace(
+        #         '%player|{}%'.format(var_name), value)
+        #     new_text = new_text.replace('%{}%'.format(var_name), value)
+        #
+        #     self.update_text(new_text)
+
+        self.update_vars_in_text()
+
+    def _machine_var_change(self, value, change, prev_value, var_name,
+                            **kwargs):
+
+        self.update_vars_in_text()
+
+        # return self.update_text(self.original_text.replace(
+        #     '%machine|{}%'.format(var_name), str(value)))
 
     def _setup_variable_monitors(self):
 
         for var_string in self._get_text_vars():
             if '|' not in var_string:
-                self.add_player_var_handler(name=var_string,
-                                            player=self.machine.player['number'])
+                self.add_player_var_handler(name=var_string, player=None)
             else:
-                source, name = var_string.split('|')
-
+                source, variable_name = var_string.split('|')
                 if source.lower().startswith('player'):
 
-                    if source.strip('player'):
-                        self.add_player_var_handler(name=name,
-                            player=source.strip('player'))
+                    if source.lstrip('player'):
+                        self.add_player_var_handler(name=variable_name,
+                            player=source.lstrip('player'))
                     else:
                         self.add_player_var_handler(name=var_string,
                             player=self.machine.player['number'])
 
                 elif source.lower() == 'machine':
-                    # add machine monitor
-                    pass
+                    self.add_machine_var_handler(name=variable_name)
 
     def add_player_var_handler(self, name, player):
         self.machine.events.add_handler('player_' + name,
                                         self._player_var_change,
-                                        target_player=player)
+                                        target_player=player,
+                                        var_name=name)
+
+    def add_machine_var_handler(self, name):
+        self.machine.events.add_handler('machine_var_' + name,
+                                        self._machine_var_change,
+                                        var_name=name)
 
     def render(self):
-
         self.element_surface = self.fonts.render(text=self.text, **self.config)
         self.set_position(self.x, self.y, self.h_pos, self.v_pos)
         self.dirty = True
 
-        self.slide.refresh()
-
-        # todo add logic around color/shade
-        # todo trim this to a certain size? Or force it to fit in the size?
+        self.slide.refresh(force_dirty=True)
 
     def scrub(self):
         self.machine.events.remove_handler(self._player_var_change)
+        self.machine.events.remove_handler(self._machine_var_change)
 
     def group_digits(self, text, separator=',', group_size=3):
         """Enables digit grouping (i.e. adds comma separators between
@@ -185,7 +244,6 @@ class Text(DisplayElement):
         dependencies, so this is just way easier.
 
         """
-
         digit_list = list(text.split('.')[0])
 
         for i in range(len(digit_list))[::-group_size][1:]:

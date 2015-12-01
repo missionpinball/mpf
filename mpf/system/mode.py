@@ -5,17 +5,18 @@
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/mpf
-
+import copy
 import logging
 
+from mpf.system.config import CaseInsensitiveDict
 from mpf.system.timing import Timing, Timer
 from mpf.system.tasks import DelayManager
-from mpf.system.config import Config
-from mpf.system.mode_controller import RemoteMethod
 
 # todo
 # override player var
 # override event strings
+from mpf.system.utility_functions import Util
+
 
 class Mode(object):
     """Parent class for in-game mode code."""
@@ -43,17 +44,23 @@ class Mode(object):
         self.mode_stop_kwargs = dict()
         self.mode_devices = set()
 
-        self.auto_stop_on_ball_end = True
-        '''Controls whether this mode is stopped when the ball ends,
-        regardless of its stop_events settings.
-        '''
-
         self.player = None
         '''Reference to the current player object.'''
 
         self._validate_mode_config()
 
         self.configure_mode_settings(config.get('mode', dict()))
+
+        self.auto_stop_on_ball_end = self.config['mode']['stop_on_ball_end']
+        '''Controls whether this mode is stopped when the ball ends,
+        regardless of its stop_events settings.
+        '''
+
+        self.restart_on_next_ball = self.config['mode']['restart_on_next_ball']
+        '''Controls whether this mode will restart on the next ball. This only
+        works if the mode was running when the ball ended. It's tracked per-
+        player in the '_restart_modes_on_next_ball' untracked player variable.
+        '''
 
         for asset_manager in self.machine.asset_managers.values():
 
@@ -78,7 +85,7 @@ class Mode(object):
         self.mode_init()
 
     def __repr__(self):
-        return '<Mode.' + self.name + '>'
+        return '<Mode.{}>'.format(self.name)
 
     @property
     def active(self):
@@ -100,8 +107,8 @@ class Mode(object):
 
         for event in self.config['mode']['start_events']:
             self.machine.events.add_handler(event=event, handler=self.start,
-                                            priority=self.config['mode']['priority'] +
-                                            self.config['mode']['start_priority'])
+                priority=self.config['mode']['priority'] +
+                self.config['mode']['start_priority'])
 
     def _validate_mode_config(self):
         for section in self.machine.config['mpf']['mode_config_sections']:
@@ -117,7 +124,23 @@ class Mode(object):
                 else:
                     self.config[section] = (
                         self.machine.config_processor.process_config2(section,
-                                                                      this_section))
+                        this_section))
+
+    def _get_merged_settings(self, section_name):
+        # Returns a dict_merged dict of a config section from the machine-wide
+        # config with the mode-specific config merged in.
+
+        if section_name in self.machine.config:
+            return_dict = copy.deepcopy(self.machine.config[section_name])
+        else:
+            return_dict = CaseInsensitiveDict()
+
+        if section_name in self.config:
+            return_dict = Util.dict_merge(return_dict,
+                                          self.config[section_name],
+                                          combine_lists=False)
+
+        return return_dict
 
     def start(self, priority=None, callback=None, **kwargs):
         """Starts this mode.
@@ -135,7 +158,10 @@ class Mode(object):
         mode_start method which will be called automatically.
         """
 
+        self.log.debug("Received request to start")
+
         if self._active:
+            self.log.debug("Mode is already active. Aborting start")
             return
 
         if self.config['mode']['use_wait_queue'] and 'queue' in kwargs:
@@ -163,8 +189,8 @@ class Mode(object):
 
             for event in self.config['mode']['stop_events']:
                 # stop priority is +1 so if two modes of the same priority
-                # start and stop on the same event, the one will stop before the
-                # other starts
+                # start and stop on the same event, the one will stop before
+                # the other starts
                 self.add_mode_event_handler(event=event, handler=self.stop,
                     priority=self.priority + 1 +
                     self.config['mode']['stop_priority'])
@@ -248,7 +274,6 @@ class Mode(object):
                                        callback=self._stopped)
 
     def _stopped(self):
-
         self.log.debug('Mode Stopped.')
 
         self.priority = 0
@@ -258,7 +283,10 @@ class Mode(object):
             try:
                 item[0](item[1])
             except TypeError:
-                pass
+                try:
+                    item()
+                except TypeError:
+                    pass
 
         self.stop_methods = list()
 
@@ -273,7 +301,6 @@ class Mode(object):
             self._mode_start_wait_queue = None
 
     def _mode_stopped_callback(self, **kwargs):
-
         self._remove_mode_event_handlers()
         self._remove_mode_devices()
 
@@ -298,15 +325,17 @@ class Mode(object):
 
                     collection = getattr(self.machine, collection_name)
 
-                    if device not in collection:  # no existing device, create now
+                    if device not in collection:  # no existing device, create
 
-                        self.log.debug("Creating mode-based device: %s", device)
+                        self.log.debug("Creating mode-based device: %s",
+                                       device)
 
-                        # TODO this config is already validated, so add something
-                        # so it doesn't validate it again?
+                        # TODO this config is already validated, so add
+                        # something so it doesn't validate it again?
 
                         self.machine.device_manager.create_devices(
-                            collection.name, {device: settings}, validate=False)
+                            collection.name, {device: settings},
+                            validate=False)
 
                         # change device from str to object
                         device = collection[device]
@@ -317,8 +346,9 @@ class Mode(object):
 
                         # This lets the device know it was created by a mode
                         # instead of machine-wide, as some devices want to do
-                        # certain things here. We also pass the player object in
-                        # case this device wants to do something with that too.
+                        # certain things here. We also pass the player object
+                        # in case this device wants to do something with that
+                        # too.
                         device.device_added_to_mode(mode=self,
                                                     player=self.player)
 
@@ -363,7 +393,8 @@ class Mode(object):
         self.log.debug("_control_event_handler: callback: %s,", callback)
 
         if ms_delay:
-            self.delay.add(callback, ms_delay, callback, mode=self)
+            self.delay.add(name=callback, ms=ms_delay, callback=callback,
+                           mode=self)
         else:
             callback(mode=self)
 
@@ -524,7 +555,8 @@ class ModeTimer(object):
                 self.end_value = 0  # need it to be 0 not None
 
         if 'tick_interval' in self.config:
-            self.tick_secs = Timing.string_to_secs(self.config['tick_interval'])
+            self.tick_secs = Timing.string_to_secs(self.config[
+                                                       'tick_interval'])
 
         if 'max_value' in self.config:
             self.max_value = self.config['max_value']
@@ -730,7 +762,7 @@ class ModeTimer(object):
                                   ticks_remaining=self.ticks_remaining)
 
         if pause_secs > 0:
-            self.delay.add('pause', pause_secs, self.start)
+            self.delay.add(name='pause', ms=pause_secs, callback=self.start)
 
     def timer_complete(self):
         """Automatically called when this timer completes. Posts the

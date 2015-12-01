@@ -7,9 +7,7 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-
-from mpf.system.timing import Timing
-from mpf.system.config import Config, CaseInsensitiveDict
+from config import CaseInsensitiveDict
 
 
 class Device(object):
@@ -48,7 +46,7 @@ class Device(object):
         self.label = self.config['label']
 
         if platform_section:
-            if self.machine.physical_hw:
+            if not self.machine.options['force_platform']:
                 if not config['platform']:
                     if self.machine.config['hardware'][platform_section] != 'default':
                         self.platform = (
@@ -71,7 +69,7 @@ class Device(object):
             collection[name] = self
 
     def __repr__(self):
-        return '<' + self.class_label + '.' + self.name + '>'
+        return '<{self.class_label}.{self.name}>'.format(self=self)
 
     def enable_debugging(self):
         self.log.debug("Enabling debug logging")
@@ -104,6 +102,15 @@ class Device(object):
 
         if config:
             for device in config:
+
+                if not config[device]:
+                    raise AssertionError("Device '{}' has an empty config."
+                                         .format(device))
+
+                elif type(config[device]) is not dict:
+                    raise AssertionError("Device '{}' does not have a valid config."
+                                         .format(device))
+
                 cls(machine, device, config[device], collection, validate)
 
     def device_added_to_mode(self, mode, player):
@@ -113,6 +120,10 @@ class Device(object):
     def control_events_in_mode(self, mode):
         # Called on mode start if this device has any control events in that mode
         pass
+
+    def remove(self):
+        raise NotImplementedError(
+            '{} does not have a remove() method'.format(self.name))
 
 
 # The MIT License (MIT)

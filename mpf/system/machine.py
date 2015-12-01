@@ -1,4 +1,4 @@
-"""The main machine object for the Mission Pinball Framework."""
+"""Contains the MachineController base class"""
 # machine.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
@@ -13,8 +13,13 @@ import sys
 import Queue
 
 from mpf.system import *
-from mpf.system.config import Config
+from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.tasks import Task, DelayManager
+from mpf.system.data_manager import DataManager
+from mpf.system.timing import Timing
+from mpf.system.assets import AssetManager
+from mpf.system.utility_functions import Util
+from mpf.system.file_manager import FileManager
 import version
 
 
@@ -33,15 +38,11 @@ class MachineController(object):
             used to launch mpf.py.
         config: A dictionary of machine's configuration settings, merged from
             various sources.
-        physical_hw: Boolean as to whether there is physical pinball controller
-            hardware attached.
         done: Boolean. Set to True and MPF exits.
-        machineflow_index: What machineflow position the machine is currently in.
         machine_path: The root path of this machine_files folder
         display:
         plugins:
         scriptlets:
-        tilted:
         platform:
         events:
     """
@@ -49,13 +50,12 @@ class MachineController(object):
         self.options = options
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework v%s", version.__version__)
-        self.log_system_info()
+        self.log.debug("Command line arguments: {}".format(self.options))
+        self.verify_system_info()
 
         self.loop_start_time = 0
         self.tick_num = 0
-        self.physical_hw = options['physical_hw']
         self.done = False
-        self.machineflow_index = None
         self.machine_path = None  # Path to this machine's folder root
         self.monitors = dict()
         self.plugins = list()
@@ -64,50 +64,87 @@ class MachineController(object):
         self.asset_managers = dict()
         self.game = None
         self.active_debugger = dict()
+        self.machine_vars = CaseInsensitiveDict()
+        self.machine_var_monitor = False
+        self.machine_var_data_manager = None
 
-        self.num_assets_to_load = 0
+        self.flag_bcp_reset_complete = False
+        self.asset_loader_complete = False
 
         self.delay = DelayManager()
 
         self.crash_queue = Queue.Queue()
         Task.create(self._check_crash_queue)
 
+        FileManager.init()
         self.config = dict()
-        self._load_config()
+        self._load_mpf_config()
+        self._set_machine_path()
+        self._load_machine_config()
 
         self.configure_debugger()
 
         self.hardware_platforms = dict()
         self.default_platform = None
 
-        if self.physical_hw:
+        if not self.options['force_platform']:
             for section, platform in self.config['hardware'].iteritems():
                 if platform.lower() != 'default' and section != 'driverboards':
                         self.add_platform(platform)
-        else:
-            self.add_platform('virtual')
-
-        if self.physical_hw:
             self.set_default_platform(self.config['hardware']['platform'])
-        else:
-            self.set_default_platform('virtual')
 
+        else:
+            self.add_platform(self.options['force_platform'])
+            self.set_default_platform(self.options['force_platform'])
+
+        # Do this here so there's a credit_string var even if they're not using
+        # the credits mode
+        try:
+            credit_string = self.config['credits']['free_play_string']
+        except KeyError:
+            credit_string = 'FREE PLAY'
+
+        self.create_machine_var('credits_string', credit_string, silent=True)
 
         self._load_system_modules()
 
-        self.config['machine'] = self.config_processor.process_config2(
-            'machine', self.config.get('machine', dict()), 'machine')
+        # This is called so hw platforms have a change to register for events,
+        # and/or anything else they need to do with system modules since
+        # they're not set up yet when the hw platforms are constructed.
+        for platform in self.hardware_platforms.values():
+            platform.initialize()
+
+        self.validate_machine_config_section('machine')
+        self.validate_machine_config_section('timing')
+        self.validate_machine_config_section('hardware')
+        self.validate_machine_config_section('game')
 
         self._register_system_events()
+        self._load_machine_vars()
         self.events.post("init_phase_1")
+        self.events._process_event_queue()
         self.events.post("init_phase_2")
+        self.events._process_event_queue()
         self._load_plugins()
         self.events.post("init_phase_3")
+        self.events._process_event_queue()
         self._load_scriptlets()
         self.events.post("init_phase_4")
+        self.events._process_event_queue()
         self.events.post("init_phase_5")
+        self.events._process_event_queue()
 
         self.reset()
+
+    def validate_machine_config_section(self, section):
+        if section not in self.config['config_validator']:
+            return
+
+        if section not in self.config:
+            self.config[section] = dict()
+
+        self.config[section] = self.config_processor.process_config2(
+            section, self.config[section], section)
 
     def _register_system_events(self):
         self.events.add_handler('shutdown', self.power_off)
@@ -116,7 +153,22 @@ class MachineController(object):
         self.events.add_handler('quit', self.quit)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.quit)
+        self.events.add_handler('timer_tick', self._loading_tick)
 
+    def _load_machine_vars(self):
+        self.machine_var_data_manager = DataManager(self, 'machine_vars')
+
+        current_time = time.time()
+
+        for name, settings in (
+                self.machine_var_data_manager.get_data().iteritems()):
+
+            if ('expire' in settings and settings['expire'] and
+                    settings['expire'] < current_time):
+
+                settings['value'] = 0
+
+            self.create_machine_var(name=name, value=settings['value'])
 
     def _check_crash_queue(self):
         try:
@@ -128,57 +180,42 @@ class MachineController(object):
             self.log.critical("Crash details: %s", crash)
             self.done = True
 
-    def _load_config(self):
-        # creates the main config dictionary from the YAML machine config files.
+    def _load_mpf_config(self):
+        self.config = Config.load_config_file(self.options['mpfconfigfile'])
 
-        self.config = dict()
-
-        # load the MPF config & machine defaults
-        self.config = Config.load_config_yaml(config=self.config,
-            yaml_file=self.options['mpfconfigfile'])
-
-        # Find the machine_files location. If it starts with a forward or
+    def _set_machine_path(self):
+        # If the machine folder value passed starts with a forward or
         # backward slash, then we assume it's from the mpf root. Otherwise we
-        # assume it's from the subfolder location specified in the
-        # mpfconfigfile location
-
-        if (self.options['machinepath'].startswith('/') or
-                self.options['machinepath'].startswith('\\')):
-            machine_path = self.options['machinepath']
+        # assume it's in the mpf/machine_files folder
+        if (self.options['machine_path'].startswith('/') or
+                self.options['machine_path'].startswith('\\')):
+            machine_path = self.options['machine_path']
         else:
             machine_path = os.path.join(self.config['mpf']['paths']
                                         ['machine_files'],
-                                        self.options['machinepath'])
+                                        self.options['machine_path'])
 
         self.machine_path = os.path.abspath(machine_path)
+        self.log.debug("Machine path: {}".format(self.machine_path))
 
-        # Add the machine folder to our path so we can import modules from it
+        # Add the machine folder to sys.path so we can import modules from it
         sys.path.append(self.machine_path)
 
-        self.log.info("Machine folder: %s", machine_path)
+    def _load_machine_config(self):
+        for num, config_file in enumerate(self.options['configfile']):
 
-        # Now find the config file location. Same as machine_file with the
-        # slash uses to specify an absolute path
+            if not (config_file.startswith('/') or
+                    config_file.startswith('\\')):
 
-        if (self.options['configfile'].startswith('/') or
-                self.options['configfile'].startswith('\\')):
-            config_file = self.options['configfile']
-        else:
+                config_file = os.path.join(self.machine_path,
+                    self.config['mpf']['paths']['config'], config_file)
 
-            if not self.options['configfile'].endswith('.yaml'):
-                self.options['configfile'] += '.yaml'
+            self.log.info("Machine config file #%s: %s", num+1, config_file)
 
-            config_file = os.path.join(machine_path,
-                                       self.config['mpf']['paths']['config'],
-                                       self.options['configfile'])
+            self.config = Util.dict_merge(self.config,
+                Config.load_config_file(config_file))
 
-        self.log.debug("Base machine config file: %s", config_file)
-
-        # Load the machine-specific config
-        self.config = Config.load_config_yaml(config=self.config,
-                                            yaml_file=config_file)
-
-    def log_system_info(self):
+    def verify_system_info(self):
         """Dumps information about the Python installation to the log.
 
         Information includes Python version, Python executable, platform, and
@@ -186,6 +223,13 @@ class MachineController(object):
 
         """
         python_version = sys.version_info
+
+        if python_version[0] != 2 or python_version[1] != 7:
+            self.log.error("Incorrect Python version. MPF requires Python 2.7."
+                           "x. You have Python %s.%s.%s.", python_version[0],
+                           python_version[1], python_version[2])
+            sys.exit()
+
         self.log.debug("Python version: %s.%s.%s", python_version[0],
                       python_version[1], python_version[2])
         self.log.debug("Platform: %s", sys.platform)
@@ -205,14 +249,14 @@ class MachineController(object):
         # TODO: This should be cleaned up. Create a Plugins superclass and
         # classmethods to determine if the plugins should be used.
 
-        for plugin in Config.string_to_list(
+        for plugin in Util.string_to_list(
                 self.config['mpf']['plugins']):
 
 
             self.log.debug("Loading '%s' plugin", plugin)
 
-            i = __import__('mpf.plugins.' + plugin, fromlist=[''])
-            self.plugins.append(i.plugin_class(self))
+            pluginObj = self.string_to_class(plugin)(self)
+            self.plugins.append(pluginObj)
 
     def _load_scriptlets(self):
         if 'scriptlets' in self.config:
@@ -247,9 +291,13 @@ class MachineController(object):
 
         """
         self.events.post('Resetting...')
+        self.events._process_event_queue()
         self.events.post('machine_reset_phase_1')
+        self.events._process_event_queue()
         self.events.post('machine_reset_phase_2')
+        self.events._process_event_queue()
         self.events.post('machine_reset_phase_3')
+        self.events._process_event_queue()
         self.log.debug('Reset Complete')
 
     def add_platform(self, name):
@@ -265,7 +313,9 @@ class MachineController(object):
         if name not in self.hardware_platforms:
             hardware_platform = __import__('mpf.platform.%s' % name,
                                            fromlist=["HardwarePlatform"])
-            self.hardware_platforms[name] = hardware_platform.HardwarePlatform(self)
+
+            self.hardware_platforms[name] = (
+                hardware_platform.HardwarePlatform(self))
 
     def set_default_platform(self, name):
         """Sets the default platform which is used if a device class-specific or
@@ -274,14 +324,14 @@ class MachineController(object):
 
         Args:
             name: String name of the platform to set to default.
-        """
 
+        """
         try:
             self.default_platform = self.hardware_platforms[name]
             self.log.debug("Setting default platform to '%s'", name)
         except KeyError:
-            self.log.error("Cannot set default platform to '%s', as that's not "
-                           "a currently active platform", name)
+            self.log.error("Cannot set default platform to '%s', as that's not"
+                           " a currently active platform", name)
 
     def string_to_class(self, class_string):
         """Converts a string like mpf.system.events.EventManager into a python
@@ -296,6 +346,7 @@ class MachineController(object):
         This function came from here:
         http://stackoverflow.com/questions/452969/
         does-python-have-an-equivalent-to-java-class-forname
+
         """
         parts = class_string.split('.')
         module = ".".join(parts[:-1])
@@ -325,7 +376,6 @@ class MachineController(object):
         a central registry of monitors.
 
         """
-
         if monitor_class not in self.monitors:
             self.monitors[monitor_class] = set()
 
@@ -368,6 +418,7 @@ class MachineController(object):
             pass
 
         self.log_loop_rate()
+        self._platform_stop()
 
         try:
             self.log.info("Hardware loop rate: %s Hz",
@@ -387,7 +438,12 @@ class MachineController(object):
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
         tasks.Task.timer_tick()  # notifies tasks
-        tasks.DelayManager.timer_tick()
+        tasks.DelayManager.timer_tick(self)
+        self.events._process_event_queue()
+
+    def _platform_stop(self):
+        for platform in self.hardware_platforms.values():
+            platform.stop()
 
     def power_off(self):
         """Attempts to perform a power down of the pinball machine and ends MPF.
@@ -400,10 +456,10 @@ class MachineController(object):
         """Performs a graceful exit of MPF."""
         self.log.info("Shutting down...")
         self.events.post('shutdown')
+        self.events._process_event_queue()
         self.done = True
 
     def log_loop_rate(self):
-
         self.log.info("Target MPF loop rate: %s Hz", timing.Timing.HZ)
 
         try:
@@ -413,13 +469,45 @@ class MachineController(object):
         except ZeroDivisionError:
             self.log.info("Actual MPF loop rate: 0 Hz")
 
+    def _loading_tick(self):
+        if not self.asset_loader_complete:
+
+            if AssetManager.loader_queue.qsize():
+                self.log.debug("Holding Attract start while MPF assets load. "
+                               "Remaining: %s",
+                               AssetManager.loader_queue.qsize())
+                self.bcp.bcp_trigger('assets_to_load',
+                     total=AssetManager.total_assets,
+                     remaining=AssetManager.loader_queue.qsize())
+            else:
+                self.bcp.bcp_trigger('assets_to_load',
+                     total=AssetManager.total_assets,
+                     remaining=0)
+                self.asset_loader_complete = True
+
+        elif self.bcp.active_connections and not self.flag_bcp_reset_complete:
+            if self.tick_num % Timing.HZ == 0:
+                self.log.info("Waiting for BCP reset_complete...")
+
+        else:
+            self.log.debug("Asset loading complete")
+            self._reset_complete()
+
+    def bcp_reset_complete(self):
+        self.flag_bcp_reset_complete = True
+
+    def _reset_complete(self):
+        self.log.debug('Reset Complete')
+        self.events.post('reset_complete')
+        self.events.remove_handler(self._loading_tick)
+
     def configure_debugger(self):
         pass
 
-
     def get_debug_status(self, debug_path):
 
-        if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
+        if (self.options['loglevel'] > 10 or
+                    self.options['consoleloglevel'] > 10):
             return True
 
         class_, module = debug_path.split('|')
@@ -431,6 +519,139 @@ class MachineController(object):
                 return False
         except KeyError:
             return False
+
+    def set_machine_var(self, name, value, force_events=False):
+        """Sets the value of a machine variable.
+
+        Args:
+            name: String name of the variable you're setting the value for.
+            value: The value you're setting. This can be any Type.
+            force_events: Boolean which will force the event posting, the
+                machine monitor callback, and writing the variable to disk (if
+                it's set to persist). By default these things only happen if
+                the new value is different from the old value.
+
+        """
+        if name not in self.machine_vars:
+            self.log.warning("Received request to set machine_var '%s', but "
+                             "that is not a valid machine_var.", name)
+            return
+
+        prev_value = self.machine_vars[name]['value']
+        self.machine_vars[name]['value'] = value
+
+        try:
+            change = value-prev_value
+        except TypeError:
+            if prev_value != value:
+                change = True
+            else:
+                change = False
+
+        if change or force_events:
+
+            if self.machine_vars[name]['persist']:
+                disk_var = CaseInsensitiveDict()
+                disk_var['value'] = value
+
+                if self.machine_vars[name]['expire_secs']:
+                    disk_var['expire'] = (time.time() +
+                        self.machine_vars[name]['expire_secs'])
+
+                self.machine_var_data_manager.save_key(name, disk_var)
+
+            self.log.debug("Setting machine_var '%s' to: %s, (prior: %s, "
+                           "change: %s)", name, value, prev_value,
+                           change)
+            self.events.post('machine_var_' + name,
+                                     value=value,
+                                     prev_value=prev_value,
+                                     change=change)
+
+            if self.machine_var_monitor:
+                for callback in self.monitors['machine_vars']:
+                    callback(name=name, value=value,
+                             prev_value=prev_value, change=change)
+
+    def get_machine_var(self, name):
+        """Returns the value of a machine variable.
+
+        Args:
+            name: String name of the variable you want to get that value for.
+
+        Returns:
+            The value of the variable if it exists, or None if the variable
+            does not exist.
+
+        """
+        try:
+            return self.machine_vars[name]['value']
+        except KeyError:
+            return None
+
+    def is_machine_var(self, name):
+        if name in self.machine_vars:
+            return True
+        else:
+            return False
+
+    def create_machine_var(self, name, value=0, persist=False,
+                           expire_secs=None, silent=False):
+        """Creates a new machine variable:
+
+        Args:
+            name: String name of the variable.
+            value: The value of the variable. This can be any Type.
+            persist: Boolean as to whether this variable should be saved to
+                disk so it's available the next time MPF boots.
+            expire_secs: Optional number of seconds you'd like this variable
+                to persist on disk for. When MPF boots, if the expiration time
+                of the variable is in the past, it will be loaded with a value
+                of 0. For example, this lets you write the number of credits on
+                the machine to disk to persist even during power off, but you
+                could set it so that those only stay persisted for an hour.
+
+        """
+        var = CaseInsensitiveDict()
+
+        var['value'] = value
+        var['persist'] = persist
+        var['expire_secs'] = expire_secs
+
+        self.machine_vars[name] = var
+
+        if not silent:
+            self.set_machine_var(name, value, force_events=True)
+
+    def remove_machine_var(self, name):
+        """Removes a machine variable by name. If this variable persists to
+        disk, it will remove it from there too.
+
+        Args:
+            name: String name of the variable you want to remove.
+
+        """
+        try:
+            del self.machine_vars[name]
+            self.machine_var_data_manager.remove_key(name)
+        except KeyError:
+            pass
+
+    def remove_machine_var_search(self, startswith='', endswith=''):
+        """Removes a machine variable by matching parts of its name.
+
+        Args:
+            startswith: Optional start of the variable name to match.
+            endswith: Optional end of the variable name to match.
+
+        For example, if you pass startswit='player' and endswith='score', this
+        method will match and remove player1_score, player2_score, etc.
+
+        """
+        for var in self.machine_vars.keys():
+            if var.startswith(startswith) and var.endswith(endswith):
+                del self.machine_vars[var]
+                self.machine_var_data_manager.remove_key(var)
 
 
 

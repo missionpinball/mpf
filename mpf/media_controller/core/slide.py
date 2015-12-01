@@ -14,9 +14,8 @@ from mpf.system.timing import Timing
 
 try:
     import pygame
-except:
+except ImportError:
     pass
-
 
 class Slide(object):
     """Parent class for a Slide object.
@@ -32,8 +31,6 @@ class Slide(object):
         name: String name of this slide.
         persist: Boolean as for whether this slide should be automatically
             destroyed once it's not shown on the display anymore.
-        removal_key: A unique key that can identify this slide for its removal
-            later.
         expire_ms: How many ms this slide should live for. Default is 0 which
             means it will not automatically be removed.
         mode: A reference to the Mode which created this slide.
@@ -58,25 +55,34 @@ class Slide(object):
         height: Height of this slide, in pixels.
         depth: Integer value of the color depth, either 8 or 24.
         palette: The Pygame palette this slide uses. (8-bit only)
-        removal_key: Unique identifier that can be used later to remove this
-            slide.
         expire_ms: Integer of ms that will cause this slide to automatically
             remove itself. The timer doesn't start until the slide is shown.
+
     """
 
-    def __init__(self, mpfdisplay, machine, name=None, priority=0,
-                 persist=False, removal_key=None, expire_ms=0, mode=None):
+    creation_id = 0
+
+    @classmethod
+    def get_creation_id(cls):
+        Slide.creation_id += 1
+        return Slide.creation_id
+
+
+    def __init__(self, mpfdisplay, machine, priority=0, persist=False,
+                 expire_ms=0, mode=None, name=None):
 
         self.log = logging.getLogger('Slide')
 
         self.mpfdisplay = mpfdisplay
         self.machine = machine
-        self.name = name
         self.priority = priority
         self.persist = persist
-        self.removal_key = removal_key
         self.expire_ms = expire_ms
         self.mode = mode
+        self.name = name
+        self.active_transition = False
+        self.removal_delay = None
+        self.id = Slide.get_creation_id()
 
         self.elements = list()
         self.pending_elements = set()
@@ -95,16 +101,22 @@ class Slide(object):
         self.depth = mpfdisplay.depth
         self.palette = mpfdisplay.palette
 
-        if not name:
-            self.name = str(uuid.uuid4())
-
         # create a Pygame surface for this slide based on the display's surface
         self.surface = pygame.Surface.copy(self.mpfdisplay.surface)
 
-        self.active = False
+        if self.expire_ms:
+            self.schedule_expire()
+
+    def __repr__(self):
+        return ('<Slide:{self.name}, Mode: {self.mode}, Priority: '
+               '{self.priority}.{self.id}, {self.mpfdisplay}'.
+                format(self=self))
+
+    def tickle(self):
+        self.id = self.machine.tick_num
+        self.mpfdisplay.refresh()
 
     def ready(self):
-
         if not self.pending_elements:
             self.log.debug("Checking if slide is ready... Yes!")
             return True
@@ -133,11 +145,13 @@ class Slide(object):
         """Updates this slide by calling each display element's update() method,
         and blits the results if there's an update.
         """
-
         if self.pending_elements:
             return
 
         force_dirty = False
+
+        if self not in self.mpfdisplay.slides:
+            return
 
         for element in self.elements:
 
@@ -211,6 +225,9 @@ class Slide(object):
                                  ((source_pa[x, y] - dest_pa[x, y]) *
                                   (source_pa[x, y] >> 4) / 15.0))
 
+        del dest_pa
+        del source_pa
+
     def add_element(self, element_type, name=None, x=None, y=None, h_pos=None,
                     v_pos=None, text_variables=None, **kwargs):
         """Adds a display element to the slide.
@@ -241,16 +258,12 @@ class Slide(object):
                     slide.
 
         """
-
         element_type = element_type.lower()
 
         try:
             name = name.lower()
         except AttributeError:
             pass
-
-        self.log.debug("Adding '%s' element to slide %s.%s", element_type,
-                       self.mpfdisplay.name, self.name)
 
         element_class = (self.machine.display.display_elements[element_type].
                          display_element_class)
@@ -294,9 +307,6 @@ class Slide(object):
             name: String name of the display element you want to remove.
         """
 
-        self.log.debug('Removing %s element from slide %s.%s', name,
-                       self.mpfdisplay.name, self.name)
-
         mark_dirty = False
 
         # Reverse so we can mark any elements below this as dirty
@@ -333,38 +343,9 @@ class Slide(object):
         if force_dirty:
             for element in self.elements:
                 element.dirty = True
-
         self.update()
 
-    def show(self):
-        """Shows this slide by making it active.
-
-        This is immediate. If you want a transition, use the
-        MPFDisplay.transition() method.
-
-        This method will only show the slide if its priority is the same or
-        higher than the existing slide.
-        """
-
-        if not self.ready():
-            self.add_ready_callback(self.show)
-
-        elif (self.mpfdisplay.current_slide and
-                self.mpfdisplay.current_slide.priority <= self.priority):
-
-            self.log.debug('Showing slide at priority: %s. Slide name: %s',
-                           self.priority, self.name)
-            self.active = True
-            self.mpfdisplay.set_current_slide(slide=self)
-        else:
-            self.log.debug('New slide has a lower priority (%s) than the '
-                           'existing slide (%s). Not showing new slide.',
-                           self.priority,
-                           self.mpfdisplay.current_slide.priority)
-
-        self.schedule_removal()
-
-    def schedule_removal(self, removal_time=None):
+    def schedule_expire(self, removal_time=None):
         """Schedules this slide to automatically be removed.
 
         Args:
@@ -377,26 +358,50 @@ class Slide(object):
             self.expire_ms = Timing.string_to_ms(removal_time)
 
         if self.expire_ms:
-            self.machine.display.delay.add(name=self.name + '_expiration',
-                                           ms=self.expire_ms,
-                                           callback=self.remove)
+            self.removal_delay = self.machine.delay.add(ms=self.expire_ms,
+                                                       callback=self.remove,
+                                                       post_event=True)
 
-    def remove(self):
-        """Removes the slide. If this slide is active, the next-highest priority
-        slide will automatically be shown.
+    def remove(self, refresh_display=True, post_event=False):
+        """Removes the slide.
+
+        Args:
+            refresh_display: Boolean if you want the display to refresh itself
+                based on changes that occurred due to this slide removal.
+                Default is True, but if you're looping through and removing a
+                bunch of slides, you can use False and then manually call it
+                once when you're done.
+
+        This method will scrub the elements which will remove and shut them
+        down, remove any active delays, and remove this slide from the display
+        slides list.
+
         """
-
-        self.log.debug("Removing slide: %s", self.name)
-
         for element in self.elements:
             element.scrub()
 
+        self.elements = list()
+        self.pending_elements = None
+        self.ready_callbacks = None
+        self.persist = False
+        self.active_transition = False
+        self.surface = None
+
+        if post_event and self.name:
+            # self.machine.events.post('removing_slide_{}'.format(self.name))
+            self.machine.send(bcp_command='trigger',
+                              name='removing_slide_{}'.format(self.name))
+
+        if self.removal_delay:
+            self.machine.delay.remove(self.removal_delay)
+
         try:
-            del self.mpfdisplay.slides[self.name]
-        except KeyError:
+            self.mpfdisplay.slides.remove(self)
+        except ValueError:
             pass
 
-        self.mpfdisplay.show_current_active_slide()
+        if refresh_display:
+            self.mpfdisplay.refresh()
 
 
 # The MIT License (MIT)

@@ -6,14 +6,16 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
+
 import logging
-import yaml
 import time
-import os
+from Queue import Queue
 
 from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.file_manager import FileManager
 from mpf.system.timing import Timing
+from mpf.system.utility_functions import Util
 
 
 class LightController(object):
@@ -44,6 +46,19 @@ class LightController(object):
         self.led_update_list = []
 
         self.running_shows = []
+        self.registered_tick_handlers = set()
+
+        self.external_show_connected = False
+        self.external_show_command_queue = Queue()
+        """A thread-safe queue that receives BCP external show commands in the BCP worker
+        thread. The light controller reads and proecesses these commands in the main
+        thread via a tick handler.
+        """
+        self.running_external_show_keys = {}
+        """Dict of active external light shows that were created via BCP commands. This is
+        useful for stopping shows later. Keys are based on the 'name' parameter specified
+        when an external show was started, values are references to the external show object.
+        """
 
         self.initialized = False
 
@@ -172,7 +187,7 @@ class LightController(object):
 
         for event_name, actions in config.iteritems():
             if type(actions) is not list:
-                actions = Config.string_to_list(actions)
+                actions = Util.string_to_list(actions)
 
             for this_action in actions:
 
@@ -232,7 +247,7 @@ class LightController(object):
         """
 
         if type(script) is not list:
-            script = Config.string_to_list(script)
+            script = Util.string_to_list(script)
 
         action_list = list()
 
@@ -244,13 +259,13 @@ class LightController(object):
             if lights:
                 this_step['lights'] = dict()
 
-                for light in Config.string_to_list(lights):
+                for light in Util.string_to_list(lights):
                     this_step['lights'][light] = step['color']
 
             if leds:
                 this_step['leds'] = dict()
 
-                for led in Config.string_to_list(leds):
+                for led in Util.string_to_list(leds):
                     this_step['leds'][led] = step['color']
 
             if light_tags:
@@ -258,7 +273,7 @@ class LightController(object):
                 if 'lights' not in this_step:
                     this_step['lights'] = dict()
 
-                for tag in Config.string_to_lowercase_list(light_tags):
+                for tag in Util.string_to_lowercase_list(light_tags):
                     this_step['lights']['tag|' + tag] = step['color']
 
             if led_tags:
@@ -266,7 +281,7 @@ class LightController(object):
                 if 'leds' not in this_step:
                     this_step['leds'] = dict()
 
-                for tag in Config.string_to_lowercase_list(led_tags):
+                for tag in Util.string_to_lowercase_list(led_tags):
                     this_step['leds']['tag|' + tag] = step['color']
 
             action_list.append(this_step)
@@ -440,6 +455,13 @@ class LightController(object):
         # todo the above code could be better. It could only order the restores
         # for the lights and leds that were in this show that just ended?
 
+    def register_tick_handler(self, handler):
+        self.registered_tick_handlers.add(handler)
+
+    def deregister_tick_handler(self, handler):
+        if handler in self.registered_tick_handlers:
+            self.registered_tick_handlers.remove(handler)
+
     def _tick(self):
         # Runs once per machine loop and services any light updates that are
         # needed.
@@ -457,6 +479,9 @@ class LightController(object):
 
                 if show.ending:
                     break
+
+        for handler in self.registered_tick_handlers:
+            handler()
 
         # Check to see if we need to service any items from our queue. This can
         # be single commands or playlists
@@ -751,12 +776,12 @@ class LightController(object):
 
             if lights:
                 current_action['lights'] = dict()
-                for light in Config.string_to_list(lights):
+                for light in Util.string_to_list(lights):
                     current_action['lights'][light] = color
 
             if leds:
                 current_action['leds'] = dict()
-                for led in Config.string_to_list(leds):
+                for led in Util.string_to_list(leds):
                     current_action['leds'][led] = color
 
             show_actions.append(current_action)
@@ -785,6 +810,129 @@ class LightController(object):
             del self.running_show_keys[key]
         except KeyError:
             pass
+
+    def add_external_show_start_command_to_queue(self, name, priority=0, blend=True, leds=None,
+                            lights=None, flashers=None, gis=None):
+        """Called by BCP worker thread when an external show start command is received
+        via BCP.  Adds the command to a thread-safe queue where it will be processed
+        by the main thread.
+
+        Args:
+            name: The name of the external show, used as a key for subsequent show commands.
+            priority: Integer value of the relative priority of this show.
+            blend: When an light is off in this show, should it allow lower
+                priority lights to show through?
+            leds: A list of led device names that will be used in this show.
+            lights: A list of light device names that will be used in this show.
+            flashers: A list of flasher device names that will be used in this show.
+            gis: A list of GI device names that will be used in this show.
+        """
+        if not self.external_show_connected:
+            self.register_tick_handler(
+                self._update_external_shows)
+            self.external_show_connected = True
+
+        self.external_show_command_queue.put((self._process_external_show_start_command,
+                                              (name, priority, blend, leds,
+                                               lights, flashers, gis)))
+
+    def add_external_show_stop_command_to_queue(self, name):
+        """Called by BCP worker thread when an external show stop command is received
+        via BCP.  Adds the command to a thread-safe queue where it will be processed
+        by the main thread.
+
+        Args:
+            name: The name of the external show.
+        """
+        self.external_show_command_queue.put((self._process_external_show_stop_command, (name,)))
+
+    def add_external_show_frame_command_to_queue(self, name, led_data=None, light_data=None,
+                                                 flasher_data=None, gi_data=None):
+        """Called by BCP worker thread when an external show frame command is received
+        via BCP.  Adds the command to a thread-safe queue where it will be processed
+        by the main thread.
+
+        Args:
+            name: The name of the external show.
+            led_data: A string of concatenated hex color values for the leds in the show.
+            light_data: A string of concatenated hex brightness values for the lights in the show.
+            flasher_data: A string of concatenated pulse time (ms) values for the flashers in the show.
+            gi_data: A string of concatenated hex brightness values for the GI in the show.
+        """
+        self.external_show_command_queue.put((self._process_external_show_frame_command,
+                                              (name, led_data, light_data,
+                                               flasher_data, gi_data)))
+
+    def _update_external_shows(self):
+        """Processes any pending BCP external show commands.  This function is called
+        in the main processing thread and is a tick handler function.
+        """
+        while not self.external_show_command_queue.empty():
+            update_method, args = self.external_show_command_queue.get(False)
+            update_method(*args)
+
+    def _process_external_show_start_command(self, name, priority, blend, leds,
+                                             lights, flashers, gis):
+        """Processes an external show start command.  Runs in the main processing thread.
+
+        Args:
+            name: The name of the external show, used as a key for subsequent show commands.
+            priority: Integer value of the relative priority of this show.
+            blend: When an light is off in this show, should it allow lower
+                priority lights to show through?
+            leds: A list of led device names that will be used in this show.
+            lights: A list of light device names that will be used in this show.
+            flashers: A list of flasher device names that will be used in this show.
+            gis: A list of GI device names that will be used in this show.
+        """
+        if name not in self.running_external_show_keys:
+            self.running_external_show_keys[name] = ExternalShow(self.machine,
+                                                                 name, priority, blend, leds,
+                                                                 lights, flashers, gis)
+
+    def _process_external_show_stop_command(self, name):
+        """Processes an external show stop command.  Runs in the main processing thread.
+
+        Args:
+            name: The name of the external show.
+        """
+        try:
+            self.running_external_show_keys[name].stop()
+            del self.running_external_show_keys[name]
+        except KeyError:
+            pass
+
+        # TODO: Would like to de-register the tick handler for external shows here
+        # However, since this function is called from the tick handler while
+        # iterating over the set of handlers, the list cannot be modified at
+        # this point in time.  Since this function is so quick, it's probably
+        # okay to leave it for now rather than figure out a complicated way to
+        # remove it.
+
+    def _process_external_show_frame_command(self, name, led_data, light_data,
+                                             flasher_data, gi_data):
+        """Processes an external show frame command.  Runs in the main processing thread.
+
+        Args:
+            name: The name of the external show.
+            led_data: A string of concatenated hex color values for the leds in the show.
+            light_data: A string of concatenated hex brightness values for the lights in the show.
+            flasher_data: A string of concatenated pulse time (ms) values for the flashers in the show.
+            gi_data: A string of concatenated hex brightness values for the GI in the show.        """
+        if name not in self.running_external_show_keys:
+            return
+
+        if led_data:
+            self.running_external_show_keys[name].update_leds(led_data)
+
+        if light_data:
+            self.running_external_show_keys[name].update_lights(light_data)
+
+        if flasher_data:
+            self.running_external_show_keys[name].update_gis(flasher_data)
+
+        if gi_data:
+            self.running_external_show_keys[name].update_flashers(gi_data)
 
 
 class Show(Asset):
@@ -888,7 +1036,7 @@ class Show(Asset):
 
                     # convert / ensure lights are single ints
                     if type(value) is str:
-                        value = Config.hexstring_to_int(
+                        value = Util.hex_string_to_int(
                             show_actions[step_num]['lights'][light])
 
                     if type(value) is int and value > 255:
@@ -908,7 +1056,7 @@ class Show(Asset):
             if ('events' in show_actions[step_num] and
                     show_actions[step_num]['events']):
 
-                event_list = (Config.string_to_list(
+                event_list = (Util.string_to_list(
                     show_actions[step_num]['events']))
 
                 step_actions['events'] = event_list
@@ -958,7 +1106,7 @@ class Show(Asset):
 
                 flasher_set = set()
 
-                for flasher in Config.string_to_list(
+                for flasher in Util.string_to_list(
                         show_actions[step_num]['flashers']):
 
                     if 'tag|' in flasher:
@@ -1002,7 +1150,7 @@ class Show(Asset):
 
                     # convert / ensure flashers are single ints
                     if type(value) is str:
-                        value = Config.hexstring_to_int(value)
+                        value = Util.hex_string_to_int(value)
 
                     if type(value) is int and value > 255:
                         value = 255
@@ -1049,7 +1197,7 @@ class Show(Asset):
                             fade = value.split('-f')
 
                     # convert our color of hexes to a list of ints
-                    value = Config.hexstring_to_list(value)
+                    value = Util.hex_string_to_list(value)
                     value.append(fade)
 
                     for led_ in led_list:
@@ -1187,12 +1335,7 @@ class Show(Asset):
         self.machine.light_controller._run_show(self)
 
     def load_show_from_disk(self):
-        # todo add exception handling
-        # create central yaml loader, or, even better, config loader
-
-        show_actions = yaml.load(open(self.file_name, 'r'))
-
-        return show_actions
+        return FileManager.load(self.file_name)
 
     def add_loaded_callback(self, loaded_callback, **kwargs):
         self.asset_manager.log.debug("Adding a loaded callback: %s, %s",
@@ -1734,6 +1877,68 @@ class Playlist(object):
                 return
         else:
             self.current_step_position += 1
+
+
+class ExternalShow(object):
+
+    def __init__(self, machine, name, priority=0, blend=True, leds=None,
+                 lights=None, flashers=None, gis=None):
+
+        self.machine = machine
+        self.name = name
+        self.priority = priority
+        self.blend = blend
+        self.name = None
+        self.leds = list()
+        self.lights = list()
+        self.flashers = list()
+        self.gis = list()
+
+        if leds:
+            self.leds = Util.string_to_list(leds)
+            self.leds = [self.machine.leds[x] for x in self.leds]
+
+        if lights:
+            self.lights = Util.string_to_list(lights)
+            self.lights = [self.machine.lights[x] for x in self.lights]
+
+        if flashers:
+            self.flashers = Util.string_to_list(flashers)
+            self.flashers = [self.machine.flashers[x] for x in self.flashers]
+
+        if gis:
+            self.gis = Util.string_to_list(gis)
+            self.gis = [self.machine.gis[x] for x in self.gis]
+
+    def update_leds(self, data):
+        for led, color in zip(self.leds, Util.chunker(data, 6)):
+            self.machine.light_controller._add_to_led_update_list(
+                led, Util.hex_string_to_list(color), 0, self.priority,
+                self.blend)
+
+    def update_lights(self, data):
+        for light, brightness in zip(self.lights, Util.chunker(data, 2)):
+            self.machine.light_controller._add_to_light_update_list(
+                light, Util.hex_string_to_int(brightness), self.priority, self.blend)
+
+    def update_gis(self, data):
+        for gi, brightness in zip(self.lights, Util.chunker(data, 2)):
+            self.machine.light_controller._add_to_gi_queue(
+                gi, Util.hex_string_to_int(brightness))
+
+    def update_flashers(self, data):
+        for flasher, flash in zip(self.flashers, data):
+            if flash:
+                self.machine.light_controller._add_to_flasher_queue(flasher)
+
+    def stop(self):
+        for led in self.leds:
+            if led.cache['priority'] <= self.priority:
+                led.restore()
+
+        for light in self.lights:
+            if light.cache['priority'] <= self.priority:
+                light.restore()
 
 # The MIT License (MIT)
 

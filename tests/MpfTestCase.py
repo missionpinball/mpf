@@ -1,49 +1,108 @@
 import unittest
 
 from mpf.system.machine import MachineController
+from mpf.system.utility_functions import Util
 import logging
-from datetime import datetime
-import socket
-import os
-from optparse import OptionParser
-import errno
-import version
+import time
 import sys
+from mock import *
+from datetime import datetime, timedelta
+import inspect
 
-# TODO: mock MachineController
-# TODO: mock DelayManager + Tasks
 # TODO: mock BCP and prevent logs
 
 
 class MpfTestCase(unittest.TestCase):
 
+    def get_platform(self):
+        return 'virtual'
+
+    def get_use_bcp(self):
+        return False
+
     def getOptions(self):
         return {
-            'physical_hw': False,
+            'force_platform': self.get_platform(),
             'mpfconfigfile': "mpf/mpfconfig.yaml",
-            'machinepath': self.getMachinePath(),
-            'configfile': self.getConfigFile(),
+            'machine_path': self.getMachinePath(),
+            'configfile': Util.string_to_list(self.getConfigFile()),
+            'debug': True,
+            'bcp': self.get_use_bcp()
                }
 
+    def set_time(self, new_time):
+        self.testTime = new_time
+        time.time.return_value = self.testTime
+
+    def advance_time(self, delta):
+        self.testTime += delta
+        time.time.return_value = self.testTime
+
+    def advance_time_and_run(self, delta):
+        end_time = time.time() + delta
+        self.machine_run()
+        while True:
+            next_event = self.machine.delay.get_next_event()
+            next_timer = self.machine.timing.get_next_timer()
+
+            wait_until = next_event
+            if wait_until and next_timer and wait_until > next_timer:
+                wait_until = next_timer
+
+            if wait_until and wait_until <= end_time:
+                self.set_time(wait_until)
+                self.machine_run()
+            else:
+                break
+
+        self.set_time(end_time)
+        self.machine_run()
+
+    def machine_run(self):
+        self.machine.default_platform.tick()
+        self.machine.timer_tick()
+
+    def unittest_verbosity(self):
+        """Return the verbosity setting of the currently running unittest
+        program, or 0 if none is running.
+
+        """
+        frame = inspect.currentframe()
+        while frame:
+            self = frame.f_locals.get('self')
+            if isinstance(self, unittest.TestProgram):
+                return self.verbosity
+            frame = frame.f_back
+        return 0
+
     def setUp(self):
-        # TODO: more unittest way of logging
-    
-        # define a Handler which writes messages to console
-        console = logging.StreamHandler()
-        console.setLevel(logging.ERROR)
-        
-        # set a format which is simpler for console use
-        formatter = logging.Formatter('%(levelname)s : %(name)s : %(message)s')
-        
-        # tell the handler to use this format
-        console.setFormatter(formatter)
-        
-        # add the handler to the root logger
-        logging.getLogger('').addHandler(console)
+        if self.unittest_verbosity() > 1:
+                logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+        else:
+                # no logging by default
+                logging.basicConfig(level=99)
+
+        self.realTime = time.time
+        self.testTime = self.realTime()
+        time.time = MagicMock(return_value=self.testTime)
 
         # init machine
         self.machine = MachineController(self.getOptions())
 
+        self.machine.default_platform.timer_initialize()
+        self.machine.loop_start_time = time.time()
+
+        self.machine.ball_controller.num_balls_known = 99
+        self.advance_time_and_run(300)
+
     def tearDown(self):
+        if sys.exc_info != (None, None, None):
+            # disable teardown logging after error
+            logging.basicConfig(level=99)
+        # fire all delays
+        self.advance_time_and_run(300)
         self.machine = None
+        time.time = self.realTime
+        self.realTime = None
 

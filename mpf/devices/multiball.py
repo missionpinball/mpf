@@ -24,6 +24,7 @@ class Multiball(Device):
                                         validate=validate)
 
         self.delay = DelayManager()
+        self.balls_ejected = 0
 
         # let ball devices initialise first
         self.machine.events.add_handler('init_phase_3',
@@ -75,8 +76,9 @@ class Multiball(Device):
                                             priority=1000)
             # Register stop handler
             if not isinstance(self.config['shoot_again'], bool):
-                self.delay.add('disable_shoot_again',
-                               self.config['shoot_again'], self.stop)
+                self.delay.add(name='disable_shoot_again',
+                               ms=self.config['shoot_again'],
+                               callback=self.stop)
 
         self.machine.events.post("multiball_" + self.name + "_started",
                          balls=self.config['ball_count'])

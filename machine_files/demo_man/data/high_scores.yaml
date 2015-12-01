@@ -1,0 +1,21 @@
+!!python/object/apply:collections.OrderedDict
+- - - score
+    - - !!python/tuple
+        - BRI
+        - 7050550
+      - !!python/tuple
+        - BRI
+        - 93060
+      - !!python/tuple
+        - BRI
+        - 87890
+      - !!python/tuple
+        - BRI
+        - 87890
+      - !!python/tuple
+        - BID
+        - 31020
+  - - loops
+    - - !!python/tuple
+        - BRI
+        - 42

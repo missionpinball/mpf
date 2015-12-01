@@ -56,6 +56,13 @@ class Timing(object):
     def remove(self, timer):
         self.timers_to_remove.add(timer)
 
+    def get_next_timer(self):
+        next_timer = False
+        for timer in self.timers:
+            if not next_timer or next_timer > timer.wakeup:
+                next_timer = timer.wakeup
+        return next_timer
+
     def timer_tick(self):
         global tick
         Timing.tick += 1
@@ -109,11 +116,23 @@ class Timing(object):
 
         time_string = str(time_string).upper()
 
-        if time_string.endswith("MS") or time_string.endswith("MSEC"):
+        if time_string.endswith('MS') or time_string.endswith('MSEC'):
             time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(time_string)
 
-        elif time_string.endswith("S") or time_string.endswith("SEC"):
+        elif 'D' in time_string:
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(float(time_string) * 86400 * 1000)
+
+        elif 'H' in time_string:
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(float(time_string) * 3600 * 1000)
+
+        elif 'M' in time_string:
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(float(time_string) * 60 * 1000)
+
+        elif time_string.endswith('S') or time_string.endswith('SEC'):
             time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(float(time_string) * 1000)
 

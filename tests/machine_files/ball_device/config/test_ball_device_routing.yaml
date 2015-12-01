@@ -1,0 +1,55 @@
+#config_version=3
+
+game:
+    balls_per_game: 1
+machine:
+    glass_off_mode: False
+
+coils:
+    c_trough1:
+        number:
+    c_trough2:
+        number:
+    c_launcher:
+        number:
+    c_target1:
+        number:
+
+
+switches:
+    s_trough1_1:
+        number:
+    s_trough1_2:
+        number:
+    s_trough2_1:
+        number:
+    s_trough2_2:
+        number:
+    s_launcher:
+        number:
+    s_target1:
+        number:
+    s_playfield:
+        number:
+        tags: playfield_active
+
+ball_devices:
+    test_trough1:
+        eject_coil: c_trough1
+        ball_switches: s_trough1_1, s_trough1_2
+        eject_targets: test_launcher
+        tags: trough, drain, home
+    test_launcher:
+        eject_coil: c_launcher
+        ball_switches: s_launcher
+        eject_targets: test_trough2, test_target1
+    test_target1:
+        eject_coil: c_target1
+        ball_switches: s_target1
+        tags: ball_add_live
+    test_trough2:
+        eject_coil: c_trough2
+        ball_switches: s_trough2_1, s_trough2_2
+        tags: trough, drain, home
+        confirm_eject_type: target
+
