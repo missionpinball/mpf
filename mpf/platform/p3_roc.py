@@ -57,11 +57,10 @@ class HardwarePlatform(Platform):
         self.log.debug("Configuring P3-ROC hardware.")
 
         if not pinproc_imported:
-            self.log.error('Could not import "pinproc". Most likely you do not '
+            raise AssertionError('Could not import "pinproc". Most likely you do not '
                            'have libpinproc and/or pypinproc installed. You can'
                            ' run MPF in software-only "virtual" mode by using '
                            'the -x command like option for now instead.')
-            sys.exit()
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -92,7 +91,8 @@ class HardwarePlatform(Platform):
                 self.proc = pinproc.PinPROC(self.machine_type)
                 self.proc.reset(1)
             except IOError:
-                print "Retrying..."
+                self.log.warning("Failed to connect to P3-ROC. Will retry!")
+                time.sleep(.5)
 
         self.log.info("Successfully connected to P3-ROC")
 
@@ -138,9 +138,8 @@ class HardwarePlatform(Platform):
         proc_num = self.pdbconfig.get_proc_number(device_type,
                                                   str(config['number']))
         if proc_num == -1:
-            self.log.error("Coil %s cannot be controlled by the P3-ROC. "
-                           "Ignoring.", str(config['number']))
-            return
+            raise AssertionError("Coil %s cannot be controlled by the P3-ROC. "
+                                 str(config['number']))
 
         if device_type in ['coil', 'flasher']:
             proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
@@ -185,9 +184,8 @@ class HardwarePlatform(Platform):
             proc_num = self.pdbconfig.get_proc_number('switch',
                                                       str(config['number']))
             if proc_num == -1:
-                self.log.error("Switch %s cannot be controlled by the P3-ROC. "
-                               "Ignoring.", str(config['number']))
-                return
+                raise AssertionError("Switch %s cannot be controlled by the "
+                                     "P3-ROC.", str(config['number']))
         else:
             proc_num = pinproc.decode(self.machine_type, str(config['number']))
 
@@ -268,8 +266,8 @@ class HardwarePlatform(Platform):
         nothing. It's included here in case it's called by mistake.
 
         """
-        self.log.error("An attempt was made to configure a physical DMD, but "
-                       "the P3-ROC does not support physical DMDs.")
+        raise AssertionError("An attempt was made to configure a physical DMD, "
+                             "but the P3-ROC does not support physical DMDs.")
 
     def tick(self):
         """Checks the P3-ROC for any events (switch state changes).
@@ -851,10 +849,9 @@ class PROCDriver(object):
 
             if not ('allow_enable' in self.driver_settings and
                     self.driver_settings['allow_enable']):
-                self.log.warning("Received a command to enable this coil "
-                                 "without pwm, but 'allow_enable' has not been"
-                                 "set to True in this coil's configuration.")
-                return
+                raise AssertionError("Received a command to enable this coil "
+                                     "without pwm, but 'allow_enable' has not been"
+                                     "set to True in this coil's configuration.")
 
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
@@ -1062,9 +1059,9 @@ class PDBConfig(object):
             # (need microsecond resolution).  Instead of doing crazy logic here
             # for a case that probably won't happen, just ignore these banks.
             if group_ctr >= num_proc_banks or lamp_dict['sink_bank'] >= 16:
-                self.log.error("Lamp matrix banks can't be mapped to index "
-                                  "%d because that's outside of the banks the "
-                                  "P3-ROC can control.", lamp_dict['sink_bank'])
+                raise AssertionError("Lamp matrix banks can't be mapped to index "
+                                     "%d because that's outside of the banks the "
+                                     "P3-ROC can control.", lamp_dict['sink_bank'])
             else:
                 self.log.debug("Driver group %02d (lamp sink): slow_time=%d "
                                  "enable_index=%d row_activate_index=%d "
