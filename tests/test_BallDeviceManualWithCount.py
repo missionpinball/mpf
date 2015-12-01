@@ -935,3 +935,84 @@ class TestBallDeviceManualWithCount(MpfTestCase):
         self.assertEquals(0, self._captured)
         self.assertEquals(0, self._missing)
         self.assertEquals("idle", device2._state)
+
+    def test_request_manual_when_launcher_has_ball(self):
+        coil1 = self.machine.coils['eject_coil1']
+        coil2 = self.machine.coils['eject_coil2']
+        device1 = self.machine.ball_devices['test_trough']
+        device2 = self.machine.ball_devices['test_launcher']
+        playfield = self.machine.ball_devices['playfield']
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self._enter = 0
+        self._captured = 0
+        self._missing = 0
+
+
+        # add two initial ball to trough
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(2, self._captured)
+        self._captured = 0
+        self.assertEquals(0, playfield.balls)
+
+        # it should keep the ball
+        coil1.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+        self.assertEquals(2, device1.balls)
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+
+        # request an ball to launcher
+        device2.request_ball()
+        self.advance_time_and_run(1)
+
+        # trough eject
+        coil1.pulse.assert_called_once_with()
+        assert not coil2.pulse.called
+
+        self.machine.switch_controller.process_switch("s_ball_switch1", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device1.balls)
+
+        # launcher receives
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, device2.balls)
+
+        # ball stays in launcher
+        coil1.pulse.assert_called_once_with()
+        coil1.pulse = MagicMock()
+        assert not coil2.pulse.called
+
+        # request an ball to pf
+        playfield.add_ball(player_controlled=True)
+        self.advance_time_and_run(1)
+
+        # still no eject. waiting for player
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+
+        # player shoots the ball
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, device2.balls)
+
+        self.machine.switch_controller.process_switch("s_playfield", 1)
+        self.advance_time_and_run(0.1)
+        self.machine.switch_controller.process_switch("s_playfield", 0)
+        self.advance_time_and_run(1)
+
+        # thats it. no more ejects.
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+
+        self.advance_time_and_run(100)
+        self.assertEquals(1, playfield.balls)
+        self.assertEquals(0, self._captured)
+        self.assertEquals(0, self._missing)
+
+        self.assertEquals("idle", device1._state)
+        self.assertEquals("idle", device2._state)
