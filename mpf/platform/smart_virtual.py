@@ -47,6 +47,10 @@ class HardwarePlatform(VirtualPlatform):
 
                 if not device.config['eject_targets'][0].is_playfield():
                     device.config['eject_coil'].hw_driver.set_target_device(device.config['eject_targets'][0])
+
+                if device.config['confirm_eject_switch']:
+                    device.config['eject_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
+
             elif device.config['hold_coil']:
                 device.config['hold_coil'].hw_driver.register_ball_switches(
                     device.config['ball_switches'])
@@ -55,6 +59,10 @@ class HardwarePlatform(VirtualPlatform):
 
                 if not device.config['eject_targets'][0].is_playfield():
                     device.config['hold_coil'].hw_driver.set_target_device(device.config['eject_targets'][0])
+
+                if device.config['confirm_eject_switch']:
+                    device.config['hold_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
+
 
 
     def configure_driver(self, config, device_type='coil'):
@@ -83,6 +91,10 @@ class HardwarePlatform(VirtualPlatform):
         # ticks every hw loop (typically hundreds of times per sec)
 
         self.delay._process_delays(self.machine)
+
+    def confirm_eject_via_switch(self, switch):
+        self.machine.switch_controller.process_switch(switch.name, 1)
+        self.machine.switch_controller.process_switch(switch.name, 0)
 
     def add_ball_to_device(self, device):
         if device.config['entrance_switch']:
@@ -114,6 +126,7 @@ class SmartVirtualDriver(VirtualDriver):
         self.ball_switches = list()
         self.target_device = None
         self.type = None
+        self.confirm_eject_switch = None
 
     def __repr__(self):
         return "SmartVirtualDriver.{}".format(self.number)
@@ -131,6 +144,11 @@ class SmartVirtualDriver(VirtualDriver):
                 self.machine.switch_controller.process_switch(switch.name, 0,
                                                               logical=True)
                 break
+
+        if self.confirm_eject_switch:
+            self.platform.delay.add(ms=50,
+                                    callback=self.platform.confirm_eject_via_switch,
+                                    switch=self.confirm_eject_switch)
 
         if self.target_device:
             self.platform.delay.add(ms=100,
