@@ -37,12 +37,25 @@ class HardwarePlatform(VirtualPlatform):
 
     def _initialize2(self):
         for device in self.machine.ball_devices:
-            if not device.is_playfield() and device.config['eject_coil']:
+            if device.is_playfield():
+                continue
+            if device.config['eject_coil']:
                 device.config['eject_coil'].hw_driver.register_ball_switches(
                     device.config['ball_switches'])
 
-                if device.config['eject_targets'][0] is not self.machine.playfield:
+                device.config['eject_coil'].hw_driver.type = 'eject'
+
+                if not device.config['eject_targets'][0].is_playfield():
                     device.config['eject_coil'].hw_driver.set_target_device(device.config['eject_targets'][0])
+            elif device.config['hold_coil']:
+                device.config['hold_coil'].hw_driver.register_ball_switches(
+                    device.config['ball_switches'])
+
+                device.config['hold_coil'].hw_driver.type = 'hold'
+
+                if not device.config['eject_targets'][0].is_playfield():
+                    device.config['hold_coil'].hw_driver.set_target_device(device.config['eject_targets'][0])
+
 
     def configure_driver(self, config, device_type='coil'):
         # todo should probably throw out the number that we get since it could
@@ -75,9 +88,9 @@ class HardwarePlatform(VirtualPlatform):
         if device.config['entrance_switch']:
             pass # todo
 
-        found_switch = False
 
         if device.config['ball_switches']:
+            found_switch = False
             for switch in device.config['ball_switches']:
                 if self.machine.switch_controller.is_inactive(switch.name):
                     self.machine.switch_controller.process_switch(switch.name,
@@ -100,17 +113,19 @@ class SmartVirtualDriver(VirtualDriver):
         self.platform = platform
         self.ball_switches = list()
         self.target_device = None
+        self.type = None
 
     def __repr__(self):
         return "SmartVirtualDriver.{}".format(self.number)
 
     def disable(self):
-        pass
+        if self.type == 'hold':
+            self._handle_ball()
 
     def enable(self):
         pass
 
-    def pulse(self, milliseconds=None):
+    def _handle_ball(self):
         for switch in self.ball_switches:
             if self.machine.switch_controller.is_active(switch.name):
                 self.machine.switch_controller.process_switch(switch.name, 0,
@@ -121,6 +136,10 @@ class SmartVirtualDriver(VirtualDriver):
             self.platform.delay.add(ms=100,
                                     callback=self.platform.add_ball_to_device,
                                     device=self.target_device)
+
+    def pulse(self, milliseconds=None):
+        if self.type == 'eject':
+            self._handle_ball()
 
         if milliseconds:
             return milliseconds
