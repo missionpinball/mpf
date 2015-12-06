@@ -42,7 +42,7 @@ class MpfTestCase(unittest.TestCase):
         end_time = time.time() + delta
         self.machine_run()
         while True:
-            next_event = self.machine.delay.get_next_event()
+            next_event = self.machine.delayRegistry.get_next_event()
             next_timer = self.machine.timing.get_next_timer()
 
             wait_until = next_event

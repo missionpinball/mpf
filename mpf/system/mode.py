@@ -29,7 +29,7 @@ class Mode(object):
 
         self.log = logging.getLogger('Mode.' + name)
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.priority = 0
         self._active = False
@@ -526,7 +526,7 @@ class ModeTimer(object):
         self.timer = None
         self.bcp = False
         self.event_keys = set()
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
         self.log = None
         self.debug = False
 

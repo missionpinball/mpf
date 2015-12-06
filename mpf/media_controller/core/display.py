@@ -43,7 +43,7 @@ class DisplayController(object):
         self.log = logging.getLogger("DisplayController")
         self.log.debug("Loading the DisplayController")
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.hw_module = None
         self.fonts = None

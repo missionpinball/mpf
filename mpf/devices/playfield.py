@@ -44,7 +44,7 @@ class Playfield(BallDevice):
         self.tags = self.config['tags']
         self.label = self.config['label']
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.machine.ball_devices[name] = self
 

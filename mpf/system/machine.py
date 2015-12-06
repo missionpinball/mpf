@@ -14,7 +14,7 @@ import Queue
 
 from mpf.system import *
 from mpf.system.config import Config, CaseInsensitiveDict
-from mpf.system.tasks import Task, DelayManager
+from mpf.system.tasks import Task, DelayManager, DelayManagerRegistry
 from mpf.system.data_manager import DataManager
 from mpf.system.timing import Timing
 from mpf.system.assets import AssetManager
@@ -71,7 +71,8 @@ class MachineController(object):
         self.flag_bcp_reset_complete = False
         self.asset_loader_complete = False
 
-        self.delay = DelayManager()
+        self.delayRegistry = DelayManagerRegistry()
+        self.delay = DelayManager(self.delayRegistry)
 
         self.crash_queue = Queue.Queue()
         Task.create(self._check_crash_queue)
@@ -438,7 +439,7 @@ class MachineController(object):
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
         tasks.Task.timer_tick()  # notifies tasks
-        tasks.DelayManager.timer_tick(self)
+        self.delayRegistry.timer_tick(self)
         self.events._process_event_queue()
 
     def _platform_stop(self):

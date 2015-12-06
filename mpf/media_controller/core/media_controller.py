@@ -21,7 +21,7 @@ from mpf.media_controller.core.bcp_server import BCPServer
 from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.events import EventManager
 from mpf.system.timing import Timing
-from mpf.system.tasks import Task, DelayManager
+from mpf.system.tasks import Task, DelayManager, DelayManagerRegistry
 from mpf.system.player import Player
 from mpf.system.assets import AssetManager
 from mpf.system.utility_functions import Util
@@ -82,7 +82,8 @@ class MediaController(object):
         self.machine_vars = CaseInsensitiveDict()
         self.machine_var_monitor = False
         self.tick_num = 0
-        self.delay = DelayManager()
+        self.delayRegistry = DelayManagerRegistry()
+        self.delay = DelayManager(self.delayRegistry)
 
         self._pc_assets_to_load = 0
         self._pc_total_assets = 0
@@ -383,7 +384,7 @@ class MediaController(object):
         self.events.post('timer_tick')  # sends the timer_tick system event
         self.tick_num += 1
         Task.timer_tick()  # notifies tasks
-        DelayManager.timer_tick(self)
+        self.delayRegistry.timer_tick(self)
         self.events._process_event_queue()
 
     def run(self):

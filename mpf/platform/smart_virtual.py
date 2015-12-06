@@ -26,7 +26,7 @@ class HardwarePlatform(VirtualPlatform):
         self.log = logging.getLogger("Smart Virtual Platform")
         self.log.debug("Configuring smart_virtual hardware interface.")
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
     def __repr__(self):
         return '<Platform.SmartVirtual>'
@@ -89,8 +89,7 @@ class HardwarePlatform(VirtualPlatform):
 
     def tick(self):
         # ticks every hw loop (typically hundreds of times per sec)
-
-        self.delay._process_delays(self.machine)
+        pass
 
     def confirm_eject_via_switch(self, switch):
         self.machine.switch_controller.process_switch(switch.name, 1)

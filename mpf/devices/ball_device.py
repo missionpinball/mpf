@@ -31,7 +31,7 @@ class BallDevice(Device):
         super(BallDevice, self).__init__(machine, name, config, collection,
                                          validate=validate)
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(machine.delayRegistry)
 
         if self.config['ball_capacity'] is None:
             self.config['ball_capacity'] = len(self.config['ball_switches'])
