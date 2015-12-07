@@ -217,7 +217,7 @@ class SwitchController(object):
         last changed state.
         """
 
-        return (time.time() - self.switches[switch_name]['time']) * 1000.0
+        return round((time.time() - self.switches[switch_name]['time']) * 1000.0, 0)
 
     def secs_since_change(self, switch_name):
         """Returns the number of ms that have elapsed since this switch
