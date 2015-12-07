@@ -581,6 +581,11 @@ class SwitchController(object):
                     self.machine.switches[switch_name].deactivation_events):
                 self.machine.events.post(event)
 
+    def get_next_timed_switch_event(self):
+        if not self.active_timed_switches:
+            return False
+        return min(self.active_timed_switches.keys())
+
     def _tick(self):
         """Called once per machine tick.
 
