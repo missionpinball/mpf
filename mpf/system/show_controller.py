@@ -1,5 +1,5 @@
-"""Manages the light shows in a pinball machine."""
-# light_controller.py
+"""Manages the harwdare shows (lights, LEDs, flashers, coils, etc.) in a pinball machine."""
+# show_controller.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
 # Released under the MIT License. (See license info at the end of this file.)
@@ -16,13 +16,14 @@ from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.file_manager import FileManager
 from mpf.system.timing import Timing
 from mpf.system.utility_functions import Util
+from mpf.system.rgb_color import RGBColor
 
 
-class LightController(object):
-    """Manages all the light shows in a pinball machine.
+class ShowController(object):
+    """Manages all the hardware shows in a pinball machine.
 
-    'light shows' are coordinated light, flasher, coil, and event effects.
-    The LightController handles priorities, restores, running and stopping
+    'hardware shows' are coordinated light, flasher, coil, and event effects.
+    The ShowController handles priorities, restores, running and stopping
     Shows, etc. There should be only one per machine.
 
     Args:
@@ -30,7 +31,7 @@ class LightController(object):
     """
 
     def __init__(self, machine):
-        self.log = logging.getLogger("LightController")
+        self.log = logging.getLogger("ShowController")
         self.machine = machine
 
         self.light_queue = []
@@ -268,6 +269,7 @@ class LightController(object):
                 for led in Util.string_to_list(leds):
                     this_step['leds'][led] = step['color']
 
+
             if light_tags:
 
                 if 'lights' not in this_step:
@@ -282,7 +284,7 @@ class LightController(object):
                     this_step['leds'] = dict()
 
                 for tag in Util.string_to_lowercase_list(led_tags):
-                    this_step['leds']['tag|' + tag] = step['color']
+                    this_step['leds']['tag|' + tag] = RGBColor(RGBColor.string_to_rgb(step['color']))
 
             action_list.append(this_step)
 
@@ -514,7 +516,7 @@ class LightController(object):
 
         self._do_update()
 
-    def _add_to_light_update_list(self, light, brightness, priority, blend):
+    def add_to_light_update_list(self, light, brightness, priority, blend):
         # Adds an update to our update list, with intelligence that if the list
         # already contains an update for this lightname at the same or lower
         # priority, it deletes that one since there's not sense sending a light
@@ -527,7 +529,7 @@ class LightController(object):
                                        'priority': priority,
                                        'blend': blend})  # remove blend?
 
-    def _add_to_led_update_list(self, led, color, fade_ms, priority, blend):
+    def add_to_led_update_list(self, led, color, fade_ms, priority, blend):
         # See comment from above method
         for item in self.led_update_list:
             if item['led'] == led and item['priority'] <= priority:
@@ -538,21 +540,21 @@ class LightController(object):
                                      'priority': priority,
                                      'blend': blend})
 
-    def _add_to_event_queue(self, event):
+    def add_to_event_queue(self, event):
         # Since events don't blend, this is easy
         self.event_queue.add(event)
 
-    def _add_to_coil_queue(self, coil, action):
+    def add_to_coil_queue(self, coil, action=('pulse', 1.0)):
         # action is a tuple
         # action[0] is string of instruction (pulse, pwm, etc.)
         # action[1] is details for that instruction:
             # for pulse, it's a power multiplier
         self.coil_queue.add((coil, action))
 
-    def _add_to_gi_queue(self, gi, value):
+    def add_to_gi_queue(self, gi, value):
         self.gi_queue.add((gi, value))
 
-    def _add_to_flasher_queue(self, flasher):
+    def add_to_flasher_queue(self, flasher):
         self.flasher_queue.add(flasher)
 
     def _do_update(self):
@@ -812,7 +814,7 @@ class LightController(object):
             pass
 
     def add_external_show_start_command_to_queue(self, name, priority=0, blend=True, leds=None,
-                            lights=None, flashers=None, gis=None):
+                            lights=None, flashers=None, gis=None, coils=None):
         """Called by BCP worker thread when an external show start command is received
         via BCP.  Adds the command to a thread-safe queue where it will be processed
         by the main thread.
@@ -826,6 +828,7 @@ class LightController(object):
             lights: A list of light device names that will be used in this show.
             flashers: A list of flasher device names that will be used in this show.
             gis: A list of GI device names that will be used in this show.
+            coils: A list of coil device names that will be used in this show.
         """
         if not self.external_show_connected:
             self.register_tick_handler(
@@ -834,7 +837,7 @@ class LightController(object):
 
         self.external_show_command_queue.put((self._process_external_show_start_command,
                                               (name, priority, blend, leds,
-                                               lights, flashers, gis)))
+                                               lights, flashers, gis, coils)))
 
     def add_external_show_stop_command_to_queue(self, name):
         """Called by BCP worker thread when an external show stop command is received
@@ -847,7 +850,8 @@ class LightController(object):
         self.external_show_command_queue.put((self._process_external_show_stop_command, (name,)))
 
     def add_external_show_frame_command_to_queue(self, name, led_data=None, light_data=None,
-                                                 flasher_data=None, gi_data=None):
+                                                 flasher_data=None, gi_data=None,
+                                                 coil_data=None, events=None):
         """Called by BCP worker thread when an external show frame command is received
         via BCP.  Adds the command to a thread-safe queue where it will be processed
         by the main thread.
@@ -858,10 +862,12 @@ class LightController(object):
             light_data: A string of concatenated hex brightness values for the lights in the show.
             flasher_data: A string of concatenated pulse time (ms) values for the flashers in the show.
             gi_data: A string of concatenated hex brightness values for the GI in the show.
+            coil_data: A string of concatenated coil values
+            events: A comma-separated list of events to fire
         """
         self.external_show_command_queue.put((self._process_external_show_frame_command,
                                               (name, led_data, light_data,
-                                               flasher_data, gi_data)))
+                                               flasher_data, gi_data, coil_data, events)))
 
     def _update_external_shows(self):
         """Processes any pending BCP external show commands.  This function is called
@@ -872,7 +878,7 @@ class LightController(object):
             update_method(*args)
 
     def _process_external_show_start_command(self, name, priority, blend, leds,
-                                             lights, flashers, gis):
+                                             lights, flashers, gis, coils):
         """Processes an external show start command.  Runs in the main processing thread.
 
         Args:
@@ -888,7 +894,7 @@ class LightController(object):
         if name not in self.running_external_show_keys:
             self.running_external_show_keys[name] = ExternalShow(self.machine,
                                                                  name, priority, blend, leds,
-                                                                 lights, flashers, gis)
+                                                                 lights, flashers, gis, coils)
 
     def _process_external_show_stop_command(self, name):
         """Processes an external show stop command.  Runs in the main processing thread.
@@ -910,7 +916,8 @@ class LightController(object):
         # remove it.
 
     def _process_external_show_frame_command(self, name, led_data, light_data,
-                                             flasher_data, gi_data):
+                                             flasher_data, gi_data, coil_data,
+                                             events):
         """Processes an external show frame command.  Runs in the main processing thread.
 
         Args:
@@ -918,7 +925,10 @@ class LightController(object):
             led_data: A string of concatenated hex color values for the leds in the show.
             light_data: A string of concatenated hex brightness values for the lights in the show.
             flasher_data: A string of concatenated pulse time (ms) values for the flashers in the show.
-            gi_data: A string of concatenated hex brightness values for the GI in the show.        """
+            gi_data: A string of concatenated hex brightness values for the GI in the show.
+            coil_data: A string of concatenated coil values ????
+            events: A comma-separated list of event names to fire immediately.
+        """
         if name not in self.running_external_show_keys:
             return
 
@@ -933,6 +943,13 @@ class LightController(object):
 
         if gi_data:
             self.running_external_show_keys[name].update_flashers(gi_data)
+
+        if coil_data:
+            self.running_external_show_keys[name].update_coils(coil_data)
+
+        if events:
+            for event in events.split(","):
+                self.machine.show_controller._add_to_event_queue(event)
 
 
 class Show(Asset):
@@ -950,13 +967,21 @@ class Show(Asset):
             self._initialize_asset()
             self.do_load(callback=None, show_actions=actions)
 
-    def _initialize_asset(self):
-
-        self.tocks_per_sec = 1  # how many steps per second this show runs at
+        self._tocks_per_sec = 1  # how many steps per second this show runs at
         # you can safely read this value to determine the current playback rate
         # But don't update it directly to change the speed of a running show.
         # Use the change_speed() method instead.
-        self.ticks_per_tock = 0  # calculated based on tocks_per_sec
+        self._ticks_per_tock = 0  # calculated based on tocks_per_sec
+
+    @property
+    def tocks_per_sec(self):
+        return self._tocks_per_sec
+
+    @property
+    def ticks_per_tock(self):
+        return self._ticks_per_tock
+
+    def _initialize_asset(self):
         self.repeat = False  # whether this show repeats when finished
         self.num_repeats = 0  # if self.repeat=True, how many times it repeats
         # self.num_repeats = 0 means it repeats indefinitely until stopped
@@ -1181,34 +1206,26 @@ class Show(Asset):
 
                     value = show_actions[step_num]['leds'][led]
 
-                    # ensure led is list is of 4 ints: [r, g, b, fade_tocks]
-                    if type(value) is list:
-                        # ensure our list is exactly 4 items
-                        if len(value) < 4:
-                            # pad to 4 with zeros
-                            value.extend([0] * (4 - len(value)))
-                        elif len(value) > 4:
-                            value = value[0:4]
-
                     fade = 0
 
                     if type(value) is str:
                         if '-f' in value:
-                            fade = value.split('-f')
+                            composite_value = value.split('-f')
+                            value = composite_value[0]
+                            fade = composite_value[1]
 
                     # convert our color of hexes to a list of ints
-                    value = Util.hex_string_to_list(value)
-                    value.append(fade)
+                    destination_color = RGBColor(RGBColor.string_to_rgb(value))
 
                     for led_ in led_list:
-                        led_actions[led_] = value
+                        led_actions[led_] = {'color': destination_color, 'fade': fade}
 
                         # make sure this led is in self.led_states
                         if led_ not in self.led_states:
                             self.led_states[led_] = {
-                                'current_color': [0, 0, 0],
-                                'destination_color': [0, 0, 0],
-                                'start_color': [0, 0, 0],
+                                'current_color': RGBColor(),
+                                'destination_color': RGBColor(),
+                                'start_color': RGBColor(),
                                 'fade_start': 0,
                                 'fade_end': 0}
 
@@ -1315,8 +1332,7 @@ class Show(Asset):
 
         self.priority = int(priority)
         self.blend = blend
-        self.tocks_per_sec = tocks_per_sec
-        self.ticks_per_tock = Timing.HZ/float(tocks_per_sec)
+        self.change_speed(tocks_per_sec)
         self.callback = callback
         self.num_repeats = num_repeats
         self.sync_ms = sync_ms
@@ -1332,7 +1348,7 @@ class Show(Asset):
             else:
                 self.current_location = start_location
 
-        self.machine.light_controller._run_show(self)
+        self.machine.show_controller._run_show(self)
 
     def load_show_from_disk(self):
         return FileManager.load(self.file_name)
@@ -1377,7 +1393,7 @@ class Show(Asset):
         elif hold is False:  # if it's None we don't assume False
             self.hold = False
 
-        self.machine.light_controller._end_show(self, reset)
+        self.machine.show_controller._end_show(self, reset)
 
     def change_speed(self, tocks_per_sec=1):
         """Changes the playback speed of a running Show.
@@ -1395,14 +1411,14 @@ class Show(Asset):
         Note that you can't just update the show's tocks_per_second directly
         because we also need to update self.ticks_per_tock.
         """
-        self.tocks_per_sec = tocks_per_sec
-        self.ticks_per_tock = Timing.HZ/float(tocks_per_sec)
+        self._tocks_per_sec = tocks_per_sec
+        self._ticks_per_tock = Timing.HZ/float(tocks_per_sec)
 
     def advance(self):
 
         # Internal method which advances the show to the next step
         if self.ending:
-            self.machine.light_controller._end_show(self)
+            self.machine.show_controller._end_show(self)
             return
 
         action_loop_count = 0  # Tracks how many loops we've done in this call
@@ -1433,7 +1449,7 @@ class Show(Asset):
 
                 for light_obj, brightness in item_dict.iteritems():
 
-                    self.machine.light_controller._add_to_light_update_list(
+                    self.machine.show_controller.add_to_light_update_list(
                         light=light_obj,
                         brightness=brightness,
                         priority=self.priority,
@@ -1448,49 +1464,47 @@ class Show(Asset):
 
                 for led_obj, led_dict in item_dict.iteritems():
 
-                    self.machine.light_controller._add_to_led_update_list(
+                    self.machine.show_controller.add_to_led_update_list(
                         led=led_obj,
-                        color=[led_dict[0], led_dict[1], led_dict[2]],
-                        fade_ms=led_dict[3] * self.tocks_per_sec,
+                        color=led_dict['color'],
+                        fade_ms=int(led_dict['fade']) * self.tocks_per_sec,
                         priority=self.priority,
                         blend=self.blend)
 
                     # update the current state
 
                     # grab the old current color
-                    prev_color = [led_dict[0], led_dict[1], led_dict[2]]
+                    prev_color = led_dict['color']
 
                     self.led_states[led_obj] = {
                             'current_color': prev_color,
                             # todo need to calculate this for a restore
-                            'destination_color': [led_dict[0], led_dict[1],
-                                                  led_dict[2]],
+                            'destination_color': led_dict['color'],
                             'start_color': prev_color,
                             'fade_start': current_time,
-                            'fade_end': current_time + (led_dict[3] *
-                                                        self.tocks_per_sec)}
+                            'fade_end': current_time + int(led_dict['fade']) * self.tocks_per_sec}
 
             elif item_type == 'events':
 
                 for event in item_dict:  # item_dict is actually a list here
-                    self.machine.light_controller._add_to_event_queue(event)
+                    self.machine.show_controller.add_to_event_queue(event)
 
             elif item_type == 'coils':
 
                 for coil_obj, coil_action in item_dict.iteritems():
-                    self.machine.light_controller._add_to_coil_queue(
+                    self.machine.show_controller.add_to_coil_queue(
                         coil=coil_obj,
                         action=coil_action)
 
             elif item_type == 'gis':
                 for gi, value in item_dict.iteritems():
-                    self.machine.light_controller._add_to_gi_queue(
+                    self.machine.show_controller.add_to_gi_queue(
                         gi=gi,
                         value=value)
 
             elif item_type == 'flashers':
                 for flasher in item_dict:
-                    self.machine.light_controller._add_to_flasher_queue(
+                    self.machine.show_controller.add_to_flasher_queue(
                         flasher=flasher)
 
         # increment this show's current_location pointer and handle repeats
@@ -1531,14 +1545,14 @@ class Show(Asset):
         """
 
         for light_obj, brightness in self.light_states.iteritems():
-            self.machine.light_controller._add_to_light_update_list(
+            self.machine.show_controller._add_to_light_update_list(
                 light=light_obj,
                 brightness=brightness,
                 priority=self.priority,
                 blend=self.blend)
 
         for led_obj, led_dict in self.led_states.iteritems():
-            self.machine.light_controller._add_to_led_update_list(
+            self.machine.show_controller.add_to_led_update_list(
                 led=led_obj,
                 color=led_dict['current_color'],
                 fade_ms=0,
@@ -1772,9 +1786,9 @@ class Playlist(object):
                 # we stop the current show, we have to come back one.
                 action['show'].stop(hold=hold)
 
-        for item in self.machine.light_controller.queue:
+        for item in self.machine.show_controller.queue:
             if item['playlist'] == self:
-                self.machine.light_controller.queue.remove(item)
+                self.machine.show_controller.queue.remove(item)
         if reset:
             self.current_step_position = 0
             self.current_repeat_loop = 0
@@ -1805,7 +1819,7 @@ class Playlist(object):
                     # stop it, because if this show was a trigger show then it
                     # stopped itself already
                     if action['show'] in (
-                            self.machine.light_controller.running_shows):
+                            self.machine.show_controller.running_shows):
                         action['show'].stop()
         self.starting = False
 
@@ -1852,8 +1866,8 @@ class Playlist(object):
         # if we don't have a trigger_show but we have a time value for this
         # step, set up the time to move on
         if step_time and not step_trigger_show:
-            self.machine.light_controller.queue.append({'playlist': self,
-                'action_time': (self.machine.light_controller.current_time +
+            self.machine.show_controller.queue.append({'playlist': self,
+                'action_time': (self.machine.show_controller.current_time +
                                 step_time)})
 
         # Advance our current_step_position counter
@@ -1882,7 +1896,7 @@ class Playlist(object):
 class ExternalShow(object):
 
     def __init__(self, machine, name, priority=0, blend=True, leds=None,
-                 lights=None, flashers=None, gis=None):
+                 lights=None, flashers=None, gis=None, coils=None):
 
         self.machine = machine
         self.name = name
@@ -1893,43 +1907,48 @@ class ExternalShow(object):
         self.lights = list()
         self.flashers = list()
         self.gis = list()
+        self.coils = list()
 
         if leds:
-            self.leds = Util.string_to_list(leds)
-            self.leds = [self.machine.leds[x] for x in self.leds]
+            self.leds = [self.machine.leds[x] for x in Util.string_to_list(leds)]
 
         if lights:
-            self.lights = Util.string_to_list(lights)
-            self.lights = [self.machine.lights[x] for x in self.lights]
+            self.lights = [self.machine.lights[x] for x in Util.string_to_list(lights)]
 
         if flashers:
-            self.flashers = Util.string_to_list(flashers)
-            self.flashers = [self.machine.flashers[x] for x in self.flashers]
+            self.flashers = [self.machine.flashers[x] for x in Util.string_to_list(flashers)]
 
         if gis:
-            self.gis = Util.string_to_list(gis)
-            self.gis = [self.machine.gis[x] for x in self.gis]
+            self.gis = [self.machine.gis[x] for x in Util.string_to_list(gis)]
+
+        if coils:
+            self.coils = [self.machine.coils[x] for x in Util.string_to_list(coils)]
 
     def update_leds(self, data):
         for led, color in zip(self.leds, Util.chunker(data, 6)):
-            self.machine.light_controller._add_to_led_update_list(
-                led, Util.hex_string_to_list(color), 0, self.priority,
+            self.machine.show_controller.add_to_led_update_list(
+                led, RGBColor(RGBColor.hex_to_rgb(color)), 0, self.priority,
                 self.blend)
 
     def update_lights(self, data):
         for light, brightness in zip(self.lights, Util.chunker(data, 2)):
-            self.machine.light_controller._add_to_light_update_list(
+            self.machine.show_controller._add_to_light_update_list(
                 light, Util.hex_string_to_int(brightness), self.priority, self.blend)
 
     def update_gis(self, data):
         for gi, brightness in zip(self.lights, Util.chunker(data, 2)):
-            self.machine.light_controller._add_to_gi_queue(
+            self.machine.show_controller._add_to_gi_queue(
                 gi, Util.hex_string_to_int(brightness))
 
     def update_flashers(self, data):
         for flasher, flash in zip(self.flashers, data):
             if flash:
-                self.machine.light_controller._add_to_flasher_queue(flasher)
+                self.machine.show_controller._add_to_flasher_queue(flasher)
+
+    def update_coils(self, data):
+        for coil, pulse in zip(self.coils, data):
+            if pulse:
+                self.machine.show_controller._add_to_coil_queue(coil)
 
     def stop(self):
         for led in self.leds:

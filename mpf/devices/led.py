@@ -10,7 +10,7 @@ import time
 
 from mpf.system.device import Device
 from mpf.system.tasks import Task
-from mpf.system.utility_functions import Util
+from mpf.system.rgb_color import RGBColor
 
 
 class LED(Device):
@@ -36,38 +36,37 @@ class LED(Device):
         super(LED, self).__init__(machine, name, config, collection,
                                   platform_section='leds', validate=validate)
 
-        self.config['default_color'] = Util.hex_string_to_list(
-            input_string=self.config['default_color'],
-            output_length=3)
+        self.config['default_color'] = RGBColor(
+            RGBColor.string_to_rgb(self.config['default_color'], (255, 255, 255)))
 
         self.hw_driver = self.platform.configure_led(self.config)
 
         self.fade_in_progress = False
         self.fade_task = None
-        self.fade_destination_color = [0.0, 0.0, 0.0]
+        self.fade_destination_color = RGBColor()
         self.fade_end_time = None
 
         self.state = {  # current state of this LED
-                        'color': [0.0, 0.0, 0.0],
+                        'color': RGBColor(),
                         'priority': 0,
-                        'destination_color': [0.0, 0.0, 0.0],
+                        'destination_color': RGBColor(),
                         'destination_time': 0.0,
-                        'start_color': [0.0, 0.0, 0.0],
+                        'start_color': RGBColor(),
                         'start_time': 0.0
                      }
 
         self.cache = {  # cached state of last manual command
-                        'color': [0.0, 0.0, 0.0],
+                        'color': RGBColor(),
                         'priority': 0,
-                        'destination_color': [0.0, 0.0, 0.0],
+                        'destination_color': RGBColor(),
                         'destination_time': 0.0,
-                        'start_color': [0.0, 0.0, 0.0],
+                        'start_color': RGBColor(),
                         'start_time': 0.0
                      }
 
         self.set_brightness_compensation(self.config['brightness_compensation'])
 
-        self.current_color = []  # one item for each element, 0-255
+        self.current_color = RGBColor()
 
     def set_brightness_compensation(self, value):
         """Sets the brightness compensation for this LED.
@@ -107,9 +106,7 @@ class LED(Device):
         """Sets this LED to the color passed.
 
         Args:
-            color: a list of integers which represent the red, green, and blue
-                values the LED will be set to. If this list is fewer than three
-                items, it assumes zeros for the rest.
+            color: An RGBColor object containing the desired color.
             fade_ms: Integer value of how long the LED should fade from its
                 current color to the color you're passing it here.
             brightness_compensation: Boolean value which controls whether this
@@ -163,12 +160,12 @@ class LED(Device):
                           " %s. Processing new command.", priority,
                           self.state['priority'])
 
-        if brightness_compensation:
-            color = self.compensate(color)
+        #if brightness_compensation:
+        #    color = self.compensate(color)
 
         # make sure we have a list of three ints
-        color = [int(x) for x in color]
-        color += [0] * (3-len(color))
+        #color = [int(x) for x in color]
+        #color += [0] * (3-len(color))
 
         if fade_ms is None:
             if self.config['fade_ms'] is not None:
@@ -234,12 +231,24 @@ class LED(Device):
     def disable(self, fade_ms=0, priority=0, cache=True, force=False):
         """ Disables an LED, including all elements of a multi-color LED.
         """
-        self.color(color=[0, 0, 0], fade_ms=fade_ms, priority=priority,
+        self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
                    cache=cache, force=force)
 
     def on(self, brightness=255, fade_ms=0, start_brightness=None,
            priority=0, cache=True, force=False):
+        """
+        Turn on the LED (uses the default color).
+        Args:
+            brightness:
+            fade_ms:
+            start_brightness:
+            priority:
+            cache:
+            force:
 
+        Returns:
+
+        """
         self.color(color=[self.config['default_color'][0] * brightness / 255.0,
                           self.config['default_color'][1] * brightness / 255.0,
                           self.config['default_color'][2] * brightness / 255.0],
@@ -249,7 +258,17 @@ class LED(Device):
                    force=force)
 
     def off(self, fade_ms=0, priority=0, cache=True, force=False):
-        self.color(color=[0, 0, 0], fade_ms=fade_ms, priority=priority,
+        """
+        Turn off the LED (set all channels to 0).
+        Args:
+            fade_ms:
+            priority:
+            cache:
+            force:
+
+        Returns: None
+        """
+        self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
                    cache=cache, force=force)
         # todo send args to disable()
 
@@ -298,6 +317,10 @@ class LED(Device):
         return color
 
     def _setup_fade(self):
+        """
+        Sets up the fade task for this LED.
+        Returns: None
+        """
         self.fade_in_progress = True
 
         if not self.fade_task:
@@ -308,6 +331,11 @@ class LED(Device):
                 print "already have a fade task"
 
     def _fade_task(self):
+        """
+        Task that performs a fade from the current LED color to the target LED color
+        over the specified fade time.
+        Returns: None
+        """
         while self.fade_in_progress:
 
             if self.debug:
@@ -320,8 +348,6 @@ class LED(Device):
             ratio = ((time.time() - state['start_time']) /
                      (state['destination_time'] - state['start_time']))
 
-            new_color = list()
-
             if self.debug:
                 print "ratio", ratio
 
@@ -330,9 +356,7 @@ class LED(Device):
                 new_color = state['destination_color']
 
             else:
-                new_color.append(int(((state['destination_color'][0] - state['start_color'][0]) * ratio) + state['start_color'][0]))
-                new_color.append(int(((state['destination_color'][1] - state['start_color'][1]) * ratio) + state['start_color'][1]))
-                new_color.append(int(((state['destination_color'][2] - state['start_color'][2]) * ratio) + state['start_color'][2]))
+                new_color = RGBColor.blend(state['start_color'], state['destination_color'], ratio)
 
             if self.debug:
                 print "new color", new_color

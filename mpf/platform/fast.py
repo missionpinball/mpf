@@ -24,6 +24,8 @@ from copy import deepcopy
 from mpf.system.platform import Platform
 from mpf.system.config import Config
 from mpf.system.utility_functions import Util
+from mpf.system.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.system.rgb_color import RGBColor, ColorException
 
 try:
     import serial
@@ -1084,52 +1086,40 @@ class FASTMatrixLight(object):
         self.last_time_changed = time.time()
 
 
-class FASTDirectLED(object):
-
+class FASTDirectLED(RGBLEDPlatformInterface):
+    """
+    Represents a single RGB LED connected to the Fast hardware platform
+    """
     def __init__(self, number):
         self.log = logging.getLogger('FASTLED')
         self.number = number
+        self._current_color = '000000'
 
-        self.current_color = '000000'
-
-        # All FAST LEDs are 3 element RGB
+        # All FAST LEDs are 3 element RGB and are set using hex strings
 
         self.log.debug("Creating FAST RGB LED at hardware address: %s",
                        self.number)
-
-    def hex_to_rgb(self, value):
-        lv = len(value)
-        return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
-
-    def rgb_to_hex(self, rgb):
-        return '%02x%02x%02x' % (rgb[0], rgb[1], rgb[2])
 
     def color(self, color):
         """Instantly sets this LED to the color passed.
 
         Args:
-            color: a 3-item list of integers representing R, G, and B values,
-            0-255 each.
+            color: an RGBColor object
         """
-
-        self.current_color = self.rgb_to_hex(color)
-        # todo this is crazy inefficient right now. todo change it so it can use
-        # hex strings as the color throughout
-
-    def fade(self, color, fade_ms):
-        # todo
-        # not yet implemented. For now we'll just immediately set the color
-        self.color(color)
+        self._current_color = color.hex
 
     def disable(self):
         """Disables (turns off) this LED instantly. For multi-color LEDs it
         turns all elements off.
         """
-
-        self.current_color = '000000'
+        self._current_color = '000000'
 
     def enable(self):
-        self.current_color = 'ffffff'
+        self._current_color = 'ffffff'
+
+    @property
+    def current_color(self):
+        return self._current_color
 
 
 class FASTDMD(object):

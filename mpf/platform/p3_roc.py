@@ -25,6 +25,8 @@ import sys
 from copy import deepcopy
 
 from mpf.system.utility_functions import Util
+from mpf.system.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.system.rgb_color import RGBColor
 
 try:
     import pinproc
@@ -495,7 +497,7 @@ class HardwarePlatform(Platform):
         # appropriately.
 
 
-class PDBLED(object):
+class PDBLED(RGBLEDPlatformInterface):
     """Represents an RGB LED connected to a PD-LED board."""
 
     def __init__(self, board, address, proc_driver, invert=False):
@@ -515,52 +517,27 @@ class PDBLED(object):
         """Instantly sets this LED to the color passed.
 
         Args:
-            color: a 3-item list of integers representing R, G, and B values,
-            0-255 each.
+            color: an RGBColor object
         """
 
         #self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
         #               self.board, self.address, color)
 
-        self.proc.led_color(self.board, self.address[0],
-                            self.normalize_color(color[0]))
-        self.proc.led_color(self.board, self.address[1],
-                            self.normalize_color(color[1]))
-        self.proc.led_color(self.board, self.address[2],
-                            self.normalize_color(color[2]))
-
-    def fade(self, color, fade_ms):
-        # todo
-        # not implemented. For now we'll just immediately set the color
-        self.color(color, fade_ms)
+        self.proc.led_color(self.board, self.address[0], color.red)
+        self.proc.led_color(self.board, self.address[1], color.green)
+        self.proc.led_color(self.board, self.address[2], color.blue)
 
     def disable(self):
         """Disables (turns off) this LED instantly. For multi-color LEDs it
         turns all elements off.
         """
-
-        self.proc.led_color(self.board, self.address[0],
-                            self.normalize_color(0))
-        self.proc.led_color(self.board, self.address[1],
-                            self.normalize_color(0))
-        self.proc.led_color(self.board, self.address[2],
-                            self.normalize_color(0))
+        self.color(RGBColor())
 
     def enable(self):
         """Enables (turns on) this LED instantly. For multi-color LEDs it turns
         all elements on.
         """
-
-        self.color(self.normalize_color(255),
-                   self.normalize_color(255),
-                   self.normalize_color(255)
-                   )
-
-    def normalize_color(self, color):
-        if self.invert:
-            return 255-color
-        else:
-            return color
+        self.color(RGBColor(255, 255, 255))
 
 
 class PDBSwitch(object):

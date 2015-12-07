@@ -17,6 +17,8 @@ import sys
 import traceback
 
 from mpf.system.platform import Platform
+from mpf.system.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.system.rgb_color import RGBColor
 
 
 class HardwarePlatform(Platform):
@@ -61,7 +63,7 @@ class HardwarePlatform(Platform):
             self.machine.config['open_pixel_control'])
 
 
-class OpenPixelLED(object):
+class OpenPixelLED(RGBLEDPlatformInterface):
 
     def __init__(self, opc_client, channel, led):
         self.log = logging.getLogger('OpenPixelLED')
@@ -73,7 +75,13 @@ class OpenPixelLED(object):
 
     def color(self, color):
         self.log.debug("Setting color: %s", color)
-        self.opc_client.set_pixel_color(self.channel, self.led, color)
+        self.opc_client.set_pixel_color(self.channel, self.led, color.rgb)
+
+    def enable(self):
+        self.color(RGBColor(color=(255, 255, 255)))
+
+    def disable(self):
+        self.color(RGBColor())
 
 
 class OpenPixelClient(object):

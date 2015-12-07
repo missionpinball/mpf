@@ -234,7 +234,7 @@ class Shot(Device):
         if state_settings['light_script'] and (self.config['light'] or
                                                    self.config['led']):
             self.running_light_show = (
-                self.machine.light_controller.run_registered_script(
+                self.machine.show_controller.run_registered_script(
                     script_name=state_settings['light_script'],
                     lights=[x.name for x in self.config['light']],
                     leds=[x.name for x in self.config['led']],
