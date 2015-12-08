@@ -269,7 +269,7 @@ class Counter(LogicBlock):
 
         super(Counter, self).__init__(machine, name, player, config)
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.ignore_hits = False
         self.hit_value = -1

@@ -40,16 +40,21 @@ class MpfTestCase(unittest.TestCase):
 
     def advance_time_and_run(self, delta):
         end_time = time.time() + delta
+        self.machine.log.debug("Advance until %s", end_time)
         self.machine_run()
         while True:
-            next_event = self.machine.delay.get_next_event()
+            next_event = self.machine.delayRegistry.get_next_event()
             next_timer = self.machine.timing.get_next_timer()
+            next_switch = self.machine.switch_controller.get_next_timed_switch_event()
 
             wait_until = next_event
-            if wait_until and next_timer and wait_until > next_timer:
+            if not wait_until or (next_timer and wait_until > next_timer):
                 wait_until = next_timer
 
-            if wait_until and wait_until <= end_time:
+            if not wait_until or (next_switch and wait_until > next_switch):
+                wait_until = next_switch
+
+            if wait_until and wait_until < end_time:
                 self.set_time(wait_until)
                 self.machine_run()
             else:
@@ -59,6 +64,7 @@ class MpfTestCase(unittest.TestCase):
         self.machine_run()
 
     def machine_run(self):
+        self.machine.log.debug("Next run %s", time.time())
         self.machine.default_platform.tick()
         self.machine.timer_tick()
 

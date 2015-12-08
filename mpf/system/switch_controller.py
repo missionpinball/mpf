@@ -217,7 +217,7 @@ class SwitchController(object):
         last changed state.
         """
 
-        return (time.time() - self.switches[switch_name]['time']) * 1000.0
+        return round((time.time() - self.switches[switch_name]['time']) * 1000.0, 0)
 
     def secs_since_change(self, switch_name):
         """Returns the number of ms that have elapsed since this switch
@@ -580,6 +580,11 @@ class SwitchController(object):
             for event in (
                     self.machine.switches[switch_name].deactivation_events):
                 self.machine.events.post(event)
+
+    def get_next_timed_switch_event(self):
+        if not self.active_timed_switches:
+            return False
+        return min(self.active_timed_switches.keys())
 
     def _tick(self):
         """Called once per machine tick.

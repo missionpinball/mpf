@@ -27,7 +27,7 @@ class Diverter(Device):
         super(Diverter, self).__init__(machine, name, config, collection,
                                        validate=validate)
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(machine.delayRegistry)
 
         # Attributes
         self.active = False
