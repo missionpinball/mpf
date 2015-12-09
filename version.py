@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-__version_info__ = ('0', '22', '0-led1')
-=======
-__version_info__ = ('0', '22', '0-yaml-fix-1')
->>>>>>> refs/remotes/origin/yaml-fix
+__version_info__ = ('0', '22', '0-led2')
 __version__ = '.'.join(__version_info__)
 
 __bcp_version_info__ = ('1', '0')

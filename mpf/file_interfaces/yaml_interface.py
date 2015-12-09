@@ -33,6 +33,13 @@ class MpfResolver(BaseResolver):
     pass
 
 MpfResolver.add_implicit_resolver(
+    u'tag:yaml.org,2002:str',
+    re.compile(
+        u'''^(?:(0[a-fA-F0-9]{5})|(0[a-fA-F0-9]{2}))$''',
+        re.X),
+    list(u'0'))
+
+MpfResolver.add_implicit_resolver(
     u'tag:yaml.org,2002:bool',
     re.compile(
         u'''^(?:true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO)$''',
@@ -124,7 +131,6 @@ class MpfRoundTripConstructor(RoundTripConstructor):
             return sign*value
         else:
             return sign*int(value)
-
 
 class MpfConstructor(Constructor):
     def construct_yaml_int(self, node):
