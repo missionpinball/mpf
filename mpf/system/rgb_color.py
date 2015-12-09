@@ -1,8 +1,8 @@
 import random
 import re
 
-rgb_min_val = 0
-rgb_max_val = 255
+channel_min_val = 0
+channel_max_val = 255
 rgb_min = (0, 0, 0)
 rgb_max = (255, 255, 255)
 
@@ -190,7 +190,7 @@ class RGBColor(object):
         else:
             raise TypeError("Unsupported operand type(s) for +: '{0}' and '{1}'".format(type(self), type(other)))
 
-        return RGBColor((min(r1 + r2, rgb_max_val), min(g1 + g2, rgb_max_val), min(b1 + b2, rgb_max_val)))
+        return RGBColor((min(r1 + r2, channel_max_val), min(g1 + g2, channel_max_val), min(b1 + b2, channel_max_val)))
 
     def __sub__(self, other):
         """ Subtraction of two RGB colors """
@@ -203,7 +203,7 @@ class RGBColor(object):
         else:
             raise TypeError("Unsupported operand type(s) for -: '{0}' and '{1}'".format(type(self), type(other)))
 
-        return RGBColor((max(r1 - r2, rgb_min_val), max(g1 - g2, rgb_min_val), max(b1 - b2, rgb_min_val)))
+        return RGBColor((max(r1 - r2, channel_min_val), max(g1 - g2, channel_min_val), max(b1 - b2, channel_min_val)))
 
     def __iter__(self):
         """ Iterator """
@@ -215,7 +215,7 @@ class RGBColor(object):
 
     def __repr__(self):
         """ General representation """
-        return "<Color {}>".format(self._color)
+        return "<RGBColor {}>".format(self._color)
 
     @property
     def red(self):
