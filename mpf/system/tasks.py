@@ -87,6 +87,10 @@ class Task(object):
 class DelayManagerRegistry(object):
     def __init__(self):
         self.delay_managers = set()
+        self.new_delay_managers = set()
+
+    def add_delay_manager(self, delay_manager):
+        self.new_delay_managers.add(delay_manager)
 
     def get_next_event(self):
         next_event_time = False
@@ -101,6 +105,9 @@ class DelayManagerRegistry(object):
         for i in self.delay_managers:
             i._process_delays(machine)
 
+        while self.new_delay_managers:
+            self.delay_managers.add(self.new_delay_managers.pop())
+
 class DelayManager(object):
     """Handles delays for one object"""
 
@@ -108,7 +115,7 @@ class DelayManager(object):
         self.log = logging.getLogger("DelayManager")
         self.delays = {}
         self.registry = registry
-        self.registry.delay_managers.add(self)
+        self.registry.add_delay_manager(self)
 
     def add(self, ms, callback, name=None, **kwargs):
         """Adds a delay.

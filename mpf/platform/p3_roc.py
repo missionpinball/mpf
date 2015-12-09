@@ -138,7 +138,7 @@ class HardwarePlatform(Platform):
         proc_num = self.pdbconfig.get_proc_number(device_type,
                                                   str(config['number']))
         if proc_num == -1:
-            raise AssertionError("Coil %s cannot be controlled by the P3-ROC. "
+            raise AssertionError("Coil %s cannot be controlled by the P3-ROC. ",
                                  str(config['number']))
 
         if device_type in ['coil', 'flasher']:

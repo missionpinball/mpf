@@ -545,7 +545,8 @@ class BallDevice(Device):
         elif self.balls < balls:
             # TODO: check if entry switch was active.
             # ball probably returned
-            self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
+            if self.config['confirm_eject_type'] == 'target':
+                self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
             self.balls += 1
             return self._switch_state("failed_eject")
 
