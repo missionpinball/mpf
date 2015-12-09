@@ -239,10 +239,10 @@ class MachineController(object):
 
     def _load_system_modules(self):
         self.log.info("Loading system modules...")
-        for module in self.config['mpf']['system_modules']:
-            self.log.debug("Loading '%s' system module", module[1])
-            m = self.string_to_class(module[1])(self)
-            setattr(self, module[0], m)
+        for name, module in self.config['mpf']['system_modules'].iteritems():
+            self.log.debug("Loading '%s' system module", module)
+            m = self.string_to_class(module)(self)
+            setattr(self, name, m)
 
     def _load_plugins(self):
         self.log.info("Loading plugins...")

@@ -2,6 +2,6 @@ language: python
 python:
   - "2.7"
 # command to install dependencies
-install: "pip install pyyaml"
+install: "pip install ruamel.yaml"
 # command to run tests
 script: make unit
