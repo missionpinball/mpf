@@ -1531,8 +1531,7 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
         self.advance_time_and_run(10)
 
-        # TODO:
-#        self.assertEquals("idle", launcher._state)
+        self.assertEquals("idle", launcher._state)
 
         self.assertEquals(1, playfield.balls)
         self.assertEquals(0, self._captured)
