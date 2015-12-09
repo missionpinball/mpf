@@ -29,13 +29,15 @@ import version
 
 log = logging.getLogger('YAML Interface')
 
+
 class MpfResolver(BaseResolver):
     pass
 
 MpfResolver.add_implicit_resolver(
+    # Process any 3+ digit number with a leading zero as a string
     u'tag:yaml.org,2002:str',
     re.compile(
-        u'''^(?:(0[a-fA-F0-9]{5})|(0[a-fA-F0-9]{2}))$''',
+        u'''^(?:(0[0-9]{2,}))$''',
         re.X),
     list(u'0'))
 
