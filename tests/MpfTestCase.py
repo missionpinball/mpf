@@ -11,8 +11,25 @@ import inspect
 
 # TODO: mock BCP and prevent logs
 
+class TestMachineController(MachineController):
+
+    def __init__(self, options, config_patches):
+        self.test_config_patches = config_patches
+        super(TestMachineController, self).__init__(options)
+
+    def _load_machine_config(self):
+        super(TestMachineController, self)._load_machine_config()
+        self.config = Util.dict_merge(self.config, self.test_config_patches,
+                                      combine_lists=False)
+        # print self.config['plugins']
+
 
 class MpfTestCase(unittest.TestCase):
+
+    machine_config_patches = dict()
+    machine_config_patches['mpf'] = dict()
+    machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
+    machine_config_patches['mpf']['plugins'] = list()
 
     def get_platform(self):
         return 'virtual'
@@ -94,7 +111,8 @@ class MpfTestCase(unittest.TestCase):
         time.time = MagicMock(return_value=self.testTime)
 
         # init machine
-        self.machine = MachineController(self.getOptions())
+        self.machine = TestMachineController(self.getOptions(),
+                                             self.machine_config_patches)
 
         self.machine.default_platform.timer_initialize()
         self.machine.loop_start_time = time.time()
@@ -111,4 +129,3 @@ class MpfTestCase(unittest.TestCase):
         self.machine = None
         time.time = self.realTime
         self.realTime = None
-
