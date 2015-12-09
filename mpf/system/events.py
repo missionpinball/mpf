@@ -505,10 +505,10 @@ class EventManager(object):
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
                            "Args: %s", event, ev_type, callback, kwargs)
 
-        if ev_type is 'queue' and not queue:
+        if ev_type == 'queue' and not queue:
             # If this was a queue event but there were no registered handlers,
             # then we need to do the callback now
-            callback(**kwargs)
+            self.callback_queue.append((callback, kwargs))
 
         elif queue and queue.is_empty():
             # If we had a queue event that had handlers and a queue was created
@@ -519,7 +519,7 @@ class EventManager(object):
 
             if queue.callback:
                 # if there's still a callback, that means it wasn't called yet
-                queue.callback(**kwargs)
+                self.callback_queue.append((queue.callback, kwargs))
 
         if callback and ev_type != 'queue':
             # For event types other than queue, we'll handle the callback here.

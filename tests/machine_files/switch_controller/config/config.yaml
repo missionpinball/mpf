@@ -1,0 +1,5 @@
+#config_version=3
+
+switches:
+    s_test:
+        number:

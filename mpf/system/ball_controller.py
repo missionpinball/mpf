@@ -26,7 +26,7 @@ class BallController(object):
         self.machine = machine
         self.log = logging.getLogger("BallController")
         self.log.debug("Loading the BallController")
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.game = None
 

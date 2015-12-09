@@ -23,7 +23,7 @@ class Multiball(Device):
         super(Multiball, self).__init__(machine, name, config, collection,
                                         validate=validate)
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(machine.delayRegistry)
         self.balls_ejected = 0
 
         # let ball devices initialise first

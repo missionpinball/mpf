@@ -1531,8 +1531,7 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
         self.advance_time_and_run(10)
 
-        # TODO:
-#        self.assertEquals("idle", launcher._state)
+        self.assertEquals("idle", launcher._state)
 
         self.assertEquals(1, playfield.balls)
         self.assertEquals(0, self._captured)
@@ -1837,3 +1836,122 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(11)
         self.assertEquals(2, playfield.balls)
         self.assertEquals(0, self._captured)
+
+
+    def test_ball_request_when_device_is_full(self):
+        coil1 = self.machine.coils['eject_coil1']
+        coil2 = self.machine.coils['eject_coil2']
+        coil3 = self.machine.coils['eject_coil3']
+        trough = self.machine.ball_devices['test_trough']
+        launcher = self.machine.ball_devices['test_launcher']
+        target = self.machine.ball_devices['test_target1']
+        playfield = self.machine.ball_devices['playfield']
+
+        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self.machine.events.add_handler('collecting_balls_complete', self._collecting_balls_complete_handler)
+
+
+        self.assertEquals(None, self.machine.game)
+
+        self._enter = 0
+        self._captured = 0
+        self._missing = 0
+        self._collecting_balls_complete = 0
+        self.machine.ball_controller.num_balls_known = 2
+
+        # add initial balls to trough
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(2, self._captured)
+        self._captured = 0
+        self.assertEquals(0, playfield.balls)
+        self.assertEquals(2, self.machine.ball_controller.num_balls_known)
+
+        # it should keep the ball
+        coil1.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+        coil3.pulse = MagicMock()
+        self.assertEquals(2, trough.balls)
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+
+        # launcher requests a ball
+        launcher.request_ball()
+        self.advance_time_and_run(1)
+
+        # trough ejects
+        coil1.pulse.assert_called_once_with()
+        coil1.pulse = MagicMock()
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+
+        self.machine.switch_controller.process_switch("s_ball_switch1", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, trough.balls)
+
+
+        # launcher receives and ejects
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, launcher.balls)
+        self.assertEquals(1, launcher.available_balls)
+
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+
+        # launcher requests a second ball (but already has one)
+        launcher.request_ball()
+        self.advance_time_and_run(1)
+
+        # launcher is full so nothing should happen
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+        self.assertEquals(1, launcher.balls)
+        self.assertEquals(2, launcher.available_balls)
+
+        # target1 requests a ball
+        target.request_ball()
+        self.advance_time_and_run(1)
+
+        # launcher shoots the ball
+        assert not coil1.pulse.called
+        coil2.pulse.assert_called_once_with()
+        coil2.pulse = MagicMock()
+        assert not coil3.pulse.called
+
+        # ball leaves
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, launcher.balls)
+
+        # no eject of trough yet
+        assert not coil1.pulse.called
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+
+        # target receives
+        self.machine.switch_controller.process_switch("s_ball_switch_target1", 1)
+        self.advance_time_and_run(1)
+
+        # trough ejects
+        coil1.pulse.assert_called_once_with()
+        coil1.pulse = MagicMock()
+        assert not coil2.pulse.called
+        assert not coil3.pulse.called
+
+        self.machine.switch_controller.process_switch("s_ball_switch2", 0)
+        self.advance_time_and_run(1)
+        self.assertEquals(0, trough.balls)
+
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEquals(1, launcher.balls)
+
+        self.assertEquals("idle", trough._state)
+        self.assertEquals("idle", launcher._state)
+        self.assertEquals("idle", target._state)

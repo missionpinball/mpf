@@ -84,27 +84,38 @@ class Task(object):
             Task.Tasks.add(task)
         Task.NewTasks = set()
 
+class DelayManagerRegistry(object):
+    def __init__(self):
+        self.delay_managers = set()
+        self.new_delay_managers = set()
+
+    def add_delay_manager(self, delay_manager):
+        self.new_delay_managers.add(delay_manager)
+
+    def get_next_event(self):
+        next_event_time = False
+        for delay_manager in self.delay_managers:
+            next_event_time_single = delay_manager._get_next_event()
+            if not next_event_time or (next_event_time > next_event_time_single and next_event_time_single):
+                next_event_time = next_event_time_single
+
+        return next_event_time
+
+    def timer_tick(self, machine):
+        for i in self.delay_managers:
+            i._process_delays(machine)
+
+        while self.new_delay_managers:
+            self.delay_managers.add(self.new_delay_managers.pop())
 
 class DelayManager(object):
-    """Parent class for a delay manager which can manage multiple delays."""
+    """Handles delays for one object"""
 
-    delay_managers = set()
-    dead_delay_managers = set()
-
-    # todo it might not make sense to keep each DelayManager as a separate
-    # class instance. It makes iterating complex and doesn't really add any
-    # value? (Well, apart from it's easy to wipe all the delays that a single
-    # module created.) But it might be faster to just have a single delay
-    # manager for the whole system. Then again, we're only iterating at a
-    # relatively slow loop rate.
-
-    def __init__(self):
+    def __init__(self, registry):
         self.log = logging.getLogger("DelayManager")
         self.delays = {}
-        DelayManager.delay_managers.add(self)
-
-    def __del__(self):
-        DelayManager.dead_delay_managers.add(self)  # todo I don't like this
+        self.registry = registry
+        self.registry.add_delay_manager(self)
 
     def add(self, ms, callback, name=None, **kwargs):
         """Adds a delay.
@@ -179,15 +190,6 @@ class DelayManager(object):
         """Removes (clears) all the delays associated with this DelayManager."""
         self.delays = {}
 
-    def get_next_event(self):
-        next_event_time = False
-        for delay_manager in DelayManager.delay_managers:
-            next_event_time_single = delay_manager._get_next_event()
-            if not next_event_time or (next_event_time > next_event_time_single and next_event_time_single):
-                next_event_time = next_event_time_single
-
-        return next_event_time
-
     def _get_next_event(self):
         next_event_time = False
         for delay in self.delays.keys():
@@ -217,17 +219,6 @@ class DelayManager(object):
             # Process event queue after delay
             machine.events._process_event_queue()
 
-    @staticmethod
-    def timer_tick(machine):
-        # This is kind of complex because we have to account for a delay
-        # manager being deleted while we're iterating.
-        live_delay_managers = set()
-        while DelayManager.delay_managers:
-            i = DelayManager.delay_managers.pop()
-            if i not in DelayManager.dead_delay_managers:
-                i._process_delays(machine)
-                live_delay_managers.add(i)
-        DelayManager.delay_managers = live_delay_managers
 
 # The MIT License (MIT)
 

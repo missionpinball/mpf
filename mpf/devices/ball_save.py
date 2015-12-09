@@ -23,7 +23,7 @@ class BallSave(Device):
         super(BallSave, self).__init__(machine, name, config, collection,
                                        validate=validate)
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(machine.delayRegistry)
         self.enabled = False
         self.saves_remaining = 0
 

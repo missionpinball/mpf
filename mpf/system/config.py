@@ -11,12 +11,13 @@ import logging
 import os
 import sys
 
-import yaml
-from mpf.system.file_manager import FileManager
+import ruamel.yaml as yaml
 
+from mpf.file_interfaces.yaml_interface import MpfLoader
+from mpf.system.file_manager import FileManager
 from mpf.system.timing import Timing
-import version
 from mpf.system.utility_functions import Util
+import version
 
 log = logging.getLogger('ConfigProcessor')
 
@@ -50,6 +51,7 @@ class CaseInsensitiveDict(dict):
         except AttributeError:
             return super(CaseInsensitiveDict, self).__delitem__(key)
 
+
 class Config(object):
 
     def __init__(self, machine):
@@ -70,39 +72,8 @@ class Config(object):
         return config
 
     @staticmethod
-    def check_config_file_version(filename):
-        """Checks to see if the version of the file name passed matches the
-        config version MPF needs.
-
-        Args:
-            filename: The file with path to check.
-
-        Raises:
-            exception if the version of the file doesn't match what MPF needs.
-
-        """
-        filename = FileManager.locate_file(filename)
-        file_interface = FileManager.get_file_interface(filename)
-        file_version = file_interface.get_config_file_version(filename)
-
-        if file_version != int(version.__config_version__):
-            log.error("Config file %s is version %s. MPF %s requires "
-                      "version %s", filename, file_version,
-                      version.__version__, version.__config_version__)
-            log.error("Use the Config File Migrator to automatically "
-                      "migrate your config file to the latest version.")
-            log.error("Migration tool: "
-                       "https://missionpinball.com/docs/tools/config-file-migrator/")
-            log.error("More info on config version %s: %s",
-                      version.__config_version__,
-                      version.__config_version_url__)
-            return False
-        else:
-            return True
-
-    @staticmethod
     def process_config(config_spec, source, target=None):
-        config_spec = yaml.load(config_spec)
+        config_spec = yaml.load(config_spec, Loader=MpfLoader)
         processed_config = source
 
         for k in config_spec.keys():
@@ -480,7 +451,7 @@ class Config(object):
         with open(self.machine.config['mpf']['config_versions_file'],
                   'r') as f:
 
-            config_file = yaml.load(f)
+            config_file = yaml.load(f, Loader=MpfLoader)
 
         for ver, sections in config_file.iteritems():
 

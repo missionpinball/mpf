@@ -41,7 +41,7 @@ class Shot(Device):
         super(Shot, self).__init__(machine, name, config, collection,
                                    validate=validate)
 
-        self.delay = mpf.system.tasks.DelayManager()
+        self.delay = mpf.system.tasks.DelayManager(self.machine.delayRegistry)
 
         self.running_light_show = None
         self.active_sequences = list()

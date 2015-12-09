@@ -74,9 +74,18 @@ class DataManager(object):
 
         """
         if not section:
-            return copy.copy(self.data)
+            data = copy.copy(self.data)
         else:
-            return copy.copy(self.data[section])
+
+            try:
+                data = copy.copy(self.data[section])
+            except (KeyError, TypeError):
+                data = dict()
+
+        if isinstance(data, dict):
+            return data
+        else:
+            return dict()
 
     def save_all(self, data=None, delay_secs=0):
         """Writes this DataManager's data to the disk.

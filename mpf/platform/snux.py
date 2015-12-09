@@ -21,7 +21,7 @@ class Snux(object):
 
     def __init__(self, machine, platform):
         self.log = logging.getLogger('Platform.Snux')
-        self.delay = DelayManager()
+        self.delay = DelayManager(machine.delayRegistry)
 
         self.machine = machine
         self.platform = platform

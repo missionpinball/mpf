@@ -896,7 +896,7 @@ class ScoreReel(Device):
     def __init__(self, machine, name, config, collection=None, validate=True):
         super(ScoreReel, self).__init__(machine, name, config, collection,
                                         validate=validate)
-        self.delay = DelayManager()
+        self.delay = DelayManager(machine.delayRegistry)
 
         self.rollover_reel_advanced = False
         # True when a rollover pulse has been ordered
