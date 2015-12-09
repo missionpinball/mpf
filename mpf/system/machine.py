@@ -551,7 +551,7 @@ class MachineController(object):
 
         if change or force_events:
 
-            if self.machine_vars[name]['persist']:
+            if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
                 disk_var = CaseInsensitiveDict()
                 disk_var['value'] = value
 
