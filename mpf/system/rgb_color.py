@@ -1,6 +1,6 @@
 import random
 import re
-import math
+
 
 channel_min_val = 0
 channel_max_val = 255
@@ -455,8 +455,16 @@ class ColorException(Exception):
 
 
 class RGBColorCorrectionProfile(object):
+    """ Encapsulates a named RGB color correction profile and its associated lookup tables. """
 
     def __init__(self, name=None):
+        """
+        Constructor.  Creates a linear correction profile that does not alter color values by default.
+        Args:
+            name: The color correction profile name
+
+        Returns: None
+        """
         self._name = name
 
         # Default lookup table values (linear)
@@ -465,29 +473,57 @@ class RGBColorCorrectionProfile(object):
         for channel in range(3):
             self._lookup_table.append([i for i in range(256)])
 
-        pass
-
     def generate_from_parameters(self, gamma=2.5, whitepoint=(1.0, 1.0, 1.0),
                                  linear_slope=1.0, linear_cutoff=0.0):
+        """
+        Generates an RGB color correction profile lookup table based on the parameters supplied.
+        Args:
+            gamma: Exponent for the nonlinear portion of the brightness curve.
+            whitepoint: Tuple of (red, green, blue) values to multiply by colors prior to gamma correction.
+            linear_slope: Slope (output / input) of the linear section of the brightness curve.
+            linear_cutoff: Y (output) coordinate of intersection between linear and nonlinear curves.
 
+        Returns: None
+        """
+
+        # Lookup table generation algorithm from the Fadecandy open source server code:
+        # https://github.com/scanlime/fadecandy
+        # Copyright (c) 2013 Micah Elizabeth Scott
+        # The MIT License (MIT)
         scale = 1.0 - linear_cutoff
 
         for channel in range(3):
             for index in range(256):
                 # Scale linear table values by the whitepoint
-                self._lookup_table[channel][index] = index / 255.0 * whitepoint[channel]
+                value = index / 255.0 * whitepoint[channel]
 
-                if self._lookup_table[channel][index] * linear_slope <= linear_cutoff:
-                    self._lookup_table[channel][index] = int(linear_slope * self._lookup_table[channel][index] * 255)
+                if value * linear_slope <= linear_cutoff:
+                    value = int(linear_slope * value * 255)
                 else:
-                    non_linear_input = self._lookup_table[channel][index] - (linear_slope * linear_cutoff)
-                    self._lookup_table[channel][index] = int(linear_cutoff + pow(non_linear_input / scale, gamma) * scale * 255)
+                    non_linear_input = value - (linear_slope * linear_cutoff)
+                    value = int(linear_cutoff + pow(non_linear_input / scale, gamma) * scale * 255)
+
+                # Clamp the lookup table value between 0 and 255
+                self._lookup_table[channel][index] = max(0, min(value, 255))
 
     @property
     def name(self):
+        """
+        The color correction profile name.
+        Returns:
+            str
+        """
         return self._name
 
     def apply(self, color):
+        """
+        Applies the current color correction profile to the specified RGBColor object.
+        Args:
+            color: The RGBColor object which to apply the color correction profile.
+
+        Returns:
+            RGBColor
+        """
         return RGBColor((self._lookup_table[0][color.red],
                          self._lookup_table[1][color.green],
                          self._lookup_table[2][color.blue]))

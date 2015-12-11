@@ -1,5 +1,5 @@
 from MpfTestCase import MpfTestCase
-from mpf.system.rgb_color import RGBColor
+from mpf.system.rgb_color import RGBColor, RGBColorCorrectionProfile
 
 
 class TestRGBColor(MpfTestCase):
@@ -47,4 +47,31 @@ class TestRGBColor(MpfTestCase):
 
         self.assertTrue(color1 != color2)
         self.assertFalse(color1 == color2)
+
+    def test_color_correction(self):
+        color = RGBColor(RGBColor.name_to_rgb('DarkGray'))
+        self.assertEquals((169, 169, 169), color.rgb)
+
+        # Tests default color correction profile (should be no correction)
+        color_correction_profile = RGBColorCorrectionProfile()
+        corrected_color = color_correction_profile.apply(color)
+        self.assertEquals((169, 169, 169), corrected_color.rgb)
+
+        # Test correction with default parameters
+        color_correction_profile.generate_from_parameters(gamma=2.5,
+                                                          whitepoint=(1.0, 1.0, 1.0),
+                                                          linear_slope=1.0,
+                                                          linear_cutoff=0.0)
+        corrected_color = color_correction_profile.apply(color)
+        self.assertEquals((91, 91, 91), corrected_color.rgb)
+
+        # Test correction with new parameters
+        color_correction_profile.generate_from_parameters(gamma=2.0,
+                                                          whitepoint=(0.9, 0.85, 0.9),
+                                                          linear_slope=0.75,
+                                                          linear_cutoff=0.1)
+        corrected_color = color_correction_profile.apply(color)
+        self.assertEquals((77, 67, 77), corrected_color.rgb)
+
+
 
