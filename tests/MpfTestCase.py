@@ -44,7 +44,8 @@ class MpfTestCase(unittest.TestCase):
             'machine_path': self.getMachinePath(),
             'configfile': Util.string_to_list(self.getConfigFile()),
             'debug': True,
-            'bcp': self.get_use_bcp()
+            'bcp': self.get_use_bcp(),
+            'rebuild_cache': False
                }
 
     def set_time(self, new_time):
