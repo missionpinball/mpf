@@ -25,7 +25,6 @@ from mpf.system.platform import Platform
 from mpf.system.config import Config
 from mpf.system.utility_functions import Util
 from mpf.system.rgb_led_platform_interface import RGBLEDPlatformInterface
-from mpf.system.rgb_color import RGBColor, ColorException
 
 try:
     import serial

@@ -11,6 +11,7 @@ import time
 from mpf.system.device import Device
 from mpf.system.tasks import Task
 from mpf.system.rgb_color import RGBColor
+from mpf.system.rgb_color import RGBColorCorrectionProfile
 
 
 class LED(Device):
@@ -30,6 +31,22 @@ class LED(Device):
     @classmethod
     def device_class_init(cls, machine):
         machine.validate_machine_config_section('led_settings')
+
+        # Generate and add color correction profiles to the machine
+        machine.led_color_correction_profiles = dict()
+        for profile_name, profile_parameters in machine.config['led_settings']['color_correction_profiles'].iteritems():
+
+            machine.config_processor.process_config2('color_correction_profile',
+                                                     machine.config['led_settings']
+                                                     ['color_correction_profiles'][profile_name],
+                                                     profile_parameters)
+
+            profile = RGBColorCorrectionProfile(profile_name)
+            profile.generate_from_parameters(gamma=profile_parameters['gamma'],
+                                             whitepoint=profile_parameters['whitepoint'],
+                                             linear_slope=profile_parameters['linear_slope'],
+                                             linear_cutoff=profile_parameters['linear_cutoff'])
+            machine.led_color_correction_profiles[profile_name] = profile
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
@@ -64,54 +81,25 @@ class LED(Device):
                         'start_time': 0.0
                      }
 
-        self.set_brightness_compensation(self.config['brightness_compensation'])
+        # Set color correction profile (if applicable)
+        self._color_correction_profile = None
+        if self.config['color_correction_profile'] is not None:
+            profile = self.machine.led_color_correction_profiles[self.config['color_correction_profile']]
+            if profile is not None:
+                self.set_color_correction_profile(profile)
 
         self.current_color = RGBColor()
 
-    def set_brightness_compensation(self, value):
-        """Sets the brightness compensation for this LED.
+    def set_color_correction_profile(self, profile):
+        self._color_correction_profile = profile
 
-        args:
-            value: Str or list (of 1-to-3 items) of the new brightness
-                compensation value to set. List items are floats. 1.0 is
-                standard full brightness. 0.0 is off. 2.0 is 200% brightness
-                (which only comes into play if the LED is not at full
-                brightness). If the value is a string, it's converted to a list,
-                broken by commas.
-
-        The brightness compensation list is three items long, one for each RGB
-        element. If the LED has less than three elements, additional values are
-        ignored.
-
-        If the value list is only one item, that value is used for all three
-        elements.
-
-        If the value list is two items, a value of 1.0 is used for the third
-        item.
-
-        """
-
-        if not value:
-            value = [1.0, 1.0, 1.0]
-
-        if len(value) == 1:
-            value.extend([value[0], value[0]])
-        elif len(value) == 2:
-            value.append(1.0)
-
-        self.config['brightness_compensation'] = value
-
-    def color(self, color, fade_ms=None, brightness_compensation=True,
-              priority=0, cache=True, force=False, blend=False):
+    def color(self, color, fade_ms=None, priority=0, cache=True, force=False, blend=False):
         """Sets this LED to the color passed.
 
         Args:
             color: An RGBColor object containing the desired color.
             fade_ms: Integer value of how long the LED should fade from its
                 current color to the color you're passing it here.
-            brightness_compensation: Boolean value which controls whether this
-                LED will be light using the current brightness compensation.
-                Default is True.
             priority: Arbitrary integer value of the priority of this request.
                 If the incoming priority is lower than the current priority,
                 this incoming color request will have no effect. Default is 0.
@@ -125,14 +113,13 @@ class LED(Device):
 
         if self.debug:
             self.log.debug("+------Received new color command---------")
+            self.log.debug("| led: %s", self.name)
             self.log.debug("| color: %s", color)
             self.log.debug("| priority: %s", priority)
             self.log.debug("| cache: %s", cache)
             self.log.debug("| force: %s", force)
             self.log.debug("| fade_ms: %s", fade_ms)
             self.log.debug("| blend: %s", blend)
-            self.log.debug("| brightness_compensation: %s",
-                          brightness_compensation)
 
             self.log.debug("+-------------Current State---------------")
             self.log.debug("| color: %s", self.state['color'])
@@ -151,29 +138,22 @@ class LED(Device):
 
             if self.debug:
                 self.log.debug("Incoming color priority: %s. Current priority: "
-                              " %s. Not applying update.", priority,
-                              self.state['priority'])
+                               " %s. Not applying update.", priority,
+                               self.state['priority'])
             return
 
         elif self.debug:
             self.log.debug("Incoming color priority: %s. Current priority: "
-                          " %s. Processing new command.", priority,
-                          self.state['priority'])
-
-        #if brightness_compensation:
-        #    color = self.compensate(color)
-
-        # make sure we have a list of three ints
-        #color = [int(x) for x in color]
-        #color += [0] * (3-len(color))
+                           " %s. Processing new command.", priority,
+                           self.state['priority'])
 
         if fade_ms is None:
             if self.config['fade_ms'] is not None:
                 fade_ms = self.config['fade_ms']
                 if self.debug:
                     self.log.debug("Incoming fade_ms is none. Setting to %sms "
-                                  "based on this LED's default fade config",
-                                  fade_ms)
+                                   "based on this LED's default fade config",
+                                   fade_ms)
             elif self.machine.config['led_settings']:
                 fade_ms = (self.machine.config['led_settings']
                            ['default_led_fade_ms'])
@@ -198,11 +178,22 @@ class LED(Device):
                 print "we have a fade to set up"
 
         else:
-            self.hw_driver.color(color)
             self.state['color'] = color
 
             if self.debug:
                 self.log.debug("Setting Color: %s", color)
+
+            # Apply color correction profile (if one is set)
+            if self._color_correction_profile is None:
+                self.hw_driver.color(color)
+                if self.debug:
+                    self.log.debug("Output Color to Hardware: %s", color)
+            else:
+                self.hw_driver.color(self._color_correction_profile.apply(color))
+                if self.debug:
+                    self.log.debug("Output Color to Hardware: %s (applied '%s' color correction profile)",
+                                   self._color_correction_profile.apply(color),
+                                   self._color_correction_profile.name)
 
         if cache:
             self.cache['color'] = color  # new color
@@ -215,6 +206,7 @@ class LED(Device):
 
         if self.debug:
             self.log.debug("+---------------New State-----------------")
+            self.log.debug("| led: %s", self.name)
             self.log.debug("| color: %s *******************", self.state['color'])
             self.log.debug("| priority: %s", self.state['priority'])
             self.log.debug("| new fade: %s", fade_ms)
@@ -286,35 +278,9 @@ class LED(Device):
 
         self.color(color=self.cache['color'],
                    fade_ms=0,
-                   brightness_compensation=False,  # cached value includes this
                    priority=self.cache['priority'],
                    force=True,
                    cache=True)
-
-    def compensate(self, color):
-        """Applies the current brightness compensation values to the passed
-        color.
-
-        Args:
-            color: a 3-item color list of ints
-
-        Returns:
-            The brightness-compensated 3-item color list of ints
-        """
-
-        global_settings = self.machine.config['led_settings']
-
-        color[0] = (int(color[0] *
-                    self.config['brightness_compensation'][0] *
-                    global_settings['brightness_compensation'][0]))
-        color[1] = (int(color[1] *
-                    self.config['brightness_compensation'][1] *
-                    global_settings['brightness_compensation'][1]))
-        color[2] = (int(color[2] *
-                    self.config['brightness_compensation'][2] *
-                    global_settings['brightness_compensation'][2]))
-
-        return color
 
     def _setup_fade(self):
         """
@@ -361,9 +327,7 @@ class LED(Device):
             if self.debug:
                 print "new color", new_color
 
-            self.color(color=new_color, fade_ms=0,
-                       brightness_compensation=False,
-                       priority=state['priority'], cache=False)
+            self.color(color=new_color, fade_ms=0, priority=state['priority'], cache=False)
 
             yield
 
@@ -376,7 +340,6 @@ class LED(Device):
 
     def _kill_fade(self):
         self.fade_in_progress = False
-
 
 
 # The MIT License (MIT)

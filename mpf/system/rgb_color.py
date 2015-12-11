@@ -1,5 +1,6 @@
 import random
 import re
+import math
 
 channel_min_val = 0
 channel_max_val = 255
@@ -451,4 +452,43 @@ class RGBColor(object):
 class ColorException(Exception):
     """ General exception thrown for color utilities non-exit exceptions. """
     pass
+
+
+class RGBColorCorrectionProfile(object):
+
+    def __init__(self, name=None):
+        self._name = name
+
+        # Default lookup table values (linear)
+        self._lookup_table = []
+
+        for channel in range(3):
+            self._lookup_table.append([i for i in range(256)])
+
+        pass
+
+    def generate_from_parameters(self, gamma=2.5, whitepoint=(1.0, 1.0, 1.0),
+                                 linear_slope=1.0, linear_cutoff=0.0):
+
+        scale = 1.0 - linear_cutoff
+
+        for channel in range(3):
+            for index in range(256):
+                # Scale linear table values by the whitepoint
+                self._lookup_table[channel][index] = index / 255.0 * whitepoint[channel]
+
+                if self._lookup_table[channel][index] * linear_slope <= linear_cutoff:
+                    self._lookup_table[channel][index] = int(linear_slope * self._lookup_table[channel][index] * 255)
+                else:
+                    non_linear_input = self._lookup_table[channel][index] - (linear_slope * linear_cutoff)
+                    self._lookup_table[channel][index] = int(linear_cutoff + pow(non_linear_input / scale, gamma) * scale * 255)
+
+    @property
+    def name(self):
+        return self._name
+
+    def apply(self, color):
+        return RGBColor((self._lookup_table[0][color.red],
+                         self._lookup_table[1][color.green],
+                         self._lookup_table[2][color.blue]))
 

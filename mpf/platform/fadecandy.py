@@ -11,6 +11,7 @@ import json
 import struct
 
 from mpf.system.utility_functions import Util
+from mpf.system.config import Config
 from mpf.platform.openpixel import OpenPixelClient
 from mpf.platform.openpixel import HardwarePlatform as OPHardwarePlatform
 
@@ -58,21 +59,20 @@ class FadeCandyOPClient(OpenPixelClient):
 
         self.update_every_tick = True
 
-        self.gamma = self.machine.config['led_settings']['gamma']
-        self.whitepoint = Util.string_to_list(
-            self.machine.config['led_settings']['whitepoint'])
+        self.config = self.machine.config_processor.process_config2('fadecandy',
+                                                                    self.machine.config['fadecandy'])
+
+        self.gamma = self.config['gamma']
+        self.whitepoint = Util.string_to_list(self.config['whitepoint'])
 
         self.whitepoint[0] = float(self.whitepoint[0])
         self.whitepoint[1] = float(self.whitepoint[1])
         self.whitepoint[2] = float(self.whitepoint[2])
 
-        self.linear_slope = (
-            self.machine.config['led_settings']['linear_slope'])
-        self.linear_cutoff = (
-            self.machine.config['led_settings']['linear_cutoff'])
-        self.keyframe_interpolation = (
-            self.machine.config['led_settings']['keyframe_interpolation'])
-        self.dithering = self.machine.config['led_settings']['dithering']
+        self.linear_slope = self.config['linear_slope']
+        self.linear_cutoff = self.config['linear_cutoff']
+        self.keyframe_interpolation = self.config['keyframe_interpolation']
+        self.dithering = self.config['dithering']
 
         if not self.dithering:
             self.disable_dithering()

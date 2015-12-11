@@ -45,7 +45,6 @@ class TestRGBColor(MpfTestCase):
         color_diff = color1 - color2
         self.assertEquals((0, 0, 9), color_diff.rgb)
 
-        assert color1 != color2
-
-        assert not (color1 == color2)
+        self.assertTrue(color1 != color2)
+        self.assertFalse(color1 == color2)
 
