@@ -31,6 +31,8 @@ class LED(Device):
     @classmethod
     def device_class_init(cls, machine):
         machine.validate_machine_config_section('led_settings')
+        if machine.config['led_settings']['color_correction_profiles'] is None:
+            machine.config['led_settings']['color_correction_profiles'] = dict()
 
         # Generate and add color correction profiles to the machine
         machine.led_color_correction_profiles = dict()
@@ -84,9 +86,15 @@ class LED(Device):
         # Set color correction profile (if applicable)
         self._color_correction_profile = None
         if self.config['color_correction_profile'] is not None:
-            profile = self.machine.led_color_correction_profiles[self.config['color_correction_profile']]
-            if profile is not None:
-                self.set_color_correction_profile(profile)
+            if self.config['color_correction_profile'] in self.machine.led_color_correction_profiles:
+                profile = self.machine.led_color_correction_profiles[self.config['color_correction_profile']]
+                if profile is not None:
+                    self.set_color_correction_profile(profile)
+            else:
+                self.log.warning("Color correction profile '%s' was specified for the LED"
+                                 " but the color correction profile does not exist."
+                                 " Color correction will not be applied to this LED.",
+                                 self.config['color_correction_profile'])
 
         self.current_color = RGBColor()
 
