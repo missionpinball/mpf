@@ -9,8 +9,6 @@ from mock import *
 from datetime import datetime, timedelta
 import inspect
 
-# TODO: mock BCP and prevent logs
-
 class TestMachineController(MachineController):
 
     def __init__(self, options, config_patches):

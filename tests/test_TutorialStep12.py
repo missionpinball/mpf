@@ -47,8 +47,6 @@ class TestTutorialStep12(MpfTestCase):
         # ball drains, game goes to ball 2
         self.machine.default_platform.add_ball_to_device(
             self.machine.ball_devices.bd_trough)
-        # todo bug here. Have to call advance_time_and_run twice for it to work
-        self.advance_time_and_run(1)
         self.advance_time_and_run(1)
 
         self.assertEqual(2, self.machine.game.player.ball)
@@ -76,8 +74,6 @@ class TestTutorialStep12(MpfTestCase):
         # ball drains, game goes to ball 3
         self.machine.default_platform.add_ball_to_device(
             self.machine.ball_devices.bd_trough)
-        # todo bug here. Have to call advance_time_and_run twice for it to work
-        self.advance_time_and_run(1)
         self.advance_time_and_run(1)
 
         self.assertEqual(3, self.machine.game.player.ball)
@@ -107,8 +103,6 @@ class TestTutorialStep12(MpfTestCase):
         # ball drains, game ends
         self.machine.default_platform.add_ball_to_device(
             self.machine.ball_devices.bd_trough)
-        # todo bug here. Have to call advance_time_and_run twice for it to work
-        self.advance_time_and_run(1)
         self.advance_time_and_run(1)
 
         self.assertIsNone(self.machine.game)
