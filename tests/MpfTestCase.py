@@ -92,7 +92,7 @@ class MpfTestCase(unittest.TestCase):
         frame = inspect.currentframe()
         while frame:
             self = frame.f_locals.get('self')
-            if isinstance(self, unittest.TestProgram):
+            if isinstance(self, unittest.TestProgram) or isinstance(self, unittest.TextTestRunner):
                 return self.verbosity
             frame = frame.f_back
         return 0
