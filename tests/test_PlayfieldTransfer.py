@@ -18,10 +18,14 @@ class TestPlayfieldTransfer(MpfTestCase):
         pf2 = self.machine.ball_devices['playfield2']
 
         pf1.balls = 2
+        pf1.available_balls = 2
         pf2.balls = 2
+        pf2.available_balls = 2
         
         self.machine.switch_controller.process_switch("s_transfer", 1)
         self.advance_time_and_run(2)
 
         self.assertEquals(1, pf1.balls)
+        self.assertEquals(1, pf1.available_balls)
         self.assertEquals(3, pf2.balls)
+        self.assertEquals(3, pf2.available_balls)
