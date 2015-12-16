@@ -1467,7 +1467,7 @@ class Show(Asset):
                     self.machine.show_controller.add_to_led_update_list(
                         led=led_obj,
                         color=led_dict['color'],
-                        fade_ms=int(led_dict['fade']) * self.tocks_per_sec,
+                        fade_ms=int(led_dict['fade']) / self.tocks_per_sec * 1000,
                         priority=self.priority,
                         blend=self.blend)
 
@@ -1482,7 +1482,7 @@ class Show(Asset):
                             'destination_color': led_dict['color'],
                             'start_color': prev_color,
                             'fade_start': current_time,
-                            'fade_end': current_time + int(led_dict['fade']) * self.tocks_per_sec}
+                            'fade_end': current_time + int(led_dict['fade']) / self.tocks_per_sec * 1000}
 
             elif item_type == 'events':
 
