@@ -1,4 +1,4 @@
-from MpfTestCase import MpfTestCase
+from .MpfTestCase import MpfTestCase
 
 class TestConfigMissingVersion(MpfTestCase):
 

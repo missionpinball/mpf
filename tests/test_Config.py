@@ -1,4 +1,4 @@
-from MpfTestCase import MpfTestCase
+from .MpfTestCase import MpfTestCase
 
 class TestConfig(MpfTestCase):
 
@@ -17,11 +17,11 @@ class TestConfig(MpfTestCase):
         self.assertIs(False, self.machine.config['test_section']['false_key2'])
         self.assertIs(False, self.machine.config['test_section']['false_key3'])
         self.assertIs(False, self.machine.config['test_section']['false_key4'])
-        self.assertEquals('on', self.machine.config['test_section']['on_string'])
-        self.assertEquals('off', self.machine.config['test_section']['off_string'])
-        self.assertEquals(6400, self.machine.config['test_section']['int_6400'])
-        self.assertEquals(3200, self.machine.config['test_section']['int_3200'])
-        self.assertEquals(6, self.machine.config['test_section']['int_6'])
-        self.assertEquals(7, self.machine.config['test_section']['int_7'])
-        self.assertEquals(6400, self.machine.config['test_section']['int_6400'])
-        self.assertEquals('00ff00', self.machine.config['test_section']['str_00ff00'])
+        self.assertEqual('on', self.machine.config['test_section']['on_string'])
+        self.assertEqual('off', self.machine.config['test_section']['off_string'])
+        self.assertEqual(6400, self.machine.config['test_section']['int_6400'])
+        self.assertEqual(3200, self.machine.config['test_section']['int_3200'])
+        self.assertEqual(6, self.machine.config['test_section']['int_6'])
+        self.assertEqual(7, self.machine.config['test_section']['int_7'])
+        self.assertEqual(6400, self.machine.config['test_section']['int_6400'])
+        self.assertEqual('00ff00', self.machine.config['test_section']['str_00ff00'])

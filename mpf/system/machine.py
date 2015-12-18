@@ -322,7 +322,7 @@ class MachineController(object):
 
     def _load_system_modules(self):
         self.log.info("Loading system modules...")
-        for name, module in self.config['mpf']['system_modules'].iteritems():
+        for name, module in self.config['mpf']['system_modules'].items():
             self.log.debug("Loading '%s' system module", module)
             m = self.string_to_class(module)(self)
             setattr(self, name, m)
