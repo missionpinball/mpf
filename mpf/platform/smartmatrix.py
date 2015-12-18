@@ -12,7 +12,7 @@ import serial
 import sys
 import threading
 import traceback
-from Queue import Queue
+from queue import Queue
 from mpf.system.config import Config
 from mpf.system.platform import Platform
 

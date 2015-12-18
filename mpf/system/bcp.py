@@ -18,9 +18,9 @@ import socket
 import threading
 import sys
 import traceback
-import urllib
-import urlparse
-from Queue import Queue
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
+from queue import Queue
 import copy
 
 from mpf.system.player import Player
@@ -48,16 +48,16 @@ def decode_command_string(bcp_string):
     will be preserved.
 
     """
-    bcp_command = urlparse.urlsplit(bcp_string)
+    bcp_command = urllib.parse.urlsplit(bcp_string)
     try:
-        kwargs = urlparse.parse_qs(bcp_command.query)
+        kwargs = urllib.parse.parse_qs(bcp_command.query)
 
     except AttributeError:
         kwargs = dict()
 
     return (bcp_command.path.lower(),
-            dict((k.lower(), urllib.unquote(v[0]))
-                for k,v in kwargs.iteritems()))
+            dict((k.lower(), urllib.parse.unquote(v[0]))
+                for k,v in kwargs.items()))
 
 
 def encode_command_string(bcp_command, **kwargs):
@@ -84,17 +84,17 @@ def encode_command_string(bcp_command, **kwargs):
     kwarg_string = ''
 
     try:
-        for k, v in kwargs.iteritems():
-            kwarg_string += (urllib.quote(k.lower(), '') + '=' +
-                             urllib.quote(str(v), '') + '&')
+        for k, v in kwargs.items():
+            kwarg_string += (urllib.parse.quote(k.lower(), '') + '=' +
+                             urllib.parse.quote(str(v), '') + '&')
 
         kwarg_string = kwarg_string[:-1]
 
     except (TypeError, AttributeError):
         pass
 
-    return unicode(urlparse.urlunparse((None, None, bcp_command.lower(), None,
-                                        kwarg_string, None)), 'utf-8')
+    return str(urllib.parse.urlunparse(('', '', bcp_command.lower(), '',
+                                        kwarg_string, '')))
 
 
 class BCP(object):
@@ -278,7 +278,7 @@ class BCP(object):
         if not self.machine.options['bcp']:
             return
 
-        for name, settings in self.connection_config.iteritems():
+        for name, settings in self.connection_config.items():
             if 'host' not in settings:
                 break
 
@@ -290,7 +290,7 @@ class BCP(object):
         self._send_machine_vars()
 
     def _send_machine_vars(self):
-        for var_name, settings in self.machine.machine_vars.iteritems():
+        for var_name, settings in self.machine.machine_vars.items():
 
             self.send(bcp_command='machine_variable',
                       name=var_name,
@@ -374,7 +374,7 @@ class BCP(object):
         """Processes the BCP Events from the config."""
         # config is localized to BCPEvents
 
-        for event, settings in self.bcp_events.iteritems():
+        for event, settings in self.bcp_events.items():
 
             if 'params' in settings:
 
@@ -391,7 +391,7 @@ class BCP(object):
 
             params = copy.deepcopy(params)
 
-            for param, value in params.iteritems():
+            for param, value in params.items():
 
                 # Are there any text variables to replace on the fly?
                 # todo should this go here?
@@ -405,7 +405,7 @@ class BCP(object):
                                                       str(val))
 
                     # now check for single % which means event kwargs
-                    for name, val in kwargs.iteritems():
+                    for name, val in kwargs.items():
                         if '%' + name in value:
                             params[param] = value.replace('%' + name, str(val))
 
@@ -430,25 +430,25 @@ class BCP(object):
         self.log.debug("Registering Trigger Events")
 
         try:
-            for event in config['show_player'].keys():
+            for event in list(config['show_player'].keys()):
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for event in config['slide_player'].keys():
+            for event in list(config['slide_player'].keys()):
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for event in config['event_player'].keys():
+            for event in list(config['event_player'].keys()):
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for k, v in config['sound_player'].iteritems():
+            for k, v in config['sound_player'].items():
                 if 'start_events' in v:
                     for event in Util.string_to_list(v['start_events']):
                         self.create_trigger_event(event)
@@ -493,7 +493,7 @@ class BCP(object):
 
         event_list = list()
 
-        for event, settings in config.iteritems():
+        for event, settings in config.items():
 
             params = dict()
 
@@ -609,7 +609,7 @@ class BCP(object):
         this method will post one event for each pair.
 
         """
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             self.machine.events.post('bcp_set_{}'.format(k), value=v)
 
     def bcp_receive_reset_complete(self, **kwargs):
@@ -736,7 +736,7 @@ class BCP(object):
 
     def _setup_track_volumes(self, config):
         # config is localized to 'Volume'
-        for k, v in config['tracks'].iteritems():
+        for k, v in config['tracks'].items():
             self.track_volumes[k] = v
 
     def increase_volume(self, track='master', **kwargs):
@@ -952,7 +952,7 @@ class BCPClientSocket(object):
                 BCP.active_connections += 1
                 self.connection_attempts = 0
 
-            except socket.error, v:
+            except socket.error as v:
                 self.socket = None
                 self.log.warning("Failed to connect to remote BCP host %s:%s. "
                                  "Error: %s", self.config['host'],

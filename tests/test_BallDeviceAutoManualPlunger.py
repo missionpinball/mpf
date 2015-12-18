@@ -1,4 +1,4 @@
-from MpfTestCase import MpfTestCase
+from .MpfTestCase import MpfTestCase
 from mock import MagicMock
 
 class TestBallDeviceAutoManualPlunger(MpfTestCase):
@@ -22,8 +22,8 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         self.machine.switch_controller.process_switch('s_trough_1', 1)
 
         self.advance_time_and_run(1)
-        self.assertEquals(0, playfield.balls)
-        self.assertEquals(0, plunger.balls)
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, plunger.balls)
         assert not plunger_coil.pulse.called
         assert not trough_coil.pulse.called
 
@@ -40,7 +40,7 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         # plunger gets ball
         self.machine.switch_controller.process_switch('s_plunger', 1)
         self.advance_time_and_run(1)
-        self.assertEquals(1, plunger.balls)
+        self.assertEqual(1, plunger.balls)
         assert not plunger_coil.pulse.called
 
         # player waits, then mechanically plunges
@@ -54,8 +54,8 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         self.advance_time_and_run(.1)
 
         assert not plunger_coil.pulse.called
-        self.assertEquals(0, plunger.balls)
-        self.assertEquals(1, playfield.balls)
+        self.assertEqual(0, plunger.balls)
+        self.assertEqual(1, playfield.balls)
 
     def test_powered_eject_to_pf(self):
 
@@ -70,8 +70,8 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         self.machine.switch_controller.process_switch('s_trough_1', 1)
 
         self.advance_time_and_run(1)
-        self.assertEquals(0, playfield.balls)
-        self.assertEquals(0, plunger.balls)
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, plunger.balls)
         assert not plunger_coil.pulse.called
         assert not trough_coil.pulse.called
 
@@ -88,7 +88,7 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         # plunger gets ball
         self.machine.switch_controller.process_switch('s_plunger', 1)
         self.advance_time_and_run(1)
-        self.assertEquals(1, plunger.balls)
+        self.assertEqual(1, plunger.balls)
         assert not plunger_coil.pulse.called
 
         # player waits, then hits launch button
@@ -107,5 +107,5 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         self.machine.switch_controller.process_switch('s_playfield', 0)
         self.advance_time_and_run(.1)
 
-        self.assertEquals(0, plunger.balls)
-        self.assertEquals(1, playfield.balls)
+        self.assertEqual(0, plunger.balls)
+        self.assertEqual(1, playfield.balls)

@@ -114,7 +114,7 @@ def main():
         machine = MachineController(vars(args))
         machine.run()
         logging.info("MPF run loop ended.")
-    except Exception, e:
+    except Exception as e:
         logging.exception(e)
 
     sys.exit()

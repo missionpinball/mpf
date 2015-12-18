@@ -141,7 +141,6 @@ class DelayManager(object):
         """
         if not name:
             name = uuid.uuid4()
-
         self.log.debug("Adding delay. Name: '%s' ms: %s, callback: %s, "
                        "kwargs: %s", name, ms, callback, kwargs)
         self.delays[name] = ({'action_ms': time.time() + (ms / 1000.0),
@@ -192,7 +191,7 @@ class DelayManager(object):
 
     def _get_next_event(self):
         next_event_time = False
-        for delay in self.delays.keys():
+        for delay in list(self.delays.keys()):
             if not next_event_time or next_event_time > self.delays[delay]['action_ms']:
                 next_event_time = self.delays[delay]['action_ms']
 
@@ -200,7 +199,7 @@ class DelayManager(object):
 
     def _process_delays(self, machine):
         # Processes any delays that should fire now
-        for delay in self.delays.keys():
+        for delay in list(self.delays.keys()):
             # previous delay may have deleted it
             if not delay in self.delays:
                 continue

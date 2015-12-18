@@ -95,7 +95,7 @@ class Shot(Device):
             self.machine.switch_controller.add_switch_handler(
                 switch.name, self._cancel_switch_hit, 1)
 
-        for switch in self.config['delay_switch'].keys():
+        for switch in list(self.config['delay_switch'].keys()):
             self.machine.switch_controller.add_switch_handler(
                 switch.name, self._delay_switch_hit, 1, return_info=True)
 
@@ -117,7 +117,7 @@ class Shot(Device):
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self._cancel_switch_hit, 1)
 
-        for switch in self.config['delay_switch'].keys():
+        for switch in list(self.config['delay_switch'].keys()):
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self._delay_switch_hit, 1)
 
@@ -397,7 +397,7 @@ class Shot(Device):
 
         found = False
 
-        for _mode, settings in self.enable_table.iteritems():
+        for _mode, settings in self.enable_table.items():
             # only care about hits lower than this mode
 
             if found:
@@ -653,12 +653,12 @@ class Shot(Device):
         old_mode = self.active_mode
         old_settings = self.active_settings
 
-        self.enable_table = OrderedDict(sorted(self.enable_table.items(),
+        self.enable_table = OrderedDict(sorted(list(self.enable_table.items()),
                                                key=lambda x: x[1]['priority'],
                                                reverse=True))
 
         # set a pointer to the highest entry
-        for mode, settings in self.enable_table.iteritems():
+        for mode, settings in self.enable_table.items():
             self.active_mode = mode
             self.active_settings = settings
 
@@ -666,7 +666,7 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug("New enable_table order: %s",
-                           self.enable_table.keys())
+                           list(self.enable_table.keys()))
 
         # top profile has changed
         if (not old_settings or
@@ -760,7 +760,7 @@ class Shot(Device):
         if self.debug:
             self.log.debug("Removing active profile for mode %s", mode)
 
-        for k, v in self.enable_table.iteritems():
+        for k, v in self.enable_table.items():
             if (v['priority'] < self.enable_table[mode]['priority'] and
                     (v['enable'] or v['settings']['lights_when_disabled'])):
 

@@ -55,7 +55,7 @@ class YamlInterface(FileInterface):
 
             with open(filename, 'r') as f:
                 config = Util.keys_to_lower(yaml.load(f))
-        except yaml.YAMLError, exc:
+        except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark
                 self.log.critical("Error found in config file %s. Line %s, "

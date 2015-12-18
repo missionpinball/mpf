@@ -7,7 +7,7 @@
 # Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-from config import CaseInsensitiveDict
+from .config import CaseInsensitiveDict
 
 
 class Device(object):

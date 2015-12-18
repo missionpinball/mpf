@@ -48,7 +48,7 @@ class SlideBuilder(object):
 
         key_list = list()
 
-        for event, settings in config.iteritems():
+        for event, settings in config.items():
                 settings = self.preprocess_settings(settings, priority)
                 # todo maybe a better way to add the removal key?
 

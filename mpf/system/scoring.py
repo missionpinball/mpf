@@ -34,10 +34,10 @@ class ScoreController(object):
 
         self.mode_configs[mode] = config
         self.mode_scores[mode] = dict()
-        self.mode_configs = OrderedDict(sorted(self.mode_configs.iteritems(),
+        self.mode_configs = OrderedDict(sorted(iter(self.mode_configs.items()),
                                                key=lambda x: x[0].priority,
                                                reverse=True))
-        for event in config.keys():
+        for event in list(config.keys()):
             mode.add_mode_event_handler(event, self._score_event_callback,
                                         priority, event_name=event)
 
@@ -60,10 +60,10 @@ class ScoreController(object):
 
         blocked_variables = set()
 
-        for entry_mode, settings in self.mode_configs.iteritems():
+        for entry_mode, settings in self.mode_configs.items():
 
             if event_name in settings:
-                for var_name, value in settings[event_name].iteritems():
+                for var_name, value in settings[event_name].items():
 
                     if (type(value) is int and
                             entry_mode == mode and

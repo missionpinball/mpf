@@ -87,7 +87,7 @@ class HardwarePlatform(Platform):
                     Util.string_to_list(
                         self.machine.config['virtual_platform_start_active_switches'])]
 
-                for k, v in self.hw_switches.iteritems():
+                for k, v in self.hw_switches.items():
                     if k in initial_active_switches:
                         self.hw_switches[k] ^= 1
 
@@ -119,7 +119,7 @@ class HardwarePlatform(Platform):
     def clear_hw_rule(self, sw_name):
         sw_num = self.machine.switches[sw_name].number
 
-        for entry in self.hw_switch_rules.keys():  # slice for copy
+        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(
                     self.machine.switches.number(sw_num).name):
                 del self.hw_switch_rules[entry]

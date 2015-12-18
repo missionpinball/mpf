@@ -507,7 +507,7 @@ class BallDevice(Device):
 
     def _state_eject_broken_start(self):
         # The only way to get out of this state it to call reset on the device
-        self.log.warn("Ball device is unable to eject ball. Stopping device")
+        self.log.warning("Ball device is unable to eject ball. Stopping device")
         self.machine.events.post('balldevice_' + self.name +
                                  '_eject_broken', source=self)
 
@@ -1338,6 +1338,9 @@ class BallDevice(Device):
                 if self._state == "waiting_for_ball_mechanical":
                     timeout_combined += self._incoming_balls[0][1].config['eject_timeouts'][self]
 
+                if timeout == timeout_combined:
+                    timeout_combined += 1
+
                 self.delay.add(name='count_confirmation',
                                 ms=timeout_combined,
                                 callback=self.eject_success)
@@ -1383,7 +1386,7 @@ class BallDevice(Device):
 
         elif self.config['confirm_eject_type'] == 'count':
             # deprecated. there is no usecase for count confirmation!
-            self.log.warn("confirm_eject_type = count is deprecated and will "
+            self.log.warning("confirm_eject_type = count is deprecated and will "
                           "get removed in the next release. Switch to target "
                           "or complain in forum if you really need it!")
 

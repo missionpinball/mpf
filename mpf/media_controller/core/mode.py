@@ -40,7 +40,7 @@ class Mode(object):
         if 'mode' in self.config:
             self.configure_mode_settings(config['mode'])
 
-        for asset_manager in self.machine.asset_managers.values():
+        for asset_manager in list(self.machine.asset_managers.values()):
 
             config_data = self.config.get(asset_manager.config_section, dict())
 
@@ -158,7 +158,7 @@ class Mode(object):
         self.delete_slides_from_mode()
 
     def delete_slides_from_mode(self):
-        for display in self.machine.display.displays.values():
+        for display in list(self.machine.display.displays.values()):
             for slide in [x for x in display.slides if x.mode == self]:
                 slide.remove(refresh_display=False)
 

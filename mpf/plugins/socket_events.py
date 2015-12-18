@@ -47,7 +47,7 @@ class SocketClient(object):
 
         self.config = config
 
-        for event, settings in config.iteritems():
+        for event, settings in config.items():
             self.machine.events.add_handler(event, self._event_callback,
                                             settings=settings)
 

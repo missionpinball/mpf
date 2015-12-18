@@ -166,7 +166,7 @@ class ScoreReelController(object):
         # populate the reset queue
         self.reset_queue = []
 
-        for player, score_reel_group in self.machine.score_reel_groups.iteritems():
+        for player, score_reel_group in self.machine.score_reel_groups.items():
             self.reset_queue.append(score_reel_group)
         self.reset_queue.sort(key=lambda x: x.name)
         # todo right now this sorts by ScoreGroupName. Need to change to tags

@@ -62,7 +62,7 @@ class Mode(object):
         player in the '_restart_modes_on_next_ball' untracked player variable.
         '''
 
-        for asset_manager in self.machine.asset_managers.values():
+        for asset_manager in list(self.machine.asset_managers.values()):
 
             config_data = self.config.get(asset_manager.config_section, dict())
 
@@ -116,7 +116,7 @@ class Mode(object):
 
             if this_section:
                 if type(this_section) is dict:
-                    for device, settings in this_section.iteritems():
+                    for device, settings in this_section.items():
                         self.config[section][device] = (
                             self.machine.config_processor.process_config2(
                                 section, settings))
@@ -318,10 +318,10 @@ class Mode(object):
         self.log.debug("Scanning config for mode-based devices")
 
         for collection_name, device_class in (
-                self.machine.device_manager.device_classes.iteritems()):
+                iter(self.machine.device_manager.device_classes.items())):
             if device_class.config_section in self.config:
                 for device, settings in (
-                        self.config[device_class.config_section].iteritems()):
+                        iter(self.config[device_class.config_section].items())):
 
                     collection = getattr(self.machine, collection_name)
 
@@ -456,7 +456,7 @@ class Mode(object):
     def _setup_timers(self):
         # config is localized
 
-        for timer, settings in self.config['timers'].iteritems():
+        for timer, settings in self.config['timers'].items():
 
             self.timers[timer] = ModeTimer(machine=self.machine, mode=self,
                                            name=timer, config=settings)
@@ -464,12 +464,12 @@ class Mode(object):
         return self._kill_timers
 
     def _start_timers(self):
-        for timer in self.timers.values():
+        for timer in list(self.timers.values()):
             if timer.running:
                 timer.start()
 
     def _kill_timers(self, ):
-        for timer in self.timers.values():
+        for timer in list(self.timers.values()):
             timer.kill()
 
         self.timers = dict()

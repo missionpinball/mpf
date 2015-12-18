@@ -10,7 +10,7 @@ import copy
 import logging
 import os
 import errno
-import thread
+import _thread
 import time
 
 from mpf.system.file_manager import FileManager
@@ -110,10 +110,10 @@ class DataManager(object):
                                    data=copy.deepcopy(self.data),
                                    ms=delay_secs*1000)
         else:
-            thread.start_new_thread(self._writing_thread, (copy.deepcopy(self.data), ))
+            _thread.start_new_thread(self._writing_thread, (copy.deepcopy(self.data), ))
 
     def _delayed_save_callback(self, data):
-        thread.start_new_thread(self._writing_thread, (data, ))
+        _thread.start_new_thread(self._writing_thread, (data, ))
 
     def save_key(self, key, value, delay_secs=0):
         """Updates an individual key and then writes the entire dictionary to
