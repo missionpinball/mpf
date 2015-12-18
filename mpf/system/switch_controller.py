@@ -174,6 +174,9 @@ class SwitchController(object):
 
         """
 
+        if not ms:
+            ms = 0
+
         if self.switches[switch_name]['state'] == state:
             if ms <= self.ms_since_change(switch_name):
                 return True
@@ -283,7 +286,6 @@ class SwitchController(object):
         self.log.debug("Processing switch. Name: %s, state: %s, logical: %s,"
                        "num: %s, obj: %s, debounced: %s", name, state, logical,
                        num, obj, debounced)
-
         # Find the switch name
 
         if num is not None:  # can't be 'if num:` in case the num is 0.
@@ -358,7 +360,6 @@ class SwitchController(object):
                               "could be nothing, but if it happens a lot it could "
                               "indicate noise or interference on the line. Switch: %s",
                               name)
-
             return
 
         self.log.info("<<<<< switch: %s, State:%s >>>>>", name, state)
@@ -403,7 +404,7 @@ class SwitchController(object):
 
         # now check if the opposite state is in the active timed switches list
         # if so, remove it
-        for k, v, in self.active_timed_switches.items():
+        for k, v, in list(self.active_timed_switches.items()):
             # using items() instead of iteritems() since we might want to
             # delete while iterating
 
@@ -546,7 +547,7 @@ class SwitchController(object):
 
         self.log.info("Dumping current active switches")
 
-        for k, v in self.switches.iteritems():
+        for k, v in self.switches.items():
             if v['state']:
                 self.log.info("Active Switch|%s", k)
 
@@ -595,7 +596,7 @@ class SwitchController(object):
 
         """
 
-        for k in self.active_timed_switches.keys():
+        for k in list(self.active_timed_switches.keys()):
             if k <= time.time():  # change to generator?
                 for entry in self.active_timed_switches[k]:
                     self.log.debug(

@@ -50,7 +50,7 @@ ball_devices:
         eject_timeouts: 6s, 10s
         eject_targets: playfield, test_target
         mechanical_eject: true
-        confirm_eject_type: count
+#        confirm_eject_type: count
         tags: ball_add_live
     test_target:
         eject_coil: eject_coil3

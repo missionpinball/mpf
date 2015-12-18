@@ -61,7 +61,7 @@ def load_dmd_file(file_name, palette=None, alpha_color=None,
             height = struct.unpack("I", f.read(4))[0]
 
             if file_length != 16 + width * height * frame_count:
-                print "File size inconsistent with header information."
+                print("File size inconsistent with header information.")
 
             for frame_index in range(frame_count):
                 frame_string = f.read(width * height)

@@ -65,7 +65,7 @@ class ShotProfileManager(object):
 
         """
 
-        for name, profile in config.iteritems():
+        for name, profile in config.items():
             self.register_profile(name, profile)
 
     def process_profile_config(self, profile_name, config):
@@ -115,7 +115,7 @@ class ShotProfileManager(object):
             self.log.debug("Scanning config from mode '%s' for shots",
                            mode.name)
 
-        for shot, settings in config.iteritems():
+        for shot, settings in config.items():
             # is there a profile? yes, use it. no, use default
             if settings['profile']:
                 profile = settings['profile']
@@ -172,7 +172,7 @@ class ShotProfileManager(object):
         if self.debug:
             self.log.debug("Scanning config %s for shot_groups", mode)
 
-        for shot_group, settings in config.iteritems():
+        for shot_group, settings in config.items():
 
             if self.debug:
                 self.log.debug("Checking config for shot_group: %s. Config: %s",

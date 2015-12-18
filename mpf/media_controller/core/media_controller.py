@@ -11,7 +11,7 @@ import os
 import sys
 import time
 from distutils.version import LooseVersion
-import Queue
+import queue
 
 
 import pygame
@@ -70,9 +70,9 @@ class MediaController(object):
         self.registered_pygame_handlers = dict()
         self.pygame_allowed_events = list()
         self.socket_thread = None
-        self.receive_queue = Queue.Queue()
-        self.sending_queue = Queue.Queue()
-        self.crash_queue = Queue.Queue()
+        self.receive_queue = queue.Queue()
+        self.sending_queue = queue.Queue()
+        self.crash_queue = queue.Queue()
         self.modes = CaseInsensitiveDict()
         self.player_list = list()
         self.player = None
@@ -220,7 +220,7 @@ class MediaController(object):
     def _check_crash_queue(self):
         try:
             crash = self.crash_queue.get(block=False)
-        except Queue.Empty:
+        except queue.Empty:
             yield 1000
         else:
             self.log.critical("MPF Shutting down due to child thread crash")
@@ -592,7 +592,7 @@ class MediaController(object):
         this method will post one event for each pair.
 
         """
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             self.events.post('bcp_set_{}'.format(k), value=v)
 
     def bcp_shot(self, name, profile, state):
@@ -602,7 +602,7 @@ class MediaController(object):
 
     def bcp_config(self, **kwargs):
         """Processes an incoming BCP 'config' command."""
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             if k.startswith('volume_'):
                 self.bcp_set_volume(track=k.split('volume_')[1], value=v)
 

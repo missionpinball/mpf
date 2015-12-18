@@ -9,7 +9,7 @@
 
 import logging
 import time
-from Queue import Queue
+from queue import Queue
 
 from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config, CaseInsensitiveDict
@@ -174,7 +174,7 @@ class LightController(object):
     def process_light_scripts(self, config, mode=None, priority=0):
         # config here is localized to light_scripts:
 
-        for k, v in config.iteritems():
+        for k, v in config.items():
             self.registered_light_scripts[k] = v
 
     def process_light_player(self, config, mode=None, priority=0):
@@ -185,7 +185,7 @@ class LightController(object):
         event_keys = set()
         shows = set()
 
-        for event_name, actions in config.iteritems():
+        for event_name, actions in config.items():
             if type(actions) is not list:
                 actions = Util.string_to_list(actions)
 
@@ -377,7 +377,7 @@ class LightController(object):
     def _end_show(self, show, reset=None):
         # Internal method which ends a running Show
 
-        self.running_shows = filter(lambda x: x != show, self.running_shows)
+        self.running_shows = [x for x in self.running_shows if x != show]
 
         if not show.hold:
             self.restore_lower_lights(show=show)
@@ -392,7 +392,7 @@ class LightController(object):
 
         # if this show was from a script, remove it from running_show_keys
 
-        keys_to_remove = [key for key, value in self.running_show_keys.iteritems()
+        keys_to_remove = [key for key, value in self.running_show_keys.items()
                           if value == show]
 
         for key in keys_to_remove:
@@ -950,6 +950,9 @@ class Show(Asset):
             self._initialize_asset()
             self.do_load(callback=None, show_actions=actions)
 
+    def __lt__(self, other):
+        return self.priority < other.priority
+
     def _initialize_asset(self):
 
         self.tocks_per_sec = 1  # how many steps per second this show runs at
@@ -1418,20 +1421,20 @@ class Show(Asset):
                                      self.machine.tick_num)
 
             if self.debug:
-                print "Current tick", self.machine.tick_num
-                print "Next Tick:", self.next_action_tick
-                print "current location tocks", self.show_actions[self.current_location]['tocks']
-                print "ticks per tock", self.ticks_per_tock
+                print("Current tick", self.machine.tick_num)
+                print("Next Tick:", self.next_action_tick)
+                print("current location tocks", self.show_actions[self.current_location]['tocks'])
+                print("ticks per tock", self.ticks_per_tock)
 
         # create a dictionary of the current items of each type, combined with
         # the show details, that we can throw up to our queue
 
-        for item_type, item_dict in (self.show_actions[self.current_location].
-                                     iteritems()):
+        for item_type, item_dict in (iter(self.show_actions[self.current_location].
+                                     items())):
 
             if item_type == 'lights':
 
-                for light_obj, brightness in item_dict.iteritems():
+                for light_obj, brightness in item_dict.items():
 
                     self.machine.light_controller._add_to_light_update_list(
                         light=light_obj,
@@ -1446,7 +1449,7 @@ class Show(Asset):
 
                 current_time = time.time()
 
-                for led_obj, led_dict in item_dict.iteritems():
+                for led_obj, led_dict in item_dict.items():
 
                     self.machine.light_controller._add_to_led_update_list(
                         led=led_obj,
@@ -1477,13 +1480,13 @@ class Show(Asset):
 
             elif item_type == 'coils':
 
-                for coil_obj, coil_action in item_dict.iteritems():
+                for coil_obj, coil_action in item_dict.items():
                     self.machine.light_controller._add_to_coil_queue(
                         coil=coil_obj,
                         action=coil_action)
 
             elif item_type == 'gis':
-                for gi, value in item_dict.iteritems():
+                for gi, value in item_dict.items():
                     self.machine.light_controller._add_to_gi_queue(
                         gi=gi,
                         value=value)
@@ -1530,14 +1533,14 @@ class Show(Asset):
         lights back to how they want them.
         """
 
-        for light_obj, brightness in self.light_states.iteritems():
+        for light_obj, brightness in self.light_states.items():
             self.machine.light_controller._add_to_light_update_list(
                 light=light_obj,
                 brightness=brightness,
                 priority=self.priority,
                 blend=self.blend)
 
-        for led_obj, led_dict in self.led_states.iteritems():
+        for led_obj, led_dict in self.led_states.items():
             self.machine.light_controller._add_to_led_update_list(
                 led=led_obj,
                 color=led_dict['current_color'],

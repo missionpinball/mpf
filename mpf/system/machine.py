@@ -6,12 +6,12 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-import cPickle
+import pickle
 import logging
 import os
 import time
 import sys
-import Queue
+import queue
 
 import errno
 
@@ -77,7 +77,7 @@ class MachineController(object):
         self.delayRegistry = DelayManagerRegistry()
         self.delay = DelayManager(self.delayRegistry)
 
-        self.crash_queue = Queue.Queue()
+        self.crash_queue = queue.Queue()
         Task.create(self._check_crash_queue)
 
         FileManager.init()
@@ -92,7 +92,7 @@ class MachineController(object):
         self.default_platform = None
 
         if not self.options['force_platform']:
-            for section, platform in self.config['hardware'].iteritems():
+            for section, platform in self.config['hardware'].items():
                 if platform.lower() != 'default' and section != 'driverboards':
                         self.add_platform(platform)
             self.set_default_platform(self.config['hardware']['platform'])
@@ -115,7 +115,7 @@ class MachineController(object):
         # This is called so hw platforms have a change to register for events,
         # and/or anything else they need to do with system modules since
         # they're not set up yet when the hw platforms are constructed.
-        for platform in self.hardware_platforms.values():
+        for platform in list(self.hardware_platforms.values()):
             platform.initialize()
 
         self.validate_machine_config_section('machine')
@@ -164,7 +164,7 @@ class MachineController(object):
         current_time = time.time()
 
         for name, settings in (
-                self.machine_var_data_manager.get_data().iteritems()):
+                iter(self.machine_var_data_manager.get_data().items())):
 
             if ('expire' in settings and settings['expire'] and
                     settings['expire'] < current_time):
@@ -176,7 +176,7 @@ class MachineController(object):
     def _check_crash_queue(self):
         try:
             crash = self.crash_queue.get(block=False)
-        except Queue.Empty:
+        except queue.Empty:
             yield 1000
         else:
             self.log.critical("MPF Shutting down due to child thread crash")
@@ -256,7 +256,7 @@ class MachineController(object):
                 format('-'.join(self.options['configfile']))), 'r') as f:
 
             try:
-                self.config = cPickle.load(f)
+                self.config = pickle.load(f)
 
             except:
                 self.log.warning("Could not load config from cache")
@@ -294,7 +294,7 @@ class MachineController(object):
                 self.machine_path, '_cache', '{}_config.p'.
                 format('-'.join(self.options['configfile']))),
                 'wb') as f:
-            cPickle.dump(self.config, f)
+            pickle.dump(self.config, f)
             self.log.info('Config file cache created: {}'.format(os.path.join(
                 self.machine_path, '_cache', '{}_config.p'.
                 format('-'.join(self.options['configfile'])))))
@@ -308,8 +308,8 @@ class MachineController(object):
         """
         python_version = sys.version_info
 
-        if python_version[0] != 2 or python_version[1] != 7:
-            self.log.error("Incorrect Python version. MPF requires Python 2.7."
+        if python_version[0] != 3:
+            self.log.error("Incorrect Python version. MPF requires Python 3."
                            "x. You have Python %s.%s.%s.", python_version[0],
                            python_version[1], python_version[2])
             sys.exit()
@@ -526,7 +526,7 @@ class MachineController(object):
         self.events._process_event_queue()
 
     def _platform_stop(self):
-        for platform in self.hardware_platforms.values():
+        for platform in list(self.hardware_platforms.values()):
             platform.stop()
 
     def power_off(self):
@@ -732,7 +732,7 @@ class MachineController(object):
         method will match and remove player1_score, player2_score, etc.
 
         """
-        for var in self.machine_vars.keys():
+        for var in list(self.machine_vars.keys()):
             if var.startswith(startswith) and var.endswith(endswith):
                 del self.machine_vars[var]
                 self.machine_var_data_manager.remove_key(var)

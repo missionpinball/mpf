@@ -30,7 +30,7 @@ global import_success
 
 try:
     # noinspection PyPep8Naming
-    import OSC as OSCmodule
+    from . import OSC as OSCmodule
     socket.gethostbyname(socket.gethostname())
     import_success = True
 except:
@@ -367,7 +367,7 @@ class OSC(object):
                                                     name)
             self.OSC_message.append(data)
 
-            for k in self.OSC_clients.items():
+            for k in list(self.OSC_clients.items()):
                 try:
                     if self.config['debug_messages']:
                             self.log.info("Sending OSC Message to client:%s: "

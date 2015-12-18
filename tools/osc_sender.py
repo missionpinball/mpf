@@ -41,8 +41,8 @@ parser.add_option("-t", "--toggle",
 options = vars(options)
 
 if len(args) != 2:
-    print "Error: This tool requires two command-line arguments: OSC address & data"
-    print "Example usage: python osc_sender.py /sw/shooter 1"
+    print("Error: This tool requires two command-line arguments: OSC address & data")
+    print("Example usage: python osc_sender.py /sw/shooter 1")
     sys.exit()
 else:
     address, data = args

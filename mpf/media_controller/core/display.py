@@ -156,8 +156,8 @@ class DisplayController(object):
         # todo this could be cleaned up by adding module attributes which point
         # to the classes in the module
 
-        for k, v in (self.machine.config['media_controller']['display_modules']
-                     ['transitions'].iteritems()):
+        for k, v in (iter(self.machine.config['media_controller']['display_modules']
+                     ['transitions'].items())):
             __import__('mpf.media_controller.transitions.' + v.split('.')[0])
             module = eval('mpf.media_controller.transitions.' + v.split('.')[0])
             cls = v.split('.')[1]
@@ -170,8 +170,8 @@ class DisplayController(object):
         # todo this could be cleaned up by adding module attributes which point
         # to the classes in the module
 
-        for k, v in (self.machine.config['media_controller']['display_modules']
-                     ['decorators'].iteritems()):
+        for k, v in (iter(self.machine.config['media_controller']['display_modules']
+                     ['decorators'].items())):
             __import__('mpf.media_controller.decorators.' + v.split('.')[0])
             module = eval('mpf.media_controller.decorators.' + v.split('.')[0])
             cls = v.split('.')[1]

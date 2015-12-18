@@ -1,7 +1,7 @@
 import unittest
 
 from mpf.system.machine import MachineController
-from MpfTestCase import MpfTestCase
+from .MpfTestCase import MpfTestCase
 from mock import MagicMock
 import time
 
@@ -25,7 +25,7 @@ class TestPlayfieldTransfer(MpfTestCase):
         self.machine.switch_controller.process_switch("s_transfer", 1)
         self.advance_time_and_run(2)
 
-        self.assertEquals(1, pf1.balls)
-        self.assertEquals(1, pf1.available_balls)
-        self.assertEquals(3, pf2.balls)
-        self.assertEquals(3, pf2.available_balls)
+        self.assertEqual(1, pf1.balls)
+        self.assertEqual(1, pf1.available_balls)
+        self.assertEqual(3, pf2.balls)
+        self.assertEqual(3, pf2.available_balls)

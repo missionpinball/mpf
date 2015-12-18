@@ -1,7 +1,7 @@
 import unittest
 
 from mpf.system.machine import MachineController
-from MpfTestCase import MpfTestCase
+from .MpfTestCase import MpfTestCase
 from mock import MagicMock
 import time
 
@@ -44,18 +44,18 @@ class TestBallDeviceRouting(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_launcher", 1)
         self.advance_time_and_run(1)
-        self.assertEquals(1, launcher.balls)
-        self.assertEquals(1, self._captured)
+        self.assertEqual(1, launcher.balls)
+        self.assertEqual(1, self._captured)
         self._captured = 0
 
         c_launcher.pulse.assert_called_once_with()
-        self.assertEquals(0, len(trough1.eject_queue))
-        self.assertEquals(0, len(trough2.eject_queue))
-        self.assertEquals("ejecting", launcher._state)
-        self.assertEquals(target1, launcher.eject_in_progress_target)
-        self.assertEquals(1, len(target1.eject_queue))
+        self.assertEqual(0, len(trough1.eject_queue))
+        self.assertEqual(0, len(trough2.eject_queue))
+        self.assertEqual("ejecting", launcher._state)
+        self.assertEqual(target1, launcher.eject_in_progress_target)
+        self.assertEqual(1, len(target1.eject_queue))
 
         self.machine.switch_controller.process_switch("s_launcher", 0)
         self.advance_time_and_run(1)
 
-        self.assertEquals(0, self._missing)
+        self.assertEqual(0, self._missing)

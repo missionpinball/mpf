@@ -1,14 +1,15 @@
 language:
   python
 python:
-  - "2.7"
+  - "3.4"
+  - "3.5"
 # command to install dependencies
 install:
  - pip install pyyaml
  - pip install coveralls
 # command to run tests
 script:
-  coverage run -m unittest discover -s tests
+  coverage run -m unittest discover
 
 after_success:
   coveralls

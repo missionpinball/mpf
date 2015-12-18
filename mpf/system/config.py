@@ -105,7 +105,7 @@ class Config(object):
         config_spec = yaml.load(config_spec)
         processed_config = source
 
-        for k in config_spec.keys():
+        for k in list(config_spec.keys()):
             if k in source:
                 processed_config[k] = Config.validate_config_item(
                     config_spec[k], source[k])
@@ -226,7 +226,7 @@ class Config(object):
 
         processed_config = source
 
-        for k in this_spec.keys():
+        for k in list(this_spec.keys()):
             if k in source:  # validate the entry that exists
 
                 if type(this_spec[k]) is dict:
@@ -341,7 +341,7 @@ class Config(object):
 
     def check_for_invalid_sections(self, spec, config, validation_failure_info):
 
-        for k, v in config.iteritems():
+        for k, v in config.items():
             if type(k) is not dict:
 
                 if k not in spec:
@@ -390,7 +390,7 @@ class Config(object):
 
             return_dict = dict()
 
-            for k, v in item.iteritems():
+            for k, v in item.items():
                 return_dict[self.validate_item(k, validator[0],
                                                validation_failure_info)] = (
                     self.validate_item(v, validator[1], validation_failure_info)
@@ -482,7 +482,7 @@ class Config(object):
 
             config_file = yaml.load(f)
 
-        for ver, sections in config_file.iteritems():
+        for ver, sections in config_file.items():
 
             if type(ver) is not int:
                 continue

@@ -11,7 +11,7 @@
 
 import logging
 import socket
-from Queue import Queue
+from queue import Queue
 import threading
 import sys
 import traceback

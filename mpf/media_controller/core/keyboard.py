@@ -70,7 +70,7 @@ class Keyboard(object):
             # module if it's in the plugins list since it allows the player to
             # use the Esc key to quit MPF.
 
-        for k, v in self.mc.config['keyboard'].iteritems():
+        for k, v in self.mc.config['keyboard'].items():
             k = str(k)  # k is the value of the key entry in the config
             switch_name = v.get('switch', None)
             # set whether a key is the push on / push off type
@@ -194,7 +194,7 @@ class Keyboard(object):
 
         """
         # todo add event processing
-        if isinstance(key, basestring):
+        if isinstance(key, str):
             # deletes any random zeros that come through as modifiers
             if key[0:2] == '0-':
                 key = key[2:]

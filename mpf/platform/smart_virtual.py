@@ -82,7 +82,7 @@ class HardwarePlatform(VirtualPlatform):
     def clear_hw_rule(self, sw_name):
         sw_num = self.machine.switches[sw_name].number
 
-        for entry in self.hw_switch_rules.keys():  # slice for copy
+        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(
                     self.machine.switches.number(sw_num).name):
                 del self.hw_switch_rules[entry]

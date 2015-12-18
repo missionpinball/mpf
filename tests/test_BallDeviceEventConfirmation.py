@@ -1,7 +1,7 @@
 import unittest
 
 from mpf.system.machine import MachineController
-from MpfTestCase import MpfTestCase
+from .MpfTestCase import MpfTestCase
 from mock import MagicMock
 import time
 import tests.test_BallDeviceSwitchConfirmation

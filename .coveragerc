@@ -6,10 +6,11 @@ exclude_lines =
     raise AssertionError
     raise NotImplementedError
 
+omit=
+    *__init__.py
+
 [run]
 source=
     mpf/
 
-[report]
-omit=
-    *__init__.py
+

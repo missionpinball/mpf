@@ -478,7 +478,7 @@ class HardwarePlatform(Platform):
                                      {'notifyHost': True,
                                       'reloadActive': False}, [])
 
-        for entry in self.hw_switch_rules.keys():  # slice for copy
+        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(self.machine.switches.number(sw_num).name):
 
                 # disable any drivers from this rule which are active now
