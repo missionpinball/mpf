@@ -47,6 +47,8 @@ mpf:
         ball_save.BallSave
         driver_enabled.DriverEnabled
         accelerometer.Accelerometer
+        servo_controller.ServoController
+        servo.Servo
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -391,6 +393,7 @@ config_validator:
         flashers: single|str|default
         driverboards: single|str|
         accelerometers: single|str|
+        servo_controllers: single|str|
     high_score:
         award_slide_display_time: single|ms|4s
         categories: list|str:list|
@@ -603,6 +606,25 @@ config_validator:
         tags: list|str|None
         label: single|str|%
         number: single|str|
+    servo_controllers:
+        address: single|int|64
+        servo_min: single|int|150
+        servo_max: single|int|600
+        platform: single|str|None
+        debug: single|bool|False
+        tags: list|str|None
+        label: single|str|%
+    servos:
+        positions: dict|float:str|None
+        servo_min: single|float|0.0
+        servo_max: single|float|1.0
+        reset_position: single|float|0.5
+        reset_events: dict|str:ms|ball_starting
+        controller: single|self.machine.servo_controllers[%]|
+        debug: single|bool|False
+        tags: list|str|None
+        label: single|str|%
+        number: single|int|
     timing:
         hz: single|int|30
         hw_thread_sleep_ms: single|int|1
@@ -804,3 +826,4 @@ hardware:
   flashers: default
   driverboards: virtual
   accelerometers: default
+  servo_controllers: default
