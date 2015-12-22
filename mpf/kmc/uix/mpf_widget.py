@@ -1,0 +1,4 @@
+
+
+class MpfWidget(object):
+    pass

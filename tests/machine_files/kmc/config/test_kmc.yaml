@@ -1,0 +1,8 @@
+#config_version=3
+
+dummy:
+  dummy: dummy
+
+screens:
+  hello:
+    ok: 1

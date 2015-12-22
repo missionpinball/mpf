@@ -35,3 +35,30 @@ images:
     demo_man_logo:
         target: dmd
 
+window:
+  width: 1024
+  height: 768
+  minimum_width: 200
+  minimum_height: 100
+  borderless: false
+  fullscreen: false
+  rotation: 0
+  icon: None
+  title: Mission Pinball Framework
+  show_cursor: false
+  source_display: window
+
+displays:
+  window:
+    type: window
+    width: 800
+    height: 600
+
+screens:
+  boot:
+    type: text
+    text: MPF BOOT
+#    x: 0
+#    y: 0
+#    pos: (100, 200)
+#    size: (100, 50)
