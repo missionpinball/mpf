@@ -10,6 +10,7 @@
 from mpf.system.config import CaseInsensitiveDict
 from mpf.system.mode import Mode
 from mpf.system.timing import Timing
+import time
 
 
 class Tilt(Mode):
@@ -19,7 +20,7 @@ class Tilt(Mode):
         self._last_warning_tick = 0
         self.ball_ending_tilted_queue = None
         self.tilt_event_handlers = set()
-        self.last_tilt_warning_switch_tick = 0
+        self.last_tilt_warning_switch = 0
 
         self.tilt_config = self.machine.config_processor.process_config2(
             config_spec='tilt',
@@ -77,7 +78,7 @@ class Tilt(Mode):
         cause a tilt, a tilt will be processed.
 
         """
-        self.last_tilt_warning_switch_tick = self.machine.tick_num
+        self.last_tilt_warning_switch = time.time()
 
         if not self.player:
             return
@@ -199,13 +200,15 @@ class Tilt(Mode):
         time has cleared.
 
         """
-        ticks = (self.machine.tick_num - self.last_tilt_warning_switch_tick -
-                self.tilt_config['settle_time'])
-
-        if ticks >= 0:
+        if not self.last_tilt_warning_switch:
             return 0
+
+        delta = (time.time() - self.last_tilt_warning_switch -
+                self.tilt_config['settle_time'])
+        if delta > 0:
+            return delta
         else:
-            return abs(ticks * Timing.ms_per_tick)
+            return 0
 
     def slam_tilt(self):
         self.machine.events.post('slam_tilt')
