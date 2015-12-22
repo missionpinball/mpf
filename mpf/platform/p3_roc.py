@@ -118,6 +118,15 @@ class HardwarePlatform(Platform):
     def __repr__(self):
         return '<Platform.P3-ROC>'
 
+    def i2c_write8(self, address, register, value):
+        self.proc.write_data(7, address << 9 | register, value);
+
+    def i2c_read8(self, address, register):
+        return self.proc.read_data(7, address << 9 | register) & 0xFF;
+
+    def i2c_read16(self, address, register):
+        return self.proc.read_data(7, address << 9 | 1 << 8 | register);
+
     def stop(self):
         self.proc.reset(1)
 
