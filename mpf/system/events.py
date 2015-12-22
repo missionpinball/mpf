@@ -520,6 +520,8 @@ class EventManager(object):
             if queue.callback:
                 # if there's still a callback, that means it wasn't called yet
                 self.callback_queue.append((queue.callback, kwargs))
+        elif queue and not queue.is_empty():
+            queue.event_finished()
 
         if callback and ev_type != 'queue':
             # For event types other than queue, we'll handle the callback here.
@@ -614,9 +616,13 @@ class QueuedEvent(object):
         self.callback = callback
         self.kwargs = kwargs
         self.num_waiting = 0
+        self._is_event_finished = False
 
     def __repr__(self):
         return '<QueuedEvent for callback {}>'.format(self.callback)
+
+    def event_finished(self):
+            self._is_event_finished = True
 
     def wait(self):
         """Registers a wait for this QueueEvent."""
@@ -634,7 +640,7 @@ class QueuedEvent(object):
         if self.debug:
             self.log.debug("Clearing a wait. Current count: %s",
                            self.num_waiting)
-        if not self.num_waiting:
+        if not self.num_waiting and self._is_event_finished:
             if self.debug:
                 self.log.debug("Queue is empty. Calling %s", self.callback)
             #del self.kwargs['queue']  # ditch this since we don't need it now
