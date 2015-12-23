@@ -17,7 +17,7 @@ class Tilt(Mode):
 
     def mode_init(self):
         self._balls_to_collect = 0
-        self._last_warning_tick = 0
+        self._last_warning = None
         self.ball_ending_tilted_queue = None
         self.tilt_event_handlers = set()
         self.last_tilt_warning_switch = 0
@@ -85,7 +85,7 @@ class Tilt(Mode):
 
         self.log.debug("Tilt Warning")
 
-        self._last_warning_tick = self.machine.tick_num
+        self._last_warning = time.time()
         self.player[self.tilt_config['tilt_warnings_player_var']] += 1
 
         warnings = self.player[self.tilt_config['tilt_warnings_player_var']]
@@ -169,8 +169,9 @@ class Tilt(Mode):
         self.tilt()
 
     def _tilt_warning_switch_handler(self):
-        if (self._last_warning_tick + self.tilt_config['multiple_hit_window']
-                <= self.machine.tick_num):
+        if (not self._last_warning or
+             (self._last_warning + (self.tilt_config['multiple_hit_window']*0.001)
+              <= time.time())):
 
             self.tilt_warning()
 
@@ -205,7 +206,7 @@ class Tilt(Mode):
         if not self.last_tilt_warning_switch:
             return 0
 
-        delta = (time.time() - self.last_tilt_warning_switch -
+        delta = ((time.time() - self.last_tilt_warning_switch) * 1000 -
                 self.tilt_config['settle_time'])
         if delta > 0:
             return delta

@@ -592,8 +592,8 @@ config_validator:
         slam_tilt_switch_tag: single|str|slam_tilt
         warnings_to_tilt: single|int|3
         reset_warnings_events: list|str|ball_ending
-        multiple_hit_window: single|ticks_int|300ms
-        settle_time: single|ticks_int|5s
+        multiple_hit_window: single|ms|300ms
+        settle_time: single|ms|5s
         tilt_warnings_player_var: single|str|tilt_warnings
     accelerometers:
         platform: single|str|None

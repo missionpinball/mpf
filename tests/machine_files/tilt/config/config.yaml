@@ -25,6 +25,9 @@ switches:
     s_tilt:
         number:
         tags: tilt
+    s_tilt_warning:
+        number:
+        tags: tilt_warning
     s_slam_tilt:
         number:
         tags: slam_tilt
