@@ -111,8 +111,10 @@ class Tilt(Mode):
         if not self.machine.game:
             return
 
-        self._balls_to_collect = self.machine.playfield.balls
-        # todo use collection
+        self._balls_to_collect = 0
+        for device in self.machine.ball_devices:
+            if device.is_playfield():
+                self._balls_to_collect += device.available_balls
 
         self.log.debug("Processing Tilt. Balls to collect: %s",
                        self._balls_to_collect)
