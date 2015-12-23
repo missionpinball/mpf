@@ -131,5 +131,8 @@ class TestTilt(MpfTestCase):
 
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.advance_time_and_run(1)
+        self.assertNotEqual(None, self.machine.game)
 
+        # wait for settle time (5s) since last s_tilt_warning hit
+        self.advance_time_and_run(3.5)
         self.assertEqual(None, self.machine.game)

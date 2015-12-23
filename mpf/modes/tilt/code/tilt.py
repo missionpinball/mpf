@@ -206,8 +206,8 @@ class Tilt(Mode):
         if not self.last_tilt_warning_switch:
             return 0
 
-        delta = ((time.time() - self.last_tilt_warning_switch) * 1000 -
-                self.tilt_config['settle_time'])
+        delta = (self.tilt_config['settle_time'] -
+                (time.time() - self.last_tilt_warning_switch) * 1000)
         if delta > 0:
             return delta
         else:
