@@ -1640,6 +1640,7 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(2, self._captured)
         self._captured = 0
         self.assertEquals(0, playfield.balls)
+        self.assertEquals(0, playfield.available_balls)
         self.assertEquals(2, self.machine.ball_controller.num_balls_known)
 
         # it should keep the ball
@@ -1659,6 +1660,9 @@ class TestBallDevice(MpfTestCase):
 
         # there should be a game
         self.assertNotEquals(None, self.machine.game)
+
+        # playfield should expect to have a ball
+        self.assertEquals(1, playfield.available_balls)
 
         # trough ejects
         coil1.pulse.assert_called_once_with()
@@ -1694,9 +1698,14 @@ class TestBallDevice(MpfTestCase):
         self.assertEquals(None, self.machine.game)
         self.assertEquals(2, self.machine.ball_controller.num_balls_known)
 
+        # no more balls on pf
+        self.assertEquals(0, playfield.available_balls)
+        self.assertEquals(0, playfield.balls)
+
         self.advance_time_and_run(30)
 
         self.assertEquals(2, self.machine.ball_controller.num_balls_known)
+        self.assertEquals(0, playfield.available_balls)
 
     def test_ball_missing_to_pf_and_drain_with_pf_switch(self):
         coil1 = self.machine.coils['eject_coil1']
@@ -1799,6 +1808,7 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(30)
 
         self.assertEquals(2, self.machine.ball_controller.num_balls_known)
+        self.assertEquals(0, playfield.available_balls)
 
     def test_concurrent_capture_and_eject_unclaimed_balls(self):
         playfield = self.machine.ball_devices['playfield']
@@ -1836,6 +1846,7 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(11)
         self.assertEquals(2, playfield.balls)
         self.assertEquals(0, self._captured)
+        self.assertEquals(2, playfield.available_balls)
 
 
     def test_ball_request_when_device_is_full(self):

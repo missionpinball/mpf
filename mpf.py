@@ -44,6 +44,10 @@ parser.add_argument("-x",
                     const='virtual', help="Forces the virtual platform to be "
                     "used for all devices")
 
+parser.add_argument("-r",
+                    action="store_true", dest="rebuild_cache",
+                    help="Forces the config cache to be rebuilt")
+
 parser.add_argument("-X",
                     action="store_const", dest="force_platform",
                     const='smart_virtual',

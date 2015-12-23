@@ -86,6 +86,7 @@ mpf:
     switch_tag_event: sw_%
     allow_invalid_config_sections: false
     config_versions_file: tools/config_versions.yaml
+    save_machine_vars_to_disk: true
 
     device_collection_control_events:
         autofires:

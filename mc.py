@@ -43,6 +43,10 @@ parser.add_argument("-v",
                     default=logging.INFO, help="Enables verbose logging to the"
                     " log file")
 
+parser.add_argument("-r",
+                    action="store_true", dest="rebuild_cache",
+                    help="Forces the config cache to be rebuilt")
+
 parser.add_argument("-V",
                     action="store_true", dest="consoleloglevel",
                     default=logging.INFO,

@@ -49,9 +49,7 @@ class TestTutorialStep15(MpfTestCase):
 
         # lets drop the ball in some devices and make sure it kicks it out
         self.machine.switch_controller.process_switch('s_eject', 1)
-        # todo fix this call twice
         self.advance_time_and_run(2)
-        self.advance_time_and_run(1)
         self.assertEqual(1, self.machine.ball_devices.playfield.balls)
 
         self.machine.switch_controller.process_switch('s_bottom_popper', 1)
@@ -65,8 +63,6 @@ class TestTutorialStep15(MpfTestCase):
         # ball drains, game goes to ball 2
         self.machine.default_platform.add_ball_to_device(
             self.machine.ball_devices.bd_trough)
-        # todo bug here. Have to call advance_time_and_run twice for it to work
-        self.advance_time_and_run(1)
         self.advance_time_and_run(1)
 
         self.assertEqual(2, self.machine.game.player.ball)
@@ -94,8 +90,6 @@ class TestTutorialStep15(MpfTestCase):
         # ball drains, game goes to ball 3
         self.machine.default_platform.add_ball_to_device(
             self.machine.ball_devices.bd_trough)
-        # todo bug here. Have to call advance_time_and_run twice for it to work
-        self.advance_time_and_run(1)
         self.advance_time_and_run(1)
 
         self.assertEqual(3, self.machine.game.player.ball)
@@ -125,8 +119,6 @@ class TestTutorialStep15(MpfTestCase):
         # ball drains, game ends
         self.machine.default_platform.add_ball_to_device(
             self.machine.ball_devices.bd_trough)
-        # todo bug here. Have to call advance_time_and_run twice for it to work
-        self.advance_time_and_run(1)
         self.advance_time_and_run(1)
 
         self.assertIsNone(self.machine.game)

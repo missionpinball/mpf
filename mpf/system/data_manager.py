@@ -13,7 +13,6 @@ import errno
 import thread
 import time
 
-from mpf.system.config import Config
 from mpf.system.file_manager import FileManager
 
 
@@ -106,7 +105,15 @@ class DataManager(object):
         if data:
             self.data = data
 
-        thread.start_new_thread(self._writing_thread, (delay_secs, ))
+        if delay_secs:
+            self.machine.delay.add(callback=self._delayed_save_callback,
+                                   data=copy.deepcopy(self.data),
+                                   ms=delay_secs*1000)
+        else:
+            thread.start_new_thread(self._writing_thread, (copy.deepcopy(self.data), ))
+
+    def _delayed_save_callback(self, data):
+        thread.start_new_thread(self._writing_thread, (data, ))
 
     def save_key(self, key, value, delay_secs=0):
         """Updates an individual key and then writes the entire dictionary to
@@ -119,7 +126,15 @@ class DataManager(object):
                 data to disk. Default is 0.
 
         """
-        self.data[key] = value
+        try:
+            self.data[key] = value
+        except TypeError:
+            self.log.warning('In-memory copy of {} is invalid. Re-creating'.
+                             format(self.filename))
+            # todo should we reload from disk here?
+            self.data = dict()
+            self.data[key] = value
+
         self.save_all(delay_secs=delay_secs)
 
     def remove_key(self, key):
@@ -129,13 +144,9 @@ class DataManager(object):
         except KeyError:
             pass
 
-    def _writing_thread(self, delay_secs=0):
-
-        if delay_secs:
-            time.sleep(delay_secs)
-        self.log.debug("Writing %s to: %s", self.name, self.filename)
-
-        FileManager.save(self.filename, self.data)
+    def _writing_thread(self, data):
+        self.log.debug("Writing {} to: {}".format(self.name, self.filename))
+        FileManager.save(self.filename, data)
 
 
 # The MIT License (MIT)

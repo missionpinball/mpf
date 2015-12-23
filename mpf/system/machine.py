@@ -6,11 +6,14 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
+import cPickle
 import logging
 import os
 import time
 import sys
 import Queue
+
+import errno
 
 from mpf.system import *
 from mpf.system.config import Config, CaseInsensitiveDict
@@ -134,7 +137,6 @@ class MachineController(object):
         self.events._process_event_queue()
         self.events.post("init_phase_5")
         self.events._process_event_queue()
-
         self.reset()
 
     def validate_machine_config_section(self, section):
@@ -203,6 +205,32 @@ class MachineController(object):
         sys.path.append(self.machine_path)
 
     def _load_machine_config(self):
+        if self.options['rebuild_cache']:
+            load_from_cache = False
+        else:
+            try:
+                if self._get_latest_config_mod_time() > os.path.getmtime(os.path.join(
+                        self.machine_path, '_cache', '{}_config.p'.
+                        format('-'.join(self.options['configfile'])))):
+                    load_from_cache = False  # config is newer
+                else:
+                    load_from_cache = True  # cache is newer
+
+            except OSError as exception:
+                if exception.errno != errno.ENOENT:
+                    raise  # some unknown error?
+                else:
+                    load_from_cache = False  # cache file doesn't exist
+
+        config_loaded = False
+        if load_from_cache:
+            config_loaded = self._load_config_from_cache()
+
+        if not config_loaded:
+            self._load_config_from_files()
+
+    def _load_config_from_files(self):
+        self.log.info("Loading config from original files")
         for num, config_file in enumerate(self.options['configfile']):
 
             if not (config_file.startswith('/') or
@@ -215,6 +243,61 @@ class MachineController(object):
 
             self.config = Util.dict_merge(self.config,
                 Config.load_config_file(config_file))
+
+        self._cache_config()
+
+    def _load_config_from_cache(self):
+        self.log.info("Loading cached config: {}".format(
+            os.path.join(self.machine_path, '_cache',
+            '{}_config.p'.format('-'.join(self.options['configfile'])))))
+
+        with open(os.path.join(
+                self.machine_path, '_cache', '{}_config.p'.
+                format('-'.join(self.options['configfile']))), 'r') as f:
+
+            try:
+                self.config = cPickle.load(f)
+
+            except:
+                self.log.warning("Could not load config from cache")
+                return False
+
+            return True
+
+    def _get_latest_config_mod_time(self):
+
+        latest_time = 0.0
+
+        for root, dirs, files in os.walk(
+                os.path.join(self.machine_path, 'config')):
+            for name in files:
+                if not name.startswith('.'):
+                    if os.path.getmtime(os.path.join(root, name)) > latest_time:
+                        latest_time = os.path.getmtime(os.path.join(root, name))
+
+            for name in dirs:
+                if not name.startswith('.'):
+                    if os.path.getmtime(os.path.join(root, name)) > latest_time:
+                        latest_time = os.path.getmtime(os.path.join(root, name))
+
+        return latest_time
+
+    def _cache_config(self):
+
+        try:
+            os.makedirs(os.path.join(self.machine_path, '_cache'))
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+
+        with open(os.path.join(
+                self.machine_path, '_cache', '{}_config.p'.
+                format('-'.join(self.options['configfile']))),
+                'wb') as f:
+            cPickle.dump(self.config, f)
+            self.log.info('Config file cache created: {}'.format(os.path.join(
+                self.machine_path, '_cache', '{}_config.p'.
+                format('-'.join(self.options['configfile'])))))
 
     def verify_system_info(self):
         """Dumps information about the Python installation to the log.
@@ -551,7 +634,7 @@ class MachineController(object):
 
         if change or force_events:
 
-            if self.machine_vars[name]['persist']:
+            if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
                 disk_var = CaseInsensitiveDict()
                 disk_var['value'] = value
 

@@ -64,6 +64,7 @@ class PlayfieldTransfer(Device):
                                         balls=1,
                                         target=self.target,
                                         callback=self._ball_went_through4)
+        self.target.available_balls += 1
 
     # used as callback in _ball_went_through3
     def _ball_went_through4(self, balls, target):

@@ -110,6 +110,7 @@ class Playfield(BallDevice):
             balls -= 1
 
         self.balls += balls
+        self.available_balls += balls
 
     @property
     def balls(self):
@@ -307,6 +308,9 @@ class Playfield(BallDevice):
     def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
+        self.available_balls -= balls
+        if self.available_balls < 0:
+            self.available_balls = 0
         self._count_consistent = True
 
     def _source_device_eject_attempt(self, balls, target, **kwargs):
