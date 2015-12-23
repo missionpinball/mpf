@@ -167,7 +167,7 @@ class RGBColor(object):
         else:
             self._color = color if color else rgb_min
 
-        for k, v in kwargs.items():
+        for k, v in list(kwargs.items()):
             setattr(self, k, v)
 
     def __eq__(self, other):
@@ -255,8 +255,13 @@ class RGBColor(object):
         self._color = value
 
     @property
+    def grb(self):
+        """ A GRB representation of the color for hardware that requires GRB byte order. """
+        return self.green, self.red, self.blue
+
+    @property
     def hex(self):
-        """ A 6-char HEX representation of the color, with a prepended octothorpe. """
+        """ A 6-char HEX representation of the color. """
         return RGBColor.rgb_to_hex(self.rgb)
 
     @hex.setter
@@ -268,7 +273,7 @@ class RGBColor(object):
         """ A string containing a standard color name or None if the current
         RGB color does not have a standard name
         """
-        return dict([(_v, _k) for _k, _v in named_rgb_colors.items()]).get(self._color)
+        return dict([(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(self._color)
 
     @name.setter
     def name(self, value):

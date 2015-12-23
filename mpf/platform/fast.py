@@ -15,7 +15,7 @@ import logging
 import time
 import sys
 import threading
-import Queue
+import queue
 import traceback
 import io
 from distutils.version import StrictVersion
@@ -40,7 +40,7 @@ IO_MIN_FW = '0.87'
 
 DMD_LATEST_FW = '0.88'
 NET_LATEST_FW = '0.90'
-RGB_LATEST_FW = '0.87'
+RGB_LATEST_FW = '0.88'
 IO_LATEST_FW = '0.89'
 
 
@@ -80,7 +80,7 @@ class HardwarePlatform(Platform):
         self.rgb_connection = None
         self.fast_nodes = list()
         self.connection_threads = set()
-        self.receive_queue = Queue.Queue()
+        self.receive_queue = queue.Queue()
         self.fast_leds = set()
         self.flag_led_tick_registered = False
         self.fast_io_boards = list()
@@ -93,6 +93,7 @@ class HardwarePlatform(Platform):
                     watchdog: ms|1000
                     default_debounce_open: ms|30
                     default_debounce_close: ms|30
+                    hardware_led_fade_time: ms|0
                     debug: boolean|False
                     '''
 
@@ -328,7 +329,7 @@ class HardwarePlatform(Platform):
         for port in self.config['ports']:
             self.connection_threads.add(SerialCommunicator(machine=self.machine,
                 platform=self, port=port, baud=self.config['baud'],
-                send_queue=Queue.Queue(), receive_queue=self.receive_queue))
+                send_queue=queue.Queue(), receive_queue=self.receive_queue))
 
     def register_processor_connection(self, name, communicator):
         """Once a communication link has been established with one of the
@@ -347,6 +348,7 @@ class HardwarePlatform(Platform):
         elif name == 'RGB':
             self.rgb_connection = communicator
             self.rgb_connection.send('RA:000000')  # turn off all LEDs
+            self.rgb_connection.send('RF:' + Util.int_to_hex_string(self.config['hardware_led_fade_time']))
 
     def update_leds(self):
         """Updates all the LEDs connected to a FAST controller. This is done
@@ -766,7 +768,7 @@ class HardwarePlatform(Platform):
         sw_num = self.machine.switches[sw_name].number
 
         # find the rule(s) based on this switch
-        coils = [k for k, v in self.hw_rules.iteritems() if v['switch'] == sw_num]
+        coils = [k for k, v in self.hw_rules.items() if v['switch'] == sw_num]
 
         self.log.debug("Clearing HW Rule for switch: %s %s, coils: %s", sw_name,
                        sw_num, coils)

@@ -101,7 +101,7 @@ class HardwarePlatform(Platform):
                 self.proc = pinproc.PinPROC(self.machine_type)
                 self.proc.reset(1)
             except IOError:
-                print "Retrying..."
+                print("Retrying...")
 
         self.log.info("Successfully connected to P-ROC")
 
@@ -509,7 +509,7 @@ class HardwarePlatform(Platform):
                                      {'notifyHost': True,
                                       'reloadActive': False}, [])
 
-        for entry in self.hw_switch_rules.keys():  # slice for copy
+        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(self.machine.switches.number(sw_num).name):
 
                 # disable any drivers from this rule which are active now
