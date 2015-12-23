@@ -37,9 +37,13 @@ class Accelerometer(Device):
         return math.sqrt(x*x + y*y + z*z)
 
     def _calculate_angle(self, x1, y1, z1, x2, y2, z2):
-        return math.acos((x1*x2 + y1*y2 + z1*z2) /
-                (self._calculate_vector_length(x1, y1, z1) *
-                self._calculate_vector_length(x2, y2, z2)))
+        dividor = (self._calculate_vector_length(x1, y1, z1) *
+                self._calculate_vector_length(x2, y2, z2))
+
+        if dividor == 0:
+            return 0
+
+        return math.acos((x1*x2 + y1*y2 + z1*z2) / dividor)
 
     def update_acceleration(self, x, y, z):
         self.value = (x, y, z)
@@ -58,16 +62,28 @@ class Accelerometer(Device):
                             self.history[2] * alpha + z * (1-alpha))
 
         self._handle_hits(dx, dy, dz)
-        self._handle_level(x, y, z)
+        self._handle_level()
 
-    def _handle_level(self, x, y ,z):
-        deviation_total = self._calculate_angle(self.config['level_x'],
+    def get_level_xyz(self):
+        return self._calculate_angle(self.config['level_x'],
                                 self.config['level_y'], self.config['level_z'],
-                                x, y, z)
-        deviation_x = self._calculate_angle(0, self.config['level_y'],
-                                self.config['level_z'], 0, y, z)
-        deviation_y = self._calculate_angle(self.config['level_x'], 0,
-                                self.config['level_z'], x, 0, z)
+                                self.value[0], self.value[1], self.value[2])
+
+    def get_level_xz(self):
+        return self._calculate_angle(self.config['level_x'],
+                                0.0, self.config['level_z'],
+                                self.value[0], 0.0, self.value[2])
+
+    def get_level_yz(self):
+        return self._calculate_angle(0.0,
+                                self.config['level_y'], self.config['level_z'],
+                                0.0, self.value[1], self.value[2])
+
+    def _handle_level(self):
+        deviation_total = self.get_level_xyz()
+        deviation_x = self.get_level_xz()
+        deviation_y = self.get_level_yz()
+ 
         for max_deviation in self.config['level_limits']:
             if deviation_total/math.pi*180 > max_deviation:
                 self.log.debug("Deviation x: %s, y: %s, total: %s",
@@ -79,9 +95,7 @@ class Accelerometer(Device):
                     deviation_x=deviation_x,
                     deviation_y=deviation_y)
 
-            
-
-    def _handle_hits(self, dx, dy ,dz):
+    def _handle_hits(self, dx, dy, dz):
         acceleration = self._calculate_vector_length(dx, dy, dz)
         for min_acceleration in self.config['hit_limits']:
             if acceleration > min_acceleration:
