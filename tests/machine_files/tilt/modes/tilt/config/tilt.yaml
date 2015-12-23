@@ -9,3 +9,6 @@ tilt:
   multiple_hit_window: 300ms
   settle_time: 5s
   tilt_warnings_player_var: tilt_warnings
+  tilt_slam_tilt_events: slam_tilt_event
+  tilt_warning_events: tilt_warning_event
+  tilt_events: tilt_event

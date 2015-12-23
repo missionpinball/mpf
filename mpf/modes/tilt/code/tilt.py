@@ -33,6 +33,15 @@ class Tilt(Mode):
         for event in self.tilt_config['reset_warnings_events']:
             self.add_mode_event_handler(event, self.reset_warnings)
 
+        for event in self.tilt_config['tilt_events']:
+            self.add_mode_event_handler(event, self.tilt)
+
+        for event in self.tilt_config['tilt_warning_events']:
+            self.add_mode_event_handler(event, self.tilt_warning)
+
+        for event in self.tilt_config['tilt_slam_tilt_events']:
+            self.add_mode_event_handler(event, self.slam_tilt)
+
     def mode_stop(self, **kwargs):
         self._remove_switch_handlers()
         self.reset_warnings_handlers = set()

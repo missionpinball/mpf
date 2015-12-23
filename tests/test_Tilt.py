@@ -64,6 +64,43 @@ class TestTilt(MpfTestCase):
 
         self.assertEqual(False, self.machine.game.tilted)
 
+    def test_tilt_event(self):
+        self._is_tilted = False
+        self.machine.events.add_handler("tilt", self._tilted)
+
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(2)
+
+        self.assertEqual(None, self.machine.game)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+        self.advance_time_and_run(10)
+
+        self.assertTrue(self.machine.mode_controller.is_active('tilt'))
+        self.assertNotEqual(None, self.machine.game)
+
+        self.assertFalse(self._is_tilted)
+        self.machine.events.post("tilt_event")
+        self.advance_time_and_run(1)
+        self.machine.events.post("tilt_event")
+        self.advance_time_and_run(1)
+        self.machine.events.post("tilt_event")
+        self.advance_time_and_run(1)
+
+        self.assertTrue(self._is_tilted)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(True, self.machine.game.tilted)
+
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+
+        self.assertEqual(False, self.machine.game.tilted)
+
+
     def test_simple_tilt_ball_not_on_pf_yet(self):
         self._is_tilted = False
         self.machine.events.add_handler("tilt", self._tilted)
