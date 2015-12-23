@@ -215,4 +215,8 @@ class Tilt(Mode):
 
     def slam_tilt(self):
         self.machine.events.post('slam_tilt')
-        self.game_ended()
+        if not self.machine.game:
+            return
+
+        self.machine.game.slam_tilted = True
+        self.tilt()

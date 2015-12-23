@@ -39,8 +39,8 @@ class TestTilt(MpfTestCase):
         self.advance_time_and_run(10)
 
         # flipper actived
-        self.assertEquals(False, self.machine.flippers.f_test.disable.called)
-        self.assertEquals(1, self.machine.flippers.f_test._enable_single_coil_rule.called)
+        self.assertEqual(False, self.machine.flippers.f_test.disable.called)
+        self.assertEqual(1, self.machine.flippers.f_test._enable_single_coil_rule.called)
         self.machine.flippers.f_test._enable_single_coil_rule = MagicMock()
 
         self.assertTrue(self.machine.mode_controller.is_active('tilt'))
@@ -52,16 +52,17 @@ class TestTilt(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertTrue(self._is_tilted)
         self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(True, self.machine.game.tilted)
 
         # flipper deactived
-        self.assertEquals(1, self.machine.flippers.f_test.disable.called)
-        self.assertEquals(False, self.machine.flippers.f_test._enable_single_coil_rule.called)
+        self.assertEqual(1, self.machine.flippers.f_test.disable.called)
+        self.assertEqual(False, self.machine.flippers.f_test._enable_single_coil_rule.called)
         self.machine.flippers.f_test.disable = MagicMock()
 
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.advance_time_and_run(1)
 
-        self.assertEqual(None, self.machine.game)
+        self.assertEqual(False, self.machine.game.tilted)
 
     def test_simple_tilt_ball_not_on_pf_yet(self):
         self._is_tilted = False
@@ -88,11 +89,12 @@ class TestTilt(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertTrue(self._is_tilted)
         self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(True, self.machine.game.tilted)
 
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.advance_time_and_run(1)
 
-        self.assertEqual(None, self.machine.game)
+        self.assertEqual(False, self.machine.game.tilted)
 
     def test_tilt_warning(self):
         self._is_tilted = False
@@ -139,6 +141,7 @@ class TestTilt(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertTrue(self._is_tilted)
         self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(True, self.machine.game.tilted)
 
 
 
@@ -148,4 +151,47 @@ class TestTilt(MpfTestCase):
 
         # wait for settle time (5s) since last s_tilt_warning hit
         self.advance_time_and_run(3.5)
+        self.assertEqual(False, self.machine.game.tilted)
+
+    def test_slam_tilt(self):
+        self._is_tilted = False
+        self.machine.events.add_handler("tilt", self._tilted)
+
+        self.machine.flippers.f_test._enable_single_coil_rule = MagicMock()
+        self.machine.flippers.f_test.disable = MagicMock()
+
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(2)
+
+        self.assertEqual(None, self.machine.game)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+        self.advance_time_and_run(10)
+
+        # flipper actived
+        self.assertEqual(False, self.machine.flippers.f_test.disable.called)
+        self.assertEqual(1, self.machine.flippers.f_test._enable_single_coil_rule.called)
+        self.machine.flippers.f_test._enable_single_coil_rule = MagicMock()
+
+        self.assertTrue(self.machine.mode_controller.is_active('tilt'))
+        self.assertNotEqual(None, self.machine.game)
+
+        self.assertFalse(self._is_tilted)
+        self.machine.switch_controller.process_switch('s_slam_tilt', 1)
+        self.machine.switch_controller.process_switch('s_slam_tilt', 0)
+        self.advance_time_and_run(1)
+        self.assertNotEqual(None, self.machine.game)
+
+        # flipper deactived
+        self.assertEqual(1, self.machine.flippers.f_test.disable.called)
+        self.assertEqual(False, self.machine.flippers.f_test._enable_single_coil_rule.called)
+        self.machine.flippers.f_test.disable = MagicMock()
+
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+
         self.assertEqual(None, self.machine.game)
