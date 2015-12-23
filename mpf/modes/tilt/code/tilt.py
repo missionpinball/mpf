@@ -134,11 +134,6 @@ class Tilt(Mode):
                     self.machine.events.add_handler(
                         'balldevice_{}_ball_enter'.format(device.name),
                         self._tilted_ball_drain))
-            else:
-                self.tilt_event_handlers.add(
-                    self.machine.events.add_handler(
-                        'balldevice_{}_ball_enter'.format(device.name),
-                        self._tilted_ball_entered_non_drain_device))
 
         self.machine.game.ball_ending()
 
@@ -160,10 +155,6 @@ class Tilt(Mode):
             self._tilt_done()
 
         return {'unclaimed_balls': 0}
-
-    def _tilted_ball_entered_non_drain_device(self, new_balls, unclaimed_balls,
-                                              device):
-        return {'unclaimed_balls': unclaimed_balls}
 
     def _tilt_switch_handler(self):
         self.tilt()
