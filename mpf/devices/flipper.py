@@ -74,7 +74,7 @@ class Flipper(Device):
         D.    Enable   Hold  Button  active
         E.    Disable  Main  EOS     active
 
-        One coil, using EOS switch
+        One coil, using EOS switch (not implemented):
         Rule  Type     Coil  Switch  Action
         A.    Enable   Main  Button  active
         H.    PWM      Main  EOS     active
@@ -84,7 +84,7 @@ class Flipper(Device):
         B.    Pulse    Main  Button  active
         D.    Enable   Hold  Button  active
 
-        One coil, not using EOS switch
+        One coil, not using EOS switch:
         Rule  Type       Coil  Switch  Action
         C.    Pulse/PWM  Main  button  active
 
@@ -106,7 +106,7 @@ class Flipper(Device):
             self._enable_main_coil_pulse_rule()
             self._enable_hold_coil_rule()
 
-        elif self.config['use_eos']:  # two coils, cutoff main on EOS
+        else:  # two coils, cutoff main on EOS
             self._enable_main_coil_eos_cutoff_rule()
             self._enable_hold_coil_rule()
 
