@@ -58,10 +58,10 @@ class TestTilt(MpfTestCase):
         self.machine.flippers.f_test_hold_eos.disable()
 
         self.assertEqual(1, len(self.machine.default_platform.clear_hw_rule._mock_call_args_list))
-        self.machine.default_platform.clear_hw_rule.assert_has_calls(call("s_flipper"))
+        self.machine.default_platform.clear_hw_rule.assert_has_calls([call("s_flipper")])
         # TODO: this should be clear_hw_rule on s_flipper and s_flipper_eos
         #self.assertEqual(2, len(self.machine.default_platform.clear_hw_rule._mock_call_args_list))
-        #self.machine.default_platform.clear_hw_rule.assert_has_calls(call("s_flipper"), call("s_flipper_eos"))
+        #self.machine.default_platform.clear_hw_rule.assert_has_calls([call("s_flipper"), call("s_flipper_eos")])
 
     def test_sw_flip_and_release(self):
 
