@@ -1,0 +1,37 @@
+#config_version=3
+
+game:
+    balls_per_game: 1
+
+coils:
+    c_flipper_main:
+        number:
+    c_flipper_hold:
+        number:
+
+
+switches:
+    s_flipper:
+        number:
+    s_flipper_eos:
+        number:
+
+flippers:
+    f_test_single:
+        debug: true
+        main_coil: c_flipper_main
+        activation_switch: s_flipper
+
+    f_test_hold:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+
+    f_test_hold_eos:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true

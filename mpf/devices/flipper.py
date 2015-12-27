@@ -38,11 +38,6 @@ class Flipper(Device):
         super(Flipper, self).__init__(machine, name, config, collection,
                                       validate=validate)
 
-        self.flipper_coils = []
-        self.flipper_coils.append(self.config['main_coil'].name)
-        if self.config['hold_coil']:
-            self.flipper_coils.append(self.config['hold_coil'].name)
-
         self.flipper_switches = []
         self.flipper_switches.append(self.config['activation_switch'].name)
 
@@ -188,12 +183,7 @@ class Flipper(Device):
             state=1,
             logical=True)
 
-        coil = self.config['main_coil'].config
-        coil.pwm(
-            on_ms=coil.config['pwm_on'],
-            off_ms=coil.config['pwm_off'],
-            orig_on_ms=coil.config['pulse_ms']
-        )
+        self.config['main_coil'].enable()
 
     def sw_release(self):
         """Deactives the flipper via software as if the flipper button was
@@ -207,9 +197,7 @@ class Flipper(Device):
             logical=True)
 
         # disable the flipper coil(s)
-        for coil in self.flipper_coils:
-            coil.disable()
-
+        self.config['main_coil'].disable()
 
 
 # The MIT License (MIT)
