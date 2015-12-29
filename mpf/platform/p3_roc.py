@@ -1174,6 +1174,8 @@ class PDBConfig(object):
                                             enable,
                                             True)
 
+            self.indexes[group_ctr] = group_ctr
+
         group_ctr += 1
 
         # Process lamps first. The P3-ROC can only control so many drivers
@@ -1219,6 +1221,8 @@ class PDBConfig(object):
             # P3-ROC's driver count, which will force the drivers to be created
             # as VirtualDrivers. Appending the bank avoids conflicts when
             # group_ctr gets too high.
+            if coil_bank in self.indexes:
+                continue
 
             if group_ctr >= num_proc_banks or coil_bank >= 32:
                 self.log.warning("Driver group %d mapped to driver index"
