@@ -62,14 +62,17 @@ class Config(object):
     def load_config_file(filename, verify_version=True, halt_on_error=True):
         config = FileManager.load(filename, verify_version, halt_on_error)
 
-        if 'config' in config:
-            path = os.path.split(filename)[0]
+        try:
+            if 'config' in config:
+                path = os.path.split(filename)[0]
 
-            for file in Util.string_to_list(config['config']):
-                full_file = os.path.join(path, file)
-                config = Util.dict_merge(config,
-                                           Config.load_config_file(full_file))
-        return config
+                for file in Util.string_to_list(config['config']):
+                    full_file = os.path.join(path, file)
+                    config = Util.dict_merge(config,
+                                               Config.load_config_file(full_file))
+            return config
+        except TypeError:
+            return dict()
 
     @staticmethod
     def process_config(config_spec, source, target=None):
