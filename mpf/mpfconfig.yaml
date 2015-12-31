@@ -532,7 +532,7 @@ config_validator:
         hit_events: dict|str:ms|None
         remove_active_profile_events: dict|str:ms|None
     shot_groups:
-        shots: list|str|
+        shots: list|str|None
         profile: single|str|None
         tags: list|str|None
         label: single|str|%
@@ -587,9 +587,9 @@ config_validator:
         ac_relay_delay_ms: single|int|75
         ac_relay_driver_number: single|str|
     tilt:
-        tilt_slam_tilt_events: list|str|
-        tilt_warning_events: list|str|
-        tilt_events: list|str|
+        tilt_slam_tilt_events: list|str|None
+        tilt_warning_events: list|str|None
+        tilt_events: list|str|None
         tilt_warning_switch_tag: single|str|tilt_warning
         tilt_switch_tag: single|str|tilt
         slam_tilt_switch_tag: single|str|slam_tilt

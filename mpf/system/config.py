@@ -255,26 +255,27 @@ class Config(object):
     def validate_config_item2(self, spec, validation_failure_info,
                               item='item not in config!@#',):
 
-        default = 'default required!@#'
-
-        item_type, validation, default = spec.split('|')
+        try:
+            item_type, validation, default = spec.split('|')
+        except ValueError:
+            raise ValueError('Error in validator config: {}'.format(spec))
 
         if default.lower() == 'none':
             default = None
+        elif not default:
+            default = 'default required!@#'
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
-                log.error('Required setting missing from config file. Run with '
-                          'verbose logging and look for the last '
-                          'ConfigProcessor entry above this line to see where '
-                          'the problem is.')
-                sys.exit()
+                raise ValueError('Required setting missing from config file. '
+                    'Run with verbose logging and look for the last '
+                    'ConfigProcessor entry above this line to see where the '
+                    'problem is. {} {}'.format(spec, validation_failure_info))
             else:
                 item = default
 
         if item_type == 'single':
             item = self.validate_item(item, validation, validation_failure_info)
-
 
         elif item_type == 'list':
             item = Util.string_to_list(item)

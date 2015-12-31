@@ -24,3 +24,6 @@ test_section:
   case_sensitive_1: test
   Case_sensitive_2: test
   case_sensitive_3: Test
+
+Test_section_1:
+  test: test

@@ -44,3 +44,87 @@ class TestConfig(MpfTestCase):
         self.assertEqual(self.machine.config['test_section']['case_sensitive_2'], 'test')
         self.assertEqual(self.machine.config['test_section']['case_sensitive_3'], 'Test')
 
+        # key should be lowercase even though it's uppercase in the config
+        self.assertIn('test_section_1', self.machine.config)
+
+    def test_config_validator(self):
+        # test config spec syntax error
+        self.assertRaises(ValueError,
+                          self.machine.config_processor.validate_config_item2,
+                          'single|int', None, None)
+
+        # test default required, source is int
+        validation_string = 'single|int|'
+        results = self.machine.config_processor.validate_config_item2(
+                validation_string, 'test_failure_info', 0)
+        self.assertEqual(results, 0)
+
+        # test default provided, source overrides default
+        validation_string = 'single|int|0'
+        results = self.machine.config_processor.validate_config_item2(
+                validation_string, 'test_failure_info', 1)
+        self.assertEqual(results, 1)
+
+        # test source type is converted to int
+        validation_string = 'single|int|0'
+        results = self.machine.config_processor.validate_config_item2(
+                validation_string, 'test_failure_info', '1')
+        self.assertEqual(results, 1)
+
+        # test default when no source is present
+        validation_string = 'single|int|1'
+        results = self.machine.config_processor.validate_config_item2(
+                validation_string, 'test_failure_info')  # no item in config
+        self.assertEqual(results, 1)
+
+        # test default required with source missing raises error
+        validation_string = 'single|int|'  # default required
+        self.assertRaises(ValueError,
+                          self.machine.config_processor.validate_config_item2,
+                          validation_string, 'test_failure_info')  # no item
+
+        # test str validations
+
+        validation_string = 'single|str|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 'hello')
+        self.assertEqual(results, 'hello')
+
+        validation_string = 'single|str|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 1)
+        self.assertEqual(results, '1')
+
+        # test float validations
+
+        validation_string = 'single|float|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 1)
+        self.assertAlmostEqual(results, 1.0, .01)
+
+        validation_string = 'single|float|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '1')
+        self.assertAlmostEqual(results, 1.0, .01)
+
+        validation_string = 'single|float|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 1.0)
+        self.assertAlmostEqual(results, 1.0, .01)
+
+        # test bool validations
+
+        validation_string = 'single|bool|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 'f')
+        self.assertFalse(results)
+
+        validation_string = 'single|bool|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 'false')
+        self.assertFalse(results)
+
+        validation_string = 'single|bool|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', False)
+        self.assertFalse(results)
