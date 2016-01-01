@@ -28,12 +28,6 @@ class Accelerometer(Device):
         self.history = False
         self.value = False
 
-    def received_hit(self):
-        # currently unused
-        self.log.debug("Received hit above threshold %s",
-                config['hit_limits'].keys()[0])
-        self.machine.events.post(config['hit_limits'].values()[0])
-
     def _calculate_vector_length(self, x, y, z):
         return math.sqrt(x*x + y*y + z*z)
 
