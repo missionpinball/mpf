@@ -1,4 +1,5 @@
 from tests.MpfTestCase import MpfTestCase
+from mpf.system.timing import Timing
 
 class TestConfig(MpfTestCase):
 
@@ -119,6 +120,11 @@ class TestConfig(MpfTestCase):
             validation_string, 'test_failure_info', 'f')
         self.assertFalse(results)
 
+        validation_string = 'single|boolean|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 'f')
+        self.assertFalse(results)
+
         validation_string = 'single|bool|'
         results = self.machine.config_processor.validate_config_item2(
             validation_string, 'test_failure_info', 'false')
@@ -128,3 +134,103 @@ class TestConfig(MpfTestCase):
         results = self.machine.config_processor.validate_config_item2(
             validation_string, 'test_failure_info', False)
         self.assertFalse(results)
+
+        # test ms conversions
+
+        validation_string = 'single|ms|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 100)
+        self.assertEqual(results, 100)
+
+        validation_string = 'single|ms|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 100.0)
+        self.assertEqual(results, 100)
+
+        validation_string = 'single|ms|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '100')
+        self.assertEqual(results, 100)
+
+        validation_string = 'single|ms|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '100ms')
+        self.assertEqual(results, 100)
+
+        validation_string = 'single|ms|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '1s')
+        self.assertEqual(results, 1000)
+
+        # test sec conversions
+
+        validation_string = 'single|secs|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 100)
+        self.assertEqual(results, 100)
+
+        validation_string = 'single|secs|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 100.0)
+        self.assertEqual(results, 100)
+
+        validation_string = 'single|secs|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '100')
+        self.assertEqual(results, 100)
+
+        validation_string = 'single|secs|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '100s')
+        self.assertEqual(results, 100)
+
+        validation_string = 'single|secs|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '100ms')
+        self.assertEqual(results, .1)
+
+        # test ticks conversions
+
+        self.assertEqual(Timing.HZ, 30)
+
+        validation_string = 'single|ticks|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '1s')
+        self.assertAlmostEqual(results, 30, delta=0.1)
+        self.assertIs(type(results), float)
+
+        # test ticks_int conversions
+
+        self.assertEqual(Timing.HZ, 30)
+
+        validation_string = 'single|ticks_int|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '1s')
+        self.assertAlmostEqual(results, 30, delta=1)
+        self.assertIs(type(results), int)
+
+        # test single list conversions
+        # (this just test it gets converted to a list since string_to_list
+        # is tested earlier)
+        validation_string = 'single|list|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 'hi')
+        self.assertEqual(results, ['hi'])
+
+        # Test lists
+        validation_string = 'list|int|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '1, 2, 3')
+        self.assertEqual(results, [1, 2, 3])
+
+        # Test set
+        validation_string = 'set|int|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '1, 2, 3')
+        self.assertEqual(results, {1, 2, 3})
+
+        # Test dict
+        validation_string = 'dict|str:int|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', dict(hello='1'))
+        self.assertEqual(results, dict(hello=1))

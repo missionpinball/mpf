@@ -301,7 +301,7 @@ class Config(object):
 
         elif item_type == 'dict':
             item = self.validate_item(item, validation,
-                                               validation_failure_info)
+                                      validation_failure_info)
 
             if not item:
                 item = dict()
