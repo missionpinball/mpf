@@ -69,11 +69,11 @@ class MpfTestCase(unittest.TestCase):
         self.testTime = new_time
         time.time.return_value = self.testTime
 
-    def advance_time(self, delta):
+    def advance_time(self, delta=1):
         self.testTime += delta
         time.time.return_value = self.testTime
 
-    def advance_time_and_run(self, delta):
+    def advance_time_and_run(self, delta=1):
         end_time = time.time() + delta
         self.machine.log.debug("Advancing time %ss", delta)
         self.machine_run()

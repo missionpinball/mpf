@@ -75,7 +75,9 @@ class Config(object):
             return dict()
 
     @staticmethod
-    def process_config(config_spec, source, target=None):
+    def process_config(config_spec, source, target=None):  # pragma: no cover
+        # Note this method is deprecated and will be removed eventually
+        # Use process_config2() instead
         config_spec = yaml.load(config_spec, Loader=MpfLoader)
         processed_config = source
 
@@ -94,7 +96,9 @@ class Config(object):
         return processed_config
 
     @staticmethod
-    def validate_config_item(spec, item='item not in config!@#'):
+    def validate_config_item(spec, item='item not in config!@#'):  # pragma: no cover
+        # Note this method is deprecated and will be removed eventually
+        # Use validate_config_item2() instead
 
         try:
             if item.lower() == 'none':

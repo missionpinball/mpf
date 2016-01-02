@@ -86,7 +86,12 @@ class ModeController(object):
         # todo make a config file validator entry for lowercase values
 
         for mode in set(self.machine.config['modes']):
-            self.machine.modes.append(self._load_mode(mode.lower()))
+
+            if mode not in self.machine.modes:
+                self.machine.modes[mode] = self._load_mode(mode.lower())
+            else:
+                raise ValueError('Mode {} already exists. Cannot load again.'.
+                                 format(mode))
 
     def _load_mode(self, mode_string):
         """Loads a mode, reads in its config, and creates the Mode object.

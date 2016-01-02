@@ -442,7 +442,7 @@ config_validator:
         y: single|int|None
         z: single|int|None
     mode:
-        priority: single|int|0
+        priority: single|int|100
         start_events: list|str|None
         stop_events: list|str|None
         start_priority: single|int|0

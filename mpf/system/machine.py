@@ -17,6 +17,7 @@ import errno
 
 from mpf.system import *
 from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.device_manager import DeviceCollection
 from mpf.system.tasks import Task, DelayManager, DelayManagerRegistry
 from mpf.system.data_manager import DataManager
 from mpf.system.timing import Timing
@@ -63,7 +64,7 @@ class MachineController(object):
         self.monitors = dict()
         self.plugins = list()
         self.scriptlets = list()
-        self.modes = list()
+        self.modes = DeviceCollection(self, 'modes', None)
         self.asset_managers = dict()
         self.game = None
         self.active_debugger = dict()
