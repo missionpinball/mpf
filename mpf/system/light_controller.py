@@ -298,7 +298,7 @@ class LightController(object):
         for show in shows:
             try:
                 show.stop()
-            except AttributeError
+            except AttributeError:
                 pass
 
     def add_light_player_show(self, event, settings):
