@@ -20,6 +20,8 @@ class TestP3Roc(MpfTestCase):
         p3_roc.pinproc_imported = True
         p3_roc.pinproc = MagicMock()
         p3_roc.pinproc.DriverCount = 256
+        p3_roc.pinproc.decode = MagicMock(return_value="decode")
+        p3_roc.pinproc.driver_state_pulse = MagicMock(return_value="driver_state_pulse")
         super(TestP3Roc, self).setUp()
 
     def test_pulse(self):
@@ -40,3 +42,8 @@ class TestP3Roc(MpfTestCase):
         # A1-B1-3 -> address 16 + 8 + 3 = 27 in P3-Roc
         self.machine.coils.c_test.hw_driver.proc.driver_schedule.assert_called_with(
                 number=27, cycle_seconds=0, now=True, schedule=0xffffffff)
+
+    def test_hw_rule_pulse(self):
+        self.machine.autofires.ac_slingshot_test.enable() 
+        self.machine.autofires.ac_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
+            "decode", 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, ["driver_state_pulse"], False)
