@@ -1026,7 +1026,7 @@ class BCPClientSocket(object):
 
         """
 
-        socket_bytes = ''
+        socket_chars = ''
 
         if 'dmd' in self.machine.config:
 
@@ -1051,28 +1051,28 @@ class BCPClientSocket(object):
             try:
                 while self.socket:
 
-                    socket_bytes += self.get_from_socket()
+                    socket_chars += self.get_from_socket()
 
-                    if socket_bytes:
+                    if socket_chars:
 
-                        while socket_bytes.startswith('dmd_frame'):
+                        while socket_chars.startswith('dmd_frame'):
                             # trim the `dmd_frame?` so we have just the data
-                            socket_bytes = socket_bytes[10:]
+                            socket_chars = socket_chars[10:]
 
-                            while len(socket_bytes) < dmd_byte_length:
+                            while len(socket_chars) < dmd_byte_length:
                                 # If we don't have the full data, loop until we
                                 # have it.
-                                socket_bytes += self.get_from_socket()
+                                socket_chars += self.get_from_socket()
 
                             # trim the dmd bytes for the dmd data
-                            dmd_data = socket_bytes[:dmd_byte_length]
+                            dmd_data = socket_chars[:dmd_byte_length]
                             # Save the rest. This is +1 over the last step
                             # since we need to skip the \n separator
-                            socket_bytes = socket_bytes[dmd_byte_length+1:]
+                            socket_chars = socket_chars[dmd_byte_length+1:]
                             self.machine.bcp.dmd.update(dmd_data)
 
-                        if '\n' in socket_bytes:
-                            message, socket_bytes = socket_bytes.split('\n', 1)
+                        if '\n' in socket_chars:
+                            message, socket_chars = socket_chars.split('\n', 1)
 
                             self.log.debug('Received "%s"', message)
                             cmd, kwargs = decode_command_string(message)
@@ -1093,10 +1093,10 @@ class BCPClientSocket(object):
             try:
                 while self.socket:
 
-                    socket_bytes += self.get_from_socket()
+                    socket_chars += self.get_from_socket()
 
-                    if socket_bytes and '\n' in socket_bytes:
-                            message, socket_bytes = socket_bytes.split('\n', 1)
+                    if socket_chars and '\n' in socket_chars:
+                            message, socket_chars = socket_chars.split('\n', 1)
 
                             self.log.debug('Received "%s"', message)
                             cmd, kwargs = decode_command_string(message)
@@ -1115,7 +1115,8 @@ class BCPClientSocket(object):
 
 
     def get_from_socket(self, num_bytes=8192):
-        """Reads and returns whatever data is sitting in the receiving socket.
+        """Reads whatever data is sitting in the receiving socket, converts it
+        to a string via UTF-8 decoding, and returns it.
 
         Args:
             num_bytes: Int of the max number of bytes to read.
@@ -1130,7 +1131,7 @@ class BCPClientSocket(object):
             self.socket = None
             socket_bytes = None
 
-        return socket_bytes
+        return socket_bytes.decode('utf-8')
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
@@ -1144,7 +1145,7 @@ class BCPClientSocket(object):
 
                 try:
                     self.log.debug('Sending "%s"', message)
-                    self.socket.sendall(message + '\n')
+                    self.socket.sendall((message + '\n').encode('utf-8'))
 
                 except (IOError, AttributeError):
                     # MPF is probably in the process of shutting down

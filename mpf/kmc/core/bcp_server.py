@@ -99,9 +99,9 @@ class BCPServer(threading.Thread):
                 # Receive the data in small chunks and retransmit it
                 while True:
                     try:
-                        data = self.connection.recv(4096)
-                        if data:
-                            commands = data.split("\n")
+                        socket_chars = self.connection.recv(4096).decode('utf-8')
+                        if socket_chars:
+                            commands = socket_chars.split("\n")
                             for cmd in commands:
                                 if cmd:
                                     self.process_received_message(cmd)
@@ -146,7 +146,7 @@ class BCPServer(threading.Thread):
                     self.log.debug('Sending "%s"', msg)
 
                 try:
-                    self.connection.sendall(msg + '\n')
+                    self.connection.sendall((msg + '\n').encode('utf-8'))
                 except (AttributeError, socket.error):
                     pass
                     # Do we just keep on trying, waiting until a new client
