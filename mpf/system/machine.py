@@ -135,10 +135,11 @@ class MachineController(object):
         self.events._process_event_queue()
         self.events.post("init_phase_5")
         self.events._process_event_queue()
+        Config.unload_config_spec()
         self.reset()
 
     def validate_machine_config_section(self, section):
-        if section not in self.config['config_validator']:
+        if section not in Config.config_spec:
             return
 
         if section not in self.config:

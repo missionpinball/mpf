@@ -22,6 +22,7 @@ import version
 log = logging.getLogger('ConfigProcessor')
 
 
+
 class CaseInsensitiveDict(dict):
     """A class based on Python's 'dict' class that internally stores all keys
     as lowercase. Set, get, contains, and del methods have been overwritten to
@@ -54,9 +55,19 @@ class CaseInsensitiveDict(dict):
 
 class Config(object):
 
+    config_spec = None
+
     def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger('ConfigProcessor')
+
+    @classmethod
+    def load_config_spec(cls):
+        cls.config_spec = cls.load_config_file('mpf/config_validator.yaml')
+
+    @classmethod
+    def unload_config_spec(cls):
+        cls.config_spec = None
 
     @staticmethod
     def set_machine_path(machine_path, machine_files_default='machine_files'):
@@ -219,6 +230,9 @@ class Config(object):
         # source is dict
         # section_name is str used for logging failures
 
+        if not self.config_spec:
+            self.load_config_spec()
+
         if not section_name:
             section_name = config_spec
 
@@ -227,7 +241,7 @@ class Config(object):
         orig_spec = config_spec
 
         config_spec = config_spec.split(':')
-        this_spec = self.machine.config['config_validator']
+        this_spec = self.config_spec
 
         for i in range(len(config_spec)):
             this_spec = this_spec[config_spec[i]]
