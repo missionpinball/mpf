@@ -1,8 +1,14 @@
-
 import unittest
 
+
+
 from kivy.config import Config
+
+
+
 from mpf.system.utility_functions import Util
+from mpf.system.config import Config as MpfConfig
+
 
 Config.set('kivy', 'log_enable', '0')
 Config.set('kivy', 'log_level', 'warning')
@@ -12,6 +18,8 @@ from mpf.kmc.core.kmc import KmcApp
 
 class KmcTestCase(unittest.TestCase):
 
+
+
     def get_options(self):
 
         return dict(machine_path=self.get_machine_path(),
@@ -19,14 +27,42 @@ class KmcTestCase(unittest.TestCase):
                     configfile=Util.string_to_list(self.get_config_file()))
 
     def get_machine_path(self):
-        return '../tests/machine_files/kmc'
+        return 'tests/machine_files/kmc'
 
     def get_config_file(self):
         return 'test_kmc.yaml'
 
-    def setUp(self):
+    def preprocess_config(self, config):
 
-        KmcApp(self.get_options()).run()
+        kivy_config = config['kivy_config']
+
+        try:
+            kivy_config['graphics'].update(config['window'])
+        except KeyError:
+            pass
+
+        if 'top' in kivy_config['graphics'] and 'left' in kivy_config['graphics']:
+            kivy_config['graphics']['position'] = 'custom'
+
+        for section, settings in kivy_config.items():
+            for k, v in settings.items():
+                try:
+                    if k in Config[section]:
+                        Config.set(section, k, v)
+                except KeyError:
+                    continue
+
+    def setUp(self):
+        mpf_config = MpfConfig.load_config_file('mpf/kmc/kmcconfig.yaml')
+        mpf_config = MpfConfig.load_machine_config(Util.string_to_list(self.get_config_file()),
+                                                   self.get_machine_path(),
+                                                   'config', mpf_config)
+        self.preprocess_config(mpf_config)
+
+        self.kmc = KmcApp(options=self.get_options(),
+               config=mpf_config,
+               machine_path=self.get_machine_path())
+        self.kmc.build()
         return
 
 
@@ -55,4 +91,10 @@ class KmcTestCase(unittest.TestCase):
         pass
 
     def tearDown(self):
-        pass
+        # print('tearDown')
+        # self.kmc.stop()
+
+        from kivy.base import stopTouchApp
+        from kivy.core.window import Window
+        Window.unbind(on_flip=self.on_window_flip)
+        stopTouchApp()

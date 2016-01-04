@@ -606,6 +606,20 @@ config_validator:
     timing:
         hz: single|int|30
         hw_thread_sleep_ms: single|int|1
+    widgets:
+      text:
+        x:
+        y:
+        opacity:
+        pos_hint:
+        size_hint:
+
+        font_name:
+        font_size:
+        color:
+        italic:
+
+
 
 # Default settings for machines. All can be overridden
 

@@ -10,19 +10,15 @@
 
 import argparse
 from datetime import datetime
-import errno
 import logging
 import os
 import socket
 import sys
 
-from mpf.system.file_manager import FileManager
 from mpf.system.utility_functions import Util
 from mpf.system.config import Config as MpfConfig
 from kivy.config import Config
 import version
-
-from kivy.logger import Logger
 
 parser = argparse.ArgumentParser(description='Starts the MPF Media Controller')
 

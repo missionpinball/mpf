@@ -40,7 +40,7 @@ class Text(Label):
 
         kwargs['size_hint']=(None, None)
 
-        super(Text, self).__init__(**kwargs)
+        super(Text, self).__init__()
 
         self.texture_update()
         self.size = self.texture_size

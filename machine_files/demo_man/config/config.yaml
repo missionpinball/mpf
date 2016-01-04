@@ -36,8 +36,8 @@ images:
         target: dmd
 
 window:
-  width: 1024
-  height: 768
+  width: 500
+  height: 300
   minimum_width: 200
   minimum_height: 100
   borderless: false
@@ -47,18 +47,21 @@ window:
   title: Mission Pinball Framework
   show_cursor: false
   source_display: window
+  dpi: 96
 
 displays:
   window:
     type: window
-    width: 800
-    height: 600
+    width: 400
+    height: 300
+    color_bits: 24
+
 
 screens:
   boot:
     type: text
-    text: MPF BOOT
-#    x: 0
-#    y: 0
+    text: MPF BOOTY
+#    x: 100
+#    y: 100
 #    pos: (100, 200)
 #    size: (100, 50)

@@ -1,3 +1,5 @@
+
+
 from kivy.graphics import InstructionGroup
 from kivy.logger import Logger
 from mpf.system.config import CaseInsensitiveDict
@@ -8,6 +10,7 @@ from kivy.app import App
 
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
+from kivy.clock import Clock
 
 from mpf.kmc.core.bcp_processor import BcpProcessor
 from mpf.kmc.core.mode_controller import ModeController
@@ -19,9 +22,6 @@ from mpf.kmc.core.keyboard import MyKeyboardListener
 from mpf.kmc.uix.screen_manager import ScreenManager as MpfScreenManager
 from mpf.kmc.uix.mpf_display import MpfDisplay
 from mpf.kmc.core import kivy_config_processor
-
-
-
 
 
 class KmcApp(App):
@@ -124,6 +124,12 @@ class KmcApp(App):
     def create_display(self, width, height, name, dpi=None, **kwargs):
         self.displays[name] = MpfDisplay(width=width, height=height)
 
+        Clock.schedule_once(self.display_created)
+
+    def display_created(self, *args, **kwargs):
+
+        print('creating display post create', self.displays['window'].size)
+
     def build(self):
 
         self.crash_queue = queue.Queue()
@@ -131,40 +137,36 @@ class KmcApp(App):
         self.start_time = time.time()
         self.ticks = 0
 
-        self.title = self.machine_config['window']['title']
+        try:
+            self.title = self.machine_config['window']['title']
+        except KeyError:
+            self.title = "Mission Pinball Framework"
 
         if 'keyboard' in self.machine_config:
             self.keyboard = MyKeyboardListener(self)
 
-        # self.screen_manager = ScreenManager()
-        #
-        # self.screen1 = Screen1()
-        # self.screen_manager.add_widget(self.screen1)
-        #
-        # self.screen2 = Screen2()
-        # self.screen_manager.add_widget(self.screen2)
-        # return self.screen_manager
-
         if 'boot' in self.machine_config['screens']:
-            # boot_screen = self.machine_config['screens']['boot']['widget_cls'](
-            #     **self.machine_config['screens']['boot'])
-
             new_screen = Screen(name='boot')
 
             for widget in self.machine_config['screens']['boot']:
-                new_screen.add_widget(widget['widget_cls'](mc=self, **widget))
+                widget_obj = widget['widget_cls'](mc=self, **widget)
+                widget_obj.x = 100
+                widget_obj.y = 100
+                # widget_obj.opacity = 0.5
+                # widget_obj.pos_hint = {'top': 0.9}
+                # widget_obj.size_hint
+                widget_obj.font_name = 'Georgia'
+                widget_obj.font_size = 30
+                widget_obj.color = [1, 0, 0, 1]
+                widget_obj.italic = True
+                new_screen.add_widget(widget_obj)
 
-            # new_screen.add_widget(Label(text='hello4'))
+            # new_screen.add_widget(Label(text='hello4', pos=(100, 100)))
 
             self.default_display.screen_manager.add_widget(new_screen)
             self.default_display.screen_manager.current = 'boot'
 
-        print("WALKING++++++++++++++++")
-        for x in self.default_display.walk():
-            print(x, x.size, x.pos)
-
         return self.default_display
-
 
     def on_stop(self):
         print("loop rate", (self.ticks / (time.time() - self.start_time)))
