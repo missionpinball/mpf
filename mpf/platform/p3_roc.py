@@ -118,6 +118,15 @@ class HardwarePlatform(Platform):
     def __repr__(self):
         return '<Platform.P3-ROC>'
 
+    def i2c_write8(self, address, register, value):
+        self.proc.write_data(7, address << 9 | register, value);
+
+    def i2c_read8(self, address, register):
+        return self.proc.read_data(7, address << 9 | register) & 0xFF;
+
+    def i2c_read16(self, address, register):
+        return self.proc.read_data(7, address << 9 | 1 << 8 | register);
+
     def stop(self):
         self.proc.reset(1)
 
@@ -862,6 +871,11 @@ class PROCDriver(object):
         if pulse_ms is None:
             pulse_ms = machine.config['mpf']['default_pulse_ms']
 
+        try:
+            return_dict['allow_enable'] = kwargs['allow_enable']
+        except KeyError:
+            return_dict['allow_enable'] = False
+
         return_dict['pulse_ms'] = int(pulse_ms)
         return_dict['recycle_ms'] = 0
         return_dict['pwm_on_ms'] = 0
@@ -1138,7 +1152,7 @@ class PDBConfig(object):
         # Create a list of indexes.  The PDB banks will be mapped into this
         # list. The index of the bank is used to calculate the P3-ROC driver
         # number for each driver.
-        num_proc_banks = pinproc.DriverCount/8
+        num_proc_banks = pinproc.DriverCount//8
         self.indexes = [99] * num_proc_banks
 
         self.initialize_drivers(proc)
@@ -1159,6 +1173,8 @@ class PDBConfig(object):
                                             True,
                                             enable,
                                             True)
+
+            self.indexes[group_ctr] = group_ctr
 
         group_ctr += 1
 
@@ -1205,6 +1221,8 @@ class PDBConfig(object):
             # P3-ROC's driver count, which will force the drivers to be created
             # as VirtualDrivers. Appending the bank avoids conflicts when
             # group_ctr gets too high.
+            if coil_bank in self.indexes:
+                continue
 
             if group_ctr >= num_proc_banks or coil_bank >= 32:
                 self.log.warning("Driver group %d mapped to driver index"

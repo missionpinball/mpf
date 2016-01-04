@@ -32,6 +32,7 @@ class Game(Mode):
         self.player_list = list()
         self.machine.game = None
         self.tilted = False
+        self.slam_tilted = False
         self.player = None
 
     @property
@@ -75,6 +76,7 @@ class Game(Mode):
         self.player_list = list()
         self.machine.game = self
         self.tilted = False
+        self.slam_tilted = False
         self._balls_in_play = 0
 
         # todo register for request_to_start_game so you can deny it, or allow
@@ -275,6 +277,10 @@ class Game(Mode):
         """
         self.log.debug("Entering Game.ball_ended()")
         if ev_result is False:
+            return
+
+        if self.slam_tilted:
+            self.game_ending()
             return
 
         if self.player.extra_balls:

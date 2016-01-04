@@ -33,6 +33,20 @@ class MpfTestCase(unittest.TestCase):
     machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
     machine_config_patches['mpf']['plugins'] = list()
 
+    def getConfigFile(self):
+        """Override this method in your own test class to point to the config
+        file you need for your tests.
+
+        """
+        return 'null.yaml'
+
+    def getMachinePath(self):
+        """Override this method in your own test class to point to the machine
+        folder you need for your tests.
+
+        """
+        return '../tests/machine_files/null/'
+
     def get_platform(self):
         return 'virtual'
 
@@ -55,11 +69,11 @@ class MpfTestCase(unittest.TestCase):
         self.testTime = new_time
         time.time.return_value = self.testTime
 
-    def advance_time(self, delta):
+    def advance_time(self, delta=1):
         self.testTime += delta
         time.time.return_value = self.testTime
 
-    def advance_time_and_run(self, delta):
+    def advance_time_and_run(self, delta=1):
         end_time = time.time() + delta
         self.machine.log.debug("Advancing time %ss", delta)
         self.machine_run()

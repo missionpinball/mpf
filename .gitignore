@@ -1,9 +1,12 @@
 *.pyc
 logs/
+/machine_files/*/audits/
 *.local
 .idea
 docs/
+htmlcov
 .coverage
+data
 .*.swp
 htmlcov/
 tests/machine_files/*/data/

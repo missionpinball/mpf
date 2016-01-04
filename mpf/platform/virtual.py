@@ -127,6 +127,14 @@ class HardwarePlatform(Platform):
                     self.machine.switches.number(sw_num).name):
                 del self.hw_switch_rules[entry]
 
+    def i2c_write8(self, address, register, value):
+        pass
+
+    def i2c_read8(self, address, register):
+        return None
+
+    def i2c_read16(self, address, register):
+        return None
 
 class VirtualSwitch(object):
     """Represents a switch in a pinball machine used with virtual hardware."""

@@ -47,6 +47,8 @@ mpf:
         ball_save.BallSave
         driver_enabled.DriverEnabled
         accelerometer.Accelerometer
+        servo_controller.ServoController
+        servo.Servo
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -329,3 +331,4 @@ hardware:
   flashers: default
   driverboards: virtual
   accelerometers: default
+  servo_controllers: default

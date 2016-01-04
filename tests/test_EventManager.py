@@ -1,4 +1,4 @@
-from .MpfTestCase import MpfTestCase
+from tests.MpfTestCase import MpfTestCase
 
 
 class TestEventManager(MpfTestCase):
@@ -536,3 +536,24 @@ class TestEventManager(MpfTestCase):
 
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertIsNone(self._queue)
+
+    def test_queue_event_with_double_quick_queue_clear(self):
+        # tests that a queue event that quickly creates and clears a queue
+
+        self.machine.events.add_handler('test_event',
+                                        self.event_handler_add_quick_queue)
+        self.machine.events.add_handler('test_event',
+                                        self.event_handler_add_quick_queue)
+
+
+        self.advance_time_and_run(1)
+
+        self.machine.events.post_queue('test_event',
+                                       callback=self.queue_callback)
+        self.advance_time_and_run(1)
+
+        self.assertEqual(
+            self._handlers_called.count(self.event_handler_add_quick_queue), 2)
+
+        self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
+        self.assertEqual(True, self._queue.is_empty())

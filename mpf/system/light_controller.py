@@ -296,7 +296,10 @@ class LightController(object):
         self.machine.events.remove_handlers_by_keys(event_keys)
 
         for show in shows:
-            show.stop()
+            try:
+                show.stop()
+            except AttributeError:
+                pass
 
     def add_light_player_show(self, event, settings):
         if 'priority' in settings:

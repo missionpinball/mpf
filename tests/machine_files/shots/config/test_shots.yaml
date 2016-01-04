@@ -1,0 +1,40 @@
+#config_version=3
+
+modes:
+  - mode1
+
+switches:
+  switch_1:
+    number:
+  switch_2:
+    number:
+  switch_3:
+    number:
+
+matrix_lights:
+  light_1:
+    number:
+  light_2:
+    number:
+  light_3:
+    number:
+
+leds:
+  led_1:
+    number:
+
+shots:
+  shot_1:
+    switch: switch_1
+    light: light_1
+  shot_2:
+    switch: switch_2
+    light: light_2
+
+
+#
+#shot_groups:
+#    group_1:
+#        profile: skill
+#        rotate_events: timer_target_rotator_tick
+#        reset_events: mode_skillshot_started|1

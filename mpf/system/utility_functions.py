@@ -22,7 +22,7 @@ class Util(object):
             A dictionary with lowercase keys.
 
         """
-        if type(source_dict) is None:
+        if not source_dict:
             return dict()
         elif type(source_dict) in (dict, OrderedDict):
             for k in list(source_dict.keys()):
@@ -179,10 +179,13 @@ class Util(object):
             output_length: Integer value of the number of items you'd like in
                 your returned list. Default is 3. This method will ignore
                 extra characters if the input_string is too long, and it will
-                pad with zeros if the input string is too short.
+                pad the left with zeros if the input string is too short.
 
         Returns:
             List of integers, like [255, 255, 0]
+
+        Raises:
+            ValueError if the input string contains non-hex chars
 
         """
         output = []

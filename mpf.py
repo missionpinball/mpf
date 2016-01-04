@@ -5,6 +5,15 @@
 # Released under the MIT License. (See license info at the end of this file.)
 
 # Documentation and more info at http://missionpinball.com/mpf
+
+import sys
+
+if sys.version_info[0] != 3:
+    print("MPF requires Python 3. You have Python {}.{}.{}".format(
+        sys.version_info[0], sys.version_info[1], sys.version_info[2]
+        ))
+    sys.exit()
+
 import logging
 from datetime import datetime
 import socket
@@ -12,7 +21,6 @@ import os
 import argparse
 import errno
 import version
-import sys
 
 from mpf.system.machine import MachineController
 from mpf.system.utility_functions import Util

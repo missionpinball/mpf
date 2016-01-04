@@ -94,6 +94,12 @@ class Timing(object):
         See 'string_to_ms' for a description of the time string.
 
         """
+
+        time_string = str(time_string)
+
+        if not any(c.isalpha() for c in time_string):
+            time_string = ''.join((time_string, 's'))
+
         return Timing.string_to_ms(time_string) / 1000.0
 
     @staticmethod
@@ -139,9 +145,12 @@ class Timing(object):
         elif not time_string or time_string == 'NONE':
             return 0
 
+        elif '.' in time_string:
+            time_string = float(''.join(i for i in time_string if not i.isalpha()))
         else:
             time_string = ''.join(i for i in time_string if not i.isalpha())
-            return int(time_string)
+
+        return int(time_string)
 
     @staticmethod
     def string_to_ticks(time_string):

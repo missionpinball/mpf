@@ -113,17 +113,22 @@ class Config(object):
     def load_config_file(filename, verify_version=True, halt_on_error=True):
         config = FileManager.load(filename, verify_version, halt_on_error)
 
-        if 'config' in config:
-            path = os.path.split(filename)[0]
+        try:
+            if 'config' in config:
+                path = os.path.split(filename)[0]
 
-            for file in Util.string_to_list(config['config']):
-                full_file = os.path.join(path, file)
-                config = Util.dict_merge(config,
-                                           Config.load_config_file(full_file))
-        return config
+                for file in Util.string_to_list(config['config']):
+                    full_file = os.path.join(path, file)
+                    config = Util.dict_merge(config,
+                                               Config.load_config_file(full_file))
+            return config
+        except TypeError:
+            return dict()
 
     @staticmethod
-    def process_config(config_spec, source, target=None):
+    def process_config(config_spec, source, target=None):  # pragma: no cover
+        # Note this method is deprecated and will be removed eventually
+        # Use process_config2() instead
         config_spec = yaml.load(config_spec, Loader=MpfLoader)
         processed_config = source
 
@@ -142,7 +147,9 @@ class Config(object):
         return processed_config
 
     @staticmethod
-    def validate_config_item(spec, item='item not in config!@#'):
+    def validate_config_item(spec, item='item not in config!@#'):  # pragma: no cover
+        # Note this method is deprecated and will be removed eventually
+        # Use validate_config_item2() instead
 
         try:
             if item.lower() == 'none':
@@ -306,26 +313,27 @@ class Config(object):
     def validate_config_item2(self, spec, validation_failure_info,
                               item='item not in config!@#',):
 
-        default = 'default required!@#'
-
-        item_type, validation, default = spec.split('|')
+        try:
+            item_type, validation, default = spec.split('|')
+        except ValueError:
+            raise ValueError('Error in validator config: {}'.format(spec))
 
         if default.lower() == 'none':
             default = None
+        elif not default:
+            default = 'default required!@#'
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
-                log.error('Required setting missing from config file. Run with '
-                          'verbose logging and look for the last '
-                          'ConfigProcessor entry above this line to see where '
-                          'the problem is.')
-                sys.exit()
+                raise ValueError('Required setting missing from config file. '
+                    'Run with verbose logging and look for the last '
+                    'ConfigProcessor entry above this line to see where the '
+                    'problem is. {} {}'.format(spec, validation_failure_info))
             else:
                 item = default
 
         if item_type == 'single':
             item = self.validate_item(item, validation, validation_failure_info)
-
 
         elif item_type == 'list':
             item = Util.string_to_list(item)
@@ -351,7 +359,7 @@ class Config(object):
 
         elif item_type == 'dict':
             item = self.validate_item(item, validation,
-                                               validation_failure_info)
+                                      validation_failure_info)
 
             if not item:
                 item = dict()

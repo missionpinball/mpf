@@ -21,3 +21,9 @@ test_section:
   int_6: 6
   int_7: 07
   str_00ff00: 00ff00
+  case_sensitive_1: test
+  Case_sensitive_2: test
+  case_sensitive_3: Test
+
+Test_section_1:
+  test: test
