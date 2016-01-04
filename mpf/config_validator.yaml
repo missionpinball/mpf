@@ -266,6 +266,7 @@ hardware:
     gis: single|str|default
     flashers: single|str|default
     driverboards: single|str|
+    servo_controllers: single|str|
     accelerometers: single|str|
 high_score:
     award_slide_display_time: single|ms|4s
@@ -315,7 +316,7 @@ matrix_lights:
     y: single|int|None
     z: single|int|None
 mode:
-    priority: single|int|0
+    priority: single|int|100
     start_events: list|str|None
     stop_events: list|str|None
     start_priority: single|int|0
@@ -386,6 +387,25 @@ score_reel_groups:
     label: single|str|%
     debug: single|bool|False
     lights_tag: single|str|None
+servo_controllers:
+    address: single|int|64
+    servo_min: single|int|150
+    servo_max: single|int|600
+    platform: single|str|None
+    debug: single|bool|False
+    tags: list|str|None
+    label: single|str|%
+servos:
+    positions: dict|float:str|None
+    servo_min: single|float|0.0
+    servo_max: single|float|1.0
+    reset_position: single|float|0.5
+    reset_events: dict|str:ms|ball_starting
+    controller: single|self.machine.servo_controllers[%]|
+    debug: single|bool|False
+    tags: list|str|None
+    label: single|str|%
+    number: single|int|
 shots:
     profile: single|str|None
     switch: list|self.machine.switches[%]|None
@@ -460,13 +480,16 @@ system11:
     ac_relay_delay_ms: single|int|75
     ac_relay_driver_number: single|str|
 tilt:
+    tilt_slam_tilt_events: list|str|None
+    tilt_warning_events: list|str|None
+    tilt_events: list|str|None
     tilt_warning_switch_tag: single|str|tilt_warning
     tilt_switch_tag: single|str|tilt
     slam_tilt_switch_tag: single|str|slam_tilt
     warnings_to_tilt: single|int|3
     reset_warnings_events: list|str|ball_ending
-    multiple_hit_window: single|ticks_int|300ms
-    settle_time: single|ticks_int|5s
+    multiple_hit_window: single|ms|300ms
+    settle_time: single|ms|5s
     tilt_warnings_player_var: single|str|tilt_warnings
 timing:
     hz: single|int|30
