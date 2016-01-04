@@ -11,5 +11,6 @@ class MpfDisplay(RelativeLayout):
         self.add_widget(self.screen_manager)
 
     def _sort_children(self):
+        pass
 
 
