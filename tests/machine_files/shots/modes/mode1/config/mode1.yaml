@@ -1,0 +1,6 @@
+#config_version=3
+
+shots:
+  mode1_shot_1:
+    switch: switch_3
+    light: light_3

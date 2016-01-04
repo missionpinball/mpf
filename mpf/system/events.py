@@ -95,9 +95,12 @@ class EventManager(object):
 
         self.registered_handlers[event].append((handler, priority, kwargs, key))
         if self.debug:
-            self.log.debug("Registered %s as a handler for '%s', priority: %s, "
-                           "kwargs: %s",
-                           (str(handler).split(' '))[2], event, priority, kwargs)
+            try:
+                self.log.debug("Registered %s as a handler for '%s', priority: %s, "
+                               "kwargs: %s",
+                               (str(handler).split(' '))[2], event, priority, kwargs)
+            except IndexError:
+                pass
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
@@ -477,10 +480,13 @@ class EventManager(object):
 
                 # log if debug is enabled and this event is not the timer tick
                 if self.debug and event != 'timer_tick':
-                    self.log.debug("%s (priority: %s) responding to event '%s'"
-                                   " with args %s",
-                                   (str(handler[0]).split(' '))[2], handler[1],
-                                   event, merged_kwargs)
+                    try:
+                        self.log.debug("%s (priority: %s) responding to event '%s'"
+                                       " with args %s",
+                                       (str(handler[0]).split(' '))[2], handler[1],
+                                       event, merged_kwargs)
+                    except IndexError:
+                        pass
 
                 # call the handler and save the results
                 result = handler[0](**merged_kwargs)
