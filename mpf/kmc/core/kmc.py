@@ -37,24 +37,21 @@ class KmcApp(App):
         self.player_list = list()
         self.player = None
 
-        self.displays = dict()
+        self.displays = CaseInsensitiveDict()
         self.default_display = None
 
         self.machine_vars = CaseInsensitiveDict()
         self.machine_var_monitor = False
 
         self.events = EventManager(self, setup_event_player=False)
-        self.config_processor = MpfConfig(self)
 
-        print("---------")
-        print(self.machine_config['screens'])
-        print("---------")
+        self.config_processor = MpfConfig(self, self.machine_config['kmc'])
+        MpfConfig.load_config_spec()
+
+
+
 
         self.machine_config = kivy_config_processor.process_config(self.machine_config)
-
-        print("+++++++++")
-        print(self.machine_config['screens'])
-        print("+++++++++")
 
         self.mode_controller = ModeController(self)
         self.screen_manager = MpfScreenManager(self)
@@ -73,62 +70,80 @@ class KmcApp(App):
         self.events._process_event_queue()
         self.events.post("init_phase_5")
         self.events._process_event_queue()
-
+        MpfConfig.unload_config_spec()
         self.reset()
+
+    def validate_machine_config_section(self, section):
+        if section not in MpfConfig.config_spec:
+            return
+
+        if section not in self.machine_config:
+            self.config[section] = dict()
+
+        self.machine_config[section] = self.config_processor.process_config2(
+            section, self.machine_config[section], section)
 
     def get_config(self):
         return self.machine_config
 
     def setup_displays(self):
-        # parse the displays: section of the config
-        # if there is a window: section, then make sure there's a display with
-        # the source_display name. If not, create it.
+        # parse the displays: section of the config and create the displays
 
-        # also parse the rest of the displays
+        if 'displays' not in self.machine_config:
+            return
 
-        from kivy.core.window import Window
+        # config validate the displays: section
+        for display in self.machine_config['displays']:
+            self.machine_config['displays'][display] = (
+                self.config_processor.process_config2(
+                    'displays', self.machine_config['displays'][display], 'displays'))
 
-        w, h = 0, 0
-
-        try:
-            w, h = (self.machine_config['window']['width'],
-                    self.machine_config['window']['height'])
-        except KeyError:
-            pass
-
-        need_display = False
-        if w and h:
-
-            try:
-                if (self.machine_config['window']['source_display'] not in
-                        self.machine_config['displays']):
-                    need_display = True
-            except KeyError:
-                need_display = True
-
-        if need_display:
-            self.create_display(width=Window.width, height=Window.height,
-                                name='window', dpi=Window.dpi)
+        # w, h = 0, 0
+        #
+        # try:
+        #     w, h = (self.machine_config['window']['width'],
+        #             self.machine_config['window']['height'])
+        # except KeyError:
+        #     pass
+        #
+        # need_display = False
+        # if w and h:
+        #
+        #     try:
+        #         if (self.machine_config['window']['source_display'] not in
+        #                 self.machine_config['displays']):
+        #             need_display = True
+        #     except KeyError:
+        #         need_display = True
+        #
+        # if need_display:
+        #     from kivy.core.window import Window
+        #     self.create_display(width=Window.width, height=Window.height,
+        #                         name='window', dpi=Window.dpi)
 
         try:
             for k, v in self.machine_config['displays'].items():
                 self.create_display(width=v['width'],
                                     height=v['height'],
-                                    name=k)
+                                    name=k,
+                                    bpp=v['bits_per_pixel'])
+
         except (AttributeError, TypeError):
             pass
 
         self.default_display = self.displays['window']
 
-
-    def create_display(self, width, height, name, dpi=None, **kwargs):
-        self.displays[name] = MpfDisplay(width=width, height=height)
+    def create_display(self, width, height, name, bpp=24, **kwargs):
+        self.displays[name] = MpfDisplay(width=width, height=height, bpp=bpp)
 
         Clock.schedule_once(self.display_created)
 
     def display_created(self, *args, **kwargs):
 
         print('creating display post create', self.displays['window'].size)
+
+    def create_window(self):
+        pass
 
     def build(self):
 
@@ -145,7 +160,16 @@ class KmcApp(App):
         if 'keyboard' in self.machine_config:
             self.keyboard = MyKeyboardListener(self)
 
-        if 'boot' in self.machine_config['screens']:
+        self.show_boot_screen()
+
+        return self.default_display
+
+    def show_boot_screen(self):
+
+
+
+
+        if 'screens' in self.machine_config and 'boot' in self.machine_config['screens']:
             new_screen = Screen(name='boot')
 
             for widget in self.machine_config['screens']['boot']:
@@ -165,8 +189,6 @@ class KmcApp(App):
 
             self.default_display.screen_manager.add_widget(new_screen)
             self.default_display.screen_manager.current = 'boot'
-
-        return self.default_display
 
     def on_stop(self):
         print("loop rate", (self.ticks / (time.time() - self.start_time)))

@@ -57,9 +57,14 @@ class Config(object):
 
     config_spec = None
 
-    def __init__(self, machine):
+    def __init__(self, machine, system_config=None):
         self.machine = machine
         self.log = logging.getLogger('ConfigProcessor')
+
+        if not system_config:
+            self.system_config = self.machine.config['mpf']
+        else:
+            self.system_config = system_config
 
     @classmethod
     def load_config_spec(cls):
@@ -392,8 +397,7 @@ class Config(object):
 
                     path_string = ':'.join(path_list)
 
-                    if (self.machine.config['mpf']
-                            ['allow_invalid_config_sections']):
+                    if self.system_config['allow_invalid_config_sections']:
 
                         self.log.warning('Unrecognized config setting. "%s" is '
                                          'not a valid setting name.',
@@ -510,9 +514,7 @@ class Config(object):
 
         setting_key = setting.split(':')[-1]
 
-        with open(self.machine.config['mpf']['config_versions_file'],
-                  'r') as f:
-
+        with open(self.system_config['config_versions_file'], 'r') as f:
             config_file = yaml.load(f, Loader=MpfLoader)
 
         for ver, sections in config_file.items():

@@ -56,9 +56,9 @@ def process_screen(config, mode):
 def process_widget(config, mode):
     # config is localized widget settings
 
-    print(Text)
-    print(config)
-    print(type_map[config['type']])
+    # print(Text)
+    # print(config)
+    # print(type_map[config['type']])
 
     try:
         config['widget_cls'] = type_map[config['type']]

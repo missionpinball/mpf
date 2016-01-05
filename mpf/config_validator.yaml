@@ -137,6 +137,10 @@ credits:
     pricing_tiers:
         price: single|float|.50
         credits: single|int|1
+displays:
+    width: single|int|800
+    height: single|int|600
+    bits_per_pixel: single|int|24
 diverters:
     type: single|str|hold
     activation_time: single|ms|0
@@ -425,7 +429,7 @@ shots:
     hit_events: dict|str:ms|None
     remove_active_profile_events: dict|str:ms|None
 shot_groups:
-    shots: list|str|
+    shots: list|str|None
     profile: single|str|None
     tags: list|str|None
     label: single|str|%
@@ -495,14 +499,15 @@ timing:
     hz: single|int|30
     hw_thread_sleep_ms: single|int|1
 widgets:
-  text:
-    x:
-    y:
-    opacity:
-    pos_hint:
-    size_hint:
+    text:
+        x: single|int|None
+        y: single|int|None
+        opacity: single|float|1.0
+        pos_hint: dict|str:float|None
+        size_hint: dict|str:float|None
 
-    font_name:
-    font_size:
-    color:
-    italic:
+        font_name:
+        font_size:
+        mpf_font: single|str|None
+        color: tuple(4)|int(0-255)|(255, 255, 255, 255)
+        italic: single|bool|False

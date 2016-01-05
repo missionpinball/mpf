@@ -100,7 +100,7 @@ class BcpProcessor(object):
 
     def _bcp_goodbye(self, **kwargs):
         """Processes an incoming BCP 'goodbye' command."""
-        # if self.config['media_controller']['exit_on_disconnect']:
+        # if self.config['kmc']['exit_on_disconnect']:
         #     self.socket_thread.sending_thread.stop()
         #     sys.exit()
 

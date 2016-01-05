@@ -35,27 +35,25 @@ images:
     demo_man_logo:
         target: dmd
 
-window:
-  width: 500
-  height: 300
-  minimum_width: 200
-  minimum_height: 100
-  borderless: false
-  fullscreen: false
-  rotation: 0
-  icon: None
-  title: Mission Pinball Framework
-  show_cursor: false
-  source_display: window
-  dpi: 96
+#window:
+#  width: 500
+#  height: 300
+#  minimum_width: 200
+#  minimum_height: 100
+#  borderless: false
+#  fullscreen: false
+#  rotation: 0
+#  icon: None
+#  title: Mission Pinball Framework
+#  show_cursor: false
+#  source_display: window
+#  dpi: 96
+#  scale_contents: true
 
 displays:
   window:
-    type: window
     width: 400
     height: 300
-    color_bits: 24
-
 
 screens:
   boot:

@@ -1,5 +1,5 @@
 # config_version=3
-media_controller:
+kmc:
     modules:
         mode_controller.ModeController
         language.Language
@@ -38,6 +38,9 @@ media_controller:
         animations: animations
         movies: movies
         modes: modes
+
+    allow_invalid_config_sections: true
+    config_versions_file: tools/config_versions.yaml
 
 timing:
     hz: 30

@@ -10,6 +10,7 @@
 
 import argparse
 from datetime import datetime
+import errno
 import logging
 import os
 import socket
@@ -18,6 +19,7 @@ import sys
 from mpf.system.utility_functions import Util
 from mpf.system.config import Config as MpfConfig
 from kivy.config import Config
+from kivy.logger import Logger
 import version
 
 parser = argparse.ArgumentParser(description='Starts the MPF Media Controller')
@@ -112,6 +114,11 @@ def preprocess_config(config):
     kivy_config = config['kivy_config']
 
     try:
+        kivy_config['graphics'].update(config['displays']['window'])
+    except KeyError:
+        pass
+
+    try:
         kivy_config['graphics'].update(config['window'])
     except KeyError:
         pass
@@ -129,25 +136,23 @@ def preprocess_config(config):
 
 mpf_config = MpfConfig.load_config_file(args.kmcconfigfile)
 machine_path = MpfConfig.set_machine_path(args.machine_path,
-                mpf_config['media_controller']['paths']['machine_files'])
+                mpf_config['kmc']['paths']['machine_files'])
 
 mpf_config = MpfConfig.load_machine_config(args.configfile, machine_path,
-                mpf_config['media_controller']['paths']['config'], mpf_config)
+                mpf_config['kmc']['paths']['config'], mpf_config)
 
 preprocess_config(mpf_config)
 
 def main():
 
     from mpf.kmc.core.kmc import KmcApp
-    KmcApp(options=vars(args), config=mpf_config,
-           machine_path=machine_path).run()
 
-    # try:
-    #     mc = KmcApp(options=vars(args))
-    #     mc.run()
-    #     Logger.info("MC run loop ended.")
-    # except Exception as e:
-    #     Logger.exception(e)
+    try:
+        KmcApp(options=vars(args), config=mpf_config,
+               machine_path=machine_path).run()
+        Logger.info("MC run loop ended.")
+    except Exception as e:
+        Logger.exception(e)
 
     sys.exit()
 

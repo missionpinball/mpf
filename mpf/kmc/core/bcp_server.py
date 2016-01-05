@@ -110,7 +110,7 @@ class BCPServer(threading.Thread):
                             break
 
                     except:
-                        if self.mc.config['media_controller']['exit_on_disconnect']:
+                        if self.mc.config['kmc']['exit_on_disconnect']:
                             self.mc.shutdown()
                         else:
                             break
