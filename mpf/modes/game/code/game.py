@@ -446,7 +446,7 @@ class Game(Mode):
             self.num_players = len(self.player_list)
 
             self.machine.create_machine_var(
-                name='player_{}_score'.format(player.number),
+                name='player{}_score'.format(player.number),
                 value=player.score,
                 persist=True)
 
@@ -479,8 +479,9 @@ class Game(Mode):
         self.machine.events.post('player_turn_stop', player=self.player,
                                      number=self.player.number)
 
-        self.machine.set_machine_var(name='player' + str(self.player.number) +
-                                     '_score', value=self.player.score)
+        self.machine.set_machine_var(
+                name='player{}_score'.format(self.player.number),
+                value=self.player.score)
 
         if self.player.number < self.num_players:
             self.player = self.player_list[self.player.number]
