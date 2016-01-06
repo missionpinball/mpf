@@ -1,41 +1,23 @@
+from kivy.properties import ObjectProperty
+from kivy.properties import NumericProperty
+from kivy.properties import DictProperty
 from kivy.uix.screenmanager import Screen as KivyScreen
 
-class Screen(object):
+class Screen(KivyScreen):
 
-    creation_id = 0
+    mode = ObjectProperty(None, allownone=True)
+    ''':class:`Mode` object, which is the mode that created this screen.'''
 
-    @classmethod
-    def get_creation_id(cls):
-        Screen.creation_id += 1
-        return Screen.creation_id
+    priority = NumericProperty(0)
+    '''Priority of this screen.'''
 
-    def __init__(self, name, config, **kwargs):
+    config = DictProperty()
+    '''Dict which holds the settings for this screen, including all the widgets
+    that are on it and their properties.'''
 
-        self.priority
-        self.display
+    def __init__(self, name, manager, config, **kwargs):
+        super(Screen, self).__init__(**kwargs)
 
-
-        self.id = Screen.get_creation_id()
-
-
-
-        super(Screen, self).__init__(name)
-
-        assert self.name == name
-
-        # read in the config
-
-        # set the parent screen manager
-
-        # set the priority
-
-        # set the mode
-
-    def _create_kivy_screen(self):
-        pass
-
-    def add_widget(self):
-        pass
-
-    def remove_widget(self):
-        pass
+        self.name = name
+        self.manager = manager
+        self.config = config
