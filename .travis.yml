@@ -1,0 +1,16 @@
+language:
+  python
+
+python:
+  - 3.4
+  - 3.5
+
+install:
+ - pip install ruamel.yaml
+ - pip install coveralls
+
+script:
+  coverage run -m unittest discover
+
+after_success:
+  coveralls
