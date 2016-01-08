@@ -1,4 +1,5 @@
 """Manages the hardware shows (lights, LEDs, flashers, coils, etc.) in a pinball machine."""
+
 import logging
 import time
 from queue import Queue
@@ -1950,4 +1951,3 @@ class ExternalShow(object):
         for light in self.lights:
             if light.cache['priority'] <= self.priority:
                 light.restore()
-
