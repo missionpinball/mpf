@@ -30,7 +30,7 @@ class LED(Device):
 
         # Generate and add color correction profiles to the machine
         machine.led_color_correction_profiles = dict()
-        for profile_name, profile_parameters in machine.config['led_settings']['color_correction_profiles'].iteritems():
+        for profile_name, profile_parameters in machine.config['led_settings']['color_correction_profiles'].items():
 
             machine.config_processor.process_config2('color_correction_profile',
                                                      machine.config['led_settings']

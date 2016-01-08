@@ -27,14 +27,14 @@ class TestConfig(MpfTestCase):
         self.assertEqual('on', self.machine.config['test_section']['on_string'])
         self.assertEqual('off', self.machine.config['test_section']['off_string'])
 
-        # 6400, 003200, 6, 07 should be ints
+        # 6400, 6, 07 should be ints
         self.assertEqual(6400, self.machine.config['test_section']['int_6400'])
-        self.assertEqual(3200, self.machine.config['test_section']['int_3200'])
         self.assertEqual(6, self.machine.config['test_section']['int_6'])
         self.assertEqual(7, self.machine.config['test_section']['int_7'])
 
-        # 00ff00 should be string
+        # 00ff00, 003200 should be strings
         self.assertEqual('00ff00', self.machine.config['test_section']['str_00ff00'])
+        self.assertEqual('003200', self.machine.config['test_section']['str_003200'])
 
         # keys should be all lowercase
         self.assertIn('case_sensitive_1', self.machine.config['test_section'])

@@ -3,6 +3,8 @@
 import logging
 from mpf.system.platform import Platform
 from mpf.system.utility_functions import Util
+from mpf.system.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.system.rgb_color import RGBColor
 
 
 class HardwarePlatform(Platform):
@@ -142,20 +144,19 @@ class VirtualMatrixLight(object):
         pass
 
 
-class VirtualLED(object):
+class VirtualLED(RGBLEDPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualLED')
         self.number = number
+        self.current_color = RGBColor()
 
-    def color(self, color, fade_ms=0, brightness_compensation=True):
-        #self.log.debug("Setting color: %s, fade: %s, comp: %s",
-        #               color, fade_ms, brightness_compensation)
-        pass
+    def color(self, color):
+        self.current_color = color
 
     def disable(self):
         pass
 
-    def enable(self, brightness_compensation=True):
+    def enable(self):
         pass
 
 
