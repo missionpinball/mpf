@@ -1,11 +1,6 @@
-mpf
-===
-
-Mission Pinball Framework
-
 The MIT License (MIT)
 
-Copyright (c) 2013-2014 Brian Madden and Gabe Knuth
+Copyright (c) The Mission Pinball Framework team and other contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

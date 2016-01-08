@@ -3,7 +3,7 @@ __all__ = [
            'system',
            'version',
            'window',
-           'media_controller'
+           'kmc'
           ]
 
 from version import __version__

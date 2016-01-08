@@ -1,10 +1,4 @@
 """Contains the base classes for the EventManager and QueuedEvents"""
-# events.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 from collections import deque
@@ -95,9 +89,12 @@ class EventManager(object):
 
         self.registered_handlers[event].append((handler, priority, kwargs, key))
         if self.debug:
-            self.log.debug("Registered %s as a handler for '%s', priority: %s, "
-                           "kwargs: %s",
-                           (str(handler).split(' '))[2], event, priority, kwargs)
+            try:
+                self.log.debug("Registered %s as a handler for '%s', priority: %s, "
+                               "kwargs: %s",
+                               (str(handler).split(' '))[2], event, priority, kwargs)
+            except IndexError:
+                pass
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
@@ -477,10 +474,13 @@ class EventManager(object):
 
                 # log if debug is enabled and this event is not the timer tick
                 if self.debug and event != 'timer_tick':
-                    self.log.debug("%s (priority: %s) responding to event '%s'"
-                                   " with args %s",
-                                   (str(handler[0]).split(' '))[2], handler[1],
-                                   event, merged_kwargs)
+                    try:
+                        self.log.debug("%s (priority: %s) responding to event '%s'"
+                                       " with args %s",
+                                       (str(handler[0]).split(' '))[2], handler[1],
+                                       event, merged_kwargs)
+                    except IndexError:
+                        pass
 
                 # call the handler and save the results
                 result = handler[0](**merged_kwargs)
@@ -667,26 +667,3 @@ class QueuedEvent(object):
             return True
         else:
             return False
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

@@ -1,17 +1,4 @@
 """ MPF plugin which enables the Backbox Control Protocol (BCP) v1.0alpha"""
-# bcp.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# The Backbox Control Protocol was conceived and developed by:
-# Quinn Capen
-# Kevin Kelm
-# Gabe Knuth
-# Brian Madden
-# Mike ORourke
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import socket
@@ -1026,7 +1013,7 @@ class BCPClientSocket(object):
 
         """
 
-        socket_bytes = ''
+        socket_chars = ''
 
         if 'dmd' in self.machine.config:
 
@@ -1051,28 +1038,28 @@ class BCPClientSocket(object):
             try:
                 while self.socket:
 
-                    socket_bytes += self.get_from_socket()
+                    socket_chars += self.get_from_socket()
 
-                    if socket_bytes:
+                    if socket_chars:
 
-                        while socket_bytes.startswith('dmd_frame'):
+                        while socket_chars.startswith('dmd_frame'):
                             # trim the `dmd_frame?` so we have just the data
-                            socket_bytes = socket_bytes[10:]
+                            socket_chars = socket_chars[10:]
 
-                            while len(socket_bytes) < dmd_byte_length:
+                            while len(socket_chars) < dmd_byte_length:
                                 # If we don't have the full data, loop until we
                                 # have it.
-                                socket_bytes += self.get_from_socket()
+                                socket_chars += self.get_from_socket()
 
                             # trim the dmd bytes for the dmd data
-                            dmd_data = socket_bytes[:dmd_byte_length]
+                            dmd_data = socket_chars[:dmd_byte_length]
                             # Save the rest. This is +1 over the last step
                             # since we need to skip the \n separator
-                            socket_bytes = socket_bytes[dmd_byte_length+1:]
+                            socket_chars = socket_chars[dmd_byte_length+1:]
                             self.machine.bcp.dmd.update(dmd_data)
 
-                        if '\n' in socket_bytes:
-                            message, socket_bytes = socket_bytes.split('\n', 1)
+                        if '\n' in socket_chars:
+                            message, socket_chars = socket_chars.split('\n', 1)
 
                             self.log.debug('Received "%s"', message)
                             cmd, kwargs = decode_command_string(message)
@@ -1093,10 +1080,10 @@ class BCPClientSocket(object):
             try:
                 while self.socket:
 
-                    socket_bytes += self.get_from_socket()
+                    socket_chars += self.get_from_socket()
 
-                    if socket_bytes and '\n' in socket_bytes:
-                            message, socket_bytes = socket_bytes.split('\n', 1)
+                    if socket_chars and '\n' in socket_chars:
+                            message, socket_chars = socket_chars.split('\n', 1)
 
                             self.log.debug('Received "%s"', message)
                             cmd, kwargs = decode_command_string(message)
@@ -1115,7 +1102,8 @@ class BCPClientSocket(object):
 
 
     def get_from_socket(self, num_bytes=8192):
-        """Reads and returns whatever data is sitting in the receiving socket.
+        """Reads whatever data is sitting in the receiving socket, converts it
+        to a string via UTF-8 decoding, and returns it.
 
         Args:
             num_bytes: Int of the max number of bytes to read.
@@ -1130,7 +1118,7 @@ class BCPClientSocket(object):
             self.socket = None
             socket_bytes = None
 
-        return socket_bytes
+        return socket_bytes.decode('utf-8')
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
@@ -1144,7 +1132,7 @@ class BCPClientSocket(object):
 
                 try:
                     self.log.debug('Sending "%s"', message)
-                    self.socket.sendall(message + '\n')
+                    self.socket.sendall((message + '\n').encode('utf-8'))
 
                 except (IOError, AttributeError):
                     # MPF is probably in the process of shutting down
@@ -1180,26 +1168,3 @@ class BCPClientSocket(object):
     def send_goodbye(self):
         """Sends BCP 'goodbye' command."""
         self.send('goodbye')
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

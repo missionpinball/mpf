@@ -1,11 +1,4 @@
-"""Contains the Config class with utility configuration methods"""
-
-# config.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
+"""Contains the Config and CaseInsensitiveDict base classes"""
 
 import logging
 import os
@@ -20,6 +13,7 @@ from mpf.system.utility_functions import Util
 import version
 
 log = logging.getLogger('ConfigProcessor')
+
 
 
 class CaseInsensitiveDict(dict):
@@ -54,9 +48,64 @@ class CaseInsensitiveDict(dict):
 
 class Config(object):
 
-    def __init__(self, machine):
+    config_spec = None
+
+    def __init__(self, machine, system_config=None):
         self.machine = machine
         self.log = logging.getLogger('ConfigProcessor')
+
+        if not system_config:
+            self.system_config = self.machine.config['mpf']
+        else:
+            self.system_config = system_config
+
+    @classmethod
+    def load_config_spec(cls):
+        cls.config_spec = cls.load_config_file('mpf/config_validator.yaml')
+
+    @classmethod
+    def unload_config_spec(cls):
+        cls.config_spec = None
+
+    @staticmethod
+    def set_machine_path(machine_path, machine_files_default='machine_files'):
+        # If the machine folder value passed starts with a forward or
+        # backward slash, then we assume it's from the mpf root. Otherwise we
+        # assume it's in the mpf/machine_files folder
+        if (machine_path.startswith('/') or machine_path.startswith('\\')):
+            machine_path = machine_path
+        else:
+            machine_path = os.path.join(machine_files_default, machine_path)
+
+        machine_path = os.path.abspath(machine_path)
+        logging.info("Machine path: {}".format(machine_path))
+
+        # Add the machine folder to sys.path so we can import modules from it
+        sys.path.append(machine_path)
+        return machine_path
+
+    @staticmethod
+    def load_machine_config(config_file_list, machine_path,
+                             config_path='config', existing_config=None):
+        for num, config_file in enumerate(config_file_list):
+
+            if not existing_config:
+                machine_config = CaseInsensitiveDict()
+            else:
+                machine_config = existing_config
+
+            if not (config_file.startswith('/') or
+                    config_file.startswith('\\')):
+
+                config_file = os.path.join(machine_path, config_path,
+                                           config_file)
+
+            logging.info("Machine config file #%s: %s", num+1, config_file)
+
+            machine_config = Util.dict_merge(machine_config,
+                Config.load_config_file(config_file))
+
+        return machine_config
 
     @staticmethod
     def load_config_file(filename, verify_version=True, halt_on_error=True):
@@ -186,6 +235,9 @@ class Config(object):
         # source is dict
         # section_name is str used for logging failures
 
+        if not self.config_spec:
+            self.load_config_spec()
+
         if not section_name:
             section_name = config_spec
 
@@ -194,7 +246,7 @@ class Config(object):
         orig_spec = config_spec
 
         config_spec = config_spec.split(':')
-        this_spec = self.machine.config['config_validator']
+        this_spec = self.config_spec
 
         for i in range(len(config_spec)):
             this_spec = this_spec[config_spec[i]]
@@ -338,8 +390,7 @@ class Config(object):
 
                     path_string = ':'.join(path_list)
 
-                    if (self.machine.config['mpf']
-                            ['allow_invalid_config_sections']):
+                    if self.system_config['allow_invalid_config_sections']:
 
                         self.log.warning('Unrecognized config setting. "%s" is '
                                          'not a valid setting name.',
@@ -459,9 +510,7 @@ class Config(object):
 
         setting_key = setting.split(':')[-1]
 
-        with open(self.machine.config['mpf']['config_versions_file'],
-                  'r') as f:
-
+        with open(self.system_config['config_versions_file'], 'r') as f:
             config_file = yaml.load(f, Loader=MpfLoader)
 
         for ver, sections in config_file.items():
@@ -486,26 +535,3 @@ class Config(object):
 
         if setting in config_file['custom_messages']:
             self.log.info(config_file['custom_messages'][setting])
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

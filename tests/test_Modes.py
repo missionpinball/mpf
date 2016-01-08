@@ -28,6 +28,9 @@ class TestModes(MpfTestCase):
         self.assertIn(self.machine.modes.mode1,
                       self.machine.mode_controller.active_modes)
 
+        # start a mode that's already started and make sure it doesn't explode
+        self.machine.modes.mode1.start()
+
         # stop mode 1
         self.machine.events.post('stop_mode1')
         self.advance_time_and_run()
@@ -165,3 +168,16 @@ class TestModes(MpfTestCase):
         # mode2 should use the new priority since it should have restarted
         self.assertEqual(self.machine.modes.mode2.priority, 999)
 
+        # end ball 2
+        self.machine.game.ball_ending()
+        self.advance_time_and_run()
+
+        # end ball 3 and end the game
+        self.machine.game.ball_ending()
+        self.advance_time_and_run()
+
+        self.assertTrue(self.machine.modes.attract.active)
+        self.assertFalse(self.machine.modes.game.active)
+        self.assertTrue(self.machine.modes.mode1.active)
+        self.assertFalse(self.machine.modes.mode2.active)
+        self.assertFalse(self.machine.modes.mode3.active)

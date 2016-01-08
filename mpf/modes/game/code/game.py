@@ -6,12 +6,6 @@ Note that in the Mission Pinball Framework, a distinction is made between a
 *machine* is the physical pinball machine.
 
 """
-# game.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 from mpf.system.mode import Mode
@@ -446,7 +440,7 @@ class Game(Mode):
             self.num_players = len(self.player_list)
 
             self.machine.create_machine_var(
-                name='player_{}_score'.format(player.number),
+                name='player{}_score'.format(player.number),
                 value=player.score,
                 persist=True)
 
@@ -479,8 +473,9 @@ class Game(Mode):
         self.machine.events.post('player_turn_stop', player=self.player,
                                      number=self.player.number)
 
-        self.machine.set_machine_var(name='player' + str(self.player.number) +
-                                     '_score', value=self.player.score)
+        self.machine.set_machine_var(
+                name='player{}_score'.format(self.player.number),
+                value=self.player.score)
 
         if self.player.number < self.num_players:
             self.player = self.player_list[self.player.number]
@@ -521,26 +516,3 @@ class Game(Mode):
 
 
 # todo player events should come next, including tracking inc/dec, other values
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
