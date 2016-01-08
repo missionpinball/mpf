@@ -17,7 +17,7 @@ class TestRGBColor(MpfTestCase):
         # tests the default color
         color = RGBColor()
         self.assertEqual((0, 0, 0), color.rgb)
-        self.assertEqual('Black', color.name)
+        self.assertIn(color.name, ['Black', 'Off'])
 
     def test_off_color(self):
         color = RGBColor()
