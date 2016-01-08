@@ -1,10 +1,4 @@
 """Contains the FileManager and FileInterface base classes."""
-# file_manager.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import os
