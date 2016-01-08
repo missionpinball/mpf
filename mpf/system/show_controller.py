@@ -1,12 +1,4 @@
 """Manages the hardware shows (lights, LEDs, flashers, coils, etc.) in a pinball machine."""
-# show_controller.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
-
-
 import logging
 import time
 from queue import Queue
@@ -269,9 +261,7 @@ class ShowController(object):
                 for led in Util.string_to_list(leds):
                     this_step['leds'][led] = step['color']
 
-
             if light_tags:
-
                 if 'lights' not in this_step:
                     this_step['lights'] = dict()
 
@@ -279,7 +269,6 @@ class ShowController(object):
                     this_step['lights']['tag|' + tag] = step['color']
 
             if led_tags:
-
                 if 'leds' not in this_step:
                     this_step['leds'] = dict()
 
@@ -416,7 +405,7 @@ class ShowController(object):
         Args:
             show: The show which will set the priority of the lights you want to
                 restore.
-            priority: An iteger value of the lights you want to restore.
+            priority: An integer value of the lights you want to restore.
 
         In both cases it will only restore lights below the priority you pass,
         skipping ones that are at the same value.
@@ -1941,7 +1930,7 @@ class ExternalShow(object):
     def update_gis(self, data):
         for gi, brightness in zip(self.lights, Util.chunker(data, 2)):
             self.machine.show_controller._add_to_gi_queue(
-                gi, Util.hex_string_to_int(brightness))
+                    gi, Util.hex_string_to_int(brightness))
 
     def update_flashers(self, data):
         for flasher, flash in zip(self.flashers, data):
@@ -1962,24 +1951,3 @@ class ExternalShow(object):
             if light.cache['priority'] <= self.priority:
                 light.restore()
 
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

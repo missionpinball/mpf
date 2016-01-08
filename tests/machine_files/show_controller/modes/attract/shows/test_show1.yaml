@@ -1,0 +1,20 @@
+- tocks: 10
+  leds:
+    led_01: 006400
+    led_02: CCCCCC
+- tocks: 10
+  leds:
+    led_01: DarkGreen
+    led_02: Black
+- tocks: 10
+  leds:
+    led_01: DarkSlateGray
+    led_02: Tomato
+- tocks: 10
+  leds:
+    led_01: MidnightBlue-f5
+    led_02: DarkOrange-f5
+- tocks: 10
+  leds:
+    led_01: Off-f5
+    led_02: Off-f5

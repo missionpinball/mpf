@@ -17,7 +17,12 @@ class TestRGBColor(MpfTestCase):
         # tests the default color
         color = RGBColor()
         self.assertEqual((0, 0, 0), color.rgb)
-        self.assertEqual('Off', color.name)
+        self.assertEqual('Black', color.name)
+
+    def test_off_color(self):
+        color = RGBColor()
+        color.name = 'Off'
+        self.assertEqual((0, 0, 0), color.rgb)
 
     def test_static_utilities(self):
         # tests initializing a color by name
