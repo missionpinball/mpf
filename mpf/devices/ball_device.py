@@ -93,11 +93,6 @@ class BallDevice(Device):
         # that this device could fulfil
         # each tuple is (target device, boolean player_controlled flag)
 
-        self._count_consistent = True
-        # flag that indicates whether the balls in the device is stable. Goes
-        # false when a new ball appears in the device and then true again once
-        # it's been processed
-
         self.trigger_event = None
 
         self._state_transitions = dict(
@@ -252,7 +247,6 @@ class BallDevice(Device):
                                  balls=balls)
 
     def _handle_new_balls(self, balls):
-        self._count_consistent = False
         while len(self._incoming_balls) > 0 and balls > 0:
             balls -= 1
             self._incoming_balls.popleft()
@@ -898,8 +892,6 @@ class BallDevice(Device):
         # tell targets that we have balls available
         for i in range(new_balls):
             self.machine.events.post_boolean('balldevice_balls_available')
-
-        self._count_consistent = True
 
     def _balls_missing(self, balls):
         # Called when ball_count finds that balls are missing from this device

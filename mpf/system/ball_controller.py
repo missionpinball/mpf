@@ -26,7 +26,7 @@ class BallController(object):
 
         self.game = None
 
-        self._num_balls_known = -999
+        self.num_balls_known = -999
 
         self.num_balls_missing = 0
         # Balls lost and/or not installed.
@@ -36,52 +36,39 @@ class BallController(object):
                                         self.request_to_start_game)
         self.machine.events.add_handler('machine_reset_phase_2',
                                         self._initialize)
-        # self.machine.events.add_handler('init_phase_2',
-        #                                 self.create_playfield_device, 2)
+        self.machine.events.add_handler('init_phase_2',
+                                        self._init2)
+
+    def _init2(self):
+        # register a handler for all switches
+        for device in self.machine.ball_devices:
+            if not 'ball_switches' in device.config:
+                continue
+            for switch in device.config['ball_switches']:
+                self.machine.switch_controller.add_switch_handler(switch.name,
+                                        self._count_balls, ms=100)
+
+        # run initial count
+        self._count_balls()
 
     def _count_balls(self):
         self.log.debug("Counting Balls")
         balls = 0
-        for device in self.machine.ball_devices:
-            if not device._count_consistent:
-                self.log.debug("Device %s is inconsistent", device.name)
-                return -999
-            self.log.debug("Found %s ball(s) in %s", device.balls, device.name)
-            balls += device.balls
 
-        if balls > self._num_balls_known:
+        for device in self.machine.ball_devices:
+            if not 'ball_switches' in device.config:
+                continue
+            for switch in device.config['ball_switches']:
+                if (self.machine.switch_controller.is_active(switch.name,
+                                        ms=100)):
+                    balls += 1
+
+        self.log.debug("Setting known balls to %s", balls)
+        if balls > self.num_balls_known:
             self.log.debug("Setting known balls to %s", balls)
             self.num_balls_known = balls
 
-        if balls < 0:
-            return -999
-        else:
-            return balls
-        # todo figure out how to do this with a generator
-
-    @property
-    def num_balls_known(self):
-        self._update_num_balls_known()
-
-        return self._num_balls_known
-
-    def _update_num_balls_known(self):
-        balls = self._count_balls() 
-
-        if balls < 0:
-            self.delay.add(callback=self._update_num_balls_known, ms=10)
-
-        if balls > self._num_balls_known:
-            self._num_balls_known = balls
-
-
-    @num_balls_known.setter
-    def num_balls_known(self, balls):
-        """How many balls the machine knows about. Could vary from the number
-        of balls installed based on how many are *actually* in the machine, or
-        to compensate for balls that are lost or stuck.
-        """
-        self._num_balls_known = balls
+        return balls
 
     def _initialize(self):
 
@@ -89,8 +76,6 @@ class BallController(object):
         # do and will create errors, so we just abort.
         if not hasattr(self.machine, 'ball_devices'):
             return
-
-        self._update_num_balls_known()
 
         for device in self.machine.ball_devices:
             if 'drain' in device.tags:  # device is used to drain balls from pf
