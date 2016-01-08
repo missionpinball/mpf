@@ -183,7 +183,7 @@ class LED(Device):
             self._setup_fade()
 
             if self.debug:
-                print "we have a fade to set up"
+                print("we have a fade to set up")
 
         else:
             self.state['color'] = color
@@ -299,10 +299,10 @@ class LED(Device):
 
         if not self.fade_task:
             if self.debug:
-                print "setting up fade task"
+                print("setting up fade task")
             self.fade_task = Task.create(self._fade_task)
         elif self.debug:
-                print "already have a fade task"
+                print("already have a fade task")
 
     def _fade_task(self):
         """
@@ -313,8 +313,8 @@ class LED(Device):
         while self.fade_in_progress:
 
             if self.debug:
-                print "fade_in_progress fade_task"
-                print "state", self.state
+                print("fade_in_progress fade_task")
+                print("state", self.state)
 
             state = self.state
 
@@ -323,7 +323,7 @@ class LED(Device):
                      (state['destination_time'] - state['start_time']))
 
             if self.debug:
-                print "ratio", ratio
+                print("ratio", ratio)
 
             if ratio >= 1.0:  # fade is done
                 self.fade_in_progress = False
@@ -333,15 +333,15 @@ class LED(Device):
                 new_color = RGBColor.blend(state['start_color'], state['destination_color'], ratio)
 
             if self.debug:
-                print "new color", new_color
+                print("new color", new_color)
 
             self.color(color=new_color, fade_ms=0, priority=state['priority'], cache=False)
 
             yield
 
         if self.debug:
-            print "fade_in_progress just ended"
-            print "killing fade task"
+            print("fade_in_progress just ended")
+            print("killing fade task")
 
         self.fade_task = None
         raise StopIteration()

@@ -83,8 +83,15 @@ class ModeController(object):
         # Loads the modes from the modes: section of the machine configuration
         # file.
 
+        # todo make a config file validator entry for lowercase values
+
         for mode in set(self.machine.config['modes']):
-            self.machine.modes.append(self._load_mode(mode))
+
+            if mode not in self.machine.modes:
+                self.machine.modes[mode] = self._load_mode(mode.lower())
+            else:
+                raise ValueError('Mode {} already exists. Cannot load again.'.
+                                 format(mode))
 
     def _load_mode(self, mode_string):
         """Loads a mode, reads in its config, and creates the Mode object.
@@ -145,7 +152,7 @@ class ModeController(object):
         # If a custom 'code' setting exists, first look in the machine folder
         # for it, and if it's not there, then look in mpf/modes for it.
 
-        if 'code' in config['mode']:
+        if 'mode' in config and 'code' in config['mode']:
             mode_code_file = os.path.join(self.machine.machine_path,
                 self.machine.config['mpf']['paths']['modes'],
                 mode_string,

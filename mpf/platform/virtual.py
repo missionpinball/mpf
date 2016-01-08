@@ -87,7 +87,7 @@ class HardwarePlatform(Platform):
                     Util.string_to_list(
                         self.machine.config['virtual_platform_start_active_switches'])]
 
-                for k, v in self.hw_switches.iteritems():
+                for k, v in self.hw_switches.items():
                     if k in initial_active_switches:
                         self.hw_switches[k] ^= 1
 
@@ -100,6 +100,9 @@ class HardwarePlatform(Platform):
                 self.hw_switches[switch.number] = switch.state ^ switch.invert
 
         return self.hw_switches
+
+    def configure_accelerometer(self, device, number, useHighPass):
+        pass
 
     def configure_matrixlight(self, config):
         return VirtualMatrixLight(config['number']), config['number']
@@ -119,11 +122,19 @@ class HardwarePlatform(Platform):
     def clear_hw_rule(self, sw_name):
         sw_num = self.machine.switches[sw_name].number
 
-        for entry in self.hw_switch_rules.keys():  # slice for copy
+        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(
                     self.machine.switches.number(sw_num).name):
                 del self.hw_switch_rules[entry]
 
+    def i2c_write8(self, address, register, value):
+        pass
+
+    def i2c_read8(self, address, register):
+        return None
+
+    def i2c_read16(self, address, register):
+        return None
 
 class VirtualSwitch(object):
     """Represents a switch in a pinball machine used with virtual hardware."""

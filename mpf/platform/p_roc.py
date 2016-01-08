@@ -1026,7 +1026,7 @@ class PDBConfig(object):
         # Create a list of indexes.  The PDB banks will be mapped into this
         # list. The index of the bank is used to calculate the P-ROC driver
         # number for each driver.
-        num_proc_banks = pinproc.DriverCount/8
+        num_proc_banks = pinproc.DriverCount//8
         self.indexes = [99] * num_proc_banks
 
         self.initialize_drivers(proc)

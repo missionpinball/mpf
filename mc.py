@@ -6,7 +6,7 @@
 
 # Documentation and more info at http://missionpinball.com/mpf
 
-from __future__ import print_function
+
 
 import argparse
 from datetime import datetime
@@ -117,7 +117,7 @@ def main():
         mc = MediaController(vars(args))
         mc.run()
         logging.info("MC run loop ended.")
-    except Exception, e:
+    except Exception as e:
         logging.exception(e)
 
     sys.exit()

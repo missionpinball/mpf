@@ -132,7 +132,7 @@ class ShowController(object):
 
         key_list = list()
 
-        for event, settings in config.iteritems():
+        for event, settings in config.items():
             if type(settings) is dict:
                 settings['priority'] = priority
                 settings['stop_key'] = mode
@@ -195,7 +195,7 @@ class ShowController(object):
     def _end_show(self, show, reset=True):
         # Internal method which ends a running Show
 
-        self.running_shows = filter(lambda x: x != show, self.running_shows)
+        self.running_shows = [x for x in self.running_shows if x != show]
 
         if reset:
             show.current_location = 0
@@ -558,8 +558,8 @@ class Show(Asset):
         # create a dictionary of the current items of each type, combined with
         # the show details, that we can throw up to our queue
 
-        for item_type, item_dict in (self.show_actions[self.current_location].
-                                     iteritems()):
+        for item_type, item_dict in (iter(self.show_actions[self.current_location].
+                                     items())):
 
             if item_type == 'events':
 

@@ -140,7 +140,8 @@ class Playfield(BallDevice):
         if ball_change > 0:
             self.machine.events.post_relay('balldevice_' + self.name +
                                            '_ball_enter', new_balls=ball_change,
-                                           unclaimed_balls=ball_change)
+                                           unclaimed_balls=ball_change,
+                                           device=self)
 
         if ball_change:
             self.machine.events.post(self.name + '_ball_count_change',

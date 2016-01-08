@@ -47,7 +47,7 @@ class HighScore(Mode):
                             name=entries + str(position + 1) + '_value',
                             value=value)
 
-                except KeyError, e:
+                except KeyError as e:
                     self.high_scores[entries] = list()
 
     def mode_start(self, **kwargs):
@@ -68,7 +68,7 @@ class HighScore(Mode):
 
         for category_settings in self.high_score_config['categories']:
 
-            for category_name, award_names in category_settings.iteritems():
+            for category_name, award_names in category_settings.items():
 
                 new_list = list()
 
@@ -99,12 +99,12 @@ class HighScore(Mode):
             self.machine.events.add_handler('high_score_complete',
                                             self._receive_player_name)
 
-        for category_name, top_scores in self.new_high_score_list.iteritems():
+        for category_name, top_scores in self.new_high_score_list.items():
             for index, (player, value) in enumerate(top_scores):
                 if player in self.machine.game.player_list:
 
                     for category_dict in self.high_score_config['categories']:
-                        for config_cat_name in category_dict.keys():
+                        for config_cat_name in list(category_dict.keys()):
 
                             if config_cat_name == category_name:
                                 award_label = (
@@ -141,7 +141,7 @@ class HighScore(Mode):
 
         for category_scores in self.high_score_config['categories']:
 
-            for category_name in category_scores.keys():
+            for category_name in list(category_scores.keys()):
                 for index, local_award in (
                         enumerate(category_scores[category_name])):
                     if local_award == award:

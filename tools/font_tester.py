@@ -375,7 +375,7 @@ def setup_file_list(font_string):
         font_path, font_file =  os.path.split(font_string)
 
     else:
-        print "ERROR: Parameter passed isn't a valid path or file name."
+        print("ERROR: Parameter passed isn't a valid path or file name.")
         sys.exit()
 
     # Find all the fonts in this folder and add them to the list
@@ -399,7 +399,7 @@ def main():
     options = vars(options)
 
     if len(args) != 1:
-        print "Error. This tool requires a font filename as a command line parameter"
+        print("Error. This tool requires a font filename as a command line parameter")
         sys.exit()
     else:
         setup_file_list(args[0])

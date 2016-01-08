@@ -1,7 +1,7 @@
 import unittest
 
 from mpf.system.machine import MachineController
-from MpfTestCase import MpfTestCase
+from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
 import time
 
@@ -28,4 +28,4 @@ class TestSwitchController(MpfTestCase):
 
         self.advance_time_and_run(3)
 
-        self.assertEquals(True, self.isActive)
+        self.assertEqual(True, self.isActive)

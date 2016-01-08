@@ -21,12 +21,12 @@ class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever yo
         # down when you create your own Scriptlet.
 
         # you can access the machine object via self.machine, like this:
-        print self.machine
-        print self.machine.game
+        print(self.machine)
+        print(self.machine.game)
         # etc.
 
         # you can access this Scriptlet's name (based on the class name above):
-        print self.name  # will print `YourScriptletName` in this case
+        print(self.name)  # will print `YourScriptletName` in this case
 
         # you can write to the log via self.log:
         # The logger will be prefaced with Scriptlet.YourScriptletName
@@ -34,7 +34,7 @@ class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever yo
         self.log.debug("This is a debug-level log entry")
 
         # you can access machine configuration options via self.machine.config:
-        print self.machine.config['game']['balls per game']
+        print(self.machine.config['game']['balls per game'])
 
         # feel free to add your own entries to the machine configuration files,
         # like: self.machine.config['YourScriptlet']['Your Setting']
@@ -61,10 +61,10 @@ class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever yo
         # This is just an arbitrarily-named method which is the handler for
         # `ball_add_live_event` from the on_load(). Feel free to create as
         # many methods as you want in your Scriptlet!
-        print "A new ball was added"
+        print("A new ball was added")
 
     def my_timer(self):
-        print "another 10 seconds just passed"
+        print("another 10 seconds just passed")
 
     def tick(self):
         # this will run every single machine tick!!

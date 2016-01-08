@@ -149,7 +149,7 @@ class Player(object):
         self.__setattr__(name, value)
 
     def __iter__(self):
-        for name, value in self.vars.iteritems():
+        for name, value in self.vars.items():
             yield name, value
 
     def is_player_var(self, var_name):

@@ -10,7 +10,7 @@ import logging
 import os
 import threading
 import copy
-from Queue import PriorityQueue
+from queue import PriorityQueue
 import sys
 import traceback
 
@@ -201,7 +201,7 @@ class AssetManager(object):
 
                 built_up_config = copy.deepcopy(self.defaults[default_string])
 
-                for k, v in config.iteritems():
+                for k, v in config.items():
 
                     if ('file' in v and v['file'] == file_name) or name == k:
                         if name != k:

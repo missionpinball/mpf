@@ -1,7 +1,7 @@
 import unittest
 
 from mpf.system.machine import MachineController
-from MpfTestCase import MpfTestCase
+from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
 import time
 
@@ -14,23 +14,23 @@ class TestPlayfield(MpfTestCase):
         return '../tests/machine_files/playfield/'
 
     def test_unexpected_ball_on_pf(self):
-        self.assertEquals(0, self.machine.ball_devices.playfield.balls)
+        self.assertEqual(0, self.machine.ball_devices.playfield.balls)
         self.assertEqual(False, self.machine.config['machine']['glass_off_mode'])
 
         self.machine.switch_controller.process_switch("s_playfield", 1)
         self.machine.switch_controller.process_switch("s_playfield", 0)
         self.advance_time_and_run(.1)
 
-        self.assertEquals(1, self.machine.ball_devices.playfield.balls)
+        self.assertEqual(1, self.machine.ball_devices.playfield.balls)
 
     def test_unexpected_ball_on_pf_glass_off_mode(self):
         self.machine.config['machine']['glass_off_mode'] = True
 
-        self.assertEquals(0, self.machine.ball_devices.playfield.balls)
+        self.assertEqual(0, self.machine.ball_devices.playfield.balls)
         self.assertEqual(True, self.machine.config['machine']['glass_off_mode'])
 
         self.machine.switch_controller.process_switch("s_playfield", 1)
         self.machine.switch_controller.process_switch("s_playfield", 0)
         self.advance_time_and_run(.1)
 
-        self.assertEquals(0, self.machine.ball_devices.playfield.balls)
+        self.assertEqual(0, self.machine.ball_devices.playfield.balls)

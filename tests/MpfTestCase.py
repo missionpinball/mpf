@@ -13,13 +13,17 @@ class TestMachineController(MachineController):
 
     def __init__(self, options, config_patches):
         self.test_config_patches = config_patches
+        self.test_init_complete = False
         super(TestMachineController, self).__init__(options)
 
     def _load_machine_config(self):
         super(TestMachineController, self)._load_machine_config()
         self.config = Util.dict_merge(self.config, self.test_config_patches,
                                       combine_lists=False)
-        # print self.config['plugins']
+
+    def _reset_complete(self):
+        self.test_init_complete = True
+        super(TestMachineController, self)._reset_complete()
 
 
 class MpfTestCase(unittest.TestCase):
@@ -28,6 +32,20 @@ class MpfTestCase(unittest.TestCase):
     machine_config_patches['mpf'] = dict()
     machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
     machine_config_patches['mpf']['plugins'] = list()
+
+    def getConfigFile(self):
+        """Override this method in your own test class to point to the config
+        file you need for your tests.
+
+        """
+        return 'null.yaml'
+
+    def getMachinePath(self):
+        """Override this method in your own test class to point to the machine
+        folder you need for your tests.
+
+        """
+        return '../tests/machine_files/null/'
 
     def get_platform(self):
         return 'virtual'
@@ -47,16 +65,17 @@ class MpfTestCase(unittest.TestCase):
                }
 
     def set_time(self, new_time):
+        self.machine.log.debug("Moving time forward %ss", new_time - self.testTime)
         self.testTime = new_time
         time.time.return_value = self.testTime
 
-    def advance_time(self, delta):
+    def advance_time(self, delta=1):
         self.testTime += delta
         time.time.return_value = self.testTime
 
-    def advance_time_and_run(self, delta):
+    def advance_time_and_run(self, delta=1):
         end_time = time.time() + delta
-        self.machine.log.debug("Advance until %s", end_time)
+        self.machine.log.debug("Advancing time %ss", delta)
         self.machine_run()
         while True:
             next_event = self.machine.delayRegistry.get_next_event()
@@ -64,6 +83,7 @@ class MpfTestCase(unittest.TestCase):
             next_switch = self.machine.switch_controller.get_next_timed_switch_event()
 
             wait_until = next_event
+
             if not wait_until or (next_timer and wait_until > next_timer):
                 wait_until = next_timer
 
@@ -80,7 +100,7 @@ class MpfTestCase(unittest.TestCase):
         self.machine_run()
 
     def machine_run(self):
-        self.machine.log.debug("Next run %s", time.time())
+        self.machine.log.debug("Ticking machine")
         self.machine.default_platform.tick()
         self.machine.timer_tick()
 
@@ -115,6 +135,9 @@ class MpfTestCase(unittest.TestCase):
 
         self.machine.default_platform.timer_initialize()
         self.machine.loop_start_time = time.time()
+
+        while not self.machine.test_init_complete:
+            self.machine_run()
 
         self.machine.ball_controller.num_balls_known = 99
         self.advance_time_and_run(300)

@@ -62,21 +62,26 @@ class Config(object):
     def load_config_file(filename, verify_version=True, halt_on_error=True):
         config = FileManager.load(filename, verify_version, halt_on_error)
 
-        if 'config' in config:
-            path = os.path.split(filename)[0]
+        try:
+            if 'config' in config:
+                path = os.path.split(filename)[0]
 
-            for file in Util.string_to_list(config['config']):
-                full_file = os.path.join(path, file)
-                config = Util.dict_merge(config,
-                                           Config.load_config_file(full_file))
-        return config
+                for file in Util.string_to_list(config['config']):
+                    full_file = os.path.join(path, file)
+                    config = Util.dict_merge(config,
+                                               Config.load_config_file(full_file))
+            return config
+        except TypeError:
+            return dict()
 
     @staticmethod
-    def process_config(config_spec, source, target=None):
+    def process_config(config_spec, source, target=None):  # pragma: no cover
+        # Note this method is deprecated and will be removed eventually
+        # Use process_config2() instead
         config_spec = yaml.load(config_spec, Loader=MpfLoader)
         processed_config = source
 
-        for k in config_spec.keys():
+        for k in list(config_spec.keys()):
             if k in source:
                 processed_config[k] = Config.validate_config_item(
                     config_spec[k], source[k])
@@ -91,7 +96,9 @@ class Config(object):
         return processed_config
 
     @staticmethod
-    def validate_config_item(spec, item='item not in config!@#'):
+    def validate_config_item(spec, item='item not in config!@#'):  # pragma: no cover
+        # Note this method is deprecated and will be removed eventually
+        # Use validate_config_item2() instead
 
         try:
             if item.lower() == 'none':
@@ -197,7 +204,7 @@ class Config(object):
 
         processed_config = source
 
-        for k in this_spec.keys():
+        for k in list(this_spec.keys()):
             if k in source:  # validate the entry that exists
 
                 if type(this_spec[k]) is dict:
@@ -252,26 +259,27 @@ class Config(object):
     def validate_config_item2(self, spec, validation_failure_info,
                               item='item not in config!@#',):
 
-        default = 'default required!@#'
-
-        item_type, validation, default = spec.split('|')
+        try:
+            item_type, validation, default = spec.split('|')
+        except ValueError:
+            raise ValueError('Error in validator config: {}'.format(spec))
 
         if default.lower() == 'none':
             default = None
+        elif not default:
+            default = 'default required!@#'
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
-                log.error('Required setting missing from config file. Run with '
-                          'verbose logging and look for the last '
-                          'ConfigProcessor entry above this line to see where '
-                          'the problem is.')
-                sys.exit()
+                raise ValueError('Required setting missing from config file. '
+                    'Run with verbose logging and look for the last '
+                    'ConfigProcessor entry above this line to see where the '
+                    'problem is. {} {}'.format(spec, validation_failure_info))
             else:
                 item = default
 
         if item_type == 'single':
             item = self.validate_item(item, validation, validation_failure_info)
-
 
         elif item_type == 'list':
             item = Util.string_to_list(item)
@@ -297,7 +305,7 @@ class Config(object):
 
         elif item_type == 'dict':
             item = self.validate_item(item, validation,
-                                               validation_failure_info)
+                                      validation_failure_info)
 
             if not item:
                 item = dict()
@@ -312,7 +320,7 @@ class Config(object):
 
     def check_for_invalid_sections(self, spec, config, validation_failure_info):
 
-        for k, v in config.iteritems():
+        for k, v in config.items():
             if type(k) is not dict:
 
                 if k not in spec:
@@ -361,7 +369,7 @@ class Config(object):
 
             return_dict = dict()
 
-            for k, v in item.iteritems():
+            for k, v in item.items():
                 return_dict[self.validate_item(k, validator[0],
                                                validation_failure_info)] = (
                     self.validate_item(v, validator[1], validation_failure_info)
@@ -456,7 +464,7 @@ class Config(object):
 
             config_file = yaml.load(f, Loader=MpfLoader)
 
-        for ver, sections in config_file.iteritems():
+        for ver, sections in config_file.items():
 
             if type(ver) is not int:
                 continue

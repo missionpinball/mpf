@@ -396,7 +396,7 @@ def setup_file_list(image_string):
         image_path, image_file =  os.path.split(image_string)
 
     else:
-        print "ERROR: Parameter passed isn't a valid path or file name."
+        print("ERROR: Parameter passed isn't a valid path or file name.")
         sys.exit()
 
     # Find all the images in this folder and add them to the list
@@ -424,7 +424,7 @@ def main():
     options = vars(options)
 
     if len(args) != 1:
-        print "Error. This tool requires a image filename as a command line parameter"
+        print("Error. This tool requires a image filename as a command line parameter")
         sys.exit()
     else:
         setup_file_list(args[0])

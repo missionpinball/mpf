@@ -1,4 +1,4 @@
-"""Manages the harwdare shows (lights, LEDs, flashers, coils, etc.) in a pinball machine."""
+"""Manages the hardware shows (lights, LEDs, flashers, coils, etc.) in a pinball machine."""
 # show_controller.py
 # Mission Pinball Framework
 # Written by Brian Madden & Gabe Knuth
@@ -52,7 +52,7 @@ class ShowController(object):
         self.external_show_connected = False
         self.external_show_command_queue = Queue()
         """A thread-safe queue that receives BCP external show commands in the BCP worker
-        thread. The light controller reads and proecesses these commands in the main
+        thread. The light controller reads and processes these commands in the main
         thread via a tick handler.
         """
         self.running_external_show_keys = {}
@@ -77,7 +77,7 @@ class ShowController(object):
         """
 
         self.running_show_keys = dict()
-        """Dict of active light shows that were created from scripts. This is
+        """Dict of active shows that were created from scripts. This is
         useful for stopping shows later. Keys are based on the 'key' parameter
         specified when a script was run, values are references to the show
         object.
@@ -85,7 +85,7 @@ class ShowController(object):
 
         self.current_time = time.time()
         """
-        The light controller uses a common system time for the entire show system so that every
+        The show controller uses a common system time for the entire show system so that every
         "current_time" of a single update cycle is the same everywhere. This
         ensures that multiple shows, scripts, and commands start in-sync
         regardless of any processing lag.
@@ -99,11 +99,11 @@ class ShowController(object):
         # Tell the mode controller that it should look for light_player items in
         # modes.
         self.machine.mode_controller.register_start_method(self.process_light_player,
-                                                 'light_player')
+                                                           'light_player')
 
         # Create scripts from config
         self.machine.mode_controller.register_start_method(self.process_light_scripts,
-                                                 'light_scripts')
+                                                           'light_scripts')
 
         # Create the show AssetManager
         self.asset_manager = AssetManager(
@@ -125,7 +125,7 @@ class ShowController(object):
             self.process_light_player(self.machine.config['light_player'])
 
     def play_show(self, show, priority=0, **kwargs):
-        """Plays a light show.
+        """Plays a hardware show.
 
         Args:
             show: Either the string name of a registered show or a direct
@@ -219,7 +219,7 @@ class ShowController(object):
                     this_action['priority'] = priority
 
                 event_keys.add(self.add_light_player_show(event_name,
-                                                         this_action))
+                                                          this_action))
 
                 try:  # if this entry is to stop a script, there will be no show
                     shows.add(this_action['show'])
@@ -230,7 +230,7 @@ class ShowController(object):
 
     def create_show_from_script(self, script, lights=None, leds=None,
                                 light_tags=None, led_tags=None, key=None):
-        """Creates a light show from a script.
+        """Creates a show from a script.
 
         Args:
             script: Python dictionary in MPF light script format
@@ -298,7 +298,10 @@ class ShowController(object):
         self.machine.events.remove_handlers_by_keys(event_keys)
 
         for show in shows:
-            show.stop()
+            try:
+                show.stop()
+            except AttributeError:
+                pass
 
     def add_light_player_show(self, event, settings):
         if 'priority' in settings:

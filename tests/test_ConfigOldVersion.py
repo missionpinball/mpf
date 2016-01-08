@@ -1,4 +1,4 @@
-from MpfTestCase import MpfTestCase
+from tests.MpfTestCase import MpfTestCase
 
 class TestConfigOldVersion(MpfTestCase):
 

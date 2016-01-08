@@ -87,8 +87,8 @@ class DeviceManager(object):
         for collection in self.collections:
             if self.collections[collection].config_section in config:
                 for device, settings in (
-                        config[self.collections[collection].
-                               config_section].iteritems()):
+                        iter(config[self.collections[collection].
+                               config_section].items())):
 
                     control_events = [x for x in settings if
                                       x.endswith('_events')]
@@ -96,7 +96,7 @@ class DeviceManager(object):
                     for control_event in control_events:
                         # get events from this device's config
                         if settings[control_event]:
-                            for event, delay in settings[control_event].iteritems():
+                            for event, delay in settings[control_event].items():
 
                                 yield (event,
                                        getattr(self.collections
@@ -125,8 +125,8 @@ class DeviceManager(object):
 
     def create_collection_control_events(self):
         for collection, events in (
-                self.machine.config['mpf']['device_collection_control_events'].
-                iteritems()):
+                iter(self.machine.config['mpf']['device_collection_control_events'].
+                items())):
 
             for event in events:
 
@@ -167,9 +167,9 @@ class DeviceManager(object):
                                                 handler=getattr(device, method))
 
     def save_tree_to_file(self, filename):
-        print "Exporting file..."
+        print("Exporting file...")
         FileManager.save(filename, self.collections)
-        print "Export complete!"
+        print("Export complete!")
 
 
 class DeviceCollection(CaseInsensitiveDict):
@@ -201,7 +201,7 @@ class DeviceCollection(CaseInsensitiveDict):
             raise KeyError('Error: No device exists with the name:', attr)
 
     def __iter__(self):
-        for item in self.itervalues():
+        for item in self.values():
             yield item
 
         # todo add an exception here if this isn't found?
@@ -248,14 +248,14 @@ class DeviceCollection(CaseInsensitiveDict):
             True or False, depending on whether the name is a valid device or
             not.
         """
-        if name.lower() in self.itervalues():
+        if name.lower() in iter(self.values()):
             return True
         else:
             return False
 
     def number(self, number):
         """Returns a device object based on its number."""
-        for name, obj in self.iteritems():
+        for name, obj in self.items():
             if obj.number == number:
                 return self[name]
 

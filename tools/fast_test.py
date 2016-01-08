@@ -13,8 +13,8 @@ while True:
     fastpinball.fpEventPoll(dev, fast_events)
     event = fastpinball.fpGetEventType(fast_events)
 
-    print event
+    print(event)
 
     if event == fastpinball.FP_EVENT_TYPE_TIMER_TICK:
         tick += 1
-        print tick
+        print(tick)

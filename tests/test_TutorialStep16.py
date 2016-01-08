@@ -1,5 +1,5 @@
 
-from MpfTestCase import MpfTestCase
+from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
 
 
@@ -44,7 +44,7 @@ class TestTutorialStep16(MpfTestCase):
         self.machine.switch_controller.process_switch('s_right_inlane',
                                                       0)
         self.advance_time_and_run(1)
-        self.assertEquals(100, self.machine.game.player.score)
+        self.assertEqual(100, self.machine.game.player.score)
 
         # player should get 1000 points for hitting the flipper button
         self.machine.switch_controller.process_switch('s_left_flipper',
@@ -52,7 +52,7 @@ class TestTutorialStep16(MpfTestCase):
         self.machine.switch_controller.process_switch('s_left_flipper',
                                                       0)
         self.advance_time_and_run(1)
-        self.assertEquals(1100, self.machine.game.player.score)
+        self.assertEqual(1100, self.machine.game.player.score)
         self.advance_time_and_run(2)
 
         self.assertEqual(1, self.machine.game.player.ball)

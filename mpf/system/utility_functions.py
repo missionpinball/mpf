@@ -22,14 +22,14 @@ class Util(object):
             A dictionary with lowercase keys.
 
         """
-        if type(source_dict) is None:
+        if not source_dict:
             return dict()
         elif type(source_dict) in (dict, OrderedDict):
-            for k in source_dict.keys():
+            for k in list(source_dict.keys()):
                 if type(source_dict[k]) is dict:
                     source_dict[k] = Util.keys_to_lower(source_dict[k])
 
-            return dict((str(k).lower(), v) for k, v in source_dict.iteritems())
+            return dict((str(k).lower(), v) for k, v in source_dict.items())
         elif type(source_dict) is list:
             for num, item in enumerate(source_dict):
                 source_dict[num] = Util.keys_to_lower(item)
@@ -102,7 +102,7 @@ class Util(object):
     @staticmethod
     def chunker(l, n):
         """Yields successive n-sized chunks from l."""
-        for i in xrange(0, len(l), n):
+        for i in range(0, len(l), n):
             yield l[i:i+n]
 
     @staticmethod
@@ -157,7 +157,7 @@ class Util(object):
         if not isinstance(b, dict):
             return b
         result = deepcopy(a)
-        for k, v in b.iteritems():
+        for k, v in b.items():
             if k in result and isinstance(result[k], dict):
                 result[k] = Util.dict_merge(result[k], v)
             elif k in result and isinstance(result[k], list) and combine_lists:
@@ -179,16 +179,19 @@ class Util(object):
             output_length: Integer value of the number of items you'd like in
                 your returned list. Default is 3. This method will ignore
                 extra characters if the input_string is too long, and it will
-                pad with zeros if the input string is too short.
+                pad the left with zeros if the input string is too short.
 
         Returns:
             List of integers, like [255, 255, 0]
+
+        Raises:
+            ValueError if the input string contains non-hex chars
 
         """
         output = []
         input_string = str(input_string).zfill(output_length*2)
 
-        for i in xrange(0, len(input_string), 2):  # step through every 2 chars
+        for i in range(0, len(input_string), 2):  # step through every 2 chars
             output.append(int(input_string[i:i+2], 16))
 
         return output[0:output_length:]

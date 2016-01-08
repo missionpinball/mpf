@@ -1,0 +1,7 @@
+#config_version=3
+
+modes:
+  - mode1
+  - Mode2
+  - mode3
+  - mode4

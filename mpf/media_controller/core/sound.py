@@ -9,7 +9,7 @@ StreamTrack parent classes."""
 
 import logging
 import time
-import Queue
+import queue
 import uuid
 import copy
 import sys
@@ -131,7 +131,7 @@ class SoundController(object):
         num_channels = 0  # How many total
 
         if 'tracks' in self.config:
-            for item in self.config['tracks'].values():
+            for item in list(self.config['tracks'].values()):
                 if 'simultaneous_sounds' in item:
                     num_channels += item['simultaneous_sounds']
                 else:
@@ -144,7 +144,7 @@ class SoundController(object):
 
         # Configure Tracks
         if 'tracks' in self.config:
-            for k, v in self.config['tracks'].iteritems():
+            for k, v in self.config['tracks'].items():
                 self.create_track(name=k, config=v)
         else:
             self.create_track(name='default')
@@ -332,7 +332,7 @@ class SoundController(object):
 
         self.log.debug("Unregistering sound events")
 
-        for event in self.sound_events.keys():
+        for event in list(self.sound_events.keys()):
             for entry in self.sound_events[event][:]:
                 if entry['settings']['key'] == key:
                     self.log.debug("Remvoing %s from event %s", entry, event)
@@ -456,7 +456,7 @@ class Track(object):
         self.config = config
         self.pygame_channels = list()
         self.volume = 1
-        self.queue = Queue.PriorityQueue()
+        self.queue = queue.PriorityQueue()
 
         if 'simultaneous_sounds' not in self.config:
             self.config['simultaneous_sounds'] = 1
@@ -593,7 +593,7 @@ class Track(object):
         try:
             next_sound = self.queue.get_nowait()
 
-        except Queue.Empty:
+        except queue.Empty:
             return
 
         if not next_sound[2] or next_sound[2] >= time.time():

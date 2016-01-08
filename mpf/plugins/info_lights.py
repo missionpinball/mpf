@@ -30,7 +30,7 @@ class InfoLights(object):
         ]
 
         # convert any light names we find to objects
-        for k, v in self.config.iteritems():
+        for k, v in self.config.items():
             if 'light' in v:
                 if v['light'] in self.machine.lights:
                     self.config[k]['light'] = self.machine.lights[v['light']]
@@ -47,7 +47,7 @@ class InfoLights(object):
     def reset_game_lights(self):
         self.log.debug("reset_game_lights")
         # turn off the game-specific lights (player, ball & match)
-        for k, v in self.config.iteritems():
+        for k, v in self.config.items():
             if k.startswith('ball_'):
                 v['light'].off()
             if k.startswith('player_'):
@@ -58,7 +58,7 @@ class InfoLights(object):
     def ball_started(self, **kwargs):
         self.log.debug("ball_started")
         # turn off all the ball lights
-        for k, v in self.config.iteritems():
+        for k, v in self.config.items():
             if k.startswith('ball_'):
                 v['light'].off()
 

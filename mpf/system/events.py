@@ -191,7 +191,7 @@ class EventManager(object):
             method : The method whose handlers you want to remove.
         """
 
-        for event, handler_list in self.registered_handlers.iteritems():
+        for event, handler_list in self.registered_handlers.items():
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[0] == method:
                     handler_list.remove(handler_tup)
@@ -234,7 +234,7 @@ class EventManager(object):
             key: The key of the handler you want to remove
         """
 
-        for event, handler_list in self.registered_handlers.iteritems():
+        for event, handler_list in self.registered_handlers.items():
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[3] == key:
                     handler_list.remove(handler_tup)
@@ -473,7 +473,7 @@ class EventManager(object):
 
                 # merge the post's kwargs with the registered handler's kwargs
                 # in case of conflict, posts kwargs will win
-                merged_kwargs = dict(handler[2].items() + kwargs.items())
+                merged_kwargs = dict(list(handler[2].items()) + list(kwargs.items()))
 
                 # log if debug is enabled and this event is not the timer tick
                 if self.debug and event != 'timer_tick':
@@ -520,6 +520,8 @@ class EventManager(object):
             if queue.callback:
                 # if there's still a callback, that means it wasn't called yet
                 self.callback_queue.append((queue.callback, kwargs))
+        elif queue and not queue.is_empty():
+            queue.event_finished()
 
         if callback and ev_type != 'queue':
             # For event types other than queue, we'll handle the callback here.
@@ -560,7 +562,7 @@ class EventManager(object):
 
         event_keys = set()
 
-        for event_name, events in config.iteritems():
+        for event_name, events in config.items():
             if type(events) is not list:
                 events = Util.string_to_list(events)
 
@@ -578,7 +580,7 @@ class EventManager(object):
 
         event_keys = set()
 
-        for event_name, events in config.iteritems():
+        for event_name, events in config.items():
             if type(events) is not list:
                 events = Util.string_to_list(events)
 
@@ -614,9 +616,13 @@ class QueuedEvent(object):
         self.callback = callback
         self.kwargs = kwargs
         self.num_waiting = 0
+        self._is_event_finished = False
 
     def __repr__(self):
         return '<QueuedEvent for callback {}>'.format(self.callback)
+
+    def event_finished(self):
+            self._is_event_finished = True
 
     def wait(self):
         """Registers a wait for this QueueEvent."""
@@ -634,7 +640,7 @@ class QueuedEvent(object):
         if self.debug:
             self.log.debug("Clearing a wait. Current count: %s",
                            self.num_waiting)
-        if not self.num_waiting:
+        if not self.num_waiting and self._is_event_finished:
             if self.debug:
                 self.log.debug("Queue is empty. Calling %s", self.callback)
             #del self.kwargs['queue']  # ditch this since we don't need it now

@@ -38,24 +38,6 @@ class Flipper(Device):
         super(Flipper, self).__init__(machine, name, config, collection,
                                       validate=validate)
 
-        # todo convert to dict
-        self.no_hold = False
-        self.strength = 100
-        self.inverted = False
-        self.rules = dict()
-
-        self.rules['a'] = False
-        self.rules['b'] = False
-        # self.rules['c'] = False
-        self.rules['d'] = False
-        self.rules['e'] = False
-        self.rules['h'] = False
-
-        self.flipper_coils = []
-        self.flipper_coils.append(self.config['main_coil'].name)
-        if self.config['hold_coil']:
-            self.flipper_coils.append(self.config['hold_coil'].name)
-
         self.flipper_switches = []
         self.flipper_switches.append(self.config['activation_switch'].name)
 
@@ -87,7 +69,7 @@ class Flipper(Device):
         D.    Enable   Hold  Button  active
         E.    Disable  Main  EOS     active
 
-        One coil, using EOS switch
+        One coil, using EOS switch (not implemented):
         Rule  Type     Coil  Switch  Action
         A.    Enable   Main  Button  active
         H.    PWM      Main  EOS     active
@@ -97,7 +79,7 @@ class Flipper(Device):
         B.    Pulse    Main  Button  active
         D.    Enable   Hold  Button  active
 
-        One coil, not using EOS switch
+        One coil, not using EOS switch:
         Rule  Type       Coil  Switch  Action
         C.    Pulse/PWM  Main  button  active
 
@@ -119,37 +101,11 @@ class Flipper(Device):
             self._enable_main_coil_pulse_rule()
             self._enable_hold_coil_rule()
 
-        elif self.config['use_eos']:  # two coils, cutoff main on EOS
+        else:  # two coils, cutoff main on EOS
             self._enable_main_coil_eos_cutoff_rule()
             self._enable_hold_coil_rule()
 
         # todo detect bad EOS and program around it
-
-    def enable_no_hold(self):  # todo niy
-        """Enables the flippers in 'no hold' mode.
-
-        No Hold is a novelty mode where the flippers to not stay up even when
-        the buttons are held in.
-
-        This mode is not yet implemented.
-        """
-        self.no_hold = True
-        self.enable()
-
-    def enable_partial_power(self, percent):  # todo niy
-        """Enables flippers which operated at less than full power.
-
-        This is a novelty mode, like "weak flippers" from the Wizard of Oz.
-
-        Args:
-            percent: A floating point value between 0 and 1.0 which represents the
-                percentage of power the flippers will be enabled at.
-
-        This mode is not yet implemented.
-
-        """
-        self.power = percent
-        self.enable()
 
     def disable(self, **kwargs):
         """Disables the flipper.
@@ -175,8 +131,6 @@ class Flipper(Device):
             disable_on_release=True,
             **self.config)
 
-        self.rules['a'] = True
-
     def _enable_main_coil_pulse_rule(self):
         self.log.debug('Enabling main coil pulse rule')
 
@@ -187,8 +141,6 @@ class Flipper(Device):
             driver_action='pulse',
             disable_on_release=True,
             **self.config)
-
-        self.rules['b'] = True
 
     def _enable_hold_coil_rule(self):
         self.log.debug('Enabling hold coil rule')
@@ -201,8 +153,6 @@ class Flipper(Device):
             disable_on_release=True,
             **self.config)
 
-        self.rules['d'] = True
-
     def _enable_main_coil_eos_cutoff_rule(self):
         self.log.debug('Enabling main coil EOS cutoff rule')
 
@@ -212,8 +162,6 @@ class Flipper(Device):
             driver_name=self.config['main_coil'].name,
             driver_action='disable',
             **self.config)
-
-        self.rules['e'] = True
 
     def sw_flip(self):
         """Activates the flipper via software as if the flipper button was
@@ -235,13 +183,7 @@ class Flipper(Device):
             state=1,
             logical=True)
 
-        if self.rules['c']:  # pulse/pwm main
-            coil = self.config['main_coil'].config
-            coil.pwm(
-                on_ms=coil.config['pwm_on'],
-                off_ms=coil.config['pwm_off'],
-                orig_on_ms=coil.config['pulse_ms']
-            )
+        self.config['main_coil'].enable()
 
     def sw_release(self):
         """Deactives the flipper via software as if the flipper button was
@@ -255,9 +197,7 @@ class Flipper(Device):
             logical=True)
 
         # disable the flipper coil(s)
-        for coil in self.flipper_coils:
-            coil.disable()
-
+        self.config['main_coil'].disable()
 
 
 # The MIT License (MIT)
