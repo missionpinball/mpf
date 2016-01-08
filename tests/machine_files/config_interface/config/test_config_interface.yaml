@@ -17,7 +17,7 @@ test_section:
   on_string: on
   off_string: off
   int_6400: 6400
-  str_003200: 003200
+  int_3200: 003200
   str_001: 001
   int_100: 100
   int_6: 6
