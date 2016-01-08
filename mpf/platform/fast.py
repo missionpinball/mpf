@@ -25,6 +25,7 @@ from mpf.system.platform import Platform
 from mpf.system.config import Config
 from mpf.system.utility_functions import Util
 from mpf.system.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.system.rgb_color import RGBColor
 
 try:
     import serial
@@ -304,14 +305,12 @@ class HardwarePlatform(Platform):
     def process_received_message(self, msg):
         """Sends an incoming message from the FAST controller to the proper
         method for servicing.
-
         """
-
         if msg[2:3] == ':':
             cmd = msg[0:2]
-            payload = msg[3:].replace('\r','')
+            payload = msg[3:].replace('\r', '')
         else:
-            self.log.warning("Received maformed message: %s", msg)
+            self.log.warning("Received malformed message: %s", msg)
             return
 
         # Can't use try since it swallows too many errors for now
@@ -323,13 +322,13 @@ class HardwarePlatform(Platform):
                              "development)", msg)
 
     def _connect_to_hardware(self):
-        # Connect to each port from the config. This procuess will cause the
+        # Connect to each port from the config. This process will cause the
         # connection threads to figure out which processor they've connected to
         # and to register themselves.
         for port in self.config['ports']:
             self.connection_threads.add(SerialCommunicator(machine=self.machine,
-                platform=self, port=port, baud=self.config['baud'],
-                send_queue=queue.Queue(), receive_queue=self.receive_queue))
+                                                           platform=self, port=port, baud=self.config['baud'],
+                                                           send_queue=queue.Queue(), receive_queue=self.receive_queue))
 
     def register_processor_connection(self, name, communicator):
         """Once a communication link has been established with one of the
@@ -338,15 +337,14 @@ class HardwarePlatform(Platform):
 
         This is a separate method since we don't know which processor is on
         which serial port ahead of time.
-
         """
-
         if name == 'DMD':
             self.dmd_connection = communicator
         elif name == 'NET':
             self.net_connection = communicator
         elif name == 'RGB':
             self.rgb_connection = communicator
+            self.rgb_connection.send('RF:0')
             self.rgb_connection.send('RA:000000')  # turn off all LEDs
             self.rgb_connection.send('RF:' + Util.int_to_hex_string(self.config['hardware_led_fade_time']))
 
@@ -358,16 +356,8 @@ class HardwarePlatform(Platform):
         Also, every LED is updated every loop, even if it doesn't change. This
         is in case some interference causes a LED to change color. Since we
         update every loop, it will only be the wrong color for one tick.
-
         """
-
-        msg = 'RS:'
-
-        for led in self.fast_leds:
-            msg += (led.number + led.current_color + ',')  # todo change to join
-
-        msg = msg[:-1]  # trim the final comma
-
+        msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in self.fast_leds])
         self.rgb_connection.send(msg)
 
     def get_hw_switch_states(self):
@@ -977,7 +967,7 @@ class FASTDriver(object):
 
                 cmd = (self.driver_settings['config_cmd'] +
                        self.driver_settings['number'] +
-                      ',C1,00,18,' +
+                       ',C1,00,18,' +
                        self.driver_settings['pulse_ms'] + ',' +
                        self.driver_settings['pwm1'] + ',' +
                        self.driver_settings['pwm2'] + ',' +
@@ -1001,10 +991,10 @@ class FASTDriver(object):
         if self.autofire:
             cmd = (self.driver_settings['trigger_cmd'] +
                    self.driver_settings['number'] + ',' +
-                  '01')
+                   '01')
             if milliseconds:
                 self.log.debug("Received command to pulse driver for %sms, but"
-                              "this driver is configured with an autofire rule"
+                               "this driver is configured with an autofire rule"
                                ", so that pulse value will be used instead.")
         else:
             cmd = (self.driver_settings['config_cmd'] +
@@ -1094,6 +1084,7 @@ class FASTDirectLED(RGBLEDPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('FASTLED')
         self.number = number
+        self._color_order_function = FASTDirectLED._color_rgb
         self._current_color = '000000'
 
         # All FAST LEDs are 3 element RGB and are set using hex strings
@@ -1101,13 +1092,63 @@ class FASTDirectLED(RGBLEDPlatformInterface):
         self.log.debug("Creating FAST RGB LED at hardware address: %s",
                        self.number)
 
+    @property
+    def color_order(self):
+        return {
+            FASTDirectLED._color_rgb: 'rgb',
+            FASTDirectLED._color_rbg: 'rbg',
+            FASTDirectLED._color_grb: 'grb',
+            FASTDirectLED._color_gbr: 'gbr',
+            FASTDirectLED._color_bgr: 'bgr',
+            FASTDirectLED._color_brg: 'brg'
+        }.get(self._color_order_function, 'error')
+
+    @color_order.setter
+    def color_order(self, order):
+        self._color_order_function = FASTDirectLED._determine_color_order_function(order)
+
+    @staticmethod
+    def _determine_color_order_function(order):
+        return {
+            'rgb': FASTDirectLED._color_rgb,
+            'rbg': FASTDirectLED._color_rbg,
+            'grb': FASTDirectLED._color_grb,
+            'gbr': FASTDirectLED._color_gbr,
+            'bgr': FASTDirectLED._color_bgr,
+            'brg': FASTDirectLED._color_brg
+        }.get(order, FASTDirectLED._color_rgb)
+
+    @staticmethod
+    def _color_rgb(color):
+        return color.hex
+
+    @staticmethod
+    def _color_rbg(color):
+        return RGBColor.rgb_to_hex((color.red, color.blue, color.green))
+
+    @staticmethod
+    def _color_grb(color):
+        return RGBColor.rgb_to_hex((color.green, color.red, color.blue))
+
+    @staticmethod
+    def _color_gbr(color):
+        return RGBColor.rgb_to_hex((color.green, color.blue, color.red))
+
+    @staticmethod
+    def _color_bgr(color):
+        return RGBColor.rgb_to_hex((color.blue, color.green, color.red))
+
+    @staticmethod
+    def _color_brg(color):
+        return RGBColor.rgb_to_hex((color.blue, color.red, color.green))
+
     def color(self, color):
         """Instantly sets this LED to the color passed.
 
         Args:
             color: an RGBColor object
         """
-        self._current_color = color.hex
+        self._current_color = self._color_order_function(color)
 
     def disable(self):
         """Disables (turns off) this LED instantly. For multi-color LEDs it
@@ -1238,8 +1279,8 @@ class SerialCommunicator(object):
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
             self.platform.log.critical("Firmware version mismatch. MPF requires"
-                " the %s processor to be firmware %s, but yours is %s",
-                self.remote_processor, min_version, self.remote_firmware)
+                                       " the %s processor to be firmware %s, but yours is %s",
+                                       self.remote_processor, min_version, self.remote_firmware)
             sys.exit()
 
         if self.remote_processor == 'NET' and self.platform.machine_type == 'fast':
@@ -1278,9 +1319,9 @@ class SerialCommunicator(object):
 
                     if StrictVersion(IO_MIN_FW) > str(fw):
                         self.platform.log.critical("Firmware version mismatch. MPF "
-                            "requires the IO boards to be firmware {0}, but "
-                            "your Board {1} ({2}) is v{3}".format(IO_MIN_FW,
-                            node_id, model, fw))
+                                                   "requires the IO boards to be firmware {0}, but "
+                                                   "your Board {1} ({2}) is v{3}".format(IO_MIN_FW,
+                                                                                         node_id, model, fw))
                         firmware_ok = False
 
         if not firmware_ok:

@@ -255,11 +255,6 @@ class RGBColor(object):
         self._color = value
 
     @property
-    def grb(self):
-        """ A GRB representation of the color for hardware that requires GRB byte order. """
-        return self.green, self.red, self.blue
-
-    @property
     def hex(self):
         """ A 6-char HEX representation of the color. """
         return RGBColor.rgb_to_hex(self.rgb)
