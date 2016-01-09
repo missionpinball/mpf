@@ -113,7 +113,7 @@ class BallController(object):
                              "in their home positions.")
             return False
 
-    def are_balls_collected(self, target=None, antitarget=None):
+    def are_balls_collected(self, target):
         """Checks to see if all the balls are contained in devices tagged with
         the parameter that was passed.
 
@@ -127,8 +127,6 @@ class BallController(object):
                 'home' and 'trough'.
 
         """
-        if not target:
-            target = ['home', 'trough']
 
         self.log.debug("Checking to see if all the balls are in devices tagged"
                        " with '%s'", target)
