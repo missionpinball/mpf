@@ -1595,7 +1595,7 @@ class TestBallDevice(MpfTestCase):
 
         # Put balls in both devices
         self.machine.switch_controller.process_switch("s_ball_switch_target1", 1)
-        self.machine.switch_controller.process_switch("s_ball_switch_target2", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch_target2_1", 1)
 
         coil3 = self.machine.coils['eject_coil3']
         coil4 = self.machine.coils['eject_coil4']
