@@ -29,6 +29,14 @@ class MpfResolver(BaseResolver):
     pass
 
 MpfResolver.add_implicit_resolver(
+    # Process any item beginning with a plus sign (+) as a string
+    u'tag:yaml.org,2002:str',
+    re.compile(
+        u'''^\+''',
+        re.X),
+    None)
+
+MpfResolver.add_implicit_resolver(
     # Process any 3+ digit number with a leading zero as a string
     u'tag:yaml.org,2002:str',
     re.compile(
