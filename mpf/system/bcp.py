@@ -423,7 +423,7 @@ class BCP(object):
             pass
 
         try:
-            for event in list(config['slide_player'].keys()):
+            for event in list(config['screen_player'].keys()):
                 self.create_trigger_event(event)
         except KeyError:
             pass

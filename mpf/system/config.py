@@ -15,7 +15,6 @@ import version
 log = logging.getLogger('ConfigProcessor')
 
 
-
 class CaseInsensitiveDict(dict):
     """A class based on Python's 'dict' class that internally stores all keys
     as lowercase. Set, get, contains, and del methods have been overwritten to
@@ -50,18 +49,14 @@ class Config(object):
 
     config_spec = None
 
-    def __init__(self, machine, system_config=None):
+    def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger('ConfigProcessor')
-
-        if not system_config:
-            self.system_config = self.machine.config['mpf']
-        else:
-            self.system_config = system_config
+        self.system_config = self.machine.config['mpf']
 
     @classmethod
-    def load_config_spec(cls):
-        cls.config_spec = cls.load_config_file('mpf/config_validator.yaml')
+    def load_config_spec(cls, config_spec_file='mpf/config_validator.yaml'):
+        cls.config_spec = cls.load_config_file(config_spec_file)
 
     @classmethod
     def unload_config_spec(cls):
@@ -458,6 +453,17 @@ class Config(object):
             except (TypeError, ValueError):
                 # TODO error
                 pass
+
+        elif validator == 'num':
+            # used for int or float, but does not convert one to the other
+            if type(item) not in (int, float):
+                try:
+                    if '.' in item:
+                        item = float(item)
+                    else:
+                        item = int(item)
+                except (TypeError, ValueError):
+                    item = 0
 
         elif validator in ('bool', 'boolean'):
             if type(item) is str:
