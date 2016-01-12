@@ -94,12 +94,20 @@ class BallSearch(object):
         self.log.warning("Ball Search failed to find ball. Giving up!")
         self.disable()
 
+        lost_balls = self.playfield.balls
+        self.machine.ball_controller.num_balls_known -= lost_balls
         self.playfield.balls = 0
-        self.machine.ball_controller.num_balls_known -= 1
 
         if self.playfield.config['ball_search_failed_action'] == "new_ball":
-            self.log.info("Adding a replacement ball")
-            self.playfield.add_ball()
+            if self.machine.ball_controller.num_balls_known > 0:
+                # we have at least one ball remaining
+                self.log.info("Adding %s replacement ball", lost_balls)
+                for i in range(lost_balls):
+                    self.playfield.add_ball()
+            else:
+                self.log.info("No more balls left. Ending game!")
+                self.machine.game.game_ending()
+
         elif self.playfield.config['ball_search_failed_action'] == "end_game":
             if self.machine.game:
                 self.log.info("Ending the game")

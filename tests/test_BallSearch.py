@@ -213,14 +213,51 @@ class TestBallSearch(MpfTestCase):
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
+        # try to start a game (should not work)
+        self.machine.switch_controller.process_switch("s_start", 1)
+        self.machine.switch_controller.process_switch("s_start", 0)
+        self.advance_time_and_run(1)
+        self.assertEqual(None, self.machine.game)
+
+
         # wait for ball search to fail
         self.advance_time_and_run(300)
         self.assertEqual(None, self.machine.game)
         self.assertEqual(0, self.machine.ball_devices['playfield'].balls)
         self.assertEqual(3, self.machine.ball_controller.num_balls_known)
 
-        # try to start a game
+        # try to start a game (should work again)
         self.machine.switch_controller.process_switch("s_start", 1)
         self.machine.switch_controller.process_switch("s_start", 0)
         self.advance_time_and_run(1)
         self.assertNotEqual(None, self.machine.game)
+
+    def test_give_up_with_no_more_balls(self):
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+
+        self.assertEqual(None, self.machine.game)
+        self.machine.switch_controller.process_switch("s_start", 1)
+        self.machine.switch_controller.process_switch("s_start", 0)
+        self.advance_time_and_run(1)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+
+        self.machine.coils['eject_coil1'].pulse = MagicMock()
+        self.machine.coils['eject_coil2'].pulse = MagicMock()
+        self.machine.coils['eject_coil3'].pulse = MagicMock()
+        self.machine.coils['hold_coil'].pulse = MagicMock()
+
+        self.advance_time_and_run(10)
+        self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.advance_time_and_run(30)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # wait for ball search to fail
+        self.advance_time_and_run(150)
+        self.assertEqual(0, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(0, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(None, self.machine.game)

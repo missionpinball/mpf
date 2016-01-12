@@ -5,7 +5,7 @@ game:
 
 machine:
     glass_off_mode: False
-    min_balls: 3
+    min_balls: 1
 
 coils:
     eject_coil1:
