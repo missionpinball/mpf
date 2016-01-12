@@ -41,6 +41,9 @@ class BallSearch(object):
         if not self.playfield.config['enable_ball_search']:
             return
 
+        if not self.callbacks:
+            raise AssertionError("No callbacks registered")
+
         self.log.debug("Enabling Ball Search")
 
         self.enabled = True
@@ -71,10 +74,15 @@ class BallSearch(object):
                 element = next(self.iterator)
             except StopIteration:
                 self.iteration += 1
+                # give up at some point
+                if self.iteration > self.playfield.config['ball_search_iterations']:
+                    self.give_up()
+                    return
+
+                self.log.info("Ball Search iteration %s", self.iteration)
                 self.iterator = iter(self.callbacks)
                 element = next(self.iterator)
                 timeout = self.playfield.config['ball_search_wait_after_iteration']
-                # TODO: give up at some point? implement actions
 
             (priority, callback) = element
             # if a callback returns True we wait for the next one
@@ -82,3 +90,21 @@ class BallSearch(object):
                 self.delay.add(name='run', callback=self.run, ms=timeout)
                 return
 
+    def give_up(self):
+        self.log.warning("Ball Search failed to find ball. Giving up!")
+        self.disable()
+
+        self.playfield.balls = 0
+        self.machine.ball_controller.num_balls_known -= 1
+
+        if self.playfield.config['ball_search_failed_action'] == "new_ball":
+            self.log.info("Adding a replacement ball")
+            self.playfield.add_ball()
+        elif self.playfield.config['ball_search_failed_action'] == "end_game":
+            if self.machine.game:
+                self.log.info("Ending the game")
+                self.machine.game.game_ending()
+            else:
+                self.log.info("There is no game. Doing nothing!")
+        else:
+            raise AssertionError("Unknown action " + self.playfield.config['ball_search_failed_action'])

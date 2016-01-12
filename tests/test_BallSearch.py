@@ -127,53 +127,42 @@ class TestBallSearch(MpfTestCase):
 
         self.advance_time_and_run(5)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
-        self.assertEqual(1, self.machine.ball_devices['playfield'].ball_search.iteration)
 
-        assert not self.machine.coils['eject_coil1'].pulse.called
-        self.machine.coils['eject_coil2'].pulse.assert_called_with()
-        assert not self.machine.coils['eject_coil3'].pulse.called
-        assert not self.machine.coils['hold_coil'].pulse.called
+        self.machine.ball_devices['playfield'].add_ball = MagicMock()
 
-        self.advance_time_and_run(.25)
+        for i in range(1,11):
+                self.assertEqual(i, self.machine.ball_devices['playfield'].ball_search.iteration)
 
-        assert not self.machine.coils['eject_coil1'].pulse.called
-        self.machine.coils['eject_coil2'].pulse.assert_called_with()
-        self.machine.coils['eject_coil3'].pulse.assert_called_with()
-        assert not self.machine.coils['hold_coil'].pulse.called
+                assert not self.machine.coils['eject_coil1'].pulse.called
+                self.machine.coils['eject_coil2'].pulse.assert_called_with()
+                assert not self.machine.coils['eject_coil3'].pulse.called
+                assert not self.machine.coils['hold_coil'].pulse.called
 
-        self.advance_time_and_run(.25)
+                self.advance_time_and_run(.25)
 
-        assert not self.machine.coils['eject_coil1'].pulse.called
-        self.machine.coils['eject_coil2'].pulse.assert_called_with()
-        self.machine.coils['eject_coil3'].pulse.assert_called_with()
-        self.machine.coils['hold_coil'].pulse.assert_called_with()
+                assert not self.machine.coils['eject_coil1'].pulse.called
+                self.machine.coils['eject_coil2'].pulse.assert_called_with()
+                self.machine.coils['eject_coil3'].pulse.assert_called_with()
+                assert not self.machine.coils['hold_coil'].pulse.called
 
-        self.machine.coils['eject_coil1'].pulse = MagicMock()
-        self.machine.coils['eject_coil2'].pulse = MagicMock()
-        self.machine.coils['eject_coil3'].pulse = MagicMock()
-        self.machine.coils['hold_coil'].pulse = MagicMock()
+                self.advance_time_and_run(.25)
 
-        self.advance_time_and_run(10)
-        self.assertEqual(2, self.machine.ball_devices['playfield'].ball_search.iteration)
+                assert not self.machine.coils['eject_coil1'].pulse.called
+                self.machine.coils['eject_coil2'].pulse.assert_called_with()
+                self.machine.coils['eject_coil3'].pulse.assert_called_with()
+                self.machine.coils['hold_coil'].pulse.assert_called_with()
 
-        assert not self.machine.coils['eject_coil1'].pulse.called
-        self.machine.coils['eject_coil2'].pulse.assert_called_with()
-        assert not self.machine.coils['eject_coil3'].pulse.called
-        assert not self.machine.coils['hold_coil'].pulse.called
+                self.machine.coils['eject_coil1'].pulse = MagicMock()
+                self.machine.coils['eject_coil2'].pulse = MagicMock()
+                self.machine.coils['eject_coil3'].pulse = MagicMock()
+                self.machine.coils['hold_coil'].pulse = MagicMock()
 
-        self.advance_time_and_run(.25)
+                assert not self.machine.ball_devices['playfield'].add_ball.called
 
-        assert not self.machine.coils['eject_coil1'].pulse.called
-        self.machine.coils['eject_coil2'].pulse.assert_called_with()
-        self.machine.coils['eject_coil3'].pulse.assert_called_with()
-        assert not self.machine.coils['hold_coil'].pulse.called
-
-        self.advance_time_and_run(.25)
-
-        assert not self.machine.coils['eject_coil1'].pulse.called
-        self.machine.coils['eject_coil2'].pulse.assert_called_with()
-        self.machine.coils['eject_coil3'].pulse.assert_called_with()
-        self.machine.coils['hold_coil'].pulse.assert_called_with()
+                self.advance_time_and_run(10)
 
 
-        self.machine.ball_devices['playfield'].ball_search.disable()
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.machine.ball_devices['playfield'].add_ball.assert_called_with()
+
