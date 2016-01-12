@@ -25,13 +25,14 @@ class Driver(Device):
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
-        super(Driver, self).__init__(machine, name, config, collection,
-                                     platform_section='coils',
-                                     validate=validate)
+        super().__init__(machine, name, config, collection,
+                         platform_section='coils',
+                         validate=validate)
 
         self.time_last_changed = 0
         self.time_when_done = 0
-        self.hw_driver, self.number = (self.platform.configure_driver(self.config))
+        self.hw_driver, self.number = (
+            self.platform.configure_driver(self.config))
 
     def validate_driver_settings(self, **kwargs):
         return self.hw_driver.validate_driver_settings(**kwargs)
@@ -115,4 +116,5 @@ class Driver(Device):
                                      ms=milliseconds,
                                      callback=self.disable)
             self.enable()
-            self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
+            self.time_when_done = self.time_last_changed + (
+                milliseconds / 1000.0)

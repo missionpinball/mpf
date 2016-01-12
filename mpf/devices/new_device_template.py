@@ -6,7 +6,6 @@ from mpf.system.device import Device
 
 
 class YourNewDevice(Device):
-
     config_section = 'your_new_devices'
     collection = 'your_new_devices'
     class_label = 'your_new_device'
@@ -57,26 +56,26 @@ class YourNewDevice(Device):
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         self.log = logging.getLogger('YourNewDevice.' + name)
-        super(YourNewDevice, self).__init__(machine, name, config, collection,
-                                            validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
-    # Since this new device class is a subclass of Device and you're calling
-    # super(), several attributes are available to you, including:
+        # Since this new device class is a subclass of Device and you're calling
+        # super(), several attributes are available to you, including:
 
-    # self.machine - a reference to the main machine controller object
-    # self.name - a string of the name of this device ('device1', 'device2', etc.)
-    # self.tags - any tags that were specified in the machine config files
-    # self.label - a plain english description from the machine config files
+        # self.machine - a reference to the main machine controller object
+        # self.name - a string of the name of this device ('device1', 'device2', etc.)
+        # self.tags - any tags that were specified in the machine config files
+        # self.label - a plain english description from the machine config files
 
-    # Next, set config defaults
+        # Next, set config defaults
 
-    # Typically you'd want to configure the default settings so your device
-    # works even if the game programmer doesn't specify all the options for this
-    # device in their machine configuration files.
+        # Typically you'd want to configure the default settings so your device
+        # works even if the game programmer doesn't specify all the options for this
+        # device in their machine configuration files.
 
-    # For example:
-    # if 'foo' not in self.config:
-    #     self.config['foo'] = 'bar'
+        # For example:
+        # if 'foo' not in self.config:
+        #     self.config['foo'] = 'bar'
 
-    # Finally, add the event handlers, methods, and attributes you need for your
-    # new device.
+        # Finally, add the event handlers, methods, and attributes you need for your
+        # new device.

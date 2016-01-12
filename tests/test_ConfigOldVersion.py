@@ -1,7 +1,7 @@
 from tests.MpfTestCase import MpfTestCase
 
-class TestConfigOldVersion(MpfTestCase):
 
+class TestConfigOldVersion(MpfTestCase):
     def getConfigFile(self):
         return 'test_config_interface_missing_version.yaml'
 
@@ -15,4 +15,4 @@ class TestConfigOldVersion(MpfTestCase):
         pass
 
     def test_config_file_with_old_version(self):
-        self.assertRaises(ValueError, super(TestConfigOldVersion, self).setUp)
+        self.assertRaises(ValueError, super().setUp)

@@ -9,7 +9,7 @@ class HardwarePlatform(Platform):
     """Base class for the virtual hardware platform."""
 
     def __init__(self, machine):
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring virtual hardware interface.")
 
@@ -70,9 +70,11 @@ class HardwarePlatform(Platform):
 
             if 'virtual_platform_start_active_switches' in self.machine.config:
 
-                initial_active_switches = [self.machine.switches[x].number for x in
-                    Util.string_to_list(
-                        self.machine.config['virtual_platform_start_active_switches'])]
+                initial_active_switches = [self.machine.switches[x].number for
+                                           x in
+                                           Util.string_to_list(
+                                                   self.machine.config[
+                                                       'virtual_platform_start_active_switches'])]
 
                 for k, v in self.hw_switches.items():
                     if k in initial_active_switches:
@@ -123,8 +125,10 @@ class HardwarePlatform(Platform):
     def i2c_read16(self, address, register):
         return None
 
+
 class VirtualSwitch(object):
     """Represents a switch in a pinball machine used with virtual hardware."""
+
     def __init__(self, number):
         self.log = logging.getLogger('VirtualSwitch')
         self.number = number
@@ -148,7 +152,7 @@ class VirtualLED(object):
         self.number = number
 
     def color(self, color, fade_ms=0, brightness_compensation=True):
-        #self.log.debug("Setting color: %s, fade: %s, comp: %s",
+        # self.log.debug("Setting color: %s, fade: %s, comp: %s",
         #               color, fade_ms, brightness_compensation)
         pass
 
@@ -172,7 +176,6 @@ class VirtualGI(object):
 
 
 class VirtualDriver(object):
-
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
@@ -207,7 +210,6 @@ class VirtualDriver(object):
 
 
 class VirtualDMD(object):
-
     def __init__(self, machine):
         pass
 

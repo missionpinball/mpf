@@ -5,10 +5,10 @@ from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
 import time
 
-class TestBallController(MpfTestCase):
 
+class TestBallController(MpfTestCase):
     def setUp(self):
-        super(TestBallController, self).setUp()
+        super().setUp()
         self.machine.ball_controller.num_balls_known = 0
 
     def getConfigFile(self):
@@ -45,7 +45,8 @@ class TestBallController(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(3, self.machine.ball_controller.num_balls_known)
 
-        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher",
+                                                      1)
         self.advance_time_and_run(1)
         self.assertEqual(4, self.machine.ball_controller.num_balls_known)
 
@@ -65,4 +66,3 @@ class TestBallController(MpfTestCase):
         self.machine.switch_controller.process_switch("s_start", 0)
         self.advance_time_and_run(1)
         self.assertNotEqual(None, self.machine.game)
-

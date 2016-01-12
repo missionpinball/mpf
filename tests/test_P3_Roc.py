@@ -5,8 +5,8 @@ from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
 from mpf.platform import p3_roc
 
-class TestP3Roc(MpfTestCase):
 
+class TestP3Roc(MpfTestCase):
     def getConfigFile(self):
         return 'config.yaml'
 
@@ -21,15 +21,17 @@ class TestP3Roc(MpfTestCase):
         p3_roc.pinproc = MagicMock()
         p3_roc.pinproc.DriverCount = 256
         p3_roc.pinproc.decode = MagicMock(return_value="decode")
-        p3_roc.pinproc.driver_state_pulse = MagicMock(return_value="driver_state_pulse")
-        super(TestP3Roc, self).setUp()
+        p3_roc.pinproc.driver_state_pulse = MagicMock(
+            return_value="driver_state_pulse")
+        super().setUp()
 
     def test_pulse(self):
         # pulse coil A1-B1-2
         self.machine.coils.c_test.pulse()
         # A1-B1-2 -> address 16 + 8 + 2 = 26 in P3-Roc
         # for 23ms (from config)
-        self.machine.coils.c_test.hw_driver.proc.driver_pulse.assert_called_with(26, 23)
+        self.machine.coils.c_test.hw_driver.proc.driver_pulse.assert_called_with(
+            26, 23)
         assert not self.machine.coils.c_test.hw_driver.proc.driver_schedule.called
 
     def test_enable_exception(self):
@@ -44,6 +46,8 @@ class TestP3Roc(MpfTestCase):
                 number=27, cycle_seconds=0, now=True, schedule=0xffffffff)
 
     def test_hw_rule_pulse(self):
-        self.machine.autofires.ac_slingshot_test.enable() 
+        self.machine.autofires.ac_slingshot_test.enable()
         self.machine.autofires.ac_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
-            "decode", 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, ["driver_state_pulse"], False)
+                "decode", 'closed_nondebounced',
+                {'notifyHost': False, 'reloadActive': False},
+                ["driver_state_pulse"], False)

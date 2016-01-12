@@ -18,8 +18,7 @@ class HardwarePlatform(OPHardwarePlatform):
     """
 
     def __init__(self, machine):
-
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
 
         self.log = logging.getLogger("FadeCandy")
         self.log.debug("Configuring FadeCandy hardware interface.")
@@ -29,7 +28,8 @@ class HardwarePlatform(OPHardwarePlatform):
 
     def _setup_opc_client(self):
         self.opc_client = FadeCandyOPClient(self.machine,
-            self.machine.config['open_pixel_control'])
+                                            self.machine.config[
+                                                'open_pixel_control'])
 
 
 class FadeCandyOPClient(OpenPixelClient):
@@ -44,9 +44,10 @@ class FadeCandyOPClient(OpenPixelClient):
     available with generic OPC implementations.
 
     """
+
     def __init__(self, machine, config):
 
-        super(FadeCandyOPClient, self).__init__(machine, config)
+        super().__init__(machine, config)
 
         self.log = logging.getLogger('FadeCandyClient')
 
@@ -54,7 +55,7 @@ class FadeCandyOPClient(OpenPixelClient):
 
         self.gamma = self.machine.config['led_settings']['gamma']
         self.whitepoint = Util.string_to_list(
-            self.machine.config['led_settings']['whitepoint'])
+                self.machine.config['led_settings']['whitepoint'])
 
         self.whitepoint[0] = float(self.whitepoint[0])
         self.whitepoint[1] = float(self.whitepoint[1])
@@ -226,14 +227,14 @@ class FadeCandyOPClient(OpenPixelClient):
         """
 
         msg = json.dumps({
-                            'gamma': self.gamma,
-                            'whitepoint': self.whitepoint,
-                            'linearSlope': self.linear_slope,
-                            'linearCutoff': self.linear_cutoff
-                            })
+            'gamma': self.gamma,
+            'whitepoint': self.whitepoint,
+            'linearSlope': self.linear_slope,
+            'linearCutoff': self.linear_cutoff
+        })
 
         self.send(struct.pack(
-            "!BBHHH", 0x00, 0xFF, len(msg) + 4, 0x0001, 0x0001) + msg)
+                "!BBHHH", 0x00, 0xFF, len(msg) + 4, 0x0001, 0x0001) + msg)
 
     def write_firmware_options(self):
         """Writes the current firmware settings (keyframe interpolation and
@@ -255,4 +256,4 @@ class FadeCandyOPClient(OpenPixelClient):
         # config_byte = config_byte | 0x08
 
         self.send(struct.pack(
-            "!BBHHHB", 0x00, 0xFF, 0x0005, 0x0001, 0x0002, config_byte))
+                "!BBHHHB", 0x00, 0xFF, 0x0005, 0x0001, 0x0002, config_byte))

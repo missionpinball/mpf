@@ -5,15 +5,15 @@ from mpf.system.device import Device
 from mpf.system.config import Config
 from collections import deque
 
-class BallLock(Device):
 
+class BallLock(Device):
     config_section = 'ball_locks'
     collection = 'ball_locks'
     class_label = 'ball_lock'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(BallLock, self).__init__(machine, name, config, collection,
-                                       validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         # initialise variables
         self.balls_locked = 0
@@ -83,7 +83,8 @@ class BallLock(Device):
                 balls = balls_in_device
 
             if balls > remaining_balls_to_release:
-                self.lock_queue.append((device, balls_locked - remaining_balls_to_release))
+                self.lock_queue.append(
+                        (device, balls_locked - remaining_balls_to_release))
                 balls = remaining_balls_to_release
 
             device.eject(balls=balls)
@@ -93,8 +94,9 @@ class BallLock(Device):
                 break
 
         if balls_released > 0:
-            self.machine.events.post('ball_lock_' + self.name + '_balls_released',
-                                     balls_released=balls_released)
+            self.machine.events.post(
+                'ball_lock_' + self.name + '_balls_released',
+                balls_released=balls_released)
 
         self.balls_locked -= balls_released
         return balls_released
@@ -102,8 +104,9 @@ class BallLock(Device):
     def _register_handlers(self):
         # register on ball_enter of lock_devices
         for device in self.lock_devices:
-            self.machine.events.add_handler('balldevice_' + device.name + '_ball_enter',
-                                            self._lock_ball, device=device)
+            self.machine.events.add_handler(
+                'balldevice_' + device.name + '_ball_enter',
+                self._lock_ball, device=device)
 
     def _unregister_handlers(self):
         # unregister ball_enter handlers
@@ -117,7 +120,7 @@ class BallLock(Device):
     def remaining_space_in_lock(self):
         balls = self.config['balls_to_lock'] - self.balls_locked
         if balls < 0:
-             balls = 0
+            balls = 0
         return balls
 
     # callback for _ball_enter event of lock_devices
@@ -143,8 +146,8 @@ class BallLock(Device):
 
         # post event for ball capture
         self.machine.events.post('ball_lock_' + self.name + '_locked_ball',
-                                  balls_locked=balls_to_lock,
-                                  total_balls_locked=self.balls_locked)
+                                 balls_locked=balls_to_lock,
+                                 total_balls_locked=self.balls_locked)
 
         # check if we are full now and post event if yes
         if self.is_full():

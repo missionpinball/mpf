@@ -2,9 +2,8 @@ from tests.MpfTestCase import MpfTestCase
 
 
 class TestEventManager(MpfTestCase):
-
     def __init__(self, test_map):
-        super(TestEventManager, self).__init__(test_map)
+        super().__init__(test_map)
         self._handler1_args = tuple()
         self._handler1_kwargs = dict()
         self._handler1_called = 0
@@ -64,7 +63,7 @@ class TestEventManager(MpfTestCase):
         self._relay2_called += 1
         self._handlers_called.append(self.event_handler_relay2)
 
-        return {'relay_test': relay_test-1}
+        return {'relay_test': relay_test - 1}
 
     def callback(self, *args, **kwargs):
         self._callback_args = args
@@ -153,11 +152,11 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(self._handlers_called[0],
-                          self.event_handler_calls_second_event)
+                         self.event_handler_calls_second_event)
         self.assertEqual(self._handlers_called[1],
-                          self.event_handler1)
+                         self.event_handler1)
         self.assertEqual(self._handlers_called[2],
-                          self.callback)
+                         self.callback)
 
     def test_event_handler_priorities(self):
         # tests that handler priorities work. The second handler should be
@@ -313,9 +312,9 @@ class TestEventManager(MpfTestCase):
         self.machine.events.add_handler('test_event', self.event_handler1)
 
         self.assertEqual(True,
-                          self.machine.events.does_event_exist('test_event'))
+                         self.machine.events.does_event_exist('test_event'))
         self.assertEqual(False,
-                          self.machine.events.does_event_exist('test_event1'))
+                         self.machine.events.does_event_exist('test_event1'))
 
     def test_regular_event_with_false_return(self):
         # tests that regular events process all handlers even if one returns
@@ -335,7 +334,7 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(1, self._handler_returns_false_called)
 
         self.assertEqual(self._handlers_called[0],
-                          self.event_handler_returns_false)
+                         self.event_handler_returns_false)
         self.assertEqual(self._handlers_called[1], self.event_handler1)
 
     def test_post_boolean(self):
@@ -378,7 +377,7 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(1, self._handler_returns_false_called)
 
         self.assertEqual(self._handlers_called[0],
-                          self.event_handler_returns_false)
+                         self.event_handler_returns_false)
 
         self.assertEqual(1, len(self._handlers_called))
 
@@ -437,7 +436,7 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_add_queue), 1)
+                self._handlers_called.count(self.event_handler_add_queue), 1)
         self.assertEqual(self._handlers_called.count(self.queue_callback), 0)
         self.assertEqual(False, self._queue.is_empty())
 
@@ -460,7 +459,7 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_add_queue), 1)
+                self._handlers_called.count(self.event_handler_add_queue), 1)
         self.assertEqual(self._handlers_called.count(self.queue_callback), 0)
 
         self._queue.kill()
@@ -502,9 +501,10 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_returns_false), 1)
+                self._handlers_called.count(self.event_handler_returns_false),
+                1)
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_add_queue), 0)
+                self._handlers_called.count(self.event_handler_add_queue), 0)
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(self._queue_callback_kwargs, {'ev_result': False})
 
@@ -521,7 +521,8 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_add_quick_queue), 1)
+                self._handlers_called.count(
+                    self.event_handler_add_quick_queue), 1)
 
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(True, self._queue.is_empty())
@@ -545,7 +546,6 @@ class TestEventManager(MpfTestCase):
         self.machine.events.add_handler('test_event',
                                         self.event_handler_add_quick_queue)
 
-
         self.advance_time_and_run(1)
 
         self.machine.events.post_queue('test_event',
@@ -553,7 +553,8 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_add_quick_queue), 2)
+                self._handlers_called.count(
+                    self.event_handler_add_quick_queue), 2)
 
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(True, self._queue.is_empty())

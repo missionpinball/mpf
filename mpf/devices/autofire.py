@@ -21,9 +21,8 @@ class AutofireCoil(Device):
     class_label = 'autofire'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(AutofireCoil, self).__init__(machine, name, config, collection,
-                                           validate=validate)
-
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         self.coil = self.config['coil']
         self.switch = self.config['switch']

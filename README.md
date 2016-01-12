@@ -25,7 +25,7 @@ More details about MPF are here : https://missionpinball.com/mpf/
 [![Build Status](https://travis-ci.org/missionpinball/mpf.svg?branch=dev)](https://travis-ci.org/missionpinball/mpf)
 
 Installation, Documentation, and Examples
-----------------------------------------
+-----------------------------------------
 
 * Getting started tutorial : https://missionpinball.com/tutorial
 * Installation : https://missionpinball.com/docs/installing-mpf
@@ -40,6 +40,8 @@ Contributing
 ------------
 We love pull requests! There's also a developer forum at : https://missionpinball.com/forum/mpf-dev
 
+There's a list of authors in the AUTHORS file.
+
 License
 -------
 * MPF is released under the terms of the MIT License. Please refer to the
@@ -47,4 +49,3 @@ License
 * The MIT license basically means you can do anything you want with MPF, including
   using it for commercial projects. You don't have to pay us or share your changes
   if you don't want to.
-

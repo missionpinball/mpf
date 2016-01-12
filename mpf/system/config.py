@@ -20,33 +20,33 @@ class CaseInsensitiveDict(dict):
     as lowercase. Set, get, contains, and del methods have been overwritten to
     automatically convert incoming calls to lowercase.
     """
+
     def __setitem__(self, key, value):
         try:
-            super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
+            super().__setitem__(key.lower(), value)
         except AttributeError:
-            super(CaseInsensitiveDict, self).__setitem__(key, value)
+            super().__setitem__(key, value)
 
     def __getitem__(self, key):
         try:
-            return super(CaseInsensitiveDict, self).__getitem__(key.lower())
+            return super().__getitem__(key.lower())
         except AttributeError:
-            return super(CaseInsensitiveDict, self).__getitem__(key)
+            return super().__getitem__(key)
 
     def __contains__(self, key):
         try:
-            return super(CaseInsensitiveDict, self).__contains__(key.lower())
+            return super().__contains__(key.lower())
         except AttributeError:
-            return super(CaseInsensitiveDict, self).__contains__(key)
+            return super().__contains__(key)
 
     def __delitem__(self, key):
         try:
-            return super(CaseInsensitiveDict, self).__delitem__(key.lower())
+            return super().__delitem__(key.lower())
         except AttributeError:
-            return super(CaseInsensitiveDict, self).__delitem__(key)
+            return super().__delitem__(key)
 
 
 class Config(object):
-
     config_spec = None
 
     def __init__(self, machine):
@@ -81,7 +81,7 @@ class Config(object):
 
     @staticmethod
     def load_machine_config(config_file_list, machine_path,
-                             config_path='config', existing_config=None):
+                            config_path='config', existing_config=None):
         for num, config_file in enumerate(config_file_list):
 
             if not existing_config:
@@ -90,15 +90,15 @@ class Config(object):
                 machine_config = existing_config
 
             if not (config_file.startswith('/') or
-                    config_file.startswith('\\')):
-
+                        config_file.startswith('\\')):
                 config_file = os.path.join(machine_path, config_path,
                                            config_file)
 
-            logging.info("Machine config file #%s: %s", num+1, config_file)
+            logging.info("Machine config file #%s: %s", num + 1, config_file)
 
             machine_config = Util.dict_merge(machine_config,
-                Config.load_config_file(config_file))
+                                             Config.load_config_file(
+                                                 config_file))
 
         return machine_config
 
@@ -113,7 +113,8 @@ class Config(object):
                 for file in Util.string_to_list(config['config']):
                     full_file = os.path.join(path, file)
                     config = Util.dict_merge(config,
-                                               Config.load_config_file(full_file))
+                                             Config.load_config_file(
+                                                 full_file))
             return config
         except TypeError:
             return dict()
@@ -128,11 +129,11 @@ class Config(object):
         for k in list(config_spec.keys()):
             if k in source:
                 processed_config[k] = Config.validate_config_item(
-                    config_spec[k], source[k])
+                        config_spec[k], source[k])
             else:
                 log.debug('Processing default settings for key "%s:"', k)
                 processed_config[k] = Config.validate_config_item(
-                    config_spec[k])
+                        config_spec[k])
 
         if target:
             processed_config = Util.dict_merge(target, processed_config)
@@ -140,7 +141,8 @@ class Config(object):
         return processed_config
 
     @staticmethod
-    def validate_config_item(spec, item='item not in config!@#'):  # pragma: no cover
+    def validate_config_item(spec,
+                             item='item not in config!@#'):  # pragma: no cover
         # Note this method is deprecated and will be removed eventually
         # Use validate_config_item2() instead
 
@@ -161,10 +163,11 @@ class Config(object):
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
-                log.error('Required setting missing from config file. Run with '
-                          'verbose logging and look for the last '
-                          'ConfigProcessor entry above this line to see where '
-                          'the problem is.')
+                log.error(
+                    'Required setting missing from config file. Run with '
+                    'verbose logging and look for the last '
+                    'ConfigProcessor entry above this line to see where '
+                    'the problem is.')
                 sys.exit()
             else:
                 item = default
@@ -261,7 +264,8 @@ class Config(object):
                     if k in source:
                         for i in source[k]:  # individual step
                             final_list.append(self.process_config2(
-                                orig_spec + ':' + k, source=i, section_name=k))
+                                    orig_spec + ':' + k, source=i,
+                                    section_name=k))
 
                     processed_config[k] = final_list
 
@@ -269,13 +273,15 @@ class Config(object):
                     # spec is dict
                     # item is source
                     processed_config = self.validate_config_item2(
-                        spec=this_spec[k], item=source[k],
-                        validation_failure_info=(validation_failure_info, k))
+                            spec=this_spec[k], item=source[k],
+                            validation_failure_info=(
+                            validation_failure_info, k))
 
                 else:
                     processed_config[k] = self.validate_config_item2(
-                        this_spec[k], item=source[k],
-                        validation_failure_info=(validation_failure_info, k))
+                            this_spec[k], item=source[k],
+                            validation_failure_info=(
+                            validation_failure_info, k))
 
             else:  # create the default entry
 
@@ -285,26 +291,28 @@ class Config(object):
                 else:
                     if result_type == 'list':
                         processed_config = self.validate_config_item2(
-                            this_spec[k],
-                            validation_failure_info=(validation_failure_info,
-                                                     k))
+                                this_spec[k],
+                                validation_failure_info=(
+                                validation_failure_info,
+                                k))
 
                     else:
                         processed_config[k] = self.validate_config_item2(
-                            this_spec[k],
-                            validation_failure_info=(validation_failure_info,
-                                                     k))
+                                this_spec[k],
+                                validation_failure_info=(
+                                validation_failure_info,
+                                k))
 
         if target:
             processed_config = Util.dict_merge(target, processed_config)
 
-        #if result_type == 'list':
-            #quit()
+            # if result_type == 'list':
+            # quit()
 
         return processed_config
 
     def validate_config_item2(self, spec, validation_failure_info,
-                              item='item not in config!@#',):
+                              item='item not in config!@#', ):
 
         try:
             item_type, validation, default = spec.split('|')
@@ -319,14 +327,16 @@ class Config(object):
         if item == 'item not in config!@#':
             if default == 'default required!@#':
                 raise ValueError('Required setting missing from config file. '
-                    'Run with verbose logging and look for the last '
-                    'ConfigProcessor entry above this line to see where the '
-                    'problem is. {} {}'.format(spec, validation_failure_info))
+                                 'Run with verbose logging and look for the last '
+                                 'ConfigProcessor entry above this line to see where the '
+                                 'problem is. {} {}'.format(spec,
+                                                            validation_failure_info))
             else:
                 item = default
 
         if item_type == 'single':
-            item = self.validate_item(item, validation, validation_failure_info)
+            item = self.validate_item(item, validation,
+                                      validation_failure_info)
 
         elif item_type == 'list':
             item = Util.string_to_list(item)
@@ -335,7 +345,8 @@ class Config(object):
 
             for i in item:
                 new_list.append(
-                    self.validate_item(i, validation, validation_failure_info))
+                        self.validate_item(i, validation,
+                                           validation_failure_info))
 
             item = new_list
 
@@ -346,7 +357,8 @@ class Config(object):
 
             for i in item:
                 new_set.add(
-                    self.validate_item(i, validation, validation_failure_info))
+                        self.validate_item(i, validation,
+                                           validation_failure_info))
 
             item = new_set
 
@@ -365,7 +377,8 @@ class Config(object):
 
         return item
 
-    def check_for_invalid_sections(self, spec, config, validation_failure_info):
+    def check_for_invalid_sections(self, spec, config,
+                                   validation_failure_info):
 
         for k, v in config.items():
             if type(k) is not dict:
@@ -375,7 +388,7 @@ class Config(object):
                     path_list = validation_failure_info[0].split(':')
 
                     if len(path_list) > 1 and (
-                            path_list[-1] == validation_failure_info[1]):
+                                path_list[-1] == validation_failure_info[1]):
                         path_list.append('[list_item]')
                     elif path_list[0] == validation_failure_info[1]:
                         path_list = list()
@@ -387,9 +400,10 @@ class Config(object):
 
                     if self.system_config['allow_invalid_config_sections']:
 
-                        self.log.warning('Unrecognized config setting. "%s" is '
-                                         'not a valid setting name.',
-                                         path_string)
+                        self.log.warning(
+                            'Unrecognized config setting. "%s" is '
+                            'not a valid setting name.',
+                            path_string)
 
                     else:
                         self.log.error('Your config contains a value for the '
@@ -418,8 +432,9 @@ class Config(object):
             for k, v in item.items():
                 return_dict[self.validate_item(k, validator[0],
                                                validation_failure_info)] = (
-                    self.validate_item(v, validator[1], validation_failure_info)
-                    )
+                    self.validate_item(v, validator[1],
+                                       validation_failure_info)
+                )
 
             item = return_dict
 
@@ -501,11 +516,12 @@ class Config(object):
         return item
 
     def validation_error(self, item, validation_failure_info):
-        self.log.error("Config validation error: Entry %s:%s:%s:%s is not valid",
-                       validation_failure_info[0][0],
-                       validation_failure_info[0][1],
-                       validation_failure_info[1],
-                       item)
+        self.log.error(
+            "Config validation error: Entry %s:%s:%s:%s is not valid",
+            validation_failure_info[0][0],
+            validation_failure_info[0][1],
+            validation_failure_info[1],
+            item)
 
         sys.exit()
 
@@ -524,8 +540,9 @@ class Config(object):
             ver_string = ''
 
             if int(version.__config_version_info__) > int(ver):
-                ver_string = (' (The latest config version is config_version=' +
-                              version.__config_version_info__ + ').')
+                ver_string = (
+                ' (The latest config version is config_version=' +
+                version.__config_version_info__ + ').')
 
             if setting_key in sections['section_replacements']:
                 self.log.info('The setting "%s" has been renamed to "%s" in '

@@ -27,12 +27,12 @@ class LED(Device):
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
-        super(LED, self).__init__(machine, name, config, collection,
-                                  platform_section='leds', validate=validate)
+        super().__init__(machine, name, config, collection,
+                         platform_section='leds', validate=validate)
 
         self.config['default_color'] = Util.hex_string_to_list(
-            input_string=self.config['default_color'],
-            output_length=3)
+                input_string=self.config['default_color'],
+                output_length=3)
 
         self.hw_driver = self.platform.configure_led(self.config)
 
@@ -42,24 +42,25 @@ class LED(Device):
         self.fade_end_time = None
 
         self.state = {  # current state of this LED
-                        'color': [0.0, 0.0, 0.0],
-                        'priority': 0,
-                        'destination_color': [0.0, 0.0, 0.0],
-                        'destination_time': 0.0,
-                        'start_color': [0.0, 0.0, 0.0],
-                        'start_time': 0.0
-                     }
+            'color': [0.0, 0.0, 0.0],
+            'priority': 0,
+            'destination_color': [0.0, 0.0, 0.0],
+            'destination_time': 0.0,
+            'start_color': [0.0, 0.0, 0.0],
+            'start_time': 0.0
+        }
 
         self.cache = {  # cached state of last manual command
-                        'color': [0.0, 0.0, 0.0],
-                        'priority': 0,
-                        'destination_color': [0.0, 0.0, 0.0],
-                        'destination_time': 0.0,
-                        'start_color': [0.0, 0.0, 0.0],
-                        'start_time': 0.0
-                     }
+            'color': [0.0, 0.0, 0.0],
+            'priority': 0,
+            'destination_color': [0.0, 0.0, 0.0],
+            'destination_time': 0.0,
+            'start_color': [0.0, 0.0, 0.0],
+            'start_time': 0.0
+        }
 
-        self.set_brightness_compensation(self.config['brightness_compensation'])
+        self.set_brightness_compensation(
+                self.config['brightness_compensation'])
 
         self.current_color = []  # one item for each element, 0-255
 
@@ -129,15 +130,15 @@ class LED(Device):
             self.log.debug("| fade_ms: %s", fade_ms)
             self.log.debug("| blend: %s", blend)
             self.log.debug("| brightness_compensation: %s",
-                          brightness_compensation)
+                           brightness_compensation)
 
             self.log.debug("+-------------Current State---------------")
             self.log.debug("| color: %s", self.state['color'])
             self.log.debug("| priority: %s", self.state['priority'])
             self.log.debug("| destination_color: %s",
-                          self.state['destination_color'])
+                           self.state['destination_color'])
             self.log.debug("| destination_time: %s",
-                          self.state['destination_time'])
+                           self.state['destination_time'])
             self.log.debug("| start_color: %s", self.state['start_color'])
             self.log.debug("| start_time: %s", self.state['start_time'])
             self.log.debug("+-----------------------------------------")
@@ -147,37 +148,39 @@ class LED(Device):
         if priority < self.state['priority'] and not force:
 
             if self.debug:
-                self.log.debug("Incoming color priority: %s. Current priority: "
-                              " %s. Not applying update.", priority,
-                              self.state['priority'])
+                self.log.debug(
+                    "Incoming color priority: %s. Current priority: "
+                    " %s. Not applying update.", priority,
+                    self.state['priority'])
             return
 
         elif self.debug:
             self.log.debug("Incoming color priority: %s. Current priority: "
-                          " %s. Processing new command.", priority,
-                          self.state['priority'])
+                           " %s. Processing new command.", priority,
+                           self.state['priority'])
 
         if brightness_compensation:
             color = self.compensate(color)
 
         # make sure we have a list of three ints
         color = [int(x) for x in color]
-        color += [0] * (3-len(color))
+        color += [0] * (3 - len(color))
 
         if fade_ms is None:
             if self.config['fade_ms'] is not None:
                 fade_ms = self.config['fade_ms']
                 if self.debug:
                     self.log.debug("Incoming fade_ms is none. Setting to %sms "
-                                  "based on this LED's default fade config",
-                                  fade_ms)
+                                   "based on this LED's default fade config",
+                                   fade_ms)
             elif self.machine.config['led_settings']:
                 fade_ms = (self.machine.config['led_settings']
                            ['default_led_fade_ms'])
                 if self.debug:
                     self.log.debug("Incoming fade_ms is none. Setting to %sms "
-                                  "based on this global default fade", fade_ms)
-            # potentional optimization make this not conditional
+                                   "based on this global default fade",
+                                   fade_ms)
+                    # potentional optimization make this not conditional
 
         current_time = time.time()
 
@@ -212,16 +215,17 @@ class LED(Device):
 
         if self.debug:
             self.log.debug("+---------------New State-----------------")
-            self.log.debug("| color: %s *******************", self.state['color'])
+            self.log.debug("| color: %s *******************",
+                           self.state['color'])
             self.log.debug("| priority: %s", self.state['priority'])
             self.log.debug("| new fade: %s", fade_ms)
             self.log.debug("| start_color: %s", self.state['start_color'])
             self.log.debug("| destination_color: %s",
-                          self.state['destination_color'])
+                           self.state['destination_color'])
             self.log.debug("| start_time: %s", self.state['start_time'])
             self.log.debug("| current_time: %s", time.time())
             self.log.debug("| destination_time: %s",
-                          self.state['destination_time'])
+                           self.state['destination_time'])
             self.log.debug("+-----------------------------------------")
             self.log.debug("==========================================")
 
@@ -236,7 +240,8 @@ class LED(Device):
 
         self.color(color=[self.config['default_color'][0] * brightness / 255.0,
                           self.config['default_color'][1] * brightness / 255.0,
-                          self.config['default_color'][2] * brightness / 255.0],
+                          self.config['default_color'][
+                              2] * brightness / 255.0],
                    fade_ms=fade_ms,
                    priority=priority,
                    cache=cache,
@@ -257,7 +262,7 @@ class LED(Device):
         if self.debug:
             self.log.debug("Received a restore command.")
             self.log.debug("Cached color: %s, Cached priority: %s",
-                          self.cache['color'], self.cache['priority'])
+                           self.cache['color'], self.cache['priority'])
 
         self.color(color=self.cache['color'],
                    fade_ms=0,
@@ -280,14 +285,14 @@ class LED(Device):
         global_settings = self.machine.config['led_settings']
 
         color[0] = (int(color[0] *
-                    self.config['brightness_compensation'][0] *
-                    global_settings['brightness_compensation'][0]))
+                        self.config['brightness_compensation'][0] *
+                        global_settings['brightness_compensation'][0]))
         color[1] = (int(color[1] *
-                    self.config['brightness_compensation'][1] *
-                    global_settings['brightness_compensation'][1]))
+                        self.config['brightness_compensation'][1] *
+                        global_settings['brightness_compensation'][1]))
         color[2] = (int(color[2] *
-                    self.config['brightness_compensation'][2] *
-                    global_settings['brightness_compensation'][2]))
+                        self.config['brightness_compensation'][2] *
+                        global_settings['brightness_compensation'][2]))
 
         return color
 
@@ -299,7 +304,7 @@ class LED(Device):
                 print("setting up fade task")
             self.fade_task = Task.create(self._fade_task)
         elif self.debug:
-                print("already have a fade task")
+            print("already have a fade task")
 
     def _fade_task(self):
         while self.fade_in_progress:
@@ -324,9 +329,15 @@ class LED(Device):
                 new_color = state['destination_color']
 
             else:
-                new_color.append(int(((state['destination_color'][0] - state['start_color'][0]) * ratio) + state['start_color'][0]))
-                new_color.append(int(((state['destination_color'][1] - state['start_color'][1]) * ratio) + state['start_color'][1]))
-                new_color.append(int(((state['destination_color'][2] - state['start_color'][2]) * ratio) + state['start_color'][2]))
+                new_color.append(int(((state['destination_color'][0] -
+                                       state['start_color'][0]) * ratio) +
+                                     state['start_color'][0]))
+                new_color.append(int(((state['destination_color'][1] -
+                                       state['start_color'][1]) * ratio) +
+                                     state['start_color'][1]))
+                new_color.append(int(((state['destination_color'][2] -
+                                       state['start_color'][2]) * ratio) +
+                                     state['start_color'][2]))
 
             if self.debug:
                 print("new color", new_color)

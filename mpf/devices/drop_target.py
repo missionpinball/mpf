@@ -14,8 +14,8 @@ class DropTarget(Device):
     class_label = 'drop_target'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(DropTarget, self).__init__(machine, name, config, collection,
-                                         validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         self.complete = False
         self.reset_coil = self.config['reset_coil']
@@ -33,9 +33,11 @@ class DropTarget(Device):
         # this is in addition to the parent since drop targets track
         # self.complete in separately
 
-        self.machine.switch_controller.add_switch_handler(self.config['switch'].name,
+        self.machine.switch_controller.add_switch_handler(
+            self.config['switch'].name,
             self._update_state_from_switch, 0)
-        self.machine.switch_controller.add_switch_handler(self.config['switch'].name,
+        self.machine.switch_controller.add_switch_handler(
+            self.config['switch'].name,
             self._update_state_from_switch, 1)
 
     def knockdown(self, **kwargs):
@@ -44,7 +46,8 @@ class DropTarget(Device):
             self.knockdown_coil.pulse()
 
     def _update_state_from_switch(self):
-        if self.machine.switch_controller.is_active(self.config['switch'].name):
+        if self.machine.switch_controller.is_active(
+                self.config['switch'].name):
             self._down()
         else:
             self._up()
@@ -101,8 +104,8 @@ class DropTargetBank(Device):
     class_label = 'drop_target_bank'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(DropTargetBank, self).__init__(machine, name, config, collection,
-                                             validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         self.drop_targets = list()
         self.reset_coil = None
@@ -140,7 +143,6 @@ class DropTargetBank(Device):
         # figure out all the coils we need to pulse
         coils = set()
 
-
         for drop_target in self.drop_targets:
             if drop_target.reset_coil:
                 coils.add(drop_target.reset_coil)
@@ -176,9 +178,10 @@ class DropTargetBank(Device):
                 self.up += 1
 
         if self.debug:
-            self.log.debug('Member drop target status change: Up: %s, Down: %s,'
-                           ' Total: %s', self.up, self.down,
-                           len(self.drop_targets))
+            self.log.debug(
+                'Member drop target status change: Up: %s, Down: %s,'
+                ' Total: %s', self.up, self.down,
+                len(self.drop_targets))
 
         if self.down == len(self.drop_targets):
             self._bank_down()

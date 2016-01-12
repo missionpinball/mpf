@@ -14,7 +14,7 @@ class HardwarePlatform(Platform):
 
     def __init__(self, machine):
 
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
 
         self.log = logging.getLogger('SmartMatrix')
         self.log.info("Configuring SmartMatrix hardware interface.")

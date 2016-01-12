@@ -16,7 +16,7 @@ class HardwarePlatform(VirtualPlatform):
     """Base class for the smart_virtual hardware platform."""
 
     def __init__(self, machine):
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger("Smart Virtual Platform")
         self.log.debug("Configuring smart_virtual hardware interface.")
 
@@ -35,29 +35,32 @@ class HardwarePlatform(VirtualPlatform):
                 continue
             if device.config['eject_coil']:
                 device.config['eject_coil'].hw_driver.register_ball_switches(
-                    device.config['ball_switches'])
+                        device.config['ball_switches'])
 
                 device.config['eject_coil'].hw_driver.type = 'eject'
 
                 if not device.config['eject_targets'][0].is_playfield():
-                    device.config['eject_coil'].hw_driver.set_target_device(device.config['eject_targets'][0])
+                    device.config['eject_coil'].hw_driver.set_target_device(
+                            device.config['eject_targets'][0])
 
                 if device.config['confirm_eject_switch']:
-                    device.config['eject_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
+                    device.config[
+                        'eject_coil'].hw_driver.confirm_eject_switch = \
+                    device.config['confirm_eject_switch']
 
             elif device.config['hold_coil']:
                 device.config['hold_coil'].hw_driver.register_ball_switches(
-                    device.config['ball_switches'])
+                        device.config['ball_switches'])
 
                 device.config['hold_coil'].hw_driver.type = 'hold'
 
                 if not device.config['eject_targets'][0].is_playfield():
-                    device.config['hold_coil'].hw_driver.set_target_device(device.config['eject_targets'][0])
+                    device.config['hold_coil'].hw_driver.set_target_device(
+                            device.config['eject_targets'][0])
 
                 if device.config['confirm_eject_switch']:
-                    device.config['hold_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
-
-
+                    device.config['hold_coil'].hw_driver.confirm_eject_switch = \
+                    device.config['confirm_eject_switch']
 
     def configure_driver(self, config, device_type='coil'):
         # todo should probably throw out the number that we get since it could
@@ -91,8 +94,7 @@ class HardwarePlatform(VirtualPlatform):
 
     def add_ball_to_device(self, device):
         if device.config['entrance_switch']:
-            pass # todo
-
+            pass  # todo
 
         if device.config['ball_switches']:
             found_switch = False
@@ -110,7 +112,6 @@ class HardwarePlatform(VirtualPlatform):
 
 
 class SmartVirtualDriver(VirtualDriver):
-
     def __init__(self, number, machine, platform):
         self.log = logging.getLogger('SmartVirtualDriver')
         self.number = number

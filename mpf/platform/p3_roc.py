@@ -22,6 +22,7 @@ from mpf.system.utility_functions import Util
 
 try:
     import pinproc
+
     pinproc_imported = True
 except:
     pinproc_imported = False
@@ -46,15 +47,16 @@ class HardwarePlatform(Platform):
     """
 
     def __init__(self, machine):
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger('P3-ROC')
         self.log.debug("Configuring P3-ROC hardware.")
 
         if not pinproc_imported:
-            raise AssertionError('Could not import "pinproc". Most likely you do not '
-                           'have libpinproc and/or pypinproc installed. You can'
-                           ' run MPF in software-only "virtual" mode by using '
-                           'the -x command like option for now instead.')
+            raise AssertionError(
+                'Could not import "pinproc". Most likely you do not '
+                'have libpinproc and/or pypinproc installed. You can'
+                ' run MPF in software-only "virtual" mode by using '
+                'the -x command like option for now instead.')
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -72,7 +74,7 @@ class HardwarePlatform(Platform):
         # ----------------------------------------------------------------------
 
         self.machine_type = pinproc.normalize_machine_type(
-            self.machine.config['hardware']['driverboards'])
+                self.machine.config['hardware']['driverboards'])
 
         # Connect to the P3-ROC. Keep trying if it doesn't work the first time.
 
@@ -99,11 +101,9 @@ class HardwarePlatform(Platform):
         self.log.debug("Configuring P3-ROC for P-ROC driver boards.")
         self.pdbconfig = PDBConfig(self.proc, self.machine.config)
 
-        self.polarity = self.machine_type == pinproc.MachineTypeSternWhitestar\
-            or self.machine_type == pinproc.MachineTypeSternSAM\
-            or self.machine_type == pinproc.MachineTypePDB
-
-
+        self.polarity = self.machine_type == pinproc.MachineTypeSternWhitestar \
+                        or self.machine_type == pinproc.MachineTypeSternSAM \
+                        or self.machine_type == pinproc.MachineTypePDB
 
         self.acceleration = [0] * 3
         self.accelerometer_device = False
@@ -129,18 +129,22 @@ class HardwarePlatform(Platform):
         if (raw_value & (1 << 13)):
             raw_value = raw_value - (1 << 14)
 
-        g_value = float(raw_value)/(1 << 12)
+        g_value = float(raw_value) / (1 << 12)
 
         return g_value
 
     def configure_accelerometer(self, device, number, useHighPass):
         if number != "1":
-            raise AssertionError("P3-ROC only has one accelerometer. Use number 1")
+            raise AssertionError(
+                "P3-ROC only has one accelerometer. Use number 1")
 
         self.accelerometer_device = device
-        self._configure_accelerometer(periodicRead=True, readWithHighPass=useHighPass, tiltInterrupt=False)
+        self._configure_accelerometer(periodicRead=True,
+                                      readWithHighPass=useHighPass,
+                                      tiltInterrupt=False)
 
-    def _configure_accelerometer(self, periodicRead=False, tiltInterrupt=True, tiltThreshold=0.2, readWithHighPass=False):
+    def _configure_accelerometer(self, periodicRead=False, tiltInterrupt=True,
+                                 tiltThreshold=0.2, readWithHighPass=False):
 
         enable = 0
         if periodicRead:
@@ -159,8 +163,8 @@ class HardwarePlatform(Platform):
 
         if periodicRead:
             # XYZ_DATA_CFG - enable/disable high pass filter, scale 0 to 2g
-            self.proc.write_data(6, 0x10E, 0x00 | (bool(readWithHighPass) * 0x10));
-
+            self.proc.write_data(6, 0x10E,
+                                 0x00 | (bool(readWithHighPass) * 0x10));
 
         if tiltInterrupt:
             # HP_FILTER_CUTOFF - cutoff at 2Hz
@@ -174,7 +178,8 @@ class HardwarePlatform(Platform):
             # transient_threshold * 0.063g
             # Theoretically up to 8g
             # Since we use low noise mode limited to 4g (value of 63)
-            transient_threshold_raw = int(math.ceil(float(tiltThreshold)/0.063))
+            transient_threshold_raw = int(
+                math.ceil(float(tiltThreshold) / 0.063))
             if transient_threshold_raw > 63:
                 self.log.warning("Tilt Threshold is too high. Limiting to 4g")
                 transient_threshold_raw = 63
@@ -198,7 +203,6 @@ class HardwarePlatform(Platform):
 
         # CTRL_REG2 - set no sleep, high resolution mode
         self.proc.write_data(6, 0x12B, 0x02);
-
 
         # for auto-polling of accelerometer every 128 ms (8 times a sec). set 0x0F
         # disable polling + IRQ status addr FF_MT_SRC
@@ -229,11 +233,13 @@ class HardwarePlatform(Platform):
         proc_num = self.pdbconfig.get_proc_number(device_type,
                                                   str(config['number']))
         if proc_num == -1:
-            raise AssertionError("Coil %s cannot be controlled by the P3-ROC. ",
-                                 str(config['number']))
+            raise AssertionError(
+                "Coil %s cannot be controlled by the P3-ROC. ",
+                str(config['number']))
 
         if device_type in ['coil', 'flasher']:
-            proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
+            proc_driver_object = PROCDriver(proc_num, self.proc, config,
+                                            self.machine)
         elif device_type == 'light':
             proc_driver_object = PROCMatrixLight(proc_num, self.proc)
 
@@ -284,9 +290,10 @@ class HardwarePlatform(Platform):
         # The P3-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)
-        self.log.debug("Configuring switch's host notification settings. P3-ROC"
-                       "number: %s, debounce: %s", proc_num,
-                       config['debounce'])
+        self.log.debug(
+            "Configuring switch's host notification settings. P3-ROC"
+            "number: %s, debounce: %s", proc_num,
+            config['debounce'])
         if config['debounce'] is False:
             self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
                                          {'notifyHost': True,
@@ -357,8 +364,9 @@ class HardwarePlatform(Platform):
         nothing. It's included here in case it's called by mistake.
 
         """
-        raise AssertionError("An attempt was made to configure a physical DMD, "
-                             "but the P3-ROC does not support physical DMDs.")
+        raise AssertionError(
+            "An attempt was made to configure a physical DMD, "
+            "but the P3-ROC does not support physical DMDs.")
 
     def tick(self):
         """Checks the P3-ROC for any events (switch state changes).
@@ -392,31 +400,36 @@ class HardwarePlatform(Platform):
             # Therefore, we will trigger after the Z value
             elif event_type == pinproc.EventTypeAccelerometerX:
                 self.acceleration[0] = event_value
-#                self.log.debug("Got Accelerometer value X. Value: %s", event_value)
+            #                self.log.debug("Got Accelerometer value X. Value: %s", event_value)
             elif event_type == pinproc.EventTypeAccelerometerY:
                 self.acceleration[1] = event_value
-#                self.log.debug("Got Accelerometer value Y. Value: %s", event_value)
+            #                self.log.debug("Got Accelerometer value Y. Value: %s", event_value)
             elif event_type == pinproc.EventTypeAccelerometerZ:
                 self.acceleration[2] = event_value
 
                 # trigger here
                 if self.accelerometer_device:
                     self.accelerometer_device.update_acceleration(
-                            self.scale_accelerometer_to_g(self.acceleration[0]),
-                            self.scale_accelerometer_to_g(self.acceleration[1]),
-                            self.scale_accelerometer_to_g(self.acceleration[2]))
-#                self.log.debug("Got Accelerometer value Z. Value: %s", event_value)
+                            self.scale_accelerometer_to_g(
+                                    self.acceleration[0]),
+                            self.scale_accelerometer_to_g(
+                                    self.acceleration[1]),
+                            self.scale_accelerometer_to_g(
+                                    self.acceleration[2]))
+                #                self.log.debug("Got Accelerometer value Z. Value: %s", event_value)
 
             # The P3-ROC sends interrupts when
             elif event_type == pinproc.EventTypeAccelerometerIRQ:
-                self.log.debug("Got Accelerometer value IRQ. Value: %s", event_value)
+                self.log.debug("Got Accelerometer value IRQ. Value: %s",
+                               event_value)
                 # trigger here
                 if self.accelerometer_device:
                     self.accelerometer_device.received_hit()
 
             else:
-                self.log.warning("Received unrecognized event from the P3-ROC. "
-                                 "Type: %s, Value: %s", event_type, event_value)
+                self.log.warning(
+                    "Received unrecognized event from the P3-ROC. "
+                    "Type: %s, Value: %s", event_type, event_value)
 
         self.proc.watchdog_tickle()
         self.proc.flush()
@@ -428,12 +441,13 @@ class HardwarePlatform(Platform):
         driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
 
         driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
-            **driver_settings_overrides))
+                **driver_settings_overrides))
 
-        self.log.debug("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
-                       " %s, Driver action: %s. Driver settings: %s",
-                       switch_obj.name, sw_activity, driver_obj.name,
-                       driver_action, driver_settings)
+        self.log.debug(
+            "Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
+            " %s, Driver action: %s. Driver settings: %s",
+            switch_obj.name, sw_activity, driver_obj.name,
+            driver_action, driver_settings)
 
         if 'debounced' in driver_settings_overrides:
             if driver_settings_overrides['debounced']:
@@ -514,29 +528,30 @@ class HardwarePlatform(Platform):
 
             if proc_action == 'pulse':
                 this_driver = [pinproc.driver_state_pulse(
-                    driver_obj.hw_driver.state(), pulse_ms)]
+                        driver_obj.hw_driver.state(), pulse_ms)]
 
             elif proc_action == 'patter':
                 this_driver = [pinproc.driver_state_patter(
-                    driver_obj.hw_driver.state(), pwm_on, pwm_off, pulse_ms,
-                    True)]
+                        driver_obj.hw_driver.state(), pwm_on, pwm_off,
+                        pulse_ms,
+                        True)]
                 # todo above param True should not be there. Change to now?
 
             elif proc_action == 'enable':
                 this_driver = [pinproc.driver_state_pulse(
-                    driver_obj.hw_driver.state(), 0)]
+                        driver_obj.hw_driver.state(), 0)]
 
             elif proc_action == 'disable':
                 if invert_switch_for_disable:
                     this_sw_activity ^= 1
 
                 this_driver = [pinproc.driver_state_disable(
-                    driver_obj.hw_driver.state())]
+                        driver_obj.hw_driver.state())]
 
             elif proc_action == 'pulsed_patter':
                 this_driver = [pinproc.driver_state_pulsed_patter(
-                    driver_obj.hw_driver.state(), pwm_on, pwm_off,
-                    pulse_ms)]
+                        driver_obj.hw_driver.state(), pwm_on, pwm_off,
+                        pulse_ms)]
 
             if this_sw_activity == 0 and debounced:
                 event_type = "open_debounced"
@@ -549,7 +564,7 @@ class HardwarePlatform(Platform):
 
             # merge in any previously-configured driver rules for this switch
             final_driver = list(this_driver)  # need to make an actual copy
-            sw_rule_string = str(switch_obj.name)+str(event_type)
+            sw_rule_string = str(switch_obj.name) + str(event_type)
             if sw_rule_string in self.hw_switch_rules:
                 for driver in self.hw_switch_rules[sw_rule_string]:
                     final_driver.append(driver)
@@ -557,10 +572,11 @@ class HardwarePlatform(Platform):
             else:
                 self.hw_switch_rules[sw_rule_string] = this_driver
 
-            self.log.debug("Writing HW rule for switch: %s, driver: %s, event_type: %s, "
-                           "rule: %s, final_driver: %s, drive now: %s",
-                           switch_obj.name, driver_obj.name, event_type,
-                           rule, final_driver, drive_now)
+            self.log.debug(
+                "Writing HW rule for switch: %s, driver: %s, event_type: %s, "
+                "rule: %s, final_driver: %s, drive now: %s",
+                switch_obj.name, driver_obj.name, event_type,
+                rule, final_driver, drive_now)
             self.proc.switch_update_rule(switch_obj.number, event_type, rule,
                                          final_driver, drive_now)
 
@@ -607,8 +623,8 @@ class HardwarePlatform(Platform):
                 # Remove this rule from our list
                 del self.hw_switch_rules[entry]
 
-        # todo need to read in the notifyHost settings and reapply those
-        # appropriately.
+                # todo need to read in the notifyHost settings and reapply those
+                # appropriately.
 
 
 class PDBLED(object):
@@ -625,7 +641,7 @@ class PDBLED(object):
 
         self.log.debug("Creating PD-LED item: board: %s, "
                        "RGB outputs: %s", self.board,
-                        self.address)
+                       self.address)
 
     def color(self, color):
         """Instantly sets this LED to the color passed.
@@ -635,7 +651,7 @@ class PDBLED(object):
             0-255 each.
         """
 
-        #self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
+        # self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
         #               self.board, self.address, color)
 
         self.proc.led_color(self.board, self.address[0],
@@ -674,13 +690,14 @@ class PDBLED(object):
 
     def normalize_color(self, color):
         if self.invert:
-            return 255-color
+            return 255 - color
         else:
             return color
 
 
 class PDBSwitch(object):
     """Base class for switches connected to a P3-ROC."""
+
     def __init__(self, pdb, number_str):
         upper_str = number_str.upper()
         if upper_str.startswith('SD'):
@@ -692,7 +709,8 @@ class PDBSwitch(object):
         else:
             self.sw_type = 'proc'
             try:
-                (boardnum, banknum, inputnum) = decode_pdb_address(number_str, [])
+                (boardnum, banknum, inputnum) = decode_pdb_address(number_str,
+                                                                   [])
                 self.sw_number = boardnum * 16 + banknum * 8 + inputnum
             except ValueError:
                 try:
@@ -706,7 +724,7 @@ class PDBSwitch(object):
 
     def parse_matrix_num(self, num_str):
         cr_list = num_str.split('/')
-        return 32 + int(cr_list[0])*16 + int(cr_list[1])
+        return 32 + int(cr_list[0]) * 16 + int(cr_list[1])
 
 
 class PDBCoil(object):
@@ -714,17 +732,18 @@ class PDBCoil(object):
     driver boards (i.e. the PD-16 board).
 
     """
+
     def __init__(self, pdb, number_str):
         self.pdb = pdb
         upper_str = number_str.upper()
         if self.is_direct_coil(upper_str):
             self.coil_type = 'dedicated'
-            self.banknum = (int(number_str[1:]) - 1)/8
+            self.banknum = (int(number_str[1:]) - 1) / 8
             self.outputnum = int(number_str[1:])
         elif self.is_pdb_coil(number_str):
             self.coil_type = 'pdb'
             (self.boardnum, self.banknum, self.outputnum) = decode_pdb_address(
-                number_str, self.pdb.aliases)
+                    number_str, self.pdb.aliases)
         else:
             self.coil_type = 'unknown'
 
@@ -754,6 +773,7 @@ class PDBCoil(object):
 
 class PDBLight(object):
     """Base class for lights connected to a PD-8x8 driver board."""
+
     def __init__(self, pdb, number_str):
         self.pdb = pdb
         upper_str = number_str.upper()
@@ -764,9 +784,9 @@ class PDBLight(object):
             # C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z
             self.lamp_type = 'pdb'
             source_addr, sink_addr = self.split_matrix_addr_parts(number_str)
-            (self.source_boardnum, self.source_banknum, self.source_outputnum)\
+            (self.source_boardnum, self.source_banknum, self.source_outputnum) \
                 = decode_pdb_address(source_addr, self.pdb.aliases)
-            (self.sink_boardnum, self.sink_banknum, self.sink_outputnum)\
+            (self.sink_boardnum, self.sink_banknum, self.sink_outputnum) \
                 = decode_pdb_address(sink_addr, self.pdb.aliases)
         else:
             self.lamp_type = 'unknown'
@@ -940,7 +960,7 @@ class PROCDriver(object):
             found_pwm_off = True
 
         if (found_pwm_off and not found_pwm_on) or (
-            found_pwm_on and not found_pwm_off):
+                    found_pwm_on and not found_pwm_off):
             raise ValueError("Error: Using pwm requires both pwm_on and "
                              "pwm_off values.")
 
@@ -971,7 +991,7 @@ class PROCDriver(object):
             self.log.debug('Enabling at 100%')
 
             if not ('allow_enable' in self.driver_settings and
-                    self.driver_settings['allow_enable']):
+                        self.driver_settings['allow_enable']):
                 raise AssertionError("Received a command to enable this coil "
                                      "without pwm, but 'allow_enable' has not been"
                                      "set to True in this coil's configuration.")
@@ -1008,7 +1028,6 @@ class PROCDriver(object):
 
 
 class PROCMatrixLight(object):
-
     def __init__(self, number, proc_driver):
         self.log = logging.getLogger('PROCMatrixLight')
         self.number = number
@@ -1074,7 +1093,7 @@ class PDBConfig(object):
         if 'P_ROC' in config and 'watchdog_time' \
                 in config['P_ROC']:
             self.watchdog_time = int(config['P_ROC']
-                                           ['watchdog_time'])
+                                     ['watchdog_time'])
         else:
             self.watchdog_time = 1000
 
@@ -1124,10 +1143,10 @@ class PDBConfig(object):
                     # Create dicts of unique sink banks.  The source index is
                     # needed when setting up the driver groups.
                     lamp_dict = {'source_index':
-                                 lamp_source_bank_list.index(
-                                 lamp.source_bank()),
-                                 'sink_bank': lamp.sink_bank(),
-                                 'source_output': lamp.source_output()}
+                        lamp_source_bank_list.index(
+                                lamp.source_bank()),
+                        'sink_bank': lamp.sink_bank(),
+                        'source_output': lamp.source_output()}
 
                     # lamp_dict_for_index.  This will be used later when the
                     # p-roc numbers are requested.  The requestor won't know
@@ -1136,7 +1155,7 @@ class PDBConfig(object):
                     lamp_dict_for_index = {'source_board': lamp.source_board(),
                                            'sink_bank': lamp.sink_bank(),
                                            'source_output':
-                                           lamp.source_output()}
+                                               lamp.source_output()}
 
                     if lamp_dict not in lamp_list:
                         lamp_list.append(lamp_dict)
@@ -1145,7 +1164,7 @@ class PDBConfig(object):
         # Create a list of indexes.  The PDB banks will be mapped into this
         # list. The index of the bank is used to calculate the P3-ROC driver
         # number for each driver.
-        num_proc_banks = pinproc.DriverCount//8
+        num_proc_banks = pinproc.DriverCount // 8
         self.indexes = [99] * num_proc_banks
 
         self.initialize_drivers(proc)
@@ -1184,17 +1203,18 @@ class PDBConfig(object):
             # (need microsecond resolution).  Instead of doing crazy logic here
             # for a case that probably won't happen, just ignore these banks.
             if group_ctr >= num_proc_banks or lamp_dict['sink_bank'] >= 16:
-                raise AssertionError("Lamp matrix banks can't be mapped to index "
-                                     "%d because that's outside of the banks the "
-                                     "P3-ROC can control.", lamp_dict['sink_bank'])
+                raise AssertionError(
+                    "Lamp matrix banks can't be mapped to index "
+                    "%d because that's outside of the banks the "
+                    "P3-ROC can control.", lamp_dict['sink_bank'])
             else:
                 self.log.debug("Driver group %02d (lamp sink): slow_time=%d "
-                                 "enable_index=%d row_activate_index=%d "
-                                 "row_enable_index=%d matrix=%s", group_ctr,
-                                 self.lamp_matrix_strobe_time,
-                                 lamp_dict['sink_bank'],
-                                 lamp_dict['source_output'],
-                                 lamp_dict['source_index'], True )
+                               "enable_index=%d row_activate_index=%d "
+                               "row_enable_index=%d matrix=%s", group_ctr,
+                               self.lamp_matrix_strobe_time,
+                               lamp_dict['sink_bank'],
+                               lamp_dict['source_output'],
+                               lamp_dict['source_index'], True)
                 self.indexes[group_ctr] = lamp_list_for_index[i]
                 proc.driver_update_group_config(group_ctr,
                                                 self.lamp_matrix_strobe_time,
@@ -1228,7 +1248,7 @@ class PDBConfig(object):
                 self.indexes.append(coil_bank)
             else:
                 self.log.debug("Driver group %02d: slow_time=%d Enable "
-                                 "Index=%d", group_ctr, 0, coil_bank)
+                               "Index=%d", group_ctr, 0, coil_bank)
                 self.indexes[group_ctr] = coil_bank
                 proc.driver_update_group_config(group_ctr,
                                                 0,
@@ -1284,7 +1304,7 @@ class PDBConfig(object):
             self.log.debug("Configuring PDB Driver Globals:  polarity = %s  "
                            "matrix column index 0 = %d  matrix column index "
                            "1 = %d", True, lamp_source_bank_list[0],
-                             lamp_source_bank_list[1])
+                           lamp_source_bank_list[1])
         proc.driver_update_global_config(enable,  # Don't enable outputs yet
                                          True,  # Polarity
                                          False,  # N/A

@@ -15,7 +15,7 @@ class Attract(Mode):
     """
 
     def __init__(self, machine, config, name, path):
-        super(Attract, self).__init__(machine, config, name, path)
+        super().__init__(machine, config, name, path)
 
         self.start_button_pressed_time = 0.0
         self.start_hold_time = 0.0
@@ -38,11 +38,11 @@ class Attract(Mode):
         for switch in self.machine.switches.items_tagged(
                 self.machine.config['game']['start_game_switch_tag']):
             self.switch_handlers.append(
-                self.machine.switch_controller.add_switch_handler(
-                    switch.name, self.start_button_pressed, 1))
+                    self.machine.switch_controller.add_switch_handler(
+                            switch.name, self.start_button_pressed, 1))
             self.switch_handlers.append(
-                self.machine.switch_controller.add_switch_handler(
-                    switch.name, self.start_button_released, 0))
+                    self.machine.switch_controller.add_switch_handler(
+                            switch.name, self.start_button_released, 0))
 
         if hasattr(self.machine, 'ball_devices'):
             self.machine.ball_controller.collect_balls()

@@ -4,6 +4,7 @@ import time
 import math
 from mpf.system.device import Device
 
+
 class ServoController(Device):
     """Implements a servo controller
 
@@ -16,16 +17,20 @@ class ServoController(Device):
     class_label = 'servo_controller'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(ServoController, self).__init__(machine, name, config, collection,
-                                     platform_section='servo_controllers',
-                                     validate=validate)
+        super().__init__(machine, name, config, collection,
+                         platform_section='servo_controllers',
+                         validate=validate)
 
         # currently only implemented for PCA9685/PCA9635
-        self.platform.i2c_write8(self.config['address'], 0x00, 0x11) # set sleep
-        self.platform.i2c_write8(self.config['address'], 0x01, 0x04) # configure output
-        self.platform.i2c_write8(self.config['address'], 0xFE, 130) # set approx 50Hz
+        self.platform.i2c_write8(self.config['address'], 0x00,
+                                 0x11)  # set sleep
+        self.platform.i2c_write8(self.config['address'], 0x01,
+                                 0x04)  # configure output
+        self.platform.i2c_write8(self.config['address'], 0xFE,
+                                 130)  # set approx 50Hz
         time.sleep(.01)
-        self.platform.i2c_write8(self.config['address'], 0x00, 0x01) # no more sleep
+        self.platform.i2c_write8(self.config['address'], 0x00,
+                                 0x01)  # no more sleep
         time.sleep(.01)
 
     def go_to_position(self, number, position):
@@ -41,5 +46,7 @@ class ServoController(Device):
 
         self.platform.i2c_write8(self.config['address'], 0x06 + number * 4, 0)
         self.platform.i2c_write8(self.config['address'], 0x07 + number * 4, 0)
-        self.platform.i2c_write8(self.config['address'], 0x08 + number * 4, value & 0xFF)
-        self.platform.i2c_write8(self.config['address'], 0x09 + number * 4, value >> 8)
+        self.platform.i2c_write8(self.config['address'], 0x08 + number * 4,
+                                 value & 0xFF)
+        self.platform.i2c_write8(self.config['address'], 0x09 + number * 4,
+                                 value >> 8)

@@ -141,6 +141,7 @@ displays:
     width: single|int|800
     height: single|int|600
     bits_per_pixel: single|int|24
+    default: single|bool|False
 diverters:
     type: single|str|hold
     activation_time: single|ms|0

@@ -4,6 +4,7 @@ from collections import deque
 
 from mpf.system.device import Device
 
+
 class Servo(Device):
     """Represents a servo in a pinball machine.
 
@@ -15,8 +16,8 @@ class Servo(Device):
     class_label = 'servo'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(Servo, self).__init__(machine, name, config, collection,
-                                       validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         self.platform = None
 
@@ -32,5 +33,7 @@ class Servo(Device):
         self.go_to_position(position)
 
     def go_to_position(self, position):
-        position = self.config['servo_min'] + position * (self.config['servo_max'] - self.config['servo_min'])
-        self.config['controller'].go_to_position(self.config['number'], position)
+        position = self.config['servo_min'] + position * (
+        self.config['servo_max'] - self.config['servo_min'])
+        self.config['controller'].go_to_position(self.config['number'],
+                                                 position)
