@@ -772,7 +772,19 @@ class BallDevice(Device):
                     break
 
     def _initialize3(self):
+        self.machine.ball_devices[self.config['captures_from']].ball_search.register(self.config['ball_search_order'], self.ball_search)
         self._state_invalid_start()
+
+    def ball_search(self, iteration):
+        # only run ball search when the device is idle and contains no balls
+        if self._state == "idle" and self.balls == 0:
+            if self.config['eject_coil']:
+                self.config['eject_coil'].pulse()
+                return True
+
+            if self.config['hold_coil']:
+                self.config['hold_coil'].pulse()
+                return True
 
     def get_status(self, request=None):  # pragma: no cover
         """Returns a dictionary of current status of this ball device.

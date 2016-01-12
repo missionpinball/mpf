@@ -4,6 +4,7 @@ a pinball machine."""
 import logging
 
 from mpf.devices.ball_device import BallDevice
+from mpf.system.ball_search import BallSearch
 from mpf.system.tasks import DelayManager
 
 
@@ -24,6 +25,7 @@ class Playfield(BallDevice):
         self.debug = False
         self.config = dict()
         self.unexpected_balls = 0
+        self.ball_search = BallSearch(self.machine, self)
 
         if validate:
             self.config = self.machine.config_processor.process_config2(
@@ -141,6 +143,11 @@ class Playfield(BallDevice):
         if ball_change:
             self.machine.events.post(self.name + '_ball_count_change',
                                      balls=balls, change=ball_change)
+
+        if balls <= 0:
+            self.ball_search.disable()
+        else:
+            self.ball_search.enable()
 
     def count_balls(self, **kwargs):
         """Used to count the number of balls that are contained in a ball
@@ -261,6 +268,7 @@ class Playfield(BallDevice):
         return True
 
     def mark_playfield_active(self):
+        self.ball_search.reset_timer()
         self.machine.events.post_boolean(self.name + "_active")
 
     def playfield_switch_hit(self, **kwargs):
