@@ -14,22 +14,29 @@ class TestRGBColor(MpfTestCase):
         super(TestRGBColor, self).__init__(test_map)
 
     def test_default_color(self):
-        # tests the default color
+        # Tests the default color
         color = RGBColor()
         self.assertEqual((0, 0, 0), color.rgb)
         self.assertIn(color.name, ['Black', 'Off'])
 
     def test_off_color(self):
+        # Tests the 'Off' color (nicely readable in LED show files)
         color = RGBColor()
         color.name = 'Off'
         self.assertEqual((0, 0, 0), color.rgb)
+        self.assertIn(color.name, ['Black', 'Off'])
 
-    def test_static_utilities(self):
-        # tests initializing a color by name
+    def test_static_conversion_utilities(self):
+        # Tests initializing a color by name or hex string value
+        # (names are currently case-sensitive but hex values are not)
         self.assertEqual((240, 248, 255), RGBColor.string_to_rgb('AliceBlue'))
         self.assertEqual((240, 248, 255), RGBColor.name_to_rgb('AliceBlue'))
         self.assertEqual((240, 248, 255), RGBColor.hex_to_rgb('F0F8FF'))
         self.assertEqual((240, 248, 255), RGBColor.string_to_rgb('F0F8FF'))
+        self.assertEqual((0, 0, 0), RGBColor.string_to_rgb('aliceblue'))
+        self.assertEqual((0, 0, 0), RGBColor.name_to_rgb('aliceblue'))
+        self.assertEqual((240, 248, 255), RGBColor.hex_to_rgb('f0f8ff'))
+        self.assertEqual((240, 248, 255), RGBColor.string_to_rgb('f0f8ff'))
 
     def test_properties(self):
         color1 = RGBColor()
@@ -52,6 +59,19 @@ class TestRGBColor(MpfTestCase):
 
         self.assertTrue(color1 != color2)
         self.assertFalse(color1 == color2)
+
+    def test_color_blend(self):
+        color1 = RGBColor((128, 64, 0))
+        color2 = RGBColor((0, 32, 64))
+
+        color_blend = RGBColor.blend(color1, color2, 0.25)
+        self.assertEqual((96, 56, 16), color_blend.rgb)
+
+        color_blend = RGBColor.blend(color1, color2, 0.5)
+        self.assertEqual((64, 48, 32), color_blend.rgb)
+
+        color_blend = RGBColor.blend(color1, color2, 0.75)
+        self.assertEqual((32, 40, 48), color_blend.rgb)
 
     def test_color_correction(self):
         color = RGBColor(RGBColor.name_to_rgb('DarkGray'))
@@ -77,6 +97,3 @@ class TestRGBColor(MpfTestCase):
                                                           linear_cutoff=0.1)
         corrected_color = color_correction_profile.apply(color)
         self.assertEqual((77, 67, 77), corrected_color.rgb)
-
-
-
