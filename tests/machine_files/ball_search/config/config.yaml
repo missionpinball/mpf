@@ -14,6 +14,9 @@ coils:
         number:
     eject_coil3:
         number:
+    hold_coil:
+        number:
+
 
 playfields:
     playfield:
@@ -35,6 +38,8 @@ switches:
     s_ball_switch_launcher:
         number:
     s_vuk:
+        number:
+    s_lock:
         number:
     s_playfield:
         number:
@@ -61,3 +66,9 @@ ball_devices:
         eject_timeouts: 2s
         debug: true
         ball_search_order: 3
+    test_lock:
+        hold_coil: hold_coil
+        ball_switches: s_lock
+        eject_timeouts: 2s
+        debug: true
+        ball_search_order: 4

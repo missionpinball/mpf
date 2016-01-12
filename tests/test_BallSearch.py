@@ -123,6 +123,7 @@ class TestBallSearch(MpfTestCase):
         self.machine.coils['eject_coil1'].pulse = MagicMock()
         self.machine.coils['eject_coil2'].pulse = MagicMock()
         self.machine.coils['eject_coil3'].pulse = MagicMock()
+        self.machine.coils['hold_coil'].pulse = MagicMock()
 
         self.advance_time_and_run(5)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
@@ -131,16 +132,26 @@ class TestBallSearch(MpfTestCase):
         assert not self.machine.coils['eject_coil1'].pulse.called
         self.machine.coils['eject_coil2'].pulse.assert_called_with()
         assert not self.machine.coils['eject_coil3'].pulse.called
+        assert not self.machine.coils['hold_coil'].pulse.called
 
         self.advance_time_and_run(.25)
 
         assert not self.machine.coils['eject_coil1'].pulse.called
         self.machine.coils['eject_coil2'].pulse.assert_called_with()
         self.machine.coils['eject_coil3'].pulse.assert_called_with()
+        assert not self.machine.coils['hold_coil'].pulse.called
+
+        self.advance_time_and_run(.25)
+
+        assert not self.machine.coils['eject_coil1'].pulse.called
+        self.machine.coils['eject_coil2'].pulse.assert_called_with()
+        self.machine.coils['eject_coil3'].pulse.assert_called_with()
+        self.machine.coils['hold_coil'].pulse.assert_called_with()
 
         self.machine.coils['eject_coil1'].pulse = MagicMock()
         self.machine.coils['eject_coil2'].pulse = MagicMock()
         self.machine.coils['eject_coil3'].pulse = MagicMock()
+        self.machine.coils['hold_coil'].pulse = MagicMock()
 
         self.advance_time_and_run(.25)
         self.assertEqual(2, self.machine.ball_devices['playfield'].ball_search.iteration)
@@ -148,11 +159,21 @@ class TestBallSearch(MpfTestCase):
         assert not self.machine.coils['eject_coil1'].pulse.called
         self.machine.coils['eject_coil2'].pulse.assert_called_with()
         assert not self.machine.coils['eject_coil3'].pulse.called
+        assert not self.machine.coils['hold_coil'].pulse.called
 
         self.advance_time_and_run(.25)
 
         assert not self.machine.coils['eject_coil1'].pulse.called
         self.machine.coils['eject_coil2'].pulse.assert_called_with()
         self.machine.coils['eject_coil3'].pulse.assert_called_with()
+        assert not self.machine.coils['hold_coil'].pulse.called
+
+        self.advance_time_and_run(.25)
+
+        assert not self.machine.coils['eject_coil1'].pulse.called
+        self.machine.coils['eject_coil2'].pulse.assert_called_with()
+        self.machine.coils['eject_coil3'].pulse.assert_called_with()
+        self.machine.coils['hold_coil'].pulse.assert_called_with()
+
 
         self.machine.ball_devices['playfield'].ball_search.disable()
