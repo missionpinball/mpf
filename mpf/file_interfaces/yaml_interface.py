@@ -32,9 +32,9 @@ MpfResolver.add_implicit_resolver(
     # Process any item beginning with a plus sign (+) as a string
     u'tag:yaml.org,2002:str',
     re.compile(
-        u'''^\+''',
+        u'''^(\+([0-9a-zA-Z .]+))$''',
         re.X),
-    None)
+    list(u'+'))
 
 MpfResolver.add_implicit_resolver(
     # Process any 3+ digit number with a leading zero as a string
