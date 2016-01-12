@@ -64,20 +64,21 @@ class BallSearch(object):
         self.run()
         
     def run(self):
+        timeout = self.playfield.config['ball_search_interval']
         # iterate until we are done with all callbacks
         while True:
             try:
                 element = next(self.iterator)
             except StopIteration:
-                break
+                self.iteration += 1
+                self.iterator = iter(self.callbacks)
+                element = next(self.iterator)
+                timeout = self.playfield.config['ball_search_wait_after_iteration']
+                # TODO: give up at some point? implement actions
+
             (priority, callback) = element
             # if a callback returns True we wait for the next one
             if callback(self.iteration):
-                self.delay.add(name='run', callback=self.run, ms=self.playfield.config['ball_search_interval'])
+                self.delay.add(name='run', callback=self.run, ms=timeout)
                 return
 
-        self.iteration += 1
-        self.iterator = iter(self.callbacks)
-
-        # TODO: give up at some point?
-        self.delay.add(name='run', callback=self.run, ms=0)

@@ -776,6 +776,10 @@ class BallDevice(Device):
         self._state_invalid_start()
 
     def ball_search(self, iteration):
+        # round 1: only idle + no ball
+        # round 2: all devices except trough. small pulse
+        # round 3: all devices except trough. normal pulse
+
         # only run ball search when the device is idle and contains no balls
         if self._state == "idle" and self.balls == 0:
             if self.config['eject_coil']:
