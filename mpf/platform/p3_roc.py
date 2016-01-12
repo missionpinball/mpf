@@ -74,7 +74,7 @@ class HardwarePlatform(Platform):
         # ----------------------------------------------------------------------
 
         self.machine_type = pinproc.normalize_machine_type(
-                self.machine.config['hardware']['driverboards'])
+            self.machine.config['hardware']['driverboards'])
 
         # Connect to the P3-ROC. Keep trying if it doesn't work the first time.
 
@@ -102,8 +102,8 @@ class HardwarePlatform(Platform):
         self.pdbconfig = PDBConfig(self.proc, self.machine.config)
 
         self.polarity = self.machine_type == pinproc.MachineTypeSternWhitestar \
-                        or self.machine_type == pinproc.MachineTypeSternSAM \
-                        or self.machine_type == pinproc.MachineTypePDB
+            or self.machine_type == pinproc.MachineTypeSternSAM \
+            or self.machine_type == pinproc.MachineTypePDB
 
         self.acceleration = [0] * 3
         self.accelerometer_device = False
@@ -112,13 +112,13 @@ class HardwarePlatform(Platform):
         return '<Platform.P3-ROC>'
 
     def i2c_write8(self, address, register, value):
-        self.proc.write_data(7, address << 9 | register, value);
+        self.proc.write_data(7, address << 9 | register, value)
 
     def i2c_read8(self, address, register):
-        return self.proc.read_data(7, address << 9 | register) & 0xFF;
+        return self.proc.read_data(7, address << 9 | register) & 0xFF
 
     def i2c_read16(self, address, register):
-        return self.proc.read_data(7, address << 9 | 1 << 8 | register);
+        return self.proc.read_data(7, address << 9 | 1 << 8 | register)
 
     def stop(self):
         self.proc.reset(1)
@@ -156,24 +156,24 @@ class HardwarePlatform(Platform):
             enable |= 0x1E00
 
         # configure some P3-Roc registers
-        self.proc.write_data(6, 0x000, enable);
+        self.proc.write_data(6, 0x000, enable)
 
         # CTRL_REG1 - set to standby
-        self.proc.write_data(6, 0x12A, 0);
+        self.proc.write_data(6, 0x12A, 0)
 
         if periodicRead:
             # XYZ_DATA_CFG - enable/disable high pass filter, scale 0 to 2g
             self.proc.write_data(6, 0x10E,
-                                 0x00 | (bool(readWithHighPass) * 0x10));
+                                 0x00 | (bool(readWithHighPass) * 0x10))
 
         if tiltInterrupt:
             # HP_FILTER_CUTOFF - cutoff at 2Hz
-            self.proc.write_data(6, 0x10F, 0x03);
+            self.proc.write_data(6, 0x10F, 0x03)
 
             # FF_TRANSIENT_COUNT - set debounce counter
             # number of timesteps where the threshold has to be reached
             # time step is 1.25ms
-            self.proc.write_data(6, 0x120, 1);
+            self.proc.write_data(6, 0x120, 1)
 
             # transient_threshold * 0.063g
             # Theoretically up to 8g
@@ -185,28 +185,28 @@ class HardwarePlatform(Platform):
                 transient_threshold_raw = 63
 
             # TRANSIENT_THS - Set threshold (0-127)
-            self.proc.write_data(6, 0x11F, transient_threshold_raw & 0x7F);
+            self.proc.write_data(6, 0x11F, transient_threshold_raw & 0x7F)
 
             # Set FF_TRANSIENT_CONFIG (0x1D)
             # enable latching, all axis, no high pass filter bypass
-            self.proc.write_data(6, 0x11D, 0x1E);
+            self.proc.write_data(6, 0x11D, 0x1E)
 
             # CTRL_REG4 - Enable transient interrupt
-            self.proc.write_data(6, 0x12D, 0x20);
+            self.proc.write_data(6, 0x12D, 0x20)
 
             # CTRL_REG5 - Enable transient interrupt (goes to INT1 by default)
-            self.proc.write_data(6, 0x12E, 0x20);
+            self.proc.write_data(6, 0x12E, 0x20)
 
         # CTRL_REG1 - set device to active and in low noise mode
         # 800HZ output data rate
-        self.proc.write_data(6, 0x12A, 0x05);
+        self.proc.write_data(6, 0x12A, 0x05)
 
         # CTRL_REG2 - set no sleep, high resolution mode
-        self.proc.write_data(6, 0x12B, 0x02);
+        self.proc.write_data(6, 0x12B, 0x02)
 
         # for auto-polling of accelerometer every 128 ms (8 times a sec). set 0x0F
         # disable polling + IRQ status addr FF_MT_SRC
-        self.proc.write_data(6, 0x000, 0x1E0F);
+        self.proc.write_data(6, 0x000, 0x1E0F)
         # flush data to proc
         self.proc.flush()
 
@@ -410,12 +410,12 @@ class HardwarePlatform(Platform):
                 # trigger here
                 if self.accelerometer_device:
                     self.accelerometer_device.update_acceleration(
-                            self.scale_accelerometer_to_g(
-                                    self.acceleration[0]),
-                            self.scale_accelerometer_to_g(
-                                    self.acceleration[1]),
-                            self.scale_accelerometer_to_g(
-                                    self.acceleration[2]))
+                        self.scale_accelerometer_to_g(
+                            self.acceleration[0]),
+                        self.scale_accelerometer_to_g(
+                            self.acceleration[1]),
+                        self.scale_accelerometer_to_g(
+                            self.acceleration[2]))
                 #                self.log.debug("Got Accelerometer value Z. Value: %s", event_value)
 
             # The P3-ROC sends interrupts when
@@ -441,7 +441,7 @@ class HardwarePlatform(Platform):
         driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
 
         driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
-                **driver_settings_overrides))
+            **driver_settings_overrides))
 
         self.log.debug(
             "Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
@@ -528,30 +528,30 @@ class HardwarePlatform(Platform):
 
             if proc_action == 'pulse':
                 this_driver = [pinproc.driver_state_pulse(
-                        driver_obj.hw_driver.state(), pulse_ms)]
+                    driver_obj.hw_driver.state(), pulse_ms)]
 
             elif proc_action == 'patter':
                 this_driver = [pinproc.driver_state_patter(
-                        driver_obj.hw_driver.state(), pwm_on, pwm_off,
-                        pulse_ms,
-                        True)]
+                    driver_obj.hw_driver.state(), pwm_on, pwm_off,
+                    pulse_ms,
+                    True)]
                 # todo above param True should not be there. Change to now?
 
             elif proc_action == 'enable':
                 this_driver = [pinproc.driver_state_pulse(
-                        driver_obj.hw_driver.state(), 0)]
+                    driver_obj.hw_driver.state(), 0)]
 
             elif proc_action == 'disable':
                 if invert_switch_for_disable:
                     this_sw_activity ^= 1
 
                 this_driver = [pinproc.driver_state_disable(
-                        driver_obj.hw_driver.state())]
+                    driver_obj.hw_driver.state())]
 
             elif proc_action == 'pulsed_patter':
                 this_driver = [pinproc.driver_state_pulsed_patter(
-                        driver_obj.hw_driver.state(), pwm_on, pwm_off,
-                        pulse_ms)]
+                    driver_obj.hw_driver.state(), pwm_on, pwm_off,
+                    pulse_ms)]
 
             if this_sw_activity == 0 and debounced:
                 event_type = "open_debounced"
@@ -743,7 +743,7 @@ class PDBCoil(object):
         elif self.is_pdb_coil(number_str):
             self.coil_type = 'pdb'
             (self.boardnum, self.banknum, self.outputnum) = decode_pdb_address(
-                    number_str, self.pdb.aliases)
+                number_str, self.pdb.aliases)
         else:
             self.coil_type = 'unknown'
 
@@ -853,6 +853,7 @@ class PDBLight(object):
 
 
 class PROCSwitch(object):
+
     def __init__(self, number):
         self.log = logging.getLogger('PROCSwitch')
         self.number = number
@@ -960,7 +961,7 @@ class PROCDriver(object):
             found_pwm_off = True
 
         if (found_pwm_off and not found_pwm_on) or (
-                    found_pwm_on and not found_pwm_off):
+                found_pwm_on and not found_pwm_off):
             raise ValueError("Error: Using pwm requires both pwm_on and "
                              "pwm_off values.")
 
@@ -991,7 +992,7 @@ class PROCDriver(object):
             self.log.debug('Enabling at 100%')
 
             if not ('allow_enable' in self.driver_settings and
-                        self.driver_settings['allow_enable']):
+                    self.driver_settings['allow_enable']):
                 raise AssertionError("Received a command to enable this coil "
                                      "without pwm, but 'allow_enable' has not been"
                                      "set to True in this coil's configuration.")
@@ -1028,6 +1029,7 @@ class PROCDriver(object):
 
 
 class PROCMatrixLight(object):
+
     def __init__(self, number, proc_driver):
         self.log = logging.getLogger('PROCMatrixLight')
         self.number = number
@@ -1143,10 +1145,10 @@ class PDBConfig(object):
                     # Create dicts of unique sink banks.  The source index is
                     # needed when setting up the driver groups.
                     lamp_dict = {'source_index':
-                        lamp_source_bank_list.index(
-                                lamp.source_bank()),
-                        'sink_bank': lamp.sink_bank(),
-                        'source_output': lamp.source_output()}
+                                 lamp_source_bank_list.index(
+                                     lamp.source_bank()),
+                                 'sink_bank': lamp.sink_bank(),
+                                 'source_output': lamp.source_output()}
 
                     # lamp_dict_for_index.  This will be used later when the
                     # p-roc numbers are requested.  The requestor won't know
@@ -1375,6 +1377,7 @@ class PDBConfig(object):
 
 
 class DriverAlias(object):
+
     def __init__(self, key, value):
         self.expr = re.compile(key)
         self.repl = value
