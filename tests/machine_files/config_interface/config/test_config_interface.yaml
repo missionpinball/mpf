@@ -23,6 +23,8 @@ test_section:
   int_7: 07
   str_00ff00: 00ff00
   str_003200: 003200
+  str_plus5: +5
+  str_plus0point5: +0.5
   case_sensitive_1: test
   Case_sensitive_2: test
   case_sensitive_3: Test

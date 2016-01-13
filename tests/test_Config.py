@@ -36,6 +36,10 @@ class TestConfig(MpfTestCase):
         self.assertEqual('00ff00', self.machine.config['test_section']['str_00ff00'])
         self.assertEqual('003200', self.machine.config['test_section']['str_003200'])
 
+        # +5, +0.5 should be strings
+        self.assertEqual('+5', self.machine.config['test_section']['str_plus5'])
+        self.assertEqual('+0.5', self.machine.config['test_section']['str_plus0point5'])
+
         # keys should be all lowercase
         self.assertIn('case_sensitive_1', self.machine.config['test_section'])
         self.assertIn('case_sensitive_2', self.machine.config['test_section'])
