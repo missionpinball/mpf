@@ -1,17 +1,8 @@
-from .MpfTestCase import MpfTestCase
+from tests.MpfTestCase import MpfTestCase
 from mpf.system.rgb_color import RGBColor, RGBColorCorrectionProfile
 
 
 class TestRGBColor(MpfTestCase):
-
-    def getConfigFile(self):
-        return 'test_leds.yaml'
-
-    def getMachinePath(self):
-        return '../tests/machine_files/show_controller/'
-
-    def __init__(self, test_map):
-        super(TestRGBColor, self).__init__(test_map)
 
     def test_default_color(self):
         # Tests the default color
