@@ -5,5 +5,5 @@ unit-verbose:
 	python3 -m unittest discover -v -s tests
 
 coverage:
-	python3-coverage run -m unittest discover -s tests
-	python3-coverage html
+	coverage3 run -m unittest discover -s tests
+	coverage3 html

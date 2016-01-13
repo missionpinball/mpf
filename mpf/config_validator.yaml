@@ -69,6 +69,7 @@ ball_devices:
     eject_all_events: dict|str:ms|None
     mechanical_eject: single|bool|False
     player_controlled_eject_event: single|str|None
+    ball_search_order: single|int|100
 ball_locks:
     balls_to_lock: single|int|
     lock_devices: list|self.machine.ball_devices[%]|
@@ -192,6 +193,7 @@ drop_targets:
     debug: single|bool|False
     reset_events: dict|str:ms|ball_starting, machine_reset_phase_3
     knockdown_events: dict|str:ms|None
+    ball_search_order: single|int|100
 drop_target_banks:
     drop_targets: list|self.machine.drop_targets[%]|
     reset_coil: single|self.machine.coils[%]|None
@@ -348,6 +350,12 @@ playfields:
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
+    enable_ball_search: single|bool|False
+    ball_search_timeout: single|ms|20s
+    ball_search_interval: single|ms|250ms
+    ball_search_iterations: single|int|10
+    ball_search_failed_action: single|str|new_ball
+    ball_search_wait_after_iteration: single|ms|10s
 playfield_transfers:
     ball_switch: single|self.machine.switches[%]|
     eject_target: single|self.machine.ball_devices[%]|

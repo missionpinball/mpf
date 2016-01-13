@@ -52,7 +52,6 @@ mpf:
 
     plugins:
         mpf.plugins.auditor.Auditor
-        mpf.plugins.ball_search.BallSearch
         mpf.plugins.info_lights.InfoLights
         mpf.plugins.osc.OSC
         mpf.plugins.socket_events.SocketClient
@@ -164,7 +163,6 @@ auditor:
         events
         player
     events:
-        ball_search_begin_phase1
         game_started
         game_ended
     player:
