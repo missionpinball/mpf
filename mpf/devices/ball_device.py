@@ -775,20 +775,32 @@ class BallDevice(Device):
         self.machine.ball_devices[self.config['captures_from']].ball_search.register(self.config['ball_search_order'], self.ball_search)
         self._state_invalid_start()
 
-    def ball_search(self, iteration):
-        # round 1: only idle + no ball
-        # round 2: all devices except trough. small pulse
-        # round 3: all devices except trough. normal pulse
-
-        # only run ball search when the device is idle and contains no balls
-        if self._state == "idle" and self.balls == 0:
-            if self.config['eject_coil']:
+    def _fire_coil_for_search(self, full_power):
+        if self.config['eject_coil']:
+            if not full_power and self.config['eject_coil_jam_pulse']:
+                self.config['eject_coil'].pulse(self.config['eject_coil_jam_pulse'])
+            else:
                 self.config['eject_coil'].pulse()
-                return True
+            return True
 
-            if self.config['hold_coil']:
-                self.config['hold_coil'].pulse()
-                return True
+        if self.config['hold_coil']:
+            self.config['hold_coil'].pulse()
+            return True
+
+    def ball_search(self, iteration):
+        if iteration <= 3:
+            # round 1: only idle + no ball
+            # only run ball search when the device is idle and contains no balls
+            if self._state == "idle" and self.balls == 0:
+                return self._fire_coil_for_search(True)
+        elif iteration <= 6:
+            # round 2: all devices except trough. small pulse
+            if not 'trough' in self.config['tags']:
+                return self._fire_coil_for_search(False)
+        else:
+            # round 3: all devices except trough. normal pulse
+            if not 'trough' in self.config['tags']:
+                return self._fire_coil_for_search(True)
 
     def get_status(self, request=None):  # pragma: no cover
         """Returns a dictionary of current status of this ball device.

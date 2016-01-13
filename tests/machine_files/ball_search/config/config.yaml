@@ -16,7 +16,18 @@ coils:
         number:
     hold_coil:
         number:
-
+    drop_target_reset1:
+        number:
+    drop_target_reset2:
+        number:
+    drop_target_knockdown2:
+        number:
+    drop_target_reset3:
+        number:
+    drop_target_reset4:
+        number:
+    drop_target_knockdown4:
+        number:
 
 playfields:
     playfield:
@@ -44,6 +55,34 @@ switches:
     s_playfield:
         number:
         tags: playfield_active
+    s_drop_target1:
+        number:
+    s_drop_target2:
+        number:
+    s_drop_target3:
+        number:
+    s_drop_target4:
+        number:
+
+drop_targets:
+    target1:
+        reset_coil: drop_target_reset1
+        switch: s_drop_target1
+        ball_search_order: 10
+    target2:
+        reset_coil: drop_target_reset2
+        knockdown_coil: drop_target_knockdown2
+        switch: s_drop_target2
+        ball_search_order: 11
+    target3:
+        reset_coil: drop_target_reset3
+        switch: s_drop_target3
+        ball_search_order: 12
+    target4:
+        reset_coil: drop_target_reset4
+        knockdown_coil: drop_target_knockdown4
+        switch: s_drop_target4
+        ball_search_order: 13
 
 ball_devices:
     test_trough:
@@ -58,6 +97,7 @@ ball_devices:
         ball_switches: s_ball_switch_launcher
         tags: ball_add_live
         eject_timeouts: 5s
+        eject_coil_jam_pulse: 5ms
         debug: true
         ball_search_order: 2
     test_vuk:

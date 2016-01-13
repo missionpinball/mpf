@@ -1,9 +1,6 @@
-import unittest
-
-from mpf.system.machine import MachineController
 from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
-import time
+
 
 class TestBallSearch(MpfTestCase):
 
@@ -116,57 +113,101 @@ class TestBallSearch(MpfTestCase):
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
         self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
 
-        self.advance_time_and_run(15)
+        # push down target 3 and 4
+        self.machine.switch_controller.process_switch("s_drop_target3", 1)
+        self.machine.switch_controller.process_switch("s_drop_target4", 1)
+
+        self.advance_time_and_run(10)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
-
-        # this will break smart_virtual
-        self.machine.coils['eject_coil1'].pulse = MagicMock()
-        self.machine.coils['eject_coil2'].pulse = MagicMock()
-        self.machine.coils['eject_coil3'].pulse = MagicMock()
-        self.machine.coils['hold_coil'].pulse = MagicMock()
-
-        self.advance_time_and_run(5)
-        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
         self.machine.ball_devices['playfield'].add_ball = MagicMock()
 
-        for i in range(1,11):
-                self.assertEqual(i, self.machine.ball_devices['playfield'].ball_search.iteration)
-
-                assert not self.machine.coils['eject_coil1'].pulse.called
-                self.machine.coils['eject_coil2'].pulse.assert_called_with()
-                assert not self.machine.coils['eject_coil3'].pulse.called
-                assert not self.machine.coils['hold_coil'].pulse.called
-
-                self.advance_time_and_run(.25)
-
-                assert not self.machine.coils['eject_coil1'].pulse.called
-                self.machine.coils['eject_coil2'].pulse.assert_called_with()
-                self.machine.coils['eject_coil3'].pulse.assert_called_with()
-                assert not self.machine.coils['hold_coil'].pulse.called
-
-                self.advance_time_and_run(.25)
-
-                assert not self.machine.coils['eject_coil1'].pulse.called
-                self.machine.coils['eject_coil2'].pulse.assert_called_with()
-                self.machine.coils['eject_coil3'].pulse.assert_called_with()
-                self.machine.coils['hold_coil'].pulse.assert_called_with()
-
+        for i in range(1, 11):
+                # this will break smart_virtual
                 self.machine.coils['eject_coil1'].pulse = MagicMock()
                 self.machine.coils['eject_coil2'].pulse = MagicMock()
                 self.machine.coils['eject_coil3'].pulse = MagicMock()
                 self.machine.coils['hold_coil'].pulse = MagicMock()
+                self.machine.coils['drop_target_reset1'].pulse = MagicMock()
+                self.machine.coils['drop_target_reset2'].pulse = MagicMock()
+                self.machine.coils['drop_target_reset3'].pulse = MagicMock()
+                self.machine.coils['drop_target_reset4'].pulse = MagicMock()
+                self.machine.coils['drop_target_knockdown2'].pulse = MagicMock()
+                self.machine.coils['drop_target_knockdown4'].pulse = MagicMock()
+                self.advance_time_and_run(10)
+                self.assertEqual(i, self.machine.ball_devices['playfield'].ball_search.iteration)
+                self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
+
+                assert not self.machine.coils['eject_coil1'].pulse.called
+                if i > 3 and i <= 6:
+                    self.machine.coils['eject_coil2'].pulse.assert_called_with(5)
+                else:
+                    self.machine.coils['eject_coil2'].pulse.assert_called_with()
+                assert not self.machine.coils['eject_coil3'].pulse.called
+                assert not self.machine.coils['hold_coil'].pulse.called
+                assert not self.machine.coils['drop_target_reset1'].pulse.called
+                assert not self.machine.coils['drop_target_reset2'].pulse.called
+                assert not self.machine.coils['drop_target_knockdown2'].pulse.called
+
+                self.advance_time_and_run(.25)
+
+                assert not self.machine.coils['eject_coil1'].pulse.called
+                self.machine.coils['eject_coil3'].pulse.assert_called_with()
+                assert not self.machine.coils['hold_coil'].pulse.called
+                assert not self.machine.coils['drop_target_reset1'].pulse.called
+                assert not self.machine.coils['drop_target_reset2'].pulse.called
+                assert not self.machine.coils['drop_target_knockdown2'].pulse.called
+
+                self.advance_time_and_run(.25)
+
+                assert not self.machine.coils['eject_coil1'].pulse.called
+                self.machine.coils['hold_coil'].pulse.assert_called_with()
+                assert not self.machine.coils['drop_target_reset1'].pulse.called
+                assert not self.machine.coils['drop_target_reset2'].pulse.called
+                assert not self.machine.coils['drop_target_knockdown2'].pulse.called
+
+                self.advance_time_and_run(.25)
+
+                assert not self.machine.coils['eject_coil1'].pulse.called
+                self.machine.coils['drop_target_reset1'].pulse.assert_called_with()
+                assert not self.machine.coils['drop_target_reset2'].pulse.called
+                assert not self.machine.coils['drop_target_knockdown2'].pulse.called
+
+                self.advance_time_and_run(.25)
+
+                assert not self.machine.coils['eject_coil1'].pulse.called
+                if i <= 3:
+                    self.machine.coils['drop_target_reset2'].pulse.assert_called_with()
+                    assert not self.machine.coils['drop_target_knockdown2'].pulse.called
+                else:
+                    self.machine.coils['drop_target_reset2'].pulse.assert_called_with()
+                    self.machine.coils['drop_target_knockdown2'].pulse.assert_called_with()
+
+                assert not self.machine.coils['drop_target_reset3'].pulse.called
+                assert not self.machine.coils['drop_target_reset4'].pulse.called
+                assert not self.machine.coils['drop_target_knockdown4'].pulse.called
+
+                if i > 6:
+                    self.advance_time_and_run(.25)
+                    self.machine.coils['drop_target_reset3'].pulse.assert_called_with()
+
+                self.advance_time_and_run(.25)
+                if i <= 3:
+                    self.machine.coils['drop_target_knockdown4'].pulse.assert_called_with()
+                    assert not self.machine.coils['drop_target_reset4'].pulse.called
+                else:
+                    self.machine.coils['drop_target_reset4'].pulse.assert_called_with()
+                    self.machine.coils['drop_target_knockdown4'].pulse.assert_called_with()
+
 
                 assert not self.machine.ball_devices['playfield'].add_ball.called
 
-                self.advance_time_and_run(10)
-
+        self.advance_time_and_run(10)
 
         self.assertEqual(0, self.machine.ball_devices['playfield'].balls)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.machine.ball_devices['playfield'].add_ball.assert_called_with()
-
 
     def test_give_up_with_game_end_in_game(self):
         self.machine.ball_devices['playfield'].config['ball_search_failed_action'] = 'end_game'
@@ -218,7 +259,6 @@ class TestBallSearch(MpfTestCase):
         self.machine.switch_controller.process_switch("s_start", 0)
         self.advance_time_and_run(1)
         self.assertEqual(None, self.machine.game)
-
 
         # wait for ball search to fail
         self.advance_time_and_run(300)

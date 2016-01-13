@@ -1,8 +1,7 @@
 """ Contains the base classes for drop targets and drop target banks."""
 
 from mpf.system.device import Device
-from mpf.system.config import Config
-
+from mpf.system.tasks import DelayManager
 
 class DropTarget(Device):
     """Represents a single drop target in a pinball machine.
@@ -17,7 +16,9 @@ class DropTarget(Device):
         super().__init__(machine, name, config, collection,
                          validate=validate)
 
+        self._in_ball_search = False
         self.complete = False
+        self.delay = DelayManager(machine.delayRegistry)
         self.reset_coil = self.config['reset_coil']
         self.knockdown_coil = self.config['knockdown_coil']
         self.banks = set()
@@ -27,6 +28,72 @@ class DropTarget(Device):
                                         self._update_state_from_switch)
         self.machine.events.add_handler('init_phase_4',
                                         self._register_switch_handlers)
+
+        # TODO: make playfield name configureable
+        self.machine.ball_devices['playfield'].ball_search.register(self.config['ball_search_order'], self._ball_search)
+
+    def _ball_search_phase1(self):
+        if not self.complete and self.reset_coil:
+            self.reset_coil.pulse()
+            return True
+        # if down. knock down again
+        elif self.complete and self.knockdown_coil:
+            self.knockdown_coil.pulse()
+            return True
+
+    def _ball_search_iteration_finish(self):
+        self._in_ball_search = False
+
+    def _ball_search_knockdown(self):
+        self.knockdown_coil.pulse()
+        self.delay.add(100, self._ball_search_iteration_finish)
+
+    def _ball_search_reset(self):
+        self.reset_coil.pulse()
+        self.delay.add(100, self._ball_search_iteration_finish)
+
+
+    def _ball_search(self, iteration):
+        if iteration <= 3:
+            # phase 1: do not change state.
+            # if up. reset again
+            return self._ball_search_phase1()
+        elif iteration <= 6:
+            # phase 2: if we can reset and knockdown the target we will do that
+            if self.reset_coil and self.knockdown_coil:
+                if self.complete:
+                    self._in_ball_search = True
+                    self.reset_coil.pulse()
+                    self.delay.add(100, self._ball_search_knockdown)
+                    return True
+                else:
+                    self._in_ball_search = True
+                    self.knockdown_coil.pulse()
+                    self.delay.add(100, self._ball_search_reset)
+                    return True
+            else:
+                # fall back to phase1
+                return self._ball_search_phase1()
+        else:
+            # phase3: reset no matter what
+            if self.complete:
+                if self.reset_coil:
+                    self.reset_coil.pulse()
+                    if self.knockdown_coil:
+                        self._in_ball_search = True
+                        self.delay.add(100, self._ball_search_knockdown)
+                    return True
+                else:
+                    return self._ball_search_phase1()
+            else:
+                if self.knockdown_coil:
+                    self.knockdown_coil.pulse()
+                    if self.reset_coil:
+                        self._in_ball_search = True
+                        self.delay.add(100, self._ball_search_reset)
+                    return True
+                else:
+                    return self._ball_search_phase1()
 
     def _register_switch_handlers(self):
         # register for notification of switch state
@@ -46,6 +113,9 @@ class DropTarget(Device):
             self.knockdown_coil.pulse()
 
     def _update_state_from_switch(self):
+        if self._in_ball_search:
+            return
+
         if self.machine.switch_controller.is_active(
                 self.config['switch'].name):
             self._down()
