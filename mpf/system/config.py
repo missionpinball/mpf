@@ -6,7 +6,7 @@ import sys
 
 import ruamel.yaml as yaml
 
-from mpf.file_interfaces.yaml_interface import MpfLoader
+from mpf.file_interfaces.yaml_interface import MpfLoader, YamlInterface
 from mpf.system.file_manager import FileManager
 from mpf.system.timing import Timing
 from mpf.system.utility_functions import Util
@@ -55,8 +55,13 @@ class Config(object):
         self.system_config = self.machine.config['mpf']
 
     @classmethod
-    def load_config_spec(cls, config_spec_file='mpf/config_validator.yaml'):
-        cls.config_spec = cls.load_config_file(config_spec_file)
+    def load_config_spec(cls, config_spec=None):
+
+        if not config_spec:
+            import mpf.config_validator
+            config_spec = mpf.config_validator.config_spec
+
+        cls.config_spec = YamlInterface.process(config_spec)
 
     @classmethod
     def unload_config_spec(cls):

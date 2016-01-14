@@ -1,5 +1,7 @@
-#config_version=3
 # values are type|validation|default
+
+config_spec = '''
+
 accelerometers:
     platform: single|str|None
     hit_limits: single|float:str|None
@@ -549,3 +551,5 @@ widgets:
         keep_ratio: single|bool|False
         nocache: single|bool|False
         source: single|str|
+
+'''

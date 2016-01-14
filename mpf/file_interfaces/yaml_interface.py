@@ -257,8 +257,7 @@ class YamlInterface(FileInterface):
             self.log.debug("Loading configuration file: %s", filename)
 
             with open(filename, 'r') as f:
-                config = Util.keys_to_lower(
-                    yaml.load(f, Loader=MpfLoader))
+                config = YamlInterface.process(f)
         except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark
@@ -280,6 +279,10 @@ class YamlInterface(FileInterface):
                 config = dict()
 
         return config
+
+    @staticmethod
+    def process(data_string):
+        return Util.keys_to_lower(yaml.load(data_string, Loader=MpfLoader))
 
     def save(self, filename, data):
         with open(filename, 'w') as output_file:
