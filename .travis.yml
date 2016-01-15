@@ -1,15 +1,21 @@
-language:
-  python
+language: python
 
 python:
-  - 3.4
+- 3.4
 
 install:
- - pip install ruamel.yaml
- - pip install coveralls
+- pip install ruamel.yaml
+- pip install coveralls
 
-script:
-  coverage run -m unittest discover
+script: coverage run -m unittest discover
 
-after_success:
-  coveralls
+after_success: coveralls
+
+deploy:
+  provider: pypi
+  user: brianmadden
+  password:
+    secure: DEc9Szo403yNmbsh8s/hTYND7rAAThn0mTc3t2ccNmdR2b3wOUt1eeTqylsZP+19L2A34OIEhMnOd2k/Tu8iMj9AqpH1iKHjq9IKtZOVkcXDBr7ylx8LaRuqjCXmMtRH9YTXpSZAYjOqzQqfOWEP0hQgYOk5MmLMZiNJdvcR++ZyWL8ZwE11n3ZuBcR1chIB6Ty9800LPlXqZW0CMJ9XrSXtRb0U4zHn/j6QpdoBJohR8HKKL9/PxGZzeUEgMjVGWKHdfbKAQRTV7kih7zA+MrGgsj+oGrJihQ38YVpwJUQbiqNEtToZg8yiCN3INz0ky4G6PZHQYL49XELgXxqUD4BopoRcSB6odYj0cr6fbJVttessC7Yi4cG3WmSzH/zxEoSGbLCz9mbac8OxtHr4mhZEeZHYufieB5cGChulMFNhwBq9eKZR1TPb73SavCnW9oW5UtjDzAp4ZHEYdwNQAL9KJRjq+BXJPd79cj0fgzZCJN3MTb1RFH6rnAPr4Ee9E04au9M9cO2ESJx5Xybka4nqUF7Zag4Fth90pHnBtrhoEhdMY9bjCgc14OiPh+EcDxj39Vff6R+brLaw7WJxvu8dEFEx/PhIv0R5UxRcEpeKX1XhUoEXgFMiaj8hOG8sFq0z5hwPcVta44M5rkIl9lS7d12Lhhw1Mk10Y799Rbg=
+  on:
+    tags: true
+  distributions: bdist_wheel
