@@ -1,26 +1,13 @@
 """ MPF plugin which enables the Backbox Control Protocol (BCP) v1.0alpha"""
-# bcp.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# The Backbox Control Protocol was conceived and developed by:
-# Quinn Capen
-# Kevin Kelm
-# Gabe Knuth
-# Brian Madden
-# Mike ORourke
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import socket
 import threading
 import sys
 import traceback
-import urllib
-import urlparse
-from Queue import Queue
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
+from queue import Queue
 import copy
 
 from mpf.system.player import Player
@@ -48,16 +35,16 @@ def decode_command_string(bcp_string):
     will be preserved.
 
     """
-    bcp_command = urlparse.urlsplit(bcp_string)
+    bcp_command = urllib.parse.urlsplit(bcp_string)
     try:
-        kwargs = urlparse.parse_qs(bcp_command.query)
+        kwargs = urllib.parse.parse_qs(bcp_command.query)
 
     except AttributeError:
         kwargs = dict()
 
     return (bcp_command.path.lower(),
-            dict((k.lower(), urllib.unquote(v[0]))
-                for k,v in kwargs.iteritems()))
+            dict((k.lower(), urllib.parse.unquote(v[0]))
+                for k,v in kwargs.items()))
 
 
 def encode_command_string(bcp_command, **kwargs):
@@ -84,17 +71,17 @@ def encode_command_string(bcp_command, **kwargs):
     kwarg_string = ''
 
     try:
-        for k, v in kwargs.iteritems():
-            kwarg_string += (urllib.quote(k.lower(), '') + '=' +
-                             urllib.quote(str(v), '') + '&')
+        for k, v in kwargs.items():
+            kwarg_string += (urllib.parse.quote(k.lower(), '') + '=' +
+                             urllib.parse.quote(str(v), '') + '&')
 
         kwarg_string = kwarg_string[:-1]
 
     except (TypeError, AttributeError):
         pass
 
-    return unicode(urlparse.urlunparse((None, None, bcp_command.lower(), None,
-                                        kwarg_string, None)), 'utf-8')
+    return str(urllib.parse.urlunparse(('', '', bcp_command.lower(), '',
+                                        kwarg_string, '')))
 
 
 class BCP(object):
@@ -278,7 +265,7 @@ class BCP(object):
         if not self.machine.options['bcp']:
             return
 
-        for name, settings in self.connection_config.iteritems():
+        for name, settings in self.connection_config.items():
             if 'host' not in settings:
                 break
 
@@ -290,7 +277,7 @@ class BCP(object):
         self._send_machine_vars()
 
     def _send_machine_vars(self):
-        for var_name, settings in self.machine.machine_vars.iteritems():
+        for var_name, settings in self.machine.machine_vars.items():
 
             self.send(bcp_command='machine_variable',
                       name=var_name,
@@ -374,7 +361,7 @@ class BCP(object):
         """Processes the BCP Events from the config."""
         # config is localized to BCPEvents
 
-        for event, settings in self.bcp_events.iteritems():
+        for event, settings in self.bcp_events.items():
 
             if 'params' in settings:
 
@@ -391,7 +378,7 @@ class BCP(object):
 
             params = copy.deepcopy(params)
 
-            for param, value in params.iteritems():
+            for param, value in params.items():
 
                 # Are there any text variables to replace on the fly?
                 # todo should this go here?
@@ -405,7 +392,7 @@ class BCP(object):
                                                       str(val))
 
                     # now check for single % which means event kwargs
-                    for name, val in kwargs.iteritems():
+                    for name, val in kwargs.items():
                         if '%' + name in value:
                             params[param] = value.replace('%' + name, str(val))
 
@@ -430,25 +417,25 @@ class BCP(object):
         self.log.debug("Registering Trigger Events")
 
         try:
-            for event in config['show_player'].keys():
+            for event in list(config['show_player'].keys()):
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for event in config['slide_player'].keys():
+            for event in list(config['screen_player'].keys()):
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for event in config['event_player'].keys():
+            for event in list(config['event_player'].keys()):
                 self.create_trigger_event(event)
         except KeyError:
             pass
 
         try:
-            for k, v in config['sound_player'].iteritems():
+            for k, v in config['sound_player'].items():
                 if 'start_events' in v:
                     for event in Util.string_to_list(v['start_events']):
                         self.create_trigger_event(event)
@@ -493,7 +480,7 @@ class BCP(object):
 
         event_list = list()
 
-        for event, settings in config.iteritems():
+        for event, settings in config.items():
 
             params = dict()
 
@@ -609,7 +596,7 @@ class BCP(object):
         this method will post one event for each pair.
 
         """
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             self.machine.events.post('bcp_set_{}'.format(k), value=v)
 
     def bcp_receive_reset_complete(self, **kwargs):
@@ -736,7 +723,7 @@ class BCP(object):
 
     def _setup_track_volumes(self, config):
         # config is localized to 'Volume'
-        for k, v in config['tracks'].iteritems():
+        for k, v in config['tracks'].items():
             self.track_volumes[k] = v
 
     def increase_volume(self, track='master', **kwargs):
@@ -952,7 +939,7 @@ class BCPClientSocket(object):
                 BCP.active_connections += 1
                 self.connection_attempts = 0
 
-            except socket.error, v:
+            except socket.error as v:
                 self.socket = None
                 self.log.warning("Failed to connect to remote BCP host %s:%s. "
                                  "Error: %s", self.config['host'],
@@ -1026,7 +1013,7 @@ class BCPClientSocket(object):
 
         """
 
-        socket_bytes = ''
+        socket_chars = ''
 
         if 'dmd' in self.machine.config:
 
@@ -1051,28 +1038,28 @@ class BCPClientSocket(object):
             try:
                 while self.socket:
 
-                    socket_bytes += self.get_from_socket()
+                    socket_chars += self.get_from_socket()
 
-                    if socket_bytes:
+                    if socket_chars:
 
-                        while socket_bytes.startswith('dmd_frame'):
+                        while socket_chars.startswith('dmd_frame'):
                             # trim the `dmd_frame?` so we have just the data
-                            socket_bytes = socket_bytes[10:]
+                            socket_chars = socket_chars[10:]
 
-                            while len(socket_bytes) < dmd_byte_length:
+                            while len(socket_chars) < dmd_byte_length:
                                 # If we don't have the full data, loop until we
                                 # have it.
-                                socket_bytes += self.get_from_socket()
+                                socket_chars += self.get_from_socket()
 
                             # trim the dmd bytes for the dmd data
-                            dmd_data = socket_bytes[:dmd_byte_length]
+                            dmd_data = socket_chars[:dmd_byte_length]
                             # Save the rest. This is +1 over the last step
                             # since we need to skip the \n separator
-                            socket_bytes = socket_bytes[dmd_byte_length+1:]
+                            socket_chars = socket_chars[dmd_byte_length+1:]
                             self.machine.bcp.dmd.update(dmd_data)
 
-                        if '\n' in socket_bytes:
-                            message, socket_bytes = socket_bytes.split('\n', 1)
+                        if '\n' in socket_chars:
+                            message, socket_chars = socket_chars.split('\n', 1)
 
                             self.log.debug('Received "%s"', message)
                             cmd, kwargs = decode_command_string(message)
@@ -1093,10 +1080,10 @@ class BCPClientSocket(object):
             try:
                 while self.socket:
 
-                    socket_bytes += self.get_from_socket()
+                    socket_chars += self.get_from_socket()
 
-                    if socket_bytes and '\n' in socket_bytes:
-                            message, socket_bytes = socket_bytes.split('\n', 1)
+                    if socket_chars and '\n' in socket_chars:
+                            message, socket_chars = socket_chars.split('\n', 1)
 
                             self.log.debug('Received "%s"', message)
                             cmd, kwargs = decode_command_string(message)
@@ -1115,7 +1102,8 @@ class BCPClientSocket(object):
 
 
     def get_from_socket(self, num_bytes=8192):
-        """Reads and returns whatever data is sitting in the receiving socket.
+        """Reads whatever data is sitting in the receiving socket, converts it
+        to a string via UTF-8 decoding, and returns it.
 
         Args:
             num_bytes: Int of the max number of bytes to read.
@@ -1130,7 +1118,7 @@ class BCPClientSocket(object):
             self.socket = None
             socket_bytes = None
 
-        return socket_bytes
+        return socket_bytes.decode('utf-8')
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
@@ -1144,7 +1132,7 @@ class BCPClientSocket(object):
 
                 try:
                     self.log.debug('Sending "%s"', message)
-                    self.socket.sendall(message + '\n')
+                    self.socket.sendall((message + '\n').encode('utf-8'))
 
                 except (IOError, AttributeError):
                     # MPF is probably in the process of shutting down
@@ -1180,26 +1168,3 @@ class BCPClientSocket(object):
     def send_goodbye(self):
         """Sends BCP 'goodbye' command."""
         self.send('goodbye')
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

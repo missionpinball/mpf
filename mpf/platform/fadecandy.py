@@ -1,10 +1,4 @@
 """Contains code for an FadeCandy hardware for RGB LEDs."""
-# fadecandy.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import json
@@ -24,8 +18,7 @@ class HardwarePlatform(OPHardwarePlatform):
     """
 
     def __init__(self, machine):
-
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
 
         self.log = logging.getLogger("FadeCandy")
         self.log.debug("Configuring FadeCandy hardware interface.")
@@ -35,7 +28,8 @@ class HardwarePlatform(OPHardwarePlatform):
 
     def _setup_opc_client(self):
         self.opc_client = FadeCandyOPClient(self.machine,
-            self.machine.config['open_pixel_control'])
+                                            self.machine.config[
+                                                'open_pixel_control'])
 
 
 class FadeCandyOPClient(OpenPixelClient):
@@ -50,9 +44,10 @@ class FadeCandyOPClient(OpenPixelClient):
     available with generic OPC implementations.
 
     """
+
     def __init__(self, machine, config):
 
-        super(FadeCandyOPClient, self).__init__(machine, config)
+        super().__init__(machine, config)
 
         self.log = logging.getLogger('FadeCandyClient')
 
@@ -60,7 +55,7 @@ class FadeCandyOPClient(OpenPixelClient):
 
         self.gamma = self.machine.config['led_settings']['gamma']
         self.whitepoint = Util.string_to_list(
-            self.machine.config['led_settings']['whitepoint'])
+                self.machine.config['led_settings']['whitepoint'])
 
         self.whitepoint[0] = float(self.whitepoint[0])
         self.whitepoint[1] = float(self.whitepoint[1])
@@ -232,14 +227,14 @@ class FadeCandyOPClient(OpenPixelClient):
         """
 
         msg = json.dumps({
-                            'gamma': self.gamma,
-                            'whitepoint': self.whitepoint,
-                            'linearSlope': self.linear_slope,
-                            'linearCutoff': self.linear_cutoff
-                            })
+            'gamma': self.gamma,
+            'whitepoint': self.whitepoint,
+            'linearSlope': self.linear_slope,
+            'linearCutoff': self.linear_cutoff
+        })
 
         self.send(struct.pack(
-            "!BBHHH", 0x00, 0xFF, len(msg) + 4, 0x0001, 0x0001) + msg)
+                "!BBHHH", 0x00, 0xFF, len(msg) + 4, 0x0001, 0x0001) + msg)
 
     def write_firmware_options(self):
         """Writes the current firmware settings (keyframe interpolation and
@@ -261,27 +256,4 @@ class FadeCandyOPClient(OpenPixelClient):
         # config_byte = config_byte | 0x08
 
         self.send(struct.pack(
-            "!BBHHHB", 0x00, 0xFF, 0x0005, 0x0001, 0x0002, config_byte))
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+                "!BBHHHB", 0x00, 0xFF, 0x0005, 0x0001, 0x0002, config_byte))

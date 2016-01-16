@@ -1,0 +1,29 @@
+#config_version=3
+
+game:
+    balls_per_game: 1
+machine:
+    glass_off_mode: False
+
+test_section:
+  true_key1: true
+  true_key2: True
+  true_key3: yes
+  true_key4: Yes
+  false_key1: false
+  false_key2: False
+  false_key3: no
+  false_key4: No
+  on_string: on
+  off_string: off
+  int_6400: 6400
+  int_3200: 003200
+  int_6: 6
+  int_7: 07
+  str_00ff00: 00ff00
+  case_sensitive_1: test
+  Case_sensitive_2: test
+  case_sensitive_3: Test
+
+Test_section_1:
+  test: test

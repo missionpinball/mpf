@@ -17,7 +17,7 @@ for input in range(LENGTH):
         output = output << 1
 
     if OUTPUT_FORMAT == 'hex':
-        print str(int(input)) + ": '" + format(output, 'x').zfill(LENGTH/4) + "',  # " + format(output, 'b').zfill(LENGTH)
+        print(str(int(input)) + ": '" + format(output, 'x').zfill(LENGTH/4) + "',  # " + format(output, 'b').zfill(LENGTH))
 
     elif OUTPUT_FORMAT == 'int':
-        print str(int(input)) + ": " + format(output, 'd') + ",  # " + format(output, 'b').zfill(LENGTH)
+        print(str(int(input)) + ": " + format(output, 'd') + ",  # " + format(output, 'b').zfill(LENGTH))

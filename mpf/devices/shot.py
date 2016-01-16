@@ -1,10 +1,4 @@
 """ Contains Shots device base class."""
-# shot.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import uuid
 from collections import OrderedDict
@@ -38,10 +32,10 @@ class Shot(Device):
             if 'reset_events' not in config:
                 config['reset_events'] = 'ball_ended'
 
-        super(Shot, self).__init__(machine, name, config, collection,
-                                   validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
-        self.delay = mpf.system.tasks.DelayManager()
+        self.delay = mpf.system.tasks.DelayManager(self.machine.delayRegistry)
 
         self.running_light_show = None
         self.active_sequences = list()
@@ -85,19 +79,20 @@ class Shot(Device):
 
         for switch in self.config['switch']:
             self.machine.switch_controller.add_switch_handler(
-                switch.name, self.hit, 1)
+                    switch.name, self.hit, 1)
 
         for switch in self.config['switch_sequence']:
             self.machine.switch_controller.add_switch_handler(
-                switch.name, self._sequence_switch_hit, 1, return_info=True)
+                    switch.name, self._sequence_switch_hit, 1,
+                    return_info=True)
 
         for switch in self.config['cancel_switch']:
             self.machine.switch_controller.add_switch_handler(
-                switch.name, self._cancel_switch_hit, 1)
+                    switch.name, self._cancel_switch_hit, 1)
 
-        for switch in self.config['delay_switch'].keys():
+        for switch in list(self.config['delay_switch'].keys()):
             self.machine.switch_controller.add_switch_handler(
-                switch.name, self._delay_switch_hit, 1, return_info=True)
+                    switch.name, self._delay_switch_hit, 1, return_info=True)
 
         self.switch_handlers_active = True
 
@@ -107,19 +102,19 @@ class Shot(Device):
 
         for switch in self.config['switch']:
             self.machine.switch_controller.remove_switch_handler(
-                switch.name, self.hit, 1)
+                    switch.name, self.hit, 1)
 
         for switch in self.config['switch_sequence']:
             self.machine.switch_controller.remove_switch_handler(
-                switch.name, self._sequence_switch_hit, 1)
+                    switch.name, self._sequence_switch_hit, 1)
 
         for switch in self.config['cancel_switch']:
             self.machine.switch_controller.remove_switch_handler(
-                switch.name, self._cancel_switch_hit, 1)
+                    switch.name, self._cancel_switch_hit, 1)
 
-        for switch in self.config['delay_switch'].keys():
+        for switch in list(self.config['delay_switch'].keys()):
             self.machine.switch_controller.remove_switch_handler(
-                switch.name, self._delay_switch_hit, 1)
+                    switch.name, self._delay_switch_hit, 1)
 
         self.switch_handlers_active = False
 
@@ -224,23 +219,23 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug(
-                "Updating lights 2: Profile: '%s', State: %s, State "
-                "settings: %s, Lights: %s, LEDs: %s, Priority: %s",
-                self.active_settings['profile'],
-                self.enable_table[self.active_mode]['current_state_name'],
-                state_settings, self.config['light'],
-                self.config['led'], self.active_settings['priority'])
+                    "Updating lights 2: Profile: '%s', State: %s, State "
+                    "settings: %s, Lights: %s, LEDs: %s, Priority: %s",
+                    self.active_settings['profile'],
+                    self.enable_table[self.active_mode]['current_state_name'],
+                    state_settings, self.config['light'],
+                    self.config['led'], self.active_settings['priority'])
 
         if state_settings['light_script'] and (self.config['light'] or
                                                    self.config['led']):
             self.running_light_show = (
                 self.machine.light_controller.run_registered_script(
-                    script_name=state_settings['light_script'],
-                    lights=[x.name for x in self.config['light']],
-                    leds=[x.name for x in self.config['led']],
-                    start_location=lightshow_step,
-                    priority=self.active_settings['priority'],
-                    **state_settings))
+                        script_name=state_settings['light_script'],
+                        lights=[x.name for x in self.config['light']],
+                        leds=[x.name for x in self.config['led']],
+                        start_location=lightshow_step,
+                        priority=self.active_settings['priority'],
+                        **state_settings))
 
         if self.debug:
             self.log.debug("New running light show: %s",
@@ -397,7 +392,7 @@ class Shot(Device):
 
         found = False
 
-        for _mode, settings in self.enable_table.iteritems():
+        for _mode, settings in self.enable_table.items():
             # only care about hits lower than this mode
 
             if found:
@@ -467,7 +462,7 @@ class Shot(Device):
                            next_switch)
 
         self.active_sequences.append(
-            (seq_id, 0, next_switch)
+                (seq_id, 0, next_switch)
         )
 
         # if this sequence has a time limit, set that up
@@ -484,7 +479,7 @@ class Shot(Device):
     def _advance_sequence(self, seq_id):
         # get this sequence
         seq_id, current_position_index, next_switch = next(
-            x for x in self.active_sequences if x[0] == seq_id)
+                x for x in self.active_sequences if x[0] == seq_id)
 
         # Remove this sequence from the list
         self.active_sequences.remove((seq_id, current_position_index,
@@ -509,7 +504,7 @@ class Shot(Device):
                                next_switch)
 
             self.active_sequences.append(
-                (seq_id, current_position_index, next_switch))
+                    (seq_id, current_position_index, next_switch))
 
     def _cancel_switch_hit(self):
         self._reset_all_sequences()
@@ -517,7 +512,7 @@ class Shot(Device):
     def _delay_switch_hit(self, switch_name, state, ms):
         self.delay.reset(name=switch_name + '_delay_timer',
                          ms=self.config['delay_switch']
-                                       [self.machine.switches[switch_name]],
+                         [self.machine.switches[switch_name]],
                          callback=self._release_delay,
                          switch=switch_name)
 
@@ -557,12 +552,13 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug(
-                'Jump. Mode: %s, New state #: %s, Current state #: %s, Player var:'
-                '%s, Lightshow_step: %s', mode, state,
-                self.player[
-                    self.enable_table[mode]['settings']['player_variable']],
-                self.enable_table[mode]['settings']['player_variable'],
-                lightshow_step)
+                    'Jump. Mode: %s, New state #: %s, Current state #: %s, Player var:'
+                    '%s, Lightshow_step: %s', mode, state,
+                    self.player[
+                        self.enable_table[mode]['settings'][
+                            'player_variable']],
+                    self.enable_table[mode]['settings']['player_variable'],
+                    lightshow_step)
 
         if state == self.player[
             self.enable_table[mode]['settings']['player_variable']]:
@@ -594,8 +590,8 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug(
-                "Received command to enable this shot from mode: %s "
-                "with profile: %s", mode, profile)
+                    "Received command to enable this shot from mode: %s "
+                    "with profile: %s", mode, profile)
 
         self.update_enable_table(profile=profile, enable=True, mode=mode)
 
@@ -653,12 +649,12 @@ class Shot(Device):
         old_mode = self.active_mode
         old_settings = self.active_settings
 
-        self.enable_table = OrderedDict(sorted(self.enable_table.items(),
+        self.enable_table = OrderedDict(sorted(list(self.enable_table.items()),
                                                key=lambda x: x[1]['priority'],
                                                reverse=True))
 
         # set a pointer to the highest entry
-        for mode, settings in self.enable_table.iteritems():
+        for mode, settings in self.enable_table.items():
             self.active_mode = mode
             self.active_settings = settings
 
@@ -666,7 +662,7 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug("New enable_table order: %s",
-                           self.enable_table.keys())
+                           list(self.enable_table.keys()))
 
         # top profile has changed
         if (not old_settings or
@@ -760,7 +756,7 @@ class Shot(Device):
         if self.debug:
             self.log.debug("Removing active profile for mode %s", mode)
 
-        for k, v in self.enable_table.iteritems():
+        for k, v in self.enable_table.items():
             if (v['priority'] < self.enable_table[mode]['priority'] and
                     (v['enable'] or v['settings']['lights_when_disabled'])):
 
@@ -812,25 +808,3 @@ class Shot(Device):
     def _update_groups(self, profile, state):
         for group in self.groups:
             group.update_member_shot(shot=self, profile=profile, state=state)
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

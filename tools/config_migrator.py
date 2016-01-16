@@ -1,8 +1,4 @@
 """Migrates YAML configuration files for MPF from one version to another."""
-# config_migrator.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
 
 import optparse
 import os
@@ -46,7 +42,7 @@ options = vars(options)
 try:
     source_str = args[0]
 except:
-    print "Error: YAML file or search folder not specified."
+    print("Error: YAML file or search folder not specified.")
     sys.exit()
 
 
@@ -61,7 +57,7 @@ def load_config():
 
     config_dict = FileManager.load(CONFIG_VERSION_FILE)
 
-    for key in config_dict.keys():
+    for key in list(config_dict.keys()):
         if type(key) is not int:
             del config_dict[key]
 
@@ -69,14 +65,14 @@ def load_config():
     new_config_version = max(config_dict)
     previous_config_version = new_config_version-1
 
-    print
-    print ("Migrating MPF config files from v" + str(previous_config_version) +
-           " to v" + str(new_config_version))
+    print()
+    print(("Migrating MPF config files from v" + str(previous_config_version) +
+           " to v" + str(new_config_version)))
 
     target_file_versions.add(previous_config_version)
 
     if options['force']:
-        print ("Will also re-check v" + str(new_config_version) + " files")
+        print(("Will also re-check v" + str(new_config_version) + " files"))
         target_file_versions.add(new_config_version)
 
     section_replacements = config_dict[new_config_version].get('section_replacements', dict())
@@ -96,7 +92,7 @@ def create_file_list(source_str):
         os.path.walk(source_str, add_files, EXTENSION)
 
     else:
-        print "not a valid file or folder"
+        print("not a valid file or folder")
 
     return file_list
 
@@ -139,10 +135,10 @@ def process_file(file_name):
 
         if file_version not in target_file_versions:
             skipped_files.append(file_name)
-            print "Skipping File:", file_name
+            print("Skipping File:", file_name)
             return
 
-    print "Processing File:", file_name
+    print("Processing File:", file_name)
 
     create_backup_file(file_name)
 
@@ -181,11 +177,11 @@ def process_file(file_name):
         pattern = re.compile(re.escape(section + ':'), re.IGNORECASE)
         file_data = pattern.sub(new_string + section + ':', file_data)
 
-    for k, v in section_replacements.iteritems():
+    for k, v in section_replacements.items():
         pattern = re.compile('\\b(' + k + ')\\b:', re.IGNORECASE)
         file_data = pattern.sub(v + ':', file_data)
 
-    for k, v in string_replacements.iteritems():
+    for k, v in string_replacements.items():
         pattern = re.compile(k, re.IGNORECASE)
         file_data = pattern.sub(v, file_data)
 
@@ -231,23 +227,23 @@ def display_results():
     global migrated_files
     global warnings_files
 
-    print
-    print "Migration Results"
-    print "================="
-    print "Backup location for existing files:", backup_root_folder
-    print "Files migrated successfully:", len(migrated_files)
-    print "Files skipped:", len(skipped_files)
-    print "Files that require manual intervention:", len(warnings_files)
+    print()
+    print("Migration Results")
+    print("=================")
+    print("Backup location for existing files:", backup_root_folder)
+    print("Files migrated successfully:", len(migrated_files))
+    print("Files skipped:", len(skipped_files))
+    print("Files that require manual intervention:", len(warnings_files))
 
     if warnings_files:
-        print
+        print()
         print ("Open up each of these files to see the details of the sections "
                "you need to manually update:")
 
     for file_name in warnings_files:
-        print file_name
+        print(file_name)
 
-    print
+    print()
 
 
 def main():
@@ -264,26 +260,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

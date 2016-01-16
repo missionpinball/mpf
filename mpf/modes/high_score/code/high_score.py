@@ -1,12 +1,5 @@
 """Contains the High Score mode code"""
 
-# high_score.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
-
 from collections import OrderedDict
 from mpf.system.data_manager import DataManager
 from mpf.system.mode import Mode
@@ -47,7 +40,7 @@ class HighScore(Mode):
                             name=entries + str(position + 1) + '_value',
                             value=value)
 
-                except KeyError, e:
+                except KeyError as e:
                     self.high_scores[entries] = list()
 
     def mode_start(self, **kwargs):
@@ -68,7 +61,7 @@ class HighScore(Mode):
 
         for category_settings in self.high_score_config['categories']:
 
-            for category_name, award_names in category_settings.iteritems():
+            for category_name, award_names in category_settings.items():
 
                 new_list = list()
 
@@ -99,12 +92,12 @@ class HighScore(Mode):
             self.machine.events.add_handler('high_score_complete',
                                             self._receive_player_name)
 
-        for category_name, top_scores in self.new_high_score_list.iteritems():
+        for category_name, top_scores in self.new_high_score_list.items():
             for index, (player, value) in enumerate(top_scores):
                 if player in self.machine.game.player_list:
 
                     for category_dict in self.high_score_config['categories']:
-                        for config_cat_name in category_dict.keys():
+                        for config_cat_name in list(category_dict.keys()):
 
                             if config_cat_name == category_name:
                                 award_label = (
@@ -141,7 +134,7 @@ class HighScore(Mode):
 
         for category_scores in self.high_score_config['categories']:
 
-            for category_name in category_scores.keys():
+            for category_name in list(category_scores.keys()):
                 for index, local_award in (
                         enumerate(category_scores[category_name])):
                     if local_award == award:
@@ -249,26 +242,3 @@ class HighScore(Mode):
                               player_name=player_name,
                               award=award,
                               value=value)
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

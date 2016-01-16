@@ -1,16 +1,10 @@
 """Contains AssetManager, AssetLoader, and Asset parent classes"""
-# assets.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import os
 import threading
 import copy
-from Queue import PriorityQueue
+from queue import PriorityQueue
 import sys
 import traceback
 
@@ -201,7 +195,7 @@ class AssetManager(object):
 
                 built_up_config = copy.deepcopy(self.defaults[default_string])
 
-                for k, v in config.iteritems():
+                for k, v in config.items():
 
                     if ('file' in v and v['file'] == file_name) or name == k:
                         if name != k:
@@ -454,26 +448,3 @@ class Asset(object):
     def unload(self):
         self._unload()
         self.loaded = False
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

@@ -1,10 +1,4 @@
-""" Parent contains the base class for diverter devices."""
-# diverter.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
+"""Contains the base class for diverter devices."""
 
 from collections import deque
 
@@ -24,10 +18,10 @@ class Diverter(Device):
     class_label = 'diverter'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(Diverter, self).__init__(machine, name, config, collection,
-                                       validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(machine.delayRegistry)
 
         # Attributes
         self.active = False
@@ -46,19 +40,23 @@ class Diverter(Device):
 
         # register for feeder device eject events
         for feeder_device in self.config['feeder_devices']:
-            self.machine.events.add_handler('balldevice_' + feeder_device.name +
-                                            '_ball_eject_attempt',
-                                            self._feeder_eject_attempt)
+            self.machine.events.add_handler(
+                'balldevice_' + feeder_device.name +
+                '_ball_eject_attempt',
+                self._feeder_eject_attempt)
 
-            self.machine.events.add_handler('balldevice_' + feeder_device.name +
-                                            '_ball_eject_failed',
-                                            self._feeder_eject_count_decrease)
+            self.machine.events.add_handler(
+                'balldevice_' + feeder_device.name +
+                '_ball_eject_failed',
+                self._feeder_eject_count_decrease)
 
-            self.machine.events.add_handler('balldevice_' + feeder_device.name +
-                                            '_ball_eject_success',
-                                            self._feeder_eject_count_decrease)
+            self.machine.events.add_handler(
+                'balldevice_' + feeder_device.name +
+                '_ball_eject_success',
+                self._feeder_eject_count_decrease)
 
-        self.machine.events.add_handler('init_phase_3', self._register_switches)
+        self.machine.events.add_handler('init_phase_3',
+                                        self._register_switches)
 
         self.platform = self.config['activation_coil'].platform
 
@@ -66,12 +64,12 @@ class Diverter(Device):
         # register for deactivation switches
         for switch in self.config['deactivation_switches']:
             self.machine.switch_controller.add_switch_handler(
-                switch.name, self.deactivate)
+                    switch.name, self.deactivate)
 
         # register for disable switches:
         for switch in self.config['disable_switches']:
             self.machine.switch_controller.add_switch_handler(
-                switch.name, self.disable)
+                    switch.name, self.disable)
 
     def enable(self, auto=False, activations=-1, **kwargs):
         """Enables this diverter.
@@ -133,7 +131,7 @@ class Diverter(Device):
         self.log.debug("Activating Diverter")
         self.active = True
 
-        #if self.remaining_activations > 0:
+        # if self.remaining_activations > 0:
         #    self.remaining_activations -= 1
 
         self.machine.events.post('diverter_' + self.name + '_activating')
@@ -158,8 +156,8 @@ class Diverter(Device):
         if self.config['deactivation_coil']:
             self.config['deactivation_coil'].pulse()
 
-        #if self.remaining_activations != 0:
-        #    self.enable()
+            # if self.remaining_activations != 0:
+            #    self.enable()
             # todo this will be weird if the diverter is enabled without a hw
             # switch.. wonder if we should check for that here?
 
@@ -221,32 +219,31 @@ class Diverter(Device):
             for switch in self.config['activation_switches']:
 
                 self.platform.set_hw_rule(
-                    sw_name=switch.name,
-                    sw_activity=1,
-                    driver_name=self.config['activation_coil'].name,
-                    driver_action='hold',
-                    disable_on_release=False,
-                    **self.config)
+                        sw_name=switch.name,
+                        sw_activity=1,
+                        driver_name=self.config['activation_coil'].name,
+                        driver_action='hold',
+                        disable_on_release=False,
+                        **self.config)
 
                 # If there's a activation_time then we need to watch for the hw
                 # switch to be activated so we can disable the diverter
 
                 if self.config['activation_time']:
                     self.machine.switch_controller.add_switch_handler(
-                        switch.name,
-                        self.schedule_deactivation)
+                            switch.name,
+                            self.schedule_deactivation)
 
         elif self.config['type'] == 'pulse':
 
             for switch in self.config['activation_switches']:
-
                 self.platform.set_hw_rule(
-                    sw_name=switch.name,
-                    sw_activity=1,
-                    driver_name=self.config['activation_coil'].name,
-                    driver_action='pulse',
-                    disable_on_release=False,
-                    **self.config)
+                        sw_name=switch.name,
+                        sw_activity=1,
+                        driver_name=self.config['activation_coil'].name,
+                        driver_action='pulse',
+                        disable_on_release=False,
+                        **self.config)
 
     def enable_sw_switches(self):
         self.log.debug("Enabling Diverter sw switches: %s",
@@ -254,7 +251,7 @@ class Diverter(Device):
 
         for switch in self.config['activation_switches']:
             self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, callback=self.activate)
+                    switch_name=switch.name, callback=self.activate)
 
     def disable_sw_switches(self):
         self.log.debug("Disabling Diverter sw switches: %s",
@@ -262,7 +259,7 @@ class Diverter(Device):
 
         for switch in self.config['activation_switches']:
             self.machine.switch_controller.remove_switch_handler(
-                switch_name=switch.name, callback=self.activate)
+                    switch_name=switch.name, callback=self.activate)
 
     def disable_hw_switches(self):
         """Removes the hardware rule to disable the hardware activation switch
@@ -271,7 +268,7 @@ class Diverter(Device):
         for switch in self.config['activation_switches']:
             self.platform.clear_hw_rule(switch.name)
 
-        # todo this should not clear all the rules for this switch
+            # todo this should not clear all the rules for this switch
 
     def disable_held_coil(self):
         """Physically disables the coil holding this diverter open."""
@@ -287,13 +284,15 @@ class Diverter(Device):
             if len(self.eject_attempt_queue) > 0:
                 if self.eject_state == False:
                     self.eject_state = True
-                    self.log.debug("Enabling diverter since eject target is on the "
-                                   "active target list")
+                    self.log.debug(
+                        "Enabling diverter since eject target is on the "
+                        "active target list")
                     self.enable()
                 elif self.eject_state == True:
                     self.eject_state = False
-                    self.log.debug("Enabling diverter since eject target is on the "
-                                   "inactive target list")
+                    self.log.debug(
+                        "Enabling diverter since eject target is on the "
+                        "inactive target list")
                     self.disable()
             # And perform those ejects
             while len(self.eject_attempt_queue) > 0:
@@ -344,25 +343,3 @@ class Diverter(Device):
                            "inactive target list")
             self.eject_state = desired_state
             self.disable()
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

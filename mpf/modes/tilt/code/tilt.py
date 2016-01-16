@@ -1,25 +1,19 @@
 """Contains the Tilt mode code"""
 
-# tilt.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
-
 from mpf.system.config import CaseInsensitiveDict
 from mpf.system.mode import Mode
 from mpf.system.timing import Timing
+import time
 
 
 class Tilt(Mode):
 
     def mode_init(self):
         self._balls_to_collect = 0
-        self._last_warning_tick = 0
+        self._last_warning = None
         self.ball_ending_tilted_queue = None
         self.tilt_event_handlers = set()
-        self.last_tilt_warning_switch_tick = 0
+        self.last_tilt_warning_switch = 0
 
         self.tilt_config = self.machine.config_processor.process_config2(
             config_spec='tilt',
@@ -31,6 +25,15 @@ class Tilt(Mode):
 
         for event in self.tilt_config['reset_warnings_events']:
             self.add_mode_event_handler(event, self.reset_warnings)
+
+        for event in self.tilt_config['tilt_events']:
+            self.add_mode_event_handler(event, self.tilt)
+
+        for event in self.tilt_config['tilt_warning_events']:
+            self.add_mode_event_handler(event, self.tilt_warning)
+
+        for event in self.tilt_config['tilt_slam_tilt_events']:
+            self.add_mode_event_handler(event, self.slam_tilt)
 
     def mode_stop(self, **kwargs):
         self._remove_switch_handlers()
@@ -77,14 +80,14 @@ class Tilt(Mode):
         cause a tilt, a tilt will be processed.
 
         """
-        self.last_tilt_warning_switch_tick = self.machine.tick_num
+        self.last_tilt_warning_switch = time.time()
 
         if not self.player:
             return
 
         self.log.debug("Tilt Warning")
 
-        self._last_warning_tick = self.machine.tick_num
+        self._last_warning = time.time()
         self.player[self.tilt_config['tilt_warnings_player_var']] += 1
 
         warnings = self.player[self.tilt_config['tilt_warnings_player_var']]
@@ -110,8 +113,10 @@ class Tilt(Mode):
         if not self.machine.game:
             return
 
-        self._balls_to_collect = self.machine.playfield.balls
-        # todo use collection
+        self._balls_to_collect = 0
+        for device in self.machine.ball_devices:
+            if device.is_playfield():
+                self._balls_to_collect += device.available_balls
 
         self.log.debug("Processing Tilt. Balls to collect: %s",
                        self._balls_to_collect)
@@ -131,11 +136,6 @@ class Tilt(Mode):
                     self.machine.events.add_handler(
                         'balldevice_{}_ball_enter'.format(device.name),
                         self._tilted_ball_drain))
-            else:
-                self.tilt_event_handlers.add(
-                    self.machine.events.add_handler(
-                        'balldevice_{}_ball_enter'.format(device.name),
-                        self._tilted_ball_entered_non_drain_device))
 
         self.machine.game.ball_ending()
 
@@ -158,16 +158,13 @@ class Tilt(Mode):
 
         return {'unclaimed_balls': 0}
 
-    def _tilted_ball_entered_non_drain_device(self, new_balls, unclaimed_balls,
-                                              device):
-        return {'unclaimed_balls': unclaimed_balls}
-
     def _tilt_switch_handler(self):
         self.tilt()
 
     def _tilt_warning_switch_handler(self):
-        if (self._last_warning_tick + self.tilt_config['multiple_hit_window']
-                <= self.machine.tick_num):
+        if (not self._last_warning or
+             (self._last_warning + (self.tilt_config['multiple_hit_window']*0.001)
+              <= time.time())):
 
             self.tilt_warning()
 
@@ -199,14 +196,20 @@ class Tilt(Mode):
         time has cleared.
 
         """
-        ticks = (self.machine.tick_num - self.last_tilt_warning_switch_tick -
-                self.tilt_config['settle_time'])
-
-        if ticks >= 0:
+        if not self.last_tilt_warning_switch:
             return 0
+
+        delta = (self.tilt_config['settle_time'] -
+                (time.time() - self.last_tilt_warning_switch) * 1000)
+        if delta > 0:
+            return delta
         else:
-            return abs(ticks * Timing.ms_per_tick)
+            return 0
 
     def slam_tilt(self):
         self.machine.events.post('slam_tilt')
-        self.game_ended()
+        if not self.machine.game:
+            return
+
+        self.machine.game.slam_tilted = True
+        self.tilt()

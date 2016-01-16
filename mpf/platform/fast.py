@@ -1,21 +1,13 @@
 """Contains the hardware interface and drivers for the FAST Pinball platform
 hardware, including the FAST Core and WPC controllers as well as FAST I/O
 boards.
-
 """
-
-# fast.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import time
 import sys
 import threading
-import Queue
+import queue
 import traceback
 import io
 from distutils.version import StrictVersion
@@ -27,6 +19,7 @@ from mpf.system.utility_functions import Util
 
 try:
     import serial
+
     serial_imported = True
 except:
     serial_imported = False
@@ -52,7 +45,7 @@ class HardwarePlatform(Platform):
     """
 
     def __init__(self, machine):
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger('FAST')
         self.log.info("Configuring FAST hardware.")
 
@@ -79,7 +72,7 @@ class HardwarePlatform(Platform):
         self.rgb_connection = None
         self.fast_nodes = list()
         self.connection_threads = set()
-        self.receive_queue = Queue.Queue()
+        self.receive_queue = queue.Queue()
         self.fast_leds = set()
         self.flag_led_tick_registered = False
         self.fast_io_boards = list()
@@ -105,7 +98,7 @@ class HardwarePlatform(Platform):
 
         if self.machine_type == 'wpc':
             self.log.info("Configuring the FAST Controller for WPC driver "
-                           "board")
+                          "board")
         else:
             self.log.info("Configuring FAST Controller for FAST IO boards.")
 
@@ -116,128 +109,128 @@ class HardwarePlatform(Platform):
 
         self.wpc_switch_map = {
 
-        #    WPC   HEX    DEC
-            'S11': '00',  #00
-            'S12': '01',  #01
-            'S13': '02',  #02
-            'S14': '03',  #03
-            'S15': '04',  #04
-            'S16': '05',  #05
-            'S17': '06',  #06
-            'S18': '07',  #07
+            #    WPC   HEX    DEC
+            'S11': '00',  # 00
+            'S12': '01',  # 01
+            'S13': '02',  # 02
+            'S14': '03',  # 03
+            'S15': '04',  # 04
+            'S16': '05',  # 05
+            'S17': '06',  # 06
+            'S18': '07',  # 07
 
-            'S21': '08',  #08
-            'S22': '09',  #09
-            'S23': '0A',  #10
-            'S24': '0B',  #11
-            'S25': '0C',  #12
-            'S26': '0D',  #13
-            'S27': '0E',  #14
-            'S28': '0F',  #15
+            'S21': '08',  # 08
+            'S22': '09',  # 09
+            'S23': '0A',  # 10
+            'S24': '0B',  # 11
+            'S25': '0C',  # 12
+            'S26': '0D',  # 13
+            'S27': '0E',  # 14
+            'S28': '0F',  # 15
 
-            'S31': '10',  #16
-            'S32': '11',  #17
-            'S33': '12',  #18
-            'S34': '13',  #19
-            'S35': '14',  #20
-            'S36': '15',  #21
-            'S37': '16',  #22
-            'S38': '17',  #23
+            'S31': '10',  # 16
+            'S32': '11',  # 17
+            'S33': '12',  # 18
+            'S34': '13',  # 19
+            'S35': '14',  # 20
+            'S36': '15',  # 21
+            'S37': '16',  # 22
+            'S38': '17',  # 23
 
-            'S41': '18',  #24
-            'S42': '19',  #25
-            'S43': '1A',  #26
-            'S44': '1B',  #27
-            'S45': '1C',  #28
-            'S46': '1D',  #29
-            'S47': '1E',  #30
-            'S48': '1F',  #31
+            'S41': '18',  # 24
+            'S42': '19',  # 25
+            'S43': '1A',  # 26
+            'S44': '1B',  # 27
+            'S45': '1C',  # 28
+            'S46': '1D',  # 29
+            'S47': '1E',  # 30
+            'S48': '1F',  # 31
 
-            'S51': '20',  #32
-            'S52': '21',  #33
-            'S53': '22',  #34
-            'S54': '23',  #35
-            'S55': '24',  #36
-            'S56': '25',  #37
-            'S57': '26',  #38
-            'S58': '27',  #39
+            'S51': '20',  # 32
+            'S52': '21',  # 33
+            'S53': '22',  # 34
+            'S54': '23',  # 35
+            'S55': '24',  # 36
+            'S56': '25',  # 37
+            'S57': '26',  # 38
+            'S58': '27',  # 39
 
-            'S61': '28',  #40
-            'S62': '29',  #41
-            'S63': '2A',  #42
-            'S64': '2B',  #43
-            'S65': '2C',  #44
-            'S66': '2D',  #45
-            'S67': '2E',  #46
-            'S68': '2F',  #47
+            'S61': '28',  # 40
+            'S62': '29',  # 41
+            'S63': '2A',  # 42
+            'S64': '2B',  # 43
+            'S65': '2C',  # 44
+            'S66': '2D',  # 45
+            'S67': '2E',  # 46
+            'S68': '2F',  # 47
 
-            'S71': '30',  #48
-            'S72': '31',  #49
-            'S73': '32',  #50
-            'S74': '33',  #51
-            'S75': '34',  #52
-            'S76': '35',  #53
-            'S77': '36',  #54
-            'S78': '37',  #55
+            'S71': '30',  # 48
+            'S72': '31',  # 49
+            'S73': '32',  # 50
+            'S74': '33',  # 51
+            'S75': '34',  # 52
+            'S76': '35',  # 53
+            'S77': '36',  # 54
+            'S78': '37',  # 55
 
-            'S81': '38',  #56
-            'S82': '39',  #57
-            'S83': '3A',  #58
-            'S84': '3B',  #59
-            'S85': '3C',  #60
-            'S86': '3D',  #61
-            'S87': '3E',  #62
-            'S88': '3F',  #63
+            'S81': '38',  # 56
+            'S82': '39',  # 57
+            'S83': '3A',  # 58
+            'S84': '3B',  # 59
+            'S85': '3C',  # 60
+            'S86': '3D',  # 61
+            'S87': '3E',  # 62
+            'S88': '3F',  # 63
 
-            'S91': '40',  #64
-            'S92': '41',  #65
-            'S93': '42',  #66
-            'S94': '43',  #67
-            'S95': '44',  #68
-            'S96': '45',  #69
-            'S97': '46',  #70
-            'S98': '47',  #71
+            'S91': '40',  # 64
+            'S92': '41',  # 65
+            'S93': '42',  # 66
+            'S94': '43',  # 67
+            'S95': '44',  # 68
+            'S96': '45',  # 69
+            'S97': '46',  # 70
+            'S98': '47',  # 71
 
-            'S101': '48',  #72
-            'S102': '49',  #73
-            'S103': '4A',  #74
-            'S104': '4B',  #75
-            'S105': '4C',  #76
-            'S106': '4D',  #77
-            'S107': '4E',  #78
-            'S108': '4F',  #79
+            'S101': '48',  # 72
+            'S102': '49',  # 73
+            'S103': '4A',  # 74
+            'S104': '4B',  # 75
+            'S105': '4C',  # 76
+            'S106': '4D',  # 77
+            'S107': '4E',  # 78
+            'S108': '4F',  # 79
 
             # Directs
-            'SD1': '50',  #80
-            'SD2': '51',  #81
-            'SD3': '52',  #82
-            'SD4': '53',  #83
-            'SD5': '54',  #84
-            'SD6': '55',  #85
-            'SD7': '56',  #86
-            'SD8': '57',  #87
+            'SD1': '50',  # 80
+            'SD2': '51',  # 81
+            'SD3': '52',  # 82
+            'SD4': '53',  # 83
+            'SD5': '54',  # 84
+            'SD6': '55',  # 85
+            'SD7': '56',  # 86
+            'SD8': '57',  # 87
 
             # DIP switches
-            'DIP1': '58',  #88
-            'DIP2': '59',  #89
-            'DIP3': '5A',  #90
-            'DIP4': '5B',  #91
-            'DIP5': '5C',  #92
-            'DIP6': '5D',  #93
-            'DIP7': '5E',  #94
-            'DIP8': '5F',  #95
+            'DIP1': '58',  # 88
+            'DIP2': '59',  # 89
+            'DIP3': '5A',  # 90
+            'DIP4': '5B',  # 91
+            'DIP5': '5C',  # 92
+            'DIP6': '5D',  # 93
+            'DIP7': '5E',  # 94
+            'DIP8': '5F',  # 95
 
             # Fliptronics
-            'SF1': '60',  #96
-            'SF2': '61',  #97
-            'SF3': '62',  #98
-            'SF4': '63',  #99
-            'SF5': '64',  #100
-            'SF6': '65',  #101
-            'SF7': '66',  #102
-            'SF8': '67',  #103
+            'SF1': '60',  # 96
+            'SF2': '61',  # 97
+            'SF3': '62',  # 98
+            'SF4': '63',  # 99
+            'SF5': '64',  # 100
+            'SF6': '65',  # 101
+            'SF7': '66',  # 102
+            'SF8': '67',  # 103
 
-            }
+        }
 
         self.wpc_light_map = {
             'L11': '00', 'L12': '01', 'L13': '02', 'L14': '03',
@@ -256,7 +249,7 @@ class HardwarePlatform(Platform):
             'L75': '34', 'L76': '35', 'L77': '36', 'L78': '37',
             'L81': '38', 'L82': '39', 'L83': '3A', 'L84': '3B',
             'L85': '3C', 'L86': '3D', 'L87': '3E', 'L88': '3F',
-                               }
+        }
 
         self.wpc_driver_map = {
             'C01': '00', 'C02': '01', 'C03': '02', 'C04': '03',
@@ -272,12 +265,12 @@ class HardwarePlatform(Platform):
             'FURM': '24', 'FURH': '25', 'FULM': '26', 'FULH': '27',
             'C37': '28', 'C38': '29', 'C39': '2A', 'C40': '2B',
             'C41': '2C', 'C42': '2D', 'C43': '2E', 'C44': '2F',
-                                }
+        }
 
         self.wpc_gi_map = {
             'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
             'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
-                           }
+        }
 
         # todo verify this list
         self.fast_commands = {'ID': self.receive_id,  # processor ID
@@ -289,10 +282,11 @@ class HardwarePlatform(Platform):
                               'LX': self.receive_lx,  # lamp cmd received
                               'PX': self.receive_px,  # segment cmd received
                               'SA': self.receive_sa,  # all switch states
-                              '/N': self.receive_nw_open,    # nw switch open
+                              '/N': self.receive_nw_open,  # nw switch open
                               '-N': self.receive_nw_closed,  # nw switch closed
-                              '/L': self.receive_local_open,    # local sw open
-                              '-L': self.receive_local_closed,  # local sw close
+                              '/L': self.receive_local_open,  # local sw open
+                              '-L': self.receive_local_closed,
+                              # local sw close
                               'WD': self.receive_wd,  # watchdog
                               }
 
@@ -307,7 +301,7 @@ class HardwarePlatform(Platform):
 
         if msg[2:3] == ':':
             cmd = msg[0:2]
-            payload = msg[3:].replace('\r','')
+            payload = msg[3:].replace('\r', '')
         else:
             self.log.warning("Received maformed message: %s", msg)
             return
@@ -316,18 +310,22 @@ class HardwarePlatform(Platform):
         if cmd in self.fast_commands:
             self.fast_commands[cmd](payload)
         else:
-            self.log.warning("Received unknown serial command? %s. (This is ok "
-                             "to ignore for now while the FAST platform is in "
-                             "development)", msg)
+            self.log.warning(
+                "Received unknown serial command? %s. (This is ok "
+                "to ignore for now while the FAST platform is in "
+                "development)", msg)
 
     def _connect_to_hardware(self):
         # Connect to each port from the config. This procuess will cause the
         # connection threads to figure out which processor they've connected to
         # and to register themselves.
         for port in self.config['ports']:
-            self.connection_threads.add(SerialCommunicator(machine=self.machine,
-                platform=self, port=port, baud=self.config['baud'],
-                send_queue=Queue.Queue(), receive_queue=self.receive_queue))
+            self.connection_threads.add(
+                SerialCommunicator(machine=self.machine,
+                                   platform=self, port=port,
+                                   baud=self.config['baud'],
+                                   send_queue=queue.Queue(),
+                                   receive_queue=self.receive_queue))
 
     def register_processor_connection(self, name, communicator):
         """Once a communication link has been established with one of the
@@ -361,7 +359,8 @@ class HardwarePlatform(Platform):
         msg = 'RS:'
 
         for led in self.fast_leds:
-            msg += (led.number + led.current_color + ',')  # todo change to join
+            msg += (
+            led.number + led.current_color + ',')  # todo change to join
 
         msg = msg[:-1]  # trim the final comma
 
@@ -431,7 +430,7 @@ class HardwarePlatform(Platform):
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
                 num = Util.int_to_hex_string((offset * 8) + i)
-                if byte & (2**i):
+                if byte & (2 ** i):
                     hw_states[(num, 1)] = 1
                 else:
                     hw_states[(num, 1)] = 0
@@ -441,7 +440,7 @@ class HardwarePlatform(Platform):
 
                 num = Util.int_to_hex_string((offset * 8) + i)
 
-                if byte & (2**i):
+                if byte & (2 ** i):
                     hw_states[(num, 0)] = 1
                 else:
                     hw_states[(num, 0)] = 0
@@ -459,9 +458,9 @@ class HardwarePlatform(Platform):
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
             config['number'] = self.wpc_driver_map.get(
-                                                config['number'].upper())
+                    config['number'].upper())
             if ('connection' in config and
-                    config['connection'].lower() == 'network'):
+                        config['connection'].lower() == 'network'):
                 config['connection'] = 1
             else:
                 config['connection'] = 0  # local driver (default for WPC)
@@ -476,14 +475,14 @@ class HardwarePlatform(Platform):
 
             # Now figure out the connection type
             if ('connection' in config and
-                    config['connection'].lower() == 'local'):
+                        config['connection'].lower() == 'local'):
                 config['connection'] = 0
             else:
                 config['connection'] = 1  # network driver (default for FAST)
 
         else:
             self.log.critical("Invalid machine type: {0{}}".format(
-                self.machine_type))
+                    self.machine_type))
             sys.exit()
 
         return (FASTDriver(config, self.net_connection.send, self.machine),
@@ -519,7 +518,7 @@ class HardwarePlatform(Platform):
 
         if self.machine_type == 'wpc':  # translate switch number to FAST switch
             config['number'] = self.wpc_switch_map.get(
-                                                config['number_str'].upper())
+                    config['number_str'].upper())
             if 'connection' not in config:
                 config['connection'] = 0  # local switch (default for WPC)
             else:
@@ -596,7 +595,8 @@ class HardwarePlatform(Platform):
             sys.exit()
 
         if self.machine_type == 'wpc':  # translate switch number to FAST switch
-            config['number'] = self.wpc_gi_map.get(config['number_str'].upper())
+            config['number'] = self.wpc_gi_map.get(
+                config['number_str'].upper())
 
         return (FASTGIString(config['number'], self.net_connection.send),
                 config['number'])
@@ -611,7 +611,7 @@ class HardwarePlatform(Platform):
 
         if self.machine_type == 'wpc':  # translate number to FAST light num
             config['number'] = self.wpc_light_map.get(
-                                                config['number_str'].upper())
+                    config['number_str'].upper())
         elif self.config['config_number_format'] == 'int':
             config['number'] = Util.int_to_hex_string(config['number'])
         else:
@@ -625,8 +625,8 @@ class HardwarePlatform(Platform):
 
         if not self.dmd_connection:
             self.log.warning("A request was made to configure a FAST DMD, "
-                              "but no connection to a DMD processor is "
-                              "available. No hardware DMD will be used.")
+                             "but no connection to a DMD processor is "
+                             "available. No hardware DMD will be used.")
 
             return FASTDMD(self.machine, self.null_dmd_sender)
 
@@ -676,11 +676,12 @@ class HardwarePlatform(Platform):
         driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
 
         driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
-            **driver_settings_overrides))
+                **driver_settings_overrides))
 
-        self.log.debug("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
-                      " %s, Driver settings: %s", switch_obj.name, sw_activity,
-                      driver_obj.name, driver_settings)
+        self.log.debug(
+            "Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
+            " %s, Driver settings: %s", switch_obj.name, sw_activity,
+            driver_obj.name, driver_settings)
 
         control = 0x01  # Driver enabled
         if drive_now:
@@ -694,48 +695,48 @@ class HardwarePlatform(Platform):
         # todo need to implement disable_on_release
 
         if driver_action == 'pulse':
-            mode = '10'                               # Mode 10 settings
-            param1 = driver_settings['pulse_ms']      # initial pulse ms
-            param2 = driver_settings['pwm1']          # intial pwm
-            param3 = '00'                             # pulse 2 time
-            param4 = '00'                             # pulse 2 pwm
-            param5 = driver_settings['recycle_ms']    # recycle ms
+            mode = '10'  # Mode 10 settings
+            param1 = driver_settings['pulse_ms']  # initial pulse ms
+            param2 = driver_settings['pwm1']  # intial pwm
+            param3 = '00'  # pulse 2 time
+            param4 = '00'  # pulse 2 pwm
+            param5 = driver_settings['recycle_ms']  # recycle ms
 
         elif driver_action == 'hold':
-            mode = '18'                               # Mode 18 settings
-            param1 = driver_settings['pulse_ms']      # intiial pulse ms
-            param2 = driver_settings['pwm1']          # intial pwm
-            param3 = driver_settings['pwm2']          # hold pwm
-            param4 = driver_settings['recycle_ms']    # recycle ms
-            param5 = '00'                             # not used with Mode 18
+            mode = '18'  # Mode 18 settings
+            param1 = driver_settings['pulse_ms']  # intiial pulse ms
+            param2 = driver_settings['pwm1']  # intial pwm
+            param3 = driver_settings['pwm2']  # hold pwm
+            param4 = driver_settings['recycle_ms']  # recycle ms
+            param5 = '00'  # not used with Mode 18
 
         elif driver_action == 'timed_hold':
 
             # fast hold time is ms*100
             hold_value = driver_settings['activation_time']
 
-            mode = '70'                               # Mode 70 settings
-            param1 = driver_settings['pulse_ms']      # intiial pulse ms
-            param2 = driver_settings['pwm1']          # intial pwm
-            param3 = hold_value                       # hold time
-            param4 = driver_settings['pwm2']          # hold pwm
-            param5 = driver_settings['recycle_ms']    # recycle ms
+            mode = '70'  # Mode 70 settings
+            param1 = driver_settings['pulse_ms']  # intiial pulse ms
+            param2 = driver_settings['pwm1']  # intial pwm
+            param3 = hold_value  # hold time
+            param4 = driver_settings['pwm2']  # hold pwm
+            param5 = driver_settings['recycle_ms']  # recycle ms
 
         else:
             raise ValueError("Invalid driver action: '%s'. Expected 'hold', "
                              "'timed_hold', or 'pulse'" % (driver_action))
 
         self.hw_rules[driver_obj] = {'mode': mode,
-                               'param1': param1,
-                               'param2': param2,
-                               'param3': param3,
-                               'param4': param4,
-                               'param5': param5,
-                               'switch': switch_obj.number}
+                                     'param1': param1,
+                                     'param2': param2,
+                                     'param3': param3,
+                                     'param4': param4,
+                                     'param5': param5,
+                                     'switch': switch_obj.number}
 
         cmd = (driver_settings['config_cmd'] +
                driver_obj.number[0] + ',' +
-               control  + ',' +
+               control + ',' +
                switch_obj.number[0] + ',' +
                mode + ',' +
                param1 + ',' +
@@ -765,13 +766,13 @@ class HardwarePlatform(Platform):
         sw_num = self.machine.switches[sw_name].number
 
         # find the rule(s) based on this switch
-        coils = [k for k, v in self.hw_rules.iteritems() if v['switch'] == sw_num]
+        coils = [k for k, v in self.hw_rules.items() if v['switch'] == sw_num]
 
-        self.log.debug("Clearing HW Rule for switch: %s %s, coils: %s", sw_name,
+        self.log.debug("Clearing HW Rule for switch: %s %s, coils: %s",
+                       sw_name,
                        sw_num, coils)
 
         for coil in coils:
-
             del self.hw_rules[coil]
 
             driver_settings = coil.hw_driver.driver_settings
@@ -788,7 +789,6 @@ class HardwarePlatform(Platform):
 
 
 class FASTSwitch(object):
-
     def __init__(self, number, debounce_open, debounce_close, sender):
         self.log = logging.getLogger('FASTSwitch')
         self.number = number[0]
@@ -822,7 +822,7 @@ class FASTDriver(object):
         self.config = dict()
         self.driver_settings = self.create_driver_settings(machine, **config)
 
-        self.driver_settings['mode'] = '10'     # pulsed
+        self.driver_settings['mode'] = '10'  # pulsed
 
         self.log = logging.getLogger('FASTDriver')
 
@@ -859,19 +859,19 @@ class FASTDriver(object):
         return return_dict
 
     def merge_driver_settings(self,
-                            pulse_ms=None,
-                            pwm_on_ms=None,
-                            pwm_off_ms=None,
-                            pulse_power=None,
-                            hold_power=None,
-                            pulse_power32=None,
-                            hold_power32=None,
-                            pulse_pwm_mask=None,
-                            hold_pwm_mask=None,
-                            recycle_ms=None,
-                            activation_time=None,
-                            **kwargs
-                            ):
+                              pulse_ms=None,
+                              pwm_on_ms=None,
+                              pwm_off_ms=None,
+                              pulse_power=None,
+                              hold_power=None,
+                              pulse_power32=None,
+                              hold_power32=None,
+                              pulse_pwm_mask=None,
+                              hold_pwm_mask=None,
+                              recycle_ms=None,
+                              activation_time=None,
+                              **kwargs
+                              ):
 
         if pwm_on_ms:
             raise ValueError("The setting 'pwm_on_ms' is not valid with the "
@@ -909,15 +909,17 @@ class FASTDriver(object):
         if pulse_pwm_mask:
             pulse_pwm_mask = str(pulse_pwm_mask)
             if len(pulse_pwm_mask) == 32:
-                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
+                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask,
+                                                              8)
             elif len(pulse_pwm_mask) == 8:
-                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
+                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask,
+                                                              2)
             else:
                 raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
         elif pulse_power32 is not None:
-            return_dict['pwm32']  = Util.pwm32_to_hex_string(pulse_power32)
+            return_dict['pwm32'] = Util.pwm32_to_hex_string(pulse_power32)
         elif pulse_power is not None:
-            return_dict['pwm1']  = Util.pwm8_to_hex_string(pulse_power)
+            return_dict['pwm1'] = Util.pwm8_to_hex_string(pulse_power)
 
         if hold_pwm_mask:
             hold_pwm_mask = str(hold_pwm_mask)
@@ -961,7 +963,7 @@ class FASTDriver(object):
             # and drive now) switch ID 00, mode 18 (latched)
 
             if (self.driver_settings['pwm1'] == 'ff' and
-                    self.driver_settings['pwm2'] == 'ff' and
+                        self.driver_settings['pwm2'] == 'ff' and
                     not ('allow_enable' in self.driver_settings or not
                     self.driver_settings['allow_enable'])):
 
@@ -974,7 +976,7 @@ class FASTDriver(object):
 
                 cmd = (self.driver_settings['config_cmd'] +
                        self.driver_settings['number'] +
-                      ',C1,00,18,' +
+                       ',C1,00,18,' +
                        self.driver_settings['pulse_ms'] + ',' +
                        self.driver_settings['pwm1'] + ',' +
                        self.driver_settings['pwm2'] + ',' +
@@ -986,7 +988,7 @@ class FASTDriver(object):
         self.send(cmd)
         # todo change hold to pulse with re-ups
 
-        #self.check_auto()
+        # self.check_auto()
 
     def pulse(self, milliseconds=None):
         """Pulses this driver. """
@@ -998,10 +1000,10 @@ class FASTDriver(object):
         if self.autofire:
             cmd = (self.driver_settings['trigger_cmd'] +
                    self.driver_settings['number'] + ',' +
-                  '01')
+                   '01')
             if milliseconds:
                 self.log.debug("Received command to pulse driver for %sms, but"
-                              "this driver is configured with an autofire rule"
+                               "this driver is configured with an autofire rule"
                                ", so that pulse value will be used instead.")
         else:
             cmd = (self.driver_settings['config_cmd'] +
@@ -1029,6 +1031,7 @@ class FASTDriver(object):
 
             self.log.debug("Re-enabling auto fire mode: %s", cmd)
             self.send(cmd)
+
 
 class FASTGIString(object):
     def __init__(self, number, sender):
@@ -1060,7 +1063,6 @@ class FASTGIString(object):
 
 
 class FASTMatrixLight(object):
-
     def __init__(self, number, sender):
         self.log = logging.getLogger('FASTMatrixLight')
         self.number = number
@@ -1085,7 +1087,6 @@ class FASTMatrixLight(object):
 
 
 class FASTDirectLED(object):
-
     def __init__(self, number):
         self.log = logging.getLogger('FASTLED')
         self.number = number
@@ -1099,7 +1100,8 @@ class FASTDirectLED(object):
 
     def hex_to_rgb(self, value):
         lv = len(value)
-        return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
+        return tuple(
+                int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
 
     def rgb_to_hex(self, rgb):
         return '%02x%02x%02x' % (rgb[0], rgb[1], rgb[2])
@@ -1133,7 +1135,6 @@ class FASTDirectLED(object):
 
 
 class FASTDMD(object):
-
     def __init__(self, machine, sender):
         self.machine = machine
         self.send = sender
@@ -1157,8 +1158,8 @@ class FASTDMD(object):
 
 
 class SerialCommunicator(object):
-
-    def __init__(self, machine, platform, port, baud, send_queue, receive_queue):
+    def __init__(self, machine, platform, port, baud, send_queue,
+                 receive_queue):
         self.machine = machine
         self.platform = platform
         self.send_queue = send_queue
@@ -1197,11 +1198,13 @@ class SerialCommunicator(object):
                                                timeout=1, writeTimeout=0)
 
         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(
-            self.serial_connection, self.serial_connection, 1), newline='\r',
-            line_buffering=True)
+                self.serial_connection, self.serial_connection, 1),
+                newline='\r',
+                line_buffering=True)
 
         self.identify_connection()
-        self.platform.register_processor_connection(self.remote_processor, self)
+        self.platform.register_processor_connection(self.remote_processor,
+                                                    self)
         self._start_threads()
 
     def identify_connection(self):
@@ -1231,7 +1234,8 @@ class SerialCommunicator(object):
             self.remote_processor, self.remote_model, = msg[3:].split()
 
         self.platform.log.info("Received ID acknowledgement. Processor: %s, "
-                               "Board: %s, Firmware: %s", self.remote_processor,
+                               "Board: %s, Firmware: %s",
+                               self.remote_processor,
                                self.remote_model, self.remote_firmware)
 
         if self.remote_processor == 'DMD':
@@ -1246,7 +1250,8 @@ class SerialCommunicator(object):
             latest_version = RGB_LATEST_FW
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
-            self.platform.log.critical("Firmware version mismatch. MPF requires"
+            self.platform.log.critical(
+                "Firmware version mismatch. MPF requires"
                 " the %s processor to be firmware %s, but yours is %s",
                 self.remote_processor, min_version, self.remote_firmware)
             sys.exit()
@@ -1282,14 +1287,19 @@ class SerialCommunicator(object):
                 if model:
                     self.platform.log.info('Fast IO Board {0}: Model: {1}, '
                                            'Firmware: {2}, Switches: {3}, '
-                                           'Drivers: {4}'.format(node_id, model,
-                                           fw, int(sw, 16), int(dr, 16)))
+                                           'Drivers: {4}'.format(node_id,
+                                                                 model,
+                                                                 fw,
+                                                                 int(sw, 16),
+                                                                 int(dr, 16)))
 
                     if StrictVersion(IO_MIN_FW) > str(fw):
-                        self.platform.log.critical("Firmware version mismatch. MPF "
+                        self.platform.log.critical(
+                            "Firmware version mismatch. MPF "
                             "requires the IO boards to be firmware {0}, but "
                             "your Board {1} ({2}) is v{3}".format(IO_MIN_FW,
-                            node_id, model, fw))
+                                                                  node_id,
+                                                                  model, fw))
                         firmware_ok = False
 
         if not firmware_ok:
@@ -1343,7 +1353,8 @@ class SerialCommunicator(object):
 
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            lines = traceback.format_exception(exc_type, exc_value,
+                                               exc_traceback)
             msg = ''.join(line for line in lines)
             self.machine.crash_queue.put(msg)
 
@@ -1369,28 +1380,3 @@ class SerialCommunicator(object):
                                                    exc_traceback)
                 msg = ''.join(line for line in lines)
                 self.machine.crash_queue.put(msg)
-
-# The MIT License (MIT)
-
-# Oringal code on which this module was based:
-# Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

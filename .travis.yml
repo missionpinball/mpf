@@ -1,7 +1,17 @@
 language: python
 python:
-  - "2.7"
-# command to install dependencies
-install: "pip install pyyaml"
-# command to run tests
-script: make unit
+- 3.4
+install:
+- pip install ruamel.yaml
+- pip install coveralls
+script: coverage run -m unittest discover
+after_success: coveralls
+deploy:
+  provider: pypi
+  user: brianmadden
+  password:
+    secure: uOKQJ3KxdWyhdhbwI3s5pAW6jKVMIRS5dWrMW7Rvsld7U6JedtHGDvmszFxqek2l+ImHYAUjCob9BGdVb7zHCu0qamp+v+GJKyovS7mC/s+JqeOyb9qi+F/qoUGD41IxSna05Mhbgqsf9FbSiVaj/Wo50jzP95EqfYmO6Hw/YlPaCjFx2YoPyc+gS/LJpLD3Uhp3diibjCwXgbPb4s5lXQhjIiXyPKqa41y1ynDVlBEIbURDOhWT344BVqg1bJIkrHAicTABI37nH7jQkfe1IIuwoMaRuyQZ82P7yuMmwJ3m+lO6GQbLLM1By0S6agU874XsGtOLS+SgBLmfCSFDTAiuftM8vA3IuSWyKqsITge2W43F+P+eLUR5eaDFF9Cxn0dvBodfBZzth/qhrCKf/C+kB5QKveuatA6Nd3dpzmflW+KOPkUrdK1lfwg1wM5GpsTt1xRIe1dewPBhXETMdsaDj+WJCzaKhg4zbLO24BPFvJMhVUM1lD5XQP1hIG73VMZ6eB/EwFrOaUPSQ5xQEJn5/Xlcht7HvjJPYXn6UE2L+PyAZeOLIsbFfYcf26yBrc1ovVY/tEej2guj5ZP2TMRP/X9/QGnPtOle1UgB2zwttNN5hXihorqxftsTdIbYtZIQ4+8QAkuATzmSEi/M4jvnxkPKwUljQWAGyB4y+1U=
+  on:
+    tags: true
+  all_branches: true
+  distributions: bdist_wheel

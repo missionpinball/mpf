@@ -1,17 +1,12 @@
-"""Contains code for an Open Pixel Controller hardware for RGB LEDs."""
-# openpixel.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
+"""Contains code for an Open Pixel Controller hardware for RGB LEDs.
 
-# Documentation and more info at http://missionpinball.com/mpf
-
-# The python code to build the OPC message packet came from here:
-# https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
+The python code to build the OPC message packet came from here:
+https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
+"""
 
 import logging
 import socket
-from Queue import Queue
+from queue import Queue
 import threading
 import sys
 import traceback
@@ -29,7 +24,7 @@ class HardwarePlatform(Platform):
 
     def __init__(self, machine):
 
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
 
         self.log = logging.getLogger("OpenPixel")
         self.log.debug("Configuring Open Pixel hardware interface.")
@@ -52,17 +47,17 @@ class HardwarePlatform(Platform):
         if self.machine.config['open_pixel_control']['number_format'] == 'hex':
             led = int(str(led), 16)
 
-        #self.opc_client.add_pixel(channel, led)
+        # self.opc_client.add_pixel(channel, led)
 
         return OpenPixelLED(self.opc_client, channel, led)
 
     def _setup_opc_client(self):
         self.opc_client = OpenPixelClient(self.machine,
-            self.machine.config['open_pixel_control'])
+                                          self.machine.config[
+                                              'open_pixel_control'])
 
 
 class OpenPixelLED(object):
-
     def __init__(self, opc_client, channel, led):
         self.log = logging.getLogger('OpenPixelLED')
 
@@ -85,6 +80,7 @@ class OpenPixelClient(object):
         port: Int of the TCP port of the server to connect to.
 
     """
+
     def __init__(self, machine, config):
 
         self.log = logging.getLogger('OpenPixelClient')
@@ -118,18 +114,17 @@ class OpenPixelClient(object):
 
         """
         if len(self.channels) < channel + 1:
-
             channels_to_add = channel + 1 - len(self.channels)
 
             self.channels = (
                 self.channels + [list() for i in range(channels_to_add)])
 
         if len(self.channels[channel]) < led + 1:
-
             leds_to_add = led + 1 - len(self.channels[channel])
 
             self.channels[channel] = (
-                self.channels[channel] + [(0, 0, 0) for i in range(leds_to_add)])
+                self.channels[channel] + [(0, 0, 0) for i in
+                                          range(leds_to_add)])
 
     def set_pixel_color(self, channel, pixel, color):
         """Sets an invidual pixel color.
@@ -173,8 +168,8 @@ class OpenPixelClient(object):
         """
 
         # Build the OPC message
-        len_hi_byte = int(len(pixels)*3 / 256)
-        len_lo_byte = (len(pixels)*3) % 256
+        len_hi_byte = int(len(pixels) * 3 / 256)
+        len_lo_byte = (len(pixels) * 3) % 256
         header = chr(channel) + chr(0) + chr(len_hi_byte) + chr(len_lo_byte)
         pieces = [header]
         for r, g, b in pixels:
@@ -245,13 +240,13 @@ class OPCThread(threading.Thread):
 
             if self.connection_required:
                 self.log.debug("Configuration is set that OPC connection is "
-                              "required. MPF exiting.")
+                               "required. MPF exiting.")
                 self.done()
 
         try:
             self.log.debug('Trying to connect to OPC server: %s:%s. Attempt '
-                          'number %s', self.host, self.port,
-                          self.connection_attempts)
+                           'number %s', self.host, self.port,
+                           self.connection_attempts)
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.connect((self.host, self.port))
             self.log.debug('Connected to the OPC server.')
@@ -287,11 +282,13 @@ class OPCThread(threading.Thread):
                     # don't want to build up stale pixel data while we're not
                     # connected
                     self.sending_queue.queue.clear()
-                    self.log.warning('Discarding stale pixel data from the queue.')
+                    self.log.warning(
+                        'Discarding stale pixel data from the queue.')
 
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            lines = traceback.format_exception(exc_type, exc_value,
+                                               exc_traceback)
             msg = ''.join(line for line in lines)
             self.machine.crash_queue.put(msg)
 
@@ -299,26 +296,3 @@ class OPCThread(threading.Thread):
         """Exits the thread and causes MPF to shut down."""
         self.disconnect()
         self.machine.done = True
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

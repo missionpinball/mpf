@@ -1,0 +1,17 @@
+#config_version=3
+
+switches:
+    s_transfer:
+        number:
+
+playfield_transfers:
+    transfer1:
+        ball_switch: s_transfer
+        captures_from: playfield1
+        eject_target: playfield2
+
+playfields:
+    playfield1:
+        label: Playfield 1
+    playfield2:
+        label: Playfield 2

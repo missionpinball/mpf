@@ -1,4 +1,4 @@
-
+"""Contains the DeviceManager base class."""
 
 import logging
 from collections import OrderedDict
@@ -9,7 +9,6 @@ from mpf.system.file_manager import FileManager
 
 
 class DeviceManager(object):
-
     def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger("DeviceManager")
@@ -20,10 +19,10 @@ class DeviceManager(object):
         self._load_device_modules()
 
         self.machine.events.add_handler('init_phase_2',
-            self.create_machinewide_device_control_events)
+                                        self.create_machinewide_device_control_events)
 
         self.machine.events.add_handler('init_phase_2',
-            self.create_collection_control_events)
+                                        self.create_collection_control_events)
 
     def _load_device_modules(self):
         self.log.info("Loading devices...")
@@ -60,12 +59,12 @@ class DeviceManager(object):
     def create_devices(self, collection, config, validate=True):
 
         self.device_classes[collection].create_devices(
-            cls=self.device_classes[collection],
-            collection=getattr(self.machine, collection),
-            config=config,
-            machine=self.machine,
-            validate=validate
-            )
+                cls=self.device_classes[collection],
+                collection=getattr(self.machine, collection),
+                config=config,
+                machine=self.machine,
+                validate=validate
+        )
 
     def get_device_control_events(self, config):
         """Scans a config dictionary and yields events, methods, delays, and
@@ -83,12 +82,11 @@ class DeviceManager(object):
                 * The device object
 
         """
-
         for collection in self.collections:
             if self.collections[collection].config_section in config:
                 for device, settings in (
-                        config[self.collections[collection].
-                               config_section].iteritems()):
+                        iter(config[self.collections[collection].
+                                config_section].items())):
 
                     control_events = [x for x in settings if
                                       x.endswith('_events')]
@@ -96,8 +94,8 @@ class DeviceManager(object):
                     for control_event in control_events:
                         # get events from this device's config
                         if settings[control_event]:
-                            for event, delay in settings[control_event].iteritems():
-
+                            for event, delay in settings[
+                                control_event].items():
                                 yield (event,
                                        getattr(self.collections
                                                [collection][device],
@@ -116,26 +114,26 @@ class DeviceManager(object):
                 priority = 0
 
             self.machine.events.add_handler(
-                event=event,
-                handler=self._control_event_handler,
-                priority=int(priority),
-                callback=method,
-                ms_delay=delay,
-                delay_mgr=self.machine.delay)
+                    event=event,
+                    handler=self._control_event_handler,
+                    priority=int(priority),
+                    callback=method,
+                    ms_delay=delay,
+                    delay_mgr=self.machine.delay)
 
     def create_collection_control_events(self):
         for collection, events in (
-                self.machine.config['mpf']['device_collection_control_events'].
-                iteritems()):
+                iter(self.machine.config['mpf'][
+                         'device_collection_control_events'].
+                             items())):
 
             for event in events:
-
                 event_name = collection + '_' + event
 
                 self.machine.events.add_handler(event_name,
-                    self._collection_control_event_handler,
-                    collection=collection,
-                    method=event)
+                                                self._collection_control_event_handler,
+                                                collection=collection,
+                                                method=event)
 
     def _collection_control_event_handler(self, collection, method):
         for device in self.collections[collection]:
@@ -160,16 +158,17 @@ class DeviceManager(object):
 
             for method in (self.machine.config['mpf']['device_events']
                            [device.config_section]):
-
                 self.machine.events.add_handler(event=event_prefix + method,
-                                                handler=getattr(device, method))
+                                                handler=getattr(device,
+                                                                method))
                 self.machine.events.add_handler(event=event_prefix2 + method,
-                                                handler=getattr(device, method))
+                                                handler=getattr(device,
+                                                                method))
 
     def save_tree_to_file(self, filename):
-        print "Exporting file..."
+        print("Exporting file...")
         FileManager.save(filename, self.collections)
-        print "Export complete!"
+        print("Export complete!")
 
 
 class DeviceCollection(CaseInsensitiveDict):
@@ -181,7 +180,7 @@ class DeviceCollection(CaseInsensitiveDict):
     """
 
     def __init__(self, machine, collection, config_section):
-        super(DeviceCollection, self).__init__()
+        super().__init__()
 
         self.machine = machine
         self.name = collection
@@ -201,10 +200,10 @@ class DeviceCollection(CaseInsensitiveDict):
             raise KeyError('Error: No device exists with the name:', attr)
 
     def __iter__(self):
-        for item in self.itervalues():
+        for item in self.values():
             yield item
 
-        # todo add an exception here if this isn't found?
+            # todo add an exception here if this isn't found?
 
     def items_tagged(self, tag):
         """Returns of list of device objects which have a certain tag.
@@ -248,36 +247,13 @@ class DeviceCollection(CaseInsensitiveDict):
             True or False, depending on whether the name is a valid device or
             not.
         """
-        if name.lower() in self.itervalues():
+        if name.lower() in iter(self.values()):
             return True
         else:
             return False
 
     def number(self, number):
         """Returns a device object based on its number."""
-        for name, obj in self.iteritems():
+        for name, obj in self.items():
             if obj.number == number:
                 return self[name]
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

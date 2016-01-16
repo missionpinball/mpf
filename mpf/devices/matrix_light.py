@@ -1,10 +1,4 @@
 """ Contains the MatrixLight parent classes. """
-# light.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 from mpf.system.device import Device
 
@@ -22,15 +16,15 @@ class MatrixLight(Device):
     collection = 'lights'
     class_label = 'light'
 
-    #todo need to get the handler stuff out of each of these I think and into
+    # todo need to get the handler stuff out of each of these I think and into
     # a parent class? Maybe this is a device thing?
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
 
-        super(MatrixLight, self).__init__(machine, name, config, collection,
-                                          platform_section='matrix_lights',
-                                          validate=validate)
+        super().__init__(machine, name, config, collection,
+                         platform_section='matrix_lights',
+                         validate=validate)
 
         self.hw_driver, self.number = (
             self.platform.configure_matrixlight(self.config))
@@ -38,12 +32,12 @@ class MatrixLight(Device):
         self.registered_handlers = []
 
         self.state = {  # current state of this light
-                        'brightness': 0,
-                        'priority': 0}
+            'brightness': 0,
+            'priority': 0}
 
         self.cache = {  # cached state of last manual command
-                        'brightness': 0,
-                        'priority': 0}
+            'brightness': 0,
+            'priority': 0}
 
         # set up the X, Y coordinates
         self.x = None
@@ -137,32 +131,9 @@ class MatrixLight(Device):
         if self.debug:
             self.log.debug("Received a restore command.")
             self.log.debug("Cached brightness: %s, Cached priority: %s",
-                          self.cache['brightness'], self.cache['priority'])
+                           self.cache['brightness'], self.cache['priority'])
 
         self.on(brightness=self.cache['brightness'],
                 priority=self.cache['priority'],
                 force=True,
                 cache=True)
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
