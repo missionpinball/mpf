@@ -54,7 +54,7 @@ class FileInterface(object):
         """
         raise NotImplementedError
 
-    def load(self, filename, verify_version=True):
+    def load(self, filename, verify_version=True, halt_on_error=False, round_trip=False):
         raise NotImplementedError
 
     def save(self, filename, data):
@@ -118,7 +118,7 @@ class FileManager(object):
                 return None
 
     @staticmethod
-    def load(filename, verify_version=False, halt_on_error=False):
+    def load(filename, verify_version=False, halt_on_error=False, round_trip=False):
 
         if not FileManager.initialized:
             FileManager.init()
@@ -131,7 +131,8 @@ class FileManager(object):
             try:
                 config = FileManager.file_interfaces[ext].load(file,
                                                                verify_version,
-                                                               halt_on_error)
+                                                               halt_on_error,
+                                                               round_trip)
             except KeyError:
                 # todo convert to exception
                 FileManager.log.error("No config file processor available for file type {}"

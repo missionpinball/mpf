@@ -6,7 +6,7 @@
 # config files there to override these defaults.
 
 mpf:
-    system_modules: !!omap  # order is important here
+    system_modules: !!omap
         - config_processor: mpf.system.config.Config
         - timing: mpf.system.timing.Timing
         - events: mpf.system.events.EventManager

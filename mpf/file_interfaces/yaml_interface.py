@@ -17,6 +17,7 @@ from ruamel.yaml.parser_ import Parser
 from ruamel.yaml.composer import Composer
 from ruamel.yaml.constructor import Constructor, RoundTripConstructor
 from ruamel.yaml.compat import to_str
+from ruamel.yaml.dumper import RoundTripDumper
 
 from mpf.system.file_manager import FileInterface, FileManager
 from mpf.system.utility_functions import Util
@@ -232,7 +233,7 @@ class YamlInterface(FileInterface):
         else:
             return True
 
-    def load(self, filename, verify_version=True, halt_on_error=False):
+    def load(self, filename, verify_version=True, halt_on_error=False, round_trip=False):
         """Loads a YAML file from disk.
 
         Args:
@@ -244,6 +245,8 @@ class YamlInterface(FileInterface):
                 can't be loaded. (Not found, invalid format, etc. If True, MPF
                 will raise an error and exit. If False, an empty config
                 dictionary will be returned.
+            round_trip: Boolean with controls if the round trip loader is used
+                or if the regular MPFLoader will be used.  Default is False.
 
         Returns:
             A dictionary of the settings from this YAML file.
@@ -257,7 +260,7 @@ class YamlInterface(FileInterface):
             self.log.debug("Loading configuration file: %s", filename)
 
             with open(filename, 'r') as f:
-                config = YamlInterface.process(f)
+                config = YamlInterface.process(f, round_trip)
         except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark
@@ -281,11 +284,18 @@ class YamlInterface(FileInterface):
         return config
 
     @staticmethod
-    def process(data_string):
-        return Util.keys_to_lower(yaml.load(data_string, Loader=MpfLoader))
+    def process(data_string, round_trip=False):
+        if round_trip:
+            return yaml.load(data_string, Loader=MpfRoundTripLoader)
+        else:
+            return Util.keys_to_lower(yaml.load(data_string, Loader=MpfLoader))
 
     def save(self, filename, data):
         with open(filename, 'w') as output_file:
             output_file.write(yaml.dump(data, default_flow_style=False))
+            
+    @staticmethod
+    def save_to_str(data):
+        return yaml.dump(data, Dumper=RoundTripDumper, default_flow_style=False, indent=4, width=10)
 
 file_interface_class = YamlInterface
