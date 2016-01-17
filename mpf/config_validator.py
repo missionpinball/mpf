@@ -519,11 +519,13 @@ timing:
     hw_thread_sleep_ms: single|int|1
 widgets:
     text:
+        type: single|str|text
         x: single|num|0
         y: single|num|0
         v_pos: single|str|center
         h_pos: single|str|center
         opacity: single|float|1.0
+        z: single|int|0
 
         text: single|str|
         color: single|str|ffffffff
@@ -546,6 +548,7 @@ widgets:
   #      split_str:
   #      unicode_errors:
     image:
+        type: single|str|image
         x: single|num|0
         y: single|num|0
         v_pos: single|str|center
@@ -559,5 +562,9 @@ widgets:
         keep_ratio: single|bool|False
         nocache: single|bool|False
         source: single|str|
+widget_player:
+    widget: list|str|
+    target: single|str|None
+    slide: single|str|None
 
 '''
