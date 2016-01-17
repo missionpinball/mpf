@@ -474,6 +474,12 @@ shot_profiles:
         tocks_per_sec: single|int|10
         num_repeats: single|int|0
         sync_ms:  single|int|0
+slide_player:
+    slide: single|str|
+    target: single|str|None
+    priority: single|int|0
+    show: single|bool|True
+    force: single|bool|False
 snux:
     flipper_enable_driver_number: single|int|c23
     diag_led_driver_number: single|str|c24
