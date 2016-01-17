@@ -71,6 +71,6 @@ sound_system:
         parsed_config = YamlInterface.process(orig_config, True)
         saved_config = YamlInterface.save_to_str(parsed_config)
 
-        print(saved_config)
+        #print(saved_config)
         
         self.assertEqual(orig_config, saved_config)
