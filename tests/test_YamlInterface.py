@@ -50,7 +50,7 @@ modes:
 sound_system:
     buffer: 512
     frequency: 44100
-    channels: 1 #test comment
+    channels: 1
     initial_volume: 1
     volume_steps: 20
     tracks:
