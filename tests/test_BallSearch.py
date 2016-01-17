@@ -135,7 +135,12 @@ class TestBallSearch(MpfTestCase):
                 self.machine.coils['drop_target_knockdown2'].pulse = MagicMock()
                 self.machine.coils['drop_target_knockdown4'].pulse = MagicMock()
                 self.advance_time_and_run(10)
-                self.assertEqual(i, self.machine.ball_devices['playfield'].ball_search.iteration)
+                if i <= 3:
+                    self.assertEqual(1, self.machine.ball_devices['playfield'].ball_search.phase)
+                elif i <= 6:
+                    self.assertEqual(2, self.machine.ball_devices['playfield'].ball_search.phase)
+                else:
+                    self.assertEqual(3, self.machine.ball_devices['playfield'].ball_search.phase)
                 self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
                 assert not self.machine.coils['eject_coil1'].pulse.called

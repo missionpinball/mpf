@@ -53,12 +53,12 @@ class DropTarget(Device):
         self.delay.add(100, self._ball_search_iteration_finish)
 
 
-    def _ball_search(self, iteration):
-        if iteration <= 3:
+    def _ball_search(self, phase, iteration):
+        if phase == 1:
             # phase 1: do not change state.
             # if up. reset again
             return self._ball_search_phase1()
-        elif iteration <= 6:
+        elif phase == 2:
             # phase 2: if we can reset and knockdown the target we will do that
             if self.reset_coil and self.knockdown_coil:
                 if self.complete:

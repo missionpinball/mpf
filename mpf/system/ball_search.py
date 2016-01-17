@@ -62,6 +62,7 @@ class BallSearch(object):
     def start(self):
         self.started = True
         self.iteration = 1
+        self.phase = 1
         self.iterator = iter(self.callbacks)
         self.log.info("Starting ball search")
         self.run()
@@ -75,18 +76,21 @@ class BallSearch(object):
             except StopIteration:
                 self.iteration += 1
                 # give up at some point
-                if self.iteration > self.playfield.config['ball_search_iterations']:
-                    self.give_up()
-                    return
+                if self.iteration > self.playfield.config['ball_search_phase_' + str(self.phase) + '_searches']:
+                    self.phase += 1
+                    self.iteration = 1
+                    if self.phase > 3:
+                        self.give_up()
+                        return
 
-                self.log.info("Ball Search iteration %s", self.iteration)
+                self.log.info("Ball Search Phase %s Iteratio %s", self.phase, self.iteration)
                 self.iterator = iter(self.callbacks)
                 element = next(self.iterator)
                 timeout = self.playfield.config['ball_search_wait_after_iteration']
 
             (priority, callback) = element
             # if a callback returns True we wait for the next one
-            if callback(self.iteration):
+            if callback(self.phase, self.iteration):
                 self.delay.add(name='run', callback=self.run, ms=timeout)
                 return
 

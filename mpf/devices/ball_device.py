@@ -787,13 +787,13 @@ class BallDevice(Device):
             self.config['hold_coil'].pulse()
             return True
 
-    def ball_search(self, iteration):
-        if iteration <= 3:
+    def ball_search(self, phase, iteration):
+        if phase == 1:
             # round 1: only idle + no ball
             # only run ball search when the device is idle and contains no balls
             if self._state == "idle" and self.balls == 0:
                 return self._fire_coil_for_search(True)
-        elif iteration <= 6:
+        elif phase == 2:
             # round 2: all devices except trough. small pulse
             if not 'trough' in self.config['tags']:
                 return self._fire_coil_for_search(False)

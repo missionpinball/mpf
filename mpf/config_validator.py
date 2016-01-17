@@ -355,7 +355,9 @@ playfields:
     enable_ball_search: single|bool|False
     ball_search_timeout: single|ms|20s
     ball_search_interval: single|ms|250ms
-    ball_search_iterations: single|int|10
+    ball_search_phase_1_searches: single|int|3
+    ball_search_phase_2_searches: single|int|3
+    ball_search_phase_3_searches: single|int|4
     ball_search_failed_action: single|str|new_ball
     ball_search_wait_after_iteration: single|ms|10s
 playfield_transfers:
