@@ -20,13 +20,13 @@ class DriverEnabled(Driver):
         DriverEnabled.enable_driver_mappings[driver].add(device)
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(DriverEnabled, self).__init__(machine, name, config, collection,
-                                            validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         DriverEnabled.add_driver_enabled_device(self.hw_driver, self)
 
     def enable(self, **kwargs):
-        super(DriverEnabled, self).enable()
+        super().enable()
         for device in DriverEnabled.enable_driver_mappings[self.hw_driver]:
             device._enable()
 
@@ -36,7 +36,7 @@ class DriverEnabled(Driver):
         # print self, "enabling"
 
     def disable(self, **kwargs):
-        super(DriverEnabled, self).disable()
+        super().disable()
         # self.driver.disable()
         for device in DriverEnabled.enable_driver_mappings[self.hw_driver]:
             device._disable()

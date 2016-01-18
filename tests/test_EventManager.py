@@ -1,16 +1,18 @@
 from tests.MpfTestCase import MpfTestCase
-
+from unittest.mock import patch
 
 class TestEventManager(MpfTestCase):
-
     def __init__(self, test_map):
-        super(TestEventManager, self).__init__(test_map)
+        super().__init__(test_map)
         self._handler1_args = tuple()
         self._handler1_kwargs = dict()
         self._handler1_called = 0
         self._handler2_args = tuple()
         self._handler2_kwargs = dict()
         self._handler2_called = 0
+        self._handler3_args = tuple()
+        self._handler3_kwargs = dict()
+        self._handler3_called = 0
         self._handlers_called = list()
         self._handler_returns_false_args = tuple()
         self._handler_returns_false_kwargs = dict()
@@ -46,6 +48,12 @@ class TestEventManager(MpfTestCase):
         self._handler2_called += 1
         self._handlers_called.append(self.event_handler2)
 
+    def event_handler3(self, *args, **kwargs):
+        self._handler3_args = args
+        self._handler3_kwargs = kwargs
+        self._handler3_called += 1
+        self._handlers_called.append(self.event_handler3)
+
     def event_handler_returns_false(self, *args, **kwargs):
         self._handler_returns_false_args = args
         self._handler_returns_false_kwargs = kwargs
@@ -64,7 +72,7 @@ class TestEventManager(MpfTestCase):
         self._relay2_called += 1
         self._handlers_called.append(self.event_handler_relay2)
 
-        return {'relay_test': relay_test-1}
+        return {'relay_test': relay_test - 1}
 
     def callback(self, *args, **kwargs):
         self._callback_args = args
@@ -153,11 +161,11 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(self._handlers_called[0],
-                          self.event_handler_calls_second_event)
+                         self.event_handler_calls_second_event)
         self.assertEqual(self._handlers_called[1],
-                          self.event_handler1)
+                         self.event_handler1)
         self.assertEqual(self._handlers_called[2],
-                          self.callback)
+                         self.callback)
 
     def test_event_handler_priorities(self):
         # tests that handler priorities work. The second handler should be
@@ -313,9 +321,9 @@ class TestEventManager(MpfTestCase):
         self.machine.events.add_handler('test_event', self.event_handler1)
 
         self.assertEqual(True,
-                          self.machine.events.does_event_exist('test_event'))
+                         self.machine.events.does_event_exist('test_event'))
         self.assertEqual(False,
-                          self.machine.events.does_event_exist('test_event1'))
+                         self.machine.events.does_event_exist('test_event1'))
 
     def test_regular_event_with_false_return(self):
         # tests that regular events process all handlers even if one returns
@@ -335,7 +343,7 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(1, self._handler_returns_false_called)
 
         self.assertEqual(self._handlers_called[0],
-                          self.event_handler_returns_false)
+                         self.event_handler_returns_false)
         self.assertEqual(self._handlers_called[1], self.event_handler1)
 
     def test_post_boolean(self):
@@ -378,7 +386,7 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(1, self._handler_returns_false_called)
 
         self.assertEqual(self._handlers_called[0],
-                          self.event_handler_returns_false)
+                         self.event_handler_returns_false)
 
         self.assertEqual(1, len(self._handlers_called))
 
@@ -437,7 +445,7 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_add_queue), 1)
+                self._handlers_called.count(self.event_handler_add_queue), 1)
         self.assertEqual(self._handlers_called.count(self.queue_callback), 0)
         self.assertEqual(False, self._queue.is_empty())
 
@@ -460,7 +468,7 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_add_queue), 1)
+                self._handlers_called.count(self.event_handler_add_queue), 1)
         self.assertEqual(self._handlers_called.count(self.queue_callback), 0)
 
         self._queue.kill()
@@ -502,9 +510,10 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_returns_false), 1)
+                self._handlers_called.count(self.event_handler_returns_false),
+                1)
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_add_queue), 0)
+                self._handlers_called.count(self.event_handler_add_queue), 0)
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(self._queue_callback_kwargs, {'ev_result': False})
 
@@ -521,7 +530,8 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_add_quick_queue), 1)
+                self._handlers_called.count(
+                    self.event_handler_add_quick_queue), 1)
 
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(True, self._queue.is_empty())
@@ -545,7 +555,6 @@ class TestEventManager(MpfTestCase):
         self.machine.events.add_handler('test_event',
                                         self.event_handler_add_quick_queue)
 
-
         self.advance_time_and_run(1)
 
         self.machine.events.post_queue('test_event',
@@ -553,7 +562,141 @@ class TestEventManager(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(
-            self._handlers_called.count(self.event_handler_add_quick_queue), 2)
+                self._handlers_called.count(
+                    self.event_handler_add_quick_queue), 2)
 
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(True, self._queue.is_empty())
+
+    def test_event_player(self):
+        self.machine.events.add_handler('test_event_player1', self.event_handler1)
+        self.machine.events.add_handler('test_event_player2', self.event_handler2)
+        self.machine.events.add_handler('test_event_player3', self.event_handler3)
+        self.advance_time_and_run(1)
+
+        self.machine.events.post('test_event_player1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(1, self._handler3_called)
+        self.assertEqual(tuple(), self._handler1_args)
+        self.assertEqual(dict(test="123"), self._handler1_kwargs)
+        self.assertEqual(tuple(), self._handler2_args)
+        self.assertEqual(dict(test="123"), self._handler2_kwargs)
+        self.assertEqual(tuple(), self._handler3_args)
+        self.assertEqual(dict(test="123"), self._handler3_kwargs)
+
+    def test_random_event_player(self):
+        self.machine.events.add_handler('test_random_event_player1', self.event_handler1)
+        self.machine.events.add_handler('test_random_event_player2', self.event_handler2)
+        self.machine.events.add_handler('test_random_event_player3', self.event_handler3)
+        self.advance_time_and_run(1)
+
+        with patch('random.choice', return_value="test_random_event_player2") as mock_random:
+            self.machine.events.post('test_random_event_player1', test="123")
+            self.advance_time_and_run(1)
+            mock_random.assert_called_once_with(['test_random_event_player2', 'test_random_event_player3'])
+
+        self.assertEqual(1, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)
+        self.assertEqual(tuple(), self._handler1_args)
+        self.assertEqual(dict(test="123"), self._handler1_kwargs)
+        self.assertEqual(tuple(), self._handler2_args)
+        self.assertEqual(dict(test="123"), self._handler2_kwargs)
+
+        with patch('random.choice', return_value="test_random_event_player3") as mock_random:
+            self.machine.events.post('test_random_event_player1', test="123")
+            self.advance_time_and_run(1)
+            mock_random.assert_called_once_with(['test_random_event_player2', 'test_random_event_player3'])
+
+        self.assertEqual(2, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(1, self._handler3_called)
+        self.assertEqual(tuple(), self._handler1_args)
+        self.assertEqual(dict(test="123"), self._handler1_kwargs)
+        self.assertEqual(tuple(), self._handler3_args)
+        self.assertEqual(dict(test="123"), self._handler3_kwargs)
+
+    def test_event_player_in_mode(self):
+        self.machine.events.add_handler('test_event_player_mode1', self.event_handler1)
+        self.machine.events.add_handler('test_event_player_mode2', self.event_handler2)
+        self.machine.events.add_handler('test_event_player_mode3', self.event_handler3)
+        self.advance_time_and_run(1)
+
+        # mode not loaded. event should not be replayed
+        self.machine.events.post('test_event_player_mode1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._handler1_called)
+        self.assertEqual(0, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)
+
+        # start mode
+        self.machine.events.post('test_mode_start')
+        self.advance_time_and_run(1)
+        self.assertTrue(self.machine.mode_controller.is_active("test_mode"))
+
+        # now the event should get replayed
+        self.machine.events.post('test_event_player_mode1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(2, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(1, self._handler3_called)
+
+        # stop mode
+        self.machine.events.post('test_mode_end')
+        self.advance_time_and_run(1)
+        self.assertFalse(self.machine.mode_controller.is_active("test_mode"))
+
+        # event should not longer get replayed
+        self.machine.events.post('test_event_player_mode1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(3, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(1, self._handler3_called)
+
+    def test_random_event_player_in_mode(self):
+        self.machine.events.add_handler('test_random_event_player_mode1', self.event_handler1)
+        self.machine.events.add_handler('test_random_event_player_mode2', self.event_handler2)
+        self.machine.events.add_handler('test_random_event_player_mode3', self.event_handler3)
+        self.advance_time_and_run(1)
+
+        # mode not loaded. event should not be replayed
+        self.machine.events.post('test_random_event_player_mode1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._handler1_called)
+        self.assertEqual(0, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)
+
+        # start mode
+        self.machine.events.post('test_mode_start')
+        self.advance_time_and_run(1)
+        self.assertTrue(self.machine.mode_controller.is_active("test_mode"))
+
+        # now the event should get replayed
+        with patch('random.choice', return_value="test_random_event_player_mode2") as mock_random:
+            self.machine.events.post('test_random_event_player_mode1', test="123")
+            self.advance_time_and_run(1)
+            mock_random.assert_called_once_with(['test_random_event_player_mode2', 'test_random_event_player_mode3'])
+
+        self.assertEqual(2, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)
+
+        # stop mode
+        self.machine.events.post('test_mode_end')
+        self.advance_time_and_run(1)
+        self.assertFalse(self.machine.mode_controller.is_active("test_mode"))
+
+        # event should not longer get replayed
+        self.machine.events.post('test_random_event_player_mode1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(3, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)

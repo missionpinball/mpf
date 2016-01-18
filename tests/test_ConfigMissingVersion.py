@@ -1,7 +1,7 @@
 from tests.MpfTestCase import MpfTestCase
 
-class TestConfigMissingVersion(MpfTestCase):
 
+class TestConfigMissingVersion(MpfTestCase):
     def getConfigFile(self):
         return 'test_config_interface_missing_version.yaml'
 
@@ -15,4 +15,4 @@ class TestConfigMissingVersion(MpfTestCase):
         pass
 
     def test_config_file_with_missing_version(self):
-        self.assertRaises(ValueError, super(TestConfigMissingVersion, self).setUp)
+        self.assertRaises(ValueError, super().setUp)

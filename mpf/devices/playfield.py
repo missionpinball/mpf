@@ -4,6 +4,7 @@ a pinball machine."""
 import logging
 
 from mpf.devices.ball_device import BallDevice
+from mpf.system.ball_search import BallSearch
 from mpf.system.tasks import DelayManager
 
 
@@ -23,8 +24,8 @@ class Playfield(BallDevice):
         self.label = None
         self.debug = False
         self.config = dict()
-        self._count_consistent = True
         self.unexpected_balls = 0
+        self.ball_search = BallSearch(self.machine, self)
 
         if validate:
             self.config = self.machine.config_processor.process_config2(
@@ -143,6 +144,11 @@ class Playfield(BallDevice):
             self.machine.events.post(self.name + '_ball_count_change',
                                      balls=balls, change=ball_change)
 
+        if balls <= 0:
+            self.ball_search.disable()
+        else:
+            self.ball_search.enable()
+
     def count_balls(self, **kwargs):
         """Used to count the number of balls that are contained in a ball
         device. Since this is the playfield device, this method always returns
@@ -162,14 +168,12 @@ class Playfield(BallDevice):
         """
         return 999
 
-    def add_ball(self, balls=1, source_name=None, source_device=None,
+    def add_ball(self, balls=1, source_device=None,
                  player_controlled=False, reset=False):
         """Adds live ball(s) to the playfield.
 
         Args:
             balls: Integer of the number of balls you'd like to add.
-            source_name: Optional string name of the ball device you'd like to
-                add the ball(s) from.
             source_device: Optional ball device object you'd like to add the
                 ball(s) from.
             player_controlled: Boolean which specifies whether this event is
@@ -181,10 +185,9 @@ class Playfield(BallDevice):
             True if it's able to process the add_ball() request, False if it
             cannot.
 
-        Both source_name and source_device args are included to give you two
-        options for specifying the source of the ball(s) to be added. You don't
-        need to supply both. (it's an "either/or" thing.) Both of these args are
-        optional, so if you don't supply them then MPF will look for a device
+        The source_device arg is included to give you an options for specifying
+        the source of the ball(s) to be added. This argument is optional, so if
+        you don't supply them then MPF will look for a device
         tagged with 'ball_add_live'. If you don't provide a source and you don't
         have a device with the 'ball_add_live' tag, MPF will quit.
 
@@ -226,17 +229,16 @@ class Playfield(BallDevice):
         on the device's ball count decreasing.
 
         """
-        if balls < 1:
-            self.log.error("Received request to add %s balls, which doesn't "
-                           "make sense. Not adding any balls...")
+        if balls == 0:
             return False
+        elif balls < 0:
+            raise AssertionError("Received request to add negative balls, which "
+                                 "doesn't  make sense. Not adding any balls...")
 
         # Figure out which device we'll get a ball from
 
         if source_device:
             pass
-        elif source_name and source_name in self.machine.ball_devices:
-            source_device = self.machine.ball_devices[source_name]
         else:
             for device in self.machine.ball_devices.items_tagged('ball_add_live'):
                 if self in device.config['eject_targets']:
@@ -266,6 +268,7 @@ class Playfield(BallDevice):
         return True
 
     def mark_playfield_active(self):
+        self.ball_search.reset_timer()
         self.machine.events.post_boolean(self.name + "_active")
 
     def playfield_switch_hit(self, **kwargs):
@@ -292,12 +295,7 @@ class Playfield(BallDevice):
                     self.balls = 1
                     self.machine.events.post('unexpected_ball_on_' + self.name)
 
-    # def _ball_added_handler(self, balls):
-    #     self.log.debug("%s ball(s) added to the playfield", balls)
-    #     self.balls += balls
-
     def _ball_removed_handler(self, balls, **kwargs):
-        self._count_consistent = False
         # somebody got a ball from us so we obviously had one
         self.machine.events.post('sw_' + self.name + "_active",
                 callback=self._ball_removed_handler2, balls=balls)
@@ -308,7 +306,6 @@ class Playfield(BallDevice):
         self.available_balls -= balls
         if self.available_balls < 0:
             self.available_balls = 0
-        self._count_consistent = True
 
     def _source_device_eject_attempt(self, balls, target, **kwargs):
         # A source device is attempting to eject a ball. We need to know if it's
@@ -338,134 +335,8 @@ class Playfield(BallDevice):
             self.num_balls_requested -= balls
 
             if self.num_balls_requested < 0:
-                self.log.critical("num_balls_requested is %s, which doesn't "
-                                  "make sense. Quitting...",
-                                  self.num_balls_requested)
-                raise Exception("num_balls_requested is %s, which doesn't make "
-                                "sense. Quitting...", self.num_balls_requested)
-
-    def ok_to_confirm_ball_via_playfield_switch(self):
-        """Used to check whether it's ok for a ball device which ejects to the
-        playfield to confirm its eject via a playfield switch being hit.
-
-        Returns: True or False
-
-        Right now this is simple. If there are no playfield balls, then any
-        playfield switch hit is assumed to be from the newly-ejected ball. If
-        there are other balls on the playfield, then we can't use this
-        confirmation method since we don't know whether a playfield switch hit
-        is from the newly-ejected ball(s) or a current previously-live
-        playfield ball.
-
-        """
-        if not self.balls:
-            return True
-        else:
-            return False
-
-        # todo look for other incoming balls?
-
-    # BALL SEARCH --------------------------------------------------------------
-
-    # todo make ball search work with plunger lanes with no switches. i.e. we
-    # don't want ball search to start until a switch is hit?
-
-    def ball_search_schedule(self, secs=None, force=False):
-        """Schedules a ball search to start. By default it will schedule it
-        based on the time configured in the machine configuration files.
-
-        If a ball search is already scheduled, this method will reset that
-        schedule to the new time passed.
-
-        Args:
-            secs: Schedules the ball search that many secs from now.
-            force : Boolean to force a ball search. Set True to force a ball
-                search. Otherwise it will only schedule it if
-                self.flag_no_ball_search is False. Default is False
-
-        """
-        if self.machine.config['ball_search']:
-            if not self.flag_no_ball_search or force is True:
-                if secs is not None:
-                    start_ms = secs * 1000
-                else:
-                    start_ms = (self.machine.config['ball_search']
-                        ['secs until ball search start'] * 1000)
-                self.log.debug("Scheduling a ball search for %s secs from now",
-                               start_ms / 1000.0)
-                self.delay.reset("ball_search_start",
-                                 ms=start_ms,
-                                 callback=self.ball_search_begin)
-
-    def ball_search_disable(self):
-        """Disables ball search.
-
-        Note this is used to prevent a future ball search from happening (like
-        when all balls become contained). This method is not used to cancel an
-        existing ball search. (Use `ball_search_end` for that.)
-
-        """
-        self.log.debug("Disabling Ball Search")
-        self.delay.remove('ball_search_start')
-
-    def ball_search_begin(self, force=False):
-        """Begin the ball search process"""
-        if not self.flag_no_ball_search:
-            self.log.debug("Received request to start ball search")
-            # ball search should only start if we have uncontained balls
-            if self.balls or force:
-                # todo add audit
-                self.flag_ball_search_in_progress = True
-                self.machine.events.post("ball_search_begin_phase1")
-                # todo set delay to start phase 2
-
-            else:
-                self.log.debug("We got request to start ball search, but we "
-                               "have no balls uncontained. WTF??")
-
-    def ball_search_failed(self):
-        """Ball Search did not find the ball."""
-        self.log.debug("Ball Search failed to find a ball. Disabling.")
-        self.ball_search_end()
-        self.ball_lost()
-
-    def ball_search_end(self):
-        """End the ball search, either because we found the ball or
-        are giving up."""
-        self.log.debug("Ball search ending")
-        self.flag_ball_search_in_progress = False
-        self.machine.events.post("ball_search_end")
-        # todo cancel the delay for phase 2 if we had one
-
-    def ball_lost(self):
-        """Mark a ball as lost"""
-        self.num_balls_known = self.balls
-        self.num_balls_missing = (self.machine.config['machine']
-                                  ['balls installed'] - self.balls)
-        self.num_balls_live = 0
-        # since desired count doesn't change, this will relaunch them
-        self.log.debug("Ball(s) Marked Lost. Known: %s, Missing: %s",
-                       self.num_balls_known, self.num_balls_missing)
-
-        # todo audit balls lost
-
-    def ball_found(self, num=1):
-        """Used when a previously missing ball is found. Updates the balls
-        known and balls missing variables.
-
-        Parameters
-        ----------
-
-        num : int
-            Specifies how many balls have been found. Default is 1.
-
-        """
-        self.log.debug("HEY!! We just found %s lost ball(s).", num)
-        self.num_balls_known += num
-        self.num_balls_missing -= num
-        self.log.debug("New ball counts. Known: %s, Missing: %s",
-                       self.num_balls_known, self.num_balls_missing)
-        self.ball_update_all_counts()  # is this necessary? todo
+                raise Exception("num_balls_requested is smaller 0, which doesn't make "
+                                "sense. Quitting...")
 
     def eject(self, *args, **kwargs):
         pass

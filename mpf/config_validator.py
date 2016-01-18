@@ -1,5 +1,7 @@
-#config_version=3
 # values are type|validation|default
+
+config_spec = '''
+
 accelerometers:
     platform: single|str|None
     hit_limits: single|float:str|None
@@ -69,6 +71,7 @@ ball_devices:
     eject_all_events: dict|str:ms|None
     mechanical_eject: single|bool|False
     player_controlled_eject_event: single|str|None
+    ball_search_order: single|int|100
 ball_locks:
     balls_to_lock: single|int|
     lock_devices: list|self.machine.ball_devices[%]|
@@ -146,6 +149,7 @@ displays:
     width: single|int|800
     height: single|int|600
     bits_per_pixel: single|int|24
+    default: single|bool|False
 diverters:
     type: single|str|hold
     activation_time: single|ms|0
@@ -196,6 +200,7 @@ drop_targets:
     debug: single|bool|False
     reset_events: dict|str:ms|ball_starting, machine_reset_phase_3
     knockdown_events: dict|str:ms|None
+    ball_search_order: single|int|100
 drop_target_banks:
     drop_targets: list|self.machine.drop_targets[%]|
     reset_coil: single|self.machine.coils[%]|None
@@ -354,6 +359,14 @@ playfields:
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
+    enable_ball_search: single|bool|False
+    ball_search_timeout: single|ms|20s
+    ball_search_interval: single|ms|250ms
+    ball_search_phase_1_searches: single|int|3
+    ball_search_phase_2_searches: single|int|3
+    ball_search_phase_3_searches: single|int|4
+    ball_search_failed_action: single|str|new_ball
+    ball_search_wait_after_iteration: single|ms|10s
 playfield_transfers:
     ball_switch: single|self.machine.switches[%]|
     eject_target: single|self.machine.ball_devices[%]|
@@ -470,6 +483,12 @@ shot_profiles:
         tocks_per_sec: single|int|10
         num_repeats: single|int|0
         sync_ms:  single|int|0
+slide_player:
+    slide: single|str|
+    target: single|str|None
+    priority: single|int|0
+    show: single|bool|True
+    force: single|bool|False
 snux:
     flipper_enable_driver_number: single|int|c23
     diag_led_driver_number: single|str|c24
@@ -506,15 +525,67 @@ timing:
     hz: single|int|30
     hw_thread_sleep_ms: single|int|1
 widgets:
-    text:
-        x: single|int|None
-        y: single|int|None
+    slide_frame:
+        type: single|str|slide_frame
+        x: single|num|0
+        y: single|num|0
+        v_pos: single|str|center
+        h_pos: single|str|center
         opacity: single|float|1.0
-        pos_hint: dict|str:float|None
-        size_hint: dict|str:float|None
+        z: single|int|0
 
-        font_name:
-        font_size:
-        mpf_font: single|str|None
-        color: tuple(4)|int(0-255)|(255, 255, 255, 255)
+        name: single|str|
+        width: single|int|
+        height: single|int|
+
+    text:
+        type: single|str|text
+        x: single|num|0
+        y: single|num|0
+        v_pos: single|str|center
+        h_pos: single|str|center
+        opacity: single|float|1.0
+        z: single|int|0
+
+        text: single|str|
+        color: single|str|ffffffff
+        font_size: single|num|None
+  #      font_name:
+        bold: single|bool|False
         italic: single|bool|False
+        halign: single|str|center
+        valign: single|str|middle
+        padding_x: single|int|0
+        padding_y: single|int|0
+  #      text_size:
+  #      shorten:
+  #      mipmap:
+  #      markup:
+  #      line_height:
+  #      max_lines:
+  #      strip:
+  #      shorten_from:
+  #      split_str:
+  #      unicode_errors:
+    image:
+        type: single|str|image
+        x: single|num|0
+        y: single|num|0
+        v_pos: single|str|center
+        h_pos: single|str|center
+        opacity: single|float|1.0
+
+        allow_stretch: single|bool|False
+        anim_delay: single|float|.25
+        anim_loop: single|int|0
+        color: single|str|ffffffff
+        keep_ratio: single|bool|False
+        nocache: single|bool|False
+        source: single|str|
+
+widget_player:
+    widget: list|str|
+    target: single|str|None
+    slide: single|str|None
+
+'''

@@ -3,7 +3,6 @@ __all__ = [
            'system',
            'version',
            'window',
-           'kmc'
           ]
 
 from version import __version__

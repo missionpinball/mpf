@@ -9,25 +9,24 @@ from mock import *
 from datetime import datetime, timedelta
 import inspect
 
-class TestMachineController(MachineController):
 
+class TestMachineController(MachineController):
     def __init__(self, options, config_patches):
         self.test_config_patches = config_patches
         self.test_init_complete = False
-        super(TestMachineController, self).__init__(options)
+        super().__init__(options)
 
     def _load_machine_config(self):
-        super(TestMachineController, self)._load_machine_config()
+        super()._load_machine_config()
         self.config = Util.dict_merge(self.config, self.test_config_patches,
                                       combine_lists=False)
 
     def _reset_complete(self):
         self.test_init_complete = True
-        super(TestMachineController, self)._reset_complete()
+        super()._reset_complete()
 
 
 class MpfTestCase(unittest.TestCase):
-
     machine_config_patches = dict()
     machine_config_patches['mpf'] = dict()
     machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
@@ -62,10 +61,11 @@ class MpfTestCase(unittest.TestCase):
             'debug': True,
             'bcp': self.get_use_bcp(),
             'rebuild_cache': False
-               }
+        }
 
     def set_time(self, new_time):
-        self.machine.log.debug("Moving time forward %ss", new_time - self.testTime)
+        self.machine.log.debug("Moving time forward %ss",
+                               new_time - self.testTime)
         self.testTime = new_time
         time.time.return_value = self.testTime
 
@@ -112,18 +112,19 @@ class MpfTestCase(unittest.TestCase):
         frame = inspect.currentframe()
         while frame:
             self = frame.f_locals.get('self')
-            if isinstance(self, unittest.TestProgram) or isinstance(self, unittest.TextTestRunner):
+            if isinstance(self, unittest.TestProgram) or isinstance(self,
+                                                                    unittest.TextTestRunner):
                 return self.verbosity
             frame = frame.f_back
         return 0
 
     def setUp(self):
         if self.unittest_verbosity() > 1:
-                logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+            logging.basicConfig(level=logging.DEBUG,
+                                format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
         else:
-                # no logging by default
-                logging.basicConfig(level=99)
+            # no logging by default
+            logging.basicConfig(level=99)
 
         self.realTime = time.time
         self.testTime = self.realTime()

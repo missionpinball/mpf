@@ -1,8 +1,7 @@
 """ Contains the base classes for drop targets and drop target banks."""
 
 from mpf.system.device import Device
-from mpf.system.config import Config
-
+from mpf.system.tasks import DelayManager
 
 class DropTarget(Device):
     """Represents a single drop target in a pinball machine.
@@ -14,10 +13,12 @@ class DropTarget(Device):
     class_label = 'drop_target'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(DropTarget, self).__init__(machine, name, config, collection,
-                                         validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
+        self._in_ball_search = False
         self.complete = False
+        self.delay = DelayManager(machine.delayRegistry)
         self.reset_coil = self.config['reset_coil']
         self.knockdown_coil = self.config['knockdown_coil']
         self.banks = set()
@@ -28,14 +29,82 @@ class DropTarget(Device):
         self.machine.events.add_handler('init_phase_4',
                                         self._register_switch_handlers)
 
+        # TODO: make playfield name configureable
+        self.machine.ball_devices['playfield'].ball_search.register(self.config['ball_search_order'], self._ball_search)
+
+    def _ball_search_phase1(self):
+        if not self.complete and self.reset_coil:
+            self.reset_coil.pulse()
+            return True
+        # if down. knock down again
+        elif self.complete and self.knockdown_coil:
+            self.knockdown_coil.pulse()
+            return True
+
+    def _ball_search_iteration_finish(self):
+        self._in_ball_search = False
+
+    def _ball_search_knockdown(self):
+        self.knockdown_coil.pulse()
+        self.delay.add(100, self._ball_search_iteration_finish)
+
+    def _ball_search_reset(self):
+        self.reset_coil.pulse()
+        self.delay.add(100, self._ball_search_iteration_finish)
+
+
+    def _ball_search(self, phase, iteration):
+        if phase == 1:
+            # phase 1: do not change state.
+            # if up. reset again
+            return self._ball_search_phase1()
+        elif phase == 2:
+            # phase 2: if we can reset and knockdown the target we will do that
+            if self.reset_coil and self.knockdown_coil:
+                if self.complete:
+                    self._in_ball_search = True
+                    self.reset_coil.pulse()
+                    self.delay.add(100, self._ball_search_knockdown)
+                    return True
+                else:
+                    self._in_ball_search = True
+                    self.knockdown_coil.pulse()
+                    self.delay.add(100, self._ball_search_reset)
+                    return True
+            else:
+                # fall back to phase1
+                return self._ball_search_phase1()
+        else:
+            # phase3: reset no matter what
+            if self.complete:
+                if self.reset_coil:
+                    self.reset_coil.pulse()
+                    if self.knockdown_coil:
+                        self._in_ball_search = True
+                        self.delay.add(100, self._ball_search_knockdown)
+                    return True
+                else:
+                    return self._ball_search_phase1()
+            else:
+                if self.knockdown_coil:
+                    self.knockdown_coil.pulse()
+                    if self.reset_coil:
+                        self._in_ball_search = True
+                        self.delay.add(100, self._ball_search_reset)
+                    return True
+                else:
+                    return self._ball_search_phase1()
+
     def _register_switch_handlers(self):
         # register for notification of switch state
         # this is in addition to the parent since drop targets track
         # self.complete in separately
 
-        self.machine.switch_controller.add_switch_handler(self.config['switch'].name,
+        self.machine.switch_controller.add_switch_handler(
+            self.config['switch'].name,
             self._update_state_from_switch, 0)
-        self.machine.switch_controller.add_switch_handler(self.config['switch'].name,
+        self.machine.switch_controller.add_switch_handler(
+            self.config['switch'].name,
             self._update_state_from_switch, 1)
 
     def knockdown(self, **kwargs):
@@ -44,7 +113,11 @@ class DropTarget(Device):
             self.knockdown_coil.pulse()
 
     def _update_state_from_switch(self):
-        if self.machine.switch_controller.is_active(self.config['switch'].name):
+        if self._in_ball_search:
+            return
+
+        if self.machine.switch_controller.is_active(
+                self.config['switch'].name):
             self._down()
         else:
             self._up()
@@ -101,8 +174,8 @@ class DropTargetBank(Device):
     class_label = 'drop_target_bank'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(DropTargetBank, self).__init__(machine, name, config, collection,
-                                             validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         self.drop_targets = list()
         self.reset_coil = None
@@ -140,7 +213,6 @@ class DropTargetBank(Device):
         # figure out all the coils we need to pulse
         coils = set()
 
-
         for drop_target in self.drop_targets:
             if drop_target.reset_coil:
                 coils.add(drop_target.reset_coil)
@@ -176,9 +248,10 @@ class DropTargetBank(Device):
                 self.up += 1
 
         if self.debug:
-            self.log.debug('Member drop target status change: Up: %s, Down: %s,'
-                           ' Total: %s', self.up, self.down,
-                           len(self.drop_targets))
+            self.log.debug(
+                'Member drop target status change: Up: %s, Down: %s,'
+                ' Total: %s', self.up, self.down,
+                len(self.drop_targets))
 
         if self.down == len(self.drop_targets):
             self._bank_down()

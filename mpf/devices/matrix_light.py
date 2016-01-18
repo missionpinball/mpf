@@ -16,15 +16,15 @@ class MatrixLight(Device):
     collection = 'lights'
     class_label = 'light'
 
-    #todo need to get the handler stuff out of each of these I think and into
+    # todo need to get the handler stuff out of each of these I think and into
     # a parent class? Maybe this is a device thing?
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
 
-        super(MatrixLight, self).__init__(machine, name, config, collection,
-                                          platform_section='matrix_lights',
-                                          validate=validate)
+        super().__init__(machine, name, config, collection,
+                         platform_section='matrix_lights',
+                         validate=validate)
 
         self.hw_driver, self.number = (
             self.platform.configure_matrixlight(self.config))
@@ -32,12 +32,12 @@ class MatrixLight(Device):
         self.registered_handlers = []
 
         self.state = {  # current state of this light
-                        'brightness': 0,
-                        'priority': 0}
+            'brightness': 0,
+            'priority': 0}
 
         self.cache = {  # cached state of last manual command
-                        'brightness': 0,
-                        'priority': 0}
+            'brightness': 0,
+            'priority': 0}
 
         # set up the X, Y coordinates
         self.x = None
@@ -131,7 +131,7 @@ class MatrixLight(Device):
         if self.debug:
             self.log.debug("Received a restore command.")
             self.log.debug("Cached brightness: %s, Cached priority: %s",
-                          self.cache['brightness'], self.cache['priority'])
+                           self.cache['brightness'], self.cache['priority'])
 
         self.on(brightness=self.cache['brightness'],
                 priority=self.cache['priority'],

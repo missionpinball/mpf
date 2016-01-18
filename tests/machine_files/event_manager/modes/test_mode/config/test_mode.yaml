@@ -1,0 +1,14 @@
+#config_version=3
+mode:
+  start_events: test_mode_start
+  stop_events: test_mode_end
+
+event_player:
+    test_event_player_mode1:
+        test_event_player_mode2
+        test_event_player_mode3
+
+random_event_player:
+    test_random_event_player_mode1:
+        test_random_event_player_mode2
+        test_random_event_player_mode3

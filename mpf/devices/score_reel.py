@@ -100,7 +100,7 @@ class ScoreReelController(object):
         if (self.active_scorereelgroup.assumed_value_int !=
                 self.machine.game.player.score):
             self.active_scorereelgroup.set_value(
-                self.machine.game.player.score)
+                    self.machine.game.player.score)
 
         # light up this group
         for group in self.machine.score_reel_groups:
@@ -200,8 +200,8 @@ class ScoreReelGroup(Device):
         machine.score_reel_controller = ScoreReelController(machine)
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(ScoreReelGroup, self).__init__(machine, name, config, collection,
-                                             validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         self.wait_for_valid_queue = None
         self.valid = True  # Confirmed reels are showing the right values
@@ -825,9 +825,9 @@ class ScoreReelGroup(Device):
         # while they're resyncing
 
         self.unlight_on_resync_key = self.machine.events.add_handler(
-            'scorereelgroup_' + self.name + '_resync',
-            self.unlight,
-            relight_on_valid=True)
+                'scorereelgroup_' + self.name + '_resync',
+                self.unlight,
+                relight_on_valid=True)
 
         if relight_on_valid:
             self.machine.events.remove_handler_by_key(self.light_on_valid_key)
@@ -845,12 +845,12 @@ class ScoreReelGroup(Device):
 
         if relight_on_valid:
             self.light_on_valid_key = self.machine.events.add_handler(
-                'scorereelgroup_' + self.name + '_valid',
-                self.light,
-                relight_on_valid=True)
+                    'scorereelgroup_' + self.name + '_valid',
+                    self.light,
+                    relight_on_valid=True)
         else:
             self.machine.events.remove_handler_by_key(
-                self.unlight_on_resync_key)
+                    self.unlight_on_resync_key)
 
     def _ball_ending(self, queue=None):
         # We need to hook the ball_ending event in case the ball ends while the
@@ -886,8 +886,8 @@ class ScoreReel(Device):
     class_label = 'score_reel'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(ScoreReel, self).__init__(machine, name, config, collection,
-                                        validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
         self.delay = DelayManager(machine.delayRegistry)
 
         self.rollover_reel_advanced = False

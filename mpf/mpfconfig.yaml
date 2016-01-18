@@ -6,7 +6,7 @@
 # config files there to override these defaults.
 
 mpf:
-    system_modules: !!omap  # order is important here
+    system_modules: !!omap
         - config_processor: mpf.system.config.Config
         - timing: mpf.system.timing.Timing
         - events: mpf.system.events.EventManager
@@ -52,7 +52,6 @@ mpf:
 
     plugins:
         mpf.plugins.auditor.Auditor
-        mpf.plugins.ball_search.BallSearch
         mpf.plugins.info_lights.InfoLights
         mpf.plugins.osc.OSC
         mpf.plugins.socket_events.SocketClient
@@ -172,7 +171,6 @@ auditor:
         events
         player
     events:
-        ball_search_begin_phase1
         game_started
         game_ended
     player:

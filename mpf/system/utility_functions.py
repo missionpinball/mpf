@@ -57,6 +57,11 @@ class Util(object):
 
         elif string is None:
             return []  # If it's None, make it into an empty list
+        
+        elif str(type(string)) == "<class 'ruamel.yaml.comments.CommentedSeq'>":
+            return string  #If it's a ruamel CommentedSeq, just pretend its a list
+                           #I did it as a str comparison so I didn't have to
+                           #import the actual ruamel.yaml classes
         else:
             # if we're passed anything else, just make it into a list
             return [string]

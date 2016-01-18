@@ -5,15 +5,15 @@ from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timing
 from mpf.system.config import Config
 
-class BallSave(Device):
 
+class BallSave(Device):
     config_section = 'ball_saves'
     collection = 'ball_saves'
     class_label = 'ball_save'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(BallSave, self).__init__(machine, name, config, collection,
-                                       validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         self.delay = DelayManager(machine.delayRegistry)
         self.enabled = False
@@ -67,7 +67,7 @@ class BallSave(Device):
         if self.config['active_time'] > 0:
             if self.debug:
                 self.log.debug('Starting ball save timer: %ss',
-                               self.config['active_time']/1000.0)
+                               self.config['active_time'] / 1000.0)
 
             self.delay.add(name='disable',
                            ms=(self.config['active_time'] +
@@ -117,7 +117,8 @@ class BallSave(Device):
                                  balls=balls)
 
         self.source_playfield.add_ball(balls=balls,
-            player_controlled=self.config['auto_launch']^1)
+                                       player_controlled=self.config[
+                                                             'auto_launch'] ^ 1)
 
         if not self.unlimited_saves:
             self.saves_remaining -= balls

@@ -1,10 +1,4 @@
-"""This is the main file you run to start a pinball machine."""
-# mpf.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
+"""This is the main file you run to start MPF."""
 
 import sys
 
@@ -128,5 +122,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

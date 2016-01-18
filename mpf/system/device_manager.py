@@ -9,7 +9,6 @@ from mpf.system.file_manager import FileManager
 
 
 class DeviceManager(object):
-
     def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger("DeviceManager")
@@ -20,10 +19,10 @@ class DeviceManager(object):
         self._load_device_modules()
 
         self.machine.events.add_handler('init_phase_2',
-            self.create_machinewide_device_control_events)
+                                        self.create_machinewide_device_control_events)
 
         self.machine.events.add_handler('init_phase_2',
-            self.create_collection_control_events)
+                                        self.create_collection_control_events)
 
     def _load_device_modules(self):
         self.log.info("Loading devices...")
@@ -60,12 +59,12 @@ class DeviceManager(object):
     def create_devices(self, collection, config, validate=True):
 
         self.device_classes[collection].create_devices(
-            cls=self.device_classes[collection],
-            collection=getattr(self.machine, collection),
-            config=config,
-            machine=self.machine,
-            validate=validate
-            )
+                cls=self.device_classes[collection],
+                collection=getattr(self.machine, collection),
+                config=config,
+                machine=self.machine,
+                validate=validate
+        )
 
     def get_device_control_events(self, config):
         """Scans a config dictionary and yields events, methods, delays, and
@@ -87,7 +86,7 @@ class DeviceManager(object):
             if self.collections[collection].config_section in config:
                 for device, settings in (
                         iter(config[self.collections[collection].
-                               config_section].items())):
+                                config_section].items())):
 
                     control_events = [x for x in settings if
                                       x.endswith('_events')]
@@ -95,8 +94,8 @@ class DeviceManager(object):
                     for control_event in control_events:
                         # get events from this device's config
                         if settings[control_event]:
-                            for event, delay in settings[control_event].items():
-
+                            for event, delay in settings[
+                                control_event].items():
                                 yield (event,
                                        getattr(self.collections
                                                [collection][device],
@@ -115,26 +114,26 @@ class DeviceManager(object):
                 priority = 0
 
             self.machine.events.add_handler(
-                event=event,
-                handler=self._control_event_handler,
-                priority=int(priority),
-                callback=method,
-                ms_delay=delay,
-                delay_mgr=self.machine.delay)
+                    event=event,
+                    handler=self._control_event_handler,
+                    priority=int(priority),
+                    callback=method,
+                    ms_delay=delay,
+                    delay_mgr=self.machine.delay)
 
     def create_collection_control_events(self):
         for collection, events in (
-                iter(self.machine.config['mpf']['device_collection_control_events'].
-                items())):
+                iter(self.machine.config['mpf'][
+                         'device_collection_control_events'].
+                             items())):
 
             for event in events:
-
                 event_name = collection + '_' + event
 
                 self.machine.events.add_handler(event_name,
-                    self._collection_control_event_handler,
-                    collection=collection,
-                    method=event)
+                                                self._collection_control_event_handler,
+                                                collection=collection,
+                                                method=event)
 
     def _collection_control_event_handler(self, collection, method):
         for device in self.collections[collection]:
@@ -159,11 +158,12 @@ class DeviceManager(object):
 
             for method in (self.machine.config['mpf']['device_events']
                            [device.config_section]):
-
                 self.machine.events.add_handler(event=event_prefix + method,
-                                                handler=getattr(device, method))
+                                                handler=getattr(device,
+                                                                method))
                 self.machine.events.add_handler(event=event_prefix2 + method,
-                                                handler=getattr(device, method))
+                                                handler=getattr(device,
+                                                                method))
 
     def save_tree_to_file(self, filename):
         print("Exporting file...")
@@ -180,7 +180,7 @@ class DeviceCollection(CaseInsensitiveDict):
     """
 
     def __init__(self, machine, collection, config_section):
-        super(DeviceCollection, self).__init__()
+        super().__init__()
 
         self.machine = machine
         self.name = collection
@@ -203,7 +203,7 @@ class DeviceCollection(CaseInsensitiveDict):
         for item in self.values():
             yield item
 
-        # todo add an exception here if this isn't found?
+            # todo add an exception here if this isn't found?
 
     def items_tagged(self, tag):
         """Returns of list of device objects which have a certain tag.

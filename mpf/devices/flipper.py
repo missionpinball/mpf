@@ -29,8 +29,8 @@ class Flipper(Device):
     class_label = 'flipper'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(Flipper, self).__init__(machine, name, config, collection,
-                                      validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         self.flipper_switches = []
         self.flipper_switches.append(self.config['activation_switch'].name)
@@ -99,7 +99,7 @@ class Flipper(Device):
             self._enable_main_coil_eos_cutoff_rule()
             self._enable_hold_coil_rule()
 
-        # todo detect bad EOS and program around it
+            # todo detect bad EOS and program around it
 
     def disable(self, **kwargs):
         """Disables the flipper.
@@ -118,44 +118,44 @@ class Flipper(Device):
         self.log.debug('Enabling single coil rule')
 
         self.platform.set_hw_rule(
-            sw_name=self.config['activation_switch'].name,
-            sw_activity=1,
-            driver_name=self.config['main_coil'].name,
-            driver_action='hold',
-            disable_on_release=True,
-            **self.config)
+                sw_name=self.config['activation_switch'].name,
+                sw_activity=1,
+                driver_name=self.config['main_coil'].name,
+                driver_action='hold',
+                disable_on_release=True,
+                **self.config)
 
     def _enable_main_coil_pulse_rule(self):
         self.log.debug('Enabling main coil pulse rule')
 
         self.platform.set_hw_rule(
-            sw_name=self.config['activation_switch'].name,
-            sw_activity=1,
-            driver_name=self.config['main_coil'].name,
-            driver_action='pulse',
-            disable_on_release=True,
-            **self.config)
+                sw_name=self.config['activation_switch'].name,
+                sw_activity=1,
+                driver_name=self.config['main_coil'].name,
+                driver_action='pulse',
+                disable_on_release=True,
+                **self.config)
 
     def _enable_hold_coil_rule(self):
         self.log.debug('Enabling hold coil rule')
 
         self.platform.set_hw_rule(
-            sw_name=self.config['activation_switch'].name,
-            sw_activity=1,
-            driver_name=self.config['hold_coil'].name,
-            driver_action='hold',
-            disable_on_release=True,
-            **self.config)
+                sw_name=self.config['activation_switch'].name,
+                sw_activity=1,
+                driver_name=self.config['hold_coil'].name,
+                driver_action='hold',
+                disable_on_release=True,
+                **self.config)
 
     def _enable_main_coil_eos_cutoff_rule(self):
         self.log.debug('Enabling main coil EOS cutoff rule')
 
         self.platform.set_hw_rule(
-            sw_name=self.config['eos_switch'],
-            sw_activity=1,
-            driver_name=self.config['main_coil'].name,
-            driver_action='disable',
-            **self.config)
+                sw_name=self.config['eos_switch'],
+                sw_activity=1,
+                driver_name=self.config['main_coil'].name,
+                driver_action='disable',
+                **self.config)
 
     def sw_flip(self):
         """Activates the flipper via software as if the flipper button was
@@ -173,9 +173,9 @@ class Flipper(Device):
 
         # Send the activation switch press to the switch controller
         self.machine.switch_controller.process_switch(
-            name=self.config['activation_switch'].name,
-            state=1,
-            logical=True)
+                name=self.config['activation_switch'].name,
+                state=1,
+                logical=True)
 
         self.config['main_coil'].enable()
 
@@ -186,9 +186,9 @@ class Flipper(Device):
 
         # Send the activation switch release to the switch controller
         self.machine.switch_controller.process_switch(
-            name=self.config['activation_switch'].name,
-            state=0,
-            logical=True)
+                name=self.config['activation_switch'].name,
+                state=0,
+                logical=True)
 
         # disable the flipper coil(s)
         self.config['main_coil'].disable()

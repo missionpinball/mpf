@@ -21,7 +21,7 @@ class Game(Mode):
     """
 
     def __init__(self, machine, config, name, path):
-        super(Game, self).__init__(machine, config, name, path)
+        super().__init__(machine, config, name, path)
         self._balls_in_play = 0
         self.player_list = list()
         self.machine.game = None
@@ -80,11 +80,12 @@ class Game(Mode):
                                     self.player_add_success)
 
         if self.machine.config['game']['add_player_switch_tag']:
-
             self.add_mode_event_handler(
-                self.machine.config['mpf']['switch_tag_event'].replace('%',
-                self.machine.config['game']['add_player_switch_tag']),
-                self.request_player_add)
+                    self.machine.config['mpf']['switch_tag_event'].replace('%',
+                                                                           self.machine.config[
+                                                                               'game'][
+                                                                               'add_player_switch_tag']),
+                    self.request_player_add)
 
         self.add_mode_event_handler('ball_ended', self.ball_ended)
         self.add_mode_event_handler('game_ended', self.game_ended)
@@ -121,7 +122,7 @@ class Game(Mode):
         if self.player and self.player.ball > self.min_restart_ball:
             self.log.debug("------Restarting game via long button press------")
 
-        # todo this should post the request to start game event first
+            # todo this should post the request to start game event first
 
     def game_started(self, ev_result=True, **kwargs):
         """All the modules that needed to do something on game start are done,
@@ -131,7 +132,7 @@ class Game(Mode):
 
         if ev_result:
             self.machine.remove_machine_var_search(startswith='player',
-                                                    endswith='_score')
+                                                   endswith='_score')
 
             if not self.player_list:
                 # Sometimes game_starting handlers will add players, so we only
@@ -170,8 +171,8 @@ class Game(Mode):
         self.log.info("****************** BALL STARTING ******************")
         self.log.info("**                                               **")
         self.log.info("**    Player: {}    Ball: {}   Score: {}".format(
-                       self.player.number, self.player.ball,
-                       self.player.score).ljust(49) + '**')
+                self.player.number, self.player.ball,
+                self.player.score).ljust(49) + '**')
         self.log.info("**                                               **")
         self.log.info("***************************************************")
         self.log.info("***************************************************")
@@ -207,7 +208,7 @@ class Game(Mode):
         else:
             self.machine.events.post('multi_player_ball_started')
             self.machine.events.post(
-                'player_{}_ball_started'.format(self.player.number))
+                    'player_{}_ball_started'.format(self.player.number))
 
         self.machine.playfield.add_ball(player_controlled=True, reset=True)
 
@@ -282,7 +283,7 @@ class Game(Mode):
             return
 
         if (self.player.ball == self.machine.config['game']['balls_per_game']
-                and self.player.number == self.num_players):
+            and self.player.number == self.num_players):
             self.game_ending()
         else:
             self.player_rotate()
@@ -416,7 +417,7 @@ class Game(Mode):
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
 
-        if len(self.player_list) >= self.machine.config['game']\
+        if len(self.player_list) >= self.machine.config['game'] \
                 ['max_players']:
             self.log.debug("Game is at max players. Cannot add another.")
             return False
@@ -440,9 +441,9 @@ class Game(Mode):
             self.num_players = len(self.player_list)
 
             self.machine.create_machine_var(
-                name='player{}_score'.format(player.number),
-                value=player.score,
-                persist=True)
+                    name='player{}_score'.format(player.number),
+                    value=player.score,
+                    persist=True)
 
             return player
 
@@ -471,7 +472,7 @@ class Game(Mode):
             return
 
         self.machine.events.post('player_turn_stop', player=self.player,
-                                     number=self.player.number)
+                                 number=self.player.number)
 
         self.machine.set_machine_var(
                 name='player{}_score'.format(self.player.number),
@@ -512,7 +513,7 @@ class Game(Mode):
         else:  # no current player, grab the first one
             self.player = self.player_list[0]
 
-        self.log.debug("Player rotate: Now up is Player %s", self.player.number)
-
+        self.log.debug("Player rotate: Now up is Player %s",
+                       self.player.number)
 
 # todo player events should come next, including tracking inc/dec, other values

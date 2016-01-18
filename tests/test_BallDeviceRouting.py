@@ -5,10 +5,10 @@ from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
 import time
 
-class TestBallDeviceRouting(MpfTestCase):
 
+class TestBallDeviceRouting(MpfTestCase):
     def __init__(self, test_map):
-        super(TestBallDeviceRouting, self).__init__(test_map)
+        super().__init__(test_map)
         self._captured = 0
         self._missing = 0
 
@@ -36,8 +36,10 @@ class TestBallDeviceRouting(MpfTestCase):
         target1 = self.machine.ball_devices['test_target1']
         playfield = self.machine.ball_devices['playfield']
 
-        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
-        self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
+        self.machine.events.add_handler('balldevice_1_ball_missing',
+                                        self._missing_ball)
+        self.machine.events.add_handler('balldevice_captured_from_playfield',
+                                        self._captured_from_pf)
 
         self._missing = 0
         self._captured = 0

@@ -13,9 +13,9 @@ class Switch(Device):
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
-        super(Switch, self).__init__(machine, name, config, collection,
-                                     platform_section='switches',
-                                     validate=validate)
+        super().__init__(machine, name, config, collection,
+                         platform_section='switches',
+                         validate=validate)
 
         self.machine = machine
         self.name = name
