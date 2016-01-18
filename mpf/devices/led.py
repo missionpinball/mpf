@@ -342,3 +342,4 @@ class LED(Device):
 
     def _kill_fade(self):
         self.fade_in_progress = False
+        self.color(color=self.state['destination_color'], fade_ms=0, priority=self.state['priority'], cache=True)
