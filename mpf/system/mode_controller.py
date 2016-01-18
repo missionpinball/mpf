@@ -124,25 +124,14 @@ class ModeController(object):
         # Now figure out if there's a machine-specific config for this mode,
         # and if so, merge it into the config
 
-        mode_config_folder = os.path.join(self.machine.machine_path,
+        mode_config_file = os.path.join(self.machine.machine_path,
             self.machine.config['mpf']['paths']['modes'],
-            mode_string, 'config')
+            mode_string, 'config', mode_string + '.yaml')
 
-        found_file = False
-        # TODO: refactor this loop to one simple seek
-        for path, _, files in os.walk(mode_config_folder):
-            for file in files:
-                file_root, file_ext = os.path.splitext(file)
-
-                if file_root == mode_string:
-                    config = Util.dict_merge(config,
-                        Config.load_config_file(os.path.join(path, file)))
-                    found_file = True
-                    found_configuration = True
-                    break
-
-            if found_file:
-                break
+        if os.path.isfile(mode_config_file):
+            config = Util.dict_merge(config,
+            Config.load_config_file(mode_config_file))
+            found_configuration = True
 
         # the mode has to have at least one config to exist
         if not found_configuration:
