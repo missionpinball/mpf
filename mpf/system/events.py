@@ -556,7 +556,7 @@ class EventManager(object):
         self.machine.events.post(event_to_call, **kwargs)
 
     def _random_event_player_callback(self, event_list, **kwargs):
-        self.machine.events.post(random.choice(event_list))
+        self.machine.events.post(random.choice(event_list), **kwargs)
 
 
 class QueuedEvent(object):
