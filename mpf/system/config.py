@@ -421,7 +421,9 @@ class Config(object):
 
                         self.lookup_invalid_config_setting(path_string)
 
-                        sys.exit()
+                        raise AssertionError('Your config contains a value for the '
+                                       'setting "' + path_string + '", but this is not a valid '
+                                       'setting name.')
 
     def validate_item(self, item, validator, validation_failure_info):
 
