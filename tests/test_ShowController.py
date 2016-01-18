@@ -1,4 +1,4 @@
-from .MpfTestCase import MpfTestCase
+from tests.MpfTestCase import MpfTestCase
 from mpf.system.rgb_color import RGBColor
 
 
@@ -13,14 +13,11 @@ class TestShowController(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
-    def __init__(self, test_map):
-        super(TestShowController, self).__init__(test_map)
-
     def testSimpleLEDShow(self):
         # Make sure attract mode has been loaded
         self.assertIn('attract', self.machine.modes)
 
-        # Make sure test_show1 has been loaded
+        # Make sure test_show1 exists and can be loaded
         self.assertIn('test_show1', self.machine.shows)
 
         # Make sure test LEDs have been configured
