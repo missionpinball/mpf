@@ -1,5 +1,5 @@
 from tests.MpfTestCase import MpfTestCase
-
+from unittest.mock import patch
 
 class TestEventManager(MpfTestCase):
     def __init__(self, test_map):
@@ -10,6 +10,9 @@ class TestEventManager(MpfTestCase):
         self._handler2_args = tuple()
         self._handler2_kwargs = dict()
         self._handler2_called = 0
+        self._handler3_args = tuple()
+        self._handler3_kwargs = dict()
+        self._handler3_called = 0
         self._handlers_called = list()
         self._handler_returns_false_args = tuple()
         self._handler_returns_false_kwargs = dict()
@@ -44,6 +47,12 @@ class TestEventManager(MpfTestCase):
         self._handler2_kwargs = kwargs
         self._handler2_called += 1
         self._handlers_called.append(self.event_handler2)
+
+    def event_handler3(self, *args, **kwargs):
+        self._handler3_args = args
+        self._handler3_kwargs = kwargs
+        self._handler3_called += 1
+        self._handlers_called.append(self.event_handler3)
 
     def event_handler_returns_false(self, *args, **kwargs):
         self._handler_returns_false_args = args
@@ -558,3 +567,55 @@ class TestEventManager(MpfTestCase):
 
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(True, self._queue.is_empty())
+
+    def test_event_player(self):
+        self.machine.events.add_handler('test_event_player1', self.event_handler1)
+        self.machine.events.add_handler('test_event_player2', self.event_handler2)
+        self.machine.events.add_handler('test_event_player3', self.event_handler3)
+        self.advance_time_and_run(1)
+
+        self.machine.events.post('test_event_player1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(1, self._handler3_called)
+        self.assertEqual(tuple(), self._handler1_args)
+        self.assertEqual(dict(test="123"), self._handler1_kwargs)
+        self.assertEqual(tuple(), self._handler2_args)
+        self.assertEqual(dict(test="123"), self._handler2_kwargs)
+        self.assertEqual(tuple(), self._handler3_args)
+        self.assertEqual(dict(test="123"), self._handler3_kwargs)
+
+
+    def test_random_event_player(self):
+        self.machine.events.add_handler('test_random_event_player1', self.event_handler1)
+        self.machine.events.add_handler('test_random_event_player2', self.event_handler2)
+        self.machine.events.add_handler('test_random_event_player3', self.event_handler3)
+        self.advance_time_and_run(1)
+
+        with patch('random.choice', return_value="test_random_event_player2") as mock_random:
+            self.machine.events.post('test_random_event_player1', test="123")
+            self.advance_time_and_run(1)
+            mock_random.assert_called_once_with(['test_random_event_player2', 'test_random_event_player3'])
+
+        self.assertEqual(1, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)
+        self.assertEqual(tuple(), self._handler1_args)
+        self.assertEqual(dict(test="123"), self._handler1_kwargs)
+        self.assertEqual(tuple(), self._handler2_args)
+        self.assertEqual(dict(test="123"), self._handler2_kwargs)
+
+        with patch('random.choice', return_value="test_random_event_player3") as mock_random:
+            self.machine.events.post('test_random_event_player1', test="123")
+            self.advance_time_and_run(1)
+            mock_random.assert_called_once_with(['test_random_event_player2', 'test_random_event_player3'])
+
+        self.assertEqual(2, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(1, self._handler3_called)
+        self.assertEqual(tuple(), self._handler1_args)
+        self.assertEqual(dict(test="123"), self._handler1_kwargs)
+        self.assertEqual(tuple(), self._handler3_args)
+        self.assertEqual(dict(test="123"), self._handler3_kwargs)
