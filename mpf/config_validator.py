@@ -518,6 +518,19 @@ timing:
     hz: single|int|30
     hw_thread_sleep_ms: single|int|1
 widgets:
+    slide_frame:
+        type: single|str|slide_frame
+        x: single|num|0
+        y: single|num|0
+        v_pos: single|str|center
+        h_pos: single|str|center
+        opacity: single|float|1.0
+        z: single|int|0
+
+        name: single|str|
+        width: single|int|
+        height: single|int|
+
     text:
         type: single|str|text
         x: single|num|0
@@ -562,6 +575,7 @@ widgets:
         keep_ratio: single|bool|False
         nocache: single|bool|False
         source: single|str|
+
 widget_player:
     widget: list|str|
     target: single|str|None
