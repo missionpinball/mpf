@@ -587,7 +587,6 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(tuple(), self._handler3_args)
         self.assertEqual(dict(test="123"), self._handler3_kwargs)
 
-
     def test_random_event_player(self):
         self.machine.events.add_handler('test_random_event_player1', self.event_handler1)
         self.machine.events.add_handler('test_random_event_player2', self.event_handler2)
@@ -619,3 +618,85 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(dict(test="123"), self._handler1_kwargs)
         self.assertEqual(tuple(), self._handler3_args)
         self.assertEqual(dict(test="123"), self._handler3_kwargs)
+
+    def test_event_player_in_mode(self):
+        self.machine.events.add_handler('test_event_player_mode1', self.event_handler1)
+        self.machine.events.add_handler('test_event_player_mode2', self.event_handler2)
+        self.machine.events.add_handler('test_event_player_mode3', self.event_handler3)
+        self.advance_time_and_run(1)
+
+        # mode not loaded. event should not be replayed
+        self.machine.events.post('test_event_player_mode1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._handler1_called)
+        self.assertEqual(0, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)
+
+        # start mode
+        self.machine.events.post('test_mode_start')
+        self.advance_time_and_run(1)
+        self.assertTrue(self.machine.mode_controller.is_active("test_mode"))
+
+        # now the event should get replayed
+        self.machine.events.post('test_event_player_mode1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(2, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(1, self._handler3_called)
+
+        # stop mode
+        self.machine.events.post('test_mode_end')
+        self.advance_time_and_run(1)
+        self.assertFalse(self.machine.mode_controller.is_active("test_mode"))
+
+        # event should not longer get replayed
+        self.machine.events.post('test_event_player_mode1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(3, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(1, self._handler3_called)
+
+    def test_random_event_player_in_mode(self):
+        self.machine.events.add_handler('test_random_event_player_mode1', self.event_handler1)
+        self.machine.events.add_handler('test_random_event_player_mode2', self.event_handler2)
+        self.machine.events.add_handler('test_random_event_player_mode3', self.event_handler3)
+        self.advance_time_and_run(1)
+
+        # mode not loaded. event should not be replayed
+        self.machine.events.post('test_random_event_player_mode1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._handler1_called)
+        self.assertEqual(0, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)
+
+        # start mode
+        self.machine.events.post('test_mode_start')
+        self.advance_time_and_run(1)
+        self.assertTrue(self.machine.mode_controller.is_active("test_mode"))
+
+        # now the event should get replayed
+        with patch('random.choice', return_value="test_random_event_player_mode2") as mock_random:
+            self.machine.events.post('test_random_event_player_mode1', test="123")
+            self.advance_time_and_run(1)
+            mock_random.assert_called_once_with(['test_random_event_player_mode2', 'test_random_event_player_mode3'])
+
+        self.assertEqual(2, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)
+
+        # stop mode
+        self.machine.events.post('test_mode_end')
+        self.advance_time_and_run(1)
+        self.assertFalse(self.machine.mode_controller.is_active("test_mode"))
+
+        # event should not longer get replayed
+        self.machine.events.post('test_random_event_player_mode1', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(3, self._handler1_called)
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)

@@ -14,3 +14,6 @@ random_event_player:
     test_random_event_player1:
         test_random_event_player2
         test_random_event_player3
+
+modes:
+  - test_mode
