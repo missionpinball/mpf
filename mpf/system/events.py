@@ -567,7 +567,7 @@ class QueuedEvent(object):
     def __init__(self, callback, **kwargs):
         self.log = logging.getLogger("Queue")
 
-        self.debug = False
+        self.debug = True
 
         if self.debug:
             self.log.debug("Creating an event queue. Callback: %s Args: %s",
