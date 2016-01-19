@@ -518,6 +518,13 @@ timing:
     hz: single|int|30
     hw_thread_sleep_ms: single|int|1
 widgets:
+    animations:
+        property: list|str|
+        value: list|num|
+        duration: single|secs|1
+        timing: single|str|after_previous
+        repeat: single|bool|False
+        easing: single|str|linear
     slide_frame:
         type: single|str|slide_frame
         x: single|num|0
@@ -526,6 +533,7 @@ widgets:
         h_pos: single|str|center
         opacity: single|float|1.0
         z: single|int|0
+        animations: ignore
 
         name: single|str|
         width: single|int|
@@ -539,6 +547,7 @@ widgets:
         h_pos: single|str|center
         opacity: single|float|1.0
         z: single|int|0
+        animations: ignore
 
         text: single|str|
         color: single|str|ffffffff
@@ -567,6 +576,8 @@ widgets:
         v_pos: single|str|center
         h_pos: single|str|center
         opacity: single|float|1.0
+        z: single|int|0
+        animations: ignore
 
         allow_stretch: single|bool|False
         anim_delay: single|float|.25

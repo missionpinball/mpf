@@ -260,7 +260,11 @@ class Config(object):
         processed_config = source
 
         for k in list(this_spec.keys()):
-            if k in source:  # validate the entry that exists
+
+            if this_spec[k] == 'ignore':
+                continue
+
+            elif k in source:  # validate the entry that exists
 
                 if type(this_spec[k]) is dict:
                     # This means we're looking for a list of dicts
