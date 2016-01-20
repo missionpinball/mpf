@@ -1,5 +1,5 @@
 # mpf
-__version_info__ = ('0', '30', '0', 'dev12')
+__version_info__ = ('0', '30', '0', 'dev13')
 __version__ = '.'.join(__version_info__)
 
 __bcp_version_info__ = ('1', '0')

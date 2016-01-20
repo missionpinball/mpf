@@ -482,6 +482,7 @@ slide_player:
     priority: single|int|0
     show: single|bool|True
     force: single|bool|False
+    transition: ignore
 snux:
     flipper_enable_driver_number: single|int|c23
     diag_led_driver_number: single|str|c24
@@ -517,6 +518,33 @@ tilt:
 timing:
     hz: single|int|30
     hw_thread_sleep_ms: single|int|1
+transitions:
+    push:
+        type: single|str|
+        direction: single|str|left
+        easing: single|str|out_quad
+        duration: single|secs|1
+    fade:
+        type: single|str|
+        duration: single|secs|1
+    swap:
+        type: single|str|
+        duration: single|secs|2
+    wipe:
+        type: single|str|
+        duration: single|secs|1
+    fade_back:
+        type: single|str|
+        duration: single|secs|2
+    rise_in:
+        type: single|str|
+        duration: single|secs|2
+
+    # clearcolor
+    # fs
+    # vs
+
+
 widgets:
     animations:
         property: list|str|
