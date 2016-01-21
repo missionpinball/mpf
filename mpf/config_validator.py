@@ -542,13 +542,14 @@ transitions:
         duration: single|secs|2
     wipe:
         type: single|str|
-        duration: single|secs|1
     fade_back:
         type: single|str|
         duration: single|secs|2
     rise_in:
         type: single|str|
         duration: single|secs|2
+    none:
+        type: ignore
 
     # clearcolor
     # fs
