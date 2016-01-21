@@ -524,6 +524,16 @@ transitions:
         direction: single|str|left
         easing: single|str|out_quad
         duration: single|secs|1
+    move_in:
+        type: single|str|
+        direction: single|str|left
+        easing: single|str|out_quad
+        duration: single|secs|1
+    move_out:
+        type: single|str|
+        direction: single|str|left
+        easing: single|str|out_quad
+        duration: single|secs|1
     fade:
         type: single|str|
         duration: single|secs|1
