@@ -565,10 +565,12 @@ widgets:
         easing: single|str|linear
     slide_frame:
         type: single|str|slide_frame
-        x: single|num|0
-        y: single|num|0
+        x: single|str|None
+        y: single|str|None
         v_pos: single|str|center
         h_pos: single|str|center
+        anchor_x: single|str|None
+        anchor_y: single|str|None
         opacity: single|float|1.0
         z: single|int|0
         animations: ignore
@@ -579,10 +581,12 @@ widgets:
 
     text:
         type: single|str|text
-        x: single|num|0
-        y: single|num|0
+        x: single|str|None
+        y: single|str|None
         v_pos: single|str|center
         h_pos: single|str|center
+        anchor_x: single|str|None
+        anchor_y: single|str|None
         opacity: single|float|1.0
         z: single|int|0
         animations: ignore
@@ -595,6 +599,8 @@ widgets:
         italic: single|bool|False
         halign: single|str|center
         valign: single|str|middle
+        anchor_x: single|str|None
+        anchor_y: single|str|None
         padding_x: single|int|0
         padding_y: single|int|0
   #      text_size:
@@ -609,10 +615,12 @@ widgets:
   #      unicode_errors:
     image:
         type: single|str|image
-        x: single|num|0
-        y: single|num|0
+        x: single|str|None
+        y: single|str|None
         v_pos: single|str|center
         h_pos: single|str|center
+        anchor_x: single|str|None
+        anchor_y: single|str|None
         opacity: single|float|1.0
         z: single|int|0
         animations: ignore
