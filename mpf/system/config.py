@@ -329,7 +329,6 @@ class Config(object):
             try:
                 item = int(item)
             except (TypeError, ValueError):
-                # TODO error
                 pass
 
         elif validator == 'num':

@@ -479,7 +479,7 @@ shot_profiles:
 slide_player:
     slide: single|str|
     target: single|str|None
-    priority: single|int|0
+    priority: single|int|None
     show: single|bool|True
     force: single|bool|False
     transition: ignore
