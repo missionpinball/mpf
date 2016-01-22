@@ -559,7 +559,7 @@ transitions:
 widgets:
     animations:
         property: list|str|
-        value: list|num|
+        value: list|str|
         duration: single|secs|1
         timing: single|str|after_previous
         repeat: single|bool|False
@@ -568,8 +568,6 @@ widgets:
         type: single|str|slide_frame
         x: single|str|None
         y: single|str|None
-        v_pos: single|str|center
-        h_pos: single|str|center
         anchor_x: single|str|None
         anchor_y: single|str|None
         opacity: single|float|1.0
@@ -584,8 +582,6 @@ widgets:
         type: single|str|text
         x: single|str|None
         y: single|str|None
-        v_pos: single|str|center
-        h_pos: single|str|center
         anchor_x: single|str|None
         anchor_y: single|str|None
         opacity: single|float|1.0
@@ -618,8 +614,6 @@ widgets:
         type: single|str|image
         x: single|str|None
         y: single|str|None
-        v_pos: single|str|center
-        h_pos: single|str|center
         anchor_x: single|str|None
         anchor_y: single|str|None
         opacity: single|float|1.0
