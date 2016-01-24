@@ -626,7 +626,7 @@ widgets:
         color: single|str|ffffffff
         keep_ratio: single|bool|False
         nocache: single|bool|False
-        source: single|str|
+        image: single|str|
 
 widget_player:
     widget: list|str|
