@@ -486,9 +486,10 @@ shot_profiles:
 slide_player:
     slide: single|str|
     target: single|str|None
-    priority: single|int|0
+    priority: single|int|None
     show: single|bool|True
     force: single|bool|False
+    transition: ignore
 snux:
     flipper_enable_driver_number: single|int|c23
     diag_led_driver_number: single|str|c24
@@ -524,15 +525,61 @@ tilt:
 timing:
     hz: single|int|30
     hw_thread_sleep_ms: single|int|1
+transitions:
+    push:
+        type: single|str|
+        direction: single|str|left
+        easing: single|str|out_quad
+        duration: single|secs|1
+    move_in:
+        type: single|str|
+        direction: single|str|left
+        easing: single|str|out_quad
+        duration: single|secs|1
+    move_out:
+        type: single|str|
+        direction: single|str|left
+        easing: single|str|out_quad
+        duration: single|secs|1
+    fade:
+        type: single|str|
+        duration: single|secs|1
+    swap:
+        type: single|str|
+        duration: single|secs|2
+    wipe:
+        type: single|str|
+    fade_back:
+        type: single|str|
+        duration: single|secs|2
+    rise_in:
+        type: single|str|
+        duration: single|secs|2
+    none:
+        type: ignore
+
+    # clearcolor
+    # fs
+    # vs
+
+
 widgets:
+    animations:
+        property: list|str|
+        value: list|str|
+        duration: single|secs|1
+        timing: single|str|after_previous
+        repeat: single|bool|False
+        easing: single|str|linear
     slide_frame:
         type: single|str|slide_frame
-        x: single|num|0
-        y: single|num|0
-        v_pos: single|str|center
-        h_pos: single|str|center
+        x: single|str|None
+        y: single|str|None
+        anchor_x: single|str|None
+        anchor_y: single|str|None
         opacity: single|float|1.0
         z: single|int|0
+        animations: ignore
 
         name: single|str|
         width: single|int|
@@ -540,12 +587,13 @@ widgets:
 
     text:
         type: single|str|text
-        x: single|num|0
-        y: single|num|0
-        v_pos: single|str|center
-        h_pos: single|str|center
+        x: single|str|None
+        y: single|str|None
+        anchor_x: single|str|None
+        anchor_y: single|str|None
         opacity: single|float|1.0
         z: single|int|0
+        animations: ignore
 
         text: single|str|
         color: single|str|ffffffff
@@ -555,6 +603,8 @@ widgets:
         italic: single|bool|False
         halign: single|str|center
         valign: single|str|middle
+        anchor_x: single|str|None
+        anchor_y: single|str|None
         padding_x: single|int|0
         padding_y: single|int|0
   #      text_size:
@@ -569,11 +619,13 @@ widgets:
   #      unicode_errors:
     image:
         type: single|str|image
-        x: single|num|0
-        y: single|num|0
-        v_pos: single|str|center
-        h_pos: single|str|center
+        x: single|str|None
+        y: single|str|None
+        anchor_x: single|str|None
+        anchor_y: single|str|None
         opacity: single|float|1.0
+        z: single|int|0
+        animations: ignore
 
         allow_stretch: single|bool|False
         anim_delay: single|float|.25
@@ -581,7 +633,7 @@ widgets:
         color: single|str|ffffffff
         keep_ratio: single|bool|False
         nocache: single|bool|False
-        source: single|str|
+        image: single|str|
 
 widget_player:
     widget: list|str|

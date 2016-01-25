@@ -1,0 +1,5 @@
+#config_version=3
+
+modes:
+  - broken_mode2
+  - mode2

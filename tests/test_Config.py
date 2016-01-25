@@ -118,6 +118,18 @@ class TestConfig(MpfTestCase):
             validation_string, 'test_failure_info', 1.0)
         self.assertAlmostEqual(results, 1.0, .01)
 
+        # test num validations
+
+        validation_string = 'single|num|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 1.0)
+        self.assertAlmostEqual(results, 1.0, .01)
+        self.assertEqual(type(results), float)
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '1')
+        self.assertEqual(results, 1)
+        self.assertIs(type(results), int)
+
         # test bool validations
 
         validation_string = 'single|bool|'

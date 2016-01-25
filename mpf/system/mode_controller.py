@@ -98,6 +98,7 @@ class ModeController(object):
             self.log.debug('Processing mode: %s', mode_string)
 
         config = dict()
+        found_configuration = False
 
         # Find the folder for this mode. First check the machine folder/modes,
         # if that's not a valid folder, check the mpf/modes folder.
@@ -118,34 +119,36 @@ class ModeController(object):
 
         if os.path.isfile(mpf_mode_config):
             config = Config.load_config_file(mpf_mode_config)
+            found_configuration = True
 
         # Now figure out if there's a machine-specific config for this mode,
         # and if so, merge it into the config
 
-        mode_config_folder = os.path.join(self.machine.machine_path,
+        mode_config_file = os.path.join(self.machine.machine_path,
             self.machine.config['mpf']['paths']['modes'],
-            mode_string, 'config')
+            mode_string, 'config', mode_string + '.yaml')
 
-        found_file = False
-        for path, _, files in os.walk(mode_config_folder):
-            for file in files:
-                file_root, file_ext = os.path.splitext(file)
+        if os.path.isfile(mode_config_file):
+            config = Util.dict_merge(config,
+            Config.load_config_file(mode_config_file))
+            found_configuration = True
 
-                if file_root == mode_string:
-                    config = Util.dict_merge(config,
-                        Config.load_config_file(os.path.join(path, file)))
-                    found_file = True
-                    break
+        # the mode has to have at least one config to exist
+        if not found_configuration:
+            raise AssertionError("No configuration found for mode " + mode_string)
 
-            if found_file:
-                break
+        # validate config
+        if not 'mode' in config:
+            config['mode'] = dict()
+
+        self.machine.config_processor.process_config2("mode", config['mode'])
 
         # Figure out where the code is for this mode.
 
         # If a custom 'code' setting exists, first look in the machine folder
         # for it, and if it's not there, then look in mpf/modes for it.
 
-        if 'mode' in config and 'code' in config['mode']:
+        if config['mode']['code']:
             mode_code_file = os.path.join(self.machine.machine_path,
                 self.machine.config['mpf']['paths']['modes'],
                 mode_string,

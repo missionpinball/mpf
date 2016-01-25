@@ -1,0 +1,4 @@
+#config_version=3
+
+unrelated_section:
+  invalid_key: crap
