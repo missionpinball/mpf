@@ -45,15 +45,7 @@ class Auditor(object):
         # Initializes the auditor. We do this separate from __init__() since
         # we need everything else to be setup first.
 
-        config = '''
-                    save_events: list|ball_ended
-                    audit: list|None
-                    events: list|None
-                    player: list|None
-                    num_player_top_records: int|10
-                    '''
-
-        self.config = Config.process_config(config,
+        self.config = self.machine.config_processor.process_config2('auditor',
                                             self.machine.config['auditor'])
 
         self.current_audits = self.data_manager.get_data()

@@ -633,4 +633,10 @@ widget_player:
     target: single|str|None
     slide: single|str|None
 
+auditor:
+    save_events: list|str|ball_ended
+    audit: list|str|None
+    events: list|str|None
+    player: list|str|None
+    num_player_top_records: single|int|1
 '''
