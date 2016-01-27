@@ -936,6 +936,9 @@ class Show(Asset):
         self.current_tick_time = 0
         self.running = False
 
+    def __repr__(self):
+        return '<Show.{} (loaded={}, running={})>'.format(self.file_name, self.loaded, self.running)
+
     @property
     def playback_rate(self):
         return self._playback_rate
@@ -1424,7 +1427,7 @@ class Show(Asset):
         action_loop_count = 0  # Tracks how many loops we've done in this call
         # Used to detect if a show is running too slow
 
-        while self.next_step_time <= self.current_tick_time:
+        while self.next_step_time and self.next_step_time <= self.current_tick_time:
             action_loop_count += 1
             self._process_current_step()
 
@@ -1433,14 +1436,9 @@ class Show(Asset):
             if action_loop_count == self.total_steps:
                 return
 
-
     def _process_current_step(self):
 
             current_step_time = self.next_step_time
-
-            # Set the next action time & step to the next location
-            self.next_step_time = (current_step_time +
-                                   self.show_steps[self.current_step]['time'] / self.playback_rate)
 
             if self.debug:
                 print("Current step: ", self.current_step)
@@ -1454,7 +1452,9 @@ class Show(Asset):
 
             for item_type, item_dict in (iter(self.show_steps[self.current_step].items())):
 
-                if item_type == 'lights':
+                if item_type == 'time':
+                    continue
+                elif item_type == 'lights':
 
                     for light_obj, brightness in item_dict.items():
 
@@ -1489,7 +1489,7 @@ class Show(Asset):
                                 'destination_color': led_dict['color'],
                                 'start_color': prev_color,
                                 'fade_start': current_step_time,
-                                'fade_end': current_step_time + int(led_dict['fade']) / self.playback_rate * 0.001}
+                                'fade_end': current_step_time + int(led_dict['fade']) / self.playback_rate / 1000}
 
                 elif item_type == 'events':
 
@@ -1542,6 +1542,13 @@ class Show(Asset):
             # else, we're in the middle of a show
             else:
                 self.current_step += 1
+
+            if self.ending:
+                self.next_step_time = False
+            else:
+                # Set the next action time based on upcoming show step
+                self.next_step_time = (current_step_time +
+                                       self.show_steps[self.current_step]['time'] / self.playback_rate)
 
     def resync(self):
         """Causes this show to do a one-time update to resync all the LEDs and
