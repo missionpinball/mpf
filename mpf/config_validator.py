@@ -632,12 +632,29 @@ widgets:
         anim_loop: single|int|0
         color: single|str|ffffffff
         keep_ratio: single|bool|False
-        nocache: single|bool|False
         image: single|str|
+
+    video:
+        type: single|str|image
+        x: single|str|None
+        y: single|str|None
+        anchor_x: single|str|None
+        anchor_y: single|str|None
+        opacity: single|float|1.0
+        z: single|int|0
+        animations: ignore
+
+        video: single|str|
 
 widget_player:
     widget: list|str|
     target: single|str|None
     slide: single|str|None
 
+auditor:
+    save_events: list|str|ball_ended
+    audit: list|str|None
+    events: list|str|None
+    player: list|str|None
+    num_player_top_records: single|int|1
 '''
