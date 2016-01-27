@@ -441,8 +441,8 @@ class ShowController(object):
             self.registered_tick_handlers.remove(handler)
 
     def _tick(self):
-        # Runs once per machine loop and services any light updates that are
-        # needed.
+        # Runs once per machine loop.  Calls the tick processing function for any running shows
+        # and processes any device updates and/or show actions that are needed.
         self.current_tick_time = time.time()
 
         # Process the running Shows
@@ -454,6 +454,7 @@ class ShowController(object):
 
         # Check to see if we need to service any items from our queue. This can
         # be single commands or playlists
+        # TODO: Implement playlist processing
 
         # Make a copy of the queue since we might delete items as we iterate
         # through it
@@ -469,6 +470,7 @@ class ShowController(object):
         #        if item in self.queue:
         #            self.queue.remove(item)
 
+        # Process any device changes or actions made by the running shows
         self._do_update()
 
     def add_to_light_update_list(self, light, brightness, priority, blend):

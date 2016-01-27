@@ -19,3 +19,6 @@ assets:
     test_show1:
       preload: yes
       debug: yes
+    test_show_triggers:
+      preload: yes
+      debug: yes
