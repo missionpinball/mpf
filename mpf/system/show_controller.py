@@ -1094,9 +1094,7 @@ class Show(Asset):
             # make sure events is a list of strings
             if 'events' in steps[step_num] and steps[step_num]['events']:
 
-                event_list = (Util.string_to_list(
-                    steps[step_num]['events']))
-
+                event_list = (Util.string_to_list(steps[step_num]['events']))
                 actions['events'] = event_list
 
             # Coils
@@ -1115,26 +1113,17 @@ class Show(Asset):
                                                        coil)
                         continue
 
-                    value = steps[step_num]['coils'][coil]
-
-                    # process the value into a tuple which will be
-                    # value[0] = string of action type (pulse, pwm, etc)
-                    # value[1] = int / float of pulse value
-
-                    # split the value on '-p' to look for a power setting
-                    value = value.split('-p')
-
-                    # if there's no power setting, append 100
-                    if len(value) == 1:
-                        value.append(100)
+                    # Check if a power setting has been specified
+                    if isinstance(steps[step_num]['coils'][coil], dict) and 'power' in steps[step_num]['coils'][coil]:
+                        power = max(min(int(steps[step_num]['coils'][coil]['power']), 100), 0)
+                    else:
+                        power = 100
 
                     # convert the 0-100 value to 0.0-1.0 float
-                    value[1] = float(value[1]) / 100.0
+                    power /= 100.0
 
                     # convert value list into tuple
-                    value = (value[0], value[1])
-
-                    coil_actions[this_coil] = value
+                    coil_actions[this_coil] = ('pulse', power)
 
                 actions['coils'] = coil_actions
 

@@ -8,8 +8,8 @@ mode:
 
 show_player:
   mode_mode2_started:
-    - show: test_show_triggers
+    - show: test_show2
 
-  mode_attract_stopped:
-    - show: test_show_triggers
+  mode_mode2_stopped:
+    - show: test_show2
       action: stop

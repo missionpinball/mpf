@@ -3,6 +3,7 @@
 modes:
   - mode1
   - mode2
+  - mode3
 
 leds:
     led_01:
@@ -14,11 +15,25 @@ leds:
         color_correction_profile: default
         debug: yes
 
+coils:
+    coil_01:
+        number: 1
+        pulse_ms: 30
+
+flashers:
+    flasher_01:
+        number: 1
+        label: Test flasher
+        flash_ms: 40
+
 assets:
   shows:
     test_show1:
       preload: yes
       debug: yes
-    test_show_triggers:
+    test_show2:
+      preload: yes
+      debug: yes
+    test_show3:
       preload: yes
       debug: yes
