@@ -33,14 +33,16 @@ class ShowController(object):
         self.coil_queue = set()
         self.gi_queue = set()
         self.flasher_queue = set()
+        self.trigger_queue = []
 
-        self.registered_light_scripts = CaseInsensitiveDict()
+        self.registered_show_scripts = CaseInsensitiveDict()
 
         self.light_update_list = []
         self.led_update_list = []
 
         self.running_shows = []
         self.registered_tick_handlers = set()
+        self.current_tick_time = 0
 
         self.external_show_connected = False
         self.external_show_command_queue = Queue()
@@ -76,27 +78,19 @@ class ShowController(object):
         object.
         """
 
-        self.current_time = time.time()
-        """
-        The show controller uses a common system time for the entire show system so that every
-        "current_time" of a single update cycle is the same everywhere. This
-        ensures that multiple shows, scripts, and commands start in-sync
-        regardless of any processing lag.
-        """
-
         # register for events
         self.machine.events.add_handler('timer_tick', self._tick)
         self.machine.events.add_handler('init_phase_5',
                                         self._initialize)
 
-        # Tell the mode controller that it should look for light_player items in
+        # Tell the mode controller that it should look for show_player items in
         # modes.
-        self.machine.mode_controller.register_start_method(self.process_light_player,
-                                                           'light_player')
+        self.machine.mode_controller.register_start_method(self.process_show_player,
+                                                           'show_player')
 
         # Create scripts from config
-        self.machine.mode_controller.register_start_method(self.process_light_scripts,
-                                                           'light_scripts')
+        self.machine.mode_controller.register_start_method(self.process_show_scripts,
+                                                           'show_scripts')
 
         # Create the show AssetManager
         self.asset_manager = AssetManager(
@@ -111,11 +105,11 @@ class ShowController(object):
     def _initialize(self):
         # Sets up everything that has to be instantiated first
 
-        if 'light_scripts' in self.machine.config:
-            self.process_light_scripts(self.machine.config['light_scripts'])
+        if 'show_scripts' in self.machine.config:
+            self.process_show_scripts(self.machine.config['show_scripts'])
 
-        if 'light_player' in self.machine.config:
-            self.process_light_player(self.machine.config['light_player'])
+        if 'show_player' in self.machine.config:
+            self.process_show_player(self.machine.config['show_player'])
 
     def play_show(self, show, priority=0, **kwargs):
         """Plays a hardware show.
@@ -165,15 +159,15 @@ class ShowController(object):
         for key in keys:
             self.stop_shows_by_key(key)
 
-    def process_light_scripts(self, config, mode=None, priority=0):
-        # config here is localized to light_scripts:
+    def process_show_scripts(self, config, mode=None, priority=0):
+        # config here is localized to show_scripts:
 
         for k, v in config.items():
-            self.registered_light_scripts[k] = v
+            self.registered_show_scripts[k] = v
 
-    def process_light_player(self, config, mode=None, priority=0):
-        # config is localized to 'light_player'
-        self.log.debug("Processing light_player configuration. Priority: %s",
+    def process_show_player(self, config, mode=None, priority=0):
+        # config is localized to 'show_player'
+        self.log.debug("Processing show_player configuration. Priority: %s",
                        priority)
 
         event_keys = set()
@@ -190,7 +184,7 @@ class ShowController(object):
 
                 if 'script' in this_action:
                     this_action['show'] = self.create_show_from_script(
-                        script=self.registered_light_scripts[this_action['script']],
+                        script=self.registered_show_scripts[this_action['script']],
                         lights=this_action.get('lights', None),
                         leds=this_action.get('leds', None),
                         light_tags=this_action.get('light_tags', None),
@@ -211,15 +205,15 @@ class ShowController(object):
                 else:
                     this_action['priority'] = priority
 
-                event_keys.add(self.add_light_player_show(event_name,
-                                                          this_action))
+                event_keys.add(self.add_show_player_show(event_name,
+                                                         this_action))
 
                 try:  # if this entry is to stop a script, there will be no show
                     shows.add(this_action['show'])
                 except KeyError:
                     pass
 
-        return self.unload_light_player_shows, (event_keys, shows)
+        return self.unload_show_player_shows, (event_keys, shows)
 
     def create_show_from_script(self, script, lights=None, leds=None,
                                 light_tags=None, led_tags=None, key=None):
@@ -281,10 +275,10 @@ class ShowController(object):
         return Show(machine=self.machine, config=None, file_name=None,
                     asset_manager=self.asset_manager, actions=action_list)
 
-    def unload_light_player_shows(self, removal_tuple):
+    def unload_show_player_shows(self, removal_tuple):
         event_keys, shows = removal_tuple
 
-        self.log.debug("Removing light_player events & stopping shows")
+        self.log.debug("Removing show_player events & stopping shows")
         self.machine.events.remove_handlers_by_keys(event_keys)
 
         for show in shows:
@@ -293,7 +287,7 @@ class ShowController(object):
             except AttributeError:
                 pass
 
-    def add_light_player_show(self, event, settings):
+    def add_show_player_show(self, event, settings):
         if 'priority' in settings:
             settings['show_priority'] = settings['priority']
 
@@ -326,32 +320,6 @@ class ShowController(object):
 
         return event_key
 
-    def sync_ms_next_tick(self, sync_ms):
-        """Figures out the next tick show should start based on the passed
-        sync_ms value.
-
-        Args:
-            sync_ms: Integer of the sync period in ms.
-
-        Returns:
-            Int of a tick number
-
-        """
-
-        tick_interval = Timing.HZ / (1000 / sync_ms)
-        next_tick = self.machine.tick_num
-
-        if (sync_ms >= Timing.ms_per_tick and
-                self.machine.tick_num % tick_interval):
-            next_tick = self.machine.tick_num + tick_interval - (
-                self.machine.tick_num % tick_interval)
-
-        self.log.debug("Calculating show sync. Sync_ms: %s, Current tick: %s, "
-                       "Show start: %s", sync_ms, self.machine.tick_num,
-                       next_tick)
-
-        return next_tick
-
     def _run_show(self, show):
         # Internal method which starts a Show
 
@@ -360,11 +328,14 @@ class ShowController(object):
             return
 
         show.ending = False
-        show.current_repeat_step = 0
+        show.running = True
+        show.current_loop_number = 0
         # or in the advance loop?
 
+        # Set the Show to begin immediately
+        show.next_step_time = self.current_tick_time
         if show.sync_ms:
-            show.next_action_tick = self.sync_ms_next_tick(show.sync_ms)
+            show.next_step_time += show.sync_ms / 1000.0
 
         self.running_shows.append(show)
         self.running_shows.sort(key=lambda x: x.priority)
@@ -383,7 +354,9 @@ class ShowController(object):
             this_reset = reset
 
         if this_reset:
-            show.current_location = 0
+            show.current_step = 0
+
+        show.running = False
 
         # if this show was from a script, remove it from running_show_keys
 
@@ -395,6 +368,16 @@ class ShowController(object):
 
         if show.callback:
             show.callback()
+
+    def get_next_show_step(self):
+        next_show_step_time = False
+        for show in self.running_shows:
+            if not next_show_step_time or show.next_step_time < next_show_step_time:
+                next_show_step_time = show.next_step_time
+
+        return next_show_step_time
+
+
 
     def restore_lower_lights(self, show=None, priority=0):
         """Restores the lights and LEDs from lower priority shows under this
@@ -460,20 +443,11 @@ class ShowController(object):
     def _tick(self):
         # Runs once per machine loop and services any light updates that are
         # needed.
+        self.current_tick_time = time.time()
 
-        # Check the running Shows
+        # Process the running Shows
         for show in self.running_shows:
-            # we use a while loop so we can catch multiple action blocks
-            # if the show tocked more than once since our last update
-            while show.next_action_tick <= self.machine.tick_num:
-
-                # add the current location to the list to be serviced
-                # show.service_locations.append(show.current_location)
-                # advance the show to the current time
-                show.advance()
-
-                if show.ending:
-                    break
+            show.tick(self.current_tick_time)
 
         for handler in self.registered_tick_handlers:
             handler()
@@ -483,29 +457,17 @@ class ShowController(object):
 
         # Make a copy of the queue since we might delete items as we iterate
         # through it
-        queue_copy = list(self.queue)
+        #queue_copy = list(self.queue)
 
-        for item in queue_copy:
-            if item['action_time'] <= self.current_time:
-                # If the queue is for a fade, we ignore the current color
-                if item.get('fadeend', None):
-                    self._add_to_update_list({'lightname': item['lightname'],
-                                             'priority': item['priority'],
-                                             'blend': item.get('blend', None),
-                                             'fadeend': item.get('fadeend', None),
-                                             'dest_color': item.get('dest_color',
-                                                                    None)})
-                elif item.get('color', None):
-                    self._add_to_update_list({'lightname': item['lightname'],
-                                             'priority': item['priority'],
-                                             'color': item.get('color', None)})
-                elif item.get('playlist', None):
-                    item['playlist'].advance()
+        #for item in queue_copy:
+        #    if item['action_time'] <= self.current_time:
+        #        if item.get('playlist', None):
+        #            item['playlist'].advance()
 
                 # We have to check again since one of these advances could have
                 # removed it already
-                if item in self.queue:
-                    self.queue.remove(item)
+        #        if item in self.queue:
+        #            self.queue.remove(item)
 
         self._do_update()
 
@@ -550,6 +512,9 @@ class ShowController(object):
     def add_to_flasher_queue(self, flasher):
         self.flasher_queue.add(flasher)
 
+    def add_to_trigger_queue(self, trigger):
+        self.trigger_queue.append(trigger)
+
     def _do_update(self):
         if self.light_update_list:
             self._update_lights()
@@ -563,6 +528,8 @@ class ShowController(object):
             self._update_gis()
         if self.flasher_queue:
             self._update_flashers()
+        if self.trigger_queue:
+            self._fire_triggers()
 
     def _fire_coils(self):
         for coil in self.coil_queue:
@@ -584,6 +551,11 @@ class ShowController(object):
         for flasher in self.flasher_queue:
             flasher.flash()
         self.flasher_queue = set()
+
+    def _fire_triggers(self):
+        for trigger in self.trigger_queue:
+            self.machine.bcp.bcp_trigger(trigger[0], **trigger[1])
+        self.trigger_queue = []
 
     def _update_lights(self):
         # Updates all the lights in the machine with whatever's in
@@ -637,9 +609,9 @@ class ShowController(object):
     def run_registered_script(self, script_name, **kwargs):
 
         return self.run_script(
-            script=self.registered_light_scripts[script_name], **kwargs)
+            script=self.registered_show_scripts[script_name], **kwargs)
 
-    def run_script(self, script, lights=None, leds=None, repeat=True,
+    def run_script(self, script, lights=None, leds=None, loops=-1,
                    callback=None, key=None, **kwargs):
         """Runs a light script.
 
@@ -648,14 +620,14 @@ class ShowController(object):
             lights: A light name or list of lights this script will be applied
                 to.
             leds: An LED name or a list of LEDs this script will be applied to.
-            repeat (bool): Whether the script repeats (loops).
+            loops: The number of times the script loops/repeats (-1 = indefinitely).
             callback: A method that will be called when this script stops.
             key: A key that can be used to later stop the light show this script
                 creates. Typically a unique string. If it's not passed, it will
                 either be the first light name or the first LED name.
             **kwargs: Since this method just builds a Light Show, you can use
                 any other Light Show attribute here as well, such as
-                tocks_per_sec, blend, repeat, num_repeats, etc.
+                tocks_per_sec, blend, repeat, loops, etc.
 
         Returns:
             :class:`Show` object. Since running a script just sets up and
@@ -763,11 +735,11 @@ class ShowController(object):
 
         for step in script:
             if step.get('fade', None):
-                color = str(step['color']) + "-f" + str(step['tocks'])
+                color = str(step['color']) + "-f" + str(step['time'])
             else:
                 color = str(step['color'])
 
-            current_action = {'tocks': step['tocks']}
+            current_action = {'time': step['time']}
 
             if lights:
                 current_action['lights'] = dict()
@@ -782,9 +754,9 @@ class ShowController(object):
             show_actions.append(current_action)
 
         show = Show(machine=self.machine, config=None, file_name=None,
-                    asset_manager=self.asset_manager, actions=show_actions)
+                    asset_manager=self.asset_manager, steps=show_actions)
 
-        show.play(repeat=repeat, callback=callback, **kwargs)
+        show.play(loops=loops, callback=callback, **kwargs)
 
         self.running_show_keys[key] = show
 
@@ -807,7 +779,7 @@ class ShowController(object):
             pass
 
     def add_external_show_start_command_to_queue(self, name, priority=0, blend=True, leds=None,
-                            lights=None, flashers=None, gis=None, coils=None):
+                                                 lights=None, flashers=None, gis=None, coils=None):
         """Called by BCP worker thread when an external show start command is received
         via BCP.  Adds the command to a thread-safe queue where it will be processed
         by the main thread.
@@ -947,8 +919,8 @@ class ShowController(object):
 
 class Show(Asset):
 
-    def __init__(self, machine, config, file_name, asset_manager, actions=None):
-        if not actions:
+    def __init__(self, machine, config, file_name, asset_manager, steps=None):
+        if not steps:
             super(Show, self).__init__(machine, config, file_name,
                                        asset_manager)
         else:
@@ -958,28 +930,34 @@ class Show(Asset):
             self.asset_manager = asset_manager
 
             self._initialize_asset()
-            self.do_load(callback=None, show_actions=actions)
+            self.do_load(callback=None, steps=steps)
 
-        self._tocks_per_sec = 1  # how many steps per second this show runs at
-        # you can safely read this value to determine the current playback rate
-        # But don't update it directly to change the speed of a running show.
-        # Use the change_speed() method instead.
-        self._ticks_per_tock = 0  # calculated based on tocks_per_sec
+        self._playback_rate = 1.0
+        self.current_tick_time = 0
+        self.running = False
 
     @property
-    def tocks_per_sec(self):
-        return self._tocks_per_sec
+    def playback_rate(self):
+        return self._playback_rate
 
-    @property
-    def ticks_per_tock(self):
-        return self._ticks_per_tock
+    @playback_rate.setter
+    def playback_rate(self, value):
+        """Changes the current playback speed of a running Show.
+
+        Args:
+            value: The new playback speed value.
+
+        Note that you can't just update the show's _playback_rate directly
+        because some other important calculations that must be made to adjust
+        a show that is currently running.
+        """
+        self._playback_rate = value
+        if not self.running:
+            return
 
     def _initialize_asset(self):
-        self.repeat = False  # whether this show repeats when finished
-        self.num_repeats = 0  # if self.repeat=True, how many times it repeats
-        # self.num_repeats = 0 means it repeats indefinitely until stopped
-        self.current_repeat_step = 0  # tracks which repeat we're on, used with
-        # num_repeats above
+        self.loops = -1  # How many times the show will loop before it ends (-1 means indefinitely)
+        self.current_loop_number = 0  # tracks which repeat we're on, used with loops above
         self.hold = False  # hold the item states when the show ends.
         self.reset = True  # reset back to the first step when the show ends
         self.priority = 0  # relative priority of this show
@@ -987,10 +965,11 @@ class Show(Asset):
         self.blend = False  # when an light is off in this show, should it allow
         # lower priority lights to show through?
         self.debug = False
-        self.current_location = 0  # index of which step (tock) a running show is
-        self.total_locations = 0  # total number of action locations
-        self.current_tock = 0  # index of which tock a running show is in
-        self.next_action_tick = 0  # tick number of when the next action happens
+        self.current_step = 0  # index of which step a running show is
+        self.total_steps = 0  # total number of steps in the show
+        self.current_time = 0  # index of which tock a running show is in
+        self.loop_start_time = 0  # Real-world time at which the current loop of this show started
+        self.next_step_time = 0  # Real-world time when the next show step occurs
         self.callback = None  # if the show should call something when it ends
         # naturally. (Not invoked if show is manually stopped)
         self.sync_ms = 0
@@ -1002,42 +981,78 @@ class Show(Asset):
         self.loaded = False
         self.notify_when_loaded = set()
         self.loaded_callbacks = list()
-        self.show_actions = list()
+        self.show_steps = list()
 
-    def do_load(self, callback, show_actions=None):
+    def do_load(self, callback, steps=None):
 
-        self.show_actions = list()
+        self.show_steps = []
 
         self.asset_manager.log.debug("Loading Show %s", self.file_name)
 
-        if not show_actions:
-            show_actions = self.load_show_from_disk()
+        if not steps:
+            steps = self.load_show_from_disk()
 
-        if type(show_actions) is not list:
+        if type(steps) is not list:
             self.asset_manager.log.warning("%s is not a valid YAML file. "
                                            "Skipping show.", self.file_name)
             return False
 
-        for step_num in range(len(show_actions)):
-            step_actions = dict()
+        # Loop over all steps in the show file
+        total_step_time = 0
+        for step_num in range(len(steps)):
+            actions = {}
 
-            step_actions['tocks'] = show_actions[step_num]['tocks']
+            # Note: all times are stored/calculated in seconds.
 
-            # look for empty steps. If we find them we'll just add their tock
-            # time to the previous step.
+            # Step time can be specified as either an absolute time elapsed
+            # (from the beginning of the show) or a relative time (time elapsed
+            # since the previous step).  Time strings starting with a plus sign
+            # (+) are treated as relative times.
 
-            if len(show_actions[step_num]) == 1:  # 1 because it still has tocks
+            # Step times are all converted to relative times internally (time
+            # since the previous step).
 
-                show_actions[-1]['tocks'] += step_actions['tocks']
-                continue
+            # Make sure there is a time entry for each step in the show file.
+            if 'time' not in steps[step_num]:
+                self.asset_manager.log.warning("%s is not a valid show file. "
+                                               "Skipping show.", self.file_name)
+                return False
+
+            step_time = Timing.string_to_secs(steps[step_num]['time'])
+
+            # If the first step in the show is not at the very beginning of the
+            # show (time = 0), automatically add a new empty step at time 0
+            if step_num == 0 and step_time > 0:
+                self.show_steps.append({'time': 0})
+
+            # Calculate step time based on whether the step uses absolute or relative time
+            if str(steps[step_num]['time'])[0] == '+':
+                # Step time relative to previous step time
+                actions['time'] = step_time
+            else:
+                # Step time relative to start of show
+
+                # Make sure this step time comes after the previous step time
+                if step_time < total_step_time:
+                    self.asset_manager.log.warning("%s is not a valid show file. Step times are not valid "
+                                                   "as they are not all in chronological order. Skipping show.",
+                                                   self.file_name)
+                    return False
+
+                # Calculate the time since previous step
+                actions['time'] = step_time - total_step_time
+
+            total_step_time += actions['time']
+
+            # Now process show step actions
 
             # Lights
-            if ('lights' in show_actions[step_num] and
-                    show_actions[step_num]['lights']):
+            if ('lights' in steps[step_num] and
+                    steps[step_num]['lights']):
 
                 light_actions = dict()
 
-                for light in show_actions[step_num]['lights']:
+                for light in steps[step_num]['lights']:
 
                     if 'tag|' in light:
                         tag = light.split('tag|')[1]
@@ -1047,15 +1062,16 @@ class Show(Asset):
                             light_list = [self.machine.lights[light]]
                         except KeyError:
                             self.asset_manager.log.warning("Found invalid "
-                                "light name '%s' in show. Skipping...", light)
+                                                           "light name '%s' in show. Skipping...",
+                                                           light)
                             continue
 
-                    value = show_actions[step_num]['lights'][light]
+                    value = steps[step_num]['lights'][light]
 
                     # convert / ensure lights are single ints
                     if type(value) is str:
                         value = Util.hex_string_to_int(
-                            show_actions[step_num]['lights'][light])
+                            steps[step_num]['lights'][light])
 
                     if type(value) is int and value > 255:
                         value = 255
@@ -1067,35 +1083,34 @@ class Show(Asset):
                         if light_ not in self.light_states:
                             self.light_states[light_] = 0
 
-                step_actions['lights'] = light_actions
+                actions['lights'] = light_actions
 
             # Events
             # make sure events is a list of strings
-            if ('events' in show_actions[step_num] and
-                    show_actions[step_num]['events']):
+            if 'events' in steps[step_num] and steps[step_num]['events']:
 
                 event_list = (Util.string_to_list(
-                    show_actions[step_num]['events']))
+                    steps[step_num]['events']))
 
-                step_actions['events'] = event_list
+                actions['events'] = event_list
 
             # Coils
-            if ('coils' in show_actions[step_num] and
-                    show_actions[step_num]['coils']):
+            if 'coils' in steps[step_num] and steps[step_num]['coils']:
 
                 coil_actions = dict()
 
-                for coil in show_actions[step_num]['coils']:
+                for coil in steps[step_num]['coils']:
 
                     try:
                         this_coil = self.machine.coils[coil]
                     except:
                         # this coil name is invalid
                         self.asset_manager.log.warning("WARNING: Found invalid "
-                            "coil name '%s' in show. Skipping...", coil)
+                                                       "coil name '%s' in show. Skipping...",
+                                                       coil)
                         continue
 
-                    value = show_actions[step_num]['coils'][coil]
+                    value = steps[step_num]['coils'][coil]
 
                     # process the value into a tuple which will be
                     # value[0] = string of action type (pulse, pwm, etc)
@@ -1116,16 +1131,15 @@ class Show(Asset):
 
                     coil_actions[this_coil] = value
 
-                step_actions['coils'] = coil_actions
+                actions['coils'] = coil_actions
 
             # Flashers
-            if ('flashers' in show_actions[step_num] and
-                    show_actions[step_num]['flashers']):
+            if 'flashers' in steps[step_num] and steps[step_num]['flashers']:
 
                 flasher_set = set()
 
                 for flasher in Util.string_to_list(
-                        show_actions[step_num]['flashers']):
+                        steps[step_num]['flashers']):
 
                     if 'tag|' in flasher:
                         tag = flasher.split('tag|')[1]
@@ -1135,22 +1149,21 @@ class Show(Asset):
                             flasher_list = [self.machine.flashers[flasher]]
                         except KeyError:
                             self.asset_manager.log.warning("Found invalid "
-                                "flasher name '%s' in show. Skipping...",
-                                flasher)
+                                                           "flasher name '%s' in show. Skipping...",
+                                                           flasher)
                             continue
 
                     for flasher_ in flasher_list:
                         flasher_set.add(flasher_)
 
-                step_actions['flashers'] = flasher_set
+                actions['flashers'] = flasher_set
 
             # GI
-            if ('gis' in show_actions[step_num] and
-                    show_actions[step_num]['gis']):
+            if 'gis' in steps[step_num] and steps[step_num]['gis']:
 
                 gi_actions = dict()
 
-                for gi in show_actions[step_num]['gis']:
+                for gi in steps[step_num]['gis']:
 
                     if 'tag|' in gi:
                         tag = gi.split('tag|')[1]
@@ -1160,11 +1173,11 @@ class Show(Asset):
                             gi_list = [self.machine.gi[gi]]
                         except KeyError:
                             self.asset_manager.log.warning("Found invalid "
-                                "GI name '%s' in show. Skipping...",
-                                gi)
+                                                           "GI name '%s' in show. Skipping...",
+                                                           gi)
                             continue
 
-                    value = show_actions[step_num]['gis'][gi]
+                    value = steps[step_num]['gis'][gi]
 
                     # convert / ensure flashers are single ints
                     if type(value) is str:
@@ -1176,15 +1189,14 @@ class Show(Asset):
                     for gi_ in gi_list:
                         gi_actions[gi_] = value
 
-                step_actions['gis'] = gi_actions
+                actions['gis'] = gi_actions
 
             # LEDs
-            if ('leds' in show_actions[step_num] and
-                    show_actions[step_num]['leds']):
+            if 'leds' in steps[step_num] and steps[step_num]['leds']:
 
-                led_actions = dict()
+                led_actions = {}
 
-                for led in show_actions[step_num]['leds']:
+                for led in steps[step_num]['leds']:
 
                     if 'tag|' in led:
                         tag = led.split('tag|')[1]
@@ -1194,10 +1206,11 @@ class Show(Asset):
                             led_list = [self.machine.leds[led]]
                         except KeyError:
                             self.asset_manager.log.warning("Found invalid "
-                                "LED name '%s' in show. Skipping...", led)
+                                                           "LED name '%s' in show. Skipping...",
+                                                           led)
                             continue
 
-                    value = show_actions[step_num]['leds'][led]
+                    value = steps[step_num]['leds'][led]
 
                     fade = 0
 
@@ -1205,7 +1218,7 @@ class Show(Asset):
                         if '-f' in value:
                             composite_value = value.split('-f')
                             value = composite_value[0]
-                            fade = composite_value[1]
+                            fade = Timing.string_to_ms(composite_value[1])
 
                     # convert our color of hexes to a list of ints
                     destination_color = RGBColor(RGBColor.string_to_rgb(value))
@@ -1222,13 +1235,23 @@ class Show(Asset):
                                 'fade_start': 0,
                                 'fade_end': 0}
 
-                step_actions['leds'] = led_actions
+                actions['leds'] = led_actions
 
-            self.show_actions.append(step_actions)
+            # Triggers
+            if 'triggers' in steps[step_num] and steps[step_num]['triggers']:
 
-        # count how many total locations are in the show. We need this later
+                triggers = {}
+
+                for name, args in steps[step_num]['triggers'].items():
+                    triggers[name] = args
+
+                actions['triggers'] = triggers
+
+            self.show_steps.append(actions)
+
+        # Count how many total steps are in the show. We need this later
         # so we can know when we're at the end of a show
-        self.total_locations = len(self.show_actions)
+        self.total_steps = len(self.show_steps)
 
         self.loaded = True
 
@@ -1239,11 +1262,11 @@ class Show(Asset):
         # why do we need this and the one above?
 
     def _unload(self):
-        self.show_actions = None
+        self.show_steps = None
 
-    def play(self, repeat=False, priority=0, blend=False, hold=None,
-             tocks_per_sec=30, start_location=None, callback=None,
-             num_repeats=0, sync_ms=0, reset=True, **kwargs):
+    def play(self, priority=0, blend=False, hold=None,
+             playback_rate=1.0, start_step=None, callback=None,
+             loops=-1, sync_ms=0, reset=True, **kwargs):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
         speed, priority, whether this show blends with others, etc. These are
@@ -1253,7 +1276,6 @@ class Show(Asset):
         how you play the show.)
 
         Args:
-            repeat: Boolean of whether the show repeats when it's done.
             priority: Integer value of the relative priority of this show. If
                 there's ever a situation where multiple shows want to control
                 the same item, the one with the higher priority will win.
@@ -1271,27 +1293,29 @@ class Show(Asset):
                 their final show state when the show ends. Default is None which
                 means hold will be False if the show has more than one step, and
                 True if there is only one step.
-            tocks_per_sec: Integer of how fast your show runs ("Playback speed,"
-                in other words.) Your Show files specify action times in terms
-                of 'tocks', like "make this light red for 3 tocks, then off for
-                4 tocks, then a different light on for 6 tocks. When you play a
-                show, you specify how many tocks per second you want it to play.
-                Default is 30, but you might even want tocks_per_sec of only 1
-                or 2 if your show doesn't need to move than fast. Note this does
-                not affect fade rates. So you can have tocks_per_sec of 1 but
-                still have lights fade on and off at whatever rate you want.
-                Also the term "tocks" was chosen so as not to confuse it with
-                "ticks" which is used by the machine run loop.
-            start_location: Integer of which position in the show file the show
-                should start in. Usually this is 0 but it's nice to start part
-                way through. Also used for restarting shows that you paused. A
-                negative value will count backwards from the end (-1 is the last
-                position, -2 is second to last, etc.).
+            playback_rate: Float of how fast your show runs. Your Show files
+                specify step times in actual time values.  When you play a show,
+                you specify a playback rate factor that is applied to the time
+                values in the show (divides the relative show times). The
+                default value is 1.0 (uses the actual time values in specified
+                in the show), but you might want to speed up (playback_rate
+                values > 1.0) or slow down (playback_rate values < 1.0) the
+                playback rate.  If you want your show to play twice as fast
+                (finish in half the time), you want all your time values to be
+                half of the specified values in the show so you would use a
+                playback_rate value of 2.0.  To make the show take twice as long
+                to finish, you would a playback_rate value of 0.5.
+            start_step: Integer of which position in the show file the show
+                should start in. Usually this is 0 (start at the beginning
+                of the show) but it's nice to start part way through. Also 
+                used for restarting shows that you paused. A negative value 
+                will count backwards from the end (-1 is the last position, 
+                -2 is second to last, etc.).
             callback: A callback function that is invoked when the show is
                 stopped.
-            num_repeats: Integer of how many times you want this show to repeat
-                before stopping. A value of 0 means that it repeats
-                indefinitely. Note this only works if you also have repeat=True.
+            loops: Integer of how many times you want this show to repeat
+                before stopping. A value of -1 means that it repeats
+                indefinitely.
             sync_ms: Number of ms of the show sync cycle. A value of zero means
                 this show will also start playing immediately. See the full MPF
                 documentation for details on how this works.
@@ -1303,43 +1327,43 @@ class Show(Asset):
 
         if not self.loaded:
             self.add_loaded_callback(self.play,
-                                    repeat=repeat,
                                     priority=priority,
                                     blend=blend,
                                     hold=hold,
-                                    tocks_per_sec=tocks_per_sec,
-                                    start_location=start_location,
+                                    playback_rate=playback_rate,
+                                    start_step=start_step,
                                     callback=callback,
-                                    num_repeats=num_repeats,
+                                    loops=loops,
                                     sync_ms=sync_ms)
             self.load()
             return False
 
         if hold is not None:
             self.hold = hold
-        elif self.total_locations == 1:
+        elif self.total_steps == 1:
             self.hold = True
 
-        if self.total_locations > 1:
-            self.repeat = repeat
+        if self.total_steps > 1:
+            self.loops = loops
+        else:
+            self.loops = 0
 
         self.priority = int(priority)
         self.blend = blend
-        self.change_speed(tocks_per_sec)
+        self.playback_rate = playback_rate
         self.callback = callback
-        self.num_repeats = num_repeats
         self.sync_ms = sync_ms
         self.reset = reset
 
-        if start_location is not None:
+        if start_step is not None:
             # if you don't specify a start location, it will start where it
             # left off (if you stopped it with reset=False). If the show has
             # never been run, it will start at 0 per the initialization
 
-            if start_location < 0:
-                self.current_location = self.total_locations + start_location
+            if start_step < 0:
+                self.current_step = self.total_steps + start_step
             else:
-                self.current_location = start_location
+                self.current_step = start_step
 
         self.machine.show_controller._run_show(self)
 
@@ -1388,26 +1412,9 @@ class Show(Asset):
 
         self.machine.show_controller._end_show(self, reset)
 
-    def change_speed(self, tocks_per_sec=1):
-        """Changes the playback speed of a running Show.
+    def tick(self, current_tick_time):
 
-        Args:
-            tocks_per_sec: The new tocks_per_second play rate.
-
-        If you want to change the playback speed by a percentage, you can
-        access the current tocks_per_second rate via Show's
-        tocks_per_second variable. So if you want to double the playback speed
-        of your show, you could do something like:
-
-            self.your_show.change_speed(self.your_show.tocks_per_second*2)
-
-        Note that you can't just update the show's tocks_per_second directly
-        because we also need to update self.ticks_per_tock.
-        """
-        self._tocks_per_sec = tocks_per_sec
-        self._ticks_per_tock = Timing.HZ/float(tocks_per_sec)
-
-    def advance(self):
+        self.current_tick_time = current_tick_time
 
         # Internal method which advances the show to the next step
         if self.ending:
@@ -1417,118 +1424,124 @@ class Show(Asset):
         action_loop_count = 0  # Tracks how many loops we've done in this call
         # Used to detect if a show is running too slow
 
-        while (self.next_action_tick <=
-               self.machine.tick_num):
+        while self.next_step_time <= self.current_tick_time:
             action_loop_count += 1
+            self._process_current_step()
+
+            # If our Show is running so fast that it has done a complete
+            # loop during this tick, then let's just break out of the loop
+            if action_loop_count == self.total_steps:
+                return
+
+
+    def _process_current_step(self):
+
+            current_step_time = self.next_step_time
 
             # Set the next action time & step to the next location
-            self.next_action_tick = ((self.show_actions[self.current_location]
-                                     ['tocks'] * self.ticks_per_tock) +
-                                     self.machine.tick_num)
+            self.next_step_time = (current_step_time +
+                                   self.show_steps[self.current_step]['time'] / self.playback_rate)
 
             if self.debug:
-                print("Current tick", self.machine.tick_num)
-                print("Next Tick:", self.next_action_tick)
-                print("current location tocks", self.show_actions[self.current_location]['tocks'])
-                print("ticks per tock", self.ticks_per_tock)
+                print("Current step: ", self.current_step)
+                print("Current tick time: ", self.current_tick_time)
+                print("Next step time: ", self.next_step_time)
+                print("Current step time: ", current_step_time)
+                print("Playback rate: ", self.playback_rate)
 
-        # create a dictionary of the current items of each type, combined with
-        # the show details, that we can throw up to our queue
+            # create a dictionary of the current items of each type, combined with
+            # the show details, that we can throw up to our queue
 
-        for item_type, item_dict in (iter(self.show_actions[self.current_location].
-                                     items())):
+            for item_type, item_dict in (iter(self.show_steps[self.current_step].items())):
 
-            if item_type == 'lights':
+                if item_type == 'lights':
 
-                for light_obj, brightness in item_dict.items():
+                    for light_obj, brightness in item_dict.items():
 
-                    self.machine.show_controller.add_to_light_update_list(
-                        light=light_obj,
-                        brightness=brightness,
-                        priority=self.priority,
-                        blend=self.blend)
+                        self.machine.show_controller.add_to_light_update_list(
+                            light=light_obj,
+                            brightness=brightness,
+                            priority=self.priority,
+                            blend=self.blend)
 
-                    # update the current state
-                    self.light_states[light_obj] = brightness
+                        # update the current state
+                        self.light_states[light_obj] = brightness
 
-            elif item_type == 'leds':
+                elif item_type == 'leds':
 
-                current_time = time.time()
+                    for led_obj, led_dict in item_dict.items():
 
-                for led_obj, led_dict in item_dict.items():
+                        self.machine.show_controller.add_to_led_update_list(
+                            led=led_obj,
+                            color=led_dict['color'],
+                            fade_ms=int(led_dict['fade'] / self.playback_rate),
+                            priority=self.priority,
+                            blend=self.blend)
 
-                    self.machine.show_controller.add_to_led_update_list(
-                        led=led_obj,
-                        color=led_dict['color'],
-                        fade_ms=int(led_dict['fade']) / self.tocks_per_sec * 1000,
-                        priority=self.priority,
-                        blend=self.blend)
+                        # update the current state
 
-                    # update the current state
+                        # grab the old current color
+                        prev_color = led_dict['color']
 
-                    # grab the old current color
-                    prev_color = led_dict['color']
+                        self.led_states[led_obj] = {
+                                'current_color': prev_color,
+                                # todo need to calculate this for a restore
+                                'destination_color': led_dict['color'],
+                                'start_color': prev_color,
+                                'fade_start': current_step_time,
+                                'fade_end': current_step_time + int(led_dict['fade']) / self.playback_rate * 0.001}
 
-                    self.led_states[led_obj] = {
-                            'current_color': prev_color,
-                            # todo need to calculate this for a restore
-                            'destination_color': led_dict['color'],
-                            'start_color': prev_color,
-                            'fade_start': current_time,
-                            'fade_end': current_time + int(led_dict['fade']) / self.tocks_per_sec * 1000}
+                elif item_type == 'events':
 
-            elif item_type == 'events':
+                    for event in item_dict:  # item_dict is actually a list here
+                        self.machine.show_controller.add_to_event_queue(event)
 
-                for event in item_dict:  # item_dict is actually a list here
-                    self.machine.show_controller.add_to_event_queue(event)
+                elif item_type == 'coils':
 
-            elif item_type == 'coils':
+                    for coil_obj, coil_action in item_dict.items():
+                        self.machine.show_controller.add_to_coil_queue(
+                            coil=coil_obj,
+                            action=coil_action)
 
-                for coil_obj, coil_action in item_dict.items():
-                    self.machine.show_controller.add_to_coil_queue(
-                        coil=coil_obj,
-                        action=coil_action)
+                elif item_type == 'gis':
+                    for gi, value in item_dict.items():
+                        self.machine.show_controller.add_to_gi_queue(
+                            gi=gi,
+                            value=value)
 
-            elif item_type == 'gis':
-                for gi, value in item_dict.items():
-                    self.machine.show_controller.add_to_gi_queue(
-                        gi=gi,
-                        value=value)
+                elif item_type == 'flashers':
+                    for flasher in item_dict:
+                        self.machine.show_controller.add_to_flasher_queue(
+                            flasher=flasher)
 
-            elif item_type == 'flashers':
-                for flasher in item_dict:
-                    self.machine.show_controller.add_to_flasher_queue(
-                        flasher=flasher)
+                elif item_type == 'triggers':
+                    for trigger_name, trigger_args in item_dict.items():
+                        self.machine.show_controller.add_to_trigger_queue(
+                            trigger=(trigger_name, trigger_args))
 
-        # increment this show's current_location pointer and handle repeats
+            # increment this show's current_step pointer and handle repeats
 
-        # if we're at the end of the show
-        if self.current_location == self.total_locations-1:
+            # if we're at the end of the show
+            if self.current_step == self.total_steps-1:
 
-            # if we're repeating with an unlimited number of repeats
-            if self.repeat and self.num_repeats == 0:
-                self.current_location = 0
+                # if we're repeating with an unlimited number of repeats
+                if self.loops == -1:
+                    self.current_step = 0
 
-            # if we're repeating, but only for a certain number of times
-            elif self.repeat and self.num_repeats > 0:
-                # if we haven't hit the repeat limit yet
-                if self.current_repeat_step < self.num_repeats-1:
-                    self.current_location = 0
-                    self.current_repeat_step += 1
+                # if we're repeating, but only for a certain number of times
+                elif self.loops > 0:
+                    # if we haven't hit the repeat limit yet
+                    if self.current_loop_number < self.loops:
+                        self.current_step = 0
+                        self.current_loop_number += 1
+                    else:
+                        self.ending = True
                 else:
                     self.ending = True
+
+            # else, we're in the middle of a show
             else:
-                self.ending = True
-                return  # no need to continue if the show's over
-
-        # else, we're in the middle of a show
-        else:
-            self.current_location += 1
-
-        # If our Show is running so fast that it has done a complete
-        # loop, then let's just break out of the loop
-        if action_loop_count == self.total_locations:
-            return
+                self.current_step += 1
 
     def resync(self):
         """Causes this show to do a one-time update to resync all the LEDs and
@@ -1538,7 +1551,7 @@ class Show(Asset):
         """
 
         for light_obj, brightness in self.light_states.items():
-            self.machine.show_controller._add_to_light_update_list(
+            self.machine.show_controller.add_to_light_update_list(
                 light=light_obj,
                 brightness=brightness,
                 priority=self.priority,
@@ -1618,7 +1631,7 @@ class Playlist(object):
         self.step_actions = []  # The actions for the steps in the playlist
         # step_num
         # show
-        # num_repeats
+        # loops
         # tocks_per_sec
         # blend
         self.steps = []  # list of values of steps, like [1,2,3,5,10]
@@ -1632,7 +1645,7 @@ class Playlist(object):
         self.stopping = False  # used to tell the playlist it should stop on
         # the next advance
 
-    def add_show(self, step_num, show, num_repeats=0, tocks_per_sec=32,
+    def add_show(self, step_num, show, loops=0, tocks_per_sec=32,
                  blend=False, repeat=True):
         """Adds a Show to this playlist. You have to add at least one show
         before you start playing the playlist.
@@ -1649,7 +1662,7 @@ class Playlist(object):
                 doesn't matter. If you have step numbers of 1, 2, 5... then the
                 player will figure it out.
             show: The Show object that you're adding to this step.
-            num_repeats: Integer of how many times you want this show to repeat
+            loops: Integer of how many times you want this show to repeat
                 within this step. Note this does not affect when the playlist
                 advances to the next step. (That is controlled via
                 :meth:`step_settings`.) Rather, this is just how many loops this
@@ -1673,7 +1686,7 @@ class Playlist(object):
                 self.step_actions.remove(step)
         self.step_actions.append({'step_num': step_num,
                                   'show': show,
-                                  'num_repeats': num_repeats,
+                                  'loops': loops,
                                   'tocks_per_sec': tocks_per_sec,
                                   'repeat': repeat,
                                   'blend': blend})
@@ -1706,7 +1719,7 @@ class Playlist(object):
             move on.
 
         Note that you can have repeats with a trigger show, but in that case
-        you also need to have the num_repeats specified. Otherwise if you have
+        you also need to have the loops specified. Otherwise if you have
         your trigger show repeating forever then the playlist will never move
         on. (In that case use the *time* parameter to move on based on time.)
         """
@@ -1832,7 +1845,7 @@ class Playlist(object):
         for action in self.step_actions:
             if action['step_num'] == current_step_value:
                 show = action['show']
-                num_repeats = action['num_repeats']
+                loops = action['loops']
                 tocks_per_sec = action['tocks_per_sec']
                 blend = action['blend']
                 repeat = action['repeat']
@@ -1842,17 +1855,17 @@ class Playlist(object):
                     # advancement to the next step.
                     callback = self._advance
 
-                    if num_repeats == 0:
+                    if loops == 0:
                         self.log.warning("Found a trigger show that was set to"
                                          " repeat indefinitely. Changing repeat"
                                          " to 1.")
-                        num_repeats = 1
+                        loops = 1
 
                 else:
                     callback = None
 
                 show.play(repeat=repeat, priority=self.priority, blend=blend,
-                          tocks_per_sec=tocks_per_sec, num_repeats=num_repeats,
+                          tocks_per_sec=tocks_per_sec, loops=loops,
                           callback=callback,
                           hold=self.step_settings_dic[current_step_value]['hold'])
 
@@ -1860,8 +1873,7 @@ class Playlist(object):
         # step, set up the time to move on
         if step_time and not step_trigger_show:
             self.machine.show_controller.queue.append({'playlist': self,
-                'action_time': (self.machine.show_controller.current_time +
-                                step_time)})
+                'action_time': (self.machine.show_controller.current_time + step_time)})
 
         # Advance our current_step_position counter
         if self.current_step_position == len(self.steps)-1:
