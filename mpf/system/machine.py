@@ -84,8 +84,6 @@ class MachineController(object):
         self.hardware_platforms = dict()
         self.default_platform = None
 
-        self._load_system_modules()
-
         if not self.options['force_platform']:
             for section, platform in self.config['hardware'].items():
                 if platform.lower() != 'default' and section != 'driverboards':
@@ -104,6 +102,8 @@ class MachineController(object):
             credit_string = 'FREE PLAY'
 
         self.create_machine_var('credits_string', credit_string, silent=True)
+
+        self._load_system_modules()
 
         # This is called so hw platforms have a change to register for events,
         # and/or anything else they need to do with system modules since
