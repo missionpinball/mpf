@@ -6,11 +6,10 @@ mode:
   start_priority: 1
   stop_on_ball_end: false
 
-light_player:
+show_player:
   mode_attract_started:
     - show: test_show1
-      repeat: yes
-      tocks_per_sec: 5
+      loops: -1
 
   mode_attract_stopped:
     - show: test_show1

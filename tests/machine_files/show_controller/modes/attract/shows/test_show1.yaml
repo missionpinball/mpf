@@ -1,20 +1,22 @@
-- tocks: 10
+- time: 0
   leds:
     led_01: 006400
     led_02: CCCCCC
-- tocks: 10
+- time: 1
   leds:
     led_01: DarkGreen
     led_02: Black
-- tocks: 10
+- time: 2
   leds:
     led_01: DarkSlateGray
     led_02: Tomato
-- tocks: 10
+- time: +1
   leds:
-    led_01: MidnightBlue-f5
-    led_02: DarkOrange-f5
-- tocks: 10
+    led_01: MidnightBlue-f500 ms
+    led_02: DarkOrange-f0.5 s
+- time: 4
   leds:
-    led_01: Off-f5
-    led_02: Off-f5
+    led_01: Off-f800
+    led_02: Off-f800
+- time: 5
+

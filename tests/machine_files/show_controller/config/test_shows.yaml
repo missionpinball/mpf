@@ -2,6 +2,7 @@
 
 modes:
   - attract
+  - mode2
 
 leds:
     led_01:
