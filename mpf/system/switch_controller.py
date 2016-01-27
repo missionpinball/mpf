@@ -132,7 +132,10 @@ class SwitchController(object):
             switch_states = platform.get_hw_switch_states()
 
             for switch, number in switches:
-                switch.state = switch_states[number] ^ switch.invert
+                try:
+                    switch.state = switch_states[number] ^ switch.invert
+                except KeyError:
+                    pass
 
     def verify_switches(self):
         """Loops through all the switches and queries their hardware states via
