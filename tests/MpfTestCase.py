@@ -81,6 +81,7 @@ class MpfTestCase(unittest.TestCase):
             next_event = self.machine.delayRegistry.get_next_event()
             next_timer = self.machine.timing.get_next_timer()
             next_switch = self.machine.switch_controller.get_next_timed_switch_event()
+            next_show_step = self.machine.show_controller.get_next_show_step()
 
             wait_until = next_event
 
@@ -89,6 +90,9 @@ class MpfTestCase(unittest.TestCase):
 
             if not wait_until or (next_switch and wait_until > next_switch):
                 wait_until = next_switch
+
+            if not wait_until or (next_show_step and wait_until > next_show_step):
+                wait_until = next_show_step
 
             if wait_until and wait_until < end_time:
                 self.set_time(wait_until)
