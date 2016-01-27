@@ -1,7 +1,7 @@
 #config_version=3
 
 modes:
-  - attract
+  - mode1
   - mode2
 
 leds:
@@ -13,3 +13,9 @@ leds:
         number: 1
         color_correction_profile: default
         debug: yes
+
+assets:
+  shows:
+    test_show1:
+      preload: yes
+      debug: yes
