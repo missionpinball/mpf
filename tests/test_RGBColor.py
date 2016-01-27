@@ -29,6 +29,12 @@ class TestRGBColor(MpfTestCase):
         self.assertEqual((240, 248, 255), RGBColor.hex_to_rgb('f0f8ff'))
         self.assertEqual((240, 248, 255), RGBColor.string_to_rgb('f0f8ff'))
 
+    def test_construction(self):
+        self.assertEqual((240, 248, 255), RGBColor('AliceBlue').rgb)
+        self.assertEqual((240, 248, 255), RGBColor('F0F8FF').rgb)
+        self.assertEqual((240, 248, 255), RGBColor('f0f8ff').rgb)
+        self.assertEqual((240, 248, 255), RGBColor((240, 248, 255)).rgb)
+
     def test_properties(self):
         color1 = RGBColor()
         color1.name = 'DarkSlateBlue'

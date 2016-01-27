@@ -164,6 +164,8 @@ class RGBColor(object):
 
         if isinstance(color, RGBColor):
             self._color = color._color
+        elif isinstance(color, str):
+            self._color = RGBColor.string_to_rgb(color)
         else:
             self._color = color if color else rgb_min
 
