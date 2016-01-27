@@ -90,8 +90,6 @@ class LED(Device):
                                  " Color correction will not be applied to this LED.",
                                  self.config['color_correction_profile'])
 
-        self.current_color = RGBColor()
-
     def set_color_correction_profile(self, profile):
         self._color_correction_profile = profile
 
