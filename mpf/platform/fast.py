@@ -78,17 +78,7 @@ class HardwarePlatform(Platform):
         self.fast_io_boards = list()
         self.waiting_for_switch_data = False
 
-        config_spec = '''
-                    ports: list
-                    baud: int|921600
-                    config_number_format: string|hex
-                    watchdog: ms|1000
-                    default_debounce_open: ms|30
-                    default_debounce_close: ms|30
-                    debug: boolean|False
-                    '''
-
-        self.config = Config.process_config(config_spec=config_spec,
+        self.config = self.machine.config_processor.process_config2('fast',
                                             source=self.machine.config['fast'])
 
         self.watchdog_command = 'WD:' + str(hex(self.config['watchdog']))[2:]

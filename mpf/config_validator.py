@@ -650,4 +650,14 @@ auditor:
     events: list|str|None
     player: list|str|None
     num_player_top_records: single|int|1
+
+fast:
+    ports: list|str|
+    baud: single|int|921600
+    config_number_format: single|str|hex
+    watchdog: single|ms|1000
+    default_debounce_open: single|ms|30
+    default_debounce_close: single|ms|30
+    debug: single|bool|False
+
 '''
