@@ -730,3 +730,16 @@ class MachineController(object):
             if var.startswith(startswith) and var.endswith(endswith):
                 del self.machine_vars[var]
                 self.machine_var_data_manager.remove_key(var)
+
+    def get_platform_sections(self, platform_section, overwrite):
+        if not self.options['force_platform']:
+            if not overwrite:
+                if self.config['hardware'][platform_section] != 'default':
+                    return self.hardware_platforms[self.config['hardware'][platform_section]]
+                else:
+                    return self.default_platform
+            else:
+               return (
+                    self.hardware_platforms[overwrite])
+        else:
+            return self.default_platform

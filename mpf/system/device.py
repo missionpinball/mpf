@@ -40,19 +40,7 @@ class Device(object):
         self.label = self.config['label']
 
         if platform_section:
-            if not self.machine.options['force_platform']:
-                if not config['platform']:
-                    if self.machine.config['hardware'][platform_section] != 'default':
-                        self.platform = (
-                            self.machine.hardware_platforms
-                            [self.machine.config['hardware'][platform_section]])
-                    else:
-                        self.platform = self.machine.default_platform
-                else:
-                    self.platform = (
-                        self.machine.hardware_platforms[config['platform']])
-            else:
-                self.platform = self.machine.default_platform
+            self.platform = self.machine.get_platform_sections(platform_section, config['platform'])
 
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
