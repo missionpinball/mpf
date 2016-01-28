@@ -159,8 +159,8 @@ class LED(Device):
                            ['default_led_fade_ms'])
                 if self.debug:
                     self.log.debug("Incoming fade_ms is none. Setting to %sms "
-                                  "based on this global default fade", fade_ms)
-            # potentional optimization make this not conditional
+                                   "based on this global default fade", fade_ms)
+            # potential optimization make this not conditional
 
         current_time = time.time()
 
@@ -168,10 +168,11 @@ class LED(Device):
         self.state['priority'] = priority
 
         if fade_ms:
+            self.state['fade_ms'] = fade_ms
             self.state['destination_color'] = color
-            self.state['destination_time'] = current_time + (fade_ms / 1000.0)
             self.state['start_color'] = self.state['color']
             self.state['start_time'] = current_time
+            self.state['destination_time'] = current_time + (fade_ms / 1000.0)
             self._setup_fade()
 
             if self.debug:
@@ -197,12 +198,12 @@ class LED(Device):
 
         if cache:
             self.cache['color'] = color  # new color
+            self.cache['start_color'] = self.state['color']
+            self.cache['destination_color'] = self.state['destination_color']
+            self.cache['start_time'] = current_time
+            self.cache['destination_time'] = self.state['destination_time']
             self.cache['fade_ms'] = fade_ms
             self.cache['priority'] = priority
-            self.cache['destination_color'] = priority
-            self.cache['destination_time'] = self.state['destination_time']
-            self.cache['start_color'] = self.cache['color']
-            self.cache['start_time'] = time.time()
 
         if self.debug:
             self.log.debug("+---------------New State-----------------")
@@ -226,14 +227,13 @@ class LED(Device):
         self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
                    cache=cache, force=force)
 
-    def on(self, brightness=255, fade_ms=0, start_brightness=None,
+    def on(self, brightness=255, fade_ms=0,
            priority=0, cache=True, force=False):
         """
         Turn on the LED (uses the default color).
         Args:
             brightness:
             fade_ms:
-            start_brightness:
             priority:
             cache:
             force:
@@ -319,15 +319,17 @@ class LED(Device):
 
             if ratio >= 1.0:  # fade is done
                 self.fade_in_progress = False
+                set_cache = True
                 new_color = state['destination_color']
 
             else:
+                set_cache = False
                 new_color = RGBColor.blend(state['start_color'], state['destination_color'], ratio)
 
             if self.debug:
                 print("new color", new_color)
 
-            self.color(color=new_color, fade_ms=0, priority=state['priority'], cache=False)
+            self.color(color=new_color, fade_ms=0, priority=state['priority'], cache=set_cache)
 
             yield
 
