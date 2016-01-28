@@ -1,0 +1,50 @@
+#config_version=3
+
+leds:
+    led_01:
+        number: 0
+        color_correction_profile: default
+    led_02:
+        number: 1
+        color_correction_profile: correction_profile_1
+
+led_settings:
+    color_correction_profiles:
+        correction_profile_1:
+            gamma: 1
+            whitepoint: [185, 201, 240]
+            linear_slope: 1.5
+            linear_cutoff: 0.5
+
+matrix_lights:
+    light_01:
+        number: 0
+        label: Test 0
+    light_02:
+        number: 1
+        label: Test 1
+
+gis:
+    gi_01:
+        number: G01
+    gi_02:
+        number: G02
+
+coils:
+    coil_01:
+        number: 1
+        pulse_ms: 30
+    coil_02:
+        number: 2
+        pulse_ms: 60
+
+flashers:
+    flasher_01:
+        number: 1
+        label: Test flasher
+        flash_ms: 40
+    flasher_02:
+        number: 2
+        label: Test flasher 2
+        flash_ms: 100
+
