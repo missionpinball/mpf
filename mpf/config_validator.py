@@ -626,6 +626,8 @@ widgets:
         color: single|str|ffffffff
         keep_ratio: single|bool|False
         image: single|str|
+        height: single|int|0
+        width: single|int|0
 
     video:
         type: single|str|image
@@ -638,6 +640,8 @@ widgets:
         animations: ignore
 
         video: single|str|
+        height: single|int|0
+        width: single|int|0
 
 widget_player:
     widget: list|str|
