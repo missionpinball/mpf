@@ -17,6 +17,7 @@ from mpf.system.platform import Platform
 from mpf.system.config import Config
 from mpf.system.utility_functions import Util
 from mpf.system.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.system.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.system.rgb_color import RGBColor
 
 try:
@@ -1044,7 +1045,7 @@ class FASTGIString(object):
         self.last_time_changed = time.time()
 
 
-class FASTMatrixLight(object):
+class FASTMatrixLight(MatrixLightPlatformInterface):
 
     def __init__(self, number, sender):
         self.log = logging.getLogger('FASTMatrixLight')
@@ -1056,7 +1057,7 @@ class FASTMatrixLight(object):
         self.send('L1:' + self.number + ',00')
         self.last_time_changed = time.time()
 
-    def on(self, brightness=255, fade_ms=0, start=0):
+    def on(self, brightness=255):
         """Enables (turns on) this driver."""
         if brightness >= 255:
             self.send('L1:' + self.number + ',FF')

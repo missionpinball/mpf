@@ -4,6 +4,7 @@ import logging
 from mpf.system.platform import Platform
 from mpf.system.utility_functions import Util
 from mpf.system.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.system.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.system.rgb_color import RGBColor
 
 
@@ -132,16 +133,17 @@ class VirtualSwitch(object):
         self.number = number
 
 
-class VirtualMatrixLight(object):
+class VirtualMatrixLight(MatrixLightPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualMatrixLight')
         self.number = number
+        self.current_brightness = 0
 
-    def on(self, brightness=255, fade_ms=0, start=0):
-        pass
+    def on(self, brightness=255):
+        self.current_brightness = brightness
 
     def off(self):
-        pass
+        self.current_brightness = 0
 
 
 class VirtualLED(RGBLEDPlatformInterface):

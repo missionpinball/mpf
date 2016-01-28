@@ -20,6 +20,7 @@ from copy import deepcopy
 
 from mpf.system.utility_functions import Util
 from mpf.system.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.system.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.system.rgb_color import RGBColor
 
 try:
@@ -984,7 +985,7 @@ class PROCDriver(object):
         pass
 
 
-class PROCMatrixLight(object):
+class PROCMatrixLight(MatrixLightPlatformInterface):
 
     def __init__(self, number, proc_driver):
         self.log = logging.getLogger('PROCMatrixLight')
@@ -996,7 +997,7 @@ class PROCMatrixLight(object):
         self.proc.driver_disable(self.number)
         self.last_time_changed = time.time()
 
-    def on(self, brightness=255, fade_ms=0, start=0):
+    def on(self, brightness=255):
         """Enables (turns on) this driver."""
         if brightness >= 255:
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
