@@ -12,7 +12,7 @@ import sys
 import traceback
 
 from mpf.system.platform import Platform
-from mpf.system.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.system.rgb_color import RGBColor
 
 
