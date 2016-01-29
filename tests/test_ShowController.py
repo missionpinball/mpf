@@ -18,24 +18,44 @@ class TestShowController(MpfTestCase):
     def event_handler(self, **kwargs):
         pass
 
-    def testSimpleLEDShow(self):
-        # Make sure attract mode has been loaded
+    def testShows(self):
+        # Make sure required modes have been loaded
         self.assertIn('mode1', self.machine.modes)
+        self.assertIn('mode2', self.machine.modes)
+        self.assertIn('mode3', self.machine.modes)
 
-        # Make sure test_show1 exists and can be loaded
+        # Make sure test shows exist and can be loaded
         self.assertIn('test_show1', self.machine.shows)
+        self.assertIn('test_show2', self.machine.shows)
+        self.assertIn('test_show3', self.machine.shows)
 
-        # Make sure test LEDs have been configured
+        # Make sure hardware devices have been configured for tests
         self.assertIn('led_01', self.machine.leds)
         self.assertIn('led_02', self.machine.leds)
+        self.assertIn('light_01', self.machine.lights)
+        self.assertIn('light_02', self.machine.lights)
+        self.assertIn('gi_01', self.machine.gi)
+        self.assertIn('coil_01', self.machine.coils)
+        self.assertIn('flasher_01', self.machine.flashers)
+
+        # --------------------------------------------------------
+        # test_show1 - Show with LEDs, lights, and GI
+        # --------------------------------------------------------
 
         # LEDs should start out off (current color is default RGBColor object)
-        self.assertEqual(RGBColor(), self.machine.leds['led_01'].state['color'])
-        self.assertEqual(RGBColor(), self.machine.leds['led_02'].state['color'])
+        self.assertEqual(RGBColor(), self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(RGBColor(), self.machine.leds.led_02.hw_driver.current_color)
+
+        # Lights should start out off (brightness is 0)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(0, self.machine.lights.light_02.hw_driver.current_brightness)
+
+        # GI should start out enabled/on (brightness is 255)
+        self.assertEqual(255, self.machine.gi.gi_01.hw_driver.current_brightness)
 
         # Advance the clock enough to ensure the shows have time to load
         self.advance_time_and_run(2)
-        time.sleep(1)
+        time.sleep(2)
         self.assertTrue(self.machine.shows['test_show1'].loaded)
         self.assertEqual(self.machine.shows['test_show1'].total_steps, 6)
 
@@ -47,25 +67,37 @@ class TestShowController(MpfTestCase):
         self.assertIn(self.machine.modes.mode1, self.machine.mode_controller.active_modes)
         self.assertTrue(self.machine.shows['test_show1'].running)
 
-        # Check LEDs after first show step
+        # Check LEDs, lights, and GI after first show step
         self.machine_run()
-        self.assertEqual(RGBColor('006400'), self.machine.leds['led_01'].state['color'])
-        self.assertEqual(RGBColor('CCCCCC'), self.machine.leds['led_02'].state['color'])
+        self.assertEqual(RGBColor('006400'), self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(RGBColor('CCCCCC'), self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(204, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(120, self.machine.lights.light_02.hw_driver.current_brightness)
+        self.assertEqual(255, self.machine.gi.gi_01.hw_driver.current_brightness)
 
-        # Check LEDs after 2nd step
+        # Check LEDs, lights, and GI after 2nd step
         self.advance_time_and_run(1.0)
-        self.assertEqual(RGBColor('DarkGreen'), self.machine.leds['led_01'].state['color'])
-        self.assertEqual(RGBColor('Black'), self.machine.leds['led_02'].state['color'])
+        self.assertEqual(RGBColor('DarkGreen'), self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(RGBColor('Black'), self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(204, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(120, self.machine.lights.light_02.hw_driver.current_brightness)
+        self.assertEqual(255, self.machine.gi.gi_01.hw_driver.current_brightness)
 
-        # Check LEDs after 3rd step
+        # Check LEDs, lights, and GI after 3rd step
         self.advance_time_and_run(1.0)
-        self.assertEqual(RGBColor('DarkSlateGray'), self.machine.leds['led_01'].state['color'])
-        self.assertEqual(RGBColor('Tomato'), self.machine.leds['led_02'].state['color'])
+        self.assertEqual(RGBColor('DarkSlateGray'), self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(RGBColor('Tomato'), self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(51, self.machine.lights.light_02.hw_driver.current_brightness)
+        self.assertEqual(153, self.machine.gi.gi_01.hw_driver.current_brightness)
 
-        # Check LEDs after 4th step (includes a fade to next color)
+        # Check LEDs, lights, and GI after 4th step (includes a fade to next color)
         self.advance_time_and_run(1.0)
-        self.assertNotEqual(RGBColor('MidnightBlue'), self.machine.leds['led_01'].state['color'])
-        self.assertNotEqual(RGBColor('DarkOrange'), self.machine.leds['led_02'].state['color'])
+        self.assertNotEqual(RGBColor('MidnightBlue'), self.machine.leds.led_01.hw_driver.current_color)
+        self.assertNotEqual(RGBColor('DarkOrange'), self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(51, self.machine.lights.light_02.hw_driver.current_brightness)
+        self.assertEqual(51, self.machine.gi.gi_01.hw_driver.current_brightness)
 
         # Advance time so fade should have completed
         self.advance_time_and_run(0.1)
@@ -74,13 +106,15 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run(0.1)
         self.advance_time_and_run(0.1)
         self.advance_time_and_run(0.1)
-        self.assertEqual(RGBColor('MidnightBlue'), self.machine.leds['led_01'].state['color'])
-        self.assertEqual(RGBColor('DarkOrange'), self.machine.leds['led_02'].state['color'])
+        self.assertEqual(RGBColor('MidnightBlue'), self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(RGBColor('DarkOrange'), self.machine.leds.led_02.hw_driver.current_color)
 
         # Check LEDs after 5th step (includes a fade to black/off)
         self.advance_time_and_run(0.4)
-        self.assertNotEqual(RGBColor('Off'), self.machine.leds['led_01'].state['color'])
-        self.assertNotEqual(RGBColor('Off'), self.machine.leds['led_02'].state['color'])
+        self.assertNotEqual(RGBColor('Off'), self.machine.leds.led_01.hw_driver.current_color)
+        self.assertNotEqual(RGBColor('Off'), self.machine.leds.led_02.hw_driver.current_color)
+        self.assertNotEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertNotEqual(0, self.machine.lights.light_02.hw_driver.current_brightness)
 
         # Advance time so fade should have completed
         self.advance_time_and_run(0.2)
@@ -88,34 +122,38 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run(0.2)
         self.advance_time_and_run(0.2)
         self.advance_time_and_run(0.2)
-        self.assertEqual(RGBColor('Off'), self.machine.leds['led_01'].state['color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds['led_02'].state['color'])
+        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(RGBColor('Off'), self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(0, self.machine.lights.light_02.hw_driver.current_brightness)
+        self.assertEqual(0, self.machine.gi.gi_01.hw_driver.current_brightness)
 
         # Make sure show loops back to the first step
         self.advance_time_and_run(1.1)
-        self.assertEqual(RGBColor('006400'), self.machine.leds['led_01'].state['color'])
-        self.assertEqual(RGBColor('CCCCCC'), self.machine.leds['led_02'].state['color'])
+        self.assertEqual(RGBColor('006400'), self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(RGBColor('CCCCCC'), self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(204, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(120, self.machine.lights.light_02.hw_driver.current_brightness)
+        self.assertEqual(255, self.machine.gi.gi_01.hw_driver.current_brightness)
 
         # TODO: Add tests for reset and hold
 
-    def testShowEventsAndTriggers(self):
-        # Ensure expected hardware devices have been setup
-        self.assertIsNotNone(self.machine.coils['coil_01'])
-        self.assertIsNotNone(self.machine.flashers['flasher_01'])
+        # Stop the mode (and therefore the show)
+        self.machine.events.post('stop_mode1')
+        self.machine_run()
+        self.assertFalse(self.machine.mode_controller.is_active('mode1'))
+        self.advance_time_and_run(5)
+
+        # --------------------------------------------------------
+        # test_show2 - Show with events and triggers
+        # --------------------------------------------------------
 
         # Setup callback for test_event event (fired in test show) and triggers
         self.event_handler = MagicMock()
         self.machine.events.add_handler('test_event', self.event_handler)
         self.machine.bcp.bcp_trigger = MagicMock()
 
-        self.assertIn('mode2', self.machine.modes)
-
-        # Make sure test_show2 exists and can be loaded
-        self.assertIn('test_show2', self.machine.shows)
-
         # Advance the clock enough to ensure the shows have time to load
-        self.advance_time_and_run(3)
-        time.sleep(1)
         self.assertTrue(self.machine.shows['test_show2'].loaded)
         self.assertEqual(self.machine.shows['test_show2'].total_steps, 4)
 
@@ -145,23 +183,20 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run(1.0)
         self.machine.bcp.bcp_trigger.assert_called_with('play_sound', sound="test_3", volume=0.35, loops=1)
 
-    def testShowCoilsAndFlashers(self):
-        # Ensure expected hardware devices have been setup
-        self.assertIsNotNone(self.machine.coils['coil_01'])
-        self.assertIsNotNone(self.machine.flashers['flasher_01'])
+        # Stop the mode (and therefore the show)
+        self.machine.events.post('stop_mode2')
+        self.machine_run()
+        self.assertFalse(self.machine.mode_controller.is_active('mode2'))
+        self.advance_time_and_run(5)
+
+        # --------------------------------------------------------
+        # test_show3 - Show with coils and flashers
+        # --------------------------------------------------------
 
         # Setup callback for test_event event (fired in test show) and triggers
         self.machine.coils['coil_01'].pulse = MagicMock()
         self.machine.flashers['flasher_01'].flash = MagicMock()
 
-        self.assertIn('mode3', self.machine.modes)
-
-        # Make sure test_show3 exists and can be loaded
-        self.assertIn('test_show3', self.machine.shows)
-
-        # Advance the clock enough to ensure the shows have time to load
-        self.machine.shows['test_show3'].load()
-        time.sleep(1)
         self.assertTrue(self.machine.shows['test_show3'].loaded)
         self.assertEqual(self.machine.shows['test_show3'].total_steps, 4)
 
@@ -189,5 +224,6 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run(1.0)
         self.machine.coils['coil_01'].pulse.assert_called_with(power=0.45)
 
-    # TODO: Add tests for lights and gi
     # TODO: Test device tags
+    # TODO: Add test for multiple shows running at once with different priorities
+
