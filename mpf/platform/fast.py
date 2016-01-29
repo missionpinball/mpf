@@ -18,6 +18,7 @@ from mpf.system.config import Config
 from mpf.system.utility_functions import Util
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platform.interfaces.gi_platform_interface import GIPlatformInterface
 from mpf.system.rgb_color import RGBColor
 
 try:
@@ -1016,7 +1017,7 @@ class FASTDriver(object):
             self.log.debug("Re-enabling auto fire mode: %s", cmd)
             self.send(cmd)
 
-class FASTGIString(object):
+class FASTGIString(GIPlatformInterface):
     def __init__(self, number, sender):
         """A FAST GI string in a WPC machine.
 
@@ -1032,7 +1033,7 @@ class FASTGIString(object):
         self.send('GI:' + self.number + ',00')
         self.last_time_changed = time.time()
 
-    def on(self, brightness=255, fade_ms=0, start=0):
+    def on(self, brightness=255):
         if brightness >= 255:
             self.log.debug("Turning On GI String")
             self.send('GI:' + self.number + ',FF')

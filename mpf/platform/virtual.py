@@ -5,6 +5,7 @@ from mpf.system.platform import Platform
 from mpf.system.utility_functions import Util
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platform.interfaces.gi_platform_interface import GIPlatformInterface
 from mpf.system.rgb_color import RGBColor
 
 
@@ -162,16 +163,17 @@ class VirtualLED(RGBLEDPlatformInterface):
         pass
 
 
-class VirtualGI(object):
+class VirtualGI(GIPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualGI')
         self.number = number
+        self.current_brightness = 0
 
-    def on(self, brightness, fade_ms, start):
-        pass
+    def on(self, brightness):
+        self.current_brightness = brightness
 
     def off(self):
-        pass
+        self.current_brightness = 0
 
 
 class VirtualDriver(object):
