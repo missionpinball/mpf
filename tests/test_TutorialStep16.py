@@ -9,7 +9,7 @@ class TestTutorialStep16(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../machine_files/tutorial_step_16/'
+        return '../examples/tutorial_step_16/'
 
     def get_platform(self):
         return 'smart_virtual'
