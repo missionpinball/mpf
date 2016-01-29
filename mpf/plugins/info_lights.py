@@ -71,7 +71,7 @@ class InfoLights(object):
 
         # turn on game over
         if 'game_over' in self.config:
-            self.machine.light_controller.run_script(
+            self.machine.show_controller.run_script(
                 lights=self.config['game_over']['light'].name,
                 script=self.flash,
                 tocks_per_sec=2,
@@ -80,7 +80,7 @@ class InfoLights(object):
     def game_starting(self, **kwargs):
         self.log.debug("game_starting")
         self.reset_game_lights()
-        self.machine.light_controller.stop_script(key='game_over')
+        self.machine.show_controller.stop_script(key='game_over')
 
     def player_added(self, player, **kwargs):
         self.log.debug("player_added. player=%s", player)

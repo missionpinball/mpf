@@ -523,6 +523,9 @@ class Config(object):
         elif validator == 'list':
             item = Util.string_to_list(item)
 
+        elif validator == 'dict':
+            return item
+
         else:
             self.log.error("Invalid Validator '%s' in config spec %s:%s",
                            validator,

@@ -17,10 +17,14 @@ test_section:
   on_string: on
   off_string: off
   int_6400: 6400
-  int_3200: 003200
+  str_001: 001
+  int_100: 100
   int_6: 6
   int_7: 07
   str_00ff00: 00ff00
+  str_003200: 003200
+  str_plus5: +5
+  str_plus0point5: +0.5
   case_sensitive_1: test
   Case_sensitive_2: test
   case_sensitive_3: Test

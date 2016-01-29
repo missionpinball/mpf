@@ -25,8 +25,7 @@ class GI(Device):
 
         self.registered_handlers = []
 
-    def enable(self, brightness=255, fade_ms=0, start_brightness=None,
-               **kwargs):
+    def enable(self, brightness=255, fade_ms=0, **kwargs):
         """Enables this GI string.
 
         Args:
@@ -35,7 +34,6 @@ class GI(Device):
                 support this.
             fade_ms: How quickly you'd like this GI string to fade to this
                 brightness level. This is not implemented.
-            start_brightness: Starting brightness level for a fade.
         """
         if type(brightness) is list:
             brightness = brightness[0]
@@ -44,14 +42,14 @@ class GI(Device):
             for handler in self.registered_handlers:
                 handler(light_name=self.name, brightness=brightness)
 
-        self.hw_driver.on(brightness, fade_ms, start_brightness)
+        self.hw_driver.on(brightness)
 
     def disable(self, **kwargs):
         """Disables this GI string."""
         self.hw_driver.off()
 
     def add_handler(self, callback):
-        """Registers a handler to be called when this light changes state."""
+        """Registers a handler to be called when this GI changes state."""
         self.registered_handlers.append(callback)
 
     def remove_handler(self, callback=None):

@@ -32,8 +32,8 @@ class Shot(Device):
             if 'reset_events' not in config:
                 config['reset_events'] = 'ball_ended'
 
-        super().__init__(machine, name, config, collection,
-                         validate=validate)
+        super(Shot, self).__init__(machine, name, config, collection,
+                                   validate=validate)
 
         self.delay = mpf.system.tasks.DelayManager(self.machine.delayRegistry)
 
@@ -79,20 +79,19 @@ class Shot(Device):
 
         for switch in self.config['switch']:
             self.machine.switch_controller.add_switch_handler(
-                    switch.name, self.hit, 1)
+                switch.name, self.hit, 1)
 
         for switch in self.config['switch_sequence']:
             self.machine.switch_controller.add_switch_handler(
-                    switch.name, self._sequence_switch_hit, 1,
-                    return_info=True)
+                switch.name, self._sequence_switch_hit, 1, return_info=True)
 
         for switch in self.config['cancel_switch']:
             self.machine.switch_controller.add_switch_handler(
-                    switch.name, self._cancel_switch_hit, 1)
+                switch.name, self._cancel_switch_hit, 1)
 
         for switch in list(self.config['delay_switch'].keys()):
             self.machine.switch_controller.add_switch_handler(
-                    switch.name, self._delay_switch_hit, 1, return_info=True)
+                switch.name, self._delay_switch_hit, 1, return_info=True)
 
         self.switch_handlers_active = True
 
@@ -102,19 +101,19 @@ class Shot(Device):
 
         for switch in self.config['switch']:
             self.machine.switch_controller.remove_switch_handler(
-                    switch.name, self.hit, 1)
+                switch.name, self.hit, 1)
 
         for switch in self.config['switch_sequence']:
             self.machine.switch_controller.remove_switch_handler(
-                    switch.name, self._sequence_switch_hit, 1)
+                switch.name, self._sequence_switch_hit, 1)
 
         for switch in self.config['cancel_switch']:
             self.machine.switch_controller.remove_switch_handler(
-                    switch.name, self._cancel_switch_hit, 1)
+                switch.name, self._cancel_switch_hit, 1)
 
         for switch in list(self.config['delay_switch'].keys()):
             self.machine.switch_controller.remove_switch_handler(
-                    switch.name, self._delay_switch_hit, 1)
+                switch.name, self._delay_switch_hit, 1)
 
         self.switch_handlers_active = False
 
@@ -219,23 +218,23 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug(
-                    "Updating lights 2: Profile: '%s', State: %s, State "
-                    "settings: %s, Lights: %s, LEDs: %s, Priority: %s",
-                    self.active_settings['profile'],
-                    self.enable_table[self.active_mode]['current_state_name'],
-                    state_settings, self.config['light'],
-                    self.config['led'], self.active_settings['priority'])
+                "Updating lights 2: Profile: '%s', State: %s, State "
+                "settings: %s, Lights: %s, LEDs: %s, Priority: %s",
+                self.active_settings['profile'],
+                self.enable_table[self.active_mode]['current_state_name'],
+                state_settings, self.config['light'],
+                self.config['led'], self.active_settings['priority'])
 
         if state_settings['light_script'] and (self.config['light'] or
                                                    self.config['led']):
             self.running_light_show = (
-                self.machine.light_controller.run_registered_script(
-                        script_name=state_settings['light_script'],
-                        lights=[x.name for x in self.config['light']],
-                        leds=[x.name for x in self.config['led']],
-                        start_location=lightshow_step,
-                        priority=self.active_settings['priority'],
-                        **state_settings))
+                self.machine.show_controller.run_registered_script(
+                    script_name=state_settings['light_script'],
+                    lights=[x.name for x in self.config['light']],
+                    leds=[x.name for x in self.config['led']],
+                    start_location=lightshow_step,
+                    priority=self.active_settings['priority'],
+                    **state_settings))
 
         if self.debug:
             self.log.debug("New running light show: %s",
@@ -462,7 +461,7 @@ class Shot(Device):
                            next_switch)
 
         self.active_sequences.append(
-                (seq_id, 0, next_switch)
+            (seq_id, 0, next_switch)
         )
 
         # if this sequence has a time limit, set that up
@@ -479,7 +478,7 @@ class Shot(Device):
     def _advance_sequence(self, seq_id):
         # get this sequence
         seq_id, current_position_index, next_switch = next(
-                x for x in self.active_sequences if x[0] == seq_id)
+            x for x in self.active_sequences if x[0] == seq_id)
 
         # Remove this sequence from the list
         self.active_sequences.remove((seq_id, current_position_index,
@@ -504,7 +503,7 @@ class Shot(Device):
                                next_switch)
 
             self.active_sequences.append(
-                    (seq_id, current_position_index, next_switch))
+                (seq_id, current_position_index, next_switch))
 
     def _cancel_switch_hit(self):
         self._reset_all_sequences()
@@ -512,7 +511,7 @@ class Shot(Device):
     def _delay_switch_hit(self, switch_name, state, ms):
         self.delay.reset(name=switch_name + '_delay_timer',
                          ms=self.config['delay_switch']
-                         [self.machine.switches[switch_name]],
+                                       [self.machine.switches[switch_name]],
                          callback=self._release_delay,
                          switch=switch_name)
 
@@ -552,13 +551,12 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug(
-                    'Jump. Mode: %s, New state #: %s, Current state #: %s, Player var:'
-                    '%s, Lightshow_step: %s', mode, state,
-                    self.player[
-                        self.enable_table[mode]['settings'][
-                            'player_variable']],
-                    self.enable_table[mode]['settings']['player_variable'],
-                    lightshow_step)
+                'Jump. Mode: %s, New state #: %s, Current state #: %s, Player var:'
+                '%s, Lightshow_step: %s', mode, state,
+                self.player[
+                    self.enable_table[mode]['settings']['player_variable']],
+                self.enable_table[mode]['settings']['player_variable'],
+                lightshow_step)
 
         if state == self.player[
             self.enable_table[mode]['settings']['player_variable']]:
@@ -590,8 +588,8 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug(
-                    "Received command to enable this shot from mode: %s "
-                    "with profile: %s", mode, profile)
+                "Received command to enable this shot from mode: %s "
+                "with profile: %s", mode, profile)
 
         self.update_enable_table(profile=profile, enable=True, mode=mode)
 

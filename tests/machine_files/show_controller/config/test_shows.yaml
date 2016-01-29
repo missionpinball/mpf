@@ -1,0 +1,48 @@
+#config_version=3
+
+modes:
+  - mode1
+  - mode2
+  - mode3
+
+leds:
+    led_01:
+        number: 0
+        color_correction_profile: default
+    led_02:
+        number: 1
+        color_correction_profile: default
+
+matrix_lights:
+    light_01:
+        number: 0
+        label: Test 0
+        debug: yes
+    light_02:
+        number: 1
+        label: Test 1
+        debug: yes
+
+gis:
+    gi_01:
+        number: 0
+
+coils:
+    coil_01:
+        number: 1
+        pulse_ms: 30
+
+flashers:
+    flasher_01:
+        number: 1
+        label: Test flasher
+        flash_ms: 40
+
+assets:
+    shows:
+        test_show1:
+            preload: yes
+        test_show2:
+            preload: yes
+        test_show3:
+            preload: yes

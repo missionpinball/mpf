@@ -3,13 +3,18 @@
 import logging
 from mpf.system.platform import Platform
 from mpf.system.utility_functions import Util
+from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platform.interfaces.gi_platform_interface import GIPlatformInterface
+from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.system.rgb_color import RGBColor
 
 
 class HardwarePlatform(Platform):
     """Base class for the virtual hardware platform."""
 
     def __init__(self, machine):
-        super().__init__(machine)
+        super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring virtual hardware interface.")
 
@@ -70,11 +75,9 @@ class HardwarePlatform(Platform):
 
             if 'virtual_platform_start_active_switches' in self.machine.config:
 
-                initial_active_switches = [self.machine.switches[x].number for
-                                           x in
-                                           Util.string_to_list(
-                                                   self.machine.config[
-                                                       'virtual_platform_start_active_switches'])]
+                initial_active_switches = [self.machine.switches[x].number for x in
+                    Util.string_to_list(
+                        self.machine.config['virtual_platform_start_active_switches'])]
 
                 for k, v in self.hw_switches.items():
                     if k in initial_active_switches:
@@ -128,54 +131,54 @@ class HardwarePlatform(Platform):
 
 class VirtualSwitch(object):
     """Represents a switch in a pinball machine used with virtual hardware."""
-
     def __init__(self, number):
         self.log = logging.getLogger('VirtualSwitch')
         self.number = number
 
 
-class VirtualMatrixLight(object):
+class VirtualMatrixLight(MatrixLightPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualMatrixLight')
         self.number = number
+        self.current_brightness = 0
 
-    def on(self, brightness=255, fade_ms=0, start=0):
-        pass
+    def on(self, brightness=255):
+        self.current_brightness = brightness
 
     def off(self):
-        pass
+        self.current_brightness = 0
 
 
-class VirtualLED(object):
+class VirtualLED(RGBLEDPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualLED')
         self.number = number
+        self.current_color = RGBColor()
 
-    def color(self, color, fade_ms=0, brightness_compensation=True):
-        # self.log.debug("Setting color: %s, fade: %s, comp: %s",
-        #               color, fade_ms, brightness_compensation)
-        pass
+    def color(self, color):
+        self.current_color = color
 
     def disable(self):
         pass
 
-    def enable(self, brightness_compensation=True):
+    def enable(self):
         pass
 
 
-class VirtualGI(object):
+class VirtualGI(GIPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualGI')
         self.number = number
+        self.current_brightness = 0
 
-    def on(self, brightness, fade_ms, start):
-        pass
+    def on(self, brightness):
+        self.current_brightness = brightness
 
     def off(self):
-        pass
+        self.current_brightness = 0
 
 
-class VirtualDriver(object):
+class VirtualDriver(DriverPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number

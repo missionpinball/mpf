@@ -12,6 +12,10 @@ name of your own platform.
 import logging
 from mpf.system.platform import Platform
 from mpf.system.utility_functions import Util
+from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platform.interfaces.gi_platform_interface import GIPlatformInterface
+from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
 
 
 # you might have to add additional imports here for modules you need for your
@@ -197,7 +201,7 @@ class VirtualSwitch(object):
         self.number = number
 
 
-class VirtualMatrixLight(object):
+class VirtualMatrixLight(MatrixLightPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualMatrixLight')
         self.number = number
@@ -209,12 +213,12 @@ class VirtualMatrixLight(object):
         pass
 
 
-class VirtualLED(object):
+class VirtualLED(RGBLEDPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualLED')
         self.number = number
 
-    def color(self, color, fade_ms=0, brightness_compensation=True):
+    def color(self, color):
         # self.log.debug("Setting color: %s, fade: %s, comp: %s",
         #               color, fade_ms, brightness_compensation)
         pass
@@ -226,30 +230,30 @@ class VirtualLED(object):
         pass
 
 
-class VirtualGI(object):
+class VirtualGI(GIPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualGI')
         self.number = number
 
-    def on(self, brightness, fade_ms, start):
+    def on(self, brightness):
         pass
 
     def off(self):
         pass
 
 
-class TemplateDriver(object):
+class TemplateDriver(DriverPlatformInterface):
     """The base class for a hardware driver on your platform. Several methods
     are required, including:
 
-    validate_driver_settings()
     disable()
     enable()
     pulse()
+
+    The following are optional:
     state()
     tick()
     reconfigure()
-
 
     """
 
@@ -259,9 +263,6 @@ class TemplateDriver(object):
 
     def __repr__(self):
         return "VirtualDriver.{}".format(self.number)
-
-    def validate_driver_settings(self, **kwargs):
-        return dict()
 
     def disable(self):
         pass

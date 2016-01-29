@@ -1,0 +1,10 @@
+- time: 0
+  flashers: flasher_01
+- time: 1
+  coils:
+      coil_01:
+- time: 2
+  coils:
+      coil_01:
+          power: 45
+- time: 3

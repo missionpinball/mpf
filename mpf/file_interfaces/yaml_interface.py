@@ -25,8 +25,25 @@ import version
 
 log = logging.getLogger('YAML Interface')
 
+
 class MpfResolver(BaseResolver):
     pass
+
+MpfResolver.add_implicit_resolver(
+    # Process any item beginning with a plus sign (+) as a string
+    u'tag:yaml.org,2002:str',
+    re.compile(
+        u'''^(\+([0-9a-zA-Z .]+))$''',
+        re.X),
+    list(u'+'))
+
+MpfResolver.add_implicit_resolver(
+    # Process any 3+ digit number with a leading zero as a string
+    u'tag:yaml.org,2002:str',
+    re.compile(
+        u'''^(?:(0[0-9]{2,}))$''',
+        re.X),
+    list(u'0'))
 
 MpfResolver.add_implicit_resolver(
     u'tag:yaml.org,2002:bool',
@@ -120,7 +137,6 @@ class MpfRoundTripConstructor(RoundTripConstructor):
             return sign*value
         else:
             return sign*int(value)
-
 
 class MpfConstructor(Constructor):
     def construct_yaml_int(self, node):

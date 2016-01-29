@@ -124,6 +124,11 @@ coils:
     disable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
     platform: single|str|None
+color_correction_profile:
+    gamma: single|float|2.5
+    whitepoint: list|float|1.0, 1.0, 1.0
+    linear_slope: single|float|1.0
+    linear_cutoff: single|float|0.0
 credits:
     max_credits: single|int|0
     free_play: single|bool|yes
@@ -204,6 +209,13 @@ drop_target_banks:
     label: single|str|%
     debug: single|bool|False
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
+fadecandy:
+    gamma: single|float|2.5
+    whitepoint: list|float|1.0, 1.0, 1.0
+    linear_slope: single|float|1.0
+    linear_cutoff: single|float|0.0
+    keyframe_interpolation: single|bool|True
+    dithering: single|bool|True
 flashers:
     number: single|str|
     number_str: single|str|
@@ -288,7 +300,7 @@ leds:
     number_str: single|str|
     polarity: single|bool|False
     default_color: single|str|ffffff
-    brightness_compensation: list|float|1.0, 1.0, 1.0
+    color_correction_profile: single|str|None
     fade_ms: single|int|None
     tags: list|str|None
     label: single|str|%
@@ -300,14 +312,9 @@ leds:
     y: single|int|None
     z: single|int|None
 led_settings:
-    brightness_compensation: list|float|1.0, 1.0, 1.0
-    default_led_fade_ms: single|int|100
-    gamma: single|float|2.5
-    whitepoint: list|float|1.0, 1.0, 1.0
-    linear_slope: single|float|1.0
-    linear_cutoff: single|float|0.0
-    keyframe_interpolation: single|bool|True
-    dithering: single|bool|True
+    color_correction_profiles: single|dict|None
+    default_color_correction_profile: single|str|None
+    default_led_fade_ms: single|int|0
 machine:
     balls_installed: single|int|1
     min_balls: single|int|1

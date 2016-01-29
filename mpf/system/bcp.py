@@ -13,7 +13,7 @@ import copy
 from mpf.system.player import Player
 from mpf.system.utility_functions import Util
 from mpf.devices.shot import Shot
-from mpf.system.light_controller import ExternalShow
+from mpf.system.show_controller import ExternalShow
 import version
 
 
@@ -867,15 +867,15 @@ class BCP(object):
 
     def external_show_start(self, name, **kwargs):
         # Called by worker thread
-        self.machine.light_controller.add_external_show_start_command_to_queue(name, **kwargs)
+        self.machine.show_controller.add_external_show_start_command_to_queue(name, **kwargs)
 
     def external_show_stop(self, name):
         # Called by worker thread
-        self.machine.light_controller.add_external_show_stop_command_to_queue(name)
+        self.machine.show_controller.add_external_show_stop_command_to_queue(name)
 
     def external_show_frame(self, name, **kwargs):
         # Called by worker thread
-        self.machine.light_controller.add_external_show_frame_command_to_queue(name, **kwargs)
+        self.machine.show_controller.add_external_show_frame_command_to_queue(name, **kwargs)
 
 
 class BCPClientSocket(object):
