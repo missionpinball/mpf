@@ -22,6 +22,7 @@ import sys
 from copy import deepcopy
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
 from mpf.system.rgb_color import RGBColor
 
 try:
@@ -708,7 +709,7 @@ class PROCSwitch(object):
         self.number = number
 
 
-class PROCDriver(object):
+class PROCDriver(DriverPlatformInterface):
     """ Base class for drivers connected to a P-ROC. This class is used for all
     drivers, regardless of whether they're connected to a P-ROC driver board
     (such as the PD-16 or PD-8x8) or an OEM driver board.

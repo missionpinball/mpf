@@ -6,6 +6,7 @@ from mpf.system.utility_functions import Util
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platform.interfaces.gi_platform_interface import GIPlatformInterface
+from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
 from mpf.system.rgb_color import RGBColor
 
 
@@ -127,6 +128,7 @@ class HardwarePlatform(Platform):
     def i2c_read16(self, address, register):
         return None
 
+
 class VirtualSwitch(object):
     """Represents a switch in a pinball machine used with virtual hardware."""
     def __init__(self, number):
@@ -176,8 +178,7 @@ class VirtualGI(GIPlatformInterface):
         self.current_brightness = 0
 
 
-class VirtualDriver(object):
-
+class VirtualDriver(DriverPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
@@ -212,7 +213,6 @@ class VirtualDriver(object):
 
 
 class VirtualDMD(object):
-
     def __init__(self, machine):
         pass
 
