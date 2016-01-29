@@ -571,7 +571,7 @@ widgets:
         timing: single|str|after_previous
         repeat: single|bool|False
         easing: single|str|linear
-    slide_frame:
+    common:
         type: single|str|slide_frame
         x: single|str|None
         y: single|str|None
@@ -581,20 +581,12 @@ widgets:
         z: single|int|0
         animations: ignore
 
+    slide_frame:
         name: single|str|
         width: single|int|
         height: single|int|
 
     text:
-        type: single|str|text
-        x: single|str|None
-        y: single|str|None
-        anchor_x: single|str|None
-        anchor_y: single|str|None
-        opacity: single|float|1.0
-        z: single|int|0
-        animations: ignore
-
         text: single|str|
         color: single|str|ffffffff
         font_size: single|num|None
@@ -618,15 +610,6 @@ widgets:
   #      split_str:
   #      unicode_errors:
     image:
-        type: single|str|image
-        x: single|str|None
-        y: single|str|None
-        anchor_x: single|str|None
-        anchor_y: single|str|None
-        opacity: single|float|1.0
-        z: single|int|0
-        animations: ignore
-
         allow_stretch: single|bool|False
         anim_delay: single|float|.25
         anim_loop: single|int|0
@@ -637,15 +620,6 @@ widgets:
         width: single|int|0
 
     video:
-        type: single|str|image
-        x: single|str|None
-        y: single|str|None
-        anchor_x: single|str|None
-        anchor_y: single|str|None
-        opacity: single|float|1.0
-        z: single|int|0
-        animations: ignore
-
         video: single|str|
         height: single|int|0
         width: single|int|0

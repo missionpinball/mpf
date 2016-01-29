@@ -3,6 +3,7 @@
 import logging
 import os
 import sys
+from copy import deepcopy
 
 import ruamel.yaml as yaml
 
@@ -233,7 +234,7 @@ class Config(object):
             return Util.list_of_lists(item)
 
     def process_config2(self, config_spec, source, section_name=None,
-                        target=None, result_type='dict'):
+                        target=None, result_type='dict', base_spec=None):
         # config_spec, str i.e. "device:shot"
         # source is dict
         # section_name is str used for logging failures
@@ -242,17 +243,28 @@ class Config(object):
             self.load_config_spec()
 
         if not section_name:
-            section_name = config_spec
+            section_name = config_spec  # str
 
         validation_failure_info = (config_spec, section_name)
 
-        orig_spec = config_spec
+        orig_spec = config_spec  # str
 
-        config_spec = config_spec.split(':')
+        # build up the actual config spec we're going to use
         this_spec = self.config_spec
-
+        config_spec = config_spec.split(':')
         for i in range(len(config_spec)):
             this_spec = this_spec[config_spec[i]]
+
+        if base_spec:
+            this_base_spec = self.config_spec
+            base_spec = base_spec.split(':')
+            for i in range(len(base_spec)):
+                # need to deepcopy so the orig base spec doesn't get polluted
+                # with this widget's spec
+                this_base_spec = deepcopy(this_base_spec[base_spec[i]])
+
+            this_base_spec.update(this_spec)
+            this_spec = this_base_spec
 
         self.check_for_invalid_sections(this_spec, source,
                                         validation_failure_info)
@@ -260,8 +272,7 @@ class Config(object):
         processed_config = source
 
         for k in list(this_spec.keys()):
-
-            if this_spec[k] == 'ignore':
+            if this_spec[k] == 'ignore' or k[0] == '_':
                 continue
 
             elif k in source:  # validate the entry that exists
@@ -314,9 +325,6 @@ class Config(object):
 
         if target:
             processed_config = Util.dict_merge(target, processed_config)
-
-            # if result_type == 'list':
-            # quit()
 
         return processed_config
 
@@ -391,8 +399,7 @@ class Config(object):
 
         for k, v in config.items():
             if type(k) is not dict:
-
-                if k not in spec:
+                if k not in spec and k[0] != '_':
 
                     path_list = validation_failure_info[0].split(':')
 
