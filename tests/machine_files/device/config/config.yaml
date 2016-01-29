@@ -26,9 +26,9 @@ matrix_lights:
 
 gis:
     gi_01:
-        number: G01
+        number: 1
     gi_02:
-        number: G02
+        number: 2
 
 coils:
     coil_01:
