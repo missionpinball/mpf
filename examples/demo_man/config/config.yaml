@@ -51,8 +51,12 @@ window:
 
 displays:
   window:
-    width: 400
-    height: 300
+    width: 800
+    height: 600
+    default: yes
+  dmd:
+    width: 128
+    height: 32
 
 slides:
   boot:

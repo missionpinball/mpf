@@ -76,7 +76,7 @@ mpf:
         high_scores: data/high_scores.yaml
         config_cache: data/config_cache.yaml
         earnings: data/earnings.yaml
-        machine_files: machine_files
+        machine_files: examples
         config: config
         modes: modes
 

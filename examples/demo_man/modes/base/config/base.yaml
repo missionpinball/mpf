@@ -12,6 +12,18 @@ event_player:
 
 slide_player:
   single_player_ball_started:
+    slide: 1_player_score
+  player_1_ball_started:
+    slide: player_1_multiplayer_score
+  player_2_ball_started:
+    slide: player_2_multiplayer_score
+  player_3_ball_started:
+    slide: player_3_multiplayer_score
+  player_4_ball_started:
+    slide: player_4_multiplayer_score
+
+slides:
+  single_player_score:
     - type: text
       text: "%player1|score%"
       number_grouping: true
@@ -27,8 +39,7 @@ slide_player:
       v_pos: bottom
       font: small
       y: -1
-
-  player_1_multiplayer_slide:
+  player_1_multiplayer_score:
     - type: text
       text: "%player1|score%"
       #font: medium
@@ -70,7 +81,6 @@ slide_player:
       v_pos: bottom
       font: small
       y: -1
-
   player_2_ball_started:
     - type: text
       text: "%player1|score%"
