@@ -1,0 +1,31 @@
+#config_version=3
+
+hardware:
+    platform: fast
+    driverboards: fast
+
+fast:
+    ports: com4
+
+switches:
+    s_test:
+        number: 7
+    s_slingshot_test:
+        number: 16
+
+coils:
+    c_test:
+        number: 4
+        pulse_ms: 23
+    c_test_allow_enable:
+        number: 6
+        pulse_ms: 23
+        allow_enable: true
+    c_slingshot_test:
+        number: 9
+
+
+autofire_coils:
+    ac_slingshot_test:
+        coil: c_slingshot_test
+        switch: s_slingshot_test

@@ -359,6 +359,7 @@ class HardwarePlatform(Platform):
         self.hw_switch_data = None
         self.net_connection.send('SA:')
 
+        self.tick()
         while not self.hw_switch_data:
             time.sleep(.01)
             self.tick()
