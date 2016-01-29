@@ -473,7 +473,7 @@ class ShowController(object):
         # Process any device changes or actions made by the running shows
         self._do_update()
 
-    def add_to_light_update_list(self, light, brightness, priority, blend):
+    def add_to_light_update_list(self, light, brightness, fade_ms, priority, blend):
         # Adds an update to our update list, with intelligence that if the list
         # already contains an update for this lightname at the same or lower
         # priority, it deletes that one since there's not sense sending a light
@@ -483,6 +483,7 @@ class ShowController(object):
                 self.light_update_list.remove(item)
         self.light_update_list.append({'light': light,
                                        'brightness': brightness,
+                                       'fade_ms': fade_ms,
                                        'priority': priority,
                                        'blend': blend})  # remove blend?
 
@@ -566,6 +567,7 @@ class ShowController(object):
 
         for item in self.light_update_list:
             item['light'].on(brightness=item['brightness'],
+                             fade_ms=item['fade_ms'],
                              priority=item['priority'],
                              cache=False)
 
@@ -1052,8 +1054,7 @@ class Show(Asset):
             # Now process show step actions
 
             # Lights
-            if ('lights' in steps[step_num] and
-                    steps[step_num]['lights']):
+            if 'lights' in steps[step_num] and steps[step_num]['lights']:
 
                 light_actions = dict()
 
@@ -1071,22 +1072,28 @@ class Show(Asset):
                                                            light)
                             continue
 
-                    value = steps[step_num]['lights'][light]
-
                     # convert / ensure lights are single ints
-                    if type(value) is str:
-                        value = Util.hex_string_to_int(
-                            steps[step_num]['lights'][light])
+                    value = str(steps[step_num]['lights'][light])
+                    fade = 0
 
-                    if type(value) is int and value > 255:
-                        value = 255
+                    if '-f' in value:
+                        composite_value = value.split('-f')
+                        value = composite_value[0]
+                        fade = Timing.string_to_ms(composite_value[1])
+
+                    brightness = max(min(Util.hex_string_to_int(value), 255), 0)
 
                     for light_ in light_list:
-                        light_actions[light_] = value
+                        light_actions[light_] = {'brightness': brightness, 'fade': fade}
 
                         # make sure this light is in self.light_states
                         if light_ not in self.light_states:
-                            self.light_states[light_] = 0
+                            self.light_states[light_] = {
+                                'current_brightness': 0,
+                                'destination_brightness': 0,
+                                'start_brightness': 0,
+                                'fade_start': 0,
+                                'fade_end': 0}
 
                 actions['lights'] = light_actions
 
@@ -1171,14 +1178,10 @@ class Show(Asset):
                                                            gi)
                             continue
 
-                    value = steps[step_num]['gis'][gi]
+                    value = str(steps[step_num]['gis'][gi])
 
-                    # convert / ensure flashers are single ints
-                    if type(value) is str:
-                        value = Util.hex_string_to_int(value)
-
-                    if type(value) is int and value > 255:
-                        value = 255
+                    # convert / ensure flashers are single ints between 0 and 255
+                    value = max(min(Util.hex_string_to_int(value), 255), 0)
 
                     for gi_ in gi_list:
                         gi_actions[gi_] = value
@@ -1204,15 +1207,13 @@ class Show(Asset):
                                                            led)
                             continue
 
-                    value = steps[step_num]['leds'][led]
-
+                    value = str(steps[step_num]['leds'][led])
                     fade = 0
 
-                    if type(value) is str:
-                        if '-f' in value:
-                            composite_value = value.split('-f')
-                            value = composite_value[0]
-                            fade = Timing.string_to_ms(composite_value[1])
+                    if '-f' in value:
+                        composite_value = value.split('-f')
+                        value = composite_value[0]
+                        fade = Timing.string_to_ms(composite_value[1])
 
                     # convert our color of hexes to a list of ints
                     destination_color = RGBColor(RGBColor.string_to_rgb(value))
@@ -1447,16 +1448,25 @@ class Show(Asset):
                     continue
                 elif item_type == 'lights':
 
-                    for light_obj, brightness in item_dict.items():
+                    for light_obj, light_dict in item_dict.items():
 
                         self.machine.show_controller.add_to_light_update_list(
                             light=light_obj,
-                            brightness=brightness,
+                            brightness=light_dict['brightness'],
+                            fade_ms=int(light_dict['fade'] / self.playback_rate),
                             priority=self.priority,
                             blend=self.blend)
 
+                        prev_brightness = self.light_states[light_obj]['current_brightness']
+
                         # update the current state
-                        self.light_states[light_obj] = brightness
+                        self.light_states[light_obj] = {
+                                'current_brightness': prev_brightness,
+                                'destination_brightness': light_dict['brightness'],
+                                'start_brightness': prev_brightness,
+                                'fade_start': current_step_time,
+                                'fade_end': current_step_time + int(light_dict['fade']) / self.playback_rate / 1000}
+
 
                 elif item_type == 'leds':
 
@@ -1472,7 +1482,7 @@ class Show(Asset):
                         # update the current state
 
                         # grab the old current color
-                        prev_color = led_dict['color']
+                        prev_color = self.led_states[led_obj]['current_color']
 
                         self.led_states[led_obj] = {
                                 'current_color': prev_color,
