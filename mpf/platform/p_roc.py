@@ -554,7 +554,7 @@ class PDBLED(RGBLEDPlatformInterface):
         """Enables (turns on) this LED instantly. For multi-color LEDs it turns
         all elements on.
         """
-        self.color(RGBColor(255, 255, 255))
+        self.color(RGBColor('White'))
 
 
 class PDBSwitch(object):
