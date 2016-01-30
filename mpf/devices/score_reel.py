@@ -1,13 +1,11 @@
 """ Contains the base classes for mechanical EM-style score reels."""
 
 import logging
-import time
 
 from collections import deque
 from mpf.system.device import Device
 from mpf.system.tasks import DelayManager
-from mpf.system.timing import Timing
-from mpf.system.config import Config
+from mpf.system.clock import Clock
 
 
 class ScoreReelController(object):
@@ -553,7 +551,7 @@ class ScoreReelGroup(Device):
 
         reels_needing_advance = []  # reels that need to be advanced
         num_energized = 0  # count of the number of coils currently energized
-        current_time = time.time()  # local reference for speed
+        current_time = Clock.get_time()  # local reference for speed
         # loop through the reels one by one
         for i in range(len(self.reels)):
             this_reel = self.reels[i]  # local reference for speed
@@ -1066,7 +1064,7 @@ class ScoreReel(Device):
         self.set_destination_value(direction)
         # above line also sets self._destination_index
 
-        if self.next_pulse_time > time.time():
+        if self.next_pulse_time > Clock.get_time():
             # This reel is not ready to pulse again
             # Note we don't allow this to be overridden. Figure the
             # recycle time is there for a reason and we don't want to
@@ -1098,7 +1096,7 @@ class ScoreReel(Device):
                                ms=self.config['repeat_pulse_time'],
                                callback=self._ready_to_fire)
 
-                self.next_pulse_time = (time.time() +
+                self.next_pulse_time = (Clock.get_time() +
                                         (self.config['repeat_pulse_time'] /
                                          1000.0))
                 self.log.debug("@@@ New Next pulse ready time: %s",
@@ -1165,7 +1163,7 @@ class ScoreReel(Device):
         # check to make sure the 'hw_confirm_time' time has passed. If not then
         # we cannot trust any value we read from the switches
         if (self.config['coil_inc'].time_last_changed +
-                (self.config['hw_confirm_time'] / 1000.0) <= time.time()):
+                (self.config['hw_confirm_time'] / 1000.0) <= Clock.get_time()):
             self.log.debug("Checking hw switches to determine reel value")
             value = -999
             for i in range(len(self.value_switches)):

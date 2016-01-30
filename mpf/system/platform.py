@@ -1,6 +1,7 @@
 """ Contains the parent classes Platform"""
 
 import time
+from mpf.system.clock import Clock
 
 
 class Platform(object):
@@ -46,7 +47,7 @@ class Platform(object):
         this premature optimization?)
 
         """
-        self.next_tick_time = time.time()
+        self.next_tick_time = Clock.get_time()
 
     def set_hw_rule(self, sw_name, sw_activity, driver_name, driver_action,
                     disable_on_release=True, drive_now=False,

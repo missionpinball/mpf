@@ -9,6 +9,7 @@ import time
 
 from mpf.system.config import CaseInsensitiveDict
 from mpf.system.timing import Timing
+from mpf.system.clock import Clock
 from mpf.system.utility_functions import Util
 
 
@@ -217,14 +218,14 @@ class SwitchController(object):
         last changed state.
         """
 
-        return round((time.time() - self.switches[switch_name]['time']) * 1000.0, 0)
+        return round((Clock.get_time() - self.switches[switch_name]['time']) * 1000.0, 0)
 
     def secs_since_change(self, switch_name):
         """Returns the number of ms that have elapsed since this switch
         last changed state.
         """
 
-        return time.time() - self.switches[switch_name]['time']
+        return Clock.get_time() - self.switches[switch_name]['time']
 
     def set_state(self, switch_name, state=1, reset_time=False):
         """Sets the state of a switch."""
@@ -232,7 +233,7 @@ class SwitchController(object):
         if reset_time:
             timestamp = 1
         else:
-            timestamp = time.time()
+            timestamp = Clock.get_time()
 
         self.switches.update({switch_name: {'state': state,
                                             'time': timestamp
@@ -374,7 +375,7 @@ class SwitchController(object):
                 if entry['ms']:
                     # This entry is for a timed switch, so add it to our
                     # active timed switch list
-                    key = time.time() + (entry['ms'] / 1000.0)
+                    key = Clock.get_time() + (entry['ms'] / 1000.0)
                     value = {'switch_action': str(name) + '-' + str(state),
                              'callback': entry['callback'],
                              'switch_name': name,
@@ -476,7 +477,7 @@ class SwitchController(object):
                     # figure out when this handler should fire based on the
                     # switch's original activation time.
                     key = (
-                    time.time() + ((ms - self.ms_since_change(switch_name))
+                    Clock.get_time() + ((ms - self.ms_since_change(switch_name))
                                    / 1000.0))
                     value = {'switch_action': entry_key,
                              'callback': callback,
@@ -490,7 +491,7 @@ class SwitchController(object):
                 if self.is_inactive(switch_name, 0) and (
                             self.ms_since_change(switch_name) < ms):
                     key = (
-                    time.time() + ((ms - self.ms_since_change(switch_name))
+                    Clock.get_time() + ((ms - self.ms_since_change(switch_name))
                                    / 1000.0))
                     value = {'switch_action': entry_key,
                              'callback': callback,
@@ -593,7 +594,7 @@ class SwitchController(object):
         """
 
         for k in list(self.active_timed_switches.keys()):
-            if k <= time.time():  # change to generator?
+            if k <= Clock.get_time():  # change to generator?
                 for entry in self.active_timed_switches[k]:
                     self.log.debug(
                         "Processing timed switch handler. Switch: %s "

@@ -1,9 +1,7 @@
 """Contains the Tilt mode code"""
 
-from mpf.system.config import CaseInsensitiveDict
 from mpf.system.mode import Mode
-from mpf.system.timing import Timing
-import time
+from mpf.system.clock import Clock
 
 
 class Tilt(Mode):
@@ -80,14 +78,14 @@ class Tilt(Mode):
         cause a tilt, a tilt will be processed.
 
         """
-        self.last_tilt_warning_switch = time.time()
+        self.last_tilt_warning_switch = Clock.get_time()
 
         if not self.player:
             return
 
         self.log.debug("Tilt Warning")
 
-        self._last_warning = time.time()
+        self._last_warning = Clock.get_time()
         self.player[self.tilt_config['tilt_warnings_player_var']] += 1
 
         warnings = self.player[self.tilt_config['tilt_warnings_player_var']]
@@ -164,7 +162,7 @@ class Tilt(Mode):
     def _tilt_warning_switch_handler(self):
         if (not self._last_warning or
              (self._last_warning + (self.tilt_config['multiple_hit_window']*0.001)
-              <= time.time())):
+              <= Clock.get_time())):
 
             self.tilt_warning()
 
@@ -200,7 +198,7 @@ class Tilt(Mode):
             return 0
 
         delta = (self.tilt_config['settle_time'] -
-                (time.time() - self.last_tilt_warning_switch) * 1000)
+                (Clock.get_time() - self.last_tilt_warning_switch) * 1000)
         if delta > 0:
             return delta
         else:

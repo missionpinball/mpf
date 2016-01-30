@@ -2,8 +2,8 @@ import unittest
 
 from mpf.system.machine import MachineController
 from mpf.system.utility_functions import Util
+from mpf.system.clock import Clock
 import logging
-import time
 import sys
 from mock import *
 from datetime import datetime, timedelta
@@ -67,16 +67,16 @@ class MpfTestCase(unittest.TestCase):
         self.machine.log.debug("Moving time forward %ss",
                                new_time - self.testTime)
         self.testTime = new_time
-        time.time.return_value = self.testTime
+        Clock.time.return_value = self.testTime
 
     def advance_time(self, delta=1):
         self.testTime += delta
-        time.time.return_value = self.testTime
+        Clock.time.return_value = self.testTime
 
     def advance_time_and_run(self, delta=1):
-        end_time = time.time() + delta
+        end_time = Clock.get_time() + delta
         self.machine.log.debug("Advancing time %ss", delta)
-        self.machine_run()
+        #self.machine_run()
         while True:
             next_event = self.machine.delayRegistry.get_next_event()
             next_timer = self.machine.timing.get_next_timer()
@@ -94,7 +94,7 @@ class MpfTestCase(unittest.TestCase):
             if not wait_until or (next_show_step and wait_until > next_show_step):
                 wait_until = next_show_step
 
-            if wait_until and wait_until < end_time:
+            if wait_until and wait_until > Clock.get_time() and wait_until < end_time:
                 self.set_time(wait_until)
                 self.machine_run()
             else:
@@ -105,6 +105,8 @@ class MpfTestCase(unittest.TestCase):
 
     def machine_run(self):
         self.machine.log.debug("Ticking machine")
+        # TODO: Implement testing with the Clock
+        Clock.testing_tick()
         self.machine.default_platform.tick()
         self.machine.timer_tick()
 
@@ -130,16 +132,16 @@ class MpfTestCase(unittest.TestCase):
             # no logging by default
             logging.basicConfig(level=99)
 
-        self.realTime = time.time
+        self.realTime = Clock.time
         self.testTime = self.realTime()
-        time.time = MagicMock(return_value=self.testTime)
+        Clock.time = MagicMock(return_value=self.testTime)
 
         # init machine
         self.machine = TestMachineController(self.getOptions(),
                                              self.machine_config_patches)
 
         self.machine.default_platform.timer_initialize()
-        self.machine.loop_start_time = time.time()
+        self.machine.loop_start_time = Clock.get_time()
 
         while not self.machine.test_init_complete:
             self.machine_run()
@@ -154,5 +156,5 @@ class MpfTestCase(unittest.TestCase):
         # fire all delays
         self.advance_time_and_run(300)
         self.machine = None
-        time.time = self.realTime
+        Clock.time = self.realTime
         self.realTime = None

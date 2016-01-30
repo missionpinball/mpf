@@ -2,8 +2,6 @@
 
 import logging
 
-import time
-
 from mpf.system.tasks import DelayManager
 from mpf.system.utility_functions import Util
 from mpf.platform.virtual import (HardwarePlatform as VirtualPlatform,

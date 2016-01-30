@@ -10,6 +10,7 @@ import queue
 import errno
 
 from mpf.system import *
+from mpf.system.clock import Clock
 from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.device_manager import DeviceCollection
 from mpf.system.tasks import Task, DelayManager, DelayManagerRegistry
@@ -155,7 +156,7 @@ class MachineController(object):
     def _load_machine_vars(self):
         self.machine_var_data_manager = DataManager(self, 'machine_vars')
 
-        current_time = time.time()
+        current_time = Clock.get_time()
 
         for name, settings in (
                 iter(self.machine_var_data_manager.get_data().items())):
@@ -465,7 +466,7 @@ class MachineController(object):
 
         self.default_platform.timer_initialize()
 
-        self.loop_start_time = time.time()
+        self.loop_start_time = Clock.get_time()
 
         if self.default_platform.features['hw_timer']:
             self.default_platform.run_loop()
@@ -473,36 +474,34 @@ class MachineController(object):
             self._mpf_timer_run_loop()
 
     def _mpf_timer_run_loop(self):
-        #Main machine run loop with when the default platform interface
-        #specifies the MPF should control the main timer
-
-        start_time = time.time()
-        loops = 0
-        secs_per_tick = timing.Timing.secs_per_tick
-        sleep_sec = self.config['timing']['hw_thread_sleep_ms'] / 1000.0
-
-        self.default_platform.next_tick_time = time.time()
-
+        # Main machine run loop with when the default platform interface
+        # specifies the MPF should control the main timer
         try:
-            while self.done is False:
-                time.sleep(sleep_sec)
-                self.default_platform.tick()
-                loops += 1
-                if self.default_platform.next_tick_time <= time.time():  # todo change this
-                    self.timer_tick()
-                    self.default_platform.next_tick_time += secs_per_tick
-
+            while not self.done:
+                self.idle()
         except KeyboardInterrupt:
             pass
 
         self.log_loop_rate()
         self._platform_stop()
 
-        try:
-            self.log.info("Hardware loop rate: %s Hz",
-                          round(loops / (time.time() - start_time), 2))
-        except ZeroDivisionError:
-            self.log.info("Hardware loop rate: 0 Hz")
+    def idle(self):
+        '''This function is called after every frame. By default:
+
+           * it "ticks" the clock to the next frame.
+           * it reads all input and dispatches events.
+             window.
+        '''
+
+        # TODO: Replace the two function calls below
+        self.default_platform.tick()
+        self.timer_tick()
+
+        # update dt
+        Clock.tick()
+
+        # tick before draw
+        Clock.tick_draw()
 
     def timer_tick(self):
         """Called to "tick" MPF at a rate specified by the machine Hz setting.
@@ -512,11 +511,10 @@ class MachineController(object):
         let MPF drive.)
 
         """
-        self.tick_num += 1  # used to calculate the loop rate when MPF exits
         self.timing.timer_tick()  # notifies the timing module
         self.events.post('timer_tick')  # sends the timer_tick system event
-        tasks.Task.timer_tick()  # notifies tasks
-        self.delayRegistry.timer_tick(self)
+        #tasks.Task.timer_tick()  # notifies tasks
+        #self.delayRegistry.timer_tick(self)
         self.events._process_event_queue()
 
     def _platform_stop(self):
@@ -539,13 +537,7 @@ class MachineController(object):
 
     def log_loop_rate(self):
         self.log.info("Target MPF loop rate: %s Hz", timing.Timing.HZ)
-
-        try:
-            self.log.info("Actual MPF loop rate: %s Hz",
-                          round(self.tick_num /
-                                (time.time() - self.loop_start_time), 2))
-        except ZeroDivisionError:
-            self.log.info("Actual MPF loop rate: 0 Hz")
+        self.log.info("Actual MPF loop rate: %s Hz", Clock.get_fps())
 
     def _loading_tick(self):
         if not self.asset_loader_complete:
@@ -633,7 +625,7 @@ class MachineController(object):
                 disk_var['value'] = value
 
                 if self.machine_vars[name]['expire_secs']:
-                    disk_var['expire'] = (time.time() +
+                    disk_var['expire'] = (Clock.get_time() +
                         self.machine_vars[name]['expire_secs'])
 
                 self.machine_var_data_manager.save_key(name, disk_var)

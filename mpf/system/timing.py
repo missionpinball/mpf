@@ -2,6 +2,7 @@
 
 import logging
 import time
+from mpf.system.clock import Clock
 
 
 class Timing(object):
@@ -44,7 +45,7 @@ class Timing(object):
         Timing.ms_per_tick = 1000 * Timing.secs_per_tick
 
     def add(self, timer):
-        timer.wakeup = time.time() + timer.frequency
+        timer.wakeup = Clock.get_time() + timer.frequency
         self.timers_to_add.add(timer)
 
     def remove(self, timer):
@@ -61,7 +62,7 @@ class Timing(object):
         global tick
         Timing.tick += 1
         for timer in self.timers:
-            if timer.wakeup and timer.wakeup <= time.time():
+            if timer.wakeup and timer.wakeup <= Clock.get_time():
                 timer.call()
                 if timer.frequency:
                     timer.wakeup += timer.frequency

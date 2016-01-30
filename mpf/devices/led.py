@@ -1,7 +1,6 @@
 """ Contains the LED parent classes. """
 
-import time
-
+from mpf.system.clock import Clock
 from mpf.system.device import Device
 from mpf.system.tasks import Task
 from mpf.system.rgb_color import RGBColor
@@ -162,7 +161,7 @@ class LED(Device):
                                    "based on this global default fade", fade_ms)
             # potential optimization make this not conditional
 
-        current_time = time.time()
+        current_time = Clock.get_time()
 
         # update our state
         self.state['priority'] = priority
@@ -215,7 +214,7 @@ class LED(Device):
             self.log.debug("| destination_color: %s",
                           self.state['destination_color'])
             self.log.debug("| start_time: %s", self.state['start_time'])
-            self.log.debug("| current_time: %s", time.time())
+            self.log.debug("| current_time: %s", Clock.get_time())
             self.log.debug("| destination_time: %s",
                           self.state['destination_time'])
             self.log.debug("+-----------------------------------------")
@@ -302,44 +301,41 @@ class LED(Device):
         over the specified fade time.
         Returns: None
         """
-        while self.fade_in_progress:
 
-            if self.debug:
-                print("fade_in_progress fade_task")
-                print("state", self.state)
+        if self.debug:
+            print("fade_in_progress fade_task")
+            print("state", self.state)
 
-            state = self.state
+        state = self.state
 
-            # figure out the ratio of how far along we are
-            ratio = ((time.time() - state['start_time']) /
-                     (state['destination_time'] - state['start_time']))
+        # figure out the ratio of how far along we are
+        ratio = ((Clock.get_time() - state['start_time']) /
+                 (state['destination_time'] - state['start_time']))
 
-            if self.debug:
-                print("ratio", ratio)
+        if self.debug:
+            print("ratio", ratio)
 
-            if ratio >= 1.0:  # fade is done
-                self.fade_in_progress = False
-                set_cache = True
-                new_color = state['destination_color']
+        if ratio >= 1.0:  # fade is done
+            self.fade_in_progress = False
+            set_cache = True
+            new_color = state['destination_color']
+            self.fade_task.stop()
+            self.fade_task = None
+        else:
+            set_cache = False
+            new_color = RGBColor.blend(state['start_color'], state['destination_color'], ratio)
 
-            else:
-                set_cache = False
-                new_color = RGBColor.blend(state['start_color'], state['destination_color'], ratio)
+        if self.debug:
+            print("new color", new_color)
 
-            if self.debug:
-                print("new color", new_color)
-
-            self.color(color=new_color, fade_ms=0, priority=state['priority'], cache=set_cache)
-
-            yield
+        self.color(color=new_color, fade_ms=0, priority=state['priority'], cache=set_cache)
 
         if self.debug:
             print("fade_in_progress just ended")
             print("killing fade task")
 
-        self.fade_task = None
-        raise StopIteration()
-
     def _kill_fade(self):
         self.fade_in_progress = False
+        self.fade_task.stop()
+        self.fade_task = None
         self.color(color=self.state['destination_color'], fade_ms=0, priority=self.state['priority'], cache=True)

@@ -13,6 +13,7 @@ import io
 from distutils.version import StrictVersion
 from copy import deepcopy
 
+from mpf.system.clock import Clock
 from mpf.system.platform import Platform
 from mpf.system.config import Config
 from mpf.system.utility_functions import Util
@@ -1034,7 +1035,7 @@ class FASTGIString(GIPlatformInterface):
     def off(self):
         self.log.debug("Turning Off GI String")
         self.send('GI:' + self.number + ',00')
-        self.last_time_changed = time.time()
+        self.last_time_changed = Clock.get_time()
 
     def on(self, brightness=255):
         if brightness >= 255:
@@ -1046,7 +1047,7 @@ class FASTGIString(GIPlatformInterface):
             brightness = str(hex(brightness))[2:]
             self.send('GI:' + self.number + ',' + brightness)
 
-        self.last_time_changed = time.time()
+        self.last_time_changed = Clock.get_time()
 
 
 class FASTMatrixLight(MatrixLightPlatformInterface):
@@ -1059,7 +1060,7 @@ class FASTMatrixLight(MatrixLightPlatformInterface):
     def off(self):
         """Disables (turns off) this matrix light."""
         self.send('L1:' + self.number + ',00')
-        self.last_time_changed = time.time()
+        self.last_time_changed = Clock.get_time()
 
     def on(self, brightness=255):
         """Enables (turns on) this driver."""
@@ -1071,7 +1072,7 @@ class FASTMatrixLight(MatrixLightPlatformInterface):
             pass
             # patter rates of 10/1 through 2/9
 
-        self.last_time_changed = time.time()
+        self.last_time_changed = Clock.get_time()
 
 
 class FASTDirectLED(RGBLEDPlatformInterface):

@@ -14,10 +14,10 @@ https://github.com/preble/pyprocgame
 import logging
 import re
 import time
-import sys
 import math
 from copy import deepcopy
 
+from mpf.system.clock import Clock
 from mpf.system.utility_functions import Util
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -996,7 +996,7 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
     def off(self):
         """Disables (turns off) this driver."""
         self.proc.driver_disable(self.number)
-        self.last_time_changed = time.time()
+        self.last_time_changed = Clock.get_time()
 
     def on(self, brightness=255):
         """Enables (turns on) this driver."""
@@ -1009,7 +1009,7 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
             pass
             # patter rates of 10/1 through 2/9
 
-        self.last_time_changed = time.time()
+        self.last_time_changed = Clock.get_time()
 
         '''
         Koen's fade code he posted to pinballcontrollers:

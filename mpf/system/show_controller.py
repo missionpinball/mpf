@@ -8,6 +8,7 @@ from mpf.system.assets import Asset, AssetManager
 from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.file_manager import FileManager
 from mpf.system.timing import Timing
+from mpf.system.clock import Clock
 from mpf.system.utility_functions import Util
 from mpf.system.rgb_color import RGBColor
 
@@ -78,8 +79,12 @@ class ShowController(object):
         object.
         """
 
+        # Setup the callback schedule (every frame)
+        Clock.schedule_interval(self._tick, 0)
+        #self.machine.events.add_handler('timer_tick', self._tick)
+
+
         # register for events
-        self.machine.events.add_handler('timer_tick', self._tick)
         self.machine.events.add_handler('init_phase_5',
                                         self._initialize)
 
@@ -440,10 +445,10 @@ class ShowController(object):
         if handler in self.registered_tick_handlers:
             self.registered_tick_handlers.remove(handler)
 
-    def _tick(self):
+    def _tick(self, dt):
         # Runs once per machine loop.  Calls the tick processing function for any running shows
         # and processes any device updates and/or show actions that are needed.
-        self.current_tick_time = time.time()
+        self.current_tick_time = Clock.get_time()
 
         # Process the running Shows
         for show in self.running_shows:

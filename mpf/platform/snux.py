@@ -6,6 +6,7 @@ Mark Sunnucks's System 11 interface board.
 
 import logging
 import time
+from mpf.system.clock import Clock
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timer
 
@@ -53,7 +54,7 @@ class Snux(object):
     @property
     def a_side_busy(self):
         if (self.drivers_holding_a_side or
-                    self.a_side_done_time > time.time() or
+                    self.a_side_done_time > Clock.get_time() or
                     self.a_side_queue):
             return True
         else:
@@ -61,7 +62,7 @@ class Snux(object):
 
     @property
     def c_side_active(self):
-        if self.drivers_holding_c_side or self.c_side_done_time > time.time():
+        if self.drivers_holding_c_side or self.c_side_done_time > Clock.get_time():
             return True
         else:
             return False
@@ -271,7 +272,7 @@ class Snux(object):
             if ms > 0:
                 driver.pulse(ms)
                 self.a_side_done_time = max(self.a_side_done_time,
-                    time.time() + (ms / 1000.0))
+                                            Clock.get_time() + (ms / 1000.0))
 
             elif ms == -1:
                 driver.enable()
@@ -326,7 +327,7 @@ class Snux(object):
             if ms > 0:
                 driver.pulse(ms)
                 self.c_side_done_time = max(self.c_side_done_time,
-                    time.time() + (ms / 1000.))
+                                            Clock.get_time() + (ms / 1000.))
             elif ms == -1:
                 driver.enable()
                 self.drivers_holding_c_side.add(driver)
