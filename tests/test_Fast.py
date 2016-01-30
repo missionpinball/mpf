@@ -97,14 +97,14 @@ class TestFast(MpfTestCase):
     def test_servo(self):
         # go to min position
         MockSerialCommunicator.expected_commands = {
-                "XO:3,00" : False
+                "XO:03,00" : False
         }
         self.machine.servos.servo1.go_to_position(0)
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
         # go to max position
         MockSerialCommunicator.expected_commands = {
-                "XO:3,FF" : False
+                "XO:03,FF" : False
         }
         self.machine.servos.servo1.go_to_position(1)
         self.assertFalse(MockSerialCommunicator.expected_commands)

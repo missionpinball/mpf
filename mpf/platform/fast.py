@@ -788,7 +788,7 @@ class HardwarePlatform(Platform):
         position_numeric = int(position * 255)
 
         # build command and send it
-        cmd = 'XO:' + str(number) + ',' + Util.int_to_hex_string(position_numeric)
+        cmd = 'XO:' + Util.int_to_hex_string(number) + ',' + Util.int_to_hex_string(position_numeric)
         self.net_connection.send(cmd)
 
 
