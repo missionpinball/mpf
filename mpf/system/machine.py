@@ -3,14 +3,13 @@
 import pickle
 import logging
 import os
-import time
 import sys
 import queue
 
 import errno
 
 from mpf.system import *
-from mpf.system.clock import Clock
+from mpf.system.clock import ClockBase
 from mpf.system.config import Config, CaseInsensitiveDict
 from mpf.system.device_manager import DeviceCollection
 from mpf.system.tasks import Task, DelayManager, DelayManagerRegistry
@@ -51,6 +50,7 @@ class MachineController(object):
         self.log.debug("Command line arguments: {}".format(self.options))
         self.verify_system_info()
 
+        self.clock = ClockBase()
         self.loop_start_time = 0
         self.tick_num = 0
         self.done = False
@@ -69,11 +69,11 @@ class MachineController(object):
         self.flag_bcp_reset_complete = False
         self.asset_loader_complete = False
 
-        self.delayRegistry = DelayManagerRegistry()
+        self.delayRegistry = DelayManagerRegistry(self)
         self.delay = DelayManager(self.delayRegistry)
 
         self.crash_queue = queue.Queue()
-        Task.create(self._check_crash_queue)
+        Task.create(self, self._check_crash_queue, interval=1.0)
 
         self.config = dict()
         self._load_mpf_config()
@@ -151,12 +151,13 @@ class MachineController(object):
         self.events.add_handler('quit', self.quit)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.quit)
-        self.events.add_handler('timer_tick', self._loading_tick)
+
+        self.clock.schedule_interval(self._loading_tick, 0.1)
 
     def _load_machine_vars(self):
         self.machine_var_data_manager = DataManager(self, 'machine_vars')
 
-        current_time = Clock.get_time()
+        current_time = self.clock.get_time()
 
         for name, settings in (
                 iter(self.machine_var_data_manager.get_data().items())):
@@ -172,7 +173,7 @@ class MachineController(object):
         try:
             crash = self.crash_queue.get(block=False)
         except queue.Empty:
-            yield 1000
+            pass
         else:
             self.log.critical("MPF Shutting down due to child thread crash")
             self.log.critical("Crash details: %s", crash)
@@ -466,7 +467,7 @@ class MachineController(object):
 
         self.default_platform.timer_initialize()
 
-        self.loop_start_time = Clock.get_time()
+        self.loop_start_time = self.clock.get_time()
 
         if self.default_platform.features['hw_timer']:
             self.default_platform.run_loop()
@@ -498,10 +499,10 @@ class MachineController(object):
         self.timer_tick()
 
         # update dt
-        Clock.tick()
+        self.clock.tick()
 
         # tick before draw
-        Clock.tick_draw()
+        self.clock.tick_draw()
 
     def timer_tick(self):
         """Called to "tick" MPF at a rate specified by the machine Hz setting.
@@ -537,9 +538,9 @@ class MachineController(object):
 
     def log_loop_rate(self):
         self.log.info("Target MPF loop rate: %s Hz", timing.Timing.HZ)
-        self.log.info("Actual MPF loop rate: %s Hz", Clock.get_fps())
+        self.log.info("Actual MPF loop rate: %s Hz", self.clock.get_fps())
 
-    def _loading_tick(self):
+    def _loading_tick(self, dt):
         if not self.asset_loader_complete:
 
             if AssetManager.loader_queue.qsize():
@@ -569,7 +570,7 @@ class MachineController(object):
     def _reset_complete(self):
         self.log.debug('Reset Complete')
         self.events.post('reset_complete')
-        self.events.remove_handler(self._loading_tick)
+        self.clock.unschedule(self._loading_tick)
 
     def configure_debugger(self):
         pass
@@ -625,7 +626,7 @@ class MachineController(object):
                 disk_var['value'] = value
 
                 if self.machine_vars[name]['expire_secs']:
-                    disk_var['expire'] = (Clock.get_time() +
+                    disk_var['expire'] = (self.clock.get_time() +
                         self.machine_vars[name]['expire_secs'])
 
                 self.machine_var_data_manager.save_key(name, disk_var)

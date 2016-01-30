@@ -82,7 +82,7 @@ class HardwarePlatform(VirtualPlatform):
                     self.machine.switches.number(sw_num).name):
                 del self.hw_switch_rules[entry]
 
-    def tick(self):
+    def tick(self, dt):
         # ticks every hw loop (typically hundreds of times per sec)
         pass
 

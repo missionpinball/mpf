@@ -1,10 +1,8 @@
 """Contains the Task, DelayManager, and DelayManagerRegistry base classes."""
 
 import logging
-from copy import copy
 import uuid
 from functools import partial
-from mpf.system.clock import Clock
 
 
 class Task(object):
@@ -20,7 +18,8 @@ class Task(object):
     run queue.
     """
 
-    def __init__(self, callback, args=None, name=None, interval=0, delay=0):
+    def __init__(self, machine, callback, args=None, name=None, interval=0, delay=0):
+        self.machine = machine
         self.callback = callback
         self.args = args
         self.name = name
@@ -29,7 +28,7 @@ class Task(object):
         self.clock_event = None
 
         if delay:
-            self.clock_event = Clock.schedule_once(self.run, delay)
+            self.clock_event = self.machine.clock.schedule_once(self.run, delay)
         else:
             self.run(0)
 
@@ -42,7 +41,7 @@ class Task(object):
 
     def run(self, dt):
         self.stop()
-        self.clock_event = Clock.schedule_interval(self._process_task, self.interval)
+        self.clock_event = self.machine.clock.schedule_interval(self._process_task, self.interval)
 
     def _process_task(self, dt):
         if self.callback is not None:
@@ -51,21 +50,22 @@ class Task(object):
     def stop(self):
         """Stops the task. This causes it not to run any longer"""
         if self.clock_event:
-            Clock.unschedule(self.clock_event)
+            self.machine.clock.unschedule(self.clock_event)
             self.clock_event = None
 
     def __repr__(self):
         return "callback=" + str(self.callback) + " interval=" + str(self.interval) + " delay=" + str(self.delay)
 
     @staticmethod
-    def create(callback, args=tuple(), interval=0, delay=0):
+    def create(machine, callback, args=tuple(), interval=0, delay=0):
         """Creates a new task and insert it into the runnable set."""
-        return Task(callback=callback, args=args, interval=interval, delay=delay)
+        return Task(machine=machine, callback=callback, args=args, interval=interval, delay=delay)
 
 
 class DelayManagerRegistry(object):
-    def __init__(self):
+    def __init__(self, machine):
         self.delay_managers = set()
+        self.machine = machine
 
     def add_delay_manager(self, delay_manager):
         self.delay_managers.add(delay_manager)
@@ -86,6 +86,7 @@ class DelayManager(object):
     def __init__(self, registry):
         self.log = logging.getLogger("DelayManager")
         self.delays = {}
+        self.machine = registry.machine
         self.registry = registry
         self.registry.add_delay_manager(self)
 
@@ -117,10 +118,10 @@ class DelayManager(object):
                        "kwargs: %s", name, ms, callback, kwargs)
 
         if name in self.delays:
-            Clock.unschedule(self.delays[name])
+            self.machine.clock.unschedule(self.delays[name])
             del self.delays[name]
 
-        self.delays[name] = Clock.schedule_once(
+        self.delays[name] = self.machine.clock.schedule_once(
             partial(self._process_delay_callback, name, callback, **kwargs),
             ms / 1000.0)
 
@@ -136,11 +137,9 @@ class DelayManager(object):
         """
 
         self.log.debug("Removing delay: '%s'", name)
-        try:
-            Clock.unschedule(self.delays[name])
+        if name in self.delays:
+            self.machine.clock.unschedule(self.delays[name])
             del self.delays[name]
-        except:
-            pass
 
     def check(self, delay):
         """Checks to see if a delay exists.
@@ -160,14 +159,15 @@ class DelayManager(object):
         Args:
             same as add()
         """
-        Clock.unschedule(self.delays[name])
-        self.remove(name)
+        if name in self.delays:
+            self.remove(name)
+
         self.add(ms, callback, name, **kwargs)
 
     def clear(self):
         """Removes (clears) all the delays associated with this DelayManager."""
         for name in list(self.delays.keys()):
-            Clock.unschedule(self.delays[name])
+            self.machine.clock.unschedule(self.delays[name])
             self.remove(name)
 
         self.delays = {}

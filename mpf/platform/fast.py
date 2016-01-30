@@ -13,7 +13,6 @@ import io
 from distutils.version import StrictVersion
 from copy import deepcopy
 
-from mpf.system.clock import Clock
 from mpf.system.platform import Platform
 from mpf.system.config import Config
 from mpf.system.utility_functions import Util
@@ -344,7 +343,7 @@ class HardwarePlatform(Platform):
             self.rgb_connection.send('RA:000000')  # turn off all LEDs
             self.rgb_connection.send('RF:' + Util.int_to_hex_string(self.config['hardware_led_fade_time']))
 
-    def update_leds(self):
+    def update_leds(self, dt):
         """Updates all the LEDs connected to a FAST controller. This is done
         once per game loop for efficiency (i.e. all LEDs are sent as a single
         update rather than lots of individual ones).
@@ -360,10 +359,10 @@ class HardwarePlatform(Platform):
         self.hw_switch_data = None
         self.net_connection.send('SA:')
 
-        self.tick()
+        self.tick(0.01)
         while not self.hw_switch_data:
             time.sleep(.01)
-            self.tick()
+            self.tick(0.01)
 
         return self.hw_switch_data
 
@@ -554,7 +553,8 @@ class HardwarePlatform(Platform):
             sys.exit()
 
         if not self.flag_led_tick_registered:
-            self.machine.events.add_handler('timer_tick', self.update_leds)
+            # Update leds every frame
+            self.machine.clock.schedule_interval(self.update_leds, 0)
             self.flag_led_tick_registered = True
 
         # if the LED number is in <channel> - <led> format, convert it to a
@@ -625,7 +625,7 @@ class HardwarePlatform(Platform):
     def null_dmd_sender(self, *args, **kwargs):
         pass
 
-    def tick(self):
+    def tick(self, dt):
         while not self.receive_queue.empty():
             self.process_received_message(self.receive_queue.get(False))
 
@@ -1035,7 +1035,7 @@ class FASTGIString(GIPlatformInterface):
     def off(self):
         self.log.debug("Turning Off GI String")
         self.send('GI:' + self.number + ',00')
-        self.last_time_changed = Clock.get_time()
+        self.last_time_changed = self.machine.clock.get_time()
 
     def on(self, brightness=255):
         if brightness >= 255:
@@ -1047,7 +1047,7 @@ class FASTGIString(GIPlatformInterface):
             brightness = str(hex(brightness))[2:]
             self.send('GI:' + self.number + ',' + brightness)
 
-        self.last_time_changed = Clock.get_time()
+        self.last_time_changed = self.machine.clock.get_time()
 
 
 class FASTMatrixLight(MatrixLightPlatformInterface):
@@ -1060,7 +1060,7 @@ class FASTMatrixLight(MatrixLightPlatformInterface):
     def off(self):
         """Disables (turns off) this matrix light."""
         self.send('L1:' + self.number + ',00')
-        self.last_time_changed = Clock.get_time()
+        self.last_time_changed = self.machine.clock.get_time()
 
     def on(self, brightness=255):
         """Enables (turns on) this driver."""
@@ -1072,7 +1072,7 @@ class FASTMatrixLight(MatrixLightPlatformInterface):
             pass
             # patter rates of 10/1 through 2/9
 
-        self.last_time_changed = Clock.get_time()
+        self.last_time_changed = self.machine.clock.get_time()
 
 
 class FASTDirectLED(RGBLEDPlatformInterface):
@@ -1173,7 +1173,9 @@ class FASTDMD(object):
 
         self.dmd_frame = bytearray()
 
-        self.machine.events.add_handler('timer_tick', self.tick)
+        # Update DMD 30 times per second
+        # TODO: Add DMD update interval to config
+        self.machine.clock.schedule_interval(self.tick, 1/30.0)
 
     def update(self, data):
 
@@ -1182,7 +1184,7 @@ class FASTDMD(object):
         except TypeError:
             pass
 
-    def tick(self):
+    def tick(self, dt):
         self.send('BM:' + self.dmd_frame)
 
 

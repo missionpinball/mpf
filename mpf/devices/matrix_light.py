@@ -2,7 +2,6 @@
 
 from mpf.system.device import Device
 from mpf.system.tasks import Task
-from mpf.system.clock import Clock
 
 
 class MatrixLight(Device):
@@ -99,7 +98,7 @@ class MatrixLight(Device):
             for handler in self.registered_handlers:
                 handler(light_name=self.name, brightness=brightness)
 
-        current_time = Clock.get_time()
+        current_time = self.machine.clock.get_time()
 
         # update our state
         self.state['priority'] = priority
@@ -191,7 +190,7 @@ class MatrixLight(Device):
         if not self.fade_task:
             if self.debug:
                 print("setting up fade task")
-            self.fade_task = Task.create(self._fade_task)
+            self.fade_task = Task.create(self.machine, self._fade_task)
         elif self.debug:
                 print("already have a fade task")
 
@@ -208,7 +207,7 @@ class MatrixLight(Device):
         state = self.state
 
         # figure out the ratio of how far along we are
-        ratio = ((Clock.get_time() - state['start_time']) /
+        ratio = ((self.machine.clock.get_time() - state['start_time']) /
                  (state['destination_time'] - state['start_time']))
 
         if self.debug:

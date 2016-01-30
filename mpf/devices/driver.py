@@ -1,6 +1,5 @@
 """ Contains the Driver parent class. """
 
-from mpf.system.clock import Clock
 from mpf.system.device import Device
 
 
@@ -52,14 +51,14 @@ class Driver(Device):
 
         """
         self.time_when_done = -1
-        self.time_last_changed = Clock.get_time()
+        self.time_last_changed = self.machine.clock.get_time()
         self.log.debug("Enabling Driver")
         self.hw_driver.enable()
 
     def disable(self, **kwargs):
         """ Disables this driver """
         self.log.debug("Disabling Driver")
-        self.time_last_changed = Clock.get_time()
+        self.time_last_changed = self.machine.clock.get_time()
         self.time_when_done = self.time_last_changed
         self.hw_driver.disable()
         # todo also disable the timer which reenables this

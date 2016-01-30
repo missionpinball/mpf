@@ -2,7 +2,6 @@
 """
 
 from mpf.system.mode import Mode
-from mpf.system.clock import Clock
 
 
 class Attract(Mode):
@@ -51,7 +50,7 @@ class Attract(Mode):
 
     def start_button_pressed(self):
         """ Called when the a switch tagged with *start* is activated."""
-        self.start_button_pressed_time = Clock.get_time()
+        self.start_button_pressed_time = self.machine.clock.get_time()
 
     def start_button_released(self):
         """ Called when the a switch tagged with *start* is deactivated.
@@ -61,7 +60,7 @@ class Attract(Mode):
         method calls :meth:`result_of_start_request`.
 
         """
-        self.start_hold_time = Clock.get_time() - self.start_button_pressed_time
+        self.start_hold_time = self.machine.clock.get_time() - self.start_button_pressed_time
         self.start_buttons_held = list()
 
         for switch in self.machine.switches.items_tagged('player'):

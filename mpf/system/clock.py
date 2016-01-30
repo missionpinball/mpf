@@ -151,10 +151,8 @@ just an external thread.
 '''
 
 from sys import platform
-from os import environ
-from functools import wraps, partial
+from functools import partial
 
-from mpf.system.context import register_context
 from mpf.system.weakmethod import WeakMethod
 import time
 import logging
@@ -598,18 +596,6 @@ class ClockBase(_ClockBase):
                         ev.cancel()
                         break
 
-    def get_next_event_time(self):
-        next_event_time = None
-        for events in self._events:
-            remove = events.remove
-            for event in events[:]:
-                # event may be already removed from original list
-                if event in events:
-                    if not next_event_time or event.next_event_time < next_event_time:
-                        next_event_time = event.next_event_time
-
-        return next_event_time
-
     def _release_references(self):
         # call that function to release all the direct reference to any
         # callback and replace it with a weakref
@@ -654,32 +640,27 @@ class ClockBase(_ClockBase):
 
     time = staticmethod(partial(_default_time))
 
+    def get_next_event_time(self):
+        """
+        Gets the time of the next event scheduled in the event queue.  Used primarily
+        for testing.
+
+        Returns:
+            The time of the next scheduled clock event (float) or None if there are
+            no scheduled events.
+
+        Notes:
+            This method was added specifically for MPF and is not in the original Kivy class.
+        """
+        next_event_time = None
+        for events in self._events:
+            remove = events.remove
+            for event in events[:]:
+                # event may be already removed from original list
+                if event in events:
+                    if not next_event_time or event.next_event_time < next_event_time:
+                        next_event_time = event.next_event_time
+
+        return next_event_time
+
 ClockBase.time.__doc__ = '''Proxy method for :func:`~kivy.compat.clock`. '''
-
-
-def mainthread(func):
-    '''Decorator that will schedule the call of the function for the next
-    available frame in the mainthread. It can be useful when you use
-    :class:`~kivy.network.urlrequest.UrlRequest` or when you do Thread
-    programming: you cannot do any OpenGL-related work in a thread.
-    Please note that this method will return directly and no result can be
-    returned::
-        @mainthread
-        def callback(self, *args):
-            print('The request succedded!',
-                  'This callback is called in the main thread.')
-        self.req = UrlRequest(url='http://...', on_success=callback)
-    .. versionadded:: 1.8.0
-    '''
-    @wraps(func)
-    def delayed_func(*args, **kwargs):
-        def callback_func(dt):
-            func(*args, **kwargs)
-        Clock.schedule_once(callback_func, 0)
-    return delayed_func
-
-if 'KIVY_DOC_INCLUDE' in environ:
-    #: Instance of :class:`ClockBase`.
-    Clock = None
-else:
-    Clock = register_context('Clock', ClockBase)

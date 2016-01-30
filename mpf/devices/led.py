@@ -1,6 +1,5 @@
 """ Contains the LED parent classes. """
 
-from mpf.system.clock import Clock
 from mpf.system.device import Device
 from mpf.system.tasks import Task
 from mpf.system.rgb_color import RGBColor
@@ -161,7 +160,7 @@ class LED(Device):
                                    "based on this global default fade", fade_ms)
             # potential optimization make this not conditional
 
-        current_time = Clock.get_time()
+        current_time = self.machine.clock.get_time()
 
         # update our state
         self.state['priority'] = priority
@@ -214,7 +213,7 @@ class LED(Device):
             self.log.debug("| destination_color: %s",
                           self.state['destination_color'])
             self.log.debug("| start_time: %s", self.state['start_time'])
-            self.log.debug("| current_time: %s", Clock.get_time())
+            self.log.debug("| current_time: %s", self.machine.clock.get_time())
             self.log.debug("| destination_time: %s",
                           self.state['destination_time'])
             self.log.debug("+-----------------------------------------")
@@ -291,7 +290,7 @@ class LED(Device):
         if not self.fade_task:
             if self.debug:
                 print("setting up fade task")
-            self.fade_task = Task.create(self._fade_task)
+            self.fade_task = Task.create(self.machine, self._fade_task)
         elif self.debug:
                 print("already have a fade task")
 
@@ -309,7 +308,7 @@ class LED(Device):
         state = self.state
 
         # figure out the ratio of how far along we are
-        ratio = ((Clock.get_time() - state['start_time']) /
+        ratio = ((self.machine.clock.get_time() - state['start_time']) /
                  (state['destination_time'] - state['start_time']))
 
         if self.debug:

@@ -2,7 +2,6 @@ import unittest
 
 from mpf.system.machine import MachineController
 from mpf.system.utility_functions import Util
-from mpf.system.clock import Clock
 import logging
 import sys
 from mock import *
@@ -67,14 +66,14 @@ class MpfTestCase(unittest.TestCase):
         self.machine.log.debug("Moving time forward %ss",
                                new_time - self.testTime)
         self.testTime = new_time
-        Clock.time.return_value = self.testTime
+        self.machine.clock.time.return_value = self.testTime
 
     def advance_time(self, delta=1):
         self.testTime += delta
-        Clock.time.return_value = self.testTime
+        self.machine.clock.time.return_value = self.testTime
 
-    def advance_time_and_run(self, delta=1):
-        end_time = Clock.get_time() + delta
+    def advance_time_and_run(self, delta=1.0):
+        end_time = self.machine.clock.get_time() + delta
         self.machine.log.debug("Advancing time %ss", delta)
         #self.machine_run()
         while True:
@@ -94,7 +93,7 @@ class MpfTestCase(unittest.TestCase):
             if not wait_until or (next_show_step and wait_until > next_show_step):
                 wait_until = next_show_step
 
-            if wait_until and wait_until > Clock.get_time() and wait_until < end_time:
+            if wait_until and wait_until > self.machine.clock.get_time() and wait_until < end_time:
                 self.set_time(wait_until)
                 self.machine_run()
             else:
@@ -106,8 +105,8 @@ class MpfTestCase(unittest.TestCase):
     def machine_run(self):
         self.machine.log.debug("Ticking machine")
         # TODO: Implement testing with the Clock
-        Clock.testing_tick()
-        self.machine.default_platform.tick()
+        self.machine.clock.testing_tick()
+        self.machine.default_platform.tick(self.machine.clock.frametime)
         self.machine.timer_tick()
 
     def unittest_verbosity(self):
@@ -132,19 +131,19 @@ class MpfTestCase(unittest.TestCase):
             # no logging by default
             logging.basicConfig(level=99)
 
-        self.realTime = Clock.time
-        self.testTime = self.realTime()
-        Clock.time = MagicMock(return_value=self.testTime)
-
         # init machine
         self.machine = TestMachineController(self.getOptions(),
                                              self.machine_config_patches)
 
+        self.realTime = self.machine.clock.time
+        self.testTime = self.realTime()
+        self.machine.clock.time = MagicMock(return_value=self.testTime)
+
         self.machine.default_platform.timer_initialize()
-        self.machine.loop_start_time = Clock.get_time()
+        self.machine.loop_start_time = self.machine.clock.get_time()
 
         while not self.machine.test_init_complete:
-            self.machine_run()
+            self.advance_time_and_run(0.01)
 
         self.machine.ball_controller.num_balls_known = 99
         self.advance_time_and_run(300)
@@ -155,6 +154,6 @@ class MpfTestCase(unittest.TestCase):
             logging.basicConfig(level=99)
         # fire all delays
         self.advance_time_and_run(300)
+        self.machine.clock.time = self.realTime
         self.machine = None
-        Clock.time = self.realTime
         self.realTime = None

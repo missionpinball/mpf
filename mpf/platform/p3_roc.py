@@ -17,7 +17,6 @@ import time
 import math
 from copy import deepcopy
 
-from mpf.system.clock import Clock
 from mpf.system.utility_functions import Util
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -364,7 +363,7 @@ class HardwarePlatform(Platform):
         raise AssertionError("An attempt was made to configure a physical DMD, "
                              "but the P3-ROC does not support physical DMDs.")
 
-    def tick(self):
+    def tick(self, dt):
         """Checks the P3-ROC for any events (switch state changes).
 
         Also tickles the watchdog and flushes any queued commands to the P3-ROC.
@@ -996,7 +995,7 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
     def off(self):
         """Disables (turns off) this driver."""
         self.proc.driver_disable(self.number)
-        self.last_time_changed = Clock.get_time()
+        self.last_time_changed = self.machine.clock.get_time()
 
     def on(self, brightness=255):
         """Enables (turns on) this driver."""
@@ -1009,7 +1008,7 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
             pass
             # patter rates of 10/1 through 2/9
 
-        self.last_time_changed = Clock.get_time()
+        self.last_time_changed = self.machine.clock.get_time()
 
         '''
         Koen's fade code he posted to pinballcontrollers:
