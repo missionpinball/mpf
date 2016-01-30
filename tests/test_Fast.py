@@ -41,17 +41,27 @@ class TestFast(MpfTestCase):
         return 'fast'
 
     def setUp(self):
+        self.communicator = fast.SerialCommunicator
         fast.SerialCommunicator = MockSerialCommunicator
-        # 
+        fast.serial_imported = True
         MockSerialCommunicator.expected_commands = {
             "SA:" : "SA:0,00,32,00",
             "SN:16,01,a,a" : "SN:",
             "SN:07,01,a,a" : "SN:"
         }
         # FAST should never call sleep. Make it fail
+        self.sleep = time.sleep
         time.sleep = None
+
         super().setUp()
         self.assertFalse(MockSerialCommunicator.expected_commands)
+
+    def tearDown(self):
+        super().tearDown()
+
+        # restore modules to keep the environment clean
+        time.sleep = self.sleep
+        fast.SerialCommunicator = self.communicator
 
     def test_pulse(self):
         MockSerialCommunicator.expected_commands = {
@@ -83,3 +93,19 @@ class TestFast(MpfTestCase):
         }
         self.machine.autofires.ac_slingshot_test.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
+
+    def test_servo(self):
+        # go to min position
+        MockSerialCommunicator.expected_commands = {
+                "XO:3,00" : False
+        }
+        self.machine.servos.servo1.go_to_position(0)
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+        # go to max position
+        MockSerialCommunicator.expected_commands = {
+                "XO:3,FF" : False
+        }
+        self.machine.servos.servo1.go_to_position(1)
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+

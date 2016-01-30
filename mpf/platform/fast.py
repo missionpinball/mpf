@@ -775,6 +775,22 @@ class HardwarePlatform(Platform):
 
             self.net_connection.send(cmd)
 
+    def servo_go_to_position(self, number, position):
+        """Sets a servo position. """
+
+        if number < 0:
+            raise AssertionError("invalid number")
+
+        if position < 0 or position > 1:
+            raise AssertionError("Position has to be between 0 and 1")
+
+        # convert from [0,1] to [0, 255]
+        position_numeric = int(position * 255)
+
+        # build command and send it
+        cmd = 'XO:' + str(number) + ',' + Util.int_to_hex_string(position_numeric)
+        self.net_connection.send(cmd)
+
 
 class FASTSwitch(object):
 
