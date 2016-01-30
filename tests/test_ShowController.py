@@ -53,9 +53,14 @@ class TestShowController(MpfTestCase):
         # GI should start out enabled/on (brightness is 255)
         self.assertEqual(255, self.machine.gi.gi_01.hw_driver.current_brightness)
 
-        # Advance the clock enough to ensure the shows have time to load
-        self.advance_time_and_run(2)
-        time.sleep(2)
+        # Make sure all required shows are loaded
+        start_time = time.time()
+        while not self.machine.shows['test_show1'].loaded and \
+                not self.machine.shows['test_show2'].loaded and \
+                not self.machine.shows['test_show3'].loaded and \
+                time.time() < start_time + 100000:
+            self.advance_time(0.001)
+
         self.assertTrue(self.machine.shows['test_show1'].loaded)
         self.assertEqual(self.machine.shows['test_show1'].total_steps, 6)
 
@@ -226,4 +231,5 @@ class TestShowController(MpfTestCase):
 
     # TODO: Test device tags
     # TODO: Add test for multiple shows running at once with different priorities
+    # TODO: Test show playback rate
 

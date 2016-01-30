@@ -17,11 +17,9 @@ matrix_lights:
     light_01:
         number: 0
         label: Test 0
-        debug: yes
     light_02:
         number: 1
         label: Test 1
-        debug: yes
 
 gis:
     gi_01:
