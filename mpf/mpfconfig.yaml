@@ -47,7 +47,6 @@ mpf:
         ball_save.BallSave
         driver_enabled.DriverEnabled
         accelerometer.Accelerometer
-        servo_controller.ServoController
         servo.Servo
 
     plugins:
