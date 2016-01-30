@@ -21,7 +21,7 @@ class TestDeviceDriver(MpfTestCase):
         # Setup platform function mock to test coil
         self.machine.coils.coil_01.hw_driver.disable = MagicMock()
         self.machine.coils.coil_01.hw_driver.enable = MagicMock()
-        self.machine.coils.coil_01.hw_driver.pulse = MagicMock()
+        self.machine.coils.coil_01.hw_driver.pulse = MagicMock(return_value=45)
 
         self.machine.coils.coil_01.enable()
         self.machine.coils.coil_01.hw_driver.enable.assert_called_with()
