@@ -442,6 +442,9 @@ class Asset(object):
     def load(self, callback=None):
         self.asset_manager.load_asset(self, callback)
 
+    def __lt__(self, other):
+        return self.file_name < other.file_name
+
     def do_load(self, callback):
         pass
 
