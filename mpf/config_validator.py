@@ -591,8 +591,8 @@ widgets:
     text:
         text: single|str|
         color: single|str|ffffffff
-        font_size: single|num|None
-  #      font_name:
+        font_size: single|num|15
+        font_name: ignore
         bold: single|bool|False
         italic: single|bool|False
         halign: single|str|center
@@ -601,6 +601,9 @@ widgets:
         anchor_y: single|str|None
         padding_x: single|int|0
         padding_y: single|int|0
+        number_grouping: single|bool|True
+        min_digits: single|int|1
+
   #      text_size:
   #      shorten:
   #      mipmap:
@@ -611,6 +614,30 @@ widgets:
   #      shorten_from:
   #      split_str:
   #      unicode_errors:
+
+    # text_styles:
+    #     font_name:
+    #     font_size:
+    #     bold:
+    #     italtic:
+    #     halign:
+    #     valign:
+    #     padding_x:
+    #     padding_y:
+    #     text_size:
+    #     shorten:
+    #     mipmap:
+    #     markup:
+    #     line_height:
+    #     max_lines:
+    #     strip:
+    #     shorten_from:
+    #     split_str
+    #     unicode_errors:
+
+
+
+
     image:
         allow_stretch: single|bool|False
         anim_delay: single|float|.25
