@@ -841,6 +841,19 @@ class FASTDriver(DriverPlatformInterface):
         self.driver_settings.update(self.merge_driver_settings(**config))
 
         self.log.debug("Driver Settings: %s", self.driver_settings)
+        self.reset()
+
+    def reset(self):
+        """
+
+        Resets a driver
+
+        """
+        self.log.debug("Reseting driver %s", self.driver_settings)
+        cmd = (self.driver_settings['config_cmd'] +
+               self.driver_settings['number'] +
+               ',00,00,00')
+        self.send(cmd)
 
     def create_driver_settings(self, machine, pulse_ms=None, **kwargs):
         return_dict = dict()
