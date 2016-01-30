@@ -34,7 +34,7 @@ class ServoController(Device):
         time.sleep(.01)
 
     def go_to_position(self, number, position):
-        if number < 0 or number > 7:
+        if number < 0 or number > 15:
             raise AssertionError("invalid number")
 
         if position < 0 or position > 1:

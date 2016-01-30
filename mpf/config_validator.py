@@ -289,6 +289,7 @@ hardware:
     driverboards: single|str|
     servo_controllers: single|str|
     accelerometers: single|str|
+    i2c: single|str|
 high_score:
     award_slide_display_time: single|ms|4s
     categories: list|str:list|
@@ -412,6 +413,7 @@ score_reel_groups:
     debug: single|bool|False
     lights_tag: single|str|None
 servo_controllers:
+    platform: single|str|None
     address: single|int|64
     servo_min: single|int|150
     servo_max: single|int|600
@@ -425,11 +427,11 @@ servos:
     servo_max: single|float|1.0
     reset_position: single|float|0.5
     reset_events: dict|str:ms|ball_starting
-    controller: single|self.machine.servo_controllers[%]|
     debug: single|bool|False
     tags: list|str|None
     label: single|str|%
     number: single|int|
+    platform: single|str|None
 shots:
     profile: single|str|None
     switch: list|self.machine.switches[%]|None

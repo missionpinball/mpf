@@ -66,7 +66,7 @@ mpf:
         snux: mpf.platform.snux.Snux
         virtual: mpf.platform.virtual.HardwarePlatform
         smart_virtual: mpf.platform.smart_virtual.HardwarePlatform
-
+        i2c_servo_controller: mpf.platform.i2c_servo_controller.HardwarePlatform
 
     paths:
         scriptlets: scriptlets
@@ -343,3 +343,4 @@ hardware:
   driverboards: virtual
   accelerometers: default
   servo_controllers: default
+  i2c: default
