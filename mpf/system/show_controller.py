@@ -35,7 +35,7 @@ class ShowController(object):
         self.flasher_queue = set()
         self.trigger_queue = []
 
-        self.registered_show_scripts = CaseInsensitiveDict()
+        self.registered_light_scripts = CaseInsensitiveDict()
 
         self.light_update_list = []
         self.led_update_list = []
@@ -89,8 +89,8 @@ class ShowController(object):
                                                            'show_player')
 
         # Create scripts from config
-        self.machine.mode_controller.register_start_method(self.process_show_scripts,
-                                                           'show_scripts')
+        self.machine.mode_controller.register_start_method(self.process_light_scripts,
+                                                           'light_scripts')
 
         # Create the show AssetManager
         self.asset_manager = AssetManager(
@@ -105,8 +105,8 @@ class ShowController(object):
     def _initialize(self):
         # Sets up everything that has to be instantiated first
 
-        if 'show_scripts' in self.machine.config:
-            self.process_show_scripts(self.machine.config['show_scripts'])
+        if 'light_scripts' in self.machine.config:
+            self.process_light_scripts(self.machine.config['light_scripts'])
 
         if 'show_player' in self.machine.config:
             self.process_show_player(self.machine.config['show_player'])
@@ -147,7 +147,7 @@ class ShowController(object):
                 self.machine.shows[show].stop(**kwargs)
 
         if key:
-            self.stop_script(key, **kwargs)
+            self.stop_light_script(key, **kwargs)
 
     def stop_shows_by_key(self, key):
         try:
@@ -159,11 +159,11 @@ class ShowController(object):
         for key in keys:
             self.stop_shows_by_key(key)
 
-    def process_show_scripts(self, config, mode=None, priority=0):
-        # config here is localized to show_scripts:
+    def process_light_scripts(self, config, mode=None, priority=0):
+        # config here is localized to light_scripts:
 
         for k, v in config.items():
-            self.registered_show_scripts[k] = v
+            self.registered_light_scripts[k] = v
 
     def process_show_player(self, config, mode=None, priority=0):
         # config is localized to 'show_player'
@@ -184,7 +184,7 @@ class ShowController(object):
 
                 if 'script' in this_action:
                     this_action['show'] = self.create_show_from_script(
-                        script=self.registered_show_scripts[this_action['script']],
+                        script=self.registered_light_scripts[this_action['script']],
                         lights=this_action.get('lights', None),
                         leds=this_action.get('leds', None),
                         light_tags=this_action.get('light_tags', None),
@@ -244,36 +244,36 @@ class ShowController(object):
             this_step = dict()
             this_step['tocks'] = step['tocks']
 
-            if lights:
+            if lights and 'brightness' in this_step:
                 this_step['lights'] = dict()
 
                 for light in Util.string_to_list(lights):
-                    this_step['lights'][light] = step['color']
+                    this_step['lights'][light] = step['brightness']
 
-            if leds:
-                this_step['leds'] = dict()
-
-                for led in Util.string_to_list(leds):
-                    this_step['leds'][led] = step['color']
-
-            if light_tags:
+            if light_tags and 'brightness' in this_step:
                 if 'lights' not in this_step:
                     this_step['lights'] = dict()
 
                 for tag in Util.string_to_lowercase_list(light_tags):
-                    this_step['lights']['tag|' + tag] = step['color']
+                    this_step['lights']['tag|' + tag] = step['brightness']
 
-            if led_tags:
+            if leds and 'color' in this_step:
+                this_step['leds'] = dict()
+
+                for led in Util.string_to_list(leds):
+                    this_step['leds'][led] = RGBColor(step['color'])
+
+            if led_tags and 'color' in this_step:
                 if 'leds' not in this_step:
                     this_step['leds'] = dict()
 
                 for tag in Util.string_to_lowercase_list(led_tags):
-                    this_step['leds']['tag|' + tag] = RGBColor(RGBColor.string_to_rgb(step['color']))
+                    this_step['leds']['tag|' + tag] = RGBColor(step['color'])
 
             action_list.append(this_step)
 
         return Show(machine=self.machine, config=None, file_name=None,
-                    asset_manager=self.asset_manager, actions=action_list)
+                    asset_manager=self.asset_manager, steps=action_list)
 
     def unload_show_player_shows(self, removal_tuple):
         event_keys, shows = removal_tuple
@@ -300,7 +300,7 @@ class ShowController(object):
 
                 if 'key' in settings:
                     event_key = self.machine.events.add_handler(event,
-                                                                self.stop_script,
+                                                                self.stop_light_script,
                                                                 **settings)
 
                 else:
@@ -610,13 +610,13 @@ class ShowController(object):
 
         self.led_update_list = []
 
-    def run_registered_script(self, script_name, **kwargs):
+    def run_registered_light_script(self, script_name, **kwargs):
 
-        return self.run_script(
-            script=self.registered_show_scripts[script_name], **kwargs)
+        return self.run_light_script(
+            script=self.registered_light_scripts[script_name], **kwargs)
 
-    def run_script(self, script, lights=None, leds=None, loops=-1,
-                   callback=None, key=None, **kwargs):
+    def run_light_script(self, script, lights=None, leds=None, loops=-1,
+                         callback=None, key=None, **kwargs):
         """Runs a light script.
 
         Args:
@@ -631,7 +631,7 @@ class ShowController(object):
                 either be the first light name or the first LED name.
             **kwargs: Since this method just builds a Light Show, you can use
                 any other Light Show attribute here as well, such as
-                tocks_per_sec, blend, repeat, loops, etc.
+                playback_rate, blend, repeat, loops, etc.
 
         Returns:
             :class:`Show` object. Since running a script just sets up and
@@ -640,27 +640,28 @@ class ShowController(object):
             know exactly which Show was created by this script so you can
             stop it later. (See the examples below for usage.)
 
-        Scripts are similar to Shows, except they only apply to single lights
-        and you can "attach" any script to any light. Scripts are used anytime
-        you want an light to have more than one action. A simple example would
-        be a flash an light. You would make a script that turned it on (with
-        your color), then off, repeating forever.
+        Light scripts are similar to Shows, except they only apply to single
+        lights and you can "attach" any script to any light. Scripts are used
+        anytime you want an light to have more than one action. A simple example
+        would be a flash an light. You would make a script that turned it on
+        (with your color), then off, repeating forever.
 
         Scripts could be more complex, like cycling through multiple colors,
         blinking out secret messages in Morse code, etc.
 
-        Interally we actually just take a script and dynamically convert it
-        into a Show (that just happens to only be for a single light), so
+        Interally we actually just take a light script and dynamically convert
+        it into a Show (that just happens to only be for a single light), so
         we can have all the other Show-like features, including playback
         speed, repeats, blends, callbacks, etc.
 
-        The script is a list of dictionaries, with each list item being a
+        The light script is a list of dictionaries, with each list item being a
         sequential instruction, and the dictionary defining what you want to
         do at that step. Dictionary items for each step are:
 
-            color: The hex color for the light
+            color: The hex color for the led (ex: 00CC24)
+            brightness: The hex brightness value for the light (ex: FF)
             time: How long (in ms) you want the light to be at that color
-            fade: True/False. Whether you want that light to fade to the color
+            fade_ms: True/False. Whether you want that light to fade to the color
                 (using the *time* above), or whether you want it to switch to
                 that color instantly.
 
@@ -670,8 +671,8 @@ class ShowController(object):
         and off:
 
             self.flash_red = []
-            self.flash_red.append({"color": 'ff0000', 'tocks': 1})
-            self.flash_red.append({"color": '000000', 'tocks': 1})
+            self.flash_red.append({"color": 'ff0000', 'time': 1})
+            self.flash_red.append({"color": '000000', 'time': 1})
             self.machine.show_controller.run_script(script=self.flash_red,
                                                     lights='light1',
                                                     priority=4,
@@ -693,28 +694,28 @@ class ShowController(object):
         which smoothly cycles an RGB light through all colors of the rainbow:
 
             self.rainbow = []
-            self.rainbow.append({'color': 'ff0000', 'tocks': 1, 'fade': True})
-            self.rainbow.append({'color': 'ff7700', 'tocks': 1, 'fade': True})
-            self.rainbow.append({'color': 'ffcc00', 'tocks': 1, 'fade': True})
-            self.rainbow.append({'color': '00ff00', 'tocks': 1, 'fade': True})
-            self.rainbow.append({'color': '0000ff', 'tocks': 1, 'fade': True})
-            self.rainbow.append({'color': 'ff00ff', 'tocks': 1, 'fade': True})
+            self.rainbow.append({'color': 'ff0000', 'time': 1, 'fade': True})
+            self.rainbow.append({'color': 'ff7700', 'time': 1, 'fade': True})
+            self.rainbow.append({'color': 'ffcc00', 'time': 1, 'fade': True})
+            self.rainbow.append({'color': '00ff00', 'time': 1, 'fade': True})
+            self.rainbow.append({'color': '0000ff', 'time': 1, 'fade': True})
+            self.rainbow.append({'color': 'ff00ff', 'time': 1, 'fade': True})
 
-        If you have single color lights, your *color* entries in your script
+        If you have single color lights, your *brightness* entries in your script
         would only contain a single hex value for the intensity of that light.
         For example, a script to flash a single-color light on-and-off (which
         you can apply to any light):
 
             self.flash = []
-            self.flash.append({"color": "ff", "tocks": 1})
-            self.flash.append({"color": "00", "tocks": 1})
+            self.flash.append({"brightness": "ff", "time": 1})
+            self.flash.append({"brightness": "00", "time": 1})
 
         If you'd like to save a reference to the :class:`Show` that's
         created by this script, call it like this:
 
             self.blah = self.machine.show_controller.run_script("light2",
                                                         self.flash_red, "4",
-                                                        tocks_per_sec=2)
+                                                        playback_rate=2)
          """
 
         # convert the steps from the script list that was passed into the
@@ -766,11 +767,11 @@ class ShowController(object):
 
         return show
 
-    def stop_script(self, key, **kwargs):
+    def stop_light_script(self, key, **kwargs):
         """Stops and removes the light show that was created by a light script.
 
         Args:
-            key: The key that was specified in run_script().
+            key: The key that was specified in run_light_script().
             **kwargs: Not used, included in case this method is called via an
                 event handler that might contain other random paramters.
 

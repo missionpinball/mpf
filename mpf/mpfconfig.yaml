@@ -302,15 +302,20 @@ shot_profiles:
 
 light_scripts:
     flash:
-        - tocks: 1
-          color: ff
-        - tocks: 1
-          color: 0
+        - time: 0
+          brightness: ff
+          color: ffffff
+        - time: 1
+          brightness: 0
+          color: 000000
+        - time: 2
     "on":
-        - tocks: 1
-          color: ff
+        - time: 0
+          brightness: ff
+          color: ffffff
     "off":
-        - tocks: 1
+        - time: 0
+          brightness: 0
           color: 0
 
 playfields:
