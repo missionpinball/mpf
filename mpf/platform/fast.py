@@ -967,13 +967,12 @@ class FASTDriver(DriverPlatformInterface):
 
             if (self.driver_settings['pwm1'] == 'ff' and
                     self.driver_settings['pwm2'] == 'ff' and
-                    not ('allow_enable' in self.driver_settings or not
+                    not ('allow_enable' in self.driver_settings and
                     self.driver_settings['allow_enable'])):
 
-                self.log.warning("Received a command to enable this coil "
+                raise AssertionError("Received a command to enable this coil "
                                  "without pwm, but 'allow_enable' has not been"
                                  "set to True in this coil's configuration.")
-                return
 
             else:
 

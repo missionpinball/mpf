@@ -72,10 +72,6 @@ class TestFast(MpfTestCase):
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
     def test_enable_exception(self):
-        return
-        # this should throw an error but it does not.
-        # TODO: why?
-
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError) as cm:
             self.machine.coils.c_test.enable()
