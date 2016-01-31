@@ -1373,7 +1373,7 @@ class BallDevice(Device):
                     self._incoming_balls[0][1].config['eject_timeouts'][self]
 
                 if timeout == timeout_combined:
-                    timeout_combined += 1
+                    timeout_combined += 500
 
                 self.delay.add(name='count_confirmation',
                                ms=timeout_combined,
