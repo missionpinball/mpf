@@ -1,6 +1,6 @@
 """Contains the Tilt mode code"""
 
-from mpf.system.config import CaseInsensitiveDict
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.mode import Mode
 from mpf.system.timing import Timing
 import time

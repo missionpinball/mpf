@@ -11,40 +11,16 @@ from mpf.file_interfaces.yaml_interface import MpfLoader, YamlInterface
 from mpf.system.file_manager import FileManager
 from mpf.system.timing import Timing
 from mpf.system.utility_functions import Util
+import mpf.system.rgb_color
+from mpf.system.rgb_color import RGBColor
 import version
+
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 
 log = logging.getLogger('ConfigProcessor')
 
 
-class CaseInsensitiveDict(dict):
-    """A class based on Python's 'dict' class that internally stores all keys
-    as lowercase. Set, get, contains, and del methods have been overwritten to
-    automatically convert incoming calls to lowercase.
-    """
 
-    def __setitem__(self, key, value):
-        try:
-            super().__setitem__(key.lower(), value)
-        except AttributeError:
-            super().__setitem__(key, value)
-
-    def __getitem__(self, key):
-        try:
-            return super().__getitem__(key.lower())
-        except AttributeError:
-            return super().__getitem__(key)
-
-    def __contains__(self, key):
-        try:
-            return super().__contains__(key.lower())
-        except AttributeError:
-            return super().__contains__(key)
-
-    def __delitem__(self, key):
-        try:
-            return super().__delitem__(key.lower())
-        except AttributeError:
-            return super().__delitem__(key)
 
 
 class Config(object):
@@ -234,7 +210,8 @@ class Config(object):
             return Util.list_of_lists(item)
 
     def process_config2(self, config_spec, source, section_name=None,
-                        target=None, result_type='dict', base_spec=None):
+                        target=None, result_type='dict', base_spec=None,
+                        add_missing_keys=True):
         # config_spec, str i.e. "device:shot"
         # source is dict
         # section_name is str used for logging failures
@@ -303,7 +280,7 @@ class Config(object):
                             validation_failure_info=(
                             validation_failure_info, k))
 
-            else:  # create the default entry
+            elif add_missing_keys:  # create the default entry
 
                 if type(this_spec[k]) is dict:
                     processed_config[k] = list()
@@ -526,6 +503,12 @@ class Config(object):
         elif validator == 'dict':
             return item
 
+        elif validator == 'color':
+            # we call color_from_string() here because MPF and the MPF_MC each
+            # need different color formats internally, so this way they can
+            # each implement their own methods.
+            return self.color_from_string(item)
+
         else:
             self.log.error("Invalid Validator '%s' in config spec %s:%s",
                            validator,
@@ -575,3 +558,21 @@ class Config(object):
 
         if setting in config_file['custom_messages']:
             self.log.info(config_file['custom_messages'][setting])
+
+    def color_from_string(self, color_string):
+
+        color_string = str(color_string).lower()
+
+        if color_string in mpf.system.rgb_color.named_rgb_colors:
+            return mpf.system.rgb_color.named_rgb_colors[color_string]
+        elif Util.is_hex_string(color_string):
+            return RGBColor.hex_to_rgb(color_string)
+
+        else:
+            color = Util.string_to_list(color_string)
+
+            try:
+                return (int(color[0]), int(color[1]), int(color[2]))
+
+            except KeyError:
+                raise

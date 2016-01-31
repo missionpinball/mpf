@@ -2,9 +2,12 @@
 
 from copy import deepcopy
 from collections import OrderedDict
+import re
 
 
 class Util(object):
+
+    hex_matcher = re.compile("(?:[a-fA-F0-9]{6,8})")
 
     @staticmethod
     def keys_to_lower(source_dict):
@@ -424,3 +427,7 @@ class Util(object):
     def bin_str_to_hex_str(source_int_str, num_chars):
         return Util.normalize_hex_string('%0X' % int(source_int_str, 2),
                                            num_chars)
+
+    @staticmethod
+    def is_hex_string(string):
+        return Util.hex_matcher.fullmatch(str(string)) is not None

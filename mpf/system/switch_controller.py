@@ -7,7 +7,7 @@ import logging
 from collections import defaultdict
 import time
 
-from mpf.system.config import CaseInsensitiveDict
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.timing import Timing
 from mpf.system.utility_functions import Util
 

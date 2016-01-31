@@ -8,7 +8,7 @@ from queue import PriorityQueue
 import sys
 import traceback
 
-from mpf.system.config import CaseInsensitiveDict
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 
 
 class AssetLoader(threading.Thread):

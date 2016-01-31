@@ -10,7 +10,8 @@ import queue
 import errno
 
 from mpf.system import *
-from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.config import Config
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.device_manager import DeviceCollection
 from mpf.system.tasks import Task, DelayManager, DelayManagerRegistry
 from mpf.system.data_manager import DataManager

@@ -300,7 +300,7 @@ leds:
     number: single|str|
     number_str: single|str|
     polarity: single|bool|False
-    default_color: single|str|ffffff
+    default_color: single|color|ffffff
     color_correction_profile: single|str|None
     fade_ms: single|int|None
     tags: list|str|None
@@ -512,6 +512,26 @@ switches:
 system11:
     ac_relay_delay_ms: single|int|75
     ac_relay_driver_number: single|str|
+text_styles:
+    font_name: single|str|None
+    font_size: single|num|None
+    bold: single|bool|None
+    italtic: single|bool|None
+    halign: single|str|None
+    valign: single|str|None
+    padding_x: single|num|None
+    padding_y: single|num|None
+    # text_size: single||None
+    shorten: single|bool|None
+    mipmap: single|bool|None
+    markup: single|bool|None
+    line_height: single|float|None
+    max_lines: single|int|None
+    strip: single|bool|None
+    shorten_from: single|str|None
+    split_str: single|str|None
+    unicode_errors: single|str|None
+    color: single|color|ffffffff
 tilt:
     tilt_slam_tilt_events: list|str|None
     tilt_warning_events: list|str|None
@@ -590,7 +610,7 @@ widgets:
 
     text:
         text: single|str|
-        color: single|str|ffffffff
+        color: single|color|ffffffff
         font_size: single|num|15
         font_name: ignore
         bold: single|bool|False
@@ -603,6 +623,7 @@ widgets:
         padding_y: single|int|0
         number_grouping: single|bool|True
         min_digits: single|int|1
+        style: single|str|None
 
   #      text_size:
   #      shorten:
@@ -615,34 +636,11 @@ widgets:
   #      split_str:
   #      unicode_errors:
 
-    # text_styles:
-    #     font_name:
-    #     font_size:
-    #     bold:
-    #     italtic:
-    #     halign:
-    #     valign:
-    #     padding_x:
-    #     padding_y:
-    #     text_size:
-    #     shorten:
-    #     mipmap:
-    #     markup:
-    #     line_height:
-    #     max_lines:
-    #     strip:
-    #     shorten_from:
-    #     split_str
-    #     unicode_errors:
-
-
-
-
     image:
         allow_stretch: single|bool|False
         anim_delay: single|float|.25
         anim_loop: single|int|0
-        color: single|str|ffffffff
+        color: single|color|ffffffff
         keep_ratio: single|bool|False
         image: single|str|
         height: single|int|0

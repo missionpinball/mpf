@@ -192,3 +192,11 @@ class TestUtil(MpfTestCase):
     def test_bin_str_to_hex_str(self):
         result = Util.bin_str_to_hex_str('1111', 2)
         self.assertEqual(result, '0F')
+
+    def test_is_hex_string(self):
+        self.assertTrue(Util.is_hex_string('ff1234'))
+        self.assertTrue(Util.is_hex_string('123456'))
+        self.assertTrue(Util.is_hex_string('aabb00'))
+        self.assertFalse(Util.is_hex_string('ffaagg'))
+        self.assertFalse(Util.is_hex_string('hello'))
+        self.assertFalse(Util.is_hex_string([1, 2, 3]))

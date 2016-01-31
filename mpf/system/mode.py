@@ -3,7 +3,7 @@
 import copy
 import logging
 
-from mpf.system.config import CaseInsensitiveDict
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.timing import Timing, Timer
 from mpf.system.tasks import DelayManager
 

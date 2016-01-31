@@ -1,6 +1,8 @@
 import random
 import re
 
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
+from mpf.system.utility_functions import Util
 
 channel_min_val = 0
 channel_max_val = 255
@@ -8,156 +10,158 @@ rgb_min = (0, 0, 0)
 rgb_max = (255, 255, 255)
 
 # Standard web color names and values
-named_rgb_colors = {
-    'Off': (0, 0, 0),
-    'AliceBlue': (240, 248, 255),
-    'AntiqueWhite': (250, 235, 215),
-    'Aquamarine': (127, 255, 212),
-    'Azure': (240, 255, 255),
-    'Beige': (245, 245, 220),
-    'Bisque': (255, 228, 196),
-    'Black': (0, 0, 0),
-    'BlanchedAlmond': (255, 235, 205),
-    'Blue': (0, 0, 255),
-    'BlueViolet': (138, 43, 226),
-    'Brown': (165, 42, 42),
-    'BurlyWood': (222, 184, 135),
-    'CadetBlue': (95, 158, 160),
-    'Chartreuse': (127, 255, 0),
-    'Chocolate': (210, 105, 30),
-    'Coral': (255, 127, 80),
-    'CornflowerBlue': (100, 149, 237),
-    'Cornsilk': (255, 248, 220),
-    'Crimson': (220, 20, 60),
-    'Cyan': (0, 255, 255),
-    'DarkBlue': (0, 0, 139),
-    'DarkCyan': (0, 139, 139),
-    'DarkGoldenrod': (184, 134, 11),
-    'DarkGray': (169, 169, 169),
-    'DarkGreen': (0, 100, 0),
-    'DarkKhaki': (189, 183, 107),
-    'DarkMagenta': (139, 0, 139),
-    'DarkOliveGreen': (85, 107, 47),
-    'DarkOrange': (255, 140, 0),
-    'DarkOrchid': (153, 50, 204),
-    'DarkRed': (139, 0, 0),
-    'DarkSalmon': (233, 150, 122),
-    'DarkSeaGreen': (143, 188, 143),
-    'DarkSlateBlue': (72, 61, 139),
-    'DarkSlateGray': (47, 79, 79),
-    'DarkTurquoise': (0, 206, 209),
-    'DarkViolet': (148, 0, 211),
-    'DeepPink': (255, 20, 147),
-    'DeepSkyBlue': (0, 191, 255),
-    'DimGray': (105, 105, 105),
-    'DodgerBlue': (30, 144, 255),
-    'FireBrick': (178, 34, 34),
-    'FloralWhite': (255, 250, 240),
-    'ForestGreen': (34, 139, 34),
-    'Gainsboro': (220, 220, 220),
-    'GhostWhite': (248, 248, 255),
-    'Gold': (255, 215, 0),
-    'Goldenrod': (218, 165, 32),
-    'Gray': (128, 128, 128),
-    'Green': (0, 128, 0),
-    'GreenYellow': (173, 255, 47),
-    'Honeydew': (240, 255, 240),
-    'HotPink': (255, 105, 180),
-    'IndianRed': (205, 92, 92),
-    'Indigo': (75, 0, 130),
-    'Ivory': (255, 255, 240),
-    'Khaki': (240, 230, 140),
-    'Lavender': (230, 230, 250),
-    'LavenderBlush': (255, 240, 245),
-    'LawnGreen': (124, 252, 0),
-    'LemonChiffon': (255, 250, 205),
-    'LightBlue': (173, 216, 230),
-    'LightCoral': (240, 128, 128),
-    'LightCyan': (224, 255, 255),
-    'LightGoldenrodYellow': (250, 250, 210),
-    'LightGreen': (144, 238, 144),
-    'LightGrey': (211, 211, 211),
-    'LightPink': (255, 182, 193),
-    'LightSalmon': (255, 160, 122),
-    'LightSeaGreen': (32, 178, 170),
-    'LightSkyBlue': (135, 206, 250),
-    'LightSlateGray': (119, 136, 153),
-    'LightSteelBlue': (176, 196, 222),
-    'LightYellow': (255, 255, 224),
-    'Lime': (0, 255, 0),
-    'LimeGreen': (50, 205, 50),
-    'Linen': (250, 240, 230),
-    'Magenta': (255, 0, 255),
-    'Maroon': (128, 0, 0),
-    'MediumAquamarine': (102, 205, 170),
-    'MediumBlue': (0, 0, 205),
-    'MediumOrchid': (186, 85, 211),
-    'MediumPurple': (147, 112, 219),
-    'MediumSeaGreen': (60, 179, 113),
-    'MediumSlateBlue': (123, 104, 238),
-    'MediumSpringGreen': (0, 250, 154),
-    'MediumTurquoise': (72, 209, 204),
-    'MediumVioletRed': (199, 21, 133),
-    'MidnightBlue': (25, 25, 112),
-    'MintCream': (245, 255, 250),
-    'MistyRose': (255, 228, 225),
-    'Moccasin': (255, 228, 181),
-    'NavajoWhite': (255, 222, 173),
-    'Navy': (0, 0, 128),
-    'OldLace': (253, 245, 230),
-    'Olive': (128, 128, 0),
-    'OliveDrab': (107, 142, 35),
-    'Orange': (255, 165, 0),
-    'OrangeRed': (255, 69, 0),
-    'Orchid': (218, 112, 214),
-    'PaleGoldenrod': (238, 232, 170),
-    'PaleGreen': (152, 251, 152),
-    'PaleTurquoise': (175, 238, 238),
-    'PaleVioletRed': (219, 112, 147),
-    'PapayaWhip': (255, 239, 213),
-    'PeachPuff': (255, 218, 185),
-    'Peru': (205, 133, 63),
-    'Pink': (255, 192, 203),
-    'Plum': (221, 160, 221),
-    'PowderBlue': (176, 224, 230),
-    'Purple': (128, 0, 128),
-    'RebeccaPurple': (102, 51, 153),
-    'Red': (255, 0, 0),
-    'RosyBrown': (188, 143, 143),
-    'RoyalBlue': (65, 105, 225),
-    'SaddleBrown': (139, 69, 19),
-    'Salmon': (250, 128, 114),
-    'SandyBrown': (244, 164, 96),
-    'SeaGreen': (46, 139, 87),
-    'Seashell': (255, 245, 238),
-    'Sienna': (160, 82, 45),
-    'Silver': (192, 192, 192),
-    'SkyBlue': (135, 206, 235),
-    'SlateBlue': (106, 90, 205),
-    'SlateGray': (112, 128, 144),
-    'Snow': (255, 250, 250),
-    'SpringGreen': (0, 255, 127),
-    'SteelBlue': (70, 130, 180),
-    'Tan': (210, 180, 140),
-    'Teal': (0, 128, 128),
-    'Thistle': (216, 191, 216),
-    'Tomato': (255, 99, 71),
-    'Turquoise': (64, 224, 208),
-    'Violet': (238, 130, 238),
-    'Wheat': (245, 222, 179),
-    'White': (255, 255, 255),
-    'WhiteSmoke': (245, 245, 245),
-    'Yellow': (255, 255, 0),
-    'YellowGreen': (154, 205, 50),
-}
+named_rgb_colors = CaseInsensitiveDict(
+    off=(0, 0, 0),
+    aliceblue=(240, 248, 255),
+    antiquewhite=(250, 235, 215),
+    aquamarine=(127, 255, 212),
+    azure=(240, 255, 255),
+    beige=(245, 245, 220),
+    bisque=(255, 228, 196),
+    black=(0, 0, 0),
+    blanchedalmond=(255, 235, 205),
+    blue=(0, 0, 255),
+    blueviolet=(138, 43, 226),
+    brown=(165, 42, 42),
+    burlywood=(222, 184, 135),
+    cadetblue=(95, 158, 160),
+    chartreuse=(127, 255, 0),
+    chocolate=(210, 105, 30),
+    coral=(255, 127, 80),
+    cornflowerblue=(100, 149, 237),
+    cornsilk=(255, 248, 220),
+    crimson=(220, 20, 60),
+    cyan=(0, 255, 255),
+    darkblue=(0, 0, 139),
+    darkcyan=(0, 139, 139),
+    darkgoldenrod=(184, 134, 11),
+    darkgray=(169, 169, 169),
+    darkgreen=(0, 100, 0),
+    darkkhaki=(189, 183, 107),
+    darkmagenta=(139, 0, 139),
+    darkolivegreen=(85, 107, 47),
+    darkorange=(255, 140, 0),
+    darkorchid=(153, 50, 204),
+    darkred=(139, 0, 0),
+    darksalmon=(233, 150, 122),
+    darkseagreen=(143, 188, 143),
+    darkslateblue=(72, 61, 139),
+    darkslategray=(47, 79, 79),
+    darkturquoise=(0, 206, 209),
+    darkviolet=(148, 0, 211),
+    deeppink=(255, 20, 147),
+    deepskyblue=(0, 191, 255),
+    dimgray=(105, 105, 105),
+    dodgerblue=(30, 144, 255),
+    firebrick=(178, 34, 34),
+    floralwhite=(255, 250, 240),
+    forestgreen=(34, 139, 34),
+    gainsboro=(220, 220, 220),
+    ghostwhite=(248, 248, 255),
+    gold=(255, 215, 0),
+    goldenrod=(218, 165, 32),
+    gray=(128, 128, 128),
+    green=(0, 128, 0),
+    greenyellow=(173, 255, 47),
+    honeydew=(240, 255, 240),
+    hotpink=(255, 105, 180),
+    indianred=(205, 92, 92),
+    indigo=(75, 0, 130),
+    ivory=(255, 255, 240),
+    khaki=(240, 230, 140),
+    lavender=(230, 230, 250),
+    lavenderblush=(255, 240, 245),
+    lawngreen=(124, 252, 0),
+    lemonchiffon=(255, 250, 205),
+    lightblue=(173, 216, 230),
+    lightcoral=(240, 128, 128),
+    lightcyan=(224, 255, 255),
+    lightgoldenrodyellow=(250, 250, 210),
+    lightgreen=(144, 238, 144),
+    lightgrey=(211, 211, 211),
+    lightpink=(255, 182, 193),
+    lightsalmon=(255, 160, 122),
+    lightseagreen=(32, 178, 170),
+    lightskyblue=(135, 206, 250),
+    lightslategray=(119, 136, 153),
+    lightsteelblue=(176, 196, 222),
+    lightyellow=(255, 255, 224),
+    lime=(0, 255, 0),
+    limegreen=(50, 205, 50),
+    linen=(250, 240, 230),
+    magenta=(255, 0, 255),
+    maroon=(128, 0, 0),
+    mediumaquamarine=(102, 205, 170),
+    mediumblue=(0, 0, 205),
+    mediumorchid=(186, 85, 211),
+    mediumpurple=(147, 112, 219),
+    mediumseagreen=(60, 179, 113),
+    mediumslateblue=(123, 104, 238),
+    mediumspringgreen=(0, 250, 154),
+    mediumturquoise=(72, 209, 204),
+    mediumvioletred=(199, 21, 133),
+    midnightblue=(25, 25, 112),
+    mintcream=(245, 255, 250),
+    mistyrose=(255, 228, 225),
+    moccasin=(255, 228, 181),
+    navajowhite=(255, 222, 173),
+    navy=(0, 0, 128),
+    oldlace=(253, 245, 230),
+    olive=(128, 128, 0),
+    olivedrab=(107, 142, 35),
+    orange=(255, 165, 0),
+    orangered=(255, 69, 0),
+    orchid=(218, 112, 214),
+    palegoldenrod=(238, 232, 170),
+    palegreen=(152, 251, 152),
+    paleturquoise=(175, 238, 238),
+    palevioletred=(219, 112, 147),
+    papayawhip=(255, 239, 213),
+    peachpuff=(255, 218, 185),
+    peru=(205, 133, 63),
+    pink=(255, 192, 203),
+    plum=(221, 160, 221),
+    powderblue=(176, 224, 230),
+    purple=(128, 0, 128),
+    rebeccapurple=(102, 51, 153),
+    red=(255, 0, 0),
+    rosybrown=(188, 143, 143),
+    royalblue=(65, 105, 225),
+    saddlebrown=(139, 69, 19),
+    salmon=(250, 128, 114),
+    sandybrown=(244, 164, 96),
+    seagreen=(46, 139, 87),
+    seashell=(255, 245, 238),
+    sienna=(160, 82, 45),
+    silver=(192, 192, 192),
+    skyblue=(135, 206, 235),
+    slateblue=(106, 90, 205),
+    slategray=(112, 128, 144),
+    snow=(255, 250, 250),
+    springgreen=(0, 255, 127),
+    steelblue=(70, 130, 180),
+    tan=(210, 180, 140),
+    teal=(0, 128, 128),
+    thistle=(216, 191, 216),
+    tomato=(255, 99, 71),
+    turquoise=(64, 224, 208),
+    violet=(238, 130, 238),
+    wheat=(245, 222, 179),
+    white=(255, 255, 255),
+    whitesmoke=(245, 245, 245),
+    yellow=(255, 255, 0),
+    yellowgreen=(154, 205, 50),
+)
 
 
 class RGBColor(object):
     """
-    The Color module provides utilities for working with RGB colors.  It is based on the colorutils
-    open-source library: https://github.com/edaniszewski/colorutils
+    The Color module provides utilities for working with RGB colors.  It is
+    based on the colorutils open-source library:
+    https://github.com/edaniszewski/colorutils
     Copyright (c) 2015 Erick Daniszewski
     The MIT License (MIT)
+
     """
     def __init__(self, color=None, **kwargs):
         """ Initialization """
@@ -191,9 +195,13 @@ class RGBColor(object):
             r1, g1, b1 = self.rgb
             r2, g2, b2 = other
         else:
-            raise TypeError("Unsupported operand type(s) for +: '{0}' and '{1}'".format(type(self), type(other)))
+            raise TypeError(
+                "Unsupported operand type(s) for +: '{0}' and '{1}'".format(
+                    type(self), type(other)))
 
-        return RGBColor((min(r1 + r2, channel_max_val), min(g1 + g2, channel_max_val), min(b1 + b2, channel_max_val)))
+        return RGBColor((min(r1 + r2, channel_max_val),
+                         min(g1 + g2, channel_max_val),
+                         min(b1 + b2, channel_max_val)))
 
     def __sub__(self, other):
         """ Subtraction of two RGB colors """
@@ -204,9 +212,13 @@ class RGBColor(object):
             r1, g1, b1 = self.rgb
             r2, g2, b2 = other
         else:
-            raise TypeError("Unsupported operand type(s) for -: '{0}' and '{1}'".format(type(self), type(other)))
+            raise TypeError(
+                "Unsupported operand type(s) for -: '{0}' and '{1}'".format(
+                    type(self), type(other)))
 
-        return RGBColor((max(r1 - r2, channel_min_val), max(g1 - g2, channel_min_val), max(b1 - b2, channel_min_val)))
+        return RGBColor((max(r1 - r2, channel_min_val),
+                         max(g1 - g2, channel_min_val),
+                         max(b1 - b2, channel_min_val)))
 
     def __iter__(self):
         """ Iterator """
@@ -270,7 +282,9 @@ class RGBColor(object):
         """ A string containing a standard color name or None if the current
         RGB color does not have a standard name
         """
-        return dict([(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(self._color)
+        return dict(
+                [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
+            self._color)
 
     @name.setter
     def name(self, value):
@@ -288,22 +302,28 @@ class RGBColor(object):
         :rtype: str
         """
         r, g, b = rgb
-        return "{0}{1}{2}".format(hex(int(r))[2:].zfill(2), hex(int(g))[2:].zfill(2), hex(int(b))[2:].zfill(2))
+        return "{0}{1}{2}".format(hex(int(r))[2:].zfill(2),
+                                  hex(int(g))[2:].zfill(2),
+                                  hex(int(b))[2:].zfill(2))
 
     @staticmethod
     def hex_to_rgb(_hex, default=None):
+        """Convert a HEX color representation to an RGB color representation.
+
+        Args:
+            _hex: The 3- or 6-char hexadecimal string representing the color
+                value.
+            default: The default value to return if _hex is invalid.
+
+        Returns: RGB representation of the input HEX value as a 3-item tuple
+            with each item being an integer 0-255.
+
         """
-        Convert a HEX color representation to an RGB color representation.
-        hex :: hex -> [000000, FFFFFF]
-        :param _hex: The 3- or 6-char hexadecimal string representing the color value.
-        :param default: The default value to return if _hex is invalid.
-        :return: RGB representation of the input HEX value.
-        :rtype: tuple
-        """
-        if re.match("((?:[a-fA-F0-9]{3}){1,2})", _hex) is None:
+        if not Util.is_hex_string(_hex):
             return default
 
-        _hex = _hex.strip('#')
+        _hex = str(_hex).strip('#')
+
         n = len(_hex) // 3
         if len(_hex) == 3:
             r = int(_hex[:n] * 2, 16)
@@ -384,7 +404,8 @@ class RGBColor(object):
             raise ColorException("Unable to convert from HSV to RGB")
 
         r, g, b = res
-        return round((r + m)*255, 3), round((g + m)*255, 3), round((b + m)*255, 3)
+        return round((r + m) * 255, 3), round((g + m) * 255, 3), round(
+            (b + m) * 255, 3)
 
     @staticmethod
     def blend(start_color, end_color, fraction):
@@ -393,10 +414,11 @@ class RGBColor(object):
         Args:
             start_color: The start color
             end_color:  The end color
-            fraction: The fraction between 0 and 1 that is used to set the blend point between the
-            two colors.
+            fraction: The fraction between 0 and 1 that is used to set the
+                blend point between the two colors.
 
-        Returns: An RGBColor object that is a blend between the start and end colors
+        Returns: An RGBColor object that is a blend between the start and end
+            colors
 
         """
         if isinstance(start_color, RGBColor):
@@ -405,7 +427,8 @@ class RGBColor(object):
         if isinstance(end_color, RGBColor):
             end_color = end_color.rgb
 
-        output_color = tuple(start_color[i] + int((end_color[i] - start_color[i]) * fraction) for i in range(3))
+        output_color = tuple(start_color[i] + int(
+            (end_color[i] - start_color[i]) * fraction) for i in range(3))
         return RGBColor(output_color)
 
     @staticmethod
@@ -414,7 +437,8 @@ class RGBColor(object):
         Generate a uniformly random RGB value.
         :return: A tuple of three integers with values between 0 and 255 inclusive
         """
-        return random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+        return random.randint(0, 255), random.randint(0, 255), random.randint(
+            0, 255)
 
     @staticmethod
     def name_to_rgb(name, default=rgb_min):
@@ -440,6 +464,7 @@ class RGBColor(object):
         :return: RGB representation of the named color.
         :rtype: tuple
         """
+
         rgb = named_rgb_colors.get(value)
         if rgb is not None:
             return rgb
@@ -452,13 +477,15 @@ class RGBColor(object):
 
 
 class ColorException(Exception):
-    """ General exception thrown for color utilities non-exit exceptions. """
+    """General exception thrown for color utilities non-exit exceptions."""
     pass
 
 
 class RGBColorCorrectionProfile(object):
-    """ Encapsulates a named RGB color correction profile and its associated lookup tables. """
+    """Encapsulates a named RGB color correction profile and its associated
+    lookup tables.
 
+    """
     def __init__(self, name=None):
         """
         Constructor.  Creates a linear correction profile that does not alter color values by default.
@@ -477,17 +504,21 @@ class RGBColorCorrectionProfile(object):
 
     def generate_from_parameters(self, gamma=2.5, whitepoint=(1.0, 1.0, 1.0),
                                  linear_slope=1.0, linear_cutoff=0.0):
-        """
-        Generates an RGB color correction profile lookup table based on the parameters supplied.
+        """Generates an RGB color correction profile lookup table based on the
+        parameters supplied.
+
         Args:
             gamma: Exponent for the nonlinear portion of the brightness curve.
-            whitepoint: Tuple of (red, green, blue) values to multiply by colors prior to gamma correction.
-            linear_slope: Slope (output / input) of the linear section of the brightness curve.
-            linear_cutoff: Y (output) coordinate of intersection between linear and nonlinear curves.
+            whitepoint: Tuple of (red, green, blue) values to multiply by
+                colors prior to gamma correction.
+            linear_slope: Slope (output / input) of the linear section of the
+                brightness curve.
+            linear_cutoff: Y (output) coordinate of intersection between linear
+                and nonlinear curves.
 
         Returns: None
-        """
 
+        """
         # Lookup table generation algorithm from the Fadecandy open source server code:
         # https://github.com/scanlime/fadecandy
         # Copyright (c) 2013 Micah Elizabeth Scott
@@ -503,7 +534,8 @@ class RGBColorCorrectionProfile(object):
                     value = int(linear_slope * value * 255)
                 else:
                     non_linear_input = value - (linear_slope * linear_cutoff)
-                    value = int(linear_cutoff + pow(non_linear_input / scale, gamma) * scale * 255)
+                    value = int(linear_cutoff + pow(non_linear_input / scale,
+                                                    gamma) * scale * 255)
 
                 # Clamp the lookup table value between 0 and 255
                 self._lookup_table[channel][index] = max(0, min(value, 255))
@@ -518,15 +550,15 @@ class RGBColorCorrectionProfile(object):
         return self._name
 
     def apply(self, color):
-        """
-        Applies the current color correction profile to the specified RGBColor object.
+        """Applies the current color correction profile to the specified RGBColor
+        object.
+
         Args:
             color: The RGBColor object which to apply the color correction profile.
 
-        Returns:
-            RGBColor
+        Returns: RGBColor
+
         """
         return RGBColor((self._lookup_table[0][color.red],
                          self._lookup_table[1][color.green],
                          self._lookup_table[2][color.blue]))
-
