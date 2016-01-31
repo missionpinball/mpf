@@ -157,6 +157,7 @@ class MpfTestCase(unittest.TestCase):
         self.advance_time_and_run(300)
 
     def tearDown(self):
+        self.machine.log.debug("Test ended")
         if sys.exc_info != (None, None, None):
             # disable teardown logging after error
             logging.basicConfig(level=99)
