@@ -486,7 +486,7 @@ class MachineController(object):
         self.log_loop_rate()
         self._platform_stop()
 
-    def idle(self):
+    def process_frame(self):
         '''This function is called after every frame. By default:
 
            * it "ticks" the clock to the next frame.
@@ -494,29 +494,17 @@ class MachineController(object):
              window.
         '''
 
-        # TODO: Replace the two function calls below
-        self.default_platform.tick()
-        self.timer_tick()
+        # TODO: Replace the function call below
+        self.default_platform.tick(self.clock.frametime)
+
+        # Process events before processing the clock
+        self.events._process_event_queue()
 
         # update dt
         self.clock.tick()
 
         # tick before draw
         self.clock.tick_draw()
-
-    def timer_tick(self):
-        """Called to "tick" MPF at a rate specified by the machine Hz setting.
-
-        This method is called by the MPF run loop or the platform run loop,
-        depending on the platform. (Some platforms drive the loop, and others
-        let MPF drive.)
-
-        """
-        self.timing.timer_tick()  # notifies the timing module
-        self.events.post('timer_tick')  # sends the timer_tick system event
-        #tasks.Task.timer_tick()  # notifies tasks
-        #self.delayRegistry.timer_tick(self)
-        self.events._process_event_queue()
 
     def _platform_stop(self):
         for platform in list(self.hardware_platforms.values()):

@@ -1211,19 +1211,18 @@ class BallDevice(Device):
         else:
             return False
 
-    def _eject_status(self):
+    def _eject_status(self, dt):
         if self.debug:
 
-            if self.machine.tick_num % 10 == 0:
-                try:
-                    self.log.debug("DEBUG: Eject duration: %ss. Target: %s",
-                                   round(self.machine.clock.get_time() - self.eject_start_time,
-                                         2),
-                                   self.eject_in_progress_target.name)
-                except AttributeError:
-                    self.log.debug("DEBUG: Eject duration: %ss. Target: None",
-                                   round(self.machine.clock.get_time() - self.eject_start_time,
-                                         2))
+            try:
+                self.log.debug("DEBUG: Eject duration: %ss. Target: %s",
+                               round(self.machine.clock.get_time() - self.eject_start_time,
+                                     2),
+                               self.eject_in_progress_target.name)
+            except AttributeError:
+                self.log.debug("DEBUG: Eject duration: %ss. Target: None",
+                               round(self.machine.clock.get_time() - self.eject_start_time,
+                                     2))
 
     def _ball_left_device(self, balls, **kwargs):
         assert balls == 1
@@ -1344,7 +1343,7 @@ class BallDevice(Device):
             self.log.debug("Setting up eject confirmation")
             self.eject_start_time = self.machine.clock.get_time()
             self.log.debug("Eject start time: %s", self.eject_start_time)
-            self.machine.events.add_handler('timer_tick', self._eject_status)
+            self.machine.clock.schedule_interval(self._eject_status, 0.25)
 
         timeout = self.config['eject_timeouts'][target]
         if timeout:

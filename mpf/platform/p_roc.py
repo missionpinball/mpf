@@ -875,7 +875,7 @@ class PROCDriver(DriverPlatformInterface):
         """
         return self.proc.driver_get_state(self.number)
 
-    def tick(self):
+    def tick(self, dt):
         pass
 
 

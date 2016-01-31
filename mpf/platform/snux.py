@@ -125,8 +125,7 @@ class Snux(object):
                                         self._initialize_phase_2)
 
     def _initialize_phase_2(self):
-        self.machine.timing.add(
-            Timer(callback=self.flash_diag_led, frequency=0.5))
+        self.machine.clock.schedule_interval(self.flash_diag_led, 0.5)
 
         # Schedule processing callback
         # TODO: Make callback interval a config item
@@ -149,7 +148,7 @@ class Snux(object):
         elif self.c_side_enabled and not self.c_side_active:
             self._enable_a_side()
 
-    def flash_diag_led(self):
+    def flash_diag_led(self, dt):
         self.diag_led.pulse(250)
 
     def configure_driver(self, config, device_type='coil'):

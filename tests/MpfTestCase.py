@@ -8,6 +8,7 @@ from mock import *
 from datetime import datetime, timedelta
 import inspect
 
+logging.basicConfig(level=logging.DEBUG)
 
 class TestMachineController(MachineController):
     def __init__(self, options, config_patches):
@@ -23,6 +24,20 @@ class TestMachineController(MachineController):
     def _reset_complete(self):
         self.test_init_complete = True
         super()._reset_complete()
+
+    def testing_process_frame(self):
+        self.default_platform.tick(self.clock.frametime)
+
+        self.log.debug("Ticking machine - new time {}".format(self.clock.get_time()))
+
+        # Process events before processing the clock
+        self.events._process_event_queue()
+
+        # update dt
+        self.clock.testing_tick()
+
+        # tick before draw
+        self.clock.tick_draw()
 
 
 class MpfTestCase(unittest.TestCase):
@@ -74,18 +89,16 @@ class MpfTestCase(unittest.TestCase):
 
     def advance_time_and_run(self, delta=1.0):
         end_time = self.machine.clock.get_time() + delta
-        self.machine.log.debug("Advancing time %ss", delta)
-        #self.machine_run()
         while True:
             next_event = self.machine.delayRegistry.get_next_event()
-            next_timer = self.machine.timing.get_next_timer()
+            #next_timer = self.machine.timing.get_next_timer()
             next_switch = self.machine.switch_controller.get_next_timed_switch_event()
             next_show_step = self.machine.show_controller.get_next_show_step()
 
             wait_until = next_event
 
-            if not wait_until or (next_timer and wait_until > next_timer):
-                wait_until = next_timer
+            #if not wait_until or (next_timer and wait_until > next_timer):
+            #    wait_until = next_timer
 
             if not wait_until or (next_switch and wait_until > next_switch):
                 wait_until = next_switch
@@ -103,11 +116,7 @@ class MpfTestCase(unittest.TestCase):
         self.machine_run()
 
     def machine_run(self):
-        self.machine.log.debug("Ticking machine")
-        # TODO: Implement testing with the Clock
-        self.machine.clock.testing_tick()
-        self.machine.default_platform.tick(self.machine.clock.frametime)
-        self.machine.timer_tick()
+        self.machine.testing_process_frame()
 
     def unittest_verbosity(self):
         """Return the verbosity setting of the currently running unittest
