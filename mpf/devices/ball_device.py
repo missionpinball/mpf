@@ -404,8 +404,8 @@ class BallDevice(Device):
                 self.log.debug("Target is playfield. Will confirm after "
                                "timeout if it did not return.")
             timeout = (
-                self.config['eject_timeouts'][self.eject_in_progress_target])
-            self.delay.add(name='count_confirmation',
+                self.config['eject_timeouts'][self.eject_in_progress_target]) + 500
+            self.delay.add(name='playfield_confirmation',
                            ms=timeout,
                            callback=self.eject_success)
 
