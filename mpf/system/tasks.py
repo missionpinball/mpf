@@ -46,6 +46,7 @@ class Task(object):
     def _process_task(self, dt):
         if self.callback is not None:
             self.callback(*self.args)
+        self.machine.events._process_event_queue()
 
     def stop(self):
         """Stops the task. This causes it not to run any longer"""
@@ -184,3 +185,4 @@ class DelayManager(object):
         self.log.debug("---Processing delay: %s", name)
         del self.delays[name]
         callback(**kwargs)
+        self.machine.events._process_event_queue()

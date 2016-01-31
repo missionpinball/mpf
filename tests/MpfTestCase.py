@@ -8,8 +8,6 @@ from mock import *
 from datetime import datetime, timedelta
 import inspect
 
-logging.basicConfig(level=logging.DEBUG)
-
 class TestMachineController(MachineController):
     def __init__(self, options, config_patches):
         self.test_config_patches = config_patches
@@ -88,17 +86,18 @@ class MpfTestCase(unittest.TestCase):
         self.machine.clock.time.return_value = self.testTime
 
     def advance_time_and_run(self, delta=1.0):
+        self.machine_run()
         end_time = self.machine.clock.get_time() + delta
         while True:
             next_event = self.machine.delayRegistry.get_next_event()
-            #next_timer = self.machine.timing.get_next_timer()
+            next_timer = self.machine.timing.get_next_timer()
             next_switch = self.machine.switch_controller.get_next_timed_switch_event()
             next_show_step = self.machine.show_controller.get_next_show_step()
 
             wait_until = next_event
 
-            #if not wait_until or (next_timer and wait_until > next_timer):
-            #    wait_until = next_timer
+            if not wait_until or (next_timer and wait_until > next_timer):
+                wait_until = next_timer
 
             if not wait_until or (next_switch and wait_until > next_switch):
                 wait_until = next_switch
@@ -158,6 +157,7 @@ class MpfTestCase(unittest.TestCase):
         self.advance_time_and_run(300)
 
     def tearDown(self):
+        self.machine.log.debug("Test ended")
         if sys.exc_info != (None, None, None):
             # disable teardown logging after error
             logging.basicConfig(level=99)
