@@ -1,3 +1,4 @@
+from mpf.system.tasks import DelayManager
 from tests.MpfTestCase import MpfTestCase
 from unittest.mock import patch
 
@@ -700,3 +701,33 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(3, self._handler1_called)
         self.assertEqual(1, self._handler2_called)
         self.assertEqual(0, self._handler3_called)
+
+    def delay1_cb(self):
+        self.machine.events.post("event1")
+
+    def event1_cb(self):
+        self.delay.add(ms=100, callback=self.delay2_cb)
+
+    def delay2_cb(self):
+        self.machine.events.post("event2")
+
+    def event2_cb(self):
+        self.delay.add(ms=100, callback=self.delay3_cb)
+
+    def delay3_cb(self):
+        self.machine.events.post("event3")
+
+    def event3_cb(self):
+        self.correct = True
+
+    def test_event_in_delay(self):
+        self.machine.events.add_handler('event1', self.event1_cb)
+        self.machine.events.add_handler('event2', self.event2_cb)
+        self.machine.events.add_handler('event3', self.event3_cb)
+        self.correct = False
+        self.delay = DelayManager(self.machine.delayRegistry)
+
+        self.machine.events.post("event1")
+        self.advance_time_and_run(1)
+
+        self.assertTrue(self.correct)

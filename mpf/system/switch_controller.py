@@ -607,3 +607,5 @@ class SwitchController(object):
                     else:
                         entry['callback'](**entry['callback_kwargs'])
                 del self.active_timed_switches[k]
+
+        self.machine.events._process_event_queue()
