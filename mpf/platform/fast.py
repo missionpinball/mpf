@@ -493,10 +493,9 @@ class HardwarePlatform(Platform):
         """
 
         if not self.net_connection:
-            self.log.critical("A request was made to configure a FAST switch, "
+            raise AssertionError("A request was made to configure a FAST switch, "
                               "but no connection to a NET processor is "
                               "available")
-            sys.exit()
 
         if self.machine_type == 'wpc':  # translate switch number to FAST switch
             config['number'] = self.wpc_switch_map.get(
@@ -512,10 +511,14 @@ class HardwarePlatform(Platform):
             else:
                 config['connection'] = 0  # local switch
 
-            if self.config['config_number_format'] == 'int':
-                config['number'] = Util.int_to_hex_string(config['number'])
-            else:
-                config['number'] = Util.normalize_hex_string(config['number'])
+            try:
+                if self.config['config_number_format'] == 'int':
+                    config['number'] = Util.int_to_hex_string(config['number'])
+                else:
+                    config['number'] = Util.normalize_hex_string(config['number'])
+            except ValueError:
+                raise AssertionError("Could not parse switch number " + config['number'] + ". Seems to be not a "
+                                     " a valid switch number for the FAST platform.")
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
