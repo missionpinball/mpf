@@ -1,13 +1,14 @@
-import unittest
-
-from mpf.system.machine import MachineController
 from tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
 from mpf.platform import fast
 import time
 
+
 class MockSerialCommunicator:
+    expected_commands = []
+
     def __init__(self, machine, send_queue, receive_queue, platform, baud, port):
+        # ignored variable
+        del machine, send_queue, baud, port
         self.platform = platform
         self.receive_queue = receive_queue
         self.platform.register_processor_connection("NET", self)
@@ -23,12 +24,6 @@ class MockSerialCommunicator:
         else:
             raise Exception(cmd)
 
-        if cmd == "SA:":
-            self.receive_queue.put("SA:0,,2,00")
-        elif cmd == "SN:16,01,a,a":
-            self.receive_queue.put("SN:")
-        elif cmd == "SN:07,01,a,a":
-            self.receive_queue.put("SN:")
 
 class TestFast(MpfTestCase):
     def getConfigFile(self):
@@ -45,9 +40,10 @@ class TestFast(MpfTestCase):
         fast.SerialCommunicator = MockSerialCommunicator
         fast.serial_imported = True
         MockSerialCommunicator.expected_commands = {
-            "SA:" : "SA:0,00,32,00",
-            "SN:16,01,a,a" : "SN:",
-            "SN:07,01,a,a" : "SN:"
+            "SA:": "SA:1,00,8,00000000",
+            "SN:16,01,a,a": "SN:",
+            "SN:07,01,a,a": "SN:",
+            "SN:1A,01,a,a": "SN:"
         }
         # FAST should never call sleep. Make it fail
         self.sleep = time.sleep
@@ -65,7 +61,7 @@ class TestFast(MpfTestCase):
 
     def test_pulse(self):
         MockSerialCommunicator.expected_commands = {
-                "DN:04,89,00,10,17,ff,00,00,00" : False
+                "DN:04,89,00,10,17,ff,00,00,00": False
         }
         # pulse coil 4
         self.machine.coils.c_test.pulse()
@@ -73,19 +69,19 @@ class TestFast(MpfTestCase):
 
     def test_enable_exception(self):
         # enable coil which does not have allow_enable
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(AssertionError):
             self.machine.coils.c_test.enable()
 
     def test_allow_enable(self):
         MockSerialCommunicator.expected_commands = {
-                "DN:06,C1,00,18,17,ff,ff,00" : False
+                "DN:06,C1,00,18,17,ff,ff,00": False
         }
         self.machine.coils.c_test_allow_enable.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
     def test_hw_rule_pulse(self):
         MockSerialCommunicator.expected_commands = {
-                "DN:09,01,16,10,0A,ff,00,00,00" : False
+                "DN:09,01,16,10,0A,ff,00,00,00": False
         }
         self.machine.autofires.ac_slingshot_test.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
@@ -93,15 +89,63 @@ class TestFast(MpfTestCase):
     def test_servo(self):
         # go to min position
         MockSerialCommunicator.expected_commands = {
-                "XO:03,00" : False
+                "XO:03,00": False
         }
         self.machine.servos.servo1.go_to_position(0)
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
         # go to max position
         MockSerialCommunicator.expected_commands = {
-                "XO:03,FF" : False
+                "XO:03,FF": False
         }
         self.machine.servos.servo1.go_to_position(1)
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
+    def _switch_hit_cb(self):
+        self.switch_hit = True
+
+    def test_switch_changes(self):
+        self.switch_hit = False
+        self.advance_time_and_run(1)
+        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+        self.assertFalse(self.switch_hit)
+
+        self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
+        self.machine.default_platform.net_connection.receive_queue.put("-N:07")
+        self.advance_time_and_run(1)
+
+        self.assertTrue(self.switch_hit)
+        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+        self.switch_hit = False
+
+        self.advance_time_and_run(1)
+        self.assertFalse(self.switch_hit)
+        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+
+        self.machine.default_platform.net_connection.receive_queue.put("/N:07")
+        self.advance_time_and_run(1)
+        self.assertFalse(self.switch_hit)
+        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+
+    def test_switch_changes_nc(self):
+        self.switch_hit = False
+        self.advance_time_and_run(1)
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertFalse(self.switch_hit)
+
+        self.advance_time_and_run(1)
+        self.assertFalse(self.switch_hit)
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
+
+        self.machine.default_platform.net_connection.receive_queue.put("-N:1A")
+        self.advance_time_and_run(1)
+        self.assertFalse(self.switch_hit)
+        self.assertFalse(self.machine.switch_controller.is_active("s_test_nc"))
+
+        self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
+        self.machine.default_platform.net_connection.receive_queue.put("/N:1A")
+        self.advance_time_and_run(1)
+
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
+        self.assertTrue(self.switch_hit)
+        self.switch_hit = False
