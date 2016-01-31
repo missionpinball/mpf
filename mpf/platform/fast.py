@@ -54,9 +54,8 @@ class HardwarePlatform(Platform):
         self.log.info("Configuring FAST hardware.")
 
         if not serial_imported:
-            self.log.error('Could not import "pySerial". This is required for '
+            raise AssertionError('Could not import "pySerial". This is required for '
                            'the FAST platform interface')
-            sys.exit()
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -81,36 +80,9 @@ class HardwarePlatform(Platform):
         self.flag_led_tick_registered = False
         self.fast_io_boards = list()
         self.waiting_for_switch_data = False
-
-        config_spec = '''
-                    ports: list
-                    baud: int|921600
-                    config_number_format: string|hex
-                    watchdog: ms|1000
-                    default_debounce_open: ms|30
-                    default_debounce_close: ms|30
-                    hardware_led_fade_time: ms|0
-                    debug: boolean|False
-                    '''
-
-        self.config = Config.process_config(config_spec=config_spec,
-                                            source=self.machine.config['fast'])
-
-        self.watchdog_command = 'WD:' + str(hex(self.config['watchdog']))[2:]
-
-        self.machine_type = (
-            self.machine.config['hardware']['driverboards'].lower())
-
-        if self.machine_type == 'wpc':
-            self.log.info("Configuring the FAST Controller for WPC driver "
-                           "board")
-        else:
-            self.log.info("Configuring FAST Controller for FAST IO boards.")
-
-        self._connect_to_hardware()
-
-        if 'config_number_format' not in self.machine.config['fast']:
-            self.machine.config['fast']['config_number_format'] = 'int'
+        self.config = None
+        self.watchdog_command = None
+        self.machine_type = None
 
         self.wpc_switch_map = {
 
@@ -293,6 +265,26 @@ class HardwarePlatform(Platform):
                               '-L': self.receive_local_closed,  # local sw close
                               'WD': self.receive_wd,  # watchdog
                               }
+
+    def initialize(self):
+        self.config = self.machine.config['fast']
+        self.machine.config_processor.process_config2("fast", self.config)
+
+        self.watchdog_command = 'WD:' + str(hex(self.config['watchdog']))[2:]
+
+        self.machine_type = (
+            self.machine.config['hardware']['driverboards'].lower())
+
+        if self.machine_type == 'wpc':
+            self.log.info("Configuring the FAST Controller for WPC driver "
+                           "board")
+        else:
+            self.log.info("Configuring FAST Controller for FAST IO boards.")
+
+        self._connect_to_hardware()
+
+        if 'config_number_format' not in self.machine.config['fast']:
+            self.machine.config['fast']['config_number_format'] = 'int'
 
     def __repr__(self):
         return '<Platform.FAST>'
