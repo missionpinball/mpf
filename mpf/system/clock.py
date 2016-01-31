@@ -154,6 +154,8 @@ from sys import platform
 from functools import partial
 
 from mpf.system.weakmethod import WeakMethod
+from queue import PriorityQueue, Empty
+import itertools
 import time
 import logging
 
@@ -257,7 +259,7 @@ class ClockEvent(object):
     '''
 
     def __init__(self, clock, loop, callback, timeout, starttime, cid,
-                 trigger=False):
+                 priority=1, trigger=False):
         self.clock = clock
         self.cid = cid
         self.loop = loop
@@ -267,6 +269,7 @@ class ClockEvent(object):
         self._is_triggered = trigger
         self._last_dt = starttime
         self._dt = 0.
+        self._priority = priority
         if trigger:
             clock._events[cid].append(self)
 
@@ -299,6 +302,14 @@ class ClockEvent(object):
     def next_event_time(self):
         return self._last_dt + self.timeout
 
+    @property
+    def last_event_time(self):
+        return self._last_dt
+
+    @property
+    def priority(self):
+        return self._priority
+
     def cancel(self):
         ''' Cancels the callback if it was scheduled to be called.
         '''
@@ -314,10 +325,8 @@ class ClockEvent(object):
         self.callback = None
 
     def tick(self, curtime, remove):
-        # timeout happened ? (check also if we would miss from 5ms) this
-        # 5ms increase the accuracy if the timing of animation for
-        # example.
-        if curtime - self._last_dt < self.timeout - 0.005:
+        # timeout happened ?
+        if curtime - self._last_dt < self.timeout:
             return True
 
         # calculate current timediff for this event
@@ -346,18 +355,11 @@ class ClockEvent(object):
             except ValueError:
                 pass
 
-        # call the callback
-        ret = callback(self._dt)
-
-        # if the user returns False explicitly, remove the event
-        if loop and ret is False:
-            self._is_triggered = False
-            try:
-                remove(self)
-            except ValueError:
-                pass
-            return False
-        return loop
+        # Do not actually call the callback here, instead add it to the clock
+        # frame callback queue where it will be processed after all events are processed
+        # for the frame.  The callback queue is prioritized by callback time and then
+        # event priority.
+        self.clock.add_event_to_frame_callbacks(self)
 
     def __repr__(self):
         return '<ClockEvent callback=%r>' % self.get_callback()
@@ -368,13 +370,15 @@ class ClockBase(_ClockBase):
     '''
     __slots__ = ('_dt', '_last_fps_tick', '_last_tick', '_fps', '_rfps',
                  '_start_tick', '_fps_counter', '_rfps_counter', '_events',
-                 '_frames', '_frames_displayed',
+                 '_frame_callbacks', '_frames', '_frames_displayed',
                  '_max_fps', 'max_iteration', '_log')
 
     MIN_SLEEP = 0.005
     SLEEP_UNDERSHOOT = MIN_SLEEP - 0.001
 
-    def __init__(self):
+    counter = itertools.count()
+
+    def __init__(self, max_fps=60):
         super(ClockBase, self).__init__()
         self._dt = 0.0001
         self._start_tick = self._last_tick = self.time()
@@ -386,9 +390,9 @@ class ClockBase(_ClockBase):
         self._frames = 0
         self._frames_displayed = 0
         self._events = [[] for i in range(256)]
+        self._frame_callbacks = PriorityQueue()
         # TODO: Load maxfps from config
-        #self._max_fps = float(Timing.HZ)
-        self._max_fps = float(60)
+        self._max_fps = float(max_fps)
         self._log = logging.getLogger("ClockBase")
 
 
@@ -460,6 +464,9 @@ class ClockBase(_ClockBase):
         # process event
         self._process_events()
 
+        # now process event callbacks
+        self._process_event_callbacks()
+
         return self._dt
 
     def testing_tick(self):
@@ -493,12 +500,16 @@ class ClockBase(_ClockBase):
         # process event
         self._process_events()
 
+        # now process event callbacks
+        self._process_event_callbacks()
+
         return self._dt
 
     def tick_draw(self):
         '''Tick the drawing counter.
         '''
         self._process_events_before_frame()
+        self._process_event_callbacks()
         self._rfps_counter += 1
         self._frames_displayed += 1
 
@@ -523,7 +534,7 @@ class ClockBase(_ClockBase):
         '''Get the time in seconds from the application start.'''
         return self._last_tick - self._start_tick
 
-    def create_trigger(self, callback, timeout=0):
+    def create_trigger(self, callback, timeout=0, priority=1):
         '''Create a Trigger event. Check module documentation for more
         information.
         :returns:
@@ -531,11 +542,11 @@ class ClockBase(_ClockBase):
             instance, you can call it.
         .. versionadded:: 1.0.5
         '''
-        ev = ClockEvent(self, False, callback, timeout, 0, _hash(callback))
+        ev = ClockEvent(self, False, callback, timeout, 0, _hash(callback), priority)
         ev.release()
         return ev
 
-    def schedule_once(self, callback, timeout=0):
+    def schedule_once(self, callback, timeout=0, priority=1):
         '''Schedule an event in <timeout> seconds. If <timeout> is unspecified
         or 0, the callback will be called after the next frame is rendered.
         :returns:
@@ -550,10 +561,10 @@ class ClockBase(_ClockBase):
             raise ValueError('callback must be a callable, got %s' % callback)
         event = ClockEvent(
             self, False, callback, timeout, self._last_tick, _hash(callback),
-            True)
+            priority, True)
         return event
 
-    def schedule_interval(self, callback, timeout):
+    def schedule_interval(self, callback, timeout, priority=1):
         '''Schedule an event to be called every <timeout> seconds.
         :returns:
             A :class:`ClockEvent` instance. As opposed to
@@ -564,7 +575,7 @@ class ClockBase(_ClockBase):
             raise ValueError('callback must be a callable, got %s' % callback)
         event = ClockEvent(
             self, True, callback, timeout, self._last_tick, _hash(callback),
-            True)
+            priority, True)
         return event
 
     def unschedule(self, callback, all=True):
@@ -637,6 +648,34 @@ class ClockBase(_ClockBase):
                     # event may be already removed from original list
                     if event in events:
                         event.tick(self._last_tick, remove)
+
+    def add_event_to_frame_callbacks(self, event):
+        """
+        Adds an event to the priority queue whose callback will be called in the
+        current frame.
+        Args:
+            event: The event whose callback will be called (in priority order)
+                during the current frame.
+        """
+        self._frame_callbacks.put((event.last_event_time, -event.priority, next(self.counter), event))
+
+    def _process_event_callbacks(self):
+        """
+        Processes event callbacks that were triggered to be called in the current frame.
+        """
+        while True:
+            try:
+                event = self._frame_callbacks.get(block=False)[3]
+            except Empty:
+                return
+
+            # Call the callback
+            callback = event.get_callback()
+            ret = callback(self.frametime)
+
+            # if the user returns False explicitly, remove the event
+            if event.loop and ret is False:
+                event.cancel()
 
     time = staticmethod(partial(_default_time))
 
