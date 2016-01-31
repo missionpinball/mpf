@@ -262,12 +262,15 @@ class ClockEvent(object):
                  priority=1, trigger=False):
         self.clock = clock
         self.cid = cid
+        self.id = next(clock.counter)
         self.loop = loop
         self.weak_callback = None
         self.callback = callback
         self.timeout = timeout
         self._is_triggered = trigger
         self._last_dt = starttime
+        self._next_event_time = starttime + timeout
+        self._last_event_time = 0
         self._dt = 0.
         self._priority = priority
         if trigger:
@@ -300,11 +303,11 @@ class ClockEvent(object):
 
     @property
     def next_event_time(self):
-        return self._last_dt + self.timeout
+        return self._next_event_time
 
     @property
     def last_event_time(self):
-        return self._last_dt
+        return self._last_event_time
 
     @property
     def priority(self):
@@ -326,13 +329,16 @@ class ClockEvent(object):
 
     def tick(self, curtime, remove):
         # timeout happened ?
-        if curtime - self._last_dt < self.timeout:
+        if curtime < self._next_event_time:
             return True
 
         # calculate current timediff for this event
         self._dt = curtime - self._last_dt
         self._last_dt = curtime
         loop = self.loop
+
+        self._last_event_time = self._next_event_time
+        self._next_event_time += self.timeout
 
         # get the callback
         callback = self.get_callback()
@@ -657,7 +663,7 @@ class ClockBase(_ClockBase):
             event: The event whose callback will be called (in priority order)
                 during the current frame.
         """
-        self._frame_callbacks.put((event.last_event_time, -event.priority, next(self.counter), event))
+        self._frame_callbacks.put((event.last_event_time, -event.priority, event.id, event))
 
     def _process_event_callbacks(self):
         """
