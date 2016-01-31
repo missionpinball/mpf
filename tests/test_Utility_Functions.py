@@ -186,7 +186,7 @@ class TestUtil(MpfTestCase):
         result = Util.normalize_hex_string('c')
         self.assertEqual(result, '0C')
 
-        result = Util.normalize_hex_string(4)
+        result = Util.normalize_hex_string('4')
         self.assertEqual(result, '04')
 
     def test_bin_str_to_hex_str(self):
