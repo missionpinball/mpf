@@ -328,17 +328,23 @@ class ClockEvent(object):
         self.callback = None
 
     def tick(self, curtime, remove):
-        # timeout happened ?
-        if curtime < self._next_event_time:
+        # Is it time to execute the callback (did timeout occur)?  The
+        # decision is easy if this event's timeout is 0 or -1 as it
+        # should be called every time.
+        if self.timeout > 0 and curtime < self._next_event_time:
             return True
 
-        # calculate current timediff for this event
+        # calculate current time-diff for this event
         self._dt = curtime - self._last_dt
         self._last_dt = curtime
         loop = self.loop
 
-        self._last_event_time = self._next_event_time
-        self._next_event_time += self.timeout
+        if self.timeout > 0:
+            self._last_event_time = self._next_event_time
+            self._next_event_time += self.timeout
+        else:
+            self._last_event_time = curtime
+            self._next_event_time = curtime
 
         # get the callback
         callback = self.get_callback()
@@ -675,7 +681,7 @@ class ClockBase(_ClockBase):
             for event in events[:]:
                 # event may be already removed from original list
                 if event in events:
-                    if not next_event_time or event.next_event_time < next_event_time:
+                    if event.timeout > 0 and (not next_event_time or event.next_event_time < next_event_time):
                         next_event_time = event.next_event_time
 
         return next_event_time
