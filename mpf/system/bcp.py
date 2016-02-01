@@ -158,7 +158,6 @@ class BCP(object):
 
         # Add the following to the set of events that already have mpf mc
         # triggers since these are all posted on the mc side already
-        self.mpfmc_trigger_events.add('timer_tick')
         self.mpfmc_trigger_events.add('ball_started')
         self.mpfmc_trigger_events.add('ball_ended')
         self.mpfmc_trigger_events.add('player_add_success')
@@ -226,7 +225,7 @@ class BCP(object):
 
         self.machine.events.add_handler('init_phase_2',
                                         self._setup_bcp_connections)
-        self.machine.events.add_handler('timer_tick', self.get_bcp_messages)
+        self.machine.clock.schedule_interval(self.get_bcp_messages, 0)
         self.machine.events.add_handler('player_add_success',
                                         self.bcp_player_added)
         self.machine.events.add_handler('machine_reset_phase_1',
@@ -542,7 +541,7 @@ class BCP(object):
         if callback:
             callback()
 
-    def get_bcp_messages(self):
+    def get_bcp_messages(self, dt):
         """Retrieves and processes new BCP messages from the receiving queue.
 
         """
