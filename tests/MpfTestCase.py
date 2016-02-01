@@ -8,11 +8,13 @@ from mock import *
 from datetime import datetime, timedelta
 import inspect
 
+
 class TestMachineController(MachineController):
     def __init__(self, options, config_patches):
         self.test_config_patches = config_patches
         self.test_init_complete = False
         super().__init__(options)
+        self.clock._max_fps = 1000
 
     def _load_machine_config(self):
         super()._load_machine_config()
@@ -22,20 +24,6 @@ class TestMachineController(MachineController):
     def _reset_complete(self):
         self.test_init_complete = True
         super()._reset_complete()
-
-    def testing_process_frame(self):
-        self.default_platform.tick(self.clock.frametime)
-
-        self.log.debug("Ticking machine - new time {}".format(self.clock.get_time()))
-
-        # Process events before processing the clock
-        self.events._process_event_queue()
-
-        # update dt
-        self.clock.testing_tick()
-
-        # tick before draw
-        self.clock.tick_draw()
 
 
 class MpfTestCase(unittest.TestCase):
@@ -115,7 +103,7 @@ class MpfTestCase(unittest.TestCase):
         self.machine_run()
 
     def machine_run(self):
-        self.machine.testing_process_frame()
+        self.machine.process_frame()
 
     def unittest_verbosity(self):
         """Return the verbosity setting of the currently running unittest

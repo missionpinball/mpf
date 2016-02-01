@@ -475,42 +475,6 @@ class ClockBase(_ClockBase):
 
         return self._dt
 
-    def testing_tick(self):
-        '''Advance the clock to the next step. Must be called every frame.
-        The default clock has a tick() function called by the core Kivy
-        framework.'''
-
-        self._release_references()
-
-        # do we need to sleep ?
-        # no sleeping during testing
-
-        # tick the current time
-        current = self.time()
-        self._dt = current - self._last_tick
-        self._frames += 1
-        self._fps_counter += 1
-        self._last_tick = current
-
-        # calculate fps things
-        if self._last_fps_tick is None:
-            self._last_fps_tick = current
-        elif current - self._last_fps_tick > 1:
-            d = float(current - self._last_fps_tick)
-            self._fps = self._fps_counter / d
-            self._rfps = self._rfps_counter
-            self._last_fps_tick = current
-            self._fps_counter = 0
-            self._rfps_counter = 0
-
-        # process event
-        self._process_events()
-
-        # now process event callbacks
-        self._process_event_callbacks()
-
-        return self._dt
-
     def tick_draw(self):
         '''Tick the drawing counter.
         '''
@@ -568,6 +532,10 @@ class ClockBase(_ClockBase):
         event = ClockEvent(
             self, False, callback, timeout, self._last_tick, _hash(callback),
             priority, True)
+
+        self._log.debug("Scheduled a one-time clock callback (callback={}, timeout={}, priority={})".format(
+            str(callback), timeout, priority))
+
         return event
 
     def schedule_interval(self, callback, timeout, priority=1):
@@ -582,6 +550,10 @@ class ClockBase(_ClockBase):
         event = ClockEvent(
             self, True, callback, timeout, self._last_tick, _hash(callback),
             priority, True)
+
+        self._log.debug("Scheduled a recurring clock callback (callback={}, timeout={}, priority={})".format(
+            str(callback), timeout, priority))
+
         return event
 
     def unschedule(self, callback, all=True):
