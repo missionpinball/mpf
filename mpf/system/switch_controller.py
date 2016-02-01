@@ -47,8 +47,7 @@ class SwitchController(object):
             self.machine.config['mpf']['switch_tag_event'])
 
         # register for events
-        # TODO: figure out clock callback priority scheme for switch controller (high priority)
-        self.machine.clock.schedule_interval(self._tick, 0)
+        self.machine.clock.schedule_interval(self._tick, 0, 1000)
         self.machine.events.add_handler('init_phase_2',
                                         self._initialize_switches,
                                         1000)

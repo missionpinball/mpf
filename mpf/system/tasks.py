@@ -140,7 +140,10 @@ class DelayManager(object):
         self.log.debug("Removing delay: '%s'", name)
         if name in self.delays:
             self.machine.clock.unschedule(self.delays[name])
-            del self.delays[name]
+            try:
+                del self.delays[name]
+            except KeyError:
+                pass
 
     def check(self, delay):
         """Checks to see if a delay exists.
@@ -183,6 +186,9 @@ class DelayManager(object):
 
     def _process_delay_callback(self, name, callback, dt, **kwargs):
         self.log.debug("---Processing delay: %s", name)
-        del self.delays[name]
+        try:
+            del self.delays[name]
+        except KeyError:
+            pass
         callback(**kwargs)
         self.machine.events._process_event_queue()
