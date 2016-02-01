@@ -390,8 +390,13 @@ class MachineController(object):
         """
 
         if name not in self.hardware_platforms:
-            hardware_platform = __import__('mpf.platform.%s' % name,
-                                           fromlist=["HardwarePlatform"])
+
+            try:
+                hardware_platform = __import__('mpf.platform.%s' % name,
+                                               fromlist=["HardwarePlatform"])
+            except ImportError:
+                raise ImportError("Cannot add hardware platform {}. This is "
+                                  "not a valid platform name".format(name))
 
             self.hardware_platforms[name] = (
                 hardware_platform.HardwarePlatform(self))
@@ -740,7 +745,10 @@ class MachineController(object):
                 else:
                     return self.default_platform
             else:
-               return (
-                    self.hardware_platforms[overwrite])
+                try:
+                    return self.hardware_platforms[overwrite]
+                except KeyError:
+                    self.add_platform(overwrite)
+                    return self.hardware_platforms[overwrite]
         else:
             return self.default_platform
