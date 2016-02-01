@@ -43,7 +43,7 @@ class TestFast(MpfTestCase):
             "SA:": "SA:1,00,8,00000000",
             "SN:16,01,a,a": "SN:",
             "SN:07,01,a,a": "SN:",
-            "SN:1A,01,a,a": "SN:"
+            "SN:1A,01,a,a": "SN:",
             "DN:04,00,00,00" : False,
             "DN:06,00,00,00" : False,
             "DN:09,00,00,00" : False,
