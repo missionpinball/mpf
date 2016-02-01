@@ -405,7 +405,8 @@ class ClockBase(_ClockBase):
         self._frame_callbacks = PriorityQueue()
         # TODO: Load maxfps from config
         self._max_fps = float(max_fps)
-        self._log = logging.getLogger("ClockBase")
+        self._log = logging.getLogger("Clock")
+        self._log.debug("Starting clock (maximum frames per second={})".format(self._max_fps))
 
 
         #: .. versionadded:: 1.0.5
