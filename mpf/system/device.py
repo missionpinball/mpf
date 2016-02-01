@@ -55,6 +55,10 @@ class Device(object):
                     else:
                         self.platform = self.machine.default_platform
                 else:
+                    if (config['platform'] not in
+                            self.machine.hardware_platforms):
+                        self.machine.add_platform(config['platform'])
+
                     self.platform = (
                         self.machine.hardware_platforms[config['platform']])
             else:

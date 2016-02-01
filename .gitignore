@@ -8,6 +8,7 @@ htmlcov
 .coverage
 data
 .*.swp
+*.p
 htmlcov/
 tests/machine_files/ball_device/data/
 # docs have been moved to a branch called gh-pages
