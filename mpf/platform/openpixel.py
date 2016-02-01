@@ -99,8 +99,9 @@ class OpenPixelClient(object):
         self.sending_thread = None
         self.channels = list()
 
-        self.machine.events.add_handler('timer_tick', self.tick, 1000000)
-        # todo should this be highest priority? Or lowest??
+        # Update the FadeCandy at a regular interval
+        # TODO: Add update interval to config
+        self.machine.clock.schedule_interval(self.tick, 1/30.0)
 
         self.sending_thread = OPCThread(self.machine, self.sending_queue,
                                         config)
@@ -146,7 +147,7 @@ class OpenPixelClient(object):
         self.channels[channel][pixel] = color
         self.dirty = True
 
-    def tick(self):
+    def tick(self, dt):
         """Called once per machine loop to update the pixels."""
         if self.update_every_tick or self.dirty:
             for channel_index, pixel_list in enumerate(self.channels):

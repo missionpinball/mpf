@@ -1,9 +1,8 @@
 """Contains the Task, DelayManager, and DelayManagerRegistry base classes."""
 
 import logging
-from copy import copy
-import time
 import uuid
+from functools import partial
 
 
 class Task(object):
@@ -19,74 +18,58 @@ class Task(object):
     run queue.
     """
 
-    Tasks = set()
-    NewTasks = set()
-
-    def __init__(self, callback, args=None, name=None, sleep=0):
+    def __init__(self, machine, callback, args=None, name=None, interval=0, delay=0):
+        self.machine = machine
         self.callback = callback
         self.args = args
-        self.wakeup = None
         self.name = name
-        self.gen = None
+        self.interval = interval
+        self.delay = delay
+        self.clock_event = None
 
-        if sleep:
-            self.wakeup = time.time() + sleep
+        if delay:
+            self.clock_event = self.machine.clock.schedule_once(self.run, delay)
+        else:
+            self.run(0)
 
-    def restart(self):
-        """Restarts the task."""
-        self.wakeup = None
-        self.gen = None
+    def __del__(self):
+        self.stop()
+
+    @property
+    def running(self):
+        return self.clock_event is not None
+
+    def run(self, dt):
+        self.stop()
+        self.clock_event = self.machine.clock.schedule_interval(self._process_task, self.interval)
+
+    def _process_task(self, dt):
+        if self.callback is not None:
+            self.callback(*self.args)
+        self.machine.events._process_event_queue()
 
     def stop(self):
-        """Stops the task.
-
-        This causes it not to run any longer, by removing it from the task set
-        and then deleting it."""
-        Task.Tasks.remove(self)
+        """Stops the task. This causes it not to run any longer"""
+        if self.clock_event:
+            self.machine.clock.unschedule(self.clock_event)
+            self.clock_event = None
 
     def __repr__(self):
-        return "callback=" + str(self.callback) + " wakeup=" + str(self.wakeup)
+        return "callback=" + str(self.callback) + " interval=" + str(self.interval) + " delay=" + str(self.delay)
 
     @staticmethod
-    def create(callback, args=tuple(), sleep=0):
+    def create(machine, callback, args=tuple(), interval=0, delay=0):
         """Creates a new task and insert it into the runnable set."""
-        task = Task(callback=callback, args=args, sleep=sleep)
-        Task.NewTasks.add(task)
-        return task
-
-    @staticmethod
-    def timer_tick():
-        """Scans all tasks now and run those that are ready."""
-        dead_tasks = []
-        for task in Task.Tasks:
-            if not task.wakeup or task.wakeup <= time.time():
-                if task.gen:
-                    try:
-                        rc = next(task.gen)
-                        if rc:
-                            task.wakeup = time.time() + rc
-                    except StopIteration:
-                        dead_tasks.append(task)
-                else:
-                    task.wakeup = time.time()
-                    task.gen = task.callback(*task.args)
-        for task in dead_tasks:
-            Task.Tasks.remove(task)
-        # We need to queue the addition to new tasks to the set because if we
-        # get a new task while we're iterating above then our set size will
-        # change while iterating and produce an error.
-        for task in Task.NewTasks:
-            Task.Tasks.add(task)
-        Task.NewTasks = set()
+        return Task(machine=machine, callback=callback, args=args, interval=interval, delay=delay)
 
 
 class DelayManagerRegistry(object):
-    def __init__(self):
+    def __init__(self, machine):
         self.delay_managers = set()
-        self.new_delay_managers = set()
+        self.machine = machine
 
     def add_delay_manager(self, delay_manager):
-        self.new_delay_managers.add(delay_manager)
+        self.delay_managers.add(delay_manager)
 
     def get_next_event(self):
         next_event_time = False
@@ -97,13 +80,6 @@ class DelayManagerRegistry(object):
 
         return next_event_time
 
-    def timer_tick(self, machine):
-        for i in self.delay_managers:
-            i._process_delays(machine)
-
-        while self.new_delay_managers:
-            self.delay_managers.add(self.new_delay_managers.pop())
-
 
 class DelayManager(object):
     """Handles delays for one object"""
@@ -111,6 +87,7 @@ class DelayManager(object):
     def __init__(self, registry):
         self.log = logging.getLogger("DelayManager")
         self.delays = {}
+        self.machine = registry.machine
         self.registry = registry
         self.registry.add_delay_manager(self)
 
@@ -140,9 +117,14 @@ class DelayManager(object):
             name = uuid.uuid4()
         self.log.debug("Adding delay. Name: '%s' ms: %s, callback: %s, "
                        "kwargs: %s", name, ms, callback, kwargs)
-        self.delays[name] = ({'action_ms': time.time() + (ms / 1000.0),
-                              'callback': callback,
-                              'kwargs': kwargs})
+
+        if name in self.delays:
+            self.machine.clock.unschedule(self.delays[name])
+            del self.delays[name]
+
+        self.delays[name] = self.machine.clock.schedule_once(
+            partial(self._process_delay_callback, name, callback, **kwargs),
+            ms / 1000.0)
 
         return name
 
@@ -156,10 +138,12 @@ class DelayManager(object):
         """
 
         self.log.debug("Removing delay: '%s'", name)
-        try:
-            del self.delays[name]
-        except:
-            pass
+        if name in self.delays:
+            self.machine.clock.unschedule(self.delays[name])
+            try:
+                del self.delays[name]
+            except KeyError:
+                pass
 
     def check(self, delay):
         """Checks to see if a delay exists.
@@ -179,41 +163,32 @@ class DelayManager(object):
         Args:
             same as add()
         """
-        self.remove(name)
+        if name in self.delays:
+            self.remove(name)
+
         self.add(ms, callback, name, **kwargs)
 
     def clear(self):
         """Removes (clears) all the delays associated with this DelayManager."""
+        for name in list(self.delays.keys()):
+            self.machine.clock.unschedule(self.delays[name])
+            self.remove(name)
+
         self.delays = {}
 
     def _get_next_event(self):
         next_event_time = False
-        for delay in list(self.delays.keys()):
-            if not next_event_time or next_event_time > self.delays[delay]['action_ms']:
-                next_event_time = self.delays[delay]['action_ms']
+        for name in list(self.delays.keys()):
+            if not next_event_time or next_event_time > self.delays[name].next_event_time:
+                next_event_time = self.delays[name].next_event_time
 
         return next_event_time
 
-    def _process_delays(self, machine):
-        # Processes any delays that should fire now
-        for delay in list(self.delays.keys()):
-            # previous delay may have deleted it
-            if not delay in self.delays:
-                continue
-            if self.delays[delay]['action_ms'] <= time.time():
-                # Delete the delay first in case the processing of it adds a
-                # new delay with the same name. If we delete as the final step
-                # then we'll inadvertantly delete the newly-set delay
-                this_delay = copy(self.delays[delay])
-                del self.delays[delay]
-                self.log.debug("---Processing delay: %s", this_delay)
-                if this_delay['kwargs']:
-                    this_delay['callback'](**this_delay['kwargs'])
-                else:
-                    this_delay['callback']()
-
-            # Process event queue after delay
-            machine.events._process_event_queue()
-
-
-
+    def _process_delay_callback(self, name, callback, dt, **kwargs):
+        self.log.debug("---Processing delay: %s", name)
+        try:
+            del self.delays[name]
+        except KeyError:
+            pass
+        callback(**kwargs)
+        self.machine.events._process_event_queue()

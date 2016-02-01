@@ -48,8 +48,10 @@ class HardwarePlatform(Platform):
             self.dmd_thread.start()
         else:
             self.update = self.update_non_thread
-            self.machine.events.add_handler('timer_tick', self.tick,
-                                            priority=0)  # p0 so this runs last
+            # Update display 30 times per second
+            # TODO: Add display update interval to config
+            # TODO: Want this to update last, figure out priority scheme
+            self.machine.clock.schedule_interval(self.tick, 1/30.0)
 
         return self
 
@@ -62,7 +64,7 @@ class HardwarePlatform(Platform):
     def update_separate_thread(self, data):
         self.queue.put(bytearray(data))
 
-    def tick(self):
+    def tick(self, dt):
         self.serial_port.write(bytearray([0x01]))
         self.serial_port.write(self.dmd_frame)
 

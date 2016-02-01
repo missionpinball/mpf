@@ -46,7 +46,7 @@ class Platform(object):
         this premature optimization?)
 
         """
-        self.next_tick_time = time.time()
+        self.next_tick_time = self.machine.clock.get_time()
 
     def set_hw_rule(self, sw_name, sw_activity, driver_name, driver_action,
                     disable_on_release=True, drive_now=False,
@@ -114,7 +114,7 @@ class Platform(object):
         """
         raise NotImplementedError
 
-    def tick(self):
+    def tick(self, dt):
         """Subclass this method in a platform module to perform periodic updates
         to the platform hardware, e.g. reading switches, sending driver or
         light updates, etc.

@@ -759,7 +759,7 @@ class ModeTimer(object):
         if pause_secs > 0:
             self.delay.add(name='pause', ms=pause_secs, callback=self.start)
 
-    def timer_complete(self):
+    def timer_complete(self, **kwargs):
         """Automatically called when this timer completes. Posts the
         'timer_<name>_complete' event. Can be manually called to mark this timer
         as complete.
@@ -792,8 +792,8 @@ class ModeTimer(object):
             self.reset()
             self.start()
 
-    def _timer_tick(self):
-        # Automatically called by the sytem timer each tick
+    def _timer_tick(self, dt):
+        # Automatically called by the system clock each tick
 
         if self.debug:
             self.log.debug("Timer Tick")
@@ -830,10 +830,9 @@ class ModeTimer(object):
         """Adds ticks to this timer.
 
         Args:
-            Args:
             timer_value: The number of ticks you want to add to this timer's
                 current value.
-            **kwargs: Not used in this method. Only exists since this method is
+            kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
@@ -862,10 +861,10 @@ class ModeTimer(object):
         self._check_for_done()
 
     def subtract_time(self, timer_value, **kwargs):
-        """Subracts ticks from this timer.
+        """Subtracts ticks from this timer.
 
         Args:
-            timer_value: The numebr of ticks you want to subtract from this
+            timer_value: The number of ticks you want to subtract from this
                 timer's current value.
             **kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
@@ -896,9 +895,9 @@ class ModeTimer(object):
 
         if self.debug:
             self.log.debug("Checking to see if timer is done. Ticks: %s, End "
-                          "Value: %s, Direction: %s",
-                          self.mode.player[self.tick_var], self.end_value,
-                          self.direction)
+                           "Value: %s, Direction: %s",
+                           self.mode.player[self.tick_var], self.end_value,
+                           self.direction)
 
         if (self.direction == 'up' and self.end_value is not None and
                 self.mode.player[self.tick_var] >= self.end_value):
@@ -919,15 +918,14 @@ class ModeTimer(object):
         return False
 
     def _create_system_timer(self):
-        # Creates the system timer which drives this mode timer's tick method.
+        # Creates the clock event which drives this mode timer's tick method.
         self._remove_system_timer()
-        self.timer = Timer(callback=self._timer_tick, frequency=self.tick_secs)
-        self.machine.timing.add(self.timer)
+        self.timer = self.machine.clock.schedule_interval(self._timer_tick, self.tick_secs)
 
     def _remove_system_timer(self):
-        # Removes the system timer associated with this mode timer.
+        # Removes the clock event associated with this mode timer.
         if self.timer:
-            self.machine.timing.remove(self.timer)
+            self.machine.clock.unschedule(self.timer)
             self.timer = None
 
     def change_tick_interval(self, change=0.0, **kwargs):

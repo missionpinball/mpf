@@ -1,6 +1,4 @@
 from tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
-import time
 from mpf.system.rgb_color import RGBColor, RGBColorCorrectionProfile
 
 
@@ -39,13 +37,13 @@ class TestDeviceLED(MpfTestCase):
         self.machine.leds.led_01.color(RGBColor('SteelBlue'))
         self.assertEqual(RGBColor('SteelBlue'), self.machine.leds.led_01.state['color'])
         self.assertEqual(RGBColor('SteelBlue'), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(time.time(), self.machine.leds.led_01.cache['start_time'])
+        self.assertEqual(self.machine.clock.get_time(), self.machine.leds.led_01.cache['start_time'])
         self.assertEqual(RGBColor('SteelBlue'), self.machine.leds.led_01.hw_driver.current_color)
         self.assertEqual(0, self.machine.leds.led_01.state['priority'])
         self.machine.leds.led_02.color(RGBColor('006400'))
         self.assertEqual(RGBColor('006400'), self.machine.leds.led_02.state['color'])
         self.assertEqual(RGBColor('006400'), self.machine.leds.led_02.cache['color'])
-        self.assertEqual(time.time(), self.machine.leds.led_02.cache['start_time'])
+        self.assertEqual(self.machine.clock.get_time(), self.machine.leds.led_02.cache['start_time'])
         self.assertEqual(RGBColor('006400'), self.machine.leds.led_02.hw_driver.current_color)
         self.assertEqual(0, self.machine.leds.led_02.state['priority'])
 
@@ -53,13 +51,13 @@ class TestDeviceLED(MpfTestCase):
         self.machine.leds.led_01.color(RGBColor('Off'))
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['color'])
         self.assertEqual(RGBColor((0, 0, 0)), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(time.time(), self.machine.leds.led_01.cache['start_time'])
+        self.assertEqual(self.machine.clock.get_time(), self.machine.leds.led_01.cache['start_time'])
         self.assertEqual(RGBColor('Black'), self.machine.leds.led_01.hw_driver.current_color)
         self.assertEqual(0, self.machine.leds.led_01.state['priority'])
         self.machine.leds.led_02.color(RGBColor('Off'))
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_02.state['color'])
         self.assertEqual(RGBColor((0, 0, 0)), self.machine.leds.led_02.cache['color'])
-        self.assertEqual(time.time(), self.machine.leds.led_02.cache['start_time'])
+        self.assertEqual(self.machine.clock.get_time(), self.machine.leds.led_02.cache['start_time'])
         self.assertEqual(RGBColor('Black'), self.machine.leds.led_02.hw_driver.current_color)
         self.assertEqual(0, self.machine.leds.led_02.state['priority'])
 
@@ -71,12 +69,12 @@ class TestDeviceLED(MpfTestCase):
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['color'])
 
         self.machine.leds.led_01.color(RGBColor('White'), fade_ms=1000)
-        fade_start_time = time.time()
+        fade_start_time = self.machine.clock.get_time()
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['color'])
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['start_color'])
         self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['destination_color'])
-        self.assertEqual(time.time(), self.machine.leds.led_01.state['start_time'])
-        self.assertEqual(time.time() + 1, self.machine.leds.led_01.state['destination_time'])
+        self.assertEqual(self.machine.clock.get_time(), self.machine.leds.led_01.state['start_time'])
+        self.assertEqual(self.machine.clock.get_time() + 1, self.machine.leds.led_01.state['destination_time'])
         self.assertEqual(RGBColor('Black'), self.machine.leds.led_01.hw_driver.current_color)
         self.assertEqual(0, self.machine.leds.led_01.state['priority'])
         self.assertIsNotNone(self.machine.leds.led_01.fade_task)
@@ -161,7 +159,7 @@ class TestDeviceLED(MpfTestCase):
         self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['color'])
 
         self.machine.leds.led_01.color(RGBColor('Off'), fade_ms=1000)
-        fade_start_time = time.time()
+        fade_start_time = self.machine.clock.get_time()
         self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['color'])
         self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['start_color'])
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['destination_color'])

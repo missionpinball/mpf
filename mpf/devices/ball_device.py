@@ -1,7 +1,6 @@
 """ Contains the base class for ball devices."""
 
 from collections import deque
-import time
 
 from mpf.system.tasks import DelayManager
 from mpf.system.device import Device
@@ -86,7 +85,7 @@ class BallDevice(Device):
 
         self._incoming_balls = deque()
         # deque of tuples that tracks incoming balls this device should expect
-        # each tuple is (time.time() formatted timeout, source device)
+        # each tuple is (self.machine.clock.get_time() formatted timeout, source device)
 
         self.ball_requests = deque()
         # deque of tuples that holds requests from target devices for balls
@@ -213,7 +212,7 @@ class BallDevice(Device):
         # handle timeout incoming balls
         missing_balls = 0
         while (len(self._incoming_balls) and
-                       self._incoming_balls[0][0] <= time.time()):
+                       self._incoming_balls[0][0] <= self.machine.clock.get_time()):
             self._incoming_balls.popleft()
             self._handle_lost_incoming_ball()
             missing_balls += 1
@@ -357,7 +356,7 @@ class BallDevice(Device):
 
         """
         timeout = 60
-        self._incoming_balls.append((time.time() + timeout, source))
+        self._incoming_balls.append((self.machine.clock.get_time() + timeout, source))
         self.delay.add(ms=timeout * 1000, callback=self._timeout_incoming)
 
         if (self._state == "waiting_for_ball" and
@@ -1212,19 +1211,18 @@ class BallDevice(Device):
         else:
             return False
 
-    def _eject_status(self):
+    def _eject_status(self, dt):
         if self.debug:
 
-            if self.machine.tick_num % 10 == 0:
-                try:
-                    self.log.debug("DEBUG: Eject duration: %ss. Target: %s",
-                                   round(time.time() - self.eject_start_time,
-                                         2),
-                                   self.eject_in_progress_target.name)
-                except AttributeError:
-                    self.log.debug("DEBUG: Eject duration: %ss. Target: None",
-                                   round(time.time() - self.eject_start_time,
-                                         2))
+            try:
+                self.log.debug("DEBUG: Eject duration: %ss. Target: %s",
+                               round(self.machine.clock.get_time() - self.eject_start_time,
+                                     2),
+                               self.eject_in_progress_target.name)
+            except AttributeError:
+                self.log.debug("DEBUG: Eject duration: %ss. Target: None",
+                               round(self.machine.clock.get_time() - self.eject_start_time,
+                                     2))
 
     def _ball_left_device(self, balls, **kwargs):
         assert balls == 1
@@ -1343,9 +1341,9 @@ class BallDevice(Device):
 
         if self.debug:
             self.log.debug("Setting up eject confirmation")
-            self.eject_start_time = time.time()
+            self.eject_start_time = self.machine.clock.get_time()
             self.log.debug("Eject start time: %s", self.eject_start_time)
-            self.machine.events.add_handler('timer_tick', self._eject_status)
+            self.machine.clock.schedule_interval(self._eject_status, 0.25)
 
         timeout = self.config['eject_timeouts'][target]
         if timeout:
@@ -1506,7 +1504,7 @@ class BallDevice(Device):
 
         if self.debug:
             self.log.debug("Eject duration: %ss",
-                           time.time() - self.eject_start_time)
+                           self.machine.clock.get_time() - self.eject_start_time)
 
         if self.debug:
             self.log.debug("Confirmed successful eject")
@@ -1577,7 +1575,7 @@ class BallDevice(Device):
 
         if self.debug:
             self.log.debug("Eject duration: %ss",
-                           time.time() - self.eject_start_time)
+                           self.machine.clock.get_time() - self.eject_start_time)
 
         # cancel eject confirmations
         self._cancel_eject_confirmation()

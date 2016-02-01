@@ -1,5 +1,5 @@
 from tests.MpfTestCase import MpfTestCase
-
+from mock import MagicMock
 
 class TestPlatform(MpfTestCase):
 
@@ -12,7 +12,7 @@ class TestPlatform(MpfTestCase):
     def get_platform(self):
         return False
 
-    def test_platform_from_device(self):
+    def _test_platform_from_device(self):
         # tests that a platform can be added by a device, even if it's not
         # specified in the hardware section
 

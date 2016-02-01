@@ -5,7 +5,6 @@ states and posting events to the framework.
 
 import logging
 from collections import defaultdict
-import time
 
 from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.timing import Timing
@@ -48,7 +47,7 @@ class SwitchController(object):
             self.machine.config['mpf']['switch_tag_event'])
 
         # register for events
-        self.machine.events.add_handler('timer_tick', self._tick, 1000)
+        self.machine.clock.schedule_interval(self._tick, 0, 1000)
         self.machine.events.add_handler('init_phase_2',
                                         self._initialize_switches,
                                         1000)
@@ -217,22 +216,22 @@ class SwitchController(object):
         last changed state.
         """
 
-        return round((time.time() - self.switches[switch_name]['time']) * 1000.0, 0)
+        return round((self.machine.clock.get_time() - self.switches[switch_name]['time']) * 1000.0, 0)
 
     def secs_since_change(self, switch_name):
         """Returns the number of ms that have elapsed since this switch
         last changed state.
         """
 
-        return time.time() - self.switches[switch_name]['time']
+        return self.machine.clock.get_time() - self.switches[switch_name]['time']
 
     def set_state(self, switch_name, state=1, reset_time=False):
         """Sets the state of a switch."""
 
         if reset_time:
-            timestamp = 1
+            timestamp = -1
         else:
-            timestamp = time.time()
+            timestamp = self.machine.clock.get_time()
 
         self.switches.update({switch_name: {'state': state,
                                             'time': timestamp
@@ -374,7 +373,7 @@ class SwitchController(object):
                 if entry['ms']:
                     # This entry is for a timed switch, so add it to our
                     # active timed switch list
-                    key = time.time() + (entry['ms'] / 1000.0)
+                    key = self.machine.clock.get_time() + (entry['ms'] / 1000.0)
                     value = {'switch_action': str(name) + '-' + str(state),
                              'callback': entry['callback'],
                              'switch_name': name,
@@ -476,7 +475,7 @@ class SwitchController(object):
                     # figure out when this handler should fire based on the
                     # switch's original activation time.
                     key = (
-                    time.time() + ((ms - self.ms_since_change(switch_name))
+                    self.machine.clock.get_time() + ((ms - self.ms_since_change(switch_name))
                                    / 1000.0))
                     value = {'switch_action': entry_key,
                              'callback': callback,
@@ -490,7 +489,7 @@ class SwitchController(object):
                 if self.is_inactive(switch_name, 0) and (
                             self.ms_since_change(switch_name) < ms):
                     key = (
-                    time.time() + ((ms - self.ms_since_change(switch_name))
+                    self.machine.clock.get_time() + ((ms - self.ms_since_change(switch_name))
                                    / 1000.0))
                     value = {'switch_action': entry_key,
                              'callback': callback,
@@ -583,7 +582,7 @@ class SwitchController(object):
             return False
         return min(self.active_timed_switches.keys())
 
-    def _tick(self):
+    def _tick(self, dt):
         """Called once per machine tick.
 
         Checks the current list of active timed switches to see if it's
@@ -593,7 +592,7 @@ class SwitchController(object):
         """
 
         for k in list(self.active_timed_switches.keys()):
-            if k <= time.time():  # change to generator?
+            if k <= self.machine.clock.get_time():  # change to generator?
                 for entry in self.active_timed_switches[k]:
                     self.log.debug(
                         "Processing timed switch handler. Switch: %s "
@@ -607,3 +606,5 @@ class SwitchController(object):
                     else:
                         entry['callback'](**entry['callback_kwargs'])
                 del self.active_timed_switches[k]
+
+        self.machine.events._process_event_queue()

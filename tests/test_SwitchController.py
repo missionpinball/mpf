@@ -1,9 +1,5 @@
-import unittest
-
-from mpf.system.machine import MachineController
 from tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
-import time
+
 
 class TestSwitchController(MpfTestCase):
 
@@ -13,11 +9,10 @@ class TestSwitchController(MpfTestCase):
     def getMachinePath(self):
         return '../tests/machine_files/switch_controller/'
 
-
     def _callback(self):
          self.isActive = self.machine.switch_controller.is_active("s_test", ms=300)
 
-    def testIsActiveTimeing(self):
+    def test_is_active_timing(self):
         self.isActive = None
 
         self.machine.switch_controller.add_switch_handler(
@@ -29,3 +24,9 @@ class TestSwitchController(MpfTestCase):
         self.advance_time_and_run(3)
 
         self.assertEqual(True, self.isActive)
+
+    def test_initial_state(self):
+        # tests that when MPF starts, the initial states of switches that
+        # started in that state are read correctly.
+        self.assertFalse(self.machine.switch_controller.is_active('s_test',
+                                                                  1000))

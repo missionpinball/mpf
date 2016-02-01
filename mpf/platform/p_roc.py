@@ -17,7 +17,6 @@ https://github.com/preble/pyprocgame
 
 import logging
 import re
-import time
 import sys
 from copy import deepcopy
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
@@ -290,7 +289,7 @@ class HardwarePlatform(Platform):
         """Configures a hardware DMD connected to a classic P-ROC."""
         return PROCDMD(self.proc, self.machine)
 
-    def tick(self):
+    def tick(self, dt):
         """Checks the P-ROC for any events (switch state changes or notification
         that a DMD frame was updated).
 
@@ -874,7 +873,7 @@ class PROCDriver(DriverPlatformInterface):
         """
         return self.proc.driver_get_state(self.number)
 
-    def tick(self):
+    def tick(self, dt):
         pass
 
 
@@ -888,7 +887,7 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
     def off(self):
         """Disables (turns off) this driver."""
         self.proc.driver_disable(self.number)
-        self.last_time_changed = time.time()
+        self.last_time_changed = self.machine.clock.get_time()
 
     def on(self, brightness=255):
         """Enables (turns on) this driver."""
@@ -901,7 +900,7 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
             pass
             # patter rates of 10/1 through 2/9
 
-        self.last_time_changed = time.time()
+        self.last_time_changed = self.machine.clock.get_time()
 
         '''
         Koen's fade code he posted to pinballcontrollers:
@@ -1307,7 +1306,9 @@ class PROCDMD(object):
 
             self.proc.dmd_update_config(high_cycles=dmd_timing)
 
-        self.machine.events.add_handler('timer_tick', self.tick)
+        # Update DMD 30 times per second
+        # TODO: Add DMD update interval to config
+        self.machine.clock.schedule_interval(self.tick, 1/30.0)
 
     def update(self, data):
         """Updates the DMD with a new frame.
@@ -1322,7 +1323,7 @@ class PROCDMD(object):
             self.machine.log.warning("Received a DMD frame of length %s instead"
                                      "of 4096. Discarding...", len(data))
 
-    def tick(self):
+    def tick(self, dt):
         """Updates the physical DMD with the latest frame data. Meant to be
         called once per machine tick.
 

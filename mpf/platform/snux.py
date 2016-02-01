@@ -5,9 +5,7 @@ Mark Sunnucks's System 11 interface board.
 """
 
 import logging
-import time
 from mpf.system.tasks import DelayManager
-from mpf.system.timing import Timer
 
 
 class Snux(object):
@@ -53,7 +51,7 @@ class Snux(object):
     @property
     def a_side_busy(self):
         if (self.drivers_holding_a_side or
-                    self.a_side_done_time > time.time() or
+                    self.a_side_done_time > self.machine.clock.get_time() or
                     self.a_side_queue):
             return True
         else:
@@ -61,7 +59,7 @@ class Snux(object):
 
     @property
     def c_side_active(self):
-        if self.drivers_holding_c_side or self.c_side_done_time > time.time():
+        if self.drivers_holding_c_side or self.c_side_done_time > self.machine.clock.get_time():
             return True
         else:
             return False
@@ -124,10 +122,11 @@ class Snux(object):
                                         self._initialize_phase_2)
 
     def _initialize_phase_2(self):
-        self.machine.timing.add(
-            Timer(callback=self.flash_diag_led, frequency=0.5))
+        self.machine.clock.schedule_interval(self.flash_diag_led, 0.5)
 
-        self.machine.events.add_handler('timer_tick', self._tick)
+        # Schedule processing callback
+        # TODO: Make callback interval a config item
+        self.machine.clock.schedule_interval(self._tick, 0)
 
     def _validate_config(self):
         self.system11_config = self.machine.config_processor.process_config2(
@@ -137,7 +136,7 @@ class Snux(object):
         self.snux_config = self.machine.config_processor.process_config2(
             'snux', snux)
 
-    def _tick(self):
+    def _tick(self, dt):
         # Called based on the timer_tick event
         if self.a_side_queue:
             self._service_a_side()
@@ -146,7 +145,7 @@ class Snux(object):
         elif self.c_side_enabled and not self.c_side_active:
             self._enable_a_side()
 
-    def flash_diag_led(self):
+    def flash_diag_led(self, dt):
         self.diag_led.pulse(250)
 
     def configure_driver(self, config, device_type='coil'):
@@ -183,7 +182,7 @@ class Snux(object):
                       **driver_settings_overrides):
         """On system 11 machines, Switched drivers cannot be configured with
         autofire hardware rules.
-        
+
         """
         if driver_obj in self.a_drivers or driver_obj in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"
@@ -271,7 +270,7 @@ class Snux(object):
             if ms > 0:
                 driver.pulse(ms)
                 self.a_side_done_time = max(self.a_side_done_time,
-                    time.time() + (ms / 1000.0))
+                                            self.machine.clock.get_time() + (ms / 1000.0))
 
             elif ms == -1:
                 driver.enable()
@@ -326,7 +325,7 @@ class Snux(object):
             if ms > 0:
                 driver.pulse(ms)
                 self.c_side_done_time = max(self.c_side_done_time,
-                    time.time() + (ms / 1000.))
+                                            self.machine.clock.get_time() + (ms / 1000.))
             elif ms == -1:
                 driver.enable()
                 self.drivers_holding_c_side.add(driver)

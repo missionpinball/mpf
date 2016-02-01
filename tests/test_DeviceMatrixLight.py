@@ -1,6 +1,4 @@
 from tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
-import time
 
 
 class TestDeviceMatrixLight(MpfTestCase):
@@ -30,13 +28,13 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.machine.lights.light_01.on(128)
         self.assertEqual(128, self.machine.lights.light_01.state['brightness'])
         self.assertEqual(128, self.machine.lights.light_01.cache['brightness'])
-        self.assertEqual(time.time(), self.machine.lights.light_01.cache['start_time'])
+        self.assertEqual(self.machine.clock.get_time(), self.machine.lights.light_01.cache['start_time'])
         self.assertEqual(128, self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertEqual(0, self.machine.lights.light_01.state['priority'])
         self.machine.lights.light_02.on(255)
         self.assertEqual(255, self.machine.lights.light_02.state['brightness'])
         self.assertEqual(255, self.machine.lights.light_02.cache['brightness'])
-        self.assertEqual(time.time(), self.machine.lights.light_02.cache['start_time'])
+        self.assertEqual(self.machine.clock.get_time(), self.machine.lights.light_02.cache['start_time'])
         self.assertEqual(255, self.machine.lights.light_02.hw_driver.current_brightness)
         self.assertEqual(0, self.machine.lights.light_02.state['priority'])
 
@@ -44,13 +42,13 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.machine.lights.light_01.on(0)
         self.assertEqual(0, self.machine.lights.light_01.state['brightness'])
         self.assertEqual(0, self.machine.lights.light_01.cache['brightness'])
-        self.assertEqual(time.time(), self.machine.lights.light_01.cache['start_time'])
+        self.assertEqual(self.machine.clock.get_time(), self.machine.lights.light_01.cache['start_time'])
         self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertEqual(0, self.machine.lights.light_01.state['priority'])
         self.machine.lights.light_02.on(0)
         self.assertEqual(0, self.machine.lights.light_02.state['brightness'])
         self.assertEqual(0, self.machine.lights.light_02.cache['brightness'])
-        self.assertEqual(time.time(), self.machine.lights.light_02.cache['start_time'])
+        self.assertEqual(self.machine.clock.get_time(), self.machine.lights.light_02.cache['start_time'])
         self.assertEqual(0, self.machine.lights.light_02.hw_driver.current_brightness)
         self.assertEqual(0, self.machine.lights.light_02.state['priority'])
 
@@ -62,12 +60,12 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertEqual(0, self.machine.lights.light_01.state['brightness'])
 
         self.machine.lights.light_01.on(255, fade_ms=1000)
-        fade_start_time = time.time()
+        fade_start_time = self.machine.clock.get_time()
         self.assertEqual(0, self.machine.lights.light_01.state['brightness'])
         self.assertEqual(0, self.machine.lights.light_01.state['start_brightness'])
         self.assertEqual(255, self.machine.lights.light_01.state['destination_brightness'])
-        self.assertEqual(time.time(), self.machine.lights.light_01.state['start_time'])
-        self.assertEqual(time.time() + 1, self.machine.lights.light_01.state['destination_time'])
+        self.assertEqual(self.machine.clock.get_time(), self.machine.lights.light_01.state['start_time'])
+        self.assertEqual(self.machine.clock.get_time() + 1, self.machine.lights.light_01.state['destination_time'])
         self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertEqual(0, self.machine.lights.light_01.state['priority'])
         self.assertIsNotNone(self.machine.lights.light_01.fade_task)
@@ -152,7 +150,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertEqual(255, self.machine.lights.light_01.state['brightness'])
 
         self.machine.lights.light_01.on(0, fade_ms=1000)
-        fade_start_time = time.time()
+        fade_start_time = self.machine.clock.get_time()
         self.assertEqual(255, self.machine.lights.light_01.state['brightness'])
         self.assertEqual(255, self.machine.lights.light_01.state['start_brightness'])
         self.assertEqual(0, self.machine.lights.light_01.state['destination_brightness'])

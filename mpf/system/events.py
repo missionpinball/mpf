@@ -380,7 +380,7 @@ class EventManager(object):
 
         event = event.lower()
 
-        if self.debug and event != 'timer_tick':
+        if self.debug:
             # Use friendly_kwargs so the logger shows a "friendly" name of the
             # callback handler instead of the bound method object reference.
             friendly_kwargs = dict(kwargs)
@@ -393,7 +393,7 @@ class EventManager(object):
                            friendly_kwargs)
 
         self.event_queue.append((event, ev_type, callback, kwargs))
-        if self.debug and event != 'timer_tick':
+        if self.debug:
             if self.debug:
                 self.log.debug("============== EVENTS QUEUE =============")
                 for event in list(self.event_queue):
@@ -406,7 +406,7 @@ class EventManager(object):
 
         result = None
         queue = None
-        if self.debug and event != 'timer_tick':
+        if self.debug:
             # Show friendly callback name. See comment in post() above.
             friendly_kwargs = dict(kwargs)
             if 'callback' in kwargs:
@@ -432,7 +432,7 @@ class EventManager(object):
                 merged_kwargs = dict(list(handler[2].items()) + list(kwargs.items()))
 
                 # log if debug is enabled and this event is not the timer tick
-                if self.debug and event != 'timer_tick':
+                if self.debug:
                     try:
                         self.log.debug("%s (priority: %s) responding to event '%s'"
                                        " with args %s",
@@ -452,7 +452,7 @@ class EventManager(object):
                     # add a False result so our callback knows something failed
                     kwargs['ev_result'] = False
 
-                    if self.debug and event != 'timer_tick':
+                    if self.debug:
                         self.log.debug("Aborting future event processing")
 
                     break
@@ -460,7 +460,7 @@ class EventManager(object):
                 elif ev_type == 'relay' and type(result) is dict:
                     kwargs.update(result)
 
-        if self.debug and event != 'timer_tick':
+        if self.debug:
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
                            "Args: %s", event, ev_type, callback, kwargs)
 

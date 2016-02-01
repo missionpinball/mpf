@@ -3,13 +3,13 @@
 import pickle
 import logging
 import os
-import time
 import sys
 import queue
 
 import errno
 
 from mpf.system import *
+from mpf.system.clock import ClockBase
 from mpf.system.config import Config
 from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.device_manager import DeviceCollection
@@ -51,6 +51,7 @@ class MachineController(object):
         self.log.debug("Command line arguments: {}".format(self.options))
         self.verify_system_info()
 
+        self.clock = ClockBase()
         self.loop_start_time = 0
         self.tick_num = 0
         self.done = False
@@ -69,11 +70,11 @@ class MachineController(object):
         self.flag_bcp_reset_complete = False
         self.asset_loader_complete = False
 
-        self.delayRegistry = DelayManagerRegistry()
+        self.delayRegistry = DelayManagerRegistry(self)
         self.delay = DelayManager(self.delayRegistry)
 
         self.crash_queue = queue.Queue()
-        Task.create(self._check_crash_queue)
+        Task.create(self, self._check_crash_queue, interval=1.0)
 
         self.config = dict()
         self._load_mpf_config()
@@ -151,12 +152,13 @@ class MachineController(object):
         self.events.add_handler('quit', self.quit)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.quit)
-        self.events.add_handler('timer_tick', self._loading_tick)
+
+        self.clock.schedule_interval(self._loading_tick, 0.1)
 
     def _load_machine_vars(self):
         self.machine_var_data_manager = DataManager(self, 'machine_vars')
 
-        current_time = time.time()
+        current_time = self.clock.get_time()
 
         for name, settings in (
                 iter(self.machine_var_data_manager.get_data().items())):
@@ -172,7 +174,7 @@ class MachineController(object):
         try:
             crash = self.crash_queue.get(block=False)
         except queue.Empty:
-            yield 1000
+            pass
         else:
             self.log.critical("MPF Shutting down due to child thread crash")
             self.log.critical("Crash details: %s", crash)
@@ -471,7 +473,7 @@ class MachineController(object):
 
         self.default_platform.timer_initialize()
 
-        self.loop_start_time = time.time()
+        self.loop_start_time = self.clock.get_time()
 
         if self.default_platform.features['hw_timer']:
             self.default_platform.run_loop()
@@ -479,51 +481,36 @@ class MachineController(object):
             self._mpf_timer_run_loop()
 
     def _mpf_timer_run_loop(self):
-        #Main machine run loop with when the default platform interface
-        #specifies the MPF should control the main timer
-
-        start_time = time.time()
-        loops = 0
-        secs_per_tick = timing.Timing.secs_per_tick
-        sleep_sec = self.config['timing']['hw_thread_sleep_ms'] / 1000.0
-
-        self.default_platform.next_tick_time = time.time()
-
+        # Main machine run loop with when the default platform interface
+        # specifies the MPF should control the main timer
         try:
-            while self.done is False:
-                time.sleep(sleep_sec)
-                self.default_platform.tick()
-                loops += 1
-                if self.default_platform.next_tick_time <= time.time():  # todo change this
-                    self.timer_tick()
-                    self.default_platform.next_tick_time += secs_per_tick
-
+            while not self.done:
+                self.idle()
         except KeyboardInterrupt:
             pass
 
         self.log_loop_rate()
         self._platform_stop()
 
-        try:
-            self.log.info("Hardware loop rate: %s Hz",
-                          round(loops / (time.time() - start_time), 2))
-        except ZeroDivisionError:
-            self.log.info("Hardware loop rate: 0 Hz")
+    def process_frame(self):
+        '''This function is called after every frame. By default:
 
-    def timer_tick(self):
-        """Called to "tick" MPF at a rate specified by the machine Hz setting.
+           * it "ticks" the clock to the next frame.
+           * it reads all input and dispatches events.
+             window.
+        '''
 
-        This method is called by the MPF run loop or the platform run loop,
-        depending on the platform. (Some platforms drive the loop, and others
-        let MPF drive.)
+        # TODO: Replace the function call below
+        self.default_platform.tick(self.clock.frametime)
 
-        """
-        self.tick_num += 1  # used to calculate the loop rate when MPF exits
-        self.timing.timer_tick()  # notifies the timing module
-        self.events.post('timer_tick')  # sends the timer_tick system event
-        tasks.Task.timer_tick()  # notifies tasks
-        self.delayRegistry.timer_tick(self)
+        # Process events before processing the clock
         self.events._process_event_queue()
+
+        # update dt
+        self.clock.tick()
+
+        # tick before draw
+        self.clock.tick_draw()
 
     def _platform_stop(self):
         for platform in list(self.hardware_platforms.values()):
@@ -545,15 +532,9 @@ class MachineController(object):
 
     def log_loop_rate(self):
         self.log.info("Target MPF loop rate: %s Hz", timing.Timing.HZ)
+        self.log.info("Actual MPF loop rate: %s Hz", self.clock.get_fps())
 
-        try:
-            self.log.info("Actual MPF loop rate: %s Hz",
-                          round(self.tick_num /
-                                (time.time() - self.loop_start_time), 2))
-        except ZeroDivisionError:
-            self.log.info("Actual MPF loop rate: 0 Hz")
-
-    def _loading_tick(self):
+    def _loading_tick(self, dt):
         if not self.asset_loader_complete:
 
             if AssetManager.loader_queue.qsize():
@@ -583,7 +564,7 @@ class MachineController(object):
     def _reset_complete(self):
         self.log.debug('Reset Complete')
         self.events.post('reset_complete')
-        self.events.remove_handler(self._loading_tick)
+        self.clock.unschedule(self._loading_tick)
 
     def configure_debugger(self):
         pass
@@ -639,7 +620,7 @@ class MachineController(object):
                 disk_var['value'] = value
 
                 if self.machine_vars[name]['expire_secs']:
-                    disk_var['expire'] = (time.time() +
+                    disk_var['expire'] = (self.clock.get_time() +
                         self.machine_vars[name]['expire_secs'])
 
                 self.machine_var_data_manager.save_key(name, disk_var)
