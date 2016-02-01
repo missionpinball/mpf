@@ -33,10 +33,10 @@ class TestP3Roc(MpfTestCase):
     def test_pulse(self):
         # pulse coil A1-B1-2
         self.machine.coils.c_test.pulse()
-        # A1-B1-2 -> address 16 + 8 + 2 = 26 in P3-Roc
+        # A1-B1-2 -> address 16 + 8 + 2 = 26 + 8 for first dummy group -> 34in P3-Roc
         # for 23ms (from config)
         self.machine.coils.c_test.hw_driver.proc.driver_pulse.assert_called_with(
-            26, 23)
+            34, 23)
         assert not self.machine.coils.c_test.hw_driver.proc.driver_schedule.called
 
     def test_enable_exception(self):
@@ -46,9 +46,9 @@ class TestP3Roc(MpfTestCase):
 
     def test_allow_enable(self):
         self.machine.coils.c_test_allow_enable.enable()
-        # A1-B1-3 -> address 16 + 8 + 3 = 27 in P3-Roc
+        # A1-B1-3 -> address 16 + 8 + 3 = 27 + 8 for first dummy group -> 35 in P3-Roc
         self.machine.coils.c_test.hw_driver.proc.driver_schedule.assert_called_with(
-                number=27, cycle_seconds=0, now=True, schedule=0xffffffff)
+                number=35, cycle_seconds=0, now=True, schedule=0xffffffff)
 
     def test_hw_rule_pulse(self):
         self.machine.autofires.ac_slingshot_test.enable()
