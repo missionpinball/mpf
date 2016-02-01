@@ -9,22 +9,19 @@ More info on the P3-ROC hardware platform: http://pinballcontrollers.com/
 
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
-
 """
-# p3_roc.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import re
 import time
-import sys
+import math
 from copy import deepcopy
 
 from mpf.system.utility_functions import Util
+from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.system.rgb_color import RGBColor
 
 try:
     import pinproc
@@ -57,11 +54,10 @@ class HardwarePlatform(Platform):
         self.log.debug("Configuring P3-ROC hardware.")
 
         if not pinproc_imported:
-            self.log.error('Could not import "pinproc". Most likely you do not '
+            raise AssertionError('Could not import "pinproc". Most likely you do not '
                            'have libpinproc and/or pypinproc installed. You can'
                            ' run MPF in software-only "virtual" mode by using '
                            'the -x command like option for now instead.')
-            sys.exit()
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -92,7 +88,8 @@ class HardwarePlatform(Platform):
                 self.proc = pinproc.PinPROC(self.machine_type)
                 self.proc.reset(1)
             except IOError:
-                print "Retrying..."
+                self.log.warning("Failed to connect to P3-ROC. Will retry!")
+                time.sleep(.5)
 
         self.log.info("Successfully connected to P3-ROC")
 
@@ -109,11 +106,108 @@ class HardwarePlatform(Platform):
             or self.machine_type == pinproc.MachineTypeSternSAM\
             or self.machine_type == pinproc.MachineTypePDB
 
+
+
+        self.acceleration = [0] * 3
+        self.accelerometer_device = False
+
     def __repr__(self):
         return '<Platform.P3-ROC>'
 
+    def i2c_write8(self, address, register, value):
+        self.proc.write_data(7, address << 9 | register, value);
+
+    def i2c_read8(self, address, register):
+        return self.proc.read_data(7, address << 9 | register) & 0xFF;
+
+    def i2c_read16(self, address, register):
+        return self.proc.read_data(7, address << 9 | 1 << 8 | register);
+
     def stop(self):
         self.proc.reset(1)
+
+    def scale_accelerometer_to_g(self, raw_value):
+        # raw value is 0 to 16384 -> 14 bit
+        # scale is -2g to 2g (2 complement)
+        if (raw_value & (1 << 13)):
+            raw_value = raw_value - (1 << 14)
+
+        g_value = float(raw_value)/(1 << 12)
+
+        return g_value
+
+    def configure_accelerometer(self, device, number, useHighPass):
+        if number != "1":
+            raise AssertionError("P3-ROC only has one accelerometer. Use number 1")
+
+        self.accelerometer_device = device
+        self._configure_accelerometer(periodicRead=True, readWithHighPass=useHighPass, tiltInterrupt=False)
+
+    def _configure_accelerometer(self, periodicRead=False, tiltInterrupt=True, tiltThreshold=0.2, readWithHighPass=False):
+
+        enable = 0
+        if periodicRead:
+            # enable polling every 128ms
+            enable |= 0x0F
+
+        if tiltInterrupt:
+            # configure interrupt at P3-ROC
+            enable |= 0x1E00
+
+        # configure some P3-Roc registers
+        self.proc.write_data(6, 0x000, enable);
+
+        # CTRL_REG1 - set to standby
+        self.proc.write_data(6, 0x12A, 0);
+
+        if periodicRead:
+            # XYZ_DATA_CFG - enable/disable high pass filter, scale 0 to 2g
+            self.proc.write_data(6, 0x10E, 0x00 | (bool(readWithHighPass) * 0x10));
+
+
+        if tiltInterrupt:
+            # HP_FILTER_CUTOFF - cutoff at 2Hz
+            self.proc.write_data(6, 0x10F, 0x03);
+
+            # FF_TRANSIENT_COUNT - set debounce counter
+            # number of timesteps where the threshold has to be reached
+            # time step is 1.25ms
+            self.proc.write_data(6, 0x120, 1);
+
+            # transient_threshold * 0.063g
+            # Theoretically up to 8g
+            # Since we use low noise mode limited to 4g (value of 63)
+            transient_threshold_raw = int(math.ceil(float(tiltThreshold)/0.063))
+            if transient_threshold_raw > 63:
+                self.log.warning("Tilt Threshold is too high. Limiting to 4g")
+                transient_threshold_raw = 63
+
+            # TRANSIENT_THS - Set threshold (0-127)
+            self.proc.write_data(6, 0x11F, transient_threshold_raw & 0x7F);
+
+            # Set FF_TRANSIENT_CONFIG (0x1D)
+            # enable latching, all axis, no high pass filter bypass
+            self.proc.write_data(6, 0x11D, 0x1E);
+
+            # CTRL_REG4 - Enable transient interrupt
+            self.proc.write_data(6, 0x12D, 0x20);
+
+            # CTRL_REG5 - Enable transient interrupt (goes to INT1 by default)
+            self.proc.write_data(6, 0x12E, 0x20);
+
+        # CTRL_REG1 - set device to active and in low noise mode
+        # 800HZ output data rate
+        self.proc.write_data(6, 0x12A, 0x05);
+
+        # CTRL_REG2 - set no sleep, high resolution mode
+        self.proc.write_data(6, 0x12B, 0x02);
+
+
+        # for auto-polling of accelerometer every 128 ms (8 times a sec). set 0x0F
+        # disable polling + IRQ status addr FF_MT_SRC
+        self.proc.write_data(6, 0x000, 0x1E0F);
+        # flush data to proc
+        self.proc.flush()
 
     def configure_driver(self, config, device_type='coil'):
         """ Creates a P3-ROC driver.
@@ -138,9 +232,8 @@ class HardwarePlatform(Platform):
         proc_num = self.pdbconfig.get_proc_number(device_type,
                                                   str(config['number']))
         if proc_num == -1:
-            self.log.error("Coil %s cannot be controlled by the P3-ROC. "
-                           "Ignoring.", str(config['number']))
-            return
+            raise AssertionError("Coil %s cannot be controlled by the P3-ROC. ",
+                                 str(config['number']))
 
         if device_type in ['coil', 'flasher']:
             proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
@@ -185,9 +278,8 @@ class HardwarePlatform(Platform):
             proc_num = self.pdbconfig.get_proc_number('switch',
                                                       str(config['number']))
             if proc_num == -1:
-                self.log.error("Switch %s cannot be controlled by the P3-ROC. "
-                               "Ignoring.", str(config['number']))
-                return
+                raise AssertionError("Switch %s cannot be controlled by the "
+                                     "P3-ROC.", str(config['number']))
         else:
             proc_num = pinproc.decode(self.machine_type, str(config['number']))
 
@@ -268,10 +360,10 @@ class HardwarePlatform(Platform):
         nothing. It's included here in case it's called by mistake.
 
         """
-        self.log.error("An attempt was made to configure a physical DMD, but "
-                       "the P3-ROC does not support physical DMDs.")
+        raise AssertionError("An attempt was made to configure a physical DMD, "
+                             "but the P3-ROC does not support physical DMDs.")
 
-    def tick(self):
+    def tick(self, dt):
         """Checks the P3-ROC for any events (switch state changes).
 
         Also tickles the watchdog and flushes any queued commands to the P3-ROC.
@@ -298,6 +390,33 @@ class HardwarePlatform(Platform):
                 self.machine.switch_controller.process_switch(state=0,
                                                               num=event_value,
                                                               debounced=False)
+
+            # The P3-ROC will always send all three values sequentially.
+            # Therefore, we will trigger after the Z value
+            elif event_type == pinproc.EventTypeAccelerometerX:
+                self.acceleration[0] = event_value
+#                self.log.debug("Got Accelerometer value X. Value: %s", event_value)
+            elif event_type == pinproc.EventTypeAccelerometerY:
+                self.acceleration[1] = event_value
+#                self.log.debug("Got Accelerometer value Y. Value: %s", event_value)
+            elif event_type == pinproc.EventTypeAccelerometerZ:
+                self.acceleration[2] = event_value
+
+                # trigger here
+                if self.accelerometer_device:
+                    self.accelerometer_device.update_acceleration(
+                            self.scale_accelerometer_to_g(self.acceleration[0]),
+                            self.scale_accelerometer_to_g(self.acceleration[1]),
+                            self.scale_accelerometer_to_g(self.acceleration[2]))
+#                self.log.debug("Got Accelerometer value Z. Value: %s", event_value)
+
+            # The P3-ROC sends interrupts when
+            elif event_type == pinproc.EventTypeAccelerometerIRQ:
+                self.log.debug("Got Accelerometer value IRQ. Value: %s", event_value)
+                # trigger here
+                if self.accelerometer_device:
+                    self.accelerometer_device.received_hit()
+
             else:
                 self.log.warning("Received unrecognized event from the P3-ROC. "
                                  "Type: %s, Value: %s", event_type, event_value)
@@ -480,7 +599,7 @@ class HardwarePlatform(Platform):
                                      {'notifyHost': True,
                                       'reloadActive': False}, [])
 
-        for entry in self.hw_switch_rules.keys():  # slice for copy
+        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(self.machine.switches.number(sw_num).name):
 
                 # disable any drivers from this rule which are active now
@@ -495,7 +614,7 @@ class HardwarePlatform(Platform):
         # appropriately.
 
 
-class PDBLED(object):
+class PDBLED(RGBLEDPlatformInterface):
     """Represents an RGB LED connected to a PD-LED board."""
 
     def __init__(self, board, address, proc_driver, invert=False):
@@ -515,52 +634,27 @@ class PDBLED(object):
         """Instantly sets this LED to the color passed.
 
         Args:
-            color: a 3-item list of integers representing R, G, and B values,
-            0-255 each.
+            color: an RGBColor object
         """
 
         #self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
         #               self.board, self.address, color)
 
-        self.proc.led_color(self.board, self.address[0],
-                            self.normalize_color(color[0]))
-        self.proc.led_color(self.board, self.address[1],
-                            self.normalize_color(color[1]))
-        self.proc.led_color(self.board, self.address[2],
-                            self.normalize_color(color[2]))
-
-    def fade(self, color, fade_ms):
-        # todo
-        # not implemented. For now we'll just immediately set the color
-        self.color(color, fade_ms)
+        self.proc.led_color(self.board, self.address[0], color.red)
+        self.proc.led_color(self.board, self.address[1], color.green)
+        self.proc.led_color(self.board, self.address[2], color.blue)
 
     def disable(self):
         """Disables (turns off) this LED instantly. For multi-color LEDs it
         turns all elements off.
         """
-
-        self.proc.led_color(self.board, self.address[0],
-                            self.normalize_color(0))
-        self.proc.led_color(self.board, self.address[1],
-                            self.normalize_color(0))
-        self.proc.led_color(self.board, self.address[2],
-                            self.normalize_color(0))
+        self.color(RGBColor())
 
     def enable(self):
         """Enables (turns on) this LED instantly. For multi-color LEDs it turns
         all elements on.
         """
-
-        self.color(self.normalize_color(255),
-                   self.normalize_color(255),
-                   self.normalize_color(255)
-                   )
-
-    def normalize_color(self, color):
-        if self.invert:
-            return 255-color
-        else:
-            return color
+        self.color(RGBColor('White'))
 
 
 class PDBSwitch(object):
@@ -722,7 +816,7 @@ class PROCSwitch(object):
         self.number = number
 
 
-class PROCDriver(object):
+class PROCDriver(DriverPlatformInterface):
     """ Base class for drivers connected to a P3-ROC. This class is used for all
     drivers, regardless of whether they're connected to a P-ROC driver board
     (such as the PD-16 or PD-8x8) or an OEM driver board.
@@ -856,10 +950,9 @@ class PROCDriver(object):
 
             if not ('allow_enable' in self.driver_settings and
                     self.driver_settings['allow_enable']):
-                self.log.warning("Received a command to enable this coil "
-                                 "without pwm, but 'allow_enable' has not been"
-                                 "set to True in this coil's configuration.")
-                return
+                raise AssertionError("Received a command to enable this coil "
+                                     "without pwm, but 'allow_enable' has not been"
+                                     "set to True in this coil's configuration.")
 
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
@@ -892,7 +985,7 @@ class PROCDriver(object):
         pass
 
 
-class PROCMatrixLight(object):
+class PROCMatrixLight(MatrixLightPlatformInterface):
 
     def __init__(self, number, proc_driver):
         self.log = logging.getLogger('PROCMatrixLight')
@@ -902,9 +995,9 @@ class PROCMatrixLight(object):
     def off(self):
         """Disables (turns off) this driver."""
         self.proc.driver_disable(self.number)
-        self.last_time_changed = time.time()
+        self.last_time_changed = self.machine.clock.get_time()
 
-    def on(self, brightness=255, fade_ms=0, start=0):
+    def on(self, brightness=255):
         """Enables (turns on) this driver."""
         if brightness >= 255:
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
@@ -915,7 +1008,7 @@ class PROCMatrixLight(object):
             pass
             # patter rates of 10/1 through 2/9
 
-        self.last_time_changed = time.time()
+        self.last_time_changed = self.machine.clock.get_time()
 
         '''
         Koen's fade code he posted to pinballcontrollers:
@@ -1030,7 +1123,7 @@ class PDBConfig(object):
         # Create a list of indexes.  The PDB banks will be mapped into this
         # list. The index of the bank is used to calculate the P3-ROC driver
         # number for each driver.
-        num_proc_banks = pinproc.DriverCount/8
+        num_proc_banks = pinproc.DriverCount//8
         self.indexes = [99] * num_proc_banks
 
         self.initialize_drivers(proc)
@@ -1052,6 +1145,8 @@ class PDBConfig(object):
                                             enable,
                                             True)
 
+            self.indexes[group_ctr] = group_ctr
+
         group_ctr += 1
 
         # Process lamps first. The P3-ROC can only control so many drivers
@@ -1067,9 +1162,9 @@ class PDBConfig(object):
             # (need microsecond resolution).  Instead of doing crazy logic here
             # for a case that probably won't happen, just ignore these banks.
             if group_ctr >= num_proc_banks or lamp_dict['sink_bank'] >= 16:
-                self.log.error("Lamp matrix banks can't be mapped to index "
-                                  "%d because that's outside of the banks the "
-                                  "P3-ROC can control.", lamp_dict['sink_bank'])
+                raise AssertionError("Lamp matrix banks can't be mapped to index "
+                                     "%d because that's outside of the banks the "
+                                     "P3-ROC can control.", lamp_dict['sink_bank'])
             else:
                 self.log.debug("Driver group %02d (lamp sink): slow_time=%d "
                                  "enable_index=%d row_activate_index=%d "
@@ -1097,6 +1192,8 @@ class PDBConfig(object):
             # P3-ROC's driver count, which will force the drivers to be created
             # as VirtualDrivers. Appending the bank avoids conflicts when
             # group_ctr gets too high.
+            if coil_bank in self.indexes:
+                continue
 
             if group_ctr >= num_proc_banks or coil_bank >= 32:
                 self.log.warning("Driver group %d mapped to driver index"
@@ -1289,29 +1386,3 @@ def decode_pdb_address(addr, aliases=[]):
 
     else:
         raise ValueError('PDB address delimeter (- or /) not found.')
-
-
-# The MIT License (MIT)
-
-# Oringal code on which this module was based:
-# Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

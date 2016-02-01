@@ -1,12 +1,5 @@
 """MPF plugin which implements Logic Blocks"""
 
-# logic_blocks.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
-
 import logging
 
 from mpf.system.tasks import DelayManager
@@ -25,8 +18,9 @@ class LogicBlocks(object):
 
         # Tell the mode controller that it should look for LogicBlock items in
         # modes.
-        self.machine.mode_controller.register_start_method(self._process_config,
-                                                 'logic_blocks')
+        self.machine.mode_controller.register_start_method(
+            self._process_config,
+            'logic_blocks')
 
         # Process game-wide (i.e. not in modes) logic blocks
         self.machine.events.add_handler('player_add_success',
@@ -50,9 +44,10 @@ class LogicBlocks(object):
         player.uvars['logic_blocks'] = set()
 
         if 'logic_blocks' in self.machine.config:
-            self._create_logic_blocks(config=self.machine.config['logic_blocks'],
-                                     player=player,
-                                     enable=False)
+            self._create_logic_blocks(
+                config=self.machine.config['logic_blocks'],
+                player=player,
+                enable=False)
 
     def _player_turn_start(self, player, **kwargs):
 
@@ -74,8 +69,8 @@ class LogicBlocks(object):
         self.log.debug("Processing LogicBlock configuration.")
 
         blocks_added = self._create_logic_blocks(config=config,
-                                                player=self.machine.game.player,
-                                                enable=enable)
+                                                 player=self.machine.game.player,
+                                                 enable=enable)
 
         if mode:
             for block in blocks_added:
@@ -153,7 +148,7 @@ class LogicBlock(object):
                 'logicblock_' + self.name + '_complete'])
         else:
             self.config['events_when_complete'] = Util.string_to_list(
-                config['events_when_complete'])
+                    config['events_when_complete'])
 
     def __repr__(self):
         return '<LogicBlock.{}>'.format(self.name)
@@ -170,19 +165,19 @@ class LogicBlock(object):
         # Register for the events to enable, disable, and reset this LogicBlock
         for event in self.config['enable_events']:
             self.handler_keys.add(
-                self.machine.events.add_handler(event, self.enable))
+                    self.machine.events.add_handler(event, self.enable))
 
         for event in self.config['disable_events']:
             self.handler_keys.add(
-                self.machine.events.add_handler(event, self.disable))
+                    self.machine.events.add_handler(event, self.disable))
 
         for event in self.config['reset_events']:
             self.handler_keys.add(
-                self.machine.events.add_handler(event, self.reset))
+                    self.machine.events.add_handler(event, self.reset))
 
         for event in self.config['restart_events']:
             self.handler_keys.add(
-                self.machine.events.add_handler(event, self.restart))
+                    self.machine.events.add_handler(event, self.restart))
 
     def _remove_all_event_handlers(self):
         for key in self.handler_keys:
@@ -267,9 +262,9 @@ class Counter(LogicBlock):
         self.log = logging.getLogger('Counter.' + name)
         self.log.debug("Creating Counter LogicBlock")
 
-        super(Counter, self).__init__(machine, name, player, config)
+        super().__init__(machine, name, player, config)
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.ignore_hits = False
         self.hit_value = -1
@@ -308,16 +303,16 @@ class Counter(LogicBlock):
         """Enables this counter. Automatically called when one of the
         'enable_event's is posted. Can also manually be called.
         """
-        super(Counter, self).enable()
+        super().enable()
         self.machine.events.remove_handler(self.hit)  # prevents multiples
 
         for event in self.config['count_events']:
             self.handler_keys.add(
-                self.machine.events.add_handler(event, self.hit))
+                    self.machine.events.add_handler(event, self.hit))
 
     def reset(self, **kwargs):
         """Resets the hit progress towards completion"""
-        super(Counter, self).reset(**kwargs)
+        super().reset(**kwargs)
         self.player[self.config['player_variable']] = (
             self.config['starting_count'])
 
@@ -334,18 +329,19 @@ class Counter(LogicBlock):
             if self.config['count_complete_value'] is not None:
 
                 if (self.config['direction'] == 'up' and
-                        self.player[self.config['player_variable']] >=
-                        self.config['count_complete_value']):
+                            self.player[self.config['player_variable']] >=
+                            self.config['count_complete_value']):
                     self.complete()
 
                 elif (self.config['direction'] == 'down' and
-                        self.player[self.config['player_variable']] <=
-                        self.config['count_complete_value']):
+                              self.player[self.config['player_variable']] <=
+                              self.config['count_complete_value']):
                     self.complete()
 
             if self.config['event_when_hit']:
                 self.machine.events.post(self.config['event_when_hit'],
-                    count=self.player[self.config['player_variable']])
+                                         count=self.player[
+                                             self.config['player_variable']])
 
             if self.config['multiple_hit_window']:
                 self.log.debug("Beginning Ignore Hits")
@@ -372,7 +368,7 @@ class Accrual(LogicBlock):
         self.log = logging.getLogger('Accrual.' + name)
         self.log.debug("Creating Accrual LogicBlock")
 
-        super(Accrual, self).__init__(machine, name, player, config)
+        super().__init__(machine, name, player, config)
 
         config_spec = '''
                         events: list_of_lists
@@ -396,18 +392,18 @@ class Accrual(LogicBlock):
         """Enables this accrual. Automatically called when one of the
         'enable_events' is posted. Can also manually be called.
         """
-        super(Accrual, self).enable()
+        super().enable()
         self.machine.events.remove_handler(self.hit)  # prevents multiples
 
         for entry_num in range(len(self.config['events'])):
             for event in self.config['events'][entry_num]:
                 self.handler_keys.add(
-                    self.machine.events.add_handler(event, self.hit,
-                                                    step=entry_num))
+                        self.machine.events.add_handler(event, self.hit,
+                                                        step=entry_num))
 
     def reset(self, **kwargs):
         """Resets the hit progress towards completion"""
-        super(Accrual, self).reset(**kwargs)
+        super().reset(**kwargs)
 
         self.player[self.config['player_variable']] = (
             [False] * len(self.config['events']))
@@ -442,7 +438,7 @@ class Sequence(LogicBlock):
         self.log = logging.getLogger('Sequence.' + name)
         self.log.debug("Creating Sequence LogicBlock")
 
-        super(Sequence, self).__init__(machine, name, player, config)
+        super().__init__(machine, name, player, config)
 
         config_spec = '''
                         events: list_of_lists
@@ -452,7 +448,7 @@ class Sequence(LogicBlock):
                                             source=self.config)
 
         if 'player_variable' not in config:
-                self.config['player_variable'] = self.name + '_step'
+            self.config['player_variable'] = self.name + '_step'
 
         if not self.config['persist_state']:
             self.player[self.config['player_variable']] = 0
@@ -467,7 +463,7 @@ class Sequence(LogicBlock):
 
         Note the step numbers are zero-based.
         """
-        super(Sequence, self).enable()
+        super().enable()
 
         if step:
             self.player[self.config['player_variable']] = step
@@ -485,7 +481,7 @@ class Sequence(LogicBlock):
         for event in (self.config['events']
                       [self.player[self.config['player_variable']]]):
             self.handler_keys.add(
-                self.machine.events.add_handler(event, self.hit))
+                    self.machine.events.add_handler(event, self.hit))
 
     def hit(self, **kwargs):
         """Increases the hit progress towards completion. Automatically called
@@ -499,40 +495,17 @@ class Sequence(LogicBlock):
         self.player[self.config['player_variable']] += 1
 
         if self.player[self.config['player_variable']] >= (
-            len(self.config['events'])):
+                len(self.config['events'])):
             self.complete()
         else:
             # add the handlers for the new current step
             for event in (self.config['events']
                           [self.player[self.config['player_variable']]]):
                 self.handler_keys.add(
-                    self.machine.events.add_handler(event, self.hit))
+                        self.machine.events.add_handler(event, self.hit))
 
     def reset(self, **kwargs):
         """Resets the sequence back to the first step."""
 
-        super(Sequence, self).reset(**kwargs)
+        super().reset(**kwargs)
         self.player[self.config['player_variable']] = 0
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

@@ -1,10 +1,5 @@
 """ Contains the Mode and ModeTimers parent classes"""
-# modes.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/mpf
 import copy
 import logging
 
@@ -29,7 +24,7 @@ class Mode(object):
 
         self.log = logging.getLogger('Mode.' + name)
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.priority = 0
         self._active = False
@@ -62,7 +57,7 @@ class Mode(object):
         player in the '_restart_modes_on_next_ball' untracked player variable.
         '''
 
-        for asset_manager in self.machine.asset_managers.values():
+        for asset_manager in list(self.machine.asset_managers.values()):
 
             config_data = self.config.get(asset_manager.config_section, dict())
 
@@ -116,7 +111,7 @@ class Mode(object):
 
             if this_section:
                 if type(this_section) is dict:
-                    for device, settings in this_section.iteritems():
+                    for device, settings in this_section.items():
                         self.config[section][device] = (
                             self.machine.config_processor.process_config2(
                                 section, settings))
@@ -318,10 +313,10 @@ class Mode(object):
         self.log.debug("Scanning config for mode-based devices")
 
         for collection_name, device_class in (
-                self.machine.device_manager.device_classes.iteritems()):
+                iter(self.machine.device_manager.device_classes.items())):
             if device_class.config_section in self.config:
                 for device, settings in (
-                        self.config[device_class.config_section].iteritems()):
+                        iter(self.config[device_class.config_section].items())):
 
                     collection = getattr(self.machine, collection_name)
 
@@ -456,7 +451,7 @@ class Mode(object):
     def _setup_timers(self):
         # config is localized
 
-        for timer, settings in self.config['timers'].iteritems():
+        for timer, settings in self.config['timers'].items():
 
             self.timers[timer] = ModeTimer(machine=self.machine, mode=self,
                                            name=timer, config=settings)
@@ -464,12 +459,12 @@ class Mode(object):
         return self._kill_timers
 
     def _start_timers(self):
-        for timer in self.timers.values():
+        for timer in list(self.timers.values()):
             if timer.running:
                 timer.start()
 
     def _kill_timers(self, ):
-        for timer in self.timers.values():
+        for timer in list(self.timers.values()):
             timer.kill()
 
         self.timers = dict()
@@ -526,7 +521,7 @@ class ModeTimer(object):
         self.timer = None
         self.bcp = False
         self.event_keys = set()
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
         self.log = None
         self.debug = False
 
@@ -764,7 +759,7 @@ class ModeTimer(object):
         if pause_secs > 0:
             self.delay.add(name='pause', ms=pause_secs, callback=self.start)
 
-    def timer_complete(self):
+    def timer_complete(self, **kwargs):
         """Automatically called when this timer completes. Posts the
         'timer_<name>_complete' event. Can be manually called to mark this timer
         as complete.
@@ -797,8 +792,8 @@ class ModeTimer(object):
             self.reset()
             self.start()
 
-    def _timer_tick(self):
-        # Automatically called by the sytem timer each tick
+    def _timer_tick(self, dt):
+        # Automatically called by the system clock each tick
 
         if self.debug:
             self.log.debug("Timer Tick")
@@ -835,10 +830,9 @@ class ModeTimer(object):
         """Adds ticks to this timer.
 
         Args:
-            Args:
             timer_value: The number of ticks you want to add to this timer's
                 current value.
-            **kwargs: Not used in this method. Only exists since this method is
+            kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
@@ -867,10 +861,10 @@ class ModeTimer(object):
         self._check_for_done()
 
     def subtract_time(self, timer_value, **kwargs):
-        """Subracts ticks from this timer.
+        """Subtracts ticks from this timer.
 
         Args:
-            timer_value: The numebr of ticks you want to subtract from this
+            timer_value: The number of ticks you want to subtract from this
                 timer's current value.
             **kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
@@ -901,9 +895,9 @@ class ModeTimer(object):
 
         if self.debug:
             self.log.debug("Checking to see if timer is done. Ticks: %s, End "
-                          "Value: %s, Direction: %s",
-                          self.mode.player[self.tick_var], self.end_value,
-                          self.direction)
+                           "Value: %s, Direction: %s",
+                           self.mode.player[self.tick_var], self.end_value,
+                           self.direction)
 
         if (self.direction == 'up' and self.end_value is not None and
                 self.mode.player[self.tick_var] >= self.end_value):
@@ -924,15 +918,14 @@ class ModeTimer(object):
         return False
 
     def _create_system_timer(self):
-        # Creates the system timer which drives this mode timer's tick method.
+        # Creates the clock event which drives this mode timer's tick method.
         self._remove_system_timer()
-        self.timer = Timer(callback=self._timer_tick, frequency=self.tick_secs)
-        self.machine.timing.add(self.timer)
+        self.timer = self.machine.clock.schedule_interval(self._timer_tick, self.tick_secs)
 
     def _remove_system_timer(self):
-        # Removes the system timer associated with this mode timer.
+        # Removes the clock event associated with this mode timer.
         if self.timer:
-            self.machine.timing.remove(self.timer)
+            self.machine.clock.unschedule(self.timer)
             self.timer = None
 
     def change_tick_interval(self, change=0.0, **kwargs):
@@ -995,26 +988,3 @@ class ModeTimer(object):
 
         self.stop()
         self._remove_control_events()
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

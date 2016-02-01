@@ -1,21 +1,13 @@
 """Contains the hardware interface and drivers for the FAST Pinball platform
 hardware, including the FAST Core and WPC controllers as well as FAST I/O
 boards.
-
 """
-
-# fast.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import time
 import sys
 import threading
-import Queue
+import queue
 import traceback
 import io
 from distutils.version import StrictVersion
@@ -24,6 +16,11 @@ from copy import deepcopy
 from mpf.system.platform import Platform
 from mpf.system.config import Config
 from mpf.system.utility_functions import Util
+from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platform.interfaces.gi_platform_interface import GIPlatformInterface
+from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.system.rgb_color import RGBColor
 
 try:
     import serial
@@ -39,7 +36,7 @@ IO_MIN_FW = '0.87'
 
 DMD_LATEST_FW = '0.88'
 NET_LATEST_FW = '0.90'
-RGB_LATEST_FW = '0.87'
+RGB_LATEST_FW = '0.88'
 IO_LATEST_FW = '0.89'
 
 
@@ -79,7 +76,7 @@ class HardwarePlatform(Platform):
         self.rgb_connection = None
         self.fast_nodes = list()
         self.connection_threads = set()
-        self.receive_queue = Queue.Queue()
+        self.receive_queue = queue.Queue()
         self.fast_leds = set()
         self.flag_led_tick_registered = False
         self.fast_io_boards = list()
@@ -92,6 +89,7 @@ class HardwarePlatform(Platform):
                     watchdog: ms|1000
                     default_debounce_open: ms|30
                     default_debounce_close: ms|30
+                    hardware_led_fade_time: ms|0
                     debug: boolean|False
                     '''
 
@@ -302,14 +300,12 @@ class HardwarePlatform(Platform):
     def process_received_message(self, msg):
         """Sends an incoming message from the FAST controller to the proper
         method for servicing.
-
         """
-
         if msg[2:3] == ':':
             cmd = msg[0:2]
-            payload = msg[3:].replace('\r','')
+            payload = msg[3:].replace('\r', '')
         else:
-            self.log.warning("Received maformed message: %s", msg)
+            self.log.warning("Received malformed message: %s", msg)
             return
 
         # Can't use try since it swallows too many errors for now
@@ -321,13 +317,13 @@ class HardwarePlatform(Platform):
                              "development)", msg)
 
     def _connect_to_hardware(self):
-        # Connect to each port from the config. This procuess will cause the
+        # Connect to each port from the config. This process will cause the
         # connection threads to figure out which processor they've connected to
         # and to register themselves.
         for port in self.config['ports']:
             self.connection_threads.add(SerialCommunicator(machine=self.machine,
-                platform=self, port=port, baud=self.config['baud'],
-                send_queue=Queue.Queue(), receive_queue=self.receive_queue))
+                                                           platform=self, port=port, baud=self.config['baud'],
+                                                           send_queue=queue.Queue(), receive_queue=self.receive_queue))
 
     def register_processor_connection(self, name, communicator):
         """Once a communication link has been established with one of the
@@ -336,18 +332,18 @@ class HardwarePlatform(Platform):
 
         This is a separate method since we don't know which processor is on
         which serial port ahead of time.
-
         """
-
         if name == 'DMD':
             self.dmd_connection = communicator
         elif name == 'NET':
             self.net_connection = communicator
         elif name == 'RGB':
             self.rgb_connection = communicator
+            self.rgb_connection.send('RF:0')
             self.rgb_connection.send('RA:000000')  # turn off all LEDs
+            self.rgb_connection.send('RF:' + Util.int_to_hex_string(self.config['hardware_led_fade_time']))
 
-    def update_leds(self):
+    def update_leds(self, dt):
         """Updates all the LEDs connected to a FAST controller. This is done
         once per game loop for efficiency (i.e. all LEDs are sent as a single
         update rather than lots of individual ones).
@@ -355,25 +351,18 @@ class HardwarePlatform(Platform):
         Also, every LED is updated every loop, even if it doesn't change. This
         is in case some interference causes a LED to change color. Since we
         update every loop, it will only be the wrong color for one tick.
-
         """
-
-        msg = 'RS:'
-
-        for led in self.fast_leds:
-            msg += (led.number + led.current_color + ',')  # todo change to join
-
-        msg = msg[:-1]  # trim the final comma
-
+        msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in self.fast_leds])
         self.rgb_connection.send(msg)
 
     def get_hw_switch_states(self):
         self.hw_switch_data = None
         self.net_connection.send('SA:')
 
+        self.tick(0.01)
         while not self.hw_switch_data:
             time.sleep(.01)
-            self.tick()
+            self.tick(0.01)
 
         return self.hw_switch_data
 
@@ -564,7 +553,8 @@ class HardwarePlatform(Platform):
             sys.exit()
 
         if not self.flag_led_tick_registered:
-            self.machine.events.add_handler('timer_tick', self.update_leds)
+            # Update leds every frame
+            self.machine.clock.schedule_interval(self.update_leds, 0)
             self.flag_led_tick_registered = True
 
         # if the LED number is in <channel> - <led> format, convert it to a
@@ -635,7 +625,7 @@ class HardwarePlatform(Platform):
     def null_dmd_sender(self, *args, **kwargs):
         pass
 
-    def tick(self):
+    def tick(self, dt):
         while not self.receive_queue.empty():
             self.process_received_message(self.receive_queue.get(False))
 
@@ -765,7 +755,7 @@ class HardwarePlatform(Platform):
         sw_num = self.machine.switches[sw_name].number
 
         # find the rule(s) based on this switch
-        coils = [k for k, v in self.hw_rules.iteritems() if v['switch'] == sw_num]
+        coils = [k for k, v in self.hw_rules.items() if v['switch'] == sw_num]
 
         self.log.debug("Clearing HW Rule for switch: %s %s, coils: %s", sw_name,
                        sw_num, coils)
@@ -808,7 +798,7 @@ class FASTSwitch(object):
         self.send(cmd)
 
 
-class FASTDriver(object):
+class FASTDriver(DriverPlatformInterface):
     """Base class for drivers connected to a FAST Controller.
 
     """
@@ -974,7 +964,7 @@ class FASTDriver(object):
 
                 cmd = (self.driver_settings['config_cmd'] +
                        self.driver_settings['number'] +
-                      ',C1,00,18,' +
+                       ',C1,00,18,' +
                        self.driver_settings['pulse_ms'] + ',' +
                        self.driver_settings['pwm1'] + ',' +
                        self.driver_settings['pwm2'] + ',' +
@@ -998,10 +988,10 @@ class FASTDriver(object):
         if self.autofire:
             cmd = (self.driver_settings['trigger_cmd'] +
                    self.driver_settings['number'] + ',' +
-                  '01')
+                   '01')
             if milliseconds:
                 self.log.debug("Received command to pulse driver for %sms, but"
-                              "this driver is configured with an autofire rule"
+                               "this driver is configured with an autofire rule"
                                ", so that pulse value will be used instead.")
         else:
             cmd = (self.driver_settings['config_cmd'] +
@@ -1030,7 +1020,8 @@ class FASTDriver(object):
             self.log.debug("Re-enabling auto fire mode: %s", cmd)
             self.send(cmd)
 
-class FASTGIString(object):
+
+class FASTGIString(GIPlatformInterface):
     def __init__(self, number, sender):
         """A FAST GI string in a WPC machine.
 
@@ -1044,9 +1035,9 @@ class FASTGIString(object):
     def off(self):
         self.log.debug("Turning Off GI String")
         self.send('GI:' + self.number + ',00')
-        self.last_time_changed = time.time()
+        self.last_time_changed = self.machine.clock.get_time()
 
-    def on(self, brightness=255, fade_ms=0, start=0):
+    def on(self, brightness=255):
         if brightness >= 255:
             self.log.debug("Turning On GI String")
             self.send('GI:' + self.number + ',FF')
@@ -1056,10 +1047,10 @@ class FASTGIString(object):
             brightness = str(hex(brightness))[2:]
             self.send('GI:' + self.number + ',' + brightness)
 
-        self.last_time_changed = time.time()
+        self.last_time_changed = self.machine.clock.get_time()
 
 
-class FASTMatrixLight(object):
+class FASTMatrixLight(MatrixLightPlatformInterface):
 
     def __init__(self, number, sender):
         self.log = logging.getLogger('FASTMatrixLight')
@@ -1069,9 +1060,9 @@ class FASTMatrixLight(object):
     def off(self):
         """Disables (turns off) this matrix light."""
         self.send('L1:' + self.number + ',00')
-        self.last_time_changed = time.time()
+        self.last_time_changed = self.machine.clock.get_time()
 
-    def on(self, brightness=255, fade_ms=0, start=0):
+    def on(self, brightness=255):
         """Enables (turns on) this driver."""
         if brightness >= 255:
             self.send('L1:' + self.number + ',FF')
@@ -1081,55 +1072,94 @@ class FASTMatrixLight(object):
             pass
             # patter rates of 10/1 through 2/9
 
-        self.last_time_changed = time.time()
+        self.last_time_changed = self.machine.clock.get_time()
 
 
-class FASTDirectLED(object):
-
+class FASTDirectLED(RGBLEDPlatformInterface):
+    """
+    Represents a single RGB LED connected to the Fast hardware platform
+    """
     def __init__(self, number):
         self.log = logging.getLogger('FASTLED')
         self.number = number
+        self._color_order_function = FASTDirectLED._color_rgb
+        self._current_color = '000000'
 
-        self.current_color = '000000'
-
-        # All FAST LEDs are 3 element RGB
+        # All FAST LEDs are 3 element RGB and are set using hex strings
 
         self.log.debug("Creating FAST RGB LED at hardware address: %s",
                        self.number)
 
-    def hex_to_rgb(self, value):
-        lv = len(value)
-        return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
+    @property
+    def color_order(self):
+        return {
+            FASTDirectLED._color_rgb: 'rgb',
+            FASTDirectLED._color_rbg: 'rbg',
+            FASTDirectLED._color_grb: 'grb',
+            FASTDirectLED._color_gbr: 'gbr',
+            FASTDirectLED._color_bgr: 'bgr',
+            FASTDirectLED._color_brg: 'brg'
+        }.get(self._color_order_function, 'error')
 
-    def rgb_to_hex(self, rgb):
-        return '%02x%02x%02x' % (rgb[0], rgb[1], rgb[2])
+    @color_order.setter
+    def color_order(self, order):
+        self._color_order_function = FASTDirectLED._determine_color_order_function(order)
+
+    @staticmethod
+    def _determine_color_order_function(order):
+        return {
+            'rgb': FASTDirectLED._color_rgb,
+            'rbg': FASTDirectLED._color_rbg,
+            'grb': FASTDirectLED._color_grb,
+            'gbr': FASTDirectLED._color_gbr,
+            'bgr': FASTDirectLED._color_bgr,
+            'brg': FASTDirectLED._color_brg
+        }.get(order, FASTDirectLED._color_rgb)
+
+    @staticmethod
+    def _color_rgb(color):
+        return color.hex
+
+    @staticmethod
+    def _color_rbg(color):
+        return RGBColor.rgb_to_hex((color.red, color.blue, color.green))
+
+    @staticmethod
+    def _color_grb(color):
+        return RGBColor.rgb_to_hex((color.green, color.red, color.blue))
+
+    @staticmethod
+    def _color_gbr(color):
+        return RGBColor.rgb_to_hex((color.green, color.blue, color.red))
+
+    @staticmethod
+    def _color_bgr(color):
+        return RGBColor.rgb_to_hex((color.blue, color.green, color.red))
+
+    @staticmethod
+    def _color_brg(color):
+        return RGBColor.rgb_to_hex((color.blue, color.red, color.green))
 
     def color(self, color):
         """Instantly sets this LED to the color passed.
 
         Args:
-            color: a 3-item list of integers representing R, G, and B values,
-            0-255 each.
+            color: an RGBColor object
         """
-
-        self.current_color = self.rgb_to_hex(color)
-        # todo this is crazy inefficient right now. todo change it so it can use
-        # hex strings as the color throughout
-
-    def fade(self, color, fade_ms):
-        # todo
-        # not yet implemented. For now we'll just immediately set the color
-        self.color(color)
+        self._current_color = self._color_order_function(color)
 
     def disable(self):
         """Disables (turns off) this LED instantly. For multi-color LEDs it
         turns all elements off.
         """
-
-        self.current_color = '000000'
+        self._current_color = '000000'
 
     def enable(self):
-        self.current_color = 'ffffff'
+        self._current_color = 'ffffff'
+
+    @property
+    def current_color(self):
+        return self._current_color
 
 
 class FASTDMD(object):
@@ -1143,7 +1173,9 @@ class FASTDMD(object):
 
         self.dmd_frame = bytearray()
 
-        self.machine.events.add_handler('timer_tick', self.tick)
+        # Update DMD 30 times per second
+        # TODO: Add DMD update interval to config
+        self.machine.clock.schedule_interval(self.tick, 1/30.0)
 
     def update(self, data):
 
@@ -1152,7 +1184,7 @@ class FASTDMD(object):
         except TypeError:
             pass
 
-    def tick(self):
+    def tick(self, dt):
         self.send('BM:' + self.dmd_frame)
 
 
@@ -1247,8 +1279,8 @@ class SerialCommunicator(object):
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
             self.platform.log.critical("Firmware version mismatch. MPF requires"
-                " the %s processor to be firmware %s, but yours is %s",
-                self.remote_processor, min_version, self.remote_firmware)
+                                       " the %s processor to be firmware %s, but yours is %s",
+                                       self.remote_processor, min_version, self.remote_firmware)
             sys.exit()
 
         if self.remote_processor == 'NET' and self.platform.machine_type == 'fast':
@@ -1287,9 +1319,9 @@ class SerialCommunicator(object):
 
                     if StrictVersion(IO_MIN_FW) > str(fw):
                         self.platform.log.critical("Firmware version mismatch. MPF "
-                            "requires the IO boards to be firmware {0}, but "
-                            "your Board {1} ({2}) is v{3}".format(IO_MIN_FW,
-                            node_id, model, fw))
+                                                   "requires the IO boards to be firmware {0}, but "
+                                                   "your Board {1} ({2}) is v{3}".format(IO_MIN_FW,
+                                                                                         node_id, model, fw))
                         firmware_ok = False
 
         if not firmware_ok:
@@ -1369,28 +1401,3 @@ class SerialCommunicator(object):
                                                    exc_traceback)
                 msg = ''.join(line for line in lines)
                 self.machine.crash_queue.put(msg)
-
-# The MIT License (MIT)
-
-# Oringal code on which this module was based:
-# Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

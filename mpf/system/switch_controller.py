@@ -2,16 +2,9 @@
 states and posting events to the framework.
 
 """
-# switch_controller.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 from collections import defaultdict
-import time
 
 from mpf.system.config import CaseInsensitiveDict
 from mpf.system.timing import Timing
@@ -54,7 +47,7 @@ class SwitchController(object):
             self.machine.config['mpf']['switch_tag_event'])
 
         # register for events
-        self.machine.events.add_handler('timer_tick', self._tick, 1000)
+        self.machine.clock.schedule_interval(self._tick, 0, 1000)
         self.machine.events.add_handler('init_phase_2',
                                         self._initialize_switches,
                                         1000)
@@ -138,7 +131,10 @@ class SwitchController(object):
             switch_states = platform.get_hw_switch_states()
 
             for switch, number in switches:
-                switch.state = switch_states[number] ^ switch.invert
+                try:
+                    switch.state = switch_states[number] ^ switch.invert
+                except KeyError:
+                    pass
 
     def verify_switches(self):
         """Loops through all the switches and queries their hardware states via
@@ -173,6 +169,9 @@ class SwitchController(object):
         is in the state regardless of how long it's been in that state.
 
         """
+
+        if not ms:
+            ms = 0
 
         if self.switches[switch_name]['state'] == state:
             if ms <= self.ms_since_change(switch_name):
@@ -217,22 +216,22 @@ class SwitchController(object):
         last changed state.
         """
 
-        return (time.time() - self.switches[switch_name]['time']) * 1000.0
+        return round((self.machine.clock.get_time() - self.switches[switch_name]['time']) * 1000.0, 0)
 
     def secs_since_change(self, switch_name):
         """Returns the number of ms that have elapsed since this switch
         last changed state.
         """
 
-        return time.time() - self.switches[switch_name]['time']
+        return self.machine.clock.get_time() - self.switches[switch_name]['time']
 
     def set_state(self, switch_name, state=1, reset_time=False):
         """Sets the state of a switch."""
 
         if reset_time:
-            timestamp = 1
+            timestamp = -1
         else:
-            timestamp = time.time()
+            timestamp = self.machine.clock.get_time()
 
         self.switches.update({switch_name: {'state': state,
                                             'time': timestamp
@@ -283,7 +282,6 @@ class SwitchController(object):
         self.log.debug("Processing switch. Name: %s, state: %s, logical: %s,"
                        "num: %s, obj: %s, debounced: %s", name, state, logical,
                        num, obj, debounced)
-
         # Find the switch name
 
         if num is not None:  # can't be 'if num:` in case the num is 0.
@@ -301,9 +299,8 @@ class SwitchController(object):
             try:
                 obj = self.machine.switches[name]
             except KeyError:
-                self.log.warning("Cannot process switch '%s' as this is not a"
-                                 "valid switch name.", name)
-                return
+                raise AssertionError("Cannot process switch " + name + " as"
+                                     "this is not a valid switch name.")
 
             name = obj.name  # switches this to the name MPF wants to use
 
@@ -358,7 +355,6 @@ class SwitchController(object):
                               "could be nothing, but if it happens a lot it could "
                               "indicate noise or interference on the line. Switch: %s",
                               name)
-
             return
 
         self.log.info("<<<<< switch: %s, State:%s >>>>>", name, state)
@@ -377,7 +373,7 @@ class SwitchController(object):
                 if entry['ms']:
                     # This entry is for a timed switch, so add it to our
                     # active timed switch list
-                    key = time.time() + (entry['ms'] / 1000.0)
+                    key = self.machine.clock.get_time() + (entry['ms'] / 1000.0)
                     value = {'switch_action': str(name) + '-' + str(state),
                              'callback': entry['callback'],
                              'switch_name': name,
@@ -403,7 +399,7 @@ class SwitchController(object):
 
         # now check if the opposite state is in the active timed switches list
         # if so, remove it
-        for k, v, in self.active_timed_switches.items():
+        for k, v, in list(self.active_timed_switches.items()):
             # using items() instead of iteritems() since we might want to
             # delete while iterating
 
@@ -479,7 +475,7 @@ class SwitchController(object):
                     # figure out when this handler should fire based on the
                     # switch's original activation time.
                     key = (
-                    time.time() + ((ms - self.ms_since_change(switch_name))
+                    self.machine.clock.get_time() + ((ms - self.ms_since_change(switch_name))
                                    / 1000.0))
                     value = {'switch_action': entry_key,
                              'callback': callback,
@@ -493,7 +489,7 @@ class SwitchController(object):
                 if self.is_inactive(switch_name, 0) and (
                             self.ms_since_change(switch_name) < ms):
                     key = (
-                    time.time() + ((ms - self.ms_since_change(switch_name))
+                    self.machine.clock.get_time() + ((ms - self.ms_since_change(switch_name))
                                    / 1000.0))
                     value = {'switch_action': entry_key,
                              'callback': callback,
@@ -546,7 +542,7 @@ class SwitchController(object):
 
         self.log.info("Dumping current active switches")
 
-        for k, v in self.switches.iteritems():
+        for k, v in self.switches.items():
             if v['state']:
                 self.log.info("Active Switch|%s", k)
 
@@ -581,7 +577,12 @@ class SwitchController(object):
                     self.machine.switches[switch_name].deactivation_events):
                 self.machine.events.post(event)
 
-    def _tick(self):
+    def get_next_timed_switch_event(self):
+        if not self.active_timed_switches:
+            return False
+        return min(self.active_timed_switches.keys())
+
+    def _tick(self, dt):
         """Called once per machine tick.
 
         Checks the current list of active timed switches to see if it's
@@ -590,8 +591,8 @@ class SwitchController(object):
 
         """
 
-        for k in self.active_timed_switches.keys():
-            if k <= time.time():  # change to generator?
+        for k in list(self.active_timed_switches.keys()):
+            if k <= self.machine.clock.get_time():  # change to generator?
                 for entry in self.active_timed_switches[k]:
                     self.log.debug(
                         "Processing timed switch handler. Switch: %s "
@@ -606,24 +607,4 @@ class SwitchController(object):
                         entry['callback'](**entry['callback_kwargs'])
                 del self.active_timed_switches[k]
 
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+        self.machine.events._process_event_queue()

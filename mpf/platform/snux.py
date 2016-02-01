@@ -2,17 +2,11 @@
 
 This class overlays an existing WPC-compatible platform interface to work with
 Mark Sunnucks's System 11 interface board.
-
 """
-# snux.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import time
+from mpf.system.clock import Clock
 from mpf.system.tasks import DelayManager
 from mpf.system.timing import Timer
 
@@ -21,7 +15,7 @@ class Snux(object):
 
     def __init__(self, machine, platform):
         self.log = logging.getLogger('Platform.Snux')
-        self.delay = DelayManager()
+        self.delay = DelayManager(machine.delayRegistry)
 
         self.machine = machine
         self.platform = platform
@@ -60,7 +54,7 @@ class Snux(object):
     @property
     def a_side_busy(self):
         if (self.drivers_holding_a_side or
-                    self.a_side_done_time > time.time() or
+                    self.a_side_done_time > self.machine.clock.get_time() or
                     self.a_side_queue):
             return True
         else:
@@ -68,7 +62,7 @@ class Snux(object):
 
     @property
     def c_side_active(self):
-        if self.drivers_holding_c_side or self.c_side_done_time > time.time():
+        if self.drivers_holding_c_side or self.c_side_done_time > self.machine.clock.get_time():
             return True
         else:
             return False
@@ -131,10 +125,11 @@ class Snux(object):
                                         self._initialize_phase_2)
 
     def _initialize_phase_2(self):
-        self.machine.timing.add(
-            Timer(callback=self.flash_diag_led, frequency=0.5))
+        self.machine.clock.schedule_interval(self.flash_diag_led, 0.5)
 
-        self.machine.events.add_handler('timer_tick', self._tick)
+        # Schedule processing callback
+        # TODO: Make callback interval a config item
+        self.machine.clock.schedule_interval(self._tick, 0)
 
     def _validate_config(self):
         self.system11_config = self.machine.config_processor.process_config2(
@@ -144,7 +139,7 @@ class Snux(object):
         self.snux_config = self.machine.config_processor.process_config2(
             'snux', snux)
 
-    def _tick(self):
+    def _tick(self, dt):
         # Called based on the timer_tick event
         if self.a_side_queue:
             self._service_a_side()
@@ -153,7 +148,7 @@ class Snux(object):
         elif self.c_side_enabled and not self.c_side_active:
             self._enable_a_side()
 
-    def flash_diag_led(self):
+    def flash_diag_led(self, dt):
         self.diag_led.pulse(250)
 
     def configure_driver(self, config, device_type='coil'):
@@ -278,7 +273,7 @@ class Snux(object):
             if ms > 0:
                 driver.pulse(ms)
                 self.a_side_done_time = max(self.a_side_done_time,
-                    time.time() + (ms / 1000.0))
+                                            self.machine.clock.get_time() + (ms / 1000.0))
 
             elif ms == -1:
                 driver.enable()
@@ -333,7 +328,7 @@ class Snux(object):
             if ms > 0:
                 driver.pulse(ms)
                 self.c_side_done_time = max(self.c_side_done_time,
-                    time.time() + (ms / 1000.))
+                                            self.machine.clock.get_time() + (ms / 1000.))
             elif ms == -1:
                 driver.enable()
                 self.drivers_holding_c_side.add(driver)
@@ -387,26 +382,3 @@ class SnuxDriver(object):
 
 
 driver_overlay_class = Snux
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

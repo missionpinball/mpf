@@ -1,12 +1,7 @@
 """ Contains the MatrixLight parent classes. """
-# light.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 from mpf.system.device import Device
+from mpf.system.tasks import Task
 
 
 class MatrixLight(Device):
@@ -22,15 +17,15 @@ class MatrixLight(Device):
     collection = 'lights'
     class_label = 'light'
 
-    #todo need to get the handler stuff out of each of these I think and into
+    # todo need to get the handler stuff out of each of these I think and into
     # a parent class? Maybe this is a device thing?
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
 
-        super(MatrixLight, self).__init__(machine, name, config, collection,
-                                          platform_section='matrix_lights',
-                                          validate=validate)
+        super().__init__(machine, name, config, collection,
+                         platform_section='matrix_lights',
+                         validate=validate)
 
         self.hw_driver, self.number = (
             self.platform.configure_matrixlight(self.config))
@@ -38,12 +33,25 @@ class MatrixLight(Device):
         self.registered_handlers = []
 
         self.state = {  # current state of this light
-                        'brightness': 0,
-                        'priority': 0}
+            'brightness': 0,
+            'priority': 0,
+            'destination_brightness': 0,
+            'destination_time': 0.0,
+            'start_brightness': 0,
+            'start_time': 0.0
+        }
 
         self.cache = {  # cached state of last manual command
-                        'brightness': 0,
-                        'priority': 0}
+            'brightness': 0,
+            'priority': 0,
+            'destination_brightness': 0,
+            'destination_time': 0.0,
+            'start_brightness': 0,
+            'start_time': 0.0
+        }
+
+        self.fade_task = None
+        self.fade_in_progress = False
 
         # set up the X, Y coordinates
         self.x = None
@@ -55,8 +63,7 @@ class MatrixLight(Device):
         if 'y' in config:
             self.y = config['y']
 
-    def on(self, brightness=255, fade_ms=0, start_brightness=None,
-           priority=0, cache=True, force=False):
+    def on(self, brightness=255, fade_ms=0, priority=0, cache=True, force=False):
         """Turns on this matrix light.
 
         Args:
@@ -64,8 +71,8 @@ class MatrixLight(Device):
                 and 255. 0 is off. 255 is full on. Note that intermediary
                 values are not yet implemented, so 0 is off, anything from
                 1-255 is full on.
-            fade_ms: Not yet implemented
-            start_brightness: Not yet implemented.
+            fade_ms: The number of milliseconds to fade from the current
+                brightness level to the desired brightness level.
             priority: The priority of the incoming request. If this priority is
                 lower than the current cached priority, this on command will
                 have no effect. (Unless force=True)
@@ -91,22 +98,45 @@ class MatrixLight(Device):
             for handler in self.registered_handlers:
                 handler(light_name=self.name, brightness=brightness)
 
-        self.state['brightness'] = brightness
+        current_time = self.machine.clock.get_time()
+
+        # update our state
         self.state['priority'] = priority
+
+        if fade_ms:
+            self.state['fade_ms'] = fade_ms
+            self.state['destination_brightness'] = brightness
+            self.state['start_brightness'] = self.state['brightness']
+            self.state['start_time'] = current_time
+            self.state['destination_time'] = current_time + (fade_ms / 1000.0)
+            self._setup_fade()
+
+            if self.debug:
+                print("we have a light fade to set up")
+
+        else:
+            self.state['brightness'] = brightness
+
+            if self.debug:
+                self.log.debug("Setting Brightness: %s", brightness)
+
+            self.hw_driver.on(brightness)
 
         if cache:
             self.cache['brightness'] = brightness
+            self.cache['start_brightness'] = self.state['brightness']
+            self.cache['destination_brightness'] = self.state['destination_brightness']
+            self.cache['start_time'] = current_time
+            self.cache['destination_time'] = self.state['destination_time']
             self.cache['priority'] = priority
-
-        self.hw_driver.on(brightness, fade_ms, start_brightness)
+            self.cache['fade_ms'] = fade_ms
 
     def off(self, fade_ms=0, priority=0, cache=True, force=False):
-        self.on(brightness=0, fade_ms=fade_ms, priority=priority, cache=cache,
-                force=force)
         """Turns this light off.
 
         Args:
-            fade_ms: Not yet implemented
+            fade_ms: The number of milliseconds to fade from the current
+                brightness level to a brightness level of 0 (off).
             priority: The priority of the incoming request. If this priority is
                 lower than the current cached priority, this on command will
                 have no effect. (Unless force=True)
@@ -117,6 +147,12 @@ class MatrixLight(Device):
                 regardless of the incoming and current priority. Default is
                 False.
         """
+        self.on(brightness=0, fade_ms=fade_ms, priority=priority, cache=cache,
+                force=force)
+
+    def get_state(self):
+        """Returns the current state of this light"""
+        return self.state
 
     def add_handler(self, callback):
         """Registers a handler to be called when this light changes state."""
@@ -137,32 +173,69 @@ class MatrixLight(Device):
         if self.debug:
             self.log.debug("Received a restore command.")
             self.log.debug("Cached brightness: %s, Cached priority: %s",
-                          self.cache['brightness'], self.cache['priority'])
+                           self.cache['brightness'], self.cache['priority'])
 
         self.on(brightness=self.cache['brightness'],
                 priority=self.cache['priority'],
                 force=True,
                 cache=True)
 
+    def _setup_fade(self):
+        """
+        Sets up the fade task for this LED.
+        Returns: None
+        """
+        self.fade_in_progress = True
 
-# The MIT License (MIT)
+        if not self.fade_task:
+            if self.debug:
+                print("setting up fade task")
+            self.fade_task = Task.create(self.machine, self._fade_task)
+        elif self.debug:
+                print("already have a fade task")
 
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
+    def _fade_task(self):
+        """
+        Task that performs a fade from the current brightness to the target brightness
+        over the specified fade time.
+        Returns: None
+        """
+        if self.debug:
+            print("fade_in_progress fade_task")
+            print("state", self.state)
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+        state = self.state
 
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
+        # figure out the ratio of how far along we are
+        ratio = ((self.machine.clock.get_time() - state['start_time']) /
+                 (state['destination_time'] - state['start_time']))
 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+        if self.debug:
+            print("ratio", ratio)
+
+        if ratio >= 1.0:  # fade is done
+            self.fade_in_progress = False
+            set_cache = True
+            new_brightness = state['destination_brightness']
+            self.fade_task.stop()
+            self.fade_task = None
+        else:
+            set_cache = False
+            new_brightness = state['start_brightness'] + int((state['destination_brightness'] -
+                                                              state['start_brightness']) * ratio)
+
+        if self.debug:
+            print("new brightness", new_brightness)
+
+        self.on(brightness=new_brightness, fade_ms=0, priority=state['priority'], cache=set_cache)
+
+        if self.debug:
+            print("fade_in_progress just ended")
+            print("killing fade task")
+
+    def _kill_fade(self):
+        self.fade_in_progress = False
+        self.fade_task.stop()
+        self.fade_task = None
+        self.on(brightness=self.state['destination_brightness'],
+                fade_ms=0, priority=self.state['priority'], cache=True)

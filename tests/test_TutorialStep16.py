@@ -1,5 +1,5 @@
 
-from MpfTestCase import MpfTestCase
+from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
 
 
@@ -9,7 +9,7 @@ class TestTutorialStep16(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../machine_files/tutorial_step_16/'
+        return '../examples/tutorial_step_16/'
 
     def get_platform(self):
         return 'smart_virtual'
@@ -44,7 +44,7 @@ class TestTutorialStep16(MpfTestCase):
         self.machine.switch_controller.process_switch('s_right_inlane',
                                                       0)
         self.advance_time_and_run(1)
-        self.assertEquals(100, self.machine.game.player.score)
+        self.assertEqual(100, self.machine.game.player.score)
 
         # player should get 1000 points for hitting the flipper button
         self.machine.switch_controller.process_switch('s_left_flipper',
@@ -52,7 +52,7 @@ class TestTutorialStep16(MpfTestCase):
         self.machine.switch_controller.process_switch('s_left_flipper',
                                                       0)
         self.advance_time_and_run(1)
-        self.assertEquals(1100, self.machine.game.player.score)
+        self.assertEqual(1100, self.machine.game.player.score)
         self.advance_time_and_run(2)
 
         self.assertEqual(1, self.machine.game.player.ball)
@@ -62,9 +62,7 @@ class TestTutorialStep16(MpfTestCase):
 
         # lets drop the ball in some devices and make sure it kicks it out
         self.machine.switch_controller.process_switch('s_eject', 1)
-        # todo fix this call twice
         self.advance_time_and_run(2)
-        self.advance_time_and_run(1)
         self.assertEqual(1, self.machine.ball_devices.playfield.balls)
 
         self.machine.switch_controller.process_switch('s_bottom_popper', 1)
@@ -78,8 +76,6 @@ class TestTutorialStep16(MpfTestCase):
         # ball drains, game goes to ball 2
         self.machine.default_platform.add_ball_to_device(
             self.machine.ball_devices.bd_trough)
-        # todo bug here. Have to call advance_time_and_run twice for it to work
-        self.advance_time_and_run(1)
         self.advance_time_and_run(1)
 
         self.assertEqual(2, self.machine.game.player.ball)
@@ -107,8 +103,6 @@ class TestTutorialStep16(MpfTestCase):
         # ball drains, game goes to ball 3
         self.machine.default_platform.add_ball_to_device(
             self.machine.ball_devices.bd_trough)
-        # todo bug here. Have to call advance_time_and_run twice for it to work
-        self.advance_time_and_run(1)
         self.advance_time_and_run(1)
 
         self.assertEqual(3, self.machine.game.player.ball)
@@ -138,8 +132,6 @@ class TestTutorialStep16(MpfTestCase):
         # ball drains, game ends
         self.machine.default_platform.add_ball_to_device(
             self.machine.ball_devices.bd_trough)
-        # todo bug here. Have to call advance_time_and_run twice for it to work
-        self.advance_time_and_run(1)
         self.advance_time_and_run(1)
 
         self.assertIsNone(self.machine.game)

@@ -6,12 +6,6 @@ Note that in the Mission Pinball Framework, a distinction is made between a
 *machine* is the physical pinball machine.
 
 """
-# game.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 from mpf.system.mode import Mode
@@ -27,11 +21,12 @@ class Game(Mode):
     """
 
     def __init__(self, machine, config, name, path):
-        super(Game, self).__init__(machine, config, name, path)
+        super().__init__(machine, config, name, path)
         self._balls_in_play = 0
         self.player_list = list()
         self.machine.game = None
         self.tilted = False
+        self.slam_tilted = False
         self.player = None
 
     @property
@@ -75,6 +70,7 @@ class Game(Mode):
         self.player_list = list()
         self.machine.game = self
         self.tilted = False
+        self.slam_tilted = False
         self._balls_in_play = 0
 
         # todo register for request_to_start_game so you can deny it, or allow
@@ -84,11 +80,12 @@ class Game(Mode):
                                     self.player_add_success)
 
         if self.machine.config['game']['add_player_switch_tag']:
-
             self.add_mode_event_handler(
-                self.machine.config['mpf']['switch_tag_event'].replace('%',
-                self.machine.config['game']['add_player_switch_tag']),
-                self.request_player_add)
+                    self.machine.config['mpf']['switch_tag_event'].replace('%',
+                                                                           self.machine.config[
+                                                                               'game'][
+                                                                               'add_player_switch_tag']),
+                    self.request_player_add)
 
         self.add_mode_event_handler('ball_ended', self.ball_ended)
         self.add_mode_event_handler('game_ended', self.game_ended)
@@ -125,7 +122,7 @@ class Game(Mode):
         if self.player and self.player.ball > self.min_restart_ball:
             self.log.debug("------Restarting game via long button press------")
 
-        # todo this should post the request to start game event first
+            # todo this should post the request to start game event first
 
     def game_started(self, ev_result=True, **kwargs):
         """All the modules that needed to do something on game start are done,
@@ -135,7 +132,7 @@ class Game(Mode):
 
         if ev_result:
             self.machine.remove_machine_var_search(startswith='player',
-                                                    endswith='_score')
+                                                   endswith='_score')
 
             if not self.player_list:
                 # Sometimes game_starting handlers will add players, so we only
@@ -174,8 +171,8 @@ class Game(Mode):
         self.log.info("****************** BALL STARTING ******************")
         self.log.info("**                                               **")
         self.log.info("**    Player: {}    Ball: {}   Score: {}".format(
-                       self.player.number, self.player.ball,
-                       self.player.score).ljust(49) + '**')
+                self.player.number, self.player.ball,
+                self.player.score).ljust(49) + '**')
         self.log.info("**                                               **")
         self.log.info("***************************************************")
         self.log.info("***************************************************")
@@ -211,7 +208,7 @@ class Game(Mode):
         else:
             self.machine.events.post('multi_player_ball_started')
             self.machine.events.post(
-                'player_{}_ball_started'.format(self.player.number))
+                    'player_{}_ball_started'.format(self.player.number))
 
         self.machine.playfield.add_ball(player_controlled=True, reset=True)
 
@@ -277,12 +274,16 @@ class Game(Mode):
         if ev_result is False:
             return
 
+        if self.slam_tilted:
+            self.game_ending()
+            return
+
         if self.player.extra_balls:
             self.shoot_again()
             return
 
         if (self.player.ball == self.machine.config['game']['balls_per_game']
-                and self.player.number == self.num_players):
+            and self.player.number == self.num_players):
             self.game_ending()
         else:
             self.player_rotate()
@@ -416,7 +417,7 @@ class Game(Mode):
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
 
-        if len(self.player_list) >= self.machine.config['game']\
+        if len(self.player_list) >= self.machine.config['game'] \
                 ['max_players']:
             self.log.debug("Game is at max players. Cannot add another.")
             return False
@@ -440,9 +441,9 @@ class Game(Mode):
             self.num_players = len(self.player_list)
 
             self.machine.create_machine_var(
-                name='player_{}_score'.format(player.number),
-                value=player.score,
-                persist=True)
+                    name='player{}_score'.format(player.number),
+                    value=player.score,
+                    persist=True)
 
             return player
 
@@ -471,10 +472,11 @@ class Game(Mode):
             return
 
         self.machine.events.post('player_turn_stop', player=self.player,
-                                     number=self.player.number)
+                                 number=self.player.number)
 
-        self.machine.set_machine_var(name='player' + str(self.player.number) +
-                                     '_score', value=self.player.score)
+        self.machine.set_machine_var(
+                name='player{}_score'.format(self.player.number),
+                value=self.player.score)
 
         if self.player.number < self.num_players:
             self.player = self.player_list[self.player.number]
@@ -511,30 +513,7 @@ class Game(Mode):
         else:  # no current player, grab the first one
             self.player = self.player_list[0]
 
-        self.log.debug("Player rotate: Now up is Player %s", self.player.number)
-
+        self.log.debug("Player rotate: Now up is Player %s",
+                       self.player.number)
 
 # todo player events should come next, including tracking inc/dec, other values
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

@@ -1,0 +1,299 @@
+# config_version=3
+mode:
+    start_events: ball_starting
+    priority: 100
+    code: base.Base
+
+event_player:
+  multiplayer_game:
+    player_1_multiplayer_slide
+  player_1_ball_started:
+    player_1_multiplayer_slide
+
+slide_player:
+  single_player_ball_started:
+    slide: 1_player_score
+  player_1_ball_started:
+    slide: player_1_multiplayer_score
+  player_2_ball_started:
+    slide: player_2_multiplayer_score
+  player_3_ball_started:
+    slide: player_3_multiplayer_score
+  player_4_ball_started:
+    slide: player_4_multiplayer_score
+
+slides:
+  single_player_score:
+    - type: text
+      text: "%player1|score%"
+      number_grouping: true
+      min_digits: 2
+      v_pos: center
+      h_pos: center
+      y: -2
+      slide: score_display
+      #persist_slide: yes
+      font: tall title
+    - type: text
+      text: BALL %player1|ball%    %machine|credits_string%
+      v_pos: bottom
+      font: small
+      y: -1
+  player_1_multiplayer_score:
+    - type: text
+      text: "%player1|score%"
+      #font: medium
+      number_grouping: true
+      min_digits: 2
+      v_pos: top
+      h_pos: right
+      x: -60
+      y: 2
+    - type: text
+      text: "%player2|score%"
+      font: medium
+      v_pos: top
+      h_pos: right
+      number_grouping: true
+      min_digits: 2
+      x: -2
+      y: 2
+    - type: text
+      text: "%player3|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -60
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: "%player4|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -2
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: BALL %player1|ball%    %machine|credits_string%
+      v_pos: bottom
+      font: small
+      y: -1
+  player_2_ball_started:
+    - type: text
+      text: "%player1|score%"
+      font: medium
+      number_grouping: true
+      min_digits: 2
+      v_pos: top
+      h_pos: right
+      x: -60
+      y: 2
+    - type: text
+      text: "%player2|score%"
+#      font: medium
+      v_pos: top
+      h_pos: right
+      number_grouping: true
+      min_digits: 2
+      x: -2
+      y: 2
+    - type: text
+      text: "%player3|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -60
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: "%player4|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -2
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: BALL %player2|ball%    %machine|credits_string%
+      v_pos: bottom
+      font: small
+      y: -1
+
+  player_3_ball_started:
+    - type: text
+      text: "%player1|score%"
+      font: medium
+      number_grouping: true
+      min_digits: 2
+      v_pos: top
+      h_pos: right
+      x: -60
+      y: 2
+    - type: text
+      text: "%player2|score%"
+      font: medium
+      v_pos: top
+      h_pos: right
+      number_grouping: true
+      min_digits: 2
+      x: -2
+      y: 2
+    - type: text
+      text: "%player3|score%"
+#      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -60
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: "%player4|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -2
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: BALL %player3|ball%    %machine|credits_string%
+      v_pos: bottom
+      font: small
+      y: -1
+
+  player_4_ball_started:
+    - type: text
+      text: "%player1|score%"
+      font: medium
+      number_grouping: true
+      min_digits: 2
+      v_pos: top
+      h_pos: right
+      x: -60
+      y: 2
+    - type: text
+      text: "%player2|score%"
+      font: medium
+      v_pos: top
+      h_pos: right
+      number_grouping: true
+      min_digits: 2
+      x: -2
+      y: 2
+    - type: text
+      text: "%player3|score%"
+      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -60
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: "%player4|score%"
+#      font: medium
+      v_pos: bottom
+      h_pos: right
+      y: -10
+      x: -2
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: BALL %player4|ball%    %machine|credits_string%
+      v_pos: bottom
+      font: small
+      y: -1
+
+sound_player:
+    waiting to plunge loop:
+        sound: waiting to plunge loop
+        start_events: mode_base_started
+        stop_events: sw_plunger
+        loops: -1
+        volume: 0.5
+    background music:
+        start_events: sw_plunger
+        stop_events: mode_base_stopping, balldevice_elevator_ball_enter
+        sound: base background music
+        loops: -1
+        volume: .5
+    ramp 1 fx:
+        start_events: sw_ramp_1
+        sound: ramp 1
+    ramp 2 fx:
+        start_events: sw_ramp_2
+        sound: ramp 2
+    standup lit:
+        start_events: shots_standups_lit_hit
+        sound: standup hit lit
+    standup unlit:
+        start_events: shots_standups_unlit_hit
+        sound: standup hit unlit
+    little metal:
+        start_events: sw_slingshot
+        sound: little metal
+        #switch_tag_triggers: slingshot
+    jets:
+        start_events: sw_jet
+        sound: medium metal
+
+show_player:
+    left_orbit_default_unlit_hit:
+        show: left orbit
+
+scoring:
+    left_orbit_unlit_hit:
+        Score: 1000000
+    left_ramp_default_unlit_hit:
+        Score: 1000000
+    side_ramp_default_unlit_hit:
+        Score: 2000000
+    right_ramp_default_unlit_hit:
+        Score: 1000000
+    right_orbit_default_unlit_hit:
+        Score: 1500000
+    center_ramp_default_unlit_hit:
+        Score: 250000
+    sw_slingshot:
+        Score: 5170
+    sw_jet:
+        Score: 75020
+    sw_outlane:
+        Score: 24440
+    sw_inlane:
+        Score: 47650
+    standups_default_lit_hit:
+        Score: 10000
+    standups_default_unlit_hit:
+        Score: 50000
+    standups_default_lit_complete:
+        Score: 100000
+    rollover_default_lanes_lit_hit:
+        Score: 5000
+    rollover_default_lanes_unlit_hit:
+        Score: 45000
+    rollover_default_lanes_lit_complete:
+        Score: 375000
+    sw_small_car_crash:
+        Score: 25000
+    sw_big_car_crash:
+        Score: 11000
+    balldevice_lower_vuk_ball_enter:
+        Score: 475000
+    balldevice_upper_vuk_ball_enter:
+        Score: 110000
+    balldevice_retina_hole_ball_enter:
+        Score: 225000
+
+shot_groups:
+    rollover_lanes:
+        rotate_left_events: sw_left_flipper
+        rotate_right_events: sw_right_flipper
+    standups:
+        profile: default

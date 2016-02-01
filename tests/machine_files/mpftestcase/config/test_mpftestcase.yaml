@@ -1,0 +1,5 @@
+#config_version=3
+
+switches:
+  switch1:
+    number:

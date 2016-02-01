@@ -1,15 +1,10 @@
 """ Contains the ShotGroup base class."""
-# shot_group.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 from collections import deque
 
 from mpf.system.device import Device
 from mpf.system.utility_functions import Util
+
 
 class ShotGroup(Device):
     """Represents a group of shots in a pinball machine by grouping
@@ -47,10 +42,10 @@ class ShotGroup(Device):
             if 'profile' in config:
                 for shot in self.shots:
                     shot.update_enable_table(profile=config['profile'],
-                                      mode=None)
+                                             mode=None)
 
-        super(ShotGroup, self).__init__(machine, name, config, collection,
-                                        validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         self.rotation_enabled = True
 
@@ -59,7 +54,8 @@ class ShotGroup(Device):
 
     def _enable_related_device_debugging(self):
 
-        self.log.debug("Enabling debugging for this shot groups's member shots")
+        self.log.debug(
+            "Enabling debugging for this shot groups's member shots")
 
         for shot in self.shots:
             shot.enable_debugging()
@@ -209,13 +205,15 @@ class ShotGroup(Device):
         if states:
             states = Util.string_to_lowercase_list(states)
         else:
-            states = self.shots[0].enable_table[mode]['settings']['state_names_to_rotate']
+            states = self.shots[0].enable_table[mode]['settings'][
+                'state_names_to_rotate']
 
         if exclude_states:
             exclude_states = Util.string_to_lowercase_list(exclude_states)
         else:
             exclude_states = (
-                self.shots[0].enable_table[mode]['settings']['state_names_to_not_rotate'])
+                self.shots[0].enable_table[mode]['settings'][
+                    'state_names_to_not_rotate'])
 
         shot_list = list()
 
@@ -223,10 +221,10 @@ class ShotGroup(Device):
         for shot in self.shots:
 
             if ((not states or
-                    shot.enable_table[mode]['current_state_name'] in states)
-                    and shot.enable_table[mode]['current_state_name']
-                    not in exclude_states):
-
+                         shot.enable_table[mode][
+                             'current_state_name'] in states)
+                and shot.enable_table[mode]['current_state_name']
+                not in exclude_states):
                 shot_list.append(shot)
 
         # shot_state_list is deque of tuples (state num, light show step num)
@@ -241,14 +239,15 @@ class ShotGroup(Device):
                 current_state = -1
 
             shot_state_list.append(
-                (shot.player[shot.enable_table[mode]['settings']['player_variable']],
-                 current_state))
+                    (shot.player[shot.enable_table[mode]['settings'][
+                        'player_variable']],
+                     current_state))
 
         if self.debug:
             self.log.debug('Rotating. Mode: %s, Direction: %s, Include states:'
                            ' %s, Exclude states: %s, Shots to be rotated: %s',
                            mode, direction, states,
-               exclude_states, [x.name for x in shot_list])
+                           exclude_states, [x.name for x in shot_list])
 
             for shot in shot_list:
                 shot.log.debug("This shot is part of a rotation event. Current"
@@ -257,8 +256,10 @@ class ShotGroup(Device):
 
         # figure out which direction we're going to rotate
         if not direction:
-            direction = shot_list[0].enable_table[mode]['settings']['rotation_pattern'][0]
-            shot_list[0].enable_table[mode]['settings']['rotation_pattern'].rotate(-1)
+            direction = \
+            shot_list[0].enable_table[mode]['settings']['rotation_pattern'][0]
+            shot_list[0].enable_table[mode]['settings'][
+                'rotation_pattern'].rotate(-1)
 
             if self.debug:
                 self.log.debug("Since no direction was specified, pulling from"
@@ -329,8 +330,9 @@ class ShotGroup(Device):
             profile, state = shot_states.pop()
 
             if self.debug:
-                self.log.debug("Shot group is complete with profile :%s, state:"
-                               "%s", profile, state)
+                self.log.debug(
+                    "Shot group is complete with profile :%s, state:"
+                    "%s", profile, state)
 
             self.machine.events.post(self.name + '_complete')
             self.machine.events.post(self.name + '_' + profile + '_complete')
@@ -358,14 +360,13 @@ class ShotGroup(Device):
 
                 if profile:
                     shot.update_enable_table(profile=profile,
-                                         enable=enable,
-                                         mode=mode)
+                                             enable=enable,
+                                             mode=mode)
 
                 else:
                     shot.update_enable_table(profile=shot.config['profile'],
                                              enable=enable,
                                              mode=mode)
-
 
     def control_events_in_mode(self, mode):
         # called if any control_events for this shot_group exist in the mode
@@ -397,26 +398,3 @@ class ShotGroup(Device):
         if self.debug:
             self.log.debug("Removing this shot group")
         del self.machine.shot_groups[self.name]
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

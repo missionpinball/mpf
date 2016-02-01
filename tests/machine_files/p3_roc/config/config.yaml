@@ -1,0 +1,29 @@
+#config_version=3
+
+hardware:
+    driverboards: pdb
+    platform: p3_roc
+
+switches:
+    s_test:
+        number: A1-B0-7
+    s_slingshot_test:
+        number: A2-B1-0
+
+coils:
+    c_test:
+        number: A1-B1-2
+        pulse_ms: 23
+
+    c_test_allow_enable:
+        number: A1-B1-3
+        pulse_ms: 23
+        allow_enable: true
+    c_slingshot_test:
+        number: A0-B1-0
+
+
+autofire_coils:
+    ac_slingshot_test:
+        coil: c_slingshot_test
+        switch: s_slingshot_test

@@ -1,11 +1,4 @@
 """ Contains the ModeController class."""
-# mode_controller.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
-
 
 import logging
 import os
@@ -83,8 +76,15 @@ class ModeController(object):
         # Loads the modes from the modes: section of the machine configuration
         # file.
 
+        # todo make a config file validator entry for lowercase values
+
         for mode in set(self.machine.config['modes']):
-            self.machine.modes.append(self._load_mode(mode))
+
+            if mode not in self.machine.modes:
+                self.machine.modes[mode] = self._load_mode(mode.lower())
+            else:
+                raise ValueError('Mode {} already exists. Cannot load again.'.
+                                 format(mode))
 
     def _load_mode(self, mode_string):
         """Loads a mode, reads in its config, and creates the Mode object.
@@ -98,6 +98,7 @@ class ModeController(object):
             self.log.debug('Processing mode: %s', mode_string)
 
         config = dict()
+        found_configuration = False
 
         # Find the folder for this mode. First check the machine folder/modes,
         # if that's not a valid folder, check the mpf/modes folder.
@@ -118,34 +119,36 @@ class ModeController(object):
 
         if os.path.isfile(mpf_mode_config):
             config = Config.load_config_file(mpf_mode_config)
+            found_configuration = True
 
         # Now figure out if there's a machine-specific config for this mode,
         # and if so, merge it into the config
 
-        mode_config_folder = os.path.join(self.machine.machine_path,
+        mode_config_file = os.path.join(self.machine.machine_path,
             self.machine.config['mpf']['paths']['modes'],
-            mode_string, 'config')
+            mode_string, 'config', mode_string + '.yaml')
 
-        found_file = False
-        for path, _, files in os.walk(mode_config_folder):
-            for file in files:
-                file_root, file_ext = os.path.splitext(file)
+        if os.path.isfile(mode_config_file):
+            config = Util.dict_merge(config,
+            Config.load_config_file(mode_config_file))
+            found_configuration = True
 
-                if file_root == mode_string:
-                    config = Util.dict_merge(config,
-                        Config.load_config_file(os.path.join(path, file)))
-                    found_file = True
-                    break
+        # the mode has to have at least one config to exist
+        if not found_configuration:
+            raise AssertionError("No configuration found for mode " + mode_string)
 
-            if found_file:
-                break
+        # validate config
+        if not 'mode' in config:
+            config['mode'] = dict()
+
+        self.machine.config_processor.process_config2("mode", config['mode'])
 
         # Figure out where the code is for this mode.
 
         # If a custom 'code' setting exists, first look in the machine folder
         # for it, and if it's not there, then look in mpf/modes for it.
 
-        if 'code' in config['mode']:
+        if config['mode']['code']:
             mode_code_file = os.path.join(self.machine.machine_path,
                 self.machine.config['mpf']['paths']['modes'],
                 mode_string,
@@ -340,26 +343,3 @@ class ModeController(object):
             return True
         else:
             return False
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

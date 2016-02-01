@@ -1,14 +1,6 @@
 """Contains code for the smart_virtual platform."""
-# smart_virtual.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-
-import time
 
 from mpf.system.tasks import DelayManager
 from mpf.system.utility_functions import Util
@@ -22,11 +14,11 @@ class HardwarePlatform(VirtualPlatform):
     """Base class for the smart_virtual hardware platform."""
 
     def __init__(self, machine):
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger("Smart Virtual Platform")
         self.log.debug("Configuring smart_virtual hardware interface.")
 
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
     def __repr__(self):
         return '<Platform.SmartVirtual>'
@@ -37,12 +29,36 @@ class HardwarePlatform(VirtualPlatform):
 
     def _initialize2(self):
         for device in self.machine.ball_devices:
-            if not device.is_playfield() and device.config['eject_coil']:
+            if device.is_playfield():
+                continue
+            if device.config['eject_coil']:
                 device.config['eject_coil'].hw_driver.register_ball_switches(
-                    device.config['ball_switches'])
+                        device.config['ball_switches'])
 
-                if device.config['eject_targets'][0] is not self.machine.playfield:
-                    device.config['eject_coil'].hw_driver.set_target_device(device.config['eject_targets'][0])
+                device.config['eject_coil'].hw_driver.type = 'eject'
+
+                if not device.config['eject_targets'][0].is_playfield():
+                    device.config['eject_coil'].hw_driver.set_target_device(
+                            device.config['eject_targets'][0])
+
+                if device.config['confirm_eject_switch']:
+                    device.config[
+                        'eject_coil'].hw_driver.confirm_eject_switch = \
+                    device.config['confirm_eject_switch']
+
+            elif device.config['hold_coil']:
+                device.config['hold_coil'].hw_driver.register_ball_switches(
+                        device.config['ball_switches'])
+
+                device.config['hold_coil'].hw_driver.type = 'hold'
+
+                if not device.config['eject_targets'][0].is_playfield():
+                    device.config['hold_coil'].hw_driver.set_target_device(
+                            device.config['eject_targets'][0])
+
+                if device.config['confirm_eject_switch']:
+                    device.config['hold_coil'].hw_driver.confirm_eject_switch = \
+                    device.config['confirm_eject_switch']
 
     def configure_driver(self, config, device_type='coil'):
         # todo should probably throw out the number that we get since it could
@@ -61,23 +77,25 @@ class HardwarePlatform(VirtualPlatform):
     def clear_hw_rule(self, sw_name):
         sw_num = self.machine.switches[sw_name].number
 
-        for entry in self.hw_switch_rules.keys():  # slice for copy
+        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(
                     self.machine.switches.number(sw_num).name):
                 del self.hw_switch_rules[entry]
 
-    def tick(self):
+    def tick(self, dt):
         # ticks every hw loop (typically hundreds of times per sec)
+        pass
 
-        self.delay._process_delays(self.machine)
+    def confirm_eject_via_switch(self, switch):
+        self.machine.switch_controller.process_switch(switch.name, 1)
+        self.machine.switch_controller.process_switch(switch.name, 0)
 
     def add_ball_to_device(self, device):
         if device.config['entrance_switch']:
-            pass # todo
-
-        found_switch = False
+            pass  # todo
 
         if device.config['ball_switches']:
+            found_switch = False
             for switch in device.config['ball_switches']:
                 if self.machine.switch_controller.is_inactive(switch.name):
                     self.machine.switch_controller.process_switch(switch.name,
@@ -92,7 +110,6 @@ class HardwarePlatform(VirtualPlatform):
 
 
 class SmartVirtualDriver(VirtualDriver):
-
     def __init__(self, number, machine, platform):
         self.log = logging.getLogger('SmartVirtualDriver')
         self.number = number
@@ -100,27 +117,39 @@ class SmartVirtualDriver(VirtualDriver):
         self.platform = platform
         self.ball_switches = list()
         self.target_device = None
+        self.type = None
+        self.confirm_eject_switch = None
 
     def __repr__(self):
         return "SmartVirtualDriver.{}".format(self.number)
 
     def disable(self):
-        pass
+        if self.type == 'hold':
+            self._handle_ball()
 
     def enable(self):
         pass
 
-    def pulse(self, milliseconds=None):
+    def _handle_ball(self):
         for switch in self.ball_switches:
             if self.machine.switch_controller.is_active(switch.name):
                 self.machine.switch_controller.process_switch(switch.name, 0,
                                                               logical=True)
                 break
 
+        if self.confirm_eject_switch:
+            self.platform.delay.add(ms=50,
+                                    callback=self.platform.confirm_eject_via_switch,
+                                    switch=self.confirm_eject_switch)
+
         if self.target_device:
             self.platform.delay.add(ms=100,
                                     callback=self.platform.add_ball_to_device,
                                     device=self.target_device)
+
+    def pulse(self, milliseconds=None):
+        if self.type == 'eject':
+            self._handle_ball()
 
         if milliseconds:
             return milliseconds
@@ -132,29 +161,3 @@ class SmartVirtualDriver(VirtualDriver):
 
     def set_target_device(self, target):
         self.target_device = target
-
-
-# The MIT License (MIT)
-
-# Oringal code on which this module was based:
-# Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

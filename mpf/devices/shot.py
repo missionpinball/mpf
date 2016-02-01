@@ -1,10 +1,4 @@
 """ Contains Shots device base class."""
-# shot.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import uuid
 from collections import OrderedDict
@@ -41,7 +35,7 @@ class Shot(Device):
         super(Shot, self).__init__(machine, name, config, collection,
                                    validate=validate)
 
-        self.delay = mpf.system.tasks.DelayManager()
+        self.delay = mpf.system.tasks.DelayManager(self.machine.delayRegistry)
 
         self.running_light_show = None
         self.active_sequences = list()
@@ -95,7 +89,7 @@ class Shot(Device):
             self.machine.switch_controller.add_switch_handler(
                 switch.name, self._cancel_switch_hit, 1)
 
-        for switch in self.config['delay_switch'].keys():
+        for switch in list(self.config['delay_switch'].keys()):
             self.machine.switch_controller.add_switch_handler(
                 switch.name, self._delay_switch_hit, 1, return_info=True)
 
@@ -117,7 +111,7 @@ class Shot(Device):
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self._cancel_switch_hit, 1)
 
-        for switch in self.config['delay_switch'].keys():
+        for switch in list(self.config['delay_switch'].keys()):
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self._delay_switch_hit, 1)
 
@@ -234,7 +228,7 @@ class Shot(Device):
         if state_settings['light_script'] and (self.config['light'] or
                                                    self.config['led']):
             self.running_light_show = (
-                self.machine.light_controller.run_registered_script(
+                self.machine.show_controller.run_registered_light_script(
                     script_name=state_settings['light_script'],
                     lights=[x.name for x in self.config['light']],
                     leds=[x.name for x in self.config['led']],
@@ -397,7 +391,7 @@ class Shot(Device):
 
         found = False
 
-        for _mode, settings in self.enable_table.iteritems():
+        for _mode, settings in self.enable_table.items():
             # only care about hits lower than this mode
 
             if found:
@@ -653,12 +647,12 @@ class Shot(Device):
         old_mode = self.active_mode
         old_settings = self.active_settings
 
-        self.enable_table = OrderedDict(sorted(self.enable_table.items(),
+        self.enable_table = OrderedDict(sorted(list(self.enable_table.items()),
                                                key=lambda x: x[1]['priority'],
                                                reverse=True))
 
         # set a pointer to the highest entry
-        for mode, settings in self.enable_table.iteritems():
+        for mode, settings in self.enable_table.items():
             self.active_mode = mode
             self.active_settings = settings
 
@@ -666,7 +660,7 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug("New enable_table order: %s",
-                           self.enable_table.keys())
+                           list(self.enable_table.keys()))
 
         # top profile has changed
         if (not old_settings or
@@ -760,7 +754,7 @@ class Shot(Device):
         if self.debug:
             self.log.debug("Removing active profile for mode %s", mode)
 
-        for k, v in self.enable_table.iteritems():
+        for k, v in self.enable_table.items():
             if (v['priority'] < self.enable_table[mode]['priority'] and
                     (v['enable'] or v['settings']['lights_when_disabled'])):
 
@@ -812,25 +806,3 @@ class Shot(Device):
     def _update_groups(self, profile, state):
         for group in self.groups:
             group.update_member_shot(shot=self, profile=profile, state=state)
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

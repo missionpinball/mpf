@@ -13,24 +13,17 @@ More info on the P-ROC hardware platform: http://pinballcontrollers.com/
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
 
-If you want to use the Mission Pinball Framework with P-ROC hardware, you also
-need libpinproc and pypinproc. More info:
-http://www.pinballcontrollers.com/forum/index.php?board=10.0
-
 """
-
-# p_roc.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import re
-import time
 import sys
 from copy import deepcopy
+from mpf.system.clock import Clock
+from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.system.rgb_color import RGBColor
 
 try:
     import pinproc
@@ -99,7 +92,7 @@ class HardwarePlatform(Platform):
                 self.proc = pinproc.PinPROC(self.machine_type)
                 self.proc.reset(1)
             except IOError:
-                print "Retrying..."
+                print("Retrying...")
 
         self.log.info("Successfully connected to P-ROC")
 
@@ -297,7 +290,7 @@ class HardwarePlatform(Platform):
         """Configures a hardware DMD connected to a classic P-ROC."""
         return PROCDMD(self.proc, self.machine)
 
-    def tick(self):
+    def tick(self, dt):
         """Checks the P-ROC for any events (switch state changes or notification
         that a DMD frame was updated).
 
@@ -507,7 +500,7 @@ class HardwarePlatform(Platform):
                                      {'notifyHost': True,
                                       'reloadActive': False}, [])
 
-        for entry in self.hw_switch_rules.keys():  # slice for copy
+        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(self.machine.switches.number(sw_num).name):
 
                 # disable any drivers from this rule which are active now
@@ -522,7 +515,7 @@ class HardwarePlatform(Platform):
         # appropriately.
 
 
-class PDBLED(object):
+class PDBLED(RGBLEDPlatformInterface):
     """Represents an RGB LED connected to a PD-LED board."""
 
     def __init__(self, board, address, proc_driver, invert=False):
@@ -542,52 +535,27 @@ class PDBLED(object):
         """Instantly sets this LED to the color passed.
 
         Args:
-            color: a 3-item list of integers representing R, G, and B values,
-            0-255 each.
+            color: an RGBColor object
         """
 
         #self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
         #               self.board, self.address, color)
 
-        self.proc.led_color(self.board, self.address[0],
-                            self.normalize_color(color[0]))
-        self.proc.led_color(self.board, self.address[1],
-                            self.normalize_color(color[1]))
-        self.proc.led_color(self.board, self.address[2],
-                            self.normalize_color(color[2]))
-
-    def fade(self, color, fade_ms):
-        # todo
-        # not implemented. For now we'll just immediately set the color
-        self.color(color, fade_ms)
+        self.proc.led_color(self.board, self.address[0], color.red)
+        self.proc.led_color(self.board, self.address[1], color.green)
+        self.proc.led_color(self.board, self.address[2], color.blue)
 
     def disable(self):
         """Disables (turns off) this LED instantly. For multi-color LEDs it
         turns all elements off.
         """
-
-        self.proc.led_color(self.board, self.address[0],
-                            self.normalize_color(0))
-        self.proc.led_color(self.board, self.address[1],
-                            self.normalize_color(0))
-        self.proc.led_color(self.board, self.address[2],
-                            self.normalize_color(0))
+        self.color(RGBColor())
 
     def enable(self):
         """Enables (turns on) this LED instantly. For multi-color LEDs it turns
         all elements on.
         """
-
-        self.color(self.normalize_color(255),
-                   self.normalize_color(255),
-                   self.normalize_color(255)
-                   )
-
-    def normalize_color(self, color):
-        if self.invert:
-            return 255-color
-        else:
-            return color
+        self.color(RGBColor('White'))
 
 
 class PDBSwitch(object):
@@ -741,7 +709,7 @@ class PROCSwitch(object):
         self.number = number
 
 
-class PROCDriver(object):
+class PROCDriver(DriverPlatformInterface):
     """ Base class for drivers connected to a P-ROC. This class is used for all
     drivers, regardless of whether they're connected to a P-ROC driver board
     (such as the PD-16 or PD-8x8) or an OEM driver board.
@@ -907,11 +875,11 @@ class PROCDriver(object):
         """
         return self.proc.driver_get_state(self.number)
 
-    def tick(self):
+    def tick(self, dt):
         pass
 
 
-class PROCMatrixLight(object):
+class PROCMatrixLight(MatrixLightPlatformInterface):
 
     def __init__(self, number, proc_driver):
         self.log = logging.getLogger('PROCMatrixLight')
@@ -921,9 +889,9 @@ class PROCMatrixLight(object):
     def off(self):
         """Disables (turns off) this driver."""
         self.proc.driver_disable(self.number)
-        self.last_time_changed = time.time()
+        self.last_time_changed = self.machine.clock.get_time()
 
-    def on(self, brightness=255, fade_ms=0, start=0):
+    def on(self, brightness=255):
         """Enables (turns on) this driver."""
         if brightness >= 255:
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
@@ -934,7 +902,7 @@ class PROCMatrixLight(object):
             pass
             # patter rates of 10/1 through 2/9
 
-        self.last_time_changed = time.time()
+        self.last_time_changed = self.machine.clock.get_time()
 
         '''
         Koen's fade code he posted to pinballcontrollers:
@@ -1049,7 +1017,7 @@ class PDBConfig(object):
         # Create a list of indexes.  The PDB banks will be mapped into this
         # list. The index of the bank is used to calculate the P-ROC driver
         # number for each driver.
-        num_proc_banks = pinproc.DriverCount/8
+        num_proc_banks = pinproc.DriverCount//8
         self.indexes = [99] * num_proc_banks
 
         self.initialize_drivers(proc)
@@ -1340,7 +1308,9 @@ class PROCDMD(object):
 
             self.proc.dmd_update_config(high_cycles=dmd_timing)
 
-        self.machine.events.add_handler('timer_tick', self.tick)
+        # Update DMD 30 times per second
+        # TODO: Add DMD update interval to config
+        self.machine.clock.schedule_interval(self.tick, 1/30.0)
 
     def update(self, data):
         """Updates the DMD with a new frame.
@@ -1355,35 +1325,9 @@ class PROCDMD(object):
             self.machine.log.warning("Received a DMD frame of length %s instead"
                                      "of 4096. Discarding...", len(data))
 
-    def tick(self):
+    def tick(self, dt):
         """Updates the physical DMD with the latest frame data. Meant to be
         called once per machine tick.
 
         """
         self.proc.dmd_draw(self.dmd)
-
-
-# The MIT License (MIT)
-
-# Oringal code on which this module was based:
-# Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

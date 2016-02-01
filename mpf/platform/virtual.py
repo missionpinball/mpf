@@ -1,21 +1,13 @@
-"""Contains code for a virtual hardware platform. At this point this is more
-for testing before you have a P-ROC or FAST board installed. Eventually this
-can be used to allow the MPF to drive PinMAME and Virtual Pinball machines.
-
-This is similar to the P-ROC's 'FakePinPROC' mode of operation, though unlike
-that it doesn't require any P-ROC drivers or modules to be installed.
-
-"""
-# virtual.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
+"""Contains code for a virtual hardware platform."""
 
 import logging
 from mpf.system.platform import Platform
 from mpf.system.utility_functions import Util
+from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platform.interfaces.gi_platform_interface import GIPlatformInterface
+from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.system.rgb_color import RGBColor
 
 
 class HardwarePlatform(Platform):
@@ -87,7 +79,7 @@ class HardwarePlatform(Platform):
                     Util.string_to_list(
                         self.machine.config['virtual_platform_start_active_switches'])]
 
-                for k, v in self.hw_switches.iteritems():
+                for k, v in self.hw_switches.items():
                     if k in initial_active_switches:
                         self.hw_switches[k] ^= 1
 
@@ -100,6 +92,9 @@ class HardwarePlatform(Platform):
                 self.hw_switches[switch.number] = switch.state ^ switch.invert
 
         return self.hw_switches
+
+    def configure_accelerometer(self, device, number, useHighPass):
+        pass
 
     def configure_matrixlight(self, config):
         return VirtualMatrixLight(config['number']), config['number']
@@ -119,10 +114,19 @@ class HardwarePlatform(Platform):
     def clear_hw_rule(self, sw_name):
         sw_num = self.machine.switches[sw_name].number
 
-        for entry in self.hw_switch_rules.keys():  # slice for copy
+        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(
                     self.machine.switches.number(sw_num).name):
                 del self.hw_switch_rules[entry]
+
+    def i2c_write8(self, address, register, value):
+        pass
+
+    def i2c_read8(self, address, register):
+        return None
+
+    def i2c_read16(self, address, register):
+        return None
 
 
 class VirtualSwitch(object):
@@ -132,49 +136,49 @@ class VirtualSwitch(object):
         self.number = number
 
 
-class VirtualMatrixLight(object):
+class VirtualMatrixLight(MatrixLightPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualMatrixLight')
         self.number = number
+        self.current_brightness = 0
 
-    def on(self, brightness=255, fade_ms=0, start=0):
-        pass
+    def on(self, brightness=255):
+        self.current_brightness = brightness
 
     def off(self):
-        pass
+        self.current_brightness = 0
 
 
-class VirtualLED(object):
+class VirtualLED(RGBLEDPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualLED')
         self.number = number
+        self.current_color = RGBColor()
 
-    def color(self, color, fade_ms=0, brightness_compensation=True):
-        #self.log.debug("Setting color: %s, fade: %s, comp: %s",
-        #               color, fade_ms, brightness_compensation)
-        pass
+    def color(self, color):
+        self.current_color = color
 
     def disable(self):
         pass
 
-    def enable(self, brightness_compensation=True):
+    def enable(self):
         pass
 
 
-class VirtualGI(object):
+class VirtualGI(GIPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualGI')
         self.number = number
+        self.current_brightness = 0
 
-    def on(self, brightness, fade_ms, start):
-        pass
+    def on(self, brightness):
+        self.current_brightness = brightness
 
     def off(self):
-        pass
+        self.current_brightness = 0
 
 
-class VirtualDriver(object):
-
+class VirtualDriver(DriverPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
@@ -209,34 +213,8 @@ class VirtualDriver(object):
 
 
 class VirtualDMD(object):
-
     def __init__(self, machine):
         pass
 
     def update(self, data):
         pass
-
-# The MIT License (MIT)
-
-# Oringal code on which this module was based:
-# Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

@@ -1,9 +1,5 @@
-"""Contrains the BallController class which manages and tracks all the balls in
+"""Contains the BallController class which manages and tracks all the balls in
 a pinball machine."""
-# ball_controller.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
 
 import logging
 
@@ -26,11 +22,11 @@ class BallController(object):
         self.machine = machine
         self.log = logging.getLogger("BallController")
         self.log.debug("Loading the BallController")
-        self.delay = DelayManager()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.game = None
 
-        self._num_balls_known = -999
+        self.num_balls_known = -999
 
         self.num_balls_missing = 0
         # Balls lost and/or not installed.
@@ -40,52 +36,39 @@ class BallController(object):
                                         self.request_to_start_game)
         self.machine.events.add_handler('machine_reset_phase_2',
                                         self._initialize)
-        # self.machine.events.add_handler('init_phase_2',
-        #                                 self.create_playfield_device, 2)
+        self.machine.events.add_handler('init_phase_2',
+                                        self._init2)
+
+    def _init2(self):
+        # register a handler for all switches
+        for device in self.machine.ball_devices:
+            if not 'ball_switches' in device.config:
+                continue
+            for switch in device.config['ball_switches']:
+                self.machine.switch_controller.add_switch_handler(switch.name,
+                                        self._count_balls, ms=100)
+
+        # run initial count
+        self._count_balls()
 
     def _count_balls(self):
         self.log.debug("Counting Balls")
         balls = 0
-        for device in self.machine.ball_devices:
-            if not device._count_consistent:
-                self.log.debug("Device %s is inconsistent", device.name)
-                return -999
-            self.log.debug("Found %s ball(s) in %s", device.balls, device.name)
-            balls += device.balls
 
-        if balls > self._num_balls_known:
+        for device in self.machine.ball_devices:
+            if not 'ball_switches' in device.config:
+                continue
+            for switch in device.config['ball_switches']:
+                if (self.machine.switch_controller.is_active(switch.name,
+                                        ms=100)):
+                    balls += 1
+
+        self.log.debug("Setting known balls to %s", balls)
+        if balls > self.num_balls_known:
             self.log.debug("Setting known balls to %s", balls)
             self.num_balls_known = balls
 
-        if balls < 0:
-            return -999
-        else:
-            return balls
-        # todo figure out how to do this with a generator
-
-    @property
-    def num_balls_known(self):
-        self._update_num_balls_known()
-
-        return self._num_balls_known
-
-    def _update_num_balls_known(self):
-        balls = self._count_balls() 
-
-        if balls < 0:
-            self.delay.add(callback=self._update_num_balls_known, ms=10)
-
-        if balls > self._num_balls_known:
-            self._num_balls_known = balls
-
-
-    @num_balls_known.setter
-    def num_balls_known(self, balls):
-        """How many balls the machine knows about. Could vary from the number
-        of balls installed based on how many are *actually* in the machine, or
-        to compensate for balls that are lost or stuck.
-        """
-        self._num_balls_known = balls
+        return balls
 
     def _initialize(self):
 
@@ -93,8 +76,6 @@ class BallController(object):
         # do and will create errors, so we just abort.
         if not hasattr(self.machine, 'ball_devices'):
             return
-
-        self._update_num_balls_known()
 
         for device in self.machine.ball_devices:
             if 'drain' in device.tags:  # device is used to drain balls from pf
@@ -132,7 +113,7 @@ class BallController(object):
                              "in their home positions.")
             return False
 
-    def are_balls_collected(self, target=None, antitarget=None):
+    def are_balls_collected(self, target):
         """Checks to see if all the balls are contained in devices tagged with
         the parameter that was passed.
 
@@ -146,8 +127,6 @@ class BallController(object):
                 'home' and 'trough'.
 
         """
-        if not target:
-            target = ['home', 'trough']
 
         self.log.debug("Checking to see if all the balls are in devices tagged"
                        " with '%s'", target)
@@ -257,28 +236,3 @@ class BallController(object):
         # the game, etc. should jump in and do whatever they need to do when a
         # ball is drained.
         pass
-
-
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

@@ -1,10 +1,4 @@
 """Contains the FileManager and FileInterface base classes."""
-# file_manager.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import os
@@ -60,7 +54,7 @@ class FileInterface(object):
         """
         raise NotImplementedError
 
-    def load(self, filename, verify_version=True):
+    def load(self, filename, verify_version=True, halt_on_error=False, round_trip=False):
         raise NotImplementedError
 
     def save(self, filename, data):
@@ -71,6 +65,7 @@ class FileManager(object):
 
     log = logging.getLogger('FileManager')
     file_interfaces = dict()
+    initialized = False
 
     @classmethod
     def init(cls):
@@ -87,8 +82,14 @@ class FileManager(object):
                 for file_type in interface_class.file_types:
                     cls.file_interfaces[file_type] = this_instance
 
+        FileManager.initialized = True
+
     @staticmethod
     def locate_file(filename):
+
+        if not FileManager.initialized:
+            FileManager.init()
+
         ext = os.path.splitext(filename)[1]
 
         if not os.path.isfile(filename):
@@ -117,7 +118,10 @@ class FileManager(object):
                 return None
 
     @staticmethod
-    def load(filename, verify_version=False, halt_on_error=False):
+    def load(filename, verify_version=False, halt_on_error=False, round_trip=False):
+
+        if not FileManager.initialized:
+            FileManager.init()
 
         file = FileManager.locate_file(filename)
 
@@ -127,7 +131,8 @@ class FileManager(object):
             try:
                 config = FileManager.file_interfaces[ext].load(file,
                                                                verify_version,
-                                                               halt_on_error)
+                                                               halt_on_error,
+                                                               round_trip)
             except KeyError:
                 # todo convert to exception
                 FileManager.log.error("No config file processor available for file type {}"

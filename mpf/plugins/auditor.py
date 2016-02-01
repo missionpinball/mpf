@@ -1,11 +1,5 @@
 """MPF plugin for an auditor which records switch events, high scores, shots,
 etc."""
-# auditor.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 from mpf.system.config import Config
@@ -51,15 +45,7 @@ class Auditor(object):
         # Initializes the auditor. We do this separate from __init__() since
         # we need everything else to be setup first.
 
-        config = '''
-                    save_events: list|ball_ended
-                    audit: list|None
-                    events: list|None
-                    player: list|None
-                    num_player_top_records: int|10
-                    '''
-
-        self.config = Config.process_config(config,
+        self.config = self.machine.config_processor.process_config2('auditor',
                                             self.machine.config['auditor'])
 
         self.current_audits = self.data_manager.get_data()
@@ -231,26 +217,3 @@ class Auditor(object):
 
 
 plugin_class = Auditor
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

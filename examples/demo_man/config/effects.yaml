@@ -1,0 +1,54 @@
+widgets:
+  score:
+    - type: text
+      text: %score%
+      effects:
+        entrance:
+          pulse, spin
+          blow-up
+        exit:
+        emphasis:
+
+widgets:
+  score:
+    - type: text
+      text: %score%
+      effects:
+        emphasis:
+          opacity: 100
+          time: 1s
+          opacity: 0
+          time: 1s
+          repeat: yes
+          function: smooth
+        exit:
+        entrance:
+        my_event:
+          opacity: 30
+
+widgets:
+  score:
+    - type: text
+      text: %score%
+      effects: pulse, drip
+
+widgets:
+  score:
+    - type: text
+      text: %score%
+      effects:
+        pulse:
+          time: 2s
+
+effects:
+  pulse:
+    opacity:
+      end_value: 100
+      time: 1s
+      opacity: 0
+      time: 1s
+      repeat: yes
+      function: smooth
+    x_pos:
+      end_value: 600
+      time: 2s

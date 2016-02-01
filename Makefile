@@ -1,9 +1,9 @@
 unit:
-	python -m unittest discover -s tests
+	python3 -m unittest discover -s tests
 
 unit-verbose:
-	python -m unittest discover -v -s tests
+	python3 -m unittest discover -v -s tests
 
 coverage:
-	coverage run -m unittest discover -s tests
-	coverage html
+	coverage3 run -m unittest discover -s tests
+	coverage3 html

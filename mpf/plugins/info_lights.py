@@ -1,11 +1,5 @@
 """MPF plugin which uses lights to represent Game functions. Typically in an
 EM machine"""
-# info_lights.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 
@@ -30,7 +24,7 @@ class InfoLights(object):
         ]
 
         # convert any light names we find to objects
-        for k, v in self.config.iteritems():
+        for k, v in self.config.items():
             if 'light' in v:
                 if v['light'] in self.machine.lights:
                     self.config[k]['light'] = self.machine.lights[v['light']]
@@ -47,7 +41,7 @@ class InfoLights(object):
     def reset_game_lights(self):
         self.log.debug("reset_game_lights")
         # turn off the game-specific lights (player, ball & match)
-        for k, v in self.config.iteritems():
+        for k, v in self.config.items():
             if k.startswith('ball_'):
                 v['light'].off()
             if k.startswith('player_'):
@@ -58,7 +52,7 @@ class InfoLights(object):
     def ball_started(self, **kwargs):
         self.log.debug("ball_started")
         # turn off all the ball lights
-        for k, v in self.config.iteritems():
+        for k, v in self.config.items():
             if k.startswith('ball_'):
                 v['light'].off()
 
@@ -77,16 +71,16 @@ class InfoLights(object):
 
         # turn on game over
         if 'game_over' in self.config:
-            self.machine.light_controller.run_script(
+            self.machine.show_controller.run_light_script(
                 lights=self.config['game_over']['light'].name,
                 script=self.flash,
-                tocks_per_sec=2,
+                playback_rate=2,
                 key='game_over')
 
     def game_starting(self, **kwargs):
         self.log.debug("game_starting")
         self.reset_game_lights()
-        self.machine.light_controller.stop_script(key='game_over')
+        self.machine.show_controller.stop_light_script(key='game_over')
 
     def player_added(self, player, **kwargs):
         self.log.debug("player_added. player=%s", player)
@@ -108,26 +102,3 @@ class InfoLights(object):
 
 
 plugin_class = InfoLights
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

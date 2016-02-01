@@ -1,0 +1,168 @@
+# config_version=3
+
+hardware:
+  platform: smart_virtual
+  driverboards: virtual
+
+config:
+    - hardware.yaml
+    - shots.yaml
+    - keyboard.yaml
+
+mpf:
+  default_pulse_ms: 20
+
+game:
+    balls_per_game: 3
+    max_players: 4
+#    player_controlled_eject_tag: plunger
+
+modes:
+  - base
+  - claw_lit_for_major_mode
+  - mode1_acmag
+  - skillshot
+  - bonus
+  - high_score
+  - tilt
+#  - credits
+
+scriptlets:
+    add_a_ball.AddABall
+    claw.Claw
+
+images:
+    demo_man_logo:
+        target: dmd
+
+window:
+  width: 800
+  height: 600
+  minimum_width: 200
+  minimum_height: 100
+  borderless: false
+  fullscreen: false
+  rotation: 0
+  title: Demo Man
+  show_cursor: false
+  source_display: window
+  dpi: 96
+  scale_contents: true
+
+displays:
+  window:
+    width: 800
+    height: 600
+    default: yes
+  dmd:
+    width: 128
+    height: 32
+
+slides:
+  boot:
+  - type: text
+    text: FADE IN
+    animations:
+      entrance:
+        - property: opacity
+          value: 1
+          duration: 1s
+          repeat: True
+        - property: opacity
+          value: 0
+          duration: 1s
+  - type: text
+    text: SIZE
+    color: ff0000
+    animations:
+      event1:
+        - property: font_size, x
+          value: 200, 300
+          repeat: True
+          duration: 3s
+          easing: in_out_sine
+        - property: font_size, x
+          value: 0, 100
+          duration: 3s
+          easing: in_out_sine
+  - type: text
+    text: POSITION WITH CUSTOM EASING
+    font_size: 50
+    y: 350
+    color: 00ff00
+    animations:
+      entrance:
+        - property: y
+          value: 0
+          repeat: True
+          duration: 2s
+          easing: out_bounce
+        - property: y
+          value: 350
+          duration: 0
+
+  slide2:
+    type: text
+    text: MPF BOOTY
+    animations:
+      entrance2:
+        property: x  # x, y, height, width, opacity, rotation?
+        start: 0
+        value: 99
+        duration: 1s
+        repeats: -1
+
+  slide3:
+    type: text
+    text: MPF BOOTY
+    animations:
+      entrance3: fade_in, multi
+
+  slide4:
+    type: text
+    text: MPF BOOTY
+    animations:
+      entrance4: fade_in, multi
+      some_event4: multi
+
+  slide5:
+    type: text
+    text: MPF BOOTY
+    animations:
+      entrance5: fade_in, multi
+      event5:
+        property: x # x, y, height, width, opacity, rotation?
+        start: 0
+        value: 98
+        duration: 1s
+        repeats: -1
+
+keyboard:
+  g:
+    mc_event: event1
+  h:
+    mc_event: event2
+
+slide_player:
+  display_window_initialized:
+    slide: boot
+    target: window
+
+#animations:
+#  fade_in:
+#    property: opacity
+#    start: 0
+#    value: 1
+#    duration: 1s
+#    timing: with_previous
+#    repeats: 0
+#
+#  multi:
+#  - property: opacity
+#    value: 1
+#    duration: 1s
+#  - property: opacity
+#    value: 0
+#    duration: 100ms
+#    timing: after_previous
+#    repeats: -1

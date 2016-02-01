@@ -1,29 +1,10 @@
 """ Contains the base classes for mechanical EM-style score reels."""
-# score_reel.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
-import time
 
 from collections import deque
 from mpf.system.device import Device
 from mpf.system.tasks import DelayManager
-from mpf.system.timing import Timing
-from mpf.system.config import Config
-
-
-# Known limitations of this module:
-# Assumes all score reels include a zero value
-# Assumes all score reels count up or down by one
-# Assumes all score reels map their displayed value to their stored value
-# in a 1:1 way. (i.e. value[0] displays 0, value[5] displays 5, etc.
-
-# Note, currently this module only supports "incrementing" reels (i.e. counting
-# up). Decrementing support will be added in the future
 
 
 class ScoreReelController(object):
@@ -38,6 +19,14 @@ class ScoreReelController(object):
     ScoreReelGroups and "stacking" and switching out players when there are
     multiple players per ScoreReelGroup.
 
+    Known limitations of this module:
+        * Assumes all score reels include a zero value.
+        * Assumes all score reels count up or down by one.
+        * Assumes all score reels map their displayed value to their stored
+          value in a 1:1 way. (i.e. value[0] displays 0, value[5] displays 5,
+          etc.
+        * Currently this module only supports "incrementing" reels (i.e.
+          counting up). Decrementing support will be added in the future.
     """
 
     def __init__(self, machine):
@@ -108,7 +97,7 @@ class ScoreReelController(object):
         if (self.active_scorereelgroup.assumed_value_int !=
                 self.machine.game.player.score):
             self.active_scorereelgroup.set_value(
-                self.machine.game.player.score)
+                    self.machine.game.player.score)
 
         # light up this group
         for group in self.machine.score_reel_groups:
@@ -166,7 +155,7 @@ class ScoreReelController(object):
         # populate the reset queue
         self.reset_queue = []
 
-        for player, score_reel_group in self.machine.score_reel_groups.iteritems():
+        for player, score_reel_group in self.machine.score_reel_groups.items():
             self.reset_queue.append(score_reel_group)
         self.reset_queue.sort(key=lambda x: x.name)
         # todo right now this sorts by ScoreGroupName. Need to change to tags
@@ -208,8 +197,8 @@ class ScoreReelGroup(Device):
         machine.score_reel_controller = ScoreReelController(machine)
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(ScoreReelGroup, self).__init__(machine, name, config, collection,
-                                             validate=validate)
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
 
         self.wait_for_valid_queue = None
         self.valid = True  # Confirmed reels are showing the right values
@@ -277,7 +266,7 @@ class ScoreReelGroup(Device):
         self.machine.events.add_handler('init_phase_4',
                                         self.initialize)
 
-        self.machine.events.add_handler('timer_tick', self.tick)
+        self.machine.clock.schedule_interval(self.tick, 0.1)
 
         # Need to hook this in case reels aren't done when ball ends
         self.machine.events.add_handler('ball_ending', self._ball_ending, 900)
@@ -326,7 +315,7 @@ class ScoreReelGroup(Device):
             if self.reels[reel] and (reel < len(self.reels) - 1):
                 self.reels[reel]._set_rollover_reel(self.reels[reel + 1])
 
-    def tick(self):
+    def tick(self, dt):
         """Automatically called once per machine tick and checks to see if there
         are any jumps or advances in progress, and, if so, calls those methods.
         """
@@ -561,7 +550,7 @@ class ScoreReelGroup(Device):
 
         reels_needing_advance = []  # reels that need to be advanced
         num_energized = 0  # count of the number of coils currently energized
-        current_time = time.time()  # local reference for speed
+        current_time = self.machine.clock.get_time()  # local reference for speed
         # loop through the reels one by one
         for i in range(len(self.reels)):
             this_reel = self.reels[i]  # local reference for speed
@@ -833,9 +822,9 @@ class ScoreReelGroup(Device):
         # while they're resyncing
 
         self.unlight_on_resync_key = self.machine.events.add_handler(
-            'scorereelgroup_' + self.name + '_resync',
-            self.unlight,
-            relight_on_valid=True)
+                'scorereelgroup_' + self.name + '_resync',
+                self.unlight,
+                relight_on_valid=True)
 
         if relight_on_valid:
             self.machine.events.remove_handler_by_key(self.light_on_valid_key)
@@ -853,12 +842,12 @@ class ScoreReelGroup(Device):
 
         if relight_on_valid:
             self.light_on_valid_key = self.machine.events.add_handler(
-                'scorereelgroup_' + self.name + '_valid',
-                self.light,
-                relight_on_valid=True)
+                    'scorereelgroup_' + self.name + '_valid',
+                    self.light,
+                    relight_on_valid=True)
         else:
             self.machine.events.remove_handler_by_key(
-                self.unlight_on_resync_key)
+                    self.unlight_on_resync_key)
 
     def _ball_ending(self, queue=None):
         # We need to hook the ball_ending event in case the ball ends while the
@@ -894,9 +883,9 @@ class ScoreReel(Device):
     class_label = 'score_reel'
 
     def __init__(self, machine, name, config, collection=None, validate=True):
-        super(ScoreReel, self).__init__(machine, name, config, collection,
-                                        validate=validate)
-        self.delay = DelayManager()
+        super().__init__(machine, name, config, collection,
+                         validate=validate)
+        self.delay = DelayManager(machine.delayRegistry)
 
         self.rollover_reel_advanced = False
         # True when a rollover pulse has been ordered
@@ -1074,7 +1063,7 @@ class ScoreReel(Device):
         self.set_destination_value(direction)
         # above line also sets self._destination_index
 
-        if self.next_pulse_time > time.time():
+        if self.next_pulse_time > self.machine.clock.get_time():
             # This reel is not ready to pulse again
             # Note we don't allow this to be overridden. Figure the
             # recycle time is there for a reason and we don't want to
@@ -1106,7 +1095,7 @@ class ScoreReel(Device):
                                ms=self.config['repeat_pulse_time'],
                                callback=self._ready_to_fire)
 
-                self.next_pulse_time = (time.time() +
+                self.next_pulse_time = (self.machine.clock.get_time() +
                                         (self.config['repeat_pulse_time'] /
                                          1000.0))
                 self.log.debug("@@@ New Next pulse ready time: %s",
@@ -1173,7 +1162,7 @@ class ScoreReel(Device):
         # check to make sure the 'hw_confirm_time' time has passed. If not then
         # we cannot trust any value we read from the switches
         if (self.config['coil_inc'].time_last_changed +
-                (self.config['hw_confirm_time'] / 1000.0) <= time.time()):
+                (self.config['hw_confirm_time'] / 1000.0) <= self.machine.clock.get_time()):
             self.log.debug("Checking hw switches to determine reel value")
             value = -999
             for i in range(len(self.value_switches)):
@@ -1243,25 +1232,3 @@ class ScoreReel(Device):
             self.log.debug("@@@ new destination_index: -999")
             self._destination_index = -999
             return -999
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

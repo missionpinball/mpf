@@ -1,16 +1,7 @@
 """Contains the Attract class which is the attract mode in a pinball machine.
-
 """
-# attract.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/mpf
-
-import logging
 from mpf.system.mode import Mode
-import time
 
 
 class Attract(Mode):
@@ -22,7 +13,7 @@ class Attract(Mode):
     """
 
     def __init__(self, machine, config, name, path):
-        super(Attract, self).__init__(machine, config, name, path)
+        super().__init__(machine, config, name, path)
 
         self.start_button_pressed_time = 0.0
         self.start_hold_time = 0.0
@@ -45,11 +36,11 @@ class Attract(Mode):
         for switch in self.machine.switches.items_tagged(
                 self.machine.config['game']['start_game_switch_tag']):
             self.switch_handlers.append(
-                self.machine.switch_controller.add_switch_handler(
-                    switch.name, self.start_button_pressed, 1))
+                    self.machine.switch_controller.add_switch_handler(
+                            switch.name, self.start_button_pressed, 1))
             self.switch_handlers.append(
-                self.machine.switch_controller.add_switch_handler(
-                    switch.name, self.start_button_released, 0))
+                    self.machine.switch_controller.add_switch_handler(
+                            switch.name, self.start_button_released, 0))
 
         if hasattr(self.machine, 'ball_devices'):
             self.machine.ball_controller.collect_balls()
@@ -59,7 +50,7 @@ class Attract(Mode):
 
     def start_button_pressed(self):
         """ Called when the a switch tagged with *start* is activated."""
-        self.start_button_pressed_time = time.time()
+        self.start_button_pressed_time = self.machine.clock.get_time()
 
     def start_button_released(self):
         """ Called when the a switch tagged with *start* is deactivated.
@@ -69,7 +60,7 @@ class Attract(Mode):
         method calls :meth:`result_of_start_request`.
 
         """
-        self.start_hold_time = time.time() - self.start_button_pressed_time
+        self.start_hold_time = self.machine.clock.get_time() - self.start_button_pressed_time
         self.start_buttons_held = list()
 
         for switch in self.machine.switches.items_tagged('player'):
@@ -101,26 +92,3 @@ class Attract(Mode):
             self.machine.events.post('game_start',
                                      buttons=self.start_buttons_held,
                                      hold_time=self.start_hold_time)
-            # machine flow will move on to the next mode when this mode ends
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

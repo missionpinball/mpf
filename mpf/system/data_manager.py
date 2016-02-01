@@ -1,19 +1,12 @@
 """Contains the DataManager base class."""
-# data_manager.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import copy
 import logging
 import os
 import errno
-import thread
+import _thread
 import time
 
-from mpf.system.config import Config
 from mpf.system.file_manager import FileManager
 
 
@@ -74,9 +67,18 @@ class DataManager(object):
 
         """
         if not section:
-            return copy.copy(self.data)
+            data = copy.copy(self.data)
         else:
-            return copy.copy(self.data[section])
+
+            try:
+                data = copy.copy(self.data[section])
+            except (KeyError, TypeError):
+                data = dict()
+
+        if isinstance(data, dict):
+            return data
+        else:
+            return dict()
 
     def save_all(self, data=None, delay_secs=0):
         """Writes this DataManager's data to the disk.
@@ -97,7 +99,15 @@ class DataManager(object):
         if data:
             self.data = data
 
-        thread.start_new_thread(self._writing_thread, (delay_secs, ))
+        if delay_secs:
+            self.machine.delay.add(callback=self._delayed_save_callback,
+                                   data=copy.deepcopy(self.data),
+                                   ms=delay_secs*1000)
+        else:
+            _thread.start_new_thread(self._writing_thread, (copy.deepcopy(self.data), ))
+
+    def _delayed_save_callback(self, data):
+        _thread.start_new_thread(self._writing_thread, (data, ))
 
     def save_key(self, key, value, delay_secs=0):
         """Updates an individual key and then writes the entire dictionary to
@@ -110,7 +120,15 @@ class DataManager(object):
                 data to disk. Default is 0.
 
         """
-        self.data[key] = value
+        try:
+            self.data[key] = value
+        except TypeError:
+            self.log.warning('In-memory copy of {} is invalid. Re-creating'.
+                             format(self.filename))
+            # todo should we reload from disk here?
+            self.data = dict()
+            self.data[key] = value
+
         self.save_all(delay_secs=delay_secs)
 
     def remove_key(self, key):
@@ -120,33 +138,6 @@ class DataManager(object):
         except KeyError:
             pass
 
-    def _writing_thread(self, delay_secs=0):
-
-        if delay_secs:
-            time.sleep(delay_secs)
-        self.log.debug("Writing %s to: %s", self.name, self.filename)
-
-        FileManager.save(self.filename, self.data)
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+    def _writing_thread(self, data):
+        self.log.debug("Writing {} to: {}".format(self.name, self.filename))
+        FileManager.save(self.filename, data)

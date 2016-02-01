@@ -1,16 +1,11 @@
 """Contains code for an FadeCandy hardware for RGB LEDs."""
-# fadecandy.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 import json
 import struct
 
 from mpf.system.utility_functions import Util
+from mpf.system.config import Config
 from mpf.platform.openpixel import OpenPixelClient
 from mpf.platform.openpixel import HardwarePlatform as OPHardwarePlatform
 
@@ -58,21 +53,20 @@ class FadeCandyOPClient(OpenPixelClient):
 
         self.update_every_tick = True
 
-        self.gamma = self.machine.config['led_settings']['gamma']
-        self.whitepoint = Util.string_to_list(
-            self.machine.config['led_settings']['whitepoint'])
+        self.config = self.machine.config_processor.process_config2('fadecandy',
+                                                                    self.machine.config['fadecandy'])
+
+        self.gamma = self.config['gamma']
+        self.whitepoint = Util.string_to_list(self.config['whitepoint'])
 
         self.whitepoint[0] = float(self.whitepoint[0])
         self.whitepoint[1] = float(self.whitepoint[1])
         self.whitepoint[2] = float(self.whitepoint[2])
 
-        self.linear_slope = (
-            self.machine.config['led_settings']['linear_slope'])
-        self.linear_cutoff = (
-            self.machine.config['led_settings']['linear_cutoff'])
-        self.keyframe_interpolation = (
-            self.machine.config['led_settings']['keyframe_interpolation'])
-        self.dithering = self.machine.config['led_settings']['dithering']
+        self.linear_slope = self.config['linear_slope']
+        self.linear_cutoff = self.config['linear_cutoff']
+        self.keyframe_interpolation = self.config['keyframe_interpolation']
+        self.dithering = self.config['dithering']
 
         if not self.dithering:
             self.disable_dithering()
@@ -262,26 +256,3 @@ class FadeCandyOPClient(OpenPixelClient):
 
         self.send(struct.pack(
             "!BBHHHB", 0x00, 0xFF, 0x0005, 0x0001, 0x0002, config_byte))
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

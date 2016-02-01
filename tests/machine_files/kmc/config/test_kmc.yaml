@@ -1,0 +1,19 @@
+#config_version=3
+
+dummy:
+  dummy: dummy
+
+screens:
+  hello:
+    ok: 1
+
+displays:
+  window:
+    type: window
+    width: 760
+    height: 660
+
+window:
+  source_display: window
+  width: 750
+  height: 600

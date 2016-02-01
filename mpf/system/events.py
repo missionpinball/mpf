@@ -1,10 +1,4 @@
 """Contains the base classes for the EventManager and QueuedEvents"""
-# events.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
 
 import logging
 from collections import deque
@@ -22,7 +16,6 @@ class EventManager(object):
         self.registered_handlers = {}
         self.event_queue = deque([])
         self.callback_queue = deque([])
-        self.registered_monitors = set()  # callbacks that get every event
 
         self.debug = True
 
@@ -95,9 +88,12 @@ class EventManager(object):
 
         self.registered_handlers[event].append((handler, priority, kwargs, key))
         if self.debug:
-            self.log.debug("Registered %s as a handler for '%s', priority: %s, "
-                           "kwargs: %s",
-                           (str(handler).split(' '))[2], event, priority, kwargs)
+            try:
+                self.log.debug("Registered %s as a handler for '%s', priority: %s, "
+                               "kwargs: %s",
+                               (str(handler).split(' '))[2], event, priority, kwargs)
+            except IndexError:
+                pass
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
@@ -105,42 +101,6 @@ class EventManager(object):
         self.registered_handlers[event].sort(key=lambda x: x[1], reverse=True)
 
         return key
-
-    def add_monitor(self, monitor):
-        """Adds a new event monitor.
-
-        Args:
-            monitor: Reference to the callback function that will be called on
-                every event posting.
-
-        Event monitors are similar to event handlers except they're called on
-        every single event. In other words, they're like handlers you register
-        for every event instead of a single event.
-
-        The monitor you register will be called on each event posting with the
-        following paramters:
-
-            * event String name of the evnet
-            * ev_type String of the type of event
-            * callback Reference to the event callback (if it has one)
-            * kwargs Dict of kwargs that will be passed to the handlers.
-
-        """
-        self.events_monitors.add(monitor)
-
-    def remove_monitor(self, monitor):
-        """Removes / deregisters an event monitor.
-
-        Args:
-            monitor: The function you want to deregister.
-
-        This method can safely be called even if this monitor is not registered.
-
-        """
-        try:
-            self.events_monitors.remove(monitor)
-        except KeyError:
-            pass
 
     def replace_handler(self, event, handler, priority=1, **kwargs):
         """Checks to see if a handler (optionally with kwargs) is registered for
@@ -191,7 +151,7 @@ class EventManager(object):
             method : The method whose handlers you want to remove.
         """
 
-        for event, handler_list in self.registered_handlers.iteritems():
+        for event, handler_list in self.registered_handlers.items():
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[0] == method:
                     handler_list.remove(handler_tup)
@@ -234,7 +194,7 @@ class EventManager(object):
             key: The key of the handler you want to remove
         """
 
-        for event, handler_list in self.registered_handlers.iteritems():
+        for event, handler_list in self.registered_handlers.items():
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[3] == key:
                     handler_list.remove(handler_tup)
@@ -420,7 +380,7 @@ class EventManager(object):
 
         event = event.lower()
 
-        if self.debug and event != 'timer_tick':
+        if self.debug:
             # Use friendly_kwargs so the logger shows a "friendly" name of the
             # callback handler instead of the bound method object reference.
             friendly_kwargs = dict(kwargs)
@@ -433,7 +393,7 @@ class EventManager(object):
                            friendly_kwargs)
 
         self.event_queue.append((event, ev_type, callback, kwargs))
-        if self.debug and event != 'timer_tick':
+        if self.debug:
             if self.debug:
                 self.log.debug("============== EVENTS QUEUE =============")
                 for event in list(self.event_queue):
@@ -446,7 +406,7 @@ class EventManager(object):
 
         result = None
         queue = None
-        if self.debug and event != 'timer_tick':
+        if self.debug:
             # Show friendly callback name. See comment in post() above.
             friendly_kwargs = dict(kwargs)
             if 'callback' in kwargs:
@@ -455,10 +415,6 @@ class EventManager(object):
             self.log.debug("^^^^ Processing event '%s'. Type: %s, Callback: %s,"
                            " Args: %s", event, ev_type, callback,
                            friendly_kwargs)
-
-        for monitor in self.registered_monitors:
-            monitor(event=event, ev_type=ev_type, callback=callback,
-                    kwargs=kwargs)
 
         # Now let's call the handlers one-by-one, including any kwargs
         if event in self.registered_handlers:
@@ -473,14 +429,17 @@ class EventManager(object):
 
                 # merge the post's kwargs with the registered handler's kwargs
                 # in case of conflict, posts kwargs will win
-                merged_kwargs = dict(handler[2].items() + kwargs.items())
+                merged_kwargs = dict(list(handler[2].items()) + list(kwargs.items()))
 
                 # log if debug is enabled and this event is not the timer tick
-                if self.debug and event != 'timer_tick':
-                    self.log.debug("%s (priority: %s) responding to event '%s'"
-                                   " with args %s",
-                                   (str(handler[0]).split(' '))[2], handler[1],
-                                   event, merged_kwargs)
+                if self.debug:
+                    try:
+                        self.log.debug("%s (priority: %s) responding to event '%s'"
+                                       " with args %s",
+                                       (str(handler[0]).split(' '))[2], handler[1],
+                                       event, merged_kwargs)
+                    except IndexError:
+                        pass
 
                 # call the handler and save the results
                 result = handler[0](**merged_kwargs)
@@ -493,7 +452,7 @@ class EventManager(object):
                     # add a False result so our callback knows something failed
                     kwargs['ev_result'] = False
 
-                    if self.debug and event != 'timer_tick':
+                    if self.debug:
                         self.log.debug("Aborting future event processing")
 
                     break
@@ -501,14 +460,14 @@ class EventManager(object):
                 elif ev_type == 'relay' and type(result) is dict:
                     kwargs.update(result)
 
-        if self.debug and event != 'timer_tick':
+        if self.debug:
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
                            "Args: %s", event, ev_type, callback, kwargs)
 
-        if ev_type is 'queue' and not queue:
+        if ev_type == 'queue' and not queue:
             # If this was a queue event but there were no registered handlers,
             # then we need to do the callback now
-            callback(**kwargs)
+            self.callback_queue.append((callback, kwargs))
 
         elif queue and queue.is_empty():
             # If we had a queue event that had handlers and a queue was created
@@ -519,7 +478,9 @@ class EventManager(object):
 
             if queue.callback:
                 # if there's still a callback, that means it wasn't called yet
-                queue.callback(**kwargs)
+                self.callback_queue.append((queue.callback, kwargs))
+        elif queue and not queue.is_empty():
+            queue.event_finished()
 
         if callback and ev_type != 'queue':
             # For event types other than queue, we'll handle the callback here.
@@ -560,7 +521,7 @@ class EventManager(object):
 
         event_keys = set()
 
-        for event_name, events in config.iteritems():
+        for event_name, events in config.items():
             if type(events) is not list:
                 events = Util.string_to_list(events)
 
@@ -578,7 +539,7 @@ class EventManager(object):
 
         event_keys = set()
 
-        for event_name, events in config.iteritems():
+        for event_name, events in config.items():
             if type(events) is not list:
                 events = Util.string_to_list(events)
 
@@ -595,7 +556,7 @@ class EventManager(object):
         self.machine.events.post(event_to_call, **kwargs)
 
     def _random_event_player_callback(self, event_list, **kwargs):
-        self.machine.events.post(random.choice(event_list))
+        self.machine.events.post(random.choice(event_list), **kwargs)
 
 
 class QueuedEvent(object):
@@ -606,7 +567,7 @@ class QueuedEvent(object):
     def __init__(self, callback, **kwargs):
         self.log = logging.getLogger("Queue")
 
-        self.debug = False
+        self.debug = True
 
         if self.debug:
             self.log.debug("Creating an event queue. Callback: %s Args: %s",
@@ -614,9 +575,13 @@ class QueuedEvent(object):
         self.callback = callback
         self.kwargs = kwargs
         self.num_waiting = 0
+        self._is_event_finished = False
 
     def __repr__(self):
         return '<QueuedEvent for callback {}>'.format(self.callback)
+
+    def event_finished(self):
+            self._is_event_finished = True
 
     def wait(self):
         """Registers a wait for this QueueEvent."""
@@ -634,7 +599,7 @@ class QueuedEvent(object):
         if self.debug:
             self.log.debug("Clearing a wait. Current count: %s",
                            self.num_waiting)
-        if not self.num_waiting:
+        if not self.num_waiting and self._is_event_finished:
             if self.debug:
                 self.log.debug("Queue is empty. Calling %s", self.callback)
             #del self.kwargs['queue']  # ditch this since we don't need it now
@@ -661,26 +626,3 @@ class QueuedEvent(object):
             return True
         else:
             return False
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

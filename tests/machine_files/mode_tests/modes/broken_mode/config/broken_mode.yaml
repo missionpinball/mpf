@@ -1,0 +1,4 @@
+#config_version=3
+
+mode:
+  invalid_key: crap

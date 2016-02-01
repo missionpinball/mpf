@@ -1,25 +1,22 @@
 """Contains the MachineController base class"""
-# machine.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
 
-# Documentation and more info at http://missionpinball.com/mpf
-
+import pickle
 import logging
 import os
-import time
 import sys
-import Queue
+import queue
+
+import errno
 
 from mpf.system import *
+from mpf.system.clock import ClockBase
 from mpf.system.config import Config, CaseInsensitiveDict
-from mpf.system.tasks import Task, DelayManager
+from mpf.system.device_manager import DeviceCollection
+from mpf.system.tasks import Task, DelayManager, DelayManagerRegistry
 from mpf.system.data_manager import DataManager
 from mpf.system.timing import Timing
 from mpf.system.assets import AssetManager
 from mpf.system.utility_functions import Util
-from mpf.system.file_manager import FileManager
 import version
 
 
@@ -53,6 +50,7 @@ class MachineController(object):
         self.log.debug("Command line arguments: {}".format(self.options))
         self.verify_system_info()
 
+        self.clock = ClockBase()
         self.loop_start_time = 0
         self.tick_num = 0
         self.done = False
@@ -60,7 +58,7 @@ class MachineController(object):
         self.monitors = dict()
         self.plugins = list()
         self.scriptlets = list()
-        self.modes = list()
+        self.modes = DeviceCollection(self, 'modes', None)
         self.asset_managers = dict()
         self.game = None
         self.active_debugger = dict()
@@ -71,12 +69,12 @@ class MachineController(object):
         self.flag_bcp_reset_complete = False
         self.asset_loader_complete = False
 
-        self.delay = DelayManager()
+        self.delayRegistry = DelayManagerRegistry(self)
+        self.delay = DelayManager(self.delayRegistry)
 
-        self.crash_queue = Queue.Queue()
-        Task.create(self._check_crash_queue)
+        self.crash_queue = queue.Queue()
+        Task.create(self, self._check_crash_queue, interval=1.0)
 
-        FileManager.init()
         self.config = dict()
         self._load_mpf_config()
         self._set_machine_path()
@@ -88,7 +86,7 @@ class MachineController(object):
         self.default_platform = None
 
         if not self.options['force_platform']:
-            for section, platform in self.config['hardware'].iteritems():
+            for section, platform in self.config['hardware'].items():
                 if platform.lower() != 'default' and section != 'driverboards':
                         self.add_platform(platform)
             self.set_default_platform(self.config['hardware']['platform'])
@@ -111,7 +109,7 @@ class MachineController(object):
         # This is called so hw platforms have a change to register for events,
         # and/or anything else they need to do with system modules since
         # they're not set up yet when the hw platforms are constructed.
-        for platform in self.hardware_platforms.values():
+        for platform in list(self.hardware_platforms.values()):
             platform.initialize()
 
         self.validate_machine_config_section('machine')
@@ -133,11 +131,11 @@ class MachineController(object):
         self.events._process_event_queue()
         self.events.post("init_phase_5")
         self.events._process_event_queue()
-
+        Config.unload_config_spec()
         self.reset()
 
     def validate_machine_config_section(self, section):
-        if section not in self.config['config_validator']:
+        if section not in Config.config_spec:
             return
 
         if section not in self.config:
@@ -153,15 +151,16 @@ class MachineController(object):
         self.events.add_handler('quit', self.quit)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.quit)
-        self.events.add_handler('timer_tick', self._loading_tick)
+
+        self.clock.schedule_interval(self._loading_tick, 0.1)
 
     def _load_machine_vars(self):
         self.machine_var_data_manager = DataManager(self, 'machine_vars')
 
-        current_time = time.time()
+        current_time = self.clock.get_time()
 
         for name, settings in (
-                self.machine_var_data_manager.get_data().iteritems()):
+                iter(self.machine_var_data_manager.get_data().items())):
 
             if ('expire' in settings and settings['expire'] and
                     settings['expire'] < current_time):
@@ -173,8 +172,8 @@ class MachineController(object):
     def _check_crash_queue(self):
         try:
             crash = self.crash_queue.get(block=False)
-        except Queue.Empty:
-            yield 1000
+        except queue.Empty:
+            pass
         else:
             self.log.critical("MPF Shutting down due to child thread crash")
             self.log.critical("Crash details: %s", crash)
@@ -202,6 +201,32 @@ class MachineController(object):
         sys.path.append(self.machine_path)
 
     def _load_machine_config(self):
+        if self.options['rebuild_cache']:
+            load_from_cache = False
+        else:
+            try:
+                if self._get_latest_config_mod_time() > os.path.getmtime(os.path.join(
+                        self.machine_path, '_cache', '{}_config.p'.
+                        format('-'.join(self.options['configfile'])))):
+                    load_from_cache = False  # config is newer
+                else:
+                    load_from_cache = True  # cache is newer
+
+            except OSError as exception:
+                if exception.errno != errno.ENOENT:
+                    raise  # some unknown error?
+                else:
+                    load_from_cache = False  # cache file doesn't exist
+
+        config_loaded = False
+        if load_from_cache:
+            config_loaded = self._load_config_from_cache()
+
+        if not config_loaded:
+            self._load_config_from_files()
+
+    def _load_config_from_files(self):
+        self.log.info("Loading config from original files")
         for num, config_file in enumerate(self.options['configfile']):
 
             if not (config_file.startswith('/') or
@@ -215,6 +240,61 @@ class MachineController(object):
             self.config = Util.dict_merge(self.config,
                 Config.load_config_file(config_file))
 
+        self._cache_config()
+
+    def _load_config_from_cache(self):
+        self.log.info("Loading cached config: {}".format(
+            os.path.join(self.machine_path, '_cache',
+            '{}_config.p'.format('-'.join(self.options['configfile'])))))
+
+        with open(os.path.join(
+                self.machine_path, '_cache', '{}_config.p'.
+                format('-'.join(self.options['configfile']))), 'r') as f:
+
+            try:
+                self.config = pickle.load(f)
+
+            except:
+                self.log.warning("Could not load config from cache")
+                return False
+
+            return True
+
+    def _get_latest_config_mod_time(self):
+
+        latest_time = 0.0
+
+        for root, dirs, files in os.walk(
+                os.path.join(self.machine_path, 'config')):
+            for name in files:
+                if not name.startswith('.'):
+                    if os.path.getmtime(os.path.join(root, name)) > latest_time:
+                        latest_time = os.path.getmtime(os.path.join(root, name))
+
+            for name in dirs:
+                if not name.startswith('.'):
+                    if os.path.getmtime(os.path.join(root, name)) > latest_time:
+                        latest_time = os.path.getmtime(os.path.join(root, name))
+
+        return latest_time
+
+    def _cache_config(self):
+
+        try:
+            os.makedirs(os.path.join(self.machine_path, '_cache'))
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+
+        with open(os.path.join(
+                self.machine_path, '_cache', '{}_config.p'.
+                format('-'.join(self.options['configfile']))),
+                'wb') as f:
+            pickle.dump(self.config, f)
+            self.log.info('Config file cache created: {}'.format(os.path.join(
+                self.machine_path, '_cache', '{}_config.p'.
+                format('-'.join(self.options['configfile'])))))
+
     def verify_system_info(self):
         """Dumps information about the Python installation to the log.
 
@@ -224,8 +304,8 @@ class MachineController(object):
         """
         python_version = sys.version_info
 
-        if python_version[0] != 2 or python_version[1] != 7:
-            self.log.error("Incorrect Python version. MPF requires Python 2.7."
+        if python_version[0] != 3:
+            self.log.error("Incorrect Python version. MPF requires Python 3."
                            "x. You have Python %s.%s.%s.", python_version[0],
                            python_version[1], python_version[2])
             sys.exit()
@@ -238,10 +318,10 @@ class MachineController(object):
 
     def _load_system_modules(self):
         self.log.info("Loading system modules...")
-        for module in self.config['mpf']['system_modules']:
-            self.log.debug("Loading '%s' system module", module[1])
-            m = self.string_to_class(module[1])(self)
-            setattr(self, module[0], m)
+        for name, module in self.config['mpf']['system_modules'].items():
+            self.log.debug("Loading '%s' system module", module)
+            m = self.string_to_class(module)(self)
+            setattr(self, name, m)
 
     def _load_plugins(self):
         self.log.info("Loading plugins...")
@@ -387,7 +467,7 @@ class MachineController(object):
 
         self.default_platform.timer_initialize()
 
-        self.loop_start_time = time.time()
+        self.loop_start_time = self.clock.get_time()
 
         if self.default_platform.features['hw_timer']:
             self.default_platform.run_loop()
@@ -395,54 +475,39 @@ class MachineController(object):
             self._mpf_timer_run_loop()
 
     def _mpf_timer_run_loop(self):
-        #Main machine run loop with when the default platform interface
-        #specifies the MPF should control the main timer
-
-        start_time = time.time()
-        loops = 0
-        secs_per_tick = timing.Timing.secs_per_tick
-        sleep_sec = self.config['timing']['hw_thread_sleep_ms'] / 1000.0
-
-        self.default_platform.next_tick_time = time.time()
-
+        # Main machine run loop with when the default platform interface
+        # specifies the MPF should control the main timer
         try:
-            while self.done is False:
-                time.sleep(sleep_sec)
-                self.default_platform.tick()
-                loops += 1
-                if self.default_platform.next_tick_time <= time.time():  # todo change this
-                    self.timer_tick()
-                    self.default_platform.next_tick_time += secs_per_tick
-
+            while not self.done:
+                self.idle()
         except KeyboardInterrupt:
             pass
 
         self.log_loop_rate()
         self._platform_stop()
 
-        try:
-            self.log.info("Hardware loop rate: %s Hz",
-                          round(loops / (time.time() - start_time), 2))
-        except ZeroDivisionError:
-            self.log.info("Hardware loop rate: 0 Hz")
+    def process_frame(self):
+        '''This function is called after every frame. By default:
 
-    def timer_tick(self):
-        """Called to "tick" MPF at a rate specified by the machine Hz setting.
+           * it "ticks" the clock to the next frame.
+           * it reads all input and dispatches events.
+             window.
+        '''
 
-        This method is called by the MPF run loop or the platform run loop,
-        depending on the platform. (Some platforms drive the loop, and others
-        let MPF drive.)
+        # TODO: Replace the function call below
+        self.default_platform.tick(self.clock.frametime)
 
-        """
-        self.tick_num += 1  # used to calculate the loop rate when MPF exits
-        self.timing.timer_tick()  # notifies the timing module
-        self.events.post('timer_tick')  # sends the timer_tick system event
-        tasks.Task.timer_tick()  # notifies tasks
-        tasks.DelayManager.timer_tick(self)
+        # Process events before processing the clock
         self.events._process_event_queue()
 
+        # update dt
+        self.clock.tick()
+
+        # tick before draw
+        self.clock.tick_draw()
+
     def _platform_stop(self):
-        for platform in self.hardware_platforms.values():
+        for platform in list(self.hardware_platforms.values()):
             platform.stop()
 
     def power_off(self):
@@ -461,15 +526,9 @@ class MachineController(object):
 
     def log_loop_rate(self):
         self.log.info("Target MPF loop rate: %s Hz", timing.Timing.HZ)
+        self.log.info("Actual MPF loop rate: %s Hz", self.clock.get_fps())
 
-        try:
-            self.log.info("Actual MPF loop rate: %s Hz",
-                          round(self.tick_num /
-                                (time.time() - self.loop_start_time), 2))
-        except ZeroDivisionError:
-            self.log.info("Actual MPF loop rate: 0 Hz")
-
-    def _loading_tick(self):
+    def _loading_tick(self, dt):
         if not self.asset_loader_complete:
 
             if AssetManager.loader_queue.qsize():
@@ -499,7 +558,7 @@ class MachineController(object):
     def _reset_complete(self):
         self.log.debug('Reset Complete')
         self.events.post('reset_complete')
-        self.events.remove_handler(self._loading_tick)
+        self.clock.unschedule(self._loading_tick)
 
     def configure_debugger(self):
         pass
@@ -550,12 +609,12 @@ class MachineController(object):
 
         if change or force_events:
 
-            if self.machine_vars[name]['persist']:
+            if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
                 disk_var = CaseInsensitiveDict()
                 disk_var['value'] = value
 
                 if self.machine_vars[name]['expire_secs']:
-                    disk_var['expire'] = (time.time() +
+                    disk_var['expire'] = (self.clock.get_time() +
                         self.machine_vars[name]['expire_secs'])
 
                 self.machine_var_data_manager.save_key(name, disk_var)
@@ -648,31 +707,7 @@ class MachineController(object):
         method will match and remove player1_score, player2_score, etc.
 
         """
-        for var in self.machine_vars.keys():
+        for var in list(self.machine_vars.keys()):
             if var.startswith(startswith) and var.endswith(endswith):
                 del self.machine_vars[var]
                 self.machine_var_data_manager.remove_key(var)
-
-
-
-# The MIT License (MIT)
-
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.

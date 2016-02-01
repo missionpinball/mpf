@@ -1,22 +1,20 @@
-"""Contains code for an Open Pixel Controller hardware for RGB LEDs."""
-# openpixel.py
-# Mission Pinball Framework
-# Written by Brian Madden & Gabe Knuth
-# Released under the MIT License. (See license info at the end of this file.)
+"""Contains code for an Open Pixel Controller hardware for RGB LEDs.
 
-# Documentation and more info at http://missionpinball.com/mpf
-
-# The python code to build the OPC message packet came from here:
-# https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
+The python code to build the OPC message packet came from here:
+https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
+"""
 
 import logging
 import socket
-from Queue import Queue
+from queue import Queue
 import threading
 import sys
 import traceback
 
+from mpf.system.clock import Clock
 from mpf.system.platform import Platform
+from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.system.rgb_color import RGBColor
 
 
 class HardwarePlatform(Platform):
@@ -61,7 +59,7 @@ class HardwarePlatform(Platform):
             self.machine.config['open_pixel_control'])
 
 
-class OpenPixelLED(object):
+class OpenPixelLED(RGBLEDPlatformInterface):
 
     def __init__(self, opc_client, channel, led):
         self.log = logging.getLogger('OpenPixelLED')
@@ -73,7 +71,13 @@ class OpenPixelLED(object):
 
     def color(self, color):
         self.log.debug("Setting color: %s", color)
-        self.opc_client.set_pixel_color(self.channel, self.led, color)
+        self.opc_client.set_pixel_color(self.channel, self.led, color.rgb)
+
+    def enable(self):
+        self.color(RGBColor(color=(255, 255, 255)))
+
+    def disable(self):
+        self.color(RGBColor())
 
 
 class OpenPixelClient(object):
@@ -96,8 +100,9 @@ class OpenPixelClient(object):
         self.sending_thread = None
         self.channels = list()
 
-        self.machine.events.add_handler('timer_tick', self.tick, 1000000)
-        # todo should this be highest priority? Or lowest??
+        # Update the FadeCandy at a regular interval
+        # TODO: Add update interval to config
+        self.machine.clock.schedule_interval(self.tick, 1/30.0)
 
         self.sending_thread = OPCThread(self.machine, self.sending_queue,
                                         config)
@@ -143,7 +148,7 @@ class OpenPixelClient(object):
         self.channels[channel][pixel] = color
         self.dirty = True
 
-    def tick(self):
+    def tick(self, dt):
         """Called once per machine loop to update the pixels."""
         if self.update_every_tick or self.dirty:
             for channel_index, pixel_list in enumerate(self.channels):
@@ -301,24 +306,4 @@ class OPCThread(threading.Thread):
         self.machine.done = True
 
 
-# The MIT License (MIT)
 
-# Copyright (c) 2013-2015 Brian Madden and Gabe Knuth
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
