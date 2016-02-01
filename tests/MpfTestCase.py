@@ -77,12 +77,16 @@ class MpfTestCase(unittest.TestCase):
         self.machine_run()
         end_time = self.machine.clock.get_time() + delta
         while True:
-            next_event = self.machine.delayRegistry.get_next_event()
+            next_clock_event = self.machine.clock.get_next_event_time()
+            next_delay_event = self.machine.delayRegistry.get_next_event()
             next_timer = self.machine.timing.get_next_timer()
             next_switch = self.machine.switch_controller.get_next_timed_switch_event()
             next_show_step = self.machine.show_controller.get_next_show_step()
 
-            wait_until = next_event
+            wait_until = next_clock_event
+
+            if not wait_until or (next_delay_event and wait_until > next_delay_event):
+                wait_until = next_delay_event
 
             if not wait_until or (next_timer and wait_until > next_timer):
                 wait_until = next_timer
