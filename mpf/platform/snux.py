@@ -5,10 +5,7 @@ Mark Sunnucks's System 11 interface board.
 """
 
 import logging
-import time
-from mpf.system.clock import Clock
 from mpf.system.tasks import DelayManager
-from mpf.system.timing import Timer
 
 
 class Snux(object):
@@ -185,7 +182,7 @@ class Snux(object):
                       **driver_settings_overrides):
         """On system 11 machines, Switched drivers cannot be configured with
         autofire hardware rules.
-        
+
         """
         if driver_obj in self.a_drivers or driver_obj in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"

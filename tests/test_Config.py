@@ -251,3 +251,17 @@ class TestConfig(MpfTestCase):
         results = self.machine.config_processor.validate_config_item2(
             validation_string, 'test_failure_info', dict(hello='1'))
         self.assertEqual(results, dict(hello=1))
+
+        # Test color
+        validation_string = 'single|color|'
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 'red')
+        self.assertEqual(results, (255, 0, 0))
+
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', 'ff0000')
+        self.assertEqual(results, (255, 0, 0))
+
+        results = self.machine.config_processor.validate_config_item2(
+            validation_string, 'test_failure_info', '255, 0, 0')
+        self.assertEqual(results, (255, 0, 0))

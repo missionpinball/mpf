@@ -128,6 +128,9 @@ class HardwarePlatform(Platform):
     def i2c_read16(self, address, register):
         return None
 
+    def servo_go_to_position(self, number, position):
+        pass
+
 
 class VirtualSwitch(object):
     """Represents a switch in a pinball machine used with virtual hardware."""

@@ -54,9 +54,8 @@ class HardwarePlatform(Platform):
         self.log.info("Configuring FAST hardware.")
 
         if not serial_imported:
-            self.log.error('Could not import "pySerial". This is required for '
+            raise AssertionError('Could not import "pySerial". This is required for '
                            'the FAST platform interface')
-            sys.exit()
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -81,36 +80,9 @@ class HardwarePlatform(Platform):
         self.flag_led_tick_registered = False
         self.fast_io_boards = list()
         self.waiting_for_switch_data = False
-
-        config_spec = '''
-                    ports: list
-                    baud: int|921600
-                    config_number_format: string|hex
-                    watchdog: ms|1000
-                    default_debounce_open: ms|30
-                    default_debounce_close: ms|30
-                    hardware_led_fade_time: ms|0
-                    debug: boolean|False
-                    '''
-
-        self.config = Config.process_config(config_spec=config_spec,
-                                            source=self.machine.config['fast'])
-
-        self.watchdog_command = 'WD:' + str(hex(self.config['watchdog']))[2:]
-
-        self.machine_type = (
-            self.machine.config['hardware']['driverboards'].lower())
-
-        if self.machine_type == 'wpc':
-            self.log.info("Configuring the FAST Controller for WPC driver "
-                           "board")
-        else:
-            self.log.info("Configuring FAST Controller for FAST IO boards.")
-
-        self._connect_to_hardware()
-
-        if 'config_number_format' not in self.machine.config['fast']:
-            self.machine.config['fast']['config_number_format'] = 'int'
+        self.config = None
+        self.watchdog_command = None
+        self.machine_type = None
 
         self.wpc_switch_map = {
 
@@ -293,6 +265,26 @@ class HardwarePlatform(Platform):
                               '-L': self.receive_local_closed,  # local sw close
                               'WD': self.receive_wd,  # watchdog
                               }
+
+    def initialize(self):
+        self.config = self.machine.config['fast']
+        self.machine.config_processor.process_config2("fast", self.config)
+
+        self.watchdog_command = 'WD:' + str(hex(self.config['watchdog']))[2:]
+
+        self.machine_type = (
+            self.machine.config['hardware']['driverboards'].lower())
+
+        if self.machine_type == 'wpc':
+            self.log.info("Configuring the FAST Controller for WPC driver "
+                           "board")
+        else:
+            self.log.info("Configuring FAST Controller for FAST IO boards.")
+
+        self._connect_to_hardware()
+
+        if 'config_number_format' not in self.machine.config['fast']:
+            self.machine.config['fast']['config_number_format'] = 'int'
 
     def __repr__(self):
         return '<Platform.FAST>'
@@ -501,10 +493,9 @@ class HardwarePlatform(Platform):
         """
 
         if not self.net_connection:
-            self.log.critical("A request was made to configure a FAST switch, "
+            raise AssertionError("A request was made to configure a FAST switch, "
                               "but no connection to a NET processor is "
                               "available")
-            sys.exit()
 
         if self.machine_type == 'wpc':  # translate switch number to FAST switch
             config['number'] = self.wpc_switch_map.get(
@@ -520,10 +511,14 @@ class HardwarePlatform(Platform):
             else:
                 config['connection'] = 0  # local switch
 
-            if self.config['config_number_format'] == 'int':
-                config['number'] = Util.int_to_hex_string(config['number'])
-            else:
-                config['number'] = Util.normalize_hex_string(config['number'])
+            try:
+                if self.config['config_number_format'] == 'int':
+                    config['number'] = Util.int_to_hex_string(config['number'])
+                else:
+                    config['number'] = Util.normalize_hex_string(config['number'])
+            except ValueError:
+                raise AssertionError("Could not parse switch number " + config['number'] + ". Seems to be not a "
+                                     " a valid switch number for the FAST platform.")
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
@@ -776,6 +771,22 @@ class HardwarePlatform(Platform):
 
             self.net_connection.send(cmd)
 
+    def servo_go_to_position(self, number, position):
+        """Sets a servo position. """
+
+        if number < 0:
+            raise AssertionError("invalid number")
+
+        if position < 0 or position > 1:
+            raise AssertionError("Position has to be between 0 and 1")
+
+        # convert from [0,1] to [0, 255]
+        position_numeric = int(position * 255)
+
+        # build command and send it
+        cmd = 'XO:' + Util.int_to_hex_string(number) + ',' + Util.int_to_hex_string(position_numeric)
+        self.net_connection.send(cmd)
+
 
 class FASTSwitch(object):
 
@@ -952,13 +963,12 @@ class FASTDriver(DriverPlatformInterface):
 
             if (self.driver_settings['pwm1'] == 'ff' and
                     self.driver_settings['pwm2'] == 'ff' and
-                    not ('allow_enable' in self.driver_settings or not
+                    not ('allow_enable' in self.driver_settings and
                     self.driver_settings['allow_enable'])):
 
-                self.log.warning("Received a command to enable this coil "
+                raise AssertionError("Received a command to enable this coil "
                                  "without pwm, but 'allow_enable' has not been"
                                  "set to True in this coil's configuration.")
-                return
 
             else:
 

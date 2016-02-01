@@ -289,6 +289,7 @@ hardware:
     driverboards: single|str|
     servo_controllers: single|str|
     accelerometers: single|str|
+    i2c: single|str|
 high_score:
     award_slide_display_time: single|ms|4s
     categories: list|str:list|
@@ -299,7 +300,7 @@ leds:
     number: single|str|
     number_str: single|str|
     polarity: single|bool|False
-    default_color: single|str|ffffff
+    default_color: single|color|ffffff
     color_correction_profile: single|str|None
     fade_ms: single|int|None
     tags: list|str|None
@@ -412,6 +413,7 @@ score_reel_groups:
     debug: single|bool|False
     lights_tag: single|str|None
 servo_controllers:
+    platform: single|str|None
     address: single|int|64
     servo_min: single|int|150
     servo_max: single|int|600
@@ -425,11 +427,11 @@ servos:
     servo_max: single|float|1.0
     reset_position: single|float|0.5
     reset_events: dict|str:ms|ball_starting
-    controller: single|self.machine.servo_controllers[%]|
     debug: single|bool|False
     tags: list|str|None
     label: single|str|%
     number: single|int|
+    platform: single|str|None
 shots:
     profile: single|str|None
     switch: list|self.machine.switches[%]|None
@@ -510,6 +512,26 @@ switches:
 system11:
     ac_relay_delay_ms: single|int|75
     ac_relay_driver_number: single|str|
+text_styles:
+    font_name: single|str|None
+    font_size: single|num|None
+    bold: single|bool|None
+    italtic: single|bool|None
+    halign: single|str|None
+    valign: single|str|None
+    padding_x: single|num|None
+    padding_y: single|num|None
+    # text_size: single||None
+    shorten: single|bool|None
+    mipmap: single|bool|None
+    markup: single|bool|None
+    line_height: single|float|None
+    max_lines: single|int|None
+    strip: single|bool|None
+    shorten_from: single|str|None
+    split_str: single|str|None
+    unicode_errors: single|str|None
+    color: single|color|ffffffff
 tilt:
     tilt_slam_tilt_events: list|str|None
     tilt_warning_events: list|str|None
@@ -588,9 +610,9 @@ widgets:
 
     text:
         text: single|str|
-        color: single|str|ffffffff
-        font_size: single|num|None
-  #      font_name:
+        color: single|color|ffffffff
+        font_size: single|num|15
+        font_name: ignore
         bold: single|bool|False
         italic: single|bool|False
         halign: single|str|center
@@ -599,6 +621,10 @@ widgets:
         anchor_y: single|str|None
         padding_x: single|int|0
         padding_y: single|int|0
+        number_grouping: single|bool|True
+        min_digits: single|int|1
+        style: single|str|None
+
   #      text_size:
   #      shorten:
   #      mipmap:
@@ -609,11 +635,12 @@ widgets:
   #      shorten_from:
   #      split_str:
   #      unicode_errors:
+
     image:
         allow_stretch: single|bool|False
         anim_delay: single|float|.25
         anim_loop: single|int|0
-        color: single|str|ffffffff
+        color: single|color|ffffffff
         keep_ratio: single|bool|False
         image: single|str|
         height: single|int|0
@@ -635,4 +662,14 @@ auditor:
     events: list|str|None
     player: list|str|None
     num_player_top_records: single|int|1
+
+fast:
+    ports: list|str|
+    baud: single|int|921600
+    config_number_format: single|str|hex
+    watchdog: single|ms|1000
+    default_debounce_open: single|ms|30
+    default_debounce_close: single|ms|30
+    hardware_led_fade_time: single|ms|0
+    debug: single|bool|False
 '''

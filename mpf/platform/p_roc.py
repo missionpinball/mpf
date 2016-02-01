@@ -19,7 +19,6 @@ import logging
 import re
 import sys
 from copy import deepcopy
-from mpf.system.clock import Clock
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
@@ -843,10 +842,9 @@ class PROCDriver(DriverPlatformInterface):
 
             if not ('allow_enable' in self.driver_settings and
                     self.driver_settings['allow_enable']):
-                self.log.warning("Received a command to enable this coil "
+                raise AssertionError("Received a command to enable this coil "
                                  "without pwm, but 'allow_enable' has not been"
                                  "set to True in this coil's configuration.")
-                return
 
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)

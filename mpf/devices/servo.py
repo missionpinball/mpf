@@ -17,9 +17,7 @@ class Servo(Device):
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         super().__init__(machine, name, config, collection,
-                         validate=validate)
-
-        self.platform = None
+                         validate=validate, platform_section='servo_controllers')
 
         for position in self.config['positions']:
             self.machine.events.add_handler(self.config['positions'][position],
@@ -35,5 +33,4 @@ class Servo(Device):
     def go_to_position(self, position):
         position = self.config['servo_min'] + position * (
         self.config['servo_max'] - self.config['servo_min'])
-        self.config['controller'].go_to_position(self.config['number'],
-                                                 position)
+        self.platform.servo_go_to_position(self.config['number'], position)

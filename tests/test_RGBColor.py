@@ -8,29 +8,29 @@ class TestRGBColor(MpfTestCase):
         # Tests the default color
         color = RGBColor()
         self.assertEqual((0, 0, 0), color.rgb)
-        self.assertIn(color.name, ['Black', 'Off'])
+        self.assertIn(color.name, ['black', 'off'])
 
     def test_off_color(self):
         # Tests the 'Off' color (nicely readable in LED show files)
         color = RGBColor()
         color.name = 'Off'
         self.assertEqual((0, 0, 0), color.rgb)
-        self.assertIn(color.name, ['Black', 'Off'])
+        self.assertIn(color.name, ['black', 'off'])
 
     def test_static_conversion_utilities(self):
         # Tests initializing a color by name or hex string value
-        # (names are currently case-sensitive but hex values are not)
-        self.assertEqual((240, 248, 255), RGBColor.string_to_rgb('AliceBlue'))
-        self.assertEqual((240, 248, 255), RGBColor.name_to_rgb('AliceBlue'))
+        # (names and hex values are not case-sensitive)
+        self.assertEqual((240, 248, 255), RGBColor.string_to_rgb('aliceblue'))
+        self.assertEqual((240, 248, 255), RGBColor.name_to_rgb('aliceblue'))
         self.assertEqual((240, 248, 255), RGBColor.hex_to_rgb('F0F8FF'))
         self.assertEqual((240, 248, 255), RGBColor.string_to_rgb('F0F8FF'))
-        self.assertEqual((0, 0, 0), RGBColor.string_to_rgb('aliceblue'))
-        self.assertEqual((0, 0, 0), RGBColor.name_to_rgb('aliceblue'))
+        self.assertEqual((0, 0, 0), RGBColor.string_to_rgb('non_existant'))
+        self.assertEqual((0, 0, 0), RGBColor.name_to_rgb('non_existant'))
         self.assertEqual((240, 248, 255), RGBColor.hex_to_rgb('f0f8ff'))
         self.assertEqual((240, 248, 255), RGBColor.string_to_rgb('f0f8ff'))
 
     def test_construction(self):
-        self.assertEqual((240, 248, 255), RGBColor('AliceBlue').rgb)
+        self.assertEqual((240, 248, 255), RGBColor('aliceblue').rgb)
         self.assertEqual((240, 248, 255), RGBColor('F0F8FF').rgb)
         self.assertEqual((240, 248, 255), RGBColor('f0f8ff').rgb)
         self.assertEqual((240, 248, 255), RGBColor((240, 248, 255)).rgb)
@@ -42,7 +42,7 @@ class TestRGBColor(MpfTestCase):
         self.assertEqual(72, color1.red)
         self.assertEqual(61, color1.green)
         self.assertEqual(139, color1.blue)
-        self.assertEqual('DarkSlateBlue', color1.name)
+        self.assertEqual('darkslateblue', color1.name)
         self.assertEqual('483d8b', color1.hex)
 
         color2 = RGBColor()

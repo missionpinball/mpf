@@ -1,0 +1,23 @@
+#config_version=3
+
+game:
+    balls_per_game: 1
+
+switches:
+    s_test:
+        number:
+    s_start:
+        number:
+        tags: start
+    s_ball:
+        number:
+
+coils:
+    c_eject:
+        number:
+
+ball_devices:
+    s_trough:
+        ball_switches: s_ball
+        eject_coil: c_eject
+        tags: trough, drain, home, ball_add_live

@@ -4,7 +4,7 @@ import logging
 from collections import OrderedDict
 
 from mpf.devices import *
-from mpf.system.config import CaseInsensitiveDict
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.file_manager import FileManager
 
 
@@ -16,7 +16,8 @@ class DeviceManager(object):
         self.collections = OrderedDict()
         self.device_classes = OrderedDict()  # collection_name: device_class
 
-        self._load_device_modules()
+        self.machine.events.add_handler('init_phase_1',
+                                        self._load_device_modules)
 
         self.machine.events.add_handler('init_phase_2',
                                         self.create_machinewide_device_control_events)

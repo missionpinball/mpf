@@ -11,7 +11,6 @@ import threading
 import sys
 import traceback
 
-from mpf.system.clock import Clock
 from mpf.system.platform import Platform
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.system.rgb_color import RGBColor

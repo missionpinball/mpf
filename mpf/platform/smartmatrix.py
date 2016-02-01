@@ -6,7 +6,6 @@ import sys
 import threading
 import traceback
 from queue import Queue
-from mpf.system.clock import Clock
 from mpf.system.config import Config
 from mpf.system.platform import Platform
 

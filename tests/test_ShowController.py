@@ -57,7 +57,7 @@ class TestShowController(MpfTestCase):
         while (not self.machine.shows['test_show1'].loaded and
                 not self.machine.shows['test_show2'].loaded and
                 not self.machine.shows['test_show3'].loaded) and \
-                self.machine.clock.get_time() < start_time + 10000:
+                self.machine.clock.get_time() < start_time + 100000:
             self.advance_time(0.001)
 
         self.assertTrue(self.machine.shows['test_show1'].loaded)

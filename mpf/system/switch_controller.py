@@ -6,7 +6,7 @@ states and posting events to the framework.
 import logging
 from collections import defaultdict
 
-from mpf.system.config import CaseInsensitiveDict
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.timing import Timing
 from mpf.system.utility_functions import Util
 

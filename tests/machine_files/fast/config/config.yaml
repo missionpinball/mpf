@@ -10,6 +10,9 @@ fast:
 switches:
     s_test:
         number: 7
+    s_test_nc:
+        number: 1A
+        type: 'NC'
     s_slingshot_test:
         number: 16
 
@@ -29,3 +32,7 @@ autofire_coils:
     ac_slingshot_test:
         coil: c_slingshot_test
         switch: s_slingshot_test
+
+servos:
+    servo1:
+        number: 3

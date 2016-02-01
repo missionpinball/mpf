@@ -403,8 +403,8 @@ class BallDevice(Device):
                 self.log.debug("Target is playfield. Will confirm after "
                                "timeout if it did not return.")
             timeout = (
-                self.config['eject_timeouts'][self.eject_in_progress_target])
-            self.delay.add(name='count_confirmation',
+                self.config['eject_timeouts'][self.eject_in_progress_target]) + 500
+            self.delay.add(name='playfield_confirmation',
                            ms=timeout,
                            callback=self.eject_success)
 
@@ -1371,9 +1371,9 @@ class BallDevice(Device):
                     self._incoming_balls[0][1].config['eject_timeouts'][self]
 
                 if timeout == timeout_combined:
-                    timeout_combined += 1
+                    timeout_combined += 500
 
-                self.delay.add(name='count_confirmation',
+                self.delay.add(name='playfield_confirmation',
                                ms=timeout_combined,
                                callback=self.eject_success)
 
@@ -1416,18 +1416,6 @@ class BallDevice(Device):
             self.machine.events.add_handler(
                     self.config['confirm_eject_event'], self.eject_success)
 
-        elif self.config['confirm_eject_type'] == 'count':
-            # deprecated. there is no usecase for count confirmation!
-            self.log.warning(
-                "confirm_eject_type = count is deprecated and will "
-                "get removed in the next release. Switch to target "
-                "or complain in forum if you really need it!")
-
-            if self.debug:
-                self.log.debug("Will confirm eject via recount of ball "
-                               "switches.")
-            self._setup_count_eject_confirmation(timeout)
-
         elif self.config['confirm_eject_type'] == 'fake':
             # for devices without ball_switches and entry_switch
             # we use delay to keep the call order
@@ -1441,33 +1429,6 @@ class BallDevice(Device):
             raise AssertionError("Invalid confirm_eject_type setting: " +
                                  self.config['confirm_eject_type'])
 
-    def _setup_count_eject_confirmation(self, timeout):
-
-        if self._state == "waiting_for_ball_mechanical":
-            # add timeout of source device
-            timeout += self._incoming_balls[0][1].config['eject_timeouts'][
-                self]
-            # ball did not enter. if it does not return then confirm
-            self.delay.add(name='count_confirmation',
-                           ms=timeout,
-                           callback=self._count_confirm)
-
-        else:
-            # wait until one of the active switches turns off
-            for switch in self.config['ball_switches']:
-                # only consider active switches
-                if self.machine.switch_controller.is_active(switch.name,
-                                                            ms=self.config[
-                                                                'entrance_count_delay']):
-                    self.machine.switch_controller.add_switch_handler(
-                            switch_name=switch.name,
-                            ms=self.config['exit_count_delay'],
-                            callback=self._count_confirm,
-                            state=0)
-
-    def _count_confirm(self):
-        self.eject_success()
-
     def _cancel_eject_confirmation(self):
         if self.debug:
             self.log.debug("Canceling eject confirmations")
@@ -1478,7 +1439,6 @@ class BallDevice(Device):
         self.machine.events.remove_handler(self.eject_success)
         self.machine.events.remove_handler(self._playfield_active)
         self.machine.events.remove_handler(self._trigger_eject_by_event)
-        self.machine.events.remove_handler(self._count_confirm)
 
         self.mechanical_eject_in_progress = False
 
@@ -1493,11 +1453,6 @@ class BallDevice(Device):
                     callback=self.eject_success,
                     ms=self.config['exit_count_delay'],
                     state=0)
-            self.machine.switch_controller.remove_switch_handler(
-                    switch_name=switch.name,
-                    callback=self._count_confirm,
-                    ms=self.config['exit_count_delay'],
-                    state=0)
 
         # Remove any switch handlers
         if self.config['confirm_eject_type'] == 'switch':
@@ -1509,7 +1464,7 @@ class BallDevice(Device):
         # Remove any delays that were watching for failures
         self.delay.remove('target_eject_confirmation_timeout')
         self.delay.remove('ball_missing_timeout')
-        self.delay.remove('count_confirmation')
+        self.delay.remove('playfield_confirmation')
 
     def _notify_target_of_incoming_ball(self, target):
         target.add_incoming_ball(self)

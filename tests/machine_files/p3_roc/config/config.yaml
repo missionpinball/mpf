@@ -3,6 +3,7 @@
 hardware:
     driverboards: pdb
     platform: p3_roc
+    servo_controllers: i2c_servo_controller
 
 switches:
     s_test:
@@ -27,3 +28,10 @@ autofire_coils:
     ac_slingshot_test:
         coil: c_slingshot_test
         switch: s_slingshot_test
+
+servo_controller:
+    address: 0x40
+
+servos:
+    servo1:
+        number: 3

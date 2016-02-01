@@ -115,7 +115,7 @@ class Auditor(object):
         self.current_audits[audit_class][event] += 1
 
     def audit_switch(self, switch_name, state):
-        if state and switch_name in self.switchnames_to_audit:
+        if self.enabled and state and switch_name in self.switchnames_to_audit:
             self.audit('switches', switch_name)
 
     def audit_shot(self, name, profile, state):
@@ -209,11 +209,5 @@ class Auditor(object):
         # remove switch and event handlers
         self.machine.events.remove_handler(self.audit_event)
         self.machine.events.remove_handler(self._save_audits)
-
-        for switch in self.machine.switches:
-            if 'no_audit' not in switch.tags:
-                self.machine.switch_controller.remove_switch_handler(
-                    switch.name, self.audit_switch, 1, 0)
-
 
 plugin_class = Auditor

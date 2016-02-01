@@ -2,7 +2,7 @@ import unittest
 
 from mpf.system.machine import MachineController
 from tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from mock import MagicMock, call
 from mpf.platform import p3_roc
 
 
@@ -12,6 +12,11 @@ class TestP3Roc(MpfTestCase):
 
     def getMachinePath(self):
         return '../tests/machine_files/p3_roc/'
+
+    def getOptions(self):
+        options = super().getOptions()
+        options['force_platform'] = False
+        return options
 
     def get_platform(self):
         return 'p3_roc'
@@ -51,3 +56,30 @@ class TestP3Roc(MpfTestCase):
                 "decode", 'closed_nondebounced',
                 {'notifyHost': False, 'reloadActive': False},
                 ["driver_state_pulse"], False)
+
+    def test_servo_via_i2c(self):
+        # assert on init
+        self.machine.default_platform.proc.write_data.assert_has_calls([
+                call(7, 0x8000, 0x11),
+                call(7, 0x8001, 0x04),
+                call(7, 0x80FE, 130),
+                call(7, 0x8000, 0x01)
+            ])
+        self.machine.default_platform.proc.write_data = MagicMock()
+        self.machine.servos.servo1.go_to_position(0)
+
+        self.machine.default_platform.proc.write_data.assert_has_calls([
+                call(7, 0x8012, 0),
+                call(7, 0x8013, 0),
+                call(7, 0x8014, 150),
+                call(7, 0x8015, 0)
+            ])
+        self.machine.default_platform.proc.write_data = MagicMock()
+        self.machine.servos.servo1.go_to_position(1)
+
+        self.machine.default_platform.proc.write_data.assert_has_calls([
+                call(7, 0x8012, 0),
+                call(7, 0x8013, 0),
+                call(7, 0x8014, 88),
+                call(7, 0x8015, 2)
+            ])

@@ -10,7 +10,8 @@ import errno
 
 from mpf.system import *
 from mpf.system.clock import ClockBase
-from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.config import Config
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.device_manager import DeviceCollection
 from mpf.system.tasks import Task, DelayManager, DelayManagerRegistry
 from mpf.system.data_manager import DataManager
@@ -391,8 +392,13 @@ class MachineController(object):
         """
 
         if name not in self.hardware_platforms:
-            hardware_platform = __import__('mpf.platform.%s' % name,
-                                           fromlist=["HardwarePlatform"])
+
+            try:
+                hardware_platform = __import__('mpf.platform.%s' % name,
+                                               fromlist=["HardwarePlatform"])
+            except ImportError:
+                raise ImportError("Cannot add hardware platform {}. This is "
+                                  "not a valid platform name".format(name))
 
             self.hardware_platforms[name] = (
                 hardware_platform.HardwarePlatform(self))
@@ -711,3 +717,19 @@ class MachineController(object):
             if var.startswith(startswith) and var.endswith(endswith):
                 del self.machine_vars[var]
                 self.machine_var_data_manager.remove_key(var)
+
+    def get_platform_sections(self, platform_section, overwrite):
+        if not self.options['force_platform']:
+            if not overwrite:
+                if self.config['hardware'][platform_section] != 'default':
+                    return self.hardware_platforms[self.config['hardware'][platform_section]]
+                else:
+                    return self.default_platform
+            else:
+                try:
+                    return self.hardware_platforms[overwrite]
+                except KeyError:
+                    self.add_platform(overwrite)
+                    return self.hardware_platforms[overwrite]
+        else:
+            return self.default_platform

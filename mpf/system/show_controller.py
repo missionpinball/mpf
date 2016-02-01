@@ -4,7 +4,8 @@ import logging
 from queue import Queue
 
 from mpf.system.assets import Asset, AssetManager
-from mpf.system.config import Config, CaseInsensitiveDict
+from mpf.system.config import Config
+from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.file_manager import FileManager
 from mpf.system.timing import Timing
 from mpf.system.utility_functions import Util

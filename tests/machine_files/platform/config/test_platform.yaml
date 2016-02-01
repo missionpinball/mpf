@@ -1,0 +1,11 @@
+#config_version=3
+
+#hardware:
+#  leds: fadecandy
+
+leds:
+  led1:
+    number: 1
+  led2:
+    number: 2
+    platform: fadecandy
