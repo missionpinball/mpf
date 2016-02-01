@@ -15,6 +15,14 @@ elapsed between the scheduling and the calling of the callback via the
     # call my_callback as soon as possible (usually next frame.)
     Clock.schedule_once(my_callback)
 .. note::
+    You can also add a priority to any callback that ensures that callbacks
+    with higher priority values are called before ones with lower priorities
+    when both will be called in the same frame.  The default priority value
+    is 1.
+
+    # call my_callback every 0.5 seconds with a priority of 100
+    Clock.schedule_interval(my_callback, 0.5, 100)
+
     If the callback returns False, the schedule will be removed.
 If you want to schedule a function to call with default arguments, you can use
 the `functools.partial
@@ -149,6 +157,25 @@ from two threads simultaneously without any locking mechanism::
 Note, in the code above, thread 1 or thread 2 could be the kivy thread, not
 just an external thread.
 '''
+
+"""
+---------------------
+MPF v0.30
+This file was adapted from Kivy for use in MPF.  The following changes have
+been made for use in MPF:
+    1) Support proper event callback order in a frame based on scheduled callback
+       time (earliest first), priority (highest first), and finally the order
+       in which the callback was added to the clock. This involved adding
+       triggered events to a priority queue and then executing all the callbacks
+       in the queue during each frame.
+    2) The 5ms look-ahead for activating events has been removed.
+    3) next_event_time and last_event_time properties have been added.
+    4) Clock is not used as a global singleton in MPF, but rather as an
+       instantiated object.  Multiple clock objects could be used in a single
+       program if desired.
+    5) max_fps is now a parameter in the Clock constructor (defaults to 60) that
+       controls the maximum speed at which the MPF main loop/clock runs.
+"""
 
 from sys import platform
 from functools import partial
@@ -403,7 +430,6 @@ class ClockBase(_ClockBase):
         self._frames_displayed = 0
         self._events = [[] for i in range(256)]
         self._frame_callbacks = PriorityQueue()
-        # TODO: Load maxfps from config
         self._max_fps = float(max_fps)
         self._log = logging.getLogger("Clock")
         self._log.debug("Starting clock (maximum frames per second={})".format(self._max_fps))
