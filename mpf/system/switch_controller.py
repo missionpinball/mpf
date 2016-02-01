@@ -229,7 +229,7 @@ class SwitchController(object):
         """Sets the state of a switch."""
 
         if reset_time:
-            timestamp = 1
+            timestamp = -1
         else:
             timestamp = self.machine.clock.get_time()
 
