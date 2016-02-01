@@ -45,26 +45,26 @@ class TestMpfTestCase(MpfTestCase):
         self.id_list = list()
 
         self.machine.default_platform.delay.add(ms=500,
-                                                callback=self.test_callback,
+                                                callback=self._callback,
                                                 id='d1')
         self.machine.default_platform.delay.add(ms=1500,
-                                                callback=self.test_callback,
+                                                callback=self._callback,
                                                 id='d2')
         self.machine.default_platform.delay.add(ms=2500,
-                                                callback=self.test_callback,
+                                                callback=self._callback,
                                                 id='d3')
 
         self.machine.switch_controller.add_switch_handler('switch1',
-            self.test_callback, ms=1000, callback_kwargs={'id': 's1'})
+            self._callback, ms=1000, callback_kwargs={'id': 's1'})
         self.machine.switch_controller.add_switch_handler('switch1',
-            self.test_callback, ms=2000, callback_kwargs={'id': 's2'})
+            self._callback, ms=2000, callback_kwargs={'id': 's2'})
         self.machine.switch_controller.add_switch_handler('switch1',
-            self.test_callback, ms=3000, callback_kwargs={'id': 's3'})
+            self._callback, ms=3000, callback_kwargs={'id': 's3'})
 
         self.machine.switch_controller.process_switch('switch1')
         self.advance_time_and_run(10)
 
-        print(self.id_list)
+        #print(self.id_list)
 
         # make sure the callback was called in the right order
         self.assertEqual(self.id_list[0][0], 'd1')
@@ -86,6 +86,6 @@ class TestMpfTestCase(MpfTestCase):
         self.assertAlmostEqual(self.id_list[5][1] - self.id_list[4][1], .5,
                                delta=0.01)
 
-    def test_callback(self, id):
+    def _callback(self, id):
         # print(self.id_list)
         self.id_list.append((id, self.machine.clock.time()))
