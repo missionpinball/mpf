@@ -945,6 +945,9 @@ class Show(Asset):
     def __repr__(self):
         return '<Show.{} (loaded={}, running={})>'.format(self.file_name, self.loaded, self.running)
 
+    def __lt__(self, other):
+        return id(self) < id(other)
+
     @property
     def playback_rate(self):
         return self._playback_rate
@@ -1304,9 +1307,9 @@ class Show(Asset):
                 to finish, you would a playback_rate value of 0.5.
             start_step: Integer of which position in the show file the show
                 should start in. Usually this is 0 (start at the beginning
-                of the show) but it's nice to start part way through. Also 
-                used for restarting shows that you paused. A negative value 
-                will count backwards from the end (-1 is the last position, 
+                of the show) but it's nice to start part way through. Also
+                used for restarting shows that you paused. A negative value
+                will count backwards from the end (-1 is the last position,
                 -2 is second to last, etc.).
             callback: A callback function that is invoked when the show is
                 stopped.
