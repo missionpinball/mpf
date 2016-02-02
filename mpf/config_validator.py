@@ -602,15 +602,54 @@ widgets:
         opacity: single|float|1.0
         z: single|int|0
         animations: ignore
-
+        color: single|color|ffffffff
+    bezier:
+        points: list|num|
+        thickness: single|float|1.0
+        cap: single|str|round
+        joint: single|str|round
+        cap_precision: single|int|10
+        joint_precision: single|int|10
+        close: single|bool|False
+        precision: single|int|180
+    ellipse:
+        segments: single|int|180
+        angle_start: single|int|0
+        angle_end: single|int|360
+    image:
+        allow_stretch: single|bool|False
+        anim_delay: single|float|.25
+        anim_loop: single|int|0
+        keep_ratio: single|bool|False
+        image: single|str|
+        height: single|int|0
+        width: single|int|0
+    line:
+        points: list|num|
+        thickness: single|float|1.0
+        cap: single|str|round
+        joint: single|str|round
+        cap_precision: single|int|10
+        joint_precision: single|int|10
+        close: single|bool|False
+    points:
+        points: list|num|
+        size: single|float|1.0
+    quad:
+        points: list|num|
+    rectangle:
+        x: single|float|
+        y: single|float|
+        width: single|float|
+        height: single|float|
+        corner_radius: single|int|0
+        corner_segments: single|int|10
     slide_frame:
         name: single|str|
         width: single|int|
         height: single|int|
-
     text:
         text: single|str|
-        color: single|color|ffffffff
         font_size: single|num|15
         font_name: ignore
         bold: single|bool|False
@@ -624,7 +663,6 @@ widgets:
         number_grouping: single|bool|True
         min_digits: single|int|1
         style: single|str|None
-
   #      text_size:
   #      shorten:
   #      mipmap:
@@ -635,17 +673,8 @@ widgets:
   #      shorten_from:
   #      split_str:
   #      unicode_errors:
-
-    image:
-        allow_stretch: single|bool|False
-        anim_delay: single|float|.25
-        anim_loop: single|int|0
-        color: single|color|ffffffff
-        keep_ratio: single|bool|False
-        image: single|str|
-        height: single|int|0
-        width: single|int|0
-
+    triangle:
+        points: list|num|
     video:
         video: single|str|
         height: single|int|0
