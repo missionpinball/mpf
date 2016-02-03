@@ -626,6 +626,13 @@ widgets:
         gain: single|float|1.0
         color: single|color|ff7700  # classic DMD orange
         shades: single|int|16
+    color_dmd:
+        width: single|num|
+        height: single|num|
+        source_display: single|str|dmd
+        gain: single|float|1.0
+        color: single|color|None
+        shades: single|int|0
     ellipse:
         width: single|num|
         height: single|num|
