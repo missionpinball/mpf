@@ -626,6 +626,10 @@ widgets:
         gain: single|float|1.0
         color: single|color|ff7700  # classic DMD orange
         shades: single|int|16
+        bg_color: single|color|191919ff
+        blur: single|float|0.1
+        pixel_size: single|float|0.5
+        dot_filter: single|bool|True
     color_dmd:
         width: single|num|
         height: single|num|
@@ -633,6 +637,10 @@ widgets:
         gain: single|float|1.0
         color: single|color|None
         shades: single|int|0
+        bg_color: single|color|191919ff
+        blur: single|float|0.1
+        pixel_size: single|float|0.5
+        dot_filter: single|bool|True
     ellipse:
         width: single|num|
         height: single|num|
