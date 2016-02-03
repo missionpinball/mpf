@@ -612,7 +612,17 @@ widgets:
         joint_precision: single|int|10
         close: single|bool|False
         precision: single|int|180
+    dmd:
+        width: single|num|
+        height: single|num|
+        source_display: single|str|dmd
+        luminosity: list|float|.299, .587, .114
+        gain: single|float|1.0
+        color: single|color|ff7700  # classic DMD orange
+        shades: single|int|16
     ellipse:
+        width: single|num|
+        height: single|num|
         segments: single|int|180
         angle_start: single|int|0
         angle_end: single|int|360
@@ -638,8 +648,8 @@ widgets:
     quad:
         points: list|num|
     rectangle:
-        x: single|float|
-        y: single|float|
+        x: single|float|None
+        y: single|float|None
         width: single|float|
         height: single|float|
         corner_radius: single|int|0
