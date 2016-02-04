@@ -47,5 +47,7 @@ community.''',
 
         packages=find_packages(exclude=['machine_files', 'tests', 'tools']),
 
-        install_requires=['ruamel.yaml', 'pyserial']
+        install_requires=['ruamel.yaml', 'pyserial'],
+
+        tests_require=['mock']
 )
