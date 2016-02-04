@@ -649,12 +649,13 @@ widgets:
         angle_end: single|int|360
     image:
         allow_stretch: single|bool|False
-        anim_delay: single|float|.25
-        anim_loop: single|int|0
+        fps: single|int|10
+        anim_loops: single|int|0
         keep_ratio: single|bool|False
         image: single|str|
         height: single|int|0
         width: single|int|0
+        auto_play: single|bool|True
     line:
         points: list|num|
         thickness: single|float|1.0
