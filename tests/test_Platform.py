@@ -1,7 +1,7 @@
 from mock import MagicMock
 
 from tests.MpfTestCase import MpfTestCase
-from mpf.platform.openpixel import OPCThread
+from mpf.platform import openpixel
 
 class TestPlatform(MpfTestCase):
 
@@ -15,7 +15,7 @@ class TestPlatform(MpfTestCase):
         return False
 
     def setUp(self):
-        OPCThread.connect = MagicMock()
+        openpixel.OPCThread = MagicMock()
         super().setUp()
 
     def test_platform_from_device(self):
