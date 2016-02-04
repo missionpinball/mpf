@@ -5,7 +5,7 @@ from mpf.system.utility_functions import Util
 import logging
 import sys
 from mock import *
-from datetime import datetime, timedelta
+import time
 import inspect
 
 
@@ -93,7 +93,7 @@ class MpfTestCase(unittest.TestCase):
             if not wait_until or (next_show_step and wait_until > next_show_step):
                 wait_until = next_show_step
 
-            if wait_until and wait_until > self.machine.clock.get_time() and wait_until < end_time:
+            if wait_until and self.machine.clock.get_time() < wait_until < end_time:
                 self.set_time(wait_until)
                 self.machine_run()
             else:
@@ -112,14 +112,14 @@ class MpfTestCase(unittest.TestCase):
         """
         frame = inspect.currentframe()
         while frame:
-            self = frame.f_locals.get('self')
-            if isinstance(self, unittest.TestProgram) or isinstance(self,
-                                                                    unittest.TextTestRunner):
-                return self.verbosity
+            obj = frame.f_locals.get('self')
+            if isinstance(obj, unittest.TestProgram) or isinstance(obj, unittest.TextTestRunner):
+                return obj.verbosity
             frame = frame.f_back
         return 0
 
     def setUp(self):
+        self.test_start_time = time.time()
         if self.unittest_verbosity() > 1:
             logging.basicConfig(level=logging.DEBUG,
                                 format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
@@ -145,6 +145,9 @@ class MpfTestCase(unittest.TestCase):
         self.advance_time_and_run(300)
 
     def tearDown(self):
+        duration = time.time() - self.test_start_time
+        if duration > 1.0:
+            print("Test " + str(self.__class__) + "." + str(self._testMethodName) + " took " + str(duration) + " > 1s")
         self.machine.log.debug("Test ended")
         if sys.exc_info != (None, None, None):
             # disable teardown logging after error
