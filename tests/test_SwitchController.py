@@ -30,3 +30,25 @@ class TestSwitchController(MpfTestCase):
         # started in that state are read correctly.
         self.assertFalse(self.machine.switch_controller.is_active('s_test',
                                                                   1000))
+
+    def _callback_invalid(self):
+         raise AssertionError("Should not be called")
+
+    def test_timed_switch_handler(self):
+        self.machine.switch_controller.process_switch("s_test", 1)
+        self.advance_time_and_run(3)
+
+        self.machine.switch_controller.add_switch_handler(
+                switch_name="s_test",
+                callback=self._callback_invalid,
+                state=0, ms=250)
+
+        self.machine.switch_controller.process_switch("s_test", 0)
+        self.advance_time_and_run(.1)
+
+        self.machine.switch_controller.remove_switch_handler(
+                switch_name="s_test",
+                callback=self._callback_invalid,
+                state=0, ms=250)
+
+        self.advance_time_and_run(5)
