@@ -88,4 +88,4 @@ class TestMpfTestCase(MpfTestCase):
 
     def _callback(self, id):
         # print(self.id_list)
-        self.id_list.append((id, self.machine.clock.time()))
+        self.id_list.append((id, self.machine.clock.get_time()))
