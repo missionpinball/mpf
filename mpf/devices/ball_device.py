@@ -83,6 +83,8 @@ class BallDevice(Device):
         self._state = "invalid"
         # Name of the state of this device
 
+        self.jam_switch_state_during_eject = False
+
         self._incoming_balls = deque()
         # deque of tuples that tracks incoming balls this device should expect
         # each tuple is (self.machine.clock.get_time() formatted timeout, source device)
@@ -514,8 +516,8 @@ class BallDevice(Device):
 
     def _state_failed_confirm_counted_balls(self, balls):
 
-        if (not self.jam_switch_state_during_eject and
-                self.config['jam_switch'] and
+        if (self.config['jam_switch'] and
+                not self.jam_switch_state_during_eject and
                 self.machine.switch_controller.is_active(
                         self.config['jam_switch'].name,
                         ms=self.config['entrance_count_delay'])):
