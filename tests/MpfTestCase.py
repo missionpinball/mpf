@@ -19,7 +19,6 @@ class TestMachineController(MachineController):
         self.clock._max_fps = 0
 
     def _load_mpf_config(self):
-        print(self.options['mpfconfigfile'])
         if self.options['mpfconfigfile'] in TestMachineController.local_mpf_config_cache:
             self.config = TestMachineController.local_mpf_config_cache[self.options['mpfconfigfile']]
         else:
