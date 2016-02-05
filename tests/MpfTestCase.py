@@ -1,3 +1,4 @@
+import copy
 import unittest
 
 from mpf.system.config import Config
@@ -22,10 +23,10 @@ class TestMachineController(MachineController):
 
     def _load_mpf_config(self):
         if self.options['mpfconfigfile'] in TestMachineController.local_mpf_config_cache:
-            self.config = TestMachineController.local_mpf_config_cache[self.options['mpfconfigfile']]
+            self.config = copy.deepcopy(TestMachineController.local_mpf_config_cache[self.options['mpfconfigfile']])
         else:
             super()._load_mpf_config()
-            TestMachineController.local_mpf_config_cache[self.options['mpfconfigfile']] = self.config
+            TestMachineController.local_mpf_config_cache[self.options['mpfconfigfile']] = copy.deepcopy(self.config)
 
     def _load_machine_config(self):
         super()._load_machine_config()
@@ -56,6 +57,10 @@ class MpfTestCase(unittest.TestCase):
 
         """
         return '../tests/machine_files/null/'
+
+    def post_event(self, event_name):
+        self.machine.events.post(event_name)
+        self.machine_run()
 
     def get_platform(self):
         return 'virtual'
