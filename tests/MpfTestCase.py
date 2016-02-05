@@ -10,11 +10,21 @@ import inspect
 
 
 class TestMachineController(MachineController):
+    local_mpf_config_cache = {}
+
     def __init__(self, options, config_patches):
         self.test_config_patches = config_patches
         self.test_init_complete = False
         super().__init__(options)
         self.clock._max_fps = 0
+
+    def _load_mpf_config(self):
+        print(self.options['mpfconfigfile'])
+        if self.options['mpfconfigfile'] in TestMachineController.local_mpf_config_cache:
+            self.config = TestMachineController.local_mpf_config_cache[self.options['mpfconfigfile']]
+        else:
+            super()._load_mpf_config()
+            TestMachineController.local_mpf_config_cache[self.options['mpfconfigfile']] = self.config
 
     def _load_machine_config(self):
         super()._load_machine_config()
