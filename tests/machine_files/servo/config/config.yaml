@@ -1,0 +1,15 @@
+#config_version=3
+
+servos:
+    limited_servo:
+        number: 1
+        servo_min: 0.2
+        servo_max: 0.8
+    test_servo:
+        number: 2
+        reset_position: 0.5
+        reset_events: test_reset
+        positions:
+            0.0: test_00
+            0.1: test_01
+            1.0: test_10
