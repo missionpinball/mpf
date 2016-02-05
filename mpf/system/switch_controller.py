@@ -379,6 +379,7 @@ class SwitchController(object):
                              'switch_name': name,
                              'state': state,
                              'ms': entry['ms'],
+                             'removed': False,
                              'return_info': entry['return_info'],
                              'callback_kwargs': entry['callback_kwargs']}
                     self.active_timed_switches[key].append(value)
@@ -482,6 +483,7 @@ class SwitchController(object):
                              'switch_name': switch_name,
                              'state': state,
                              'ms': ms,
+                             'removed': False,
                              'return_info': return_info,
                              'callback_kwargs': callback_kwargs}
                     self.active_timed_switches[key].append(value)
@@ -496,6 +498,7 @@ class SwitchController(object):
                              'switch_name': switch_name,
                              'state': state,
                              'ms': ms,
+                             'removed': False,
                              'return_info': return_info,
                              'callback_kwargs': callback_kwargs}
                     self.active_timed_switches[key].append(value)
@@ -527,6 +530,11 @@ class SwitchController(object):
                 if (settings['ms'] == ms and
                             settings['callback'] == callback):
                     self.registered_switches[entry_key].remove(settings)
+
+        for timed_key, timed_entry in self.active_timed_switches.items():
+            for key, entry in enumerate(timed_entry):
+                if entry['switch_action'] == entry_key and entry['ms'] == ms and entry['callback'] == callback:
+                    entry['removed'] = True
 
     def log_active_switches(self):
         """Writes out entries to the log file of all switches that are
@@ -594,6 +602,8 @@ class SwitchController(object):
         for k in list(self.active_timed_switches.keys()):
             if k <= self.machine.clock.get_time():  # change to generator?
                 for entry in self.active_timed_switches[k]:
+                    if entry['removed']:
+                        continue
                     self.log.debug(
                         "Processing timed switch handler. Switch: %s "
                         " State: %s, ms: %s", entry['switch_name'],
