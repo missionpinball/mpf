@@ -495,6 +495,12 @@ slide_player:
 snux:
     flipper_enable_driver_number: single|int|c23
     diag_led_driver_number: single|str|c24
+sound_player:
+    sound: single|str|
+    track: single|str|None
+    priority: single|int|None
+    loops: single|int|None
+    volume: single|float|None
 sound_system:
     enabled: single|bool|True
     buffer: single|int|2048
