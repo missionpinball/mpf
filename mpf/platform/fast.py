@@ -1325,7 +1325,7 @@ class SerialCommunicator(object):
             msg = self.serial_io.readline()
             if msg.startswith('NN:'):
 
-                node_id, model, fw, sw, dr, _, _, _, _, _, _ = msg.split(',')
+                node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
                 node_id = node_id[3:]
                 model = model.strip()
 
