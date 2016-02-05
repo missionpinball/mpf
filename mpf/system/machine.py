@@ -485,7 +485,7 @@ class MachineController(object):
         # specifies the MPF should control the main timer
         try:
             while not self.done:
-                self.idle()
+                self.process_frame()
         except KeyboardInterrupt:
             pass
 
@@ -493,13 +493,8 @@ class MachineController(object):
         self._platform_stop()
 
     def process_frame(self):
-        '''This function is called after every frame. By default:
-
-           * it "ticks" the clock to the next frame.
-           * it reads all input and dispatches events.
-             window.
-        '''
-
+        """Processes the current frame and ticks the clock to wait for the
+        next one"""
         # TODO: Replace the function call below
         self.default_platform.tick(self.clock.frametime)
 
