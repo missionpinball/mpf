@@ -1,5 +1,7 @@
 import unittest
 
+from mpf.system.config import Config
+
 from mpf.system.machine import MachineController
 from mpf.system.utility_functions import Util
 import logging
@@ -128,6 +130,9 @@ class MpfTestCase(unittest.TestCase):
         return 0
 
     def setUp(self):
+        # we want to reuse config_specs to speed tests up
+        Config.unload_config_spec = MagicMock()
+
         self.test_start_time = time.time()
         if self.unittest_verbosity() > 1:
             logging.basicConfig(level=logging.DEBUG,
