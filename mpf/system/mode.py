@@ -57,13 +57,13 @@ class Mode(object):
         player in the '_restart_modes_on_next_ball' untracked player variable.
         '''
 
-        for asset_manager in list(self.machine.asset_managers.values()):
-
-            config_data = self.config.get(asset_manager.config_section, dict())
-
-            self.config[asset_manager.config_section] = (
-                asset_manager.register_assets(config=config_data,
-                                              mode_path=self.path))
+        # for asset_manager in list(self.machine.asset_managers.values()):
+        #
+        #     config_data = self.config.get(asset_manager.config_section, dict())
+        #
+        #     self.config[asset_manager.config_section] = (
+        #         asset_manager.register_assets(config=config_data,
+        #                                       mode_path=self.path))
 
         # Call registered remote loader methods
         for item in self.machine.mode_controller.loader_methods:

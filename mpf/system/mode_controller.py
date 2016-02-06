@@ -52,7 +52,7 @@ class ModeController(object):
         self.start_methods = list()
 
         if 'modes' in self.machine.config:
-            self.machine.events.add_handler('init_phase_4',
+            self.machine.events.add_handler('init_phase_2',
                                             self._load_modes)
 
         self.machine.events.add_handler('ball_ending', self._ball_ending,

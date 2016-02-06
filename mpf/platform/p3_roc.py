@@ -373,7 +373,7 @@ class HardwarePlatform(Platform):
             event_type = event['type']
             event_value = event['value']
             if event_type == 99:  # CTRL-C to quit todo does this go here?
-                self.machine.quit()
+                self.machine.stop()
             elif event_type == pinproc.EventTypeDMDFrameDisplayed:
                 pass
             elif event_type == pinproc.EventTypeSwitchClosedDebounced:

@@ -1,4 +1,4 @@
-import copy
+import threading
 import unittest
 
 from mpf.system.config import Config
@@ -10,7 +10,7 @@ import sys
 from mock import *
 import time
 import inspect
-
+import copy
 
 class TestMachineController(MachineController):
     local_mpf_config_cache = {}
@@ -23,7 +23,9 @@ class TestMachineController(MachineController):
 
     def _load_mpf_config(self):
         if self.options['mpfconfigfile'] in TestMachineController.local_mpf_config_cache:
-            self.config = copy.deepcopy(TestMachineController.local_mpf_config_cache[self.options['mpfconfigfile']])
+            self.config = copy.deepcopy(TestMachineController.local_mpf_config_cache[
+                    self.options['mpfconfigfile']])
+            self.machine_config = self.config
         else:
             super()._load_mpf_config()
             TestMachineController.local_mpf_config_cache[self.options['mpfconfigfile']] = copy.deepcopy(self.config)
@@ -138,6 +140,8 @@ class MpfTestCase(unittest.TestCase):
         # we want to reuse config_specs to speed tests up
         Config.unload_config_spec = MagicMock()
 
+        # print(threading.active_count())
+
         self.test_start_time = time.time()
         if self.unittest_verbosity() > 1:
             logging.basicConfig(level=logging.DEBUG,
@@ -147,21 +151,30 @@ class MpfTestCase(unittest.TestCase):
             logging.basicConfig(level=99)
 
         # init machine
-        self.machine = TestMachineController(self.getOptions(),
-                                             self.machine_config_patches)
+        try:
+            self.machine = TestMachineController(self.getOptions(),
+                                                 self.machine_config_patches)
+            self.realTime = self.machine.clock.time
+            self.testTime = self.realTime()
+            self.machine.clock.time = MagicMock(return_value=self.testTime)
 
-        self.realTime = self.machine.clock.time
-        self.testTime = self.realTime()
-        self.machine.clock.time = MagicMock(return_value=self.testTime)
+            self.machine.default_platform.timer_initialize()
+            self.machine.loop_start_time = self.machine.clock.get_time()
 
-        self.machine.default_platform.timer_initialize()
-        self.machine.loop_start_time = self.machine.clock.get_time()
+            while not self.machine.test_init_complete:
+                self.advance_time_and_run(0.01)
 
-        while not self.machine.test_init_complete:
-            self.advance_time_and_run(0.01)
+            self.machine.ball_controller.num_balls_known = 99
+            self.advance_time_and_run(300)
 
-        self.machine.ball_controller.num_balls_known = 99
-        self.advance_time_and_run(300)
+        except Exception as e:
+            # todo temp until I can figure out how to stop the asset loader
+            # thread automatically.
+            try:
+                self.machine.stop()
+            except AttributeError:
+                pass
+            raise e
 
     def tearDown(self):
         duration = time.time() - self.test_start_time
@@ -174,5 +187,6 @@ class MpfTestCase(unittest.TestCase):
         # fire all delays
         self.advance_time_and_run(300)
         self.machine.clock.time = self.realTime
+        self.machine.stop()
         self.machine = None
         self.realTime = None

@@ -16,7 +16,6 @@ class TestTutorialStep17(MpfTestCase):
 
     def test_game(self):
         # start active switches should start with 5 balls in the trough
-
         self.machine.ball_controller.num_balls_known = 5
         self.assertEqual(5, self.machine.ball_devices.bd_trough.balls)
 

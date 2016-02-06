@@ -15,6 +15,7 @@ mpf:
         - device_manager: mpf.system.device_manager.DeviceManager
         - switch_controller: mpf.system.switch_controller.SwitchController
         - ball_controller: mpf.system.ball_controller.BallController
+        - asset_manager: mpf.system.assets.AssetManager
         - show_controller: mpf.system.show_controller.ShowController
         - bcp: mpf.system.bcp.BCP
         - logic_blocks: mpf.system.logic_blocks.LogicBlocks
@@ -227,10 +228,16 @@ textstrings:
     volume_zero: OFF
     volume_max: MAX
 
-asset_defaults:
+assets:
     shows:
         default:
             load: preload
+        preload:
+            load: preload
+        on_demand:
+            load: on_demand
+        mode_start:
+            load: mode_start
 
 bcp:
     connections:

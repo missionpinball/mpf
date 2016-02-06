@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import queue
+import threading
 
 import errno
 
@@ -13,10 +14,8 @@ from mpf.system.clock import ClockBase
 from mpf.system.config import Config
 from mpf.system.case_insensitive_dict import CaseInsensitiveDict
 from mpf.system.device_manager import DeviceCollection
-from mpf.system.tasks import Task, DelayManager, DelayManagerRegistry
+from mpf.system.tasks import DelayManager, DelayManagerRegistry
 from mpf.system.data_manager import DataManager
-from mpf.system.timing import Timing
-from mpf.system.assets import AssetManager
 from mpf.system.utility_functions import Util
 import version
 
@@ -51,6 +50,8 @@ class MachineController(object):
         self.log.debug("Command line arguments: {}".format(self.options))
         self.verify_system_info()
 
+        self._boot_holds = set()
+        self.register_boot_hold('init')
         self.clock = ClockBase()
         self.loop_start_time = 0
         self.tick_num = 0
@@ -60,23 +61,22 @@ class MachineController(object):
         self.plugins = list()
         self.scriptlets = list()
         self.modes = DeviceCollection(self, 'modes', None)
-        self.asset_managers = dict()
         self.game = None
         self.active_debugger = dict()
         self.machine_vars = CaseInsensitiveDict()
         self.machine_var_monitor = False
         self.machine_var_data_manager = None
-
+        self.thread_stopper = threading.Event()
         self.flag_bcp_reset_complete = False
-        self.asset_loader_complete = False
 
         self.delayRegistry = DelayManagerRegistry(self)
         self.delay = DelayManager(self.delayRegistry)
 
         self.crash_queue = queue.Queue()
-        Task.create(self, self._check_crash_queue, interval=1.0)
-
-        self.config = dict()
+        self.clock.schedule_interval(self._check_crash_queue, 1)
+        self._init_done = False
+        self.config = None
+        self.machine_config = None
         self._load_mpf_config()
         self._set_machine_path()
         self._load_machine_config()
@@ -133,7 +133,9 @@ class MachineController(object):
         self.events.post("init_phase_5")
         self.events._process_event_queue()
         Config.unload_config_spec()
-        self.reset()
+        # self.reset()
+
+        self.clear_boot_hold('init')
 
     def validate_machine_config_section(self, section):
         if section not in Config.config_spec:
@@ -149,11 +151,11 @@ class MachineController(object):
         self.events.add_handler('shutdown', self.power_off)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'shutdown'), self.power_off)
-        self.events.add_handler('quit', self.quit)
+        self.events.add_handler('quit', self.stop)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
-                                replace('%', 'quit'), self.quit)
+                                replace('%', 'quit'), self.stop)
 
-        self.clock.schedule_interval(self._loading_tick, 0.1)
+        # self.clock.schedule_interval(self._loading_tick, 0.1)
 
     def _load_machine_vars(self):
         self.machine_var_data_manager = DataManager(self, 'machine_vars')
@@ -170,18 +172,19 @@ class MachineController(object):
 
             self.create_machine_var(name=name, value=settings['value'])
 
-    def _check_crash_queue(self):
+    def _check_crash_queue(self, time):
         try:
             crash = self.crash_queue.get(block=False)
         except queue.Empty:
             pass
         else:
-            self.log.critical("MPF Shutting down due to child thread crash")
-            self.log.critical("Crash details: %s", crash)
-            self.done = True
+            print("MPF Shutting down due to child thread crash")
+            print("Crash details: %s", crash)
+            self.stop()
 
     def _load_mpf_config(self):
         self.config = Config.load_config_file(self.options['mpfconfigfile'])
+        self.machine_config = self.config
 
     def _set_machine_path(self):
         # If the machine folder value passed starts with a forward or
@@ -380,6 +383,7 @@ class MachineController(object):
         self.events.post('machine_reset_phase_3')
         self.events._process_event_queue()
         self.log.debug('Reset Complete')
+        self._reset_complete()
 
     def add_platform(self, name):
         """Makes an additional hardware platform interface available to MPF.
@@ -480,6 +484,15 @@ class MachineController(object):
         else:
             self._mpf_timer_run_loop()
 
+    def stop(self):
+        """Performs a graceful exit of MPF."""
+        self.log.info("Shutting down...")
+        self.events.post('shutdown')
+        self.events._process_event_queue()
+        self.thread_stopper.set()
+        # todo change this to look for the shutdown event
+        self.done = True
+
     def _mpf_timer_run_loop(self):
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
@@ -518,40 +531,33 @@ class MachineController(object):
         """
         pass
 
-    def quit(self):
-        """Performs a graceful exit of MPF."""
-        self.log.info("Shutting down...")
-        self.events.post('shutdown')
-        self.events._process_event_queue()
-        self.done = True
-
     def log_loop_rate(self):
         self.log.info("Target MPF loop rate: %s Hz", timing.Timing.HZ)
         self.log.info("Actual MPF loop rate: %s Hz", self.clock.get_fps())
 
-    def _loading_tick(self, dt):
-        if not self.asset_loader_complete:
-
-            if AssetManager.loader_queue.qsize():
-                self.log.debug("Holding Attract start while MPF assets load. "
-                               "Remaining: %s",
-                               AssetManager.loader_queue.qsize())
-                self.bcp.bcp_trigger('assets_to_load',
-                     total=AssetManager.total_assets,
-                     remaining=AssetManager.loader_queue.qsize())
-            else:
-                self.bcp.bcp_trigger('assets_to_load',
-                     total=AssetManager.total_assets,
-                     remaining=0)
-                self.asset_loader_complete = True
-
-        elif self.bcp.active_connections and not self.flag_bcp_reset_complete:
-            if self.tick_num % Timing.HZ == 0:
-                self.log.info("Waiting for BCP reset_complete...")
-
-        else:
-            self.log.debug("Asset loading complete")
-            self._reset_complete()
+    # def _loading_tick(self, dt):
+    #     if not self.asset_loader_complete:
+    #
+    #         if AssetManager.loader_queue.qsize():
+    #             self.log.debug("Holding Attract start while MPF assets load. "
+    #                            "Remaining: %s",
+    #                            AssetManager.loader_queue.qsize())
+    #             self.bcp.bcp_trigger('assets_to_load',
+    #                  total=AssetManager.total_assets,
+    #                  remaining=AssetManager.loader_queue.qsize())
+    #         else:
+    #             self.bcp.bcp_trigger('assets_to_load',
+    #                  total=AssetManager.total_assets,
+    #                  remaining=0)
+    #             self.asset_loader_complete = True
+    #
+    #     elif self.bcp.active_connections and not self.flag_bcp_reset_complete:
+    #         if self.tick_num % Timing.HZ == 0:
+    #             self.log.info("Waiting for BCP reset_complete...")
+    #
+    #     else:
+    #         self.log.debug("Asset loading complete")
+    #         self._reset_complete()
 
     def bcp_reset_complete(self):
         self.flag_bcp_reset_complete = True
@@ -559,7 +565,7 @@ class MachineController(object):
     def _reset_complete(self):
         self.log.debug('Reset Complete')
         self.events.post('reset_complete')
-        self.clock.unschedule(self._loading_tick)
+        # self.clock.unschedule(self._loading_tick)
 
     def configure_debugger(self):
         pass
@@ -728,3 +734,18 @@ class MachineController(object):
                     return self.hardware_platforms[overwrite]
         else:
             return self.default_platform
+
+    def register_boot_hold(self, hold):
+        self._boot_holds.add(hold)
+
+    def clear_boot_hold(self, hold):
+        self._boot_holds.remove(hold)
+        self.log.debug("Clearing boot hold '{}'. Holds remaining:".format(
+            hold, self._boot_holds))
+        if not self._boot_holds:
+            self.init_done()
+
+    def init_done(self):
+        self._init_done = True
+        Config.unload_config_spec()
+        self.reset()

@@ -44,3 +44,15 @@ assets:
             preload: yes
         test_show3:
             preload: yes
+
+#assets:
+#    shows:
+#        default:
+#            load: preload
+#        preload:
+#            load: preload
+#            test_key: test_value
+#        on_demand:
+#            load: on_demand
+#        mode_start:
+#            load: mode_start
