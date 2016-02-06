@@ -49,8 +49,9 @@ community.''',
 
         package_data = {'': ['*.yaml', '*.png']},
 
-        packages=['assets', 'devices', 'file_interfaces', 'modes',
-                  'platform', 'plugins', 'system'],
+        packages= find_packages(include=['assets', 'devices',
+                                         'file_interfaces', 'modes',
+                                         'platform', 'plugins', 'system']),
 
         install_requires=['ruamel.yaml', 'pyserial'],
 
