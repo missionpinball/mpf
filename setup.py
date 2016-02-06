@@ -45,7 +45,7 @@ community.''',
 
         keywords='pinball',
 
-        packages=find_packages(exclude=['machine_files', 'tests', 'tools']),
+        packages=find_packages(exclude=['example', 'tests', 'tools']),
 
         install_requires=['ruamel.yaml', 'pyserial'],
 

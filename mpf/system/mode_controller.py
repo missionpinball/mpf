@@ -142,7 +142,6 @@ class ModeController(object):
             config['mode'] = dict()
 
         self.machine.config_processor.process_config2("mode", config['mode'])
-
         # Figure out where the code is for this mode.
 
         # If a custom 'code' setting exists, first look in the machine folder

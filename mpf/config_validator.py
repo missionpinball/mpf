@@ -13,6 +13,17 @@ accelerometers:
     tags: list|str|None
     label: single|str|%
     number: single|str|
+assets:
+    common:
+        load: single|str|preload
+        file: single|str|None
+        priority: single|int|0
+    images: # no image-specific config items
+    shows:  # no show-specific config items
+    videos:
+        width: single|num|None
+        height: single|num|None
+
 autofire_coils:
     coil: single|self.machine.coils[%]|
     switch: single|self.machine.switches[%]|

@@ -810,10 +810,11 @@ class Asset(object):
     def __init__(self, mc, name, file, config):
         self.machine = mc
         self.name = name
-        self.config = config
         self.file = file
-        if not self.config:
-            self.config=dict()
+
+        self.config = self.machine.config_processor.process_config2(
+            'assets:{}'.format(self.config_section), config,
+            base_spec='assets:common')
 
         self.priority = self.config.get('priority', 0)
         self._callbacks = set()
@@ -825,7 +826,8 @@ class Asset(object):
         self.unloading = False  # Is this asset in the process of unloading?
 
     def __repr__(self):
-        return '<Asset: {}>'.format(self.name)
+        return '<{} Asset: {}, loaded={}>'.format(self.attribute.capitalize(),
+                                                  self.name, self.loaded)
 
     def __lt__(self, other):
         # Note this is "backwards" (It's the __lt__ method but the formula uses

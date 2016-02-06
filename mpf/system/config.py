@@ -209,7 +209,7 @@ class Config(object):
         elif item_type == 'list_of_lists':
             return Util.list_of_lists(item)
 
-    def process_config2(self, config_spec, source, section_name=None,
+    def process_config2(self, config_spec, source=None, section_name=None,
                         target=None, result_type='dict', base_spec=None,
                         add_missing_keys=True):
         # config_spec, str i.e. "device:shot"
@@ -218,6 +218,9 @@ class Config(object):
 
         if not self.config_spec:
             self.load_config_spec()
+
+        if source is None:
+            source = CaseInsensitiveDict()
 
         if not section_name:
             section_name = config_spec  # str
@@ -231,6 +234,9 @@ class Config(object):
         config_spec = config_spec.split(':')
         for i in range(len(config_spec)):
             this_spec = this_spec[config_spec[i]]
+
+        if not isinstance(this_spec, dict):
+            this_spec = dict()
 
         if base_spec:
             this_base_spec = self.config_spec
@@ -434,7 +440,6 @@ class Config(object):
             item = return_dict
 
         elif '%' in validator:
-
             if type(item) is str:
 
                 try:
@@ -472,7 +477,7 @@ class Config(object):
                     else:
                         item = int(item)
                 except (TypeError, ValueError):
-                    item = 0
+                    pass
 
         elif validator in ('bool', 'boolean'):
             if type(item) is str:

@@ -33,11 +33,6 @@ class Show(Asset):
         if steps:
             self._do_load(steps=steps)
 
-    def __repr__(self):
-        return '<Show: {} (loaded={}, running={})>'.format(self.name,
-                                                           self.loaded,
-                                                           self.running)
-
     def __lt__(self, other):
         return id(self) < id(other)
 
