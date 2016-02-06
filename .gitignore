@@ -60,7 +60,7 @@ target/
 .idea/
 
 # MPF files
-_cache
+__mpfcache__
 data/
 logs/
 audits.yaml

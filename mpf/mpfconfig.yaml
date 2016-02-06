@@ -74,7 +74,6 @@ mpf:
         audits: data/audits.yaml
         machine_vars: data/machine_vars.yaml
         high_scores: data/high_scores.yaml
-        config_cache: data/config_cache.yaml
         earnings: data/earnings.yaml
         machine_files: examples
         config: config

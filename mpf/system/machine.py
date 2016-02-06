@@ -9,7 +9,6 @@ import threading
 
 import errno
 
-from mpf.system import *
 from mpf.system.clock import ClockBase
 from mpf.system.config import Config
 from mpf.system.case_insensitive_dict import CaseInsensitiveDict
@@ -133,7 +132,6 @@ class MachineController(object):
         self.events.post("init_phase_5")
         self.events._process_event_queue()
         Config.unload_config_spec()
-        # self.reset()
 
         self.clear_boot_hold('init')
 
@@ -210,7 +208,7 @@ class MachineController(object):
         else:
             try:
                 if self._get_latest_config_mod_time() > os.path.getmtime(os.path.join(
-                        self.machine_path, '_cache', '{}_config.p'.
+                        self.machine_path, '__mpfcache__', '{}_config.p'.
                         format('-'.join(self.options['configfile'])))):
                     load_from_cache = False  # config is newer
                 else:
@@ -248,12 +246,12 @@ class MachineController(object):
 
     def _load_config_from_cache(self):
         self.log.info("Loading cached config: {}".format(
-            os.path.join(self.machine_path, '_cache',
+            os.path.join(self.machine_path, '__mpfcache__',
             '{}_config.p'.format('-'.join(self.options['configfile'])))))
 
         with open(os.path.join(
-                self.machine_path, '_cache', '{}_config.p'.
-                format('-'.join(self.options['configfile']))), 'r') as f:
+                self.machine_path, '__mpfcache__', '{}_config.p'.
+                format('-'.join(self.options['configfile']))), 'rb') as f:
 
             try:
                 self.config = pickle.load(f)
@@ -285,18 +283,18 @@ class MachineController(object):
     def _cache_config(self):
 
         try:
-            os.makedirs(os.path.join(self.machine_path, '_cache'))
+            os.makedirs(os.path.join(self.machine_path, '__mpfcache__'))
         except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise
 
         with open(os.path.join(
-                self.machine_path, '_cache', '{}_config.p'.
+                self.machine_path, '__mpfcache__', '{}_config.p'.
                 format('-'.join(self.options['configfile']))),
                 'wb') as f:
-            pickle.dump(self.config, f)
+            pickle.dump(self.config, f, protocol=4)
             self.log.info('Config file cache created: {}'.format(os.path.join(
-                self.machine_path, '_cache', '{}_config.p'.
+                self.machine_path, '__mpfcache__', '{}_config.p'.
                 format('-'.join(self.options['configfile'])))))
 
     def verify_system_info(self):
@@ -532,8 +530,8 @@ class MachineController(object):
         pass
 
     def log_loop_rate(self):
-        self.log.info("Target MPF loop rate: %s Hz", timing.Timing.HZ)
-        self.log.info("Actual MPF loop rate: %s Hz", self.clock.get_fps())
+        self.log.info("Actual MPF loop rate: %s Hz",
+                      round(self.clock.get_fps(), 2))
 
     # def _loading_tick(self, dt):
     #     if not self.asset_loader_complete:
