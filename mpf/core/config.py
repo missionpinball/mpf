@@ -19,9 +19,6 @@ from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 log = logging.getLogger('ConfigProcessor')
 
 
-
-
-
 class Config(object):
     config_spec = None
 
@@ -187,7 +184,6 @@ class Config(object):
                 return None
 
         elif item_type in ('string', 'str'):
-
             if item:
                 return str(item)
             else:
@@ -453,6 +449,12 @@ class Config(object):
                 item = str(item)
             else:
                 item = None
+
+        elif validator == 'lstr':  # lowercase string
+            if item:
+                return str(item).lower()
+            else:
+                return None
 
         elif validator == 'float':
             try:
