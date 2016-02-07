@@ -63,7 +63,6 @@ class HardwarePlatform(Platform):
         # Platform-specific hardware features. WARNING: Do not edit these. They
         # are based on what the P3-ROC hardware can and cannot do.
         self.features['max_pulse'] = 255
-        self.features['hw_timer'] = False
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
         self.features['variable_debounce_time'] = False

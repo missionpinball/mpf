@@ -61,7 +61,6 @@ class HardwarePlatform(Platform):
         # Platform-specific hardware features. WARNING: Do not edit these. They
         # are based on what the FAST hardware can and cannot do.
         self.features['max_pulse'] = 255  # todo
-        self.features['hw_timer'] = False
         self.features['hw_rule_coil_delay'] = True  # todo
         self.features['variable_recycle_time'] = True  # todo
         self.features['variable_debounce_time'] = True  # todo

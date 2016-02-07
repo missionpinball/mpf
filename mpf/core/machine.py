@@ -1,13 +1,12 @@
 """Contains the MachineController base class"""
 
-import pickle
+import errno
 import logging
 import os
-import sys
+import pickle
 import queue
+import sys
 import threading
-
-import errno
 
 from mpf.core.clock import ClockBase
 from mpf.core.config import Config
@@ -41,6 +40,7 @@ class MachineController(object):
         scriptlets:
         platform:
         events:
+
     """
     def __init__(self, options):
         self.options = options
@@ -328,7 +328,7 @@ class MachineController(object):
     def _load_plugins(self):
         self.log.info("Loading plugins...")
 
-        # TODO: This should be cleaned up. Create a Plugins superclass and
+        # TODO: This should be cleaned up. Create a Plugins base class and
         # classmethods to determine if the plugins should be used.
 
         for plugin in Util.string_to_list(
@@ -477,10 +477,7 @@ class MachineController(object):
 
         self.loop_start_time = self.clock.get_time()
 
-        if self.default_platform.features['hw_timer']:
-            self.default_platform.run_loop()
-        else:
-            self._mpf_timer_run_loop()
+        self._run_loop()
 
     def stop(self):
         """Performs a graceful exit of MPF."""
@@ -491,7 +488,7 @@ class MachineController(object):
         # todo change this to look for the shutdown event
         self.done = True
 
-    def _mpf_timer_run_loop(self):
+    def _run_loop(self):
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
         try:
@@ -507,6 +504,7 @@ class MachineController(object):
         """Processes the current frame and ticks the clock to wait for the
         next one"""
         # TODO: Replace the function call below
+        # todo should the platforms register for their own ticks?
         self.default_platform.tick(self.clock.frametime)
 
         # Process events before processing the clock

@@ -33,10 +33,9 @@ class HardwarePlatform(Platform):
 
         # The following "features" are supposed to be constants that you can
         # use to define was is or is not in your own platform. However they
-        # have not been implemneted at this time. So for now just keep them
+        # have not been implemented at this time. So for now just keep them
         # as-is below and we'll deal with them in some future version of MPF.
         self.features['max_pulse'] = 255
-        self.features['hw_timer'] = False
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
         self.features['variable_debounce_time'] = False

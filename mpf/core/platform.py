@@ -26,7 +26,6 @@ class Platform(object):
         # Set default platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
         self.features['max_pulse'] = 255
-        self.features['hw_timer'] = False
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
 
@@ -118,40 +117,6 @@ class Platform(object):
         """Subclass this method in a platform module to perform periodic updates
         to the platform hardware, e.g. reading switches, sending driver or
         light updates, etc.
-
-        If you want to use this method and let MPF control the machine's run
-        loop, set `self.features['hw_timer'] = False`.
-
-        This method is only used when MPF controls the game loop. Each platform
-        interface either needs to implement this method or the `run_loop`
-        method.
-
-        This method will be called every 1ms.
-
-        """
-        pass
-
-    def run_loop(self):
-        """Subclass this method in a platform module if the platform will
-        control the run loop rather than MPF controlling it.
-
-        If you want to use this method and let your platform control the
-        machine's run loop, set `self.features['hw_timer'] = True`.
-
-        If your platform controls the loop, it should call
-        `self.machine.timer_tick()` periodically based on the `self.machine.HZ`
-        rate.
-
-        Also the loop should continue running until `self.machine.done` is True.
-        For example, it could run in `while not self.machine.done:` loop.
-
-        Your loop can call `self.machine.switch_controller.process_switch()` if
-        any switch events come in "off cycle", but the timer_tick should be
-        called consistently.
-
-        This loop can safely block. If the call to the hardware does not block,
-        there should be a small pause in the loop (e.g. `time.sleep(.001)` to
-        prevent 100% CPU utilization.)
 
         """
         pass
