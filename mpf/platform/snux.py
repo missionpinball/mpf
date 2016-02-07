@@ -5,7 +5,7 @@ Mark Sunnucks's System 11 interface board.
 """
 
 import logging
-from mpf.core.tasks import DelayManager
+from mpf.core.delays import DelayManager
 
 
 class Snux(object):

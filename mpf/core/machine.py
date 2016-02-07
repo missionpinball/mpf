@@ -13,7 +13,7 @@ from mpf.core.clock import ClockBase
 from mpf.core.config import Config
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.device_manager import DeviceCollection
-from mpf.core.tasks import DelayManager, DelayManagerRegistry
+from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.data_manager import DataManager
 from mpf.core.utility_functions import Util
 import version

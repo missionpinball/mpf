@@ -4,7 +4,7 @@ file."""
 import logging
 
 from mpf.core.config import Config
-from mpf.core.tasks import DelayManager
+from mpf.core.delays import DelayManager
 
 
 class SwitchPlayer(object):

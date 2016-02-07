@@ -1,4 +1,4 @@
-from mpf.core.tasks import DelayManager
+from mpf.core.delays import DelayManager
 from tests.MpfTestCase import MpfTestCase
 from unittest.mock import patch
 

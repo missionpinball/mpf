@@ -4,7 +4,7 @@ import uuid
 from collections import OrderedDict
 
 from mpf.core.device import Device
-import mpf.core.tasks
+import mpf.core.delays
 
 
 class Shot(Device):
@@ -35,7 +35,7 @@ class Shot(Device):
         super(Shot, self).__init__(machine, name, config, collection,
                                    validate=validate)
 
-        self.delay = mpf.core.tasks.DelayManager(self.machine.delayRegistry)
+        self.delay = mpf.core.delays.DelayManager(self.machine.delayRegistry)
 
         self.running_light_show = None
         self.active_sequences = list()

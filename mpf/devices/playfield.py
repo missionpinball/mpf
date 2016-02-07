@@ -5,7 +5,7 @@ import logging
 
 from mpf.devices.ball_device import BallDevice
 from mpf.core.ball_search import BallSearch
-from mpf.core.tasks import DelayManager
+from mpf.core.delays import DelayManager
 
 
 class Playfield(BallDevice):

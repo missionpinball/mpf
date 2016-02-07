@@ -1,7 +1,7 @@
 """Device that implements a ball save."""
 
 from mpf.core.device import Device
-from mpf.core.tasks import DelayManager
+from mpf.core.delays import DelayManager
 
 
 class BallSave(Device):

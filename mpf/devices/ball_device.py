@@ -2,7 +2,7 @@
 
 from collections import deque
 
-from mpf.core.tasks import DelayManager
+from mpf.core.delays import DelayManager
 from mpf.core.device import Device
 from mpf.core.utility_functions import Util
 

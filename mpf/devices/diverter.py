@@ -3,7 +3,7 @@
 from collections import deque
 
 from mpf.core.device import Device
-from mpf.core.tasks import DelayManager
+from mpf.core.delays import DelayManager
 
 
 class Diverter(Device):

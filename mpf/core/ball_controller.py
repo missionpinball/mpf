@@ -3,7 +3,7 @@ a pinball machine."""
 
 import logging
 
-from mpf.core.tasks import DelayManager
+from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
 
 

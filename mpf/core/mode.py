@@ -4,7 +4,7 @@ import copy
 import logging
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-from mpf.core.tasks import DelayManager
+from mpf.core.delays import DelayManager
 
 # todo
 # override player var
