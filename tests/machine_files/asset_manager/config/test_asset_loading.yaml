@@ -1,0 +1,96 @@
+#config_version=3
+
+leds:
+    led_01:
+        number: 0
+        color_correction_profile: default
+    led_02:
+        number: 1
+        color_correction_profile: default
+
+matrix_lights:
+    light_01:
+        number: 0
+        label: Test 0
+    light_02:
+        number: 1
+        label: Test 1
+
+gis:
+    gi_01:
+        number: 0
+
+coils:
+    coil_01:
+        number: 1
+        pulse_ms: 30
+
+flashers:
+    flasher_01:
+        number: 1
+        label: Test flasher
+        flash_ms: 40
+
+modes:
+  - mode1
+
+assets:
+    shows:
+        default:
+            load: preload
+        preload:
+            load: preload
+            test_key: test_value
+        on_demand:
+            load: on_demand
+        mode_start:
+            load: mode_start
+
+shows:
+  show_12_new_name:
+    file: show12.yaml
+    test_key: test_value_override12
+  show_13_new_name:
+    file: show13.yaml
+  show3:
+    test_key: test_value_override3
+
+show_pools:
+  group1:
+    load: preload
+    shows:
+      show1
+      show2
+      show3
+    type: random
+  group2:
+    load: preload
+    shows:
+      show1
+      show2
+      show3|2
+    type: random
+  group3:
+    shows:
+      show1
+      show2
+      show3
+    type: sequence
+  group4:
+    shows:
+      show1|4
+      show2|2
+      show3
+    type: sequence
+  group5:
+    shows:
+      show1|1
+      show2|5
+      show3|1
+    type: random_force_next
+  group6:
+    shows:
+      show1
+      show2
+      show3
+    type: random_force_all

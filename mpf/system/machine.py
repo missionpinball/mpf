@@ -182,7 +182,6 @@ class MachineController(object):
 
     def _load_mpf_config(self):
         self.config = Config.load_config_file(self.options['mpfconfigfile'])
-        self.machine_config = self.config
 
     def _set_machine_path(self):
         # If the machine folder value passed starts with a forward or
@@ -241,6 +240,7 @@ class MachineController(object):
 
             self.config = Util.dict_merge(self.config,
                 Config.load_config_file(config_file))
+            self.machine_config = self.config
 
         self._cache_config()
 
@@ -255,6 +255,7 @@ class MachineController(object):
 
             try:
                 self.config = pickle.load(f)
+                self.machine_config = self.config
 
             except:
                 self.log.warning("Could not load config from cache")

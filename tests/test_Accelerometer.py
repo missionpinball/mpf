@@ -1,13 +1,9 @@
-import unittest
-
-from mpf.system.machine import MachineController
-from tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
-import time
 import math
 
-class TestAccelerometer(MpfTestCase):
+from tests.MpfTestCase import MpfTestCase
 
+
+class TestAccelerometer(MpfTestCase):
     def getConfigFile(self):
         return 'config.yaml'
 
@@ -39,9 +35,9 @@ class TestAccelerometer(MpfTestCase):
 
         # 90 degree on the side
         accelerometer.update_acceleration(1.0, 0.0, 0.0)
-        self.assertAlmostEqual(math.pi/2, accelerometer.get_level_xz())
+        self.assertAlmostEqual(math.pi / 2, accelerometer.get_level_xz())
         self.assertAlmostEqual(0, accelerometer.get_level_yz())
-        self.assertAlmostEqual(math.pi/2, accelerometer.get_level_xyz())
+        self.assertAlmostEqual(math.pi / 2, accelerometer.get_level_xyz())
         self.machine_run()
         self.assertTrue(self._level1)
         self.assertTrue(self._level2)
@@ -50,15 +46,15 @@ class TestAccelerometer(MpfTestCase):
         accelerometer.update_acceleration(0.0, 1.0, 0.0)
         self.machine_run()
         self.assertAlmostEqual(0, accelerometer.get_level_xz())
-        self.assertAlmostEqual(math.pi/2, accelerometer.get_level_yz())
-        self.assertAlmostEqual(math.pi/2, accelerometer.get_level_xyz())
+        self.assertAlmostEqual(math.pi / 2, accelerometer.get_level_yz())
+        self.assertAlmostEqual(math.pi / 2, accelerometer.get_level_xyz())
 
         # 45 degree on the side
         accelerometer.update_acceleration(0.5, 0.0, 0.5)
         self.machine_run()
-        self.assertAlmostEqual(math.pi/4, accelerometer.get_level_xz())
+        self.assertAlmostEqual(math.pi / 4, accelerometer.get_level_xz())
         self.assertAlmostEqual(0, accelerometer.get_level_yz())
-        self.assertAlmostEqual(math.pi/4, accelerometer.get_level_xyz())
+        self.assertAlmostEqual(math.pi / 4, accelerometer.get_level_xyz())
 
         # 3.01 degree
         self._level1 = False

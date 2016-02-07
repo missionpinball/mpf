@@ -364,7 +364,7 @@ class Show(Asset):
         # so we can know when we're at the end of a show
         self.total_steps = len(self.show_steps)
 
-    def _unload(self):
+    def _do_unload(self):
         self.show_steps = None
 
     def play(self, priority=0, blend=False, hold=None,

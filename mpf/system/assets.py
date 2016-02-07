@@ -187,6 +187,7 @@ class AssetManager(object):
     def _create_assets(self):
         # Called once on boot to create all the asset objects
         # Create the machine-wide assets
+
         self._create_assets_from_disk(config=self.machine.machine_config)
         self._create_asset_groups(config=self.machine.machine_config)
 
@@ -287,7 +288,6 @@ class AssetManager(object):
             path = self.machine.machine_path
 
         for ac in self._asset_classes:
-
             if ac['config_section'] not in config:
                 config[ac['config_section']] = dict()
 
@@ -370,7 +370,6 @@ class AssetManager(object):
         for path, _, files in os.walk(root_path, followlinks=True):
             valid_files = [f for f in files if f.endswith(
                     asset_class['extensions'])]
-
             for file_name in valid_files:
                 folder = os.path.basename(path)
                 name = os.path.splitext(file_name)[0].lower()
@@ -395,7 +394,6 @@ class AssetManager(object):
                 # scan through the existing config to see if this file is used
                 # as the file setting for any entry.
                 for k, v in config.items():
-
                     if ('file' in v and v['file'] == file_name) or name == k:
                         # if it's found, set the asset entry's name to whatever
                         # the name of this entry is
@@ -420,7 +418,6 @@ class AssetManager(object):
                 # self.log.debug("Registering Asset: %s, File: %s, Default
                 # Group: %s, Final Config: %s", name, file_name,
                 #                default_string, built_up_config)
-
         return config
 
     def locate_asset_file(self, file_name, path_string, path=None):
@@ -563,10 +560,10 @@ class AssetManager(object):
                             percent=self.loading_percent)
 
         # TODO temp until logging is implemented properly
-        print('Loading assets: {}/{} ({}%)'.format(self.num_assets_loaded +
-                                                   self.num_bcp_assets_loaded,
-                                                   total,
-                                                   self.loading_percent))
+        # print('Loading assets: {}/{} ({}%)'.format(self.num_assets_loaded +
+        #                                            self.num_bcp_assets_loaded,
+        #                                            total,
+        #                                            self.loading_percent))
 
         if not remaining and not self.machine._init_done:
             self.machine.clear_boot_hold('assets')
@@ -601,26 +598,6 @@ class AssetLoader(threading.Thread):
         self.thread_stopper = thread_stopper
         self.name = 'asset_loader'
 
-    # def stop(self):
-    #     """Stops the AssetLoader thread, blocking until the thread is stopped.
-    #     This method also clears out the loader and loaded queues.
-    #
-    #     """
-    #     while not self.loader_queue.empty():
-    #         try:
-    #             self.loader_queue.get_nowait()
-    #         except Empty:
-    #             pass
-    #
-    #     while not self.loaded_queue.empty():
-    #         try:
-    #             self.loaded_queue.get_nowait()
-    #         except Empty:
-    #             pass
-    #
-    #     self.loaded_queue = None
-    #     self.loader_queue = None
-
     def run(self):
         """Run loop for the loader thread."""
         try:  # wrap the so we can send exceptions to the main thread
@@ -634,7 +611,6 @@ class AssetLoader(threading.Thread):
                     if not asset.loaded:
                         with asset.lock:
                             asset._do_load()
-
                     self.loaded_queue.put(asset)
 
         except Exception:  # pragma no cover
