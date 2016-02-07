@@ -53,6 +53,9 @@ class PlayfieldTransfer(Device):
 
     # used as callback in _ball_went_through2
     def _ball_went_through3(self, balls, target, timeout):
+        del balls
+        del target
+        del timeout
         # promise (and hope) that it actually goes there
         self.machine.events.post(
             'balldevice_' + self.name + '_ball_eject_success',
@@ -63,5 +66,7 @@ class PlayfieldTransfer(Device):
 
     # used as callback in _ball_went_through3
     def _ball_went_through4(self, balls, target):
+        del balls
+        del target
         # since we confirmed eject target playfield has to be active
         self.machine.events.post('sw_' + self.target.name + '_active')
