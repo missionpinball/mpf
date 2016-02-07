@@ -1,4 +1,4 @@
-- tocks: 3
+- time: +3
   display:
     - type: text
       text: YOU ARE AWESOME
@@ -7,7 +7,7 @@
         duration: 1s
         direction: left
 
-- tocks: 3
+- time: +3
   display:
     - type: Text
       text: PRESS START
@@ -26,7 +26,7 @@
         duration: 1s
         direction: right
 
-- tocks: 3
+- time: +3
   display:
     - type: Text
       text: MISSION PINBALL
@@ -39,4 +39,3 @@
       shape: box
       width: 128
       height: 32
-

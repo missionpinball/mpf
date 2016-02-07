@@ -88,6 +88,7 @@ class Show(Asset):
         self.show_steps = list()
 
     def _do_load(self, steps=None):
+
         self.show_steps = []
 
         self.machine.show_controller.log.debug("Loading Show %s",

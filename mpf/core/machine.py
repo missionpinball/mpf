@@ -8,6 +8,7 @@ import queue
 import sys
 import threading
 
+from mpf.core.bcp import BCP
 from mpf.core.clock import ClockBase
 from mpf.core.config import Config
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
@@ -133,6 +134,10 @@ class MachineController(object):
         Config.unload_config_spec()
 
         self.clear_boot_hold('init')
+
+    @property
+    def bcp_client_connected(self):
+        return BCP.active_connections > 0
 
     def validate_machine_config_section(self, section):
         if section not in Config.config_spec:

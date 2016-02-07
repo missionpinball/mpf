@@ -1,11 +1,11 @@
-- tocks: 1
+- time: +0.16
   lights:
     l_ball_save: ff
     l_super_jackpot: ff
     l_computer: ff
     l_demo_time: ff
     l_retina_scan: ff
-- tocks: 1
+- time: +0.16
   lights:
     l_ball_save: 0
     l_super_jackpot: 0

@@ -415,34 +415,13 @@ class BCP(object):
 
         self.log.debug("Registering Trigger Events")
 
-        try:
-            for event in list(config['show_player'].keys()):
-                self.create_trigger_event(event)
-        except KeyError:
-            pass
+        local_players = ['light_player', 'show_player']
 
-        try:
-            for event in list(config['screen_player'].keys()):
-                self.create_trigger_event(event)
-        except KeyError:
-            pass
+        for player in [x for x in config if x.endswith('_player') and
+                       x not in local_players]:
 
-        try:
-            for event in list(config['event_player'].keys()):
+            for event in config[player].keys():
                 self.create_trigger_event(event)
-        except KeyError:
-            pass
-
-        try:
-            for k, v in config['sound_player'].items():
-                if 'start_events' in v:
-                    for event in Util.string_to_list(v['start_events']):
-                        self.create_trigger_event(event)
-                if 'stop_events' in v:
-                    for event in Util.string_to_list(v['stop_events']):
-                        self.create_trigger_event(event)
-        except KeyError:
-            pass
 
     def create_trigger_event(self, event):
         """Registers a BCP trigger based on an MPF event.

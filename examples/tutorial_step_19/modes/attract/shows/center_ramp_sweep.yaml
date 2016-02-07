@@ -1,13 +1,13 @@
-- tocks: 1
+- time: +0.15
   lights:
     l_center_ramp_outer: ff
-- tocks: 1
+- time: +0.15
   lights:
     l_center_ramp_inner: ff
-- tocks: 1
+- time: +0.15
   lights:
     l_center_ramp_middle: ff
-- tocks: 1
+- time: +0.15
   lights:
     l_center_ramp_outer: 0
     l_center_ramp_inner: 0

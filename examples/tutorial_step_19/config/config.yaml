@@ -11,7 +11,7 @@ modes:
     - base
 
 hardware:
-    platform: fast
+    platform: smart_virtual
     driverboards: wpc
 
 switches:
@@ -853,37 +853,51 @@ dmd:
     width: 128
     height: 32
 
-window:
-    elements:
-      - type: virtualdmd
-        width: 512
-        height: 128
-        h_pos: center
-        v_pos: center
-        pixel_color: ff6600
-        dark_color: 220000
-        pixel_spacing: 1
-      - type: shape
-        shape: box
-        width: 516
-        height: 132
-        color: aaaaaa
-        thickness: 2
-      - type: text
-        font: tall title
-        text: MY AWESOME GAME
-        h_pos: center
-        v_pos: top
-        y: 60
-        size: 100
-        antialias: yes
-        layer: 1
-        color: ee9900
+displays:
+  default:
+    width: 800
+    height: 600
+
+#window:
+#    elements:
+#      - type: virtualdmd
+#        width: 512
+#        height: 128
+#        h_pos: center
+#        v_pos: center
+#        pixel_color: ff6600
+#        dark_color: 220000
+#        pixel_spacing: 1
+#      - type: shape
+#        shape: box
+#        width: 516
+#        height: 132
+#        color: aaaaaa
+#        thickness: 2
+#      - type: text
+#        font: tall title
+#        text: MY AWESOME GAME
+#        h_pos: center
+#        v_pos: top
+#        y: 60
+#        size: 100
+#        antialias: yes
+#        layer: 1
+#        color: ee9900
 
 slide_player:
     mode_attract_started:
-        type: text
-        text: PRESS START
+      slide: press_start
+    loading_assets:
+      slide: asset_loading
+
+slides:
+  press_start:
+    type: text
+    text: PRESS START
+  asset_loading:
+    - type: text
+      text: "ASSETS REMAINING: %remaining%. PERCENT: %percent%%"
 
 keyboard:
     z:
