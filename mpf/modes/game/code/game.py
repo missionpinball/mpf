@@ -114,7 +114,7 @@ class Game(Mode):
                     switch_name=switch.name,
                     callback=self._midgame_restart_handler,
                     state=1,
-                    ms=Timing.string_to_ms(time))
+                    ms=Util.string_to_ms(time))
             )
         '''
 

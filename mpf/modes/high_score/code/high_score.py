@@ -3,7 +3,6 @@
 from collections import OrderedDict
 from mpf.core.data_manager import DataManager
 from mpf.core.mode import Mode
-from mpf.core.timing import Timing
 
 
 class HighScore(Mode):

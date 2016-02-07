@@ -1,6 +1,5 @@
 from mpf.core.assets import Asset, AssetPool
 from mpf.core.file_manager import FileManager
-from mpf.core.timing import Timing
 from mpf.core.utility_functions import Util
 from mpf.core.rgb_color import RGBColor
 
@@ -125,7 +124,7 @@ class Show(Asset):
                     "Skipping show.", self.file)
                 return False
 
-            step_time = Timing.string_to_secs(steps[step_num]['time'])
+            step_time = Util.string_to_secs(steps[step_num]['time'])
 
             # If the first step in the show is not at the very beginning of the
             # show (time = 0), automatically add a new empty step at time 0
@@ -184,7 +183,7 @@ class Show(Asset):
                     if '-f' in value:
                         composite_value = value.split('-f')
                         value = composite_value[0]
-                        fade = Timing.string_to_ms(composite_value[1])
+                        fade = Util.string_to_ms(composite_value[1])
 
                     brightness = max(min(Util.hex_string_to_int(value), 255),
                                      0)
@@ -328,7 +327,7 @@ class Show(Asset):
                     if '-f' in value:
                         composite_value = value.split('-f')
                         value = composite_value[0]
-                        fade = Timing.string_to_ms(composite_value[1])
+                        fade = Util.string_to_ms(composite_value[1])
 
                     # convert our color of hexes to a list of ints
                     destination_color = RGBColor(RGBColor.string_to_rgb(value))

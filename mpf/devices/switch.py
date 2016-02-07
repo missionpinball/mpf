@@ -1,7 +1,6 @@
 """ Contains the Switch parent class. """
 
 from mpf.core.device import Device
-from mpf.core.timing import Timing
 
 
 class Switch(Device):
@@ -31,14 +30,14 @@ class Switch(Device):
 
         self.invert = 0
 
-        self.recycle_ticks = 0
-        self.recycle_clear_tick = 0
+        self.recycle_secs = 0
+        self.recycle_clear_time = 0
         self.recycle_jitter_count = 0
 
         if self.config['type'].upper() == 'NC':
             self.invert = 1
 
-        self.recycle_ticks = self.config['recycle_time']
+        self.recycle_secs = self.config['recycle_time']
 
         self.last_changed = None
         self.hw_timestamp = None

@@ -1,0 +1,45 @@
+#config_version=3
+
+switches:
+  switch1:
+    number:
+  switch2:
+    number:
+  switch3:
+    number:
+  switch4:
+    number:
+  switch5:
+    number:
+  switch6:
+    number:
+
+coils:
+  coil1:
+    number:
+  coil2:
+    number:
+
+modes:
+  - mode1
+
+drop_targets:
+   left1:
+     switch: switch1
+   left2:
+     switch: switch2
+   left3:
+     switch: switch3
+   left4:
+     switch: switch4
+   left5:
+     switch: switch5
+   left6:
+     switch: switch6
+
+drop_target_banks:
+   left_bank:
+     drop_targets: left1, left2, left3
+     reset_coils: coil1
+     reset_events:
+       drop_targets_left_complete: 1s

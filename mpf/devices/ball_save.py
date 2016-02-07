@@ -2,8 +2,6 @@
 
 from mpf.core.device import Device
 from mpf.core.tasks import DelayManager
-from mpf.core.timing import Timing
-from mpf.core.config import Config
 
 
 class BallSave(Device):

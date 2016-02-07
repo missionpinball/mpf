@@ -7,7 +7,6 @@ import logging
 from collections import defaultdict
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-from mpf.core.timing import Timing
 from mpf.core.utility_functions import Util
 
 
@@ -89,7 +88,7 @@ class SwitchController(object):
                             switch_name=switch.name,
                             callback=self.machine.events.post,
                             state=1,
-                            ms=Timing.string_to_ms(ev_time),
+                            ms=Util.string_to_ms(ev_time),
                             callback_kwargs={'event': ev_name}
                         )
                     else:
@@ -105,7 +104,7 @@ class SwitchController(object):
                             switch_name=switch.name,
                             callback=self.machine.events.post,
                             state=0,
-                            ms=Timing.string_to_ms(ev_time),
+                            ms=Util.string_to_ms(ev_time),
                             callback_kwargs={'event': ev_name}
                         )
                     else:
@@ -344,12 +343,13 @@ class SwitchController(object):
 
         if state:
             # update the switch's next recycle clear time
-            obj.recycle_clear_tick = Timing.tick + obj.recycle_ticks
+            obj.recycle_clear_time = (self.machine.clock.get_time() +
+                                      obj.recycle_secs)
 
         # if the switch is already in this state, then abort
         if self.switches[name]['state'] == state:
 
-            if not obj.recycle_ticks:
+            if not obj.recycle_secs:
                 self.log.info("Received duplicate switch state, which means "
                               "this switch had some non-debounced state changes. This "
                               "could be nothing, but if it happens a lot it could "
@@ -558,7 +558,7 @@ class SwitchController(object):
         # checks to see when a switch is ok to be activated again after it's
         # been last activated
 
-        if Timing.tick >= switch.recycle_clear_tick:
+        if self.machine.clock.get_time() >= switch.recycle_clear_time:
             return True
 
         else:

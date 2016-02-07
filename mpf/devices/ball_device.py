@@ -4,7 +4,7 @@ from collections import deque
 
 from mpf.core.tasks import DelayManager
 from mpf.core.device import Device
-from mpf.core.timing import Timing
+from mpf.core.utility_functions import Util
 
 
 class BallDevice(Device):
@@ -665,7 +665,7 @@ class BallDevice(Device):
 
         for i in range(len(self.config['eject_targets'])):
             self.config['eject_timeouts'][self.config['eject_targets'][i]] = (
-                Timing.string_to_ms(timeouts_list[i]))
+                Util.string_to_ms(timeouts_list[i]))
 
         timeouts_list = self.config['ball_missing_timeouts']
         self.config['ball_missing_timeouts'] = dict()
@@ -673,7 +673,7 @@ class BallDevice(Device):
         for i in range(len(self.config['eject_targets'])):
             self.config['ball_missing_timeouts'][
                 self.config['eject_targets'][i]] = (
-                Timing.string_to_ms(timeouts_list[i]))
+                Util.string_to_ms(timeouts_list[i]))
         # End code to create timeouts list ------------------------------------
 
         # make sure timeouts are reasonable:

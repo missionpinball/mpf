@@ -9,7 +9,6 @@ import ruamel.yaml as yaml
 
 from mpf.file_interfaces.yaml_interface import MpfLoader, YamlInterface
 from mpf.core.file_manager import FileManager
-from mpf.core.timing import Timing
 from mpf.core.utility_functions import Util
 import mpf.core.rgb_color
 from mpf.core.rgb_color import RGBColor
@@ -201,10 +200,10 @@ class Config(object):
                 return str(item).lower() in ('yes', 'true')
 
         elif item_type == 'ms':
-            return Timing.string_to_ms(item)
+            return Util.string_to_ms(item)
 
         elif item_type == 'secs':
-            return Timing.string_to_secs(item)
+            return Util.string_to_secs(item)
 
         elif item_type == 'list_of_lists':
             return Util.list_of_lists(item)
@@ -491,16 +490,10 @@ class Config(object):
                 item = True
 
         elif validator == 'ms':
-            item = Timing.string_to_ms(item)
+            item = Util.string_to_ms(item)
 
         elif validator == 'secs':
-            item = Timing.string_to_secs(item)
-
-        elif validator == 'ticks':
-            item = Timing.string_to_ticks(item)
-
-        elif validator == 'ticks_int':
-            item = int(Timing.string_to_ticks(item))
+            item = Util.string_to_secs(item)
 
         elif validator == 'list':
             item = Util.string_to_list(item)

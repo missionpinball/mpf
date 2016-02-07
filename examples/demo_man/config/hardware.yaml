@@ -5,9 +5,6 @@ machine:
     balls_installed: 6
     min_balls: 1
 
-timing:
-    hz: 30
-
 virtual_platform_start_active_switches:
     s_trough_1
     s_trough_2

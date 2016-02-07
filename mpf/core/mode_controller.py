@@ -135,7 +135,9 @@ class ModeController(object):
 
         # the mode has to have at least one config to exist
         if not found_configuration:
-            raise AssertionError("No configuration found for mode " + mode_string)
+            raise AssertionError("No configuration found for mode '{}'. Is "
+                                 "your mode folder in the 'modes' folder?"
+                                 .format(mode_string))
 
         # validate config
         if not 'mode' in config:

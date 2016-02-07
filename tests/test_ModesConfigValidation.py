@@ -21,14 +21,17 @@ class TestModesConfigValidation(MpfTestCase):
         with self.assertRaises(AssertionError) as context:
             super(TestModesConfigValidation, self).setUp()
 
-        self.assertEqual("No configuration found for mode invalid", str(context.exception))
+        self.assertEqual("No configuration found for mode 'invalid'. Is your "
+                         "mode folder in the 'modes' folder?",
+                         str(context.exception))
 
     def test_broken_mode_config(self):
         self.config = 'test_broken_mode_config.yaml'
         with self.assertRaises(AssertionError) as context:
             super(TestModesConfigValidation, self).setUp()
 
-        self.assertEqual('Your config contains a value for the setting "mode:invalid_key", but this is not a valid '
+        self.assertEqual('Your config contains a value for the setting "'
+                         'mode:invalid_key", but this is not a valid '
                          'setting name.', str(context.exception))
 
     def test_missing_mode_section(self):

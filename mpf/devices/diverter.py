@@ -4,7 +4,6 @@ from collections import deque
 
 from mpf.core.device import Device
 from mpf.core.tasks import DelayManager
-from mpf.core.timing import Timing
 
 
 class Diverter(Device):
@@ -172,7 +171,7 @@ class Diverter(Device):
                 it will disable the diverter immediately.
         """
         if time is not None:
-            delay = Timing.string_to_ms(time)
+            delay = Util.string_to_ms(time)
         elif self.config['activation_time']:
             delay = self.config['activation_time']
         else:

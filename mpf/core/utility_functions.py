@@ -60,7 +60,7 @@ class Util(object):
 
         elif string is None:
             return []  # If it's None, make it into an empty list
-        
+
         elif str(type(string)) == "<class 'ruamel.yaml.comments.CommentedSeq'>":
             return string  #If it's a ruamel CommentedSeq, just pretend its a list
                            #I did it as a str comparison so I didn't have to
@@ -434,3 +434,68 @@ class Util(object):
     @staticmethod
     def is_hex_string(string):
         return Util.hex_matcher.fullmatch(str(string)) is not None
+
+    @staticmethod
+    def string_to_ms(time_string):
+        """Decodes a string of real-world time into an int of milliseconds.
+        Example inputs:
+
+        200ms
+        2s
+        None
+
+        If no "s" or "ms" is provided, this method assumes "milliseconds."
+
+        If time is 'None' or a string of 'None', this method returns 0.
+
+        Returns:
+            Integer. The examples listed above return 200, 2000 and 0,
+            respectively
+        """
+
+        time_string = str(time_string).upper()
+
+        if time_string.endswith('MS') or time_string.endswith('MSEC'):
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(time_string)
+
+        elif 'D' in time_string:
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(float(time_string) * 86400 * 1000)
+
+        elif 'H' in time_string:
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(float(time_string) * 3600 * 1000)
+
+        elif 'M' in time_string:
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(float(time_string) * 60 * 1000)
+
+        elif time_string.endswith('S') or time_string.endswith('SEC'):
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+            return int(float(time_string) * 1000)
+
+        elif not time_string or time_string == 'NONE':
+            return 0
+
+        elif '.' in time_string:
+            time_string = float(''.join(i for i in time_string if not i.isalpha()))
+        else:
+            time_string = ''.join(i for i in time_string if not i.isalpha())
+
+        return int(time_string)
+
+    @staticmethod
+    def string_to_secs(time_string):
+        """Decodes a string of real-world time into an float of seconds.
+
+        See 'string_to_ms' for a description of the time string.
+
+        """
+
+        time_string = str(time_string)
+
+        if not any(c.isalpha() for c in time_string):
+            time_string = ''.join((time_string, 's'))
+
+        return Util.string_to_ms(time_string) / 1000.0

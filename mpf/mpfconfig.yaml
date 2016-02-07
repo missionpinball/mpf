@@ -8,7 +8,6 @@
 mpf:
     core_modules: !!omap
         - config_processor: mpf.core.config.Config
-        - timing: mpf.core.timing.Timing
         - events: mpf.core.events.EventManager
         - mode_controller: mpf.core.mode_controller.ModeController
         - shot_profile_manager: mpf.core.shot_profile_manager.ShotProfileManager

@@ -523,7 +523,7 @@ switches:
     number_str: single|str|
     type: single|str|NO
     debounce: single|bool|True
-    recycle_time: single|ticks|0
+    recycle_time: single|secs|0
     activation_events: list|str|None
     deactivation_events: list|str|None
     tags: list|str|None
@@ -567,9 +567,6 @@ tilt:
     multiple_hit_window: single|ms|300ms
     settle_time: single|ms|5s
     tilt_warnings_player_var: single|str|tilt_warnings
-timing:
-    hz: single|int|30
-    hw_thread_sleep_ms: single|int|1
 transitions:
     push:
         type: single|str|

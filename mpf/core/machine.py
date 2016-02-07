@@ -113,7 +113,6 @@ class MachineController(object):
             platform.initialize()
 
         self.validate_machine_config_section('machine')
-        self.validate_machine_config_section('timing')
         self.validate_machine_config_section('hardware')
         self.validate_machine_config_section('game')
 

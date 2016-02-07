@@ -4,7 +4,6 @@ import copy
 import logging
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-from mpf.core.timing import Timing, Timer
 from mpf.core.tasks import DelayManager
 
 # todo
@@ -550,7 +549,7 @@ class ModeTimer(object):
                 self.end_value = 0  # need it to be 0 not None
 
         if 'tick_interval' in self.config:
-            self.tick_secs = Timing.string_to_secs(self.config[
+            self.tick_secs = Util.string_to_secs(self.config[
                                                        'tick_interval'])
 
         if 'max_value' in self.config:

@@ -5,7 +5,6 @@ import logging
 
 from mpf.core.config import Config
 from mpf.core.tasks import DelayManager
-from mpf.core.timing import Timing
 
 
 class SwitchPlayer(object):
@@ -46,7 +45,7 @@ class SwitchPlayer(object):
                 self.step_list[self.current_step]['time'] > 0):
 
             self.delay.add(name='switch_player_next_step',
-                           ms=Timing.string_to_ms(self.step_list[self.current_step]['time']),
+                           ms=Util.string_to_ms(self.step_list[self.current_step]['time']),
                            callback=self._do_step)
 
     def _do_step(self):
@@ -76,7 +75,7 @@ class SwitchPlayer(object):
 
                 # schedule next step
                 self.delay.add(name='switch_player_next_step',
-                               ms=Timing.string_to_ms(self.step_list[self.current_step]['time']),
+                               ms=Util.string_to_ms(self.step_list[self.current_step]['time']),
                                callback=self._do_step)
 
     def _hit(self, switch):

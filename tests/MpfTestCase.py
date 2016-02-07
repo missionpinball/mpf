@@ -94,16 +94,15 @@ class MpfTestCase(unittest.TestCase):
     def advance_time_and_run(self, delta=1.0):
         self.machine_run()
         end_time = self.machine.clock.get_time() + delta
+
+        # todo do we want to add clock scheduled events here?
+
         while True:
             next_delay_event = self.machine.delayRegistry.get_next_event()
-            next_timer = self.machine.timing.get_next_timer()
             next_switch = self.machine.switch_controller.get_next_timed_switch_event()
             next_show_step = self.machine.show_controller.get_next_show_step()
 
             wait_until = next_delay_event
-
-            if not wait_until or (next_timer and wait_until > next_timer):
-                wait_until = next_timer
 
             if not wait_until or (next_switch and wait_until > next_switch):
                 wait_until = next_switch

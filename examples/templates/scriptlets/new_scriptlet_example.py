@@ -46,10 +46,21 @@ class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever yo
         self.machine.events.add_handler('ball_add_live',
                                         self.my_handler)
 
-        # you can create periodic timers that are called every so often
-        from mpf.core.timing import Timer
-        self.machine.timing.add(Timer(callback=self.my_timer, frequency=10))
-        # (Or save a reference to the timer if you want to remove() it later.)
+        # you can create periodic timers that are called every so often. Note
+        # that a positional argument of the current time will be passed to your
+        # callback.
+
+        # To schedule your callback to be called every 10 secs
+        self.machine.clock.scedule(self.my_timer, 10)
+
+        # To schedule your callback to be called every frame
+        self.machine.clock.scedule(self.my_timer, 10)
+
+        # To schedule your callback to be called once, 2 secs from now
+        self.machine.clock.scedule_once(self.my_timer, 2)
+
+        # To remove a previously scheduled call
+        self.machine.clock.unschedule(self.my_timer)
 
         # you can register a handler for the machine tick which will be called
         # every machine tick!
@@ -63,8 +74,8 @@ class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever yo
         # many methods as you want in your Scriptlet!
         print("A new ball was added")
 
-    def my_timer(self):
-        print("another 10 seconds just passed")
+    def my_timer(self, time):
+        print("I was called")
 
     def tick(self):
         # this will run every single machine tick!!

@@ -1,5 +1,4 @@
 from tests.MpfTestCase import MpfTestCase
-from mpf.core.timing import Timing
 
 
 class TestConfig(MpfTestCase):
@@ -205,26 +204,6 @@ class TestConfig(MpfTestCase):
         results = self.machine.config_processor.validate_config_item2(
             validation_string, 'test_failure_info', '100ms')
         self.assertEqual(results, .1)
-
-        # test ticks conversions
-
-        self.assertEqual(Timing.HZ, 30)
-
-        validation_string = 'single|ticks|'
-        results = self.machine.config_processor.validate_config_item2(
-            validation_string, 'test_failure_info', '1s')
-        self.assertAlmostEqual(results, 30, delta=0.1)
-        self.assertIs(type(results), float)
-
-        # test ticks_int conversions
-
-        self.assertEqual(Timing.HZ, 30)
-
-        validation_string = 'single|ticks_int|'
-        results = self.machine.config_processor.validate_config_item2(
-            validation_string, 'test_failure_info', '1s')
-        self.assertAlmostEqual(results, 30, delta=1)
-        self.assertIs(type(results), int)
 
         # test single list conversions
         # (this just test it gets converted to a list since string_to_list
