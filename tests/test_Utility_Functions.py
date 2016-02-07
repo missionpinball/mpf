@@ -1,5 +1,5 @@
 from tests.MpfTestCase import MpfTestCase
-from mpf.system.utility_functions import Util
+from mpf.core.utility_functions import Util
 
 class TestUtil(MpfTestCase):
 

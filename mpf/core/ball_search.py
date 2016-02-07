@@ -2,7 +2,7 @@
 
 import logging
 
-from mpf.system.tasks import DelayManager
+from mpf.core.tasks import DelayManager
 
 
 class BallSearch(object):
@@ -85,7 +85,7 @@ class BallSearch(object):
         self.log.info("Starting ball search")
         self.machine.events.post('ball_search_started')
         self.run()
-        
+
     def run(self):
         # runs one iteration of the ball search. will schedule itself for the next run
         timeout = self.playfield.config['ball_search_interval']

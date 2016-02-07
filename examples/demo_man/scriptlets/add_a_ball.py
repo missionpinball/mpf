@@ -1,6 +1,6 @@
 """Test scriptlet to add an additional ball into play"""
 
-from mpf.system.scriptlet import Scriptlet
+from mpf.core.scriptlet import Scriptlet
 
 
 class AddABall(Scriptlet):

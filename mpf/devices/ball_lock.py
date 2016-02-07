@@ -1,8 +1,8 @@
 """ Contains the BallLock device class."""
 
 import logging
-from mpf.system.device import Device
-from mpf.system.config import Config
+from mpf.core.device import Device
+from mpf.core.config import Config
 from collections import deque
 
 

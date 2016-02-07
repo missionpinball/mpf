@@ -1,6 +1,6 @@
 import time
 
-from mpf.system.config import Config
+from mpf.core.config import Config
 from tests.MpfTestCase import MpfTestCase
 
 

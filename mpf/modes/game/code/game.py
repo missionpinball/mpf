@@ -8,8 +8,8 @@ Note that in the Mission Pinball Framework, a distinction is made between a
 """
 
 import logging
-from mpf.system.mode import Mode
-from mpf.system.player import Player
+from mpf.core.mode import Mode
+from mpf.core.player import Player
 
 
 class Game(Mode):

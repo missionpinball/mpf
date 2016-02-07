@@ -5,7 +5,7 @@ from collections import deque
 import random
 import uuid
 
-from mpf.system.utility_functions import Util
+from mpf.core.utility_functions import Util
 
 
 class EventManager(object):
@@ -249,7 +249,7 @@ class EventManager(object):
         called.
 
         Events are processed serially (e.g. one at a time), so if the event
-        system is in the process of handling another event, this event is
+        core is in the process of handling another event, this event is
         added to a queue and processed after the current event is done.
 
         You can control the order the handlers will be called by optionally
@@ -280,7 +280,7 @@ class EventManager(object):
         called.
 
         Events are processed serially (e.g. one at a time), so if the event
-        system is in the process of handling another event, this event is
+        core is in the process of handling another event, this event is
         added to a queue and processed after the current event is done.
 
         You can control the order the handlers will be called by optionally
@@ -317,7 +317,7 @@ class EventManager(object):
         called.
 
         Events are processed serially (e.g. one at a time), so if the event
-        system is in the process of handling another event, this event is
+        core is in the process of handling another event, this event is
         added to a queue and processed after the current event is done.
 
         You can control the order the handlers will be called by optionally
@@ -360,7 +360,7 @@ class EventManager(object):
                 certain ones don't need them.)
 
         Events are processed serially (e.g. one at a time), so if the event
-        system is in the process of handling another event, this event is
+        core is in the process of handling another event, this event is
         added to a queue and processed after the current event is done.
 
         You can control the order the handlers will be called by optionally

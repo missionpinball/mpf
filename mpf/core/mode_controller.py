@@ -4,8 +4,8 @@ import logging
 import os
 from collections import namedtuple
 
-from mpf.system.config import Config
-from mpf.system.utility_functions import Util
+from mpf.core.config import Config
+from mpf.core.utility_functions import Util
 
 
 RemoteMethod = namedtuple('RemoteMethod',
@@ -20,7 +20,7 @@ be called on mode_start or mode_stop.
 # it. So this breaks some rules now. Probably should figure out some other way
 # to do this? TODO
 
-from mpf.system.mode import Mode
+from mpf.core.mode import Mode
 
 
 class ModeController(object):
@@ -32,7 +32,7 @@ class ModeController(object):
 
     """
 
-    debug_path = 'system_modules|mode_controller'
+    debug_path = 'core_modules|mode_controller'
 
     def __init__(self, machine):
         self.machine = machine
@@ -244,7 +244,7 @@ class ModeController(object):
 
     def register_load_method(self, load_method, config_section_name=None,
                              priority=0, **kwargs):
-        """Used by system components, plugins, etc. to register themselves with
+        """Used by core components, plugins, etc. to register themselves with
         the Mode Controller for anything they need a mode to do when it's
         registered.
 
@@ -270,7 +270,7 @@ class ModeController(object):
 
     def register_start_method(self, start_method, config_section_name=None,
                               priority=0, **kwargs):
-        """Used by system components, plugins, etc. to register themselves with
+        """Used by core components, plugins, etc. to register themselves with
         the Mode Controller for anything that they a mode to do when it starts.
 
         Args:

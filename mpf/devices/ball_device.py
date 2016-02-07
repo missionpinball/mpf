@@ -2,9 +2,9 @@
 
 from collections import deque
 
-from mpf.system.tasks import DelayManager
-from mpf.system.device import Device
-from mpf.system.timing import Timing
+from mpf.core.tasks import DelayManager
+from mpf.core.device import Device
+from mpf.core.timing import Timing
 
 
 class BallDevice(Device):
@@ -1548,7 +1548,7 @@ class BallDevice(Device):
         called automatically based on ejects timing out or balls falling back
         into devices while they're in the process of ejecting. But you can call
         it manually if you want to if you have some other way of knowing that
-        the eject failed that the system can't figure out on it's own.
+        the eject failed that the core can't figure out on it's own.
 
         Args:
             retry: Boolean as to whether this eject should be retried. If True,

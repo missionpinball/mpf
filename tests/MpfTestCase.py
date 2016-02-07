@@ -1,10 +1,10 @@
 import threading
 import unittest
 
-from mpf.system.config import Config
+from mpf.core.config import Config
 
-from mpf.system.machine import MachineController
-from mpf.system.utility_functions import Util
+from mpf.core.machine import MachineController
+from mpf.core.utility_functions import Util
 import logging
 import sys
 from mock import *

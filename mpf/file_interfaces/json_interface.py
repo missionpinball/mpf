@@ -6,8 +6,8 @@ import version
 
 import json
 
-from mpf.system.file_manager import FileInterface
-from mpf.system.utility_functions import Util
+from mpf.core.file_manager import FileInterface
+from mpf.core.utility_functions import Util
 
 
 class JsonInterface(FileInterface):

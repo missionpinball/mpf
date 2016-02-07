@@ -3,9 +3,9 @@ file."""
 
 import logging
 
-from mpf.system.config import Config
-from mpf.system.tasks import DelayManager
-from mpf.system.timing import Timing
+from mpf.core.config import Config
+from mpf.core.tasks import DelayManager
+from mpf.core.timing import Timing
 
 
 class SwitchPlayer(object):

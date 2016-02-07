@@ -1,9 +1,9 @@
 """ Contains the LED parent classes. """
 
-from mpf.system.device import Device
-from mpf.system.tasks import Task
-from mpf.system.rgb_color import RGBColor
-from mpf.system.rgb_color import RGBColorCorrectionProfile
+from mpf.core.device import Device
+from mpf.core.tasks import Task
+from mpf.core.rgb_color import RGBColor
+from mpf.core.rgb_color import RGBColorCorrectionProfile
 
 
 class LED(Device):

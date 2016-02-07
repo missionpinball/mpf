@@ -9,7 +9,7 @@
 # "mode:" section of your mode's <mode_name>.yaml configuration file.
 
 
-from mpf.system.mode import Mode
+from mpf.core.mode import Mode
 
 
 class YourMode(Mode):

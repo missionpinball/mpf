@@ -1,8 +1,8 @@
 import random
 import re
 
-from mpf.system.case_insensitive_dict import CaseInsensitiveDict
-from mpf.system.utility_functions import Util
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.utility_functions import Util
 
 channel_min_val = 0
 channel_max_val = 255

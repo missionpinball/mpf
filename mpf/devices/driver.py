@@ -1,6 +1,6 @@
 """ Contains the Driver parent class. """
 
-from mpf.system.device import Device
+from mpf.core.device import Device
 
 
 class Driver(Device):

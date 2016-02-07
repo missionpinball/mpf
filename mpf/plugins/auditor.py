@@ -2,8 +2,8 @@
 etc."""
 
 import logging
-from mpf.system.config import Config
-from mpf.system.data_manager import DataManager
+from mpf.core.config import Config
+from mpf.core.data_manager import DataManager
 from mpf.devices.shot import Shot
 
 
@@ -29,7 +29,7 @@ class Auditor(object):
         self.switchnames_to_audit = set()
 
         self.enabled = False
-        """Attribute that's viewed by other system components to let them know
+        """Attribute that's viewed by other core components to let them know
         they should send auditing events. Set this via the enable() and
         disable() methods.
         """

@@ -1,7 +1,7 @@
 """ Transfer a ball between two playfields. E.g. lower to upper playfield via a
 ramp"""
 
-from mpf.system.device import Device
+from mpf.core.device import Device
 
 
 class PlayfieldTransfer(Device):

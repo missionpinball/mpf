@@ -8,8 +8,8 @@ import time
 import datetime
 import re
 
-from mpf.system.config import Config
-from mpf.system.file_manager import FileManager
+from mpf.core.config import Config
+from mpf.core.file_manager import FileManager
 
 EXTENSION = '.yaml'
 CONFIG_VERSION_FILE = 'config_versions.yaml'

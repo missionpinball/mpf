@@ -2,7 +2,7 @@
 
 # Search this file for 'YourNewDevice' and replace with your device name
 
-from mpf.system.device import Device
+from mpf.core.device import Device
 
 
 class YourNewDevice(Device):
@@ -41,7 +41,7 @@ class YourNewDevice(Device):
     def device_class_init(cls, machine):
         """This @classmethod is optional, but is called automatically before
         individual devices based on this device class are created. You can use
-        it for any system-wide settings, configurations, or objects that you
+        it for any core-wide settings, configurations, or objects that you
         might need for these types of devices outside of the individual devices
         themselves.
 

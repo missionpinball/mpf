@@ -9,7 +9,7 @@ import socket
 import threading
 import locale
 
-from mpf.system.config import Config
+from mpf.core.config import Config
 
 global import_success
 

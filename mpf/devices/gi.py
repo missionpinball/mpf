@@ -1,6 +1,6 @@
 """ Contains the GI (General Illumination) parent classes. """
 
-from mpf.system.device import Device
+from mpf.core.device import Device
 
 
 class GI(Device):

@@ -4,8 +4,8 @@ a pinball machine."""
 import logging
 
 from mpf.devices.ball_device import BallDevice
-from mpf.system.ball_search import BallSearch
-from mpf.system.tasks import DelayManager
+from mpf.core.ball_search import BallSearch
+from mpf.core.tasks import DelayManager
 
 
 class Playfield(BallDevice):

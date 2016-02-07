@@ -4,7 +4,7 @@ Clock tests
 '''
 
 import unittest
-from mpf.system.clock import ClockBase
+from mpf.core.clock import ClockBase
 from functools import partial
 
 counter = 0

@@ -1,6 +1,6 @@
 import unittest
 
-from mpf.system.machine import MachineController
+from mpf.core.machine import MachineController
 from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
 import time
@@ -110,7 +110,7 @@ class TestBallLock(MpfTestCase):
         coil2.pulse = MagicMock()
         coil3.pulse = MagicMock()
 
-        # ball enters lock 
+        # ball enters lock
         self.machine.switch_controller.process_switch("s_ball_switch_lock1", 1)
         self.advance_time_and_run(1)
         self.assertEqual(1, lock.balls)
@@ -366,7 +366,7 @@ class TestBallLock(MpfTestCase):
         coil2.pulse = MagicMock()
         coil3.pulse = MagicMock()
 
-        # ball directly enters the lock 
+        # ball directly enters the lock
         self.machine.switch_controller.process_switch("s_ball_switch_lock1", 1)
         self.advance_time_and_run(1)
         self.assertEqual(1, lock.balls)
@@ -498,7 +498,7 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(10)
 
         # theoretically it would eject another ball but there is no ball in the trough
-        self.assertEqual(1, len(launcher.ball_requests)) 
+        self.assertEqual(1, len(launcher.ball_requests))
 
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 

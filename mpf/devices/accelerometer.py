@@ -3,7 +3,7 @@
 
 import time
 import math
-from mpf.system.device import Device
+from mpf.core.device import Device
 
 
 class Accelerometer(Device):

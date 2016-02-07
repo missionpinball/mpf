@@ -19,8 +19,8 @@ from ruamel.yaml.constructor import Constructor, RoundTripConstructor
 from ruamel.yaml.compat import to_str
 from ruamel.yaml.dumper import RoundTripDumper
 
-from mpf.system.file_manager import FileInterface, FileManager
-from mpf.system.utility_functions import Util
+from mpf.core.file_manager import FileInterface, FileManager
+from mpf.core.utility_functions import Util
 import version
 
 log = logging.getLogger('YAML Interface')
@@ -309,7 +309,7 @@ class YamlInterface(FileInterface):
     def save(self, filename, data):
         with open(filename, 'w') as output_file:
             output_file.write(yaml.dump(data, default_flow_style=False))
-            
+
     @staticmethod
     def save_to_str(data):
         return yaml.dump(data, Dumper=RoundTripDumper, default_flow_style=False, indent=4, width=10)

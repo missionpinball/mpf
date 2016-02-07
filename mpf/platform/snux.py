@@ -5,7 +5,7 @@ Mark Sunnucks's System 11 interface board.
 """
 
 import logging
-from mpf.system.tasks import DelayManager
+from mpf.core.tasks import DelayManager
 
 
 class Snux(object):
@@ -75,7 +75,7 @@ class Snux(object):
         self.platform.write_hw_rule = self.write_hw_rule
 
     def initialize(self):
-        """Automatically called by the Platform class after all the system
+        """Automatically called by the Platform class after all the core
         modules are loaded.
 
         """
@@ -180,7 +180,7 @@ class Snux(object):
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
                       disable_on_release, drive_now,
                       **driver_settings_overrides):
-        """On system 11 machines, Switched drivers cannot be configured with
+        """On core 11 machines, Switched drivers cannot be configured with
         autofire hardware rules.
 
         """

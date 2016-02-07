@@ -4,9 +4,9 @@ pinball machine."""
 import logging
 from queue import Queue
 
-from mpf.system.case_insensitive_dict import CaseInsensitiveDict
-from mpf.system.rgb_color import RGBColor
-from mpf.system.utility_functions import Util
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.rgb_color import RGBColor
+from mpf.core.utility_functions import Util
 from mpf.assets.show import Show
 
 

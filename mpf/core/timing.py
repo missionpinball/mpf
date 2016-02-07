@@ -6,7 +6,7 @@ import logging
 class Timing(object):
     """System timing object.
 
-    This object manages timing for the whole system.  Only one of these
+    This object manages timing for the whole core.  Only one of these
     objects should exist.  By convention it is called 'timing'.
 
     The timing keeps the current time in 'time' and a set of Timer
@@ -38,7 +38,7 @@ class Timing(object):
         except KeyError:
             Timing.HZ = 30
 
-        self.log.debug("Configuring system Timing for %sHz", Timing.HZ)
+        self.log.debug("Configuring core Timing for %sHz", Timing.HZ)
         Timing.secs_per_tick = 1 / float(Timing.HZ)
         Timing.ms_per_tick = 1000 * Timing.secs_per_tick
 

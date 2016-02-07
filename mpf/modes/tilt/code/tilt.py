@@ -1,7 +1,7 @@
 """Contains the Tilt mode code"""
 
-from mpf.system.case_insensitive_dict import CaseInsensitiveDict
-from mpf.system.mode import Mode
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.mode import Mode
 
 
 class Tilt(Mode):

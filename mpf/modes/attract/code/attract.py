@@ -1,7 +1,7 @@
 """Contains the Attract class which is the attract mode in a pinball machine.
 """
 
-from mpf.system.mode import Mode
+from mpf.core.mode import Mode
 
 
 class Attract(Mode):

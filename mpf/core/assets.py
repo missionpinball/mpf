@@ -10,8 +10,8 @@ from collections import deque
 from queue import PriorityQueue, Queue, Empty
 
 
-from mpf.system.case_insensitive_dict import CaseInsensitiveDict
-from mpf.system.utility_functions import Util
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.utility_functions import Util
 
 
 class AssetManager(object):
@@ -322,7 +322,7 @@ class AssetManager(object):
                 is not needed for all assets, as any asset file found not in
                 the config dictionary will be set up with the folder it was
                 found in's asset_defaults settings.)
-            path: A full system path to the root folder that will be searched
+            path: A full core path to the root folder that will be searched
                 for assets. This should *not* include the asset-specific path
                 string. If None, machine's root folder will be searched.
 

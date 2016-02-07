@@ -2,9 +2,9 @@
 
 from collections import deque
 
-from mpf.system.device import Device
-from mpf.system.tasks import DelayManager
-from mpf.system.timing import Timing
+from mpf.core.device import Device
+from mpf.core.tasks import DelayManager
+from mpf.core.timing import Timing
 
 
 class Diverter(Device):

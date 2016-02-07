@@ -1,6 +1,6 @@
 """ Contains the Flasher parent class. """
 
-from mpf.system.device import Device
+from mpf.core.device import Device
 
 
 class Flasher(Device):
@@ -31,7 +31,7 @@ class Flasher(Device):
         Args:
             milliseconds: Int of how long you want the flash to be, in ms.
                 Default is None which causes the flasher to flash for whatever
-                its default config is, either its own flash_ms or the system-
+                its default config is, either its own flash_ms or the core-
                 wide default_flash_ms settings. (Current default is 50ms.)
 
         """

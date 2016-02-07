@@ -1,7 +1,7 @@
 """ Contains the MatrixLight parent classes. """
 
-from mpf.system.device import Device
-from mpf.system.tasks import Task
+from mpf.core.device import Device
+from mpf.core.tasks import Task
 
 
 class MatrixLight(Device):

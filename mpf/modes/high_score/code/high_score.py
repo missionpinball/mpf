@@ -1,9 +1,9 @@
 """Contains the High Score mode code"""
 
 from collections import OrderedDict
-from mpf.system.data_manager import DataManager
-from mpf.system.mode import Mode
-from mpf.system.timing import Timing
+from mpf.core.data_manager import DataManager
+from mpf.core.mode import Mode
+from mpf.core.timing import Timing
 
 
 class HighScore(Mode):

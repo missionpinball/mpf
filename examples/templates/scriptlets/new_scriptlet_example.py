@@ -1,6 +1,6 @@
 """Example Scriptlet which shows different things you can do."""
 
-from mpf.system.scriptlet import Scriptlet  # This import is required
+from mpf.core.scriptlet import Scriptlet  # This import is required
 
 
 class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever you want!
@@ -42,12 +42,12 @@ class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever yo
         # you can post events which other modules can pick up:
         self.machine.events.post('whatever_event_you_want')
 
-        # you can register handlers to act on system events
+        # you can register handlers to act on core events
         self.machine.events.add_handler('ball_add_live',
                                         self.my_handler)
 
         # you can create periodic timers that are called every so often
-        from mpf.system.timing import Timer
+        from mpf.core.timing import Timer
         self.machine.timing.add(Timer(callback=self.my_timer, frequency=10))
         # (Or save a reference to the timer if you want to remove() it later.)
 

@@ -6,8 +6,8 @@ import sys
 import threading
 import traceback
 from queue import Queue
-from mpf.system.config import Config
-from mpf.system.platform import Platform
+from mpf.core.config import Config
+from mpf.core.platform import Platform
 
 
 class HardwarePlatform(Platform):

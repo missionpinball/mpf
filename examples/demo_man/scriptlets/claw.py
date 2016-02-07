@@ -1,6 +1,6 @@
 # Claw controller Scriptlet for Demo Man
 
-from mpf.system.scriptlet import Scriptlet
+from mpf.core.scriptlet import Scriptlet
 
 
 class Claw(Scriptlet):

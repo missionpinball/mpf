@@ -5,4 +5,4 @@ import os
 import sys
 import version
 
-from mpf.system.utility_functions import Util
+from mpf.core.utility_functions import Util

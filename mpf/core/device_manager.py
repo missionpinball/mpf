@@ -4,8 +4,8 @@ import logging
 from collections import OrderedDict
 
 from mpf.devices import *
-from mpf.system.case_insensitive_dict import CaseInsensitiveDict
-from mpf.system.file_manager import FileManager
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.file_manager import FileManager
 
 
 class DeviceManager(object):

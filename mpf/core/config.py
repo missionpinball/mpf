@@ -8,14 +8,14 @@ from copy import deepcopy
 import ruamel.yaml as yaml
 
 from mpf.file_interfaces.yaml_interface import MpfLoader, YamlInterface
-from mpf.system.file_manager import FileManager
-from mpf.system.timing import Timing
-from mpf.system.utility_functions import Util
-import mpf.system.rgb_color
-from mpf.system.rgb_color import RGBColor
+from mpf.core.file_manager import FileManager
+from mpf.core.timing import Timing
+from mpf.core.utility_functions import Util
+import mpf.core.rgb_color
+from mpf.core.rgb_color import RGBColor
 import version
 
-from mpf.system.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 
 log = logging.getLogger('ConfigProcessor')
 
@@ -568,8 +568,8 @@ class Config(object):
 
         color_string = str(color_string).lower()
 
-        if color_string in mpf.system.rgb_color.named_rgb_colors:
-            return mpf.system.rgb_color.named_rgb_colors[color_string]
+        if color_string in mpf.core.rgb_color.named_rgb_colors:
+            return mpf.core.rgb_color.named_rgb_colors[color_string]
         elif Util.is_hex_string(color_string):
             return RGBColor.hex_to_rgb(color_string)
 

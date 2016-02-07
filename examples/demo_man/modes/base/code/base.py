@@ -1,4 +1,4 @@
-from mpf.system.mode import Mode
+from mpf.core.mode import Mode
 
 
 class Base(Mode):

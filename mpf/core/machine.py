@@ -9,13 +9,13 @@ import threading
 
 import errno
 
-from mpf.system.clock import ClockBase
-from mpf.system.config import Config
-from mpf.system.case_insensitive_dict import CaseInsensitiveDict
-from mpf.system.device_manager import DeviceCollection
-from mpf.system.tasks import DelayManager, DelayManagerRegistry
-from mpf.system.data_manager import DataManager
-from mpf.system.utility_functions import Util
+from mpf.core.clock import ClockBase
+from mpf.core.config import Config
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.device_manager import DeviceCollection
+from mpf.core.tasks import DelayManager, DelayManagerRegistry
+from mpf.core.data_manager import DataManager
+from mpf.core.utility_functions import Util
 import version
 
 
@@ -104,10 +104,10 @@ class MachineController(object):
 
         self.create_machine_var('credits_string', credit_string, silent=True)
 
-        self._load_system_modules()
+        self._load_core_modules()
 
         # This is called so hw platforms have a change to register for events,
-        # and/or anything else they need to do with system modules since
+        # and/or anything else they need to do with core modules since
         # they're not set up yet when the hw platforms are constructed.
         for platform in list(self.hardware_platforms.values()):
             platform.initialize()
@@ -302,7 +302,7 @@ class MachineController(object):
         """Dumps information about the Python installation to the log.
 
         Information includes Python version, Python executable, platform, and
-        system architecture.
+        core architecture.
 
         """
         python_version = sys.version_info
@@ -319,10 +319,10 @@ class MachineController(object):
         self.log.debug("Python executable location: %s", sys.executable)
         self.log.debug("32-bit Python? %s", sys.maxsize < 2**32)
 
-    def _load_system_modules(self):
-        self.log.info("Loading system modules...")
-        for name, module in self.config['mpf']['system_modules'].items():
-            self.log.debug("Loading '%s' system module", module)
+    def _load_core_modules(self):
+        self.log.info("Loading core modules...")
+        for name, module in self.config['mpf']['core_modules'].items():
+            self.log.debug("Loading '%s' core module", module)
             m = self.string_to_class(module)(self)
             setattr(self, name, m)
 
@@ -423,7 +423,7 @@ class MachineController(object):
                            " a currently active platform", name)
 
     def string_to_class(self, class_string):
-        """Converts a string like mpf.system.events.EventManager into a python
+        """Converts a string like mpf.core.events.EventManager into a python
         class.
 
         Args:

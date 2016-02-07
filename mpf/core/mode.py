@@ -3,14 +3,14 @@
 import copy
 import logging
 
-from mpf.system.case_insensitive_dict import CaseInsensitiveDict
-from mpf.system.timing import Timing, Timer
-from mpf.system.tasks import DelayManager
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.timing import Timing, Timer
+from mpf.core.tasks import DelayManager
 
 # todo
 # override player var
 # override event strings
-from mpf.system.utility_functions import Util
+from mpf.core.utility_functions import Util
 
 
 class Mode(object):
@@ -793,7 +793,7 @@ class ModeTimer(object):
             self.start()
 
     def _timer_tick(self, dt):
-        # Automatically called by the system clock each tick
+        # Automatically called by the core clock each tick
 
         if self.debug:
             self.log.debug("Timer Tick")

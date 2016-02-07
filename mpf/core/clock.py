@@ -180,7 +180,7 @@ been made for use in MPF:
 from sys import platform
 from functools import partial
 
-from mpf.system.weakmethod import WeakMethod
+from mpf.core.weakmethod import WeakMethod
 from queue import PriorityQueue, Empty
 import itertools
 import time

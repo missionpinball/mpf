@@ -2,8 +2,8 @@
 
 from collections import deque
 
-from mpf.system.device import Device
-from mpf.system.utility_functions import Util
+from mpf.core.device import Device
+from mpf.core.utility_functions import Util
 
 
 class ShotGroup(Device):

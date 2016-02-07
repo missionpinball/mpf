@@ -2,7 +2,7 @@
 """
 
 import logging
-from mpf.system.platform import Platform
+from mpf.core.platform import Platform
 import time
 
 

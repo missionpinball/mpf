@@ -6,9 +6,9 @@ states and posting events to the framework.
 import logging
 from collections import defaultdict
 
-from mpf.system.case_insensitive_dict import CaseInsensitiveDict
-from mpf.system.timing import Timing
-from mpf.system.utility_functions import Util
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.timing import Timing
+from mpf.core.utility_functions import Util
 
 
 class SwitchController(object):
@@ -16,7 +16,7 @@ class SwitchController(object):
     all switch activity in the machine and converting them into events.
 
     More info:
-    http://missionpinball.com/docs/system-components/switch-controller/
+    http://missionpinball.com/docs/core-components/switch-controller/
 
     """
 

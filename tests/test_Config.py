@@ -1,5 +1,5 @@
 from tests.MpfTestCase import MpfTestCase
-from mpf.system.timing import Timing
+from mpf.core.timing import Timing
 
 
 class TestConfig(MpfTestCase):

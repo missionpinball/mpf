@@ -10,8 +10,8 @@ name of your own platform.
 """
 
 import logging
-from mpf.system.platform import Platform
-from mpf.system.utility_functions import Util
+from mpf.core.platform import Platform
+from mpf.core.utility_functions import Util
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platform.interfaces.gi_platform_interface import GIPlatformInterface

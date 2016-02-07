@@ -1,5 +1,5 @@
 from tests.MpfTestCase import MpfTestCase
-from mpf.system.rgb_color import RGBColor, RGBColorCorrectionProfile
+from mpf.core.rgb_color import RGBColor, RGBColorCorrectionProfile
 
 
 class TestRGBColor(MpfTestCase):

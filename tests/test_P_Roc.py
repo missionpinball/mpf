@@ -1,6 +1,6 @@
 import unittest
 
-from mpf.system.machine import MachineController
+from mpf.core.machine import MachineController
 from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock, call
 from mpf.platform import p_roc

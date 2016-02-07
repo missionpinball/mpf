@@ -1,6 +1,6 @@
 from mock import MagicMock
 from mpf.devices.switch import Switch
-from mpf.system.device_manager import DeviceCollection
+from mpf.core.device_manager import DeviceCollection
 
 from tests.MpfTestCase import MpfTestCase
 

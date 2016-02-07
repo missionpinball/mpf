@@ -10,10 +10,10 @@ import urllib.parse
 from queue import Queue
 import copy
 
-from mpf.system.player import Player
-from mpf.system.utility_functions import Util
+from mpf.core.player import Player
+from mpf.core.utility_functions import Util
 from mpf.devices.shot import Shot
-from mpf.system.show_controller import ExternalShow
+from mpf.core.show_controller import ExternalShow
 import version
 
 
@@ -771,7 +771,7 @@ class BCP(object):
                              'track "%s"', track)
 
     def enable_volume_keys(self, up_tag='volume_up', down_tag='volume_down'):
-        """Enables switch handlers to change the master system volume based on
+        """Enables switch handlers to change the master core volume based on
         switch tags.
 
         Args:
@@ -797,7 +797,7 @@ class BCP(object):
 
     def disable_volume_keys(self, up_tag='volume_up', down_tag='volume_down'):
         """Disables switch handlers so that the switches no longer affect the
-        master system volume.
+        master core volume.
 
         Args:
             up_tag: String of a switch tag name of the switches that will no

@@ -1,6 +1,6 @@
 """ Contains the base class for autofire coil devices."""
 
-from mpf.system.device import Device
+from mpf.core.device import Device
 
 
 class AutofireCoil(Device):

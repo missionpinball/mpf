@@ -16,8 +16,8 @@ import argparse
 import errno
 import version
 
-from mpf.system.machine import MachineController
-from mpf.system.utility_functions import Util
+from mpf.core.machine import MachineController
+from mpf.core.utility_functions import Util
 
 parser = argparse.ArgumentParser(description='Starts the MPF core engine')
 

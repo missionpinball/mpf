@@ -7,7 +7,7 @@ import errno
 import _thread
 import time
 
-from mpf.system.file_manager import FileManager
+from mpf.core.file_manager import FileManager
 
 
 class DataManager(object):

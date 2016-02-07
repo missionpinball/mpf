@@ -6,20 +6,20 @@
 # config files there to override these defaults.
 
 mpf:
-    system_modules: !!omap
-        - config_processor: mpf.system.config.Config
-        - timing: mpf.system.timing.Timing
-        - events: mpf.system.events.EventManager
-        - mode_controller: mpf.system.mode_controller.ModeController
-        - shot_profile_manager: mpf.system.shot_profile_manager.ShotProfileManager
-        - device_manager: mpf.system.device_manager.DeviceManager
-        - switch_controller: mpf.system.switch_controller.SwitchController
-        - ball_controller: mpf.system.ball_controller.BallController
-        - asset_manager: mpf.system.assets.AssetManager
-        - show_controller: mpf.system.show_controller.ShowController
-        - bcp: mpf.system.bcp.BCP
-        - logic_blocks: mpf.system.logic_blocks.LogicBlocks
-        - scoring: mpf.system.scoring.ScoreController
+    core_modules: !!omap
+        - config_processor: mpf.core.config.Config
+        - timing: mpf.core.timing.Timing
+        - events: mpf.core.events.EventManager
+        - mode_controller: mpf.core.mode_controller.ModeController
+        - shot_profile_manager: mpf.core.shot_profile_manager.ShotProfileManager
+        - device_manager: mpf.core.device_manager.DeviceManager
+        - switch_controller: mpf.core.switch_controller.SwitchController
+        - ball_controller: mpf.core.ball_controller.BallController
+        - asset_manager: mpf.core.assets.AssetManager
+        - show_controller: mpf.core.show_controller.ShowController
+        - bcp: mpf.core.bcp.BCP
+        - logic_blocks: mpf.core.logic_blocks.LogicBlocks
+        - scoring: mpf.core.scoring.ScoreController
 
     platform_overlays:
         - snux: mpf.platform.snux.Snux
@@ -329,7 +329,7 @@ playfields:
 
 debug_profiles:
     verbose:
-        system_modules:
+        core_modules:
             events
             mode_controller
         device_collections:

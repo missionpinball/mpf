@@ -17,11 +17,11 @@ import time
 import math
 from copy import deepcopy
 
-from mpf.system.utility_functions import Util
+from mpf.core.utility_functions import Util
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
-from mpf.system.rgb_color import RGBColor
+from mpf.core.rgb_color import RGBColor
 
 try:
     import pinproc
@@ -29,8 +29,8 @@ try:
 except:
     pinproc_imported = False
 
-from mpf.system.platform import Platform
-from mpf.system.config import Config
+from mpf.core.platform import Platform
+from mpf.core.config import Config
 
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00

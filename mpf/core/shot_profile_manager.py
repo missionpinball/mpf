@@ -3,7 +3,7 @@
 import logging
 from collections import deque
 
-from mpf.system.config import Config
+from mpf.core.config import Config
 
 
 class ShotProfileManager(object):
@@ -186,7 +186,7 @@ class ShotProfileManager(object):
                 if self.debug:
                     self.log.debug("Found enable_events, enable entry will be"
                                    " False")
-                
+
                 enable = False
 
             if self.debug:

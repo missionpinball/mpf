@@ -1,7 +1,7 @@
 """Template file you can customize to build your own machine-specific Scriptlets.
 """
 
-from mpf.system.scriptlet import Scriptlet
+from mpf.core.scriptlet import Scriptlet
 
 
 class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever you want!

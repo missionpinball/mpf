@@ -2,9 +2,9 @@
 
 import logging
 
-from mpf.system.tasks import DelayManager
-from mpf.system.config import Config
-from mpf.system.utility_functions import Util
+from mpf.core.tasks import DelayManager
+from mpf.core.config import Config
+from mpf.core.utility_functions import Util
 
 
 class LogicBlocks(object):

@@ -1,7 +1,7 @@
 """ Contains the Switch parent class. """
 
-from mpf.system.device import Device
-from mpf.system.timing import Timing
+from mpf.core.device import Device
+from mpf.core.timing import Timing
 
 
 class Switch(Device):

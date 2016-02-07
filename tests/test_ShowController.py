@@ -2,7 +2,7 @@ import time
 
 from mock import MagicMock
 
-from mpf.system.rgb_color import RGBColor
+from mpf.core.rgb_color import RGBColor
 from tests.MpfTestCase import MpfTestCase
 
 

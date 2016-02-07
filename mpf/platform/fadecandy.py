@@ -4,8 +4,8 @@ import logging
 import json
 import struct
 
-from mpf.system.utility_functions import Util
-from mpf.system.config import Config
+from mpf.core.utility_functions import Util
+from mpf.core.config import Config
 from mpf.platform.openpixel import OpenPixelClient
 from mpf.platform.openpixel import HardwarePlatform as OPHardwarePlatform
 

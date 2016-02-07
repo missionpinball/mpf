@@ -11,9 +11,9 @@ import threading
 import sys
 import traceback
 
-from mpf.system.platform import Platform
+from mpf.core.platform import Platform
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
-from mpf.system.rgb_color import RGBColor
+from mpf.core.rgb_color import RGBColor
 
 
 class HardwarePlatform(Platform):

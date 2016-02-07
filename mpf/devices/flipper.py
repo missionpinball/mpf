@@ -1,6 +1,6 @@
 """ Contains the base class for flippers."""
 
-from mpf.system.device import Device
+from mpf.core.device import Device
 
 
 class Flipper(Device):
@@ -19,7 +19,7 @@ class Flipper(Device):
         name: A string of the name you'll refer to this flipper object as.
         config: A dictionary that holds the configuration values which specify
             how this flipper should be configured. If this is None, it will use
-            the system config settings that were read in from the config files
+            the core config settings that were read in from the config files
             when the machine was reset.
         collection: A reference to the collection list this device will be added
         to.

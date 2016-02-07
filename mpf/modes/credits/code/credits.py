@@ -1,9 +1,9 @@
 """Contains the Credit (coin play) mode code"""
 
 from math import floor
-from mpf.system.data_manager import DataManager
+from mpf.core.data_manager import DataManager
 
-from mpf.system.mode import Mode
+from mpf.core.mode import Mode
 
 
 class Credits(Mode):

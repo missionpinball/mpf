@@ -1,8 +1,8 @@
-from mpf.system.assets import Asset, AssetPool
-from mpf.system.file_manager import FileManager
-from mpf.system.timing import Timing
-from mpf.system.utility_functions import Util
-from mpf.system.rgb_color import RGBColor
+from mpf.core.assets import Asset, AssetPool
+from mpf.core.file_manager import FileManager
+from mpf.core.timing import Timing
+from mpf.core.utility_functions import Util
+from mpf.core.rgb_color import RGBColor
 
 class ShowPool(AssetPool):
     def __repr__(self):
