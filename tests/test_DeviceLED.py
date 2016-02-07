@@ -77,7 +77,7 @@ class TestDeviceLED(MpfTestCase):
         self.assertEqual(self.machine.clock.get_time() + 1, self.machine.leds.led_01.state['destination_time'])
         self.assertEqual(RGBColor('Black'), self.machine.leds.led_01.hw_driver.current_color)
         self.assertEqual(0, self.machine.leds.led_01.state['priority'])
-        self.assertIsNotNone(self.machine.leds.led_01.fade_task)
+        self.assertTrue(self.machine.leds.led_01.fade_in_progress)
         self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['color'])
         self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['destination_color'])
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.cache['start_color'])
@@ -143,7 +143,7 @@ class TestDeviceLED(MpfTestCase):
         self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['destination_color'])
         self.assertEqual(RGBColor('White'), self.machine.leds.led_01.hw_driver.current_color)
         self.machine_run()
-        self.assertIsNone(self.machine.leds.led_01.fade_task)
+        self.assertFalse(self.machine.leds.led_01.fade_in_progress)
 
         # Check cache (should have been updated)
         self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['color'])
@@ -190,7 +190,7 @@ class TestDeviceLED(MpfTestCase):
         self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['start_color'])
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['destination_color'])
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.hw_driver.current_color)
-        self.assertIsNone(self.machine.leds.led_01.fade_task)
+        self.assertFalse(self.machine.leds.led_01.fade_in_progress)
 
         # Check cache (should have been updated)
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.cache['color'])

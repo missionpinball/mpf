@@ -1,7 +1,6 @@
 """ Contains the MatrixLight parent classes. """
 
 from mpf.core.device import Device
-from mpf.core.tasks import Task
 
 
 class MatrixLight(Device):
@@ -50,7 +49,6 @@ class MatrixLight(Device):
             'start_time': 0.0
         }
 
-        self.fade_task = None
         self.fade_in_progress = False
 
         # set up the X, Y coordinates
@@ -186,15 +184,14 @@ class MatrixLight(Device):
         Returns: None
         """
         self.fade_in_progress = True
+        self.machine.clock.unschedule(self._fade_task)
 
-        if not self.fade_task:
-            if self.debug:
-                print("setting up fade task")
-            self.fade_task = Task.create(self.machine, self._fade_task)
-        elif self.debug:
-                print("already have a fade task")
+        if self.debug:
+            print("setting up fade task")
 
-    def _fade_task(self):
+        self.machine.clock.schedule_interval(self._fade_task, 0)
+
+    def _fade_task(self, dt):
         """
         Task that performs a fade from the current brightness to the target brightness
         over the specified fade time.
@@ -217,8 +214,7 @@ class MatrixLight(Device):
             self.fade_in_progress = False
             set_cache = True
             new_brightness = state['destination_brightness']
-            self.fade_task.stop()
-            self.fade_task = None
+            self.machine.clock.unschedule(self._fade_task)
         else:
             set_cache = False
             new_brightness = state['start_brightness'] + int((state['destination_brightness'] -
@@ -227,7 +223,8 @@ class MatrixLight(Device):
         if self.debug:
             print("new brightness", new_brightness)
 
-        self.on(brightness=new_brightness, fade_ms=0, priority=state['priority'], cache=set_cache)
+        self.on(brightness=new_brightness, fade_ms=0,
+                priority=state['priority'], cache=set_cache)
 
         if self.debug:
             print("fade_in_progress just ended")
@@ -235,7 +232,6 @@ class MatrixLight(Device):
 
     def _kill_fade(self):
         self.fade_in_progress = False
-        self.fade_task.stop()
-        self.fade_task = None
+        self.machine.clock.unschedule(self._fade_task)
         self.on(brightness=self.state['destination_brightness'],
                 fade_ms=0, priority=self.state['priority'], cache=True)

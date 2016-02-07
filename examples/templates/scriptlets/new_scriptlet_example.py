@@ -51,10 +51,10 @@ class YourScriptletName(Scriptlet):  # Change `YourScriptletName` to whatever yo
         # callback.
 
         # To schedule your callback to be called every 10 secs
-        self.machine.clock.scedule(self.my_timer, 10)
+        self.machine.clock.schedule_interval(self.my_timer, 10)
 
         # To schedule your callback to be called every frame
-        self.machine.clock.scedule(self.my_timer, 10)
+        self.machine.clock.schedule_interval(self.my_timer, 10)
 
         # To schedule your callback to be called once, 2 secs from now
         self.machine.clock.scedule_once(self.my_timer, 2)

@@ -68,7 +68,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertEqual(self.machine.clock.get_time() + 1, self.machine.lights.light_01.state['destination_time'])
         self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertEqual(0, self.machine.lights.light_01.state['priority'])
-        self.assertIsNotNone(self.machine.lights.light_01.fade_task)
+        self.assertTrue(self.machine.lights.light_01.fade_in_progress)
         self.assertEqual(255, self.machine.lights.light_01.cache['brightness'])
         self.assertEqual(255, self.machine.lights.light_01.cache['destination_brightness'])
         self.assertEqual(0, self.machine.lights.light_01.cache['start_brightness'])
@@ -134,7 +134,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertEqual(255, self.machine.lights.light_01.state['destination_brightness'])
         self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
         self.machine_run()
-        self.assertIsNone(self.machine.lights.light_01.fade_task)
+        self.assertFalse(self.machine.lights.light_01.fade_in_progress)
 
         # Check cache (should have been updated)
         self.assertEqual(255, self.machine.lights.light_01.cache['brightness'])
@@ -181,7 +181,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertEqual(255, self.machine.lights.light_01.state['start_brightness'])
         self.assertEqual(0, self.machine.lights.light_01.state['destination_brightness'])
         self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
-        self.assertIsNone(self.machine.lights.light_01.fade_task)
+        self.assertFalse(self.machine.lights.light_01.fade_in_progress)
 
         # Check cache (should have been updated)
         self.assertEqual(0, self.machine.lights.light_01.cache['brightness'])

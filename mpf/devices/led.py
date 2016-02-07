@@ -1,7 +1,6 @@
 """ Contains the LED parent classes. """
 
 from mpf.core.device import Device
-from mpf.core.tasks import Task
 from mpf.core.rgb_color import RGBColor
 from mpf.core.rgb_color import RGBColorCorrectionProfile
 
@@ -53,7 +52,6 @@ class LED(Device):
         self.hw_driver = self.platform.configure_led(self.config)
 
         self.fade_in_progress = False
-        self.fade_task = None
         self.fade_destination_color = RGBColor()
         self.fade_end_time = None
 
@@ -286,15 +284,14 @@ class LED(Device):
         Returns: None
         """
         self.fade_in_progress = True
+        self.machine.clock.unschedule(self._fade_task)
 
-        if not self.fade_task:
-            if self.debug:
-                print("setting up fade task")
-            self.fade_task = Task.create(self.machine, self._fade_task)
-        elif self.debug:
-                print("already have a fade task")
+        if self.debug:
+            print("setting up fade task")
 
-    def _fade_task(self):
+        self.machine.clock.schedule_interval(self._fade_task, 0)
+
+    def _fade_task(self, dt):
         """
         Task that performs a fade from the current LED color to the target LED color
         over the specified fade time.
@@ -318,8 +315,7 @@ class LED(Device):
             self.fade_in_progress = False
             set_cache = True
             new_color = state['destination_color']
-            self.fade_task.stop()
-            self.fade_task = None
+            self.machine.clock.unschedule(self._fade_task)
         else:
             set_cache = False
             new_color = RGBColor.blend(state['start_color'], state['destination_color'], ratio)
@@ -335,6 +331,5 @@ class LED(Device):
 
     def _kill_fade(self):
         self.fade_in_progress = False
-        self.fade_task.stop()
-        self.fade_task = None
+        self.machine.clock.unschedule(self._fade_task)
         self.color(color=self.state['destination_color'], fade_ms=0, priority=self.state['priority'], cache=True)

@@ -4,65 +4,6 @@ import logging
 import uuid
 from functools import partial
 
-
-class Task(object):
-    """A task/coroutine implementation.
-
-    Tasks are similar to timers except they can yield back to the main loop
-    at any point, then be resumed later.
-
-    To wait from a Task, do `yield <ms>`, e.g. `yield 200`.
-
-    To exit from a Task, just return.  This will raise a StopIteration
-    exception which the scheduler will catch and remove the task from the
-    run queue.
-    """
-
-    def __init__(self, machine, callback, args=None, name=None, interval=0, delay=0):
-        self.machine = machine
-        self.callback = callback
-        self.args = args
-        self.name = name
-        self.interval = interval
-        self.delay = delay
-        self.clock_event = None
-
-        if delay:
-            self.clock_event = self.machine.clock.schedule_once(self.run, delay)
-        else:
-            self.run(0)
-
-    def __del__(self):
-        self.stop()
-
-    @property
-    def running(self):
-        return self.clock_event is not None
-
-    def run(self, dt):
-        self.stop()
-        self.clock_event = self.machine.clock.schedule_interval(self._process_task, self.interval)
-
-    def _process_task(self, dt):
-        if self.callback is not None:
-            self.callback(*self.args)
-        self.machine.events._process_event_queue()
-
-    def stop(self):
-        """Stops the task. This causes it not to run any longer"""
-        if self.clock_event:
-            self.machine.clock.unschedule(self.clock_event)
-            self.clock_event = None
-
-    def __repr__(self):
-        return "callback=" + str(self.callback) + " interval=" + str(self.interval) + " delay=" + str(self.delay)
-
-    @staticmethod
-    def create(machine, callback, args=tuple(), interval=0, delay=0):
-        """Creates a new task and insert it into the runnable set."""
-        return Task(machine=machine, callback=callback, args=args, interval=interval, delay=delay)
-
-
 class DelayManagerRegistry(object):
     def __init__(self, machine):
         self.delay_managers = set()
