@@ -1,8 +1,6 @@
 """ Contains the BallLock device class."""
 
-import logging
 from mpf.core.device import Device
-from mpf.core.config_processor import ConfigProcessor
 from collections import deque
 
 
@@ -17,6 +15,7 @@ class BallLock(Device):
 
         # initialise variables
         self.balls_locked = 0
+        self.enabled = False
         self.lock_queue = deque()
 
         # let ball devices initialise first
@@ -27,7 +26,6 @@ class BallLock(Device):
         # load lock_devices
 
         self.lock_devices = []
-        self.enabled = False
         for device in self.config['lock_devices']:
             self.lock_devices.append(device)
 
@@ -36,7 +34,11 @@ class BallLock(Device):
     def enable(self, **kwargs):
         """ Enables the lock. If the lock is not enabled, no balls will be
         locked.
+
+        Args:
+            **kwargs: unused
         """
+        del kwargs
         self.log.debug("Enabling...")
         if not self.enabled:
             self._register_handlers()
@@ -45,7 +47,11 @@ class BallLock(Device):
     def disable(self, **kwargs):
         """ Disables the lock. If the lock is not enabled, no balls will be
         locked.
+
+        Args:
+            **kwargs: unused
         """
+        del kwargs
         self.log.debug("Disabling...")
         self._unregister_handlers()
         self.enabled = False
@@ -53,20 +59,34 @@ class BallLock(Device):
     def reset(self, **kwargs):
         """Resets the lock. Will release locked balls. Device will status will
         stay the same (enabled/disabled)
+
+        Args:
+            **kwargs: unused
         """
+        del kwargs
         self.release_all_balls()
         self.balls_locked = 0
 
     def release_one(self, **kwargs):
         """ Releases one ball
+
+        Args:
+            **kwargs: unused
         """
+        del kwargs
         self.release_balls(balls_to_release=1)
 
     def release_all_balls(self):
+        """ Releases all balls in lock
+
+        """
         self.release_balls(self.balls_locked)
 
     def release_balls(self, balls_to_release):
         """Release all balls and return the actual amount of balls released.
+
+        Args:
+            balls_to_release: number of ball to release from lock
         """
         if len(self.lock_queue) == 0:
             return 0
@@ -125,6 +145,8 @@ class BallLock(Device):
 
     # callback for _ball_enter event of lock_devices
     def _lock_ball(self, device, new_balls, unclaimed_balls, **kwargs):
+        del new_balls
+        del kwargs
         # if full do not take any balls
         if self.is_full():
             self.log.debug("Cannot lock balls. Lock is full.")

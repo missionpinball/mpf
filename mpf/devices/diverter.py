@@ -4,6 +4,7 @@ from collections import deque
 
 from mpf.core.device import Device
 from mpf.core.delays import DelayManager
+from mpf.core.utility_functions import Util
 
 
 class Diverter(Device):
@@ -70,16 +71,14 @@ class Diverter(Device):
             self.machine.switch_controller.add_switch_handler(
                     switch.name, self.disable)
 
-    def enable(self, auto=False, activations=-1, **kwargs):
+    def enable(self, auto=False, **kwargs):
         """Enables this diverter.
 
         Args:
             auto: Boolean value which is used to indicate whether this
                 diverter enabled itself automatically. This is passed to the
                 event which is posted.
-            activations: Integer of how many times you'd like this diverter to
-                activate before it will automatically disable itself. Default is
-                -1 which is unlimited.
+            **kwargs: unused
 
         If an 'activation_switches' is configured, then this method writes a
         hardware autofire rule to the pinball controller which fires the
@@ -89,6 +88,7 @@ class Diverter(Device):
         immediately.
 
         """
+        del kwargs
         self.enabled = True
 
         self.machine.events.post('diverter_' + self.name + '_enabling',
@@ -114,6 +114,7 @@ class Diverter(Device):
                 configuration file, so we don't know what event that might be
                 or whether it has random kwargs attached to it.
         """
+        del kwargs
         self.enabled = False
 
         self.machine.events.post('diverter_' + self.name + '_disabling',
@@ -129,9 +130,6 @@ class Diverter(Device):
         """Physically activates this diverter's coil."""
         self.log.debug("Activating Diverter")
         self.active = True
-
-        # if self.remaining_activations > 0:
-        #    self.remaining_activations -= 1
 
         self.machine.events.post('diverter_' + self.name + '_activating')
         if self.config['type'] == 'pulse':
@@ -154,11 +152,6 @@ class Diverter(Device):
 
         if self.config['deactivation_coil']:
             self.config['deactivation_coil'].pulse()
-
-            # if self.remaining_activations != 0:
-            #    self.enable()
-            # todo this will be weird if the diverter is enabled without a hw
-            # switch.. wonder if we should check for that here?
 
     def schedule_deactivation(self, time=None):
         """Schedules a delay to deactivate this diverter.
@@ -275,19 +268,21 @@ class Diverter(Device):
         self.config['activation_coil'].disable()
 
     def _feeder_eject_count_decrease(self, target, **kwargs):
+        del target
+        del kwargs
         self.diverting_ejects_count -= 1
         if self.diverting_ejects_count <= 0:
             self.diverting_ejects_count = 0
 
             # If there are ejects waiting for the other target switch diverter
             if len(self.eject_attempt_queue) > 0:
-                if self.eject_state == False:
+                if not self.eject_state:
                     self.eject_state = True
                     self.log.debug(
                         "Enabling diverter since eject target is on the "
                         "active target list")
                     self.enable()
-                elif self.eject_state == True:
+                elif self.eject_state:
                     self.eject_state = False
                     self.log.debug(
                         "Enabling diverter since eject target is on the "
@@ -307,7 +302,7 @@ class Diverter(Device):
 
         # Since the 'target' kwarg is going to be an object, not a name, we need
         # to figure out if this object is one of the targets of this diverter.
-
+        del kwargs
         self.log.debug("Feeder device eject attempt for target: %s", target)
 
         desired_state = None
@@ -317,7 +312,7 @@ class Diverter(Device):
         elif target in self.config['targets_when_inactive']:
             desired_state = False
 
-        if desired_state == None:
+        if desired_state is None:
             self.log.debug("Feeder device ejects to an unknown target: %s. "
                            "Ignoring!", target.name)
             return
@@ -332,12 +327,12 @@ class Diverter(Device):
 
         self.diverting_ejects_count += 1
 
-        if desired_state == True:
+        if desired_state:
             self.log.debug("Enabling diverter since eject target is on the "
                            "active target list")
             self.eject_state = desired_state
             self.enable()
-        elif desired_state == False:
+        elif not desired_state:
             self.log.debug("Enabling diverter since eject target is on the "
                            "inactive target list")
             self.eject_state = desired_state

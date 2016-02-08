@@ -1,7 +1,5 @@
 """ Implements a servo in MPF """
 
-from collections import deque
-
 from mpf.core.device import Device
 
 
@@ -25,12 +23,17 @@ class Servo(Device):
                                             position=position)
 
     def reset(self, **kwargs):
+        del kwargs
         self.go_to_position(self.config['reset_position'])
 
     def _position_event(self, position, **kwargs):
+        del kwargs
         self.go_to_position(position)
 
     def go_to_position(self, position):
+        # linearly interpolate between servo limits
         position = self.config['servo_min'] + position * (
-        self.config['servo_max'] - self.config['servo_min'])
+            self.config['servo_max'] - self.config['servo_min'])
+
+        # call platform with calculated position
         self.platform.servo_go_to_position(self.config['number'], position)

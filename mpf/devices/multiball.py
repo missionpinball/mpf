@@ -15,6 +15,8 @@ class Multiball(Device):
 
         self.delay = DelayManager(machine.delayRegistry)
         self.balls_ejected = 0
+        self.enabled = False
+        self.shoot_again = False
 
         # let ball devices initialise first
         self.machine.events.add_handler('init_phase_3',
@@ -22,11 +24,10 @@ class Multiball(Device):
 
     def _initialize(self):
         self.ball_locks = self.config['ball_locks']
-        self.shoot_again = False
-        self.enabled = False
         self.source_playfield = self.config['source_playfield']
 
     def start(self, **kwargs):
+        del kwargs
         if not self.enabled:
             return
 
@@ -76,6 +77,7 @@ class Multiball(Device):
                                  balls=self.config['ball_count'])
 
     def _ball_drain_shoot_again(self, balls, **kwargs):
+        del kwargs
         if balls <= 0:
             return {'balls': balls}
 
@@ -87,6 +89,7 @@ class Multiball(Device):
         return {'balls': 0}
 
     def _ball_drain_count_balls(self, balls, **kwargs):
+        del kwargs
         self.balls_ejected -= balls
         if self.balls_ejected <= 0:
             self.balls_ejected = 0
@@ -104,6 +107,7 @@ class Multiball(Device):
         return {'balls': balls}
 
     def stop(self, **kwargs):
+        del kwargs
         self.log.debug("Stopping shoot again of multiball")
         self.shoot_again = False
 
@@ -117,20 +121,32 @@ class Multiball(Device):
     def enable(self, **kwargs):
         """ Enables the multiball. If the multiball is not enabled, it cannot
         start.
+
+        Args:
+            **kwargs: unused
         """
+        del kwargs
         self.log.debug("Enabling...")
         self.enabled = True
 
     def disable(self, **kwargs):
         """ Disabless the multiball. If the multiball is not enabled, it cannot
-        start.
+        start. Will not stop a running multiball.
+
+        Args:
+            **kwargs: unused
         """
+        del kwargs
         self.log.debug("Disabling...")
         self.enabled = False
 
     def reset(self, **kwargs):
         """Resets the multiball and disables it.
+
+        Args:
+            **kwargs: unused
         """
+        del kwargs
         self.enabled = False
         self.shoot_again = False
         self.balls_ejected = 0

@@ -1158,6 +1158,12 @@ class ConfigValidator(object):
             else:
                 item = None
 
+        elif validator == 'lstr':
+            if item is not None:
+                item = str(item).lower()
+            else:
+                item = None
+
         elif validator == 'float':
             try:
                 item = float(item)

@@ -163,6 +163,7 @@ class BallDevice(Device):
     def _counted_balls(self, balls, **kwargs):
         # Called when the device counts its balls and then calls the current
         # state's _counted_balls() method.
+        del kwargs
         method_name = "_state_" + self._state + "_counted_balls"
         method = getattr(self, method_name, lambda *args: None)
         method(balls)
@@ -170,6 +171,8 @@ class BallDevice(Device):
     def _target_ready(self, target, **kwargs):
         # Called whenever one of this device's target devices changes state to
         # be ready to receive balls
+        del kwargs
+        del target
 
         if self._state == "wait_for_eject":
             self._state_wait_for_eject_start()
@@ -214,7 +217,7 @@ class BallDevice(Device):
         # handle timeout incoming balls
         missing_balls = 0
         while (len(self._incoming_balls) and
-                       self._incoming_balls[0][0] <= self.machine.clock.get_time()):
+                self._incoming_balls[0][0] <= self.machine.clock.get_time()):
             self._incoming_balls.popleft()
             self._handle_lost_incoming_ball()
             missing_balls += 1
@@ -367,8 +370,7 @@ class BallDevice(Device):
 
             return self._switch_state("waiting_for_ball_mechanical")
 
-        elif (self._state == "idle" and
-                  self.config['mechanical_eject']):
+        elif self._state == "idle" and self.config['mechanical_eject']:
             # we have no eject queue in that case. will use default target
 
             return self._switch_state("waiting_for_ball_mechanical")
@@ -481,9 +483,7 @@ class BallDevice(Device):
 
     def _state_failed_eject_start(self):
         self.eject_failed()
-        if (self.config['max_eject_attempts'] != 0 and
-                    self.num_eject_attempts >= self.config[
-                    'max_eject_attempts']):
+        if self.config['max_eject_attempts'] != 0 and self.num_eject_attempts >= self.config['max_eject_attempts']:
             self._eject_permanently_failed()
             # What now? Ball is still in device or switch just broke. At least
             # we are unable to get rid of it
@@ -559,6 +559,7 @@ class BallDevice(Device):
                                   balls=1)
 
     def _source_device_balls_available(self, **kwargs):
+        del kwargs
         if len(self.ball_requests):
             (target, player_controlled) = self.ball_requests.popleft()
             if self._setup_or_queue_eject_to_target(target, player_controlled):
@@ -600,6 +601,7 @@ class BallDevice(Device):
             return self._switch_state("idle")
 
     def _source_device_ball_lost(self, target, **kwargs):
+        del kwargs
         if target != self:
             return
 
@@ -773,7 +775,8 @@ class BallDevice(Device):
                     break
 
     def _initialize3(self):
-        self.machine.ball_devices[self.config['captures_from']].ball_search.register(self.config['ball_search_order'], self.ball_search)
+        self.machine.ball_devices[self.config['captures_from']].ball_search.register(
+            self.config['ball_search_order'], self.ball_search)
         self._state_invalid_start()
 
     def _fire_coil_for_search(self, full_power):
@@ -789,6 +792,7 @@ class BallDevice(Device):
             return True
 
     def ball_search(self, phase, iteration):
+        del iteration
         if phase == 1:
             # round 1: only idle + no ball
             # only run ball search when the device is idle and contains no balls
@@ -796,11 +800,11 @@ class BallDevice(Device):
                 return self._fire_coil_for_search(True)
         elif phase == 2:
             # round 2: all devices except trough. small pulse
-            if not 'trough' in self.config['tags']:
+            if 'trough' not in self.config['tags']:
                 return self._fire_coil_for_search(False)
         else:
             # round 3: all devices except trough. normal pulse
-            if not 'trough' in self.config['tags']:
+            if 'trough' not in self.config['tags']:
                 return self._fire_coil_for_search(True)
 
     def get_status(self, request=None):  # pragma: no cover
@@ -850,9 +854,11 @@ class BallDevice(Device):
             self.log.debug("+-----------------------------------------+")
 
     def _switch_changed(self, **kwargs):
+        del kwargs
         return self._count_balls()
 
     def _count_balls(self, **kwargs):
+        del kwargs
         if self.debug:
             self.log.debug("Counting balls")
 
@@ -905,6 +911,7 @@ class BallDevice(Device):
         return ball_count
 
     def _balls_added_callback(self, new_balls, unclaimed_balls, **kwargs):
+        del kwargs
         # If we still have unclaimed_balls here, that means that no one claimed
         # them, so essentially they're "stuck." So we just eject them unless
         # this device is tagged 'trough' in which case we let it keep them.
@@ -913,8 +920,7 @@ class BallDevice(Device):
 
         if unclaimed_balls:
             if 'trough' not in self.tags:
-                target = self.machine.ball_devices[self.config
-                ['captures_from']]
+                target = self.machine.ball_devices[self.config['captures_from']]
 
                 # try to eject to pf
                 path = self.find_path_to_target(target, True)
@@ -945,8 +951,7 @@ class BallDevice(Device):
                                  balls=abs(balls))
 
         # add ball to default target
-        self.machine.ball_devices[self.config
-        ['ball_missing_target']].add_missing_balls(balls)
+        self.machine.ball_devices[self.config['ball_missing_target']].add_missing_balls(balls)
 
     def is_full(self):
         """Checks to see if this device is full, meaning it is holding either
@@ -956,8 +961,7 @@ class BallDevice(Device):
         Returns: True or False
 
         """
-        if (self.config['ball_capacity'] and
-                    self.balls >= self.config['ball_capacity']):
+        if self.config['ball_capacity'] and self.balls >= self.config['ball_capacity']:
             return True
         elif self.balls >= self.machine.ball_controller.num_balls_known:
             return True
@@ -1032,7 +1036,9 @@ class BallDevice(Device):
             balls: Integer of the number of balls that should be added to this
                 device. A value of -1 will cause this device to try to fill
                 itself.
+            **kwargs: unused
         """
+        del kwargs
         if self.debug:
             self.log.debug("Requesting Ball(s). Balls=%s", balls)
 
@@ -1048,7 +1054,11 @@ class BallDevice(Device):
         You have to call stop on all connected devices to really reset
         everything
 
+        Args:
+            **kwargs: unused
+
         """
+        del kwargs
         if self.debug:
             self.log.debug("Stopping all activity via stop()")
 
@@ -1098,8 +1108,7 @@ class BallDevice(Device):
 
         if self.config['mechanical_eject'] or (
                     self.config['player_controlled_eject_event'] and (
-                            self.config['eject_coil'] or self.config[
-                            'hold_coil'])):
+                            self.config['eject_coil'] or self.config['hold_coil'])):
 
             self._setup_or_queue_eject_to_target(target, True)
 
@@ -1135,9 +1144,7 @@ class BallDevice(Device):
             raise AssertionError("Broken path")
 
         # append to queue
-        if player_controlled and (
-            self.config['mechanical_eject'] or self.config[
-            'player_controlled_eject_event']):
+        if player_controlled and (self.config['mechanical_eject'] or self.config['player_controlled_eject_event']):
             self.eject_queue.append((next_hop, self.config['mechanical_eject'],
                                      self.config[
                                          'player_controlled_eject_event']))
@@ -1200,11 +1207,13 @@ class BallDevice(Device):
         Args:
             target: The string or BallDevice target for this eject. Default of
                 None means `playfield`.
+            **kwargs: unused
 
         Returns:
             True if there are balls to eject. False if this device is empty.
 
         """
+        del kwargs
         if self.debug:
             self.log.debug("Ejecting all balls")
         if self.balls > 0:
@@ -1214,6 +1223,7 @@ class BallDevice(Device):
             return False
 
     def _eject_status(self, dt):
+        del dt
         if self.debug:
 
             try:
@@ -1227,6 +1237,7 @@ class BallDevice(Device):
                                      2))
 
     def _ball_left_device(self, balls, **kwargs):
+        del kwargs
         assert balls == 1
         assert self._state == "ejecting"
         # remove handler
@@ -1241,6 +1252,7 @@ class BallDevice(Device):
         return self._switch_state("ball_left")
 
     def _perform_eject(self, target, **kwargs):
+        del kwargs
         self._setup_eject_confirmation(target)
         self.log.debug("Ejecting ball to %s", target.name)
 
@@ -1297,6 +1309,7 @@ class BallDevice(Device):
                            "balls: %s.", self.balls)
 
     def hold(self, **kwargs):
+        del kwargs
         # do not enable coil when we are ejecting
         if self.hold_release_in_progress:
             return
@@ -1319,8 +1332,7 @@ class BallDevice(Device):
                         ms=self.config['entrance_count_delay'])):
             self.config['eject_coil'].pulse(
                     self.config['eject_coil_jam_pulse'])
-        elif (self.num_eject_attempts >= 4 and
-                  self.config['eject_coil_retry_pulse']):
+        elif self.num_eject_attempts >= 4 and self.config['eject_coil_retry_pulse']:
             self.config['eject_coil'].pulse(
                     self.config['eject_coil_retry_pulse'])
         else:
@@ -1331,6 +1343,8 @@ class BallDevice(Device):
                            "balls: %s.", self.balls)
 
     def _playfield_active(self, playfield, **kwargs):
+        del playfield
+        del kwargs
         self.eject_success()
         return False
 
@@ -1369,8 +1383,7 @@ class BallDevice(Device):
                                    "timeout if it did not return.")
                 timeout_combined = timeout
                 if self._state == "waiting_for_ball_mechanical":
-                    timeout_combined += \
-                    self._incoming_balls[0][1].config['eject_timeouts'][self]
+                    timeout_combined += self._incoming_balls[0][1].config['eject_timeouts'][self]
 
                 if timeout == timeout_combined:
                     timeout_combined += 500
@@ -1479,6 +1492,7 @@ class BallDevice(Device):
         # **kwargs because there are many ways to get here, some with kwargs
         # and some without. Also, since there are many ways we can get here,
         # let's first make sure we actually had an eject in progress
+        del kwargs
 
         if self._state == "ejecting":
             self.log.debug("Got an eject_success before the switch changed"
@@ -1497,8 +1511,7 @@ class BallDevice(Device):
                     "Got an eject_success in wrong state " + self._state)
         elif self.config['confirm_eject_type'] != 'target':
             # notify if not in waiting_for_ball_mechanical
-            self._notify_target_of_incoming_ball(
-                    self.eject_in_progress_target)
+            self._notify_target_of_incoming_ball(self.eject_in_progress_target)
 
         if self.debug:
             self.log.debug("In eject_success(). Eject target: %s",

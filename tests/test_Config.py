@@ -100,6 +100,22 @@ class TestConfig(MpfTestCase):
             validation_string, 'test_failure_info', 1)
         self.assertEqual(results, '1')
 
+        # test lstr
+        validation_string = 'single|lstr|'
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', 'HellO')
+        self.assertEqual(results, 'hello')
+
+        validation_string = 'single|lstr|'
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', 'hello')
+        self.assertEqual(results, 'hello')
+
+        validation_string = 'single|lstr|'
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', 'H1')
+        self.assertEqual(results, 'h1')
+
         # test float validations
 
         validation_string = 'single|float|'
