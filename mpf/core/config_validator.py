@@ -791,7 +791,7 @@ class ConfigValidator(object):
     def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger('ConfigProcessor')
-        self.system_config = self.machine.config['mpf']
+        self.system_config = self.machine.get_system_config()
 
     @classmethod
     def load_config_spec(cls, config_spec=None):

@@ -145,6 +145,9 @@ class MachineController(object):
     def bcp_client_connected(self):
         return BCP.active_connections > 0
 
+    def get_system_config(self):
+        return self.machine_config['mpf']
+
     def validate_machine_config_section(self, section):
 
         # todo change this to use the normal process_config2 meth
