@@ -5,7 +5,7 @@ import json
 import struct
 
 from mpf.core.utility_functions import Util
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 from mpf.platform.openpixel import OpenPixelClient
 from mpf.platform.openpixel import HardwarePlatform as OPHardwarePlatform
 
@@ -53,7 +53,7 @@ class FadeCandyOPClient(OpenPixelClient):
 
         self.update_every_tick = True
 
-        self.config = self.machine.config_processor.process_config2('fadecandy',
+        self.config = self.machine.config_validator.process_config2('fadecandy',
                                                                     self.machine.config['fadecandy'])
 
         self.gamma = self.config['gamma']

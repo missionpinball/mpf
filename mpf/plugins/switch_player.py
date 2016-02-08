@@ -3,7 +3,7 @@ file."""
 
 import logging
 
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 from mpf.core.delays import DelayManager
 
 
@@ -27,7 +27,7 @@ class SwitchPlayer(object):
                         start_delay: secs|0
                         '''
 
-        self.config = Config.process_config(config_spec,
+        self.config = ConfigProcessor.process_config(config_spec,
                                             self.machine.config['switch_player'])
 
         self.machine.events.add_handler(self.config['start_event'],

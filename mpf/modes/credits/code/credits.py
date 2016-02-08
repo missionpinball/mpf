@@ -19,7 +19,7 @@ class Credits(Mode):
         self.pricing_tiers = set()
         self.credit_units_for_pricing_tiers = 0
 
-        self.credits_config = self.machine.config_processor.process_config2(
+        self.credits_config = self.machine.config_validator.process_config2(
             config_spec='credits',
             source=self._get_merged_settings('credits'),
             section_name='credits')

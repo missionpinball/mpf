@@ -14,7 +14,7 @@ from distutils.version import StrictVersion
 from copy import deepcopy
 
 from mpf.core.platform import Platform
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -267,7 +267,7 @@ class HardwarePlatform(Platform):
 
     def initialize(self):
         self.config = self.machine.config['fast']
-        self.machine.config_processor.process_config2("fast", self.config)
+        self.machine.config_validator.process_config2("fast", self.config)
 
         self.watchdog_command = 'WD:' + str(hex(self.config['watchdog']))[2:]
 

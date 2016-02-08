@@ -30,7 +30,7 @@ except:
     pinproc_imported = False
 
 from mpf.core.platform import Platform
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 
 proc_output_module = 3
 proc_pdb_bus_addr = 0xC00

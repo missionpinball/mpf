@@ -6,7 +6,7 @@ import sys
 import threading
 import traceback
 from queue import Queue
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 from mpf.core.platform import Platform
 
 
@@ -27,7 +27,7 @@ class HardwarePlatform(Platform):
                       use_separate_thread: boolean|True
                       '''
 
-        self.config = Config.process_config(config_spec=config_spec,
+        self.config = ConfigProcessor.process_config(config_spec=config_spec,
             source=self.machine.config['smartmatrix'])
 
     def __repr__(self):

@@ -2,7 +2,7 @@
 
 import logging
 from mpf.core.device import Device
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 from collections import deque
 
 

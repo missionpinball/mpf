@@ -96,7 +96,7 @@ class Mode(object):
         dictionary.
         """
 
-        self.config['mode'] = self.machine.config_processor.process_config2(
+        self.config['mode'] = self.machine.config_validator.process_config2(
             config_spec='mode', source=config, section_name='mode')
 
         for event in self.config['mode']['start_events']:
@@ -112,12 +112,12 @@ class Mode(object):
                 if type(this_section) is dict:
                     for device, settings in this_section.items():
                         self.config[section][device] = (
-                            self.machine.config_processor.process_config2(
+                            self.machine.config_validator.process_config2(
                                 section, settings))
 
                 else:
                     self.config[section] = (
-                        self.machine.config_processor.process_config2(section,
+                        self.machine.config_validator.process_config2(section,
                         this_section))
 
     def _get_merged_settings(self, section_name):

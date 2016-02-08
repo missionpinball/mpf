@@ -4,7 +4,7 @@ import logging
 import os
 from collections import namedtuple
 
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
 
 
@@ -118,7 +118,7 @@ class ModeController(object):
             mode_string + '.yaml')
 
         if os.path.isfile(mpf_mode_config):
-            config = Config.load_config_file(mpf_mode_config)
+            config = ConfigProcessor.load_config_file(mpf_mode_config)
             found_configuration = True
 
         # Now figure out if there's a machine-specific config for this mode,
@@ -130,7 +130,7 @@ class ModeController(object):
 
         if os.path.isfile(mode_config_file):
             config = Util.dict_merge(config,
-            Config.load_config_file(mode_config_file))
+            ConfigProcessor.load_config_file(mode_config_file))
             found_configuration = True
 
         # the mode has to have at least one config to exist
@@ -143,7 +143,7 @@ class ModeController(object):
         if not 'mode' in config:
             config['mode'] = dict()
 
-        self.machine.config_processor.process_config2("mode", config['mode'])
+        self.machine.config_validator.process_config2("mode", config['mode'])
         # Figure out where the code is for this mode.
 
         # If a custom 'code' setting exists, first look in the machine folder

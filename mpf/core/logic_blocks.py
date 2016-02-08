@@ -3,7 +3,7 @@
 import logging
 
 from mpf.core.delays import DelayManager
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
 
 
@@ -140,7 +140,7 @@ class LogicBlock(object):
                     persist_state: boolean|False
                     '''
 
-        self.config = Config.process_config(config_spec=config_spec,
+        self.config = ConfigProcessor.process_config(config_spec=config_spec,
                                             source=config)
 
         if 'events_when_complete' not in config:
@@ -278,7 +278,7 @@ class Counter(LogicBlock):
                         starting_count: int|0
                       '''
 
-        self.config = Config.process_config(config_spec=config_spec,
+        self.config = ConfigProcessor.process_config(config_spec=config_spec,
                                             source=self.config)
 
         if 'event_when_hit' not in self.config:
@@ -374,7 +374,7 @@ class Accrual(LogicBlock):
                         events: list_of_lists
                       '''
 
-        self.config = Config.process_config(config_spec=config_spec,
+        self.config = ConfigProcessor.process_config(config_spec=config_spec,
                                             source=self.config)
 
         if 'player_variable' not in config:
@@ -444,7 +444,7 @@ class Sequence(LogicBlock):
                         events: list_of_lists
                       '''
 
-        self.config = Config.process_config(config_spec=config_spec,
+        self.config = ConfigProcessor.process_config(config_spec=config_spec,
                                             source=self.config)
 
         if 'player_variable' not in config:

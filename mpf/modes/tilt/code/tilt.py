@@ -13,7 +13,7 @@ class Tilt(Mode):
         self.tilt_event_handlers = set()
         self.last_tilt_warning_switch = 0
 
-        self.tilt_config = self.machine.config_processor.process_config2(
+        self.tilt_config = self.machine.config_validator.process_config2(
             config_spec='tilt',
             source=self._get_merged_settings('tilt'),
             section_name='tilt')

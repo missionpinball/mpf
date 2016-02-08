@@ -8,7 +8,7 @@ show_player:
     - show: attract_dmd_loop
       action: stop
 
-light_player:
+show_player:
   mode_attract_started:
     - show: multiball_sweep
       repeat: yes

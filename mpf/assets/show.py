@@ -88,12 +88,10 @@ class Show(Asset):
         self.show_steps = list()
 
     def _do_load(self, steps=None):
-
         self.show_steps = []
 
         self.machine.show_controller.log.debug("Loading Show %s",
                                                self.file)
-
         if not steps:
             steps = self.load_show_from_disk()
 

@@ -9,7 +9,7 @@ import socket
 import threading
 import locale
 
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 
 global import_success
 
@@ -46,7 +46,7 @@ class OSC(object):
                         debug_messages: boolean|False
                         '''
 
-        self.config = Config.process_config(config_spec,
+        self.config = ConfigProcessor.process_config(config_spec,
                                           self.machine.config['osc'])
 
         if self.config['machine_ip'].upper() == 'AUTO':

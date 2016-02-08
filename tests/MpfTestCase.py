@@ -1,7 +1,7 @@
 import threading
 import unittest
 
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
@@ -137,7 +137,7 @@ class MpfTestCase(unittest.TestCase):
 
     def setUp(self):
         # we want to reuse config_specs to speed tests up
-        Config.unload_config_spec = MagicMock()
+        ConfigProcessor.unload_config_spec = MagicMock()
 
         # print(threading.active_count())
 

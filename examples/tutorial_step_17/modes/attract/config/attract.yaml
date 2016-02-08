@@ -3,4 +3,3 @@ show_player:
   mode_attract_started:
     - show: attract_dmd_loop
       repeat: yes
-      tocks_per_sec: 1

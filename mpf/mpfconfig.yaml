@@ -7,9 +7,11 @@
 
 mpf:
     core_modules: !!omap
-        - config_processor: mpf.core.config.Config
+        - config_validator: mpf.core.config_validator.ConfigValidator
         - events: mpf.core.events.EventManager
         - mode_controller: mpf.core.mode_controller.ModeController
+        - light_scripts: mpf.core.light_scripts.LightScripts
+        - config_processor: mpf.core.config_processor.ConfigProcessor
         - shot_profile_manager: mpf.core.shot_profile_manager.ShotProfileManager
         - device_manager: mpf.core.device_manager.DeviceManager
         - switch_controller: mpf.core.switch_controller.SwitchController

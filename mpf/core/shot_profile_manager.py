@@ -3,7 +3,7 @@
 import logging
 from collections import deque
 
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 
 
 class ShotProfileManager(object):
@@ -71,7 +71,7 @@ class ShotProfileManager(object):
 
         """
 
-        config = self.machine.config_processor.process_config2(
+        config = self.machine.config_validator.process_config2(
             'shot_profiles', config, 'shot_profiles')
 
         rotation_pattern = deque()

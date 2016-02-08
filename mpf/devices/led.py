@@ -29,7 +29,7 @@ class LED(Device):
         machine.led_color_correction_profiles = dict()
         for profile_name, profile_parameters in machine.config['led_settings']['color_correction_profiles'].items():
 
-            machine.config_processor.process_config2('color_correction_profile',
+            machine.config_validator.process_config2('color_correction_profile',
                                                      machine.config['led_settings']
                                                      ['color_correction_profiles'][profile_name],
                                                      profile_parameters)

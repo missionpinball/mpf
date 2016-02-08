@@ -878,7 +878,7 @@ class BCPClientSocket(object):
         self.name = name
         self.receive_queue = receive_queue
 
-        self.config = self.machine.config_processor.process_config2(
+        self.config = self.machine.config_validator.process_config2(
             'bcp:connections', config, 'bcp:connections')
 
         self.sending_queue = Queue()

@@ -10,11 +10,14 @@ import threading
 
 from mpf.core.bcp import BCP
 from mpf.core.clock import ClockBase
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
+from mpf.core.config_validator import ConfigValidator
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.device_manager import DeviceCollection
 from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.data_manager import DataManager
+from mpf.core.light_script_player import LightScriptPlayer
+from mpf.core.show_player import ShowPlayer
 from mpf.core.utility_functions import Util
 import version
 
@@ -77,9 +80,8 @@ class MachineController(object):
         self._init_done = False
         self.config = None
         self.machine_config = None
-        self._load_mpf_config()
         self._set_machine_path()
-        self._load_machine_config()
+        self._load_config()
 
         self.configure_debugger()
 
@@ -117,6 +119,10 @@ class MachineController(object):
         self.validate_machine_config_section('hardware')
         self.validate_machine_config_section('game')
 
+        # todo move these to mpfconfig
+        self.show_player = ShowPlayer(self)
+        self.light_script_player = LightScriptPlayer(self)
+
         self._register_system_events()
         self._load_machine_vars()
         self.events.post("init_phase_1")
@@ -131,7 +137,7 @@ class MachineController(object):
         self.events._process_event_queue()
         self.events.post("init_phase_5")
         self.events._process_event_queue()
-        Config.unload_config_spec()
+        ConfigProcessor.unload_config_spec()
 
         self.clear_boot_hold('init')
 
@@ -140,13 +146,16 @@ class MachineController(object):
         return BCP.active_connections > 0
 
     def validate_machine_config_section(self, section):
-        if section not in Config.config_spec:
+
+        # todo change this to use the normal process_config2 meth
+
+        if section not in ConfigValidator.config_spec:
             return
 
         if section not in self.config:
             self.config[section] = dict()
 
-        self.config[section] = self.config_processor.process_config2(
+        self.config[section] = self.config_validator.process_config2(
             section, self.config[section], section)
 
     def _register_system_events(self):
@@ -184,9 +193,6 @@ class MachineController(object):
             print("Crash details: %s", crash)
             self.stop()
 
-    def _load_mpf_config(self):
-        self.config = Config.load_config_file(self.options['mpfconfigfile'])
-
     def _set_machine_path(self):
         # If the machine folder value passed starts with a forward or
         # backward slash, then we assume it's from the mpf root. Otherwise we
@@ -195,8 +201,8 @@ class MachineController(object):
                 self.options['machine_path'].startswith('\\')):
             machine_path = self.options['machine_path']
         else:
-            machine_path = os.path.join(self.config['mpf']['paths']
-                                        ['machine_files'],
+            # todo temp examples hard coded
+            machine_path = os.path.join('examples',
                                         self.options['machine_path'])
 
         self.machine_path = os.path.abspath(machine_path)
@@ -205,7 +211,7 @@ class MachineController(object):
         # Add the machine folder to sys.path so we can import modules from it
         sys.path.append(self.machine_path)
 
-    def _load_machine_config(self):
+    def _load_config(self):
         if self.options['rebuild_cache']:
             load_from_cache = False
         else:
@@ -232,6 +238,9 @@ class MachineController(object):
 
     def _load_config_from_files(self):
         self.log.info("Loading config from original files")
+
+        self.config = ConfigProcessor.load_config_file(self.options['mpfconfigfile'])
+
         for num, config_file in enumerate(self.options['configfile']):
 
             if not (config_file.startswith('/') or
@@ -243,7 +252,7 @@ class MachineController(object):
             self.log.info("Machine config file #%s: %s", num+1, config_file)
 
             self.config = Util.dict_merge(self.config,
-                Config.load_config_file(config_file))
+                ConfigProcessor.load_config_file(config_file))
             self.machine_config = self.config
 
         self._cache_config()
@@ -269,7 +278,7 @@ class MachineController(object):
 
     def _get_latest_config_mod_time(self):
 
-        latest_time = 0.0
+        latest_time = os.path.getmtime(self.options['mpfconfigfile'])
 
         for root, dirs, files in os.walk(
                 os.path.join(self.machine_path, 'config')):
@@ -427,7 +436,7 @@ class MachineController(object):
                            " a currently active platform", name)
 
     def string_to_class(self, class_string):
-        """Converts a string like mpf.core.events.EventManager into a python
+        """Converts a string like mpf.core.events.EventManager into a Python
         class.
 
         Args:
@@ -441,6 +450,7 @@ class MachineController(object):
         does-python-have-an-equivalent-to-java-class-forname
 
         """
+        # todo I think thre's a better way to do this in Python 3
         parts = class_string.split('.')
         module = ".".join(parts[:-1])
         m = __import__(module)
@@ -748,5 +758,5 @@ class MachineController(object):
 
     def init_done(self):
         self._init_done = True
-        Config.unload_config_spec()
+        ConfigProcessor.unload_config_spec()
         self.reset()

@@ -1,7 +1,6 @@
 """ Contains the Device base class"""
 
 import logging
-from .config import CaseInsensitiveDict
 
 
 class Device(object):
@@ -26,7 +25,7 @@ class Device(object):
         self.config = dict()
 
         if validate:
-            self.config = self.machine.config_processor.process_config2(
+            self.config = self.machine.config_validator.process_config2(
                 self.config_section, config, self.name)
 
         else:

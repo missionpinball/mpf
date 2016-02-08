@@ -1,6 +1,22 @@
-# values are type|validation|default
 
-config_spec = '''
+import logging
+import sys
+from copy import deepcopy
+
+import ruamel.yaml as yaml
+
+from mpf.file_interfaces.yaml_interface import MpfLoader, YamlInterface
+from mpf.core.utility_functions import Util
+import mpf.core.rgb_color
+from mpf.core.rgb_color import RGBColor
+import version
+
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+
+log = logging.getLogger('ConfigProcessor')
+
+# values are type|validation|default
+mpf_config_spec = '''
 
 accelerometers:
     platform: single|str|None
@@ -327,6 +343,18 @@ led_settings:
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
     default_led_fade_ms: single|int|0
+light_script_player:
+    script: single|self.machine.light_scripts[%]|
+    lights: list|str|None
+    leds: list|str|None
+    light_tags: list|str|None
+    led_tags: list|str|None
+    tags: list|str|None
+    action: single|str|play
+light_scripts:
+    fade: single|bool|False
+    color: single|color|None
+    time: ignore
 machine:
     balls_installed: single|int|1
     min_balls: single|int|1
@@ -496,6 +524,14 @@ shot_profiles:
         tocks_per_sec: single|int|10
         num_repeats: single|int|0
         sync_ms:  single|int|0
+show_player:
+    show: single|str|
+    priority: single|int|None
+    action: single|str|play
+    repeat: single|bool|True
+    step_num: single|int|0
+    loops: single|int|0
+    blend: single|bool|False
 slide_player:
     slide: single|str|
     target: single|str|None
@@ -748,3 +784,479 @@ fast:
     hardware_led_fade_time: single|ms|0
     debug: single|bool|False
 '''
+
+class ConfigValidator(object):
+    config_spec = None
+
+    def __init__(self, machine):
+        self.machine = machine
+        self.log = logging.getLogger('ConfigProcessor')
+        self.system_config = self.machine.config['mpf']
+
+    @classmethod
+    def load_config_spec(cls, config_spec=None):
+        if not config_spec:
+            config_spec = mpf_config_spec
+
+        cls.config_spec = YamlInterface.process(config_spec)
+
+    @classmethod
+    def unload_config_spec(cls):
+        cls.config_spec = None
+
+    @staticmethod
+    def process_config(config_spec, source, target=None):  # pragma: no cover
+        # Note this method is deprecated and will be removed eventually
+        # Use process_config2() instead
+        config_spec = yaml.load(config_spec, Loader=MpfLoader)
+        processed_config = source
+
+        for k in list(config_spec.keys()):
+            if k in source:
+                processed_config[k] = ConfigValidator.validate_config_item(
+                        config_spec[k], source[k])
+            else:
+                log.debug('Processing default settings for key "%s:"', k)
+                processed_config[k] = ConfigValidator.validate_config_item(
+                        config_spec[k])
+
+        if target:
+            processed_config = Util.dict_merge(target, processed_config)
+
+        return processed_config
+
+    @staticmethod
+    def validate_config_item(spec,
+                             item='item not in config!@#'):  # pragma: no cover
+        # Note this method is deprecated and will be removed eventually
+        # Use validate_config_item2() instead
+
+        try:
+            if item.lower() == 'none':
+                item = None
+        except AttributeError:
+            pass
+
+        default = 'default required!@#'
+
+        if '|' in spec:
+            item_type, default = spec.split('|')
+            if type(default) is str and default.lower() == 'none':
+                default = None
+        else:
+            item_type = spec
+
+        if item == 'item not in config!@#':
+            if default == 'default required!@#':
+                log.error(
+                    'Required setting missing from config file. Run with '
+                    'verbose logging and look for the last '
+                    'ConfigProcessor entry above this line to see where '
+                    'the problem is.')
+                sys.exit()
+            else:
+                item = default
+
+        if item_type == 'list':
+            return Util.string_to_list(item)
+
+        if item_type == 'list_of_dicts':
+            if type(item) is list:
+                return item
+            elif type(item) is dict:
+                return [item]
+
+        elif item_type == 'set':
+            return set(Util.string_to_list(item))
+
+        elif item_type == 'dict':
+            if type(item) is dict or type(item) is CaseInsensitiveDict:
+                return item
+            elif not default:
+                return dict()
+            else:
+                log.error('Config error. "%s" is not a dictionary', item)
+                sys.exit()
+
+        elif item_type == 'int':
+            try:
+                return int(item)
+            except TypeError:
+                return None
+
+        elif item_type == 'float':
+            try:
+                return float(item)
+            except TypeError:
+                return None
+
+        elif item_type in ('string', 'str'):
+
+            if item:
+                return str(item)
+            else:
+                return None
+
+        elif item_type in ('boolean', 'bool'):
+            if type(item) is bool:
+                return item
+            else:
+                return str(item).lower() in ('yes', 'true')
+
+        elif item_type == 'ms':
+            return Util.string_to_ms(item)
+
+        elif item_type == 'secs':
+            return Util.string_to_secs(item)
+
+        elif item_type == 'list_of_lists':
+            return Util.list_of_lists(item)
+
+    def process_config2(self, config_spec, source=None, section_name=None,
+                        target=None, result_type='dict', base_spec=None,
+                        add_missing_keys=True):
+        # config_spec, str i.e. "device:shot"
+        # source is dict
+        # section_name is str used for logging failures
+
+        if not self.config_spec:
+            self.load_config_spec()
+
+        if source is None:
+            source = CaseInsensitiveDict()
+
+        if not section_name:
+            section_name = config_spec  # str
+
+        validation_failure_info = (config_spec, section_name)
+
+        orig_spec = config_spec  # str
+
+        # build up the actual config spec we're going to use
+        this_spec = self.config_spec
+        config_spec = config_spec.split(':')
+        for i in range(len(config_spec)):
+            this_spec = this_spec[config_spec[i]]
+
+        if not isinstance(this_spec, dict):
+            this_spec = dict()
+
+        if base_spec:
+            this_base_spec = self.config_spec
+            base_spec = base_spec.split(':')
+            for i in range(len(base_spec)):
+                # need to deepcopy so the orig base spec doesn't get polluted
+                # with this widget's spec
+                this_base_spec = deepcopy(this_base_spec[base_spec[i]])
+
+            this_base_spec.update(this_spec)
+            this_spec = this_base_spec
+
+        self.check_for_invalid_sections(this_spec, source,
+                                        validation_failure_info)
+
+        processed_config = source
+
+        for k in list(this_spec.keys()):
+            if this_spec[k] == 'ignore' or k[0] == '_':
+                continue
+
+            elif k in source:  # validate the entry that exists
+
+                if type(this_spec[k]) is dict:
+                    # This means we're looking for a list of dicts
+
+                    final_list = list()
+                    if k in source:
+                        for i in source[k]:  # individual step
+                            final_list.append(self.process_config2(
+                                    orig_spec + ':' + k, source=i,
+                                    section_name=k))
+
+                    processed_config[k] = final_list
+
+                elif result_type == 'list':
+                    # spec is dict
+                    # item is source
+                    processed_config = self.validate_config_item2(
+                            spec=this_spec[k], item=source[k],
+                            validation_failure_info=(
+                            validation_failure_info, k))
+
+                else:
+                    processed_config[k] = self.validate_config_item2(
+                            this_spec[k], item=source[k],
+                            validation_failure_info=(
+                            validation_failure_info, k))
+
+            elif add_missing_keys:  # create the default entry
+
+                if type(this_spec[k]) is dict:
+                    processed_config[k] = list()
+
+                else:
+                    if result_type == 'list':
+                        processed_config = self.validate_config_item2(
+                                this_spec[k],
+                                validation_failure_info=(
+                                validation_failure_info,
+                                k))
+
+                    else:
+                        processed_config[k] = self.validate_config_item2(
+                                this_spec[k],
+                                validation_failure_info=(
+                                validation_failure_info,
+                                k))
+
+        if target:
+            processed_config = Util.dict_merge(target, processed_config)
+
+        return processed_config
+
+    def validate_config_item2(self, spec, validation_failure_info,
+                              item='item not in config!@#', ):
+
+        try:
+            item_type, validation, default = spec.split('|')
+        except ValueError:
+            raise ValueError('Error in validator config: {}'.format(spec))
+
+        if default.lower() == 'none':
+            default = None
+        elif not default:
+            default = 'default required!@#'
+
+        if item == 'item not in config!@#':
+            if default == 'default required!@#':
+                raise ValueError('Required setting missing from config file. '
+                                 'Run with verbose logging and look for the last '
+                                 'ConfigProcessor entry above this line to see where the '
+                                 'problem is. {} {}'.format(spec,
+                                                            validation_failure_info))
+            else:
+                item = default
+
+        if item_type == 'single':
+            item = self.validate_item(item, validation,
+                                      validation_failure_info)
+
+        elif item_type == 'list':
+            item = Util.string_to_list(item)
+
+            new_list = list()
+
+            for i in item:
+                new_list.append(
+                        self.validate_item(i, validation,
+                                           validation_failure_info))
+
+            item = new_list
+
+        elif item_type == 'set':
+            item = set(Util.string_to_list(item))
+
+            new_set = set()
+
+            for i in item:
+                new_set.add(
+                        self.validate_item(i, validation,
+                                           validation_failure_info))
+
+            item = new_set
+
+        elif item_type == 'dict':
+            item = self.validate_item(item, validation,
+                                      validation_failure_info)
+
+            if not item:
+                item = dict()
+
+        else:
+            self.log.error("Invalid Type '%s' in config spec %s:%s", item_type,
+                           validation_failure_info[0][0],
+                           validation_failure_info[1])
+            sys.exit()
+
+        return item
+
+    def check_for_invalid_sections(self, spec, config,
+                                   validation_failure_info):
+
+        for k, v in config.items():
+            if type(k) is not dict:
+                if k not in spec and k[0] != '_':
+
+                    path_list = validation_failure_info[0].split(':')
+
+                    if len(path_list) > 1 and (
+                                path_list[-1] == validation_failure_info[1]):
+                        path_list.append('[list_item]')
+                    elif path_list[0] == validation_failure_info[1]:
+                        path_list = list()
+
+                    path_list.append(validation_failure_info[1])
+                    path_list.append(k)
+
+                    path_string = ':'.join(path_list)
+
+                    if self.system_config['allow_invalid_config_sections']:
+
+                        self.log.warning(
+                            'Unrecognized config setting. "%s" is '
+                            'not a valid setting name.',
+                            path_string)
+
+                    else:
+                        self.log.error('Your config contains a value for the '
+                                       'setting "%s", but this is not a valid '
+                                       'setting name.', path_string)
+
+                        self.lookup_invalid_config_setting(path_string)
+
+                        raise AssertionError('Your config contains a value for the '
+                                       'setting "' + path_string + '", but this is not a valid '
+                                       'setting name.')
+
+    def validate_item(self, item, validator, validation_failure_info):
+
+        try:
+            if item.lower() == 'none':
+                item = None
+        except AttributeError:
+            pass
+
+        if ':' in validator:
+            validator = validator.split(':')
+            # item could be str, list, or list of dicts
+            item = Util.event_config_to_dict(item)
+
+            return_dict = dict()
+
+            for k, v in item.items():
+                return_dict[self.validate_item(k, validator[0],
+                                               validation_failure_info)] = (
+                    self.validate_item(v, validator[1],
+                                       validation_failure_info)
+                )
+
+            item = return_dict
+
+        elif '%' in validator:
+            if type(item) is str:
+
+                try:
+                    item = eval(validator.replace('%', "'" + item + "'"))
+                except KeyError:
+                    self.validation_error(item, validation_failure_info)
+            else:
+                item = None
+
+        elif validator == 'str':
+            if item is not None:
+                item = str(item)
+            else:
+                item = None
+
+        elif validator == 'float':
+            try:
+                item = float(item)
+            except (TypeError, ValueError):
+                # TODO error
+                pass
+
+        elif validator == 'int':
+            try:
+                item = int(item)
+            except (TypeError, ValueError):
+                pass
+
+        elif validator == 'num':
+            # used for int or float, but does not convert one to the other
+            if type(item) not in (int, float):
+                try:
+                    if '.' in item:
+                        item = float(item)
+                    else:
+                        item = int(item)
+                except (TypeError, ValueError):
+                    pass
+
+        elif validator in ('bool', 'boolean'):
+            if type(item) is str:
+                if item.lower() in ['false', 'f', 'no', 'disable', 'off']:
+                    item = False
+
+            elif not item:
+                item = False
+
+            else:
+                item = True
+
+        elif validator == 'ms':
+            item = Util.string_to_ms(item)
+
+        elif validator == 'secs':
+            item = Util.string_to_secs(item)
+
+        elif validator == 'list':
+            item = Util.string_to_list(item)
+
+        elif validator == 'dict':
+            return item
+
+        elif validator == 'color':
+            # we call color_from_string() from the config processor because MPF
+            # and the MPF_MC each need different color formats internally, so
+            # this way they can each implement their own methods.
+            return self.machine.config_processor.color_from_string(item)
+
+        else:
+            self.log.error("Invalid Validator '%s' in config spec %s:%s",
+                           validator,
+                           validation_failure_info[0][0],
+                           validation_failure_info[1])
+            sys.exit()
+
+        return item
+
+    def validation_error(self, item, validation_failure_info):
+        self.log.error(
+            "Config validation error: Entry %s:%s:%s:%s is not valid",
+            validation_failure_info[0][0],
+            validation_failure_info[0][1],
+            validation_failure_info[1],
+            item)
+
+        sys.exit()
+
+    def lookup_invalid_config_setting(self, setting):
+
+        setting_key = setting.split(':')[-1]
+
+        with open(self.system_config['config_versions_file'], 'r') as f:
+            config_file = yaml.load(f, Loader=MpfLoader)
+
+        for ver, sections in config_file.items():
+
+            if type(ver) is not int:
+                continue
+
+            ver_string = ''
+
+            if int(version.__config_version_info__) > int(ver):
+                ver_string = (
+                ' (The latest config version is config_version=' +
+                version.__config_version_info__ + ').')
+
+            if setting_key in sections['section_replacements']:
+                self.log.info('The setting "%s" has been renamed to "%s" in '
+                              'config_version=%s%s', setting,
+                              sections['section_replacements'][setting_key],
+                              ver, ver_string)
+            if setting_key in sections['section_deprecations']:
+                self.log.info('The setting "%s" has been removed in '
+                              'config_version=%s%s', setting, ver, ver_string)
+
+        if setting in config_file['custom_messages']:
+            self.log.info(config_file['custom_messages'][setting])

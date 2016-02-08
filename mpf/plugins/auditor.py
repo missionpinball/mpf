@@ -2,7 +2,7 @@
 etc."""
 
 import logging
-from mpf.core.config import Config
+from mpf.core.config_processor import ConfigProcessor
 from mpf.core.data_manager import DataManager
 from mpf.devices.shot import Shot
 
@@ -45,7 +45,7 @@ class Auditor(object):
         # Initializes the auditor. We do this separate from __init__() since
         # we need everything else to be setup first.
 
-        self.config = self.machine.config_processor.process_config2('auditor',
+        self.config = self.machine.config_validator.process_config2('auditor',
                                             self.machine.config['auditor'])
 
         self.current_audits = self.data_manager.get_data()
