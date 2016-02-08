@@ -92,7 +92,7 @@ class Show(Asset):
 
         self.machine.show_controller.log.debug("Loading Show %s",
                                                self.file)
-        if not steps:
+        if not steps and self.file:
             steps = self.load_show_from_disk()
 
         if type(steps) is not list:
@@ -476,7 +476,7 @@ class Show(Asset):
 
         self.machine.show_controller._run_show(self)
 
-    def _autoplay(self):
+    def _autoplay(self, *args, **kwargs):
         self.play(**self._autoplay_settings)
 
     def load_show_from_disk(self):
@@ -506,6 +506,9 @@ class Show(Asset):
         self.machine.show_controller._end_show(self, reset)
 
     def tick(self, current_tick_time):
+
+        if not self.show_steps:
+            return
 
         self.current_tick_time = current_tick_time
 
@@ -664,6 +667,7 @@ class Show(Asset):
             self.machine.show_controller.add_to_light_update_list(
                 light=light_obj,
                 brightness=brightness,
+                fade_ms=0,
                 priority=self.priority,
                 blend=self.blend)
 

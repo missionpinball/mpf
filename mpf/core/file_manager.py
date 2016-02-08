@@ -87,6 +87,9 @@ class FileManager(object):
     @staticmethod
     def locate_file(filename):
 
+        if not filename:
+            return False
+
         if not FileManager.initialized:
             FileManager.init()
 
