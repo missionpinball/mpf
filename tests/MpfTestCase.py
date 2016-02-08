@@ -21,19 +21,15 @@ class TestMachineController(MachineController):
         super().__init__(options)
         self.clock._max_fps = 0
 
-    def _load_mpf_config(self):
+    def _get_machine_config(self):
         if self.options['mpfconfigfile'] in TestMachineController.local_mpf_config_cache:
-            self.config = copy.deepcopy(TestMachineController.local_mpf_config_cache[
-                    self.options['mpfconfigfile']])
-            self.machine_config = self.config
+            return copy.deepcopy(TestMachineController.local_mpf_config_cache[
+                self.options['mpfconfigfile']])
         else:
-            super()._load_mpf_config()
-            TestMachineController.local_mpf_config_cache[self.options['mpfconfigfile']] = copy.deepcopy(self.config)
-
-    def _load_machine_config(self):
-        super()._load_machine_config()
-        self.config = Util.dict_merge(self.config, self.test_config_patches,
-                                      combine_lists=False)
+            config = super()._get_machine_config()
+            TestMachineController.local_mpf_config_cache[
+                self.options['mpfconfigfile']] = config
+            return config
 
     def _reset_complete(self):
         self.test_init_complete = True
@@ -78,7 +74,8 @@ class MpfTestCase(unittest.TestCase):
             'configfile': Util.string_to_list(self.getConfigFile()),
             'debug': True,
             'bcp': self.get_use_bcp(),
-            'rebuild_cache': False
+            'no_load_cache': False,
+            'create_config_cache': True,
         }
 
     def set_time(self, new_time):

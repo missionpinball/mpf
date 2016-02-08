@@ -46,9 +46,14 @@ parser.add_argument("-x",
                     const='virtual', help="Forces the virtual platform to be "
                     "used for all devices")
 
-parser.add_argument("-r",
-                    action="store_true", dest="rebuild_cache",
-                    help="Forces the config cache to be rebuilt")
+parser.add_argument("-a",
+                    action="store_true", dest="no_load_cache",
+                    help="Forces the config to be loaded from files and not "
+                    "cache")
+
+parser.add_argument("-A",
+                    action="store_false", dest="create_config_cache",
+                    help="Does not create the cache config files")
 
 parser.add_argument("-X",
                     action="store_const", dest="force_platform",

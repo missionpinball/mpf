@@ -215,7 +215,7 @@ class MachineController(object):
         sys.path.append(self.machine_path)
 
     def _load_config(self):
-        if self.options['rebuild_cache']:
+        if self.options['no_load_cache']:
             load_from_cache = False
         else:
             try:
@@ -242,7 +242,7 @@ class MachineController(object):
     def _load_config_from_files(self):
         self.log.info("Loading config from original files")
 
-        self.config = ConfigProcessor.load_config_file(self.options['mpfconfigfile'])
+        self.config = self._get_machine_config()
 
         for num, config_file in enumerate(self.options['configfile']):
 
@@ -258,7 +258,11 @@ class MachineController(object):
                 ConfigProcessor.load_config_file(config_file))
             self.machine_config = self.config
 
-        self._cache_config()
+        if self.options['create_config_cache']:
+            self._cache_config()
+
+    def _get_machine_config(self):
+        return ConfigProcessor.load_config_file(self.options['mpfconfigfile'])
 
     def _load_config_from_cache(self):
         self.log.info("Loading cached config: {}".format(
@@ -298,7 +302,6 @@ class MachineController(object):
         return latest_time
 
     def _cache_config(self):
-
         try:
             os.makedirs(os.path.join(self.machine_path, '__mpfcache__'))
         except OSError as exception:
