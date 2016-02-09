@@ -230,6 +230,7 @@ class BallDevice(Device):
             if not self.eject_queue or not self.balls:
                 if self._blocked_eject_attempts:
                     (queue, source) = self._blocked_eject_attempts.popleft()
+                    del source
                     queue.clear()
                     return self._switch_state("waiting_for_ball")
 
@@ -384,6 +385,7 @@ class BallDevice(Device):
             return self._switch_state("idle")
 
     def remove_incoming_ball(self, source):
+        del source
         # Removes a ball from the incoming balls queue
         self._incoming_balls.popleft()
 
@@ -567,6 +569,9 @@ class BallDevice(Device):
 
     def _source_device_eject_attempt(self, balls, target, source, queue,
                                      **kwargs):
+        del balls
+        del kwargs
+
         if target != self:
             return
 
@@ -584,6 +589,9 @@ class BallDevice(Device):
                                  target=target)
 
     def _source_device_eject_failed(self, balls, target, retry, **kwargs):
+        del balls
+        del kwargs
+
         if target != self:
             return
 
@@ -752,8 +760,8 @@ class BallDevice(Device):
                 if target.name == self.name:
                     self._source_devices.append(device)
                     if self.debug:
-                        self.log.debug("EVENT: {} to {}".format(device.name,
-                                                                target.name))
+                        self.log.debug("EVENT: % to %", device.name, target.name)
+
                     self.machine.events.add_handler(
                             'balldevice_{}_ball_eject_failed'.format(
                                 device.name),
@@ -769,7 +777,7 @@ class BallDevice(Device):
                             self._source_device_ball_lost)
 
                     self.machine.events.add_handler(
-                            'balldevice_balls_available'.format(device.name),
+                            'balldevice_balls_available',
                             self._source_device_balls_available)
 
                     break
@@ -1185,6 +1193,7 @@ class BallDevice(Device):
         return False
 
     def eject(self, balls=1, target=None, **kwargs):
+        del kwargs
         if not target:
             target = self.config['eject_targets'][0]
 
