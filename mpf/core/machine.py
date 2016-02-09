@@ -59,7 +59,7 @@ class MachineController(object):
         self.options = options
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework v%s", version.__version__)
-        self.log.debug("Command line arguments: {}".format(self.options))
+        self.log.debug("Command line arguments: %", self.options)
         self.verify_system_info()
 
         self._boot_holds = set()
@@ -100,7 +100,7 @@ class MachineController(object):
         if not self.options['force_platform']:
             for section, platform in self.config['hardware'].items():
                 if platform.lower() != 'default' and section != 'driverboards':
-                        self.add_platform(platform)
+                    self.add_platform(platform)
             self.set_default_platform(self.config['hardware']['platform'])
 
         else:
@@ -205,6 +205,7 @@ class MachineController(object):
             self.create_machine_var(name=name, value=settings['value'])
 
     def _check_crash_queue(self, time):
+        del time
         try:
             crash = self.crash_queue.get(block=False)
         except queue.Empty:
@@ -227,7 +228,7 @@ class MachineController(object):
                                         self.options['machine_path'])
 
         self.machine_path = os.path.abspath(machine_path)
-        self.log.debug("Machine path: {}".format(self.machine_path))
+        self.log.debug("Machine path: %", self.machine_path)
 
         # Add the machine folder to sys.path so we can import modules from it
         sys.path.append(self.machine_path)
@@ -283,9 +284,9 @@ class MachineController(object):
         return ConfigProcessor.load_config_file(self.options['mpfconfigfile'])
 
     def _load_config_from_cache(self):
-        self.log.info("Loading cached config: {}".format(
+        self.log.info("Loading cached config: %",
             os.path.join(self.machine_path, '__mpfcache__',
-            '{}_config.p'.format('-'.join(self.options['configfile'])))))
+            '{}_config.p'.format('-'.join(self.options['configfile']))))
 
         with open(os.path.join(
                 self.machine_path, '__mpfcache__', '{}_config.p'.
@@ -331,9 +332,9 @@ class MachineController(object):
                 format('-'.join(self.options['configfile']))),
                 'wb') as f:
             pickle.dump(self.config, f, protocol=4)
-            self.log.info('Config file cache created: {}'.format(os.path.join(
+            self.log.info('Config file cache created: %', os.path.join(
                 self.machine_path, '__mpfcache__', '{}_config.p'.
-                format('-'.join(self.options['configfile'])))))
+                format('-'.join(self.options['configfile']))))
 
     def verify_system_info(self):
         """Dumps information about the Python installation to the log.
@@ -775,8 +776,7 @@ class MachineController(object):
 
     def clear_boot_hold(self, hold):
         self._boot_holds.remove(hold)
-        self.log.debug("Clearing boot hold '{}'. Holds remaining:".format(
-            hold, self._boot_holds))
+        self.log.debug("Clearing boot hold '%'. Holds remaining: %", hold, self._boot_holds)
         if not self._boot_holds:
             self.init_done()
 
