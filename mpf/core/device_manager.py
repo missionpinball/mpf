@@ -222,6 +222,22 @@ class DeviceCollection(CaseInsensitiveDict):
                 output.append(item)
         return output
 
+    def sitems_tagged(self, tag):
+        """Returns of list of device names (strings) which have a certain tag.
+
+        Args:
+            tag: A string of the tag name which specifies what devices are
+                returned.
+        Returns:
+            A list of string names of devices. If no devices are found with
+            that tag, it will return an empty list.
+        """
+        output = []
+        for item in self:
+            if tag in item.tags:
+                output.append(item.name)
+        return output
+
     def items_not_tagged(self, tag):
         """Returns of list of device objects which do not have a certain tag.
 

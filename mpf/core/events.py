@@ -10,7 +10,7 @@ from mpf.core.utility_functions import Util
 
 class EventManager(object):
 
-    def __init__(self, machine, setup_event_player=True):
+    def __init__(self, machine):
         self.log = logging.getLogger("Events")
         self.machine = machine
         self.registered_handlers = {}
@@ -18,24 +18,6 @@ class EventManager(object):
         self.callback_queue = deque([])
 
         self.debug = True
-
-        if setup_event_player:
-            self.add_handler('init_phase_1', self._setup_event_player)
-
-    def _setup_event_player(self):
-
-        if 'event_player' in self.machine.config:
-            self.process_event_player(self.machine.config['event_player'])
-
-        if 'random_event_player' in self.machine.config:
-            self.process_random_event_player(
-                self.machine.config['random_event_player'])
-
-        self.machine.mode_controller.register_start_method(
-            self.process_event_player, 'event_player')
-
-        self.machine.mode_controller.register_start_method(
-            self.process_random_event_player, 'random_event_player')
 
     def add_handler(self, event, handler, priority=1, **kwargs):
         """Registers an event handler to respond to an event.
@@ -512,51 +494,6 @@ class EventManager(object):
             if len(self.callback_queue) > 0:
                 callback, kwargs = self.callback_queue.pop()
                 callback(**kwargs)
-
-    def process_event_player(self, config, mode=None, priority=0):
-        # config is localized to 'event_player'
-        if self.debug:
-            self.log.debug("Processing event_player configuration. Priority: %s",
-                       priority)
-
-        event_keys = set()
-
-        for event_name, events in config.items():
-            if type(events) is not list:
-                events = Util.string_to_list(events)
-
-            for event in events:
-                event_keys.add(self.machine.events.add_handler(event_name,
-                    self._event_player_callback, priority, event_to_call=event))
-
-        return self.unload_event_player_events, event_keys
-
-    def process_random_event_player(self, config, mode=None, priority=0):
-        # config is localized to 'event_player'
-        if self.debug:
-            self.log.debug("Processing random_event_player configuration. Priority:"
-                       " %s", priority)
-
-        event_keys = set()
-
-        for event_name, events in config.items():
-            if type(events) is not list:
-                events = Util.string_to_list(events)
-
-            event_keys.add(self.machine.events.add_handler(event_name,
-                self._random_event_player_callback, priority,
-                event_list=events))
-
-        return self.unload_event_player_events, event_keys
-
-    def unload_event_player_events(self, event_keys):
-        self.machine.events.remove_handlers_by_keys(event_keys)
-
-    def _event_player_callback(self, event_to_call, **kwargs):
-        self.machine.events.post(event_to_call, **kwargs)
-
-    def _random_event_player_callback(self, event_list, **kwargs):
-        self.machine.events.post(random.choice(event_list), **kwargs)
 
 
 class QueuedEvent(object):

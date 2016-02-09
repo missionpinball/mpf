@@ -788,7 +788,7 @@ class Asset(object):
         self.name = name
         self.file = file
 
-        self.config = self.machine.config_validator.process_config2(
+        self.config = self.machine.config_validator.validate_config(
             'assets:{}'.format(self.config_section), config,
             base_spec='assets:common')
 

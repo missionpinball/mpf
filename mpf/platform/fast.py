@@ -267,7 +267,7 @@ class HardwarePlatform(Platform):
 
     def initialize(self):
         self.config = self.machine.config['fast']
-        self.machine.config_validator.process_config2("fast", self.config)
+        self.machine.config_validator.validate_config("fast", self.config)
 
         self.watchdog_command = 'WD:' + str(hex(self.config['watchdog']))[2:]
 

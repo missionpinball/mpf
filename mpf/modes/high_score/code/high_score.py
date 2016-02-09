@@ -11,7 +11,7 @@ class HighScore(Mode):
         self.data_manager = DataManager(self.machine, 'high_scores')
         self.high_scores = self.data_manager.get_data()
 
-        self.high_score_config = self.machine.config_validator.process_config2(
+        self.high_score_config = self.machine.config_validator.validate_config(
             config_spec='high_score',
             source=self._get_merged_settings('high_score'),
             section_name='high_score')

@@ -2,10 +2,10 @@ import abc
 
 
 class MatrixLightPlatformInterface(metaclass=abc.ABCMeta):
-    """
-    MatrixLightPlatformInterface is an abstract base class that should be overridden for all
-    matrix light interface classes on supported platforms.  This class ensures the proper required
-    methods are implemented to support matrix light operations in MPF.
+    """MatrixLightPlatformInterface is an abstract base class that should be
+    overridden for all matrix light interface classes on supported
+    platforms. This class ensures the proper required methods are
+    implemented to support matrix light operations in MPF.
     """
 
     @abc.abstractmethod

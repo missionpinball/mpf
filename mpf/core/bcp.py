@@ -438,7 +438,7 @@ class BCP(object):
         if event not in self.mpfmc_trigger_events:
 
             self.machine.events.add_handler(event,
-                                            handler=self.send_trigger,
+                                            handler=self.bcp_trigger,
                                             name=event)
             self.mpfmc_trigger_events.add(event)
 
@@ -477,21 +477,6 @@ class BCP(object):
                                  event, settings)
 
         return self.machine.events.remove_handlers_by_keys, event_list
-
-    def send_trigger(self, name, **kwargs):
-        # Since player variables are sent automatically, if we get a trigger
-        # for an event that starts with "player_", we need to only send it here
-        # if there's *not* a player variable with that name, since if there is
-        # a player variable then the player variable handler will send it.
-        if name.startswith('player_'):
-            try:
-                if self.machine.game.player.is_player_var(name.lstrip('player_')):
-                    return
-
-            except AttributeError:
-                pass
-
-        self.send(bcp_command='trigger', name=name, **kwargs)
 
     def send(self, bcp_command, callback=None, **kwargs):
         """Sends a BCP message.
@@ -631,7 +616,19 @@ class BCP(object):
 
     def bcp_trigger(self, name, **kwargs):
         """Sends BCP 'trigger' to the connected BCP hosts."""
-        self.send('trigger', name=name, **kwargs)
+        # Since player variables are sent automatically, if we get a trigger
+        # for an event that starts with "player_", we need to only send it here
+        # if there's *not* a player variable with that name, since if there is
+        # a player variable then the player variable handler will send it.
+        if name.startswith('player_'):
+            try:
+                if self.machine.game.player.is_player_var(name.lstrip('player_')):
+                    return
+
+            except AttributeError:
+                pass
+
+        self.send(bcp_command='trigger', name=name, **kwargs)
 
     def bcp_receive_trigger(self, name=None, **kwargs):
         """Processes an incoming trigger command from a remote BCP host.
@@ -878,7 +875,7 @@ class BCPClientSocket(object):
         self.name = name
         self.receive_queue = receive_queue
 
-        self.config = self.machine.config_validator.process_config2(
+        self.config = self.machine.config_validator.validate_config(
             'bcp:connections', config, 'bcp:connections')
 
         self.sending_queue = Queue()

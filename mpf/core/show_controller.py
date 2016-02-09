@@ -24,7 +24,6 @@ class ShowController(object):
         self.log = logging.getLogger("ShowController")
         self.machine = machine
 
-        self.light_queue = []
         self.led_queue = []
         self.event_queue = set()
         self.coil_queue = set()
@@ -32,7 +31,7 @@ class ShowController(object):
         self.flasher_queue = set()
         self.trigger_queue = []
 
-        self.light_update_list = []
+        # self.light_update_list = []
         self.led_update_list = []
 
         self.running_shows = []
@@ -85,7 +84,7 @@ class ShowController(object):
         # Registers Show with the asset manager
         Show.initialize(self.machine)
 
-    def play_show(self, show, priority=0, **kwargs):
+    def play_show(self, show, priority=0, mode=None, **kwargs):
         """Plays a show.
 
         Args:
@@ -102,9 +101,10 @@ class ShowController(object):
             pass
 
         if show in self.machine.shows:
-            self.machine.shows[show].play(priority=priority, **kwargs)
+            self.machine.shows[show].play(priority=priority, mode=mode,
+                                          **kwargs)
         elif isinstance(show, Show):
-            show.play(priority=priority, **kwargs)
+            show.play(priority=priority, mode=mode, **kwargs)
         else:
             raise ValueError("Can't play show '{}' since it's not a valid "
                              "show name or show object".format(show))
@@ -338,150 +338,6 @@ class ShowController(object):
         #        if item in self.queue:
         #            self.queue.remove(item)
 
-        # Process any device changes or actions made by the running shows
-        self._do_update()
-
-    def add_to_light_update_list(self, light, brightness, fade_ms, priority,
-                                 blend):
-        # Adds an update to our update list, with intelligence that if the list
-        # already contains an update for this lightname at the same or lower
-        # priority, it deletes that one since there's not sense sending a light
-        # command that will be immediately overridden by a higher one.
-        for item in self.light_update_list:
-            if item['light'] == light and item['priority'] <= priority:
-                self.light_update_list.remove(item)
-        self.light_update_list.append({'light': light,
-                                       'brightness': brightness,
-                                       'fade_ms': fade_ms,
-                                       'priority': priority,
-                                       'blend': blend})  # remove blend?
-
-    def add_to_led_update_list(self, led, color, fade_ms, priority, blend):
-        # See comment from above method
-        for item in self.led_update_list:
-            if item['led'] == led and item['priority'] <= priority:
-                self.led_update_list.remove(item)
-        self.led_update_list.append({'led': led,
-                                     'color': color,
-                                     'fade_ms': fade_ms,
-                                     'priority': priority,
-                                     'blend': blend})
-
-    def add_to_event_queue(self, event):
-        # Since events don't blend, this is easy
-        self.event_queue.add(event)
-
-    def add_to_coil_queue(self, coil, action=('pulse', 1.0)):
-        # action is a tuple
-        # action[0] is string of instruction (pulse, pwm, etc.)
-        # action[1] is details for that instruction:
-        # for pulse, it's a power multiplier
-        self.coil_queue.add((coil, action))
-
-    def add_to_gi_queue(self, gi, value):
-        self.gi_queue.add((gi, value))
-
-    def add_to_flasher_queue(self, flasher):
-        self.flasher_queue.add(flasher)
-
-    def add_to_trigger_queue(self, trigger):
-        self.trigger_queue.append(trigger)
-
-    def _do_update(self):
-        if self.light_update_list:
-            self._update_lights()
-        if self.led_update_list:
-            self._update_leds()
-        if self.coil_queue:
-            self._fire_coils()
-        if self.event_queue:
-            self._fire_events()
-        if self.gi_queue:
-            self._update_gis()
-        if self.flasher_queue:
-            self._update_flashers()
-        if self.trigger_queue:
-            self._fire_triggers()
-
-    def _fire_coils(self):
-        for coil in self.coil_queue:
-            if coil[1][0] == 'pulse':
-                coil[0].pulse(power=coil[1][1])
-        self.coil_queue = set()
-
-    def _fire_events(self):
-        for event in self.event_queue:
-            self.machine.events.post(event)
-        self.event_queue = set()
-
-    def _update_gis(self):
-        for gi in self.gi_queue:
-            gi[0].enable(brightness=gi[1])
-        self.gi_queue = set()
-
-    def _update_flashers(self):
-        for flasher in self.flasher_queue:
-            flasher.flash()
-        self.flasher_queue = set()
-
-    def _fire_triggers(self):
-        for trigger in self.trigger_queue:
-            self.machine.bcp.bcp_trigger(trigger[0], **trigger[1])
-        self.trigger_queue = []
-
-    def _update_lights(self):
-        # Updates all the lights in the machine with whatever's in
-        # self.light_update_list. Updates with priority, so if the light is
-        # doing something at a higher priority, it won't have an effect
-
-        for item in self.light_update_list:
-            item['light'].on(brightness=item['brightness'],
-                             fade_ms=item['fade_ms'],
-                             priority=item['priority'],
-                             cache=False)
-
-        self.light_update_list = []
-
-    def _update_leds(self):
-        # Updates the LEDs in the machine with whatever's in the update_list.
-
-        # The update_list is a list of dictionaries w/the following k/v pairs:
-        #   led
-        #   color
-        #   fade_ms
-        #   priority
-        #   blend
-
-        for item in self.led_update_list:
-            # Only perform the update if the priority is higher than whatever
-            # touched that led last.
-            if item['priority'] >= item['led'].state['priority']:
-
-                # Now we're doing the actual update.
-
-                if item['led'].debug:
-                    item['led'].log.debug(
-                        "Applying update to LED from the Show "
-                        "Controller")
-
-                item['led'].color(color=item['color'],
-                                  fade_ms=item['fade_ms'],
-                                  priority=item['priority'],
-                                  blend=item['blend'],
-                                  cache=False)
-
-            elif item['led'].debug:
-                item['led'].log.debug("Show Controller has an update for this "
-                                      "LED, but the update is priority %s "
-                                      "while "
-                                      "the current priority of the LED is %s. "
-                                      "The update will not be applied.",
-                                      item['priority'],
-                                      item['led'].state['priority'])
-
-        self.led_update_list = []
-
-
     def add_external_show_start_command_to_queue(self, name, priority=0,
                                                  blend=True, leds=None,
                                                  lights=None, flashers=None,
@@ -619,46 +475,46 @@ class ShowController(object):
             # way to
             # remove it.
 
-    def _process_external_show_frame_command(self, name, led_data, light_data,
-                                             flasher_data, gi_data, coil_data,
-                                             events):
-        """Processes an external show frame command.  Runs in the main
-        processing thread.
-
-        Args:
-            name: The name of the external show.
-            led_data: A string of concatenated hex color values for the leds
-            in the show.
-            light_data: A string of concatenated hex brightness values for
-            the lights in the show.
-            flasher_data: A string of concatenated pulse time (ms) values
-            for the flashers in the show.
-            gi_data: A string of concatenated hex brightness values for the
-            GI in the show.
-            coil_data: A string of concatenated coil values ????
-            events: A comma-separated list of event names to fire immediately.
-        """
-        if name not in self.running_external_show_keys:
-            return
-
-        if led_data:
-            self.running_external_show_keys[name].update_leds(led_data)
-
-        if light_data:
-            self.running_external_show_keys[name].update_lights(light_data)
-
-        if flasher_data:
-            self.running_external_show_keys[name].update_gis(flasher_data)
-
-        if gi_data:
-            self.running_external_show_keys[name].update_flashers(gi_data)
-
-        if coil_data:
-            self.running_external_show_keys[name].update_coils(coil_data)
-
-        if events:
-            for event in events.split(","):
-                self.machine.show_controller._add_to_event_queue(event)
+    # def _process_external_show_frame_command(self, name, led_data, light_data,
+    #                                          flasher_data, gi_data, coil_data,
+    #                                          events):
+    #     """Processes an external show frame command.  Runs in the main
+    #     processing thread.
+    #
+    #     Args:
+    #         name: The name of the external show.
+    #         led_data: A string of concatenated hex color values for the leds
+    #         in the show.
+    #         light_data: A string of concatenated hex brightness values for
+    #         the lights in the show.
+    #         flasher_data: A string of concatenated pulse time (ms) values
+    #         for the flashers in the show.
+    #         gi_data: A string of concatenated hex brightness values for the
+    #         GI in the show.
+    #         coil_data: A string of concatenated coil values ????
+    #         events: A comma-separated list of event names to fire immediately.
+    #     """
+    #     if name not in self.running_external_show_keys:
+    #         return
+    #
+    #     if led_data:
+    #         self.running_external_show_keys[name].update_leds(led_data)
+    #
+    #     if light_data:
+    #         self.running_external_show_keys[name].update_lights(light_data)
+    #
+    #     if flasher_data:
+    #         self.running_external_show_keys[name].update_gis(flasher_data)
+    #
+    #     if gi_data:
+    #         self.running_external_show_keys[name].update_flashers(gi_data)
+    #
+    #     if coil_data:
+    #         self.running_external_show_keys[name].update_coils(coil_data)
+    #
+    #     if events:
+    #         for event in events.split(","):
+    #             self.machine.show_controller._add_to_event_queue(event)
 
 
 class Playlist(object):
@@ -1040,16 +896,16 @@ class ExternalShow(object):
             self.coils = [self.machine.coils[x] for x in
                           Util.string_to_list(coils)]
 
-    def update_leds(self, data):
-        for led, color in zip(self.leds, Util.chunker(data, 6)):
-            self.machine.show_controller.add_to_led_update_list(
-                led, RGBColor(RGBColor.hex_to_rgb(color)), 0, self.priority,
-                self.blend)
-
     def update_lights(self, data):
         for light, brightness in zip(self.lights, Util.chunker(data, 2)):
             self.machine.show_controller._add_to_light_update_list(
                 light, Util.hex_string_to_int(brightness), self.priority,
+                self.blend)
+
+    def update_leds(self, data):
+        for led, color in zip(self.leds, Util.chunker(data, 6)):
+            self.machine.show_controller.add_to_led_update_list(
+                led, RGBColor(RGBColor.hex_to_rgb(color)), 0, self.priority,
                 self.blend)
 
     def update_gis(self, data):

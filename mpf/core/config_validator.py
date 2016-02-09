@@ -151,6 +151,18 @@ coils:
     disable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
     platform: single|str|None
+coil_player:
+    action: single|lstr|pulse
+    ms: single|ms|None
+    power: single|float|1.0
+    pwm_on_ms: single|int|None
+    pwm_off_ms: single|int|None
+    pulse_power: single|int|None
+    hold_power: single|int|None
+    pulse_power32: single|int|None
+    hold_power32: single|int|None
+    pulse_pwm_mask: single|int|None
+    hold_pwm_mask: single|int|None
 color_correction_profile:
     gamma: single|float|2.5
     whitepoint: list|float|1.0, 1.0, 1.0
@@ -236,6 +248,7 @@ drop_target_banks:
     label: single|str|%
     debug: single|bool|False
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
+event_player: ignore
 fadecandy:
     gamma: single|float|2.5
     whitepoint: list|float|1.0, 1.0, 1.0
@@ -640,7 +653,6 @@ transitions:
     # fs
     # vs
 
-
 widgets:
     animations:
         property: list|str|
@@ -912,7 +924,7 @@ class ConfigValidator(object):
         elif item_type == 'list_of_lists':
             return Util.list_of_lists(item)
 
-    def process_config2(self, config_spec, source=None, section_name=None,
+    def validate_config(self, config_spec, source=None, section_name=None,
                         target=None, result_type='dict', base_spec=None,
                         add_missing_keys=True):
         # config_spec, str i.e. "device:shot"
@@ -969,7 +981,7 @@ class ConfigValidator(object):
                     final_list = list()
                     if k in source:
                         for i in source[k]:  # individual step
-                            final_list.append(self.process_config2(
+                            final_list.append(self.validate_config(
                                     orig_spec + ':' + k, source=i,
                                     section_name=k))
 

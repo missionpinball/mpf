@@ -28,7 +28,7 @@ class HardwarePlatform(Platform):
         super().initialize()
 
         # validate our config (has to be in intialize since config_processor its not read in __init__)
-        self.machine.config_validator.process_config2("servo_controllers", self.config)
+        self.machine.config_validator.validate_config("servo_controllers", self.config)
 
         # load i2c platform
         self.platform = self.machine.get_platform_sections("i2c", self.config['platform'])

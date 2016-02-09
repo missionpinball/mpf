@@ -69,6 +69,7 @@ class TestDeviceLED(MpfTestCase):
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['color'])
 
         self.machine.leds.led_01.color(RGBColor('White'), fade_ms=1000)
+        self.machine_run()
         fade_start_time = self.machine.clock.get_time()
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['color'])
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['start_color'])
@@ -182,12 +183,12 @@ class TestDeviceLED(MpfTestCase):
         self.assertEqual(0, self.machine.leds.led_01.cache['priority'])
 
         # Now interrupt the fade
-        self.machine.leds.led_01._kill_fade()
+        self.machine.leds.led_01._end_fade()
         self.machine_run()
 
         # Fade should have been completed when killed
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['start_color'])
+        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['start_color'])
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['destination_color'])
         self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.hw_driver.current_color)
         self.assertFalse(self.machine.leds.led_01.fade_in_progress)

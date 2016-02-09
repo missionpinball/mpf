@@ -5,7 +5,7 @@ from mpf.core.rgb_color import RGBColor
 from mpf.core.rgb_color import RGBColorCorrectionProfile
 
 
-class LED(Device):
+class Led(Device):
     """ Represents an light connected to an new-style interface board.
     Typically this is an LED.
 
@@ -19,6 +19,8 @@ class LED(Device):
     collection = 'leds'
     class_label = 'led'
 
+    leds_to_update = set()
+
     @classmethod
     def device_class_init(cls, machine):
         machine.validate_machine_config_section('led_settings')
@@ -29,7 +31,7 @@ class LED(Device):
         machine.led_color_correction_profiles = dict()
         for profile_name, profile_parameters in machine.config['led_settings']['color_correction_profiles'].items():
 
-            machine.config_validator.process_config2('color_correction_profile',
+            machine.config_validator.validate_config('color_correction_profile',
                                                      machine.config['led_settings']
                                                      ['color_correction_profiles'][profile_name],
                                                      profile_parameters)
@@ -41,10 +43,23 @@ class LED(Device):
                                              linear_cutoff=profile_parameters['linear_cutoff'])
             machine.led_color_correction_profiles[profile_name] = profile
 
+        # todo make time configurable
+        machine.clock.schedule_interval(cls.update_leds, 0, -100)
+
+    @classmethod
+    def update_leds(cls, dt):
+        # called periodically (default at the end of every frame) to actually
+        # write the new light states to the hardware
+        if Led.leds_to_update:
+            for light in Led.leds_to_update:
+                light._do_color()
+
+            Led.leds_to_update = set()
+
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
-        super(LED, self).__init__(machine, name, config, collection,
-                                  platform_section='leds', validate=validate)
+        super().__init__(machine, name, config, collection,
+                         platform_section='leds', validate=validate)
 
         self.config['default_color'] = RGBColor(
             RGBColor.string_to_rgb(self.config['default_color'], (255, 255, 255)))
@@ -55,23 +70,26 @@ class LED(Device):
         self.fade_destination_color = RGBColor()
         self.fade_end_time = None
 
-        self.state = {  # current state of this LED
-                        'color': RGBColor(),
-                        'priority': 0,
-                        'destination_color': RGBColor(),
-                        'destination_time': 0.0,
-                        'start_color': RGBColor(),
-                        'start_time': 0.0
-                     }
+        self.registered_handlers = list()
 
-        self.cache = {  # cached state of last manual command
-                        'color': RGBColor(),
-                        'priority': 0,
-                        'destination_color': RGBColor(),
-                        'destination_time': 0.0,
-                        'start_color': RGBColor(),
-                        'start_time': 0.0
-                     }
+        self.state = dict(color=RGBColor(),
+                          priority=0,
+                          destination_color=RGBColor(),
+                          destination_time=0.0,
+                          start_color=RGBColor(),
+                          start_time=0.0,
+                          fade_ms=0)
+        """Current state of this LED."""
+
+
+        self.cache = dict(color=RGBColor(),
+                          priority=0,
+                          destination_color=RGBColor(),
+                          destination_time=0.0,
+                          start_color=RGBColor(),
+                          start_time=0.0,
+                          fade_ms=0)
+        """Cached state of the last manual command."""
 
         # Set color correction profile (if applicable)
         self._color_correction_profile = None
@@ -89,7 +107,8 @@ class LED(Device):
     def set_color_correction_profile(self, profile):
         self._color_correction_profile = profile
 
-    def color(self, color, fade_ms=None, priority=0, cache=True, force=False, blend=False):
+    def color(self, color, fade_ms=None, priority=0, cache=True, force=False,
+              blend=False):
         """Sets this LED to the color passed.
 
         Args:
@@ -106,42 +125,10 @@ class LED(Device):
                 Default is True.
             blend: Not yet implemented.
         """
-
-        if self.debug:
-            self.log.debug("+------Received new color command---------")
-            self.log.debug("| led: %s", self.name)
-            self.log.debug("| color: %s", color)
-            self.log.debug("| priority: %s", priority)
-            self.log.debug("| cache: %s", cache)
-            self.log.debug("| force: %s", force)
-            self.log.debug("| fade_ms: %s", fade_ms)
-            self.log.debug("| blend: %s", blend)
-
-            self.log.debug("+-------------Current State---------------")
-            self.log.debug("| color: %s", self.state['color'])
-            self.log.debug("| priority: %s", self.state['priority'])
-            self.log.debug("| destination_color: %s",
-                          self.state['destination_color'])
-            self.log.debug("| destination_time: %s",
-                          self.state['destination_time'])
-            self.log.debug("| start_color: %s", self.state['start_color'])
-            self.log.debug("| start_time: %s", self.state['start_time'])
-            self.log.debug("+-----------------------------------------")
-
         # If the incoming priority is lower that what this LED is at currently
         # ignore this request.
         if priority < self.state['priority'] and not force:
-
-            if self.debug:
-                self.log.debug("Incoming color priority: %s. Current priority: "
-                               " %s. Not applying update.", priority,
-                               self.state['priority'])
             return
-
-        elif self.debug:
-            self.log.debug("Incoming color priority: %s. Current priority: "
-                           " %s. Processing new command.", priority,
-                           self.state['priority'])
 
         if fade_ms is None:
             if self.config['fade_ms'] is not None:
@@ -162,35 +149,43 @@ class LED(Device):
 
         # update our state
         self.state['priority'] = priority
+        self.state['fade_ms'] = fade_ms
 
-        if fade_ms:
-            self.state['fade_ms'] = fade_ms
-            self.state['destination_color'] = color
-            self.state['start_color'] = self.state['color']
-            self.state['start_time'] = current_time
-            self.state['destination_time'] = current_time + (fade_ms / 1000.0)
-            self._setup_fade()
+        if not self.fade_in_progress:
+            if fade_ms:
 
-            if self.debug:
-                print("we have a fade to set up")
+                self.state['destination_color'] = color
+                self.state['start_color'] = self.state['color']
+                self.state['start_time'] = current_time
+                self.state['destination_time'] = current_time + (fade_ms / 1000.0)
+                self._setup_fade()
 
+                if self.debug:
+                    print("we have a fade to set up")
+
+            else:
+                self.state['color'] = color
+                self.state['destination_color'] = color
+                self.state['destination_time'] = 0.0
+                self.state['start_color'] = RGBColor()
+                self.state['start_time'] = current_time
+
+                if self.debug:
+                    self.log.debug("Setting Color: %s", color)
+
+                # Apply color correction profile (if one is set)
+                if self._color_correction_profile is None:
+                    self.hw_driver.color(color)
+                    if self.debug:
+                        self.log.debug("Output Color to Hardware: %s", color)
+                else:
+                    self.hw_driver.color(self._color_correction_profile.apply(color))
+                    if self.debug:
+                        self.log.debug("Output Color to Hardware: %s (applied '%s' color correction profile)",
+                                       self._color_correction_profile.apply(color),
+                                       self._color_correction_profile.name)
         else:
             self.state['color'] = color
-
-            if self.debug:
-                self.log.debug("Setting Color: %s", color)
-
-            # Apply color correction profile (if one is set)
-            if self._color_correction_profile is None:
-                self.hw_driver.color(color)
-                if self.debug:
-                    self.log.debug("Output Color to Hardware: %s", color)
-            else:
-                self.hw_driver.color(self._color_correction_profile.apply(color))
-                if self.debug:
-                    self.log.debug("Output Color to Hardware: %s (applied '%s' color correction profile)",
-                                   self._color_correction_profile.apply(color),
-                                   self._color_correction_profile.name)
 
         if cache:
             self.cache['color'] = color  # new color
@@ -201,21 +196,26 @@ class LED(Device):
             self.cache['fade_ms'] = fade_ms
             self.cache['priority'] = priority
 
-        if self.debug:
-            self.log.debug("+---------------New State-----------------")
-            self.log.debug("| led: %s", self.name)
-            self.log.debug("| color: %s *******************", self.state['color'])
-            self.log.debug("| priority: %s", self.state['priority'])
-            self.log.debug("| new fade: %s", fade_ms)
-            self.log.debug("| start_color: %s", self.state['start_color'])
-            self.log.debug("| destination_color: %s",
-                          self.state['destination_color'])
-            self.log.debug("| start_time: %s", self.state['start_time'])
-            self.log.debug("| current_time: %s", self.machine.clock.get_time())
-            self.log.debug("| destination_time: %s",
-                          self.state['destination_time'])
-            self.log.debug("+-----------------------------------------")
-            self.log.debug("==========================================")
+        Led.leds_to_update.add(self)
+
+    def _do_color(self):
+
+        if self.state['fade_ms'] and not self.fade_in_progress:
+            self._setup_fade()
+
+        else:
+
+            if self.debug:
+                print(self.state['color'], self.machine.clock.get_time())
+
+            self.hw_driver.color(self.state['color'])
+
+            if self.registered_handlers:
+                for handler in self.registered_handlers:
+                    handler(led_name=self.name,
+                            color=self.state['color'])
+
+
 
     def disable(self, fade_ms=0, priority=0, cache=True, force=False):
         """ Disables an LED, including all elements of a multi-color LED.
@@ -264,6 +264,19 @@ class LED(Device):
         """Returns the current state of this LED"""
         return self.state
 
+    def add_handler(self, callback):
+        """Registers a handler to be called when this light changes state."""
+        self.registered_handlers.append(callback)
+
+    def remove_handler(self, callback=None):
+        """Removes a handler from the list of registered handlers."""
+        if not callback:  # remove all
+            self.registered_handlers = []
+            return
+
+        if callback in self.registered_handlers:
+            self.registered_handlers.remove(callback)
+
     def restore(self):
         """Sets this LED to the cached state."""
 
@@ -298,6 +311,12 @@ class LED(Device):
         Returns: None
         """
 
+        # not sure why this is needed, but sometimes the fade task tries to
+        # run even though self.fade_in_progress is False. Maybe
+        # clock.unschedule doesn't happen right away?
+        if not self.fade_in_progress:
+            return
+
         if self.debug:
             print("fade_in_progress fade_task")
             print("state", self.state)
@@ -305,17 +324,19 @@ class LED(Device):
         state = self.state
 
         # figure out the ratio of how far along we are
-        ratio = ((self.machine.clock.get_time() - state['start_time']) /
-                 (state['destination_time'] - state['start_time']))
+        try:
+            ratio = ((self.machine.clock.get_time() - state['start_time']) /
+                     (state['destination_time'] - state['start_time']))
+        except ZeroDivisionError:
+            ratio = 1.0
 
         if self.debug:
             print("ratio", ratio)
 
         if ratio >= 1.0:  # fade is done
-            self.fade_in_progress = False
+            self._stop_fade_task()
             set_cache = True
             new_color = state['destination_color']
-            self.machine.clock.unschedule(self._fade_task)
         else:
             set_cache = False
             new_color = RGBColor.blend(state['start_color'], state['destination_color'], ratio)
@@ -323,13 +344,20 @@ class LED(Device):
         if self.debug:
             print("new color", new_color)
 
-        self.color(color=new_color, fade_ms=0, priority=state['priority'], cache=set_cache)
+        self.color(color=new_color, fade_ms=0, priority=state['priority'],
+                   cache=set_cache)
 
         if self.debug:
             print("fade_in_progress just ended")
             print("killing fade task")
 
-    def _kill_fade(self):
+    def _end_fade(self):
+        # stops the fade and instantly sets the light to its destination color
+        self._stop_fade_task()
+        self.color(color=self.state['destination_color'], fade_ms=0,
+                   priority=self.state['priority'], cache=True)
+
+    def _stop_fade_task(self):
+        # stops the fade task. Light is left in whatever state it was in
         self.fade_in_progress = False
         self.machine.clock.unschedule(self._fade_task)
-        self.color(color=self.state['destination_color'], fade_ms=0, priority=self.state['priority'], cache=True)

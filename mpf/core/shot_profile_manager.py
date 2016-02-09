@@ -71,7 +71,7 @@ class ShotProfileManager(object):
 
         """
 
-        config = self.machine.config_validator.process_config2(
+        config = self.machine.config_validator.validate_config(
             'shot_profiles', config, 'shot_profiles')
 
         rotation_pattern = deque()

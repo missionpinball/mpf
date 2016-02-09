@@ -129,11 +129,11 @@ class Snux(object):
         self.machine.clock.schedule_interval(self._tick, 0)
 
     def _validate_config(self):
-        self.system11_config = self.machine.config_validator.process_config2(
+        self.system11_config = self.machine.config_validator.validate_config(
             'system11', self.machine.config['system11'])
 
         snux = self.machine.config.get('snux', dict())
-        self.snux_config = self.machine.config_validator.process_config2(
+        self.snux_config = self.machine.config_validator.validate_config(
             'snux', snux)
 
     def _tick(self, dt):

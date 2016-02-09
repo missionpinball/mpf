@@ -25,7 +25,7 @@ class Device(object):
         self.config = dict()
 
         if validate:
-            self.config = self.machine.config_validator.process_config2(
+            self.config = self.machine.config_validator.validate_config(
                 self.config_section, config, self.name)
 
         else:

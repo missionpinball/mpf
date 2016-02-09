@@ -16,8 +16,25 @@ class MatrixLight(Device):
     collection = 'lights'
     class_label = 'light'
 
+    lights_to_update = set()
+
     # todo need to get the handler stuff out of each of these I think and into
     # a parent class? Maybe this is a device thing?
+
+    @classmethod
+    def device_class_init(cls, machine):
+        # todo make time configurable
+        machine.clock.schedule_interval(cls.update_matrix_lights, 0, -100)
+
+    @classmethod
+    def update_matrix_lights(cls, dt):
+        # called periodically (default at the end of every frame) to actually
+        # write the new light states to the hardware
+        if MatrixLight.lights_to_update:
+            for light in MatrixLight.lights_to_update:
+                light._do_on()
+
+            MatrixLight.lights_to_update = set()
 
     def __init__(self, machine, name, config, collection=None, validate=True):
         config['number_str'] = str(config['number']).upper()
@@ -29,25 +46,25 @@ class MatrixLight(Device):
         self.hw_driver, self.number = (
             self.platform.configure_matrixlight(self.config))
 
-        self.registered_handlers = []
+        self.registered_handlers = list()
 
-        self.state = {  # current state of this light
-            'brightness': 0,
-            'priority': 0,
-            'destination_brightness': 0,
-            'destination_time': 0.0,
-            'start_brightness': 0,
-            'start_time': 0.0
-        }
+        self.state = dict(brightness=0,
+                          priority=0,
+                          destination_brightness=0,
+                          destination_time=0.0,
+                          start_brightness=0,
+                          start_time=0.0,
+                          fade_ms=0)
+        """Current state of this light."""
 
-        self.cache = {  # cached state of last manual command
-            'brightness': 0,
-            'priority': 0,
-            'destination_brightness': 0,
-            'destination_time': 0.0,
-            'start_brightness': 0,
-            'start_time': 0.0
-        }
+        self.cache = dict(brightness=0,
+                          priority=0,
+                          destination_brightness=0,
+                          destination_time=0.0,
+                          start_brightness=0,
+                          start_time=0.0,
+                          fade_ms=0)
+        """Cached state of the last manual command."""
 
         self.fade_in_progress = False
 
@@ -61,7 +78,8 @@ class MatrixLight(Device):
         if 'y' in config:
             self.y = config['y']
 
-    def on(self, brightness=255, fade_ms=0, priority=0, cache=True, force=False):
+    def on(self, brightness=255, fade_ms=0, priority=0, cache=True,
+           force=False):
         """Turns on this matrix light.
 
         Args:
@@ -80,45 +98,51 @@ class MatrixLight(Device):
             force: Whether the light should be forced to go to the new state,
                 regardless of the incoming and current priority. Default is
                 False.
-        """
 
+        Note: This method immediately updates the internal state of the matrix
+        light, but it doesn't actually send the command to set or change the
+        light to the hardware platform interface until the end of the
+        current frame. This is done so that multiple things changing the same
+        light in the same frame actually only send a single command to the
+        light instead of sending a stream of conflicting  values.
+
+        """
         # First, if this incoming command is at a lower priority than what the
-        # light is doing now, we don't proceed
+        # light is doing now, we don't proceed (unless force is True).
+
         if priority < self.state['priority'] and not force:
             return
 
-        # todo cache support
         # todo add brightness 0 as the same as on(0)
         if type(brightness) is list:
             brightness = brightness[0]
 
-        if self.registered_handlers:
-            for handler in self.registered_handlers:
-                handler(light_name=self.name, brightness=brightness)
-
         current_time = self.machine.clock.get_time()
 
-        # update our state
+        # update state
         self.state['priority'] = priority
+        self.state['fade_ms'] = fade_ms
 
-        if fade_ms:
-            self.state['fade_ms'] = fade_ms
-            self.state['destination_brightness'] = brightness
-            self.state['start_brightness'] = self.state['brightness']
-            self.state['start_time'] = current_time
-            self.state['destination_time'] = current_time + (fade_ms / 1000.0)
-            self._setup_fade()
+        if not self.fade_in_progress:
+            if fade_ms:
+                self.state['destination_brightness'] = brightness
+                self.state['start_brightness'] = self.state['brightness']
+                self.state['destination_time'] = current_time + (fade_ms / 1000.0)
+                self.state['start_time'] = current_time
+                if self.debug:
+                    print("setting fade", self.state)
 
-            if self.debug:
-                print("we have a light fade to set up")
+            else:
+                self.state['brightness'] = brightness
+                self.state['destination_brightness'] = brightness
+                self.state['destination_time'] = 0.0
+                self.state['start_brightness'] = 0
+                self.state['start_time'] = current_time
+                if self.debug:
+                    print("setting brightness", self.state)
 
         else:
             self.state['brightness'] = brightness
-
-            if self.debug:
-                self.log.debug("Setting Brightness: %s", brightness)
-
-            self.hw_driver.on(brightness)
 
         if cache:
             self.cache['brightness'] = brightness
@@ -128,6 +152,24 @@ class MatrixLight(Device):
             self.cache['destination_time'] = self.state['destination_time']
             self.cache['priority'] = priority
             self.cache['fade_ms'] = fade_ms
+
+        MatrixLight.lights_to_update.add(self)
+
+    def _do_on(self):
+        if self.state['fade_ms'] and not self.fade_in_progress:
+            self._setup_fade()
+
+        else:
+
+            if self.debug:
+                print(self.state['brightness'], self.machine.clock.get_time())
+
+            self.hw_driver.on(self.state['brightness'])
+
+            if self.registered_handlers:
+                for handler in self.registered_handlers:
+                    handler(light_name=self.name,
+                            brightness=self.state['brightness'])
 
     def off(self, fade_ms=0, priority=0, cache=True, force=False):
         """Turns this light off.
@@ -197,24 +239,33 @@ class MatrixLight(Device):
         over the specified fade time.
         Returns: None
         """
+
+        # not sure why this is needed, but sometimes the fade task tries to
+        # run even though self.fade_in_progress is False. Maybe
+        # clock.unschedule doesn't happen right away?
+        if not self.fade_in_progress:
+            return
+
         if self.debug:
-            print("fade_in_progress fade_task")
+            print("fade_in_progress fade_task", self.machine.clock.get_time())
             print("state", self.state)
 
         state = self.state
 
         # figure out the ratio of how far along we are
-        ratio = ((self.machine.clock.get_time() - state['start_time']) /
-                 (state['destination_time'] - state['start_time']))
+        try:
+            ratio = ((self.machine.clock.get_time() - state['start_time']) /
+                     (state['destination_time'] - state['start_time']))
+        except ZeroDivisionError:
+            ratio = 1.0
 
         if self.debug:
             print("ratio", ratio)
 
         if ratio >= 1.0:  # fade is done
-            self.fade_in_progress = False
+            self._stop_fade_task()
             set_cache = True
             new_brightness = state['destination_brightness']
-            self.machine.clock.unschedule(self._fade_task)
         else:
             set_cache = False
             new_brightness = state['start_brightness'] + int((state['destination_brightness'] -
@@ -230,8 +281,13 @@ class MatrixLight(Device):
             print("fade_in_progress just ended")
             print("killing fade task")
 
-    def _kill_fade(self):
-        self.fade_in_progress = False
-        self.machine.clock.unschedule(self._fade_task)
+    def _end_fade(self):
+        # stops the fade and instantly sets the light to its destination color
+        self._stop_fade_task()
         self.on(brightness=self.state['destination_brightness'],
                 fade_ms=0, priority=self.state['priority'], cache=True)
+
+    def _stop_fade_task(self):
+        # stops the fade task. Light is left in whatever state it was in
+        self.fade_in_progress = False
+        self.machine.clock.unschedule(self._fade_task)

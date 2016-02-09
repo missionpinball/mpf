@@ -29,8 +29,8 @@ mpf:
         driver.Driver
         switch.Switch
         matrix_light.MatrixLight
-        led.LED
-        gi.GI
+        led.Led
+        gi.Gi
         autofire.AutofireCoil
         ball_device.BallDevice
         playfield.Playfield

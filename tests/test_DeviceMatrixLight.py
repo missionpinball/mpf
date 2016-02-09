@@ -21,34 +21,44 @@ class TestDeviceMatrixLight(MpfTestCase):
 
         self.advance_time_and_run(10)
 
-        # LEDs should start out off (current brightness is 0)
+        # Lights should start out off (current brightness is 0)
         self.assertEqual(0, self.machine.lights.light_01.state['brightness'])
         self.assertEqual(0, self.machine.lights.light_02.state['brightness'])
 
         self.machine.lights.light_01.on(128)
+        self.advance_time_and_run(1)
         self.assertEqual(128, self.machine.lights.light_01.state['brightness'])
         self.assertEqual(128, self.machine.lights.light_01.cache['brightness'])
-        self.assertEqual(self.machine.clock.get_time(), self.machine.lights.light_01.cache['start_time'])
-        self.assertEqual(128, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(self.machine.clock.get_time() - 1,
+                         self.machine.lights.light_01.cache['start_time'])
+        self.assertEqual(128,
+                         self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertEqual(0, self.machine.lights.light_01.state['priority'])
         self.machine.lights.light_02.on(255)
+        self.advance_time_and_run(1)
         self.assertEqual(255, self.machine.lights.light_02.state['brightness'])
         self.assertEqual(255, self.machine.lights.light_02.cache['brightness'])
-        self.assertEqual(self.machine.clock.get_time(), self.machine.lights.light_02.cache['start_time'])
-        self.assertEqual(255, self.machine.lights.light_02.hw_driver.current_brightness)
+        self.assertEqual(self.machine.clock.get_time() - 1,
+                         self.machine.lights.light_02.cache['start_time'])
+        self.assertEqual(255,
+                         self.machine.lights.light_02.hw_driver.current_brightness)
         self.assertEqual(0, self.machine.lights.light_02.state['priority'])
 
-        # Turn the LEDs off
+        # Turn the lights off
         self.machine.lights.light_01.on(0)
+        self.advance_time_and_run(1)
         self.assertEqual(0, self.machine.lights.light_01.state['brightness'])
         self.assertEqual(0, self.machine.lights.light_01.cache['brightness'])
-        self.assertEqual(self.machine.clock.get_time(), self.machine.lights.light_01.cache['start_time'])
+        self.assertEqual(self.machine.clock.get_time() - 1,
+                         self.machine.lights.light_01.cache['start_time'])
         self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertEqual(0, self.machine.lights.light_01.state['priority'])
         self.machine.lights.light_02.on(0)
+        self.advance_time_and_run(1)
         self.assertEqual(0, self.machine.lights.light_02.state['brightness'])
         self.assertEqual(0, self.machine.lights.light_02.cache['brightness'])
-        self.assertEqual(self.machine.clock.get_time(), self.machine.lights.light_02.cache['start_time'])
+        self.assertEqual(self.machine.clock.get_time() - 1,
+                         self.machine.lights.light_02.cache['start_time'])
         self.assertEqual(0, self.machine.lights.light_02.hw_driver.current_brightness)
         self.assertEqual(0, self.machine.lights.light_02.state['priority'])
 
@@ -57,9 +67,11 @@ class TestDeviceMatrixLight(MpfTestCase):
 
         # Matrix light should start out off (current brightness is 0)
         self.machine.lights.light_01.off()
+        self.advance_time_and_run(1)
         self.assertEqual(0, self.machine.lights.light_01.state['brightness'])
 
         self.machine.lights.light_01.on(255, fade_ms=1000)
+        self.machine_run()
         fade_start_time = self.machine.clock.get_time()
         self.assertEqual(0, self.machine.lights.light_01.state['brightness'])
         self.assertEqual(0, self.machine.lights.light_01.state['start_brightness'])
@@ -95,7 +107,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertEqual(1000, self.machine.lights.light_01.cache['fade_ms'])
         self.assertEqual(0, self.machine.lights.light_01.cache['priority'])
 
-        # Advance time another 25% of the fade and check brightnesss
+        # Advance time another 25% of the fade and check brightness
         self.advance_time_and_run(0.25)
         self.assertEqual(127, self.machine.lights.light_01.state['brightness'])
         self.assertEqual(0, self.machine.lights.light_01.state['start_brightness'])
@@ -111,7 +123,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertEqual(1000, self.machine.lights.light_01.cache['fade_ms'])
         self.assertEqual(0, self.machine.lights.light_01.cache['priority'])
 
-        # Advance time another 25% of the fade and check brightnesss
+        # Advance time another 25% of the fade and check brightness
         self.advance_time_and_run(0.25)
         self.assertEqual(191, self.machine.lights.light_01.state['brightness'])
         self.assertEqual(0, self.machine.lights.light_01.state['start_brightness'])
@@ -173,12 +185,12 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertEqual(0, self.machine.lights.light_01.cache['priority'])
 
         # Now interrupt the fade
-        self.machine.lights.light_01._kill_fade()
+        self.machine.lights.light_01._end_fade()
         self.machine_run()
 
-        # Fade should have been completed when killed
+        # Fade should have been completed when ended
         self.assertEqual(0, self.machine.lights.light_01.state['brightness'])
-        self.assertEqual(255, self.machine.lights.light_01.state['start_brightness'])
+        self.assertEqual(0, self.machine.lights.light_01.state['start_brightness'])
         self.assertEqual(0, self.machine.lights.light_01.state['destination_brightness'])
         self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertFalse(self.machine.lights.light_01.fade_in_progress)

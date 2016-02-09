@@ -53,7 +53,7 @@ class FadeCandyOPClient(OpenPixelClient):
 
         self.update_every_tick = True
 
-        self.config = self.machine.config_validator.process_config2('fadecandy',
+        self.config = self.machine.config_validator.validate_config('fadecandy',
                                                                     self.machine.config['fadecandy'])
 
         self.gamma = self.config['gamma']

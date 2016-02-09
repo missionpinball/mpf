@@ -3,7 +3,7 @@
 from mpf.core.device import Device
 
 
-class GI(Device):
+class Gi(Device):
     """ Represents a light connected to a traditional lamp matrix in a pinball
     machine.
 
@@ -25,7 +25,7 @@ class GI(Device):
 
         self.registered_handlers = []
 
-    def enable(self, brightness=255, fade_ms=0, **kwargs):
+    def enable(self, brightness=255, **kwargs):
         """Enables this GI string.
 
         Args:

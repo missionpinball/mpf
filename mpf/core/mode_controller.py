@@ -143,7 +143,7 @@ class ModeController(object):
         if not 'mode' in config:
             config['mode'] = dict()
 
-        self.machine.config_validator.process_config2("mode", config['mode'])
+        self.machine.config_validator.validate_config("mode", config['mode'])
         # Figure out where the code is for this mode.
 
         # If a custom 'code' setting exists, first look in the machine folder

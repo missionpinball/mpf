@@ -287,11 +287,13 @@ class TestShowController(MpfTestCase):
 
         # Advance to next show step and check for coil firing
         self.advance_time_and_run(1.0)
-        self.machine.coils['coil_01'].pulse.assert_called_with(power=1.0)
+        self.machine.coils['coil_01'].pulse.assert_called_with(action='pulse',
+                                                               power=1.0)
 
         # Advance to next show step and check for coil firing
         self.advance_time_and_run(1.0)
-        self.machine.coils['coil_01'].pulse.assert_called_with(power=0.45)
+        self.machine.coils['coil_01'].pulse.assert_called_with(
+            action='pulse', power=0.45)
 
         # TODO: Test device tags
         # TODO: Add test for multiple shows running at once with different

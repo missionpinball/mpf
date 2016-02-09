@@ -1,7 +1,7 @@
 from mpf.core.assets import Asset, AssetPool
+from mpf.core.config_player import ConfigPlayer
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
-from mpf.core.rgb_color import RGBColor
 
 class ShowPool(AssetPool):
     def __repr__(self):
@@ -20,6 +20,11 @@ class Show(Asset):
     class_priority = 100
     pool_config_section = 'show_pools'
     asset_group_class = ShowPool
+
+    registered_players = dict()
+    """Dictionary of players that can handle each step in a show. Keys are
+    the name of the player as entered into the show. e.g. "lights" or "slides",
+    values are player instances."""
 
     def __init__(self, machine, name, file, config=None, steps=None):
         super().__init__(machine, name, file, config)
@@ -78,14 +83,14 @@ class Show(Asset):
         # naturally. (Not invoked if show is manually stopped)
         self.sync_ms = 0
         self._autoplay_settings = dict()
-        self.light_states = dict()
-        self.led_states = dict()
         self.stop_key = None
 
         self.loaded = False
         self.notify_when_loaded = set()
         self.loaded_callbacks = list()
         self.show_steps = list()
+
+        self.mode = None
 
     def _do_load(self, steps=None):
         self.show_steps = []
@@ -156,205 +161,48 @@ class Show(Asset):
             # Now process show step actions
 
             # Lights
-            if 'lights' in steps[step_num] and steps[step_num]['lights']:
 
-                light_actions = dict()
+            if 'lights' in steps[step_num]:
+                actions['lights'] = ConfigPlayer.show_players[
+                    'lights'].process_show_config(ConfigPlayer.show_players[
+                    'lights'].validate_show_config(steps[step_num]['lights']))
 
-                for light in steps[step_num]['lights']:
+            if 'leds' in steps[step_num]:
+                actions['leds'] = ConfigPlayer.show_players[
+                    'leds'].process_show_config(ConfigPlayer.show_players[
+                    'leds'].validate_show_config(steps[step_num]['leds']))
 
-                    if 'tag|' in light:
-                        tag = light.split('tag|')[1]
-                        light_list = self.machine.lights.items_tagged(tag)
-                    else:  # create a single item list of the light object
-                        try:
-                            light_list = [self.machine.lights[light]]
-                        except KeyError:
-                            self.machine.show_controller.log.warning(
-                                "Found invalid "
-                                "light name '%s' in show. Skipping...",
-                                light)
-                            continue
+            if 'events' in steps[step_num]:
+                actions['events'] = ConfigPlayer.show_players[
+                    'events'].process_show_config(ConfigPlayer.show_players[
+                    'events'].validate_show_config(steps[step_num]['events']))
 
-                    # convert / ensure lights are single ints
-                    value = str(steps[step_num]['lights'][light])
-                    fade = 0
+            if 'random_events' in steps[step_num]:
+                actions['random_events'] = ConfigPlayer.show_players[
+                    'random_events'].process_show_config(
+                    ConfigPlayer.show_players[
+                    'random_events'].validate_show_config(steps[step_num][
+                                                                              'random_events']))
 
-                    if '-f' in value:
-                        composite_value = value.split('-f')
-                        value = composite_value[0]
-                        fade = Util.string_to_ms(composite_value[1])
+            if 'coils' in steps[step_num]:
+                actions['coils'] = ConfigPlayer.show_players[
+                    'coils'].process_show_config(ConfigPlayer.show_players[
+                    'coils'].validate_show_config(steps[step_num]['coils']))
 
-                    brightness = max(min(Util.hex_string_to_int(value), 255),
-                                     0)
+            if 'flashers' in steps[step_num]:
+                actions['flashers'] = ConfigPlayer.show_players[
+                    'flashers'].process_show_config(ConfigPlayer.show_players[
+                    'flashers'].validate_show_config(steps[step_num]['flashers']))
 
-                    for light_ in light_list:
-                        light_actions[light_] = {'brightness': brightness,
-                                                 'fade': fade}
+            if 'gis' in steps[step_num]:
+                actions['gis'] = ConfigPlayer.show_players[
+                    'gis'].process_show_config(ConfigPlayer.show_players[
+                    'gis'].validate_show_config(steps[step_num]['gis']))
 
-                        # make sure this light is in self.light_states
-                        if light_ not in self.light_states:
-                            self.light_states[light_] = {
-                                'current_brightness': 0,
-                                'destination_brightness': 0,
-                                'start_brightness': 0,
-                                'fade_start': 0,
-                                'fade_end': 0}
-
-                actions['lights'] = light_actions
-
-            # Events
-            # make sure events is a list of strings
-            if 'events' in steps[step_num] and steps[step_num]['events']:
-                event_list = (Util.string_to_list(steps[step_num]['events']))
-                actions['events'] = event_list
-
-            # Coils
-            if 'coils' in steps[step_num] and steps[step_num]['coils']:
-
-                coil_actions = dict()
-
-                for coil in steps[step_num]['coils']:
-
-                    try:
-                        this_coil = self.machine.coils[coil]
-                    except:
-                        # this coil name is invalid
-                        self.machine.show_controller.log.warning(
-                            "WARNING: Found invalid "
-                            "coil name '%s' in show. Skipping...",
-                            coil)
-                        continue
-
-                    # Check if a power setting has been specified
-                    if isinstance(steps[step_num]['coils'][coil],
-                                  dict) and 'power' in \
-                            steps[step_num]['coils'][coil]:
-                        power = max(
-                            min(int(steps[step_num]['coils'][coil]['power']),
-                                100), 0)
-                    else:
-                        power = 100
-
-                    # convert the 0-100 value to 0.0-1.0 float
-                    power /= 100.0
-
-                    # convert value list into tuple
-                    coil_actions[this_coil] = ('pulse', power)
-
-                actions['coils'] = coil_actions
-
-            # Flashers
-            if 'flashers' in steps[step_num] and steps[step_num]['flashers']:
-
-                flasher_set = set()
-
-                for flasher in Util.string_to_list(
-                        steps[step_num]['flashers']):
-
-                    if 'tag|' in flasher:
-                        tag = flasher.split('tag|')[1]
-                        flasher_list = self.machine.flashers.items_tagged(tag)
-                    else:  # create a single item list of the flasher objects
-                        try:
-                            flasher_list = [self.machine.flashers[flasher]]
-                        except KeyError:
-                            self.machine.show_controller.log.warning(
-                                "Found invalid "
-                                "flasher name '%s' in show. Skipping...",
-                                flasher)
-                            continue
-
-                    for flasher_ in flasher_list:
-                        flasher_set.add(flasher_)
-
-                actions['flashers'] = flasher_set
-
-            # GI
-            if 'gis' in steps[step_num] and steps[step_num]['gis']:
-
-                gi_actions = dict()
-
-                for gi in steps[step_num]['gis']:
-
-                    if 'tag|' in gi:
-                        tag = gi.split('tag|')[1]
-                        gi_list = self.machine.gi.items_tagged(tag)
-                    else:  # create a single item list of the light object
-                        try:
-                            gi_list = [self.machine.gi[gi]]
-                        except KeyError:
-                            self.machine.show_controller.log.warning(
-                                "Found invalid "
-                                "GI name '%s' in show. Skipping...",
-                                gi)
-                            continue
-
-                    value = str(steps[step_num]['gis'][gi])
-
-                    # convert / ensure flashers are single ints between 0
-                    # and 255
-                    value = max(min(Util.hex_string_to_int(value), 255), 0)
-
-                    for gi_ in gi_list:
-                        gi_actions[gi_] = value
-
-                actions['gis'] = gi_actions
-
-            # LEDs
-            if 'leds' in steps[step_num] and steps[step_num]['leds']:
-
-                led_actions = {}
-
-                for led in steps[step_num]['leds']:
-
-                    if 'tag|' in led:
-                        tag = led.split('tag|')[1]
-                        led_list = self.machine.leds.items_tagged(tag)
-                    else:  # create a single item list of the led object
-                        try:
-                            led_list = [self.machine.leds[led]]
-                        except KeyError:
-                            self.machine.show_controller.log.warning(
-                                "Found invalid "
-                                "LED name '%s' in show. Skipping...",
-                                led)
-                            continue
-
-                    value = str(steps[step_num]['leds'][led])
-                    fade = 0
-
-                    if '-f' in value:
-                        composite_value = value.split('-f')
-                        value = composite_value[0]
-                        fade = Util.string_to_ms(composite_value[1])
-
-                    # convert our color of hexes to a list of ints
-                    destination_color = RGBColor(RGBColor.string_to_rgb(value))
-
-                    for led_ in led_list:
-                        led_actions[led_] = {'color': destination_color,
-                                             'fade': fade}
-
-                        # make sure this led is in self.led_states
-                        if led_ not in self.led_states:
-                            self.led_states[led_] = {
-                                'current_color': RGBColor(),
-                                'destination_color': RGBColor(),
-                                'start_color': RGBColor(),
-                                'fade_start': 0,
-                                'fade_end': 0}
-
-                actions['leds'] = led_actions
-
-            # Triggers
-            if 'triggers' in steps[step_num] and steps[step_num]['triggers']:
-
-                triggers = {}
-
-                for name, args in steps[step_num]['triggers'].items():
-                    triggers[name] = args
-
-                actions['triggers'] = triggers
+            if 'triggers' in steps[step_num]:
+                actions['triggers'] = ConfigPlayer.show_players[
+                    'triggers'].process_show_config(ConfigPlayer.show_players[
+                    'triggers'].validate_show_config(steps[step_num]['triggers']))
 
             self.show_steps.append(actions)
 
@@ -367,7 +215,7 @@ class Show(Asset):
 
     def play(self, priority=0, blend=False, hold=None,
              playback_rate=1.0, start_step=None, callback=None,
-             loops=-1, sync_ms=0, reset=True, **kwargs):
+             loops=-1, sync_ms=0, reset=True, mode=None, **kwargs):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
         speed, priority, whether this show blends with others, etc. These are
@@ -433,8 +281,9 @@ class Show(Asset):
                 event handler which might include additional kwargs.
         """
 
-        if not self.loaded:
+        self.mode = mode
 
+        if not self.loaded:
             self._autoplay_settings = dict(
                                          priority=priority,
                                          blend=blend,
@@ -498,6 +347,8 @@ class Show(Asset):
                 hold or not with True or False here.
         """
 
+        self.mode = None
+
         if hold:
             self.hold = True
         elif hold is False:  # if it's None we don't assume False
@@ -549,64 +400,11 @@ class Show(Asset):
 
             if item_type == 'time':
                 continue
-            elif item_type == 'lights':
 
-                for light_obj, light_dict in item_dict.items():
-                    self.machine.show_controller.add_to_light_update_list(
-                        light=light_obj,
-                        brightness=light_dict['brightness'],
-                        fade_ms=int(light_dict['fade'] / self.playback_rate),
-                        priority=self.priority,
-                        blend=self.blend)
-
-                    prev_brightness = self.light_states[light_obj][
-                        'current_brightness']
-
-                    # update the current state
-                    self.light_states[light_obj] = {
-                        'current_brightness': prev_brightness,
-                        'destination_brightness': light_dict['brightness'],
-                        'start_brightness': prev_brightness,
-                        'fade_start': current_step_time,
-                        'fade_end': current_step_time + int(
-                            light_dict['fade']) / self.playback_rate / 1000}
-
-
-            elif item_type == 'leds':
-
-                for led_obj, led_dict in item_dict.items():
-                    self.machine.show_controller.add_to_led_update_list(
-                        led=led_obj,
-                        color=led_dict['color'],
-                        fade_ms=int(led_dict['fade'] / self.playback_rate),
-                        priority=self.priority,
-                        blend=self.blend)
-
-                    # update the current state
-
-                    # grab the old current color
-                    prev_color = self.led_states[led_obj]['current_color']
-
-                    self.led_states[led_obj] = {
-                        'current_color': prev_color,
-                        # todo need to calculate this for a restore
-                        'destination_color': led_dict['color'],
-                        'start_color': prev_color,
-                        'fade_start': current_step_time,
-                        'fade_end': current_step_time + int(
-                            led_dict['fade']) / self.playback_rate / 1000}
-
-            elif item_type == 'events':
-
-                for event in item_dict:  # item_dict is actually a list here
-                    self.machine.show_controller.add_to_event_queue(event)
-
-            elif item_type == 'coils':
-
-                for coil_obj, coil_action in item_dict.items():
-                    self.machine.show_controller.add_to_coil_queue(
-                        coil=coil_obj,
-                        action=coil_action)
+            elif item_type in ConfigPlayer.show_players:
+                ConfigPlayer.show_players[item_type].play(settings=item_dict,
+                                                          mode=self.mode,
+                                                          priority=self.priority)
 
             elif item_type == 'gis':
                 for gi, value in item_dict.items():

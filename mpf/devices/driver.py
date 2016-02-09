@@ -79,6 +79,14 @@ class Driver(Device):
             self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
                            "%sms", milliseconds)
             ms_actual = self.hw_driver.pulse(milliseconds)
+
+        elif power != 1.0:
+            if 0 > power * milliseconds <= 255:
+                ms_actual = power * milliseconds
+                self.log.debug("Pulsing Driver. Overriding default pulse_ms "
+                               "with: {}ms ({}x power)".format(ms_actual,
+                                                               power))
+                self.timed_enable(ms_actual)
         else:
             self.log.debug("Pulsing Driver. Using default pulse_ms.")
             ms_actual = self.hw_driver.pulse()

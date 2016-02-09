@@ -8,18 +8,27 @@ import queue
 import sys
 import threading
 
+import version
 from mpf.core.bcp import BCP
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
+from mpf.core.config_player import ConfigPlayer
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.config_validator import ConfigValidator
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-from mpf.core.device_manager import DeviceCollection
-from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.data_manager import DataManager
-from mpf.core.light_script_player import LightScriptPlayer
-from mpf.core.show_player import ShowPlayer
+from mpf.core.delays import DelayManager, DelayManagerRegistry
+from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
-import version
+from mpf.players.coil_player import CoilPlayer
+from mpf.players.event_player import EventPlayer
+from mpf.players.flasher_player import FlasherPlayer
+from mpf.players.gi_player import GiPlayer
+from mpf.players.light_player import LightPlayer
+from mpf.players.light_script_player import LightScriptPlayer
+from mpf.players.led_player import LedPlayer
+from mpf.players.random_event_player import RandomEventPlayer
+from mpf.players.show_player import ShowPlayer
+from mpf.players.trigger_player import TriggerPlayer
 
 
 class MachineController(object):
@@ -109,7 +118,7 @@ class MachineController(object):
 
         self._load_core_modules()
 
-        # This is called so hw platforms have a change to register for events,
+        # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
         # they're not set up yet when the hw platforms are constructed.
         for platform in list(self.hardware_platforms.values()):
@@ -119,9 +128,7 @@ class MachineController(object):
         self.validate_machine_config_section('hardware')
         self.validate_machine_config_section('game')
 
-        # todo move these to mpfconfig
-        self.show_player = ShowPlayer(self)
-        self.light_script_player = LightScriptPlayer(self)
+        self._register_config_players()
 
         self._register_system_events()
         self._load_machine_vars()
@@ -158,7 +165,7 @@ class MachineController(object):
         if section not in self.config:
             self.config[section] = dict()
 
-        self.config[section] = self.config_validator.process_config2(
+        self.config[section] = self.config_validator.validate_config(
             section, self.config[section], section)
 
     def _register_system_events(self):
@@ -169,7 +176,18 @@ class MachineController(object):
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.stop)
 
-        # self.clock.schedule_interval(self._loading_tick, 0.1)
+    def _register_config_players(self):
+        # todo automate this
+        ConfigPlayer.register(ShowPlayer(self))
+        ConfigPlayer.register(LightScriptPlayer(self))
+        ConfigPlayer.register(LightPlayer(self))
+        ConfigPlayer.register(LedPlayer(self))
+        ConfigPlayer.register(EventPlayer(self))
+        ConfigPlayer.register(RandomEventPlayer(self))
+        ConfigPlayer.register(CoilPlayer(self))
+        ConfigPlayer.register(FlasherPlayer(self))
+        ConfigPlayer.register(GiPlayer(self))
+        ConfigPlayer.register(TriggerPlayer(self))
 
     def _load_machine_vars(self):
         self.machine_var_data_manager = DataManager(self, 'machine_vars')
