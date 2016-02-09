@@ -27,7 +27,7 @@ from mpf.core.rgb_color import RGBColor
 try:
     import pinproc
     pinproc_imported = True
-except:
+except ImportError:
     pinproc_imported = False
 
 from mpf.core.platform import Platform
@@ -295,6 +295,7 @@ class HardwarePlatform(Platform):
         Also tickles the watchdog and flushes any queued commands to the P-ROC.
 
         """
+        del dt
         # Get P-ROC events (switches & DMD frames displayed)
         for event in self.proc.get_events():
             event_type = event['type']
@@ -559,6 +560,7 @@ class PDBLED(RGBLEDPlatformInterface):
 class PDBSwitch(object):
     """Base class for switches connected to a P-ROC."""
     def __init__(self, pdb, number_str):
+        del pdb
         upper_str = number_str.upper()
         if upper_str.startswith('SD'):
             self.sw_type = 'dedicated'
@@ -758,6 +760,7 @@ class PROCDriver(DriverPlatformInterface):
                               recycle_ms=None,
                               **kwargs
                               ):
+        del kwargs
 
         if pulse_power:
             raise NotImplementedError('"pulse_power" has not been '
@@ -1036,7 +1039,7 @@ class PDBConfig(object):
                                             enable,
                                             True)
 
-        group_ctr += 1
+        group_ctr = 4
 
         # Process lamps first. The P-ROC can only control so many drivers
         # directly. Since software won't have the speed to control lamp
@@ -1231,16 +1234,18 @@ class DriverAlias(object):
         return self.expr.sub(repl=self.repl, string=addr)
 
 
-def is_pdb_address(addr, aliases=[]):
+def is_pdb_address(addr, aliases=None):
     """Returne True if the given address is a valid PDB address."""
+    if aliases is None:
+        aliases = []
     try:
         decode_pdb_address(addr=addr, aliases=aliases)
         return True
-    except:
+    except ValueError:
         return False
 
 
-def decode_pdb_address(addr, aliases=[]):
+def decode_pdb_address(addr, aliases=None):
     """Decodes Ax-By-z or x/y/z into PDB address, bank number, and output
     number.
 
@@ -1248,6 +1253,8 @@ def decode_pdb_address(addr, aliases=[]):
     a tuple of (addr, bank, number).
 
     """
+    if aliases is None:
+        aliases = []
     for alias in aliases:
         if alias.matches(addr):
             addr = alias.decode(addr)
