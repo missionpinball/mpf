@@ -21,11 +21,21 @@ class TestP3Roc(MpfTestCase):
     def get_platform(self):
         return 'p3_roc'
 
+    def _decode(self, type, num):
+        if num == "A1-B0-7":
+            return 23
+        elif num == "A2-B1-0":
+            return 40
+        else:
+            raise AssertionError("unexpected decode called")
+
     def setUp(self):
         p3_roc.pinproc_imported = True
         p3_roc.pinproc = MagicMock()
+        p3_roc.pinproc.EventTypeSwitchClosedDebounced = 1
+        p3_roc.pinproc.EventTypeSwitchOpenDebounced = 2
         p3_roc.pinproc.DriverCount = 256
-        p3_roc.pinproc.decode = MagicMock(return_value="decode")
+        p3_roc.pinproc.decode = self._decode
         p3_roc.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
         super().setUp()
@@ -52,7 +62,7 @@ class TestP3Roc(MpfTestCase):
     def test_hw_rule_pulse(self):
         self.machine.autofires.ac_slingshot_test.enable()
         self.machine.autofires.ac_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
-                "decode", 'closed_nondebounced',
+                40, 'closed_nondebounced',
                 {'notifyHost': False, 'reloadActive': False},
                 ["driver_state_pulse"], False)
 
@@ -82,3 +92,15 @@ class TestP3Roc(MpfTestCase):
                 call(7, 0x8014, 88),
                 call(7, 0x8015, 2)
             ])
+
+    def test_switches(self):
+        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+            {'type': 1, 'value': 23}])
+        self.machine_run()
+        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+
+        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+            {'type': 2, 'value': 23}])
+        self.machine_run()
+        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
