@@ -59,7 +59,7 @@ class MachineController(object):
         self.options = options
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework v%s", version.__version__)
-        self.log.debug("Command line arguments: %", self.options)
+        self.log.debug("Command line arguments: %s", self.options)
         self.verify_system_info()
 
         self._boot_holds = set()
@@ -228,7 +228,7 @@ class MachineController(object):
                                         self.options['machine_path'])
 
         self.machine_path = os.path.abspath(machine_path)
-        self.log.debug("Machine path: %", self.machine_path)
+        self.log.debug("Machine path: %s", self.machine_path)
 
         # Add the machine folder to sys.path so we can import modules from it
         sys.path.append(self.machine_path)
@@ -284,7 +284,7 @@ class MachineController(object):
         return ConfigProcessor.load_config_file(self.options['mpfconfigfile'])
 
     def _load_config_from_cache(self):
-        self.log.info("Loading cached config: %",
+        self.log.info("Loading cached config: %s",
             os.path.join(self.machine_path, '__mpfcache__',
             '{}_config.p'.format('-'.join(self.options['configfile']))))
 
@@ -332,7 +332,7 @@ class MachineController(object):
                 format('-'.join(self.options['configfile']))),
                 'wb') as f:
             pickle.dump(self.config, f, protocol=4)
-            self.log.info('Config file cache created: %', os.path.join(
+            self.log.info('Config file cache created: %s', os.path.join(
                 self.machine_path, '__mpfcache__', '{}_config.p'.
                 format('-'.join(self.options['configfile']))))
 
@@ -776,7 +776,7 @@ class MachineController(object):
 
     def clear_boot_hold(self, hold):
         self._boot_holds.remove(hold)
-        self.log.debug("Clearing boot hold '%'. Holds remaining: %", hold, self._boot_holds)
+        self.log.debug('Clearing boot hold %s. Holds remaining: %s', hold, self._boot_holds)
         if not self._boot_holds:
             self.init_done()
 
