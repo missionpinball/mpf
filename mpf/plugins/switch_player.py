@@ -37,13 +37,9 @@ class SwitchPlayer(object):
         return '<SwitchPlayer>'
 
     def _start_event_callback(self):
-        if ('time' in self.step_list[self.current_step] and
-                Util.string_to_ms(self.step_list[self.current_step]['time']) > 0):
-            self.delay.add(name='switch_player_next_step',
-                           ms=Util.string_to_ms(self.step_list[self.current_step]['time']),
-                           callback=self._do_step)
-        else:
-            self._do_step()
+        self.delay.add(name='switch_player_next_step',
+                       ms=Util.string_to_ms(self.step_list[self.current_step]['time']),
+                       callback=self._do_step)
 
     def _do_step(self):
 
