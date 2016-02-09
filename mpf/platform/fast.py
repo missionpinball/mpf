@@ -14,7 +14,6 @@ from distutils.version import StrictVersion
 from copy import deepcopy
 
 from mpf.core.platform import Platform
-from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
 from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -25,7 +24,7 @@ from mpf.core.rgb_color import RGBColor
 try:
     import serial
     serial_imported = True
-except:
+except ImportError:
     serial_imported = False
 
 # Minimum firmware versions needed for this module
@@ -343,6 +342,7 @@ class HardwarePlatform(Platform):
         is in case some interference causes a LED to change color. Since we
         update every loop, it will only be the wrong color for one tick.
         """
+        del dt
         msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in self.fast_leds])
         self.rgb_connection.send(msg)
 
@@ -407,6 +407,8 @@ class HardwarePlatform(Platform):
         hw_states = dict()
 
         num_local, local_states, num_nw, nw_states = msg.split(',')
+        del num_local
+        del num_nw
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
@@ -431,10 +433,9 @@ class HardwarePlatform(Platform):
     def configure_driver(self, config, device_type='coil'):
 
         if not self.net_connection:
-            self.log.critical("A request was made to configure a FAST driver, "
-                              "but no connection to a NET processor is "
-                              "available")
-            sys.exit()
+            raise AssertionError('A request was made to configure a FAST driver, '
+                                 'but no connection to a NET processor is '
+                                 'available')
 
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
@@ -462,9 +463,7 @@ class HardwarePlatform(Platform):
                 config['connection'] = 1  # network driver (default for FAST)
 
         else:
-            self.log.critical("Invalid machine type: {0{}}".format(
-                self.machine_type))
-            sys.exit()
+            raise AssertionError("Invalid machine type: {}".format(self.machine_type))
 
         return (FASTDriver(config, self.net_connection.send, self.machine),
                 (config['number'], config['connection']))
@@ -541,10 +540,9 @@ class HardwarePlatform(Platform):
     def configure_led(self, config):
 
         if not self.rgb_connection:
-            self.log.critical("A request was made to configure a FAST LED, "
-                              "but no connection to an LED processor is "
-                              "available")
-            sys.exit()
+            raise AssertionError('A request was made to configure a FAST LED, '
+                                 'but no connection to an LED processor is '
+                                 'available')
 
         if not self.flag_led_tick_registered:
             # Update leds every frame
@@ -574,10 +572,9 @@ class HardwarePlatform(Platform):
         # TODO: Add support for driver-based GI strings
 
         if not self.net_connection:
-            self.log.critical("A request was made to configure a FAST GI, "
-                              "but no connection to a NET processor is "
-                              "available")
-            sys.exit()
+            raise AssertionError('A request was made to configure a FAST GI, '
+                                 'but no connection to a NET processor is '
+                                 'available')
 
         if self.machine_type == 'wpc':  # translate switch number to FAST switch
             config['number'] = self.wpc_gi_map.get(config['number_str'].upper())
@@ -588,10 +585,9 @@ class HardwarePlatform(Platform):
     def configure_matrixlight(self, config):
 
         if not self.net_connection:
-            self.log.critical("A request was made to configure a FAST matrix "
-                              "light, but no connection to a NET processor is "
-                              "available")
-            sys.exit()
+            raise AssertionError('A request was made to configure a FAST matrix '
+                                 'light, but no connection to a NET processor is '
+                                 'available')
 
         if self.machine_type == 'wpc':  # translate number to FAST light num
             config['number'] = self.wpc_light_map.get(
@@ -872,19 +868,19 @@ class FASTDriver(DriverPlatformInterface):
         return return_dict
 
     def merge_driver_settings(self,
-                            pulse_ms=None,
-                            pwm_on_ms=None,
-                            pwm_off_ms=None,
-                            pulse_power=None,
-                            hold_power=None,
-                            pulse_power32=None,
-                            hold_power32=None,
-                            pulse_pwm_mask=None,
-                            hold_pwm_mask=None,
-                            recycle_ms=None,
-                            activation_time=None,
-                            **kwargs
-                            ):
+                              pulse_ms=None,
+                              pwm_on_ms=None,
+                              pwm_off_ms=None,
+                              pulse_power=None,
+                              hold_power=None,
+                              pulse_power32=None,
+                              hold_power32=None,
+                              pulse_pwm_mask=None,
+                              hold_pwm_mask=None,
+                              recycle_ms=None,
+                              activation_time=None,
+                              **kwargs):
+        del kwargs
 
         if pwm_on_ms:
             raise ValueError("The setting 'pwm_on_ms' is not valid with the "
@@ -1191,7 +1187,7 @@ class FASTDMD(object):
         self.send = sender
 
         # Clear the DMD
-        pass  # todo
+        # todo
 
         self.dmd_frame = bytearray()
 
@@ -1207,6 +1203,7 @@ class FASTDMD(object):
             pass
 
     def tick(self, dt):
+        del dt
         self.send('BM:' + self.dmd_frame)
 
 
@@ -1290,20 +1287,19 @@ class SerialCommunicator(object):
 
         if self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
-            latest_version = DMD_LATEST_FW
+            #latest_version = DMD_LATEST_FW
             self.dmd = True
         elif self.remote_processor == 'NET':
             min_version = NET_MIN_FW
-            latest_version = NET_LATEST_FW
+            #latest_version = NET_LATEST_FW
         else:
             min_version = RGB_MIN_FW
-            latest_version = RGB_LATEST_FW
+            #latest_version = RGB_LATEST_FW
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
-            self.platform.log.critical("Firmware version mismatch. MPF requires"
-                                       " the %s processor to be firmware %s, but yours is %s",
-                                       self.remote_processor, min_version, self.remote_firmware)
-            sys.exit()
+            raise AssertionError('Firmware version mismatch. MPF requires'
+                                 ' the {} processor to be firmware {}, but yours is {}'.format(
+                                       self.remote_processor, min_version, self.remote_firmware))
 
         if self.remote_processor == 'NET' and self.platform.machine_type == 'fast':
             self.query_fast_io_boards()
@@ -1347,9 +1343,7 @@ class SerialCommunicator(object):
                         firmware_ok = False
 
         if not firmware_ok:
-            self.platform.log.critical("Exiting due to IO board firmware "
-                                       "mismatch")
-            sys.exit()
+            raise AssertionError("Exiting due to IO board firmware mismatch")
 
     def _start_threads(self):
 
