@@ -1,6 +1,7 @@
 """ Template file for a new device driver."""
 
 # Search this file for 'YourNewDevice' and replace with your device name
+import logging
 
 from mpf.core.device import Device
 
