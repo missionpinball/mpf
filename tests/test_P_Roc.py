@@ -21,13 +21,28 @@ class TestPRoc(MpfTestCase):
     def get_platform(self):
         return 'p_roc'
 
+    def _decode(self, type, num):
+        if num == "A1-B1-2":
+            return 26
+        elif num == "A1-B1-3":
+            return 27
+        elif num == "A1-B0-7":
+            return 23
+        elif num == "A0-B1-0":
+            return 8
+        elif num == "A2-B1-0":
+            return 40
+        else:
+            raise AssertionError("unexpected decode called " + num)
+
     def setUp(self):
         p_roc.pinproc_imported = True
         p_roc.pinproc = MagicMock()
         p_roc.pinproc.DriverCount = 256
         p_roc.pinproc.SwitchNeverDebounceFirst = 192
-        p_roc.pinproc.decode = MagicMock(return_value=7)
-        self.decode = p_roc.pinproc.decode
+        p_roc.pinproc.EventTypeSwitchClosedDebounced = 1
+        p_roc.pinproc.EventTypeSwitchOpenDebounced = 2
+        p_roc.pinproc.decode = self._decode
         p_roc.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
         super().setUp()
@@ -38,7 +53,7 @@ class TestPRoc(MpfTestCase):
         # A1-B1-2 -> address 16 + 8 + 2 = 26 in P3-Roc
         # for 23ms (from config)
         self.machine.coils.c_test.hw_driver.proc.driver_pulse.assert_called_with(
-            7, 23)
+            26, 23)
         assert not self.machine.coils.c_test.hw_driver.proc.driver_schedule.called
 
     def test_enable_exception(self):
@@ -49,12 +64,23 @@ class TestPRoc(MpfTestCase):
     def test_allow_enable(self):
         self.machine.coils.c_test_allow_enable.enable()
         self.machine.coils.c_test.hw_driver.proc.driver_schedule.assert_called_with(
-                number=7, cycle_seconds=0, now=True, schedule=0xffffffff)
+                number=27, cycle_seconds=0, now=True, schedule=0xffffffff)
 
     def test_hw_rule_pulse(self):
         self.machine.autofires.ac_slingshot_test.enable()
         self.machine.autofires.ac_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
-                7, 'closed_nondebounced',
+                40, 'closed_nondebounced',
                 {'notifyHost': False, 'reloadActive': False},
                 ["driver_state_pulse"], False)
 
+    def test_switches(self):
+        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+            {'type': 1, 'value': 23}])
+        self.machine_run()
+        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
+
+        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+            {'type': 2, 'value': 23}])
+        self.machine_run()
+        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
