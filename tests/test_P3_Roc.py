@@ -18,14 +18,6 @@ class TestP3Roc(MpfTestCase):
     def get_platform(self):
         return 'p3_roc'
 
-    def _decode(self, type, num):
-        if num == "A1-B0-7":
-            return 23
-        elif num == "A2-B1-0":
-            return 40
-        else:
-            raise AssertionError("unexpected decode called")
-
     def setUp(self):
         p3_roc.pinproc_imported = True
         p3_roc.pinproc = MagicMock()
@@ -34,7 +26,7 @@ class TestP3Roc(MpfTestCase):
         p3_roc.pinproc.EventTypeSwitchOpenDebounced = 2
         p3_roc.pinproc.DriverCount = 256
         p3_roc.pinproc.normalize_machine_type = MagicMock(return_value=7)
-        p3_roc.pinproc.decode = self._decode
+        p3_roc.pinproc.decode = None # should not be called and therefore fail
         p3_roc.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
         super().setUp()
