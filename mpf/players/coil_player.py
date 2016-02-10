@@ -16,7 +16,7 @@ class CoilPlayer(ConfigPlayer):
             config = dict()
 
         if not isinstance(config, dict):
-            raise ValueError("Received invalid coil player config: "
+            raise ValueError("Received invalid coil player config: {}"
                              .format(config))
 
         for coil, settings in config.items():

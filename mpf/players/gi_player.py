@@ -21,7 +21,7 @@ class GiPlayer(ConfigPlayer):
             config = dict()
 
         if not isinstance(config, dict):
-            raise ValueError("Received invalid gi player config: "
+            raise ValueError("Received invalid gi player config: {}"
                              .format(config))
 
         validated_config = dict()

@@ -21,7 +21,7 @@ class LedPlayer(ConfigPlayer):
             config = dict()
 
         if not isinstance(config, dict):
-            raise ValueError("Received invalid led player config: "
+            raise ValueError("Received invalid led player config: {}"
                              .format(config))
 
         validated_config = dict()
