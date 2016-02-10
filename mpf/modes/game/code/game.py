@@ -7,7 +7,6 @@ Note that in the Mission Pinball Framework, a distinction is made between a
 
 """
 
-import logging
 from mpf.core.mode import Mode
 from mpf.core.player import Player
 
