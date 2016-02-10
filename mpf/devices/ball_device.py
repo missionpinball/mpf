@@ -760,7 +760,7 @@ class BallDevice(Device):
                 if target.name == self.name:
                     self._source_devices.append(device)
                     if self.debug:
-                        self.log.debug("EVENT: % to %", device.name, target.name)
+                        self.log.debug("EVENT: %s to %s", device.name, target.name)
 
                     self.machine.events.add_handler(
                             'balldevice_{}_ball_eject_failed'.format(
