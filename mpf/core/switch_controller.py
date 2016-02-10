@@ -132,7 +132,7 @@ class SwitchController(object):
             for switch, number in switches:
                 try:
                     switch.state = switch_states[number] ^ switch.invert
-                except KeyError:
+                except IndexError:
                     pass
 
     def verify_switches(self):
