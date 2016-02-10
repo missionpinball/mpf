@@ -30,6 +30,7 @@ class HardwarePlatform(Platform):
         super().__init__(machine)
         self.log = logging.getLogger("Template Platform")
         self.log.debug("Configuring template hardware interface.")
+        self.initial_states_sent = False
 
         # The following "features" are supposed to be constants that you can
         # use to define was is or is not in your own platform. However they
