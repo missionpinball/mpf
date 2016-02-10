@@ -475,8 +475,8 @@ class EventManager(object):
 
             self.callback_queue.append((callback, kwargs))
 
-    def _process_event_queue(self):
-        # Internal method which checks to see if there are any other events
+    def process_event_queue(self):
+        # Method which checks to see if there are any other events
         # that need to be processed, and then processes them.
         while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
             # first process all events. if they post more events we will

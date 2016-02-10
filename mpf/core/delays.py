@@ -132,4 +132,4 @@ class DelayManager(object):
         except KeyError:
             pass
         callback(**kwargs)
-        self.machine.events._process_event_queue()
+        self.machine.events.process_event_queue()
