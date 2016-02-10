@@ -43,7 +43,6 @@ class HardwarePlatform(Platform):
     Attributes:
         machine: The MachineController instance.
         proc: The P3-ROC pinproc.PinPROC device.
-        machine_type: Constant of the pinproc.MachineType
     """
 
     def __init__(self, machine):
@@ -71,8 +70,11 @@ class HardwarePlatform(Platform):
         self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
-        self.machine_type = pinproc.normalize_machine_type(
+        machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])
+
+        if machine_type != pinproc.MachineTypePDB:
+            raise AssertionError("P3-Roc can only handle PDB driver boards")
 
         # Connect to the P3-ROC. Keep trying if it doesn't work the first time.
 
@@ -82,7 +84,7 @@ class HardwarePlatform(Platform):
 
         while not self.proc:
             try:
-                self.proc = pinproc.PinPROC(self.machine_type)
+                self.proc = pinproc.PinPROC(machine_type)
                 self.proc.reset(1)
             except IOError:
                 self.log.warning("Failed to connect to P3-ROC. Will retry!")
@@ -99,9 +101,7 @@ class HardwarePlatform(Platform):
         self.log.debug("Configuring P3-ROC for P-ROC driver boards.")
         self.pdbconfig = PDBConfig(self.proc, self.machine.config)
 
-        self.polarity = self.machine_type == pinproc.MachineTypeSternWhitestar \
-                        or self.machine_type == pinproc.MachineTypeSternSAM \
-                        or self.machine_type == pinproc.MachineTypePDB
+        self.polarity = True
 
         self.acceleration = [0] * 3
         self.accelerometer_device = False
@@ -255,14 +255,11 @@ class HardwarePlatform(Platform):
                 configuration files would specify a switch number like `SD12` or
                 `7/5`. This `proc_num` is an int between 0 and 255.
         """
-        if self.machine_type == pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number('switch',
-                                                      str(config['number']))
-            if proc_num == -1:
-                raise AssertionError("Switch %s cannot be controlled by the "
-                                     "P3-ROC.", str(config['number']))
-        else:
-            proc_num = pinproc.decode(self.machine_type, str(config['number']))
+        proc_num = self.pdbconfig.get_proc_number('switch',
+                                                  str(config['number']))
+        if proc_num == -1:
+            raise AssertionError("Switch %s cannot be controlled by the "
+                                 "P3-ROC.", str(config['number']))
 
         switch = PROCSwitch(proc_num)
         # The P3-ROC needs to be configured to notify the host computers of
