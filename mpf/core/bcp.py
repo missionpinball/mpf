@@ -5,15 +5,15 @@ import socket
 import threading
 import sys
 import traceback
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
 import urllib.parse
+import urllib.error
 from queue import Queue
 import copy
 
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
 from mpf.devices.shot import Shot
-from mpf.core.show_controller import ExternalShow
 import version
 
 
@@ -254,8 +254,7 @@ class BCP(object):
 
         if (not self.machine.options['force_platform'] and
                     self.machine.config['hardware']['dmd'] != 'default'):
-                dmd_platform = (self.machine.hardware_platforms
-                                [self.machine.config['hardware']['dmd']])
+            dmd_platform = (self.machine.hardware_platforms[self.machine.config['hardware']['dmd']])
 
         self.dmd = dmd_platform.configure_dmd()
 
@@ -291,7 +290,7 @@ class BCP(object):
 
         """
         try:
-            self.bcp_clients.remove(self)
+            self.bcp_clients.remove(bcp_client)
         except ValueError:
             pass
 
@@ -412,6 +411,7 @@ class BCP(object):
                 handler.
 
         """
+        del kwargs
 
         self.log.debug("Registering Trigger Events")
 
@@ -455,6 +455,8 @@ class BCP(object):
 
         """
         # config is localized to 'Trigger'
+        del priority
+        del mode
 
         event_list = list()
 
@@ -509,6 +511,8 @@ class BCP(object):
         """Retrieves and processes new BCP messages from the receiving queue.
 
         """
+        del dt
+
         while not self.receive_queue.empty():
             cmd, kwargs = self.receive_queue.get(False)
 
@@ -547,6 +551,7 @@ class BCP(object):
         event and to send the response BCP 'set' command.
 
         """
+        del kwargs
         for name in Util.string_to_list(names):
             self.machine.events.post('bcp_get_{}'.format(name))
 
@@ -563,18 +568,22 @@ class BCP(object):
             self.machine.events.post('bcp_set_{}'.format(k), value=v)
 
     def bcp_receive_reset_complete(self, **kwargs):
+        del kwargs
         self.machine.bcp_reset_complete()
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
         """Sends BCP 'mode_start' to the connected BCP hosts and schedules
         automatic sending of 'mode_stop' when the mode stops.
         """
+        del config
+        del kwargs
         self.send('mode_start', name=mode.name, priority=priority)
 
         return self.bcp_mode_stop, mode.name
 
     def bcp_mode_stop(self, name, **kwargs):
         """Sends BCP 'mode_stop' to the connected BCP hosts."""
+        del kwargs
         self.send('mode_stop', name=name)
 
     def bcp_reset(self):
@@ -592,6 +601,7 @@ class BCP(object):
                 from whatever its current state is to the opposite state.
 
         """
+        del kwargs
         state = int(state)
 
         if state == -1:
@@ -612,6 +622,7 @@ class BCP(object):
 
     def bcp_player_added(self, player, num):
         """Sends BCP 'player_added' to the connected BCP hosts."""
+        del player
         self.send('player_added', player_num=num)
 
     def bcp_trigger(self, name, **kwargs):
@@ -694,6 +705,7 @@ class BCP(object):
             self.disable_bcp_switch(switch)
 
     def _switch_sender_callback(self, switch_name, state, ms):
+        del ms
         self.send('switch', name=switch_name, state=state)
 
     def _setup_track_volumes(self, config):
@@ -716,6 +728,7 @@ class BCP(object):
         the max value, the increase is ignored.
 
         """
+        del kwargs
 
         try:
             self.track_volumes[track] += 1
@@ -738,6 +751,7 @@ class BCP(object):
         ignored.
 
         """
+        del kwargs
 
         try:
             self.track_volumes[track] -= 1
@@ -884,7 +898,7 @@ class BCPClientSocket(object):
         self.socket = None
         self.connection_attempts = 0
         self.attempt_socket_connection = True
-        self.send_goodbye = True
+        self._send_goodbye = True
 
         self.bcp_commands = {'hello': self.receive_hello,
                              'goodbye': self.receive_goodbye,
@@ -960,8 +974,8 @@ class BCPClientSocket(object):
         self.log.info("Stopping socket client")
 
         if self.socket:
-            if self.send_goodbye:
-                self.send('goodbye')
+            if self._send_goodbye:
+                self.send_goodbye()
 
             self.socket.close()
             BCP.active_connections -= 1
@@ -1058,15 +1072,15 @@ class BCPClientSocket(object):
                     socket_chars += self.get_from_socket()
 
                     if socket_chars and '\n' in socket_chars:
-                            message, socket_chars = socket_chars.split('\n', 1)
+                        message, socket_chars = socket_chars.split('\n', 1)
 
-                            self.log.debug('Received "%s"', message)
-                            cmd, kwargs = decode_command_string(message)
+                        self.log.debug('Received "%s"', message)
+                        cmd, kwargs = decode_command_string(message)
 
-                            if cmd in self.bcp_commands:
-                                self.bcp_commands[cmd](**kwargs)
-                            else:
-                                self.receive_queue.put((cmd, kwargs))
+                        if cmd in self.bcp_commands:
+                            self.bcp_commands[cmd](**kwargs)
+                        else:
+                            self.receive_queue.put((cmd, kwargs))
 
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -1125,7 +1139,7 @@ class BCPClientSocket(object):
 
     def receive_goodbye(self):
         """Processes incoming BCP 'goodbye' command."""
-        self.send_goodbye = False
+        self._send_goodbye = False
         self.stop()
         self.machine.bcp.remove_bcp_connection(self)
 
