@@ -1,4 +1,12 @@
-'''
+from sys import platform
+from functools import partial
+
+from mpf.core.weakmethod import WeakMethod
+from queue import PriorityQueue, Empty
+import itertools
+import time
+import logging
+"""
 Clock object
 ============
 The :class:`Clock` object allows you to schedule a function call in the
@@ -156,7 +164,7 @@ from two threads simultaneously without any locking mechanism::
     # may schedule it twice
 Note, in the code above, thread 1 or thread 2 could be the kivy thread, not
 just an external thread.
-'''
+"""
 
 """
 ---------------------
@@ -177,16 +185,7 @@ been made for use in MPF:
        controls the maximum speed at which the MPF main loop/clock runs.
 """
 
-from sys import platform
-from functools import partial
-
-from mpf.core.weakmethod import WeakMethod
-from queue import PriorityQueue, Empty
-import itertools
-import time
-import logging
-
-__all__ = ('Clock', 'ClockBase', 'ClockEvent', 'mainthread')
+__all__ = ('ClockBase', 'ClockEvent')
 
 
 _default_time = time.perf_counter
@@ -432,7 +431,7 @@ class ClockBase(_ClockBase):
         self._frame_callbacks = PriorityQueue()
         self._max_fps = float(max_fps)
         self._log = logging.getLogger("Clock")
-        self._log.debug("Starting clock (maximum frames per second={})".format(self._max_fps))
+        self._log.debug("Starting clock (maximum frames per second=%s)", self._max_fps)
 
 
         #: .. versionadded:: 1.0.5
@@ -566,8 +565,8 @@ class ClockBase(_ClockBase):
             self, False, callback, timeout, self._last_tick, _hash(callback),
             priority, True)
 
-        self._log.debug("Scheduled a one-time clock callback (callback={}, timeout={}, priority={})".format(
-            str(callback), timeout, priority))
+        self._log.debug("Scheduled a one-time clock callback (callback=%s, timeout=%s, priority=%s)",
+                        str(callback), timeout, priority)
 
         return event
 
@@ -584,8 +583,8 @@ class ClockBase(_ClockBase):
             self, True, callback, timeout, self._last_tick, _hash(callback),
             priority, True)
 
-        self._log.debug("Scheduled a recurring clock callback (callback={}, timeout={}, priority={})".format(
-            str(callback), timeout, priority))
+        self._log.debug("Scheduled a recurring clock callback (callback=%s, timeout=%s, priority=%s)",
+                        str(callback), timeout, priority)
 
         return event
 
