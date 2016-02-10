@@ -1,6 +1,3 @@
-import unittest
-
-from mpf.core.machine import MachineController
 from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock, call
 from mpf.platform import p3_roc
@@ -32,9 +29,11 @@ class TestP3Roc(MpfTestCase):
     def setUp(self):
         p3_roc.pinproc_imported = True
         p3_roc.pinproc = MagicMock()
+        p3_roc.pinproc.MachineTypePDB = 7
         p3_roc.pinproc.EventTypeSwitchClosedDebounced = 1
         p3_roc.pinproc.EventTypeSwitchOpenDebounced = 2
         p3_roc.pinproc.DriverCount = 256
+        p3_roc.pinproc.normalize_machine_type = MagicMock(return_value=7)
         p3_roc.pinproc.decode = self._decode
         p3_roc.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
