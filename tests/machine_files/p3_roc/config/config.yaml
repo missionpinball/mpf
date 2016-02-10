@@ -6,6 +6,10 @@ hardware:
     servo_controllers: i2c_servo_controller
 
 switches:
+    s_test_000:
+        number: A0-B0-0
+    s_test_001:
+        number: A0-B0-1
     s_test:
         number: A1-B0-7
     s_slingshot_test:

@@ -2,6 +2,33 @@ from tests.MpfTestCase import MpfTestCase
 from mock import MagicMock, call
 from mpf.platform import p3_roc
 
+class MockPinProcModule(MagicMock):
+    DriverCount = 256
+
+    EventTypeAccelerometerIRQ = 11
+    EventTypeAccelerometerX = 8
+    EventTypeAccelerometerY = 9
+    EventTypeAccelerometerZ = 10
+    EventTypeBurstSwitchClosed = 7
+    EventTypeBurstSwitchOpen = 6
+    EventTypeDMDFrameDisplayed = 5
+    EventTypeSwitchClosedDebounced = 1
+    EventTypeSwitchClosedNondebounced = 3
+    EventTypeSwitchOpenDebounced = 2
+    EventTypeSwitchOpenNondebounced = 4
+
+    MachineTypeCustom = 1
+    MachineTypeInvalid = 0
+    MachineTypePDB = 7
+    MachineTypeSternSAM = 6
+    MachineTypeSternWhitestar = 5
+    MachineTypeWPC = 3
+    MachineTypeWPC95 = 4
+    MachineTypeWPCAlphanumeric = 2
+
+    SwitchCount = 255
+    SwitchNeverDebounceFirst = 192
+    SwitchNeverDebounceLast = 255
 
 class TestP3Roc(MpfTestCase):
     def getConfigFile(self):
@@ -20,15 +47,15 @@ class TestP3Roc(MpfTestCase):
 
     def setUp(self):
         p3_roc.pinproc_imported = True
-        p3_roc.pinproc = MagicMock()
-        p3_roc.pinproc.MachineTypePDB = 7
-        p3_roc.pinproc.EventTypeSwitchClosedDebounced = 1
-        p3_roc.pinproc.EventTypeSwitchOpenDebounced = 2
-        p3_roc.pinproc.DriverCount = 256
+        p3_roc.pinproc = MockPinProcModule()
+        pinproc = MagicMock()
+        p3_roc.pinproc.PinPROC = MagicMock(return_value=pinproc)
         p3_roc.pinproc.normalize_machine_type = MagicMock(return_value=7)
         p3_roc.pinproc.decode = None # should not be called and therefore fail
         p3_roc.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
+
+        pinproc.switch_get_states = MagicMock(return_value=[0,1,0,0,0,0,0,0,0,0,0])
         super().setUp()
 
     def test_pulse(self):
@@ -83,6 +110,11 @@ class TestP3Roc(MpfTestCase):
                 call(7, 0x8014, 88),
                 call(7, 0x8015, 2)
             ])
+
+    def test_initial_switches(self):
+        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+        self.assertFalse(self.machine.switch_controller.is_active("s_test_000"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_001"))
 
     def test_switches(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
