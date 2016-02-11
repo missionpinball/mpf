@@ -49,13 +49,12 @@ class HardwarePlatform(Platform):
         if self.machine.config['open_pixel_control']['number_format'] == 'hex':
             led = int(str(led), 16)
 
-        #self.opc_client.add_pixel(channel, led)
+        # self.opc_client.add_pixel(channel, led)
 
         return OpenPixelLED(self.opc_client, channel, led)
 
     def _setup_opc_client(self):
-        self.opc_client = OpenPixelClient(self.machine,
-            self.machine.config['open_pixel_control'])
+        self.opc_client = OpenPixelClient(self.machine, self.machine.config['open_pixel_control'])
 
 
 class OpenPixelLED(RGBLEDPlatformInterface):
@@ -84,9 +83,7 @@ class OpenPixelClient(object):
 
     Args:
         machine: The main ``MachineController`` instance.
-        server: String name of the server to connect to.
-        port: Int of the TCP port of the server to connect to.
-
+        config: Config to use
     """
     def __init__(self, machine, config):
 
@@ -125,15 +122,13 @@ class OpenPixelClient(object):
 
             channels_to_add = channel + 1 - len(self.channels)
 
-            self.channels = (
-                self.channels + [list() for i in range(channels_to_add)])
+            self.channels += [list() for i in range(channels_to_add)]
 
         if len(self.channels[channel]) < led + 1:
 
             leds_to_add = led + 1 - len(self.channels[channel])
 
-            self.channels[channel] = (
-                self.channels[channel] + [(0, 0, 0) for i in range(leds_to_add)])
+            self.channels[channel] += [(0, 0, 0) for i in range(leds_to_add)]
 
     def set_pixel_color(self, channel, pixel, color):
         """Sets an invidual pixel color.
@@ -149,6 +144,7 @@ class OpenPixelClient(object):
 
     def tick(self, dt):
         """Called once per machine loop to update the pixels."""
+        del dt
         if self.update_every_tick or self.dirty:
             for channel_index, pixel_list in enumerate(self.channels):
                 self.update_pixels(pixel_list, channel_index)
@@ -203,7 +199,7 @@ class OPCThread(threading.Thread):
 
     Args:
         machine: The main ``MachineController`` instance.
-        queue: The Queue() object that receives OPC messages for the OPC server.
+        sending_queue: The Queue() object that receives OPC messages for the OPC server.
         config: Dictionary of configuration settings.
 
     The OPC connection is handled in a separate thread so it doesn't bog down
@@ -249,13 +245,13 @@ class OPCThread(threading.Thread):
 
             if self.connection_required:
                 self.log.debug("Configuration is set that OPC connection is "
-                              "required. MPF exiting.")
+                               "required. MPF exiting.")
                 self.done()
 
         try:
             self.log.debug('Trying to connect to OPC server: %s:%s. Attempt '
-                          'number %s', self.host, self.port,
-                          self.connection_attempts)
+                           'number %s', self.host, self.port,
+                           self.connection_attempts)
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.connect((self.host, self.port))
             self.log.debug('Connected to the OPC server.')
@@ -303,6 +299,3 @@ class OPCThread(threading.Thread):
         """Exits the thread and causes MPF to shut down."""
         self.disconnect()
         self.machine.done = True
-
-
-
