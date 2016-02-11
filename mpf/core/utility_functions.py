@@ -497,3 +497,27 @@ class Util(object):
             time_string = ''.join((time_string, 's'))
 
         return Util.string_to_ms(time_string) / 1000.0
+
+    @staticmethod
+    def string_to_class(class_string):
+        """Converts a string like mpf.core.events.EventManager into a Python
+        class.
+
+        Args:
+            class_string(str): The input string
+
+        Returns:
+            A reference to the python class object
+
+        This function came from here:
+        http://stackoverflow.com/questions/452969/
+        does-python-have-an-equivalent-to-java-class-forname
+
+        """
+        # todo I think thre's a better way to do this in Python 3
+        parts = class_string.split('.')
+        module = ".".join(parts[:-1])
+        m = __import__(module)
+        for comp in parts[1:]:
+            m = getattr(m, comp)
+        return m

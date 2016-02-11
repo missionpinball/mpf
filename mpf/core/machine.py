@@ -48,10 +48,9 @@ class MachineController(object):
             various sources.
         done: Boolean. Set to True and MPF exits.
         machine_path: The root path of this machine_files folder
-        display:
         plugins:
         scriptlets:
-        platform:
+        hardware_platforms:
         events:
 
     """
@@ -88,6 +87,7 @@ class MachineController(object):
         self.clock.schedule_interval(self._check_crash_queue, 1)
         self._init_done = False
         self.config = None
+        self.events = None
         self.machine_config = None
         self._set_machine_path()
         self._load_config()
@@ -268,8 +268,7 @@ class MachineController(object):
             if not (config_file.startswith('/') or
                     config_file.startswith('\\')):
 
-                config_file = os.path.join(self.machine_path,
-                    self.config['mpf']['paths']['config'], config_file)
+                config_file = os.path.join(self.machine_path, self.config['mpf']['paths']['config'], config_file)
 
             self.log.info("Machine config file #%s: %s", num+1, config_file)
 
@@ -285,8 +284,8 @@ class MachineController(object):
 
     def _load_config_from_cache(self):
         self.log.info("Loading cached config: %s",
-            os.path.join(self.machine_path, '__mpfcache__',
-            '{}_config.p'.format('-'.join(self.options['configfile']))))
+                      os.path.join(self.machine_path, '__mpfcache__',
+                                   '{}_config.p'.format('-'.join(self.options['configfile']))))
 
         with open(os.path.join(
                 self.machine_path, '__mpfcache__', '{}_config.p'.
@@ -352,7 +351,7 @@ class MachineController(object):
             sys.exit()
 
         self.log.debug("Python version: %s.%s.%s", python_version[0],
-                      python_version[1], python_version[2])
+                       python_version[1], python_version[2])
         self.log.debug("Platform: %s", sys.platform)
         self.log.debug("Python executable location: %s", sys.executable)
         self.log.debug("32-bit Python? %s", sys.maxsize < 2**32)
@@ -361,7 +360,7 @@ class MachineController(object):
         self.log.info("Loading core modules...")
         for name, module in self.config['mpf']['core_modules'].items():
             self.log.debug("Loading '%s' core module", module)
-            m = self.string_to_class(module)(self)
+            m = Util.string_to_class(module)(self)
             setattr(self, name, m)
 
     def _load_plugins(self):
@@ -373,11 +372,10 @@ class MachineController(object):
         for plugin in Util.string_to_list(
                 self.config['mpf']['plugins']):
 
-
             self.log.debug("Loading '%s' plugin", plugin)
 
-            pluginObj = self.string_to_class(plugin)(self)
-            self.plugins.append(pluginObj)
+            plugin_obj = Util.string_to_class(plugin)(self)
+            self.plugins.append(plugin_obj)
 
     def _load_scriptlets(self):
         if 'scriptlets' in self.config:
@@ -389,8 +387,7 @@ class MachineController(object):
 
                 self.log.debug("Loading '%s' scriptlet", scriptlet)
 
-                i = __import__(self.config['mpf']['paths']['scriptlets'] + '.'
-                               + scriptlet.split('.')[0], fromlist=[''])
+                i = __import__(self.config['mpf']['paths']['scriptlets'] + '.' + scriptlet.split('.')[0], fromlist=[''])
 
                 self.scriptlets.append(getattr(i, scriptlet.split('.')[1])
                                        (machine=self,
@@ -459,29 +456,6 @@ class MachineController(object):
         except KeyError:
             self.log.error("Cannot set default platform to '%s', as that's not"
                            " a currently active platform", name)
-
-    def string_to_class(self, class_string):
-        """Converts a string like mpf.core.events.EventManager into a Python
-        class.
-
-        Args:
-            class_string(str): The input string
-
-        Returns:
-            A reference to the python class object
-
-        This function came from here:
-        http://stackoverflow.com/questions/452969/
-        does-python-have-an-equivalent-to-java-class-forname
-
-        """
-        # todo I think thre's a better way to do this in Python 3
-        parts = class_string.split('.')
-        module = ".".join(parts[:-1])
-        m = __import__(module)
-        for comp in parts[1:]:
-            m = getattr(m, comp)
-        return m
 
     def register_monitor(self, monitor_class, monitor):
         """Registers a monitor.
@@ -608,8 +582,7 @@ class MachineController(object):
 
     def get_debug_status(self, debug_path):
 
-        if (self.options['loglevel'] > 10 or
-                    self.options['consoleloglevel'] > 10):
+        if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
             return True
 
         class_, module = debug_path.split('|')
@@ -657,8 +630,7 @@ class MachineController(object):
                 disk_var['value'] = value
 
                 if self.machine_vars[name]['expire_secs']:
-                    disk_var['expire'] = (self.clock.get_time() +
-                        self.machine_vars[name]['expire_secs'])
+                    disk_var['expire'] = self.clock.get_time() + self.machine_vars[name]['expire_secs']
 
                 self.machine_var_data_manager.save_key(name, disk_var)
 
@@ -666,9 +638,9 @@ class MachineController(object):
                            "change: %s)", name, value, prev_value,
                            change)
             self.events.post('machine_var_' + name,
-                                     value=value,
-                                     prev_value=prev_value,
-                                     change=change)
+                             value=value,
+                             prev_value=prev_value,
+                             change=change)
 
             if self.machine_var_monitor:
                 for callback in self.monitors['machine_vars']:
