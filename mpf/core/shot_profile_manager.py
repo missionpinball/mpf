@@ -3,8 +3,6 @@
 import logging
 from collections import deque
 
-from mpf.core.config_processor import ConfigProcessor
-
 
 class ShotProfileManager(object):
 
@@ -25,7 +23,7 @@ class ShotProfileManager(object):
             self.register_profiles, config_section_name="shot_profiles")
 
         self.machine.mode_controller.register_start_method(
-            self.mode_start_for_shots, config_section_name="shots", priority=1)
+            self.mode_start_for_shots, config_section_name="shots")
         self.machine.mode_controller.register_start_method(
             self.mode_start_for_shot_groups, config_section_name="shot_groups")
 
@@ -56,8 +54,10 @@ class ShotProfileManager(object):
         Args:
             config: Dict containing the profiles you're registering. Keys are
                 profile names, values are dictionaries of profile settings.
+            kwargs: unused
 
         """
+        del kwargs
 
         for name, profile in config.items():
             self.register_profile(name, profile)
@@ -94,17 +94,21 @@ class ShotProfileManager(object):
         return config
 
     def _player_turn_start(self, player, **kwargs):
+        del kwargs
         for shot in self.machine.shots:
             shot.player_turn_start(player)
 
     def _player_turn_stop(self, player, **kwargs):
+        del kwargs
+        del player
         for shot in self.machine.shots:
             shot.player_turn_stop()
 
-    def mode_start_for_shots(self, config, priority, mode, **kwargs):
+    def mode_start_for_shots(self, config, mode, **kwargs):
         """ runs on mode start, sets the shots' enable_tables
 
         """
+        del kwargs
         if self.debug:
             self.log.debug("Scanning config from mode '%s' for shots",
                            mode.name)
@@ -129,8 +133,8 @@ class ShotProfileManager(object):
                                ': %s, enable: %s, mode: %s', profile, enable,
                                mode)
                 self.machine.shots[shot].log.debug('Updating shot enable_table '
-                    'from config: profile: %s, enable: %s, mode: %s', profile,
-                    enable, mode)
+                                                   'from config: profile: %s, enable: %s, mode: %s', profile,
+                                                   enable, mode)
 
             self.machine.shots[shot].update_enable_table(profile, enable, mode)
 
@@ -156,12 +160,15 @@ class ShotProfileManager(object):
         Args:
             config: Dict containing shot groups. Keys are shot group names.
                 Values are settings for each shot group.
-            priority: Int of the priority these profiles will be applied at.
+            priority: Int of the priority these profiles will be applied at. unused.
             mode: A Mode class object for the mode which is applying these
                 profiles. Used as the key to remove the profiles a specific mode
                 applied later.
+            kwargs: unused
 
         """
+        del kwargs
+        del priority
 
         if self.debug:
             self.log.debug("Scanning config %s for shot_groups", mode)
@@ -200,9 +207,9 @@ class ShotProfileManager(object):
 
             for shot in self.machine.shot_groups[shot_group].shots:
                 if self.debug:
-                    shot.log.debug("Updating enable_table from"
-                               " config: profile: %s, enable: %s, mode: %s",
-                               settings['profile'], enable, mode)
+                    shot.log.debug("Updating enable_table from "
+                                   "config: profile: %s, enable: %s, mode: %s",
+                                   settings['profile'], enable, mode)
 
                 shot.update_enable_table(settings['profile'], enable, mode)
 
