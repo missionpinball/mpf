@@ -36,6 +36,7 @@ assets:
         priority: single|int|0
     images: # no image-specific config items
     shows:  # no show-specific config items
+    sounds: # no sound-specific config items
     videos:
         width: single|num|None
         height: single|num|None
