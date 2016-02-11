@@ -3,7 +3,7 @@
 import logging
 from collections import OrderedDict
 
-from mpf.devices import *
+from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.file_manager import FileManager
 
@@ -31,7 +31,7 @@ class DeviceManager(object):
             self.machine.config['mpf']['device_modules'].split(' '))
         for device_type in self.machine.config['mpf']['device_modules']:
 
-            device_cls = eval(device_type)
+            device_cls = Util.string_to_class("mpf.devices." + device_type)
 
             collection_name, config = device_cls.get_config_info()
 
