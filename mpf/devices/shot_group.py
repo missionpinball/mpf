@@ -70,10 +70,12 @@ class ShotGroup(Device):
         Args:
             profile: String name of the active profile of the shot that
                 was hit.
-            profile: String name of the state name of the profile of
-                the shot that was hit.
+            mode: unused
+            kwargs: unused
 
         """
+        del mode
+        del kwargs
         if self.debug:
             self.log.debug('Hit! Active profile: %s, Current state: %s',
                            profile, profile)
@@ -92,6 +94,7 @@ class ShotGroup(Device):
         group.
 
         """
+        del kwargs
         if self.debug:
             self.log.debug('Enabling from mode: %s', mode)
 
@@ -104,6 +107,7 @@ class ShotGroup(Device):
         group.
 
         """
+        del kwargs
         if self.debug:
             self.log.debug('Disabling from mode: %s', mode)
 
@@ -116,6 +120,7 @@ class ShotGroup(Device):
         rotate the shots.
 
         """
+        del kwargs
         if self.debug:
             self.log.debug('Enabling rotation')
         self.rotation_enabled = True
@@ -125,6 +130,7 @@ class ShotGroup(Device):
         rotate the shots.
 
         """
+        del kwargs
         if self.debug:
             self.log.debug('Disabling rotation')
         self.rotation_enabled = False
@@ -135,6 +141,7 @@ class ShotGroup(Device):
         each shot's reset() method one-by-one.
 
         """
+        del kwargs
         if self.debug:
             self.log.debug('Resetting')
         for shot in self.shots:
@@ -144,6 +151,7 @@ class ShotGroup(Device):
         """Removes the current active profile from every shot in the group.
 
         """
+        del kwargs
         if self.debug:
             self.log.debug('Removing active profile')
         for shot in self.shots:
@@ -154,6 +162,7 @@ class ShotGroup(Device):
         one step forward.
 
         """
+        del kwargs
         if self.debug:
             self.log.debug('Advancing')
         for shot in self.shots:
@@ -184,11 +193,13 @@ class ShotGroup(Device):
                 targets with an active profile in one of these states will not
                 be included in the rotation. Default is None which means all
                 targets will be rotated)
+            kwargs: unused
 
         Note that this shot group must, and rotation_events for this
         shot group, must both be enabled for the rotation events to work.
 
         """
+        del kwargs
         if not self.rotation_enabled:
 
             if self.debug:
@@ -220,11 +231,8 @@ class ShotGroup(Device):
         # build of a list of shots we're actually going to rotate
         for shot in self.shots:
 
-            if ((not states or
-                         shot.enable_table[mode][
-                             'current_state_name'] in states)
-                and shot.enable_table[mode]['current_state_name']
-                not in exclude_states):
+            if ((not states or shot.enable_table[mode]['current_state_name'] in states) and
+                    shot.enable_table[mode]['current_state_name'] not in exclude_states):
                 shot_list.append(shot)
 
         # shot_state_list is deque of tuples (state num, light show step num)
@@ -256,10 +264,8 @@ class ShotGroup(Device):
 
         # figure out which direction we're going to rotate
         if not direction:
-            direction = \
-            shot_list[0].enable_table[mode]['settings']['rotation_pattern'][0]
-            shot_list[0].enable_table[mode]['settings'][
-                'rotation_pattern'].rotate(-1)
+            direction = shot_list[0].enable_table[mode]['settings']['rotation_pattern'][0]
+            shot_list[0].enable_table[mode]['settings']['rotation_pattern'].rotate(-1)
 
             if self.debug:
                 self.log.debug("Since no direction was specified, pulling from"
@@ -282,8 +288,10 @@ class ShotGroup(Device):
 
         Args:
             steps: Integer of how many steps you want to rotate. Default is 1.
+            kwargs: unused
 
         """
+        del kwargs
         self.rotate(direction='right', steps=steps, mode=mode)
 
     def rotate_left(self, steps=1, mode=None, **kwargs):
@@ -292,8 +300,10 @@ class ShotGroup(Device):
 
         Args:
             steps: Integer of how many steps you want to rotate. Default is 1.
+            kwargs: unused
 
         """
+        del kwargs
         self.rotate(direction='left', steps=steps, mode=mode)
 
     def check_for_complete(self, mode):
