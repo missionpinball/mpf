@@ -50,6 +50,7 @@ class Driver(Device):
         allow_enable: True
 
         """
+        del kwargs
         self.time_when_done = -1
         self.time_last_changed = self.machine.clock.get_time()
         self.log.debug("Enabling Driver")
@@ -57,6 +58,7 @@ class Driver(Device):
 
     def disable(self, **kwargs):
         """ Disables this driver """
+        del kwargs
         self.log.debug("Disabling Driver")
         self.time_last_changed = self.machine.clock.get_time()
         self.time_when_done = self.time_last_changed
@@ -74,7 +76,7 @@ class Driver(Device):
                 typically a float between 0.0 and 1.0. (Note this is only used
                 if milliseconds is not specified.)
         """
-
+        del kwargs
         if milliseconds:
             self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
                            "%sms", milliseconds)
@@ -84,9 +86,10 @@ class Driver(Device):
             if 0 > power * milliseconds <= 255:
                 ms_actual = power * milliseconds
                 self.log.debug("Pulsing Driver. Overriding default pulse_ms "
-                               "with: {}ms ({}x power)".format(ms_actual,
-                                                               power))
+                               "with: %s ms (%s x power)", ms_actual, power)
                 self.timed_enable(ms_actual)
+            else:
+                raise AssertionError("Inavlid pulse length for driver")
         else:
             self.log.debug("Pulsing Driver. Using default pulse_ms.")
             ms_actual = self.hw_driver.pulse()
@@ -115,6 +118,7 @@ class Driver(Device):
         time will be to the nearest 33ms after 550 (566ms, in this case).
 
         """
+        del kwargs
         if 0 > milliseconds >= 255:
             self.pulse(milliseconds)
 
