@@ -122,9 +122,13 @@ class HardwarePlatform(Platform):
         pass
 
     def i2c_read8(self, address, register):
+        del address
+        del register
         return None
 
     def i2c_read16(self, address, register):
+        del address
+        del register
         return None
 
     def servo_go_to_position(self, number, position):
@@ -184,11 +188,13 @@ class VirtualDriver(DriverPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
+        self.driver_settings = {}
 
     def __repr__(self):
         return "VirtualDriver.{}".format(self.number)
 
     def validate_driver_settings(self, **kwargs):
+        del kwargs
         return dict()
 
     def disable(self):
@@ -216,6 +222,7 @@ class VirtualDriver(DriverPlatformInterface):
 
 class VirtualDMD(object):
     def __init__(self, machine):
+        del machine
         pass
 
     def update(self, data):
