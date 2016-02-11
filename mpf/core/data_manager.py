@@ -5,7 +5,6 @@ import logging
 import os
 import errno
 import _thread
-import time
 
 from mpf.core.file_manager import FileManager
 
@@ -55,7 +54,7 @@ class DataManager(object):
 
         else:
             self.log.debug("Didn't find the %s file. No prob. We'll create "
-                          "it when we save.", self.name)
+                           "it when we save.", self.name)
 
     def get_data(self, section=None):
         """Returns the value of this DataManager's data.
@@ -123,8 +122,7 @@ class DataManager(object):
         try:
             self.data[key] = value
         except TypeError:
-            self.log.warning('In-memory copy of {} is invalid. Re-creating'.
-                             format(self.filename))
+            self.log.warning('In-memory copy of %s is invalid. Re-creating', self.filename)
             # todo should we reload from disk here?
             self.data = dict()
             self.data[key] = value
@@ -139,5 +137,5 @@ class DataManager(object):
             pass
 
     def _writing_thread(self, data):
-        self.log.debug("Writing {} to: {}".format(self.name, self.filename))
+        self.log.debug("Writing %s to: %s", self.name, self.filename)
         FileManager.save(self.filename, data)
