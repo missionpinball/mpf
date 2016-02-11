@@ -85,9 +85,7 @@ class DeviceManager(object):
         """
         for collection in self.collections:
             if self.collections[collection].config_section in config:
-                for device, settings in (
-                        iter(config[self.collections[collection].
-                                config_section].items())):
+                for device, settings in (iter(config[self.collections[collection].config_section].items())):
 
                     control_events = [x for x in settings if
                                       x.endswith('_events')]
@@ -95,8 +93,7 @@ class DeviceManager(object):
                     for control_event in control_events:
                         # get events from this device's config
                         if settings[control_event]:
-                            for event, delay in settings[
-                                control_event].items():
+                            for event, delay in settings[control_event].items():
                                 yield (event,
                                        getattr(self.collections
                                                [collection][device],
@@ -123,10 +120,7 @@ class DeviceManager(object):
                     delay_mgr=self.machine.delay)
 
     def create_collection_control_events(self):
-        for collection, events in (
-                iter(self.machine.config['mpf'][
-                         'device_collection_control_events'].
-                             items())):
+        for collection, events in (iter(self.machine.config['mpf']['device_collection_control_events'].items())):
 
             for event in events:
                 event_name = collection + '_' + event
@@ -142,6 +136,7 @@ class DeviceManager(object):
 
     def _control_event_handler(self, callback, ms_delay=0, delay_mgr=None,
                                mode=None, **kwargs):
+        del kwargs
 
         self.log.debug("_control_event_handler: mode: %s, callback: %s,", mode,
                        callback)
