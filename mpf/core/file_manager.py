@@ -2,7 +2,6 @@
 
 import logging
 import os
-import sys
 import mpf.file_interfaces
 
 
@@ -71,24 +70,29 @@ class FileManager(object):
     def init(cls):
         # Needs to be a separate method to prevent circular import
         for module in mpf.file_interfaces.__all__:
+            module_obj = getattr(mpf.file_interfaces, module)
+            interface_class = getattr(module_obj, "file_interface_class")
 
-                __import__('mpf.file_interfaces.{}'.format(module))
+            this_instance = interface_class()
 
-                interface_class = eval(
-                    'mpf.file_interfaces.{}.file_interface_class'.format(module))
-
-                this_instance = interface_class()
-
-                for file_type in interface_class.file_types:
-                    cls.file_interfaces[file_type] = this_instance
+            for file_type in interface_class.file_types:
+                cls.file_interfaces[file_type] = this_instance
 
         FileManager.initialized = True
 
     @staticmethod
-    def locate_file(filename):
+    def locate_file(filename) -> str:
+        """
+
+        Args:
+            filename: Filename to locate
+
+        Returns: Location of file
+
+        """
 
         if not filename:
-            return False
+            raise FileNotFoundError("No filename provided")
 
         if not FileManager.initialized:
             FileManager.init()
@@ -104,21 +108,24 @@ class FileManager(object):
                     if questionable_file:
                         return questionable_file
 
-                return False
+                raise FileNotFoundError("File not found")
 
         else:
             return filename
 
     @staticmethod
     def get_file_interface(filename):
-        file = FileManager.locate_file(filename)
+        try:
+            FileManager.locate_file(filename)
+        except FileNotFoundError:
+            return None
+
         ext = os.path.splitext(filename)[1]
 
-        if file:
-            try:
-                return FileManager.file_interfaces[ext]
-            except KeyError:
-                return None
+        try:
+            return FileManager.file_interfaces[ext]
+        except KeyError:
+            return None
 
     @staticmethod
     def load(filename, verify_version=False, halt_on_error=False, round_trip=False):
@@ -126,29 +133,25 @@ class FileManager(object):
         if not FileManager.initialized:
             FileManager.init()
 
-        file = FileManager.locate_file(filename)
+        try:
+            file = FileManager.locate_file(filename)
+        except FileNotFoundError:
+            if halt_on_error:
+                raise IOError("Could not find file {}".format(filename))
+            else:
+                return dict()
 
-        if file:
-            ext = os.path.splitext(file)[1]
+        ext = os.path.splitext(file)[1]
 
-            try:
-                config = FileManager.file_interfaces[ext].load(file,
-                                                               verify_version,
-                                                               halt_on_error,
-                                                               round_trip)
-            except KeyError:
-                # todo convert to exception
-                FileManager.log.error("No config file processor available for file type {}"
-                          .format(ext))
-                sys.exit()
+        try:
+            config = FileManager.file_interfaces[ext].load(file,
+                                                           verify_version,
+                                                           halt_on_error,
+                                                           round_trip)
+        except KeyError:
+            raise AssertionError("No config file processor available for file type {}".format(ext))
 
-            return config
-
-        elif halt_on_error:
-            raise IOError("Could not find file {}".format(filename))
-
-        else:
-            return dict()
+        return config
 
     @staticmethod
     def save(filename, data):
@@ -157,7 +160,4 @@ class FileManager(object):
         try:
             FileManager.file_interfaces[ext].save(filename, data)
         except KeyError:
-            # todo convert to exception
-            FileManager.log.error("No config file processor available for file type {}"
-                      .format(ext))
-            sys.exit()
+            raise AssertionError("No config file processor available for file type {}".format(ext))
