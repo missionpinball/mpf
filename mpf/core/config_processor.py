@@ -11,8 +11,15 @@ from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 
 log = logging.getLogger('ConfigProcessor')
 
+
 class ConfigProcessorBase(object):
     config_spec = None
+
+    def __init__(self, machine):
+        self.machine = machine
+        self.log = logging.getLogger('ConfigProcessor')
+        self.machine_sections = []
+        self.mode_sections = []
 
     def register_load_methods(self):
         for section in self.mode_sections:
@@ -27,10 +34,12 @@ class ConfigProcessorBase(object):
                                                       section=section)
 
     def process_mode_config(self, config, mode, mode_path, section):
+        del mode
+        del mode_path
         self.process_localized_config_section(config, section)
 
     def process_localized_config_section(self, config, section):
-        config = self.machine_sections[section](config)
+        self.machine_sections[section](config)
 
     def color_from_string(self, item):
         raise NotImplementedError
@@ -40,13 +49,13 @@ class ConfigProcessorBase(object):
         # If the machine folder value passed starts with a forward or
         # backward slash, then we assume it's from the mpf root. Otherwise we
         # assume it's in the mpf/machine_files folder
-        if (machine_path.startswith('/') or machine_path.startswith('\\')):
+        if machine_path.startswith('/') or machine_path.startswith('\\'):
             machine_path = machine_path
         else:
             machine_path = os.path.join(machine_files_default, machine_path)
 
         machine_path = os.path.abspath(machine_path)
-        logging.info("Machine path: {}".format(machine_path))
+        logging.info("Machine path: %s", machine_path)
 
         # Add the machine folder to sys.path so we can import modules from it
         sys.path.append(machine_path)
@@ -55,6 +64,7 @@ class ConfigProcessorBase(object):
     @staticmethod
     def load_machine_config(config_file_list, machine_path,
                             config_path='config', existing_config=None):
+        machine_config = None
         for num, config_file in enumerate(config_file_list):
 
             if not existing_config:
@@ -62,8 +72,7 @@ class ConfigProcessorBase(object):
             else:
                 machine_config = existing_config
 
-            if not (config_file.startswith('/') or
-                        config_file.startswith('\\')):
+            if not (config_file.startswith('/') or config_file.startswith('\\')):
                 config_file = os.path.join(machine_path, config_path,
                                            config_file)
 
@@ -92,15 +101,13 @@ class ConfigProcessorBase(object):
         except TypeError:
             return dict()
 
+
 class ConfigProcessor(ConfigProcessorBase):
     config_spec = None
 
     def __init__(self, machine):
-        self.machine = machine
-        self.log = logging.getLogger('ConfigProcessor')
+        super(ConfigProcessor, self).__init__(machine)
         self.system_config = self.machine.config['mpf']
-        self.machine_sections = None
-        self.mode_sections = None
 
         self.machine_sections = dict(shows=self.process_shows,
                                      light_scripts=self.process_light_scripts)
@@ -137,7 +144,7 @@ class ConfigProcessor(ConfigProcessorBase):
             color = Util.string_to_list(color_string)
 
             try:
-                return (int(color[0]), int(color[1]), int(color[2]))
+                return int(color[0]), int(color[1]), int(color[2])
 
             except KeyError:
                 raise
