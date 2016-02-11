@@ -2,7 +2,6 @@
 etc."""
 
 import logging
-from mpf.core.config_processor import ConfigProcessor
 from mpf.core.data_manager import DataManager
 from mpf.devices.shot import Shot
 
@@ -45,8 +44,7 @@ class Auditor(object):
         # Initializes the auditor. We do this separate from __init__() since
         # we need everything else to be setup first.
 
-        self.config = self.machine.config_validator.validate_config('auditor',
-                                            self.machine.config['auditor'])
+        self.config = self.machine.config_validator.validate_config('auditor', self.machine.config['auditor'])
 
         self.current_audits = self.data_manager.get_data()
 
@@ -105,6 +103,7 @@ class Auditor(object):
             **kawargs: Not used, but included since some of the audit events
                 might include random kwargs.
         """
+        del kwargs
 
         if audit_class not in self.current_audits:
             self.current_audits[audit_class] = dict()
@@ -119,6 +118,8 @@ class Auditor(object):
             self.audit('switches', switch_name)
 
     def audit_shot(self, name, profile, state):
+        del profile
+        del state
         self.audit('shots', name)
 
     def audit_event(self, eventname, **kwargs):
@@ -129,6 +130,7 @@ class Auditor(object):
             **kwargs, not used, but included since some types of events include
                 kwargs.
         """
+        del kwargs
 
         self.current_audits['events'][eventname] += 1
 
@@ -140,6 +142,7 @@ class Auditor(object):
             **kwargs, not used, but included since some types of events include
                 kwargs.
         """
+        del kwargs
         for item in self.config['player']:
             for player in self.machine.game.player_list:
 
@@ -176,6 +179,7 @@ class Auditor(object):
                 keyword arguments.
 
         """
+        del kwags
         if self.enabled:
             return  # this will happen if we get a mid game restart
 
@@ -203,6 +207,7 @@ class Auditor(object):
 
     def disable(self, **kwargs):
         """Disables the auditor."""
+        del kwargs
         self.log.debug("Disabling the Auditor")
         self.enabled = False
 
