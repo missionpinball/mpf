@@ -5,7 +5,6 @@ import json
 import struct
 
 from mpf.core.utility_functions import Util
-from mpf.core.config_processor import ConfigProcessor
 from mpf.platform.openpixel import OpenPixelClient
 from mpf.platform.openpixel import HardwarePlatform as OPHardwarePlatform
 
@@ -29,8 +28,7 @@ class HardwarePlatform(OPHardwarePlatform):
         return '<Platform.FadeCandy>'
 
     def _setup_opc_client(self):
-        self.opc_client = FadeCandyOPClient(self.machine,
-            self.machine.config['open_pixel_control'])
+        self.opc_client = FadeCandyOPClient(self.machine, self.machine.config['open_pixel_control'])
 
 
 class FadeCandyOPClient(OpenPixelClient):
@@ -112,7 +110,7 @@ class FadeCandyOPClient(OpenPixelClient):
 
         """
 
-        self.linearslope = float(linearslope)
+        self.linear_slope = float(linearslope)
         self.set_global_color_correction()
 
     def set_linear_cutoff(self, linearcutoff):
