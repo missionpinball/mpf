@@ -11,7 +11,7 @@ class TestPlayfield(MpfTestCase):
         return 'test_playfield.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/playfield/'
+        return 'tests/machine_files/playfield/'
 
     def test_unexpected_ball_on_pf(self):
         self.assertEqual(0, self.machine.ball_devices.playfield.balls)

@@ -7,7 +7,7 @@ class TestShots(MpfTestCase):
         return 'test_shots.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/shots/'
+        return 'tests/machine_files/shots/'
 
     def test_loading_shots(self):
         # Make sure machine-wide shots load & mode-specific shots do not

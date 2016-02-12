@@ -6,7 +6,7 @@ from tests.MpfTestCase import MpfTestCase
 
 class TestAssets(MpfTestCase):
     def getMachinePath(self):
-        return '../tests/machine_files/asset_manager'
+        return 'tests/machine_files/asset_manager'
 
     def getConfigFile(self):
         return 'test_asset_loading.yaml'

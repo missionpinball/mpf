@@ -7,7 +7,7 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         return 'test_ball_device_auto_manual_plunger.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/ball_device/'
+        return 'tests/machine_files/ball_device/'
 
     def test_mechanical_eject_to_pf(self):
 

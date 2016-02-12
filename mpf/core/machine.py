@@ -8,7 +8,7 @@ import queue
 import sys
 import threading
 
-import version
+import mpf
 from mpf.core.bcp import BCP
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
@@ -54,10 +54,12 @@ class MachineController(object):
         events:
 
     """
-    def __init__(self, options):
+    def __init__(self, mpf_path, machine_path, options):
+        self.mpf_path = mpf_path
+        self.machine_path = machine_path
         self.options = options
         self.log = logging.getLogger("Machine")
-        self.log.info("Mission Pinball Framework v%s", version.__version__)
+        self.log.info("Mission Pinball Framework v%s", mpf.__version__)
         self.log.debug("Command line arguments: %s", self.options)
         self.verify_system_info()
 
@@ -67,7 +69,6 @@ class MachineController(object):
         self.loop_start_time = 0
         self.tick_num = 0
         self.done = False
-        self.machine_path = None  # Path to this machine's folder root
         self.monitors = dict()
         self.plugins = list()
         self.scriptlets = list()
@@ -144,7 +145,7 @@ class MachineController(object):
         self.events.process_event_queue()
         self.events.post("init_phase_5")
         self.events.process_event_queue()
-        ConfigProcessor.unload_config_spec()
+        ConfigValidator.unload_config_spec()
 
         self.clear_boot_hold('init')
 
@@ -216,18 +217,6 @@ class MachineController(object):
             self.stop()
 
     def _set_machine_path(self):
-        # If the machine folder value passed starts with a forward or
-        # backward slash, then we assume it's from the mpf root. Otherwise we
-        # assume it's in the mpf/machine_files folder
-        if (self.options['machine_path'].startswith('/') or
-                self.options['machine_path'].startswith('\\')):
-            machine_path = self.options['machine_path']
-        else:
-            # todo temp examples hard coded
-            machine_path = os.path.join('examples',
-                                        self.options['machine_path'])
-
-        self.machine_path = os.path.abspath(machine_path)
         self.log.debug("Machine path: %s", self.machine_path)
 
         # Add the machine folder to sys.path so we can import modules from it
@@ -261,7 +250,7 @@ class MachineController(object):
     def _load_config_from_files(self):
         self.log.info("Loading config from original files")
 
-        self.config = self._get_machine_config()
+        self.config = self._get_mpf_config()
 
         for num, config_file in enumerate(self.options['configfile']):
 
@@ -279,7 +268,7 @@ class MachineController(object):
         if self.options['create_config_cache']:
             self._cache_config()
 
-    def _get_machine_config(self):
+    def _get_mpf_config(self):
         return ConfigProcessor.load_config_file(self.options['mpfconfigfile'])
 
     def _load_config_from_cache(self):
@@ -754,5 +743,5 @@ class MachineController(object):
 
     def init_done(self):
         self._init_done = True
-        ConfigProcessor.unload_config_spec()
+        ConfigValidator.unload_config_spec()
         self.reset()

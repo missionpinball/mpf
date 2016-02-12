@@ -23,7 +23,7 @@ class TestAuditor(MpfTestCase):
         return 'smart_virtual'
 
     def getMachinePath(self):
-        return '../tests/machine_files/auditor/'
+        return 'tests/machine_files/auditor/'
 
     def setUp(self):
         self.machine_config_patches['mpf']['plugins'] = ['mpf.plugins.auditor.Auditor']

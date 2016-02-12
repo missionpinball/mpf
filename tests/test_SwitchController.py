@@ -7,7 +7,7 @@ class TestSwitchController(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/switch_controller/'
+        return 'tests/machine_files/switch_controller/'
 
     def _callback(self):
          self.isActive = self.machine.switch_controller.is_active("s_test", ms=300)

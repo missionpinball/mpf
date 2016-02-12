@@ -11,7 +11,7 @@ class TestSystem11Trough(MpfTestCase):
         return 'test_system_11_trough.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/ball_device/'
+        return 'tests/machine_files/ball_device/'
 
     def test_boot_with_ball_in_drain_empty_trough(self):
         # MPF starts with a ball in the outhole (drain device). It should be

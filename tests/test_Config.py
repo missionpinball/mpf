@@ -7,7 +7,7 @@ class TestConfig(MpfTestCase):
         return 'test_config_interface.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/config_interface/'
+        return 'tests/machine_files/config_interface/'
 
     def test_config_file(self):
         # true, True, yes, Yes values should be True

@@ -11,7 +11,7 @@ class TestBallDevicesHoldCoil(MpfTestCase):
       return 'test_hold_coil.yaml'
 
   def getMachinePath(self):
-      return '../tests/machine_files/ball_device/'
+      return 'tests/machine_files/ball_device/'
 
   def test_holdcoil_with_direct_release(self):
       self.machine.coils['hold_coil'].enable = MagicMock()

@@ -30,7 +30,7 @@ class TestFast(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/fast/'
+        return 'tests/machine_files/fast/'
 
     def get_platform(self):
         return 'fast'

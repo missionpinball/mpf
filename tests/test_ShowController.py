@@ -11,7 +11,7 @@ class TestShowController(MpfTestCase):
         return 'test_shows.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/show_controller/'
+        return 'tests/machine_files/show_controller/'
 
     def get_platform(self):
         return 'smart_virtual'

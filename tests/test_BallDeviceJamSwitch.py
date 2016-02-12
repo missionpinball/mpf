@@ -9,7 +9,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         return 'test_ball_device_jam_switch.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/ball_device/'
+        return 'tests/machine_files/ball_device/'
 
     def _captured_from_pf(self, balls, **kwargs):
         self._captured += balls

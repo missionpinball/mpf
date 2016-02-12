@@ -10,7 +10,7 @@ class TestMpfTestCase(MpfTestCase):
         return 'test_mpftestcase.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/mpftestcase/'
+        return 'tests/machine_files/mpftestcase/'
 
     def get_platform(self):
         return 'smart_virtual'

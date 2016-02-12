@@ -6,7 +6,7 @@ class TestConfigOldVersion(MpfTestCase):
         return 'test_config_interface_missing_version.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/config_interface/'
+        return 'tests/machine_files/config_interface/'
 
     def setUp(self):
         pass

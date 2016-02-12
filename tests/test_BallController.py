@@ -15,7 +15,7 @@ class TestBallController(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/ball_controller/'
+        return 'tests/machine_files/ball_controller/'
 
     def get_platform(self):
         return 'smart_virtual'

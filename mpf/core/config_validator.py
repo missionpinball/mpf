@@ -1,15 +1,14 @@
 
 import logging
+import os
 import sys
 from copy import deepcopy
 
 import ruamel.yaml as yaml
 
+import mpf
 from mpf.file_interfaces.yaml_interface import MpfLoader, YamlInterface
 from mpf.core.utility_functions import Util
-import mpf.core.rgb_color
-from mpf.core.rgb_color import RGBColor
-import version
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 
@@ -1253,7 +1252,9 @@ class ConfigValidator(object):
 
         setting_key = setting.split(':')[-1]
 
-        with open(self.system_config['config_versions_file'], 'r') as f:
+        with open(os.path.join(self.machine.mpf_path,
+                self.machine.config['mpf']['config_versions_file']),
+                  'r') as f:
             config_file = yaml.load(f, Loader=MpfLoader)
 
         for ver, sections in config_file.items():
@@ -1263,10 +1264,10 @@ class ConfigValidator(object):
 
             ver_string = ''
 
-            if int(version.__config_version_info__) > int(ver):
+            if int(mpf.__config_version_info__) > int(ver):
                 ver_string = (
                 ' (The latest config version is config_version=' +
-                version.__config_version_info__ + ').')
+                mpf.__config_version_info__ + ').')
 
             if setting_key in sections['section_replacements']:
                 self.log.info('The setting "%s" has been renamed to "%s" in '

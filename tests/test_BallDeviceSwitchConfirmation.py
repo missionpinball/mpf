@@ -19,7 +19,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         return 'test_ball_device_switch_confirmation.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/ball_device/'
+        return 'tests/machine_files/ball_device/'
 
     def _missing_ball(self):
         self._missing += 1

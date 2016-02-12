@@ -3,6 +3,5 @@
 import logging
 import os
 import sys
-import version
 
 from mpf.core.utility_functions import Util

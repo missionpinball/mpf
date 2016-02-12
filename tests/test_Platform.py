@@ -9,7 +9,7 @@ class TestPlatform(MpfTestCase):
         return 'test_platform.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/platform/'
+        return 'tests/machine_files/platform/'
 
     def get_platform(self):
         return False

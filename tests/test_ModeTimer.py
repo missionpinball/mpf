@@ -6,7 +6,7 @@ class TestModeTimer(MpfTestCase):
         return 'test_mode_timers.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/mode_tests/'
+        return 'tests/machine_files/mode_tests/'
 
     def _mode_timer_start(self, **kwargs):
         self.started = True

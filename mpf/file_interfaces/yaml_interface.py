@@ -4,7 +4,7 @@ Fixes for octal and boolean values are from here:
 http://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly/
 
 """
-
+import copy
 import logging
 import re
 import sys
@@ -21,7 +21,7 @@ from ruamel.yaml.dumper import RoundTripDumper
 
 from mpf.core.file_manager import FileInterface, FileManager
 from mpf.core.utility_functions import Util
-import version
+import mpf
 
 log = logging.getLogger('YAML Interface')
 
@@ -206,6 +206,8 @@ for ch in list(u'yYnNoO'):
 class YamlInterface(FileInterface):
 
     file_types = ['.yaml', '.yml']
+    cache = False
+    file_cache = dict()
 
     @staticmethod
     def get_config_file_version(filename):
@@ -234,17 +236,17 @@ class YamlInterface(FileInterface):
         file_interface = FileManager.get_file_interface(filename)
         file_version = file_interface.get_config_file_version(filename)
 
-        if file_version != int(version.__config_version__):
+        if file_version != int(mpf.__config_version__):
             log.error("Config file %s is version %s. MPF %s requires "
                       "version %s", filename, file_version,
-                      version.__version__, version.__config_version__)
+                      mpf.__version__, mpf.__config_version__)
             log.error("Use the Config File Migrator to automatically "
                       "migrate your config file to the latest version.")
             log.error("Migration tool: "
                        "https://missionpinball.com/docs/tools/config-file-migrator/")
             log.error("More info on config version %s: %s",
-                      version.__config_version__,
-                      version.__config_version_url__)
+                      mpf.__config_version__,
+                      mpf.__config_version_url__)
             return False
         else:
             return True
@@ -268,6 +270,10 @@ class YamlInterface(FileInterface):
             A dictionary of the settings from this YAML file.
 
         """
+
+        if YamlInterface.cache and filename in YamlInterface.file_cache:
+            return copy.deepcopy(YamlInterface.file_cache[filename])
+
         if verify_version and not YamlInterface.check_config_file_version(filename):
             raise ValueError("Config file version mismatch: {}".
                             format(filename))
@@ -296,6 +302,9 @@ class YamlInterface(FileInterface):
                 sys.exit()
             else:
                 config = dict()
+
+        if YamlInterface.cache:
+            YamlInterface.file_cache[filename] = config
 
         return config
 

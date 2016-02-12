@@ -9,7 +9,7 @@ class TestDeviceGI(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/device/'
+        return 'tests/machine_files/device/'
 
     def get_platform(self):
         return 'smart_virtual'

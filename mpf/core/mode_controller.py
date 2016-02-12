@@ -106,12 +106,13 @@ class ModeController(object):
             self.machine.config['mpf']['paths']['modes'], mode_string)
 
         if not os.path.exists(mode_path):
-            mode_path = os.path.abspath(os.path.join('mpf',
-                self.machine.config['mpf']['paths']['modes'], mode_string))
+            mode_path = os.path.join(
+                self.machine.mpf_path,
+                self.machine.config['mpf']['paths']['modes'], mode_string)
 
         # Is there an MPF default config for this mode? If so, load it first
         mpf_mode_config = os.path.join(
-            'mpf',
+            self.machine.mpf_path,
             self.machine.config['mpf']['paths']['modes'],
             mode_string,
             'config',

@@ -11,7 +11,7 @@ class TestTilt(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/tilt/'
+        return 'tests/machine_files/tilt/'
 
     def get_platform(self):
         return 'smart_virtual'

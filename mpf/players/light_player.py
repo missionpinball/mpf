@@ -62,7 +62,19 @@ class LightPlayer(ConfigPlayer):
 
     def process_config(self, config, **kwargs):
         # config is a validated config section:
+        processed_config = dict()
 
+        # for event, settings in config.items():
+        #
+        #     for light_name, settings_dict in config.items():
+        #         processed_config[self.machine.lights[light_name]] = settings_dict
+        #
+        #     processed_config[event] =
+
+        return processed_config
+
+    def process_show_config(self, config, **kwargs):
+        # config is a validated config section:
         processed_config = dict()
 
         for light_name, settings_dict in config.items():

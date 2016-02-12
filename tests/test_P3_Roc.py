@@ -35,7 +35,7 @@ class TestP3Roc(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/p3_roc/'
+        return 'tests/machine_files/p3_roc/'
 
     def getOptions(self):
         options = super().getOptions()

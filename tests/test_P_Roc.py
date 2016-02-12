@@ -35,7 +35,7 @@ class TestPRoc(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/p_roc/'
+        return 'tests/machine_files/p_roc/'
 
     def get_platform(self):
         return 'p_roc'

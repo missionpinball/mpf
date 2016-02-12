@@ -6,7 +6,7 @@ class TestSwitchPlayer(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/switch_player/'
+        return 'tests/machine_files/switch_player/'
 
     def _sw_handler(self):
         self.hits += 1

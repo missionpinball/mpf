@@ -8,7 +8,7 @@ class TestModesConfigValidation(MpfTestCase):
         return self.config
 
     def getMachinePath(self):
-        return '../tests/machine_files/mode_tests/'
+        return 'tests/machine_files/mode_tests/'
 
     def setUp(self):
         pass

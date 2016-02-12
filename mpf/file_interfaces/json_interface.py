@@ -1,8 +1,5 @@
 """Contains the JsonInterface class for reading & writing to JSON files"""
 
-import os
-import sys
-import version
 
 import json
 

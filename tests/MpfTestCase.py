@@ -1,35 +1,29 @@
-import threading
+import inspect
+import logging
+import os
+import sys
+import time
 import unittest
 
-from mpf.core.config_processor import ConfigProcessor
+from mock import *
 
+import mpf
+from mpf.core.config_validator import ConfigValidator
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
-import logging
-import sys
-from mock import *
-import time
-import inspect
-import copy
+from mpf.file_interfaces.yaml_interface import YamlInterface
+
+YamlInterface.cache = True
+
 
 class TestMachineController(MachineController):
     local_mpf_config_cache = {}
 
-    def __init__(self, options, config_patches):
+    def __init__(self, mpf_path, machine_path, options, config_patches):
         self.test_config_patches = config_patches
         self.test_init_complete = False
-        super().__init__(options)
+        super().__init__(mpf_path, machine_path, options)
         self.clock._max_fps = 0
-
-    def _get_machine_config(self):
-        if self.options['mpfconfigfile'] in TestMachineController.local_mpf_config_cache:
-            return copy.deepcopy(TestMachineController.local_mpf_config_cache[
-                self.options['mpfconfigfile']])
-        else:
-            config = super()._get_machine_config()
-            TestMachineController.local_mpf_config_cache[
-                self.options['mpfconfigfile']] = config
-            return config
 
     def _reset_complete(self):
         self.test_init_complete = True
@@ -53,8 +47,10 @@ class MpfTestCase(unittest.TestCase):
         """Override this method in your own test class to point to the machine
         folder you need for your tests.
 
+        Path is related to the MPF package root
+
         """
-        return '../tests/machine_files/null/'
+        return 'tests/machine_files/null/'
 
     def post_event(self, event_name):
         self.machine.events.post(event_name)
@@ -70,7 +66,6 @@ class MpfTestCase(unittest.TestCase):
         return {
             'force_platform': self.get_platform(),
             'mpfconfigfile': "mpf/mpfconfig.yaml",
-            'machine_path': self.getMachinePath(),
             'configfile': Util.string_to_list(self.getConfigFile()),
             'debug': True,
             'bcp': self.get_use_bcp(),
@@ -96,7 +91,8 @@ class MpfTestCase(unittest.TestCase):
 
         while True:
             next_delay_event = self.machine.delayRegistry.get_next_event()
-            next_switch = self.machine.switch_controller.get_next_timed_switch_event()
+            next_switch = \
+                self.machine.switch_controller.get_next_timed_switch_event()
             next_show_step = self.machine.show_controller.get_next_show_step()
 
             wait_until = next_delay_event
@@ -104,10 +100,12 @@ class MpfTestCase(unittest.TestCase):
             if not wait_until or (next_switch and wait_until > next_switch):
                 wait_until = next_switch
 
-            if not wait_until or (next_show_step and wait_until > next_show_step):
+            if not wait_until or (
+                next_show_step and wait_until > next_show_step):
                 wait_until = next_show_step
 
-            if wait_until and self.machine.clock.get_time() < wait_until < end_time:
+            if wait_until and self.machine.clock.get_time() < wait_until < \
+                    end_time:
                 self.set_time(wait_until)
                 self.machine_run()
             else:
@@ -127,29 +125,36 @@ class MpfTestCase(unittest.TestCase):
         frame = inspect.currentframe()
         while frame:
             obj = frame.f_locals.get('self')
-            if isinstance(obj, unittest.TestProgram) or isinstance(obj, unittest.TextTestRunner):
+            if isinstance(obj, unittest.TestProgram) or isinstance(obj,
+                                                                   unittest.TextTestRunner):
                 return obj.verbosity
             frame = frame.f_back
         return 0
 
     def setUp(self):
         # we want to reuse config_specs to speed tests up
-        ConfigProcessor.unload_config_spec = MagicMock()
+        ConfigValidator.unload_config_spec = MagicMock()
 
         # print(threading.active_count())
 
         self.test_start_time = time.time()
         if self.unittest_verbosity() > 1:
             logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+                                format='%(asctime)s : %(levelname)s : %('
+                                       'name)s : %(message)s')
         else:
             # no logging by default
             logging.basicConfig(level=99)
 
         # init machine
+        machine_path = os.path.abspath(self.getMachinePath())
+
         try:
-            self.machine = TestMachineController(self.getOptions(),
-                                                 self.machine_config_patches)
+            self.machine = TestMachineController(
+                os.path.abspath(mpf.__path__[0]),
+                machine_path,
+                self.getOptions(),
+                self.machine_config_patches)
             self.realTime = self.machine.clock.time
             self.testTime = self.realTime()
             self.machine.clock.time = MagicMock(return_value=self.testTime)
@@ -175,7 +180,8 @@ class MpfTestCase(unittest.TestCase):
     def tearDown(self):
         duration = time.time() - self.test_start_time
         if duration > 1.0:
-            print("Test " + str(self.__class__) + "." + str(self._testMethodName) + " took " + str(duration) + " > 1s")
+            print("Test " + str(self.__class__) + "." + str(
+                self._testMethodName) + " took " + str(duration) + " > 1s")
         self.machine.log.debug("Test ended")
         if sys.exc_info != (None, None, None):
             # disable teardown logging after error

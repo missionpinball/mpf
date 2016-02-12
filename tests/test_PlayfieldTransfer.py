@@ -11,7 +11,7 @@ class TestPlayfieldTransfer(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/playfield_transfer/'
+        return 'tests/machine_files/playfield_transfer/'
 
     def testBallPassThrough(self):
         pf1 = self.machine.ball_devices['playfield1']

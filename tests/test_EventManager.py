@@ -35,7 +35,7 @@ class TestEventManager(MpfTestCase):
         return 'test_event_manager.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/event_manager/'
+        return 'tests/machine_files/event_manager/'
 
     def event_handler1(self, *args, **kwargs):
         self._handler1_args = args

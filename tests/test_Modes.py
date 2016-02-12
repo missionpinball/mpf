@@ -7,7 +7,7 @@ class TestModes(MpfTestCase):
         return 'test_modes.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/mode_tests/'
+        return 'tests/machine_files/mode_tests/'
 
     def test_loading_modes(self):
         # Tests multi-case mode listing in config and checking here

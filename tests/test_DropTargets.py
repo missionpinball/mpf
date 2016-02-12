@@ -12,7 +12,7 @@ class TestDropTargets(MpfTestCase):
         return 'test_drop_targets.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/drop_targets/'
+        return 'tests/machine_files/drop_targets/'
 
     def test_drop_targets(self):
         self.assertIn('left1', self.machine.drop_targets)

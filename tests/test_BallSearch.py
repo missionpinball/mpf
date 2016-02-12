@@ -8,7 +8,7 @@ class TestBallSearch(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/ball_search/'
+        return 'tests/machine_files/ball_search/'
 
     def get_platform(self):
         return 'smart_virtual'

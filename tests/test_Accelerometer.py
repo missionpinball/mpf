@@ -8,7 +8,7 @@ class TestAccelerometer(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/accelerometer/'
+        return 'tests/machine_files/accelerometer/'
 
     def _event_level1(self, **kwargs):
         self._level1 = True

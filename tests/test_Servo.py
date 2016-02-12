@@ -7,7 +7,7 @@ class TestShots(MpfTestCase):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return '../tests/machine_files/servo/'
+        return 'tests/machine_files/servo/'
 
     def test_servo_go_to_position(self):
         # full range servo
