@@ -1264,10 +1264,10 @@ class ConfigValidator(object):
 
             ver_string = ''
 
-            if int(mpf.__config_version_info__) > int(ver):
+            if int(mpf.core.__config_version_info__) > int(ver):
                 ver_string = (
                 ' (The latest config version is config_version=' +
-                mpf.__config_version_info__ + ').')
+                mpf.core.__config_version_info__ + ').')
 
             if setting_key in sections['section_replacements']:
                 self.log.info('The setting "%s" has been renamed to "%s" in '

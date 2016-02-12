@@ -19,6 +19,7 @@ from mpf.core.utility_functions import Util
 class Command(object):
 
     def __init__(self, mpf_path, machine_path, args):
+
         parser = argparse.ArgumentParser(description='Starts the MPF core engine')
 
         parser.add_argument("-c",
@@ -79,7 +80,7 @@ class Command(object):
                             "mpf/mpfconfig.yaml")
 
         parser.add_argument("--version",
-                            action="version", version=mpf.version_str,
+                            action="version", version=mpf.core.version_str,
                             help="Displays the MPF, config file, and BCP version info "
                                  "and exits")
 

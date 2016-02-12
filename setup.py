@@ -7,7 +7,7 @@ import mpf
 setup(
 
     name='mpf',
-    version=mpf.__version__,
+    version=mpf.core.__version__,
     description='Mission Pinball Framework',
     long_description='''Let's build a pinball machine!
 

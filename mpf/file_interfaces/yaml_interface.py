@@ -236,17 +236,17 @@ class YamlInterface(FileInterface):
         file_interface = FileManager.get_file_interface(filename)
         file_version = file_interface.get_config_file_version(filename)
 
-        if file_version != int(mpf.__config_version__):
+        if file_version != int(mpf.core.__config_version__):
             log.error("Config file %s is version %s. MPF %s requires "
                       "version %s", filename, file_version,
-                      mpf.__version__, mpf.__config_version__)
+                      mpf.core.__version__, mpf.core.__config_version__)
             log.error("Use the Config File Migrator to automatically "
                       "migrate your config file to the latest version.")
             log.error("Migration tool: "
                        "https://missionpinball.com/docs/tools/config-file-migrator/")
             log.error("More info on config version %s: %s",
-                      mpf.__config_version__,
-                      mpf.__config_version_url__)
+                      mpf.core.__config_version__,
+                      mpf.core.__config_version_url__)
             return False
         else:
             return True

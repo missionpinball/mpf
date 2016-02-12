@@ -151,7 +151,7 @@ class MpfTestCase(unittest.TestCase):
 
         try:
             self.machine = TestMachineController(
-                os.path.abspath(mpf.__path__[0]),
+                os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir)),
                 machine_path,
                 self.getOptions(),
                 self.machine_config_patches)

@@ -3,7 +3,7 @@ import sys
 
 import os
 from importlib import import_module
-import mpf
+import mpf.core
 
 
 
@@ -18,6 +18,8 @@ class CommandLineUtility(object):
 
         self.argv = sys.argv[:]
         self.path = path
+        self.mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0],
+                                                     os.pardir))
 
     def check_python_version(self):
         if sys.version_info[0] != 3:
@@ -45,7 +47,8 @@ class CommandLineUtility(object):
 
         machine_path, remaining_args = self.parse_args()
 
-        return module.Command(mpf.__path__[0], machine_path, remaining_args)
+        return module.Command(self.mpf_path, machine_path,
+                              remaining_args)
 
     def parse_args(self):
 
@@ -74,7 +77,7 @@ class CommandLineUtility(object):
                 # If the folder is invalid, see if we have an examples machine
                 # folder with that name
                 example_machine_path = os.path.abspath(os.path.join(
-                    mpf.__path__[0], os.pardir, EXAMPLES_FOLDER,
+                    self.mpf_path, os.pardir, EXAMPLES_FOLDER,
                     machine_path_hint))
 
                 if os.path.isdir(example_machine_path):

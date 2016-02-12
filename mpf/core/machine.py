@@ -59,7 +59,7 @@ class MachineController(object):
         self.machine_path = machine_path
         self.options = options
         self.log = logging.getLogger("Machine")
-        self.log.info("Mission Pinball Framework v%s", mpf.__version__)
+        self.log.info("Mission Pinball Framework v%s", mpf.core.__version__)
         self.log.debug("Command line arguments: %s", self.options)
         self.verify_system_info()
 
