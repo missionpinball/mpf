@@ -1,15 +1,12 @@
 """This is the main file you run to start MPF."""
 
-import sys
-
-
-
-import logging
-from datetime import datetime
-import socket
-import os
 import argparse
 import errno
+import logging
+import os
+import socket
+import sys
+from datetime import datetime
 
 import mpf
 from mpf.core.machine import MachineController
@@ -17,38 +14,46 @@ from mpf.core.utility_functions import Util
 
 
 class Command(object):
-
     def __init__(self, mpf_path, machine_path, args):
 
-        parser = argparse.ArgumentParser(description='Starts the MPF core engine')
+        parser = argparse.ArgumentParser(
+            description='Starts the MPF core engine')
 
         parser.add_argument("-c",
                             action="store", dest="configfile",
                             default="config", metavar='config_file',
-                            help="The name of a config file to load. Default is "
-                            "config.yaml. Multiple files can be used via a comma-"
-                            "separated list (no spaces between)")
+                            help="The name of a config file to load. Default "
+                                 "is "
+                                 "config.yaml. Multiple files can be used "
+                                 "via a comma-"
+                                 "separated list (no spaces between)")
 
         parser.add_argument("-v",
-                            action="store_const", dest="loglevel", const=logging.DEBUG,
-                            default=logging.INFO, help="Enables verbose logging to the"
-                            " log file")
+                            action="store_const", dest="loglevel",
+                            const=logging.DEBUG,
+                            default=logging.INFO,
+                            help="Enables verbose logging to the"
+                                 " log file")
 
         parser.add_argument("-V",
                             action="store_true", dest="consoleloglevel",
                             default=logging.INFO,
-                            help="Enables verbose logging to the console. Do NOT on "
-                            "Windows platforms. Must also use -v for this to work.")
+                            help="Enables verbose logging to the console. Do "
+                                 "NOT on "
+                                 "Windows platforms. Must also use -v for "
+                                 "this to work.")
 
         parser.add_argument("-x",
                             action="store_const", dest="force_platform",
-                            const='virtual', help="Forces the virtual platform to be "
-                            "used for all devices")
+                            const='virtual',
+                            help="Forces the virtual platform to be "
+                                 "used for all devices")
 
         parser.add_argument("-a",
                             action="store_true", dest="no_load_cache",
-                            help="Forces the config to be loaded from files and not "
-                            "cache")
+                            help="Forces the config to be loaded from files "
+                                 "and not "
+                                 "cache")
 
         parser.add_argument("-A",
                             action="store_false", dest="create_config_cache",
@@ -57,18 +62,22 @@ class Command(object):
         parser.add_argument("-X",
                             action="store_const", dest="force_platform",
                             const='smart_virtual',
-                            help="Forces the smart virtual platform to be used for all"
-                            " devices")
+                            help="Forces the smart virtual platform to be "
+                                 "used for all"
+                                 " devices")
 
         parser.add_argument("-b",
                             action="store_false", dest="bcp", default=True,
-                            help="Runs MPF without making a connection attempt to a "
-                            "BCP Server")
+                            help="Runs MPF without making a connection "
+                                 "attempt to a "
+                                 "BCP Server")
 
         parser.add_argument("-l",
-                            action="store", dest="logfile", metavar='file_name',
-                            default=os.path.join("logs", datetime.now().strftime(
-                            "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
+                            action="store", dest="logfile",
+                            metavar='file_name',
+                            default=os.path.join("logs",
+                                                 datetime.now().strftime(
+                                                     "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
                             help="The name (and path) of the log file")
 
         parser.add_argument("-C",
@@ -76,17 +85,17 @@ class Command(object):
                             default=os.path.join(mpf_path,
                                                  "mpfconfig.yaml"),
                             metavar='config_file',
-                            help="The MPF framework default config file. Default is "
-                            "mpf/mpfconfig.yaml")
+                            help="The MPF framework default config file. "
+                                 "Default is "
+                                 "mpf/mpfconfig.yaml")
 
         parser.add_argument("--version",
                             action="version", version=mpf.core.version_str,
-                            help="Displays the MPF, config file, and BCP version info "
-                                 "and exits")
+                            help="Displays the MPF, config file, and BCP "
+                                 "version info and exits")
 
         args = parser.parse_args(args)
         args.configfile = Util.string_to_list(args.configfile)
-
 
         # Configure logging. Creates a logfile and logs to the console.
         # Formatting options are documented here:
@@ -99,11 +108,13 @@ class Command(object):
                 raise
 
         logging.basicConfig(level=args.loglevel,
-                            format='%(asctime)s : %(levelname)s : %(name)s : %(message)s',
+                            format='%(asctime)s : %(levelname)s : %(name)s : '
+                                   '%(message)s',
                             filename=os.path.join(machine_path, args.logfile),
                             filemode='w')
 
-        # define a Handler which writes INFO messages or higher to the sys.stderr
+        # define a Handler which writes INFO messages or higher to the
+        # sys.stderr
         console = logging.StreamHandler()
         console.setLevel(args.consoleloglevel)
 
@@ -115,7 +126,6 @@ class Command(object):
 
         # add the handler to the root logger
         logging.getLogger('').addHandler(console)
-
 
         try:
             MachineController(mpf_path, machine_path, vars(args)).run()

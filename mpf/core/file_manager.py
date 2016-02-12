@@ -108,7 +108,7 @@ class FileManager(object):
                     if questionable_file:
                         return questionable_file
 
-                raise FileNotFoundError("File not found")
+                raise FileNotFoundError("File not found: {}".format(filename))
 
         else:
             return filename
@@ -140,6 +140,9 @@ class FileManager(object):
                 raise IOError("Could not find file {}".format(filename))
             else:
                 return dict()
+
+        if not file and halt_on_error:
+            raise IOError("Could not find file {}".format(filename))
 
         ext = os.path.splitext(file)[1]
 

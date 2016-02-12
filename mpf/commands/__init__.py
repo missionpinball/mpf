@@ -1,19 +1,15 @@
 import argparse
-import sys
-
 import os
+import sys
 from importlib import import_module
+
 import mpf.core
-
-
 
 EXAMPLES_FOLDER = 'examples'
 CONFIG_FOLDER = 'config'
 
 
-
 class CommandLineUtility(object):
-
     def __init__(self, path=None):
 
         self.argv = sys.argv[:]
@@ -25,7 +21,7 @@ class CommandLineUtility(object):
         if sys.version_info[0] != 3:
             print("MPF requires Python 3. You have Python {}.{}.{}".format(
                 sys.version_info[0], sys.version_info[1], sys.version_info[2]
-                ))
+            ))
             sys.exit()
 
     def execute(self):
@@ -62,7 +58,6 @@ class CommandLineUtility(object):
 
         return machine_path, remaining_args
 
-
     def get_machine_path(self, machine_path_hint):
 
         machine_path = None
@@ -96,6 +91,7 @@ class CommandLineUtility(object):
             print("Error. Could not find machine folder: '{}'.".format(
                 machine_path_hint))
             sys.exit()
+
 
 def run_from_command_line():
     path = os.path.abspath(os.path.curdir)

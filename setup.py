@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-import mpf
+import mpf.core
 
 setup(
 
