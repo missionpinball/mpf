@@ -953,7 +953,7 @@ class BallDevice(Device):
                     self.setup_eject_chain(path, not self.config['auto_fire_on_unexpected_ball'])
 
         # tell targets that we have balls available
-        for i in range(new_balls):
+        for dummy_iterator in range(new_balls):
             self.machine.events.post_boolean('balldevice_balls_available')
 
     def _balls_missing(self, balls):
