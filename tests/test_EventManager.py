@@ -733,16 +733,29 @@ class TestEventManager(MpfTestCase):
         self.assertTrue(self.correct)
 
     def delay_first(self):
+        self.called = True
         self.delay.remove("second")
 
     def delay_second(self):
+        if not self.called:
+            raise AssertionError("first has not been called")
+
         raise AssertionError("this should never be called")
 
     def test_delay_order(self):
+        self.called = False
         self.delay = DelayManager(self.machine.delayRegistry)
 
         self.delay.add(ms=6001, name="second", callback=self.delay_second)
         self.delay.add(ms=6000, name="first", callback=self.delay_first)
 
         self.assertEqual(6000, (self.machine.delayRegistry.get_next_event() - self.machine.clock.get_time()) * 1000)
+        self.advance_time_and_run(10)
+
+    def test_delay_remove_race(self):
+        self.called = False
+        self.delay = DelayManager(self.machine.delayRegistry)
+
+        self.delay.add(ms=6000, name="first", callback=self.delay_first)
+        self.delay.add(ms=6000, name="second", callback=self.delay_second)
         self.advance_time_and_run(10)
