@@ -16,6 +16,7 @@ class Playfield(BallDevice):
 
     # noinspection PyMissingConstructor
     def __init__(self, machine, name, config, collection=None, validate=True):
+        del collection
         self.log = logging.getLogger('playfield')
 
         self.machine = machine
@@ -50,7 +51,7 @@ class Playfield(BallDevice):
 
         # Attributes
         self._balls = 0
-        self.available_balls=0
+        self.available_balls = 0
         self.num_balls_requested = 0
         self.queued_balls = list()
         self._playfield = True
@@ -157,6 +158,7 @@ class Playfield(BallDevice):
         Returns: 0
 
         """
+        del kwargs
         return 0
 
     def get_additional_ball_capacity(self):
@@ -276,7 +278,7 @@ class Playfield(BallDevice):
         indicating that there is at least one ball on the playfield.
 
         """
-        if (not self.balls or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0)):
+        if not self.balls or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0):
             self.mark_playfield_active()
 
             if not self.num_balls_requested:
@@ -296,9 +298,9 @@ class Playfield(BallDevice):
                     self.machine.events.post('unexpected_ball_on_' + self.name)
 
     def _ball_removed_handler(self, balls, **kwargs):
+        del kwargs
         # somebody got a ball from us so we obviously had one
-        self.machine.events.post('sw_' + self.name + "_active",
-                callback=self._ball_removed_handler2, balls=balls)
+        self.machine.events.post('sw_' + self.name + "_active", callback=self._ball_removed_handler2, balls=balls)
 
     def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)
@@ -310,6 +312,7 @@ class Playfield(BallDevice):
     def _source_device_eject_attempt(self, balls, target, **kwargs):
         # A source device is attempting to eject a ball. We need to know if it's
         # headed to the playfield.
+        del kwargs
         if target == self:
             self.log.debug("A source device is attempting to eject %s ball(s)"
                            " to the playfield.", balls)
@@ -318,6 +321,7 @@ class Playfield(BallDevice):
     def _source_device_eject_failed(self, balls, target, **kwargs):
         # A source device failed to eject a ball. We need to know if it was
         # headed to the playfield.
+        del kwargs
         if target == self:
             self.log.debug("A source device has failed to eject %s ball(s)"
                            " to the playfield.", balls)
