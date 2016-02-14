@@ -2,10 +2,7 @@
 
 import logging
 from collections import deque
-import random
 import uuid
-
-from mpf.core.utility_functions import Util
 
 
 class EventManager(object):
@@ -60,7 +57,7 @@ class EventManager(object):
         event = event.lower()
 
         # Add an entry for this event if it's not there already
-        if not event in self.registered_handlers:
+        if event not in self.registered_handlers:
             self.registered_handlers[event] = []
 
         key = uuid.uuid4()
@@ -113,8 +110,8 @@ class EventManager(object):
 
         if event in self.registered_handlers:
             if kwargs:
-            # slice the full list [:] to make a copy so we can delete from the
-            # original while iterating
+                # slice the full list [:] to make a copy so we can delete from the
+                # original while iterating
                 for rh in self.registered_handlers[event][:]:
                     if rh[0] == handler and rh[2] == kwargs:
                         self.registered_handlers[event].remove(rh)
@@ -133,15 +130,17 @@ class EventManager(object):
             method : The method whose handlers you want to remove.
         """
 
+        events_to_delete_if_empty = []
         for event, handler_list in self.registered_handlers.items():
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[0] == method:
                     handler_list.remove(handler_tup)
                     if self.debug:
-                        self.log.debug("Removing method %s from event %s",
-                                   (str(method).split(' '))[2], event)
+                        self.log.debug("Removing method %s from event %s", (str(method).split(' '))[2], event)
+            events_to_delete_if_empty.append(event)
 
-        self._remove_event_if_empty(event)
+        for event in events_to_delete_if_empty:
+            self._remove_event_if_empty(event)
 
     def remove_handler_by_event(self, event, handler):
         """Removes the handler you pass from the event you pass.
@@ -159,15 +158,17 @@ class EventManager(object):
 
         event = event.lower()
 
+        events_to_delete_if_empty = []
         if event in self.registered_handlers:
             for handler_tup in self.registered_handlers[event][:]:
                 if handler_tup[0] == handler:
                     self.registered_handlers[event].remove(handler_tup)
                     if self.debug:
-                        self.log.debug("Removing method %s from event %s",
-                                   (str(handler).split(' '))[2], event)
+                        self.log.debug("Removing method %s from event %s", (str(handler).split(' '))[2], event)
+            events_to_delete_if_empty.append(event)
 
-        self._remove_event_if_empty(event)
+        for event in events_to_delete_if_empty:
+            self._remove_event_if_empty(event)
 
     def remove_handler_by_key(self, key):
         """Removes a registered event handler by key.
@@ -176,15 +177,17 @@ class EventManager(object):
             key: The key of the handler you want to remove
         """
 
+        events_to_delete_if_empty = []
         for event, handler_list in self.registered_handlers.items():
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[3] == key:
                     handler_list.remove(handler_tup)
                     if self.debug:
-                        self.log.debug("Removing method %s from event %s",
-                                   (str(handler_tup[0]).split(' '))[2], event)
+                        self.log.debug("Removing method %s from event %s", (str(handler_tup[0]).split(' '))[2], event)
+            events_to_delete_if_empty.append(event)
 
-        self._remove_event_if_empty(event)
+        for event in events_to_delete_if_empty:
+            self._remove_event_if_empty(event)
 
     def remove_handlers_by_keys(self, key_list):
         """Removes multiple event handlers based on a passed list of keys
@@ -199,14 +202,14 @@ class EventManager(object):
         # Checks to see if the event doesn't have any more registered handlers,
         # removes it if so.
 
-        if not event in self.registered_handlers:
+        if event not in self.registered_handlers:
             return
 
         if not self.registered_handlers[event]:  # if value is empty list
                 del self.registered_handlers[event]
                 if self.debug:
                     self.log.debug("Removing event %s since there are no more"
-                               " handlers registered for it", event)
+                                   " handlers registered for it", event)
 
     def does_event_exist(self, event_name):
         """Checks to see if any handlers are registered for the event name that
@@ -371,8 +374,8 @@ class EventManager(object):
                     (str(kwargs['callback']).split(' '))[2]
             if self.debug:
                 self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
-                           "Args: %s", event, ev_type, callback,
-                           friendly_kwargs)
+                               "Args: %s", event, ev_type, callback,
+                               friendly_kwargs)
 
         self.event_queue.append((event, ev_type, callback, kwargs))
         if self.debug:
@@ -380,7 +383,7 @@ class EventManager(object):
                 self.log.debug("============== EVENTS QUEUE =============")
                 for event in list(self.event_queue):
                     self.log.debug("%s, %s, %s, %s", event[0], event[1],
-                                event[2], event[3])
+                                   event[2], event[3])
                 self.log.debug("=========================================")
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
@@ -508,7 +511,7 @@ class QueuedEvent(object):
 
         if self.debug:
             self.log.debug("Creating an event queue. Callback: %s Args: %s",
-                       callback, kwargs)
+                           callback, kwargs)
         self.callback = callback
         self.kwargs = kwargs
         self.num_waiting = 0
@@ -539,7 +542,7 @@ class QueuedEvent(object):
         if not self.num_waiting and self._is_event_finished:
             if self.debug:
                 self.log.debug("Queue is empty. Calling %s", self.callback)
-            #del self.kwargs['queue']  # ditch this since we don't need it now
+            # del self.kwargs['queue']  # ditch this since we don't need it now
             callback = self.callback
             self.callback = None
             callback(**self.kwargs)
