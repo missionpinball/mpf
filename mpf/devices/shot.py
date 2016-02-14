@@ -125,6 +125,7 @@ class Shot(Device):
         configured to roll over, this method has no effect.
 
         """
+        del kwargs
 
         profile_name = self.enable_table[mode]['profile']
         profile = self.enable_table[mode]['settings']
@@ -212,9 +213,8 @@ class Shot(Device):
                 not self.active_settings['settings']['lights_when_disabled']):
             return
 
-        state_settings = (self.active_settings['settings']['states']
-                          [self.player[
-                self.active_settings['settings']['player_variable']]])
+        state_settings = (self.active_settings['settings']['states'][self.player[
+                          self.active_settings['settings']['player_variable']]])
 
         if self.debug:
             self.log.debug(
@@ -225,8 +225,7 @@ class Shot(Device):
                 state_settings, self.config['light'],
                 self.config['led'], self.active_settings['priority'])
 
-        if state_settings['light_script'] and (self.config['light'] or
-                                                   self.config['led']):
+        if state_settings['light_script'] and (self.config['light'] or self.config['led']):
             self.running_light_show = (
                 self.machine.light_scripts.run_registered_light_script(
                     script_name=state_settings['light_script'],
@@ -246,6 +245,7 @@ class Shot(Device):
         default machine-wide shot profile.
 
         """
+        del kwargs
         self.player = player
         # self.update_enable_table(self.config['profile'], False)
 
@@ -298,8 +298,7 @@ class Shot(Device):
 
         del self.machine.shots[self.name]
 
-    def hit(self, mode='default#$%', waterfall_hits=None,
-            **kwargs):
+    def hit(self, mode='default#$%', waterfall_hits=None, **kwargs):
         """Method which is called to indicate this shot was just hit. This
         method will advance the currently-active shot profile.
 
@@ -314,6 +313,7 @@ class Shot(Device):
         processed.
 
         """
+        del kwargs
         if (not self.machine.game or
                 (self.machine.game and not self.machine.game.balls_in_play) or
                 self.active_delay_switches):
@@ -423,6 +423,8 @@ class Shot(Device):
         # Since we can track multiple simulatenous sequences (e.g. two balls
         # going into an orbit in a row), we first have to see whether this
         # switch is starting a new sequence or continuing an existing one
+        del state
+        del ms
 
         if self.debug:
             self.log.debug("Sequence switch hit: %s", switch_name)
@@ -509,6 +511,8 @@ class Shot(Device):
         self._reset_all_sequences()
 
     def _delay_switch_hit(self, switch_name, state, ms):
+        del state
+        del ms
         self.delay.reset(name=switch_name + '_delay_timer',
                          ms=self.config['delay_switch']
                                        [self.machine.switches[switch_name]],
@@ -558,8 +562,7 @@ class Shot(Device):
                 self.enable_table[mode]['settings']['player_variable'],
                 lightshow_step)
 
-        if state == self.player[
-            self.enable_table[mode]['settings']['player_variable']]:
+        if state == self.player[self.enable_table[mode]['settings']['player_variable']]:
             # we're already at that state
             return
 
@@ -582,9 +585,7 @@ class Shot(Device):
                            "lights", mode, self.active_mode)
 
     def enable(self, mode=None, profile=None, **kwargs):
-        """
-
-        """
+        del kwargs
 
         if self.debug:
             self.log.debug(
@@ -609,6 +610,7 @@ class Shot(Device):
         not be processed.
 
         """
+        del kwargs
 
         # we still want the profile here in case the shot is configured to have
         # lights even when disabled
@@ -632,6 +634,7 @@ class Shot(Device):
         This method is the same as calling jump(0).
 
         """
+        del kwargs
         if self.debug:
             self.log.debug("Resetting. Mode profile '%s' will be reset to "
                            "its initial state", mode)
@@ -644,7 +647,6 @@ class Shot(Device):
         if self.debug:
             self.log.debug("Sorting enable_table")
 
-        old_mode = self.active_mode
         old_settings = self.active_settings
 
         self.enable_table = OrderedDict(sorted(list(self.enable_table.items()),
@@ -663,9 +665,7 @@ class Shot(Device):
                            list(self.enable_table.keys()))
 
         # top profile has changed
-        if (not old_settings or
-                    old_settings['profile'] != self.active_settings[
-                    'profile']):
+        if not old_settings or old_settings['profile'] != self.active_settings['profile']:
 
             if self.debug:
                 self.log.debug("New top entry settings: %s",
@@ -736,10 +736,9 @@ class Shot(Device):
                            mode, self.enable_table[mode]['current_state_name'])
 
         try:
-            self.enable_table[mode]['current_state_name'] = (
-                self.enable_table[mode]['settings']['states']
-                [self.player[self.enable_table[mode]['settings']
-                ['player_variable']]]['name'])
+            self.enable_table[mode]['current_state_name'] = (self.enable_table[mode]['settings']['states']
+                                                             [self.player[self.enable_table[mode]['settings']
+                                                                          ['player_variable']]]['name'])
         except TypeError:
             self.enable_table[mode]['current_state_name'] = None
 
@@ -748,6 +747,7 @@ class Shot(Device):
                            mode, self.enable_table[mode]['current_state_name'])
 
     def remove_active_profile(self, mode, **kwargs):
+        del kwargs
         # this has the effect of changing out this mode's profile in the
         # enable_table with the next highest visable one.
 
