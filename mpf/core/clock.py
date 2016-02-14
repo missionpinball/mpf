@@ -299,6 +299,7 @@ class ClockEvent(object):
         self._last_event_time = 0
         self._dt = 0.
         self._priority = priority
+        self._callback_cancelled = False
         if trigger:
             clock._events[cid].append(self)
 
@@ -339,6 +340,10 @@ class ClockEvent(object):
     def priority(self):
         return self._priority
 
+    @property
+    def callback_cancelled(self):
+        return self._callback_cancelled
+
     def cancel(self):
         ''' Cancels the callback if it was scheduled to be called.
         '''
@@ -348,6 +353,8 @@ class ClockEvent(object):
                 self.clock._events[self.cid].remove(self)
             except ValueError:
                 pass
+
+        self._callback_cancelled = True
 
     def release(self):
         self.weak_callback = WeakMethod(self.callback)
@@ -382,6 +389,15 @@ class ClockEvent(object):
                 pass
             return False
 
+        # Make sure the callback will be called by resetting its cancelled flag
+        self._callback_cancelled = False
+
+        # Do not actually call the callback here, instead add it to the clock
+        # frame callback queue where it will be processed after all events are processed
+        # for the frame.  The callback queue is prioritized by callback time and then
+        # event priority.
+        self.clock.add_event_to_frame_callbacks(self)
+
         # if it's a trigger, allow to retrigger inside the callback
         # we have to remove event here, otherwise, if we remove later, the user
         # might have canceled in the callback and then re-triggered. That'd
@@ -392,12 +408,6 @@ class ClockEvent(object):
                 remove(self)
             except ValueError:
                 pass
-
-        # Do not actually call the callback here, instead add it to the clock
-        # frame callback queue where it will be processed after all events are processed
-        # for the frame.  The callback queue is prioritized by callback time and then
-        # event priority.
-        self.clock.add_event_to_frame_callbacks(self)
 
     def __repr__(self):
         return '<ClockEvent callback=%r>' % self.get_callback()
@@ -669,6 +679,11 @@ class ClockBase(_ClockBase):
         """
         self._frame_callbacks.put((event.last_event_time, -event.priority, event.id, event))
 
+    def remove_event_from_frame_callbacks(self, event):
+        with self._frame_callbacks.mutex:
+              if event in self._frame_callbacks.queue:
+                  self._frame_callbacks
+
     def _process_event_callbacks(self):
         """
         Processes event callbacks that were triggered to be called in the current frame.
@@ -679,13 +694,14 @@ class ClockBase(_ClockBase):
             except Empty:
                 return
 
-            # Call the callback
-            callback = event.get_callback()
-            ret = callback(self.frametime)
+            # Call the callback if the event has not been cancelled during the current frame
+            if not event.callback_cancelled:
+                callback = event.get_callback()
+                ret = callback(self.frametime)
 
-            # if the user returns False explicitly, remove the event
-            if event.loop and ret is False:
-                event.cancel()
+                # if the user returns False explicitly, remove the event
+                if event.loop and ret is False:
+                    event.cancel()
 
     time = staticmethod(partial(_default_time))
 
