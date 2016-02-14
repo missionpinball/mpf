@@ -679,11 +679,6 @@ class ClockBase(_ClockBase):
         """
         self._frame_callbacks.put((event.last_event_time, -event.priority, event.id, event))
 
-    def remove_event_from_frame_callbacks(self, event):
-        with self._frame_callbacks.mutex:
-              if event in self._frame_callbacks.queue:
-                  self._frame_callbacks
-
     def _process_event_callbacks(self):
         """
         Processes event callbacks that were triggered to be called in the current frame.
