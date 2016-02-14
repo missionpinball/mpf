@@ -403,8 +403,7 @@ class BallDevice(Device):
             self._notify_target_of_incoming_ball(
                     self.eject_in_progress_target)
 
-        if (self.eject_in_progress_target.is_playfield() and
-                not self.mechanical_eject_in_progress):
+        if self.eject_in_progress_target.is_playfield():
             if self.debug:
                 self.log.debug("Target is playfield. Will confirm after "
                                "timeout if it did not return.")
