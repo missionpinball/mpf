@@ -39,7 +39,7 @@ class HighScore(Mode):
                             name=entries + str(position + 1) + '_value',
                             value=value)
 
-                except KeyError as e:
+                except KeyError:
                     self.high_scores[entries] = list()
 
     def mode_start(self, **kwargs):
