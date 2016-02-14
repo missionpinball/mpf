@@ -1406,13 +1406,11 @@ class BallDevice(Device):
                     '{}_active'.format(target.name),
                     self._playfield_active, playfield=target)
 
-            if self.mechanical_eject_in_progress:
+            if self.mechanical_eject_in_progress and self._state == "waiting_for_ball_mechanical":
                 if self.debug:
                     self.log.debug("Target is playfield. Will confirm after "
                                    "timeout if it did not return.")
-                timeout_combined = timeout
-                if self._state == "waiting_for_ball_mechanical":
-                    timeout_combined += self._incoming_balls[0][1].config['eject_timeouts'][self]
+                timeout_combined = timeout + self._incoming_balls[0][1].config['eject_timeouts'][self]
 
                 if timeout == timeout_combined:
                     timeout_combined += 500
