@@ -304,7 +304,7 @@ class ModeController(object):
 
         self.start_methods.sort(key=lambda x: x.priority, reverse=True)
 
-    def _active_change(self, mode, active):
+    def set_mode_state(self, mode, active):
         # called when a mode goes active or inactive
 
         if active:

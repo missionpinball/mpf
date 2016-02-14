@@ -89,7 +89,7 @@ class Mode(object):
     def active(self, active):
         if self._active != active:
             self._active = active
-            self.machine.mode_controller._active_change(self, self._active)
+            self.machine.mode_controller.set_mode_state(self, self._active)
 
     def configure_mode_settings(self, config):
         """Processes this mode's configuration settings from a config
@@ -101,8 +101,8 @@ class Mode(object):
 
         for event in self.config['mode']['start_events']:
             self.machine.events.add_handler(event=event, handler=self.start,
-                priority=self.config['mode']['priority'] +
-                self.config['mode']['start_priority'])
+                                            priority=self.config['mode']['priority'] +
+                                            self.config['mode']['start_priority'])
 
     def _validate_mode_config(self):
         for section in self.machine.config['mpf']['mode_config_sections']:
@@ -116,9 +116,7 @@ class Mode(object):
                                 section, settings))
 
                 else:
-                    self.config[section] = (
-                        self.machine.config_validator.validate_config(section,
-                        this_section))
+                    self.config[section] = (self.machine.config_validator.validate_config(section, this_section))
 
     def _get_merged_settings(self, section_name):
         # Returns a dict_merged dict of a config section from the machine-wide
@@ -186,8 +184,8 @@ class Mode(object):
                 # start and stop on the same event, the one will stop before
                 # the other starts
                 self.add_mode_event_handler(event=event, handler=self.stop,
-                    priority=self.priority + 1 +
-                    self.config['mode']['stop_priority'])
+                                            priority=self.priority + 1 +
+                                            self.config['mode']['stop_priority'])
 
         self.start_callback = callback
 
@@ -224,6 +222,7 @@ class Mode(object):
 
     def _mode_started_callback(self, **kwargs):
         # Called after the mode_<name>_started queue event has finished.
+        del kwargs
         self.mode_start(**self.start_event_kwargs)
 
         self.start_event_kwargs = dict()
@@ -295,6 +294,7 @@ class Mode(object):
             self._mode_start_wait_queue = None
 
     def _mode_stopped_callback(self, **kwargs):
+        del kwargs
         self._remove_mode_event_handlers()
         self._remove_mode_devices()
 
@@ -383,7 +383,7 @@ class Mode(object):
             device.control_events_in_mode(self)
 
     def _control_event_handler(self, callback, ms_delay=0, **kwargs):
-
+        del kwargs
         self.log.debug("_control_event_handler: callback: %s,", callback)
 
         if ms_delay:
@@ -651,6 +651,7 @@ class ModeTimer(object):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
+        del kwargs
 
         if self.debug:
             self.log.debug("Resetting timer. New value: %s", self.start_value)
@@ -667,6 +668,7 @@ class ModeTimer(object):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
+        del kwargs
 
         if self.debug:
             self.log.debug("Starting Timer.")
@@ -698,6 +700,7 @@ class ModeTimer(object):
                 additional keyword arguments.
 
         """
+        del kwargs
         self.reset()
         self.start()
 
@@ -709,6 +712,7 @@ class ModeTimer(object):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
+        del kwargs
 
         if self.debug:
             self.log.debug("Stopping Timer")
@@ -738,6 +742,7 @@ class ModeTimer(object):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
+        del kwargs
 
         if self.debug:
             self.log.debug("Pausing Timer for %s secs", timer_value)
@@ -768,6 +773,7 @@ class ModeTimer(object):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
+        del kwargs
 
         if self.debug:
             self.log.debug("Timer Complete")
@@ -793,6 +799,7 @@ class ModeTimer(object):
 
     def _timer_tick(self, dt):
         # Automatically called by the core clock each tick
+        del dt
 
         if self.debug:
             self.log.debug("Timer Tick")
@@ -817,8 +824,8 @@ class ModeTimer(object):
 
             if self.debug:
                 self.log.debug("Ticks: %s, Remaining: %s",
-                              self.mode.player[self.tick_var],
-                              self.ticks_remaining)
+                               self.mode.player[self.tick_var],
+                               self.ticks_remaining)
 
             if self.bcp:
                 self.machine.bcp.send('timer', name=self.name, action='tick',
@@ -835,6 +842,7 @@ class ModeTimer(object):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
+        del kwargs
 
         ticks_added = timer_value
 
@@ -869,6 +877,7 @@ class ModeTimer(object):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
+        del kwargs
 
         ticks_subtracted = timer_value
 
@@ -939,6 +948,7 @@ class ModeTimer(object):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
+        del kwargs
 
         self.tick_secs *= change
         self._create_system_timer()
@@ -955,6 +965,7 @@ class ModeTimer(object):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
+        del kwargs
 
         self.tick_secs = abs(timer_value)
         self._create_system_timer()
@@ -970,6 +981,7 @@ class ModeTimer(object):
                 often registered as an event handler which may contain
                 additional keyword arguments.
         """
+        del kwargs
 
         self.mode.player[self.tick_var] = int(timer_value)
 
@@ -978,11 +990,6 @@ class ModeTimer(object):
 
     def kill(self):
         """Stops this timer and also removes all the control events.
-
-        Args:
-            **kwargs: Not used in this method. Only exists since this method is
-                often registered as an event handler which may contain
-                additional keyword arguments.
         """
 
         self.stop()
