@@ -69,7 +69,7 @@ ball_devices:
         ball_switches: s_ball_switch_target1
         debug: true
         tags: ball_add_live
-        confirm_eject_type: count
+        confirm_eject_type: target
     test_target2:
         eject_coil: eject_coil4
         ball_switches: s_ball_switch_target2_1, s_ball_switch_target2_2

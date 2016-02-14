@@ -57,4 +57,4 @@ ball_devices:
         ball_switches: s_ball_switch_target
         debug: true
         eject_timeouts: 6s
-        confirm_eject_type: count
+        confirm_eject_type: target

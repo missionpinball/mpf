@@ -47,7 +47,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         coil_diverter = self.machine.coils['c_diverter']
         device1 = self.machine.ball_devices['test_trough']
         device2 = self.machine.ball_devices['test_launcher']
-        device3 = self.machine.ball_devices['test_target1']
         device4 = self.machine.ball_devices['test_target2']
         playfield = self.machine.ball_devices['playfield']
 
@@ -150,7 +149,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         coil_diverter = self.machine.coils['c_diverter']
         device1 = self.machine.ball_devices['test_trough']
         device2 = self.machine.ball_devices['test_launcher']
-        device3 = self.machine.ball_devices['test_target1']
         device4 = self.machine.ball_devices['test_target2']
         playfield = self.machine.ball_devices['playfield']
 
@@ -251,7 +249,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         coil4 = self.machine.coils['eject_coil4']
         device1 = self.machine.ball_devices['test_trough']
         device2 = self.machine.ball_devices['test_launcher']
-        device3 = self.machine.ball_devices['test_target1']
         device4 = self.machine.ball_devices['test_target2']
         playfield = self.machine.ball_devices['playfield']
 
