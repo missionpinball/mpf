@@ -1240,14 +1240,12 @@ class ConfigValidator(object):
         return item
 
     def validation_error(self, item, validation_failure_info):
-        self.log.error(
-            "Config validation error: Entry %s:%s:%s:%s is not valid",
+        raise AssertionError(
+            "Config validation error: Entry {}:{}:{}:{} is not valid".format(
             validation_failure_info[0][0],
             validation_failure_info[0][1],
             validation_failure_info[1],
-            item)
-
-        sys.exit()
+            item))
 
     def lookup_invalid_config_setting(self, setting):
 
