@@ -1065,3 +1065,84 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual("idle", launcher_manual._state)
         self.assertEqual(1, playfield.balls)
         self.assertEqual(0, launcher_manual.balls)
+
+    def test_vuk_with_auto_fire_on_unexpected_ball_false(self):
+        coil5 = self.machine.coils['eject_coil5']
+        vuk = self.machine.ball_devices['test_vuk']
+        coil2 = self.machine.coils['eject_coil2']
+        launcher = self.machine.ball_devices['test_launcher']
+        playfield = self.machine.ball_devices['playfield']
+
+        # add ball to pf
+        playfield.balls = 1
+        coil5.pulse = MagicMock()
+        coil2.pulse = MagicMock()
+        self.assertEqual(1, playfield.balls)
+        self.assertEqual(0, launcher.balls)
+        self.assertEqual(0, vuk.balls)
+        assert not coil5.pulse.called
+        assert not coil2.pulse.called
+
+        # ball enters launcher unexpectedly
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(1, launcher.balls)
+
+        # launcher auto fires
+        coil2.pulse.assert_called_once_with()
+        coil2.pulse = MagicMock()
+
+        # ball leaves
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+
+        # ball is back on pf
+        self.advance_time_and_run(10)
+        self.assertEqual(1, playfield.balls)
+        self.assertEqual(0, launcher.balls)
+
+        # ball enters the vuk
+        self.machine.switch_controller.process_switch("s_vuk", 1)
+        self.advance_time_and_run(1)
+
+        # vuk ejects to launcher
+        coil5.pulse.assert_called_once_with()
+        coil5.pulse = MagicMock()
+
+        # ball leaves
+        self.machine.switch_controller.process_switch("s_vuk", 0)
+        self.advance_time_and_run(1)
+
+        # and enters launcher
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(1, launcher.balls)
+        self.assertEqual(0, vuk.balls)
+
+
+        # it should stay there and wait for manual eject
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(1, launcher.balls)
+        self.assertEqual("ejecting", launcher._state)
+        self.assertEqual(True, launcher.mechanical_eject_in_progress)
+        assert not coil2.pulse.called
+
+        # player has time
+        self.advance_time_and_run(100)
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(1, launcher.balls)
+        self.assertEqual("ejecting", launcher._state)
+        self.assertEqual(True, launcher.mechanical_eject_in_progress)
+        assert not coil2.pulse.called
+
+        # but finally he ejects the ball
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher", 0)
+        self.advance_time_and_run(1)
+        self.assertEqual("ball_left", launcher._state)
+        self.advance_time_and_run(20)
+        self.assertEqual("idle", launcher._state)
+        self.assertEqual("idle", vuk._state)
+        self.assertEqual(1, playfield.balls)
+        self.assertEqual(0, launcher.balls)
+        self.assertEqual(0, vuk.balls)

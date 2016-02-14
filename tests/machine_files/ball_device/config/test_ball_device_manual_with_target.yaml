@@ -11,9 +11,8 @@ coils:
         number:
     eject_coil5:
         number:
-    c_diverter:
+    eject_coil6:
         number:
-
 
 
 switches:
@@ -33,6 +32,8 @@ switches:
     s_launch:
         number:
         tags: launch
+    s_vuk:
+        number:
 
 
 
@@ -67,5 +68,13 @@ ball_devices:
         eject_timeouts: 6s
         eject_targets: playfield
         mechanical_eject: true
+        auto_fire_on_unexpected_ball: false
+        confirm_eject_type: target
+    test_vuk:
+        eject_coil: eject_coil5
+        ball_switches: s_vuk
+        debug: true
+        eject_timeouts: 3s
+        eject_targets: test_launcher
         auto_fire_on_unexpected_ball: false
         confirm_eject_type: target
