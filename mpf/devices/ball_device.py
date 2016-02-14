@@ -949,7 +949,7 @@ class BallDevice(Device):
                 if not path:
                     raise AssertionError("Could not find path to playfield")
 
-                for i in range(unclaimed_balls):
+                for dummy_iterator in range(unclaimed_balls):
                     self.setup_eject_chain(path, not self.config['auto_fire_on_unexpected_ball'])
 
         # tell targets that we have balls available
