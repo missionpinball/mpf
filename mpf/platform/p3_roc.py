@@ -346,6 +346,7 @@ class HardwarePlatform(Platform):
 
         Also tickles the watchdog and flushes any queued commands to the P3-ROC.
         """
+        del dt
         # Get P3-ROC events
         for event in self.proc.get_events():
             event_type = event['type']
@@ -1002,7 +1003,7 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
                         off_time = round(var)
                         lamp.patter(on_time, off_time)
                 self.fade_counter += 1
-        """
+        """     # pylint: disable=W0105
 
 
 class PDBConfig(object):

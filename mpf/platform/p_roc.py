@@ -100,7 +100,7 @@ class HardwarePlatform(Platform):
         commands = []
         commands += [pinproc.aux_command_disable()]
 
-        for i in range(1, 255):
+        for dummy_iterator in range(1, 255):
             commands += [pinproc.aux_command_jump(0)]
 
         self.proc.aux_send_commands(0, commands)
@@ -915,7 +915,7 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
                         off_time = round(var)
                         lamp.patter(on_time, off_time)
                 self.fade_counter += 1
-        '''
+        '''     # pylint: disable=W0105
 
 
 class PDBConfig(object):
@@ -1334,4 +1334,5 @@ class PROCDMD(object):
         called once per machine tick.
 
         """
+        del dt
         self.proc.dmd_draw(self.dmd)
