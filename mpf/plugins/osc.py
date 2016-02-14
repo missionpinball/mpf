@@ -18,7 +18,7 @@ try:
     from . import OSC as OSCmodule
     socket.gethostbyname(socket.gethostname())
     import_success = True
-except:
+except ImportError:
     import_success = False
 
 
@@ -28,26 +28,28 @@ class OSC(object):
 
         if 'osc' not in machine.config:
             machine.log.debug('"OSC:" section not found in the machine '
-                                   'configuration, so the OSC plugin will not '
-                                   'be used.')
+                              'configuration, so the OSC plugin will not '
+                              'be used.')
             return
 
         if not import_success:
             machine.log.warning('OSC plugin requires PyOSC which does not '
-                                     'appear to be installed. No prob, but FYI '
-                                     'that the OSC will not be available.')
+                                'appear to be installed. No prob, but FYI '
+                                'that the OSC will not be available.')
             return
 
         self.log = logging.getLogger('osc')
         self.machine = machine
+        self.server = None
+        self.server_thread = None
 
         config_spec = '''
                         client_port: int|8000
                         debug_messages: boolean|False
                         '''
 
-        self.config = ConfigProcessor.process_config(config_spec,
-                                          self.machine.config['osc'])
+        # TODO: fix this call
+        self.config = ConfigProcessor.process_config(config_spec, self.machine.config['osc'])
 
         if self.config['machine_ip'].upper() == 'AUTO':
             self.config['machine_ip'] = socket.gethostbyname(
@@ -60,6 +62,7 @@ class OSC(object):
             self.config['client_updates'] = None
 
         self.OSC_clients = dict()
+        self.OSC_message = False
         self.client_needs_sync = False
         self.client_last_update_time = None
         self.last_loop_time = 1
@@ -112,7 +115,7 @@ class OSC(object):
 
         if self.config['debug_messages']:
             self.log.debug("Incoming OSC message. Client IP: %s, Message: %s, %s"
-                          ", %s", client_address, addr, tags, data)
+                           ", %s", client_address, addr, tags, data)
 
         # Separate the incoming message into category and name parts.
         # For example "/sw/rollover1" is split into "sw" and "rollover1"
@@ -121,7 +124,7 @@ class OSC(object):
 
         try:
             name = addr.split("/")[2]
-        except:
+        except ValueError:
             name = None  # catches incoming messages that are just one part
 
         # if this client is not connected, set up a connection
@@ -162,8 +165,7 @@ class OSC(object):
         # it as a number
         if (switch not in self.machine.switches and self.wpc and
                 self.machine.switches.config['number_str']('S' + str(switch))):
-            switch = self.machine.switches.config['number_str']('S' +
-                                                            str(switch)).name
+            switch = self.machine.switches.config['number_str']('S' + str(switch)).name
 
         if switch in self.machine.switches:
             self.machine.switch_controller.process_switch(name=switch,
@@ -196,6 +198,7 @@ class OSC(object):
 
     def process_coil(self, coil, data):
         """Processes a coil event received from the OSC client."""
+        del data
         if coil in self.machine.coils:
             self.machine.coils[coil].pulse()
             # todo more work to do here, like supporting variable hold times,
@@ -203,6 +206,7 @@ class OSC(object):
 
     def process_event(self, event, data):
         """Posts an MPF event based on an event received from the OSC client."""
+        del data
         self.machine.events.post(event)
 
     def process_flipper(self, flipper, data):
@@ -217,14 +221,10 @@ class OSC(object):
         """Adds switch handlers to all switches so the OSC client can receive
         updates."""
         for switch in self.machine.switches:
-            self.machine.switch_controller.add_switch_handler(switch.name,
-                                                    self.client_update_switch,
-                                                    1,
-                                                    return_info=True)
-            self.machine.switch_controller.add_switch_handler(switch.name,
-                                                    self.client_update_switch,
-                                                    0,
-                                                    return_info=True)
+            self.machine.switch_controller.add_switch_handler(switch.name, self.client_update_switch,
+                                                              1, return_info=True)
+            self.machine.switch_controller.add_switch_handler(switch.name, self.client_update_switch,
+                                                              0, return_info=True)
 
     def register_lights(self):
         """Adds handlers to all lights so the OSC client can receive
@@ -242,25 +242,28 @@ class OSC(object):
         self.machine.events.add_handler('score_change', self.update_score)
 
     def update_player(self, **kwargs):
+        del kwargs
         self.update_score()
         self.client_send_osc_message("data", "player",
                                      self.machine.game.player['number'])
 
     def update_ball(self, **kwargs):
+        del kwargs
         self.client_send_osc_message("data", "ball",
                                      self.machine.game.player['ball'])
 
     def update_score(self, **kwargs):
-        self.client_send_osc_message("data", "score",
-                                     locale.format("%d",
-                                     self.machine.game.player['score'],
-                                     grouping=True))
+        del kwargs
+        self.client_send_osc_message("data", "score", locale.format("%d", self.machine.game.player['score'],
+                                                                    grouping=True))
 
     def update_audits(self, event, data):
         """Sends audit data to the OSC client."""
 
         # This method just sends all audits to the client whenever any OSC
         # message comes in that starts with /audits
+        del event
+        del data
 
         if not hasattr(self.machine, 'auditor'):
             return
@@ -269,26 +272,22 @@ class OSC(object):
             for entry in self.machine.auditor.current_audits[category]:
                 if category != 'Player':
                     self.client_send_osc_message(category="audits",
-                        name=category + '/' + entry,
-                        data=self.machine.auditor.current_audits[category][entry])
+                                                 name=category + '/' + entry,
+                                                 data=self.machine.auditor.current_audits[category][entry])
 
         if 'Player' in self.machine.auditor.current_audits:
             for entry in self.machine.auditor.current_audits['Player']:
                 self.client_send_osc_message(category="audits",
-                    name='Player/' + entry + '/average',
-                    data=self.machine.auditor.current_audits['Player'][entry]
-                        ['average'])
+                                             name='Player/' + entry + '/average',
+                                             data=self.machine.auditor.current_audits['Player'][entry]['average'])
                 self.client_send_osc_message(category="audits",
-                    name='Player/' + entry + '/total',
-                    data=self.machine.auditor.current_audits['Player'][entry]
-                        ['total'])
+                                             name='Player/' + entry + '/total',
+                                             data=self.machine.auditor.current_audits['Player'][entry]['total'])
                 i = 0
-                for top in (self.machine.auditor.current_audits['Player']
-                            [entry]['top']):
+                for dummy_iterator in (self.machine.auditor.current_audits['Player'][entry]['top']):
                     self.client_send_osc_message(category="audits",
-                        name='Player/' + entry + '/top/' + str(i+1),
-                        data=self.machine.auditor.current_audits[
-                            'Player'][entry]['top'][i])
+                                                 name='Player/' + entry + '/top/' + str(i+1),
+                                                 data=self.machine.auditor.current_audits['Player'][entry]['top'][i])
                     i += 1
 
     def process_config(self, event, data):
@@ -309,6 +308,7 @@ class OSC(object):
         self.client_needs_sync = False
 
     def client_update_switch(self, switch_name, ms, state):
+        del ms
         if self.client_mode == 'wpc':
             switch_name = self.machine.switches[switch_name].config[
                                                         'number_str'].lower()
@@ -355,13 +355,11 @@ class OSC(object):
             for k in list(self.OSC_clients.items()):
                 try:
                     if self.config['debug_messages']:
-                            self.log.info("Sending OSC Message to client:%s: "
-                                           "%s", k, self.OSC_message, )
+                            self.log.info("Sending OSC Message to client:%s: %s", k, self.OSC_message)
                     k[1].send(self.OSC_message)
 
                 except OSCmodule.OSCClientError:
-                    self.log.info("OSC client at address %s disconnected",
-                                   k[0])
+                    self.log.info("OSC client at address %s disconnected", k[0])
                     # todo mark for deletion
                     self.clients_to_delete.append(k)
                     break
