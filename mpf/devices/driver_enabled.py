@@ -26,30 +26,33 @@ class DriverEnabled(Driver):
         DriverEnabled.add_driver_enabled_device(self.hw_driver, self)
 
     def enable(self, **kwargs):
+        del kwargs
         super().enable()
         for device in DriverEnabled.enable_driver_mappings[self.hw_driver]:
             device._enable()
 
     def _enable(self):
-        pass
         self.log.debug('Enabling')
         # print self, "enabling"
 
     def disable(self, **kwargs):
+        del kwargs
         super().disable()
         # self.driver.disable()
         for device in DriverEnabled.enable_driver_mappings[self.hw_driver]:
             device._disable()
 
     def _disable(self):
-        pass
         self.log.debug('Disabling')
-        # print self, "disabling"
 
     def pulse(self, *args, **kwargs):
+        del args
+        del kwargs
         self.log.warning("Received request to pulse a driver-enabled device. "
                          "Ignoring...")
 
     def timed_enable(self, *args, **kwargs):
+        del args
+        del kwargs
         self.log.warning("Received request to timed-enable a driver-enabled "
                          "device. Ignoring...")
