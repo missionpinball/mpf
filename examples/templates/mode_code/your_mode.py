@@ -19,7 +19,7 @@ class YourMode(Mode):
 
     def mode_start(self, **kwargs):
         """This code will run every time this mode starts."""
-        pass
+        del kwargs
 
         # Other things you can use in your mode code:
 

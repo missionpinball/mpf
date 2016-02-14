@@ -3,15 +3,20 @@ from mpf.core.mode import Mode
 
 class Bonus(Mode):
 
+    def __init__(self, machine, config, name, path):
+        super().__init__(machine, config, name, path)
+        self.bonus_score = 0
+
     def mode_init(self):
         self.machine.events.add_handler('player_add_success',
                                         self.player_add)
 
     def player_add(self, player, **kwargs):
+        del kwargs
         player['bonus_multiplier'] = 1
 
     def mode_start(self, **kwargs):
-
+        del kwargs
         if self.machine.game.tilted:
             self.stop()
 

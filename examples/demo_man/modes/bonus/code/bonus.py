@@ -1,4 +1,4 @@
-from mpf.core.mode import Mode
+from mpf.system.mode import Mode
 
 
 class Bonus(Mode):
