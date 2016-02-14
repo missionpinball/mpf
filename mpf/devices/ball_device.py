@@ -53,7 +53,9 @@ class BallDevice(Device):
         """
 
         self.eject_in_progress_target = None
-        """The device this device is currently trying to eject to."""
+        """The device this device is currently trying to eject to.
+        @type: BallDevice
+        """
 
         self.machine.events.add_handler('init_phase_2',
                                         self._initialize)
@@ -930,7 +932,6 @@ class BallDevice(Device):
                 # ball already reached trough. everything is fine
                 pass
             elif 'drain' in self.tags:
-                target = self.machine.ball_devices[self.config['captures_from']]
                 # try to eject to next trough
                 path = self.find_path_to_trough()
 
@@ -1148,13 +1149,13 @@ class BallDevice(Device):
         if source != self:
             raise AssertionError("Path starts somewhere else!")
 
-        self._setup_eject_chain(path, player_controlled)
+        self.setup_eject_chain_next_hop(path, player_controlled)
 
         target.available_balls += 1
 
         self.machine.events.post_boolean('balldevice_balls_available')
 
-    def _setup_eject_chain(self, path, player_controlled):
+    def setup_eject_chain_next_hop(self, path, player_controlled):
         next_hop = path.popleft()
 
         if next_hop not in self.config['eject_targets']:
@@ -1170,7 +1171,7 @@ class BallDevice(Device):
 
         # check if we traversed the whole path
         if len(path) > 0:
-            next_hop._setup_eject_chain(path, player_controlled)
+            next_hop.setup_eject_chain_next_hop(path, player_controlled)
 
         method_name = "_state_" + self._state + "_eject_request"
         method = getattr(self, method_name, lambda: None)
