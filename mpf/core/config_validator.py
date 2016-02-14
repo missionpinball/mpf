@@ -99,6 +99,7 @@ ball_devices:
     mechanical_eject: single|bool|False
     player_controlled_eject_event: single|str|None
     ball_search_order: single|int|100
+    auto_fire_on_unexpected_ball: single|bool|True
 ball_locks:
     balls_to_lock: single|int|
     lock_devices: list|self.machine.ball_devices[%]|
