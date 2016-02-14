@@ -938,7 +938,7 @@ class BallDevice(Device):
                 if not path:
                     raise AssertionError("Could not find path to trough")
 
-                for i in range(unclaimed_balls):
+                for dummy_iterator in range(unclaimed_balls):
                     self.setup_eject_chain(path)
             else:
                 target = self.machine.ball_devices[self.config['captures_from']]
@@ -1060,7 +1060,7 @@ class BallDevice(Device):
         if self.debug:
             self.log.debug("Requesting Ball(s). Balls=%s", balls)
 
-        for i in range(balls):
+        for dummy_iterator in range(balls):
             self._setup_or_queue_eject_to_target(self)
 
         return balls
@@ -1225,7 +1225,7 @@ class BallDevice(Device):
                            balls)
 
         # add request to queue
-        for i in range(balls):
+        for dummy_iterator in range(balls):
             self._setup_or_queue_eject_to_target(target)
 
         if self.debug:
