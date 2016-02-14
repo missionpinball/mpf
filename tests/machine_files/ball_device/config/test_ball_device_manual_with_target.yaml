@@ -23,6 +23,8 @@ switches:
         number:
     s_ball_switch_launcher:
         number:
+    s_ball_switch_launcher2:
+        number:
     s_ball_switch_target:
         number:
     s_playfield:
@@ -57,4 +59,13 @@ ball_devices:
         ball_switches: s_ball_switch_target
         debug: true
         eject_timeouts: 6s
+        confirm_eject_type: target
+    test_launcher_manual_on_unexpected:
+        eject_coil: eject_coil4
+        ball_switches: s_ball_switch_launcher2
+        debug: true
+        eject_timeouts: 6s
+        eject_targets: playfield
+        mechanical_eject: true
+        auto_fire_on_unexpected_ball: false
         confirm_eject_type: target

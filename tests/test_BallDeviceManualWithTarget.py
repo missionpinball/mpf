@@ -1025,3 +1025,43 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
 
         self.assertEqual("idle", device1._state)
         self.assertEqual("idle", device2._state)
+
+    def test_launcher_without_auto_fire_on_unexpected_ball(self):
+        coil4 = self.machine.coils['eject_coil4']
+        launcher_manual = self.machine.ball_devices['test_launcher_manual_on_unexpected']
+        playfield = self.machine.ball_devices['playfield']
+
+        # add ball to pf
+        playfield.balls = 1
+        self.assertEqual(1, playfield.balls)
+        coil4.pulse = MagicMock()
+        self.assertEqual(0, launcher_manual.balls)
+        assert not coil4.pulse.called
+
+        # ball enters the launcher
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher2", 1)
+        self.advance_time_and_run(1)
+
+        # it should stay there and wait for manual eject
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(1, launcher_manual.balls)
+        self.assertEqual("ejecting", launcher_manual._state)
+        self.assertEqual(True, launcher_manual.mechanical_eject_in_progress)
+        assert not coil4.pulse.called
+
+        # player has time
+        self.advance_time_and_run(100)
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(1, launcher_manual.balls)
+        self.assertEqual("ejecting", launcher_manual._state)
+        self.assertEqual(True, launcher_manual.mechanical_eject_in_progress)
+        assert not coil4.pulse.called
+
+        # but finally he ejects the ball
+        self.machine.switch_controller.process_switch("s_ball_switch_launcher2", 0)
+        self.advance_time_and_run(1)
+        self.assertEqual("ball_left", launcher_manual._state)
+        self.advance_time_and_run(20)
+        self.assertEqual("idle", launcher_manual._state)
+        self.assertEqual(1, playfield.balls)
+        self.assertEqual(0, launcher_manual.balls)
