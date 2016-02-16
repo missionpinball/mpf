@@ -4,7 +4,7 @@ python:
 install:
 - pip install coveralls
 - python setup.py install
-script: coverage run -m unittest discover mpf
+script: coverage run -m unittest discover mpf/tests
 after_success: coveralls
 deploy:
   provider: pypi
