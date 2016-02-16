@@ -298,7 +298,7 @@ class SwitchController(object):
             try:
                 obj = self.machine.switches[name]
             except KeyError:
-                raise AssertionError("Cannot process switch " + name + " as"
+                raise AssertionError("Cannot process switch \"" + name + "\" as "
                                      "this is not a valid switch name.")
 
             name = obj.name  # switches this to the name MPF wants to use
