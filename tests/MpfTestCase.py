@@ -135,6 +135,8 @@ class MpfTestCase(unittest.TestCase):
         # we want to reuse config_specs to speed tests up
         ConfigValidator.unload_config_spec = MagicMock()
 
+        self._events = {}
+
         # print(threading.active_count())
 
         self.test_start_time = time.time()
@@ -176,6 +178,13 @@ class MpfTestCase(unittest.TestCase):
             except AttributeError:
                 pass
             raise e
+
+    def _mockEventHandler(self, eventName, **kwargs):
+        self._events[eventName] += 1
+
+    def mockEvent(self, eventName):
+        self._events[eventName] = 0
+        self.machine.events.add_handler(event=eventName, handler=self._mockEventHandler, eventName=eventName)
 
     def tearDown(self):
         duration = time.time() - self.test_start_time
