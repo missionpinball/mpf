@@ -206,6 +206,19 @@ class MpfTestCase(unittest.TestCase):
         self._events[eventName] = 0
         self.machine.events.add_handler(event=eventName, handler=self._mockEventHandler, eventName=eventName)
 
+    def hit_switch(self, name):
+        self.machine.switch_controller.process_switch(name, 1)
+        self.machine_run()
+
+    def release_switch(self, name):
+        self.machine.switch_controller.process_switch(name, 0)
+        self.machine_run()
+
+    def hit_and_release_switch(self, name):
+        self.machine.switch_controller.process_switch(name, 1)
+        self.machine.switch_controller.process_switch(name, 0)
+        self.machine_run()
+
     def tearDown(self):
         duration = time.time() - self.test_start_time
         if duration > 1.0:
