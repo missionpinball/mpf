@@ -15,6 +15,7 @@ class BallSave(Device):
 
         self.delay = DelayManager(machine.delayRegistry)
         self.enabled = False
+        self.timer_started = False
         self.saves_remaining = 0
 
         if self.config['balls_to_save'] == -1:
@@ -55,6 +56,7 @@ class BallSave(Device):
             return
 
         self.enabled = False
+        self.timer_started = False
         self.log.debug("Disabling...")
         self.machine.events.remove_handler(self._ball_drain_while_active)
         self.delay.remove('disable')
@@ -65,6 +67,9 @@ class BallSave(Device):
 
     def timer_start(self, **kwargs):
         del kwargs
+        if self.timer_started:
+            return
+
         if self.config['active_time'] > 0:
             if self.debug:
                 self.log.debug('Starting ball save timer: %ss',
