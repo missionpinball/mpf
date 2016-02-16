@@ -1,3 +1,4 @@
+import copy
 import inspect
 import logging
 import os
@@ -135,6 +136,18 @@ class MpfTestCase(unittest.TestCase):
             frame = frame.f_back
         return 0
 
+    def save_and_prepare_sys_path(self):
+        # save path
+        self._sys_path = copy.deepcopy(sys.path)
+
+        mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir))
+        if mpf_path in sys.path:
+            sys.path.remove(mpf_path)
+
+    def restore_sys_path(self):
+        # restore sys path
+        sys.path = self._sys_path
+
     def setUp(self):
         # we want to reuse config_specs to speed tests up
         ConfigValidator.unload_config_spec = MagicMock()
@@ -151,6 +164,8 @@ class MpfTestCase(unittest.TestCase):
         else:
             # no logging by default
             logging.basicConfig(level=99)
+
+        self.save_and_prepare_sys_path()
 
         # init machine
         machine_path = os.path.abspath(os.path.join(
@@ -206,3 +221,5 @@ class MpfTestCase(unittest.TestCase):
         self.machine.stop()
         self.machine = None
         self.realTime = None
+
+        self.restore_sys_path()
