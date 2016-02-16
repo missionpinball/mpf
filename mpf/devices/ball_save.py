@@ -70,6 +70,8 @@ class BallSave(Device):
         if self.timer_started:
             return
 
+        self.machine.events.post('ball_save_{}_timer_start'.format(self.name))
+
         if self.config['active_time'] > 0:
             if self.debug:
                 self.log.debug('Starting ball save timer: %ss',
