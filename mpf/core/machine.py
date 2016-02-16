@@ -220,7 +220,7 @@ class MachineController(object):
         self.log.debug("Machine path: %s", self.machine_path)
 
         # Add the machine folder to sys.path so we can import modules from it
-        sys.path.append(self.machine_path)
+        sys.path.insert(0, self.machine_path)
 
     def _load_config(self):
         if self.options['no_load_cache']:
