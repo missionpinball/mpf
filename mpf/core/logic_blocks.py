@@ -3,7 +3,6 @@
 import logging
 
 from mpf.core.delays import DelayManager
-from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
 
 

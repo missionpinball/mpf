@@ -784,7 +784,7 @@ logic_block:
         restart_on_complete: single|bool|False
         disable_on_complete: single|bool|True
         persist_state: single|bool|False
-        events_when_complete: list|str|
+        events_when_complete: list|str|None
         player_variable: single|str|None
     accrual:
         events: list|str|
