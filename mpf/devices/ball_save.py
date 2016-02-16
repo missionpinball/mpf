@@ -67,7 +67,7 @@ class BallSave(Device):
 
     def timer_start(self, **kwargs):
         del kwargs
-        if self.timer_started:
+        if self.timer_started or not self.enabled:
             return
 
         self.machine.events.post('ball_save_{}_timer_start'.format(self.name))
@@ -136,7 +136,7 @@ class BallSave(Device):
         elif self.debug:
             self.log.debug("Unlimited Saves enabled")
 
-        if self.saves_remaining <= 0:
+        if self.saves_remaining <= 0 and not self.unlimited_saves:
             if self.debug:
                 self.log.debug("Disabling since there are no saves remaining")
             self.disable()

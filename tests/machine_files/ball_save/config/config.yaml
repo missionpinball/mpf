@@ -43,8 +43,16 @@ ball_saves:
         active_time: 10s
         hurry_up_time: 2s
         grace_period: 2s
-        enable_events: mode_game_started
+        enable_events: enable1
         timer_start_events: balldevice_bd_launcher_ball_eject_success
         auto_launch: yes
         balls_to_save: 1
+        debug: yes
+    unlimited:
+        active_time: 30s
+        hurry_up_time: 2s
+        grace_period: 2s
+        enable_events: enable2
+        auto_launch: yes
+        balls_to_save: -1
         debug: yes
