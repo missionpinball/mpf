@@ -1,5 +1,0 @@
-#config_version=3
-show_player:
-  mode_attract_started:
-    - show: attract_dmd_loop
-      repeat: yes

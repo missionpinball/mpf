@@ -1,8 +1,0 @@
-- time: +0.125
-  lights:
-    l_access_claw: ff
-    l_light_quick_freeze: 0
-- time: +0.125
-  lights:
-    l_light_quick_freeze: ff
-    l_access_claw: 0

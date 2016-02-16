@@ -1,8 +1,0 @@
-# config_version=3
-
-hardware:
-    driverboards: wpc
-    platform: p_roc
-
-config:
-    - config.yaml
