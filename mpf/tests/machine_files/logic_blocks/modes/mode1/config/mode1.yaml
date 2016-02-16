@@ -1,0 +1,16 @@
+#config_version=3
+mode:
+  start_events: start_mode1
+  stop_events: stop_mode1
+
+logic_blocks:
+     counters:
+        counter2:
+            count_events: counter2_count
+            event_when_hit: counter2_hit
+            events_when_complete: counter2_complete
+            starting_count: 0
+            count_complete_value: 3
+            direction: up
+            restart_on_complete: True
+            disable_on_complete: False

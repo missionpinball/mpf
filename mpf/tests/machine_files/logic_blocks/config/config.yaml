@@ -35,13 +35,12 @@ logic_blocks:
     counters:
         counter1:
             count_events: counter1_count
-            event_when_hit: counter1_hit
             starting_count: 5
             count_complete_value: 0
             direction: down
-            events_when_complete: counter1_complete
             enable_events: counter1_enable
             disable_events: counter1_disable
+            restart_events: counter1_restart
             reset_events: counter1_reset
     sequences:
         sequence1:
@@ -53,3 +52,6 @@ logic_blocks:
             enable_events: sequence1_enable
             disable_events: sequence1_disable
             reset_events: sequence1_reset
+
+modes:
+    - mode1

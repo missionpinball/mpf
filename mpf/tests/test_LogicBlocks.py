@@ -18,6 +18,9 @@ class TestLogicBlocks(MpfTestCase):
         self.hit_and_release_switch("s_start")
         self.assertNotEqual(None, self.machine.game)
 
+        self.advance_time_and_run(1)
+        self.release_switch_and_run("s_ball_switch1", 1)
+
     # TODO: should it complete again when enabled but not reset?
 
     def test_accruals_simple(self):
@@ -93,39 +96,38 @@ class TestLogicBlocks(MpfTestCase):
 
     def test_counter_simple_down(self):
         self._start_game()
-        self.mock_event("counter1_complete")
-        self.mock_event("counter1_hit")
+        self.mock_event("logicblock_counter1_complete")
+        self.mock_event("counter_counter1_hit")
 
         self.post_event("counter1_enable")
         for i in range(4):
             self.post_event("counter1_count")
-            self.assertEqual(0, self._events["counter1_complete"])
+            self.assertEqual(0, self._events["logicblock_counter1_complete"])
 
         # nothing should happen when disabled
         self.post_event("counter1_disable")
         for i in range(10):
             self.post_event("counter1_count")
-            self.assertEqual(0, self._events["counter1_complete"])
+            self.assertEqual(0, self._events["logicblock_counter1_complete"])
         self.post_event("counter1_enable")
 
         self.post_event("counter1_count")
-        self.assertEqual(1, self._events["counter1_complete"])
-        self.assertEqual(5, self._events["counter1_hit"])
+        self.assertEqual(1, self._events["logicblock_counter1_complete"])
+        self.assertEqual(5, self._events["counter_counter1_hit"])
 
         # it should disable
         self.post_event("counter1_count")
-        self.assertEqual(1, self._events["counter1_complete"])
-        self.assertEqual(5, self._events["counter1_hit"])
+        self.assertEqual(1, self._events["logicblock_counter1_complete"])
+        self.assertEqual(5, self._events["counter_counter1_hit"])
 
-        self.post_event("counter1_enable")
-        self.post_event("counter1_reset")
+        self.post_event("counter1_restart")
 
         for i in range(4):
             self.post_event("counter1_count")
 
         # 4 more hits but not completed
-        self.assertEqual(1, self._events["counter1_complete"])
-        self.assertEqual(9, self._events["counter1_hit"])
+        self.assertEqual(1, self._events["logicblock_counter1_complete"])
+        self.assertEqual(9, self._events["counter_counter1_hit"])
 
         # reset
         self.post_event("counter1_reset")
@@ -133,13 +135,13 @@ class TestLogicBlocks(MpfTestCase):
             self.post_event("counter1_count")
 
         # another 4 hits still not complete
-        self.assertEqual(1, self._events["counter1_complete"])
-        self.assertEqual(13, self._events["counter1_hit"])
+        self.assertEqual(1, self._events["logicblock_counter1_complete"])
+        self.assertEqual(13, self._events["counter_counter1_hit"])
 
         # and complete again
         self.post_event("counter1_count")
-        self.assertEqual(2, self._events["counter1_complete"])
-        self.assertEqual(14, self._events["counter1_hit"])
+        self.assertEqual(2, self._events["logicblock_counter1_complete"])
+        self.assertEqual(14, self._events["counter_counter1_hit"])
 
     def test_sequence_simple(self):
         self._start_game()
@@ -192,3 +194,41 @@ class TestLogicBlocks(MpfTestCase):
         self.assertEqual(1, self._events["sequence1_complete"])
         self.post_event("sequence1_step3a")
         self.assertEqual(2, self._events["sequence1_complete"])
+
+    def test_counter_in_mode(self):
+        self._start_game()
+        self.mock_event("counter2_complete")
+        self.mock_event("counter2_hit")
+
+        for i in range(10):
+            self.post_event("counter2_count")
+            self.assertEqual(0, self._events["counter2_complete"])
+
+        self.post_event("start_mode1")
+        self.assertTrue("mode1" in self.machine.modes)
+
+        for i in range(2):
+            self.post_event("counter2_count")
+            self.assertEqual(i+1, self._events["counter2_hit"])
+            self.assertEqual(0, self._events["counter2_complete"])
+
+        self.post_event("counter2_count")
+        self.assertEqual(1, self._events["counter2_complete"])
+
+        # should run again
+        for i in range(2):
+            self.post_event("counter2_count")
+            self.assertEqual(i+4, self._events["counter2_hit"])
+            self.assertEqual(1, self._events["counter2_complete"])
+
+        self.post_event("counter2_count")
+        self.assertEqual(2, self._events["counter2_complete"])
+
+        # stop mode
+        self.post_event("stop_mode1")
+
+        # nothing should happen any more
+        for i in range(10):
+            self.post_event("counter2_count")
+            self.assertEqual(2, self._events["counter2_complete"])
+            self.assertEqual(6, self._events["counter2_hit"])
