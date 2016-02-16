@@ -32,6 +32,7 @@ class TestAuditor(MpfTestCase):
         super().setUp()
 
     def tearDown(self):
+        super().tearDown()
         auditor.DataManager = self.dataManager
 
     def test_auditor_switches(self):
