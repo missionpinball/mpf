@@ -135,25 +135,16 @@ class LogicBlock(object):
 
         self.enabled = False
 
-        config_spec = '''
-                    enable_events: list|None
-                    disable_events: list|None
-                    reset_events: list|None
-                    restart_events: list|None
-                    restart_on_complete: boolean|False
-                    disable_on_complete: boolean|True
-                    persist_state: boolean|False
-                    '''
+        self.config = self.machine.config_validator.validate_config(
+            'logic_block:{}'.format(self.config_section_name), config,
+            base_spec='logic_block:common')
 
-        self.config = ConfigProcessor.process_config(config_spec=config_spec,
-                                                     source=config)
+        if not self.config['events_when_complete']:
+            self.config['events_when_complete'] = ['logicblock_' + self.name + '_complete']
 
-        if 'events_when_complete' not in config:
-            self.config['events_when_complete'] = ([
-                'logicblock_' + self.name + '_complete'])
-        else:
-            self.config['events_when_complete'] = Util.string_to_list(
-                    config['events_when_complete'])
+    @property
+    def config_section_name(self):
+        raise NotImplementedError("Please implement")
 
     def __repr__(self):
         return '<LogicBlock.{}>'.format(self.name)
@@ -268,6 +259,10 @@ class Counter(LogicBlock):
     configurable counting interval.
     """
 
+    @property
+    def config_section_name(self):
+        return 'counter'
+
     # todo settle time
 
     def __init__(self, machine, name, player, config):
@@ -281,23 +276,10 @@ class Counter(LogicBlock):
         self.ignore_hits = False
         self.hit_value = -1
 
-        config_spec = '''
-                        count_events: list|None
-                        count_complete_value: int|None
-                        multiple_hit_window: ms|0
-                        count_interval: int|1
-                        direction: string|up
-                        starting_count: int|0
-                      '''
+        if not self.config['event_when_hit']:
+            self.config['event_when_hit'] = 'counter_' + self.name + '_hit'
 
-        self.config = ConfigProcessor.process_config(config_spec=config_spec,
-                                                     source=self.config)
-
-        if 'event_when_hit' not in self.config:
-            self.config['event_when_hit'] = ('counter_' + self.name +
-                                             '_hit')
-
-        if 'player_variable' not in self.config:
+        if not self.config['player_variable']:
             self.config['player_variable'] = self.name + '_count'
 
         self.hit_value = self.config['count_interval']
@@ -308,8 +290,7 @@ class Counter(LogicBlock):
             self.hit_value *= -1
 
         if not self.config['persist_state']:
-            self.player[self.config['player_variable']] = (
-                self.config['starting_count'])
+            self.player[self.config['player_variable']] = self.config['starting_count']
 
     def enable(self, **kwargs):
         """Enables this counter. Automatically called when one of the
@@ -339,15 +320,13 @@ class Counter(LogicBlock):
             self.log.debug("Processing Count change. Total: %s",
                            self.player[self.config['player_variable']])
 
-            if self.config['count_complete_value'] is not None:
+            if (self.config['direction'] == 'up' and
+                    self.player[self.config['player_variable']] >= self.config['count_complete_value']):
+                self.complete()
 
-                if (self.config['direction'] == 'up' and
-                        self.player[self.config['player_variable']] >= self.config['count_complete_value']):
-                    self.complete()
-
-                elif (self.config['direction'] == 'down' and
-                        self.player[self.config['player_variable']] <= self.config['count_complete_value']):
-                    self.complete()
+            elif (self.config['direction'] == 'down' and
+                    self.player[self.config['player_variable']] <= self.config['count_complete_value']):
+                self.complete()
 
             if self.config['event_when_hit']:
                 self.machine.events.post(self.config['event_when_hit'],
@@ -376,20 +355,20 @@ class Accrual(LogicBlock):
     a goal, with the steps being able to happen in any order.
     """
 
+    @property
+    def config_section_name(self):
+        return "accrual"
+
     def __init__(self, machine, name, player, config):
         super().__init__(machine, name, player, config)
 
         self.log = logging.getLogger('Accrual.' + name)
         self.log.debug("Creating Accrual LogicBlock")
 
-        config_spec = '''
-                        events: list_of_lists
-                      '''
+        # split events for each step
+        self.config['events'][:] = [Util.string_to_list(x) for x in self.config['events']]
 
-        self.config = ConfigProcessor.process_config(config_spec=config_spec,
-                                                     source=self.config)
-
-        if 'player_variable' not in config:
+        if not self.config['player_variable']:
             self.config['player_variable'] = self.name + '_status'
 
         if not self.player[self.config['player_variable']]:
@@ -447,20 +426,20 @@ class Sequence(LogicBlock):
     a goal, with the steps having to happen in order.
     """
 
+    @property
+    def config_section_name(self):
+        return "sequence"
+
     def __init__(self, machine, name, player, config):
         super().__init__(machine, name, player, config)
 
         self.log = logging.getLogger('Sequence.' + name)
         self.log.debug("Creating Sequence LogicBlock")
 
-        config_spec = '''
-                        events: list_of_lists
-                      '''
+        # split events for each step
+        self.config['events'][:] = [Util.string_to_list(x) for x in self.config['events']]
 
-        self.config = ConfigProcessor.process_config(config_spec=config_spec,
-                                                     source=self.config)
-
-        if 'player_variable' not in config:
+        if not self.config['player_variable']:
             self.config['player_variable'] = self.name + '_step'
 
         if not self.config['persist_state']:

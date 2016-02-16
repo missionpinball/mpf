@@ -775,6 +775,30 @@ widgets:
         height: single|int|0
         width: single|int|0
 
+logic_block:
+    common:
+        enable_events: list|str|None
+        disable_events: list|str|None
+        reset_events: list|str|None
+        restart_events: list|str|None
+        restart_on_complete: single|bool|False
+        disable_on_complete: single|bool|True
+        persist_state: single|bool|False
+        events_when_complete: list|str|
+        player_variable: single|str|None
+    accrual:
+        events: list|str|
+    counter:
+        count_events: list|str|
+        count_complete_value: single|int|
+        multiple_hit_window: single|ms|0
+        count_interval: single|int|1
+        direction: single|str|up
+        starting_count: single|int|0
+        event_when_hit: single|str|None
+    sequence:
+        events: list|str|
+
 widget_player:
     widget: list|str|
     target: single|str|None
