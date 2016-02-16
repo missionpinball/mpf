@@ -72,7 +72,7 @@ class TestBallSave(MpfTestCase):
     def testBallSaveEvents(self):
         self.machine.events.add_handler("ball_save_default_hurry_up", self.hurry_up)
         self.machine.events.add_handler("ball_save_default_grace_period", self.grace_period)
-        self.mockEvent("ball_save_default_timer_start")
+        self.mock_event("ball_save_default_timer_start")
         self._hurry_up = False
         self._grace_period = False
 
@@ -133,7 +133,7 @@ class TestBallSave(MpfTestCase):
         self.assertEqual(None, self.machine.game)
 
     def testBallSaveUnlimited(self):
-        self.mockEvent("ball_save_unlimited_timer_start")
+        self.mock_event("ball_save_unlimited_timer_start")
 
         # prepare game
         self.machine.ball_controller.num_balls_known = 0

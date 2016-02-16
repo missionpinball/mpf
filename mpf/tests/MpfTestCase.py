@@ -199,20 +199,20 @@ class MpfTestCase(unittest.TestCase):
                 pass
             raise e
 
-    def _mockEventHandler(self, eventName, **kwargs):
+    def _mock_event_handler(self, eventName, **kwargs):
         self._events[eventName] += 1
 
-    def mockEvent(self, eventName):
+    def mock_event(self, eventName):
         self._events[eventName] = 0
-        self.machine.events.add_handler(event=eventName, handler=self._mockEventHandler, eventName=eventName)
+        self.machine.events.add_handler(event=eventName, handler=self._mock_event_handler, eventName=eventName)
 
-    def hit_switch(self, name):
+    def hit_switch_and_run(self, name, delta):
         self.machine.switch_controller.process_switch(name, 1)
-        self.machine_run()
+        self.advance_time_and_run(delta)
 
-    def release_switch(self, name):
+    def release_switch_and_run(self, name, delta):
         self.machine.switch_controller.process_switch(name, 0)
-        self.machine_run()
+        self.advance_time_and_run(delta)
 
     def hit_and_release_switch(self, name):
         self.machine.switch_controller.process_switch(name, 1)
