@@ -1,0 +1,55 @@
+#config_version=3
+
+
+# minimal config to start game
+coils:
+    eject_coil1:
+        number:
+
+switches:
+    s_start:
+        number:
+        tags: start
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+
+ball_devices:
+    test_trough:
+        ball_switches: s_ball_switch1, s_ball_switch2
+        eject_coil: eject_coil1
+        tags: trough, drain, home, ball_add_live
+
+logic_blocks:
+    accruals:
+        accrual1:
+            events:
+                - accrual1_step1a, accrual1_step1b, accrual1_step1c
+                - accrual1_step2a, accrual1_step2b, accrual1_step2c
+                - accrual1_step3a, accrual1_step3b, accrual1_step3c
+            events_when_complete: accrual1_complete1, accrual1_complete2
+            enable_events: accrual1_enable
+            disable_events: accrual1_disable
+            reset_events: accrual1_reset
+    counters:
+        counter1:
+            count_events: counter1_count
+            event_when_hit: counter1_hit
+            starting_count: 5
+            count_complete_value: 0
+            direction: down
+            events_when_complete: counter1_complete
+            enable_events: counter1_enable
+            disable_events: counter1_disable
+            reset_events: counter1_reset
+    sequences:
+        sequence1:
+            events:
+                - sequence1_step1a, sequence1_step1b
+                - sequence1_step2a, sequence1_step2b
+                - sequence1_step3a, sequence1_step3b
+            events_when_complete: sequence1_complete
+            enable_events: sequence1_enable
+            disable_events: sequence1_disable
+            reset_events: sequence1_reset
