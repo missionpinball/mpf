@@ -502,3 +502,8 @@ class Sequence(LogicBlock):
 
         super().reset(**kwargs)
         self.player[self.config['player_variable']] = 0
+
+        # make sure we register the right handler
+        if self.enabled:
+            self.disable()
+            self.enable()
