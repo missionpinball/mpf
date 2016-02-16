@@ -9,10 +9,10 @@ class TestConfigMissingVersion(MpfTestCase):
         return 'tests/machine_files/config_interface/'
 
     def setUp(self):
-        pass
+        self.save_and_prepare_sys_path()
 
     def tearDown(self):
-        pass
+        self.restore_sys_path()
 
     def test_config_file_with_missing_version(self):
         self.assertRaises(ValueError, super().setUp)

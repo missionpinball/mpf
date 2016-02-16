@@ -11,10 +11,10 @@ class TestModesConfigValidation(MpfTestCase):
         return 'tests/machine_files/mode_tests/'
 
     def setUp(self):
-        pass
+        self.save_and_prepare_sys_path()
 
     def tearDown(self):
-        pass
+        self.restore_sys_path()
 
     def test_loading_invalid_modes(self):
         self.config = 'test_loading_invalid_modes.yaml'
