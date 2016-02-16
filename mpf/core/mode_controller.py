@@ -151,13 +151,13 @@ class ModeController(object):
         # for it, and if it's not there, then look in mpf/modes for it.
 
         if config['mode']['code']:
-            mode_code_file = os.path.join(self.machine.machine_path,
-                self.machine.config['mpf']['paths']['modes'],
-                mode_string,
-                'code',
-                config['mode']['code'].split('.')[0] + '.py')
-
-            if os.path.isfile(mode_code_file):  # code is in the machine folder
+            try:
+                mode_code_file = os.path.join(self.machine.machine_path,
+                    self.machine.config['mpf']['paths']['modes'],
+                    mode_string,
+                    'code',
+                    config['mode']['code'].split('.')[0] + '.py')
+                # code is in the machine folder
                 import_str = (self.machine.config['mpf']['paths']['modes'] +
                               '.' + mode_string + '.code.' +
                               config['mode']['code'].split('.')[0])
@@ -170,7 +170,8 @@ class ModeController(object):
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
                     self.machine, config, mode_string, mode_path)
 
-            else:  # code is in the mpf folder
+            except ImportError:
+                # code is in the mpf folder
                 import_str = ('mpf.' +
                               self.machine.config['mpf']['paths']['modes'] +
                               '.' + mode_string + '.code.' +
