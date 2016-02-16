@@ -193,3 +193,20 @@ class TestBallSave(MpfTestCase):
         # game should end
         self.advance_time_and_run(1)
         self.assertEqual(None, self.machine.game)
+
+    def testBallOutsideGame(self):
+        self.assertEqual(None, self.machine.game)
+
+        # enable ball save
+        self.post_event("enable1")
+        self.assertTrue(self.machine.ball_saves.default.enabled)
+
+        # ball drains
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(0, self.machine.playfield.balls)
+
+        # it should not come back
+        self.advance_time_and_run(20)
+        self.assertEqual(None, self.machine.game)
+        self.assertEqual(0, self.machine.playfield.balls)
