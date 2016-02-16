@@ -27,6 +27,7 @@ class TestBallSave(MpfTestCase):
         self.machine.switch_controller.process_switch('s_start', 1)
         self.machine.switch_controller.process_switch('s_start', 0)
         self.machine_run()
+        self.post_event("enable1")
 
         # ball save should be enabled now
         self.assertTrue(self.machine.ball_saves.default.enabled)
@@ -71,6 +72,7 @@ class TestBallSave(MpfTestCase):
     def testBallSaveEvents(self):
         self.machine.events.add_handler("ball_save_default_hurry_up", self.hurry_up)
         self.machine.events.add_handler("ball_save_default_grace_period", self.grace_period)
+        self.mockEvent("ball_save_default_timer_start")
         self._hurry_up = False
         self._grace_period = False
 
@@ -83,17 +85,20 @@ class TestBallSave(MpfTestCase):
         self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
 
         self.assertFalse(self.machine.ball_saves.default.enabled)
+        self.assertEqual(0, self._events["ball_save_default_timer_start"])
 
         # start game
         self.machine.switch_controller.process_switch('s_start', 1)
         self.machine.switch_controller.process_switch('s_start', 0)
         self.machine_run()
+        self.post_event("enable1")
 
         # ball save should be enabled now
         self.assertTrue(self.machine.ball_saves.default.enabled)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
+        self.assertEqual(1, self._events["ball_save_default_timer_start"])
         self.assertNotEqual(None, self.machine.game)
 
         self.assertEqual(1, self.machine.playfield.balls)
@@ -115,6 +120,68 @@ class TestBallSave(MpfTestCase):
         # after another 2s it should turn off
         self.advance_time_and_run(2)
         self.assertFalse(self.machine.ball_saves.default.enabled)
+
+        # game should still run
+        self.assertNotEqual(None, self.machine.game)
+
+        # ball drains
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+
+        # game should end
+        self.advance_time_and_run(1)
+        self.assertEqual(None, self.machine.game)
+
+    def testBallSaveUnlimited(self):
+        self.mockEvent("ball_save_unlimited_timer_start")
+
+        # prepare game
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(10)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+
+        self.assertFalse(self.machine.ball_saves.unlimited.enabled)
+        self.assertEqual(0, self._events["ball_save_unlimited_timer_start"])
+
+        # start game
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+        self.machine_run()
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        self.advance_time_and_run(10)
+        self.assertEqual(0, self._events["ball_save_unlimited_timer_start"])
+
+        # ball save should be enabled now
+        self.post_event("enable2")
+        self.advance_time_and_run(1)
+        self.assertTrue(self.machine.ball_saves.unlimited.enabled)
+        self.assertTrue(self.machine.ball_saves.unlimited.unlimited_saves)
+        self.assertEqual(1, self._events["ball_save_unlimited_timer_start"])
+
+        # 20s loop
+        for i in range(4):
+            # ball drains
+            self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+            self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+            self.advance_time_and_run(1)
+            self.assertEqual(0, self.machine.playfield.balls)
+
+            # wait for new ball
+            self.advance_time_and_run(4)
+            self.assertNotEqual(None, self.machine.game)
+            self.assertEqual(1, self.machine.playfield.balls)
+
+        # after 30s + 2s + 2s it should turn off
+        self.advance_time_and_run(15)
+        self.assertFalse(self.machine.ball_saves.unlimited.enabled)
 
         # game should still run
         self.assertNotEqual(None, self.machine.game)
