@@ -32,14 +32,14 @@ class CommandLineUtility(object):
         try:
             command = self.argv[1]
         except IndexError:
-            command = 'start'
+            command = 'both'
 
         try:
             module = import_module('mpf.commands.%s' % command)
             self.argv.pop(1)
         except (ImportError, IndexError):
             # assume we have a machine folder to run and not a command
-            module = import_module('mpf.commands.start')
+            module = import_module('mpf.commands.both')
 
         machine_path, remaining_args = self.parse_args()
 

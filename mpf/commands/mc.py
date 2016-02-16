@@ -2,8 +2,6 @@
 
 """Starts the MPF media controller."""
 
-print("IMPORTING MC COMMAND")
-
 import argparse
 import logging
 import os
@@ -69,6 +67,12 @@ class Command(object):
                             action="store_false", dest="bcp", default=True,
                             help="Do not set up the BCP server threads")
 
+        parser.add_argument("-p",
+                            action="store_true", dest="pause", default=True,
+                            help="Pause the terminal window on exit. Useful "
+                            "when launching in a separate window so you can "
+                            "see any errors before the window closes.")
+
         # The following are just included for full compatibility with mpf.py which is
         # needed when launching from a batch file or shell script.
         parser.add_argument("-x",
@@ -129,8 +133,11 @@ class Command(object):
                   machine_path=machine_path).run()
             Logger.info("MC run loop ended.")
         except Exception as e:
-            Logger.exception(e)
+            # Todo need to change back to a normal exception
+            logging.exception(str(e))
 
+        if args.pause:
+            input('Press ENTER to close this window...')
         sys.exit()
 
     def preprocess_config(self, config):

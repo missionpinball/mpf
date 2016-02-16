@@ -1,4 +1,4 @@
-"""This is the main file you run to start MPF."""
+"""Command to start the MPF core engine."""
 
 import argparse
 import errno
@@ -89,6 +89,12 @@ class Command(object):
                                  "Default is "
                                  "mpf/mpfconfig.yaml")
 
+        parser.add_argument("-p",
+                            action="store_true", dest="pause", default=True,
+                            help="Pause the terminal window on exit. Useful "
+                            "when launching in a separate window so you can "
+                            "see any errors before the window closes.")
+
         parser.add_argument("--version",
                             action="version", version=mpf.core.version_str,
                             help="Displays the MPF, config file, and BCP "
@@ -133,4 +139,6 @@ class Command(object):
         except Exception as e:
             logging.exception(e)
 
+        if args.pause:
+            input('Press ENTER to close this window...')
         sys.exit()
