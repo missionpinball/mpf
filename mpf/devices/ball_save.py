@@ -119,18 +119,26 @@ class BallSave(Device):
                            " play. Discarding request.")
             return {'balls': balls}
 
+        balls_to_save = balls
+
+        if balls_to_save > self.machine.game.balls_in_play:
+            balls_to_save = self.machine.game.balls_in_play
+
+        if balls_to_save > self.saves_remaining and not self.unlimited_saves:
+            balls_to_save = self.saves_remaining
+
         self.log.debug("Ball(s) drained while active. Requesting new one(s). "
                        "Autolaunch: %s", self.config['auto_launch'])
 
         self.machine.events.post('ball_save_{}_saving_ball'.format(self.name),
-                                 balls=balls)
+                                 balls=balls_to_save)
 
-        self.source_playfield.add_ball(balls=balls,
+        self.source_playfield.add_ball(balls=balls_to_save,
                                        player_controlled=self.config[
                                                              'auto_launch'] ^ 1)
 
         if not self.unlimited_saves:
-            self.saves_remaining -= balls
+            self.saves_remaining -= balls_to_save
             if self.debug:
                 self.log.debug("Saves remaining: %s", self.saves_remaining)
         elif self.debug:
@@ -141,7 +149,7 @@ class BallSave(Device):
                 self.log.debug("Disabling since there are no saves remaining")
             self.disable()
 
-        return {'balls': 0}
+        return {'balls': balls - balls_to_save}
 
     def remove(self):
         if self.debug:
