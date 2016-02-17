@@ -1,5 +1,5 @@
 """MPF plugin which implements Logic Blocks"""
-
+import copy
 import logging
 
 from mpf.core.delays import DelayManager
@@ -46,8 +46,7 @@ class LogicBlocks(object):
         if 'logic_blocks' in self.machine.config:
             self._create_logic_blocks(
                 config=self.machine.config['logic_blocks'],
-                player=player,
-                enable=False)
+                player=player)
 
     def player_turn_start(self, player, **kwargs):
         del kwargs
@@ -67,13 +66,12 @@ class LogicBlocks(object):
             # we're iterating over
             block.player_turn_stop()
 
-    def _process_config(self, config, priority=0, mode=None, enable=True):
+    def _process_config(self, config, priority=0, mode=None):
         del priority
         self.log.debug("Processing LogicBlock configuration.")
 
         blocks_added = self._create_logic_blocks(config=config,
-                                                 player=self.machine.game.player,
-                                                 enable=enable)
+                                                 player=self.machine.game.player)
 
         if mode:
             for block in blocks_added:
@@ -81,7 +79,7 @@ class LogicBlocks(object):
 
         return self._unload_logic_blocks, blocks_added
 
-    def _create_logic_blocks(self, config, player, enable=True):
+    def _create_logic_blocks(self, config, player):
         # config is localized for LogicBlock
 
         blocks_added = set()
@@ -105,10 +103,9 @@ class LogicBlocks(object):
                 blocks_added.add(block)
 
         # Enable any logic blocks that do not have specific enable events
-        if enable:
-            for block in blocks_added:
-                if not block.config['enable_events']:
-                    block.enable()
+        for block in blocks_added:
+            if not block.config['enable_events']:
+                block.enabled = True
 
         player.uvars['logic_blocks'] |= blocks_added
 
@@ -135,6 +132,10 @@ class LogicBlock(object):
         self.enabled = False
         self.completed = False
 
+        # LogicBlocks are loaded multiple times and config_validator changes the config
+        # therefore we have to copy the config
+        config = copy.deepcopy(config)
+
         self.config = self.machine.config_validator.validate_config(
             'logic_block:{}'.format(self.config_section_name), config,
             base_spec='logic_block:common')
@@ -151,12 +152,9 @@ class LogicBlock(object):
 
     def create_control_events(self):
 
-        # todo need to run this when a mode start creates a logic block
-
-        # If this logic block is enabled, keep it enabled
-        # If it's not enabled, enable it if there are no other enable events
-        if not self.enabled and not self.config['enable_events']:
-            self.enable()
+        if self.enabled:
+            # register all event handler if already enabled
+            self.add_event_handlers()
 
         # Register for the events to enable, disable, and reset this LogicBlock
         for event in self.config['enable_events']:
@@ -199,6 +197,10 @@ class LogicBlock(object):
         del kwargs
         self.log.debug("Enabling")
         self.enabled = True
+        self.add_event_handlers()
+
+    def add_event_handlers(self):
+        raise NotImplementedError("Not implemented")
 
     def hit(self, **kwargs):
         raise NotImplementedError("Not implemented")
@@ -301,11 +303,7 @@ class Counter(LogicBlock):
         if not self.config['persist_state']:
             self.player[self.config['player_variable']] = self.config['starting_count']
 
-    def enable(self, **kwargs):
-        """Enables this counter. Automatically called when one of the
-        'enable_event's is posted. Can also manually be called.
-        """
-        super().enable()
+    def add_event_handlers(self):
         self.machine.events.remove_handler(self.hit)  # prevents multiples
 
         for event in self.config['count_events']:
@@ -388,11 +386,7 @@ class Accrual(LogicBlock):
             self.player[self.config['player_variable']] = (
                 [False] * len(self.config['events']))
 
-    def enable(self, **kwargs):
-        """Enables this accrual. Automatically called when one of the
-        'enable_events' is posted. Can also manually be called.
-        """
-        super().enable()
+    def add_event_handlers(self):
         self.machine.events.remove_handler(self.hit)  # prevents multiples
 
         for entry_num in range(len(self.config['events'])):
@@ -454,30 +448,7 @@ class Sequence(LogicBlock):
         if not self.config['persist_state']:
             self.player[self.config['player_variable']] = 0
 
-    def enable(self, step=0, **kwargs):
-        """Enables this Sequence. Automatically called when one of the
-        'enable_events' is posted. Can also manually be called.
-
-        Args:
-            step: Step number this logic block will be at when it's enabled.
-                Default is 0.
-
-        Note the step numbers are zero-based.
-        """
-        super().enable()
-
-        if step:
-            self.player[self.config['player_variable']] = step
-
-        if self.player[self.config['player_variable']] >= (
-                len(self.config['events'])):
-            # hmm.. we're enabling, but we're done. So now what?
-            self.log.warning("Received request to enable at step %s, but this "
-                             " Sequence only has %s step(s). Marking complete",
-                             self.player[self.config['player_variable']],
-                             len(self.config['events']))
-            return
-
+    def add_event_handlers(self):
         # add the handlers for the current step
         for event in (self.config['events']
                       [self.player[self.config['player_variable']]]):
