@@ -72,6 +72,17 @@ logic_blocks:
             disable_events: counter1_disable
             restart_events: counter1_restart
             reset_events: counter1_reset
+        counter3:
+            count_events: counter3_count
+            starting_count: 0
+            count_complete_value: 5
+            hit_value: -1
+            direction: up
+            enable_events: counter3_enable
+            disable_events: counter3_disable
+            restart_events: counter3_restart
+            reset_events: counter3_reset
+            multiple_hit_window: 1s
     sequences:
         sequence1:
             events:

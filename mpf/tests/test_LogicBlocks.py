@@ -383,3 +383,30 @@ class TestLogicBlocks(MpfTestCase):
         self.post_event("accrual5_step1")
         self.post_event("accrual5_step2")
         self.assertEqual(2, self._events["logicblock_accrual5_complete"])
+
+    def test_counter_hit_window(self):
+        self._start_game()
+        self.mock_event("logicblock_counter3_complete")
+        self.mock_event("counter_counter3_hit")
+
+        self.post_event("counter3_enable")
+        for i in range(10):
+            self.post_event("counter3_count")
+            self.assertEqual(0, self._events["logicblock_counter3_complete"])
+
+        # inside same window. only one hit
+        self.assertEqual(1, self._events["counter_counter3_hit"])
+        self.assertEqual(0, self._events["logicblock_counter3_complete"])
+        self.advance_time_and_run(1)
+
+        for i in range(3):
+            self.post_event("counter3_count")
+            self.assertEqual(0, self._events["logicblock_counter3_complete"])
+            self.assertEqual(2+i, self._events["counter_counter3_hit"])
+            self.advance_time_and_run(1)
+
+
+        # it should complete
+        self.post_event("counter3_count")
+        self.assertEqual(1, self._events["logicblock_counter3_complete"])
+        self.assertEqual(5, self._events["counter_counter3_hit"])
