@@ -2,9 +2,7 @@ language: python
 python:
 - 3.4
 install:
-- pip install ruamel.yaml
-- pip install coveralls
-- pip install pyserial
+- python setup.py install
 script: coverage run -m unittest discover mpf
 after_success: coveralls
 deploy:
