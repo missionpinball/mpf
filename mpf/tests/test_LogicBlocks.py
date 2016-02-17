@@ -21,6 +21,12 @@ class TestLogicBlocks(MpfTestCase):
         self.advance_time_and_run(1)
         self.release_switch_and_run("s_ball_switch1", 1)
 
+    def _stop_game(self):
+        self.advance_time_and_run(10)
+        self.hit_switch_and_run("s_ball_switch1", 1)
+
+        self.assertEqual(None, self.machine.game)
+
     # TODO: should it complete again when enabled but not reset?
 
     def test_accruals_simple(self):
@@ -232,3 +238,148 @@ class TestLogicBlocks(MpfTestCase):
             self.post_event("counter2_count")
             self.assertEqual(2, self._events["counter2_complete"])
             self.assertEqual(6, self._events["counter2_hit"])
+
+    def test_auto_enable_and_disable_in_system_config(self):
+        self.mock_event("logicblock_accrual2_complete")
+
+        # does not work before game
+        self.post_event("accrual2_step1")
+        self.post_event("accrual2_step2")
+        self.assertEqual(0, self._events["logicblock_accrual2_complete"])
+
+        self._start_game()
+        # should work during game
+        self.post_event("accrual2_step1")
+        self.post_event("accrual2_step2")
+        self.assertEqual(1, self._events["logicblock_accrual2_complete"])
+
+        self._stop_game()
+
+        # does not work after game
+        self.post_event("accrual2_step1")
+        self.post_event("accrual2_step2")
+        self.assertEqual(1, self._events["logicblock_accrual2_complete"])
+
+    def test_no_reset_on_complete(self):
+        self.mock_event("logicblock_accrual3_complete")
+
+        # start game
+        self._start_game()
+        # and enable
+        self.post_event("accrual3_enable")
+
+        # should work once
+        self.post_event("accrual3_step1")
+        self.post_event("accrual3_step2")
+        self.assertEqual(1, self._events["logicblock_accrual3_complete"])
+
+        # but not a second time because it disabled
+        self.post_event("accrual3_step1")
+        self.post_event("accrual3_step2")
+        self.assertEqual(1, self._events["logicblock_accrual3_complete"])
+
+        # enable again
+        self.post_event("accrual3_enable")
+
+        # still completed
+        self.post_event("accrual3_step1")
+        self.post_event("accrual3_step2")
+        self.assertEqual(1, self._events["logicblock_accrual3_complete"])
+
+        # should work after reset
+        self.post_event("accrual3_reset")
+        self.post_event("accrual3_step1")
+        self.post_event("accrual3_step2")
+        self.assertEqual(2, self._events["logicblock_accrual3_complete"])
+
+        # disabled again
+        self.post_event("accrual3_reset")
+        self.post_event("accrual3_step1")
+        self.post_event("accrual3_step2")
+        self.assertEqual(2, self._events["logicblock_accrual3_complete"])
+
+        # works after enable
+        self.post_event("accrual3_enable")
+        self.post_event("accrual3_step1")
+        self.post_event("accrual3_step2")
+        self.assertEqual(3, self._events["logicblock_accrual3_complete"])
+
+    def test_no_reset_and_no_disable_on_complete(self):
+        self.mock_event("logicblock_accrual4_complete")
+
+        # start game
+        self._start_game()
+        # and enable
+        self.post_event("accrual4_enable")
+
+        # should work once
+        self.post_event("accrual4_step1")
+        self.post_event("accrual4_step2")
+        self.assertEqual(1, self._events["logicblock_accrual4_complete"])
+
+        # enabled but still completed
+        self.post_event("accrual4_step1")
+        self.post_event("accrual4_step2")
+        self.assertEqual(1, self._events["logicblock_accrual4_complete"])
+
+        # should work after reset
+        self.post_event("accrual4_reset")
+        self.post_event("accrual4_step1")
+        self.post_event("accrual4_step2")
+        self.assertEqual(2, self._events["logicblock_accrual4_complete"])
+
+    def test_player_change(self):
+        self.mock_event("logicblock_accrual5_complete")
+
+        self.machine.config['game']['balls_per_game'] = 2
+
+        self._start_game()
+        # add player
+        self.hit_and_release_switch("s_start")
+
+        # should work during game - player1
+        self.assertEqual(1, self.machine.game.player.number)
+        self.post_event("accrual5_step1")
+        self.post_event("accrual5_step2")
+        self.assertEqual(1, self._events["logicblock_accrual5_complete"])
+
+        # player2
+        self.advance_time_and_run(10)
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.release_switch_and_run("s_ball_switch1", 4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(2, self.machine.game.player.number)
+
+        # not yet complete
+        self.post_event("accrual5_step1")
+        self.assertEqual(1, self._events["logicblock_accrual5_complete"])
+
+        # player1 again
+        self.advance_time_and_run(10)
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.release_switch_and_run("s_ball_switch1", 4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.game.player.number)
+
+        # nothing should happen because its disabled and completed for player1
+        self.post_event("accrual5_step1")
+        self.post_event("accrual5_step2")
+        self.assertEqual(1, self._events["logicblock_accrual5_complete"])
+
+        # player2 again
+        self.advance_time_and_run(10)
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.release_switch_and_run("s_ball_switch1", 4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(2, self.machine.game.player.number)
+
+        # complete it
+        self.post_event("accrual5_step2")
+        self.assertEqual(2, self._events["logicblock_accrual5_complete"])
+
+        self._stop_game()
+
+        # does not work after game
+        self.post_event("accrual5_step1")
+        self.post_event("accrual5_step2")
+        self.assertEqual(2, self._events["logicblock_accrual5_complete"])

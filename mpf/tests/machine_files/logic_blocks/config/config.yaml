@@ -1,7 +1,9 @@
 #config_version=3
 
-
 # minimal config to start game
+game:
+    balls_per_game: 1
+
 coils:
     eject_coil1:
         number:
@@ -21,6 +23,7 @@ ball_devices:
         eject_coil: eject_coil1
         tags: trough, drain, home, ball_add_live
 
+# system wide logic blocks
 logic_blocks:
     accruals:
         accrual1:
@@ -32,6 +35,33 @@ logic_blocks:
             enable_events: accrual1_enable
             disable_events: accrual1_disable
             reset_events: accrual1_reset
+        accrual2:
+            events:
+                - accrual2_step1
+                - accrual2_step2
+        accrual3:
+            events:
+                - accrual3_step1
+                - accrual3_step2
+            reset_on_complete: False
+            disable_on_complete: True
+            enable_events: accrual3_enable
+            disable_events: accrual3_disable
+            reset_events: accrual3_reset
+        accrual4:
+            events:
+                - accrual4_step1
+                - accrual4_step2
+            reset_on_complete: False
+            disable_on_complete: False
+            enable_events: accrual4_enable
+            disable_events: accrual4_disable
+            reset_events: accrual4_reset
+        accrual5:
+            events:
+                - accrual5_step1
+                - accrual5_step2
+            persist_state: True
     counters:
         counter1:
             count_events: counter1_count
@@ -53,5 +83,6 @@ logic_blocks:
             disable_events: sequence1_disable
             reset_events: sequence1_reset
 
+# logic blocks in mode1
 modes:
     - mode1
