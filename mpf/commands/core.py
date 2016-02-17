@@ -8,7 +8,6 @@ import socket
 import sys
 from datetime import datetime
 
-import mpf
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
 
@@ -95,10 +94,7 @@ class Command(object):
                             "when launching in a separate window so you can "
                             "see any errors before the window closes.")
 
-        parser.add_argument("--version",
-                            action="version", version=mpf.core.version_str,
-                            help="Displays the MPF, config file, and BCP "
-                                 "version info and exits")
+
 
         args = parser.parse_args(args)
         args.configfile = Util.string_to_list(args.configfile)

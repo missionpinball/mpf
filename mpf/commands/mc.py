@@ -12,7 +12,6 @@ from datetime import datetime
 from kivy.config import Config
 from kivy.logger import Logger
 
-import mpf.mc
 from mpf.core.utility_functions import Util
 from mpf.mc.core.config_processor import ConfigProcessor
 from mpf.mc.core.mc import MpfMc
@@ -56,12 +55,6 @@ class Command(object):
                             metavar='config_file',
                             help="The MPF framework default config file. Default is "
                                  "mc/mcconfig.yaml")
-
-        parser.add_argument("--version",
-                            action="version",
-                            version=mpf.mc.version_str,
-                            help="Displays the MPF, config file, and BCP version info "
-                                 "and exits")
 
         parser.add_argument("-b",
                             action="store_false", dest="bcp", default=True,

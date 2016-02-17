@@ -4,6 +4,7 @@ import sys
 from importlib import import_module
 
 import mpf.core
+from mpf._version import version
 
 EXAMPLES_FOLDER = 'examples'
 CONFIG_FOLDER = 'config'
@@ -52,6 +53,11 @@ class CommandLineUtility(object):
 
         parser.add_argument("machine_path", help="Path of the machine folder.",
                             default=None, nargs='?')
+
+        parser.add_argument("--version",
+                            action="version", version=version,
+                            help="Displays the MPF, config file, and BCP "
+                                 "version info and exits")
 
         args, remaining_args = parser.parse_known_args(self.argv[1:])
         machine_path = self.get_machine_path(args.machine_path)
