@@ -2,6 +2,7 @@ language: python
 python:
 - 3.4
 install:
+- pip install coveralls
 - python setup.py install
 script: coverage run -m unittest discover mpf
 after_success: coveralls
