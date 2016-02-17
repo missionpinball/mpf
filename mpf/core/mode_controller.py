@@ -161,6 +161,11 @@ class ModeController(object):
                 import_str = (self.machine.config['mpf']['paths']['modes'] +
                               '.' + mode_string + '.code.' +
                               config['mode']['code'].split('.')[0])
+                print('---')
+                print(self.machine.config['mpf']['paths']['modes'])
+                print(mode_string)
+                print(config['mode']['code'])
+                print(import_str)
                 i = __import__(import_str, fromlist=[''])
 
                 if self.debug:
