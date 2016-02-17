@@ -121,7 +121,7 @@ class AssetManager(object):
                 at self.machine.images.
             config_section: String name of this assets section in the config
                 files. e.g. 'images'
-            path_string: String name of the setting from mpf_mc:paths: which
+            path_string: String name of the setting from mpf-mc:paths: which
                 controls the name of the folder that will hold this type of
                 assets in the machine folder. e.g. 'images
             extensions: Tuple of strings, with no dots, of the types of file
@@ -753,7 +753,7 @@ class AssetPool(object):
 
 class Asset(object):
     attribute = ''  # attribute in MC, e.g. self.machine.images
-    path_string = ''  # entry from mpf_mc:paths: for asset folder name
+    path_string = ''  # entry from mpf-mc:paths: for asset folder name
     config_section = ''  # section in the config files for this asset
     extensions = ('', '', '')  # tuple of strings, no dots
     class_priority = 0  # Order asset classes will be loaded. Higher is first.

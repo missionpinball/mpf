@@ -6,7 +6,7 @@ from copy import deepcopy
 
 import ruamel.yaml as yaml
 
-import mpf
+from mpf._version import __config_version__
 from mpf.file_interfaces.yaml_interface import MpfLoader, YamlInterface
 from mpf.core.utility_functions import Util
 
@@ -1226,7 +1226,7 @@ class ConfigValidator(object):
 
         elif validator == 'color':
             # we call color_from_string() from the config processor because MPF
-            # and the MPF_MC each need different color formats internally, so
+            # and the MPF-MC each need different color formats internally, so
             # this way they can each implement their own methods.
             return self.machine.config_processor.color_from_string(item)
 
@@ -1263,10 +1263,10 @@ class ConfigValidator(object):
 
             ver_string = ''
 
-            if int(mpf.core.__config_version_info__) > int(ver):
+            if int(__config_version__) > int(ver):
                 ver_string = (
                 ' (The latest config version is config_version=' +
-                mpf.core.__config_version_info__ + ').')
+                __config_version__ + ').')
 
             if setting_key in sections['section_replacements']:
                 self.log.info('The setting "%s" has been renamed to "%s" in '

@@ -14,7 +14,7 @@ import copy
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
 from mpf.devices.shot import Shot
-import mpf
+from mpf._version import __version__, __bcp_version__
 
 
 def decode_command_string(bcp_string):
@@ -1150,9 +1150,9 @@ class BCPClientSocket(object):
     def send_hello(self):
         """Sends BCP 'hello' command."""
         self.send(encode_command_string('hello',
-                                        version=mpf.core.__bcp_version__,
+                                        version=__bcp_version__,
                                         controller_name='Mission Pinball Framework',
-                                        controller_version=mpf.core.__version__))
+                                        controller_version=__version__))
 
     def send_goodbye(self):
         """Sends BCP 'goodbye' command."""

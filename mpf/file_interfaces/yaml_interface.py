@@ -21,7 +21,7 @@ from ruamel.yaml.dumper import RoundTripDumper
 
 from mpf.core.file_manager import FileInterface, FileManager
 from mpf.core.utility_functions import Util
-import mpf
+from mpf._version import __version__, __config_version__
 
 log = logging.getLogger('YAML Interface')
 
@@ -236,17 +236,18 @@ class YamlInterface(FileInterface):
         file_interface = FileManager.get_file_interface(filename)
         file_version = file_interface.get_config_file_version(filename)
 
-        if file_version != int(mpf.core.__config_version__):
+        if file_version != int(__config_version__):
             log.error("Config file %s is version %s. MPF %s requires "
                       "version %s", filename, file_version,
-                      mpf.core.__version__, mpf.core.__config_version__)
+                      __version__, __config_version__)
             log.error("Use the Config File Migrator to automatically "
                       "migrate your config file to the latest version.")
             log.error("Migration tool: "
                        "https://missionpinball.com/docs/tools/config-file-migrator/")
-            log.error("More info on config version %s: %s",
-                      mpf.core.__config_version__,
-                      mpf.core.__config_version_url__)
+            log.error("More info on config version %s: "
+                      "https://missionpinball.com/docs/configuration-file"
+                      "-reference/important-config-file-concepts/config_version/config-version-%s/",
+                      __config_version__, __config_version__)
             return False
         else:
             return True

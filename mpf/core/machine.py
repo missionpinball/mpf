@@ -8,7 +8,7 @@ import queue
 import sys
 import threading
 
-import mpf
+from mpf._version import __version__
 from mpf.core.bcp import BCP
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
@@ -59,7 +59,7 @@ class MachineController(object):
         self.machine_path = machine_path
         self.options = options
         self.log = logging.getLogger("Machine")
-        self.log.info("Mission Pinball Framework v%s", mpf.core.__version__)
+        self.log.info("Mission Pinball Framework v%s", __version__)
         self.log.debug("Command line arguments: %s", self.options)
         self.verify_system_info()
 
@@ -333,8 +333,8 @@ class MachineController(object):
         """
         python_version = sys.version_info
 
-        if python_version[0] != 3:
-            self.log.error("Incorrect Python version. MPF requires Python 3."
+        if python_version[0] != 3 or python_version[1] != 4:
+            self.log.error("Incorrect Python version. MPF requires Python 3.4"
                            "x. You have Python %s.%s.%s.", python_version[0],
                            python_version[1], python_version[2])
             sys.exit()

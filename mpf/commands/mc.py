@@ -119,11 +119,11 @@ class Command(object):
             mpf.mc.__path__[0], args.mcconfigfile))
 
         machine_path = set_machine_path(machine_path,
-                                        mpf_config['mpf_mc']['paths'][
+                                        mpf_config['mpf-mc']['paths'][
                                             'machine_files'])
 
         mpf_config = load_machine_config(args.configfile, machine_path,
-                                         mpf_config['mpf_mc']['paths'][
+                                         mpf_config['mpf-mc']['paths'][
                                              'config'], mpf_config)
 
         self.preprocess_config(mpf_config)
