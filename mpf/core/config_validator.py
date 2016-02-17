@@ -796,7 +796,6 @@ logic_block:
         direction: single|str|up
         starting_count: single|int|0
         event_when_hit: single|str|None
-        hit_value: single|int|1
     sequence:
         events: list|str|
 

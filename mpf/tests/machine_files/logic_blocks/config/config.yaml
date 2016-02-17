@@ -76,7 +76,7 @@ logic_blocks:
             count_events: counter3_count
             starting_count: 0
             count_complete_value: 5
-            hit_value: -1
+            count_interval: -1
             direction: up
             enable_events: counter3_enable
             disable_events: counter3_disable
