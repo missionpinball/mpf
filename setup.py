@@ -2,7 +2,7 @@
 
 import re
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 #  http://stackoverflow.com/questions/458550/standard-way-to-embed-version-into-python-package
 VERSIONFILE = "mpf/_version.py"

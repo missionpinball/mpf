@@ -5,7 +5,7 @@ install:
 - pip install ruamel.yaml
 - pip install coveralls
 - pip install pyserial
-script: coverage run -m unittest discover
+script: coverage run -m unittest discover mpf
 after_success: coveralls
 deploy:
   provider: pypi
