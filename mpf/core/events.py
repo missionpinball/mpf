@@ -137,7 +137,7 @@ class EventManager(object):
                     handler_list.remove(handler_tup)
                     if self.debug:
                         self.log.debug("Removing method %s from event %s", (str(method).split(' '))[2], event)
-            events_to_delete_if_empty.append(event)
+                    events_to_delete_if_empty.append(event)
 
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
@@ -165,7 +165,7 @@ class EventManager(object):
                     self.registered_handlers[event].remove(handler_tup)
                     if self.debug:
                         self.log.debug("Removing method %s from event %s", (str(handler).split(' '))[2], event)
-            events_to_delete_if_empty.append(event)
+                    events_to_delete_if_empty.append(event)
 
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
@@ -184,7 +184,7 @@ class EventManager(object):
                     handler_list.remove(handler_tup)
                     if self.debug:
                         self.log.debug("Removing method %s from event %s", (str(handler_tup[0]).split(' '))[2], event)
-            events_to_delete_if_empty.append(event)
+                    events_to_delete_if_empty.append(event)
 
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
