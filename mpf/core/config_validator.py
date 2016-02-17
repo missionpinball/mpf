@@ -781,7 +781,7 @@ logic_block:
         disable_events: list|str|None
         reset_events: list|str|None
         restart_events: list|str|None
-        restart_on_complete: single|bool|False
+        reset_on_complete: single|bool|True
         disable_on_complete: single|bool|True
         persist_state: single|bool|False
         events_when_complete: list|str|None

@@ -133,6 +133,7 @@ class LogicBlock(object):
         self.log = None
 
         self.enabled = False
+        self.completed = False
 
         self.config = self.machine.config_validator.validate_config(
             'logic_block:{}'.format(self.config_section_name), config,
@@ -217,6 +218,7 @@ class LogicBlock(object):
         Can also be manually called.
         """
         del kwargs
+        self.completed = False
         self.log.debug("Resetting")
 
     def restart(self, **kwargs):
@@ -234,16 +236,24 @@ class LogicBlock(object):
         events and optionally restarts this logic block or disables it,
         depending on this block's configuration settings.
         """
+        # if already completed do not complete again
+        if self.completed:
+            return
+
+        # otherwise mark as completed
+        self.completed = True
+
         self.log.debug("Complete")
         if self.config['events_when_complete']:
             for event in self.config['events_when_complete']:
                 self.machine.events.post(event)
 
-        if self.config['restart_on_complete']:
+        # call reset to reset completion
+        if self.config['reset_on_complete']:
             self.reset()
-            self.enable()
 
-        elif self.config['disable_on_complete']:
+        # disable block
+        if self.config['disable_on_complete']:
             self.disable()
 
 

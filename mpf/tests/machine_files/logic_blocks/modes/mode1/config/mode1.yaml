@@ -12,5 +12,5 @@ logic_blocks:
             starting_count: 0
             count_complete_value: 3
             direction: up
-            restart_on_complete: True
+            reset_on_complete: True
             disable_on_complete: False
