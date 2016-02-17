@@ -378,11 +378,7 @@ class Accrual(LogicBlock):
         if not self.config['player_variable']:
             self.config['player_variable'] = self.name + '_status'
 
-        if not self.player[self.config['player_variable']]:
-            self.player[self.config['player_variable']] = (
-                [False] * len(self.config['events']))
-
-        elif not self.config['persist_state']:
+        if not self.config['persist_state'] or not self.player[self.config['player_variable']]:
             self.player[self.config['player_variable']] = (
                 [False] * len(self.config['events']))
 
