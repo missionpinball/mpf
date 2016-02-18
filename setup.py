@@ -66,7 +66,7 @@ community.''',
     # MANIFEST.in picks up the rest
     packages=['mpf'],
 
-    zip_safe=True,
+    zip_safe=False,
 
     install_requires=['ruamel.yaml', 'pyserial'],
 
