@@ -65,3 +65,6 @@ data/
 logs/
 audits.yaml
 docs
+
+# MPF build files
+build_scripts/wheels
