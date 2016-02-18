@@ -58,13 +58,13 @@ class BallDevice(Device):
         """
 
         self.machine.events.add_handler('init_phase_2',
-                                        self._initialize)
+                                        self._initialize_phase_2)
 
         self.machine.events.add_handler('init_phase_3',
-                                        self._initialize2)
+                                        self._initialize_phase_3)
 
         self.machine.events.add_handler('init_phase_4',
-                                        self._initialize3)
+                                        self._initialize_phase_4)
 
         self.mechanical_eject_in_progress = False
         """How many balls are waiting for a mechanical (e.g. non coil fired /
@@ -129,11 +129,6 @@ class BallDevice(Device):
 
                 eject_confirmed=['idle', 'lost_balls'],
         )
-
-        if (self.config['confirm_eject_type'] == "switch" and
-                not self.config['confirm_eject_switch']):
-            raise AssertionError("When using confirm_eject_type switch you " +
-                                 "to specify a confirm_eject_switch")
 
     # Logic and dispatchers
 
@@ -720,6 +715,11 @@ class BallDevice(Device):
                                  'than all ball_missing_timeouts'.
                                  format(self.name))
 
+        if (self.config['confirm_eject_type'] == "switch" and
+                not self.config['confirm_eject_switch']):
+            raise AssertionError("When using confirm_eject_type switch you " +
+                                 "to specify a confirm_eject_switch")
+
     def _register_handlers(self):
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
@@ -754,7 +754,7 @@ class BallDevice(Device):
                     'balldevice_{}_ok_to_receive'.format(target.name),
                     self._target_ready, target=target)
 
-    def _initialize(self):
+    def _initialize_phase_2(self):
         # load targets and timeouts
         self._parse_config()
 
@@ -764,7 +764,7 @@ class BallDevice(Device):
         # register switch and event handlers
         self._register_handlers()
 
-    def _initialize2(self):
+    def _initialize_phase_3(self):
         # Register events to watch for ejects targeted at this device
         for device in self.machine.ball_devices:
             for target in device.config['eject_targets']:
@@ -793,7 +793,7 @@ class BallDevice(Device):
 
                     break
 
-    def _initialize3(self):
+    def _initialize_phase_4(self):
         self.machine.ball_devices[self.config['captures_from']].ball_search.register(
             self.config['ball_search_order'], self.ball_search)
         self._state_invalid_start()
