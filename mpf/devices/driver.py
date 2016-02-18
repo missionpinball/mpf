@@ -62,10 +62,10 @@ class Driver(Device):
         self.log.debug("Disabling Driver")
         self.time_last_changed = self.machine.clock.get_time()
         self.time_when_done = self.time_last_changed
+        self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
         self.hw_driver.disable()
-        # todo also disable the timer which reenables this
 
-    def pulse(self, milliseconds=None, power=1.0, **kwargs):
+    def pulse(self, milliseconds=None, power=None, **kwargs):
         """ Pulses this driver.
 
         Args:
@@ -73,26 +73,37 @@ class Driver(Device):
                 enabled for. If no value is provided, the driver will be
                 enabled for the value specified in the config dictionary.
             power: A multiplier that will be applied to the default pulse time,
-                typically a float between 0.0 and 1.0. (Note this is only used
-                if milliseconds is not specified.)
+                typically a float between 0.0 and 1.0. (Note this is can only be used
+                if milliseconds is also specified.)
         """
         del kwargs
-        if milliseconds:
-            self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
-                           "%sms", milliseconds)
-            ms_actual = self.hw_driver.pulse(milliseconds)
 
-        elif power != 1.0:
-            if 0 > power * milliseconds <= 255:
-                ms_actual = power * milliseconds
-                self.log.debug("Pulsing Driver. Overriding default pulse_ms "
-                               "with: %s ms (%s x power)", ms_actual, power)
-                self.timed_enable(ms_actual)
-            else:
-                raise AssertionError("Inavlid pulse length for driver")
-        else:
+        # handle default case first
+        if not milliseconds and not power:
             self.log.debug("Pulsing Driver. Using default pulse_ms.")
             ms_actual = self.hw_driver.pulse()
+        else:
+            if not milliseconds:
+                raise AssertionError("Cannot use power without milliseconds")
+
+            if power:
+                milliseconds *= power
+            else:
+                power = 1.0
+
+            if 0 < milliseconds <= 255:
+                self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
+                               "%sms (%s power)", milliseconds, power)
+                ms_actual = self.hw_driver.pulse(milliseconds)
+            else:
+                self.log.debug("Enabling Driver for %sms (%s power)", milliseconds, power)
+                self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
+                                         ms=milliseconds,
+                                         callback=self.disable)
+                self.enable()
+                self.time_when_done = self.time_last_changed + (
+                    milliseconds / 1000.0)
+                ms_actual = milliseconds
 
         if ms_actual != -1:
             self.time_when_done = self.time_last_changed + (ms_actual / 1000.0)
@@ -100,32 +111,5 @@ class Driver(Device):
             self.time_when_done = -1
 
     def timed_enable(self, milliseconds, **kwargs):
-        """Lets you enable a driver for a specific time duration that's longer
-        than 255ms. (If you want to enable a driver for 255ms or less, just use
-        the pulse() method.)
+        self.pulse(milliseconds)
 
-        Args:
-            milliseconds: Integer of the number of milliseconds you'd like to
-                enable this driver for.
-
-        Note if this driver is currently enabled via an earlier call to this
-        method, this method will extend it for the duration of milliseconds
-        you pass here.
-
-        Note that the "resolution" of this will be based on your machine's HZ
-        setting. In other words, if your machine's HZ is set to 30 (the
-        default) and you set this timed_enable for 550ms, the actual enable
-        time will be to the nearest 33ms after 550 (566ms, in this case).
-
-        """
-        del kwargs
-        if 0 > milliseconds >= 255:
-            self.pulse(milliseconds)
-
-        else:
-            self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
-                                     ms=milliseconds,
-                                     callback=self.disable)
-            self.enable()
-            self.time_when_done = self.time_last_changed + (
-                milliseconds / 1000.0)
