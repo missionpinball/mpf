@@ -26,9 +26,6 @@ class BallDevice(Device):
 
         self.delay = DelayManager(machine.delayRegistry)
 
-        if self.config['ball_capacity'] is None:
-            self.config['ball_capacity'] = len(self.config['ball_switches'])
-
         self.balls = 0
         """Number of balls currently contained (held) in this device."""
 
@@ -56,15 +53,6 @@ class BallDevice(Device):
         """The device this device is currently trying to eject to.
         @type: BallDevice
         """
-
-        self.machine.events.add_handler('init_phase_2',
-                                        self._initialize_phase_2)
-
-        self.machine.events.add_handler('init_phase_3',
-                                        self._initialize_phase_3)
-
-        self.machine.events.add_handler('init_phase_4',
-                                        self._initialize_phase_4)
 
         self.mechanical_eject_in_progress = False
         """How many balls are waiting for a mechanical (e.g. non coil fired /
@@ -129,6 +117,19 @@ class BallDevice(Device):
 
                 eject_confirmed=['idle', 'lost_balls'],
         )
+
+        self._initialize_init()
+
+    def _initialize_init(self):
+        # add handlers for delayed init. wait for platform and other devices
+        self.machine.events.add_handler('init_phase_2',
+                                        self._initialize_phase_2)
+
+        self.machine.events.add_handler('init_phase_3',
+                                        self._initialize_phase_3)
+
+        self.machine.events.add_handler('init_phase_4',
+                                        self._initialize_phase_4)
 
     # Logic and dispatchers
 
@@ -665,6 +666,9 @@ class BallDevice(Device):
                 self.config['eject_targets'][i]] = (
                 Util.string_to_ms(timeouts_list[i]))
         # End code to create timeouts list ------------------------------------
+
+        if self.config['ball_capacity'] is None:
+            self.config['ball_capacity'] = len(self.config['ball_switches'])
 
     def _validate_config(self):
         # perform logical validation
