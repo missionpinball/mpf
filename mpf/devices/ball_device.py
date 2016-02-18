@@ -633,8 +633,7 @@ class BallDevice(Device):
 
     # ---------------------- End of state handling code -----------------------
 
-    def _initialize(self):
-
+    def _parse_config(self):
         # configure eject targets
         new_list = list()
 
@@ -642,21 +641,6 @@ class BallDevice(Device):
             new_list.append(self.machine.ball_devices[target])
 
         self.config['eject_targets'] = new_list
-
-        # perform logical validation
-
-        if (not self.config['eject_coil'] and not self.config['hold_coil'] and
-                not self.config['mechanical_eject']):
-            raise AssertionError('Configuration error in {} ball device. '
-                                 'Device needs an eject_coil, a hold_coil, or '
-                                 '"mechanical_eject: True"'.format(self.name))
-
-        if (len(self.config['ball_switches']) > 1 and
-                self.config['mechanical_eject']):
-            raise AssertionError('Configuration error in {} ball device. '
-                                 'mechanical_eject can only be used with '
-                                 'devices that have 1 ball switch'.
-                                 format(self.name))
 
         # ensure eject timeouts list matches the length of the eject targets
         if (len(self.config['eject_timeouts']) <
@@ -686,6 +670,23 @@ class BallDevice(Device):
                 self.config['eject_targets'][i]] = (
                 Util.string_to_ms(timeouts_list[i]))
         # End code to create timeouts list ------------------------------------
+
+    def _validate_config(self):
+        # perform logical validation
+        # a device cannot have hold_coil and eject_coil
+        if (not self.config['eject_coil'] and not self.config['hold_coil'] and
+                not self.config['mechanical_eject']):
+            raise AssertionError('Configuration error in {} ball device. '
+                                 'Device needs an eject_coil, a hold_coil, or '
+                                 '"mechanical_eject: True"'.format(self.name))
+
+        # entrance switch + mechanical eject is not supported
+        if (len(self.config['ball_switches']) > 1 and
+                self.config['mechanical_eject']):
+            raise AssertionError('Configuration error in {} ball device. '
+                                 'mechanical_eject can only be used with '
+                                 'devices that have 1 ball switch'.
+                                 format(self.name))
 
         # make sure timeouts are reasonable:
         # exit_count_delay < all eject_timeout
@@ -719,6 +720,7 @@ class BallDevice(Device):
                                  'than all ball_missing_timeouts'.
                                  format(self.name))
 
+    def _register_handlers(self):
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
             self.machine.switch_controller.add_switch_handler(
@@ -747,12 +749,20 @@ class BallDevice(Device):
 
         # Configure event handlers to watch for target device status changes
         for target in self.config['eject_targets']:
-            # Target device is requesting a ball
-
             # Target device is now able to receive a ball
             self.machine.events.add_handler(
                     'balldevice_{}_ok_to_receive'.format(target.name),
                     self._target_ready, target=target)
+
+    def _initialize(self):
+        # load targets and timeouts
+        self._parse_config()
+
+        # validate that configuration is valid
+        self._validate_config()
+
+        # register switch and event handlers
+        self._register_handlers()
 
     def _initialize2(self):
         # Register events to watch for ejects targeted at this device
