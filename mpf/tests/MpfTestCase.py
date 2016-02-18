@@ -53,6 +53,9 @@ class MpfTestCase(unittest.TestCase):
         """
         return 'tests/machine_files/null/'
 
+    def get_abs_path(self, path):
+        return os.path.join(os.path.abspath(os.curdir), path)
+
     def post_event(self, event_name):
         self.machine.events.post(event_name)
         self.machine_run()
