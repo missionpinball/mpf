@@ -1,7 +1,7 @@
 from mock import MagicMock
 
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.platform import openpixel
+from mpf.platforms import openpixel
 
 class TestPlatform(MpfTestCase):
 

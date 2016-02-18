@@ -4,7 +4,7 @@ import logging
 
 from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
-from mpf.platform.virtual import (HardwarePlatform as VirtualPlatform,
+from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform,
                                   VirtualDMD, VirtualDriver, VirtualGI,
                                   VirtualLED, VirtualMatrixLight,
                                   VirtualSwitch)

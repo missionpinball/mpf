@@ -19,9 +19,9 @@ import logging
 import re
 import sys
 from copy import deepcopy
-from mpf.platform.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
-from mpf.platform.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
-from mpf.platform.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 from mpf.core.rgb_color import RGBColor
 
 try:

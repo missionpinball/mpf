@@ -5,8 +5,8 @@ import json
 import struct
 
 from mpf.core.utility_functions import Util
-from mpf.platform.openpixel import OpenPixelClient
-from mpf.platform.openpixel import HardwarePlatform as OPHardwarePlatform
+from mpf.platforms.openpixel import OpenPixelClient
+from mpf.platforms.openpixel import HardwarePlatform as OPHardwarePlatform
 
 
 class HardwarePlatform(OPHardwarePlatform):

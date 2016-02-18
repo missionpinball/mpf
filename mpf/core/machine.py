@@ -421,7 +421,7 @@ class MachineController(object):
         if name not in self.hardware_platforms:
 
             try:
-                hardware_platform = __import__('mpf.platform.%s' % name,
+                hardware_platform = __import__('mpf.platforms.%s' % name,
                                                fromlist=["HardwarePlatform"])
             except ImportError:
                 raise ImportError("Cannot add hardware platform {}. This is "

@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.platform import fast
+from mpf.platforms import fast
 import time
 
 

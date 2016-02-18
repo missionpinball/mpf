@@ -1,6 +1,6 @@
 from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock, call
-from mpf.platform import p3_roc
+from mpf.platforms import p3_roc
 
 class MockPinProcModule(MagicMock):
     DriverCount = 256
