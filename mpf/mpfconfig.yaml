@@ -64,7 +64,7 @@ mpf:
         snux: mpf.platform.snux.Snux
         virtual: mpf.platform.virtual.HardwarePlatform
         smart_virtual: mpf.platform.smart_virtual.HardwarePlatform
-
+        opp:  mpf.platform.opp.HardwarePlatform
 
     paths:
         scriptlets: scriptlets
