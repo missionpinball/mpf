@@ -21,7 +21,7 @@ class Accelerometer(Device):
 
         self.platform.configure_accelerometer(self,
                                               number=self.config['number'],
-                                              useHighPass=False)
+                                              use_high_pass=False)
         self.history = False
         self.value = False
 

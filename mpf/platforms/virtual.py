@@ -75,7 +75,7 @@ class HardwarePlatform(Platform):
             if 'virtual_platform_start_active_switches' in self.machine.config:
 
                 initial_active_switches = [self.machine.switches[x].number for x in
-                    Util.string_to_list(
+                                           Util.string_to_list(
                         self.machine.config['virtual_platform_start_active_switches'])]
 
                 for k, v in self.hw_switches.items():
@@ -92,7 +92,7 @@ class HardwarePlatform(Platform):
 
         return self.hw_switches
 
-    def configure_accelerometer(self, device, number, useHighPass):
+    def configure_accelerometer(self, device, number, use_high_pass):
         pass
 
     def configure_matrixlight(self, config):
@@ -223,7 +223,6 @@ class VirtualDriver(DriverPlatformInterface):
 class VirtualDMD(object):
     def __init__(self, machine):
         del machine
-        pass
 
     def update(self, data):
         pass
