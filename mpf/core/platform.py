@@ -1,7 +1,5 @@
 """ Contains the parent classes Platform"""
 
-import time
-
 
 class Platform(object):
     """Parent class for the a hardware platform interface.
@@ -22,6 +20,7 @@ class Platform(object):
         self.features = {}
         self.hw_switch_rules = {}
         self.driver_overlay = None
+        self.log = None
 
         # Set default platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
@@ -31,7 +30,7 @@ class Platform(object):
 
         # todo change this to be dynamic for any overlay
         if self.machine.config['hardware']['driverboards'] == 'snux':
-            from mpf.platform.snux import Snux
+            from mpf.platforms.snux import Snux
             self.driver_overlay = Snux(self.machine, self)
             self.machine.config['hardware']['driverboards'] = 'wpc'
 
