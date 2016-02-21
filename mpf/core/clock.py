@@ -183,7 +183,7 @@ been made for use in MPF:
        program if desired.
     5) max_fps is now a parameter in the Clock constructor (defaults to 60) that
        controls the maximum speed at which the MPF main loop/clock runs.
-"""
+"""     # pylint: disable=W0105
 
 __all__ = ('ClockBase', 'ClockEvent')
 
