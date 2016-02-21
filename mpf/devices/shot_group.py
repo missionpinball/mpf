@@ -18,7 +18,7 @@ class ShotGroup(Device):
     collection = 'shot_groups'
     class_label = 'shot_group'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
+    def __init__(self, machine, name, config=None, validate=True):
 
         self.shots = list()  # list of strings
 
@@ -44,8 +44,7 @@ class ShotGroup(Device):
                     shot.update_enable_table(profile=config['profile'],
                                              mode=None)
 
-        super().__init__(machine, name, config, collection,
-                         validate=validate)
+        super().__init__(machine, name, config, validate=validate)
 
         self.rotation_enabled = True
 

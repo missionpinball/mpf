@@ -10,11 +10,9 @@ class Switch(Device):
     collection = 'switches'
     class_label = 'switch'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
+    def __init__(self, machine, name, config=None, validate=True):
         config['number_str'] = str(config['number']).upper()
-        super().__init__(machine, name, config, collection,
-                         platform_section='switches',
-                         validate=validate)
+        super().__init__(machine, name, config, platform_section='switches', validate=validate)
 
         self.machine = machine
         self.name = name

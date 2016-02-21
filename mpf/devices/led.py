@@ -56,10 +56,9 @@ class Led(Device):
 
             Led.leds_to_update = set()
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
+    def __init__(self, machine, name, config=None, validate=True):
         config['number_str'] = str(config['number']).upper()
-        super().__init__(machine, name, config, collection,
-                         platform_section='leds', validate=validate)
+        super().__init__(machine, name, config, platform_section='leds', validate=validate)
 
         self.config['default_color'] = RGBColor(
             RGBColor.string_to_rgb(self.config['default_color'], (255, 255, 255)))

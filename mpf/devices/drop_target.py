@@ -12,9 +12,8 @@ class DropTarget(Device):
     collection = 'drop_targets'
     class_label = 'drop_target'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
-        super().__init__(machine, name, config, collection,
-                         validate=validate)
+    def __init__(self, machine, name, config=None, validate=True):
+        super().__init__(machine, name, config, validate=validate)
 
         self._in_ball_search = False
         self.complete = False
@@ -173,9 +172,8 @@ class DropTargetBank(Device):
     collection = 'drop_target_banks'
     class_label = 'drop_target_bank'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
-        super().__init__(machine, name, config, collection,
-                         validate=validate)
+    def __init__(self, machine, name, config=None, validate=True):
+        super().__init__(machine, name, config, validate=validate)
 
         self.drop_targets = list()
         self.reset_coil = None

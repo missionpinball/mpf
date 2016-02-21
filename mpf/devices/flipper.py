@@ -28,9 +28,8 @@ class Flipper(Device):
     collection = 'flippers'
     class_label = 'flipper'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
-        super().__init__(machine, name, config, collection,
-                         validate=validate)
+    def __init__(self, machine, name, config=None, validate=True):
+        super().__init__(machine, name, config, validate=validate)
 
         self.flipper_switches = []
         self.flipper_switches.append(self.config['activation_switch'].name)

@@ -9,9 +9,8 @@ class Multiball(Device):
     collection = 'multiballs'
     class_label = 'multiball'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
-        super().__init__(machine, name, config, collection,
-                         validate=validate)
+    def __init__(self, machine, name, config=None, validate=True):
+        super().__init__(machine, name, config, validate=validate)
 
         self.delay = DelayManager(machine.delayRegistry)
         self.balls_ejected = 0

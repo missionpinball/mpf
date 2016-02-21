@@ -12,8 +12,7 @@ class Device(object):
     collection = None  # String name of the collection
     class_label = None  # String of the friendly name of the device class
 
-    def __init__(self, machine, name, config=None, collection=-1,
-                 platform_section=None, validate=True):
+    def __init__(self, machine, name, config=None, platform_section=None, validate=True):
 
         self.machine = machine
         self.name = name.lower()
@@ -44,11 +43,6 @@ class Device(object):
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
 
-        # Add this instance to the collection for this type of device
-        if collection != -1:
-            # Have to use -1 here instead of None to catch an empty collection
-            collection[name] = self
-
     def __repr__(self):
         return '<{self.class_label}.{self.name}>'.format(self=self)
 
@@ -71,28 +65,6 @@ class Device(object):
     @classmethod
     def get_config_info(cls):
         return cls.collection, cls.config_section
-
-    @staticmethod
-    def create_devices(cls, collection, config, machine, validate=True):
-        # if this device class has a device_class_init classmethod, run it now
-        if config and hasattr(cls, 'device_class_init'):
-            # don't want to use try here in case the called meth has an error
-            cls.device_class_init(machine)
-
-        # create the devices
-
-        if config:
-            for device in config:
-
-                if not config[device]:
-                    raise AssertionError("Device '{}' has an empty config."
-                                         .format(device))
-
-                elif type(config[device]) is not dict:
-                    raise AssertionError("Device '{}' does not have a valid config."
-                                         .format(device))
-
-                cls(machine, device, config[device], collection, validate)
 
     def device_added_to_mode(self, mode, player):
         # Called when a device is created by a mode
