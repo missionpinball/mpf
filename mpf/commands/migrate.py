@@ -8,7 +8,6 @@ import time
 import datetime
 import re
 
-from mpf.core.config_processor import ConfigProcessor
 from mpf.core.file_manager import FileManager
 
 EXTENSION = '.yaml'
