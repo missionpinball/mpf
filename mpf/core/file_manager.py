@@ -33,8 +33,7 @@ class FileInterface(object):
             for extension in self.file_types:
                 if os.path.isfile(filename + extension):
                     return os.path.abspath(filename + extension), extension
-            else:
-                return False, None
+            return False, None
         else:
             return filename, os.path.splitext(filename)[1]
 
