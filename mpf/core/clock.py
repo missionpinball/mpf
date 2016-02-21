@@ -164,7 +164,7 @@ from two threads simultaneously without any locking mechanism::
     # may schedule it twice
 Note, in the code above, thread 1 or thread 2 could be the kivy thread, not
 just an external thread.
-"""
+"""     # pylint: disable=W0105
 
 """
 ---------------------
@@ -275,14 +275,14 @@ def _hash(cb):
 
 
 class ClockEvent(object):
-    ''' A class that describes a callback scheduled with kivy's :attr:`Clock`.
+    """ A class that describes a callback scheduled with kivy's :attr:`Clock`.
     This class is never created by the user; instead, kivy creates and returns
     an instance of this class when scheduling a callback.
     .. warning::
         Most of the methods of this class are internal and can change without
         notice. The only exception are the :meth:`cancel` and
         :meth:`__call__` methods.
-    '''
+    """
 
     def __init__(self, clock, loop, callback, timeout, starttime, cid,
                  priority=1, trigger=False):
@@ -304,10 +304,11 @@ class ClockEvent(object):
             clock._events[cid].append(self)
 
     def __call__(self, *largs):
-        ''' Schedules the callback associated with this instance.
+        """ Schedules the callback associated with this instance.
         If the callback is already scheduled, it will not be scheduled again.
-        '''
+        """
         # if the event is not yet triggered, do it !
+        del largs
         if self._is_triggered is False:
             self._is_triggered = True
             # update starttime
@@ -345,8 +346,8 @@ class ClockEvent(object):
         return self._callback_cancelled
 
     def cancel(self):
-        ''' Cancels the callback if it was scheduled to be called.
-        '''
+        """ Cancels the callback if it was scheduled to be called.
+        """
         if self._is_triggered:
             self._is_triggered = False
             try:
@@ -414,8 +415,8 @@ class ClockEvent(object):
 
 
 class ClockBase(_ClockBase):
-    '''A clock object with event support.
-    '''
+    """A clock object with event support.
+    """
     __slots__ = ('_dt', '_last_fps_tick', '_last_tick', '_fps', '_rfps',
                  '_start_tick', '_fps_counter', '_rfps_counter', '_events',
                  '_frame_callbacks', '_frames', '_frames_displayed',
@@ -437,12 +438,11 @@ class ClockBase(_ClockBase):
         self._last_fps_tick = None
         self._frames = 0
         self._frames_displayed = 0
-        self._events = [[] for i in range(256)]
+        self._events = [[] for dummy_iterator in range(256)]
         self._frame_callbacks = PriorityQueue()
         self._max_fps = float(max_fps)
         self._log = logging.getLogger("Clock")
         self._log.debug("Starting clock (maximum frames per second=%s)", self._max_fps)
-
 
         #: .. versionadded:: 1.0.5
         #:     When a schedule_once is used with -1, you can add a limit on
@@ -452,30 +452,30 @@ class ClockBase(_ClockBase):
 
     @property
     def frametime(self):
-        '''Time spent between the last frame and the current frame
+        """Time spent between the last frame and the current frame
         (in seconds).
         .. versionadded:: 1.8.0
-        '''
+        """
         return self._dt
 
     @property
     def frames(self):
-        '''Number of internal frames (not necessarily drawn) from the start of
+        """Number of internal frames (not necessarily drawn) from the start of
         the clock.
         .. versionadded:: 1.8.0
-        '''
+        """
         return self._frames
 
     @property
     def frames_displayed(self):
-        '''Number of displayed frames from the start of the clock.
-        '''
+        """Number of displayed frames from the start of the clock.
+        """
         return self._frames_displayed
 
     def tick(self):
-        '''Advance the clock to the next step. Must be called every frame.
+        """Advance the clock to the next step. Must be called every frame.
         The default clock has a tick() function called by the core Kivy
-        framework.'''
+        framework."""
 
         self._release_references()
 
@@ -518,48 +518,48 @@ class ClockBase(_ClockBase):
         return self._dt
 
     def tick_draw(self):
-        '''Tick the drawing counter.
-        '''
+        """Tick the drawing counter.
+        """
         self._process_events_before_frame()
         self._process_event_callbacks()
         self._rfps_counter += 1
         self._frames_displayed += 1
 
     def get_fps(self):
-        '''Get the current average FPS calculated by the clock.
-        '''
+        """Get the current average FPS calculated by the clock.
+        """
         return self._fps
 
     def get_rfps(self):
-        '''Get the current "real" FPS calculated by the clock.
+        """Get the current "real" FPS calculated by the clock.
         This counter reflects the real framerate displayed on the screen.
         In contrast to get_fps(), this function returns a counter of the
         number of frames, not the average of frames per second.
-        '''
+        """
         return self._rfps
 
     def get_time(self):
-        '''Get the last tick made by the clock.'''
+        """Get the last tick made by the clock."""
         return self._last_tick
 
     def get_boottime(self):
-        '''Get the time in seconds from the application start.'''
+        """Get the time in seconds from the application start."""
         return self._last_tick - self._start_tick
 
     def create_trigger(self, callback, timeout=0, priority=1):
-        '''Create a Trigger event. Check module documentation for more
+        """Create a Trigger event. Check module documentation for more
         information.
         :returns:
             A :class:`ClockEvent` instance. To schedule the callback of this
             instance, you can call it.
         .. versionadded:: 1.0.5
-        '''
+        """
         ev = ClockEvent(self, False, callback, timeout, 0, _hash(callback), priority)
         ev.release()
         return ev
 
     def schedule_once(self, callback, timeout=0, priority=1):
-        '''Schedule an event in <timeout> seconds. If <timeout> is unspecified
+        """Schedule an event in <timeout> seconds. If <timeout> is unspecified
         or 0, the callback will be called after the next frame is rendered.
         :returns:
             A :class:`ClockEvent` instance. As opposed to
@@ -568,7 +568,7 @@ class ClockBase(_ClockBase):
         .. versionchanged:: 1.0.5
             If the timeout is -1, the callback will be called before the next
             frame (at :meth:`tick_draw`).
-        '''
+        """
         if not callable(callback):
             raise ValueError('callback must be a callable, got %s' % callback)
         event = ClockEvent(
@@ -581,12 +581,12 @@ class ClockBase(_ClockBase):
         return event
 
     def schedule_interval(self, callback, timeout, priority=1):
-        '''Schedule an event to be called every <timeout> seconds.
+        """Schedule an event to be called every <timeout> seconds.
         :returns:
             A :class:`ClockEvent` instance. As opposed to
             :meth:`create_trigger` which only creates the trigger event, this
             method also schedules it.
-        '''
+        """
         if not callable(callback):
             raise ValueError('callback must be a callable, got %s' % callback)
         event = ClockEvent(
@@ -598,8 +598,8 @@ class ClockBase(_ClockBase):
 
         return event
 
-    def unschedule(self, callback, all=True):
-        '''Remove a previously scheduled event.
+    def unschedule(self, callback, all_events=True):
+        """Remove a previously scheduled event.
         :parameters:
             `callback`: :class:`ClockEvent` or a callable.
                 If it's a :class:`ClockEvent` instance, then the callback
@@ -613,11 +613,11 @@ class ClockBase(_ClockBase):
         .. versionchanged:: 1.9.0
             The all parameter was added. Before, it behaved as if `all` was
             `True`.
-        '''
+        """
         if isinstance(callback, ClockEvent):
             callback.cancel()
         else:
-            if all:
+            if all_events:
                 for ev in self._events[_hash(callback)][:]:
                     if ev.get_callback() == callback:
                         ev.cancel()
@@ -635,6 +635,7 @@ class ClockBase(_ClockBase):
             for event in events[:]:
                 if event.callback is not None:
                     event.release()
+        del events
 
     def _process_events(self):
         for events in self._events:
@@ -668,6 +669,8 @@ class ClockBase(_ClockBase):
                     # event may be already removed from original list
                     if event in events:
                         event.tick(self._last_tick, remove)
+
+        del events
 
     def add_event_to_frame_callbacks(self, event):
         """
@@ -720,6 +723,7 @@ class ClockBase(_ClockBase):
                 if event in events:
                     if event.timeout > 0 and (not next_event_time or event.next_event_time < next_event_time):
                         next_event_time = event.next_event_time
+            del remove
 
         return next_event_time
 
