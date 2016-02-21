@@ -1,7 +1,6 @@
 """ Contains the Accelerometer """
 # Written by Jan Kantert
 
-import time
 import math
 from mpf.core.device import Device
 
