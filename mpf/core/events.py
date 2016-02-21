@@ -206,10 +206,10 @@ class EventManager(object):
             return
 
         if not self.registered_handlers[event]:  # if value is empty list
-                del self.registered_handlers[event]
-                if self.debug:
-                    self.log.debug("Removing event %s since there are no more"
-                                   " handlers registered for it", event)
+            del self.registered_handlers[event]
+            if self.debug:
+                self.log.debug("Removing event %s since there are no more"
+                               " handlers registered for it", event)
 
     def does_event_exist(self, event_name):
         """Checks to see if any handlers are registered for the event name that
@@ -521,7 +521,7 @@ class QueuedEvent(object):
         return '<QueuedEvent for callback {}>'.format(self.callback)
 
     def event_finished(self):
-            self._is_event_finished = True
+        self._is_event_finished = True
 
     def wait(self):
         """Registers a wait for this QueueEvent."""

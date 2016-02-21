@@ -70,8 +70,7 @@ class Player(object):
         index = len(player_list) - 1
         number = len(player_list)
 
-        self.log.debug("Creating new player: Player %s. (player index '%s')",
-                      number, index)
+        self.log.debug("Creating new player: Player %s. (player index '%s')", number, index)
 
         # Set these after the player_add_success event so any player monitors
         # get notification of the new player before they start seeing variable
@@ -83,8 +82,10 @@ class Player(object):
                                  callback=self._player_add_done)
 
     def _player_add_done(self, **kwargs):
-         # do it this way so we get the player_score event
-         # use a callback so this event is posted after the player add event
+        """ do it this way so we get the player_score event
+        use a callback so this event is posted after the player add event
+        """
+        del kwargs
         self.score = 0
 
     def __repr__(self):
