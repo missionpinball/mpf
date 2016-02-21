@@ -40,7 +40,7 @@ options = vars(options)
 
 try:
     source_str = args[0]
-except:
+except KeyError:
     print("Error: YAML file or search folder not specified.")
     sys.exit()
 
@@ -79,6 +79,7 @@ def load_config():
     section_deprecations = config_dict[new_config_version].get('section_deprecations', dict())
     string_replacements = config_dict[new_config_version].get('string_replacements', dict())
 
+
 def create_file_list(source_str):
 
     global root_folder
@@ -97,9 +98,6 @@ def create_file_list(source_str):
 
 
 def add_files(arg, dirname, names):
-
-    global BACKUP_FOLDER_NAME
-
     if BACKUP_FOLDER_NAME in dirname:
         return
 
@@ -109,18 +107,6 @@ def add_files(arg, dirname, names):
 
 
 def process_file(file_name):
-
-    global section_replacements
-    global section_warnings
-    global section_deprecations
-    global string_replacements
-    global previous_config_version
-    global new_config_version
-    global skipped_files
-    global migrated_files
-    global warnings_files
-    global target_file_versions
-
     found_warning = False
 
     with open(file_name) as f:
@@ -161,8 +147,8 @@ def process_file(file_name):
                 'is here:\n# ' + warning['url']+ '\n\n' +
                 "# When you're done, delete this message so #config_version=" +
                 str(new_config_version) + ' is the first line in this file.\n'
-                '# ---------------------------------------------------\n\n'
-                + file_data)
+                '# ---------------------------------------------------\n\n' +
+                file_data)
 
             found_warning = True
 
@@ -194,9 +180,6 @@ def process_file(file_name):
 
 
 def create_backup_folder():
-
-    global BACKUP_FOLDER_NAME
-    global root_folder
     global backup_root_folder
 
     try:
@@ -216,16 +199,10 @@ def create_backup_folder():
 
 
 def create_backup_file(file_name):
-    global backup_root_folder
-
     shutil.copy2(file_name, backup_root_folder)
 
 
 def display_results():
-    global skipped_files
-    global migrated_files
-    global warnings_files
-
     print()
     print("Migration Results")
     print("=================")
