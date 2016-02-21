@@ -1,8 +1,10 @@
 """ Contains the ModeController class."""
-
+import importlib
 import logging
 import os
 from collections import namedtuple
+
+import sys
 
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
@@ -154,14 +156,14 @@ class ModeController(object):
             try:
                 mode_code_file = os.path.join(self.machine.machine_path,
                     self.machine.config['mpf']['paths']['modes'],
-                    mode_string,
-                    'code',
+                    mode_string, 'code',
                     config['mode']['code'].split('.')[0] + '.py')
                 # code is in the machine folder
                 import_str = (self.machine.config['mpf']['paths']['modes'] +
                               '.' + mode_string + '.code.' +
                               config['mode']['code'].split('.')[0])
-                i = __import__(import_str, fromlist=[''])
+
+                i = importlib.import_module(import_str)
 
                 if self.debug:
                     self.log.debug("Loading Mode class code from %s",
@@ -176,7 +178,7 @@ class ModeController(object):
                               self.machine.config['mpf']['paths']['modes'] +
                               '.' + mode_string + '.code.' +
                               config['mode']['code'].split('.')[0])
-                i = __import__(import_str, fromlist=[''])
+                i = importlib.import_module(import_str)
 
                 if self.debug:
                     self.log.debug("Loading Mode class code from %s",

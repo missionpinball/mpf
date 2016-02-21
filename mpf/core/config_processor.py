@@ -58,7 +58,7 @@ class ConfigProcessorBase(object):
         logging.info("Machine path: %s", machine_path)
 
         # Add the machine folder to sys.path so we can import modules from it
-        sys.path.append(machine_path)
+        sys.path.insert(0, machine_path)
         return machine_path
 
     @staticmethod

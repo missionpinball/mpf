@@ -333,10 +333,12 @@ class MachineController(object):
         """
         python_version = sys.version_info
 
-        if python_version[0] != 3 or python_version[1] != 4:
-            self.log.error("Incorrect Python version. MPF requires Python 3.4"
-                           "x. You have Python %s.%s.%s.", python_version[0],
-                           python_version[1], python_version[2])
+        if not (python_version[0] == 3 and (
+                        python_version[1] == 4 or python_version[1] == 5)):
+            self.log.error("Incorrect Python version. MPF requires Python 3.4 "
+                           "or 3.5. You have Python %s.%s.%s.",
+                           python_version[0], python_version[1],
+                           python_version[2])
             sys.exit()
 
         self.log.debug("Python version: %s.%s.%s", python_version[0],

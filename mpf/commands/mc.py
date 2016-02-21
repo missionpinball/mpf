@@ -1,4 +1,4 @@
-# TODO make this pluggable so this file can live in the mpf.mc package
+# TODO make this pluggable so this file can live in the mpfmc package
 
 """Starts the MPF media controller."""
 
@@ -13,9 +13,9 @@ from kivy.config import Config
 from kivy.logger import Logger
 
 from mpf.core.utility_functions import Util
-from mpf.mc.core.config_processor import ConfigProcessor
-from mpf.mc.core.mc import MpfMc
-from mpf.mc.core.utils import set_machine_path, load_machine_config
+from mpfmc.core.config_processor import ConfigProcessor
+from mpfmc.core.mc import MpfMc
+from mpfmc.core.utils import set_machine_path, load_machine_config
 
 class Command(object):
 
@@ -109,7 +109,7 @@ class Command(object):
         # logging.getLogger('').addHandler(console)
 
         mpf_config = ConfigProcessor.load_config_file(os.path.join(
-            mpf.mc.__path__[0], args.mcconfigfile))
+            mpfmc.__path__[0], args.mcconfigfile))
 
         machine_path = set_machine_path(machine_path,
                                         mpf_config['mpf-mc']['paths'][
