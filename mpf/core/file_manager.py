@@ -38,7 +38,7 @@ class FileInterface(object):
             return filename, os.path.splitext(filename)[1]
 
     @staticmethod
-    def get_config_file_version(self, filename):
+    def get_config_file_version(filename):
         """Gets the config version number from a file. Since this technique
         varies depending on the file type, it needs to be implemented in the
         chile class
