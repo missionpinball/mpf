@@ -11,8 +11,6 @@ import locale
 
 from mpf.core.config_processor import ConfigProcessor
 
-global import_success
-
 try:
     # noinspection PyPep8Naming
     from . import OSC as OSCmodule
@@ -20,6 +18,7 @@ try:
     import_success = True
 except ImportError:
     import_success = False
+    OSCmodule = None
 
 
 class OSC(object):
