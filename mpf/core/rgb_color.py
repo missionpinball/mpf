@@ -1,5 +1,4 @@
 import random
-import re
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.utility_functions import Util
