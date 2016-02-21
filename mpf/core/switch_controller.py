@@ -87,7 +87,6 @@ class SwitchController(object):
                         self.add_switch_handler(
                             switch_name=switch.name,
                             callback=self.machine.events.post,
-                            state=1,
                             ms=Util.string_to_ms(ev_time),
                             callback_kwargs={'event': ev_name}
                         )
@@ -475,9 +474,7 @@ class SwitchController(object):
                             self.ms_since_change(switch_name) < ms):
                     # figure out when this handler should fire based on the
                     # switch's original activation time.
-                    key = (
-                    self.machine.clock.get_time() + ((ms - self.ms_since_change(switch_name))
-                                   / 1000.0))
+                    key = self.machine.clock.get_time() + ((ms - self.ms_since_change(switch_name)) / 1000.0)
                     value = {'switch_action': entry_key,
                              'callback': callback,
                              'switch_name': switch_name,
@@ -490,9 +487,7 @@ class SwitchController(object):
             elif state == 0:
                 if self.is_inactive(switch_name, 0) and (
                             self.ms_since_change(switch_name) < ms):
-                    key = (
-                    self.machine.clock.get_time() + ((ms - self.ms_since_change(switch_name))
-                                   / 1000.0))
+                    key = self.machine.clock.get_time() + ((ms - self.ms_since_change(switch_name)) / 1000.0)
                     value = {'switch_action': entry_key,
                              'callback': callback,
                              'switch_name': switch_name,
@@ -527,8 +522,7 @@ class SwitchController(object):
         if entry_key in self.registered_switches:
             for index, settings in enumerate(
                     self.registered_switches[entry_key]):
-                if (settings['ms'] == ms and
-                            settings['callback'] == callback):
+                if settings['ms'] == ms and settings['callback'] == callback:
                     self.registered_switches[entry_key].remove(settings)
 
         for timed_key, timed_entry in self.active_timed_switches.items():
@@ -581,8 +575,7 @@ class SwitchController(object):
 
         # the following events all fire the moment a switch becomes inactive
         elif state == 0:
-            for event in (
-                    self.machine.switches[switch_name].deactivation_events):
+            for event in self.machine.switches[switch_name].deactivation_events:
                 self.machine.events.post(event)
 
     def get_next_timed_switch_event(self):
@@ -598,6 +591,7 @@ class SwitchController(object):
         removes that entry from the list.
 
         """
+        del dt
 
         for k in list(self.active_timed_switches.keys()):
             if k <= self.machine.clock.get_time():  # change to generator?
