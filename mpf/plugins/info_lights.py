@@ -50,6 +50,7 @@ class InfoLights(object):
                 v['light'].off()
 
     def ball_started(self, **kwargs):
+        del kwargs
         self.log.debug("ball_started")
         # turn off all the ball lights
         for k, v in self.config.items():
@@ -66,6 +67,7 @@ class InfoLights(object):
             self.config['tilt']['light'].off()
 
     def game_ended(self, **kwargs):
+        del kwargs
         self.log.debug("game_ended")
         self.reset_game_lights()
 
@@ -78,11 +80,13 @@ class InfoLights(object):
                 key='game_over')
 
     def game_starting(self, **kwargs):
+        del kwargs
         self.log.debug("game_starting")
         self.reset_game_lights()
         self.machine.light_scripts.stop_light_script(key='game_over')
 
     def player_added(self, player, **kwargs):
+        del kwargs
         self.log.debug("player_added. player=%s", player)
         player_str = 'player_' + str(player.number)
         self.log.debug("player_str: %s", player_str)
@@ -90,11 +94,13 @@ class InfoLights(object):
             self.config[player_str]['light'].on()
 
     def tilt(self, **kwargs):
+        del kwargs
         self.log.debug("tilt")
         if 'tilt' in self.config:
             self.config['tilt']['light'].on()
 
     def match(self, match, **kwargs):
+        del kwargs
         self.log.debug("Match")
         match_str = 'match_' + str(match)
         if match_str in self.config:
