@@ -18,7 +18,7 @@ class AssetManager(object):
     """Base class for the Asset Manager.
 
     Args:
-        mc: The main MpfMc object.
+        mpfmc: The main MpfMc object.
 
     """
 
@@ -62,8 +62,7 @@ class AssetManager(object):
         self.machine.events.add_handler('init_phase_3', self._create_assets)
 
         # Picks up asset load information from connected BCP client(s)
-        self.machine.events.add_handler('assets_to_load',
-                                   self._bcp_client_asset_load)
+        self.machine.events.add_handler('assets_to_load', self._bcp_client_asset_load)
 
     @property
     def num_assets_remaining(self):
@@ -135,13 +134,11 @@ class AssetManager(object):
                 to exist. Higher number is first.
             pool_config_section: String which specifies the config file
                 section for associated asset groups.
-
         """
         if not hasattr(self.machine, attribute):
             # some assets of different classes use the same mc attribute, like
             # images and animated_images
             setattr(self.machine, attribute, CaseInsensitiveDict())
-
 
         ac = dict(attribute=attribute,
                   cls=asset_class,
@@ -221,9 +218,6 @@ class AssetManager(object):
                 config: A config dictionary.
                 mode: Optional reference to the mode object which is used when
                     assets are being created from mode folders.
-                mode_path: Optional full path to the base folder that will be
-                    traversed for the assets file on disk. If omitted, the
-                    base machine folder will be searched.
 
             Returns: An updated config dictionary. (See the "How it works"
                 section below for details.
@@ -375,8 +369,7 @@ class AssetManager(object):
                 name = os.path.splitext(file_name)[0].lower()
                 full_file_path = os.path.join(path, file_name)
 
-                if (folder == asset_class['path_string'] or
-                            folder not in asset_class['defaults']):
+                if folder == asset_class['path_string'] or folder not in asset_class['defaults']:
                     default_string = 'default'
                 else:
                     default_string = folder
@@ -455,6 +448,7 @@ class AssetManager(object):
     def _create_asset_groups(self, config, mode=None):
         # creates named groups of assets and adds them to to the mc's asset
         # dicts
+        del mode
         for ac in [x for x in self._asset_classes
                    if x['pool_config_section']]:
 
@@ -469,6 +463,7 @@ class AssetManager(object):
     def _load_mode_assets(self, config, priority, mode):
         # Called on mode start to load the assets that are set to automatically
         # load based on that mode starting
+        del config
         return (self.unload_assets,
                 self.load_assets_by_load_key(
                         key_name='{}_start'.format(mode.name),
@@ -481,6 +476,7 @@ class AssetManager(object):
                 key_name: String of the load: key name.
 
         """
+        del priority
         assets = set()
         # loop through all the registered assets of each class and look for
         # this key name
@@ -525,6 +521,7 @@ class AssetManager(object):
             self._loaded_watcher = True
 
     def _check_loader_status(self, *args):
+        del args
         # checks the loaded queue and updates loading stats
         try:
             while not self.loaded_queue.empty():
@@ -554,10 +551,9 @@ class AssetManager(object):
         remaining = total - self.num_assets_loaded - self.num_bcp_assets_loaded
 
         self.machine.events.post('loading_assets', total=total,
-                            loaded=self.num_assets_loaded +
-                                   self.num_bcp_assets_loaded,
-                            remaining=remaining,
-                            percent=self.loading_percent)
+                                 loaded=self.num_assets_loaded + self.num_bcp_assets_loaded,
+                                 remaining=remaining,
+                                 percent=self.loading_percent)
 
         # TODO temp until logging is implemented properly
         # print('Loading assets: {}/{} ({}%)'.format(self.num_assets_loaded +
