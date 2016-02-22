@@ -161,8 +161,8 @@ class ShowController(object):
 
                 if 'key' in settings:
                     event_key = self.machine.events.add_handler(event,
-                        self.machine.light_scripts.stop_light_script,
-                        **settings)
+                                                                self.machine.light_scripts.stop_light_script,
+                                                                **settings)
 
                 else:
                     self.log.error('Cannot add light show stop action since a '
@@ -267,10 +267,10 @@ class ShowController(object):
 
             if light.debug:
                 light.log.debug(
-                    "Found this light in a restore_lower_lights meth "
-                    "in show.light_states. Light cache priority: %s,"
-                    "ending show priority: %s", light.cache['priority'],
-                    priority)
+                        "Found this light in a restore_lower_lights meth "
+                        "in show.light_states. Light cache priority: %s,"
+                        "ending show priority: %s", light.cache['priority'],
+                        priority)
 
             if light.cache['priority'] <= priority:
                 light.restore()
@@ -309,6 +309,7 @@ class ShowController(object):
         # Runs once per machine loop.  Calls the tick processing function
         # for any running shows
         # and processes any device updates and/or show actions that are needed.
+        del dt
         self.current_tick_time = self.machine.clock.get_time()
 
         # Process the running Shows
@@ -335,8 +336,8 @@ class ShowController(object):
 
             # We have to check again since one of these advances could have
             # removed it already
-        #        if item in self.queue:
-        #            self.queue.remove(item)
+            #        if item in self.queue:
+            #            self.queue.remove(item)
 
     def add_external_show_start_command_to_queue(self, name, priority=0,
                                                  blend=True, leds=None,
@@ -364,13 +365,13 @@ class ShowController(object):
         """
         if not self.external_show_connected:
             self.register_tick_handler(
-                self._update_external_shows)
+                    self._update_external_shows)
             self.external_show_connected = True
 
         self.external_show_command_queue.put(
-            (self._process_external_show_start_command,
-             (name, priority, blend, leds,
-              lights, flashers, gis, coils)))
+                (self._process_external_show_start_command,
+                 (name, priority, blend, leds,
+                  lights, flashers, gis, coils)))
 
     def add_external_show_stop_command_to_queue(self, name):
         """Called by BCP worker thread when an external show stop command is
@@ -383,7 +384,7 @@ class ShowController(object):
             name: The name of the external show.
         """
         self.external_show_command_queue.put(
-            (self._process_external_show_stop_command, (name,)))
+                (self._process_external_show_stop_command, (name,)))
 
     def add_external_show_frame_command_to_queue(self, name, led_data=None,
                                                  light_data=None,
@@ -410,9 +411,9 @@ class ShowController(object):
             events: A comma-separated list of events to fire
         """
         self.external_show_command_queue.put(
-            (self._process_external_show_frame_command,
-             (name, led_data, light_data,
-              flasher_data, gi_data, coil_data, events)))
+                (self._process_external_show_frame_command,
+                 (name, led_data, light_data,
+                  flasher_data, gi_data, coil_data, events)))
 
     def _update_external_shows(self):
         """Processes any pending BCP external show commands.  This function
@@ -475,46 +476,46 @@ class ShowController(object):
             # way to
             # remove it.
 
-    # def _process_external_show_frame_command(self, name, led_data, light_data,
-    #                                          flasher_data, gi_data, coil_data,
-    #                                          events):
-    #     """Processes an external show frame command.  Runs in the main
-    #     processing thread.
-    #
-    #     Args:
-    #         name: The name of the external show.
-    #         led_data: A string of concatenated hex color values for the leds
-    #         in the show.
-    #         light_data: A string of concatenated hex brightness values for
-    #         the lights in the show.
-    #         flasher_data: A string of concatenated pulse time (ms) values
-    #         for the flashers in the show.
-    #         gi_data: A string of concatenated hex brightness values for the
-    #         GI in the show.
-    #         coil_data: A string of concatenated coil values ????
-    #         events: A comma-separated list of event names to fire immediately.
-    #     """
-    #     if name not in self.running_external_show_keys:
-    #         return
-    #
-    #     if led_data:
-    #         self.running_external_show_keys[name].update_leds(led_data)
-    #
-    #     if light_data:
-    #         self.running_external_show_keys[name].update_lights(light_data)
-    #
-    #     if flasher_data:
-    #         self.running_external_show_keys[name].update_gis(flasher_data)
-    #
-    #     if gi_data:
-    #         self.running_external_show_keys[name].update_flashers(gi_data)
-    #
-    #     if coil_data:
-    #         self.running_external_show_keys[name].update_coils(coil_data)
-    #
-    #     if events:
-    #         for event in events.split(","):
-    #             self.machine.show_controller._add_to_event_queue(event)
+            # def _process_external_show_frame_command(self, name, led_data, light_data,
+            #                                          flasher_data, gi_data, coil_data,
+            #                                          events):
+            #     """Processes an external show frame command.  Runs in the main
+            #     processing thread.
+            #
+            #     Args:
+            #         name: The name of the external show.
+            #         led_data: A string of concatenated hex color values for the leds
+            #         in the show.
+            #         light_data: A string of concatenated hex brightness values for
+            #         the lights in the show.
+            #         flasher_data: A string of concatenated pulse time (ms) values
+            #         for the flashers in the show.
+            #         gi_data: A string of concatenated hex brightness values for the
+            #         GI in the show.
+            #         coil_data: A string of concatenated coil values ????
+            #         events: A comma-separated list of event names to fire immediately.
+            #     """
+            #     if name not in self.running_external_show_keys:
+            #         return
+            #
+            #     if led_data:
+            #         self.running_external_show_keys[name].update_leds(led_data)
+            #
+            #     if light_data:
+            #         self.running_external_show_keys[name].update_lights(light_data)
+            #
+            #     if flasher_data:
+            #         self.running_external_show_keys[name].update_gis(flasher_data)
+            #
+            #     if gi_data:
+            #         self.running_external_show_keys[name].update_flashers(gi_data)
+            #
+            #     if coil_data:
+            #         self.running_external_show_keys[name].update_coils(coil_data)
+            #
+            #     if events:
+            #         for event in events.split(","):
+            #             self.machine.show_controller._add_to_event_queue(event)
 
 
 class Playlist(object):
@@ -837,7 +838,7 @@ class Playlist(object):
         if step_time and not step_trigger_show:
             self.machine.show_controller.queue.append({'playlist': self,
                                                        'action_time': (
-                                                       self.machine.show_controller.current_time + step_time)})
+                                                           self.machine.show_controller.current_time + step_time)})
 
         # Advance our current_step_position counter
         if self.current_step_position == len(self.steps) - 1:
@@ -899,19 +900,19 @@ class ExternalShow(object):
     def update_lights(self, data):
         for light, brightness in zip(self.lights, Util.chunker(data, 2)):
             self.machine.show_controller._add_to_light_update_list(
-                light, Util.hex_string_to_int(brightness), self.priority,
-                self.blend)
+                    light, Util.hex_string_to_int(brightness), self.priority,
+                    self.blend)
 
     def update_leds(self, data):
         for led, color in zip(self.leds, Util.chunker(data, 6)):
             self.machine.show_controller.add_to_led_update_list(
-                led, RGBColor(RGBColor.hex_to_rgb(color)), 0, self.priority,
-                self.blend)
+                    led, RGBColor(RGBColor.hex_to_rgb(color)), 0, self.priority,
+                    self.blend)
 
     def update_gis(self, data):
         for gi, brightness in zip(self.lights, Util.chunker(data, 2)):
             self.machine.show_controller._add_to_gi_queue(
-                gi, Util.hex_string_to_int(brightness))
+                    gi, Util.hex_string_to_int(brightness))
 
     def update_flashers(self, data):
         for flasher, flash in zip(self.flashers, data):
