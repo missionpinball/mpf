@@ -4,6 +4,7 @@ import logging
 import uuid
 from functools import partial
 
+
 class DelayManagerRegistry(object):
     def __init__(self, machine):
         self.delay_managers = set()
@@ -15,7 +16,7 @@ class DelayManagerRegistry(object):
     def get_next_event(self):
         next_event_time = False
         for delay_manager in self.delay_managers:
-            next_event_time_single = delay_manager._get_next_event()
+            next_event_time_single = delay_manager.get_next_event()
             if not next_event_time or (next_event_time > next_event_time_single and next_event_time_single):
                 next_event_time = next_event_time_single
 
@@ -117,7 +118,7 @@ class DelayManager(object):
 
         self.delays = {}
 
-    def _get_next_event(self):
+    def get_next_event(self):
         next_event_time = False
         for name in list(self.delays.keys()):
             if not next_event_time or next_event_time > self.delays[name].next_event_time:
@@ -126,6 +127,7 @@ class DelayManager(object):
         return next_event_time
 
     def _process_delay_callback(self, name, callback, dt, **kwargs):
+        del dt
         self.log.debug("---Processing delay: %s", name)
         try:
             del self.delays[name]
