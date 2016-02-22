@@ -109,5 +109,5 @@ class Driver(Device):
             self.time_when_done = -1
 
     def timed_enable(self, milliseconds, **kwargs):
+        del kwargs
         self.pulse(milliseconds)
-
