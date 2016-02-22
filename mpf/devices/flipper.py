@@ -21,8 +21,6 @@ class Flipper(Device):
             how this flipper should be configured. If this is None, it will use
             the core config settings that were read in from the config files
             when the machine was reset.
-        collection: A reference to the collection list this device will be added
-        to.
     """
     config_section = 'flippers'
     collection = 'flippers'
@@ -80,6 +78,7 @@ class Flipper(Device):
         rules). Note that this rule is the letter "i", not a numeral 1.
         I. Enable power if button is active and EOS is not active
         """
+        del kwargs
 
         # todo disable first to clear any old rules?
 
@@ -108,6 +107,7 @@ class Flipper(Device):
         tilted.
 
         """
+        del kwargs
         if self.flipper_switches:
             self.log.debug("Disabling")
             for switch in self.flipper_switches:
