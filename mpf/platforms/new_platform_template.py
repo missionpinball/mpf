@@ -157,7 +157,7 @@ class HardwarePlatform(Platform):
 
         return self.hw_switches
 
-    def configure_accelerometer(self, device, number, useHighPass):
+    def configure_accelerometer(self, device, number, use_high_pass):
         pass
 
     def configure_matrixlight(self, config):

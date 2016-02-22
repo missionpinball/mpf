@@ -56,6 +56,7 @@ class AutofireCoil(Device):
 
     def enable(self, **kwargs):
         """Enables the autofire coil rule."""
+        del kwargs
 
         # todo disable first to clear any old rules?
 
@@ -72,5 +73,6 @@ class AutofireCoil(Device):
 
     def disable(self, **kwargs):
         """Disables the autofire coil rule."""
+        del kwargs
         self.log.debug("Disabling")
         self.platform.clear_hw_rule(self.switch.name)

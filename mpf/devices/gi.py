@@ -34,6 +34,7 @@ class Gi(Device):
             fade_ms: How quickly you'd like this GI string to fade to this
                 brightness level. This is not implemented.
         """
+        del kwargs
         if type(brightness) is list:
             brightness = brightness[0]
 
@@ -45,6 +46,7 @@ class Gi(Device):
 
     def disable(self, **kwargs):
         """Disables this GI string."""
+        del kwargs
         self.hw_driver.off()
 
     def add_handler(self, callback):
