@@ -143,7 +143,7 @@ class HardwarePlatform(Platform):
                                                    self.machine.config[
                                                        'virtual_platform_start_active_switches'])]
 
-                for k, v in self.hw_switches.items():
+                for k in self.hw_switches:
                     if k in initial_active_switches:
                         self.hw_switches[k] ^= 1
 
@@ -187,9 +187,13 @@ class HardwarePlatform(Platform):
         pass
 
     def i2c_read8(self, address, register):
+        del address
+        del register
         return None
 
     def i2c_read16(self, address, register):
+        del address
+        del register
         return None
 
 
