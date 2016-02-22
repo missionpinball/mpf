@@ -158,7 +158,7 @@ class ScoreReelController(object):
         # populate the reset queue
         self.reset_queue = []
 
-        for player, score_reel_group in self.machine.score_reel_groups.items():
+        for dummy_player, score_reel_group in self.machine.score_reel_groups.items():
             self.reset_queue.append(score_reel_group)
         self.reset_queue.sort(key=lambda x: x.name)
         # todo right now this sorts by ScoreGroupName. Need to change to tags
@@ -611,7 +611,7 @@ class ScoreReelGroup(Device):
 
         for position in range(len(value_list)):
             if value_list[position]:
-                for num in range(value_list[position]):
+                for dummy_num in range(value_list[position]):
                     self.advance_queue.append(self.reels[position])
 
         # if there's a jump in progress we don't want to step on it, so we'll
@@ -673,7 +673,7 @@ class ScoreReelGroup(Device):
             try:
                 self.log.debug("Score: %s",
                                self.machine.game.player.score)
-            except:
+            except AttributeError:
                 pass
             self.machine.events.post('reel_' + reel.name + "_advance")
             # todo should this advance event be posted here? Or by the reel?
