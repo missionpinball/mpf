@@ -390,7 +390,7 @@ class Shot(Device):
 
         found = False
 
-        for _mode, settings in self.enable_table.items():
+        for _mode in self.enable_table:
             # only care about hits lower than this mode
 
             if found:
