@@ -75,6 +75,7 @@ class ScoreReelController(object):
         the same Score Reels will be used for both players, and they will
         reset themselves automatically between players.
         """
+        del kwargs
 
         # if our player to reel map is less than the number of players, we need
         # to create a new mapping
@@ -135,6 +136,7 @@ class ScoreReelController(object):
                 and included only because the score change event passes it.
             change: Interget value of the change to the score.
         """
+        del kwargs
         self.active_scorereelgroup.add_value(value=change, target=value)
 
     def game_starting(self, queue, game):
@@ -148,6 +150,7 @@ class ScoreReelController(object):
             game: A reference to the main game object. This is ignored and only
                 included because the game_starting event passes it.
         """
+        del game
         self.queue = queue
         # tell the game_starting event queue that we have stuff to do
         self.queue.wait()
@@ -305,19 +308,20 @@ class ScoreReelGroup(Device):
         self.set_rollover_reels()
 
     def set_rollover_reels(self):
-        """Calls each reel's `_set_rollover_reel` method and passes it a
+        """Calls each reel's `set_rollover_reel` method and passes it a
         pointer to the next higher up reel. This is how we know whether we're
         able to advance the next higher up reel when a particular reel rolls
         over during a step advance.
         """
         for reel in range(len(self.reels)):
             if self.reels[reel] and (reel < len(self.reels) - 1):
-                self.reels[reel]._set_rollover_reel(self.reels[reel + 1])
+                self.reels[reel].set_rollover_reel(self.reels[reel + 1])
 
     def tick(self, dt):
         """Automatically called once per machine tick and checks to see if there
         are any jumps or advances in progress, and, if so, calls those methods.
         """
+        del dt
         if self.jump_in_progress:
             self._jump_advance_step()
         elif self.advance_queue:
@@ -375,6 +379,7 @@ class ScoreReelGroup(Device):
                 have this argument listed so we can use this method as an event
                 handler for those events.
         """
+        del value
 
         self.log.debug("Checking to see if score reels are valid.")
 
@@ -387,10 +392,7 @@ class ScoreReelGroup(Device):
         # validate if they've hw_confirmed
         for reel in self.reels:
 
-            if (reel and
-                    (reel.config['confirm'] == 'lazy' or
-                             reel.config['confirm'] == 'strict') and
-                    not reel.hw_sync):
+            if reel and (reel.config['confirm'] == 'lazy' or reel.config['confirm'] == 'strict') and not reel.hw_sync:
                 return False  # need hw_sync to proceed
 
         self.log.debug("Desired list: %s", self.desired_value_list)
@@ -398,9 +400,8 @@ class ScoreReelGroup(Device):
         self.log.debug("Assumed integer: %s", self.assumed_value_int)
 
         try:
-            self.log.debug("Player's Score: %s",
-                           self.machine.game.player.score)
-        except:
+            self.log.debug("Player's Score: %s", self.machine.game.player.score)
+        except AttributeError:
             pass
 
         # todo if confirm is set to none, should we at least wait until the
@@ -557,19 +558,14 @@ class ScoreReelGroup(Device):
 
                 # While we're in here let's get a count of the total number
                 # of reels that are energized
-                if (this_reel.config['coil_inc'].
-                            time_when_done > current_time):
+                if this_reel.config['coil_inc'].time_when_done > current_time:
                     num_energized += 1
 
                 # Does this reel want to be advanced, and is it ready?
-                if (self.desired_value_list[i] !=
-                        self.assumed_value_list[i] and
-                        this_reel.ready):
-
+                if self.desired_value_list[i] != self.assumed_value_list[i] and this_reel.ready:
                     # Do we need (and have) hw_sync to advance this reel?
 
-                    if (self.assumed_value_list[i] == -999 or
-                                this_reel.config['confirm'] == 'strict'):
+                    if self.assumed_value_list[i] == -999 or this_reel.config['confirm'] == 'strict':
 
                         if this_reel.hw_sync:
                             reels_needing_advance.append(this_reel)
@@ -783,7 +779,7 @@ class ScoreReelGroup(Device):
         pass it.
 
         Args:
-            value: The list containing the values for each score reel
+            reel_list: The list containing the values for each score reel
                 position.
 
         Returns:
@@ -810,6 +806,7 @@ class ScoreReelGroup(Device):
         """Lights up this ScoreReelGroup based on the 'light_tag' in its
         config.
         """
+        del kwargs
         self.log.debug("Turning on Lights")
         for light in self.machine.lights.items_tagged(
                 self.config['lights_tag']):
@@ -832,6 +829,7 @@ class ScoreReelGroup(Device):
         """Turns off the lights for this ScoreReelGroup based on the
         'light_tag' in its config.
         """
+        del kwargs
         self.log.debug("Turning off Lights")
         for light in self.machine.lights.items_tagged(
                 self.config['lights_tag']):
@@ -951,8 +949,7 @@ class ScoreReel(Device):
 
         # figure out how many values we have
         # Add 1 so range is inclusive of the lower limit
-        self.num_values = self.config['limit_hi'] - \
-                          self.config['limit_lo'] + 1
+        self.num_values = self.config['limit_hi'] - self.config['limit_lo'] + 1
 
         self.log.debug("Total reel values: %s", self.num_values)
 
@@ -1012,7 +1009,7 @@ class ScoreReel(Device):
 
         return -999
 
-    def _set_rollover_reel(self, reel):
+    def set_rollover_reel(self, reel):
         # Sets this reels' rollover_reel to the object of the next higher
         # reel
         self.log.debug("Setting rollover reel: %s", reel.name)
@@ -1049,11 +1046,9 @@ class ScoreReel(Device):
         if not direction:
             # A direction wasn't specified, but let's see if this reel wants
             # to be in another position and fire it if so
-            if (self._destination_index != self.assumed_value and
-                    self.config['rollover']):
+            if self._destination_index != self.assumed_value and self.config['rollover']:
                 direction = 1
-            elif (self._destination_index < self.assumed_value and
-                      self.config['coil_dec']):
+            elif self._destination_index < self.assumed_value and self.config['coil_dec']:
                 direction = -1
             else:  # no direction specified and everything seems ok
                 return
@@ -1072,8 +1067,7 @@ class ScoreReel(Device):
 
         if direction == 1:
             # Ensure we're not at the limit of a reel that can't roll over
-            if not ((self.physical_value == self.config['limit_hi']) and
-                        not self.config['rollover']):
+            if not ((self.physical_value == self.config['limit_hi']) and not self.config['rollover']):
                 self.log.debug("Ok to advance")
 
                 # Since we're firing, assume we're going to make it
@@ -1180,8 +1174,7 @@ class ScoreReel(Device):
             # if value is -999, but we have a switch for the assumed value,
             # then we're in the wrong position because our hw_value should be
             # at the assumed value
-            elif (self.assumed_value != -999 and
-                      self.value_switches[self.assumed_value]):
+            elif self.assumed_value != -999 and self.value_switches[self.assumed_value]:
                 self.assumed_value = -999
 
             if not no_event:
