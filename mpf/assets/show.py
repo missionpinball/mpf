@@ -3,6 +3,7 @@ from mpf.core.config_player import ConfigPlayer
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
 
+
 class ShowPool(AssetPool):
     def __repr__(self):
         return '<ShowPool: {}>'.format(self.name)
@@ -16,7 +17,7 @@ class Show(Asset):
     attribute = 'shows'
     path_string = 'shows'
     config_section = 'shows'
-    extensions = ('yaml')
+    extensions = 'yaml'
     class_priority = 100
     pool_config_section = 'show_pools'
     asset_group_class = ShowPool
@@ -102,8 +103,8 @@ class Show(Asset):
 
         if type(steps) is not list:
             self.machine.show_controller.log.warning(
-                "%s is not a valid YAML file. "
-                "Skipping show.", self.file)
+                    "%s is not a valid YAML file. "
+                    "Skipping show.", self.file)
             return False
 
         # Loop over all steps in the show file
@@ -124,8 +125,8 @@ class Show(Asset):
             # Make sure there is a time entry for each step in the show file.
             if 'time' not in steps[step_num]:
                 self.machine.show_controller.log.warning(
-                    "%s is not a valid show file. "
-                    "Skipping show.", self.file)
+                        "%s is not a valid show file. "
+                        "Skipping show.", self.file)
                 return False
 
             step_time = Util.string_to_secs(steps[step_num]['time'])
@@ -146,11 +147,11 @@ class Show(Asset):
                 # Make sure this step time comes after the previous step time
                 if step_time < total_step_time:
                     self.machine.show_controller.log.warning(
-                        "%s is not a valid show file. Step times are not "
-                        "valid "
-                        "as they are not all in chronological order. "
-                        "Skipping show.",
-                        self.file)
+                            "%s is not a valid show file. Step times are not "
+                            "valid "
+                            "as they are not all in chronological order. "
+                            "Skipping show.",
+                            self.file)
                     return False
 
                 # Calculate the time since previous step
@@ -165,44 +166,44 @@ class Show(Asset):
             if 'lights' in steps[step_num]:
                 actions['lights'] = ConfigPlayer.show_players[
                     'lights'].process_show_config(ConfigPlayer.show_players[
-                    'lights'].validate_show_config(steps[step_num]['lights']))
+                                                      'lights'].validate_show_config(steps[step_num]['lights']))
 
             if 'leds' in steps[step_num]:
                 actions['leds'] = ConfigPlayer.show_players[
                     'leds'].process_show_config(ConfigPlayer.show_players[
-                    'leds'].validate_show_config(steps[step_num]['leds']))
+                                                    'leds'].validate_show_config(steps[step_num]['leds']))
 
             if 'events' in steps[step_num]:
                 actions['events'] = ConfigPlayer.show_players[
                     'events'].process_show_config(ConfigPlayer.show_players[
-                    'events'].validate_show_config(steps[step_num]['events']))
+                                                      'events'].validate_show_config(steps[step_num]['events']))
 
             if 'random_events' in steps[step_num]:
                 actions['random_events'] = ConfigPlayer.show_players[
                     'random_events'].process_show_config(
-                    ConfigPlayer.show_players[
-                    'random_events'].validate_show_config(steps[step_num][
-                                                                              'random_events']))
+                        ConfigPlayer.show_players[
+                            'random_events'].validate_show_config(steps[step_num][
+                                                                      'random_events']))
 
             if 'coils' in steps[step_num]:
                 actions['coils'] = ConfigPlayer.show_players[
                     'coils'].process_show_config(ConfigPlayer.show_players[
-                    'coils'].validate_show_config(steps[step_num]['coils']))
+                                                     'coils'].validate_show_config(steps[step_num]['coils']))
 
             if 'flashers' in steps[step_num]:
                 actions['flashers'] = ConfigPlayer.show_players[
                     'flashers'].process_show_config(ConfigPlayer.show_players[
-                    'flashers'].validate_show_config(steps[step_num]['flashers']))
+                                                        'flashers'].validate_show_config(steps[step_num]['flashers']))
 
             if 'gis' in steps[step_num]:
                 actions['gis'] = ConfigPlayer.show_players[
                     'gis'].process_show_config(ConfigPlayer.show_players[
-                    'gis'].validate_show_config(steps[step_num]['gis']))
+                                                   'gis'].validate_show_config(steps[step_num]['gis']))
 
             if 'triggers' in steps[step_num]:
                 actions['triggers'] = ConfigPlayer.show_players[
                     'triggers'].process_show_config(ConfigPlayer.show_players[
-                    'triggers'].validate_show_config(steps[step_num]['triggers']))
+                                                        'triggers'].validate_show_config(steps[step_num]['triggers']))
 
             self.show_steps.append(actions)
 
@@ -280,19 +281,20 @@ class Show(Asset):
             **kwargs: Not used, but included in case this method is used as an
                 event handler which might include additional kwargs.
         """
+        del kwargs
 
         self.mode = mode
 
         if not self.loaded:
             self._autoplay_settings = dict(
-                                         priority=priority,
-                                         blend=blend,
-                                         hold=hold,
-                                         playback_rate=playback_rate,
-                                         start_step=start_step,
-                                         callback=callback,
-                                         loops=loops,
-                                         sync_ms=sync_ms)
+                    priority=priority,
+                    blend=blend,
+                    hold=hold,
+                    playback_rate=playback_rate,
+                    start_step=start_step,
+                    callback=callback,
+                    loops=loops,
+                    sync_ms=sync_ms)
             self.load(callback=self._autoplay, priority=priority)
             return False
 
@@ -326,6 +328,8 @@ class Show(Asset):
         self.machine.show_controller._run_show(self)
 
     def _autoplay(self, *args, **kwargs):
+        del args
+        del kwargs
         self.play(**self._autoplay_settings)
 
     def load_show_from_disk(self):
@@ -409,18 +413,18 @@ class Show(Asset):
             elif item_type == 'gis':
                 for gi, value in item_dict.items():
                     self.machine.show_controller.add_to_gi_queue(
-                        gi=gi,
-                        value=value)
+                            gi=gi,
+                            value=value)
 
             elif item_type == 'flashers':
                 for flasher in item_dict:
                     self.machine.show_controller.add_to_flasher_queue(
-                        flasher=flasher)
+                            flasher=flasher)
 
             elif item_type == 'triggers':
                 for trigger_name, trigger_args in item_dict.items():
                     self.machine.show_controller.add_to_trigger_queue(
-                        trigger=(trigger_name, trigger_args))
+                            trigger=(trigger_name, trigger_args))
 
         # increment this show's current_step pointer and handle repeats
 
@@ -463,16 +467,16 @@ class Show(Asset):
 
         for light_obj, brightness in self.light_states.items():
             self.machine.show_controller.add_to_light_update_list(
-                light=light_obj,
-                brightness=brightness,
-                fade_ms=0,
-                priority=self.priority,
-                blend=self.blend)
+                    light=light_obj,
+                    brightness=brightness,
+                    fade_ms=0,
+                    priority=self.priority,
+                    blend=self.blend)
 
         for led_obj, led_dict in self.led_states.items():
             self.machine.show_controller.add_to_led_update_list(
-                led=led_obj,
-                color=led_dict['current_color'],
-                fade_ms=0,
-                priority=self.priority,
-                blend=self.blend)
+                    led=led_obj,
+                    color=led_dict['current_color'],
+                    fade_ms=0,
+                    priority=self.priority,
+                    blend=self.blend)
