@@ -1,4 +1,3 @@
-
 import logging
 import os
 import sys
@@ -822,6 +821,7 @@ fast:
     debug: single|bool|False
 '''
 
+
 class ConfigValidator(object):
     config_spec = None
 
@@ -886,10 +886,10 @@ class ConfigValidator(object):
         if item == 'item not in config!@#':
             if default == 'default required!@#':
                 log.error(
-                    'Required setting missing from config file. Run with '
-                    'verbose logging and look for the last '
-                    'ConfigProcessor entry above this line to see where '
-                    'the problem is.')
+                        'Required setting missing from config file. Run with '
+                        'verbose logging and look for the last '
+                        'ConfigProcessor entry above this line to see where '
+                        'the problem is.')
                 sys.exit()
             else:
                 item = default
@@ -1017,14 +1017,12 @@ class ConfigValidator(object):
                     # item is source
                     processed_config = self.validate_config_item2(
                             spec=this_spec[k], item=source[k],
-                            validation_failure_info=(
-                            validation_failure_info, k))
+                            validation_failure_info=(validation_failure_info, k))
 
                 else:
                     processed_config[k] = self.validate_config_item2(
                             this_spec[k], item=source[k],
-                            validation_failure_info=(
-                            validation_failure_info, k))
+                            validation_failure_info=(validation_failure_info, k))
 
             elif add_missing_keys:  # create the default entry
 
@@ -1036,15 +1034,13 @@ class ConfigValidator(object):
                         processed_config = self.validate_config_item2(
                                 this_spec[k],
                                 validation_failure_info=(
-                                validation_failure_info,
-                                k))
+                                    validation_failure_info, k))
 
                     else:
                         processed_config[k] = self.validate_config_item2(
                                 this_spec[k],
                                 validation_failure_info=(
-                                validation_failure_info,
-                                k))
+                                    validation_failure_info, k))
 
         if target:
             processed_config = Util.dict_merge(target, processed_config)
@@ -1120,7 +1116,7 @@ class ConfigValidator(object):
     def check_for_invalid_sections(self, spec, config,
                                    validation_failure_info):
 
-        for k, v in config.items():
+        for k in config:
             if type(k) is not dict:
                 if k not in spec and k[0] != '_':
 
@@ -1140,9 +1136,9 @@ class ConfigValidator(object):
                     if self.system_config['allow_invalid_config_sections']:
 
                         self.log.warning(
-                            'Unrecognized config setting. "%s" is '
-                            'not a valid setting name.',
-                            path_string)
+                                'Unrecognized config setting. "%s" is '
+                                'not a valid setting name.',
+                                path_string)
 
                     else:
                         self.log.error('Your config contains a value for the '
@@ -1152,8 +1148,8 @@ class ConfigValidator(object):
                         self.lookup_invalid_config_setting(path_string)
 
                         raise AssertionError('Your config contains a value for the '
-                                       'setting "' + path_string + '", but this is not a valid '
-                                       'setting name.')
+                                             'setting "' + path_string + '", but this is not a valid '
+                                                                         'setting name.')
 
     def validate_item(self, item, validator, validation_failure_info):
 
@@ -1265,19 +1261,17 @@ class ConfigValidator(object):
 
     def validation_error(self, item, validation_failure_info):
         raise AssertionError(
-            "Config validation error: Entry {}:{}:{}:{} is not valid".format(
-            validation_failure_info[0][0],
-            validation_failure_info[0][1],
-            validation_failure_info[1],
-            item))
+                "Config validation error: Entry {}:{}:{}:{} is not valid".format(
+                        validation_failure_info[0][0],
+                        validation_failure_info[0][1],
+                        validation_failure_info[1],
+                        item))
 
     def lookup_invalid_config_setting(self, setting):
 
         setting_key = setting.split(':')[-1]
 
-        with open(os.path.join(self.machine.mpf_path,
-                self.machine.config['mpf']['config_versions_file']),
-                  'r') as f:
+        with open(os.path.join(self.machine.mpf_path, self.machine.config['mpf']['config_versions_file'])) as f:
             config_file = yaml.load(f, Loader=MpfLoader)
 
         for ver, sections in config_file.items():
@@ -1289,8 +1283,8 @@ class ConfigValidator(object):
 
             if int(__config_version__) > int(ver):
                 ver_string = (
-                ' (The latest config version is config_version=' +
-                __config_version__ + ').')
+                    ' (The latest config version is config_version=' +
+                    __config_version__ + ').')
 
             if setting_key in sections['section_replacements']:
                 self.log.info('The setting "%s" has been renamed to "%s" in '
