@@ -180,7 +180,7 @@ class ShowController(object):
 
         return event_key
 
-    def _run_show(self, show):
+    def run_show(self, show):
         # Internal method which starts a Show
 
         # if the show is already playing, it does not try to play again
@@ -200,7 +200,7 @@ class ShowController(object):
         self.running_shows.append(show)
         self.running_shows.sort(key=lambda x: x.priority)
 
-    def _end_show(self, show, reset=None):
+    def end_show(self, show, reset=None):
         # Internal method which ends a running Show
 
         self.running_shows = [x for x in self.running_shows if x != show]

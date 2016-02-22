@@ -325,7 +325,7 @@ class Show(Asset):
             else:
                 self.current_step = start_step
 
-        self.machine.show_controller._run_show(self)
+        self.machine.show_controller.run_show(self)
 
     def _autoplay(self, *args, **kwargs):
         del args
@@ -358,7 +358,7 @@ class Show(Asset):
         elif hold is False:  # if it's None we don't assume False
             self.hold = False
 
-        self.machine.show_controller._end_show(self, reset)
+        self.machine.show_controller.end_show(self, reset)
 
     def tick(self, current_tick_time):
 
@@ -369,7 +369,7 @@ class Show(Asset):
 
         # Internal method which advances the show to the next step
         if self.ending:
-            self.machine.show_controller._end_show(self)
+            self.machine.show_controller.end_show(self)
             return
 
         action_loop_count = 0  # Tracks how many loops we've done in this call
