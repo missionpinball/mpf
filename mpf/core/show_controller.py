@@ -897,33 +897,6 @@ class ExternalShow(object):
             self.coils = [self.machine.coils[x] for x in
                           Util.string_to_list(coils)]
 
-    def update_lights(self, data):
-        for light, brightness in zip(self.lights, Util.chunker(data, 2)):
-            self.machine.show_controller._add_to_light_update_list(
-                    light, Util.hex_string_to_int(brightness), self.priority,
-                    self.blend)
-
-    def update_leds(self, data):
-        for led, color in zip(self.leds, Util.chunker(data, 6)):
-            self.machine.show_controller.add_to_led_update_list(
-                    led, RGBColor(RGBColor.hex_to_rgb(color)), 0, self.priority,
-                    self.blend)
-
-    def update_gis(self, data):
-        for gi, brightness in zip(self.lights, Util.chunker(data, 2)):
-            self.machine.show_controller._add_to_gi_queue(
-                    gi, Util.hex_string_to_int(brightness))
-
-    def update_flashers(self, data):
-        for flasher, flash in zip(self.flashers, data):
-            if flash:
-                self.machine.show_controller._add_to_flasher_queue(flasher)
-
-    def update_coils(self, data):
-        for coil, pulse in zip(self.coils, data):
-            if pulse:
-                self.machine.show_controller._add_to_coil_queue(coil)
-
     def stop(self):
         for led in self.leds:
             if led.cache['priority'] <= self.priority:
