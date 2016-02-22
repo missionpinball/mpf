@@ -4,7 +4,6 @@ pinball machine."""
 import logging
 from queue import Queue
 
-from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 from mpf.assets.show import Show
 
