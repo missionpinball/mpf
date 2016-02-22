@@ -78,7 +78,7 @@ class HardwarePlatform(Platform):
                                            Util.string_to_list(
                         self.machine.config['virtual_platform_start_active_switches'])]
 
-                for k, v in self.hw_switches.items():
+                for k in self.hw_switches:
                     if k in initial_active_switches:
                         self.hw_switches[k] ^= 1
 
