@@ -1,0 +1,10 @@
+#config_version=3
+mode:
+    start_events: start_mode1
+    stop_events: stop_mode1
+    priority: 200
+
+scoring:
+    test_event1:
+        score: 100
+        var_a: 1

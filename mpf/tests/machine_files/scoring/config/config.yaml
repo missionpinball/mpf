@@ -1,0 +1,28 @@
+#config_version=3
+
+# minimal config to start game
+game:
+    balls_per_game: 2
+
+coils:
+    eject_coil1:
+        number:
+
+switches:
+    s_start:
+        number:
+        tags: start
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+
+ball_devices:
+    test_trough:
+        ball_switches: s_ball_switch1, s_ball_switch2
+        eject_coil: eject_coil1
+        tags: trough, drain, home, ball_add_live
+
+modes:
+  - mode1
+  - mode2
