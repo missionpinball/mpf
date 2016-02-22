@@ -520,13 +520,13 @@ class SwitchController(object):
         entry_key = str(switch_name) + '-' + str(state)
 
         if entry_key in self.registered_switches:
-            for index, settings in enumerate(
+            for dummy_index, settings in enumerate(
                     self.registered_switches[entry_key]):
                 if settings['ms'] == ms and settings['callback'] == callback:
                     self.registered_switches[entry_key].remove(settings)
 
-        for timed_key, timed_entry in self.active_timed_switches.items():
-            for key, entry in enumerate(timed_entry):
+        for dummy_timed_key, timed_entry in self.active_timed_switches.items():
+            for dummy_key, entry in enumerate(timed_entry):
                 if entry['switch_action'] == entry_key and entry['ms'] == ms and entry['callback'] == callback:
                     entry['removed'] = True
 
