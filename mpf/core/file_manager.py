@@ -3,6 +3,7 @@
 import logging
 import os
 import mpf.file_interfaces
+import importlib
 
 
 class FileInterface(object):
@@ -70,6 +71,7 @@ class FileManager(object):
     def init(cls):
         # Needs to be a separate method to prevent circular import
         for module in mpf.file_interfaces.__all__:
+            importlib.import_module('mpf.file_interfaces.{}'.format(module))
             module_obj = getattr(mpf.file_interfaces, module)
             interface_class = getattr(module_obj, "file_interface_class")
 
@@ -157,10 +159,11 @@ class FileManager(object):
         return config
 
     @staticmethod
-    def save(filename, data):
+    def save(filename, data, include_comments=False):
         ext = os.path.splitext(filename)[1]
 
         try:
-            FileManager.file_interfaces[ext].save(filename, data)
+            FileManager.file_interfaces[ext].save(filename, data,
+                                                  include_comments)
         except KeyError:
             raise AssertionError("No config file processor available for file type {}".format(ext))

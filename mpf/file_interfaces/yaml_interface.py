@@ -287,7 +287,7 @@ class YamlInterface(FileInterface):
         except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark
-                self.log.critical("Error found in config file %s. Line %s, "
+                self.log.debug("Error found in config file %s. Line %s, "
                              "Position %s", filename, mark.line+1,
                              mark.column+1)
 
@@ -297,7 +297,7 @@ class YamlInterface(FileInterface):
                 config = dict()
 
         except:
-            self.log.critical("Couldn't load from file: %s", filename)
+            self.log.debug("Couldn't load from file: %s", filename)
 
             if halt_on_error:
                 sys.exit()
@@ -316,9 +316,13 @@ class YamlInterface(FileInterface):
         else:
             return Util.keys_to_lower(yaml.load(data_string, Loader=MpfLoader))
 
-    def save(self, filename, data):
+    def save(self, filename, data, include_comments=False):
         with open(filename, 'w') as output_file:
-            output_file.write(yaml.dump(data, default_flow_style=False))
+
+            if include_comments:
+                output_file.write(yaml.dump(data, Dumper=RoundTripDumper))
+            else:
+                output_file.write(yaml.dump(data, default_flow_style=False))
 
     @staticmethod
     def save_to_str(data):
