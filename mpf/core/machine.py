@@ -86,7 +86,7 @@ class MachineController(object):
 
         self.crash_queue = queue.Queue()
         self.clock.schedule_interval(self._check_crash_queue, 1)
-        self._init_done = False
+        self.is_init_done = False
         self.config = None
         self.events = None
         self.machine_config = None
@@ -744,6 +744,6 @@ class MachineController(object):
             self.init_done()
 
     def init_done(self):
-        self._init_done = True
+        self.is_init_done = True
         ConfigValidator.unload_config_spec()
         self.reset()

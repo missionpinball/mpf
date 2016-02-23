@@ -500,7 +500,7 @@ class AssetManager(object):
         for asset in assets:
             asset.unload()
 
-    def _load_asset(self, asset):
+    def load_asset(self, asset):
         # Internal method which handles the logistics of actually loading an
         # asset. Should only be called by Asset.load() as that method does
         # additional things that are needed.
@@ -525,7 +525,7 @@ class AssetManager(object):
         # checks the loaded queue and updates loading stats
         try:
             while not self.loaded_queue.empty():
-                self.loaded_queue.get()._loaded()
+                self.loaded_queue.get().is_loaded()
                 self.num_assets_loaded += 1
                 self._post_loading_event()
         except AttributeError:
@@ -561,7 +561,7 @@ class AssetManager(object):
         #                                            total,
         #                                            self.loading_percent))
 
-        if not remaining and not self.machine._init_done:
+        if not remaining and not self.machine.is_init_done:
             self.machine.clear_boot_hold('assets')
 
 
@@ -606,7 +606,7 @@ class AssetLoader(threading.Thread):
                 if asset:
                     if not asset.loaded:
                         with asset.lock:
-                            asset._do_load()
+                            asset.do_load()
                     self.loaded_queue.put(asset)
 
         except Exception:  # pragma no cover
@@ -805,7 +805,10 @@ class Asset(object):
         # Note this is "backwards" (It's the __lt__ method but the formula uses
         # greater than because the PriorityQueue puts lowest first.)
         return ("%s, %s" % (self.priority, self._id) >
-                "%s, %s" % (other.priority, other._id))
+                "%s, %s" % (other.priority, other.get_id()))
+
+    def get_id(self):
+        return self._id
 
     def load(self, callback=None, priority=None):
         if priority is not None:
@@ -822,7 +825,7 @@ class Asset(object):
             # do something fancy here. Maybe just skip it and come back?
 
         self.loading = True
-        self.machine.asset_manager._load_asset(self)
+        self.machine.asset_manager.load_asset(self)
 
     def _call_callbacks(self):
         for callback in self._callbacks:
@@ -831,13 +834,13 @@ class Asset(object):
 
         self._callbacks = set()
 
-    def _do_load(self):
+    def do_load(self):
         # This is the actual method that loads the asset. It's called by a
         # different thread so it's ok to block. Make sure you don't set any
         # attributes here or you don't need any since it's a separate thread.
         raise NotImplementedError
 
-    def _loaded(self):
+    def is_loaded(self):
         self.loading = False
         self.loaded = True
         self.unloading = False
