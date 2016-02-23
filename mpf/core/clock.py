@@ -301,7 +301,7 @@ class ClockEvent(object):
         self._priority = priority
         self._callback_cancelled = False
         if trigger:
-            clock._events[cid].append(self)
+            clock.events[cid].append(self)
 
     def __call__(self, *largs):
         """ Schedules the callback associated with this instance.
@@ -313,7 +313,7 @@ class ClockEvent(object):
             self._is_triggered = True
             # update starttime
             self._last_dt = self.clock._last_tick
-            self.clock._events[self.cid].append(self)
+            self.clock.events[self.cid].append(self)
             return True
 
     def get_callback(self):
@@ -351,7 +351,7 @@ class ClockEvent(object):
         if self._is_triggered:
             self._is_triggered = False
             try:
-                self.clock._events[self.cid].remove(self)
+                self.clock.events[self.cid].remove(self)
             except ValueError:
                 pass
 
@@ -418,7 +418,7 @@ class ClockBase(_ClockBase):
     """A clock object with event support.
     """
     __slots__ = ('_dt', '_last_fps_tick', '_last_tick', '_fps', '_rfps',
-                 '_start_tick', '_fps_counter', '_rfps_counter', '_events',
+                 '_start_tick', '_fps_counter', '_rfps_counter', 'events',
                  '_frame_callbacks', '_frames', '_frames_displayed',
                  '_max_fps', 'max_iteration', '_log')
 
@@ -438,7 +438,7 @@ class ClockBase(_ClockBase):
         self._last_fps_tick = None
         self._frames = 0
         self._frames_displayed = 0
-        self._events = [[] for dummy_iterator in range(256)]
+        self.events = [[] for dummy_iterator in range(256)]
         self._frame_callbacks = PriorityQueue()
         self._max_fps = float(max_fps)
         self._log = logging.getLogger("Clock")
@@ -618,11 +618,11 @@ class ClockBase(_ClockBase):
             callback.cancel()
         else:
             if all_events:
-                for ev in self._events[_hash(callback)][:]:
+                for ev in self.events[_hash(callback)][:]:
                     if ev.get_callback() == callback:
                         ev.cancel()
             else:
-                for ev in self._events[_hash(callback)][:]:
+                for ev in self.events[_hash(callback)][:]:
                     if ev.get_callback() == callback:
                         ev.cancel()
                         break
@@ -630,15 +630,15 @@ class ClockBase(_ClockBase):
     def _release_references(self):
         # call that function to release all the direct reference to any
         # callback and replace it with a weakref
-        events = self._events
-        for events in self._events:
+        events = self.events
+        for events in self.events:
             for event in events[:]:
                 if event.callback is not None:
                     event.release()
         del events
 
     def _process_events(self):
-        for events in self._events:
+        for events in self.events:
             remove = events.remove
             for event in events[:]:
                 # event may be already removed from original list
@@ -648,7 +648,7 @@ class ClockBase(_ClockBase):
     def _process_events_before_frame(self):
         found = True
         count = self.max_iteration
-        events = self._events
+        events = self.events
         while found:
             count -= 1
             if count == -1:
@@ -660,7 +660,7 @@ class ClockBase(_ClockBase):
 
             # search event that have timeout = -1
             found = False
-            for events in self._events:
+            for events in self.events:
                 remove = events.remove
                 for event in events[:]:
                     if event.timeout != -1:
@@ -716,7 +716,7 @@ class ClockBase(_ClockBase):
             This method was added specifically for MPF and is not in the original Kivy class.
         """
         next_event_time = None
-        for events in self._events:
+        for events in self.events:
             remove = events.remove
             for event in events[:]:
                 # event may be already removed from original list
