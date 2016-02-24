@@ -27,6 +27,7 @@ try:
     pinproc_imported = True
 except ImportError:
     pinproc_imported = False
+    pinproc = None
 
 from mpf.core.platform import Platform
 
@@ -125,28 +126,28 @@ class HardwarePlatform(Platform):
         # raw value is 0 to 16384 -> 14 bit
         # scale is -2g to 2g (2 complement)
         if raw_value & (1 << 13):
-            raw_value = raw_value - (1 << 14)
+            raw_value -= 1 << 14
 
         g_value = float(raw_value) / (1 << 12)
 
         return g_value
 
-    def configure_accelerometer(self, device, number, useHighPass):
+    def configure_accelerometer(self, device, number, use_high_pass):
         if number != "1":
             raise AssertionError("P3-ROC only has one accelerometer. Use number 1")
 
         self.accelerometer_device = device
-        self._configure_accelerometer(periodicRead=True, readWithHighPass=useHighPass, tiltInterrupt=False)
+        self._configure_accelerometer(periodic_read=True, read_with_high_pass=use_high_pass, tilt_interrupt=False)
 
-    def _configure_accelerometer(self, periodicRead=False, tiltInterrupt=True, tiltThreshold=0.2,
-                                 readWithHighPass=False):
+    def _configure_accelerometer(self, periodic_read=False, tilt_interrupt=True, tilt_threshold=0.2,
+                                 read_with_high_pass=False):
 
         enable = 0
-        if periodicRead:
+        if periodic_read:
             # enable polling every 128ms
             enable |= 0x0F
 
-        if tiltInterrupt:
+        if tilt_interrupt:
             # configure interrupt at P3-ROC
             enable |= 0x1E00
 
@@ -156,11 +157,11 @@ class HardwarePlatform(Platform):
         # CTRL_REG1 - set to standby
         self.proc.write_data(6, 0x12A, 0)
 
-        if periodicRead:
+        if periodic_read:
             # XYZ_DATA_CFG - enable/disable high pass filter, scale 0 to 2g
-            self.proc.write_data(6, 0x10E, 0x00 | (bool(readWithHighPass) * 0x10))
+            self.proc.write_data(6, 0x10E, 0x00 | (bool(read_with_high_pass) * 0x10))
 
-        if tiltInterrupt:
+        if tilt_interrupt:
             # HP_FILTER_CUTOFF - cutoff at 2Hz
             self.proc.write_data(6, 0x10F, 0x03)
 
@@ -172,7 +173,7 @@ class HardwarePlatform(Platform):
             # transient_threshold * 0.063g
             # Theoretically up to 8g
             # Since we use low noise mode limited to 4g (value of 63)
-            transient_threshold_raw = int(math.ceil(float(tiltThreshold) / 0.063))
+            transient_threshold_raw = int(math.ceil(float(tilt_threshold) / 0.063))
             if transient_threshold_raw > 63:
                 self.log.warning("Tilt Threshold is too high. Limiting to 4g")
                 transient_threshold_raw = 63

@@ -27,7 +27,8 @@ log = logging.getLogger('YAML Interface')
 
 
 class MpfResolver(BaseResolver):
-    pass
+    def __init__(self):
+        super().__init__()
 
 MpfResolver.add_implicit_resolver(
     # Process any item beginning with a plus sign (+) as a string
@@ -49,8 +50,7 @@ MpfResolver.add_implicit_resolver(
     u'tag:yaml.org,2002:bool',
     re.compile(
         u'''^(?:true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO)$''',
-        re.X),
-        list(u'tTfFyYnN'))
+        re.X), list(u'tTfFyYnN'))
 
 MpfResolver.add_implicit_resolver(
     u'tag:yaml.org,2002:float',
@@ -108,6 +108,9 @@ MpfResolver.add_implicit_resolver(
 
 
 class MpfRoundTripConstructor(RoundTripConstructor):
+    def __init__(self):
+        super().__init__()
+
     def construct_yaml_int(self, node):
         value = to_str(self.construct_scalar(node))
         value = value.replace('_', '')
@@ -124,7 +127,7 @@ class MpfRoundTripConstructor(RoundTripConstructor):
             return sign*int(value[2:], 16)
         elif value.startswith('0o'):
             return sign*int(value[2:], 8)
-        #elif value[0] == '0':
+        # elif value[0] == '0':
         #    return sign*int(value, 8)
         elif ':' in value:
             digits = [int(part) for part in value.split(':')]
@@ -138,7 +141,11 @@ class MpfRoundTripConstructor(RoundTripConstructor):
         else:
             return sign*int(value)
 
+
 class MpfConstructor(Constructor):
+    def __init__(self):
+        super().__init__()
+
     def construct_yaml_int(self, node):
         value = to_str(self.construct_scalar(node))
         value = value.replace('_', '')
@@ -155,7 +162,7 @@ class MpfConstructor(Constructor):
             return sign*int(value[2:], 16)
         elif value.startswith('0o'):
             return sign*int(value[2:], 8)
-        #elif value[0] == '0':
+        # elif value[0] == '0':
         #    return sign*int(value, 8)
         elif ':' in value:
             digits = [int(part) for part in value.split(':')]
@@ -178,8 +185,7 @@ MpfConstructor.add_constructor(
     MpfConstructor.construct_yaml_int)
 
 
-class MpfRoundTripLoader(Reader, RoundTripScanner, Parser,
-                      Composer, MpfRoundTripConstructor, MpfResolver):
+class MpfRoundTripLoader(Reader, RoundTripScanner, Parser, Composer, MpfRoundTripConstructor, MpfResolver):
     def __init__(self, stream):
         Reader.__init__(self, stream)
         RoundTripScanner.__init__(self)
@@ -242,8 +248,7 @@ class YamlInterface(FileInterface):
                       __version__, __config_version__)
             log.error("Use the Config File Migrator to automatically "
                       "migrate your config file to the latest version.")
-            log.error("Migration tool: "
-                       "https://missionpinball.com/docs/tools/config-file-migrator/")
+            log.error("Migration tool: https://missionpinball.com/docs/tools/config-file-migrator/")
             log.error("More info on config version %s: "
                       "https://missionpinball.com/docs/configuration-file"
                       "-reference/important-config-file-concepts/config_version/config-version-%s/",
@@ -276,13 +281,12 @@ class YamlInterface(FileInterface):
             return copy.deepcopy(YamlInterface.file_cache[filename])
 
         if verify_version and not YamlInterface.check_config_file_version(filename):
-            raise ValueError("Config file version mismatch: {}".
-                            format(filename))
+            raise ValueError("Config file version mismatch: {}".format(filename))
 
         try:
             self.log.debug("Loading configuration file: %s", filename)
 
-            with open(filename, 'r') as f:
+            with open(filename) as f:
                 config = YamlInterface.process(f, round_trip)
         except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):

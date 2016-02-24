@@ -109,7 +109,7 @@ class SocketClient(object):
 
             try:
                 self.client_socket.send(prepped_message)
-            except:
+            except IOError:
                 self.log.error('Unable to send %s to remote socket server',
                                prepped_message)
 

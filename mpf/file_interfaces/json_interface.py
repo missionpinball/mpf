@@ -11,7 +11,8 @@ class JsonInterface(FileInterface):
 
     file_types = ['.json']
 
-    def get_config_file_version(self, filename):
+    @staticmethod
+    def get_config_file_version(filename):
         """Checks to see if the filename passed matches the config version MPF
         needs.
 
@@ -30,8 +31,8 @@ class JsonInterface(FileInterface):
             except ValueError:
                 return 0
 
-    def load(self, filename, verify_version=True):
-        """Loads a YAML file from disk.
+    def load(self, filename, verify_version=True, halt_on_error=False, round_trip=False):
+        """Loads a JSON file from disk.
 
         Args:
             filename: The file to load.
@@ -43,8 +44,11 @@ class JsonInterface(FileInterface):
             A dictionary of the settings from this YAML file.
 
         """
+        del verify_version
+        del halt_on_error
+        del round_trip
 
-        config = Util.keys_to_lower(self.byteify(json.load(open(filename, 'r'))))
+        config = Util.keys_to_lower(self.byteify(json.load(open(filename))))
 
         # if verify_version:
         #     self.check_config_file_version(filename)
@@ -65,15 +69,15 @@ class JsonInterface(FileInterface):
 
         return config
 
-    def byteify(self, input):
-        if isinstance(input, dict):
-            return {self.byteify(key):self.byteify(value) for key, value in input.items()}
-        elif isinstance(input, list):
-            return [self.byteify(element) for element in input]
-        elif isinstance(input, str):
-            return input.encode('utf-8')
+    def byteify(self, input_string):
+        if isinstance(input_string, dict):
+            return {self.byteify(key): self.byteify(value) for key, value in input_string.items()}
+        elif isinstance(input_string, list):
+            return [self.byteify(element) for element in input_string]
+        elif isinstance(input_string, str):
+            return input_string.encode()
         else:
-            return input
+            return input_string
 
     def save(self, filename, data):
         pass

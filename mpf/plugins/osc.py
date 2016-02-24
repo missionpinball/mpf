@@ -11,8 +11,6 @@ import locale
 
 from mpf.core.config_processor import ConfigProcessor
 
-global import_success
-
 try:
     # noinspection PyPep8Naming
     from . import OSC as OSCmodule
@@ -20,6 +18,7 @@ try:
     import_success = True
 except ImportError:
     import_success = False
+    OSCmodule = None
 
 
 class OSC(object):
@@ -355,7 +354,7 @@ class OSC(object):
             for k in list(self.OSC_clients.items()):
                 try:
                     if self.config['debug_messages']:
-                            self.log.info("Sending OSC Message to client:%s: %s", k, self.OSC_message)
+                        self.log.info("Sending OSC Message to client:%s: %s", k, self.OSC_message)
                     k[1].send(self.OSC_message)
 
                 except OSCmodule.OSCClientError:

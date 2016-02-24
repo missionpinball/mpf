@@ -50,16 +50,16 @@ class Led(Device):
     def update_leds(cls, dt):
         # called periodically (default at the end of every frame) to actually
         # write the new light states to the hardware
+        del dt
         if Led.leds_to_update:
             for light in Led.leds_to_update:
-                light._do_color()
+                light.do_color()
 
             Led.leds_to_update = set()
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
+    def __init__(self, machine, name, config=None, validate=True):
         config['number_str'] = str(config['number']).upper()
-        super().__init__(machine, name, config, collection,
-                         platform_section='leds', validate=validate)
+        super().__init__(machine, name, config, platform_section='leds', validate=validate)
 
         self.config['default_color'] = RGBColor(
             RGBColor.string_to_rgb(self.config['default_color'], (255, 255, 255)))
@@ -80,7 +80,6 @@ class Led(Device):
                           start_time=0.0,
                           fade_ms=0)
         """Current state of this LED."""
-
 
         self.cache = dict(color=RGBColor(),
                           priority=0,
@@ -107,8 +106,7 @@ class Led(Device):
     def set_color_correction_profile(self, profile):
         self._color_correction_profile = profile
 
-    def color(self, color, fade_ms=None, priority=0, cache=True, force=False,
-              blend=False):
+    def color(self, color, fade_ms=None, priority=0, cache=True, force=False,  blend=False):
         """Sets this LED to the color passed.
 
         Args:
@@ -125,6 +123,7 @@ class Led(Device):
                 Default is True.
             blend: Not yet implemented.
         """
+        del blend
         # If the incoming priority is lower that what this LED is at currently
         # ignore this request.
         if priority < self.state['priority'] and not force:
@@ -198,7 +197,7 @@ class Led(Device):
 
         Led.leds_to_update.add(self)
 
-    def _do_color(self):
+    def do_color(self):
 
         if self.state['fade_ms'] and not self.fade_in_progress:
             self._setup_fade()
@@ -214,8 +213,6 @@ class Led(Device):
                 for handler in self.registered_handlers:
                     handler(led_name=self.name,
                             color=self.state['color'])
-
-
 
     def disable(self, fade_ms=0, priority=0, cache=True, force=False):
         """ Disables an LED, including all elements of a multi-color LED.
@@ -282,8 +279,7 @@ class Led(Device):
 
         if self.debug:
             self.log.debug("Received a restore command.")
-            self.log.debug("Cached color: %s, Cached priority: %s",
-                          self.cache['color'], self.cache['priority'])
+            self.log.debug("Cached color: %s, Cached priority: %s", self.cache['color'], self.cache['priority'])
 
         self.color(color=self.cache['color'],
                    fade_ms=0,
@@ -310,6 +306,7 @@ class Led(Device):
         over the specified fade time.
         Returns: None
         """
+        del dt
 
         # not sure why this is needed, but sometimes the fade task tries to
         # run even though self.fade_in_progress is False. Maybe

@@ -3,6 +3,7 @@
 from mpf.core.device import Device
 from mpf.core.delays import DelayManager
 
+
 class DropTarget(Device):
     """Represents a single drop target in a pinball machine.
 
@@ -12,9 +13,8 @@ class DropTarget(Device):
     collection = 'drop_targets'
     class_label = 'drop_target'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
-        super().__init__(machine, name, config, collection,
-                         validate=validate)
+    def __init__(self, machine, name, config=None, validate=True):
+        super().__init__(machine, name, config, validate=validate)
 
         self._in_ball_search = False
         self.complete = False
@@ -52,8 +52,8 @@ class DropTarget(Device):
         self.reset_coil.pulse()
         self.delay.add(100, self._ball_search_iteration_finish)
 
-
     def _ball_search(self, phase, iteration):
+        del iteration
         if phase == 1:
             # phase 1: do not change state.
             # if up. reset again
@@ -109,6 +109,7 @@ class DropTarget(Device):
 
     def knockdown(self, **kwargs):
         """Pulses the knockdown coil to knock down this drop target."""
+        del kwargs
         if self.knockdown_coil:
             self.knockdown_coil.pulse()
 
@@ -159,6 +160,7 @@ class DropTarget(Device):
         physically moves back to the up position.
 
         """
+        del kwargs
 
         if self.reset_coil:
             self.reset_coil.pulse()
@@ -173,9 +175,8 @@ class DropTargetBank(Device):
     collection = 'drop_target_banks'
     class_label = 'drop_target_bank'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
-        super().__init__(machine, name, config, collection,
-                         validate=validate)
+    def __init__(self, machine, name, config=None, validate=True):
+        super().__init__(machine, name, config, validate=validate)
 
         self.drop_targets = list()
         self.reset_coil = None
@@ -207,6 +208,7 @@ class DropTargetBank(Device):
         coil, even if each drop target is configured with its own coil.)
 
         """
+        del kwargs
         if self.debug:
             self.log.debug('Resetting')
 

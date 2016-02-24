@@ -1,5 +1,4 @@
 import random
-import re
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.utility_functions import Util
@@ -167,7 +166,7 @@ class RGBColor(object):
         """ Initialization """
 
         if isinstance(color, RGBColor):
-            self._color = color._color
+            self._color = color.rgb
         elif isinstance(color, str):
             self._color = RGBColor.string_to_rgb(color)
         else:
@@ -499,7 +498,7 @@ class RGBColorCorrectionProfile(object):
         # Default lookup table values (linear)
         self._lookup_table = []
 
-        for channel in range(3):
+        for dummy_channel in range(3):
             self._lookup_table.append([i for i in range(256)])
 
     def generate_from_parameters(self, gamma=2.5, whitepoint=(1.0, 1.0, 1.0),

@@ -18,7 +18,7 @@ class AssetManager(object):
     """Base class for the Asset Manager.
 
     Args:
-        mc: The main MpfMc object.
+        mpfmc: The main MpfMc object.
 
     """
 
@@ -62,8 +62,7 @@ class AssetManager(object):
         self.machine.events.add_handler('init_phase_3', self._create_assets)
 
         # Picks up asset load information from connected BCP client(s)
-        self.machine.events.add_handler('assets_to_load',
-                                   self._bcp_client_asset_load)
+        self.machine.events.add_handler('assets_to_load', self._bcp_client_asset_load)
 
     @property
     def num_assets_remaining(self):
@@ -135,13 +134,11 @@ class AssetManager(object):
                 to exist. Higher number is first.
             pool_config_section: String which specifies the config file
                 section for associated asset groups.
-
         """
         if not hasattr(self.machine, attribute):
             # some assets of different classes use the same mc attribute, like
             # images and animated_images
             setattr(self.machine, attribute, CaseInsensitiveDict())
-
 
         ac = dict(attribute=attribute,
                   cls=asset_class,
@@ -221,9 +218,6 @@ class AssetManager(object):
                 config: A config dictionary.
                 mode: Optional reference to the mode object which is used when
                     assets are being created from mode folders.
-                mode_path: Optional full path to the base folder that will be
-                    traversed for the assets file on disk. If omitted, the
-                    base machine folder will be searched.
 
             Returns: An updated config dictionary. (See the "How it works"
                 section below for details.
@@ -375,8 +369,7 @@ class AssetManager(object):
                 name = os.path.splitext(file_name)[0].lower()
                 full_file_path = os.path.join(path, file_name)
 
-                if (folder == asset_class['path_string'] or
-                            folder not in asset_class['defaults']):
+                if folder == asset_class['path_string'] or folder not in asset_class['defaults']:
                     default_string = 'default'
                 else:
                     default_string = folder
@@ -455,6 +448,7 @@ class AssetManager(object):
     def _create_asset_groups(self, config, mode=None):
         # creates named groups of assets and adds them to to the mc's asset
         # dicts
+        del mode
         for ac in [x for x in self._asset_classes
                    if x['pool_config_section']]:
 
@@ -469,6 +463,7 @@ class AssetManager(object):
     def _load_mode_assets(self, config, priority, mode):
         # Called on mode start to load the assets that are set to automatically
         # load based on that mode starting
+        del config
         return (self.unload_assets,
                 self.load_assets_by_load_key(
                         key_name='{}_start'.format(mode.name),
@@ -481,6 +476,7 @@ class AssetManager(object):
                 key_name: String of the load: key name.
 
         """
+        del priority
         assets = set()
         # loop through all the registered assets of each class and look for
         # this key name
@@ -504,7 +500,7 @@ class AssetManager(object):
         for asset in assets:
             asset.unload()
 
-    def _load_asset(self, asset):
+    def load_asset(self, asset):
         # Internal method which handles the logistics of actually loading an
         # asset. Should only be called by Asset.load() as that method does
         # additional things that are needed.
@@ -525,10 +521,11 @@ class AssetManager(object):
             self._loaded_watcher = True
 
     def _check_loader_status(self, *args):
+        del args
         # checks the loaded queue and updates loading stats
         try:
             while not self.loaded_queue.empty():
-                self.loaded_queue.get()._loaded()
+                self.loaded_queue.get().is_loaded()
                 self.num_assets_loaded += 1
                 self._post_loading_event()
         except AttributeError:
@@ -554,10 +551,9 @@ class AssetManager(object):
         remaining = total - self.num_assets_loaded - self.num_bcp_assets_loaded
 
         self.machine.events.post('loading_assets', total=total,
-                            loaded=self.num_assets_loaded +
-                                   self.num_bcp_assets_loaded,
-                            remaining=remaining,
-                            percent=self.loading_percent)
+                                 loaded=self.num_assets_loaded + self.num_bcp_assets_loaded,
+                                 remaining=remaining,
+                                 percent=self.loading_percent)
 
         # TODO temp until logging is implemented properly
         # print('Loading assets: {}/{} ({}%)'.format(self.num_assets_loaded +
@@ -565,7 +561,7 @@ class AssetManager(object):
         #                                            total,
         #                                            self.loading_percent))
 
-        if not remaining and not self.machine._init_done:
+        if not remaining and not self.machine.is_init_done:
             self.machine.clear_boot_hold('assets')
 
 
@@ -610,7 +606,7 @@ class AssetLoader(threading.Thread):
                 if asset:
                     if not asset.loaded:
                         with asset.lock:
-                            asset._do_load()
+                            asset.do_load()
                     self.loaded_queue.put(asset)
 
         except Exception:  # pragma no cover
@@ -809,7 +805,10 @@ class Asset(object):
         # Note this is "backwards" (It's the __lt__ method but the formula uses
         # greater than because the PriorityQueue puts lowest first.)
         return ("%s, %s" % (self.priority, self._id) >
-                "%s, %s" % (other.priority, other._id))
+                "%s, %s" % (other.priority, other.get_id()))
+
+    def get_id(self):
+        return self._id
 
     def load(self, callback=None, priority=None):
         if priority is not None:
@@ -826,7 +825,7 @@ class Asset(object):
             # do something fancy here. Maybe just skip it and come back?
 
         self.loading = True
-        self.machine.asset_manager._load_asset(self)
+        self.machine.asset_manager.load_asset(self)
 
     def _call_callbacks(self):
         for callback in self._callbacks:
@@ -835,13 +834,13 @@ class Asset(object):
 
         self._callbacks = set()
 
-    def _do_load(self):
+    def do_load(self):
         # This is the actual method that loads the asset. It's called by a
         # different thread so it's ok to block. Make sure you don't set any
         # attributes here or you don't need any since it's a separate thread.
         raise NotImplementedError
 
-    def _loaded(self):
+    def is_loaded(self):
         self.loading = False
         self.loaded = True
         self.unloading = False

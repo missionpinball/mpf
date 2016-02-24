@@ -108,7 +108,7 @@ class BallSearch(object):
                 element = next(self.iterator)
                 timeout = self.playfield.config['ball_search_wait_after_iteration']
 
-            (priority, callback) = element
+            (dummy_priority, callback) = element
             # if a callback returns True we wait for the next one
             if callback(self.phase, self.iteration):
                 self.delay.add(name='run', callback=self.run, ms=timeout)
@@ -127,7 +127,7 @@ class BallSearch(object):
             if self.machine.ball_controller.num_balls_known > 0:
                 # we have at least one ball remaining
                 self.log.info("Adding %s replacement ball", lost_balls)
-                for i in range(lost_balls):
+                for dummy_iterator in range(lost_balls):
                     self.playfield.add_ball()
             else:
                 self.log.info("No more balls left. Ending game!")

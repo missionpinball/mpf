@@ -42,11 +42,10 @@ class BallController(object):
     def _init2(self):
         # register a handler for all switches
         for device in self.machine.ball_devices:
-            if not 'ball_switches' in device.config:
+            if 'ball_switches' not in device.config:
                 continue
             for switch in device.config['ball_switches']:
-                self.machine.switch_controller.add_switch_handler(switch.name,
-                                        self._count_balls, ms=100)
+                self.machine.switch_controller.add_switch_handler(switch.name, self._count_balls, ms=100)
 
         # run initial count
         self._count_balls()
@@ -56,11 +55,10 @@ class BallController(object):
         balls = 0
 
         for device in self.machine.ball_devices:
-            if not 'ball_switches' in device.config:
+            if 'ball_switches' not in device.config:
                 continue
             for switch in device.config['ball_switches']:
-                if (self.machine.switch_controller.is_active(switch.name,
-                                        ms=100)):
+                if self.machine.switch_controller.is_active(switch.name, ms=100):
                     balls += 1
 
         self.log.debug("Setting known balls to %s", balls)
@@ -210,8 +208,9 @@ class BallController(object):
         else:
             self.log.debug("All balls are collected")
 
-    def _collecting_balls_entered_callback(self, target, new_balls,
-                                           unclaimed_balls, **kwargs):
+    def _collecting_balls_entered_callback(self, target, new_balls, unclaimed_balls, **kwargs):
+        del kwargs
+        del new_balls
         if self.are_balls_collected(target=target):
             self._collecting_balls_complete()
 
@@ -221,8 +220,9 @@ class BallController(object):
         self.machine.events.remove_handler(self._collecting_balls_complete)
         self.machine.events.post('collecting_balls_complete')
 
-    def _ball_drained_handler(self, new_balls, unclaimed_balls, device,
-                              **kwargs):
+    def _ball_drained_handler(self, new_balls, unclaimed_balls, device, **kwargs):
+        del kwargs
+        del new_balls
         self.machine.events.post_relay('ball_drain',
                                        callback=self._process_ball_drained,
                                        device=device,

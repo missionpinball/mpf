@@ -5,6 +5,7 @@ tracking.
 import logging
 from collections import OrderedDict
 
+
 class ScoreController(object):
 
     def __init__(self, machine):
@@ -25,6 +26,7 @@ class ScoreController(object):
         self.mode_scores = dict()
 
     def mode_start(self, config, mode, priority, **kwargs):
+        del kwargs
         self.mode_configs[mode] = config
         self.mode_scores[mode] = dict()
         self.mode_configs = OrderedDict(sorted(iter(self.mode_configs.items()),
@@ -37,6 +39,7 @@ class ScoreController(object):
         return self.mode_stop, mode
 
     def mode_stop(self, mode, **kwargs):
+        del kwargs
         try:
             del self.mode_configs[mode]
         except KeyError:
@@ -48,6 +51,7 @@ class ScoreController(object):
             pass
 
     def _score_event_callback(self, event_name, mode, **kwargs):
+        del kwargs
         if not (self.machine.game.player and self.machine.game.balls_in_play):
             return
 
@@ -64,8 +68,7 @@ class ScoreController(object):
 
                     elif type(value) is str:
                         value, block = value.split('|')
-                        if (entry_mode == mode and
-                                    var_name not in blocked_variables):
+                        if entry_mode == mode and var_name not in blocked_variables:
                             self.add(value, var_name, mode)
                         if block.lower() == 'block':
                             blocked_variables.add(var_name)

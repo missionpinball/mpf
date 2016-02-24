@@ -3,11 +3,7 @@
 import logging
 
 from mpf.core.delays import DelayManager
-from mpf.core.utility_functions import Util
-from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform,
-                                  VirtualDMD, VirtualDriver, VirtualGI,
-                                  VirtualLED, VirtualMatrixLight,
-                                  VirtualSwitch)
+from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform, VirtualDriver)
 
 
 class HardwarePlatform(VirtualPlatform):
@@ -42,9 +38,7 @@ class HardwarePlatform(VirtualPlatform):
                             device.config['eject_targets'][0])
 
                 if device.config['confirm_eject_switch']:
-                    device.config[
-                        'eject_coil'].hw_driver.confirm_eject_switch = \
-                    device.config['confirm_eject_switch']
+                    device.config['eject_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
 
             elif device.config['hold_coil']:
                 device.config['hold_coil'].hw_driver.register_ball_switches(
@@ -57,8 +51,7 @@ class HardwarePlatform(VirtualPlatform):
                             device.config['eject_targets'][0])
 
                 if device.config['confirm_eject_switch']:
-                    device.config['hold_coil'].hw_driver.confirm_eject_switch = \
-                    device.config['confirm_eject_switch']
+                    device.config['hold_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
 
     def configure_driver(self, config, device_type='coil'):
         # todo should probably throw out the number that we get since it could

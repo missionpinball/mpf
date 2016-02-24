@@ -44,6 +44,7 @@ class ConfigPlayer(object):
     def process_config(self, config, **kwargs):
         # called every time mpf starts, regardless of whether config was built
         # from cache or config files
+        del kwargs
 
         # config is localized
 
@@ -71,6 +72,7 @@ class ConfigPlayer(object):
 
     def register_player_events(self, config, mode=None, priority=0):
         # config is localized
+        del priority
 
         key_list = list()
 
@@ -92,6 +94,8 @@ class ConfigPlayer(object):
     def play(self, settings, mode=None, **kwargs):
         # Be sure to include **kwargs in your subclass since events could come
         # in with any parameters
+        del settings
+        del kwargs
 
         if mode and not mode.active:
             return  # pragma: no cover

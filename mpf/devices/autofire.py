@@ -20,9 +20,8 @@ class AutofireCoil(Device):
     collection = 'autofires'
     class_label = 'autofire'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
-        super().__init__(machine, name, config, collection,
-                         validate=validate)
+    def __init__(self, machine, name, config=None, validate=True):
+        super().__init__(machine, name, config, validate=validate)
 
         self.coil = self.config['coil']
         self.switch = self.config['switch']
@@ -57,6 +56,7 @@ class AutofireCoil(Device):
 
     def enable(self, **kwargs):
         """Enables the autofire coil rule."""
+        del kwargs
 
         # todo disable first to clear any old rules?
 
@@ -73,5 +73,6 @@ class AutofireCoil(Device):
 
     def disable(self, **kwargs):
         """Disables the autofire coil rule."""
+        del kwargs
         self.log.debug("Disabling")
         self.platform.clear_hw_rule(self.switch.name)

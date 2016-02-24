@@ -16,10 +16,9 @@ class Gi(Device):
     collection = 'gi'
     class_label = 'gi'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
+    def __init__(self, machine, name, config=None, validate=True):
         config['number_str'] = str(config['number']).upper()
-        super().__init__(machine, name, config, collection,
-                         platform_section='gis', validate=validate)
+        super().__init__(machine, name, config, platform_section='gis', validate=validate)
 
         self.hw_driver, self.number = self.platform.configure_gi(self.config)
 
@@ -35,6 +34,7 @@ class Gi(Device):
             fade_ms: How quickly you'd like this GI string to fade to this
                 brightness level. This is not implemented.
         """
+        del kwargs
         if type(brightness) is list:
             brightness = brightness[0]
 
@@ -46,6 +46,7 @@ class Gi(Device):
 
     def disable(self, **kwargs):
         """Disables this GI string."""
+        del kwargs
         self.hw_driver.off()
 
     def add_handler(self, callback):

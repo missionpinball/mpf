@@ -17,7 +17,7 @@ class Shot(Device):
     to track shots.
     """
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
+    def __init__(self, machine, name, config=None, validate=True):
         # If this device is setup in a machine-wide config, make sure it has
         # a default enable event.
 
@@ -32,8 +32,7 @@ class Shot(Device):
             if 'reset_events' not in config:
                 config['reset_events'] = 'ball_ended'
 
-        super(Shot, self).__init__(machine, name, config, collection,
-                                   validate=validate)
+        super(Shot, self).__init__(machine, name, config, validate=validate)
 
         self.delay = mpf.core.delays.DelayManager(self.machine.delayRegistry)
 
@@ -391,7 +390,7 @@ class Shot(Device):
 
         found = False
 
-        for _mode, settings in self.enable_table.items():
+        for _mode in self.enable_table:
             # only care about hits lower than this mode
 
             if found:

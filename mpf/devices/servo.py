@@ -13,9 +13,8 @@ class Servo(Device):
     collection = 'servos'
     class_label = 'servo'
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
-        super().__init__(machine, name, config, collection,
-                         validate=validate, platform_section='servo_controllers')
+    def __init__(self, machine, name, config=None, validate=True):
+        super().__init__(machine, name, config, platform_section='servo_controllers', validate=validate)
 
         for position in self.config['positions']:
             self.machine.events.add_handler(self.config['positions'][position],

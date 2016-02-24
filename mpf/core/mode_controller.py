@@ -3,12 +3,9 @@ import importlib
 import logging
 import os
 from collections import namedtuple
-
-import sys
-
+from mpf.core.mode import Mode
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
-
 
 RemoteMethod = namedtuple('RemoteMethod',
                           'method config_section kwargs priority',
@@ -21,8 +18,6 @@ be called on mode_start or mode_stop.
 # Need to define RemoteMethod before import Mode since the mode module imports
 # it. So this breaks some rules now. Probably should figure out some other way
 # to do this? TODO
-
-from mpf.core.mode import Mode
 
 
 class ModeController(object):
@@ -92,7 +87,7 @@ class ModeController(object):
         """Loads a mode, reads in its config, and creates the Mode object.
 
         Args:
-            mode: String name of the mode you're loading. This is the name of
+            mode_string: String name of the mode you're loading. This is the name of
                 the mode's folder in your game's machine_files/modes folder.
 
         """
@@ -104,21 +99,20 @@ class ModeController(object):
 
         # Find the folder for this mode. First check the machine folder/modes,
         # if that's not a valid folder, check the mpf/modes folder.
-        mode_path = os.path.join(self.machine.machine_path,
-            self.machine.config['mpf']['paths']['modes'], mode_string)
+        mode_path = os.path.join(self.machine.machine_path, self.machine.config['mpf']['paths']['modes'], mode_string)
 
         if not os.path.exists(mode_path):
             mode_path = os.path.join(
-                self.machine.mpf_path,
-                self.machine.config['mpf']['paths']['modes'], mode_string)
+                    self.machine.mpf_path,
+                    self.machine.config['mpf']['paths']['modes'], mode_string)
 
         # Is there an MPF default config for this mode? If so, load it first
         mpf_mode_config = os.path.join(
-            self.machine.mpf_path,
-            self.machine.config['mpf']['paths']['modes'],
-            mode_string,
-            'config',
-            mode_string + '.yaml')
+                self.machine.mpf_path,
+                self.machine.config['mpf']['paths']['modes'],
+                mode_string,
+                'config',
+                mode_string + '.yaml')
 
         if os.path.isfile(mpf_mode_config):
             config = ConfigProcessor.load_config_file(mpf_mode_config)
@@ -128,12 +122,12 @@ class ModeController(object):
         # and if so, merge it into the config
 
         mode_config_file = os.path.join(self.machine.machine_path,
-            self.machine.config['mpf']['paths']['modes'],
-            mode_string, 'config', mode_string + '.yaml')
+                                        self.machine.config['mpf']['paths']['modes'],
+                                        mode_string, 'config', mode_string + '.yaml')
 
         if os.path.isfile(mode_config_file):
             config = Util.dict_merge(config,
-            ConfigProcessor.load_config_file(mode_config_file))
+                                     ConfigProcessor.load_config_file(mode_config_file))
             found_configuration = True
 
         # the mode has to have at least one config to exist
@@ -143,7 +137,7 @@ class ModeController(object):
                                  .format(mode_string))
 
         # validate config
-        if not 'mode' in config:
+        if 'mode' not in config:
             config['mode'] = dict()
 
         self.machine.config_validator.validate_config("mode", config['mode'])
@@ -155,9 +149,9 @@ class ModeController(object):
         if config['mode']['code']:
             try:
                 mode_code_file = os.path.join(self.machine.machine_path,
-                    self.machine.config['mpf']['paths']['modes'],
-                    mode_string, 'code',
-                    config['mode']['code'].split('.')[0] + '.py')
+                                              self.machine.config['mpf']['paths']['modes'],
+                                              mode_string, 'code',
+                                              config['mode']['code'].split('.')[0] + '.py')
                 # code is in the machine folder
                 import_str = (self.machine.config['mpf']['paths']['modes'] +
                               '.' + mode_string + '.code.' +
@@ -170,7 +164,7 @@ class ModeController(object):
                                    mode_code_file)
 
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
-                    self.machine, config, mode_string, mode_path)
+                        self.machine, config, mode_string, mode_path)
 
             except ImportError:
                 # code is in the mpf folder
@@ -185,7 +179,7 @@ class ModeController(object):
                                    import_str)
 
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
-                    self.machine, config, mode_string, mode_path)
+                        self.machine, config, mode_string, mode_path)
 
         else:  # no code specified, so using the default Mode class
             if self.debug:
@@ -195,22 +189,23 @@ class ModeController(object):
         return mode_object
 
     def _player_added(self, player, num):
+        del num
         player.uvars['_restart_modes_on_next_ball'] = list()
 
     def _player_turn_start(self, player, **kwargs):
-
+        del kwargs
         for mode in self.machine.modes:
             mode.player = player
 
     def _player_turn_stop(self, player, **kwargs):
-
+        del kwargs
+        del player
         for mode in self.machine.modes:
             mode.player = None
 
     def _ball_starting(self, queue):
-        for mode in self.machine.game.player.uvars[
-                '_restart_modes_on_next_ball']:
-
+        del queue
+        for mode in self.machine.game.player.uvars['_restart_modes_on_next_ball']:
             self.log.debug("Restarting mode %s based on 'restart_on_next_ball"
                            "' setting", mode)
 
@@ -222,7 +217,7 @@ class ModeController(object):
         # unloads all the active modes
 
         if not self.active_modes:
-            return()
+            return ()
 
         self.queue = queue
         self.queue.wait()
@@ -271,8 +266,8 @@ class ModeController(object):
 
         """
         self.loader_methods.append(RemoteMethod(method=load_method,
-            config_section=config_section_name, kwargs=kwargs,
-            priority=priority))
+                                                config_section=config_section_name, kwargs=kwargs,
+                                                priority=priority))
 
     def register_start_method(self, start_method, config_section_name=None,
                               priority=0, **kwargs):
@@ -302,8 +297,8 @@ class ModeController(object):
                            start_method, config_section_name, priority, kwargs)
 
         self.start_methods.append(RemoteMethod(method=start_method,
-            config_section=config_section_name, priority=priority,
-            kwargs=kwargs))
+                                               config_section=config_section_name, priority=priority,
+                                               kwargs=kwargs))
 
         self.start_methods.sort(key=lambda x: x.priority, reverse=True)
 
@@ -328,7 +323,7 @@ class ModeController(object):
         for mode in self.active_modes:
             if mode.active:
                 self.log.info('| {} : {}'.format(
-                    mode.name, mode.priority).ljust(38) + '|')
+                        mode.name, mode.priority).ljust(38) + '|')
 
         self.log.info('+-------------------------------------+')
 
@@ -344,7 +339,7 @@ class ModeController(object):
 
         """
         if mode_name in [x.name for x in self.active_modes
-                         if x._active is True]:
+                         if x.active is True]:
             return True
         else:
             return False

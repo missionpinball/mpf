@@ -50,12 +50,7 @@ class Snux(object):
 
     @property
     def a_side_busy(self):
-        if (self.drivers_holding_a_side or
-                    self.a_side_done_time > self.machine.clock.get_time() or
-                    self.a_side_queue):
-            return True
-        else:
-            return False
+        return self.drivers_holding_a_side or self.a_side_done_time > self.machine.clock.get_time() or self.a_side_queue
 
     @property
     def c_side_active(self):
@@ -138,6 +133,7 @@ class Snux(object):
 
     def _tick(self, dt):
         # Called based on the timer_tick event
+        del dt
         if self.a_side_queue:
             self._service_a_side()
         elif self.c_side_queue:
@@ -146,6 +142,7 @@ class Snux(object):
             self._enable_a_side()
 
     def flash_diag_led(self, dt):
+        del dt
         self.diag_led.pulse(250)
 
     def configure_driver(self, config, device_type='coil'):
@@ -361,6 +358,7 @@ class SnuxDriver(object):
         return "SnuxDriver.{}".format(self.number)
 
     def pulse(self, milliseconds=None, **kwargs):
+        del kwargs
         if milliseconds is None:
             milliseconds = self.platform_driver.get_pulse_ms()
 
@@ -372,9 +370,11 @@ class SnuxDriver(object):
         return -1
 
     def enable(self, **kwargs):
+        del kwargs
         self.overlay.driver_action(self.platform_driver, -1)
 
     def disable(self, **kwargs):
+        del kwargs
         self.overlay.driver_action(self.platform_driver, 0)
 
 

@@ -57,15 +57,28 @@ class DeviceManager(object):
             except KeyError:
                 pass
 
-    def create_devices(self, collection, config, validate=True):
+    def create_devices(self, collection_name, config, validate=True):
+        cls = self.device_classes[collection_name]
 
-        self.device_classes[collection].create_devices(
-                cls=self.device_classes[collection],
-                collection=getattr(self.machine, collection),
-                config=config,
-                machine=self.machine,
-                validate=validate
-        )
+        collection = getattr(self.machine, collection_name)
+
+        # if this device class has a device_class_init classmethod, run it now
+        if hasattr(cls, 'device_class_init'):
+            # don't want to use try here in case the called method has an error
+            cls.device_class_init(self.machine)
+
+        # create the devices
+        for device in config:
+
+            if not config[device]:
+                raise AssertionError("Device '{}' has an empty config."
+                                     .format(device))
+
+            elif type(config[device]) is not dict:
+                raise AssertionError("Device '{}' does not have a valid config."
+                                     .format(device))
+
+            collection[device] = cls(self.machine, device, config[device], validate)
 
     def get_device_control_events(self, config):
         """Scans a config dictionary and yields events, methods, delays, and

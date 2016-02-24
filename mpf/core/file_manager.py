@@ -34,13 +34,12 @@ class FileInterface(object):
             for extension in self.file_types:
                 if os.path.isfile(filename + extension):
                     return os.path.abspath(filename + extension), extension
-            else:
-                return False, None
+            return False, None
         else:
             return filename, os.path.splitext(filename)[1]
 
     @staticmethod
-    def get_config_file_version(self, filename):
+    def get_config_file_version(filename):
         """Gets the config version number from a file. Since this technique
         varies depending on the file type, it needs to be implemented in the
         chile class

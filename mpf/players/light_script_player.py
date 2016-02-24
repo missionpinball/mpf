@@ -10,8 +10,6 @@ class LightScriptPlayer(ConfigPlayer):
         for s in settings:
             # settings is a list of one or more light script configs
 
-            name = s['script']
-
             self.machine.show_controller.create_show_from_script(
                 script=s['script'],
                 lights=s['lights'],

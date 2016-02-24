@@ -28,20 +28,19 @@ class MatrixLight(Device):
 
     @classmethod
     def update_matrix_lights(cls, dt):
+        del dt
         # called periodically (default at the end of every frame) to actually
         # write the new light states to the hardware
         if MatrixLight.lights_to_update:
             for light in MatrixLight.lights_to_update:
-                light._do_on()
+                light.do_on()
 
             MatrixLight.lights_to_update = set()
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
+    def __init__(self, machine, name, config=None, validate=True):
         config['number_str'] = str(config['number']).upper()
 
-        super().__init__(machine, name, config, collection,
-                         platform_section='matrix_lights',
-                         validate=validate)
+        super().__init__(machine, name, config, platform_section='matrix_lights', validate=validate)
 
         self.hw_driver, self.number = (
             self.platform.configure_matrixlight(self.config))
@@ -155,7 +154,7 @@ class MatrixLight(Device):
 
         MatrixLight.lights_to_update.add(self)
 
-    def _do_on(self):
+    def do_on(self):
         if self.state['fade_ms'] and not self.fade_in_progress:
             self._setup_fade()
 
@@ -239,6 +238,7 @@ class MatrixLight(Device):
         over the specified fade time.
         Returns: None
         """
+        del dt
 
         # not sure why this is needed, but sometimes the fade task tries to
         # run even though self.fade_in_progress is False. Maybe
@@ -274,8 +274,7 @@ class MatrixLight(Device):
         if self.debug:
             print("new brightness", new_brightness)
 
-        self.on(brightness=new_brightness, fade_ms=0,
-                priority=state['priority'], cache=set_cache)
+        self.on(brightness=new_brightness, priority=state['priority'], cache=set_cache)
 
         if self.debug:
             print("fade_in_progress just ended")
@@ -284,8 +283,7 @@ class MatrixLight(Device):
     def _end_fade(self):
         # stops the fade and instantly sets the light to its destination color
         self._stop_fade_task()
-        self.on(brightness=self.state['destination_brightness'],
-                fade_ms=0, priority=self.state['priority'], cache=True)
+        self.on(brightness=self.state['destination_brightness'], priority=self.state['priority'], cache=True)
 
     def _stop_fade_task(self):
         # stops the fade task. Light is left in whatever state it was in

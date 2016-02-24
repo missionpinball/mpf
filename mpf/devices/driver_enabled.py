@@ -19,9 +19,8 @@ class DriverEnabled(Driver):
 
         DriverEnabled.enable_driver_mappings[driver].add(device)
 
-    def __init__(self, machine, name, config, collection=None, validate=True):
-        super().__init__(machine, name, config, collection,
-                         validate=validate)
+    def __init__(self, machine, name, config=None, validate=True):
+        super().__init__(machine, name, config, validate=validate)
 
         DriverEnabled.add_driver_enabled_device(self.hw_driver, self)
 
@@ -29,9 +28,9 @@ class DriverEnabled(Driver):
         del kwargs
         super().enable()
         for device in DriverEnabled.enable_driver_mappings[self.hw_driver]:
-            device._enable()
+            device.enable_enable_driver()
 
-    def _enable(self):
+    def enable_enable_driver(self):
         self.log.debug('Enabling')
         # print self, "enabling"
 
@@ -40,9 +39,9 @@ class DriverEnabled(Driver):
         super().disable()
         # self.driver.disable()
         for device in DriverEnabled.enable_driver_mappings[self.hw_driver]:
-            device._disable()
+            device.disable_enable_driver()
 
-    def _disable(self):
+    def disable_enable_driver(self):
         self.log.debug('Disabling')
 
     def pulse(self, *args, **kwargs):
