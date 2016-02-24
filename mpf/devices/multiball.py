@@ -88,22 +88,27 @@ class Multiball(Device):
         return {'balls': 0}
 
     def _ball_drain_count_balls(self, balls, **kwargs):
-        del kwargs
-        self.balls_ejected -= balls
-        if self.balls_ejected <= 0:
+        if "mb_claimed" in kwargs:
+            claimed = kwargs['mb_claimed']
+        else:
+            claimed = 0
+
+        # balls available to claim
+        available_balls = balls - claimed
+
+        if available_balls >= self.balls_ejected:
+            claimed = self.balls_ejected
             self.balls_ejected = 0
             self.machine.events.remove_handler(self._ball_drain_count_balls)
             self.machine.events.post("multiball_" + self.name + "_ended")
             self.log.debug("Ball drained. MB ended.")
         else:
+            self.balls_ejected -= available_balls
             self.log.debug("Ball drained. %s balls remain until MB ends",
                            self.balls_ejected)
+            claimed = available_balls
 
-        # TODO: we are _not_ claiming the balls because we want it to drain.
-        # However this may result in wrong results with multiple MBs at the
-        # same time. May be we should claim and remove balls manually?
-
-        return {'balls': balls}
+        return {'balls': balls, 'mb_claimed': claimed}
 
     def stop(self, **kwargs):
         del kwargs
