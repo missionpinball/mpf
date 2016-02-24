@@ -31,6 +31,9 @@ class Multiball(Device):
         # disable mb when mode ends
         self.disable()
 
+        # also stop mb if no shoot again is specified
+        self.stop()
+
     def _initialize(self):
         self.ball_locks = self.config['ball_locks']
         self.source_playfield = self.config['source_playfield']
