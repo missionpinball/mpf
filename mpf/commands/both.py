@@ -4,7 +4,7 @@ import platform
 
 class Command(object):
     def __init__(self, mpf_path, machine_path, args):
-
+        del mpf_path
         if platform.system() == 'Windows':
             os.system('start "MPF Core" mpf mc {} {} -p'.format(
                 machine_path, ' '.join(args)))

@@ -20,7 +20,7 @@ from mpfmc.core.utils import set_machine_path, load_machine_config
 class Command(object):
 
     def __init__(self, mpf_path, machine_path, args):
-
+        del mpf_path
         parser = argparse.ArgumentParser(description='Starts the MPF Media Controller')
 
         parser.add_argument("-l",
