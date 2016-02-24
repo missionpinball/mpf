@@ -312,7 +312,7 @@ class ClockEvent(object):
         if self._is_triggered is False:
             self._is_triggered = True
             # update starttime
-            self._last_dt = self.clock._last_tick
+            self._last_dt = self.clock.get_time()
             self.clock.events[self.cid].append(self)
             return True
 
