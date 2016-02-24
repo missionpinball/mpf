@@ -72,7 +72,13 @@ class TestMultiBall(MpfTestCase):
         self.assertNotEqual(None, self.machine.game)
         self.assertEqual(1, self.machine.playfield.balls)
 
-        # mb started
+        self.post_event("mb1_disable")
+        # nothing happens
+        self.post_event("mb1_start")
+        self.assertEqual(0, self.machine.multiballs.mb1.balls_ejected)
+
+        # mb start
+        self.post_event("mb1_enable")
         self.post_event("mb1_start")
         self.assertEqual(1, self.machine.multiballs.mb1.balls_ejected)
 
@@ -117,6 +123,100 @@ class TestMultiBall(MpfTestCase):
 
         # game should end
         self.advance_time_and_run(1)
+        self.assertEqual(None, self.machine.game)
+
+    def testRestartMultiball(self):
+        self.mock_event("multiball_mb1_ended")
+
+        # prepare game
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
+
+        self.advance_time_and_run(10)
+        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
+
+        self.assertFalse(self.machine.multiballs.mb1.enabled)
+
+        # start game
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+        self.machine_run()
+        self.post_event("mb1_enable")
+
+        # multiball should be enabled
+        self.assertTrue(self.machine.multiballs.mb1.enabled)
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        # mb started
+        self.post_event("mb1_start")
+        self.assertEqual(1, self.machine.multiballs.mb1.balls_ejected)
+
+        # another ball should be ejected to pf
+        self.advance_time_and_run(10)
+        self.assertEqual(2, self.machine.playfield.balls)
+
+        # ball drains
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+
+        # game should not end
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        # it should be readded because of shoot again
+        self.advance_time_and_run(10)
+        self.assertEqual(2, self.machine.playfield.balls)
+        self.assertEqual(2, self.machine.playfield.available_balls)
+
+        # mb cannot start again/nothing happens
+        self.post_event("mb1_start")
+        self.assertEqual(1, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(2, self.machine.playfield.available_balls)
+
+        # shoot again ends
+        self.advance_time_and_run(10)
+
+        # mb cannot start again because balls are still in play
+        self.post_event("mb1_start")
+        self.assertEqual(1, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(2, self.machine.playfield.available_balls)
+        self.assertEqual(0, self._events['multiball_mb1_ended'])
+
+        # ball drains
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+
+        # mb ends
+        self.assertEqual(0, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(1, self._events['multiball_mb1_ended'])
+
+        # restart mb
+        self.post_event("mb1_start")
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(2, self.machine.playfield.available_balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        self.advance_time_and_run(40)
+        self.assertEqual(2, self.machine.playfield.balls)
+
+        # two balls drains
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+
+        # game should end
+        self.advance_time_and_run(1)
+        self.assertEqual(2, self._events['multiball_mb1_ended'])
         self.assertEqual(None, self.machine.game)
 
     def testUnlimitedShootAgain(self):
