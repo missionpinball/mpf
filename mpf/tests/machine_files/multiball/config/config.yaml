@@ -46,6 +46,7 @@ ball_devices:
 
 modes:
     - mode1
+    - mode2
 
 multiballs:
     mb1:

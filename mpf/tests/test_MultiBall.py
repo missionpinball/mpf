@@ -485,3 +485,76 @@ class TestMultiBall(MpfTestCase):
         # game should end
         self.advance_time_and_run(1)
         self.assertEqual(None, self.machine.game)
+
+    def testMultiballInModeSimple(self):
+        self.mock_event("multiball_mb5_ended")
+
+        # prepare game
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
+
+        self.advance_time_and_run(10)
+        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
+
+        # start game
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+        self.machine_run()
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        self.advance_time_and_run(4)
+        self.assertEqual(1, self.machine.playfield.available_balls)
+
+        # start mode
+        self.post_event("start_mode2")
+
+        # mode loaded. mb5 should enabled but not started
+        self.assertTrue(self.machine.multiballs.mb5.enabled)
+        self.assertEqual(0, self.machine.multiballs.mb5.balls_ejected)
+
+        # start it
+        self.post_event("mb5_start")
+        self.assertEqual(1, self.machine.multiballs.mb5.balls_ejected)
+
+        self.advance_time_and_run(4)
+        self.assertEqual(2, self.machine.playfield.available_balls)
+
+        # drain a ball
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+
+        # it should come back
+        self.assertEqual(2, self.machine.playfield.available_balls)
+        self.assertEqual(0, self._events['multiball_mb5_ended'])
+
+        # stop mode
+        self.post_event("stop_mode2")
+
+        # mode end should stop mb
+        self.assertFalse(self.machine.multiballs.mb5.shoot_again)
+        self.assertFalse(self.machine.multiballs.mb5.enabled)
+        self.assertEqual(0, self._events['multiball_mb5_ended'])
+
+        # next drain should end mb
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self.machine.playfield.available_balls)
+        self.assertEqual(1, self._events['multiball_mb5_ended'])
+
+        # ball drains
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(1)
+
+        # game should end
+        self.advance_time_and_run(1)
+        self.assertEqual(None, self.machine.game)
