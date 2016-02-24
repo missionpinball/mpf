@@ -27,7 +27,8 @@ log = logging.getLogger('YAML Interface')
 
 
 class MpfResolver(BaseResolver):
-    pass
+    def __init__(self):
+        super().__init__()
 
 MpfResolver.add_implicit_resolver(
     # Process any item beginning with a plus sign (+) as a string
@@ -107,6 +108,9 @@ MpfResolver.add_implicit_resolver(
 
 
 class MpfRoundTripConstructor(RoundTripConstructor):
+    def __init__(self):
+        super().__init__()
+
     def construct_yaml_int(self, node):
         value = to_str(self.construct_scalar(node))
         value = value.replace('_', '')
@@ -139,6 +143,9 @@ class MpfRoundTripConstructor(RoundTripConstructor):
 
 
 class MpfConstructor(Constructor):
+    def __init__(self):
+        super().__init__()
+
     def construct_yaml_int(self, node):
         value = to_str(self.construct_scalar(node))
         value = value.replace('_', '')
