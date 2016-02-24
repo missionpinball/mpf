@@ -1145,8 +1145,6 @@ class ConfigValidator(object):
                                        'setting "%s", but this is not a valid '
                                        'setting name.', path_string)
 
-                        self.lookup_invalid_config_setting(path_string)
-
                         raise AssertionError('Your config contains a value for the '
                                              'setting "' + path_string + '", but this is not a valid '
                                                                          'setting name.')
@@ -1266,34 +1264,3 @@ class ConfigValidator(object):
                         validation_failure_info[0][1],
                         validation_failure_info[1],
                         item))
-
-    def lookup_invalid_config_setting(self, setting):
-
-        setting_key = setting.split(':')[-1]
-
-        with open(os.path.join(self.machine.mpf_path, self.machine.config['mpf']['config_versions_file'])) as f:
-            config_file = yaml.load(f, Loader=MpfLoader)
-
-        for ver, sections in config_file.items():
-
-            if type(ver) is not int:
-                continue
-
-            ver_string = ''
-
-            if int(__config_version__) > int(ver):
-                ver_string = (
-                    ' (The latest config version is config_version=' +
-                    __config_version__ + ').')
-
-            if setting_key in sections['section_replacements']:
-                self.log.info('The setting "%s" has been renamed to "%s" in '
-                              'config_version=%s%s', setting,
-                              sections['section_replacements'][setting_key],
-                              ver, ver_string)
-            if setting_key in sections['section_deprecations']:
-                self.log.info('The setting "%s" has been removed in '
-                              'config_version=%s%s', setting, ver, ver_string)
-
-        if setting in config_file['custom_messages']:
-            self.log.info(config_file['custom_messages'][setting])
