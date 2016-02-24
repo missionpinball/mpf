@@ -21,9 +21,23 @@ class Multiball(Device):
         self.machine.events.add_handler('init_phase_3',
                                         self._initialize)
 
+    def device_added_to_mode(self, mode, player):
+        del mode
+        del player
+        # initialize on mode
+        self._initialize()
+
+    def remove(self):
+        # disable mb when mode ends
+        self.disable()
+
     def _initialize(self):
         self.ball_locks = self.config['ball_locks']
         self.source_playfield = self.config['source_playfield']
+
+        # start mb if no enable_events are specified
+        if not self.config['enable_events']:
+            self.enable()
 
     def start(self, **kwargs):
         del kwargs
