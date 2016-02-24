@@ -330,6 +330,45 @@ class YamlInterface(FileInterface):
 
     @staticmethod
     def save_to_str(data):
-        return yaml.dump(data, Dumper=RoundTripDumper, default_flow_style=False, indent=4, width=10)
+        return yaml.dump(data, Dumper=RoundTripDumper,
+                         default_flow_style=False, indent=4, width=10)
+
+    @staticmethod
+    def rename_key(old_key, new_key, commented_map):
+        """Used to rename a key in YAML file data that was loaded with the
+        RoundTripLoader (e.g. that contains comments. Comments are retained
+        for the renamed key. Order of keys is also maintained.
+
+        Args:
+            old_key: The existing key name you want to change.
+            new_key: The new key name.
+            commented_map: The YAML data CommentMap class (from yaml.load) with
+                the key you want to change.
+
+        Returns:
+            The updated CommentedMap YAML dict. (Note that this method does not
+            change the dict object (e.g. it's changed in place), you you most
+            likely don't need to do anything with the returned dict.
+
+        """
+        key_list = list(commented_map.keys())
+
+        for key in key_list:
+            if key == old_key:
+                commented_map[new_key] = commented_map[old_key]
+
+                try:  # if there's no comment, it will not be in ca.items
+                    commented_map.ca.items[new_key] = (
+                        commented_map.ca.items.pop(old_key))
+                except KeyError:
+                    pass
+
+                del commented_map[old_key]
+
+            else:
+                commented_map.move_to_end(key)
+
+        return commented_map
+
 
 file_interface_class = YamlInterface

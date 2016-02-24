@@ -1,3 +1,6 @@
+import ruamel.yaml as yaml
+from ruamel.yaml.loader import RoundTripLoader
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
@@ -74,3 +77,19 @@ sound_system:
         #print(saved_config)
 
         self.assertEqual(orig_config, saved_config)
+
+    def test_rename_key(self):
+        yaml_str = '''
+
+a: 1
+b: 2
+c: 3
+
+
+'''
+        data = yaml.load(yaml_str, Loader=RoundTripLoader)
+        YamlInterface.rename_key('b', 'z', data)
+
+        self.assertEqual(data['a'], 1)
+        self.assertEqual(data['z'], 2)
+        self.assertEqual(data['c'], 3)
