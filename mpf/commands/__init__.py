@@ -99,6 +99,6 @@ class CommandLineUtility(object):
             sys.exit()
 
 
-def run_from_command_line():
+def run_from_command_line(args=None):
     path = os.path.abspath(os.path.curdir)
     CommandLineUtility(path).execute()
