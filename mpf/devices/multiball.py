@@ -67,7 +67,7 @@ class Multiball(Device):
                                             self._ball_drain_shoot_again,
                                             priority=1000)
             # Register stop handler
-            if not isinstance(self.config['shoot_again'], bool):
+            if self.config['shoot_again'] > 0:
                 self.delay.add(name='disable_shoot_again',
                                ms=self.config['shoot_again'],
                                callback=self.stop)

@@ -53,8 +53,8 @@ multiballs:
         start_events: mb1_start
         stop_events: mb1_stop
     mb2:
-        ball_count: 2
-        shoot_again: 0
+        ball_count: 3
+        shoot_again: -1
         enable_events: mb2_enable
         disable_events: mb2_disable
         start_events: mb2_start
