@@ -448,6 +448,7 @@ class TestMultiBall(MpfTestCase):
         # mode loaded. mb4 should enable and start
         self.post_event("mb4_enable")
         self.post_event("mb4_start")
+        self.assertTrue(self.machine.multiballs.mb4.enabled)
 
         self.advance_time_and_run(4)
         self.assertEqual(2, self.machine.playfield.available_balls)
@@ -456,9 +457,6 @@ class TestMultiBall(MpfTestCase):
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.playfield.balls)
 
-        # stop mode
-        self.post_event("stop_mode1")
-
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.advance_time_and_run(1)
 
@@ -466,8 +464,12 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(2, self.machine.playfield.available_balls)
         self.assertEqual(0, self._events['multiball_mb4_ended'])
 
-        # wait for end of shoot again
-        self.advance_time_and_run(40)
+        # stop mode
+        self.post_event("stop_mode1")
+
+        # mode end should stop mp
+        self.assertFalse(self.machine.multiballs.mb4.shoot_again)
+        self.assertFalse(self.machine.multiballs.mb4.enabled)
         self.assertEqual(0, self._events['multiball_mb4_ended'])
 
         # next drain should end mb
