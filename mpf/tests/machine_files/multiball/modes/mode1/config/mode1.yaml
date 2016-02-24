@@ -1,0 +1,13 @@
+#config_version=3
+mode:
+  start_events: start_mode1
+  stop_events: stop_mode1
+
+multiballs:
+    mb4:
+        ball_count: 2
+        shoot_again: 30s
+        enable_events: mb4_enable
+        disable_events: mb4_disable
+        start_events: mb4_start
+        stop_events: mb4_stop

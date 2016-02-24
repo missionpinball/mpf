@@ -44,6 +44,9 @@ ball_devices:
         eject_timeouts: 2s
         tags: ball_add_live
 
+modes:
+    - mode1
+
 multiballs:
     mb1:
         ball_count: 2

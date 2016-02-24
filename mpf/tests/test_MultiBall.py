@@ -408,3 +408,78 @@ class TestMultiBall(MpfTestCase):
         # game should end
         self.advance_time_and_run(1)
         self.assertEqual(None, self.machine.game)
+
+    def testMultiballInMode(self):
+        self.mock_event("multiball_mb4_ended")
+
+        # prepare game
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
+
+        self.advance_time_and_run(10)
+        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
+
+        # start game
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+        self.machine_run()
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        # mode not loaded. mb4 should not enable or start
+        self.post_event("mb4_enable")
+        self.post_event("mb4_start")
+
+        self.advance_time_and_run(4)
+        self.assertEqual(1, self.machine.playfield.available_balls)
+
+        # start mode
+        self.post_event("start_mode1")
+
+        # mode loaded. mb4 should enable and start
+        self.post_event("mb4_enable")
+        self.post_event("mb4_start")
+
+        self.advance_time_and_run(4)
+        self.assertEqual(2, self.machine.playfield.available_balls)
+
+        # another ball should be ejected to pf
+        self.advance_time_and_run(10)
+        self.assertEqual(2, self.machine.playfield.balls)
+
+        # stop mode
+        self.post_event("stop_mode1")
+
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+
+        # it should come back
+        self.assertEqual(2, self.machine.playfield.available_balls)
+        self.assertEqual(0, self._events['multiball_mb4_ended'])
+
+        # wait for end of shoot again
+        self.advance_time_and_run(40)
+        self.assertEqual(0, self._events['multiball_mb4_ended'])
+
+        # next drain should end mb
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self.machine.playfield.available_balls)
+        self.assertEqual(1, self._events['multiball_mb4_ended'])
+
+        # ball drains
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(1)
+
+        # game should end
+        self.advance_time_and_run(1)
+        self.assertEqual(None, self.machine.game)
