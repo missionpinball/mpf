@@ -10,6 +10,8 @@ coils:
         number:
     eject_coil2:
         number:
+    eject_coil3:
+        number:
 
 switches:
     s_start:
@@ -27,6 +29,10 @@ switches:
         number:
     s_ball_switch6:
         number:
+    s_lock1:
+        number:
+    s_lock2:
+        number:
     s_ball_switch_launcher:
         number:
 
@@ -43,6 +49,10 @@ ball_devices:
         confirm_eject_type: target
         eject_timeouts: 2s
         tags: ball_add_live
+    bd_lock:
+        eject_coil: eject_coil3
+        ball_switches: s_lock1, s_lock2
+        eject_timeouts: 2s
 
 modes:
     - mode1
@@ -70,3 +80,13 @@ multiballs:
         disable_events: mb3_disable
         start_events: mb3_start
         stop_events: mb3_stop
+    mb6:
+        ball_count: 3
+        shoot_again: 0
+        start_events: mb6_start
+        ball_locks: lock_mb6
+
+ball_locks:
+    lock_mb6:
+        lock_devices: bd_lock
+        balls_to_lock: 2

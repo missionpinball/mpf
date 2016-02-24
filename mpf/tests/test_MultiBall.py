@@ -558,3 +558,48 @@ class TestMultiBall(MpfTestCase):
         # game should end
         self.advance_time_and_run(1)
         self.assertEqual(None, self.machine.game)
+
+    def testMultiballWithLock(self):
+        # prepare game
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
+
+        self.advance_time_and_run(10)
+        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
+
+        self.assertFalse(self.machine.multiballs.mb6.enabled)
+
+        # start game
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+        self.machine_run()
+
+        # multiball should be enabled
+        self.assertTrue(self.machine.multiballs.mb6.enabled)
+        # lock should be enabled
+        self.assertTrue(self.machine.ball_locks.lock_mb6.enabled)
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        # lock one ball and another one should go to pf
+        self.hit_switch_and_run("s_lock1", 10)
+        self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        # start mb
+        self.post_event("mb6_start")
+        self.assertEqual(2, self.machine.multiballs.mb6.balls_ejected)
+
+        # three balls on pf
+        self.advance_time_and_run(10)
+        self.assertEqual(3, self.machine.playfield.balls)
+        self.assertEqual(0, self.machine.ball_devices.bd_lock.balls)
