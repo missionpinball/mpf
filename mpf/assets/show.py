@@ -36,7 +36,7 @@ class Show(Asset):
         self._initialize_asset()
 
         if steps:
-            self.do_load(steps=steps)
+            self.do_load_show(steps=steps)
 
     def __lt__(self, other):
         return id(self) < id(other)
@@ -93,7 +93,10 @@ class Show(Asset):
 
         self.mode = None
 
-    def do_load(self, steps=None):
+    def do_load(self):
+        self.do_load_show(None)
+
+    def do_load_show(self, steps):
         self.show_steps = []
 
         self.machine.show_controller.log.debug("Loading Show %s",
