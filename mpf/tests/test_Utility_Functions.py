@@ -200,3 +200,19 @@ class TestUtil(MpfTestCase):
         self.assertFalse(Util.is_hex_string('ffaagg'))
         self.assertFalse(Util.is_hex_string('hello'))
         self.assertFalse(Util.is_hex_string([1, 2, 3]))
+
+    def test_get_from_dict(self):
+        a = dict()
+        a['b'] = dict()
+        a['b']['c'] = dict()
+        a['b']['c']['d'] = 1
+
+        self.assertEqual(Util.get_from_dict(a, ['b', 'c', 'd']), 1)
+
+    def test_set_in_dict(self):
+        a = dict()
+        a['b'] = dict()
+        a['b']['c'] = dict()
+
+        Util.set_in_dict(a, ['b', 'c'], 1)
+        self.assertEqual(a['b']['c'], 1)

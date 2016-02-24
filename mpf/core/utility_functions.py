@@ -3,6 +3,7 @@
 from copy import deepcopy
 from collections import OrderedDict
 import re
+from functools import reduce
 
 
 class Util(object):
@@ -521,3 +522,36 @@ class Util(object):
         for comp in parts[1:]:
             m = getattr(m, comp)
         return m
+
+    @staticmethod
+    def get_from_dict(dic, key_path):
+        """Gets a value from a nested dict (or dict-like object) from an
+        iterable of key paths.
+
+        Args:
+            dic: Nested dict of dicts to get the value from.
+            key_path: iterable of key paths
+
+        Returns:
+            value
+
+        This code came from here:
+        http://stackoverflow.com/questions/14692690/access-python-nested-dictionary-items-via-a-list-of-keys
+
+
+        """
+        return reduce(lambda d, k: d[k], key_path, dic)
+
+    @staticmethod
+    def set_in_dict(dic, key_path, value):
+        """Sets a value in a nested dict-like object based on an iterable of
+        nested keys.
+
+
+        Args:
+            dic: Nested dict of dicts to set the value in.
+            key_path: Iterable of the path to the key of the value to set.
+            value: Value to set.
+
+        """
+        Util.get_from_dict(dic, key_path[:-1])[key_path[-1]] = value
