@@ -36,7 +36,7 @@ class V4Migrator(VersionMigrator):
     - plugins
     - sound_system|volume_steps
     - sound_system|stream
-    - window|elements|__list__|pixel_spacing*
+    - window|elements|__list__|pixel_spacing
     - window|fps
 
     # everything from here down is old than v3, but I saw them in some configs
@@ -49,13 +49,6 @@ class V4Migrator(VersionMigrator):
     sound_system:
       enabled: True
     '''
-
-    warnings = dict(
-        pixel_spacing="""Setting Removed:
-    The virtual DMD "pixel_spacing" key was removed, as there now more
-    options to finely-tune the look of the pixels. Your spacing is now set
-    to the default. Check the docs for details of the new options.""",
-                    )
 
     slides = dict()
     displays = dict()

@@ -55,7 +55,7 @@ class Migrator(object):
         self.migrate_files()
 
     def build_file_list(self):
-        for root, dir, files in os.walk(self.machine_path):
+        for root, _, files in os.walk(self.machine_path):
             for file in files:
                 if (os.path.splitext(file)[1].lower() == EXTENSION and
                             BACKUP_FOLDER_NAME not in root):
@@ -146,7 +146,6 @@ class VersionMigrator(object):
     additions = ''
     migration_logger = None
     config_version = None
-    warnings = dict()
     log = logging.getLogger('Migrator')
 
     def __init__(self, file_name, file_contents):
@@ -246,7 +245,6 @@ class VersionMigrator(object):
         self._do_custom()
         self._do_deprecations()
         self._do_adds()
-        self._get_warnings()
 
     def _migration_needed(self):
         self.current_config_version = self._get_config_version()
@@ -295,13 +293,6 @@ class VersionMigrator(object):
     def _do_deprecations(self):
         # deprecations is a list of lists
         for key in deepcopy(self.deprecations):
-            warn = False
-            if key[-1].endswith('*'):
-                # if the final item ends with an asterisk, there's an
-                # associated warning message for the log
-                key[-1] = key[-1][:-1]
-                warn = key[-1]
-
             # Everything this does needs the dict, so we pull off the first
             # key so we can get the top level dict
             first_key = key.pop(0)
@@ -322,16 +313,16 @@ class VersionMigrator(object):
                 else:  # key found, key is nested
                     for dummy_iterator in range(20):
 
-                        if self._remove_key(first_key, key, warn):
+                        if self._remove_key(first_key, key):
                             continue
 
                         # Not found, but we have a list, so increment & repeat
                         key = self._increment_key_with_list(key)
 
             else:  # dict only, no list
-                self._remove_key(first_key, key, warn)
+                self._remove_key(first_key, key)
 
-    def _remove_key(self, first_key, key, warn):
+    def _remove_key(self, first_key, key):
         # actually removes the key from the dict, with nested dicts only
         # (no lists in there)
 
@@ -356,7 +347,7 @@ class VersionMigrator(object):
 
                 YamlInterface.del_key_with_comments(dic, final_key, self.log)
                 return True
-        except:
+        except (KeyError, IndexError):
             pass
 
         return False
@@ -439,7 +430,7 @@ class VersionMigrator(object):
                     new_location = new_location[key]
 
             new_location[move['new'][-1]] = old_dict
-            self._remove_key(old_parent, orig_list, False)
+            self._remove_key(old_parent, orig_list)
 
     def _do_lowercase(self, dic=None):
         # recurcisely converts all keys in dicts and nested dicts
@@ -462,7 +453,4 @@ class VersionMigrator(object):
                     self._do_lowercase(dic[key])
 
     def _do_custom(self):
-        pass
-
-    def _get_warnings(self):
         pass
