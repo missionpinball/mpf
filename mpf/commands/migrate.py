@@ -18,8 +18,7 @@ class Command(object):
                             action="store_const", dest="consoleloglevel",
                             const=logging.DEBUG,
                             default=logging.INFO,
-                            help="Enables verbose logging to the"
-                                 " log file")
+                            help="Enables verbose logging to the log file")
 
         parser.add_argument("-l",
                             action="store", dest="logfile",
@@ -38,8 +37,7 @@ class Command(object):
                 raise
 
         logging.basicConfig(level=logging.DEBUG,
-                            format='%(asctime)s : %(levelname)s : %(name)s : '
-                                   '%(message)s',
+                            format='%(name)s : %(message)s',
                             filename=os.path.join(machine_path, args.logfile),
                             filemode='w')
 

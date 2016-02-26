@@ -6,49 +6,49 @@ import time
 import datetime
 import logging
 import importlib
+from copy import deepcopy
 
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedSeq, CommentedMap
 
-from mpf._version import version, __config_version__
+from mpf._version import version
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
+from mpf.file_interfaces.yaml_interface import YamlInterface
+from mpf.core.config_validator import mpf_config_spec
 
 EXTENSION = '.yaml'
-CONFIG_VERSION_FILE = 'migrator/config_versions.yaml'
 BACKUP_FOLDER_NAME = 'previous_config_files'
+TARGET_CONFIG_VERSION = 4  # todo change to dynamic param
+REPROCESS_CURRENT_VERSION = False
+INDENTATION_SPACES = 4
 
 
 class Migrator(object):
     def __init__(self, mpf_path, machine_path):
         self.log = logging.getLogger('Migrator')
-        self.log.info("MPF Migrator v{}".format(version))
-        self.log.info("Migrating config and show files from: {}".format(
-            machine_path))
-
-        self.log = logging.getLogger()
+        self.start_time = time.time()
+        self.num_config_files = 0
+        self.num_show_files = 0
+        self.log.info("MPF Migrator: %s", version)
+        self.log.info("Migrating config and show files from: %s",
+                      machine_path)
 
         self.mpf_path = mpf_path
         self.machine_path = machine_path
         self.file_list = list()
         self.backup_folder = None
         self.base_folder = None
-        self.target_config_version = int(__config_version__)
-        self.reprocess_current_version_files = False
+        # self.target_config_version = int(__config_version__)
+        self.target_config_version = TARGET_CONFIG_VERSION
+        self.log.info("New config version will be v%s",
+                      self.target_config_version)
 
-        self.config_dict = FileManager.load(os.path.join(mpf_path,
-                                                         CONFIG_VERSION_FILE))
-        for key in list(self.config_dict.keys()):
+        self.migrator = importlib.import_module(
+            'mpf.migrator.config_version_{}'.format(TARGET_CONFIG_VERSION))
 
-            try:
-                key_int = int(key)
-                self.config_dict[key_int] = self.config_dict[key]
-                del self.config_dict[key]
-            except ValueError:
-                del self.config_dict[key]
-
-        self.new_config_version = max(self.config_dict.keys())
-        self.previous_config_version = self.new_config_version - 1
+        self.log.debug("Found Migrator for config files v%s",
+                       TARGET_CONFIG_VERSION)
 
         self.build_file_list()
         self.backup_files()
@@ -59,12 +59,11 @@ class Migrator(object):
             for file in files:
                 if (os.path.splitext(file)[1].lower() == EXTENSION and
                             BACKUP_FOLDER_NAME not in root):
-                    self.log.debug("Found file: {}".format(
-                        os.path.join(root, file)))
+                    self.log.debug("Found file: %s", os.path.join(root, file))
                     self.file_list.append(os.path.join(root, file))
 
-        self.base_folder = (os.path.commonpath(self.file_list))
-        self.log.debug("Detected base folder: {}".format(self.base_folder))
+        self.base_folder = (os.path.commonprefix(self.file_list))
+        self.log.debug("Detected base folder: %s", self.base_folder)
 
     def create_backup_folder(self):
         this_time = datetime.datetime.fromtimestamp(time.time()).strftime(
@@ -72,11 +71,9 @@ class Migrator(object):
         self.backup_folder = os.path.join(self.machine_path,
                                           BACKUP_FOLDER_NAME, this_time)
 
-        self.log.debug("Backup folder: {}".format(self.backup_folder))
-
     def backup_files(self):
-        self.log.debug("Backing up files")
         self.create_backup_folder()
+        self.log.info("Backing up files to %s", self.backup_folder)
         shutil.copytree(self.base_folder, self.backup_folder,
                         ignore=self._ignore_files)
         self.log.debug("Backup done")
@@ -84,6 +81,11 @@ class Migrator(object):
     def _ignore_files(self, root_folder, contents):
         # ignore previous backup folders
         if BACKUP_FOLDER_NAME in root_folder:
+            return contents
+
+        # ignore the data folder since those files can't be opened
+        # with the round trip loaded
+        if root_folder.split(os.sep)[-1] == 'data':
             return contents
 
         return_list = list()
@@ -96,171 +98,371 @@ class Migrator(object):
         return return_list
 
     def migrate_files(self):
+
+        # We need to migrate show files after config files since we need
+        # to pull some things out of the configs for the shows.
+        round2_files = list()
+
         for file in self.file_list:
-            f = FileManager.load(file, round_trip=True)
+            file_content = FileManager.load(file, round_trip=True)
 
-            if type(f) == CommentedMap:
-                self.migrate_config_file(file, f)
-            elif type(f) == CommentedSeq:
-                self.migrate_show_file(file, f)
+            if type(file_content) == CommentedMap:
+                migrated_content = self.migrator.migrate_file(file,
+                                                              file_content)
+                if migrated_content:
+                    self.num_config_files += 1
+                    self.save_file(file, migrated_content)
             else:
-                self.log.debug("Ignoring data file: {}. (Error is ok)".format(file))
+                round2_files.append(file)
 
-    def migrate_config_file(self, file_name, file_contents):
+        for file in round2_files:
+            file_content = FileManager.load(file, round_trip=True)
+            migrated_content = self.migrator.migrate_file(file, file_content)
+            if migrated_content:
+                self.num_show_files += 1
+                self.save_file(file, migrated_content)
 
-        file_version_num = self._is_config_migration_needed(file_name,
-                                                            file_contents)
-
-        if not file_version_num:
-            return
-
-        elif file_version_num < self.target_config_version:
-            target_version = file_version_num + 1
-        else:
-            target_version = self.target_config_version
-
-
-        # update to next config version
-        file_contents = self._update_config_version_string(file_contents,
-                                                           target_version)
-
-        # Grab the config for this version
-        migrator = importlib.import_module(
-            'mpf.migrator.config_version_{}'.format(target_version))
-
-        file_contents = self.convert_to_lowercase(file_contents)
-        file_contents = self._rename_keys(file_contents, migrator)
-        file_contents = migrator.custom_migration(file_contents)
-        file_contents = self._remove_deprecated_sections(file_contents,
-                                                         migrator)
-        file_contents = migrator.get_warnings(file_contents)
-
-        # If the config file is not current, run this again
-        while target_version < self.target_config_version:
-            self.migrate_config_file(file_name, file_contents)
-
-        self.save_file(file_name, file_contents)
-
-    def _get_config_version(self, file_name, file_contents):
-        try:
-            # comment attribute, item index 1, first item is first line
-            # which should be config_version=X
-            version_str = file_contents.ca.comment[1][0].value
-            self.log.debug("Analyzing config file: {}".format(file_name))
-            version_num = int(version_str.split('config_version=')[1])
-            self.log.debug("Current config version is {}".format(version_num))
-            return version_num
-
-        except TypeError:
-            # Otherwise it's not a config file
-            self.log.debug("Skipping non-config file: {}".format(file_name))
-            return None
-
-    def _is_config_migration_needed(self, file_name, file_contents):
-        file_version_num = self._get_config_version(file_name, file_contents)
-
-        if file_version_num == self.target_config_version:
-            self.log.debug('File is already on config version {}'.format(
-                file_version_num))
-
-            if self.reprocess_current_version_files:
-                self.log.debug('Will re-process config file')
-                return file_version_num
-            else:
-                return False
-
-        else:
-            return file_version_num
-
-    def _update_config_version_string(self, file_contents, version):
-        file_contents.ca.comment[1][0].value = '#config_version={}'.format(
-            version)
-
-        self.log.debug('Setting {}'.format(file_contents.ca.comment[1][0].value))
-
-        return file_contents
-
-    def convert_to_lowercase(self, file_data):
-
-        self.log.debug("Converting keys to lowercase")
-
-        new_data = self.get_new_dict(file_data)
-
-        for k in file_data.keys():
-            new_data[k.lower()] = file_data[k]
-
-        return new_data
-
-    def get_new_dict(self, _dict):
-        # make a copy of whatever class the existing file_data is
-        new_dict = _dict.__class__()
-        # Copy the pre and end comments which aren't tied to a key or value
-        new_dict.ca.comment = _dict.ca.comment
-        new_dict.ca.end = _dict.ca.end
-
-        return new_dict
-
-    def replace_key(self, old_key, new_key, _dict):
-        # Since this is an OrderedDict, we have to rebuild instead of
-        # popping and inserting
-        new_dict = self.get_new_dict(_dict)
-
-        for k in _dict.keys():
-            if k == old_key:
-                new_dict[new_key] = _dict[old_key]
-
-                try:
-                    new_dict.ca.items[new_key] = _dict.ca.items[old_key]
-                except KeyError:
-                    pass
-            else:
-                new_dict[k] = _dict[k]
-                try:
-                    new_dict.ca.items[k] = _dict.ca.items[k]
-                except KeyError:
-                    pass
-
-        return new_dict
-
-    def replace_key2(self, old_key, new_key, _dict):
-
-        key_list = list(_dict.keys())
-
-        for key in key_list:
-            if key == old_key:
-                _dict[new_key] = _dict[old_key]
-
-                _dict.ca.items[new_key] = _dict.ca.items.pop(old_key)
-                # print(_dict.ca.items)
-                del _dict[old_key]
-            else:
-                _dict.move_to_end(key)
-
-    def _remove_deprecated_sections(self, file_contents, migrator):
-
-        section_dict = yaml.load(migrator.section_deprecations)
-
-        # TODO need to make this recursive
-        for section in section_dict:
-            if section in file_contents:
-                self.log.debug(
-                    "Removing deprecated section: {}".format(section))
-                del file_contents[section]
-
-        return file_contents
-
-    def _rename_keys(self, file_contents, migrator):
-        print('renaming keys')
-        return file_contents
-
-    def migrate_show_file(self, file_name, file_contents):
-        self.log.debug("Analyzing show file: {}".format(file_name))
-
-        for i, x in enumerate(file_contents):
-            file_contents[i] = self.replace_key2('tocks', 'time', x)
-
-        self.save_file(file_name, file_contents)
+        self.log.info("DONE! Migrated %s config file(s) and %s show file(s) in"
+                      " %ss", self.num_config_files, self.num_show_files,
+                      round(time.time() - self.start_time, 2))
+        self.log.info("Detailed log file is in %s.", os.path.join(
+            self.machine_path, 'logs'))
+        self.log.info("Original YAML files are in %s", self.backup_folder)
 
     def save_file(self, file_name, file_contents):
-        self.log.info("Writing file: {}".format(file_name))
-        # FileManager.save(file_name, file_contents, include_comments=True)
+        self.log.info("Writing file: %s", file_name)
+        FileManager.save(file_name, file_contents, include_comments=True)
+
+
+class VersionMigrator(object):
+    """Parent class for a version-specific migrator. One instance of this base
+    class exists for each different config file version.
+
+    """
+    initialized = False
+    deprecations = ''
+    renames = ''
+    moves = ''
+    additions = ''
+    migration_logger = None
+    config_version = None
+    warnings = dict()
+    log = logging.getLogger('Migrator')
+
+    def __init__(self, file_name, file_contents):
+        """Initializes a specific instance of this file migrator. A new
+        instance is created for each file to be migrated
+
+        Args:
+            file_name: Full path and file name of the file being migrated.
+            file_contents: ruamel.load(ed) contents of the file which includes
+                the comments.
+
+        Returns:
+            Modified file_contents instance with the migrations applied.
+
+        """
+        self.log = logging.getLogger(os.path.basename(file_name))
+        self.file_name = file_name
+        self.fc = file_contents
+        self.current_config_version = 0
+        self.mpf_config_spec = yaml.load(mpf_config_spec)
+
+        if not self.initialized:
+            self._initialize()
+
+        self.log.debug('')
+        self.log.debug("------------------ %s ------------------",
+                       os.path.basename(file_name))
+
+    @classmethod
+    def _initialize(cls):
+        # Initializes the class
+        cls.migration_logger = logging.getLogger('v%s Migrator' %
+                                                 cls.config_version)
+
+        # Deprecations
+        cls.deprecations = yaml.load(cls.deprecations)
+        try:
+            for i, key in enumerate(cls.deprecations):
+                cls.deprecations[i] = list(key.split('|'))
+        except TypeError:
+            cls.deprecations = list()
+
+        # Adds
+        cls.additions = yaml.load(cls.additions)
+
+        if not cls.additions:
+            cls.additions = dict()
+
+        # Renames
+        cls.renames = yaml.load(cls.renames)
+        try:
+            for rename in cls.renames:
+                rename['old'] = list(rename['old'].split('|'))
+        except TypeError:
+            cls.renames = list()
+
+        # Moves
+        if cls.moves:
+            cls.moves = yaml.load(cls.moves)
+            for i, move in enumerate(cls.moves):
+                move['old'] = move['old'].split('|')
+                move['new'] = move['new'].split('|')
+                cls.moves[i] = move
+        else:
+            cls.moves = dict()
+
+        cls.initialized = True
+
+    def migrate(self):
+        if type(self.fc) == CommentedMap:
+            self._migrate_config_file()
+            self.log.debug("----------------------------------------")
+            return self.fc
+        elif type(self.fc) == CommentedSeq:
+            if self.is_show_file():
+                self._migrate_show_file()
+                self.log.debug("----------------------------------------")
+                return self.fc
+
+        self.log.debug("Ignoring data file: %s. (Error is ok)", self.file_name)
+
+    def is_show_file(self):
+        return False
+
+    def _migrate_show_file(self):
+        pass
+
+    def _migrate_config_file(self):
+        self.log.debug("Analyzing config file: %s", self.file_name)
+        if not self._migration_needed():
+            return
+        self._update_config_version()
+        self.log.debug("Converting keys to lowercase")
+        self._do_lowercase()
+        self._do_rename()
+        self._do_moves()
+        self._do_custom()
+        self._do_deprecations()
+        self._do_adds()
+        self._get_warnings()
+
+    def _migration_needed(self):
+        self.current_config_version = self._get_config_version()
+
+        if not self.current_config_version:
+            self.log.debug("Skipping non-config file: %s", self.file_name)
+            return False
+        else:
+            if self.current_config_version == self.config_version:
+                if REPROCESS_CURRENT_VERSION:
+                    print('reprocessing current version')
+                    return True
+                else:
+                    print('file already current')
+                    return False
+            else:  # config_version is less than current:
+                if self.config_version - self.current_config_version > 1:
+                    # use a different loader
+                    return True
+                elif self.config_version - self.current_config_version == 1:
+                    return True
+                else:
+                    print('config file is newer?!?')
+                    return False
+
+    def _update_config_version(self):
+
+        # Do a str.replace to preserve any spaces or comments in the header
+        self.fc.ca.comment[1][0].value = (
+            self.fc.ca.comment[1][0].value.replace(
+                'config_version={}'.format(self.current_config_version),
+                'config_version={}'.format(self.config_version)))
+
+        self.log.debug('Setting config_version=%s', self.config_version)
+
+    def _get_config_version(self):
+        try:
+            version_num = int(self.fc.ca.comment[1][0].value.split(
+                'config_version=')[1])
+            self.log.debug("Current config version is %s", version_num)
+            return version_num
+
+        except TypeError:  # No version
+            pass
+
+    def _do_deprecations(self):
+        # deprecations is a list of lists
+        for key in deepcopy(self.deprecations):
+            warn = False
+            if key[-1].endswith('*'):
+                # if the final item ends with an asterisk, there's an
+                # associated warning message for the log
+                key[-1] = key[-1][:-1]
+                warn = key[-1]
+
+            # Everything this does needs the dict, so we pull off the first
+            # key so we can get the top level dict
+            first_key = key.pop(0)
+
+            if '__list__' in key:
+                # If there's a "__list__" string in our list, it means one of
+                # the items is a list instead of a dict which we'll have to
+                # loop through. In that case, we loop through 20 times, each
+                # time checking a different element. That's what the
+                # _increment_key_with_list() does.
+
+                key = self._increment_key_with_list(key)
+
+                if first_key not in self.fc:
+                    # If the first key isn't even here, we can skip all this
+                    continue
+
+                else:  # key found, key is nested
+                    for dummy_iterator in range(20):
+
+                        if self._remove_key(first_key, key, warn):
+                            continue
+
+                        # Not found, but we have a list, so increment & repeat
+                        key = self._increment_key_with_list(key)
+
+            else:  # dict only, no list
+                self._remove_key(first_key, key, warn)
+
+    def _remove_key(self, first_key, key, warn):
+        # actually removes the key from the dict, with nested dicts only
+        # (no lists in there)
+
+        if not key:  # single item
+            if first_key in self.fc:
+
+                YamlInterface.del_key_with_comments(self.fc, first_key,
+                                                    self.log)
+                return True
+
+        try:
+            if self.fc[first_key].mlget(key, list_ok=True) is not None:
+                # mlget just verifies with a nested dict / list
+                # index that the key is found.
+                final_key = key.pop(-1)
+                dic = self.fc[first_key]
+
+                while key:
+                    # Loop to get the parent container of the
+                    # lowest level key
+                    dic = dic[key.pop(0)]
+
+                YamlInterface.del_key_with_comments(dic, final_key, self.log)
+                return True
+        except:
+            pass
+
+        return False
+
+    def _increment_key_with_list(self, key):
+        for i, val in enumerate(key):
+            if val == '__list__':
+                key[i] = 0
+            elif type(val) is int:
+                key[i] += 1
+
+        return key
+
+    def _do_adds(self):
+        for section, keys in self.additions.items():
+            if section in self.fc:
+                for k, v in keys.items():
+                    self.log.debug('Adding new key: %s:%s:%s', section, k, v)
+
+                self.fc[section].update(keys)
+
+    def _do_rename(self):
+        for rename in self.renames:
+
+            if len(rename['old']) > 1:  # searching for nested key
+
+                found_section = Util.get_from_dict(self.fc, rename['old'][:-1])
+
+                if not found_section:
+                    continue
+
+                self.log.debug('Renaming key: %s: -> %s:',
+                               ':'.join(rename['old']), rename['new'])
+                YamlInterface.rename_key(rename['old'][-1], rename['new'],
+                                         found_section)
+
+            else:  # searching for a single key anywhere
+                self._recursive_rename(rename['old'][0], rename['new'],
+                                       self.fc)
+
+    def _recursive_rename(self, old, new, target):
+        if isinstance(target, list):
+            for item in target:
+                self._recursive_rename(old, new, item)
+        elif isinstance(target, dict):
+
+            if old in target:
+                YamlInterface.rename_key(old, new, target, self.log)
+
+            for item in target.values():
+                self._recursive_rename(old, new, item)
+
+    def _do_moves(self):
+        # first move, then rename
+        for move in deepcopy(self.moves):
+            orig_list = deepcopy(move['old'])
+            old_parent = orig_list.pop(0)
+
+            if old_parent not in self.fc:
+                continue
+
+            if orig_list:
+                old_dict = self.fc[old_parent].mlget(orig_list)
+            else:
+                old_dict = self.fc[old_parent]
+
+            if not old_dict:
+                continue
+
+            new_location = self.fc
+
+            self.log.debug("Moving key: %s -> %s", ':'.join(orig_list),
+                           ':'.join(move['new']))
+
+            for key in move['new'][:-1]:
+                try:
+                    new_location = new_location[key]
+                except KeyError:
+                    new_location[key] = CommentedMap()
+                    new_location = new_location[key]
+
+            new_location[move['new'][-1]] = old_dict
+            self._remove_key(old_parent, orig_list, False)
+
+    def _do_lowercase(self, dic=None):
+        # recurcisely converts all keys in dicts and nested dicts
+        if not dic:
+            dic = self.fc
+
+        key_list = list(dic.keys())
+
+        for key in key_list:
+            try:
+                YamlInterface.rename_key(key, key.lower(), dic, self.log)
+            except AttributeError:
+                pass
+
+            try:
+                if isinstance(dic[key.lower()], dict):
+                    self._do_lowercase(dic[key.lower()])
+            except AttributeError:
+                if isinstance(dic[key], dict):
+                    self._do_lowercase(dic[key])
+
+    def _do_custom(self):
+        pass
+
+    def _get_warnings(self):
+        pass

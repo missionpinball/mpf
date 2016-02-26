@@ -12,6 +12,7 @@ from datetime import datetime
 from kivy.config import Config
 from kivy.logger import Logger
 
+import mpfmc
 from mpf.core.utility_functions import Util
 from mpfmc.core.config_processor import ConfigProcessor
 from mpfmc.core.mc import MpfMc
@@ -137,16 +138,12 @@ class Command(object):
         kivy_config = config['kivy_config']
 
         try:
-            kivy_config['graphics'].update(config['displays']['window'])
-        except KeyError:
-            pass
-
-        try:
             kivy_config['graphics'].update(config['window'])
         except KeyError:
             pass
 
-        if 'top' in kivy_config['graphics'] and 'left' in kivy_config['graphics']:
+        if ('top' in kivy_config['graphics'] and
+                'left' in kivy_config['graphics']):
             kivy_config['graphics']['position'] = 'custom'
 
         for section, settings in kivy_config.items():
@@ -156,3 +153,6 @@ class Command(object):
                         Config.set(section, k, v)
                 except KeyError:
                     continue
+
+        if config['window']['exit_on_escape']:
+            Config.set('kivy', 'exit_on_escape', '1')

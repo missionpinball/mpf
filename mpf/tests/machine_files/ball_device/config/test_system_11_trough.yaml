@@ -1,4 +1,4 @@
-#config_version=3
+#config_version=4
 
 game:
     balls_per_game: 3

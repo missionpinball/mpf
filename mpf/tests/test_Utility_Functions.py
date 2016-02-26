@@ -216,3 +216,9 @@ class TestUtil(MpfTestCase):
 
         Util.set_in_dict(a, ['b', 'c'], 1)
         self.assertEqual(a['b']['c'], 1)
+
+    def test_power_of_2(self):
+        self.assertTrue(Util.is_power2(2))
+        self.assertTrue(Util.is_power2(256))
+        self.assertFalse(Util.is_power2(3))
+        self.assertFalse(Util.is_power2(222))

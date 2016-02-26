@@ -284,16 +284,15 @@ class YamlInterface(FileInterface):
             raise ValueError("Config file version mismatch: {}".format(filename))
 
         try:
-            self.log.debug("Loading configuration file: %s", filename)
+            self.log.debug("Loading file: %s", filename)
 
             with open(filename) as f:
                 config = YamlInterface.process(f, round_trip)
         except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark
-                self.log.debug("Error found in config file %s. Line %s, "
-                             "Position %s", filename, mark.line+1,
-                             mark.column+1)
+                self.log.debug("Error found in file %s. Line %s, Position %s",
+                               filename, mark.line+1, mark.column+1)
 
             if halt_on_error:
                 sys.exit()
@@ -320,13 +319,21 @@ class YamlInterface(FileInterface):
         else:
             return Util.keys_to_lower(yaml.load(data_string, Loader=MpfLoader))
 
-    def save(self, filename, data, include_comments=False):
+    def save(self, filename, data, **kwargs):
+
+        try:
+            include_comments = kwargs.pop('include_comments')
+        except KeyError:
+            include_comments = False
+
         with open(filename, 'w') as output_file:
 
             if include_comments:
-                output_file.write(yaml.dump(data, Dumper=RoundTripDumper))
+                output_file.write(yaml.dump(data, Dumper=RoundTripDumper,
+                                            **kwargs))
             else:
-                output_file.write(yaml.dump(data, default_flow_style=False))
+                output_file.write(yaml.dump(data, default_flow_style=False,
+                                            **kwargs))
 
     @staticmethod
     def save_to_str(data):
@@ -334,7 +341,7 @@ class YamlInterface(FileInterface):
                          default_flow_style=False, indent=4, width=10)
 
     @staticmethod
-    def rename_key(old_key, new_key, commented_map):
+    def rename_key(old_key, new_key, commented_map, logger=None):
         """Used to rename a key in YAML file data that was loaded with the
         RoundTripLoader (e.g. that contains comments. Comments are retained
         for the renamed key. Order of keys is also maintained.
@@ -344,6 +351,8 @@ class YamlInterface(FileInterface):
             new_key: The new key name.
             commented_map: The YAML data CommentMap class (from yaml.load) with
                 the key you want to change.
+            logger: Optional logger instance which will be used to log this at
+                the debug level.
 
         Returns:
             The updated CommentedMap YAML dict. (Note that this method does not
@@ -351,10 +360,17 @@ class YamlInterface(FileInterface):
             likely don't need to do anything with the returned dict.
 
         """
+        if old_key == new_key or old_key not in commented_map:
+            return commented_map
+
         key_list = list(commented_map.keys())
 
         for key in key_list:
             if key == old_key:
+
+                if logger:
+                    logger.debug('Renaming key: %s: -> %s:', old_key, new_key)
+
                 commented_map[new_key] = commented_map[old_key]
 
                 try:  # if there's no comment, it will not be in ca.items
@@ -369,6 +385,42 @@ class YamlInterface(FileInterface):
                 commented_map.move_to_end(key)
 
         return commented_map
+
+    @staticmethod
+    def copy_with_comments(source_dict, source_key, dest_dict, dest_key,
+                           delete_source=False, logger=None):
+        dest_dict[dest_key] = source_dict[source_key]
+
+        try:
+            dest_dict.ca.items[dest_key] = source_dict.ca.items[source_key]
+
+            if logger and not delete_source:
+                logger.debug('Copying key: %s -> %s', source_key, dest_key)
+
+        except KeyError:
+            pass
+
+        if delete_source:
+
+            if logger:
+                logger.debug('Moving key: %s -> %s', source_key, dest_key)
+
+            del source_dict[source_key]
+            source_dict.ca.items.pop(source_key, None)
+
+    @staticmethod
+    def del_key_with_comments(dic, key, logger=None):
+
+        if key not in dic:
+            return
+
+        if logger:
+            logger.debug("Removing key: %s", key)
+
+        del dic[key]
+        dic.ca.items.pop(key, None)
+
+
 
 
 file_interface_class = YamlInterface

@@ -1,0 +1,160 @@
+-   time: 0
+    display:
+    -   type: text
+        text: MISSION PINBALL
+        color: red
+    -   type: rectangle
+        width: 128
+        height: 32
+-   time: '+2'
+    display:
+    -   type: image
+        image: demo_man_logo
+    transition:
+        type: move_out
+        duration: 1s
+        direction: top
+-   time: '+2'
+    display:
+    -   type: text
+        text: '%machine|credits_string%'
+-   time: '+2'
+    display:
+    -   type: text
+        text: '%machine|score1_label%'
+        anchor_y: top
+        y: 28
+    -   type: text
+        text: '%machine|score1_name% %machine|score1_value%'
+        anchor_y: bottom
+        number_grouping: true
+        y: 3
+    -   type: rectangle
+        width: 128
+        height: 32
+    -   type: rectangle
+        width: 126
+        height: 30
+        shade: 8
+-   time: '+2'
+    display:
+    -   type: text
+        text: 1. %machine|score2_name% %machine|score2_value%
+        anchor_y: top
+        anchor_x: left
+        number_grouping: true
+        y: 29
+        x: 12
+    -   type: text
+        text: 2. %machine|score3_name% %machine|score3_value%
+        anchor_y: bottom
+        anchor_x: left
+        number_grouping: true
+        y: 3
+        x: 10
+    transition:
+        type: move_out
+        duration: 1s
+        direction: top
+-   time: '+2'
+    display:
+    -   type: text
+        text: 3. %machine|score4_name% %machine|score4_value%
+        anchor_y: top
+        y: 29
+        x: 10
+        number_grouping: true
+    -   type: text
+        text: 4. %machine|score5_name% %machine|score5_value%
+        anchor_y: bottom
+        number_grouping: true
+        y: 3
+        x: 10
+    transition:
+        type: move_in
+        duration: 1s
+        direction: bottom
+-   time: '+2'
+    display:
+    -   type: text
+        text: MASTER LOOPER
+        anchor_y: top
+        style: medium
+    -   type: text
+        text: '%machine|loops1_name%'
+        style: tall title
+    -   type: text
+        text: '%machine|loops1_value% LOOPS'
+        anchor_y: bottom
+        style: medium
+        number_grouping: true
+    transition:
+        type: move_in
+        duration: 1s
+        direction: bottom
+-   time: '+2'
+    display:
+    -   type: text
+        text: '%machine|player1_score%'
+        number_grouping: true
+        min_digits: 2
+        style: small
+        anchor_y: top
+        anchor_x: right
+        x: 48
+        y: 31
+    -   type: text
+        text: '%machine|player2_score%'
+        number_grouping: true
+        min_digits: 2
+        style: small
+        anchor_y: top
+        anchor_x: right
+        x: 127
+        y: 31
+    -   type: text
+        text: '%machine|player3_score%'
+        number_grouping: true
+        min_digits: 2
+        style: small
+        anchor_y: bottom
+        anchor_x: right
+        x: 48
+        y: 10
+    -   type: text
+        text: '%machine|player4_score%'
+        number_grouping: true
+        min_digits: 2
+        style: small
+        anchor_y: bottom
+        anchor_x: right
+        x: 127
+        y: 10
+    -   type: text
+        text: '%machine|credits_string%'
+        style: small
+        anchor_x: center
+        anchor_y: bottom
+-   time: '+1'
+    lights:
+        l_car_crash_bottom: ff
+-   time: '+1'
+    lights:
+        l_car_crash_center: ff
+-   time: '+1'
+    lights:
+        l_car_crash_top: ff
+-   time: '+1'
+    lights:
+        l_car_crash_top: 0
+        l_car_crash_center: 0
+        l_car_crash_bottom: 0
+-   time: '+1'
+    leds:
+        tag|board_red: ff0000
+        tag|board_black: 0
+-   time: '+1'
+    leds:
+        tag|board_red: 0
+        tag|board_black: 0000ff
+-   time: '+1'

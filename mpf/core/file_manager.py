@@ -56,7 +56,7 @@ class FileInterface(object):
     def load(self, filename, verify_version=True, halt_on_error=False, round_trip=False):
         raise NotImplementedError
 
-    def save(self, filename, data):
+    def save(self, filename, data, **kwargs):
         raise NotImplementedError
 
 
@@ -158,11 +158,11 @@ class FileManager(object):
         return config
 
     @staticmethod
-    def save(filename, data, include_comments=False):
+    def save(filename, data, **kwargs):
         ext = os.path.splitext(filename)[1]
 
         try:
             FileManager.file_interfaces[ext].save(filename, data,
-                                                  include_comments)
+                                                  **kwargs)
         except KeyError:
             raise AssertionError("No config file processor available for file type {}".format(ext))

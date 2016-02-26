@@ -1,0 +1,280 @@
+#config_version=4
+
+sound_system:
+    tracks:
+        voice:
+            volume: 1
+            priority: 2
+            simultaneous_sounds: 1
+            preload: true
+        sfx:
+            volume: 1
+            priority: 1
+            preload: true
+            simultaneous_sounds: 7
+        music:
+            volume: 0.5
+            simultaneous_sounds: 1
+    buffer: 2048 # previous value was 512
+    frequency: 44100
+    channels: 1
+    master_volume: 1
+    enabled: true
+physical_dmd:
+    width: 128
+    height: 32
+window:
+    width: 600
+    height: 200
+    title: Mission Pinball Framework - Demo Man
+    resizable: true
+    fullscreen: false
+    borderless: false
+    exit_on_escape: true
+slide_player:
+    single_player_ball_started:
+        slide: slide_1
+        transition:
+            type: move_out
+            duration: 1s
+            direction: top
+    player_1_multiplayer_slide:
+        slide: slide_2
+    machine_reset_phase_3:
+        slide: window_slide_1
+        target: window
+text_styles:
+    default:
+        font_name: Quadrit
+        font_size: 10
+        crop_top: 2
+        crop_bottom: 3
+    space title huge:
+        font_name: DEADJIM
+        font_size: 29
+        antialias: true
+        crop_top: 3
+        crop_bottom: 3
+    space title:
+        font_name: DEADJIM
+        font_size: 21
+        antialias: true
+        crop_top: 2
+        crop_bottom: 3
+    medium:
+        font_name: pixelmix
+        font_size: 8
+        crop_top: 1
+        crop_bottom: 1
+    small:
+        font_name: smallest_pixel-7
+        font_size: 9
+        crop_top: 2
+        crop_bottom: 3
+    tall title:
+        font_name: big_noodle_titling
+        font_size: 20
+
+sounds:
+    intro_loop:
+        file: waiting to plunge loop.ogg
+        track: music
+    slingshot:
+        file: slingshot.ogg
+        track: sfx
+    ball_launch_motorcycle:
+        file: ball launch motorcycle.ogg
+        track: sfx
+    main_loop:
+        file: main song loop.wav
+
+images:
+    jackpot:
+        file: jackpot1.jpg
+videos:
+    test_movie1:
+        load: preload
+
+assets:
+    images:
+        default:
+            load: preload
+        screen:
+            load: preload
+    sounds:
+        default:
+            track: sfx
+            load: preload
+        voice:
+            track: voice
+            load: preload
+        sfx:
+            track: sfx
+            load: preload
+        music:
+            track: music
+            load: preload
+    shows:
+        default:
+            load: preload
+    videos:
+        default:
+            load: preload
+
+sound_player:
+    pluger_lane_ball_start:
+        sound: intro_loop
+        start_events: ball_starting
+        stop_events: ball_live_added
+        duration:
+        loops: -1
+        priority:
+        fade_in: 0
+        fade_out: 0
+    ball_launch_motorcycle:
+        sound: ball_launch_motorcycle
+        start_events: sw_launch
+    slingshot:
+        sound: slingshot
+        start_events: shot_Slingshot
+    main_loop:
+        sound: main_loop
+        start_events: player_eject_request
+        loops: -1
+        stop_events: ball_ending
+displays:
+    window:
+        height: 200
+        width: 600
+    dmd:
+        width: 128
+        height: 32
+slides:
+    slide_1:
+    -   type: text
+        text: '%player1|score%'
+        number_grouping: true
+        min_digits: 2
+        anchor_y: center# center
+        anchor_x: center# center
+        y: 18# -2
+        slide: score_display
+      #persist_slide: yes
+        style: tall title
+    -   type: text
+        text: BALL %player1|ball%    %machine|credits_string%
+        anchor_y: bottom# bottom
+        style: small
+        y: 1 # -1
+
+    slide_2:
+    -   type: text
+        text: '%player1|score%'
+      #font: medium
+        number_grouping: true
+        min_digits: 2
+        anchor_y: top
+        anchor_x: right
+        x: 68
+        y: 30
+    -   type: text
+        text: '%player2|score%'
+        style: medium
+        anchor_y: top# top
+        anchor_x: right# right
+        number_grouping: true
+        min_digits: 2
+        x: 126# -2
+        y: 30# 2
+    -   type: text
+        text: '%player3|score%'
+        style: medium
+        anchor_y: bottom# bottom
+        anchor_x: right# right
+        y: 10 # -10
+        x: 68 # -60
+        number_grouping: true
+        min_digits: 2
+    -   type: text
+        text: '%player4|score%'
+        style: medium
+        anchor_y: bottom# bottom
+        anchor_x: right# right
+        y: 10 # -10
+        x: 126# -2
+        number_grouping: true
+        min_digits: 2
+    -   type: text
+        text: BALL %player1|ball%    %machine|credits_string%
+        anchor_y: bottom# bottom
+        style: small
+        y: 1 # -1
+
+    window_slide_1:
+    -   type: dmd
+        width: 512
+        height: 128
+        anchor_x: center# center
+        anchor_y: center# center
+        pixel_color: ff5500
+        dark_color: 220000
+        z: 1
+        pixel_spacing: 2
+
+    -   type: text
+        style: tall title
+        text: MISSION PINBALL FRAMEWORK
+        anchor_x: center# center
+        anchor_y: top# top
+        y: 197# 3
+        font_size: 30
+        antialias: true
+        z: 1
+        color: white
+
+    -   type: rectangle
+        width: 514
+        height: 130
+        z: 2
+        thickness: 2
+        anchor_y: center# center
+        anchor_x: center# center
+        color: 444444
+
+    -   type: image
+        image: test_animation
+        fps: 10
+        anim_loops: -1
+        auto_play: true
+
+    -   type: line
+        width: 100
+        height: 100
+        z: 2
+        thickness: 2
+
+        points:
+        - 0
+        - 0
+        - 100
+        - 100
+    -   type: text
+        style: tall title
+        text: DEMO MAN
+        anchor_x: right# right
+        anchor_y: bottom# bottom
+        y: 3 # -3
+        x: 558# -42
+        font_size: 30
+        antialias: true
+        z: 1
+        color: red
+        animations:
+            entrance:
+            -   property: opacity
+                value: 1
+                duration: 0.4s
+            -   property: opacity
+                value: 0
+                duration: 0.4s
+                repeat: true

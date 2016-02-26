@@ -540,7 +540,12 @@ class Util(object):
 
 
         """
-        return reduce(lambda d, k: d[k], key_path, dic)
+        try:
+            res = reduce(lambda d, k: d[k], key_path, dic)
+        except KeyError:
+            return None
+
+        return res
 
     @staticmethod
     def set_in_dict(dic, key_path, value):
@@ -555,3 +560,20 @@ class Util(object):
 
         """
         Util.get_from_dict(dic, key_path[:-1])[key_path[-1]] = value
+
+    @staticmethod
+    def is_power2(num):
+        """Checks a number to see if it's a power of two.
+
+        Args:
+            num: The number to check
+
+        Returns: True or False
+
+        """
+        try:
+            num = int(num)
+        except (TypeError, ValueError):
+            return False
+
+        return num != 0 and ((num & (num - 1)) == 0)

@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import ruamel.yaml as yaml
 
-from mpf._version import __config_version__
+from mpf._version import __version__
 from mpf.file_interfaces.yaml_interface import MpfLoader, YamlInterface
 from mpf.core.utility_functions import Util
 
@@ -38,7 +38,12 @@ assets:
     videos:
         width: single|num|None
         height: single|num|None
-
+auditor:
+    save_events: list|str|ball_ended
+    audit: list|str|None
+    events: list|str|None
+    player: list|str|None
+    num_player_top_records: single|int|1
 autofire_coils:
     coil: single|self.machine.coils[%]|
     switch: single|self.machine.switches[%]|
@@ -187,8 +192,8 @@ credits:
 displays:
     width: single|int|800
     height: single|int|600
-    bits_per_pixel: single|int|24
     default: single|bool|False
+    fps: single|int|0
 diverters:
     type: single|str|hold
     activation_time: single|ms|0
@@ -256,6 +261,15 @@ fadecandy:
     linear_cutoff: single|float|0.0
     keyframe_interpolation: single|bool|True
     dithering: single|bool|True
+fast:
+    ports: list|str|
+    baud: single|int|921600
+    config_number_format: single|str|hex
+    watchdog: single|ms|1000
+    default_debounce_open: single|ms|30
+    default_debounce_close: single|ms|30
+    hardware_led_fade_time: single|ms|0
+    debug: single|bool|False
 flashers:
     number: single|str|
     number_str: single|str|
@@ -336,6 +350,13 @@ high_score:
     shift_left_tag: single|str|left_flipper
     shift_right_tag: single|str|right_flipper
     select_tag: single|str|start
+images:
+    file: single|str|None
+    load: single|str|None
+led_settings:
+    color_correction_profiles: single|dict|None
+    default_color_correction_profile: single|str|None
+    default_led_fade_ms: single|int|0
 leds:
     number: single|str|
     number_str: single|str|
@@ -352,10 +373,7 @@ leds:
     x: single|int|None
     y: single|int|None
     z: single|int|None
-led_settings:
-    color_correction_profiles: single|dict|None
-    default_color_correction_profile: single|str|None
-    default_led_fade_ms: single|int|0
+    color_channel_map: single|str|rgb
 light_script_player:
     script: single|self.machine.light_scripts[%]|
     lights: list|str|None
@@ -368,6 +386,29 @@ light_scripts:
     fade: single|bool|False
     color: single|color|None
     time: ignore
+logic_block:
+    common:
+        enable_events: list|str|None
+        disable_events: list|str|None
+        reset_events: list|str|None
+        restart_events: list|str|None
+        reset_on_complete: single|bool|True
+        disable_on_complete: single|bool|True
+        persist_state: single|bool|False
+        events_when_complete: list|str|None
+        player_variable: single|str|None
+    accrual:
+        events: list|str|
+    counter:
+        count_events: list|str|
+        count_complete_value: single|int|
+        multiple_hit_window: single|ms|0
+        count_interval: single|int|1
+        direction: single|str|up
+        starting_count: single|int|0
+        event_when_hit: single|str|None
+    sequence:
+        events: list|str|
 machine:
     balls_installed: single|int|1
     min_balls: single|int|1
@@ -407,6 +448,25 @@ multiballs:
     reset_events:  dict|str:ms|machine_reset_phase_3, ball_starting
     start_events:  dict|str:ms|None
     stop_events:  dict|str:ms|None
+physical_dmd:
+    width: single|int|128
+    height: single|int|32
+    shades: single|pow2|16
+    fps: single|int|0
+    platform: single|str|None
+    source_display: single|str|dmd
+    luminosity: list|float|.299, .587, .114
+    gain: single|float|1.0
+physical_rgb_dmd:
+    width: single|int|128
+    height: single|int|32
+    shades: single|pow2|16
+    fps: single|int|0
+    platform: single|str|None
+    source_display: single|str|dmd
+    color_adjust: list|float|1, 1, 1
+    channel_bits: list|int|8, 8, 8
+    color_channel_map: single|str|rgb
 playfields:
     eject_targets: list|str|None
     tags: list|str|None
@@ -534,7 +594,7 @@ shot_profiles:
         reset: single|bool|False
         repeat: single|bool|True
         blend: single|bool|False
-        tocks_per_sec: single|int|10
+        speed: single|float|1
         num_repeats: single|int|0
         sync_ms:  single|int|0
 show_player:
@@ -545,6 +605,7 @@ show_player:
     step_num: single|int|0
     loops: single|int|0
     blend: single|bool|False
+    speed: single|float|1
 slide_player:
     slide: single|str|
     target: single|str|None
@@ -567,6 +628,20 @@ sound_system:
     frequency: single|int|44100
     channels: single|int|1
     master_volume: single|float|0.5
+sounds:
+    file: single|str|None
+    track: single|str|None
+    volume: single|float|0.5
+    priority: single|int|0
+    max_queue_time: single|secs|None
+    loops: single|int|0
+    ducking:
+        target: single|str|
+        delay: single|str|0
+        attack: single|str|10ms
+        attenuation: single|float|
+        release_point: single|str|0
+        release: single|str|10ms
 switches:
     number: single|str|
     number_str: single|str|
@@ -604,6 +679,9 @@ text_styles:
     split_str: single|str|None
     unicode_errors: single|str|None
     color: single|color|ffffffff
+    crop_top: single|int|0            # todo
+    crop_bottom: single|int|0         # todo
+    antialias: single|bool|False      # todo
 tilt:
     tilt_slam_tilt_events: list|str|None
     tilt_warning_events: list|str|None
@@ -652,15 +730,12 @@ transitions:
     # clearcolor
     # fs
     # vs
-
+videos:
+    file: single|str|None
+    load: single|str|None
+    fps: single|num|None
+    auto_play: single|bool|True
 widgets:
-    animations:
-        property: list|str|
-        value: list|str|
-        duration: single|secs|1
-        timing: single|str|after_previous
-        repeat: single|bool|False
-        easing: single|str|linear
     common:
         type: single|str|slide_frame
         x: single|str|None
@@ -671,6 +746,13 @@ widgets:
         z: single|int|0
         animations: ignore
         color: single|color|ffffffff
+    animations:
+        property: list|str|
+        value: list|str|
+        duration: single|secs|1
+        timing: single|str|after_previous
+        repeat: single|bool|False
+        easing: single|str|linear
     bezier:
         points: list|num|
         thickness: single|float|1.0
@@ -680,29 +762,55 @@ widgets:
         joint_precision: single|int|10
         close: single|bool|False
         precision: single|int|180
+    character_picker:
+        font_name: single|str|default
+        name: single|str|
+        selected_char_color: single|color|black
+        selected_char_bg: single|color|white
+        char_x_offset: single|int|1
+        char_y_offset: single|int|1
+        char_width: single|int|7
+        char_list: single|str|"ABCDEFGHIJKLMNOPQRSTUVWXYZ_- "
+        back_char: single|str|
+        end_char: single|str|
+        back_char_selected: single|str|
+        end_char_selected: single|str|
+        image_padding: single|int|1
+        shift_left_tag: single|str|left_flipper
+        shfit_right_tag: single|str|right_flipper
+        select_tag: single|str|start
+        max_chars: single|int|3
+        timeout: single|secs|30
+        return_param: single|str|
+    color_dmd:
+        width: single|num|
+        height: single|num|
+        source_display: single|str|dmd
+        gain: single|float|1.0
+        pixel_color: single|color|None
+        shades: single|int|0
+        bg_color: single|color|191919ff
+        blur: single|float|0.1
+        pixel_size: single|float|0.5
+        dot_filter: single|bool|True
     dmd:
         width: single|num|
         height: single|num|
         source_display: single|str|dmd
         luminosity: list|float|.299, .587, .114
         gain: single|float|1.0
-        color: single|color|ff7700  # classic DMD orange
+        pixel_color: single|color|ff5500  # classic DMD orange
+        dark_color: single|color|221100
         shades: single|int|16
         bg_color: single|color|191919ff
         blur: single|float|0.1
         pixel_size: single|float|0.5
         dot_filter: single|bool|True
-    color_dmd:
-        width: single|num|
-        height: single|num|
-        source_display: single|str|dmd
-        gain: single|float|1.0
-        color: single|color|None
-        shades: single|int|0
-        bg_color: single|color|191919ff
-        blur: single|float|0.1
-        pixel_size: single|float|0.5
-        dot_filter: single|bool|True
+    entered_chars:
+        character_picker: single|str|
+        cursor_char: single|str|_
+        cursor_offset_x: single|int|0
+        cursor_offset_y: single|int|0
     ellipse:
         width: single|num|
         height: single|num|
@@ -718,6 +826,7 @@ widgets:
         height: single|int|0
         width: single|int|0
         auto_play: single|bool|True
+        start_frame: single|int|0                          # todo
     line:
         points: list|num|
         thickness: single|float|1.0
@@ -774,52 +883,29 @@ widgets:
         height: single|int|0
         width: single|int|0
 
-logic_block:
-    common:
-        enable_events: list|str|None
-        disable_events: list|str|None
-        reset_events: list|str|None
-        restart_events: list|str|None
-        reset_on_complete: single|bool|True
-        disable_on_complete: single|bool|True
-        persist_state: single|bool|False
-        events_when_complete: list|str|None
-        player_variable: single|str|None
-    accrual:
-        events: list|str|
-    counter:
-        count_events: list|str|
-        count_complete_value: single|int|
-        multiple_hit_window: single|ms|0
-        count_interval: single|int|1
-        direction: single|str|up
-        starting_count: single|int|0
-        event_when_hit: single|str|None
-    sequence:
-        events: list|str|
-
 widget_player:
     widget: list|str|
     target: single|str|None
     slide: single|str|None
 
-auditor:
-    save_events: list|str|ball_ended
-    audit: list|str|None
-    events: list|str|None
-    player: list|str|None
-    num_player_top_records: single|int|1
-
-fast:
-    ports: list|str|
-    baud: single|int|921600
-    config_number_format: single|str|hex
-    watchdog: single|ms|1000
-    default_debounce_open: single|ms|30
-    default_debounce_close: single|ms|30
-    hardware_led_fade_time: single|ms|0
-    debug: single|bool|False
-'''
+window:
+    icon: single|str|None
+    title: single|str|Mission Pinball Framework v{}
+    source_display: single|str|default
+    borderless: single|bool_int|0
+    resizable: single|bool_int|1
+    fullscreen: single|bool_int|0
+    show_cursor: single|bool_int|1
+    exit_on_escape: single|bool|true
+    height: single|int|600
+    maxfps: single|int|60
+    width: single|int|800
+    minimum_width: single|int|0
+    minimum_height: single|int|0
+    left: single|int|None
+    top: single|int|None
+    no_window: single|bool|False
+'''.format(__version__)
 
 
 class ConfigValidator(object):
@@ -1247,6 +1333,23 @@ class ConfigValidator(object):
             # and the MPF-MC each need different color formats internally, so
             # this way they can each implement their own methods.
             return self.machine.config_processor.color_from_string(item)
+
+        elif validator == 'bool_int':
+            if type(item) is str:
+                if item.lower() in ('yes', 'true'):
+                    return 1
+                else:
+                    return 0
+
+            elif item:
+                return 1
+            else:
+                return 0
+
+        elif validator == 'pow2':
+            if not Util.is_power2(item):
+                raise ValueError
+                # todo make a better error
 
         else:
             self.log.error("Invalid Validator '%s' in config spec %s:%s",

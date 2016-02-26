@@ -1,0 +1,289 @@
+#config_version=3
+
+timing:
+  hz: 30
+
+Sound_system:
+    Tracks:
+        Voice:
+            volume: 1
+            priority: 2
+            simultaneous_sounds: 1
+            preload: yes
+        sfx:
+            volume: 1
+            priority: 1
+            preload: yes
+            simultaneous_sounds: 7
+    stream:
+        name: music
+        priority: 0
+
+    buffer: 512
+    frequency: 44100
+    channels: 1
+    initial_volume: 1
+    volume_steps: 20
+
+dmd:
+    physical: yes
+    width: 128
+    height: 32
+    shades: 16
+    fps: auto
+
+window:
+    width: 600
+    height: 200
+    title: Mission Pinball Framework - Demo Man
+    resizable: yes
+    frame: yes
+    fullscreen: no
+    fps: auto
+    quit_on_close: True
+    elements:
+
+    - type: VirtualDMD
+      width: 512
+      height: 128
+      h_pos: center  # center
+      v_pos: center  # center
+      pixel_color: ff5500
+      dark_color: 220000
+      layer: 1
+      pixel_spacing: 2
+
+    - type: Text
+      font: tall title
+      text: MISSION PINBALL FRAMEWORK
+      h_pos: center  # center
+      v_pos: top  # top
+      y: 3  # 3
+      size: 30
+      antialias: yes
+      layer: 1
+      color: ffffff
+
+    - type: Shape
+      shape: box
+      width: 514
+      height: 130
+      layer: 2
+      thickness: 2
+      v_pos: center  # center
+      h_pos: center  # center
+      color: 444444
+
+    - type: animation
+      animation: test_animation
+      fps: 10
+      repeat: true
+      play_now: true
+
+    - type: Shape
+      shape: line
+      width: 100
+      height: 100
+      layer: 2
+      thickness: 2
+
+    - type: Text
+      font: tall title
+      text: DEMO MAN
+      h_pos: right  # right
+      v_pos: bottom  # bottom
+      y: -3  # -3
+      x: -42  # -42
+      size: 30
+      antialias: yes
+      layer: 1
+      color: ff0000
+      decorators:
+        type: blink
+        repeats: -1
+        on_secs: .4
+        off_secs: .4
+
+slide_player:
+  single_player_ball_started:
+    - type: text
+      text: "%player1|score%"
+      number_grouping: true
+      min_digits: 2
+      v_pos: center  # center
+      h_pos: center  # center
+      y: -2  # -2
+      slide: score_display
+      #persist_slide: yes
+      font: tall title
+      transition:
+        type: move_out
+        duration: 1s
+        direction: top
+    - type: text
+      text: BALL %player1|ball%    %machine|credits_string%
+      v_pos: bottom  # bottom
+      font: small
+      y: -1  # -1
+
+  player_1_multiplayer_slide:
+    - type: text
+      text: "%player1|score%"
+      #font: medium
+      number_grouping: true
+      min_digits: 2
+      v_pos: top
+      h_pos: right
+      x: -60
+      y: 2
+    - type: text
+      text: "%player2|score%"
+      font: medium
+      v_pos: top  # top
+      h_pos: right  # right
+      number_grouping: true
+      min_digits: 2
+      x: -2  # -2
+      y: 2  # 2
+    - type: text
+      text: "%player3|score%"
+      font: medium
+      v_pos: bottom  # bottom
+      h_pos: right  # right
+      y: -10  # -10
+      x: -60  # -60
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: "%player4|score%"
+      font: medium
+      v_pos: bottom  # bottom
+      h_pos: right  # right
+      y: -10  # -10
+      x: -2  # -2
+      number_grouping: true
+      min_digits: 2
+    - type: text
+      text: BALL %player1|ball%    %machine|credits_string%
+      v_pos: bottom  # bottom
+      font: small
+      y: -1  # -1
+
+fonts:
+    default:
+        file: Quadrit.ttf
+        size: 10
+        crop_top: 2
+        crop_bottom: 3
+    space title huge:
+        file: DEADJIM.TTF
+        size: 29
+        antialias: yes
+        crop_top: 3
+        crop_bottom: 3
+    space title:
+        file: DEADJIM.TTF
+        size: 21
+        antialias: yes
+        crop_top: 2
+        crop_bottom: 3
+    medium:
+        file: pixelmix.ttf
+        size: 8
+        crop_top: 1
+        crop_bottom: 1
+    small:
+        file: smallest_pixel-7.ttf
+        size: 9
+        crop_top: 2
+        crop_bottom: 3
+    tall title:
+       file: big_noodle_titling.ttf
+       size: 20
+
+Sounds:
+    intro_loop:
+        file: waiting to plunge loop.ogg
+        preload: True
+        track: music
+    slingshot:
+        file: slingshot.ogg
+        track: sfx
+    ball_launch_motorcycle:
+        file: ball launch motorcycle.ogg
+        track: sfx
+    main_loop:
+        file: main song loop.wav
+
+images:
+    jackpot:
+        file: jackpot1.jpg
+        alpha_color: 0
+        target: dmd
+    happy_face:
+        alpha_color: 15
+
+animations:
+  rolling_ball:
+    alpha_color: 15
+
+Movies:
+  test_Movie1:
+    load: preload
+
+asset_defaults:
+    images:
+        default:
+            load: preload
+        screen:
+            target: screen
+        dmd:
+            target: dmd
+    animations:
+        default:
+            load: preload
+            target: dmd
+        screen:
+            load: preload
+            target: screen
+    sounds:
+        default:
+            track: sfx
+            load: preload
+        voice:
+            track: voice
+            load: preload
+        sfx:
+            track: sfx
+            load: preload
+        music:
+            track: music
+            load: preload
+    shows:
+        default:
+            load: preload
+    movies:
+        default:
+            load: preload
+
+Sound_Player:
+    pluger_lane_ball_start:
+        sound: intro_loop
+        start_events: ball_starting
+        stop_events: ball_live_added
+        duration:
+        loops: -1
+        priority:
+        fade_in: 0
+        fade_out: 0
+    ball_launch_motorcycle:
+        sound: ball_launch_motorcycle
+        start_events: sw_launch
+    slingshot:
+        sound: slingshot
+        start_events: shot_Slingshot
+    main_loop:
+        sound: main_loop
+        start_events: player_eject_request
+        loops: -1
+        stop_events: ball_ending

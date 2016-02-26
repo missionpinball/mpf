@@ -1,4 +1,4 @@
-#config_version=3
+#config_version=4
 mode:
     start_events: start_mode1
     stop_events: stop_mode1

@@ -1,4 +1,4 @@
-#config_version=3
+#config_version=4
 
 virtual_platform_start_active_switches:
   trough1

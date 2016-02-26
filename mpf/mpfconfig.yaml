@@ -1,4 +1,4 @@
-# config_version=3
+# config_version=4
 # This file contains configuration options for the MPF itself, including
 # default settings for your machine-wide game-specific config files.
 
@@ -192,37 +192,37 @@ displaydefaults:
         background_shade: 0
         antialias: False
 
-fonts:
-    default:
-        file: Quadrit.ttf
-        size: 10
-        crop_top: 2
-        crop_bottom: 3
-    space title huge:
-        file: DEADJIM.TTF
-        size: 29
-        antialias: yes
-        crop_top: 3
-        crop_bottom: 3
-    space title:
-        file: DEADJIM.TTF
-        size: 21
-        antialias: yes
-        crop_top: 2
-        crop_bottom: 3
-    medium:
-        file: pixelmix.ttf
-        size: 8
-        crop_top: 1
-        crop_bottom: 1
-    small:
-        file: smallest_pixel-7.ttf
-        size: 9
-        crop_top: 2
-        crop_bottom: 3
-    tall title:
-       file: big_noodle_titling.ttf
-       size: 20
+#fonts:
+#    default:
+#        file: Quadrit.ttf
+#        size: 10
+#        crop_top: 2
+#        crop_bottom: 3
+#    space title huge:
+#        file: DEADJIM.TTF
+#        size: 29
+#        antialias: yes
+#        crop_top: 3
+#        crop_bottom: 3
+#    space title:
+#        file: DEADJIM.TTF
+#        size: 21
+#        antialias: yes
+#        crop_top: 2
+#        crop_bottom: 3
+#    medium:
+#        file: pixelmix.ttf
+#        size: 8
+#        crop_top: 1
+#        crop_bottom: 1
+#    small:
+#        file: smallest_pixel-7.ttf
+#        size: 9
+#        crop_top: 2
+#        crop_bottom: 3
+#    tall title:
+#       file: big_noodle_titling.ttf
+#       size: 20
 
 textstrings:
     volume_zero: OFF
@@ -315,11 +315,11 @@ light_scripts:
           brightness: 0
           color: 000000
         - time: 2
-    "on":
+    on:
         - time: 0
           brightness: ff
           color: ffffff
-    "off":
+    off:
         - time: 0
           brightness: 0
           color: 0

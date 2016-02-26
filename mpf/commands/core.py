@@ -15,6 +15,8 @@ from mpf.core.utility_functions import Util
 class Command(object):
     def __init__(self, mpf_path, machine_path, args):
 
+        print('running core')
+
         parser = argparse.ArgumentParser(
             description='Starts the MPF core engine')
 

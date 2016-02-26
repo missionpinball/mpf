@@ -30,17 +30,17 @@ class CommandLineUtility(object):
 
         self.check_python_version()
 
-        try:
-            command = self.argv[1]
-        except IndexError:
-            command = 'both'
+        commands = set()
 
-        try:
-            module = import_module('mpf.commands.%s' % command)
-            self.argv.pop(1)
-        except (ImportError, IndexError):
-            # assume we have a machine folder to run and not a command
-            module = import_module('mpf.commands.both')
+        for file in os.listdir(os.path.join(self.mpf_path, 'commands')):
+            commands.add(os.path.splitext(file)[0])
+
+        if len(self.argv) > 1 and self.argv[1] in commands:
+            command = self.argv.pop(1)
+        else:
+            command = 'core'
+
+        module = import_module('mpf.commands.%s' % command)
 
         machine_path, remaining_args = self.parse_args()
 
@@ -65,6 +65,8 @@ class CommandLineUtility(object):
         return machine_path, remaining_args
 
     def get_machine_path(self, machine_path_hint):
+
+        print('get machine path', machine_path_hint)
 
         machine_path = None
 
