@@ -58,7 +58,7 @@ window:
       text: MISSION PINBALL FRAMEWORK
       h_pos: center  # center
       v_pos: top  # top
-      y: 3  # 3
+      y: 3   # 3
       size: 30
       antialias: yes
       layer: 1
