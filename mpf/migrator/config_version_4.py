@@ -1,6 +1,5 @@
 import os
 
-import ruamel.yaml as yaml
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from mpf.migrator.migrator import VersionMigrator
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
@@ -21,6 +20,8 @@ class V4Migrator(VersionMigrator):
       new: speed
     - old: fonts
       new: text_styles
+    - old: movies
+      new: videos
     '''
 
     moves = '''
@@ -37,6 +38,11 @@ class V4Migrator(VersionMigrator):
     - sound_system|stream
     - window|elements|__list__|pixel_spacing*
     - window|fps
+
+    # everything from here down is old than v3, but I saw them in some configs
+    # so figured we can get rid of them now too
+    - machine_flow
+    - machineflow
     '''
     
     additions = '''
@@ -80,7 +86,20 @@ class V4Migrator(VersionMigrator):
 
     def _do_custom(self):
         # This runs last, so items will be in their new / renamed locations
+        self._migrate_window()
+        self._create_display_from_dmd()
+        self._migrate_physical_dmd()
+        self._migrate_slide_player()
+        self._create_window_slide()
+        self._migrate_sound_system()
+        self._migrate_fonts()
+        self._migrate_asset_defaults()
+        self._migrate_migrate_animation_assets()
+        self._migrate_assets('images')
+        self._migrate_assets('videos')
+        self._migrate_assets('sounds')
 
+    def _migrate_window(self):
         # Create a display from the window
         if 'window' in self.fc:
             self.log.debug("Converting window: section")
@@ -99,9 +118,7 @@ class V4Migrator(VersionMigrator):
             except KeyError:
                 pass
 
-        # Physical DMD
-
-        # Add it to the displays section
+    def _create_display_from_dmd(self):
         if 'dmd' in self.fc:
             self.log.debug("Converting dmd: to displays:dmd:")
             if 'displays' not in self.fc:
@@ -117,9 +134,9 @@ class V4Migrator(VersionMigrator):
             self._add_display('dmd', self.fc['dmd']['width'],
                               self.fc['dmd']['height'])
 
-        # Configure physical DMD
+    def _migrate_physical_dmd(self):
         if ('dmd' in self.fc and 'physical' in self.fc['dmd'] and
-            self.fc['dmd']['physical']):
+                self.fc['dmd']['physical']):
 
             self.log.debug("Converting physical dmd: settings")
 
@@ -132,7 +149,8 @@ class V4Migrator(VersionMigrator):
                 # physical color DMD
                 YamlInterface.del_key_with_comments(self.fc['dmd'] , 'type',
                                                 self.log)
-                YamlInterface.rename_key('dmd', 'physical_rgb_dmd', self.fc, self.log)
+                YamlInterface.rename_key('dmd', 'physical_rgb_dmd', self.fc,
+                                         self.log)
 
             else:  # physical mono DMD
                 YamlInterface.del_key_with_comments(self.fc['dmd'] , 'type',
@@ -140,7 +158,8 @@ class V4Migrator(VersionMigrator):
                 YamlInterface.del_key_with_comments(self.fc['dmd'] , 'shades',
                                                 self.log)
 
-                YamlInterface.rename_key('dmd', 'physical_dmd', self.fc, self.log)
+                YamlInterface.rename_key('dmd', 'physical_dmd', self.fc,
+                                         self.log)
 
             YamlInterface.del_key_with_comments(self.fc['displays']['dmd'],
                                                 'physical', self.log)
@@ -149,7 +168,7 @@ class V4Migrator(VersionMigrator):
             YamlInterface.del_key_with_comments(self.fc['displays']['dmd'],
                                                 'fps', self.log)
 
-        # slide_player
+    def _migrate_slide_player(self):
         if 'slide_player' in self.fc:
             self.log.debug("Converting slide_player: entries to slides:")
 
@@ -201,7 +220,7 @@ class V4Migrator(VersionMigrator):
 
             self.fc['slide_player'] = new_slide_player
 
-        # Create default slide from window elements
+    def _create_window_slide(self):
         if 'window' in self.fc and 'elements' in self.fc['window']:
             elements = self.fc['window']['elements']
 
@@ -237,6 +256,7 @@ class V4Migrator(VersionMigrator):
             self.fc['slide_player']['machine_reset_phase_3'][
                 'target'] = 'window'
 
+    def _migrate_sound_system(self):
         # convert stream track to regular track
         try:
             stream_track_name = self.fc['sound_system']['stream']['name']
@@ -264,11 +284,12 @@ class V4Migrator(VersionMigrator):
         except KeyError:
             pass
 
+    def _migrate_fonts(self):
         # Fonts to text_styles was already renamed, now update contents
         if 'text_styles' in self.fc:
             self.log.debug("Converting text_styles: from the old fonts: "
                            "settings")
-            for name, settings in self.fc['text_styles'].items():
+            for settings in self.fc['text_styles'].values():
                 YamlInterface.rename_key('size', 'font_size', settings, self.log)
                 YamlInterface.rename_key('file', 'font_name', settings, self.log)
 
@@ -277,6 +298,7 @@ class V4Migrator(VersionMigrator):
                     settings['font_name'] = os.path.splitext(
                         settings['font_name'])[0]
 
+    def _migrate_asset_defaults(self):
         # convert asset_defaults to assets:
         if 'asset_defaults' in self.fc:
             self.log.debug('Renaming key: asset_defaults -> assets:')
@@ -304,7 +326,7 @@ class V4Migrator(VersionMigrator):
             if 'images' in assets:
                 self.log.debug("Converting assets:images:")
 
-                for asset, settings in assets['images'].items():
+                for settings in assets['images'].values():
                     YamlInterface.del_key_with_comments(settings, 'target',
                                                         self.log)
 
@@ -314,9 +336,7 @@ class V4Migrator(VersionMigrator):
                 for asset, settings in assets['sounds'].items():
                     pass  # todo
 
-        if 'movies' in self.fc:
-            YamlInterface.rename_key('movies', 'videos', self.fc)
-
+    def _migrate_migrate_animation_assets(self):
         if 'animations' in self.fc:
             self.log.debug("Converting assets:animations to assets:images")
             if 'images' in self.fc:
@@ -331,12 +351,8 @@ class V4Migrator(VersionMigrator):
                 YamlInterface.rename_key('animations', 'images', self.fc,
                                          self.log)
 
-        self._migrate_assets('images')
-        self._migrate_assets('videos')
-        self._migrate_assets('sounds')
-
     def _migrate_assets(self, section_name):
-       if section_name in self.fc:
+        if section_name in self.fc:
 
             keys_to_keep = set(self.mpf_config_spec[section_name].keys())
             empty_entries = set()
@@ -480,16 +496,20 @@ class V4Migrator(VersionMigrator):
             element = self._migrate_decorators(element)
 
         if 'color' in element:
-            color_tuple = RGBColor.hex_to_rgb(element['color'])
-
-            for color_name, val in named_rgb_colors.items():
-                if color_tuple == val:
-                    self.log.debug("Converting hex color '%s' to named color "
-                                   "'%s'", element['color'], color_name)
-                    element['color'] = color_name
-                    break
+            element['color'] = self._get_color(element['color'])
 
         return element
+
+    def _get_color(self, color):
+        color_tuple = RGBColor.hex_to_rgb(color)
+
+        for color_name, val in named_rgb_colors.items():
+            if color_tuple == val:
+                self.log.debug("Converting hex color '%s' to named color "
+                               "'%s'", color, color_name)
+                return color_name
+
+        return color
 
     def _migrate_shape(self, element):
         if element['shape'] == 'box':
