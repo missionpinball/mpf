@@ -4,11 +4,11 @@ from mpf.core.utility_functions import Util
 from mpf.assets.show import Show
 
 
-class LightScripts(object):
+class ScriptController(object):
 
     def __init__(self, machine):
         self.machine = machine
-        self.registered_light_scripts = CaseInsensitiveDict()
+        self.registered_scripts = CaseInsensitiveDict()
 
     def create_show_from_script(self, script, lights=None, leds=None,
                                 light_tags=None, led_tags=None, key=None):
@@ -71,14 +71,14 @@ class LightScripts(object):
         return Show(machine=self.machine, name='Script', file=None,
                     config=None, steps=action_list)
 
-    def run_registered_light_script(self, script_name, **kwargs):
+    def run_registered_script(self, script_name, **kwargs):
 
-        return self.run_light_script(
-            script=self.registered_light_scripts[script_name], **kwargs)
+        return self.run_script(
+            script=self.registered_scripts[script_name], **kwargs)
 
-    def run_light_script(self, script, lights=None, leds=None, loops=-1,
+    def run_script(self, script, lights=None, leds=None, loops=-1,
                          callback=None, key=None, **kwargs):
-        """Runs a light script.
+        """Runs a script.
 
         Args:
             script: A list of dictionaries of script commands. (See below)
@@ -233,15 +233,16 @@ class LightScripts(object):
 
         return show
 
-    def stop_light_script(self, key, **kwargs):
-        """Stops and removes the light show that was created by a light script.
+    def stop_script(self, key, **kwargs):
+        """Stops and removes the show that was created by a script.
 
         Args:
-            key: The key that was specified in run_light_script().
+            key: The key that was specified in run_script().
             **kwargs: Not used, included in case this method is called via an
                 event handler that might contain other random paramters.
 
         """
+        del kwargs
 
         try:
             self.stop_show(show=self.running_show_keys[key], **kwargs)
