@@ -200,11 +200,7 @@ class DeviceCollection(CaseInsensitiveDict):
         # self.coils.coilname
 
         try:
-            # If we were passed a name of an item
-            if type(attr) == str:
-                return self[attr.lower()]
-            elif type(attr) == int:
-                self.number(number=attr)
+            return self[attr.lower()]
         except KeyError:
             raise KeyError('Error: No device exists with the name:', attr)
 
@@ -213,6 +209,12 @@ class DeviceCollection(CaseInsensitiveDict):
             yield item
 
             # todo add an exception here if this isn't found?
+
+    def __getitem__(self, key):
+        if key in self.keys():
+            return super().__getitem__(self.__class__.lower(key))
+        else:
+            return self.items_tagged(key)
 
     def items_tagged(self, tag):
         """Returns of list of device objects which have a certain tag.
@@ -272,7 +274,7 @@ class DeviceCollection(CaseInsensitiveDict):
             True or False, depending on whether the name is a valid device or
             not.
         """
-        if name.lower() in iter(self.values()):
+        if name.lower() in iter(self.keys()):
             return True
         else:
             return False
@@ -280,5 +282,45 @@ class DeviceCollection(CaseInsensitiveDict):
     def number(self, number):
         """Returns a device object based on its number."""
         for name, obj in self.items():
-            if obj.number == number:
+            if obj.config['number'] == number:
                 return self[name]
+
+    def multilist_to_names(self, multilist):
+        """Takes a list of strings (including tag strings of device names from
+        this collection, including tags, and returns a list of string names.
+
+        Args:
+            multilist: List of strings, or a single string separated by commas
+                or spaces. Entries can include tag|tagname.
+
+        Returns:
+            List of strings of device names. Invalid devices in the input are
+            not included in the output.
+
+        The output list will only contain each device once. Order is not
+        guaranteed
+
+        Examples:
+            input: "led1, led2, tag|playfield"
+            return: [led1, led2, led3, led4, led5]
+
+        """
+        multilist = self.multilist_to_objects(multilist)
+        return [x.name for x in multilist]
+
+    def multilist_to_objects(self, multilist):
+        """Same as multilist_to_names() method, except it returns a list of
+        objects instead of a list of strings.
+
+        """
+        multilist = Util.string_to_list(multilist)
+        final_list = list()
+
+        for item in multilist:
+            item = self[item]
+            if type(item) is list:
+                final_list.extend(item)
+            else:
+                final_list.append(item)
+
+        return list(set(final_list))

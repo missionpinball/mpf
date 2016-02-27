@@ -1,0 +1,14 @@
+#config_version=4
+
+leds:
+  led1:
+    number: 1
+    tags: tag1, tag2
+  led2:
+    number: 2
+    tags: tag1
+  led3:
+    number: 3
+    tags: tag2
+  led4:
+    number: 4
