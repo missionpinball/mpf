@@ -24,3 +24,5 @@ class ShowPlayer(ConfigPlayer):
 
             elif s['action'].lower() == 'stop':
                 self.machine.show_controller.stop_show(name, **kwargs)
+
+player_cls = ShowPlayer

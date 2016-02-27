@@ -1,7 +1,7 @@
 import random
 
 from mpf.core.utility_functions import Util
-from mpf.players.event_player import EventPlayer
+from mpf.config_players.event_player import EventPlayer
 
 
 class RandomEventPlayer(EventPlayer):

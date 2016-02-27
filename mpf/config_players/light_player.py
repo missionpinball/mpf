@@ -64,12 +64,8 @@ class LightPlayer(ConfigPlayer):
         # config is a validated config section:
         processed_config = dict()
 
-        # for event, settings in config.items():
-        #
-        #     for light_name, settings_dict in config.items():
-        #         processed_config[self.machine.lights[light_name]] = settings_dict
-        #
-        #     processed_config[event] =
+        for light_name, settings_dict in config.items():
+            processed_config[self.machine.lights[light_name]] = settings_dict
 
         return processed_config
 

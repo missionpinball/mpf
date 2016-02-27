@@ -1,8 +1,8 @@
 from mpf.core.config_player import ConfigPlayer
 
 
-class LightScriptPlayer(ConfigPlayer):
-    config_file_section = 'light_script_player'
+class ScriptPlayer(ConfigPlayer):
+    config_file_section = 'script_player'
 
     def play(self, settings, mode=None, **kwargs):
         super().play(settings, mode, **kwargs)
@@ -18,3 +18,5 @@ class LightScriptPlayer(ConfigPlayer):
                 led_tags=s['led_tags'],
                 key=s['key']
             )
+
+player_cls = ScriptPlayer
