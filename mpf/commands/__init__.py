@@ -1,7 +1,9 @@
 import argparse
+from importlib import import_module
 import os
 import sys
-from importlib import import_module
+from pkg_resources import iter_entry_points
+
 
 import mpf.core
 from mpf._version import version
@@ -17,6 +19,15 @@ class CommandLineUtility(object):
         self.path = path
         self.mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0],
                                                      os.pardir))
+        self.external_commands = dict()
+        self.get_external_commands()
+
+    def get_external_commands(self):
+        for entry_point in iter_entry_points(group='mpf.command', name=None):
+            print("Found entry point", entry_point)
+            command, function = entry_point.load()()
+            print(command, function)
+            self.external_commands[command] = function
 
     def check_python_version(self):
         if sys.version_info[0] != 3:
@@ -35,17 +46,22 @@ class CommandLineUtility(object):
         for file in os.listdir(os.path.join(self.mpf_path, 'commands')):
             commands.add(os.path.splitext(file)[0])
 
-        if len(self.argv) > 1 and self.argv[1] in commands:
-            command = self.argv.pop(1)
-        else:
-            command = 'core'
+        command = 'core'
+
+        if len(self.argv) > 1:
+
+            if self.argv[1] in self.external_commands:
+                command = self.argv.pop(1)
+                return self.external_commands[command](self.mpf_path,
+                                                       *self.parse_args())
+            elif self.argv[1] in commands:
+                command = self.argv.pop(1)
 
         module = import_module('mpf.commands.%s' % command)
 
         machine_path, remaining_args = self.parse_args()
 
-        return module.Command(self.mpf_path, machine_path,
-                              remaining_args)
+        return module.Command(self.mpf_path, machine_path, remaining_args)
 
     def parse_args(self):
 
