@@ -1,95 +1,264 @@
+from copy import deepcopy
+import re
+
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 from mpf.assets.show import Show
+from mpf.core.config_player import ConfigPlayer
+
+
+class Script(object):
+
+    def __init__(self, script_data):
+        self.script_data = script_data
+        self.tokens = set()
+        self.token_values = dict()
+        self.token_keys = dict()
+        """dict of tokens:
+
+        token_name:
+            - path:
+            - type: 'key' or 'value'
+
+        """
+        self.token_finder = re.compile('(?<=%)(.*?)(?=%)')
+
+        self._parse_script()
+
+    def _add_token(self, token, path, token_type):
+
+        if token not in self.tokens:
+            self.tokens.add(token)
+
+        if token_type == 'key':
+            if token not in self.token_keys:
+                self.token_keys[token] = list()
+            self.token_keys[token].append(path)
+
+        elif token_type == 'value':
+            if token not in self.token_values:
+                self.token_values[token] = list()
+            self.token_values[token].append(path)
+
+    def _parse_script(self):
+        if isinstance(self.script_data, dict):
+            self.script_data = list(self.script_data)
+
+        self._walk_script(self.script_data)
+
+    def _check_token(self, path, data, token_type):
+        try:
+            token = self.token_finder.findall(data)
+        except TypeError:
+            return
+
+        if token:
+            self._add_token(token[0], path, token_type)
+
+    def _walk_script(self, data, path=None, list_index=None):
+
+        # walks a list of dicts, checking tokens
+
+        if not path:
+            path = list()
+
+        if type(data) is dict:
+            for k, v in data.items():
+                self._check_token(path, k, 'key')
+                self._walk_script(v, path + [k])
+
+        elif type(data) is list:
+            for i in data:
+                self._check_token(path, i, 'key')
+                if list_index is None:
+                    list_index = 0
+                else:
+                    list_index += 1
+                self._walk_script(i, path + [list_index], list_index)
+
+        else:
+            self._check_token(path, data, 'value')
+
+    def generate_show(self, **kwargs):
+        pass
+
+    def _replace_tokens(self, **kwargs):
+        keys_replaced = dict()
+        script = deepcopy(self.script_data)
+
+        for token, replacement in kwargs.items():
+            if token in self.token_values:
+                for token_path in self.token_values[token]:
+                    target = script
+                    for x in token_path[:-1]:
+                        target = target[x]
+
+                    target[token_path[-1]] = replacement
+
+        for token, replacement in kwargs.items():
+            if token in self.token_keys:
+                key_name = '%{}%'.format(token)
+                for token_path in self.token_keys[token]:
+                    target = script
+                    for x in token_path:
+                        if x in keys_replaced:
+                            x = keys_replaced[x]
+
+                        target = target[x]
+
+                    target[replacement] = target.pop(key_name)
+                    keys_replaced[key_name] = replacement
+
+        return script
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class ScriptController(object):
+
+    id = 0
+
+    @classmethod
+    def get_id(cls):
+        cls.id += 1
+        return cls.id
 
     def __init__(self, machine):
         self.machine = machine
         self.registered_scripts = CaseInsensitiveDict()
 
-    def create_show_from_script(self, script, lights=None, leds=None,
-                                light_tags=None, led_tags=None, key=None):
+        try:
+            self._process_config_scripts_section(self.machine.config['scripts'])
+        except KeyError:
+            pass
+
+        self.machine.mode_controller.register_load_method(
+            self._process_config_scripts_section, 'scripts')
+
+    def register_script(self, name, settings):
+        if name in self.registered_scripts:
+            raise ValueError("Script named '{}' was just registered, but "
+                             "there's already a registered script with that "
+                             "name. Scripts are shared machine-wide")
+        else:
+            self.registered_scripts[name] = settings
+
+    def _process_config_scripts_section(self, config, **kwargs):
+        # processes the scripts section of a mode or machine config
+        del kwargs
+
+        for script, settings in config.items():
+            if isinstance(settings, dict):
+                settings = [settings]
+
+            for i, setting in enumerate(settings):
+                settings[i] = self.machine.config_validator.validate_config(
+                    'scripts', setting)
+
+            # todo more here?
+
+            self.register_script(script, settings)
+
+    def create_show_from_script(self, script, devices, name, key=None,
+                                **kwargs):
         """Creates a show from a script.
 
         Args:
-            script: Python dictionary in MPF light script format
-            lights: String or iterable of multiples strings of the matrix
-            lights
-                that will be included in this show.
-            leds: String or iterable of multiples strings of the LEDs that will
-                be included in this show.
-            light_tags: String or iterable of multiples strings of tags of
-                matrix lights that specify which lights will be in this show.
-            led_tags: String or iterable of multiples strings of tags of
-                LEDs that specify which lights will be in this show.
+            script: Python dictionary in script format
             key: Object (typically string) that will be used to stop the show
                 created by this list later.
 
         """
 
-        if type(script) is not list:
-            script = Util.string_to_list(script)
+        show_data = list()
+        final_device_dict = dict()
 
-        action_list = list()
+        # devices is dict
+        for device_name, device_list in devices.items():
+            device_list = Util.string_to_list(device_list)
+
+            expanded_device_list = list()
+            for device in device_list:
+
+                if 'tag|' in device:
+
+                    device_collection = (
+                        ConfigPlayer.show_players[device_name].device_collection)
+
+                    expanded_device_list.extend(
+                        device_collection.sitems_tagged(device.strip('tag|')))
+
+                else:
+                    expanded_device_list.append(device)
+
+            if expanded_device_list:
+                final_device_dict[device_name] = expanded_device_list
 
         for step in script:
+            this_step_settings = deepcopy(step)
+            for device_class, device_list in final_device_dict.items():
+                for setting in step.keys():
+                    if setting in ConfigPlayer.show_players[device_class].valid_keys:
+                        this_step_settings[setting] = step[setting]
 
-            this_step = dict()
-            this_step['tocks'] = step['tocks']
+                this_step_settings[device_class] = device_list
 
-            if lights and 'brightness' in this_step:
-                this_step['lights'] = dict()
+            show_data.append(this_step_settings)
 
-                for light in Util.string_to_list(lights):
-                    this_step['lights'][light] = step['brightness']
+        print(show_data)
 
-            if light_tags and 'brightness' in this_step:
-                if 'lights' not in this_step:
-                    this_step['lights'] = dict()
+        return Show(machine=self.machine, name=name, file=None,
+                    steps=show_data)
 
-                for tag in Util.string_to_lowercase_list(light_tags):
-                    this_step['lights']['tag|' + tag] = step['brightness']
+    def run_registered_script(self, script, devices, **kwargs):
 
-            if leds and 'color' in this_step:
-                this_step['leds'] = dict()
+        try:
+            return self.run_script(
+                script=self.registered_scripts[script], devices=devices,
+                name='script_{}_{}'.format(script, ScriptController.get_id()),
+                **kwargs)
+        except KeyError:
+            raise ValueError("Warning. Script '%s' not found", script)
 
-                for led in Util.string_to_list(leds):
-                    this_step['leds'][led] = RGBColor(step['color'])
-
-            if led_tags and 'color' in this_step:
-                if 'leds' not in this_step:
-                    this_step['leds'] = dict()
-
-                for tag in Util.string_to_lowercase_list(led_tags):
-                    this_step['leds']['tag|' + tag] = RGBColor(step['color'])
-
-            action_list.append(this_step)
-
-        return Show(machine=self.machine, name='Script', file=None,
-                    config=None, steps=action_list)
-
-    def run_registered_script(self, script_name, **kwargs):
-
-        return self.run_script(
-            script=self.registered_scripts[script_name], **kwargs)
-
-    def run_script(self, script, lights=None, leds=None, loops=-1,
-                         callback=None, key=None, **kwargs):
+    def run_script(self, script, devices, name=None, loops=-1, callback=None,
+                   key=None, **kwargs):
         """Runs a script.
 
         Args:
-            script: A list of dictionaries of script commands. (See below)
-            lights: A light name or list of lights this script will be applied
-                to.
-            leds: An LED name or a list of LEDs this script will be applied to.
+            script: A list of dictionaries of script commands. (See below).
+            devices: dict of device names to mappings
             loops: The number of times the script loops/repeats (-1 =
-            indefinitely).
+                indefinitely).
             callback: A method that will be called when this script stops.
             key: A key that can be used to later stop the light show this
-            script
+                script
                 creates. Typically a unique string. If it's not passed, it will
                 either be the first light name or the first LED name.
             **kwargs: Since this method just builds a Light Show, you can use
@@ -103,130 +272,21 @@ class ScriptController(object):
             know exactly which Show was created by this script so you can
             stop it later. (See the examples below for usage.)
 
-        Light scripts are similar to Shows, except they only apply to single
-        lights and you can "attach" any script to any light. Scripts are used
-        anytime you want an light to have more than one action. A simple
-        example
-        would be a flash an light. You would make a script that turned it on
-        (with your color), then off, repeating forever.
+        Example:
+        - time: 0
+          color: ff
+        - time: +1
+          color: 0
+        - time: +1
 
-        Scripts could be more complex, like cycling through multiple colors,
-        blinking out secret messages in Morse code, etc.
 
-        Interally we actually just take a light script and dynamically convert
-        it into a Show (that just happens to only be for a single light), so
-        we can have all the other Show-like features, including playback
-        speed, repeats, blends, callbacks, etc.
+        """
 
-        The light script is a list of dictionaries, with each list item being a
-        sequential instruction, and the dictionary defining what you want to
-        do at that step. Dictionary items for each step are:
+        if not name:
+            name = 'script_unnamed_{}'.format(ScriptController.get_id())
 
-            color: The hex color for the led (ex: 00CC24)
-            brightness: The hex brightness value for the light (ex: FF)
-            time: How long (in ms) you want the light to be at that color
-            fade_ms: True/False. Whether you want that light to fade to the
-            color
-                (using the *time* above), or whether you want it to switch to
-                that color instantly.
+        show = self.create_show_from_script(script, devices, name)
 
-        Example usage:
-
-        Here's how you would use the script to flash an RGB light between red
-        and off:
-
-            self.flash_red = []
-            self.flash_red.append({"color": 'ff0000', 'time': 1})
-            self.flash_red.append({"color": '000000', 'time': 1})
-            self.machine.show_controller.run_script(script=self.flash_red,
-                                                    lights='light1',
-                                                    priority=4,
-                                                    blend=True)
-
-        Once the "flash_red" script is defined as self.flash_red, you can use
-        it anytime for any light or LED. You can also define lights as a list,
-        like this:
-
-            self.machine.show_controller.run_script(script=self.flash_red,
-                                                    lights=['light1',
-                                                    'light2'],
-                                                    priority=4,
-                                                    blend=True)
-
-        Most likely you would define your scripts once when the game loads and
-        then call them as needed.
-
-        You can also make more complex scripts. For example, here's a script
-        which smoothly cycles an RGB light through all colors of the rainbow:
-
-            self.rainbow = []
-            self.rainbow.append({'color': 'ff0000', 'time': 1, 'fade': True})
-            self.rainbow.append({'color': 'ff7700', 'time': 1, 'fade': True})
-            self.rainbow.append({'color': 'ffcc00', 'time': 1, 'fade': True})
-            self.rainbow.append({'color': '00ff00', 'time': 1, 'fade': True})
-            self.rainbow.append({'color': '0000ff', 'time': 1, 'fade': True})
-            self.rainbow.append({'color': 'ff00ff', 'time': 1, 'fade': True})
-
-        If you have single color lights, your *brightness* entries in your
-        script
-        would only contain a single hex value for the intensity of that light.
-        For example, a script to flash a single-color light on-and-off (which
-        you can apply to any light):
-
-            self.flash = []
-            self.flash.append({"brightness": "ff", "time": 1})
-            self.flash.append({"brightness": "00", "time": 1})
-
-        If you'd like to save a reference to the :class:`Show` that's
-        created by this script, call it like this:
-
-            self.blah = self.machine.show_controller.run_script("light2",
-                                                        self.flash_red, "4",
-                                                        playback_rate=2)
-         """
-
-        # convert the steps from the script list that was passed into the
-        # format that's used in an Show
-
-        show_actions = []
-
-        if type(lights) is str:
-            lights = [lights]
-
-        if type(leds) is str:
-            leds = [leds]
-
-        if not key:
-            try:
-                key = lights[0]
-            except (TypeError, IndexError):
-                try:
-                    key = leds[0]
-                except (TypeError, IndexError):
-                    return False
-
-        for step in script:
-            if step.get('fade', None):
-                color = str(step['color']) + "-f" + str(step['time'])
-            else:
-                color = str(step['color'])
-
-            current_action = {'time': step['time']}
-
-            if lights:
-                current_action['lights'] = dict()
-                for light in Util.string_to_list(lights):
-                    current_action['lights'][light] = color
-
-            if leds:
-                current_action['leds'] = dict()
-                for led in Util.string_to_list(leds):
-                    current_action['leds'][led] = color
-
-            show_actions.append(current_action)
-
-        show = Show(machine=self.machine, name='Script', file=None,
-                    config=None, steps=show_actions)
 
         self.machine.show_controller.play_show(show=show, loops=loops,
                                                callback=callback, **kwargs)
