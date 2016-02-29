@@ -10,17 +10,27 @@ switches:
     number:
   switch_3:
     number:
+  switch_4:
+    number:
 
 matrix_lights:
   light_1:
     number:
+    tags: tag1
   light_2:
     number:
+    tags: tag2
   light_3:
     number:
 
 leds:
   led_1:
+    number:
+  led_2:
+    number:
+  led_3:
+    number:
+  led_4:
     number:
 
 shots:
@@ -31,10 +41,57 @@ shots:
     switch: switch_2
     light: light_2
 
+  shot_3:
+    switch: switch_3
+    light: tag1
+  shot_4:
+    switch: switch_1
+    light: light_1, light_2
+    led: led_1
+  led_1:
+    switch: switch_1
+    led: led_1
+  led_2:
+    switch: switch_2
+    led: led_2
+  led_3:
+    switch: switch_3
+    led: led_3
+  led_4:
+    switch: switch_4
+    led: led_4
 
-#
-#shot_groups:
-#    group_1:
-#        profile: skill
-#        rotate_events: timer_target_rotator_tick
-#        reset_events: mode_skillshot_started|1
+shot_groups:
+  led_group:
+    shots: led_1, led_2, led_3, led_4
+
+shot_profiles:
+    hit_me:
+        states:
+            - name: active
+              show: flash
+              loops: -1
+              tocks_per_sec: 5
+            - name: complete
+              show: off
+        player_variable: laser
+    default:
+        states:
+          - name: unlit
+            show: off
+          - name: lit
+            show: on
+    drop_shot:
+        states:
+          - name: up
+            show: off
+          - name: down
+            show: on
+    token_show:
+      states:
+        - name: red
+          color: red
+        - name: orange
+          color: orange
+        - name: green
+          color: green

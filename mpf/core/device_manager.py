@@ -214,7 +214,11 @@ class DeviceCollection(CaseInsensitiveDict):
         if key in self.keys():
             return super().__getitem__(self.__class__.lower(key))
         else:
-            return self.items_tagged(key)
+            items = self.items_tagged(key)
+            if items:
+                return items
+            else:
+                raise KeyError
 
     def items_tagged(self, tag):
         """Returns of list of device objects which have a certain tag.

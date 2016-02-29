@@ -240,7 +240,8 @@ class Show(Asset):
 
     def play(self, priority=0, blend=False, hold=None,
              speed=1.0, start_step=0, callback=None,
-             loops=-1, sync_ms=0, reset=True, mode=None, **kwargs):
+             loops=-1, sync_ms=0, reset=True, mode=None,
+             manual_advance=False, **kwargs):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
         speed, priority, whether this show blends with others, etc. These are
@@ -319,6 +320,7 @@ class Show(Asset):
                     sync_ms=sync_ms,
                     reset=reset,
                     mode=mode,
+                    manual_advance=manual_advance,
                     **kwargs,
                    )
 
@@ -335,21 +337,26 @@ class Show(Asset):
         else:
             loops = 0
 
-        self.machine.show_controller.notify_show_starting(
-            RunningShow(machine=self.machine,
-                        show=self,
-                        show_steps=self.get_show_steps(),
-                        priority=int(priority),
-                        blend=bool(blend),
-                        hold=bool(hold),
-                        speed=float(speed),
-                        start_step=int(start_step),
-                        callback=callback,
-                        loops=int(loops),
-                        sync_ms=int(sync_ms),
-                        reset=bool(reset),
-                        mode=mode)
-                        )
+        this_show = (RunningShow(machine=self.machine,
+                                 show=self,
+                                 show_steps=self.get_show_steps(),
+                                 priority=int(priority),
+                                 blend=bool(blend),
+                                 hold=bool(hold),
+                                 speed=float(speed),
+                                 start_step=int(start_step),
+                                 callback=callback,
+                                 loops=int(loops),
+                                 sync_ms=int(sync_ms),
+                                 reset=bool(reset),
+                                 mode=mode,
+                                 manual_advance=manual_advance,
+                                 **kwargs)
+                                 )
+
+        self.machine.show_controller.notify_show_starting(this_show)
+
+        return this_show
 
     def _autoplay(self, *args, **kwargs):
         del args
@@ -363,7 +370,7 @@ class Show(Asset):
 class RunningShow(object):
     def __init__(self, machine, show, show_steps, priority, blend,
                  hold, speed, start_step, callback, loops,
-                 sync_ms, reset, mode):
+                 sync_ms, reset, mode, manual_advance, **kwargs):
 
         self.machine = machine
         self.show = show
@@ -377,8 +384,11 @@ class RunningShow(object):
         self.loops = loops
         self.reset = reset
         self.mode = mode
+        self.manual_advance = manual_advance
+        self.tokens = kwargs
         self.debug = False
 
+        self.name = show.name
         self._total_steps = len(show_steps)
 
         show.running.add(self)
@@ -393,6 +403,9 @@ class RunningShow(object):
                                              show.sync_ms / 1000.0)
         else:  # run now
             self._run_current_step()
+
+    def __repr__(self):
+        return "Running Show Instance: {}".format(self.name)
 
     def stop(self):
         self.machine.show_controller.notify_show_stopping(self)
@@ -409,6 +422,7 @@ class RunningShow(object):
     def _run_current_step(self, dt=None):
         del dt
 
+        # todo dunno why we have to do this. It's needed with unit tests
         if self.machine.clock.get_time() < self.next_step_time:
             return
 
@@ -433,13 +447,34 @@ class RunningShow(object):
                 self.current_step = 0
             else:
                 self.stop()
-                return
+                return False
 
         else:  # we're in the middle of a show
             self.current_step += 1
 
-        time_to_next_step = self.show_steps[self.current_step]['time'] * self.speed
-        self.next_step_time = self.machine.clock.get_time() + time_to_next_step
+        if not self.manual_advance:
+            time_to_next_step = (
+                self.show_steps[self.current_step]['time'] * self.speed)
+            self.next_step_time = (
+                self.machine.clock.get_time() + time_to_next_step)
 
-        self.machine.clock.schedule_once(self._run_current_step,
-                                         time_to_next_step)
+            self.machine.clock.schedule_once(self._run_current_step,
+                                             time_to_next_step)
+
+            return time_to_next_step
+
+    def advance(self, steps=1, show_step=None):
+        """Manually advances this show to the next step."""
+
+        steps_to_advance = steps - 1  # since current_step is really next step
+
+        # todo should this end the show if there are more steps than in the
+        # show and it's not set to loop?
+
+        if steps_to_advance:
+            self.current_step = self._total_steps % steps_to_advance
+        elif show_step is not None:
+            self.current_step = show_step - 1
+
+        self._run_current_step()
+        return self.current_step - 1  # current step is actually the next step

@@ -13,6 +13,13 @@ class TestShots(MpfTestCase):
         # Make sure machine-wide shots load & mode-specific shots do not
         self.assertIn('shot_1', self.machine.shots)
         self.assertIn('shot_2', self.machine.shots)
+        self.assertIn('shot_3', self.machine.shots)
+        self.assertIn('shot_4', self.machine.shots)
+        self.assertIn('led_1', self.machine.shots)
+        self.assertIn('led_2', self.machine.shots)
+        self.assertIn('led_3', self.machine.shots)
+        self.assertIn('led_4', self.machine.shots)
+
         self.assertNotIn('mode1_shot_1', self.machine.shots)
 
         # Start the mode and make sure those shots load
@@ -20,10 +27,28 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run()
         self.assertIn('mode1_shot_1', self.machine.shots)
 
+        self.assertIn('shot_1', self.machine.shots)
+        self.assertIn('shot_2', self.machine.shots)
+        self.assertIn('shot_3', self.machine.shots)
+        self.assertIn('shot_4', self.machine.shots)
+        self.assertIn('led_1', self.machine.shots)
+        self.assertIn('led_2', self.machine.shots)
+        self.assertIn('led_3', self.machine.shots)
+        self.assertIn('led_4', self.machine.shots)
+
         # Stop the mode and make sure those shots go away
         self.machine.modes.mode1.stop()
         self.advance_time_and_run()
         self.assertNotIn('mode1_shot_1', self.machine.shots)
+
+        self.assertIn('shot_1', self.machine.shots)
+        self.assertIn('shot_2', self.machine.shots)
+        self.assertIn('shot_3', self.machine.shots)
+        self.assertIn('shot_4', self.machine.shots)
+        self.assertIn('led_1', self.machine.shots)
+        self.assertIn('led_2', self.machine.shots)
+        self.assertIn('led_3', self.machine.shots)
+        self.assertIn('led_4', self.machine.shots)
 
     def test_hits(self):
         self.shot_1_hit = MagicMock()

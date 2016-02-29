@@ -565,13 +565,14 @@ servos:
     platform: single|str|None
 shots:
     profile: single|str|None
-    switch: list|self.machine.switches[%]|None
+    switch: list|str|None
+    switches: list|str|None
     switch_sequence: list|self.machine.switches[%]|None
     cancel_switch: list|self.machine.switches[%]|None
     delay_switch: dict|self.machine.switches[%]:ms|None
     time: single|ms|0
-    light: list|self.machine.lights[%]|None
-    led: list|self.machine.leds[%]|None
+    # light: list|self.machine.lights[%]|None
+    # led: list|self.machine.leds[%]|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -581,6 +582,7 @@ shots:
     advance_events: dict|str:ms|None
     hit_events: dict|str:ms|None
     remove_active_profile_events: dict|str:ms|None
+    __allow_others__:
 shot_groups:
     shots: list|str|None
     profile: single|str|None
@@ -599,23 +601,24 @@ shot_groups:
     remove_active_profile_events: dict|str:ms|None
 shot_profiles:
     loop: single|bool|False
+    show: single|str|None
     state_names_to_rotate: list|str|None
     state_names_to_not_rotate: list|str|None
     rotation_pattern: list|str|R
     player_variable: single|str|None
-    advance_on_hit: single|bool|True
-    lights_when_disabled: single|bool|True
+    show_when_disabled: single|bool|True
     block: single|bool|true
     states:
         name: single|str|
-        script: single|str|None
+        show: single|str|None
         hold: single|bool|True
         reset: single|bool|False
         repeat: single|bool|True
         blend: single|bool|False
         speed: single|float|1
-        num_repeats: single|int|0
+        loops: single|int|0
         sync_ms:  single|int|0
+        __allow_others__:
 show_player:
     show: single|str|
     priority: single|int|None
