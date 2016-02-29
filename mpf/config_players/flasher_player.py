@@ -6,8 +6,8 @@ class FlasherPlayer(ConfigPlayer):
     config_file_section = 'flasher_player'
     show_section = 'flashers'
 
-    def play(self, settings, mode=None, **kwargs):
-        super().play(settings, mode, **kwargs)
+    def play(self, settings, mode=None, caller=None, **kwargs):
+        super().play(settings, mode, caller, **kwargs)
 
         for flasher in settings:
             flasher.flash()

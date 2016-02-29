@@ -5,8 +5,8 @@ class EventPlayer(ConfigPlayer):
     config_file_section = 'event_player'
     show_section = 'events'
 
-    def play(self, settings, mode=None, **kwargs):
-        super().play(settings, mode, **kwargs)
+    def play(self, settings, mode=None, caller=None, **kwargs):
+        super().play(settings, mode, caller, **kwargs)
         for event in settings:
             self.machine.events.post(event, **kwargs)
 

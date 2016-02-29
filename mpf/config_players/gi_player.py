@@ -7,8 +7,8 @@ class GiPlayer(ConfigPlayer):
     show_section = 'gis'
 
 
-    def play(self, settings, mode=None, **kwargs):
-        super().play(settings, mode, **kwargs)
+    def play(self, settings, mode=None, caller=None, **kwargs):
+        super().play(settings, mode, caller, **kwargs)
 
         for gi, s in settings.items():
             gi.enable(s['brightness'])

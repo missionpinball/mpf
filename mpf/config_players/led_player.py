@@ -6,12 +6,21 @@ from mpf.core.utility_functions import Util
 class LedPlayer(ConfigPlayer):
     config_file_section = 'led_player'
     show_section = 'leds'
+    machine_collection_name = "leds"
 
-    def play(self, settings, mode=None, **kwargs):
-        super().play(settings, mode, **kwargs)
+    def play(self, settings, mode=None, caller=None, **kwargs):
+        super().play(settings, mode, caller, **kwargs)
 
         for led, s in settings.items():
+            self.caller_target_map[caller].add(led)
             led.color(**s)
+
+    def clear(self, caller, priority):
+        try:
+            for led in self.caller_target_map[caller]:
+                led.off(priority=priority)
+        except KeyError:
+            pass
 
     def validate_config(self, config):
         # config is localized to the 'leds' section of a show or the

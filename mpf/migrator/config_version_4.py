@@ -88,6 +88,7 @@ class V4Migrator(VersionMigrator):
         self._migrate_fonts()
         self._migrate_asset_defaults()
         self._migrate_migrate_animation_assets()
+        self._migrate_light_player()
         self._migrate_assets('images')
         self._migrate_assets('videos')
         self._migrate_assets('sounds')
@@ -343,6 +344,72 @@ class V4Migrator(VersionMigrator):
             else:
                 YamlInterface.rename_key('animations', 'images', self.fc,
                                          self.log)
+
+    def _migrate_light_player(self):
+        # light_player: section in v3 was used for both playing light scripts
+        # and playing shows
+
+        if 'light_player' not in self.fc:
+            return
+
+        self.log.debug("Migrating light_player: section")
+
+        for event, actions in self.fc['light_player'].items():
+            if not isinstance(actions, list):
+                temp_actions = actions
+                actions = CommentedSeq()
+                actions.append(temp_actions)
+
+            scripts = list()
+            shows = list()
+
+            for step in actions:
+                if 'show' in step:
+                    shows.append(step)
+                elif 'script' in step:
+                    scripts.append(step)
+
+            if scripts:
+                self._add_to_script_player(event, scripts)
+
+            if shows:
+                self._add_to_show_player(event, shows)
+
+        YamlInterface.del_key_with_comments(self.fc, 'light_player', self.log)
+
+    def _add_to_script_player(self, event, steps):
+        if 'script_player' not in self.fc:
+            self.log.debug("Creating script_player: section")
+            self.fc['script_player'] = CommentedMap()
+
+        if event not in self.fc['script_player']:
+            self.fc['script_player'][event] = CommentedSeq()
+
+            try:
+                self.fc['script_player'].ca.items[event] = (
+                    self.fc['light_player'].ca.items[event])
+            except KeyError:
+                pass
+
+        for step in steps:
+            self.fc['script_player'][event].append(step)
+
+    def _add_to_show_player(self, event, steps):
+        if 'show_player' not in self.fc:
+            self.log.debug("Creating show_player: section")
+            self.fc['show_player'] = CommentedMap()
+
+        if event not in self.fc['show_player']:
+            self.fc['show_player'][event] = CommentedSeq()
+
+            try:
+                self.fc['show_player'].ca.items[event] = (
+                    self.fc['light_player'].ca.items[event])
+            except KeyError:
+                pass
+
+        for step in steps:
+            self.fc['show_player'][event].append(step)
 
     def _migrate_assets(self, section_name):
         if section_name in self.fc:

@@ -107,6 +107,7 @@ class AssetManager(object):
         self.loader_thread.start()
 
     def register_asset_class(self, asset_class, attribute, config_section,
+                             disk_asset_section,
                              path_string, extensions, priority,
                              pool_config_section):
         """Registers a a type of assets to be controlled by the AssetManager.
@@ -120,6 +121,8 @@ class AssetManager(object):
                 at self.machine.images.
             config_section: String name of this assets section in the config
                 files. e.g. 'images'
+            disk_asset_section: String name of the section which holds settings
+                for assets that are loaded from disk.
             path_string: String name of the setting from mpf-mc:paths: which
                 controls the name of the folder that will hold this type of
                 assets in the machine folder. e.g. 'images
@@ -144,6 +147,7 @@ class AssetManager(object):
                   cls=asset_class,
                   path_string=path_string,
                   config_section=config_section,
+                  disk_asset_section=disk_asset_section,
                   extensions=extensions,
                   priority=priority,
                   pool_config_section=pool_config_section,
@@ -162,10 +166,10 @@ class AssetManager(object):
 
         if 'assets' in config and config['assets']:
 
-            if (asset_class['config_section'] in config['assets'] and
-                    config['assets'][asset_class['config_section']]):
+            if (asset_class['disk_asset_section'] in config['assets'] and
+                    config['assets'][asset_class['disk_asset_section']]):
 
-                this_config = config['assets'][asset_class['config_section']]
+                this_config = config['assets'][asset_class['disk_asset_section']]
 
                 # set the default
                 default_config_dict['default'] = this_config['default']
@@ -282,24 +286,24 @@ class AssetManager(object):
             path = self.machine.machine_path
 
         for ac in self._asset_classes:
-            if ac['config_section'] not in config:
-                config[ac['config_section']] = dict()
+            if ac['disk_asset_section'] not in config:
+                config[ac['disk_asset_section']] = dict()
 
             # Populate the config section for this asset class with all the
             # assets found on disk
-            config[ac['config_section']] = self._create_asset_config_entries(
+            config[ac['disk_asset_section']] = self._create_asset_config_entries(
                     asset_class=ac,
-                    config=config[ac['config_section']],
+                    config=config[ac['disk_asset_section']],
                     mode_name=mode_name,
                     path=path)
 
             # create the actual instance of the Asset object and add it
             # to the self.machine asset attribute dict for that asset class
-            for asset in config[ac['config_section']]:
+            for asset in config[ac['disk_asset_section']]:
                 getattr(self.machine, ac['attribute'])[asset] = ac['cls'](
                         self.machine, name=asset,
-                        file=config[ac['config_section']][asset]['file'],
-                        config=config[ac['config_section']][asset])
+                        file=config[ac['disk_asset_section']][asset]['file'],
+                        config=config[ac['disk_asset_section']][asset])
 
         return config
 
@@ -378,7 +382,7 @@ class AssetManager(object):
                 # used for the entry for this asset.
 
                 # first deepcopy the default config for this asset based
-                # on it's default_string (folder) since we use it as the base
+                # on its default_string (folder) since we use it as the base
                 # for everything in case one of the custom folder configs
                 # doesn't include all settings
                 built_up_config = copy.deepcopy(
@@ -751,6 +755,7 @@ class Asset(object):
     attribute = ''  # attribute in MC, e.g. self.machine.images
     path_string = ''  # entry from mpf-mc:paths: for asset folder name
     config_section = ''  # section in the config files for this asset
+    disk_asset_section = ''  # option is assets: config name is different
     extensions = ('', '', '')  # tuple of strings, no dots
     class_priority = 0  # Order asset classes will be loaded. Higher is first.
     pool_config_section = None  # Create an associated AssetPool instance
@@ -770,11 +775,16 @@ class Asset(object):
 
     @classmethod
     def initialize(cls, mc):
+
+        if not cls.disk_asset_section:
+            cls.disk_asset_section = cls.config_section
+
         mc.asset_manager.register_asset_class(
                 asset_class=cls,
                 attribute=cls.attribute,
                 path_string=cls.path_string,
                 config_section=cls.config_section,
+                disk_asset_section=cls.disk_asset_section,
                 extensions=cls.extensions,
                 priority=cls.class_priority,
                 pool_config_section=cls.pool_config_section)

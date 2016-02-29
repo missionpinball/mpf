@@ -36,7 +36,7 @@ class Shot(Device):
 
         self.delay = mpf.core.delays.DelayManager(self.machine.delayRegistry)
 
-        self.running_light_show = None
+        self.running_show = None
         self.active_sequences = list()
         """List of tuples: (id, current_position_index, next_switch)"""
         self.player = None
@@ -181,17 +181,17 @@ class Shot(Device):
     def _stop_current_lights(self):
         if self.debug:
             self.log.debug("Stopping current lights. Show: %s",
-                           self.running_light_show)
+                           self.running_show)
 
         try:
-            self.running_light_show.stop(hold=False, reset=False)
+            self.running_show.stop(hold=False, reset=False)
         except AttributeError:
             pass
 
         if self.debug:
             self.log.debug("Setting current light show to: None")
 
-        self.running_light_show = None
+        self.running_show = None
 
     def _update_lights(self, lightshow_step=0):
         self._stop_current_lights()
@@ -224,10 +224,10 @@ class Shot(Device):
                 state_settings, self.config['light'],
                 self.config['led'], self.active_settings['priority'])
 
-        if state_settings['light_script'] and (self.config['light'] or self.config['led']):
-            self.running_light_show = (
-                self.machine.light_scripts.run_registered_light_script(
-                    script_name=state_settings['light_script'],
+        if state_settings['script'] and (self.config['light'] or self.config['led']):
+            self.running_show = (
+                self.machine.scripts.run_registered_script(
+                    script_name=state_settings['script'],
                     lights=[x.name for x in self.config['light']],
                     leds=[x.name for x in self.config['led']],
                     start_location=lightshow_step,
@@ -236,7 +236,7 @@ class Shot(Device):
 
         if self.debug:
             self.log.debug("New running light show: %s",
-                           self.running_light_show)
+                           self.running_show)
 
     def player_turn_start(self, player, **kwargs):
         """Called by the shot profile manager when a player's turn starts to

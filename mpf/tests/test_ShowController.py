@@ -1,7 +1,9 @@
 import time
 
 from mock import MagicMock
+from ruamel import yaml
 
+from mpf.assets.show import Show
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -19,7 +21,7 @@ class TestShowController(MpfTestCase):
     def event_handler(self, **kwargs):
         pass
 
-    def testShows(self):
+    def test_shows(self):
         # Make sure required modes have been loaded
         self.assertIn('mode1', self.machine.modes)
         self.assertIn('mode2', self.machine.modes)
@@ -87,11 +89,9 @@ class TestShowController(MpfTestCase):
         self.assertEqual(RGBColor('CCCCCC'),
                          self.machine.leds.led_02.hw_driver.current_color)
         self.assertEqual(204,
-                         self.machine.lights.light_01.hw_driver
-                         .current_brightness)
+                    self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertEqual(120,
-                         self.machine.lights.light_02.hw_driver
-                         .current_brightness)
+                    self.machine.lights.light_02.hw_driver.current_brightness)
         self.assertEqual(255,
                          self.machine.gi.gi_01.hw_driver.current_brightness)
 
@@ -102,11 +102,9 @@ class TestShowController(MpfTestCase):
         self.assertEqual(RGBColor('Black'),
                          self.machine.leds.led_02.hw_driver.current_color)
         self.assertEqual(204,
-                         self.machine.lights.light_01.hw_driver
-                         .current_brightness)
+                    self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertEqual(120,
-                         self.machine.lights.light_02.hw_driver
-                         .current_brightness)
+                    self.machine.lights.light_02.hw_driver.current_brightness)
         self.assertEqual(255,
                          self.machine.gi.gi_01.hw_driver.current_brightness)
 
@@ -299,3 +297,75 @@ class TestShowController(MpfTestCase):
         # TODO: Add test for multiple shows running at once with different
         # priorities
         # TODO: Test show playback rate
+
+    def test_token_processing(self):
+
+        data = '''
+                - time: 0
+                  (leds): red
+                - time: +1
+                  (leds): off
+                - time: +1
+                  (leds):
+                    some: setting
+                    (other): setting
+                    this: (foo)
+            '''
+
+        data = yaml.load(data)
+        show = Show(self.machine, name='test', data=data)
+
+        self.assertIn('leds', show.token_keys)
+        self.assertIn('other', show.token_keys)
+        self.assertIn('foo', show.token_values)
+
+        self.assertIn([0], show.token_keys['leds'])
+        self.assertIn([1], show.token_keys['leds'])
+        self.assertIn([2], show.token_keys['leds'])
+
+        self.assertIn([2, '(leds)', 'this'], show.token_values['foo'])
+
+        test_show = show._replace_tokens(foo='hello')
+        self.assertEqual(test_show[2]['(leds)']['this'], 'hello')
+
+        test_show = show._replace_tokens(leds='hello')
+        self.assertIn('hello', test_show[0])
+        self.assertIn('hello', test_show[1])
+        self.assertIn('hello', test_show[2])
+
+        # test multiples at the same time
+        test_show = show._replace_tokens(leds='hello', other='other',
+                                             foo='hello')
+        self.assertEqual('hello', test_show[2]['hello']['this'])
+        self.assertIn('hello', test_show[0])
+        self.assertIn('hello', test_show[1])
+        self.assertIn('hello', test_show[2])
+
+    def test_tokens_in_shows(self):
+        self.assertIn('leds_basic', self.machine.shows)
+        self.assertIn('leds_basic_fade', self.machine.shows)
+        self.assertIn('leds_color_token', self.machine.shows)
+        self.assertIn('leds_extended', self.machine.shows)
+        self.assertIn('lights_basic', self.machine.shows)
+        self.assertIn('multiple_tokens', self.machine.shows)
+
+        self.machine.events.post('play_leds_basic_single')
+        self.advance_time_and_run(.5)
+
+    def test_get_show_copy(self):
+        copied_show = self.machine.shows['test_show1'].get_show_steps()
+        self.assertEqual(6, len(copied_show))
+        self.assertIs(type(copied_show), list)
+        self.assertEqual(copied_show[0]['time'], 0)
+        self.assertEqual(copied_show[1]['time'], 1.0)
+        self.assertEqual(copied_show[2]['time'], 1.0)
+        self.assertEqual(copied_show[4]['time'], 1.0)
+        self.assertEqual(copied_show[5]['time'], 2.0)
+        self.assertIn(self.machine.leds.led_01, copied_show[0]['leds'])
+        self.assertIn(self.machine.leds.led_02, copied_show[0]['leds'])
+        self.assertEqual(copied_show[0]['leds'][self.machine.leds.led_01],
+                         dict(color=RGBColor('006400'), fade_ms=0))
+        self.assertEqual(copied_show[0]['leds'][self.machine.leds.led_02],
+                         dict(color=RGBColor('cccccc'), fade_ms=0))
+        self.assertEqual(copied_show[3]['leds'][self.machine.leds.led_01],
+                         dict(color=RGBColor('midnightblue'), fade_ms=500))

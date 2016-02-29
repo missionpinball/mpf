@@ -5,12 +5,21 @@ from mpf.core.utility_functions import Util
 class LightPlayer(ConfigPlayer):
     config_file_section = 'light_player'
     show_section = 'lights'
+    machine_collection_name = 'lights'
 
-    def play(self, settings, mode=None, **kwargs):
-        super().play(settings, mode, **kwargs)
+    def play(self, settings, mode=None, caller=None, **kwargs):
+        super().play(settings, mode, caller, **kwargs)
 
         for light, s in settings.items():
+            self.caller_target_map[caller].add(light)
             light.on(**s)
+
+    def clear(self, caller, priority):
+        try:
+            for light in self.caller_target_map[caller]:
+                light.off(priority=priority)
+        except KeyError:
+            pass
 
     def validate_config(self, config):
         # config is localized to the 'lights' section of a show or the

@@ -9,17 +9,25 @@ leds:
     led_01:
         number: 0
         color_correction_profile: default
+        tags: tag1
     led_02:
         number: 1
         color_correction_profile: default
+        tags: tag1
+    led_03:
+        number: 2
+    led_04:
+        number: 3
 
 matrix_lights:
     light_01:
         number: 0
         label: Test 0
+        tags: tag1
     light_02:
         number: 1
         label: Test 1
+        tags: tag1
 
 gis:
     gi_01:
@@ -37,7 +45,7 @@ flashers:
         flash_ms: 40
 
 assets:
-    shows:
+    file_shows:
         test_show1:
             preload: yes
         test_show2:
@@ -45,14 +53,70 @@ assets:
         test_show3:
             preload: yes
 
-#assets:
-#    shows:
-#        default:
-#            load: preload
-#        preload:
-#            load: preload
-#            test_key: test_value
-#        on_demand:
-#            load: on_demand
-#        mode_start:
-#            load: mode_start
+shows:
+  leds_basic:
+    - time: 0
+      (leds): red
+    - time: +1
+      (leds): off
+    - time: +1
+  leds_basic_fade:
+    - time: 0
+      (leds): red-f1s
+    - time: +1
+      (leds): off-f1s
+    - time: +1
+  leds_color_token:
+    - time: 0
+      led_01: (color1)
+    - time: +1
+      led_02: (color2)
+    - time: +1
+  leds_extended:
+    - time: 0
+      (leds):
+        color: red
+        fade: 1s
+    - time: +1
+      (leds):
+        color: red
+        fade: 1s
+    - time: +1
+  lights_basic:
+    - time: 0
+      (lights): ff
+    - time: +1
+      (lights): ff
+    - time: +1
+  multiple_tokens:
+    - time: 0
+      (leds): blue
+      (lights): ff
+
+show_player:
+  play_leds_basic_single:
+    show: leds_basic
+    leds: led_01
+  play_leds_basic_multiple:
+    show: leds_basic
+    leds: led_01, led_02
+  play_leds_basic_tag:
+    show: leds_basic
+    leds: tag1
+  event1:
+    lights: light_01
+    show: script2
+  event2:
+    - lights: light_01
+      show: script1
+    - lights: light_02
+      show: script1
+  event3:
+    - lights: tag|tag1
+      show: script2
+  event4:
+    - leds: tag|tag1
+      show: script1
+  event4:
+    - leds: led_01, led_02
+      show: script3

@@ -3,9 +3,10 @@ from mpf.core.config_player import ConfigPlayer
 
 class ShowPlayer(ConfigPlayer):
     config_file_section = 'show_player'
+    show_section = 'shows'
 
-    def play(self, settings, mode=None, **kwargs):
-        super().play(settings, mode, **kwargs)
+    def play(self, settings, mode=None, caller=None, **kwargs):
+        super().play(settings, mode, caller, **kwargs)
 
         for s in settings:  # settings is a list of one or more show configs
 
@@ -19,10 +20,9 @@ class ShowPlayer(ConfigPlayer):
                 priority = 0
 
             if s['action'].lower() == 'play':
-                self.machine.show_controller.play_show(name, priority,
-                                                       **kwargs)
+                self.machine.shows[name].play(priority=priority, **kwargs)
 
             elif s['action'].lower() == 'stop':
-                self.machine.show_controller.stop_show(name, **kwargs)
+                self.machine.shows[name].stop(**kwargs)
 
 player_cls = ShowPlayer

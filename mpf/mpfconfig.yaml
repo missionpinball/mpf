@@ -10,7 +10,7 @@ mpf:
         - config_validator: mpf.core.config_validator.ConfigValidator
         - events: mpf.core.events.EventManager
         - mode_controller: mpf.core.mode_controller.ModeController
-        - light_scripts: mpf.core.light_scripts.LightScripts
+        - script_controller: mpf.core.script_controller.ScriptController
         - config_processor: mpf.core.config_processor.ConfigProcessor
         - shot_profile_manager: mpf.core.shot_profile_manager.ShotProfileManager
         - device_manager: mpf.core.device_manager.DeviceManager
@@ -21,6 +21,19 @@ mpf:
         - bcp: mpf.core.bcp.BCP
         - logic_blocks: mpf.core.logic_blocks.LogicBlocks
         - scoring: mpf.core.scoring.ScoreController
+
+    config_players:
+        bcp: mpf.config_players.bcp_player
+        coil: mpf.config_players.coil_player
+        event: mpf.config_players.event_player
+        flasher: mpf.config_players.flasher_player
+        gi: mpf.config_players.gi_player
+        led: mpf.config_players.led_player
+        light: mpf.config_players.light_player
+        random_event: mpf.config_players.random_event_player
+        script: mpf.config_players.script_player
+        show: mpf.config_players.show_player
+        trigger: mpf.config_players.trigger_player
 
     platform_overlays:
         - snux: mpf.platform.snux.Snux
@@ -229,7 +242,36 @@ textstrings:
     volume_max: MAX
 
 assets:
-    shows:
+#    default:
+#        load: preload
+    file_shows:
+        default:
+            load: preload
+        preload:
+            load: preload
+        on_demand:
+            load: on_demand
+        mode_start:
+            load: mode_start
+    videos:
+        default:
+            load: preload
+        preload:
+            load: preload
+        on_demand:
+            load: on_demand
+        mode_start:
+            load: mode_start
+    images:
+        default:
+            load: preload
+        preload:
+            load: preload
+        on_demand:
+            load: on_demand
+        mode_start:
+            load: mode_start
+    sounds:
         default:
             load: preload
         preload:
@@ -302,11 +344,11 @@ shot_profiles:
     default:
         states:
           - name: unlit
-            light_script: "off"
+            script: "off"
           - name: lit
-            light_script: "on"
+            script: "on"
 
-light_scripts:
+scripts:
     flash:
         - time: 0
           brightness: ff

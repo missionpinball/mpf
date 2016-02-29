@@ -1,9 +1,11 @@
 """Contains the MachineController base class"""
 
 import errno
+import importlib
 import logging
 import os
 import pickle
+from pkg_resources import iter_entry_points
 import queue
 import sys
 import threading
@@ -12,23 +14,13 @@ from mpf._version import __version__
 from mpf.core.bcp import BCP
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
-from mpf.core.config_player import ConfigPlayer
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
-from mpf.players.coil_player import CoilPlayer
-from mpf.players.event_player import EventPlayer
-from mpf.players.flasher_player import FlasherPlayer
-from mpf.players.gi_player import GiPlayer
-from mpf.players.light_player import LightPlayer
-from mpf.players.light_script_player import LightScriptPlayer
-from mpf.players.led_player import LedPlayer
-from mpf.players.random_event_player import RandomEventPlayer
-from mpf.players.show_player import ShowPlayer
-from mpf.players.trigger_player import TriggerPlayer
+
 
 
 class MachineController(object):
@@ -130,7 +122,6 @@ class MachineController(object):
         self.validate_machine_config_section('game')
 
         self._register_config_players()
-
         self._register_system_events()
         self._load_machine_vars()
         self.events.post("init_phase_1")
@@ -178,17 +169,15 @@ class MachineController(object):
                                 replace('%', 'quit'), self.stop)
 
     def _register_config_players(self):
-        # todo automate this
-        ConfigPlayer.register(ShowPlayer(self))
-        ConfigPlayer.register(LightScriptPlayer(self))
-        ConfigPlayer.register(LightPlayer(self))
-        ConfigPlayer.register(LedPlayer(self))
-        ConfigPlayer.register(EventPlayer(self))
-        ConfigPlayer.register(RandomEventPlayer(self))
-        ConfigPlayer.register(CoilPlayer(self))
-        ConfigPlayer.register(FlasherPlayer(self))
-        ConfigPlayer.register(GiPlayer(self))
-        ConfigPlayer.register(TriggerPlayer(self))
+        for name, module in self.config['mpf']['config_players'].items():
+            imported_module = importlib.import_module(module)
+            setattr(self, '{}_player'.format(name),
+                    imported_module.player_cls(self))
+
+        # for entry_point in iter_entry_points(group='mpf.config_player',
+        #                                      name=None):
+        #     entry_point.load()(self)
+        #     pass
 
     def _load_machine_vars(self):
         self.machine_var_data_manager = DataManager(self, 'machine_vars')

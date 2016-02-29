@@ -1,7 +1,0 @@
-#config_version=4
-displays:
-  window:
-    type: window
-    width: 400
-    height: 300
-    color_bits: 24

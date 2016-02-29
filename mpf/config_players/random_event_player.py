@@ -8,8 +8,8 @@ class RandomEventPlayer(EventPlayer):
     config_file_section = 'random_event_player'
     show_section = 'random_events'
 
-    def play(self, settings, mode=None, **kwargs):
-        super().play(settings, mode, **kwargs)
+    def play(self, settings, mode=None, caller=None, **kwargs):
+        super().play(settings, mode, caller, **kwargs)
         self.machine.events.post(random.choice(settings['event_list']),
                                  **kwargs)
 

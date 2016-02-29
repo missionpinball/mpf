@@ -15,11 +15,16 @@ log = logging.getLogger('ConfigProcessor')
 class ConfigProcessorBase(object):
     config_spec = None
 
+    # todo why are scripts and shows processed here? Should they be in their
+    # respective players
+
     def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger('ConfigProcessor')
-        self.machine_sections = []
-        self.mode_sections = []
+        self.machine_sections = dict()
+        '''dict of the methods that will process machine scripts and shows.'''
+        self.mode_sections = dict()
+        '''dict of the methods that will process mode scripts and shows.'''
 
     def register_load_methods(self):
         for section in self.mode_sections:
@@ -28,6 +33,8 @@ class ConfigProcessorBase(object):
                     config_section_name=section, section=section)
 
     def process_config_file(self, section_dict, config):
+        """Called to process a config file (can be a mode or machine config).
+        """
         for section in section_dict:
             if section in section_dict and section in config:
                 self.process_localized_config_section(config=config[section],
@@ -39,6 +46,13 @@ class ConfigProcessorBase(object):
         self.process_localized_config_section(config, section)
 
     def process_localized_config_section(self, config, section):
+        """Processes a single key within a config file.
+
+        Args:
+            config: The subsection of a config dict to process
+            section: The name of the section, either 'scripts' or 'shows'.
+
+        """
         self.machine_sections[section](config)
 
     def color_from_string(self, item):
@@ -103,35 +117,10 @@ class ConfigProcessorBase(object):
 
 
 class ConfigProcessor(ConfigProcessorBase):
-    config_spec = None
+    """Main config file processor which is responsible for loading and
+    processing machine and mode config files.
 
-    def __init__(self, machine):
-        super(ConfigProcessor, self).__init__(machine)
-        self.system_config = self.machine.config['mpf']
-
-        self.machine_sections = dict(shows=self.process_shows,
-                                     light_scripts=self.process_light_scripts)
-
-        self.mode_sections = dict(shows=self.process_shows,
-                                  light_scripts=self.process_light_scripts)
-
-        # process mode-based and machine-wide configs
-        self.register_load_methods()
-        self.process_config_file(section_dict=self.machine_sections,
-                                 config=self.machine.config)
-
-    def process_shows(self, config):
-        pass
-
-    def process_show(self, name, config):
-        pass
-
-    def process_light_scripts(self, config):
-        for name, settings in config.items():
-            # todo config validator
-            self.machine.light_scripts.registered_light_scripts[name] = \
-                settings
-
+    """
     def color_from_string(self, color_string):
         color_string = str(color_string).lower()
 

@@ -134,6 +134,8 @@ bcp:
         port: single|int|5050
         connection_attempts: single|int|-1
         require_connection: single|bool|False
+bcp_player:                                          # todo
+
 coils:
     number: single|str|
     number_str: single|str|
@@ -269,6 +271,7 @@ fast:
     default_debounce_close: single|ms|30
     hardware_led_fade_time: single|ms|0
     debug: single|bool|False
+flasher_player:                                # todo
 flashers:
     number: single|str|
     number_str: single|str|
@@ -320,6 +323,7 @@ game:
     max_players: single|int|4
     start_game_switch_tag: single|str|start
     add_player_switch_tag: single|str|start
+gi_player:                                         # todo
 gis:
     number: single|str|
     number_str: single|str|
@@ -352,6 +356,7 @@ high_score:
 images:
     file: single|str|None
     load: single|str|None
+led_player:                                                   # todo
 led_settings:
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
@@ -373,18 +378,7 @@ leds:
     y: single|int|None
     z: single|int|None
     color_channel_map: single|str|rgb
-light_script_player:
-    script: single|self.machine.light_scripts[%]|
-    lights: list|str|None
-    leds: list|str|None
-    light_tags: list|str|None
-    led_tags: list|str|None
-    tags: list|str|None
-    action: single|str|play
-light_scripts:
-    fade: single|bool|False
-    color: single|color|None
-    time: ignore
+light_player:                                     # todo
 logic_block:
     common:
         enable_events: list|str|None
@@ -486,6 +480,7 @@ playfield_transfers:
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
+random_event_player:                                          # todo
 score_reels:
     coil_inc: single|self.machine.coils[%]|None
     coil_dec: single|self.machine.coils[%]|None
@@ -523,6 +518,31 @@ score_reel_groups:
     label: single|str|%
     debug: single|bool|False
     lights_tag: single|str|None
+script_player:
+    bcps: list|str|None
+    coils: list|str|None
+    displays: list|str|None
+    events: list|str|None
+    flashers: list|str|None
+    gis: list|str|None
+    leds: list|str|None
+    lights: list|str|None
+    random_events: list|str|None
+    shows: list|str|None
+    triggers: list|str|None
+    script: single|str|
+    action: single|str|play
+    priority: single|int|0
+    step_num: single|int|0
+    loops: single|int|-1
+    blend: single|bool|False
+    speed: single|float|1
+    key: single|str|None
+scripts:
+    time: ignore
+    key: single|str|None
+    loops: single|int|-1
+    __allow_others__:
 servo_controllers:
     platform: single|str|None
     address: single|int|64
@@ -588,7 +608,7 @@ shot_profiles:
     block: single|bool|true
     states:
         name: single|str|
-        light_script: single|str|None
+        script: single|str|None
         hold: single|bool|True
         reset: single|bool|False
         repeat: single|bool|True
@@ -602,9 +622,14 @@ show_player:
     action: single|str|play
     repeat: single|bool|True
     step_num: single|int|0
-    loops: single|int|0
+    loops: single|int|-1
     blend: single|bool|False
     speed: single|float|1
+    hold: single|bool|False
+    __allow_others__:
+show_step:
+    time: single|str|
+    __allow_others__:
 slide_player:
     slide: single|str|
     target: single|str|None
@@ -729,6 +754,7 @@ transitions:
     # clearcolor
     # fs
     # vs
+trigger_player:                                    # todo
 videos:
     file: single|str|None
     load: single|str|None
@@ -1074,8 +1100,9 @@ class ConfigValidator(object):
             this_base_spec.update(this_spec)
             this_spec = this_base_spec
 
-        self.check_for_invalid_sections(this_spec, source,
-                                        validation_failure_info)
+        if '__allow_others__' not in this_spec:
+            self.check_for_invalid_sections(this_spec, source,
+                                            validation_failure_info)
 
         processed_config = source
 

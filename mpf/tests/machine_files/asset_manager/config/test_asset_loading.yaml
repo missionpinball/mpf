@@ -35,7 +35,7 @@ modes:
   - mode1
 
 assets:
-    shows:
+    file_shows:
         default:
             load: preload
         preload:
@@ -46,7 +46,7 @@ assets:
         mode_start:
             load: mode_start
 
-shows:
+file_shows:
   show_12_new_name:
     file: show12.yaml
     test_key: test_value_override12

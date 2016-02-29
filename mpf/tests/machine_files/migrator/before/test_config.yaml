@@ -287,3 +287,95 @@ Sound_Player:
         start_events: player_eject_request
         loops: -1
         stop_events: ball_ending
+
+light_player:
+  mode_attract_started:  # test comment 1
+    - show: multiball_sweep  # test comment 2
+      repeat: yes  # test comment 3
+      tocks_per_sec: 10
+    - show: random_flashing
+      repeat: yes
+      tocks_per_sec: 6
+  mode_claw_lit_for_major_mode_started:
+      lights: l_claw_ready, l_right_ramp_arrow
+      script: flash  # test comment 4
+      key: claw_lit
+      tocks_per_sec: 5
+      repeat: yes
+  balldevice_elevator_ball_enter:
+      key: claw_lit
+      action: stop
+  mode_mode1_acmag_started:
+      lights: l_left_ramp_arrow
+      script: flash
+      tocks_per_sec: 4
+      repeat: yes
+
+shot_profiles:
+    hit_me:
+        states:
+            - name: active
+              light_script: flash
+              repeat: yes
+              tocks_per_sec: 5
+            - name: complete
+              light_script: "off"
+        player_variable: laser
+    default:
+        states:
+          - name: unlit
+            light_script: "off"
+          - name: lit
+            light_script: "on"
+    drop_shot:
+        states:
+          - name: up
+            light_script: "off"
+          - name: down
+            light_script: "on"
+
+show_player:
+    mode_attract_started: # test comment 1
+        -   show: multiball_sweep # test comment 2
+            repeat: true # test comment 3
+            speed: 10
+        -   show: random_flashing
+            repeat: true
+            speed: 6
+
+shots:
+  left_lane:
+    switch: s_left_rollover
+    light: l_left_rollover
+  middle_lane:
+    switch: s_center_rollover
+    light: l_middle_rollover
+
+shot_groups:
+  rollover_lanes:
+    shots: left_lane, middle_lane, right_lane
+
+  standups:
+    shots: standup_1, standup_2, standup_3, standup_4, standup_5
+
+light_scripts:
+    flash:
+        - tocks: 1
+          color: ff
+        - tocks: 1
+          color: 0
+
+    flashon:
+        - tocks: 1
+          color: ff
+        - tocks: 1
+          color: 0
+        - tocks: 1
+          color: ff
+
+    on:
+        - tocks: 1
+          color: ff
+    off:
+        - tocks: 1
+          color: 0
