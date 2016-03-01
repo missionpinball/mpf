@@ -336,7 +336,7 @@ class Show(Asset):
                     reset=reset,
                     mode=mode,
                     manual_advance=manual_advance,
-                    **kwargs,
+                    **kwargs
                    )
 
             self.load(callback=self._autoplay, priority=priority)
