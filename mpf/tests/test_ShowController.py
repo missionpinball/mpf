@@ -235,18 +235,21 @@ class TestShowController(MpfTestCase):
         self.assertTrue(self.machine.bcp.bcp_trigger)
         self.machine.bcp.bcp_trigger.assert_called_with('play_sound',
                                                         sound="test_1",
-                                                        volume=0.5, loops=-1)
+                                                        volume=0.5, loops=-1,
+                                                        priority=0)
 
         # Advance to next show step and check for trigger
         self.advance_time_and_run(1.0)
         self.machine.bcp.bcp_trigger.assert_called_with('play_sound',
-                                                        sound="test_2")
+                                                        sound="test_2",
+                                                        priority=0)
 
         # Advance to next show step and check for trigger
         self.advance_time_and_run(1.0)
         self.machine.bcp.bcp_trigger.assert_called_with('play_sound',
                                                         sound="test_3",
-                                                        volume=0.35, loops=1)
+                                                        volume=0.35, loops=1,
+                                                        priority=0)
 
         # Stop the mode (and therefore the show)
         self.machine.events.post('stop_mode2')
@@ -291,7 +294,7 @@ class TestShowController(MpfTestCase):
         # Advance to next show step and check for coil firing
         self.advance_time_and_run(1.0)
         self.machine.coils['coil_01'].pulse.assert_called_with(
-            action='pulse', power=0.45)
+            action='pulse', power=0.45, ms=0, priority=0)
 
         # TODO: Test device tags
         # TODO: Add test for multiple shows running at once with different
@@ -364,8 +367,8 @@ class TestShowController(MpfTestCase):
         self.assertIn(self.machine.leds.led_01, copied_show[0]['leds'])
         self.assertIn(self.machine.leds.led_02, copied_show[0]['leds'])
         self.assertEqual(copied_show[0]['leds'][self.machine.leds.led_01],
-                         dict(color=RGBColor('006400'), fade_ms=0))
+                         dict(color='006400', fade_ms=0))
         self.assertEqual(copied_show[0]['leds'][self.machine.leds.led_02],
-                         dict(color=RGBColor('cccccc'), fade_ms=0))
+                         dict(color='cccccc', fade_ms=0))
         self.assertEqual(copied_show[3]['leds'][self.machine.leds.led_01],
-                         dict(color=RGBColor('midnightblue'), fade_ms=500))
+                         dict(color='midnightblue', fade_ms=500))

@@ -31,14 +31,7 @@ class TestDeviceCollection(MpfTestCase):
         led3 = self.machine.leds['led3']
         led4 = self.machine.leds['led4']
 
-        self.assertEqual(self.machine.leds.tag1, self.machine.leds['tag1'])
-        self.assertIn(led1, self.machine.leds.tag1)
-        self.assertIn(led2, self.machine.leds.tag1)
-        self.assertNotIn(led3, self.machine.leds.tag1)
-        self.assertNotIn(led4, self.machine.leds.tag1)
-
-        with self.assertRaises(KeyError):
-            self.machine.leds.nonexistent_tag
+        self.assertEqual([], self.machine.leds.items_tagged('fake_tag'))
 
         self.assertIn(led1, self.machine.leds.items_tagged('tag1'))
         self.assertIn(led2, self.machine.leds.items_tagged('tag1'))

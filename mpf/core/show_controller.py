@@ -60,17 +60,10 @@ class ShowController(object):
             self._process_config_shows_section(self.machine.config['shows'])
 
     def _process_config_shows_section(self, config, **kwargs):
-        # processes the scripts section of a mode or machine config
+        # processes the shows: section of a mode or machine config
         del kwargs
 
         for show, settings in config.items():
-            if isinstance(settings, dict):
-                settings = [settings]
-
-            for i, setting in enumerate(settings):
-                settings[i] = self.machine.config_validator.validate_config(
-                    'show_step', setting)
-
             self.register_show(show, settings)
 
     def register_show(self, name, settings):

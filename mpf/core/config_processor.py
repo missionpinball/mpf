@@ -132,8 +132,5 @@ class ConfigProcessor(ConfigProcessorBase):
         else:
             color = Util.string_to_list(color_string)
 
-            try:
-                return int(color[0]), int(color[1]), int(color[2])
+            return int(color[0]), int(color[1]), int(color[2])
 
-            except KeyError:
-                raise

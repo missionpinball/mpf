@@ -22,6 +22,14 @@ class V4Migrator(VersionMigrator):
       new: text_styles
     - old: movies
       new: videos
+    - old: lights_when_disabled
+      new: show_when_disable
+    - old: num_repeats
+      new: loops
+    - old: repeat
+      new: loops
+    - old: loop
+      new: loop
     '''
 
     moves = '''
@@ -594,16 +602,15 @@ class V4Migrator(VersionMigrator):
                        "'image' widget")
         element['type'] = 'image'
         YamlInterface.rename_key('play_now', 'auto_play', element, self.log)
-        YamlInterface.rename_key('repeat', 'anim_loops', element, self.log)
         YamlInterface.rename_key('animation', 'image', element, self.log)
 
         element.pop('drop_frames', None)
 
-        self.log.debug('Converting animated image anim_loops: setting')
-        if element['anim_loops']:
-            element['anim_loops'] = -1
+        self.log.debug('Converting animated image loops: setting')
+        if element['loops']:
+            element['loops'] = -1
         else:
-            element['anim_loops'] = 0
+            element['loops'] = 0
 
         return element
 

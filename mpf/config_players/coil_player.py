@@ -7,49 +7,33 @@ class CoilPlayer(ConfigPlayer):
 
     def play(self, settings, mode=None, caller=None, **kwargs):
         super().play(settings, mode, caller, **kwargs)
+
+        if 'coils' in settings:
+            settings = settings['coils']
+
         for coil, s in settings.items():
-            getattr(coil, s['action'])(**s)
+            try:
+                getattr(coil, s['action'])(**s)
+            except AttributeError:
+                getattr(self.machine.coils[coil], s['action'])(**s)
 
-    def validate_config(self, config):
+    def get_express_config(self, value):
 
-        if not config:
-            config = dict()
+        try:
+            value = int(value)
+            return dict(action='pulse', milliseconds=value)
+        except TypeError:
+            pass
 
-        if not isinstance(config, dict):
-            raise ValueError("Received invalid coil player config: {}"
-                             .format(config))
+        action = 'pulse'
 
-        for coil, settings in config.items():
-            if not settings:
-                settings = dict()
-            settings = self.machine.config_validator.validate_config('coil_player',
-                                                                   settings)
-            if settings['action'] not in ('pulse', 'enable', 'disable',
-                                        'timed_enable'):
-                raise ValueError("Invalid coin action type: {}".format(settings[
-                                                                       'action']))
+        if value in ('disable', 'off'):
+            action = 'disable'
 
-            if not settings['ms']:
-                del settings['ms']
-            else:
-                settings['milliseconds'] = settings.pop('ms')
+        elif value in ('enable', 'on'):
+            action = 'enable'
 
+        return dict(action=action, power=1.0)
 
-            final_settings = dict()
-            for k, v in settings.items():
-                if v is not None:
-                    final_settings[k] = v
-
-            config[coil] = final_settings
-
-        return config
-
-    def process_config(self, config, **kwargs):
-        processed_config = dict()
-
-        for coil_name, settings_dict in config.items():
-            processed_config[self.machine.coils[coil_name]] = settings_dict
-
-        return processed_config
 
 player_cls = CoilPlayer

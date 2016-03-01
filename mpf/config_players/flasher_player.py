@@ -9,29 +9,16 @@ class FlasherPlayer(ConfigPlayer):
     def play(self, settings, mode=None, caller=None, **kwargs):
         super().play(settings, mode, caller, **kwargs)
 
-        for flasher in settings:
-            flasher.flash()
+        if 'flashers' in settings:
+            settings = settings['flashers']
 
-    def validate_config(self, config):
-        if not config:
-            config = list()
+        for flasher, s in settings.items():
+            try:
+                flasher.flash(**s)
+            except AttributeError:
+                self.machine.flashers[flasher].flash(**s)
 
-        config = Util.string_to_list(config)
-
-        for flasher in config:
-            if flasher not in self.machine.flashers:
-                raise ValueError("Flasher '{}' is not a valid flasher "
-                                 "name".format(flasher))
-
-        return config
-
-    def process_config(self, config, **kwargs):
-        # config is a validated config section:
-        new_list = list()
-
-        for flasher in config:
-            new_list.append(self.machine.flashers[flasher])
-
-        return new_list
+    def get_express_config(self, value):
+        return dict(ms=None)
 
 player_cls = FlasherPlayer

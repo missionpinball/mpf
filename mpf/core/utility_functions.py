@@ -213,7 +213,7 @@ class Util(object):
             Integer representation of the hex string.
 
         """
-        return_int = int(inputstring, 16)
+        return_int = int(str(inputstring), 16)
 
         if return_int > maxvalue:
             return_int = maxvalue

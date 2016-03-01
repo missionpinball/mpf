@@ -4,29 +4,39 @@ from mpf.core.utility_functions import Util
 class EventPlayer(ConfigPlayer):
     config_file_section = 'event_player'
     show_section = 'events'
+    device_collection = None
 
     def play(self, settings, mode=None, caller=None, **kwargs):
         super().play(settings, mode, caller, **kwargs)
-        for event in settings:
-            self.machine.events.post(event, **kwargs)
+
+        if 'events' in settings:
+            settings = settings['events']
+
+        for event, s in settings.items():
+            s.update(kwargs)
+            self.machine.events.post(event, **s)
+
+    def get_express_config(self, value):
+        return dict()
 
     def validate_config(self, config):
-        if type(config) is dict:
-            final_dict = dict()
+        # override because we want to let events just be a list of
+        # events
 
-            for trigger_event, play_events in config.items():
-                final_dict[trigger_event] = Util.string_to_list(play_events)
+        new_config = dict()
 
-            return final_dict
-
-    def process_config(self, config, **kwargs):
         for event, settings in config.items():
-            config[event] = Util.string_to_list(settings)
+            if not isinstance(settings, list) or not isinstance(settings, dict):
+                new_config[event] = dict()
 
-    def validate_show_config(self, config):
-        return Util.string_to_list(config)
+                for event1 in Util.string_to_list(settings):
+                    new_config[event][event1] = dict()
 
-    def process_show_config(self, config, **kwargs):
-        return config
+            else:
+                new_config[event] = settings
+
+        super().validate_config(new_config)
+
+        return new_config
 
 player_cls = EventPlayer

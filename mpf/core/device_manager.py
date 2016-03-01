@@ -211,14 +211,7 @@ class DeviceCollection(CaseInsensitiveDict):
             # todo add an exception here if this isn't found?
 
     def __getitem__(self, key):
-        if key in self.keys():
-            return super().__getitem__(self.__class__.lower(key))
-        else:
-            items = self.items_tagged(key)
-            if items:
-                return items
-            else:
-                raise KeyError
+        return super().__getitem__(self.__class__.lower(key))
 
     def items_tagged(self, tag):
         """Returns of list of device objects which have a certain tag.
@@ -309,6 +302,7 @@ class DeviceCollection(CaseInsensitiveDict):
             return: [led1, led2, led3, led4, led5]
 
         """
+
         multilist = self.multilist_to_objects(multilist)
         return [x.name for x in multilist]
 
@@ -321,10 +315,13 @@ class DeviceCollection(CaseInsensitiveDict):
         final_list = list()
 
         for item in multilist:
-            item = self[item]
-            if type(item) is list:
-                final_list.extend(item)
-            else:
-                final_list.append(item)
+            objects_from_tags = self.items_tagged(item)
+            if objects_from_tags:
+                for object in objects_from_tags:
+                    if object not in final_list:
+                        final_list.append(object)
 
-        return list(set(final_list))
+            else:
+                final_list.append(self[item])
+
+        return final_list

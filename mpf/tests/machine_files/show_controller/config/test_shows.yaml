@@ -95,28 +95,28 @@ shows:
 
 show_player:
   play_leds_basic_single:
-    show: leds_basic
-    leds: led_01
+    leds_basic:
+      leds: led_01
   play_leds_basic_multiple:
-    show: leds_basic
-    leds: led_01, led_02
+    leds_basic:
+      leds: led_01
   play_leds_basic_tag:
-    show: leds_basic
-    leds: tag1
+    leds_basic:
+      leds: tag1
   event1:
-    lights: light_01
-    show: script2
-  event2:
-    - lights: light_01
-      show: script1
-    - lights: light_02
-      show: script1
-  event3:
-    - lights: tag|tag1
+    light_01:
       show: script2
+  event2:
+    script1:
+      lights: light_01
+    script2:
+      lights: light_02
+  event3:
+    script2:
+      lights: tag1
   event4:
-    - leds: tag|tag1
-      show: script1
+    script:
+      leds: tag1
   event4:
-    - leds: led_01, led_02
-      show: script3
+    script3:
+      leds: led_01

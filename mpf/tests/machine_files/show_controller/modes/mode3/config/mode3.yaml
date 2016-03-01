@@ -7,9 +7,8 @@ mode:
   stop_on_ball_end: false
 
 show_player:
-  mode_mode3_started:
-    - show: test_show3
+  mode_mode3_started: test_show3
 
   mode_mode3_stopped:
-    - show: test_show3
+    test_show3:
       action: stop

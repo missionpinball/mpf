@@ -358,3 +358,8 @@ class Led(Device):
         # stops the fade task. Light is left in whatever state it was in
         self.fade_in_progress = False
         self.machine.clock.unschedule(self._fade_task)
+
+    def clear_priority(self, priority, color='off'):
+        if self.state['priority'] >= priority:
+            self.color(RGBColor(color), priority=priority)
+

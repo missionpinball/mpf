@@ -4,7 +4,9 @@
       sound: test_1
       volume: 0.5
       loops: -1
-  events: test_event, test_event2
+  events:
+    test_event:
+    test_event2:
 - time: 1
   triggers:
     play_sound:

@@ -122,12 +122,27 @@ class Show(Asset):
             total_step_time += actions['time']
 
             # Now process show step actions
-            for key in data[step_num].keys():
+            for key, value in data[step_num].items():
+
+                # key: the section of the show, like 'leds'
+                # value: dic of express settings or dic of dics w full settings
+
+                # check to see if we know how to process this kind of entry
                 if key in ConfigPlayer.show_players.keys():
-                        actions[key] = (
-                            ConfigPlayer.show_players[key].process_show_config(
+                        validated_config = dict()
+
+                        # we're now at a dict for this section in the show
+                        # key
+                        if not isinstance(value, dict):
+                            value = {value: dict()}
+
+                        for device, settings in value.items():
+                            validated_config.update(
                                 ConfigPlayer.show_players[key].validate_show_config(
-                                    data[step_num][key])))
+                                    device, settings))
+
+                        actions[key] = validated_config
+
                 elif key != 'time':
                     actions[key] = data[step_num][key]
 
@@ -429,10 +444,16 @@ class RunningShow(object):
         for item_type, item_dict in (
                 iter(self.show_steps[self.current_step].items())):
 
+
             if item_type == 'time':
                 continue
 
+
             elif item_type in ConfigPlayer.show_players:
+                if item_type in item_dict:
+                    item_dict = item_dict[item_type]
+
+
                 ConfigPlayer.show_players[item_type].play(settings=item_dict,
                                                           mode=self.mode,
                                                           caller=self,

@@ -40,7 +40,6 @@ shots:
   shot_2:
     switch: switch_2
     light: light_2
-
   shot_3:
     switch: switch_3
     light: tag1
@@ -71,7 +70,7 @@ shot_profiles:
             - name: active
               show: flash
               loops: -1
-              tocks_per_sec: 5
+              speed: 5
             - name: complete
               show: off
         player_variable: laser
@@ -91,7 +90,17 @@ shot_profiles:
       states:
         - name: red
           color: red
+          show: flash
         - name: orange
           color: orange
+          show: flash
         - name: green
           color: green
+          show: flash
+
+shows:
+    flash:
+        - time: +1
+          color: off
+        - time: +1
+          color: (color)

@@ -152,7 +152,6 @@ named_rgb_colors = CaseInsensitiveDict(
     yellowgreen=(154, 205, 50),
 )
 
-
 class RGBColor(object):
     """
     The Color module provides utilities for working with RGB colors.  It is
@@ -474,6 +473,23 @@ class RGBColor(object):
 
         return rgb
 
+    @staticmethod
+    def add_color(name, color):
+        """Adds (or updates if it already exists) a color. Note that this is not
+        permanent, the list is reset when MPF restarts (though you can define your
+        own custom colors in your config file's colors: section). You *can* use
+        this function to dynamically change the values of colors in shows (they
+        take place the next time an LED switches to that color).
+
+        Args:
+            name: String name of the color you want to add/update
+            color: The color you want to set. You can pass the same types as
+                the RGBColor class constructor, including a tuple or list of
+                RGB ints (0-255 each), a hex string, an RGBColor instance, or
+                a dictionart of red, green, blue key/value pairs.
+
+        """
+        named_rgb_colors[str(name)] = RGBColor(color).rgb
 
 class ColorException(Exception):
     """General exception thrown for color utilities non-exit exceptions."""

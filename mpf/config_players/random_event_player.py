@@ -1,29 +1,42 @@
 import random
-
+import copy
+from mpf.core.config_player import ConfigPlayer
 from mpf.core.utility_functions import Util
-from mpf.config_players.event_player import EventPlayer
 
 
-class RandomEventPlayer(EventPlayer):
+class RandomEventPlayer(ConfigPlayer):
     config_file_section = 'random_event_player'
     show_section = 'random_events'
+    device_collection = None
 
     def play(self, settings, mode=None, caller=None, **kwargs):
         super().play(settings, mode, caller, **kwargs)
-        self.machine.events.post(random.choice(settings['event_list']),
-                                 **kwargs)
+
+        these_settings = copy.deepcopy(settings)
+        these_settings.update(kwargs)
+        event_list = these_settings.pop('event_list')
+        self.machine.events.post(random.choice(event_list), **kwargs)
+
+    def get_express_config(self, value):
+        return dict(event_list=Util.string_to_list(value))
 
     def validate_config(self, config):
-        if type(config) is dict:
-            final_dict = dict()
+        # override because we want to let events just be a list of
+        # events
 
-            for trigger_event, play_events in config.items():
-                final_dict[trigger_event] = Util.string_to_list(play_events)
+        new_config = dict()
 
-            return final_dict
-
-    def process_config(self, config, **kwargs):
         for event, settings in config.items():
-            config[event] = dict(event_list=Util.string_to_list(settings))
+            if not isinstance(settings, list) or not isinstance(settings, dict):
+                new_config[event] = dict()
+                new_config[event]['event_list'] = Util.string_to_list(settings)
+
+            else:
+                new_config[event] = settings
+
+        super().validate_config(new_config)
+
+        return new_config
+
 
 player_cls = RandomEventPlayer

@@ -10,62 +10,23 @@ class GiPlayer(ConfigPlayer):
     def play(self, settings, mode=None, caller=None, **kwargs):
         super().play(settings, mode, caller, **kwargs)
 
+        if 'gis' in settings:
+            settings = settings['gis']
+
         for gi, s in settings.items():
-            gi.enable(s['brightness'])
+            try:
+                gi.enable(**s)
+            except AttributeError:
+                self.machine.gi[gi].enable(**s)
 
-    def validate_config(self, config):
-        # config is localized to the 'gis' section of a show or the
-        # 'gi_player' section of config
+    def get_express_config(self, value):
+        value = str(value)
 
-        if not config:
-            config = dict()
+        if value.lower() in ('off', 'disable'):
+            value = '0'
+        elif value.lower() in ('on', 'enable'):
+            value = 'ff'
 
-        if not isinstance(config, dict):
-            raise ValueError("Received invalid gi player config: {}"
-                             .format(config))
-
-        validated_config = dict()
-
-        for gi, value in config.items():
-            value = Util.hex_string_to_int(str(value))
-            if 'tag|' in gi:
-                tag = gi.split('tag|')[1]
-                gi_list = self.machine.gis.sitems_tagged(tag)
-
-                if not gi_list:
-                    self.log.warning("No GI strings exist for tag '{}'".format(
-                        tag))
-
-            else:  # create a single item list of the gi
-                try:
-                    # run it through machine.gis to make sure it's valid
-                    gi_list = [self.machine.gi[gi].name]
-                except KeyError:
-                    raise ValueError("Found invalid GI name '{}' in "
-                                     "gi show or gi_player "
-                                     "config".format(gi))
-
-            for gi_ in gi_list:
-                validated_config[gi_] = dict(brightness=value)
-
-        return validated_config
-
-    def process_config(self, config, **kwargs):
-        # config is a validated config section:
-
-        processed_config = dict()
-
-        for gi_name, settings_dict in config.items():
-            processed_config[self.machine.gi[gi_name]] = settings_dict
-
-        return processed_config
-
-
-
-
-
-
-
-
+        return dict(brightness=Util.hex_string_to_int(value))
 
 player_cls = GiPlayer

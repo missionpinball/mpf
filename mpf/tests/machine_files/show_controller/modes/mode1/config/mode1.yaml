@@ -8,9 +8,9 @@ mode:
 
 show_player:
   mode_mode1_started:
-    - show: test_show1
+    test_show1:
       loops: -1
 
   mode_mode1_stopped:
-    - show: test_show1
+    test_show1:
       action: stop

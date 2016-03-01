@@ -161,19 +161,22 @@ coil_player:
     action: single|lstr|pulse
     ms: single|ms|None
     power: single|float|1.0
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
+    # pwm_on_ms: single|int|None
+    # pwm_off_ms: single|int|None
+    # pulse_power: single|int|None
+    # hold_power: single|int|None
+    # pulse_power32: single|int|None
+    # hold_power32: single|int|None
+    # pulse_pwm_mask: single|int|None
+    # hold_pwm_mask: single|int|None
+    __allow_others__:
 color_correction_profile:
     gamma: single|float|2.5
     whitepoint: list|float|1.0, 1.0, 1.0
     linear_slope: single|float|1.0
     linear_cutoff: single|float|0.0
+config_player_common:
+    priority: single|int|0
 credits:
     max_credits: single|int|0
     free_play: single|bool|yes
@@ -254,7 +257,8 @@ drop_target_banks:
     label: single|str|%
     debug: single|bool|False
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
-event_player: ignore
+event_player:
+    __allow_others__:
 fadecandy:
     gamma: single|float|2.5
     whitepoint: list|float|1.0, 1.0, 1.0
@@ -271,7 +275,9 @@ fast:
     default_debounce_close: single|ms|30
     hardware_led_fade_time: single|ms|0
     debug: single|bool|False
-flasher_player:                                # todo
+flasher_player:
+    __allow_others:
+    ms: single|int|None
 flashers:
     number: single|str|
     number_str: single|str|
@@ -323,7 +329,9 @@ game:
     max_players: single|int|4
     start_game_switch_tag: single|str|start
     add_player_switch_tag: single|str|start
-gi_player:                                         # todo
+gi_player:
+    brightness: single|int_from_hex|ff
+    __allow_others__:
 gis:
     number: single|str|
     number_str: single|str|
@@ -334,6 +342,7 @@ gis:
     enable_events: dict|str:ms|machine_reset_phase_3
     disable_events: dict|str:ms|None
     platform: single|str|None
+    __allow_others__:
 hardware:
     platform: single|str|virtual
     coils: single|str|default
@@ -356,7 +365,11 @@ high_score:
 images:
     file: single|str|None
     load: single|str|None
-led_player:                                                   # todo
+led_player:
+    color: single|str|white
+    fade: single|ms|0
+    force: single|bool|false
+    __allow_others__:
 led_settings:
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
@@ -378,7 +391,11 @@ leds:
     y: single|int|None
     z: single|int|None
     color_channel_map: single|str|rgb
-light_player:                                     # todo
+light_player:
+    brightness: single|int_from_hex|ff
+    fade_ms: single|ms|0
+    force: single|bool|False
+    __allow_others:
 logic_block:
     common:
         enable_events: list|str|None
@@ -620,8 +637,6 @@ shot_profiles:
         sync_ms:  single|int|0
         __allow_others__:
 show_player:
-    show: single|str|
-    priority: single|int|None
     action: single|str|play
     repeat: single|bool|True
     step_num: single|int|0
@@ -758,6 +773,7 @@ transitions:
     # fs
     # vs
 trigger_player:                                    # todo
+    __allow_others__:
 videos:
     file: single|str|None
     load: single|str|None
@@ -848,7 +864,7 @@ widgets:
     image:
         allow_stretch: single|bool|False
         fps: single|int|10
-        anim_loops: single|int|0
+        loops: single|int|0
         keep_ratio: single|bool|False
         image: single|str|
         height: single|int|0
@@ -1353,6 +1369,9 @@ class ConfigValidator(object):
 
         elif validator == 'list':
             item = Util.string_to_list(item)
+
+        elif validator == 'int_from_hex':
+            item = Util.hex_string_to_int(item)
 
         elif validator == 'dict':
             return item
