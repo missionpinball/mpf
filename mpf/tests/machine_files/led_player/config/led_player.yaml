@@ -1,0 +1,93 @@
+#config_version=4
+
+leds:
+  led1:
+    number:
+    tags: tag1
+  led2:
+    number:
+    tags: tag1
+  led3:
+    number:
+    tags:
+  led4:
+    number:
+    tags:
+
+led_player:
+  event1:
+    led1:
+      color: red
+      fade: 0
+      priority: 200
+    led2:
+      color: ff0000
+      fade: 0
+    led3:
+      color: red
+      fade: 0
+  event2:
+    tag1:
+      color: blue
+      fade: 20ms
+      priority: 100
+  event3:
+    led1: green-f500
+    led2: green - f 500ms
+    led3: green-f.5s
+  event4:
+    tag1: 00ffff
+
+# should become
+_led_player:
+  event1:
+    leds:
+      led1:
+        color: red
+        fade: 0
+      led2:
+        color: ff0000
+        fade: 0
+      led3:
+        color: red
+        fade: 0
+  event2:
+    leds:
+      led1:
+        color: blue
+        fade: 20
+      led2:
+        color: blue
+        fade: 20
+  event3:
+    leds:
+      led1:
+        color: green
+        fade: 500
+      led2:
+        color: green
+        fade: 500
+      led3:
+        color: green
+        fade: 500
+  event4:
+    leds:
+      led1:
+        color: 00ffff
+        fade: 0
+      led2:
+        color: 00ffff
+        fade: 0
+
+#shows:
+#  show1:
+#  - time: 0
+#    leds:
+#      led1: red
+#      led2: red
+#      led3: red
+#  - time: 1
+#    leds:
+#      led1:
+#        color: red
+#        fade: 500ms
