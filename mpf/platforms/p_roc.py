@@ -181,25 +181,9 @@ class HardwarePlatform(Platform):
                 uses to refer to this switch. Typically your machine
                 configuration files would specify a switch number like `SD12` or
                 `7/5`. This `proc_num` is an int between 0 and 255.
-            state : An integer of the current hardware state of the switch, used
-                to set the initial state state in the machine. A value of 0
-                means the switch is open, and 1 means it's closed. Note this
-                state is the physical state of the switch, so if you configure
-                the switch to be normally-closed (i.e. "inverted" then your code
-                will have to invert it too.) MPF handles this automatically if
-                the switch type is 'NC'.
 
         """
-
-        if self.machine_type == pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number('switch',
-                                                      str(config['number']))
-            if config['number'] == -1:
-                self.log.error("Switch cannot be controlled by the P-ROC. "
-                               "Ignoring.")
-                return
-        else:
-            proc_num = pinproc.decode(self.machine_type, str(config['number']))
+        proc_num = pinproc.decode(self.machine_type, str(config['number']))
 
         switch = PROCSwitch(proc_num)
         # The P-ROC needs to be configured to notify the host computers of
