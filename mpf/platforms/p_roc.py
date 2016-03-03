@@ -179,11 +179,6 @@ class HardwarePlatform(Platform):
         Args:
             config: Dictionary of settings for the switch. In the case
                 of the P-ROC, it uses the following:
-            number : The number (or number string) for the switch as specified
-                in the machine configuration file.
-            debounce : Boolean which specifies whether the P-ROC should debounce
-                this switch first before sending open and close notifications to
-                the host computer.
 
         Returns:
             switch : A reference to the switch object that was just created.
@@ -478,7 +473,7 @@ class HardwarePlatform(Platform):
         as the *sw_num*.
 
         Args:
-            sw_num : Int of the number of the switch whose rule you want to
+            sw_name : Int of the number of the switch whose rule you want to
                 clear.
 
         """
@@ -528,7 +523,7 @@ class PDBLED(RGBLEDPlatformInterface):
 
         self.log.debug("Creating PD-LED item: board: %s, "
                        "RGB outputs: %s", self.board,
-                        self.address)
+                       self.address)
 
     def color(self, color):
         """Instantly sets this LED to the color passed.
@@ -537,7 +532,7 @@ class PDBLED(RGBLEDPlatformInterface):
             color: an RGBColor object
         """
 
-        #self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
+        # self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
         #               self.board, self.address, color)
 
         self.proc.led_color(self.board, self.address[0], color.red)
@@ -594,8 +589,7 @@ class PDBCoil(object):
             self.outputnum = int(number_str[1:])
         elif self.is_pdb_coil(number_str):
             self.coil_type = 'pdb'
-            (self.boardnum, self.banknum, self.outputnum) = decode_pdb_address(
-                number_str, self.pdb.aliases)
+            (self.boardnum, self.banknum, self.outputnum) = decode_pdb_address(number_str)
         else:
             self.coil_type = 'unknown'
 
@@ -620,7 +614,7 @@ class PDBCoil(object):
         return True
 
     def is_pdb_coil(self, string):
-        return is_pdb_address(string, self.pdb.aliases)
+        return is_pdb_address(string)
 
 
 class PDBLight(object):
@@ -635,10 +629,8 @@ class PDBLight(object):
             # C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z
             self.lamp_type = 'pdb'
             source_addr, sink_addr = self.split_matrix_addr_parts(number_str)
-            (self.source_boardnum, self.source_banknum, self.source_outputnum)\
-                = decode_pdb_address(source_addr, self.pdb.aliases)
-            (self.sink_boardnum, self.sink_banknum, self.sink_outputnum)\
-                = decode_pdb_address(sink_addr, self.pdb.aliases)
+            (self.source_boardnum, self.source_banknum, self.source_outputnum) = decode_pdb_address(source_addr)
+            (self.sink_boardnum, self.sink_banknum, self.sink_outputnum) = decode_pdb_address(sink_addr)
         else:
             self.lamp_type = 'unknown'
 
@@ -698,7 +690,7 @@ class PDBLight(object):
         if len(params) != 2:
             return False
         for addr in params:
-            if not is_pdb_address(addr, self.pdb.aliases):
+            if not is_pdb_address(addr):
                 return False
         return True
 
@@ -811,8 +803,7 @@ class PROCDriver(DriverPlatformInterface):
         if 'pwm_off_ms' in return_dict and return_dict['pwm_off_ms']:
             found_pwm_off = True
 
-        if (found_pwm_off and not found_pwm_on) or (
-            found_pwm_on and not found_pwm_off):
+        if (found_pwm_off and not found_pwm_on) or (found_pwm_on and not found_pwm_off):
             raise ValueError("Error: Using pwm requires both pwm_on and "
                              "pwm_off values.")
 
@@ -845,8 +836,8 @@ class PROCDriver(DriverPlatformInterface):
             if not ('allow_enable' in self.driver_settings and
                     self.driver_settings['allow_enable']):
                 raise AssertionError("Received a command to enable this coil "
-                                 "without pwm, but 'allow_enable' has not been"
-                                 "set to True in this coil's configuration.")
+                                     "without pwm, but 'allow_enable' has not been"
+                                     "set to True in this coil's configuration.")
 
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
@@ -926,7 +917,6 @@ class PDBConfig(object):
     """
     indexes = []
     proc = None
-    aliases = None  # set in __init__
 
     def __init__(self, proc, config):
 
@@ -962,12 +952,6 @@ class PDBConfig(object):
         lamp_list = []
         lamp_list_for_index = []
 
-        self.aliases = []
-        if 'PRDriverAliases' in config:
-            for alias_dict in config['PRDriverAliases']:
-                alias = DriverAlias(alias_dict['expr'], alias_dict['repl'])
-                self.aliases.append(alias)
-
         # Make a list of unique coil banks
         if 'coils' in config:
             for name in config['coils']:
@@ -996,8 +980,7 @@ class PDBConfig(object):
                     # Create dicts of unique sink banks.  The source index is
                     # needed when setting up the driver groups.
                     lamp_dict = {'source_index':
-                                 lamp_source_bank_list.index(
-                                 lamp.source_bank()),
+                                 lamp_source_bank_list.index(lamp.source_bank()),
                                  'sink_bank': lamp.sink_bank(),
                                  'source_output': lamp.source_output()}
 
@@ -1055,16 +1038,16 @@ class PDBConfig(object):
             # for a case that probably won't happen, just ignore these banks.
             if group_ctr >= num_proc_banks or lamp_dict['sink_bank'] >= 16:
                 self.log.error("Lamp matrix banks can't be mapped to index "
-                                  "%d because that's outside of the banks the "
-                                  "P-ROC can control.", lamp_dict['sink_bank'])
+                               "%d because that's outside of the banks the "
+                               "P-ROC can control.", lamp_dict['sink_bank'])
             else:
                 self.log.debug("Driver group %02d (lamp sink): slow_time=%d "
-                                 "enable_index=%d row_activate_index=%d "
-                                 "row_enable_index=%d matrix=%s", group_ctr,
-                                 self.lamp_matrix_strobe_time,
-                                 lamp_dict['sink_bank'],
-                                 lamp_dict['source_output'],
-                                 lamp_dict['source_index'], True )
+                               "enable_index=%d row_activate_index=%d "
+                               "row_enable_index=%d matrix=%s", group_ctr,
+                               self.lamp_matrix_strobe_time,
+                               lamp_dict['sink_bank'],
+                               lamp_dict['source_output'],
+                               lamp_dict['source_index'], True)
                 self.indexes[group_ctr] = lamp_list_for_index[i]
                 proc.driver_update_group_config(group_ctr,
                                                 self.lamp_matrix_strobe_time,
@@ -1096,7 +1079,7 @@ class PDBConfig(object):
                 self.indexes.append(coil_bank)
             else:
                 self.log.debug("Driver group %02d: slow_time=%d Enable "
-                                 "Index=%d", group_ctr, 0, coil_bank)
+                               "Index=%d", group_ctr, 0, coil_bank)
                 self.indexes[group_ctr] = coil_bank
                 proc.driver_update_group_config(group_ctr,
                                                 0,
@@ -1152,7 +1135,7 @@ class PDBConfig(object):
             self.log.debug("Configuring PDB Driver Globals:  polarity = %s  "
                            "matrix column index 0 = %d  matrix column index "
                            "1 = %d", True, lamp_source_bank_list[0],
-                             lamp_source_bank_list[1])
+                           lamp_source_bank_list[1])
         proc.driver_update_global_config(enable,  # Don't enable outputs yet
                                          True,  # Polarity
                                          False,  # N/A
@@ -1222,30 +1205,16 @@ class PDBConfig(object):
             return num
 
 
-class DriverAlias(object):
-    def __init__(self, key, value):
-        self.expr = re.compile(key)
-        self.repl = value
-
-    def matches(self, addr):
-        return self.expr.match(addr)
-
-    def decode(self, addr):
-        return self.expr.sub(repl=self.repl, string=addr)
-
-
-def is_pdb_address(addr, aliases=None):
+def is_pdb_address(addr):
     """Returne True if the given address is a valid PDB address."""
-    if aliases is None:
-        aliases = []
     try:
-        decode_pdb_address(addr=addr, aliases=aliases)
+        decode_pdb_address(addr=addr)
         return True
     except ValueError:
         return False
 
 
-def decode_pdb_address(addr, aliases=None):
+def decode_pdb_address(addr):
     """Decodes Ax-By-z or x/y/z into PDB address, bank number, and output
     number.
 
@@ -1253,13 +1222,6 @@ def decode_pdb_address(addr, aliases=None):
     a tuple of (addr, bank, number).
 
     """
-    if aliases is None:
-        aliases = []
-    for alias in aliases:
-        if alias.matches(addr):
-            addr = alias.decode(addr)
-            break
-
     if '-' in addr:  # Ax-By-z form
         params = addr.rsplit('-')
         if len(params) != 3:
@@ -1302,8 +1264,7 @@ class PROCDMD(object):
 
         # dmd_timing defaults should be 250, 400, 180, 800
 
-        if 'P_ROC' in self.machine.config and (
-            'dmd_timing_cycles' in self.machine.config['P_ROC']):
+        if 'P_ROC' in self.machine.config and 'dmd_timing_cycles' in self.machine.config['P_ROC']:
 
             dmd_timing = Util.string_to_list(
                 self.machine.config['P_ROC']['dmd_timing_cycles'])

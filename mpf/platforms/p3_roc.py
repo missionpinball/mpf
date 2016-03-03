@@ -929,8 +929,7 @@ class PROCDriver(DriverPlatformInterface):
         else:
             self.log.debug('Enabling at 100%')
 
-            if not ('allow_enable' in self.driver_settings and
-                        self.driver_settings['allow_enable']):
+            if not ('allow_enable' in self.driver_settings and self.driver_settings['allow_enable']):
                 raise AssertionError("Received a command to enable this coil "
                                      "without pwm, but 'allow_enable' has not been"
                                      "set to True in this coil's configuration.")
@@ -1012,7 +1011,6 @@ class PDBConfig(object):
     """
     indexes = []
     proc = None
-    aliases = None  # set in __init__
 
     def __init__(self, proc, config):
 
@@ -1048,8 +1046,6 @@ class PDBConfig(object):
         lamp_list = []
         lamp_list_for_index = []
 
-        self.aliases = []
-
         # Make a list of unique coil banks
         if 'coils' in config:
             for name in config['coils']:
@@ -1078,10 +1074,9 @@ class PDBConfig(object):
                     # Create dicts of unique sink banks.  The source index is
                     # needed when setting up the driver groups.
                     lamp_dict = {'source_index':
-                        lamp_source_bank_list.index(
-                            lamp.source_bank()),
-                        'sink_bank': lamp.sink_bank(),
-                        'source_output': lamp.source_output()}
+                                 lamp_source_bank_list.index(lamp.source_bank()),
+                                 'sink_bank': lamp.sink_bank(),
+                                 'source_output': lamp.source_output()}
 
                     # lamp_dict_for_index.  This will be used later when the
                     # p-roc numbers are requested.  The requestor won't know
