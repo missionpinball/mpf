@@ -7,13 +7,53 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
+try:
+    import pinproc
+    pinproc_imported = True
+except ImportError:
+    pinproc_imported = False
+    pinproc = None
+
 
 class PROCBasePlatform(Platform):
+    """Platform class for the P-Roc and P3-ROC hardware controller.
+
+    Args:
+        machine: The MachineController instance.
+
+    Attributes:
+        proc: The pinproc.PinPROC device.
+        machine_type: Constant of the pinproc.MachineType
+    """
 
     def __init__(self, machine):
         super().__init__(machine)
-        self.pinproc = None
+
+        if not pinproc_imported:
+            raise AssertionError('Could not import "pinproc". Most likely you do not '
+                                 'have libpinproc and/or pypinproc installed. You can '
+                                 'run MPF in software-only "virtual" mode by using '
+                                 'the -x command like option for now instead.')
+
+        self.pinproc = pinproc
         self.proc = None
+        self.log = None
+
+        self.machine_type = pinproc.normalize_machine_type(
+            self.machine.config['hardware']['driverboards'])
+
+    def connect(self):
+        # Connect to the P-ROC. Keep trying if it doesn't work the first time.
+        self.log.info("Connecting to P-ROC")
+
+        while not self.proc:
+            try:
+                self.proc = pinproc.PinPROC(self.machine_type)
+                self.proc.reset(1)
+            except IOError:
+                print("Retrying...")
+
+        self.log.info("Successfully connected to P-ROC/P3-ROC")
 
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
                       disable_on_release, drive_now,

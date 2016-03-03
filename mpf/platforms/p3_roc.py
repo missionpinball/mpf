@@ -12,19 +12,8 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
-import time
 import math
 from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform
-
-try:
-    import pinproc
-    pinproc_imported = True
-except ImportError:
-    pinproc_imported = False
-    pinproc = None
-
-proc_output_module = 3
-proc_pdb_bus_addr = 0xC00
 
 
 class HardwarePlatform(PROCBasePlatform):
@@ -35,19 +24,12 @@ class HardwarePlatform(PROCBasePlatform):
 
     Attributes:
         machine: The MachineController instance.
-        proc: The P3-ROC pinproc.PinPROC device.
     """
 
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P3-ROC')
         self.log.debug("Configuring P3-ROC hardware.")
-
-        if not pinproc_imported:
-            raise AssertionError('Could not import "pinproc". Most likely you do not '
-                                 'have libpinproc and/or pypinproc installed. You can'
-                                 ' run MPF in software-only "virtual" mode by using '
-                                 'the -x command like option for now instead.')
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -63,28 +45,10 @@ class HardwarePlatform(PROCBasePlatform):
         self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
-        machine_type = pinproc.normalize_machine_type(
-            self.machine.config['hardware']['driverboards'])
-
-        if machine_type != pinproc.MachineTypePDB:
+        if self.machine_type != self.pinproc.MachineTypePDB:
             raise AssertionError("P3-Roc can only handle PDB driver boards")
 
-        # Connect to the P3-ROC. Keep trying if it doesn't work the first time.
-
-        self.proc = None
-        self.pinproc = pinproc
-
-        self.log.info("Connecting to P3-ROC")
-
-        while not self.proc:
-            try:
-                self.proc = pinproc.PinPROC(machine_type)
-                self.proc.reset(1)
-            except IOError:
-                self.log.warning("Failed to connect to P3-ROC. Will retry!")
-                time.sleep(.5)
-
-        self.log.info("Successfully connected to P3-ROC")
+        self.connect()
 
         # Because PDBs can be configured in many different ways, we need to
         # traverse the YAML settings to see how many PDBs are being used.
@@ -93,7 +57,7 @@ class HardwarePlatform(PROCBasePlatform):
         # the collections.
 
         self.log.debug("Configuring P3-ROC for PDB driver boards.")
-        self.pdbconfig = PDBConfig(self.proc, self.machine.config, pinproc.DriverCount)
+        self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
 
         self.acceleration = [0] * 3
         self.accelerometer_device = None
@@ -292,32 +256,32 @@ class HardwarePlatform(PROCBasePlatform):
             event_value = event['value']
             if event_type == 99:  # CTRL-C to quit todo does this go here?
                 self.machine.stop()
-            elif event_type == pinproc.EventTypeDMDFrameDisplayed:
+            elif event_type == self.pinproc.EventTypeDMDFrameDisplayed:
                 pass
-            elif event_type == pinproc.EventTypeSwitchClosedDebounced:
+            elif event_type == self.pinproc.EventTypeSwitchClosedDebounced:
                 self.machine.switch_controller.process_switch(state=1,
                                                               num=event_value)
-            elif event_type == pinproc.EventTypeSwitchOpenDebounced:
+            elif event_type == self.pinproc.EventTypeSwitchOpenDebounced:
                 self.machine.switch_controller.process_switch(state=0,
                                                               num=event_value)
-            elif event_type == pinproc.EventTypeSwitchClosedNondebounced:
+            elif event_type == self.pinproc.EventTypeSwitchClosedNondebounced:
                 self.machine.switch_controller.process_switch(state=1,
                                                               num=event_value,
                                                               debounced=False)
-            elif event_type == pinproc.EventTypeSwitchOpenNondebounced:
+            elif event_type == self.pinproc.EventTypeSwitchOpenNondebounced:
                 self.machine.switch_controller.process_switch(state=0,
                                                               num=event_value,
                                                               debounced=False)
 
             # The P3-ROC will always send all three values sequentially.
             # Therefore, we will trigger after the Z value
-            elif event_type == pinproc.EventTypeAccelerometerX:
+            elif event_type == self.pinproc.EventTypeAccelerometerX:
                 self.acceleration[0] = event_value
             #                self.log.debug("Got Accelerometer value X. Value: %s", event_value)
-            elif event_type == pinproc.EventTypeAccelerometerY:
+            elif event_type == self.pinproc.EventTypeAccelerometerY:
                 self.acceleration[1] = event_value
             #                self.log.debug("Got Accelerometer value Y. Value: %s", event_value)
-            elif event_type == pinproc.EventTypeAccelerometerZ:
+            elif event_type == self.pinproc.EventTypeAccelerometerZ:
                 self.acceleration[2] = event_value
 
                 # trigger here
@@ -329,7 +293,7 @@ class HardwarePlatform(PROCBasePlatform):
                 #                self.log.debug("Got Accelerometer value Z. Value: %s", event_value)
 
             # The P3-ROC sends interrupts when
-            elif event_type == pinproc.EventTypeAccelerometerIRQ:
+            elif event_type == self.pinproc.EventTypeAccelerometerIRQ:
                 self.log.debug("Got Accelerometer value IRQ. Value: %s", event_value)
                 # trigger here
                 if self.accelerometer_device:

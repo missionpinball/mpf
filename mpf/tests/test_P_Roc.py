@@ -1,6 +1,6 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock, call
-from mpf.platforms import p_roc
+from mock import MagicMock
+from mpf.platforms import p_roc_common
 
 
 class MockPinProcModule(MagicMock):
@@ -48,14 +48,14 @@ class TestPRoc(MpfTestCase):
         return 'p_roc'
 
     def setUp(self):
-        p_roc.pinproc_imported = True
-        p_roc.pinproc = MockPinProcModule()
+        p_roc_common.pinproc_imported = True
+        p_roc_common.pinproc = MockPinProcModule()
         pinproc = MagicMock()
-        p_roc.pinproc.PinPROC = MagicMock(return_value=pinproc)
-        p_roc.pinproc.normalize_machine_type = MagicMock(return_value=7)
-        p_roc.pinproc.driver_state_pulse = MagicMock(
+        p_roc_common.pinproc.PinPROC = MagicMock(return_value=pinproc)
+        p_roc_common.pinproc.normalize_machine_type = MagicMock(return_value=7)
+        p_roc_common.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
-        pinproc.switch_get_states = MagicMock(return_value=[0,1,0,0,0,0,0,0,0,0,0])
+        pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         super().setUp()
 
     def test_pulse(self):
@@ -70,7 +70,7 @@ class TestPRoc(MpfTestCase):
 
     def test_enable_exception(self):
         # enable coil which does not have allow_enable
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(AssertionError):
             self.machine.coils.c_test.enable()
 
     def test_allow_enable(self):

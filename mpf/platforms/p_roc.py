@@ -16,20 +16,13 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
-import sys
 from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform
 from mpf.core.utility_functions import Util
 
 try:
     import pinproc
-    pinproc_imported = True
 except ImportError:
-    pinproc_imported = False
     pinproc = None
-
-proc_output_module = 3
-proc_pdb_bus_addr = 0xC00
-# driverboards = ['wpc', 'wpc95', 'sternSAM', 'sternWhitestar']
 
 
 class HardwarePlatform(PROCBasePlatform):
@@ -40,21 +33,12 @@ class HardwarePlatform(PROCBasePlatform):
 
     Attributes:
         machine: The MachineController instance.
-        proc: The P-ROC pinproc.PinPROC device.
-        machine_type: Constant of the pinproc.MachineType
     """
 
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P-ROC')
         self.log.debug("Configuring P-ROC hardware")
-
-        if not pinproc_imported:
-            self.log.error('Could not import "pinproc". Most likely you do not '
-                           'have libpinproc and/or pypinproc installed. You can'
-                           ' run MPF in software-only "virtual" mode by using '
-                           'the -x command like option for now instead.')
-            sys.exit()
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -70,33 +54,16 @@ class HardwarePlatform(PROCBasePlatform):
         self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
-        self.machine_type = pinproc.normalize_machine_type(
-            self.machine.config['hardware']['driverboards'])
-
-        # Connect to the P-ROC. Keep trying if it doesn't work the first time.
-
-        self.proc = None
-        self.pinproc = pinproc
-
-        self.log.info("Connecting to P-ROC")
-
-        while not self.proc:
-            try:
-                self.proc = pinproc.PinPROC(self.machine_type)
-                self.proc.reset(1)
-            except IOError:
-                print("Retrying...")
-
-        self.log.info("Successfully connected to P-ROC")
+        self.connect()
 
         # Clear out the default program for the aux port since we might need it
         # for a 9th column. Details:
         # http://www.pinballcontrollers.com/forum/index.php?topic=1360
         commands = []
-        commands += [pinproc.aux_command_disable()]
+        commands += [self.pinproc.aux_command_disable()]
 
         for dummy_iterator in range(1, 255):
-            commands += [pinproc.aux_command_jump(0)]
+            commands += [self.pinproc.aux_command_jump(0)]
 
         self.proc.aux_send_commands(0, commands)
         # End of the clear out the default program for the aux port.
@@ -106,9 +73,9 @@ class HardwarePlatform(PROCBasePlatform):
         # Then we can configure the P-ROC appropriately to use those PDBs.
         # Only then can we relate the YAML coil/light #'s to P-ROC numbers for
         # the collections.
-        if self.machine_type == pinproc.MachineTypePDB:
+        if self.machine_type == self.pinproc.MachineTypePDB:
             self.log.debug("Configuring P-ROC for PDBs (P-ROC driver boards)")
-            self.pdbconfig = PDBConfig(self.proc, self.machine.config, pinproc.DriverCount)
+            self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
 
         else:
             self.log.debug("Configuring P-ROC for OEM driver boards")
@@ -142,7 +109,7 @@ class HardwarePlatform(PROCBasePlatform):
         # boards configured via driver numbers, libpinproc's decode() method
         # can provide the number.
 
-        if self.machine_type == pinproc.MachineTypePDB:
+        if self.machine_type == self.pinproc.MachineTypePDB:
             proc_num = self.pdbconfig.get_proc_number(device_type,
                                                       str(config['number']))
             if proc_num == -1:
@@ -150,7 +117,7 @@ class HardwarePlatform(PROCBasePlatform):
                                "Ignoring.")
                 return
         else:
-            proc_num = pinproc.decode(self.machine_type, str(config['number']))
+            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
 
         if device_type in ['coil', 'flasher']:
             proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
@@ -181,7 +148,7 @@ class HardwarePlatform(PROCBasePlatform):
                 `7/5`. This `proc_num` is an int between 0 and 255.
 
         """
-        proc_num = pinproc.decode(self.machine_type, str(config['number']))
+        proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
         return self._configure_switch(config, proc_num)
 
     def get_hw_switch_states(self):
@@ -220,19 +187,19 @@ class HardwarePlatform(PROCBasePlatform):
             event_value = event['value']
             if event_type == 99:  # CTRL-C to quit todo does this go here?
                 self.machine.stop()
-            elif event_type == pinproc.EventTypeDMDFrameDisplayed:
+            elif event_type == self.pinproc.EventTypeDMDFrameDisplayed:
                 pass
-            elif event_type == pinproc.EventTypeSwitchClosedDebounced:
+            elif event_type == self.pinproc.EventTypeSwitchClosedDebounced:
                 self.machine.switch_controller.process_switch(state=1,
                                                               num=event_value)
-            elif event_type == pinproc.EventTypeSwitchOpenDebounced:
+            elif event_type == self.pinproc.EventTypeSwitchOpenDebounced:
                 self.machine.switch_controller.process_switch(state=0,
                                                               num=event_value)
-            elif event_type == pinproc.EventTypeSwitchClosedNondebounced:
+            elif event_type == self.pinproc.EventTypeSwitchClosedNondebounced:
                 self.machine.switch_controller.process_switch(state=1,
                                                               num=event_value,
                                                               debounced=False)
-            elif event_type == pinproc.EventTypeSwitchOpenNondebounced:
+            elif event_type == self.pinproc.EventTypeSwitchOpenNondebounced:
                 self.machine.switch_controller.process_switch(state=0,
                                                               num=event_value,
                                                               debounced=False)
