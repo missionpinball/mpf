@@ -1,10 +1,275 @@
 import logging
-
+from copy import deepcopy
+from mpf.core.platform import Platform
 from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+
+
+class PROCBasePlatform(Platform):
+
+    def __init__(self, machine):
+        super().__init__(machine)
+        self.pinproc = None
+        self.proc = None
+
+    def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
+                      disable_on_release, drive_now,
+                      **driver_settings_overrides):
+
+        driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
+
+        driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
+            **driver_settings_overrides))
+
+        self.log.debug("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
+                       " %s, Driver action: %s. Driver settings: %s",
+                       switch_obj.name, sw_activity, driver_obj.name,
+                       driver_action, driver_settings)
+
+        if 'debounced' in driver_settings_overrides:
+            if driver_settings_overrides['debounced']:
+                debounced = True
+            else:
+                debounced = False
+        elif switch_obj.config['debounce']:
+            debounced = True
+        else:
+            debounced = False
+
+        # Note the P-ROC uses a 125ms non-configurable recycle time. So any
+        # non-zero value passed here will enable the 125ms recycle.
+        # PinPROC calls this "reload active" (it's an "active reload timer")
+
+        reload_active = False
+        if driver_settings['recycle_ms']:
+            reload_active = True
+
+        # We only want to notify_host for debounced switch events. We use non-
+        # debounced for hw_rules since they're faster, but we don't want to
+        # notify the host on them since the host would then get two events
+        # one for the nondebounced followed by one for the debounced.
+
+        notify_host = False
+        if debounced:
+            notify_host = True
+
+        rule = {'notifyHost': notify_host, 'reloadActive': reload_active}
+
+        # Now let's figure out what type of P-ROC action we need to take.
+
+        invert_switch_for_disable = False
+
+        proc_actions = set()
+
+        if driver_action == 'pulse':
+            if (driver_settings['pwm_on_ms'] and
+                    driver_settings['pwm_off_ms']):
+                proc_actions.add('pulsed_patter')
+                pulse_ms = driver_settings['pulse_ms']
+                pwm_on = driver_settings['pwm_on_ms']
+                pwm_off = driver_settings['pwm_off_ms']
+            else:
+                proc_actions.add('pulse')
+                pulse_ms = driver_settings['pulse_ms']
+
+            if disable_on_release:
+                proc_actions.add('disable')
+                invert_switch_for_disable = True
+
+        elif driver_action == 'hold':
+            if (driver_settings['pwm_on_ms'] and
+                    driver_settings['pwm_off_ms']):
+                proc_actions.add('patter')
+                pulse_ms = driver_settings['pulse_ms']
+                pwm_on = driver_settings['pwm_on_ms']
+                pwm_off = driver_settings['pwm_off_ms']
+            else:
+                proc_actions.add('enable')
+
+            if disable_on_release:
+                proc_actions.add('disable')
+                invert_switch_for_disable = True
+
+        elif driver_action == 'disable':
+            proc_actions.add('disable')
+
+        for proc_action in proc_actions:
+            this_driver = list()
+            this_sw_activity = sw_activity
+
+            # The P-ROC ties hardware rules to switches, with a list of linked
+            # drivers that should change state based on a switch activity.
+            # Since MPF applies the rules one-at-a-time, we have to read the
+            # existing linked drivers from the hardware for that switch, add
+            # our new driver to the list, then re-update the rule on the hw.
+
+            if proc_action == 'pulse':
+                this_driver = [self.pinproc.driver_state_pulse(
+                    driver_obj.hw_driver.state(), pulse_ms)]
+
+            elif proc_action == 'patter':
+                this_driver = [self.pinproc.driver_state_patter(
+                    driver_obj.hw_driver.state(), pwm_on, pwm_off, pulse_ms,
+                    True)]
+                # todo above param True should not be there. Change to now?
+
+            elif proc_action == 'enable':
+                this_driver = [self.pinproc.driver_state_pulse(
+                    driver_obj.hw_driver.state(), 0)]
+
+            elif proc_action == 'disable':
+                if invert_switch_for_disable:
+                    this_sw_activity ^= 1
+
+                this_driver = [self.pinproc.driver_state_disable(
+                    driver_obj.hw_driver.state())]
+
+            elif proc_action == 'pulsed_patter':
+                this_driver = [self.pinproc.driver_state_pulsed_patter(
+                    driver_obj.hw_driver.state(), pwm_on, pwm_off,
+                    pulse_ms)]
+
+            if this_sw_activity == 0 and debounced:
+                event_type = "open_debounced"
+            elif this_sw_activity == 0 and not debounced:
+                event_type = "open_nondebounced"
+            elif this_sw_activity == 1 and debounced:
+                event_type = "closed_debounced"
+            else:  # if sw_activity == 1 and not debounced:
+                event_type = "closed_nondebounced"
+
+            # merge in any previously-configured driver rules for this switch
+            final_driver = list(this_driver)  # need to make an actual copy
+            sw_rule_string = str(switch_obj.name) + str(event_type)
+            if sw_rule_string in self.hw_switch_rules:
+                for driver in self.hw_switch_rules[sw_rule_string]:
+                    final_driver.append(driver)
+                self.hw_switch_rules[sw_rule_string].extend(this_driver)
+            else:
+                self.hw_switch_rules[sw_rule_string] = this_driver
+
+            self.log.debug("Writing HW rule for switch: %s, driver: %s, event_type: %s, "
+                           "rule: %s, final_driver: %s, drive now: %s",
+                           switch_obj.name, driver_obj.name, event_type,
+                           rule, final_driver, drive_now)
+            self.proc.switch_update_rule(switch_obj.number, event_type, rule,
+                                         final_driver, drive_now)
+
+    def clear_hw_rule(self, sw_name):
+        """Clears a hardware rule.
+
+        This is used if you want to remove the linkage between a switch and
+        some driver activity. For example, if you wanted to disable your
+        flippers (so that a player pushing the flipper buttons wouldn't cause
+        the flippers to flip), you'd call this method with your flipper button
+        as the *sw_num*.
+
+        Args:
+            sw_name : Name of the switch whose rule you want to clear.
+        """
+
+        sw_num = self.machine.switches[sw_name].number
+
+        self.log.debug("Clearing HW rule for switch: %s", sw_num)
+
+        self.proc.switch_update_rule(sw_num, 'open_nondebounced',
+                                     {'notifyHost': False,
+                                      'reloadActive': False}, [])
+        self.proc.switch_update_rule(sw_num, 'closed_nondebounced',
+                                     {'notifyHost': False,
+                                      'reloadActive': False}, [])
+        self.proc.switch_update_rule(sw_num, 'open_debounced',
+                                     {'notifyHost': True,
+                                      'reloadActive': False}, [])
+        self.proc.switch_update_rule(sw_num, 'closed_debounced',
+                                     {'notifyHost': True,
+                                      'reloadActive': False}, [])
+
+        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
+            if entry.startswith(self.machine.switches.number(sw_num).name):
+
+                # disable any drivers from this rule which are active now
+                # todo make this an option?
+                for driver_dict in self.hw_switch_rules[entry]:
+                    self.proc.driver_disable(driver_dict['driverNum'])
+
+                # Remove this rule from our list
+                del self.hw_switch_rules[entry]
+
+                # todo need to read in the notifyHost settings and reapply those
+                # appropriately.
+
+    def configure_matrixlight(self, config):
+        """Configures a P-ROC matrix light."""
+        # On the P-ROC, matrix lights are drivers
+        return self.configure_driver(config, 'light')
+
+    def configure_gi(self, config):
+        """Configures a P-ROC GI string light."""
+        # On the P-ROC, GI strings are drivers
+        return self.configure_driver(config, 'light')
+
+    def configure_led(self, config):
+        """ Configures a P3-ROC RGB LED controlled via a PD-LED."""
+
+        # split the number (which comes in as a string like w-x-y-z) into parts
+        config['number'] = config['number_str'].split('-')
+
+        if 'polarity' in config:
+            invert = not config['polarity']
+        else:
+            invert = False
+
+        return PDBLED(board=int(config['number'][0]),
+                      address=[int(config['number'][1]),
+                               int(config['number'][2]),
+                               int(config['number'][3])],
+                      proc_driver=self.proc,
+                      invert=invert)
+
+    def _configure_switch(self, config, proc_num):
+        """Configures a P3-ROC switch.
+
+        Args:
+            config: Dictionary of settings for the switch.
+            proc_num: decoded switch number
+
+        Returns:
+            switch : A reference to the switch object that was just created.
+            proc_num : Integer of the actual hardware switch number the P3-ROC
+                uses to refer to this switch. Typically your machine
+                configuration files would specify a switch number like `SD12` or
+                `7/5`. This `proc_num` is an int between 0 and 255.
+        """
+        if proc_num == -1:
+            raise AssertionError("Switch %s cannot be controlled by the "
+                                 "P-ROC/P3-ROC.", str(config['number']))
+
+        switch = PROCSwitch(proc_num)
+        # The P3-ROC needs to be configured to notify the host computers of
+        # switch events. (That notification can be for open or closed,
+        # debounced or nondebounced.)
+        self.log.debug("Configuring switch's host notification settings. P3-ROC"
+                       "number: %s, debounce: %s", proc_num,
+                       config['debounce'])
+        if config['debounce'] is False:
+            self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
+                                         {'notifyHost': True,
+                                          'reloadActive': False}, [], False)
+            self.proc.switch_update_rule(proc_num, 'open_nondebounced',
+                                         {'notifyHost': True,
+                                          'reloadActive': False}, [], False)
+        else:
+            self.proc.switch_update_rule(proc_num, 'closed_debounced',
+                                         {'notifyHost': True,
+                                          'reloadActive': False}, [], False)
+            self.proc.switch_update_rule(proc_num, 'open_debounced',
+                                         {'notifyHost': True,
+                                          'reloadActive': False}, [], False)
+        return switch, proc_num
 
 
 class PDBConfig(object):
