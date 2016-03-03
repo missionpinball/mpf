@@ -115,10 +115,6 @@ class HardwarePlatform(Platform):
         else:
             self.log.debug("Configuring P-ROC for OEM driver boards")
 
-        self.polarity = self.machine_type == pinproc.MachineTypeSternWhitestar\
-            or self.machine_type == pinproc.MachineTypeSternSAM\
-            or self.machine_type == pinproc.MachineTypePDB
-
     def __repr__(self):
         return '<Platform.P-ROC>'
 

@@ -97,8 +97,6 @@ class HardwarePlatform(Platform):
         self.log.debug("Configuring P3-ROC for P-ROC driver boards.")
         self.pdbconfig = PDBConfig(self.proc, self.machine.config, pinproc.DriverCount)
 
-        self.polarity = True
-
         self.acceleration = [0] * 3
         self.accelerometer_device = None
 
