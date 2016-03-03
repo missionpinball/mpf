@@ -22,6 +22,9 @@ class TestMigratorCls(Migrator):
 class TestMigrator(MpfTestCase):
 
     def test_migrator(self):
+
+        self.expected_duration = 3.0
+
         old_config_path = os.path.abspath(os.path.join(
             self.machine.machine_path, os.pardir, 'migrator/config_v3'))
 

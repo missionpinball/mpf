@@ -36,6 +36,7 @@ class MpfTestCase(unittest.TestCase):
     machine_config_patches['mpf'] = dict()
     machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
     machine_config_patches['mpf']['plugins'] = list()
+    expected_duration = 1.0
 
     def getConfigFile(self):
         """Override this method in your own test class to point to the config
@@ -207,7 +208,9 @@ class MpfTestCase(unittest.TestCase):
 
     def mock_event(self, eventName):
         self._events[eventName] = 0
-        self.machine.events.add_handler(event=eventName, handler=self._mock_event_handler, eventName=eventName)
+        self.machine.events.add_handler(event=eventName,
+                                        handler=self._mock_event_handler,
+                                        eventName=eventName)
 
     def hit_switch_and_run(self, name, delta):
         self.machine.switch_controller.process_switch(name, 1)
@@ -224,9 +227,11 @@ class MpfTestCase(unittest.TestCase):
 
     def tearDown(self):
         duration = time.time() - self.test_start_time
-        if duration > 1.0:
-            print("Test " + str(self.__class__) + "." + str(
-                self._testMethodName) + " took " + str(duration) + " > 1s")
+        if duration > self.expected_duration:
+            print("Test {}.{} took {} > {}s".format(self.__class__,
+                  self._testMethodName, round(duration, 2),
+                  self.expected_duration))
+
         self.machine.log.debug("Test ended")
         if sys.exc_info != (None, None, None):
             # disable teardown logging after error
