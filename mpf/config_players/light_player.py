@@ -15,7 +15,11 @@ class LightPlayer(ConfigPlayer):
 
         for light, s in settings.items():
             self.caller_target_map[caller].add(light)
-            light.on(**s)
+
+            try:
+                light.on(**s)
+            except AttributeError:
+                self.machine.lights[light].on(**s)
 
     def clear(self, caller, priority):
         try:
