@@ -2,6 +2,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock, call
 from mpf.platforms import p_roc
 
+
 class MockPinProcModule(MagicMock):
     DriverCount = 256
 
@@ -30,6 +31,12 @@ class MockPinProcModule(MagicMock):
     SwitchNeverDebounceFirst = 192
     SwitchNeverDebounceLast = 255
 
+    def decode(self, machine_type, device_str):
+        assert machine_type == MockPinProcModule.MachineTypePDB
+        # for PDB it will just return str as int
+        return int(device_str)
+
+
 class TestPRoc(MpfTestCase):
     def getConfigFile(self):
         return 'config.yaml'
@@ -46,7 +53,6 @@ class TestPRoc(MpfTestCase):
         pinproc = MagicMock()
         p_roc.pinproc.PinPROC = MagicMock(return_value=pinproc)
         p_roc.pinproc.normalize_machine_type = MagicMock(return_value=7)
-        p_roc.pinproc.decode = None # no decode with PDB boards
         p_roc.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
         pinproc.switch_get_states = MagicMock(return_value=[0,1,0,0,0,0,0,0,0,0,0])
