@@ -12,7 +12,6 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
-import re
 import time
 import math
 from copy import deepcopy
@@ -651,7 +650,7 @@ class PDBSwitch(object):
         else:
             self.sw_type = 'proc'
             try:
-                (boardnum, banknum, inputnum) = decode_pdb_address(number_str, [])
+                (boardnum, banknum, inputnum) = decode_pdb_address(number_str)
                 self.sw_number = boardnum * 16 + banknum * 8 + inputnum
             except ValueError:
                 try:
@@ -683,8 +682,7 @@ class PDBCoil(object):
             self.outputnum = int(number_str[1:])
         elif self.is_pdb_coil(number_str):
             self.coil_type = 'pdb'
-            (self.boardnum, self.banknum, self.outputnum) = decode_pdb_address(
-                number_str, self.pdb.aliases)
+            (self.boardnum, self.banknum, self.outputnum) = decode_pdb_address(number_str)
         else:
             self.coil_type = 'unknown'
 
@@ -709,7 +707,7 @@ class PDBCoil(object):
         return True
 
     def is_pdb_coil(self, string):
-        return is_pdb_address(string, self.pdb.aliases)
+        return is_pdb_address(string)
 
 
 class PDBLight(object):
@@ -725,10 +723,8 @@ class PDBLight(object):
             # C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z
             self.lamp_type = 'pdb'
             source_addr, sink_addr = self.split_matrix_addr_parts(number_str)
-            (self.source_boardnum, self.source_banknum, self.source_outputnum) \
-                = decode_pdb_address(source_addr, self.pdb.aliases)
-            (self.sink_boardnum, self.sink_banknum, self.sink_outputnum) \
-                = decode_pdb_address(sink_addr, self.pdb.aliases)
+            (self.source_boardnum, self.source_banknum, self.source_outputnum) = decode_pdb_address(source_addr)
+            (self.sink_boardnum, self.sink_banknum, self.sink_outputnum) = decode_pdb_address(sink_addr)
         else:
             self.lamp_type = 'unknown'
 
@@ -751,6 +747,7 @@ class PDBLight(object):
         return self.sink_outputnum
 
     def dedicated_bank(self):
+        # unused method. TODO: remove
         return self.banknum
 
     def dedicated_output(self):
@@ -788,7 +785,7 @@ class PDBLight(object):
         if len(params) != 2:
             return False
         for addr in params:
-            if not is_pdb_address(addr, self.pdb.aliases):
+            if not is_pdb_address(addr):
                 return False
         return True
 
@@ -1052,10 +1049,6 @@ class PDBConfig(object):
         lamp_list_for_index = []
 
         self.aliases = []
-        if 'PRDriverAliases' in config:
-            for alias_dict in config['PRDriverAliases']:
-                alias = DriverAlias(alias_dict['expr'], alias_dict['repl'])
-                self.aliases.append(alias)
 
         # Make a list of unique coil banks
         if 'coils' in config:
@@ -1312,30 +1305,16 @@ class PDBConfig(object):
             return num
 
 
-class DriverAlias(object):
-    def __init__(self, key, value):
-        self.expr = re.compile(key)
-        self.repl = value
-
-    def matches(self, addr):
-        return self.expr.match(addr)
-
-    def decode(self, addr):
-        return self.expr.sub(repl=self.repl, string=addr)
-
-
-def is_pdb_address(addr, aliases=None):
-    """Returne True if the given address is a valid PDB address."""
-    if aliases is None:
-        aliases = []
+def is_pdb_address(addr):
+    """Returns True if the given address is a valid PDB address."""
     try:
-        decode_pdb_address(addr=addr, aliases=aliases)
+        decode_pdb_address(addr=addr)
         return True
     except ValueError:
         return False
 
 
-def decode_pdb_address(addr, aliases=None):
+def decode_pdb_address(addr):
     """Decodes Ax-By-z or x/y/z into PDB address, bank number, and output
     number.
 
@@ -1343,13 +1322,6 @@ def decode_pdb_address(addr, aliases=None):
     a tuple of (addr, bank, number).
 
     """
-    if aliases is None:
-        aliases = []
-    for alias in aliases:
-        if alias.matches(addr):
-            addr = alias.decode(addr)
-            break
-
     if '-' in addr:  # Ax-By-z form
         params = addr.rsplit('-')
         if len(params) != 3:
