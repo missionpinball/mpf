@@ -26,6 +26,7 @@ try:
     serial_imported = True
 except ImportError:
     serial_imported = False
+    serial = None
 
 # Minimum firmware versions needed for this module
 DMD_MIN_FW = '0.88'
@@ -54,7 +55,7 @@ class HardwarePlatform(Platform):
 
         if not serial_imported:
             raise AssertionError('Could not import "pySerial". This is required for '
-                           'the FAST platform interface')
+                                 'the FAST platform interface')
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -81,6 +82,7 @@ class HardwarePlatform(Platform):
         self.config = None
         self.watchdog_command = None
         self.machine_type = None
+        self.hw_switch_data = None
 
         self.wpc_switch_map = {
 
@@ -275,7 +277,7 @@ class HardwarePlatform(Platform):
 
         if self.machine_type == 'wpc':
             self.log.info("Configuring the FAST Controller for WPC driver "
-                           "board")
+                          "board")
         else:
             self.log.info("Configuring FAST Controller for FAST IO boards.")
 
@@ -492,8 +494,8 @@ class HardwarePlatform(Platform):
 
         if not self.net_connection:
             raise AssertionError("A request was made to configure a FAST switch, "
-                              "but no connection to a NET processor is "
-                              "available")
+                                 "but no connection to a NET processor is "
+                                 "available")
 
         if self.machine_type == 'wpc':  # translate switch number to FAST switch
             config['number'] = self.wpc_switch_map.get(
@@ -605,8 +607,8 @@ class HardwarePlatform(Platform):
 
         if not self.dmd_connection:
             self.log.warning("A request was made to configure a FAST DMD, "
-                              "but no connection to a DMD processor is "
-                              "available. No hardware DMD will be used.")
+                             "but no connection to a DMD processor is "
+                             "available. No hardware DMD will be used.")
 
             return FASTDMD(self.machine, self.null_dmd_sender)
 
@@ -659,8 +661,8 @@ class HardwarePlatform(Platform):
             **driver_settings_overrides))
 
         self.log.debug("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
-                      " %s, Driver settings: %s", switch_obj.name, sw_activity,
-                      driver_obj.name, driver_settings)
+                       " %s, Driver settings: %s", switch_obj.name, sw_activity,
+                       driver_obj.name, driver_settings)
 
         control = 0x01  # Driver enabled
         if drive_now:
@@ -703,7 +705,7 @@ class HardwarePlatform(Platform):
 
         else:
             raise ValueError("Invalid driver action: '%s'. Expected 'hold', "
-                             "'timed_hold', or 'pulse'" % (driver_action))
+                             "'timed_hold', or 'pulse'" % driver_action)
 
         self.hw_rules[driver_obj] = {'mode': mode,
                                'param1': param1,
@@ -1053,7 +1055,6 @@ class FASTGIString(GIPlatformInterface):
     def off(self):
         self.log.debug("Turning Off GI String")
         self.send('GI:' + self.number + ',00')
-        self.last_time_changed = self.machine.clock.get_time()
 
     def on(self, brightness=255):
         if brightness >= 255:
@@ -1064,8 +1065,6 @@ class FASTGIString(GIPlatformInterface):
         else:
             brightness = str(hex(brightness))[2:]
             self.send('GI:' + self.number + ',' + brightness)
-
-        self.last_time_changed = self.machine.clock.get_time()
 
 
 class FASTMatrixLight(MatrixLightPlatformInterface):
@@ -1078,7 +1077,6 @@ class FASTMatrixLight(MatrixLightPlatformInterface):
     def off(self):
         """Disables (turns off) this matrix light."""
         self.send('L1:' + self.number + ',00')
-        self.last_time_changed = self.machine.clock.get_time()
 
     def on(self, brightness=255):
         """Enables (turns on) this driver."""
@@ -1089,8 +1087,6 @@ class FASTMatrixLight(MatrixLightPlatformInterface):
         else:
             pass
             # patter rates of 10/1 through 2/9
-
-        self.last_time_changed = self.machine.clock.get_time()
 
 
 class FASTDirectLED(RGBLEDPlatformInterface):
