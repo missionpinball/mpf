@@ -3,6 +3,32 @@
 timing:
   hz: 30
 
+switches:
+    s_left_rollover:
+      number:
+    s_center_rollover:
+      number:
+
+matrix_lights:
+    l_fortress_multiball:
+      number:
+    l_museum_multiball:
+      number:
+    l_wasteland_multiball:
+      number:
+    l_cryoprison_multiball:
+      number:
+    l_ball_save:
+      number:
+    l_super_jackpot:
+      number:
+    l_computer:
+      number:
+    l_demo_time:
+      number:
+    l_retina_scan:
+      number:
+
 Sound_system:
     Tracks:
         Voice:
@@ -335,13 +361,13 @@ shot_profiles:
             light_script: "on"
 
 show_player:
-    mode_attract_started: # test comment 1
-        -   show: multiball_sweep # test comment 2
-            repeat: true # test comment 3
-            speed: 10
-        -   show: random_flashing
-            repeat: true
-            speed: 6
+  mode_attract_started:
+    - show: attract_dmd_loop
+      repeat: yes
+      tocks_per_sec: 1
+  mode_attract_stopped:
+    - show: attract_dmd_loop
+      action: stop
 
 shots:
   left_lane:
@@ -353,10 +379,7 @@ shots:
 
 shot_groups:
   rollover_lanes:
-    shots: left_lane, middle_lane, right_lane
-
-  standups:
-    shots: standup_1, standup_2, standup_3, standup_4, standup_5
+    shots: left_lane, middle_lane
 
 light_scripts:
     flash:
@@ -379,3 +402,11 @@ light_scripts:
     off:
         - tocks: 1
           color: 0
+
+    rainbow:
+        - tocks: 1
+          color: ff0000
+        - tocks: 1
+          color: 00ff00
+        - tocks: 1
+          color: 0000ff

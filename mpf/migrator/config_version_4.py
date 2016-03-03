@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from mpf.migrator.migrator import VersionMigrator
@@ -52,7 +53,7 @@ class V4Migrator(VersionMigrator):
     - machine_flow
     - machineflow
     '''
-    
+
     additions = '''
     sound_system:
       enabled: True
@@ -95,8 +96,11 @@ class V4Migrator(VersionMigrator):
         self._migrate_sound_system()
         self._migrate_fonts()
         self._migrate_asset_defaults()
-        self._migrate_migrate_animation_assets()
+        self._migrate_animation_assets()
+        self._migrate_show_player()
         self._migrate_light_player()
+        self._migrate_shot_profiles()
+        self._migrate_light_scripts()
         self._migrate_assets('images')
         self._migrate_assets('videos')
         self._migrate_assets('sounds')
@@ -338,7 +342,7 @@ class V4Migrator(VersionMigrator):
                 for asset, settings in assets['sounds'].items():
                     pass  # todo
 
-    def _migrate_migrate_animation_assets(self):
+    def _migrate_animation_assets(self):
         if 'animations' in self.fc:
             self.log.debug("Converting assets:animations to assets:images")
             if 'images' in self.fc:
@@ -353,6 +357,30 @@ class V4Migrator(VersionMigrator):
                 YamlInterface.rename_key('animations', 'images', self.fc,
                                          self.log)
 
+    def _migrate_show_player(self):
+        if 'show_player' not in self.fc:
+            return
+
+        temp_show_player = deepcopy(self.fc['show_player'])
+
+        self.log.debug("Migrating show_player: section")
+
+        for event, actions in self.fc['show_player'].items():
+            if not isinstance(actions, list):
+                actions = [actions]
+            this_events_shows = CommentedMap()
+
+            for action in actions:
+                if 'show' in action:
+                    show_name = action.pop('show')
+                    this_events_shows[show_name] = action
+
+            temp_show_player[event] = this_events_shows
+
+        del self.fc['show_player']  # do not want to delete comments
+        for event, shows in temp_show_player.items():
+            self._add_to_show_player(event, shows)
+
     def _migrate_light_player(self):
         # light_player: section in v3 was used for both playing light scripts
         # and playing shows
@@ -364,60 +392,65 @@ class V4Migrator(VersionMigrator):
 
         for event, actions in self.fc['light_player'].items():
             if not isinstance(actions, list):
-                temp_actions = actions
-                actions = CommentedSeq()
-                actions.append(temp_actions)
+                actions = [actions]
+            this_events_shows = CommentedMap()
 
-            scripts = list()
-            shows = list()
+            for i, action in enumerate(actions):
 
-            for step in actions:
-                if 'show' in step:
-                    shows.append(step)
-                elif 'script' in step:
-                    scripts.append(step)
+                if 'show' in action:
+                    show_name = action.pop('show')
 
-            if scripts:
-                self._add_to_script_player(event, scripts)
+                elif 'script' in action:
+                    show_name = action.pop('script')
 
-            if shows:
-                self._add_to_show_player(event, shows)
+                elif 'key' in action:
+                    show_name = action.pop('key')
+
+                else:
+                    continue
+
+                this_events_shows[show_name] = action
+
+            self._add_to_show_player(event, this_events_shows)
 
         YamlInterface.del_key_with_comments(self.fc, 'light_player', self.log)
 
-    def _add_to_script_player(self, event, steps):
-        if 'script_player' not in self.fc:
-            self.log.debug("Creating script_player: section")
-            self.fc['script_player'] = CommentedMap()
+    def _migrate_shot_profiles(self):
+        if 'shot_profiles' not in self.fc:
+            return
 
-        if event not in self.fc['script_player']:
-            self.fc['script_player'][event] = CommentedSeq()
+        for name, settings in self.fc['shot_profiles'].items():
+            if 'states' in settings:
+                for i, state_settings in enumerate(settings['states']):
+                    if 'loops' in state_settings and state_settings['loops']:
+                        state_settings['loops'] = -1
+                    YamlInterface.rename_key('light_script', 'show',
+                                             state_settings)
 
+    def _add_to_show_player(self, event, show_dict):
+
+        for show, settings in show_dict.items():
             try:
-                self.fc['script_player'].ca.items[event] = (
-                    self.fc['light_player'].ca.items[event])
+                if settings['loops']:
+                    settings['loops'] = -1
             except KeyError:
                 pass
 
-        for step in steps:
-            self.fc['script_player'][event].append(step)
-
-    def _add_to_show_player(self, event, steps):
         if 'show_player' not in self.fc:
             self.log.debug("Creating show_player: section")
             self.fc['show_player'] = CommentedMap()
 
         if event not in self.fc['show_player']:
-            self.fc['show_player'][event] = CommentedSeq()
+            self.log.debug("Updating show_player: content")
+            self.fc['show_player'][event] = CommentedMap()
+            self.fc['show_player'].ca.items[event] = show_dict.ca.items
 
-            try:
-                self.fc['show_player'].ca.items[event] = (
-                    self.fc['light_player'].ca.items[event])
-            except KeyError:
-                pass
-
-        for step in steps:
-            self.fc['show_player'][event].append(step)
+        try:
+            self.fc['show_player'][event].update(show_dict)
+            self.fc['show_player'].ca.items[event] = (
+                self.fc['light_player'].ca.items[event])
+        except KeyError:
+            pass
 
     def _migrate_assets(self, section_name):
         if section_name in self.fc:
@@ -641,6 +674,26 @@ class V4Migrator(VersionMigrator):
 
         return element
 
+    def _migrate_light_scripts(self):
+        if 'light_scripts' not in self.fc:
+            return
+
+        YamlInterface.rename_key('light_scripts', 'shows', self.fc, self.log)
+
+        for show_name, show_contents in self.fc['shows'].items():
+            self._convert_tocks_to_time(show_contents)
+
+            for step in show_contents:
+
+                if 'color' in step:
+                    step['color'] = self._get_color(step['color'])
+                    if len(str(step['color'])) > 2:
+                        YamlInterface.rename_key('color', '(leds)', step,
+                                                 self.log)
+                    else:
+                        YamlInterface.rename_key('color', '(lights)', step,
+                                                 self.log)
+
     def is_show_file(self):
         # Verify we have a show file and that it's an old version
         if 'tocks' in self.fc[0]:
@@ -650,22 +703,7 @@ class V4Migrator(VersionMigrator):
         self.log.debug("Migrating show file: %s", self.file_name)
         # Convert tocks to time
 
-        previous_tocks = 0
-        self.log.debug('Converting "tocks:" to "time: and cascading entries "'
-                       '"to the next step (since time: is for the current "'
-                       '"step versus tocks: being for the previous step"')
-        for i, step in enumerate(self.fc):
-            previous_tocks = step['tocks']
-
-            if not i:
-                step['tocks'] = 0
-            else:
-                step['tocks'] = '+{}'.format(previous_tocks)
-
-            YamlInterface.rename_key('tocks', 'time', step, self.log)
-
-        self.fc.append(CommentedMap())
-        self.fc[-1]['time'] = '+{}'.format(previous_tocks)
+        self._convert_tocks_to_time(self.fc)
 
         # migrate the components in each step
         self.log.debug("Converting settings for each show step")
@@ -682,6 +720,35 @@ class V4Migrator(VersionMigrator):
                                                          True, self.log)
 
         return True
+
+    def _convert_tocks_to_time(self, show_steps):
+        self.log.debug('Converting "tocks:" to "time:" and cascading entries '
+                       'to the next step (since time: is for the current '
+                       'step versus tocks: being for the previous step)')
+        previous_tocks = 0
+        for i, step in enumerate(show_steps):
+            previous_tocks = step['tocks']
+
+            if not i:
+                step['tocks'] = 0
+            else:
+                step['tocks'] = '+{}'.format(previous_tocks)
+
+            YamlInterface.rename_key('tocks', 'time', step, self.log)
+
+            self._remove_tags(step)
+
+        if len(show_steps) > 1:
+            show_steps.append(CommentedMap())
+            show_steps[-1]['time'] = '+{}'.format(previous_tocks)
+
+        return show_steps
+
+    def _remove_tags(self, dic):
+        for name_with_tag in [x for x in dic.keys() if x.startswith('tag|')]:
+            YamlInterface.rename_key(name_with_tag, name_with_tag.strip(
+                'tag|', dic, self.log))
+
 
 def migrate_file(file_name, file_content):
     return V4Migrator(file_name, file_content).migrate()

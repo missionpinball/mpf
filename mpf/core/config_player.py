@@ -60,7 +60,6 @@ class ConfigPlayer(object):
 
             # settings here is the same as a show entry, so we process with
             # that
-
             if not isinstance(settings, dict):
                 settings = {settings: dict()}
 

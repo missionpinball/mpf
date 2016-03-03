@@ -1,5 +1,29 @@
 #config_version=4
 
+switches:
+    s_left_rollover:
+        number:
+    s_center_rollover:
+        number:
+matrix_lights:
+    l_fortress_multiball:
+        number:
+    l_museum_multiball:
+        number:
+    l_wasteland_multiball:
+        number:
+    l_cryoprison_multiball:
+        number:
+    l_ball_save:
+        number:
+    l_super_jackpot:
+        number:
+    l_computer:
+        number:
+    l_demo_time:
+        number:
+    l_retina_scan:
+        number:
 sound_system:
     tracks:
         voice:
@@ -146,88 +170,69 @@ sound_player:
 shot_profiles:
     hit_me:
         states:
-            - name: active
-              show: flash
-              loops: -1
-              spped: 5
-            - name: complete
-              show: off
+        -   name: active
+            show: flash
+            loops: -1
+            speed: 5
+        -   name: complete
+            show: off
         player_variable: laser
     default:
         states:
-          - name: unlit
+        -   name: unlit
             show: off
-          - name: lit
+        -   name: lit
             show: on
     drop_shot:
         states:
-          - name: up
+        -   name: up
             show: off
-          - name: down
+        -   name: down
             show: on
-
-show_player:
-    mode_attract_started: # test comment 1
-        -   show: multiball_sweep # test comment 2
-            repeat: true # test comment 3
-            speed: 10
-        -   show: random_flashing
-            repeat: true
-            speed: 6
-    mode_claw_lit_for_major_mode_started:
-    -   lights: l_claw_ready, l_right_ramp_arrow
-        show: flash # test comment 4
-        key: claw_lit
-        speed: 5
-        repeat: true
-    mode_mode1_acmag_started:
-    -   lights: l_left_ramp_arrow
-        show: flash
-        speed: 4
-        repeat: true
-    balldevice_elevator_ball_enter:
-        key: claw_lit
-        action: stop
-
 shots:
-  left_lane:
-    switch: s_left_rollover
-    light: l_left_rollover
-  middle_lane:
-    switch: s_center_rollover
-    light: l_middle_rollover
+    left_lane:
+        switch: s_left_rollover
+        light: l_left_rollover
+    middle_lane:
+        switch: s_center_rollover
+        light: l_middle_rollover
 
 shot_groups:
-  rollover_lanes:
-    shots: left_lane, middle_lane, right_lane
-
-  standups:
-    shots: standup_1, standup_2, standup_3, standup_4, standup_5
+    rollover_lanes:
+        shots: left_lane, middle_lane
 
 shows:
     flash:
-        - time: 0
-          (color): ff
-        - tocks: +1
-          (color): 0
-        - time: +1
+    -   time: 0
+        (lights): ff
+    -   time: '+1'
+        (lights): 0
 
+    -   time: '+1'
     flashon:
-        - time: 0
-          (color): ff
-        - time: +1
-          (color): 0
-        - time: +1
-          (color): ff
-        - time: +1
+    -   time: 0
+        (lights): ff
+    -   time: '+1'
+        (lights): 0
+    -   time: '+1'
+        (lights): ff
 
+    -   time: '+1'
     on:
-        - time: 0
-          (led): ff
+    -   time: 0
+        (lights): ff
     off:
-        - time: 0
-          (led): 0
+    -   time: 0
+        (lights): 0
 
+    rainbow:
+    -   time: 0
+        (leds): red
+    -   time: '+1'
+        (leds): lime
+    -   time: '+1'
+        (leds): blue
+    -   time: '+1'
 displays:
     window:
         height: 200
@@ -364,3 +369,33 @@ slides:
                 value: 0
                 duration: 0.4s
                 repeat: true
+show_player:
+    mode_attract_started: # test comment 1
+        attract_dmd_loop:
+            loops: -1
+            speed: 1
+        multiball_sweep:
+            loops: -1 # test comment 3
+            speed: 10
+        random_flashing:
+            loops: -1
+            speed: 6
+    mode_attract_stopped:
+        attract_dmd_loop:
+            action: stop
+
+    mode_claw_lit_for_major_mode_started:
+        flash:
+            lights: l_claw_ready, l_right_ramp_arrow
+            key: claw_lit
+            speed: 5
+            loops: -1
+    balldevice_elevator_ball_enter:
+        claw_lit:
+            action: stop
+    mode_mode1_acmag_started:
+        flash:
+            lights: l_left_ramp_arrow
+            speed: 4
+            loops: -1
+

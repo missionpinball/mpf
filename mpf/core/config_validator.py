@@ -807,7 +807,7 @@ widgets:
         close: single|bool|False
         precision: single|int|180
     character_picker:
-        font_name: single|str|default
+        style: single|str|default
         name: single|str|
         selected_char_color: single|color|black
         selected_char_bg: single|color|white
@@ -821,11 +821,17 @@ widgets:
         end_char_selected: single|str|
         image_padding: single|int|1
         shift_left_tag: single|str|left_flipper
-        shfit_right_tag: single|str|right_flipper
+        shift_right_tag: single|str|right_flipper
         select_tag: single|str|start
         max_chars: single|int|3
         timeout: single|secs|30
         return_param: single|str|
+        width: single|num|None
+        height: single|num|None
+        clear_slide: ignore                             # todo
+        persist: ignore                                 # todo
+        cursor_animations: ignore                       # todo
+        slide_name: ignore                              # todo
     color_dmd:
         width: single|num|
         height: single|num|

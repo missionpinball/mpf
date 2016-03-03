@@ -110,6 +110,7 @@ class MachineController(object):
         self.create_machine_var('credits_string', credit_string, silent=True)
 
         self._load_core_modules()
+        # order is specified in mpfconfig.yaml
 
         # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
@@ -169,6 +170,7 @@ class MachineController(object):
                                 replace('%', 'quit'), self.stop)
 
     def _register_config_players(self):
+        # todo move this to config_player module
         for name, module in self.config['mpf']['config_players'].items():
             imported_module = importlib.import_module(module)
             setattr(self, '{}_player'.format(name),

@@ -38,6 +38,7 @@ class Show(Asset):
         self.token_finder = re.compile('(?<=\()(.*?)(?=\))')
 
         self.running = set()
+        self.name = name
 
         if data:
             self.do_load_show(data=data)
@@ -87,8 +88,8 @@ class Show(Asset):
 
             # Make sure there is a time entry for each step in the show file.
             if 'time' not in data[step_num]:
-                raise ValueError("%s is missing a 'time:' value in step %s. "
-                                 % self.file, step_num)
+                raise ValueError("Show '%s' is missing a 'time:' value in step"
+                                 " %s. " % (self.name, step_num))
 
             step_time = Util.string_to_secs(data[step_num]['time'])
 
