@@ -9,7 +9,7 @@ exclude_lines =
 omit =
     *__init__.py
     mpf/devices/new_device_template.py
-    mpf/platform/new_platform_template.py
+    mpf/platforms/new_platform_template.py
 
 [run]
 source = mpf
