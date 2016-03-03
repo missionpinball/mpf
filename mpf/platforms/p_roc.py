@@ -652,9 +652,6 @@ class PDBLight(object):
     def sink_output(self):
         return self.sink_outputnum
 
-    def dedicated_bank(self):
-        return self.banknum
-
     def dedicated_output(self):
         return self.output
 
