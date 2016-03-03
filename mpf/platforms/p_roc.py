@@ -16,7 +16,6 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
-import re
 import sys
 from copy import deepcopy
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
@@ -29,6 +28,7 @@ try:
     pinproc_imported = True
 except ImportError:
     pinproc_imported = False
+    pinproc = None
 
 from mpf.core.platform import Platform
 from mpf.core.utility_functions import Util
@@ -165,6 +165,8 @@ class HardwarePlatform(Platform):
             proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
         elif device_type == 'light':
             proc_driver_object = PROCMatrixLight(proc_num, self.proc)
+        else:
+            raise AssertionError("Invalid device type {}".format(device_type))
 
         if 'polarity' in config:
             state = proc_driver_object.proc.driver_get_state(config['number'])
@@ -877,7 +879,6 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
     def off(self):
         """Disables (turns off) this driver."""
         self.proc.driver_disable(self.number)
-        self.last_time_changed = self.machine.clock.get_time()
 
     def on(self, brightness=255):
         """Enables (turns on) this driver."""
@@ -889,8 +890,6 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
         else:
             pass
             # patter rates of 10/1 through 2/9
-
-        self.last_time_changed = self.machine.clock.get_time()
 
         '''
         Koen's fade code he posted to pinballcontrollers:
