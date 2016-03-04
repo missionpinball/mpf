@@ -43,7 +43,7 @@ class LedPlayer(ConfigPlayer):
             value = composite_value[0]
             fade = Util.string_to_ms(composite_value[1])
 
-        return dict(color=value, fade_ms=fade)
+        return dict(color=value, fade=fade)
 
     def get_full_config(self, value):
         super().get_full_config(value)

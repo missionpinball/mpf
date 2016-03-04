@@ -289,7 +289,9 @@ class TestShowController(MpfTestCase):
         # Advance to next show step and check for coil firing
         self.advance_time_and_run(1.0)
         self.machine.coils['coil_01'].pulse.assert_called_with(action='pulse',
-                                                               power=1.0)
+                                                               power=1.0,
+                                                               ms=0,
+                                                               priority=0)
 
         # Advance to next show step and check for coil firing
         self.advance_time_and_run(1.0)
@@ -367,8 +369,11 @@ class TestShowController(MpfTestCase):
         self.assertIn(self.machine.leds.led_01, copied_show[0]['leds'])
         self.assertIn(self.machine.leds.led_02, copied_show[0]['leds'])
         self.assertEqual(copied_show[0]['leds'][self.machine.leds.led_01],
-                         dict(color='006400', fade_ms=0))
+                         dict(color='006400', fade_ms=0, force=False,
+                              priority=0))
         self.assertEqual(copied_show[0]['leds'][self.machine.leds.led_02],
-                         dict(color='cccccc', fade_ms=0))
+                         dict(color='cccccc', fade_ms=0, force=False,
+                              priority=0))
         self.assertEqual(copied_show[3]['leds'][self.machine.leds.led_01],
-                         dict(color='midnightblue', fade_ms=500))
+                         dict(color='midnightblue', fade_ms=500, force=False,
+                              priority=0))

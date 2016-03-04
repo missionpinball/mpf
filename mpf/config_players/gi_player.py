@@ -27,6 +27,6 @@ class GiPlayer(ConfigPlayer):
         elif value.lower() in ('on', 'enable'):
             value = 'ff'
 
-        return dict(brightness=Util.hex_string_to_int(value))
+        return dict(brightness=value)
 
 player_cls = GiPlayer

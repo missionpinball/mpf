@@ -80,9 +80,10 @@ class Driver(Device):
         if not milliseconds and not power:
             self.log.debug("Pulsing Driver. Using default pulse_ms.")
             ms_actual = self.hw_driver.pulse()
+
         else:
             if not milliseconds:
-                raise AssertionError("Cannot use power without milliseconds")
+                milliseconds = self.hw_driver.driver_settings['pulse_ms']
 
             if power:
                 milliseconds *= power

@@ -497,7 +497,8 @@ playfield_transfers:
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
-random_event_player:                                          # todo
+random_event_player:
+    event_list: list|str|
 score_reels:
     coil_inc: single|self.machine.coils[%]|None
     coil_dec: single|self.machine.coils[%]|None
@@ -649,12 +650,16 @@ show_step:
     time: single|str|
     __allow_others__:
 slide_player:
-    slide: single|str|
+    # slide: single|str|
     target: single|str|None
     priority: single|int|None
     show: single|bool|True
     force: single|bool|False
     transition: ignore
+slides:
+    debug: single|bool|False
+    tags: list|str|None
+    __allow_others__:
 snux:
     flipper_enable_driver_number: single|int|c23
     diag_led_driver_number: single|str|c24
@@ -934,7 +939,7 @@ widgets:
         width: single|int|0
 
 widget_player:
-    widget: list|str|
+    # widget: list|str|
     target: single|str|None
     slide: single|str|None
 

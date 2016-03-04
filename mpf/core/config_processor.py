@@ -40,7 +40,7 @@ class ConfigProcessorBase(object):
                 self.process_localized_config_section(config=config[section],
                                                       section=section)
 
-    def process_mode_config(self, config, mode, mode_path, section):
+    def process_mode_config(self, config, mode, mode_path, section, **kwargs):
         del mode
         del mode_path
         self.process_localized_config_section(config, section)

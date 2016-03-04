@@ -22,7 +22,7 @@ class CoilPlayer(ConfigPlayer):
         try:
             value = int(value)
             return dict(action='pulse', milliseconds=value)
-        except TypeError:
+        except (TypeError, ValueError):
             pass
 
         action = 'pulse'

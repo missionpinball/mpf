@@ -17,7 +17,9 @@ class EventPlayer(ConfigPlayer):
             self.machine.events.post(event, **s)
 
     def get_express_config(self, value):
-        return dict()
+        return_dict = dict()
+        return_dict[value] = dict()
+        return return_dict
 
     def validate_config(self, config):
         # override because we want to let events just be a list of

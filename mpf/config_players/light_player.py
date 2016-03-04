@@ -36,8 +36,6 @@ class LightPlayer(ConfigPlayer):
             value = composite_value[0]
             fade = Util.string_to_ms(composite_value[1])
 
-        value = Util.hex_string_to_int(value)
-
         return dict(brightness=value, fade_ms=fade)
 
 player_cls = LightPlayer

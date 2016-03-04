@@ -14,7 +14,6 @@ class ConfigPlayer(object):
 
     def __init__(self, machine):
         self.machine = machine
-        self.debug = False
         self.caller_target_map = dict()
         '''Dict of callers which called this config player. Will be used with
         a clear method. Different config players can use this for different
@@ -47,7 +46,7 @@ class ConfigPlayer(object):
                     self.machine.config[self.config_file_section]))
 
             self.register_player_events(
-                self.machine.machine_config[self.config_file_section])
+                self.machine.config[self.config_file_section])
 
     def validate_config(self, config):
         # called first, before config file is cached. Not called if config file
@@ -80,20 +79,28 @@ class ConfigPlayer(object):
         # vales are either scalars with express settings, or dicts with full
         # settings
 
-        if isinstance(device_settings, dict):  # we have a full configuration
-            device_settings = self.get_full_config(device_settings)
-        else:  # we have an express config
+        if device_settings is None:
+            device_settings = device
+
+        if not isinstance(device_settings, dict):
+            # express config, convert to full
             device_settings = self.get_express_config(device_settings)
 
+        device_settings = self.get_full_config(device_settings)
         # Now figure out if our device is a single or a tag
 
-        if self.device_collection:
-            devices =  self.device_collection.items_tagged(device)
+        try:
 
-            if not devices:
-                devices = [self.device_collection[device]]
+            if self.device_collection:
+                devices =  self.device_collection.items_tagged(device)
 
-        else:
+                if not devices:
+                    devices = [self.device_collection[device]]
+
+            else:
+                devices = [device]
+
+        except AttributeError:
             devices = [device]
 
         return_dict = dict()
@@ -105,32 +112,18 @@ class ConfigPlayer(object):
     def process_mode_config(self, config, root_config_dict, **kwargs):
         # handles validation and processing of mode config
         config = self.validate_config(config)
-
         root_config_dict[self.config_file_section] = config
 
-        # config = self.process_config(config)
 
     def process_config(self, config, **kwargs):
         # called every time mpf starts, regardless of whether config was built
         # from cache or config files
-
-        # default assumes a list of events
-
         del kwargs
-
-        # config is localized
-        # config is already validated
-
-
         return config
 
     def process_show_config(self, config):
         # override if you need a different show processor from config file
         # processor
-
-        # return self.machine.config_validator.validate_config(
-        #     self.config_file_section, config)
-
         return config
 
     def get_express_config(self, value):
@@ -164,14 +157,13 @@ class ConfigPlayer(object):
 
     def register_player_events(self, config, mode=None, priority=0):
         # config is localized
-        del priority
-
         key_list = list()
 
         for event, settings in config.items():
             key_list.append(self.machine.events.add_handler(
-                    event,
-                    self.play,
+                    event=event,
+                    handler=self.play,
+                    priority=priority,
                     mode=mode,
                     settings=settings))
 
@@ -191,6 +183,8 @@ class ConfigPlayer(object):
 
         if caller and caller not in self.caller_target_map:
             self.caller_target_map[caller] = set()
+
+        # todo mode and priority
 
         # if mode:
         #     if not mode.active:
