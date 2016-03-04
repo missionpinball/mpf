@@ -650,7 +650,6 @@ show_step:
     time: single|str|
     __allow_others__:
 slide_player:
-    # slide: single|str|
     target: single|str|None
     priority: single|int|None
     show: single|bool|True

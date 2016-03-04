@@ -1,7 +1,6 @@
 """Contains the ShowController base class."""
 
 import logging
-from copy import deepcopy
 from queue import Queue
 
 from mpf.core.utility_functions import Util

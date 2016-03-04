@@ -100,7 +100,7 @@ class ConfigPlayer(object):
             else:
                 devices = [device]
 
-        except AttributeError:
+        except KeyError:
             devices = [device]
 
         return_dict = dict()
