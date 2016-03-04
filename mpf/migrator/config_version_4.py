@@ -719,6 +719,8 @@ class V4Migrator(VersionMigrator):
                                                          step, 'transition',
                                                          True, self.log)
 
+            self._remove_tags(step)
+
         return True
 
     def _convert_tocks_to_time(self, show_steps):
