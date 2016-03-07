@@ -30,6 +30,11 @@ class TestMachineController(MachineController):
         self.test_init_complete = True
         super()._reset_complete()
 
+    def _register_plugin_config_players(self):
+        # No sense loading these plugins for every test. Specific tests that
+        # need load them manually
+        pass
+
 
 class MpfTestCase(unittest.TestCase):
     machine_config_patches = dict()
@@ -244,3 +249,10 @@ class MpfTestCase(unittest.TestCase):
         self.realTime = None
 
         self.restore_sys_path()
+
+    def patch_bcp(self):
+        self.sent_bcp_commands = list()
+        self.machine.bcp.send = self._bcp_send
+
+    def _bcp_send(self, bcp_command, callback=None, **kwargs):
+        self.sent_bcp_commands.append((bcp_command, callback, kwargs))
