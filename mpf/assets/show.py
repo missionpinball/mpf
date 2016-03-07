@@ -1,5 +1,5 @@
 import re
-from copy import deepcopy, copy
+from copy import deepcopy
 
 from mpf.core.assets import Asset, AssetPool
 from mpf.core.config_player import ConfigPlayer
@@ -130,19 +130,19 @@ class Show(Asset):
 
                 # check to see if we know how to process this kind of entry
                 if key in ConfigPlayer.show_players.keys():
-                        validated_config = dict()
+                    validated_config = dict()
 
-                        # we're now at a dict for this section in the show
-                        # key
-                        if not isinstance(value, dict):
-                            value = {value: dict()}
+                    # we're now at a dict for this section in the show
+                    # key
+                    if not isinstance(value, dict):
+                        value = {value: dict()}
 
-                        for device, settings in value.items():
-                            validated_config.update(
-                                ConfigPlayer.show_players[key].validate_show_config(
-                                    device, settings))
+                    for device, settings in value.items():
+                        validated_config.update(
+                            ConfigPlayer.show_players[key].validate_show_config(
+                                device, settings))
 
-                        actions[key] = validated_config
+                    actions[key] = validated_config
 
                 elif key != 'time':
                     actions[key] = data[step_num][key]
