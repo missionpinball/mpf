@@ -1,5 +1,4 @@
 from mpf.core.config_player import ConfigPlayer
-from mpf.core.utility_functions import Util
 
 
 class GiPlayer(ConfigPlayer):

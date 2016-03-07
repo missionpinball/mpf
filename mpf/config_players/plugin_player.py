@@ -26,7 +26,7 @@ class PluginPlayer(ConfigPlayer):
         """
         event_list = list()
 
-        for event, settings in config.items():
+        for event in config:
             self.machine.bcp.add_registered_trigger_event(event)
             event_list.append(event)
 
