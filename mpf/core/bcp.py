@@ -10,6 +10,7 @@ import urllib.parse
 import urllib.error
 from queue import Queue
 import copy
+import json
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.player import Player
@@ -39,6 +40,10 @@ def decode_command_string(bcp_string):
     bcp_command = urllib.parse.urlsplit(bcp_string)
     try:
         kwargs = urllib.parse.parse_qs(bcp_command.query)
+
+        if 'json' in kwargs:
+            kwargs = json.loads(kwargs['json'][0])
+            return bcp_command.path.lower(), kwargs
 
     except AttributeError:
         kwargs = dict()
@@ -70,9 +75,15 @@ def encode_command_string(bcp_command, **kwargs):
     """
 
     kwarg_string = ''
+    json_needed = False
 
     try:
         for k, v in kwargs.items():
+
+            if isinstance(v, dict) or isinstance(v, list):
+                json_needed = True
+                break
+
             kwarg_string += (urllib.parse.quote(k.lower(), '') + '=' +
                              urllib.parse.quote(str(v), '') + '&')
 
@@ -80,6 +91,9 @@ def encode_command_string(bcp_command, **kwargs):
 
     except (TypeError, AttributeError):
         pass
+
+    if json_needed:
+        kwarg_string = 'json={}'.format(json.dumps(kwargs))
 
     return str(urllib.parse.urlunparse(('', '', bcp_command.lower(), '',
                                         kwarg_string, '')))
