@@ -317,9 +317,9 @@ class DeviceCollection(CaseInsensitiveDict):
         for item in multilist:
             objects_from_tags = self.items_tagged(item)
             if objects_from_tags:
-                for object in objects_from_tags:
-                    if object not in final_list:
-                        final_list.append(object)
+                for tagged_object in objects_from_tags:
+                    if tagged_object not in final_list:
+                        final_list.append(tagged_object)
 
             else:
                 final_list.append(self[item])
