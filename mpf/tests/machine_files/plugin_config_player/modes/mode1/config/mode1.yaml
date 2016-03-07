@@ -1,0 +1,12 @@
+# config_version=4
+
+mode:
+  priority: 400
+
+test_player:
+  event1: some_string
+  event4: something
+
+test2_player:
+  event2: slide1
+  event3: slide2

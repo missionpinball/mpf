@@ -1,4 +1,4 @@
-""" MPF plugin which enables the Backbox Control Protocol (BCP) v1.0alpha"""
+""" MPF plugin which enables the Backbox Control Protocol (BCP) v1.0"""
 
 import logging
 import socket
@@ -11,6 +11,7 @@ import urllib.error
 from queue import Queue
 import copy
 
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
 from mpf.devices.shot import Shot
@@ -152,15 +153,16 @@ class BCP(object):
         self.filter_shots = True
         self.send_player_vars = False
         self.send_machine_vars = False
-        self.mpfmc_trigger_events = set()
         self.track_volumes = dict()
         self.volume_control_enabled = False
 
+        self.registered_trigger_events = CaseInsensitiveDict()
+
         # Add the following to the set of events that already have mpf mc
         # triggers since these are all posted on the mc side already
-        self.mpfmc_trigger_events.add('ball_started')
-        self.mpfmc_trigger_events.add('ball_ended')
-        self.mpfmc_trigger_events.add('player_add_success')
+        self.add_registered_trigger_event('ball_started')
+        self.add_registered_trigger_event('ball_ended')
+        self.add_registered_trigger_event('player_add_success')
 
         try:
             if self.machine.config['dmd']['physical']:
@@ -216,13 +218,6 @@ class BCP(object):
 
         self._setup_shot_monitor()
 
-        self.register_mpfmc_trigger_events(self.machine.config)
-
-        try:
-            self.register_triggers(self.machine.config['triggers'])
-        except KeyError:
-            pass
-
         self.machine.events.add_handler('init_phase_2',
                                         self._setup_bcp_connections)
         self.machine.clock.schedule_interval(self.get_bcp_messages, 0)
@@ -239,27 +234,42 @@ class BCP(object):
         self.machine.events.add_handler('bcp_get_led_coordinates',
                                         self.get_led_coordinates)
 
-        self.machine.mode_controller.register_start_method(self.bcp_mode_start, 'mode')
-        self.machine.mode_controller.register_start_method(self.register_triggers,
-                                                 'triggers')
-        self.machine.mode_controller.register_load_method(
-            self.register_mpfmc_trigger_events)
+        self.machine.mode_controller.register_start_method(
+            self.bcp_mode_start, 'mode')
 
     def __repr__(self):
         return '<BCP Module>'
 
-    def _setup_dmd(self):
+    def add_registered_trigger_event(self, event):
+        try:
+            self.registered_trigger_events[event] += 1
+        except KeyError:
+            self.registered_trigger_events[event] = 1
+            self.machine.events.add_handler(event=event,
+                                            handler=self.bcp_trigger,
+                                            name=event)
 
+    def remove_registered_trigger_event(self, event):
+        try:
+            self.registered_trigger_events[event] -= 1
+            if not self.registered_trigger_events[event]:
+                del self.registered_trigger_events[event]
+                self.machine.events.remove_handler_by_event(
+                    event=event, handler=self.bcp_trigger)
+        except KeyError:
+            pass
+
+    def _setup_dmd(self):
         dmd_platform = self.machine.default_platform
 
         if (not self.machine.options['force_platform'] and
                     self.machine.config['hardware']['dmd'] != 'default'):
-            dmd_platform = (self.machine.hardware_platforms[self.machine.config['hardware']['dmd']])
+            dmd_platform = (self.machine.hardware_platforms[
+                                self.machine.config['hardware']['dmd']])
 
         self.dmd = dmd_platform.configure_dmd()
 
     def _setup_bcp_connections(self):
-
         if not self.machine.options['bcp']:
             return
 
@@ -302,14 +312,13 @@ class BCP(object):
         # it will send to our ignored list. Otherwise
         # register_mpfmc_trigger_events() will register for them too and they'll
         # be sent twice
-
-        self.mpfmc_trigger_events.add('player_score')
+        self.add_registered_trigger_event('player_score')
 
         # figure out which player events are being sent already and add them to
         # the list so we don't send them again
         if self.filter_player_events:
             for event in self.config['player_variables']:
-                self.mpfmc_trigger_events.add('player_' + event.lower())
+                self.add_registered_trigger_event('player_{}'.format(event))
 
     def _setup_machine_var_monitor(self):
         self.machine.machine_var_monitor = True
@@ -317,7 +326,8 @@ class BCP(object):
 
         if self.filter_machine_vars:
             for event in self.config['machine_variables']:
-                self.mpfmc_trigger_events.add('machine_var_' + event.lower())
+                self.add_registered_trigger_event('machine_var_{}'.format(
+                    event))
 
     def _setup_shot_monitor(self):
         Shot.monitor_enabled = True
@@ -349,7 +359,6 @@ class BCP(object):
                       change=change)
 
     def _shot(self, name, profile, state):
-
         if self.filter_shots and name not in self.config['shots']:
             return
 
@@ -358,30 +367,25 @@ class BCP(object):
     def process_bcp_events(self):
         """Processes the BCP Events from the config."""
         # config is localized to BCPEvents
-
         for event, settings in self.bcp_events.items():
-
             if 'params' in settings:
-
-                self.machine.events.add_handler(event, self._bcp_event_callback,
+                self.machine.events.add_handler(event,
+                                                self._bcp_event_callback,
                                                 command=settings['command'],
                                                 params=settings['params'])
 
             else:
-                self.machine.events.add_handler(event, self._bcp_event_callback,
+                self.machine.events.add_handler(event,
+                                                self._bcp_event_callback,
                                                 command=settings['command'])
 
     def _bcp_event_callback(self, command, params=None, **kwargs):
         if params:
-
             params = copy.deepcopy(params)
-
             for param, value in params.items():
-
                 # Are there any text variables to replace on the fly?
                 # todo should this go here?
                 if '%' in value:
-
                     # first check for player vars (%var_name%)
                     if self.machine.game and self.machine.game.player:
                         for name, val in self.machine.game.player:
@@ -398,87 +402,6 @@ class BCP(object):
 
         else:
             self.send(command)
-
-    def register_mpfmc_trigger_events(self, config, **kwargs):
-        """Scans an MPF config file and creates trigger events for the config
-        settings that need them.
-
-        Args:
-            config: An MPF config dictionary (can be the machine-wide or a mode-
-                specific one).
-            **kwargs: Not used. Included to catch any additional kwargs that may
-                be associted with this method being registered as an event
-                handler.
-
-        """
-        del kwargs
-
-        self.log.debug("Registering Trigger Events")
-
-        local_players = ['light_player', 'show_player']
-
-        for player in [x for x in config if x.endswith('_player') and
-                       x not in local_players]:
-
-            for event in config[player].keys():
-                self.create_trigger_event(event)
-
-    def create_trigger_event(self, event):
-        """Registers a BCP trigger based on an MPF event.
-
-        Args:
-            event: String name of the event you're registering this trigger for.
-
-        The BCP trigger will be registered with the same name as the MPF event.
-        For example, if you pass the event "foo_event", the BCP command that
-        will be sent when that event is posted will be trigger?name=foo_event.
-
-        """
-
-        if event not in self.mpfmc_trigger_events:
-
-            self.machine.events.add_handler(event,
-                                            handler=self.bcp_trigger,
-                                            name=event)
-            self.mpfmc_trigger_events.add(event)
-
-    def register_triggers(self, config, priority=0, mode=None):
-        """Sets up trigger events based on a 'triggers:' section of a config
-        dictionary.
-
-        Args:
-            config: A python config dictionary.
-            priority: (not used) Included since this method is called as part of
-                a mode start which passed this parameter.
-            mode: (not used) Included since this method is called as part of
-                a mode start which passed this parameter.
-
-        """
-        # config is localized to 'Trigger'
-        del priority
-        del mode
-
-        event_list = list()
-
-        for event, settings in config.items():
-
-            params = dict()
-
-            try:
-                params = copy.deepcopy(settings['params'])
-            except KeyError:
-                pass
-
-            try:
-                event_list.append(self.machine.events.add_handler(
-                    event, handler=self.send, bcp_command='trigger',
-                    name=settings['bcp_name'], **params))
-            except KeyError:
-                self.log.warning("Could not create trigger event for '%s'. "
-                                 "Settings: %s",
-                                 event, settings)
-
-        return self.machine.events.remove_handlers_by_keys, event_list
 
     def send(self, bcp_command, callback=None, **kwargs):
         """Sends a BCP message.
@@ -541,7 +464,6 @@ class BCP(object):
         at this point.
 
         """
-
         self.log.warning('Received Error command from host with parameters: %s',
                          kwargs)
 
@@ -677,7 +599,6 @@ class BCP(object):
                 sending
 
         """
-
         for switch in self.machine.switches.items_tagged(tag):
             self.enable_bcp_switch(switch.name)
 
@@ -850,21 +771,26 @@ class BCP(object):
         coordinates = []
         for led in self.machine.leds:
             if led.config['x'] is not None and led.config['y'] is not None:
-                coordinates.append(led.name + ':' + str(led.config['x']) + ',' + str(led.config['y']))
+                coordinates.append('{}:{},{}'.format(led.name,
+                                                     led.config['x'],
+                                                     led.config['y']))
 
         self.send('set', led_coordinates=';'.join(coordinates))
 
     def external_show_start(self, name, **kwargs):
         # Called by worker thread
-        self.machine.show_controller.add_external_show_start_command_to_queue(name, **kwargs)
+        self.machine.show_controller.add_external_show_start_command_to_queue(
+            name, **kwargs)
 
     def external_show_stop(self, name):
         # Called by worker thread
-        self.machine.show_controller.add_external_show_stop_command_to_queue(name)
+        self.machine.show_controller.add_external_show_stop_command_to_queue(
+            name)
 
     def external_show_frame(self, name, **kwargs):
         # Called by worker thread
-        self.machine.show_controller.add_external_show_frame_command_to_queue(name, **kwargs)
+        self.machine.show_controller.add_external_show_frame_command_to_queue(
+            name, **kwargs)
 
 
 class BCPClientSocket(object):

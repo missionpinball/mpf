@@ -176,10 +176,13 @@ class MachineController(object):
             setattr(self, '{}_player'.format(name),
                     imported_module.player_cls(self))
 
-        # for entry_point in iter_entry_points(group='mpf.config_player',
-        #                                      name=None):
-        #     entry_point.load()(self)
-        #     pass
+        self._register_plugin_config_players()
+
+    def _register_plugin_config_players(self):
+
+        for entry_point in iter_entry_points(group='mpf.config_player',
+                                             name=None):
+            entry_point.load()(self)
 
     def _load_machine_vars(self):
         self.machine_var_data_manager = DataManager(self, 'machine_vars')
