@@ -235,9 +235,7 @@ class Shot(Device):
             self.running_show = (
                 self.machine.shows[state_settings['show']].play(**s))
 
-        elif (not self.running_show and 'show' in self.config
-                and self.config['show']):
-
+        elif not self.running_show and 'show' in self.config and self.config['show']:
             # Pop all the shot settings so we're left with any settings that
             # should be passed to the show
             s = deepcopy(self.config)
@@ -268,14 +266,12 @@ class Shot(Device):
                 **s)
 
         else:
-            try:
+            if self.running_show:
                 self.running_show.advance(show_step=show_step)
                 if self.debug:
                     self.log.debug("Running show: %s, step: %s",
                                    self.running_show,
                                    self.running_show.current_step - 1)
-            except:
-                pass
 
     def player_turn_start(self, player, **kwargs):
         """Called by the shot profile manager when a player's turn starts to
