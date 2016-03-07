@@ -20,7 +20,43 @@ class TestConfigPlayer(PluginPlayer):
         return dict(some=value)
 
     def validate_config(self, config):
-        return config
+        validated_config = dict()
+
+        for event, settings in config.items():
+            validated_config[event] = dict()
+            validated_config[event][self.show_section] = dict()
+
+            if not isinstance(settings, dict):
+                settings = {settings: dict()}
+
+        return validated_config
+
+    def validate_show_config(self, device, device_settings):
+        if device_settings is None:
+            device_settings = device
+
+        if not isinstance(device_settings, dict):
+            device_settings = self.get_express_config(device_settings)
+
+        try:
+
+            if self.device_collection:
+                devices =  self.device_collection.items_tagged(device)
+
+                if not devices:
+                    devices = [self.device_collection[device]]
+
+            else:
+                devices = [device]
+
+        except KeyError:
+            devices = [device]
+
+        return_dict = dict()
+        for device in devices:
+            return_dict[device] = device_settings
+
+        return return_dict
 
     def register_with_mpf(machine):
         return 'test', TestConfigPlayer(machine)
@@ -33,7 +69,40 @@ class TestConfigPlayer2(PluginPlayer):
         return dict(some=value)
 
     def validate_config(self, config):
-        return config
+        validated_config = dict()
+
+        for event, settings in config.items():
+            validated_config[event] = dict()
+            validated_config[event][self.show_section] = dict()
+            if not isinstance(settings, dict):
+                settings = {settings: dict()}
+
+        return validated_config
+
+    def validate_show_config(self, device, device_settings):
+        if device_settings is None:
+            device_settings = device
+
+        if not isinstance(device_settings, dict):
+            device_settings = self.get_express_config(device_settings)
+
+        try:
+            if self.device_collection:
+                devices =  self.device_collection.items_tagged(device)
+                if not devices:
+                    devices = [self.device_collection[device]]
+
+            else:
+                devices = [device]
+
+        except KeyError:
+            devices = [device]
+
+        return_dict = dict()
+        for device in devices:
+            return_dict[device] = device_settings
+
+        return return_dict
 
     def register_with_mpf(machine):
         return 'test2', TestConfigPlayer2(machine)
@@ -47,9 +116,7 @@ class TestPluginConfigPlayer(MpfTestCase):
         return 'tests/machine_files/plugin_config_player/'
 
     def test_plugin_config_player(self):
-
         self.patch_bcp()
-
         self.assertIn('tests', ConfigPlayer.show_players)
         self.assertIn('test_player', ConfigPlayer.config_file_players)
         self.assertIn('test2s', ConfigPlayer.show_players)
@@ -57,7 +124,6 @@ class TestPluginConfigPlayer(MpfTestCase):
 
         # event1 is in the test_player only. Check that it's sent as a
         # trigger
-
         self.machine.events.post('event1')
         self.advance_time_and_run()
         self.assertIn(('trigger', None, dict(name='event1')),
@@ -71,8 +137,6 @@ class TestPluginConfigPlayer(MpfTestCase):
         self.assertIn(('trigger', None, dict(name='event2')),
               self.sent_bcp_commands)
         self.assertEqual(1, len(self.sent_bcp_commands))
-
-        self.sent_bcp_commands = list()
 
         # event3 is test2_player only. Check that it's only sent once
         self.sent_bcp_commands = list()
@@ -142,3 +206,9 @@ class TestPluginConfigPlayer(MpfTestCase):
         self.assertIn(('trigger', None, dict(name='event3')),
               self.sent_bcp_commands)
         self.assertEqual(1, len(self.sent_bcp_commands))
+
+    def test_plugin_from_show(self):
+        self.patch_bcp()
+
+        self.machine.shows['show1'].play()
+        self.advance_time_and_run()

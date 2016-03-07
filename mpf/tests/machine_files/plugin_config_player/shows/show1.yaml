@@ -1,0 +1,16 @@
+- time: 0
+  tests:
+    some5:
+      key5: thing
+
+- time: 1
+  tests:
+    slide1:
+      key6: value
+      key6.1: value
+    transition:
+      key7: value2
+      key7.1: value3
+  test2s:
+    some7:
+      key7: value

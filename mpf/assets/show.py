@@ -445,15 +445,12 @@ class RunningShow(object):
         for item_type, item_dict in (
                 iter(self.show_steps[self.current_step].items())):
 
-
             if item_type == 'time':
                 continue
-
 
             elif item_type in ConfigPlayer.show_players:
                 if item_type in item_dict:
                     item_dict = item_dict[item_type]
-
 
                 ConfigPlayer.show_players[item_type].play(settings=item_dict,
                                                           mode=self.mode,

@@ -10,3 +10,6 @@ test_player:
 test2_player:
   event2: slide1
   event3: slide2
+
+show_player:
+  start_show2: show2

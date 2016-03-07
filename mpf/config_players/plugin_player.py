@@ -25,13 +25,6 @@ class PluginPlayer(ConfigPlayer):
             self.machine.bcp.remove_registered_trigger_event(event)
 
     def play(self, settings, mode=None, caller=None, **kwargs):
-        """Called when a plugged-in config_player needs to play something.
-
-        Sends the play command, and associated config, to the remote player
-        via BCP.
-        """
-        raise ValueError('PluginPlayer.play() method was called, but it '
-                         'should never be called. Something is wrong.')
-
-    def send_trigger(self):
-        pass
+        """Only used during shows."""
+        self.machine.bcp.bcp_trigger(name='{}_play'.format(self.show_section),
+                                     **settings)

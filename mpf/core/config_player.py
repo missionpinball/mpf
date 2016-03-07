@@ -27,6 +27,9 @@ class ConfigPlayer(object):
 
         self.machine.events.add_handler('init_phase_1', self._initialize)
 
+    def __repr__(self):
+        return 'ConfigPlayer.{}'.format(self.show_section)
+
     def _initialize(self):
         if self.machine_collection_name:
             self.device_collection = getattr(self.machine,
