@@ -20,20 +20,22 @@ YamlInterface.cache = True
 class TestMachineController(MachineController):
     local_mpf_config_cache = {}
 
-    def __init__(self, mpf_path, machine_path, options, config_patches):
+    def __init__(self, mpf_path, machine_path, options, config_patches,
+                 enable_plugins=False):
         self.test_config_patches = config_patches
         self.test_init_complete = False
+        self._enable_plugins = enable_plugins
         super().__init__(mpf_path, machine_path, options)
         self.clock._max_fps = 0
+
 
     def _reset_complete(self):
         self.test_init_complete = True
         super()._reset_complete()
 
     def _register_plugin_config_players(self):
-        # No sense loading these plugins for every test. Specific tests that
-        # need load them manually
-        pass
+        if self._enable_plugins:
+            super()._register_plugin_config_players()
 
 
 class MpfTestCase(unittest.TestCase):
