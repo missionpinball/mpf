@@ -1,4 +1,5 @@
 import os
+import re
 from copy import deepcopy
 
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
@@ -204,21 +205,24 @@ class V4Migrator(VersionMigrator):
                 slide = self._get_slide_name(display)
 
                 new_slide_player[event] = CommentedMap()
+                new_slide_player[event][slide] = CommentedMap()
                 self.log.debug("Adding slide:%s to slide_player:%s", slide,
                                event)
-                new_slide_player[event]['slide'] = slide
 
                 if transition:
                     self.log.debug("Moving transition: from slide: to "
                                    "slide_player:")
-                    new_slide_player[event]['transition'] = transition[0]
-                    new_slide_player[event].ca.items['transition'] = (
+                    new_slide_player[event][slide]['transition'] = transition[0]
+                    new_slide_player[event][slide].ca.items['transition'] = (
                         transition[1])
 
                 if display:
                     self.log.debug("Setting slide_player:target: to '%s'",
                                    display)
-                    new_slide_player[event]['target'] = display
+                    new_slide_player[event][slide]['target'] = display
+
+                if not new_slide_player[event][slide]:
+                    new_slide_player[event] = slide
 
                 self.log.debug("Creating slide: '%s' with %s migrated "
                                "widget(s)", slide, len(elements))
@@ -257,9 +261,9 @@ class V4Migrator(VersionMigrator):
             self.log.debug("Creating slide_player:machine_reset_phase3: entry"
                            "to show slide '%s' on boot", slide_name)
             self.fc['slide_player']['machine_reset_phase_3'] = CommentedMap()
-            self.fc['slide_player']['machine_reset_phase_3'][
-                'slide'] = slide_name
-            self.fc['slide_player']['machine_reset_phase_3'][
+            self.fc['slide_player']['machine_reset_phase_3'][slide_name] = \
+                CommentedMap()
+            self.fc['slide_player']['machine_reset_phase_3'][slide_name][
                 'target'] = 'window'
 
     def _migrate_sound_system(self):
@@ -430,11 +434,12 @@ class V4Migrator(VersionMigrator):
     def _add_to_show_player(self, event, show_dict):
 
         for show, settings in show_dict.items():
-            try:
+
+            if 'loops' in settings:
                 if settings['loops']:
                     settings['loops'] = -1
-            except KeyError:
-                pass
+                else:
+                    settings['loops'] = 0
 
         if 'show_player' not in self.fc:
             self.log.debug("Creating show_player: section")
@@ -701,25 +706,57 @@ class V4Migrator(VersionMigrator):
 
     def _migrate_show_file(self):
         self.log.debug("Migrating show file: %s", self.file_name)
+
+        show_name_stub = os.path.splitext(os.path.split(self.file_name)[1])[0]
+
         # Convert tocks to time
 
         self._convert_tocks_to_time(self.fc)
 
         # migrate the components in each step
         self.log.debug("Converting settings for each show step")
+
+        slide_num = 0
+
         for i, step in enumerate(self.fc):
+
+            self._remove_tags(step)
+
             if 'display' in step:
                 self.log.debug("Show step %s: Converting 'display' section",
                                i+1)
-                step['display'] = self._migrate_elements(step['display'])
 
+                found_transition = False
                 for widget in step['display']:
                     if 'transition' in widget:
-                        YamlInterface.copy_with_comments(widget, 'transition',
-                                                         step, 'transition',
-                                                         True, self.log)
+                        found_transition = True
+                        break
 
-            self._remove_tags(step)
+                if found_transition:
+                    step['display'] = dict(
+                        widgets=self._migrate_elements(step['display']))
+
+                    for widget in step['display']['widgets']:
+
+                        self._convert_tokens(widget)
+
+                        if 'transition' in widget:
+                            YamlInterface.copy_with_comments(
+                                widget, 'transition', step['display'],
+                                'transition', True, self.log)
+
+                else:
+                    step['display'] = self._migrate_elements(step['display'])
+                    self._convert_tokens(step['display'])
+
+                YamlInterface.rename_key('display', 'slides', step)
+
+                slide_num += 1
+                old_slides = step['slides']
+                step['slides'] = dict()
+                step['slides']['{}_slide_{}'.format(show_name_stub,
+                                                    slide_num)] = old_slides
+
 
         return True
 
@@ -738,8 +775,6 @@ class V4Migrator(VersionMigrator):
 
             YamlInterface.rename_key('tocks', 'time', step, self.log)
 
-            self._remove_tags(step)
-
         if len(show_steps) > 1:
             show_steps.append(CommentedMap())
             show_steps[-1]['time'] = '+{}'.format(previous_tocks)
@@ -747,9 +782,29 @@ class V4Migrator(VersionMigrator):
         return show_steps
 
     def _remove_tags(self, dic):
-        for name_with_tag in [x for x in dic.keys() if x.startswith('tag|')]:
-            YamlInterface.rename_key(name_with_tag, name_with_tag.strip(
-                'tag|', dic, self.log))
+
+        for k, v in dic.items():
+            if isinstance(v, dict):
+                for k1 in v.keys():
+                    if k1.startswith('tag|'):
+                        YamlInterface.rename_key(k1, k1.strip('tag|'), v)
+
+    def _convert_tokens(self, dic):
+        # converts % tokens to ()
+        token_finder = re.compile("(?<=%)[a-zA-Z_0-9|]+(?=%)")
+
+        if isinstance(dic, list):
+            for step in dic:
+                if 'text' in step:
+                    for token in token_finder.findall(step['text']):
+                        step['text'] = step['text'].replace(
+                            '%{}%'.format(token), '({})'.format(token))
+
+        else:
+            if 'text' in dic:
+                for token in token_finder.findall(dic['text']):
+                    dic['text'] = dic['text'].replace(
+                        '%{}%'.format(token), '({})'.format(token))
 
 
 def migrate_file(file_name, file_content):

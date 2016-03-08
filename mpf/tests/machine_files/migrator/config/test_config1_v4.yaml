@@ -57,16 +57,15 @@ window:
     exit_on_escape: true
 slide_player:
     single_player_ball_started:
-        slide: slide_1
-        transition:
-            type: move_out
-            duration: 1s
-            direction: top
-    player_1_multiplayer_slide:
-        slide: slide_2
+        slide_1:
+            transition:
+                type: move_out
+                duration: 1s
+                direction: top
+    player_1_multiplayer_slide: slide_2
     machine_reset_phase_3:
-        slide: window_slide_1
-        target: window
+        window_slide_1:
+            target: window
 text_styles:
     default:
         font_name: Quadrit

@@ -42,7 +42,6 @@ class TestMigrator(MpfTestCase):
 
             # Uncomment these two for testing
             # print(migrated_string)
-            # return
 
             self.maxDiff = None  # Full file contents in the log on failure
             self.assertEqual(migrated_string, target_string)
