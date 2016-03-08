@@ -38,19 +38,8 @@ class TestConfigPlayer(PluginPlayer):
         if not isinstance(device_settings, dict):
             device_settings = self.get_express_config(device_settings)
 
-        try:
 
-            if self.device_collection:
-                devices =  self.device_collection.items_tagged(device)
-
-                if not devices:
-                    devices = [self.device_collection[device]]
-
-            else:
-                devices = [device]
-
-        except KeyError:
-            devices = [device]
+        devices = [device]
 
         return_dict = dict()
         for device in devices:
@@ -86,17 +75,8 @@ class TestConfigPlayer2(PluginPlayer):
         if not isinstance(device_settings, dict):
             device_settings = self.get_express_config(device_settings)
 
-        try:
-            if self.device_collection:
-                devices =  self.device_collection.items_tagged(device)
-                if not devices:
-                    devices = [self.device_collection[device]]
 
-            else:
-                devices = [device]
-
-        except KeyError:
-            devices = [device]
+        devices = [device]
 
         return_dict = dict()
         for device in devices:
