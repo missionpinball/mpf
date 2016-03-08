@@ -370,8 +370,6 @@ class Show(Asset):
                                  **kwargs)
                                  )
 
-        self.machine.show_controller.notify_show_starting(this_show)
-
         return this_show
 
     def _autoplay(self, *args, **kwargs):
@@ -408,10 +406,10 @@ class RunningShow(object):
         self._total_steps = len(show_steps)
 
         show.running.add(self)
+        self.machine.show_controller.notify_show_starting(self)
 
         # Figure out the show start time
         self.next_step_time = self.machine.clock.get_time()
-        self._run_current_step()
 
         if sync_ms:
             self.next_step_time += show.sync_ms / 1000.0
