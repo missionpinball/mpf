@@ -757,7 +757,6 @@ class V4Migrator(VersionMigrator):
                 step['slides']['{}_slide_{}'.format(show_name_stub,
                                                     slide_num)] = old_slides
 
-
         return True
 
     def _convert_tocks_to_time(self, show_steps):
@@ -782,12 +781,17 @@ class V4Migrator(VersionMigrator):
         return show_steps
 
     def _remove_tags(self, dic):
-
+        found = False
         for k, v in dic.items():
             if isinstance(v, dict):
                 for k1 in v.keys():
                     if k1.startswith('tag|'):
                         YamlInterface.rename_key(k1, k1.strip('tag|'), v)
+                        found = True
+                        break
+
+        if found:
+            self._remove_tags(dic)
 
     def _convert_tokens(self, dic):
         # converts % tokens to ()
