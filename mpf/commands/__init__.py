@@ -118,5 +118,6 @@ class CommandLineUtility(object):
 
 
 def run_from_command_line(args=None):
+    del args
     path = os.path.abspath(os.path.curdir)
     CommandLineUtility(path).execute()

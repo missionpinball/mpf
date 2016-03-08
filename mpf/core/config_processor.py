@@ -43,6 +43,7 @@ class ConfigProcessorBase(object):
     def process_mode_config(self, config, mode, mode_path, section, **kwargs):
         del mode
         del mode_path
+        del kwargs
         self.process_localized_config_section(config, section)
 
     def process_localized_config_section(self, config, section):

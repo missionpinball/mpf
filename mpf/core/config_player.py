@@ -94,6 +94,7 @@ class ConfigPlayer(object):
         # keys are device names
         # vales are either scalars with express settings, or dicts with full
         # settings
+        del serializable
 
         if device_settings is None:
             device_settings = device
@@ -124,10 +125,10 @@ class ConfigPlayer(object):
         return return_dict
 
     def process_mode_config(self, config, root_config_dict, **kwargs):
+        del kwargs
         # handles validation and processing of mode config
         config = self.validate_config(config)
         root_config_dict[self.config_file_section] = config
-
 
     def process_config(self, config, **kwargs):
         # called every time mpf starts, regardless of whether config was built
@@ -190,6 +191,9 @@ class ConfigPlayer(object):
         return config
 
     def play(self, settings, mode=None, caller=None, **kwargs):
+        del mode
+        del kwargs
+        del settings
         # Be sure to include **kwargs in your subclass since events could come
         # in with any parameters
 
