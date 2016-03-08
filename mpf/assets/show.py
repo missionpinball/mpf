@@ -473,7 +473,7 @@ class RunningShow(object):
 
         if not self.manual_advance:
             time_to_next_step = (
-                self.show_steps[self.current_step]['time'] * self.speed)
+                self.show_steps[self.current_step]['time'] / self.speed)
             self.next_step_time = (
                 self.machine.clock.get_time() + time_to_next_step)
 
