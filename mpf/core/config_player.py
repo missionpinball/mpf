@@ -1,6 +1,5 @@
 """Base class used for things that "play" from the config files, such as
 WidgetPlayer, SlidePlayer, etc."""
-from mpf.core.config_validator import ConfigValidator
 from mpf.core.device import Device
 
 
@@ -52,8 +51,22 @@ class ConfigPlayer(object):
                 self.machine.config[self.config_file_section])
 
     def validate_config(self, config):
+        """Validates this player's section of a config file (either a machine-
+        wide config or a mode config).
+
+        Args:
+            config: A dict of the contents of this config_player's section
+            from the config file. It's assumed that keys are event names, and
+            values are settings for what this config_player does when that
+            event is posted.
+
+        Returns: A dict in the same format, but passed through the config
+            validator.
+
+        """
         # called first, before config file is cached. Not called if config file
         # is read from cache
+
         validated_config = dict()
 
         for event, settings in config.items():
@@ -72,7 +85,7 @@ class ConfigPlayer(object):
 
         return validated_config
 
-    def validate_show_config(self, device, device_settings):
+    def validate_show_config(self, device, device_settings, serializable=True):
         # override if you need a different show processor from config file
         # processor
 
@@ -93,10 +106,8 @@ class ConfigPlayer(object):
         # Now figure out if our device is a single or a tag
 
         try:
-
             if self.device_collection:
                 devices =  self.device_collection.items_tagged(device)
-
                 if not devices:
                     devices = [self.device_collection[device]]
 

@@ -655,6 +655,7 @@ slide_player:
     show: single|bool|True
     force: single|bool|False
     transition: ignore
+    widgets: ignore
 slides:
     debug: single|bool|False
     tags: list|str|None

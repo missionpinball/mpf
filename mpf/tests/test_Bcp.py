@@ -52,8 +52,6 @@ class TestBcp(MpfTestCase):
         encoded_string = encode_command_string(command, **kwargs)
         decoded_command, decoded_dict = decode_command_string(encoded_string)
 
-        print(encoded_string)
-
         self.assertEqual('play', decoded_command)
         self.assertIn('dict1', decoded_dict)
         self.assertIn('dict2', decoded_dict)
