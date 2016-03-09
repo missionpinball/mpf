@@ -104,7 +104,7 @@ class BallController(object):
                              "balls")
             return False
 
-        if self.machine.config['game']['Allow start with loose balls']:
+        if self.machine.config['game']['allow_start_with_loose_balls']:
             return
 
         elif not self.are_balls_collected(['home', 'trough']):

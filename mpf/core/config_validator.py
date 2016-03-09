@@ -331,6 +331,7 @@ game:
     max_players: single|int|4
     start_game_switch_tag: single|str|start
     add_player_switch_tag: single|str|start
+    allow_start_with_loose_balls: single|bool|False
 gi_player:
     brightness: single|int_from_hex|ff
     __allow_others__:
