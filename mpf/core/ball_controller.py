@@ -55,13 +55,16 @@ class BallController(object):
         balls = 0
 
         for device in self.machine.ball_devices:
-            if 'trough' in device.tags:
-                balls += device.balls
-            elif 'ball_switches' not in device.config:
+            # generally we do not count ball devices without switches
+            if 'ball_switches' not in device.config:
                 continue
-            for switch in device.config['ball_switches']:
-                if self.machine.switch_controller.is_active(switch.name, ms=100):
-                    balls += 1
+            # special handling for troughs (needed for gottlieb)
+            elif not device.config['ball_switches'] and 'trough' in device.tags:
+                    balls += device.balls
+            else:
+                for switch in device.config['ball_switches']:
+                    if self.machine.switch_controller.is_active(switch.name, ms=100):
+                        balls += 1
 
         self.log.debug("Setting known balls to %s", balls)
         if balls > self.num_balls_known:
