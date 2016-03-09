@@ -8,8 +8,10 @@ class LedPlayer(ConfigPlayer):
     show_section = 'leds'
     machine_collection_name = "leds"
 
-    def play(self, settings, mode=None, caller=None, **kwargs):
-        super().play(settings, mode, caller, **kwargs)
+    def play(self, settings, mode=None, caller=None, priority=None,
+             play_kwargs=None):
+
+        super().play(settings, mode, caller, priority, play_kwargs)
 
         if 'leds' in settings:
             settings = settings['leds']

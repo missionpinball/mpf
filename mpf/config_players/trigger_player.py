@@ -5,8 +5,10 @@ class TriggerPlayer(ConfigPlayer):
     config_file_section = 'trigger_player'
     show_section = 'triggers'
 
-    def play(self, settings, mode=None, caller=None, **kwargs):
-        super().play(settings, mode, caller, **kwargs)
+    def play(self, settings, mode=None, caller=None, priority=None,
+             play_kwargs=None):
+
+        super().play(settings, mode, caller, priority, play_kwargs)
 
         if 'triggers' in settings:
             settings = settings['triggers']

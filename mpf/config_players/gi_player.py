@@ -5,9 +5,10 @@ class GiPlayer(ConfigPlayer):
     config_file_section = 'gi_player'
     show_section = 'gis'
 
+    def play(self, settings, mode=None, caller=None, priority=None,
+             play_kwargs=None):
 
-    def play(self, settings, mode=None, caller=None, **kwargs):
-        super().play(settings, mode, caller, **kwargs)
+        super().play(settings, mode, caller, priority, play_kwargs)
 
         if 'gis' in settings:
             settings = settings['gis']

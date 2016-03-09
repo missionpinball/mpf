@@ -190,9 +190,10 @@ class ConfigPlayer(object):
     def additional_processing(self, config):
         return config
 
-    def play(self, settings, mode=None, caller=None, **kwargs):
+    def play(self, settings, mode=None, caller=None, priority=None,
+             play_kwargs=None):
         del mode
-        del kwargs
+        del play_kwargs
         del settings
         # Be sure to include **kwargs in your subclass since events could come
         # in with any parameters

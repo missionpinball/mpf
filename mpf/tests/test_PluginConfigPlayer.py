@@ -75,7 +75,6 @@ class TestConfigPlayer2(PluginPlayer):
         if not isinstance(device_settings, dict):
             device_settings = self.get_express_config(device_settings)
 
-
         devices = [device]
 
         return_dict = dict()

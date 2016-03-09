@@ -7,8 +7,10 @@ class LightPlayer(ConfigPlayer):
     show_section = 'lights'
     machine_collection_name = 'lights'
 
-    def play(self, settings, mode=None, caller=None, **kwargs):
-        super().play(settings, mode, caller, **kwargs)
+    def play(self, settings, mode=None, caller=None, priority=None,
+             play_kwargs=None):
+
+        super().play(settings, mode, caller, priority, play_kwargs)
 
         if 'lights' in settings:
             settings = settings['lights']

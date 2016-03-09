@@ -5,8 +5,10 @@ class FlasherPlayer(ConfigPlayer):
     config_file_section = 'flasher_player'
     show_section = 'flashers'
 
-    def play(self, settings, mode=None, caller=None, **kwargs):
-        super().play(settings, mode, caller, **kwargs)
+    def play(self, settings, mode=None, caller=None, priority=None,
+             play_kwargs=None):
+
+        super().play(settings, mode, caller, priority, play_kwargs)
 
         if 'flashers' in settings:
             settings = settings['flashers']

@@ -9,13 +9,18 @@ class RandomEventPlayer(ConfigPlayer):
     show_section = 'random_events'
     device_collection = None
 
-    def play(self, settings, mode=None, caller=None, **kwargs):
-        super().play(settings, mode, caller, **kwargs)
+    def play(self, settings, mode=None, caller=None, priority=None,
+             play_kwargs=None):
+
+        super().play(settings, mode, caller, priority, play_kwargs)
+
+        if not play_kwargs:
+            play_kwargs = dict()
 
         these_settings = copy.deepcopy(settings)
-        these_settings.update(kwargs)
+        these_settings.update(play_kwargs)
         event_list = these_settings.pop('event_list')
-        self.machine.events.post(random.choice(event_list), **kwargs)
+        self.machine.events.post(random.choice(event_list), **play_kwargs)
 
     def get_express_config(self, value):
         return dict(event_list=Util.string_to_list(value))

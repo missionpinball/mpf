@@ -337,7 +337,7 @@ class Show(Asset):
                     reset=reset,
                     mode=mode,
                     manual_advance=manual_advance,
-                    **kwargs
+                    play_kwargs=kwargs
                    )
 
             self.load(callback=self._autoplay, priority=priority)
@@ -367,7 +367,7 @@ class Show(Asset):
                                  reset=bool(reset),
                                  mode=mode,
                                  manual_advance=manual_advance,
-                                 **kwargs)
+                                 play_kwargs=kwargs)
                                  )
 
         return this_show
@@ -384,7 +384,7 @@ class Show(Asset):
 class RunningShow(object):
     def __init__(self, machine, show, show_steps, priority, blend,
                  hold, speed, start_step, callback, loops,
-                 sync_ms, reset, mode, manual_advance, **kwargs):
+                 sync_ms, reset, mode, manual_advance, play_kwargs):
 
         self.machine = machine
         self.show = show
@@ -399,7 +399,7 @@ class RunningShow(object):
         self.reset = reset
         self.mode = mode
         self.manual_advance = manual_advance
-        self.tokens = kwargs
+        self.play_kwargs = play_kwargs
         self.debug = False
 
         self.name = show.name
@@ -453,7 +453,8 @@ class RunningShow(object):
                 ConfigPlayer.show_players[item_type].play(settings=item_dict,
                                                           mode=self.mode,
                                                           caller=self,
-                                                          priority=self.priority)
+                                                          priority=self.priority,
+                                                          play_kwargs=self.play_kwargs)
 
         # if we're at the end of the show
         if self.current_step == self._total_steps - 1:

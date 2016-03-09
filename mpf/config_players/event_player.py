@@ -6,14 +6,15 @@ class EventPlayer(ConfigPlayer):
     show_section = 'events'
     device_collection = None
 
-    def play(self, settings, mode=None, caller=None, **kwargs):
-        super().play(settings, mode, caller, **kwargs)
+    def play(self, settings, mode=None, caller=None,
+             priority=None, play_kwargs=None):
+        super().play(settings, mode, caller, priority, play_kwargs)
 
         if 'events' in settings:
             settings = settings['events']
 
         for event, s in settings.items():
-            s.update(kwargs)
+            s.update(play_kwargs)
             self.machine.events.post(event, **s)
 
     def get_express_config(self, value):

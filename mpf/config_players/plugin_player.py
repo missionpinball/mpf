@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from mpf.core.config_player import ConfigPlayer
 
 
@@ -36,7 +38,18 @@ class PluginPlayer(ConfigPlayer):
         for event in event_list:
             self.machine.bcp.remove_registered_trigger_event(event)
 
-    def play(self, settings, mode=None, caller=None, **kwargs):
+    def play(self, settings, mode=None, caller=None, priority=None,
+             play_kwargs=None):
         """Only used during shows."""
+
+        prior_play_kwargs = play_kwargs.pop('play_kwargs', None)
+
+        # update in this roundabout way so any kwargs tied to this play call
+        # overwrite any from a config
+        if prior_play_kwargs:
+            settings['play_kwargs'] = prior_play_kwargs.update(play_kwargs)
+        else:
+            settings['play_kwargs'] = play_kwargs
+
         self.machine.bcp.bcp_trigger(name='{}_play'.format(self.show_section),
                                      **settings)

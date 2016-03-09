@@ -5,8 +5,9 @@ class CoilPlayer(ConfigPlayer):
     config_file_section = 'coil_player'
     show_section = 'coils'
 
-    def play(self, settings, mode=None, caller=None, **kwargs):
-        super().play(settings, mode, caller, **kwargs)
+    def play(self, settings, mode=None, caller=None,
+             priority=None, play_kwargs=None):
+        super().play(settings, mode, caller, priority, play_kwargs)
 
         if 'coils' in settings:
             settings = settings['coils']
