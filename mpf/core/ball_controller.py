@@ -55,7 +55,9 @@ class BallController(object):
         balls = 0
 
         for device in self.machine.ball_devices:
-            if 'ball_switches' not in device.config:
+            if 'trough' in device.tags:
+                balls += device.balls
+            elif 'ball_switches' not in device.config:
                 continue
             for switch in device.config['ball_switches']:
                 if self.machine.switch_controller.is_active(switch.name, ms=100):
