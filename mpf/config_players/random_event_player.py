@@ -10,12 +10,14 @@ class RandomEventPlayer(ConfigPlayer):
     device_collection = None
 
     def play(self, settings, mode=None, caller=None, priority=None,
-             play_kwargs=None):
+             play_kwargs=None, **kwargs):
 
         super().play(settings, mode, caller, priority, play_kwargs)
 
         if not play_kwargs:
-            play_kwargs = dict()
+            play_kwargs = kwargs
+        else:
+            play_kwargs.update(kwargs)
 
         these_settings = copy.deepcopy(settings)
         these_settings.update(play_kwargs)

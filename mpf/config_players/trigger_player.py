@@ -6,7 +6,9 @@ class TriggerPlayer(ConfigPlayer):
     show_section = 'triggers'
 
     def play(self, settings, mode=None, caller=None, priority=None,
-             play_kwargs=None):
+             play_kwargs=None, **kwargs):
+
+        del kwargs
 
         super().play(settings, mode, caller, priority, play_kwargs)
 

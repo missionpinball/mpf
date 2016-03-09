@@ -9,13 +9,15 @@ class ShowPlayer(ConfigPlayer):
     device_collection = None
 
     def play(self, settings, mode=None, caller=None, priority=None,
-             play_kwargs=None):
+             play_kwargs=None, **kwargs):
 
         super().play(settings, mode, caller, priority, play_kwargs)
 
-        # This is needed since shows calling shows can be recursive, so
-        # we check to make sure we have the actual show settings and not
-        # a dict that's one level higher
+        if not play_kwargs:
+            play_kwargs = kwargs
+        else:
+            play_kwargs.update(kwargs)
+
         if 'shows' in settings:
             settings = settings['shows']
 

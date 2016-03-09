@@ -8,7 +8,9 @@ class LightPlayer(ConfigPlayer):
     machine_collection_name = 'lights'
 
     def play(self, settings, mode=None, caller=None, priority=None,
-             play_kwargs=None):
+             play_kwargs=None, **kwargs):
+
+        del kwargs
 
         super().play(settings, mode, caller, priority, play_kwargs)
 

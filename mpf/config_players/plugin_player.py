@@ -39,7 +39,7 @@ class PluginPlayer(ConfigPlayer):
             self.machine.bcp.remove_registered_trigger_event(event)
 
     def play(self, settings, mode=None, caller=None, priority=None,
-             play_kwargs=None):
+             play_kwargs=None, **kwargs):
         """Only used during shows."""
 
         prior_play_kwargs = play_kwargs.pop('play_kwargs', None)
@@ -50,6 +50,8 @@ class PluginPlayer(ConfigPlayer):
             settings['play_kwargs'] = prior_play_kwargs.update(play_kwargs)
         else:
             settings['play_kwargs'] = play_kwargs
+
+        settings['play_kwargs'].update(kwargs)
 
         self.machine.bcp.bcp_trigger(name='{}_play'.format(self.show_section),
                                      **settings)

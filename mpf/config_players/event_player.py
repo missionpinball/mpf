@@ -7,8 +7,13 @@ class EventPlayer(ConfigPlayer):
     device_collection = None
 
     def play(self, settings, mode=None, caller=None,
-             priority=None, play_kwargs=None):
+             priority=None, play_kwargs=None, **kwargs):
         super().play(settings, mode, caller, priority, play_kwargs)
+
+        if not play_kwargs:
+            play_kwargs = kwargs
+        else:
+            play_kwargs.update(kwargs)
 
         if 'events' in settings:
             settings = settings['events']
