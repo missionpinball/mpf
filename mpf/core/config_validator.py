@@ -81,6 +81,7 @@ ball_devices:
     hold_events: dict|str:ms|None
     hold_switches: list|self.machine.switches[%]|None
     entrance_switch: single|self.machine.switches[%]|None
+    entrance_events: dict|str:ms|None
     jam_switch: single|self.machine.switches[%]|None
     confirm_eject_type: single|str|target
     captures_from: single|str|playfield

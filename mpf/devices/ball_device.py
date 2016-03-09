@@ -999,6 +999,11 @@ class BallDevice(Device):
         else:
             return False
 
+    def entrance(self, **kwargs):
+        # event handler for entrance events
+        del kwargs
+        self._entrance_switch_handler()
+
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch
 
