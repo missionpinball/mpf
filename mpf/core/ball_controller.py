@@ -83,10 +83,6 @@ class BallController(object):
                                                 '_ball_enter',
                                                 self._ball_drained_handler)
 
-        # todo
-        if 'Allow start with loose balls' not in self.machine.config['game']:
-            self.machine.config['game']['Allow start with loose balls'] = False
-
     def request_to_start_game(self):
         """Method registered for the *request_to_start_game* event.
 
