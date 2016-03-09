@@ -980,7 +980,11 @@ class ConfigValidator(object):
 
     @classmethod
     def unload_config_spec(cls):
-        cls.config_spec = None
+        # cls.config_spec = None
+        pass
+
+        # todo I had the idea that we could unload the config spec to save
+        # memory, but doing so will take more thought about timing
 
     @staticmethod
     def process_config(config_spec, source, target=None):  # pragma: no cover
