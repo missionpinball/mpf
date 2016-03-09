@@ -260,3 +260,25 @@ class TestConfig(MpfTestCase):
         results = self.machine.config_validator.validate_config_item2(
             validation_string, 'test_failure_info', '255, 0, 0')
         self.assertEqual(results, (255, 0, 0))
+
+        # Test kivycolor
+        validation_string = 'single|kivycolor|'
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', 'red')
+        self.assertEqual(results, [1, 0, 0, 1])
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', 'ff0000')
+        self.assertEqual(results, [1, 0, 0, 1])
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '255, 0, 0')
+        self.assertEqual(results, [1, 0, 0, 1])
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', 'ff000000')
+        self.assertEqual(results, [1, 0, 0, 0])
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '255, 0, 0, 255')
+        self.assertEqual(results, [1, 0, 0, 1])

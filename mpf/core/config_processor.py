@@ -12,7 +12,7 @@ from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 log = logging.getLogger('ConfigProcessor')
 
 
-class ConfigProcessorBase(object):
+class ConfigProcessor(object):
     config_spec = None
 
     # todo why are scripts and shows processed here? Should they be in their
@@ -55,9 +55,6 @@ class ConfigProcessorBase(object):
 
         """
         self.machine_sections[section](config)
-
-    def color_from_string(self, item):
-        raise NotImplementedError
 
     @staticmethod
     def set_machine_path(machine_path, machine_files_default='machine_files'):
@@ -115,23 +112,3 @@ class ConfigProcessorBase(object):
             return config
         except TypeError:
             return dict()
-
-
-class ConfigProcessor(ConfigProcessorBase):
-    """Main config file processor which is responsible for loading and
-    processing machine and mode config files.
-
-    """
-    def color_from_string(self, color_string):
-        color_string = str(color_string).lower()
-
-        if color_string in named_rgb_colors:
-            return named_rgb_colors[color_string]
-        elif Util.is_hex_string(color_string):
-            return RGBColor.hex_to_rgb(color_string)
-
-        else:
-            color = Util.string_to_list(color_string)
-
-            return int(color[0]), int(color[1]), int(color[2])
-

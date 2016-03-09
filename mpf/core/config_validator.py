@@ -1,10 +1,12 @@
 import logging
+import re
 import sys
 from copy import deepcopy
 
 import ruamel.yaml as yaml
 
 from mpf._version import __version__
+from mpf.core.rgb_color import named_rgb_colors, RGBColor
 from mpf.file_interfaces.yaml_interface import MpfLoader, YamlInterface
 from mpf.core.utility_functions import Util
 
@@ -725,7 +727,7 @@ text_styles:
     shorten_from: single|str|None
     split_str: single|str|None
     unicode_errors: single|str|None
-    color: single|color|ffffffff
+    color: single|kivycolor|ffffffff
     crop_top: single|int|0            # todo
     crop_bottom: single|int|0         # todo
     antialias: single|bool|False      # todo
@@ -794,7 +796,7 @@ widgets:
         opacity: single|float|1.0
         z: single|int|0
         animations: ignore
-        color: single|color|ffffffff
+        color: single|kivycolor|ffffffff
     animations:
         property: list|str|
         value: list|str|
@@ -814,8 +816,8 @@ widgets:
     character_picker:
         style: single|str|default
         name: single|str|
-        selected_char_color: single|color|black
-        selected_char_bg: single|color|white
+        selected_char_color: single|kivycolor|black
+        selected_char_bg: single|kivycolor|white
         char_x_offset: single|int|1
         char_y_offset: single|int|1
         char_width: single|int|7
@@ -842,9 +844,9 @@ widgets:
         height: single|num|
         source_display: single|str|dmd
         gain: single|float|1.0
-        pixel_color: single|color|None
+        pixel_color: single|kivycolor|None
         shades: single|int|0
-        bg_color: single|color|191919ff
+        bg_color: single|kivycolor|191919ff
         blur: single|float|0.1
         pixel_size: single|float|0.5
         dot_filter: single|bool|True
@@ -854,10 +856,10 @@ widgets:
         source_display: single|str|dmd
         luminosity: list|float|.299, .587, .114
         gain: single|float|1.0
-        pixel_color: single|color|ff5500  # classic DMD orange
-        dark_color: single|color|221100
+        pixel_color: single|kivycolor|ff5500  # classic DMD orange
+        dark_color: single|kivycolor|221100
         shades: single|int|16
-        bg_color: single|color|191919ff
+        bg_color: single|kivycolor|191919ff
         blur: single|float|0.1
         pixel_size: single|float|0.5
         dot_filter: single|bool|True
@@ -1391,11 +1393,45 @@ class ConfigValidator(object):
         elif validator == 'dict':
             return item
 
+        elif validator == 'kivycolor':
+            # Validate colors that will be used by Kivy. The result is a 4-item
+            # list, RGBA, with individual values from 0.0 - 1.0
+            if not item:
+                return None
+
+            color_string = str(item).lower()
+
+            if color_string in named_rgb_colors:
+                color = list(named_rgb_colors[color_string])
+
+            elif Util.is_hex_string(color_string):
+                color = [int(x, 16) for x in
+                         re.split('([0-9a-f]{2})', color_string) if x != '']
+
+            else:
+                color = Util.string_to_list(color_string)
+
+            for i, x in enumerate(color):
+                color[i] = int(x) / 255
+
+            if len(color) == 3:
+                color.append(1)
+
+            return color
+
         elif validator == 'color':
-            # we call color_from_string() from the config processor because MPF
-            # and the MPF-MC each need different color formats internally, so
-            # this way they can each implement their own methods.
-            return self.machine.config_processor.color_from_string(item)
+            # Validates colors by name, hex, or list, into a 3-item list, RGB,
+            # with individual values from 0-255
+            color_string = str(item).lower()
+
+            if color_string in named_rgb_colors:
+                return named_rgb_colors[color_string]
+            elif Util.is_hex_string(color_string):
+                return RGBColor.hex_to_rgb(color_string)
+
+            else:
+                color = Util.string_to_list(color_string)
+                return int(color[0]), int(color[1]), int(color[2])
 
         elif validator == 'bool_int':
             if type(item) is str:
@@ -1430,3 +1466,4 @@ class ConfigValidator(object):
                         validation_failure_info[0][1],
                         validation_failure_info[1],
                         item))
+
