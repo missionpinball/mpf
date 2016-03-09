@@ -60,7 +60,7 @@ class BallController(object):
                 continue
             # special handling for troughs (needed for gottlieb)
             elif not device.config['ball_switches'] and 'trough' in device.tags:
-                    balls += device.balls
+                balls += device.balls
             else:
                 for switch in device.config['ball_switches']:
                     if self.machine.switch_controller.is_active(switch.name, ms=100):
