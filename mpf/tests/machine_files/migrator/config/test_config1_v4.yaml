@@ -1,5 +1,8 @@
 #config_version=4
 
+game:
+    allow_start_with_loose_balls: true
+
 switches:
     s_left_rollover:
         number:
@@ -23,6 +26,9 @@ matrix_lights:
     l_demo_time:
         number:
     l_retina_scan:
+        number:
+leds:
+    led1:
         number:
 sound_system:
     tracks:
@@ -203,34 +209,44 @@ shot_groups:
 shows:
     flash:
     -   time: 0
-        (lights): ff
+        lights:
+            (lights): ff
     -   time: '+1'
-        (lights): 0
+        lights:
+            (lights): 0
 
     -   time: '+1'
     flashon:
     -   time: 0
-        (lights): ff
+        lights:
+            (lights): ff
     -   time: '+1'
-        (lights): 0
+        lights:
+            (lights): 0
     -   time: '+1'
-        (lights): ff
+        lights:
+            (lights): ff
 
     -   time: '+1'
     on:
     -   time: 0
-        (lights): ff
+        lights:
+            (lights): ff
     off:
     -   time: 0
-        (lights): 0
+        lights:
+            (lights): 0
 
     rainbow:
     -   time: 0
-        (leds): red
+        leds:
+            (leds): red
     -   time: '+1'
-        (leds): lime
+        leds:
+            (leds): lime
     -   time: '+1'
-        (leds): blue
+        leds:
+            (leds): blue
     -   time: '+1'
 displays:
     window:
@@ -395,6 +411,11 @@ show_player:
     mode_mode1_acmag_started:
         flash:
             lights: l_left_ramp_arrow
+            speed: 4
+            loops: -1
+    led_show1:
+        flash:
+            leds: led1
             speed: 4
             loops: -1
 

@@ -32,6 +32,8 @@ class V4Migrator(VersionMigrator):
       new: loops
     - old: loop
       new: loop
+    - old: game|allow start with loose balls
+      new: allow_start_with_loose_balls
     '''
 
     moves = '''
@@ -695,9 +697,15 @@ class V4Migrator(VersionMigrator):
                     if len(str(step['color'])) > 2:
                         YamlInterface.rename_key('color', '(leds)', step,
                                                  self.log)
+                        step['leds'] = CommentedMap()
+                        YamlInterface.copy_with_comments(step, '(leds)',
+                            step['leds'], '(leds)', True, self.log)
                     else:
                         YamlInterface.rename_key('color', '(lights)', step,
                                                  self.log)
+                        step['lights'] = CommentedMap()
+                        YamlInterface.copy_with_comments(step, '(lights)',
+                            step['lights'], '(lights)', True, self.log)
 
     def is_show_file(self):
         # Verify we have a show file and that it's an old version

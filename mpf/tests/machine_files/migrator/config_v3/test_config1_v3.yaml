@@ -3,6 +3,9 @@
 timing:
   hz: 30
 
+game:
+  Allow start with loose balls: True
+
 switches:
     s_left_rollover:
       number:
@@ -28,6 +31,10 @@ matrix_lights:
       number:
     l_retina_scan:
       number:
+
+leds:
+    led1:
+        number:
 
 Sound_system:
     Tracks:
@@ -333,6 +340,11 @@ light_player:
       action: stop
   mode_mode1_acmag_started:
       lights: l_left_ramp_arrow
+      script: flash
+      tocks_per_sec: 4
+      repeat: yes
+  led_show1:
+      leds: led1
       script: flash
       tocks_per_sec: 4
       repeat: yes
