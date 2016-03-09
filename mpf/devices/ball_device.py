@@ -176,6 +176,13 @@ class BallDevice(Device):
 
     # ---------------------------- State: invalid -----------------------------
     def _state_invalid_start(self):
+        # Handle initial ball count with entrance_switch. If there is a ball on the entrance_switch at boot
+        # assume that we are at max capacity.
+        if (self.config['entrance_switch'] and self.config['ball_capacity'] and
+                self.machine.switch_controller.is_active(self.config['entrance_switch'].name,
+                                                         ms=self.config['entrance_count_delay'])):
+            self.balls = self.config['ball_capacity']
+
         return self._count_balls()
 
     def _state_invalid_counted_balls(self, balls):
