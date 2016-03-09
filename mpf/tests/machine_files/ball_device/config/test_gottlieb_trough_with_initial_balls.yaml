@@ -1,0 +1,6 @@
+#config_version=4
+
+config: test_gottlieb_trough.yaml
+
+virtual_platform_start_active_switches:
+  trough_entry
