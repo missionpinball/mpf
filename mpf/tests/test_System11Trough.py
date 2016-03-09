@@ -1,9 +1,6 @@
-import unittest
-
-from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
-import time
+
 
 class TestSystem11Trough(MpfTestCase):
 
