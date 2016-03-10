@@ -25,7 +25,8 @@ class LedPlayer(ConfigPlayer):
             try:
                 led.color(**s)
             except AttributeError:
-                self.machine.leds[led].color(**s)
+                if not led.startswith('('):
+                    self.machine.leds[led].color(**s)
 
     def clear(self, caller, priority):
         try:

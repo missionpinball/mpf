@@ -23,7 +23,8 @@ class LightPlayer(ConfigPlayer):
             try:
                 light.on(**s)
             except AttributeError:
-                self.machine.lights[light].on(**s)
+                if not light.startswith('('):
+                    self.machine.lights[light].on(**s)
 
     def clear(self, caller, priority):
         try:
