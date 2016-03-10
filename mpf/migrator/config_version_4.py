@@ -2,7 +2,6 @@ import os
 import re
 from copy import deepcopy
 
-from ruamel.yaml import CommentToken
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from mpf.migrator.migrator import VersionMigrator
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
@@ -95,6 +94,7 @@ class V4Migrator(VersionMigrator):
         self._migrate_window()
         self._create_display_from_dmd()
         self._migrate_physical_dmd()
+        self._set_default_display()
         self._migrate_slide_player()
         self._create_window_slide()
         self._migrate_sound_system()
@@ -165,8 +165,6 @@ class V4Migrator(VersionMigrator):
             else:  # physical mono DMD
                 YamlInterface.del_key_with_comments(self.fc['dmd'] , 'type',
                                                 self.log)
-                YamlInterface.del_key_with_comments(self.fc['dmd'] , 'shades',
-                                                self.log)
 
                 YamlInterface.rename_key('dmd', 'physical_dmd', self.fc,
                                          self.log)
@@ -177,6 +175,13 @@ class V4Migrator(VersionMigrator):
                                                 'shades', self.log)
             YamlInterface.del_key_with_comments(self.fc['displays']['dmd'],
                                                 'fps', self.log)
+
+    def _set_default_display(self):
+        if not 'displays' in self.fc or len(self.fc['displays']) == 1:
+            return
+
+        if V4Migrator.default_display in self.fc['displays']:
+            self.fc['displays'][V4Migrator.default_display]['default'] = True
 
     def _migrate_slide_player(self):
         if 'slide_player' in self.fc:
@@ -191,8 +196,11 @@ class V4Migrator(VersionMigrator):
 
                 display = None
                 transition = None
+                expire = None
 
-                # see if there's a display set
+                if isinstance(elements, dict):
+                    elements = [elements]
+
                 for element in elements:
                     if 'display' in element:
                         self.log.debug("Converting display: to target:")
@@ -202,6 +210,8 @@ class V4Migrator(VersionMigrator):
                         transition = (element['transition'],
                                       element.ca.items.get('transition', None))
                         del element['transition']
+                    if 'expire' in element:
+                        del element['expire']
 
                 elements = self._migrate_elements(elements, display)
 
@@ -223,6 +233,10 @@ class V4Migrator(VersionMigrator):
                     self.log.debug("Setting slide_player:target: to '%s'",
                                    display)
                     new_slide_player[event][slide]['target'] = display
+
+                if expire:
+                    self.log.debug("Setting slide_player:expire: to '%s'",
+                                   display)
 
                 if not new_slide_player[event][slide]:
                     new_slide_player[event] = slide
@@ -562,9 +576,18 @@ class V4Migrator(VersionMigrator):
         YamlInterface.rename_key('h_pos', 'anchor_x', element, self.log)
         YamlInterface.rename_key('v_pos', 'anchor_y', element, self.log)
         YamlInterface.rename_key('font', 'style', element, self.log)
+        YamlInterface.rename_key('shade', 'brightness', element, self.log)
+        YamlInterface.del_key_with_comments(element, 'pixel_spacing', self.log)
+        YamlInterface.del_key_with_comments(element, 'antialias', self.log)
+        YamlInterface.del_key_with_comments(element, 'thickness', self.log)
+        YamlInterface.del_key_with_comments(element, 'bg_shade', self.log)
+        YamlInterface.del_key_with_comments(element, 'slide', self.log)
 
         if element_type == 'text':
             YamlInterface.rename_key('size', 'font_size', element, self.log)
+
+        if element_type != 'dmd':
+            YamlInterface.del_key_with_comments(element, 'bg_color', self.log)
 
         y_name = 'middle'
         if 'anchor_y' in element:
@@ -600,7 +623,12 @@ class V4Migrator(VersionMigrator):
             element = self._migrate_shape(element)
 
         if 'decorators' in element:
-            element = self._migrate_decorators(element)
+            element = self._migrate_decorators(element, 'decorators',
+                                               'animations')
+
+        if 'cursor_decorators' in element:
+            element = self._migrate_decorators(element, 'cursor_decorators',
+                                               'cursor_animations')
 
         if 'color' in element:
             element['color'] = self._get_color(element['color'])
@@ -655,30 +683,30 @@ class V4Migrator(VersionMigrator):
 
         return element
 
-    def _migrate_decorators(self, element):
+    def _migrate_decorators(self, element, old_key, new_key):
         self.log.debug("Converting display_element blink decorator to widget "
                        "animation")
-        decorator = element['decorators']
+        decorator = element[old_key]
 
-        element['animations'] = CommentedMap()
-        element['animations']['entrance'] = CommentedSeq()
+        element[new_key] = CommentedMap()
+        element[new_key]['entrance'] = CommentedSeq()
 
         on_dict = CommentedMap()
         on_dict['property'] = 'opacity'
         on_dict['value'] = 1
-        on_dict['duration'] = str(decorator['on_secs']) + 's'
+        on_dict['duration'] = str(decorator.get('on_secs', .5)) + 's'
 
-        element['animations']['entrance'].append(on_dict)
+        element[new_key]['entrance'].append(on_dict)
 
         off_dict = CommentedMap()
         off_dict['property'] = 'opacity'
         off_dict['value'] = 0
-        off_dict['duration'] = str(decorator['off_secs']) + 's'
+        off_dict['duration'] = str(decorator.get('off_secs', .5)) + 's'
         off_dict['repeat'] = True
 
-        element['animations']['entrance'].append(off_dict)
+        element[new_key]['entrance'].append(off_dict)
 
-        del element['decorators']
+        del element[old_key]
 
         return element
 

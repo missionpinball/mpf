@@ -41,7 +41,7 @@
         -   type: rectangle
             width: 126
             height: 30
-            shade: 8
+            brightness: 8
 -   time: '+2'
     slides:
         test_show1_v3_slide_5:

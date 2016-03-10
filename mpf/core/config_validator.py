@@ -660,6 +660,7 @@ slide_player:
     force: single|bool|False
     transition: ignore
     widgets: ignore
+    expire: single|secs|None                            # todo
 slides:
     debug: single|bool|False
     tags: list|str|None
@@ -799,6 +800,7 @@ widgets:
         z: single|int|0
         animations: ignore
         color: single|kivycolor|ffffffff
+        brightness: single|int|None
     animations:
         property: list|str|
         value: list|str|
@@ -870,6 +872,7 @@ widgets:
         cursor_char: single|str|_
         cursor_offset_x: single|int|0
         cursor_offset_y: single|int|0
+        cursor_animations: ignore                         # todo
     ellipse:
         width: single|num|
         height: single|num|
