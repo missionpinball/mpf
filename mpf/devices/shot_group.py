@@ -279,7 +279,7 @@ class ShotGroup(Device):
         # step through all our shots and update their states
         for i in range(len(shot_list)):
             shot_list[i].jump(mode=mode, state=shot_state_list[i][0],
-                              lightshow_step=shot_state_list[i][1])
+                              show_step=shot_state_list[i][1])
 
     def rotate_right(self, mode=None, steps=1, **kwargs):
         """Rotates the state of the shots to the right. This method is the
