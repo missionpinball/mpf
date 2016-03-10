@@ -52,3 +52,46 @@ class TestSwitchController(MpfTestCase):
                 state=0, ms=250)
 
         self.advance_time_and_run(5)
+
+    def test_activation_and_deactivation_events(self):
+        self.mock_event("test_active")
+        self.mock_event("test_active2")
+        self.mock_event("test_inactive")
+        self.mock_event("test_inactive2")
+
+        self.machine.switch_controller.process_switch("s_test_events", 1)
+        self.machine_run()
+
+        self.assertEqual(0, self._events['test_active'])
+        self.assertEqual(1, self._events['test_active2'])
+        self.assertEqual(0, self._events['test_inactive'])
+        self.assertEqual(0, self._events['test_inactive2'])
+
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._events['test_active'])
+        self.assertEqual(1, self._events['test_active2'])
+        self.assertEqual(0, self._events['test_inactive'])
+        self.assertEqual(0, self._events['test_inactive2'])
+
+        self.machine.switch_controller.process_switch("s_test_events", 1)
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._events['test_active'])
+        self.assertEqual(1, self._events['test_active2'])
+        self.assertEqual(0, self._events['test_inactive'])
+        self.assertEqual(0, self._events['test_inactive2'])
+
+        self.machine.switch_controller.process_switch("s_test_events", 0)
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._events['test_active'])
+        self.assertEqual(1, self._events['test_active2'])
+        self.assertEqual(1, self._events['test_inactive'])
+        self.assertEqual(0, self._events['test_inactive2'])
+
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self._events['test_active'])
+        self.assertEqual(1, self._events['test_active2'])
+        self.assertEqual(1, self._events['test_inactive'])
+        self.assertEqual(1, self._events['test_inactive2'])
