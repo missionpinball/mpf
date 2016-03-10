@@ -22,12 +22,8 @@ class HardwarePlatform(Platform):
         self.dmd_frame = bytearray()
         self.queue = None
 
-        config_spec = '''
-                      port: string
-                      use_separate_thread: boolean|True
-                      '''
-
-        self.config = ConfigProcessor.process_config(config_spec=config_spec,
+        self.config = self.machine.config_validator.validate_config(
+            config_spec='smartmatrix',
             source=self.machine.config['smartmatrix'])
 
     def __repr__(self):

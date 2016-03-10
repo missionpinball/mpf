@@ -668,6 +668,9 @@ slides:
 snux:
     flipper_enable_driver_number: single|int|c23
     diag_led_driver_number: single|str|c24
+smartmatrix:
+    port: single|str|
+    use_separate_thread: single|bool|true
 sound_player:
     sound: single|str|
     track: single|str|None
