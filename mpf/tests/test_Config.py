@@ -282,3 +282,45 @@ class TestConfig(MpfTestCase):
         results = self.machine.config_validator.validate_config_item2(
             validation_string, 'test_failure_info', '255, 0, 0, 255')
         self.assertEqual(results, [1, 0, 0, 1])
+
+        # Test gain
+        validation_string = 'single|gain|'
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '0.0')
+        self.assertEqual(results, 0.0)
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '1.0')
+        self.assertEqual(results, 1.0)
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '2.0')
+        self.assertEqual(results, 1.0)
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '-3')
+        self.assertEqual(results, 0.0)
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '0 db')
+        self.assertEqual(results, 1.0)
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '-inf')
+        self.assertEqual(results, 0.0)
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '-3 DB')
+        self.assertAlmostEqual(results, 0.707945784)
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '-6db')
+        self.assertAlmostEqual(results, 0.501187233)
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '-17.5db')
+        self.assertAlmostEqual(results, 0.133352143)
+
+        results = self.machine.config_validator.validate_config_item2(
+            validation_string, 'test_failure_info', '3db')
+        self.assertEqual(results, 1.0)

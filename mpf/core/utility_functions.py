@@ -577,3 +577,48 @@ class Util(object):
             return False
 
         return num != 0 and ((num & (num - 1)) == 0)
+
+    @staticmethod
+    def db_to_gain(db):
+        """Converts a value in decibels (-inf to 0.0) to a gain (0.0 to 1.0)
+        Args:
+            db: The decibel value (float) to convert to a gain
+
+        Returns:
+            Float
+        """
+        try:
+            db = float(db)
+        except (TypeError, ValueError):
+            return 1.0
+
+        return pow(10, db / 20.0)
+
+    @staticmethod
+    def string_to_gain(gain_string):
+        """Decodes a string containing either a gain value (0.0 to 1.0) or
+        a decibel value (-inf to 0.0) into a gain value (0.0 to 1.0).
+
+        Args:
+            gain_string: The string to convert to a gain value
+
+        Returns:
+            Float containing a gain value (0.0 to 1.0)
+        """
+
+        gain_string = str(gain_string).lower()
+
+        if gain_string.startswith('-inf'):
+            return 0.0
+
+        if gain_string.endswith('db'):
+            gain_string = ''.join(i for i in gain_string if not i.isalpha())
+            return min(max(Util.db_to_gain(float(gain_string)), 0.0), 1.0)
+
+        try:
+            gain_string = float(gain_string)
+        except (TypeError, ValueError):
+            return 1.0
+
+        return min(max(gain_string, 0.0), 1.0)
+

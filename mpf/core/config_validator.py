@@ -671,27 +671,28 @@ snux:
 sound_player:
     sound: single|str|
     track: single|str|None
-    priority: single|int|None
-    loops: single|int|None
     volume: single|float|None
+    loops: single|int|None
+    priority: single|int|None
+    max_queue_time: single|secs|None
 sound_system:
     enabled: single|bool|True
     buffer: single|int|2048
     frequency: single|int|44100
     channels: single|int|1
-    master_volume: single|float|0.5
+    master_volume: single|gain|0.5
 sounds:
     file: single|str|None
     track: single|str|None
-    volume: single|float|0.5
+    volume: single|gain|0.5
+    loops: single|int|0
     priority: single|int|0
     max_queue_time: single|secs|None
-    loops: single|int|0
     ducking:
         target: single|str|
         delay: single|str|0
         attack: single|str|10ms
-        attenuation: single|float|
+        attenuation: single|gain|1.0
         release_point: single|str|0
         release: single|str|10ms
 switches:
@@ -1454,6 +1455,11 @@ class ConfigValidator(object):
             if not Util.is_power2(item):
                 raise ValueError
                 # todo make a better error
+
+        elif validator == 'gain':
+            # Attenuation can be specified as a float value from 0.0 to 1.0 or as
+            # a decibel level -inf to 0.0 (must be labeled as db)
+            return Util.string_to_gain(item)
 
         else:
             self.log.error("Invalid Validator '%s' in config spec %s:%s",
