@@ -20,13 +20,19 @@ class LedPlayer(ConfigPlayer):
 
         for led, s in settings.items():
             s['color'] = RGBColor(s['color'])
-            if caller:
-                self.caller_target_map[caller].add(led)
+
             try:
                 led.color(**s)
+                if caller:
+                    self.caller_target_map[caller].add(led)
+
             except AttributeError:
                 if not led.startswith('('):
                     self.machine.leds[led].color(**s)
+
+                    if caller:
+                        self.caller_target_map[caller].add(
+                            self.machine.leds[led])
 
     def clear(self, caller, priority):
         try:

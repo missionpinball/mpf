@@ -18,13 +18,19 @@ class LightPlayer(ConfigPlayer):
             settings = settings['lights']
 
         for light, s in settings.items():
-            self.caller_target_map[caller].add(light)
 
             try:
                 light.on(**s)
+                if caller:
+                    self.caller_target_map[caller].add(light)
+
             except AttributeError:
                 if not light.startswith('('):
                     self.machine.lights[light].on(**s)
+
+                    if caller:
+                        self.caller_target_map[caller].add(
+                            self.machine.lights[light])
 
     def clear(self, caller, priority):
         try:
