@@ -117,10 +117,12 @@ class V4Migrator(VersionMigrator):
                 self.fc['displays'] = CommentedMap()
             self.fc['displays']['window'] = CommentedMap()
 
-            self.fc['displays']['window']['height'] = self.fc['window']['height']
-            self.fc['displays']['window']['width'] = self.fc['window']['width']
-            self._add_display('window', self.fc['window']['width'],
-                              self.fc['window']['height'])
+            self.fc['displays']['window']['height'] = self.fc['window'].get(
+                'height', 600)
+            self.fc['displays']['window']['width'] = self.fc['window'].get(
+                'width', 800)
+            self._add_display('window', self.fc['displays']['window']['width'],
+                              self.fc['displays']['window']['height'])
             V4Migrator.default_display = 'window'
 
             try:  # old setting was 'frame', so we need to flip it
