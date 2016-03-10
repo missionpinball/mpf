@@ -53,7 +53,8 @@ class FileInterface(object):
         """
         raise NotImplementedError
 
-    def load(self, filename, verify_version=True, halt_on_error=False, round_trip=False):
+    def load(self, filename, verify_version=True, halt_on_error=True,
+             round_trip=False):
         raise NotImplementedError
 
     def save(self, filename, data, **kwargs):

@@ -268,7 +268,8 @@ class YamlInterface(FileInterface):
         else:
             return True
 
-    def load(self, filename, verify_version=True, halt_on_error=False, round_trip=False):
+    def load(self, filename, verify_version=True, halt_on_error=True,
+             round_trip=False):
         """Loads a YAML file from disk.
 
         Args:
@@ -294,6 +295,8 @@ class YamlInterface(FileInterface):
         if verify_version and not YamlInterface.check_config_file_version(filename):
             raise ValueError("Config file version mismatch: {}".format(filename))
 
+        config = dict()
+
         try:
             self.log.debug("Loading file: %s", filename)
 
@@ -302,23 +305,25 @@ class YamlInterface(FileInterface):
         except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark
-                self.log.debug("Error found in file %s. Line %s, Position %s",
-                               filename, mark.line+1, mark.column+1)
+                self.log.debug("YAML error found in file %s. Line %s, "
+                               "Position %s", filename, mark.line+1,
+                               mark.column+1)
+                if halt_on_error:
+                    raise ValueError("YAML error found in file {}. Line {}, "
+                                     "Position {}".format(
+                                     filename, mark.line+1, mark.column+1))
 
-            if halt_on_error:
-                sys.exit()
-            else:
-                config = dict()
+            elif halt_on_error:
+                raise ValueError("Error found in file %s" % filename)
+
 
         except:
             self.log.debug("Couldn't load from file: %s", filename)
 
             if halt_on_error:
-                sys.exit()
-            else:
-                config = dict()
+                raise ValueError("Error found in file %s" % filename)
 
-        if YamlInterface.cache:
+        if YamlInterface.cache and config:
             YamlInterface.file_cache[filename] = config
 
         return config
