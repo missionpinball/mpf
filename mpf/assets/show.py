@@ -432,12 +432,15 @@ class RunningShow(object):
     def __repr__(self):
         return "Running Show Instance: {}".format(self.name)
 
-    def stop(self):
+    def stop(self, hold=None):
         self.machine.show_controller.notify_show_stopping(self)
         self.show.running.remove(self)
         self.machine.clock.unschedule(self._run_current_step, True)
 
-        if not self.hold:
+        if hold is None:
+            hold = self.hold
+
+        if not hold:
             for player in ConfigPlayer.show_players.values():
                 player.clear(caller=self, priority=self.priority)
 
