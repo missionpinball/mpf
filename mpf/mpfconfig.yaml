@@ -7,7 +7,6 @@
 
 mpf:
     core_modules: !!omap
-        - config_validator: mpf.core.config_validator.ConfigValidator
         - events: mpf.core.events.EventManager
         - mode_controller: mpf.core.mode_controller.ModeController
         - config_processor: mpf.core.config_processor.ConfigProcessor

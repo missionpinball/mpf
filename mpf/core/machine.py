@@ -22,7 +22,6 @@ from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
 
 
-
 class MachineController(object):
     """Base class for the Machine Controller object.
 
@@ -86,6 +85,8 @@ class MachineController(object):
         self._load_config()
 
         self.configure_debugger()
+
+        self.config_validator = ConfigValidator(self)
 
         self.hardware_platforms = dict()
         self.default_platform = None
