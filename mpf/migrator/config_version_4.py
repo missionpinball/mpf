@@ -152,21 +152,21 @@ class V4Migrator(VersionMigrator):
 
             self.log.debug("Converting physical dmd: settings")
 
-            YamlInterface.del_key_with_comments(self.fc['dmd'] , 'physical',
+            YamlInterface.del_key_with_comments(self.fc['dmd'], 'physical',
                                                 self.log)
-            YamlInterface.del_key_with_comments(self.fc['dmd'] , 'fps',
+            YamlInterface.del_key_with_comments(self.fc['dmd'], 'fps',
                                                 self.log)
 
             if 'type' in self.fc['dmd'] and self.fc['dmd']['type'] == 'color':
                 # physical color DMD
-                YamlInterface.del_key_with_comments(self.fc['dmd'] , 'type',
-                                                self.log)
+                YamlInterface.del_key_with_comments(self.fc['dmd'], 'type',
+                                                    self.log)
                 YamlInterface.rename_key('dmd', 'physical_rgb_dmd', self.fc,
                                          self.log)
 
             else:  # physical mono DMD
-                YamlInterface.del_key_with_comments(self.fc['dmd'] , 'type',
-                                                self.log)
+                YamlInterface.del_key_with_comments(self.fc['dmd'], 'type',
+                                                    self.log)
 
                 YamlInterface.rename_key('dmd', 'physical_dmd', self.fc,
                                          self.log)
@@ -179,7 +179,7 @@ class V4Migrator(VersionMigrator):
                                                 'fps', self.log)
 
     def _set_default_display(self):
-        if not 'displays' in self.fc or len(self.fc['displays']) == 1:
+        if 'displays' not in self.fc or len(self.fc['displays']) == 1:
             return
 
         if V4Migrator.default_display in self.fc['displays']:
@@ -370,7 +370,7 @@ class V4Migrator(VersionMigrator):
             self.log.debug("Converting assets:animations to assets:images")
             if 'images' in self.fc:
                 self.log.debug("Merging animations: into current "
-                                   "asset:images:")
+                               "asset:images:")
 
                 YamlInterface.copy_with_comments(self.fc, 'animations',
                                                  self.fc, 'images',
@@ -730,13 +730,13 @@ class V4Migrator(VersionMigrator):
                                                  self.log)
                         step['leds'] = CommentedMap()
                         YamlInterface.copy_with_comments(step, '(leds)',
-                            step['leds'], '(leds)', True, self.log)
+                                                         step['leds'], '(leds)', True, self.log)
                     else:
                         YamlInterface.rename_key('color', '(lights)', step,
                                                  self.log)
                         step['lights'] = CommentedMap()
                         YamlInterface.copy_with_comments(step, '(lights)',
-                            step['lights'], '(lights)', True, self.log)
+                                                         step['lights'], '(lights)', True, self.log)
 
     def is_show_file(self):
         # Verify we have a show file and that it's an old version
