@@ -231,10 +231,10 @@ class PROCDMD(object):
 
         # dmd_timing defaults should be 250, 400, 180, 800
 
-        if 'P_ROC' in self.machine.config and 'dmd_timing_cycles' in self.machine.config['P_ROC']:
+        if 'p_roc' in self.machine.config and 'dmd_timing_cycles' in self.machine.config['p_roc']:
 
             dmd_timing = Util.string_to_list(
-                self.machine.config['P_ROC']['dmd_timing_cycles'])
+                self.machine.config['p_roc']['dmd_timing_cycles'])
 
             dmd_timing = [int(i) for i in dmd_timing]
 
