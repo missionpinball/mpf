@@ -522,7 +522,7 @@ class ModeTimer(object):
         self.bcp = False
         self.event_keys = set()
         self.delay = DelayManager(self.machine.delayRegistry)
-        self.log = None
+        self.log = logging.getLogger('ModeTimer.' + name)
         self.debug = False
 
         if 'start_value' in self.config:
@@ -569,7 +569,7 @@ class ModeTimer(object):
 
         self.mode.player[self.tick_var] = self.start_value
 
-        if self.log:
+        if self.debug:
             self.log.debug("----------- Initial Values -----------")
             self.log.debug("running: %s", self.running)
             self.log.debug("start_value: %s", self.start_value)
