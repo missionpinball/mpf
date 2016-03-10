@@ -412,6 +412,7 @@ class RunningShow(object):
         self.manual_advance = manual_advance
         self.play_kwargs = play_kwargs
         self.debug = False
+        self._stopped = False
 
         self.name = show.name
         self._total_steps = len(show_steps)
@@ -433,6 +434,15 @@ class RunningShow(object):
         return "Running Show Instance: {}".format(self.name)
 
     def stop(self, hold=None):
+
+        if self._stopped:
+            return
+
+        self._stopped = True
+        # todo I think there's a potential memory leak here as shows stop but
+        # some things still hold references to them. (Shots, for example).
+        # need to investigate more
+
         self.machine.show_controller.notify_show_stopping(self)
         self.show.running.remove(self)
         self.machine.clock.unschedule(self._run_current_step, True)
