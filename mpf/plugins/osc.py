@@ -9,8 +9,6 @@ import socket
 import threading
 import locale
 
-from mpf.core.config_processor import ConfigProcessor
-
 try:
     # noinspection PyPep8Naming
     from . import OSC as OSCmodule
@@ -42,23 +40,13 @@ class OSC(object):
         self.server = None
         self.server_thread = None
 
-        config_spec = '''
-                        client_port: int|8000
-                        debug_messages: boolean|False
-                        '''
+        self.config = self.machine.config_validator.validate_config(
+            config_spec='osc', source=self.machine.config['osc'])
 
-        # TODO: fix this call
-        self.config = ConfigProcessor.process_config(config_spec, self.machine.config['osc'])
-
-        if self.config['machine_ip'].upper() == 'AUTO':
+        if self.config['machine_ip'].lower() == 'auto':
             self.config['machine_ip'] = socket.gethostbyname(
                                                         socket.gethostname())
 
-        if 'client_updates' in self.config:
-            self.config['client_updates'] = self.config['client_updates'].split(
-                                                                            ' ')
-        else:
-            self.config['client_updates'] = None
 
         self.OSC_clients = dict()
         self.OSC_message = False

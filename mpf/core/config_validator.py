@@ -462,6 +462,13 @@ multiballs:
     reset_events:  dict|str:ms|machine_reset_phase_3, ball_starting
     start_events:  dict|str:ms|None
     stop_events:  dict|str:ms|None
+osc:
+    client_port: single|int|8000
+    debug_messages: single|bool|false
+    machine_ip: single|str|auto
+    machine_port: single|int|9000
+    approved_client_ips: ignore
+    client_updates: list|str|None
 physical_dmd:
     width: single|int|128
     height: single|int|32
