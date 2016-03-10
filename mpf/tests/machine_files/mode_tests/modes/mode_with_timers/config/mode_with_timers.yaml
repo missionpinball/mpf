@@ -4,6 +4,7 @@ mode:
     stop_events: stop_mode_with_timers
 timers:
     timer_down:
+        debug: True
         start_value: 5
         end_value: 0
         direction: down
