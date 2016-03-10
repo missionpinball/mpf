@@ -95,10 +95,10 @@ class Migrator(object):
             if (os.path.isfile(os.path.join(root_folder, item)) and
                         os.path.splitext(item)[1].lower() != EXTENSION):
                 return_list.append(item)
+
         return return_list
 
     def migrate_files(self):
-
         # We need to migrate show files after config files since we need
         # to pull some things out of the configs for the shows.
         round2_files = list()
@@ -216,7 +216,8 @@ class VersionMigrator(object):
 
     def migrate(self):
         if type(self.fc) == CommentedMap:
-            self._migrate_config_file()
+            if not self._migrate_config_file():
+                return False
             self.log.debug("----------------------------------------")
             return self.fc
         elif type(self.fc) == CommentedSeq:
@@ -231,12 +232,12 @@ class VersionMigrator(object):
         return False
 
     def _migrate_show_file(self):
-        pass
+        print(self.file_name, self._get_config_version())
 
     def _migrate_config_file(self):
         self.log.debug("Analyzing config file: %s", self.file_name)
         if not self._migration_needed():
-            return
+            return False
         self._update_config_version()
         self.log.debug("Converting keys to lowercase")
         self._do_lowercase()
@@ -245,6 +246,7 @@ class VersionMigrator(object):
         self._do_custom()
         self._do_deprecations()
         self._do_adds()
+        return True
 
     def _migration_needed(self):
         self.current_config_version = self._get_config_version()
@@ -255,10 +257,12 @@ class VersionMigrator(object):
         else:
             if self.current_config_version == self.config_version:
                 if REPROCESS_CURRENT_VERSION:
-                    print('reprocessing current version')
+                    self.log.info('Reprocessing file which is already '
+                                  'config_version=%s', self.config_version)
                     return True
                 else:
-                    print('file already current')
+                    self.log.info('File is already config_version=%s. '
+                                  'Skipping...', self.config_version)
                     return False
             else:  # config_version is less than current:
                 if self.config_version - self.current_config_version > 1:
@@ -267,7 +271,12 @@ class VersionMigrator(object):
                 elif self.config_version - self.current_config_version == 1:
                     return True
                 else:
-                    print('config file is newer?!?')
+                    self.log.warning('MPF version mismatch. File is '
+                                     'config_version=%s, but this version of'
+                                     'MPF is for config_version=%s. '
+                                     'Skipping...',
+                                     self.current_config_version,
+                                     self.config_version)
                     return False
 
     def _update_config_version(self):
