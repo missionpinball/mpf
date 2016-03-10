@@ -1,3 +1,4 @@
+# show_version=4
 - time: 0
   display:
   - type: text
@@ -14,7 +15,7 @@
   transition:
     type: move_out
     duration: 1s
-    direction: top 
+    direction: top
 
 - time: '+2'
   display:

@@ -1,3 +1,4 @@
+# show_version=4
 - time: 0
   leds:
     led_01: 006400

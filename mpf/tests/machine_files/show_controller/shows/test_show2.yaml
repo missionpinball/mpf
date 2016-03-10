@@ -1,3 +1,4 @@
+# show_version=4
 - time: 0
   triggers:
     play_sound:

@@ -231,7 +231,6 @@ class YamlInterface(FileInterface):
 
         with open(filename) as f:
             file_version = f.readline().split('show_version=')[-1:][0]
-            print("FILE VERSION", file_version)
 
         try:
             return int(file_version)
