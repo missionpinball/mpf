@@ -203,38 +203,6 @@ displaydefaults:
         background_shade: 0
         antialias: False
 
-#fonts:
-#    default:
-#        file: Quadrit.ttf
-#        size: 10
-#        crop_top: 2
-#        crop_bottom: 3
-#    space title huge:
-#        file: DEADJIM.TTF
-#        size: 29
-#        antialias: yes
-#        crop_top: 3
-#        crop_bottom: 3
-#    space title:
-#        file: DEADJIM.TTF
-#        size: 21
-#        antialias: yes
-#        crop_top: 2
-#        crop_bottom: 3
-#    medium:
-#        file: pixelmix.ttf
-#        size: 8
-#        crop_top: 1
-#        crop_bottom: 1
-#    small:
-#        file: smallest_pixel-7.ttf
-#        size: 9
-#        crop_top: 2
-#        crop_bottom: 3
-#    tall title:
-#       file: big_noodle_titling.ttf
-#       size: 20
-
 textstrings:
     volume_zero: OFF
     volume_max: MAX
