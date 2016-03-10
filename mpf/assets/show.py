@@ -44,6 +44,7 @@ class Show(Asset):
 
         if data:
             self.do_load_show(data=data)
+            self.loaded = True
 
     def __lt__(self, other):
         return id(self) < id(other)
@@ -62,16 +63,15 @@ class Show(Asset):
     def do_load_show(self, data):
         self.show_steps = list()
 
-        self.machine.show_controller.log.debug("Loading Show %s",
-                                               self.file)
+        self.machine.show_controller.log.debug("Loading Show %s", self.file)
         if not data and self.file:
             data = self.load_show_from_disk()
 
         if isinstance(data, dict):
             data = list(data)
         elif not isinstance(data, list):
-            raise ValueError("Show %s does not appear to be a valid show "
-                             "config", self.file)
+            raise ValueError("Show {} does not appear to be a valid show "
+                             "config".format(self.file))
 
         # Loop over all steps in the show file
         total_step_time = 0
