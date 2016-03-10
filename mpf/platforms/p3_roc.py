@@ -256,8 +256,6 @@ class HardwarePlatform(PROCBasePlatform):
             event_value = event['value']
             if event_type == 99:  # CTRL-C to quit todo does this go here?
                 self.machine.stop()
-            elif event_type == self.pinproc.EventTypeDMDFrameDisplayed:
-                pass
             elif event_type == self.pinproc.EventTypeSwitchClosedDebounced:
                 self.machine.switch_controller.process_switch(state=1,
                                                               num=event_value)
