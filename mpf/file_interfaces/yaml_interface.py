@@ -227,6 +227,18 @@ class YamlInterface(FileInterface):
             return 0
 
     @staticmethod
+    def get_show_file_version(filename):
+
+        with open(filename) as f:
+            file_version = f.readline().split('show_version=')[-1:][0]
+            print("FILE VERSION", file_version)
+
+        try:
+            return int(file_version)
+        except ValueError:
+            return 0
+
+    @staticmethod
     def check_config_file_version(filename):
         """Checks to see if the version of the file name passed matches the
         config version MPF needs.

@@ -5,6 +5,8 @@ from mpf.core.assets import Asset, AssetPool
 from mpf.core.config_player import ConfigPlayer
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
+from mpf.file_interfaces.yaml_interface import YamlInterface
+from mpf._version import __show_version__, __version__
 
 
 class ShowPool(AssetPool):
@@ -378,6 +380,15 @@ class Show(Asset):
         self.play(**self._autoplay_settings)
 
     def load_show_from_disk(self):
+
+        show_version = YamlInterface.get_show_file_version(self.file)
+
+        if show_version != int(__show_version__):
+            raise ValueError("Show file {} cannot be loaded. MPF v{} requires "
+                             "#show_version={}".format(self.file,
+                                                       __version__,
+                                                       __show_version__))
+
         return FileManager.load(self.file)
 
 

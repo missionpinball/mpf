@@ -2,6 +2,7 @@ import os
 import re
 from copy import deepcopy
 
+from ruamel.yaml import CommentToken
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from mpf.migrator.migrator import VersionMigrator
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
@@ -434,9 +435,7 @@ class V4Migrator(VersionMigrator):
                                              state_settings)
 
     def _add_to_show_player(self, event, show_dict):
-
         for show, settings in show_dict.items():
-
             if 'loops' in settings:
                 if settings['loops']:
                     settings['loops'] = -1
@@ -606,6 +605,8 @@ class V4Migrator(VersionMigrator):
         if 'color' in element:
             element['color'] = self._get_color(element['color'])
 
+        self._convert_tokens(element)
+
         return element
 
     def _get_color(self, color):
@@ -717,8 +718,9 @@ class V4Migrator(VersionMigrator):
 
         show_name_stub = os.path.splitext(os.path.split(self.file_name)[1])[0]
 
-        # Convert tocks to time
+        self._add_show_version()
 
+        # Convert tocks to time
         self._convert_tocks_to_time(self.fc)
 
         # migrate the components in each step
@@ -766,6 +768,17 @@ class V4Migrator(VersionMigrator):
                                                     slide_num)] = old_slides
 
         return True
+
+    def _add_show_version(self):
+        # Do a str.replace to preserve any spaces or comments in the header
+
+        try:
+            self.fc.ca.comment[1][0].value = ('#show_version=4\n{}'.format(
+                self.fc.ca.comment[1][0].value))
+        except TypeError:
+            self.fc.yaml_set_start_comment('show_version=4\n')
+
+        self.log.debug('Adding #show_version=4')
 
     def _convert_tocks_to_time(self, show_steps):
         self.log.debug('Converting "tocks:" to "time:" and cascading entries '

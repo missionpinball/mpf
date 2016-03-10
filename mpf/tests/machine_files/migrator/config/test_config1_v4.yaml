@@ -258,7 +258,7 @@ displays:
 slides:
     slide_1:
     -   type: text
-        text: '%player1|score%'
+        text: (player1|score)
         number_grouping: true
         min_digits: 2
         anchor_y: center # center
@@ -268,14 +268,14 @@ slides:
       #persist_slide: yes
         style: tall title
     -   type: text
-        text: BALL %player1|ball%    %machine|credits_string%
+        text: BALL (player1|ball)    (machine|credits_string)
         anchor_y: bottom # bottom
         style: small
         y: 1 # -1
 
     slide_2:
     -   type: text
-        text: '%player1|score%'
+        text: (player1|score)
       #font: medium
         number_grouping: true
         min_digits: 2
@@ -284,7 +284,7 @@ slides:
         x: 68
         y: 30
     -   type: text
-        text: '%player2|score%'
+        text: (player2|score)
         style: medium
         anchor_y: top # top
         anchor_x: right # right
@@ -293,7 +293,7 @@ slides:
         x: 126 # -2
         y: 30 # 2
     -   type: text
-        text: '%player3|score%'
+        text: (player3|score)
         style: medium
         anchor_y: bottom # bottom
         anchor_x: right # right
@@ -302,7 +302,7 @@ slides:
         number_grouping: true
         min_digits: 2
     -   type: text
-        text: '%player4|score%'
+        text: (player4|score)
         style: medium
         anchor_y: bottom # bottom
         anchor_x: right # right
@@ -311,7 +311,7 @@ slides:
         number_grouping: true
         min_digits: 2
     -   type: text
-        text: BALL %player1|ball%    %machine|credits_string%
+        text: BALL (player1|ball)    (machine|credits_string)
         anchor_y: bottom # bottom
         style: small
         y: 1 # -1
