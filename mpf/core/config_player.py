@@ -195,6 +195,7 @@ class ConfigPlayer(object):
         del mode
         del play_kwargs
         del settings
+        del priority
         # Be sure to include **kwargs in your subclass since events could come
         # in with any parameters
 
