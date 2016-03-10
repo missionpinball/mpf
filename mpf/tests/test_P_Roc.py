@@ -132,3 +132,11 @@ class TestPRoc(MpfTestCase):
         assert not dmd.proc.dmd_draw.called
         self.advance_time_and_run(0.04)
         dmd.proc.dmd_draw.assert_called_with(dmd.dmd)
+
+        # frame displayed
+        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+            {'type': 5, 'value': 123}])
+
+        dmd.proc.dmd_draw = MagicMock()
+        self.advance_time_and_run(0.04)
+        dmd.proc.dmd_draw.assert_called_with(dmd.dmd)
