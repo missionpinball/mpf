@@ -346,23 +346,39 @@ shot_profiles:
           - name: lit
             script: "on"
 
-scripts:
+shows:
     flash:
         - time: 0
-          brightness: ff
-          color: ffffff
+          lights:
+            (light):
+              brightness: ff
+          leds:
+            (led):
+              color: ffffff
         - time: 1
-          brightness: 0
-          color: 000000
+          lights:
+            (light):
+              brightness: 0
+          leds:
+            (led):
+              color: 000000
         - time: 2
     on:
         - time: 0
-          brightness: ff
-          color: ffffff
+          lights:
+            (light):
+              brightness: ff
+          leds:
+            (led):
+              color: ffffff
     off:
         - time: 0
-          brightness: 0
-          color: 0
+          lights:
+            (light):
+              brightness: 0
+          leds:
+            (led):
+              color: 0
 
 playfields:
     playfield:
