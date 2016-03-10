@@ -711,8 +711,8 @@ switches:
     type: single|str|NO
     debounce: single|bool|True
     recycle_time: single|secs|0
-    activation_events: list|str|None
-    deactivation_events: list|str|None
+    events_when_activated: list|str|None
+    events_when_deactivated: list|str|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False

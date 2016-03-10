@@ -78,9 +78,9 @@ class SwitchController(object):
                         'switch_event_inactive'].replace(
                         '%', switch.name))
 
-            if 'activation_events' in switch.config:
+            if 'events_when_activated' in switch.config:
                 for event in Util.string_to_lowercase_list(
-                        switch.config['activation_events']):
+                        switch.config['events_when_activated']):
 
                     if "|" in event:
                         ev_name, ev_time = event.split("|")
@@ -93,9 +93,9 @@ class SwitchController(object):
                     else:
                         switch.activation_events.add(event)
 
-            if 'deactivation_events' in switch.config:
+            if 'events_when_deactivated' in switch.config:
                 for event in Util.string_to_lowercase_list(
-                        switch.config['deactivation_events']):
+                        switch.config['events_when_deactivated']):
 
                     if "|" in event:
                         ev_name, ev_time = event.split("|")
