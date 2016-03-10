@@ -15,6 +15,9 @@ switches:
         number: 1
     s_test:
         number: 23
+    s_test_no_debounce:
+        number: 24
+        debounce: false
     s_slingshot_test:
         number: 40
 
