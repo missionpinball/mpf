@@ -5,6 +5,9 @@ hardware:
     platform: p_roc
     servo_controllers: i2c_servo_controller
 
+P_ROC:
+  dmd_timing_cycles: 1, 2, 3, 4
+
 switches:
     s_test_000:
         number: 0

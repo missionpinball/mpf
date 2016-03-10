@@ -1,6 +1,6 @@
 from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
-from mpf.platforms import p_roc_common
+from mpf.platforms import p_roc_common, p_roc
 
 
 class MockPinProcModule(MagicMock):
@@ -50,6 +50,7 @@ class TestPRoc(MpfTestCase):
     def setUp(self):
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
+        p_roc.pinproc = p_roc_common.pinproc
         pinproc = MagicMock()
         p_roc_common.pinproc.PinPROC = MagicMock(return_value=pinproc)
         p_roc_common.pinproc.normalize_machine_type = MagicMock(return_value=7)
@@ -102,3 +103,18 @@ class TestPRoc(MpfTestCase):
             {'type': 2, 'value': 23}])
         self.machine_run()
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
+
+    def test_dmd_update(self):
+        # test configure
+        dmd = self.machine.default_platform.configure_dmd()
+        dmd.proc.dmd_update_config.assert_called_with(high_cycles=[1, 2, 3, 4])
+
+        # test set frame to buffer
+        frame = range(4096)
+        dmd.update(frame)
+        dmd.dmd.set_data.assert_called_with(frame)
+
+        # test draw
+        assert not dmd.proc.dmd_draw.called
+        self.advance_time_and_run(0.04)
+        dmd.proc.dmd_draw.assert_called_with(dmd.dmd)
