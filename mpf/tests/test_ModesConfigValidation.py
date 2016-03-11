@@ -18,11 +18,11 @@ class TestModesConfigValidation(MpfTestCase):
 
     def test_loading_invalid_modes(self):
         self.config = 'test_loading_invalid_modes.yaml'
-        with self.assertRaises(AssertionError) as context:
+        with self.assertRaises(ValueError) as context:
             super(TestModesConfigValidation, self).setUp()
 
-        self.assertEqual("No configuration found for mode 'invalid'. Is your "
-                         "mode folder in the 'modes' folder?",
+        self.assertEqual("No folder found for mode 'invalid'. Is your "
+                         "mode folder in your machine's 'modes' folder?",
                          str(context.exception))
 
     def test_broken_mode_config(self):
