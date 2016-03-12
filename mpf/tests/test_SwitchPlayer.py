@@ -8,9 +8,12 @@ class TestSwitchPlayer(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/switch_player/'
 
+    def setUp(self):
+        self.machine_config_patches['mpf']['plugins'] = ['mpf.plugins.switch_player.SwitchPlayer']
+        super().setUp()
+
     def _sw_handler(self):
         self.hits += 1
-
 
     def test_switch_player(self):
         self.hits = 0
