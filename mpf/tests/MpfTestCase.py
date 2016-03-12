@@ -28,7 +28,6 @@ class TestMachineController(MachineController):
         super().__init__(mpf_path, machine_path, options)
         self.clock._max_fps = 0
 
-
     def _reset_complete(self):
         self.test_init_complete = True
         super()._reset_complete()
@@ -37,6 +36,9 @@ class TestMachineController(MachineController):
         if self._enable_plugins:
             super()._register_plugin_config_players()
 
+    def _load_config(self):
+        super()._load_config()
+        self.config = Util.dict_merge(self.config, self.test_config_patches)
 
 class MpfTestCase(unittest.TestCase):
     machine_config_patches = dict()
@@ -185,9 +187,8 @@ class MpfTestCase(unittest.TestCase):
         try:
             self.machine = TestMachineController(
                 os.path.abspath(os.path.join(
-                    mpf.core.__path__[0], os.pardir)), machine_path,
-                self.getOptions(),
-                self.machine_config_patches)
+                mpf.core.__path__[0], os.pardir)), machine_path,
+                self.getOptions(), self.machine_config_patches)
             self.realTime = self.machine.clock.time
             self.testTime = self.realTime()
             self.machine.clock.time = MagicMock(return_value=self.testTime)
