@@ -147,6 +147,7 @@ class MachineController(object):
         return BCP.active_connections > 0
 
     def get_system_config(self):
+        # used by the config validator
         return self.machine_config['mpf']
 
     def validate_machine_config_section(self, section):

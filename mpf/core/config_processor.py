@@ -15,9 +15,6 @@ log = logging.getLogger('ConfigProcessor')
 class ConfigProcessor(object):
     config_spec = None
 
-    # todo why are scripts and shows processed here? Should they be in their
-    # respective players
-
     def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger('ConfigProcessor')

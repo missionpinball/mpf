@@ -378,6 +378,7 @@ led_settings:
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
     default_led_fade_ms: single|int|0
+    brightness_compensation: ignore                              # todo
 leds:
     number: single|str|
     number_str: single|str|

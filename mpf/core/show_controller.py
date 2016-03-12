@@ -69,7 +69,7 @@ class ShowController(object):
         if name in self.machine.shows:
             raise ValueError("Show named '{}' was just registered, but "
                              "there's already a show with that name. Shows are"
-                             "shared machine-wide")
+                             " shared machine-wide".format(name))
         else:
             self.machine.shows[name] = Show(self.machine,
                                             name=name,

@@ -170,10 +170,9 @@ class ModeController(object):
         if config['mode']['code']:
             try:  # First check the machine folder
                 i = importlib.import_module(
-
-                self.machine.config['mpf']['paths']['modes'] + '.' +
-                self._machine_mode_folders[mode_string] + '.code.' +
-                config['mode']['code'].split('.')[0])
+                    self.machine.config['mpf']['paths']['modes'] + '.' +
+                    self._machine_mode_folders[mode_string] + '.code.' +
+                    config['mode']['code'].split('.')[0])
 
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
                     self.machine, config,

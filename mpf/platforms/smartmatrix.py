@@ -6,7 +6,6 @@ import sys
 import threading
 import traceback
 from queue import Queue
-from mpf.core.config_processor import ConfigProcessor
 from mpf.core.platform import Platform
 
 
