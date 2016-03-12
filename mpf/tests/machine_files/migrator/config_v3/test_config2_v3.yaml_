@@ -1,0 +1,63 @@
+#config_version=3
+
+hardware:
+    platform: smart_virtual
+    driverboards: virtual
+    dmd: smartmatrix
+
+config:
+- portconfig.yaml
+- switches.yaml
+- coils.yaml
+- devices.yaml
+- keyboard.yaml
+- virtual.yaml
+- images.yaml
+
+dmd:
+    physical: no
+    width: 128
+    height: 32
+    type: color
+
+window:
+    elements:
+      - type: virtualdmd
+        width: 512
+        height: 128
+        h_pos: center
+        v_pos: center
+        pixel_color: ff6600
+        dark_color: 220000
+        pixel_spacing: 1
+      - type: shape
+        shape: box
+        width: 516
+        height: 132
+        color: aaaaaa
+        thickness: 2
+
+modes:
+    - base
+    - airlock_multiball
+
+sound_system:
+    buffer: 512
+    frequency: 44100
+    channels: 1
+    initial_volume: 1
+    volume_steps: 20
+    tracks:
+        voice:
+            volume: 1
+            priority: 2
+            simultaneous_sounds: 1
+            preload: no
+        sfx:
+            volume: 1
+            priority: 1
+            preload: no
+            simultaneous_sounds: 3
+    stream:
+        name: music
+        priority: 0

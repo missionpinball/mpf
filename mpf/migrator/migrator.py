@@ -163,6 +163,7 @@ class VersionMigrator(object):
         """
         self.log = logging.getLogger(os.path.basename(file_name))
         self.file_name = file_name
+        self.base_name = os.path.basename(file_name).lower()
         self.fc = file_contents
         self.current_config_version = 0
         self.mpf_config_spec = yaml.load(mpf_config_spec)

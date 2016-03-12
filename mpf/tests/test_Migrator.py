@@ -2,6 +2,7 @@ import os
 import ruamel.yaml as yaml
 from ruamel.yaml.dumper import RoundTripDumper
 
+from mpf.migrator.config_version_4 import V4Migrator
 from mpf.migrator.migrator import Migrator
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -28,6 +29,8 @@ class TestMigrator(MpfTestCase):
         old_config_path = os.path.abspath(os.path.join(
             self.machine.machine_path, os.pardir, 'migrator/config_v3'))
 
+        V4Migrator.MAIN_CONFIG_FILE = 'test_config2_v3.yaml'
+
         TestMigratorCls(self.machine.mpf_path, old_config_path)
 
         for old_file_name, contents in TestMigratorCls.migrated_files.items():
@@ -40,12 +43,13 @@ class TestMigrator(MpfTestCase):
             migrated_string = yaml.dump(contents, Dumper=RoundTripDumper,
                                         indent=4)
 
-            # Uncomment these two for testing
             # print(migrated_string)
+            # print('--------------------------------------------------------')
 
             self.maxDiff = None  # Full file contents in the log on failure
 
-            # todo the dict order is dumped out randomly, need to figure out
+            # todo
+            # the dict order is dumped out randomly, need to figure out
             # a way to test this consistently. For now we can just
             # uncomment this when we're actually testing the migrator.
 

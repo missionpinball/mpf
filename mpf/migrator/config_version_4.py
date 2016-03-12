@@ -2,11 +2,13 @@ import os
 import re
 from copy import deepcopy
 
+from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from mpf.migrator.migrator import VersionMigrator
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
 
-from mpf.file_interfaces.yaml_interface import YamlInterface
+from mpf.file_interfaces.yaml_interface import YamlInterface, \
+    MpfRoundTripLoader
 
 
 class V4Migrator(VersionMigrator):
@@ -50,6 +52,9 @@ class V4Migrator(VersionMigrator):
     - sound_system|stream
     - window|elements|__list__|pixel_spacing
     - window|fps
+    - dmd
+    - displays|dmd|physical
+    - displays|dmd|type
 
     # everything from here down is old than v3, but I saw them in some configs
     # so figured we can get rid of them now too
@@ -65,8 +70,10 @@ class V4Migrator(VersionMigrator):
     slides = dict()
     displays = dict()
     default_display = None
+    color_dmd = False
     WIDTH = 800
     HEIGHT = 600
+    MAIN_CONFIG_FILE = 'config.yaml'
 
     def __init__(self, file_name, file_contents):
         super().__init__(file_name, file_contents)
@@ -90,7 +97,7 @@ class V4Migrator(VersionMigrator):
         cls.displays[name] = (w, h)
 
     def _do_custom(self):
-        # This runs last, so items will be in their new / renamed locations
+        self._set_dmd_type()
         self._migrate_window()
         self._create_display_from_dmd()
         self._migrate_physical_dmd()
@@ -178,6 +185,12 @@ class V4Migrator(VersionMigrator):
             YamlInterface.del_key_with_comments(self.fc['displays']['dmd'],
                                                 'fps', self.log)
 
+    def _set_dmd_type(self):
+        if 'dmd' in self.fc and 'type' in self.fc['dmd']:
+            if self.fc['dmd']['type'].lower() == 'color':
+                V4Migrator.color_dmd = True
+                self.log.debug("Detected settings for color DMD")
+
     def _set_default_display(self):
         if 'displays' not in self.fc or len(self.fc['displays']) == 1:
             return
@@ -217,7 +230,7 @@ class V4Migrator(VersionMigrator):
 
                 elements = self._migrate_elements(elements, display)
 
-                slide = self._get_slide_name(display)
+                slide = V4Migrator._get_slide_name(display)
 
                 new_slide_player[event] = CommentedMap()
                 new_slide_player[event][slide] = CommentedMap()
@@ -260,7 +273,7 @@ class V4Migrator(VersionMigrator):
                 self.log.debug("Creating 'slides:' section")
                 self.fc['slides'] = CommentedMap()
 
-            slide_name = self._get_slide_name('window')
+            slide_name = V4Migrator._get_slide_name('window')
 
             self.log.debug("Creating slide: %s with %s display widget(s) from "
                            "the old window: config", slide_name, len(elements))
@@ -326,6 +339,19 @@ class V4Migrator(VersionMigrator):
                     self.log.debug("Converting font_name: from file to name")
                     settings['font_name'] = os.path.splitext(
                         settings['font_name'])[0]
+
+        if self.base_name == V4Migrator.MAIN_CONFIG_FILE:
+            if 'text_styles' not in self.fc:
+                self.log.debug("Creating old default font settings as "
+                               "text_styles: section")
+                self.fc['text_styles'] = self._get_old_default_text_styles()
+
+            else:
+                self.log.debug("Merging old default font settings into "
+                               "text_styles: section")
+                self.fc['text_styles'] = (
+                    self._get_old_default_text_styles().update(
+                        self.fc['text_styles']))
 
     def _migrate_asset_defaults(self):
         # convert asset_defaults to assets:
@@ -591,6 +617,12 @@ class V4Migrator(VersionMigrator):
         if element_type != 'dmd':
             YamlInterface.del_key_with_comments(element, 'bg_color', self.log)
 
+        if element_type == 'virtualdmd' and V4Migrator.color_dmd:
+            YamlInterface.del_key_with_comments(element, 'pixel_color',
+                                                self.log)
+            self.log.debug('Changing widget type from "dmd" to "color_dmd"')
+            element['type'] = 'color_dmd'
+
         y_name = 'middle'
         if 'anchor_y' in element:
             if element['anchor_y'] == 'bottom':
@@ -737,6 +769,43 @@ class V4Migrator(VersionMigrator):
                         step['lights'] = CommentedMap()
                         YamlInterface.copy_with_comments(step, '(lights)',
                                                          step['lights'], '(lights)', True, self.log)
+
+    def _get_old_default_text_styles(self):
+        # these are from MPF 0.21, but they are in the new v4 format
+        text_styles = '''
+          default:
+            font_name: Quadrit
+            font_size: 10
+            crop_top: 2
+            crop_bottom: 3
+          space title huge:
+            font_name: DEADJIM
+            font_size: 29
+            antialias: true
+            crop_top: 3
+            crop_bottom: 3
+          space title:
+            font_name: DEADJIM
+            font_size: 21
+            antialias: true
+            crop_top: 2
+            crop_bottom: 3
+          medium:
+            font_name: pixelmix
+            font_size: 8
+            crop_top: 1
+            crop_bottom: 1
+          small:
+            font_name: smallest_pixel-7
+            font_size: 9
+            crop_top: 2
+            crop_bottom: 3
+          tall title:
+            font_name: big_noodle_titling
+            font_size: 20
+        '''
+
+        return yaml.load(text_styles, Loader=MpfRoundTripLoader)
 
     def is_show_file(self):
         # Verify we have a show file and that it's an old version
