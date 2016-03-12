@@ -1,0 +1,16 @@
+#config_version=4
+modes:
+  - mode1
+
+banana_player:
+  event1: express
+  event2:
+    some: key
+  event3:
+    this_banana:
+      some: key
+    that_banana:
+      some: key
+
+show_player:
+  event4: show1
