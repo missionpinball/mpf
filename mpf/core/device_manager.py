@@ -81,8 +81,7 @@ class DeviceManager(object):
                 raise AssertionError("Device '{}' does not have a valid config."
                                      .format(device_name))
 
-            # TODO: remove config + validate here
-            collection[device_name] = cls(self.machine, device_name, config[device_name], validate)
+            collection[device_name] = cls(self.machine, device_name)
 
     def load_devices_config(self, validate=True):
 
