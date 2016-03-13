@@ -15,10 +15,11 @@ class Flasher(Device):
         # TODO: why?
         config['number_str'] = str(config['number']).upper()
 
-        super().__init__(machine, name, config, platform_section='flashers', validate=validate)
-
+        super().__init__(machine, name)
 
     def _initialize(self):
+        self.load_platform_section('flashers')
+
         self.hw_driver, self.number = (
             self.platform.configure_driver(config=self.config,
                                            device_type='flasher'))

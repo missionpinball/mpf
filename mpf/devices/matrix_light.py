@@ -41,7 +41,7 @@ class MatrixLight(Device):
         # TODO: why?
         config['number_str'] = str(config['number']).upper()
 
-        super().__init__(machine, name, config, platform_section='matrix_lights', validate=validate)
+        super().__init__(machine, name)
 
         self.registered_handlers = list()
 
@@ -70,6 +70,8 @@ class MatrixLight(Device):
         self.y = None
 
     def _initialize(self):
+        self.load_platform_section('matrix_lights')
+
         self.hw_driver, self.number = (
             self.platform.configure_matrixlight(self.config))
 

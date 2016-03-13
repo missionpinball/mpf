@@ -20,11 +20,13 @@ class Gi(Device):
         # TODO: why?
         config['number_str'] = str(config['number']).upper()
 
-        super().__init__(machine, name, config, platform_section='gis', validate=validate)
+        super().__init__(machine, name)
 
         self.registered_handlers = []
 
     def _initialize(self):
+        self.load_platform_section('gis')
+
         self.hw_driver, self.number = self.platform.configure_gi(self.config)
 
     def enable(self, brightness=255, **kwargs):

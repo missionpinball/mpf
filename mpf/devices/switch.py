@@ -15,7 +15,7 @@ class Switch(Device):
         # TODO: why?
         config['number_str'] = str(config['number']).upper()
 
-        super().__init__(machine, name, config, platform_section='switches', validate=validate)
+        super().__init__(machine, name)
 
         self.machine = machine
         self.name = name
@@ -42,6 +42,8 @@ class Switch(Device):
         self.machine.switch_controller.register_switch(name)
 
     def _initialize(self):
+        self.load_platform_section('switches')
+
         if self.config['type'].upper() == 'NC':
             self.invert = 1
 

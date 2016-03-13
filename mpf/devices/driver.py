@@ -26,7 +26,7 @@ class Driver(Device):
         # TODO: why is this needed?
         config['number_str'] = str(config['number']).upper()
 
-        super().__init__(machine, name, config, platform_section='coils', validate=validate)
+        super().__init__(machine, name)
 
         self.time_last_changed = 0
         self.time_when_done = 0
@@ -36,6 +36,8 @@ class Driver(Device):
         super().load_config(config)
 
     def _initialize(self):
+        self.load_platform_section('coils')
+
         self.hw_driver, self.number = (
             self.platform.configure_driver(self.config))
 

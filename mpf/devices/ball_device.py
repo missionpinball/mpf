@@ -21,7 +21,7 @@ class BallDevice(Device):
     class_label = 'ball_device'
 
     def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name, config, validate=validate)
+        super().__init__(machine, name)
 
         self.delay = DelayManager(machine.delayRegistry)
 

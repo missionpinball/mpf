@@ -17,12 +17,14 @@ class Accelerometer(Device):
     class_label = 'accelerometer'
 
     def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name, config, platform_section='accelerometers', validate=validate)
+        super().__init__(machine, name)
 
         self.history = False
         self.value = False
 
     def _initialize(self):
+        self.load_platform_section('accelerometers')
+
         self.platform.configure_accelerometer(self,
                                               number=self.config['number'],
                                               use_high_pass=False)

@@ -27,12 +27,9 @@ class Device(object):
         self.tags = []
         self.label = []
 
-        #TODO: refactor
-        if platform_section:
-            if "platform" in config:
-                self.platform = self.machine.get_platform_sections(platform_section, config['platform'])
-            else:
-                self.platform = self.machine.get_platform_sections(platform_section, "")
+    def load_platform_section(self, platform_section):
+        # can be called in _initialize to load the platform section
+        self.platform = self.machine.get_platform_sections(platform_section, self.config['platform'])
 
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)

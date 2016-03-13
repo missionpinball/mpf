@@ -61,7 +61,7 @@ class Led(Device):
         # TODO: why?
         config['number_str'] = str(config['number']).upper()
 
-        super().__init__(machine, name, config, platform_section='leds', validate=validate)
+        super().__init__(machine, name)
 
         self.fade_in_progress = False
         self.fade_destination_color = RGBColor()
@@ -91,6 +91,8 @@ class Led(Device):
         self._color_correction_profile = None
 
     def _initialize(self):
+        self.load_platform_section('leds')
+
         self.config['default_color'] = RGBColor(
             RGBColor.string_to_rgb(self.config['default_color'], (255, 255, 255)))
 
