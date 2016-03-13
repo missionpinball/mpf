@@ -38,6 +38,9 @@ class Switch(Device):
         self.last_changed = None
         self.hw_timestamp = None
 
+        # register switch so other devices can add handlers to it
+        self.machine.switch_controller.register_switch(name)
+
     def _initialize(self):
         if self.config['type'].upper() == 'NC':
             self.invert = 1

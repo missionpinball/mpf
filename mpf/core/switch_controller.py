@@ -57,16 +57,19 @@ class SwitchController(object):
 
         self.monitors = list()
 
+    def register_switch(self, name):
+        # Populate self.registered_switches
+        self.registered_switches[name + '-0'] = list()
+        self.registered_switches[name + '-1'] = list()
+
+        self.set_state(name, 0, reset_time=True)
+
     def _initialize_switches(self):
         self.update_switches_from_hw()
 
         for switch in self.machine.switches:
             # Populate self.switches
             self.set_state(switch.name, switch.state, reset_time=True)
-
-            # Populate self.registered_switches
-            self.registered_switches[switch.name + '-0'] = list()
-            self.registered_switches[switch.name + '-1'] = list()
 
             if self.machine.config['mpf']['auto_create_switch_events']:
                 switch.activation_events.add(
