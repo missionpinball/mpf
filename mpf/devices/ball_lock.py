@@ -1,10 +1,11 @@
 """ Contains the BallLock device class."""
 
-from mpf.core.device import Device
 from collections import deque
 
+from mpf.core.system_wide_device import SystemWideDevice
 
-class BallLock(Device):
+
+class BallLock(SystemWideDevice):
     config_section = 'ball_locks'
     collection = 'ball_locks'
     class_label = 'ball_lock'

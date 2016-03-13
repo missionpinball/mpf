@@ -3,11 +3,11 @@
 import logging
 
 from collections import deque
-from mpf.core.device import Device
 from mpf.core.delays import DelayManager
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class ScoreReelController(object):
+class ScoreReelController(SystemWideDevice):
     """The overall controller that is in charge of and manages the score reels
     in a pinball machine.
 
@@ -183,7 +183,7 @@ class ScoreReelController(object):
             self.machine.events.remove_handler(self._reset_next_group)
 
 
-class ScoreReelGroup(Device):
+class ScoreReelGroup(SystemWideDevice):
     """Represents a logical grouping of score reels in a pinball machine, where
     multiple individual ScoreReel object make up the individual digits of this
     group. This group also has support for the blank zero "inserts" that some
@@ -862,7 +862,7 @@ class ScoreReelGroup(Device):
             self.log.debug("Score reel group is valid. No queue needed.")
 
 
-class ScoreReel(Device):
+class ScoreReel(SystemWideDevice):
     """Represents an individual electro-mechanical score reel in a pinball
     machine.
 

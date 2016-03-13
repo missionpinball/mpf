@@ -1,9 +1,8 @@
 """ Contains the base class for autofire coil devices."""
+from mpf.core.system_wide_device import SystemWideDevice
 
-from mpf.core.device import Device
 
-
-class AutofireCoil(Device):
+class AutofireCoil(SystemWideDevice):
     """Base class for coils in the pinball machine which should fire
     automatically based on switch activity using hardware switch rules.
 

@@ -1,9 +1,9 @@
 """ Contains the Flasher parent class. """
 
-from mpf.core.device import Device
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class Flasher(Device):
+class Flasher(SystemWideDevice):
     """Generic class that holds flasher objects.
     """
 

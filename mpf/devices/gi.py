@@ -1,9 +1,9 @@
 """ Contains the GI (General Illumination) parent classes. """
 
-from mpf.core.device import Device
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class Gi(Device):
+class Gi(SystemWideDevice):
     """ Represents a light connected to a traditional lamp matrix in a pinball
     machine.
 

@@ -2,10 +2,10 @@
 # Written by Jan Kantert
 
 import math
-from mpf.core.device import Device
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class Accelerometer(Device):
+class Accelerometer(SystemWideDevice):
     """Implements an accelerometer
 
     Args: Same as the Device parent class
@@ -19,8 +19,8 @@ class Accelerometer(Device):
     def __init__(self, machine, name):
         super().__init__(machine, name)
 
-        self.history = False
-        self.value = False
+        self.history = None
+        self.value = None
 
     def _initialize(self):
         self.load_platform_section('accelerometers')

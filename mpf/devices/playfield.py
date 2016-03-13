@@ -3,12 +3,12 @@ a pinball machine."""
 
 import logging
 
-from mpf.devices.ball_device import BallDevice
+from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.ball_search import BallSearch
 from mpf.core.delays import DelayManager
 
 
-class Playfield(BallDevice):
+class Playfield(SystemWideDevice):
 
     config_section = 'playfields'
     collection = 'playfields'

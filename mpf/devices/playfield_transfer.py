@@ -1,10 +1,10 @@
 """ Transfer a ball between two playfields. E.g. lower to upper playfield via a
 ramp"""
 
-from mpf.core.device import Device
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class PlayfieldTransfer(Device):
+class PlayfieldTransfer(SystemWideDevice):
     config_section = 'playfield_transfers'
     collection = 'playfield_transfers'
     class_label = 'playfield_transfer'

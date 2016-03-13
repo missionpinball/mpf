@@ -1,9 +1,8 @@
 """ Contains the base class for flippers."""
+from mpf.core.system_wide_device import SystemWideDevice
 
-from mpf.core.device import Device
 
-
-class Flipper(Device):
+class Flipper(SystemWideDevice):
     """Represents a flipper in a pinball machine. Subclass of Device.
 
     Contains several methods for actions that can be performed on this flipper,
@@ -17,10 +16,6 @@ class Flipper(Device):
     Args:
         machine: A reference to the machine controller instance.
         name: A string of the name you'll refer to this flipper object as.
-        config: A dictionary that holds the configuration values which specify
-            how this flipper should be configured. If this is None, it will use
-            the core config settings that were read in from the config files
-            when the machine was reset.
     """
     config_section = 'flippers'
     collection = 'flippers'

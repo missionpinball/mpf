@@ -1,11 +1,11 @@
 """ Contains the LED parent classes. """
 
-from mpf.core.device import Device
 from mpf.core.rgb_color import RGBColor
 from mpf.core.rgb_color import RGBColorCorrectionProfile
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class Led(Device):
+class Led(SystemWideDevice):
     """ Represents an light connected to an new-style interface board.
     Typically this is an LED.
 

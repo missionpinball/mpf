@@ -1,9 +1,9 @@
 """ Contains the Switch parent class. """
 
-from mpf.core.device import Device
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class Switch(Device):
+class Switch(SystemWideDevice):
     """ A switch in a pinball machine."""
 
     config_section = 'switches'

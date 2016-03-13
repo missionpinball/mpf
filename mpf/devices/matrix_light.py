@@ -1,9 +1,9 @@
 """ Contains the MatrixLight parent classes. """
 
-from mpf.core.device import Device
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class MatrixLight(Device):
+class MatrixLight(SystemWideDevice):
     """ Represents a light connected to a traditional lamp matrix in a pinball
     machine.
 

@@ -1,13 +1,12 @@
 """Contains the base class for diverter devices."""
 
 from collections import deque
-
-from mpf.core.device import Device
 from mpf.core.delays import DelayManager
+from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 
 
-class Diverter(Device):
+class Diverter(SystemWideDevice):
     """Represents a diverter in a pinball machine.
 
     Args: Same as the Device parent class.

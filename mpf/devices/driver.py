@@ -1,9 +1,9 @@
 """ Contains the Driver parent class. """
 
-from mpf.core.device import Device
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class Driver(Device):
+class Driver(SystemWideDevice):
     """Generic class that holds driver objects.
 
     A 'driver' is any device controlled from a driver board which is typically

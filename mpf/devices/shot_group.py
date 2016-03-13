@@ -2,11 +2,12 @@
 
 from collections import deque
 
-from mpf.core.device import Device
+from mpf.core.mode_device import ModeDevice
+from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 
 
-class ShotGroup(Device):
+class ShotGroup(ModeDevice, SystemWideDevice):
     """Represents a group of shots in a pinball machine by grouping
     together multiple `Shot` class devices. This is used so you get get
     "group-level" functionality, like shot rotation, shot group completion,

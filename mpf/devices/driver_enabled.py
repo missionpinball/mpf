@@ -1,9 +1,8 @@
 """Contains the base class for driver-enabled devices."""
+from mpf.core.system_wide_device import SystemWideDevice
 
-from mpf.devices.driver import Driver
 
-
-class DriverEnabled(Driver):
+class DriverEnabled(SystemWideDevice):
     """Represents a "driver-enabled" device in a pinball machine.
     """
     config_section = 'driver_enabled'

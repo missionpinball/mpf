@@ -1,10 +1,11 @@
 """ Contains the MultiBall device class."""
 
-from mpf.core.device import Device
 from mpf.core.delays import DelayManager
+from mpf.core.mode_device import ModeDevice
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class Multiball(Device):
+class Multiball(SystemWideDevice, ModeDevice):
     config_section = 'multiballs'
     collection = 'multiballs'
     class_label = 'multiball'

@@ -73,25 +73,3 @@ class Device(object):
     def _initialize(self):
         # default initialize method
         pass
-
-    # TODO: refactor to SystemWideDevice
-    def device_added_system_wide(self):
-        # Called when a device is added system wide
-        self._initialize()
-
-    # TODO: refactor to ModeDevice
-    def device_added_to_mode(self, mode, player):
-        # Called when a device is created by a mode
-        del mode
-        del player
-        self._initialize()
-
-    # TODO: refactor to ModeDevice
-    def control_events_in_mode(self, mode):
-        # Called on mode start if this device has any control events in that mode
-        pass
-
-    # TODO: refactor to ModeDevice
-    def remove(self):
-        raise NotImplementedError(
-            '{} does not have a remove() method'.format(self.name))

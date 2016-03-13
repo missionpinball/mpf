@@ -1,13 +1,12 @@
 """ Contains the base class for ball devices."""
 
 from collections import deque
-
 from mpf.core.delays import DelayManager
-from mpf.core.device import Device
+from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 
 
-class BallDevice(Device):
+class BallDevice(SystemWideDevice):
     """Base class for a 'Ball Device' in a pinball machine.
 
     A ball device is anything that can hold one or more balls, such as a

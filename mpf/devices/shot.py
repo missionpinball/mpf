@@ -4,11 +4,12 @@ import uuid
 from collections import OrderedDict
 from copy import copy, deepcopy
 
-from mpf.core.device import Device
 import mpf.core.delays
+from mpf.core.mode_device import ModeDevice
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class Shot(Device):
+class Shot(ModeDevice, SystemWideDevice):
     config_section = 'shots'
     collection = 'shots'
     class_label = 'shot'
@@ -381,9 +382,9 @@ class Shot(Device):
         self.machine.events.post('{}_{}_hit'.format(self.name, profile),
                                  profile=profile, state=state)
 
-        self.machine.events.post('{}_{}_{}_hit'.format(self.name, profile,
-                                                       state), profile=profile,
-                                                       state=state)
+        self.machine.events.post('{}_{}_{}_hit'.format(self.name, profile, state),
+                                 profile=profile,
+                                 state=state)
 
         # Need to try because the event postings above could be used to stop
         # the mode, in which case the mode entry won't be in the enable_table
@@ -584,7 +585,7 @@ class Shot(Device):
         Args:
             state: int of the state number you want to jump to. Note that states
                 are zero-based, so the first state is 0.
-            lightshow_step: The step number that the associated light script
+            show_step: The step number that the associated light script
                 should start playing at. Useful with rotations so this shot can
                 pick up right where it left off. Default is 0.
 

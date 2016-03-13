@@ -3,10 +3,11 @@
 # Search this file for 'YourNewDevice' and replace with your device name
 import logging
 
-from mpf.core.device import Device
+from mpf.core.mode_device import ModeDevice
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class YourNewDevice(Device):
+class YourNewDevice(SystemWideDevice, ModeDevice):
     config_section = 'your_new_devices'
     collection = 'your_new_devices'
     class_label = 'your_new_device'

@@ -1,9 +1,9 @@
 """ Implements a servo in MPF """
 
-from mpf.core.device import Device
+from mpf.core.system_wide_device import SystemWideDevice
 
 
-class Servo(Device):
+class Servo(SystemWideDevice):
     """Represents a servo in a pinball machine.
 
     Args: Same as the Device parent class.
