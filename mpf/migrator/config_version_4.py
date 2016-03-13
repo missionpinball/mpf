@@ -357,7 +357,8 @@ class V4Migrator(VersionMigrator):
         # convert asset_defaults to assets:
         if 'asset_defaults' in self.fc:
             self.log.debug('Renaming key: asset_defaults -> assets:')
-            YamlInterface.rename_key('asset_defaults', 'assets', self.fc, self.log)
+            YamlInterface.rename_key('asset_defaults', 'assets', self.fc,
+                                     self.log)
 
             assets = self.fc['assets']
 
@@ -623,33 +624,110 @@ class V4Migrator(VersionMigrator):
             self.log.debug('Changing widget type from "dmd" to "color_dmd"')
             element['type'] = 'color_dmd'
 
-        y_name = 'middle'
-        if 'anchor_y' in element:
-            if element['anchor_y'] == 'bottom':
-                y_anchor = 0
-                y_name = 'bottom'
-            elif element['anchor_y'] == 'top':
-                y_anchor = height
-                y_name = 'top'
-            else:
-                y_anchor = int(height / 2)
-        else:  # middle
-            y_anchor = int(height / 2)
-
         if 'y' in element:
-            self.log.debug("Changing y:%s to y:%s (Based on anchor_y:%s and "
-                           "%s height:%s)", element['y'],
-                           y_anchor - element['y'], y_name, display, height)
-            element['y'] = y_anchor - element['y']
+            old_y = element['y']
+            element['y'] *= -1
+        else:
+            old_y = 'None'
+
+        if 'anchor_y' not in element and 'y' in element:
+            element['anchor_y'] = 'top'
 
         try:
-            if element['anchor_x'] == 'right':
-                self.log.debug("Changing x:%s to x:%s (Based on anchor_x:"
-                               "right and %s width:%s)", element['x'],
-                               width + element['x'], display, width)
-                element['x'] = width + element['x']
+            if 'anchor_y' not in element:
+                if element['y'] < 0:
+                    element['y'] = 'bottom{}'.format(element['y'])
+                else:
+                    element['y'] = 'bottom+{}'.format(element['y'])
+
+            elif element['anchor_y'] in ('middle', 'center'):
+                if element['y'] < 0:
+                    element['y'] = 'middle{}'.format(element['y'])
+                else:
+                    element['y'] = 'middle+{}'.format(element['y'])
+
+            elif element['anchor_y'] == 'top':
+                if element['y'] < 0:
+                    element['y'] = 'top{}'.format(element['y'])
+                else:
+                    element['y'] = 'top+{}'.format(element['y'])
+
+            elif element['anchor_y'] == 'bottom':
+                if element['y'] < 0:
+                    element['y'] = 'bottom{}'.format(element['y'])
+                else:
+                    element['y'] = 'bottom+{}'.format(element['y'])
+
+            self.log.debug("Changing y:%s to y:%s (Based on anchor_y:%s"
+                           "and %s height:%s)", old_y, element['y'],
+                           element['anchor_y'], display, height)
+
         except KeyError:
             pass
+
+        try:
+            if element['anchor_y'] in ('middle', 'center'):
+                YamlInterface.del_key_with_comments(element, 'anchor_y',
+                                                    self.log)
+
+        except KeyError:
+            pass
+
+        if ('anchor_y' in element and not 'y' in element and
+                element['anchor_y'] != 'middle'):
+            element['y'] = element['anchor_y']
+
+
+        if 'x' in element:
+            old_x = element['x']
+        else:
+            old_x = 'None'
+
+        if 'anchor_x' not in element and 'x' in element:
+            element['anchor_x'] = 'left'
+
+        try:
+            if 'anchor_x' not in element:
+                if element['x'] < 0:
+                    element['x'] = 'left{}'.format(element['x'])
+                else:
+                    element['x'] = 'left+{}'.format(element['x'])
+
+            elif element['anchor_x'] in ('middle', 'center'):
+                if element['x'] < 0:
+                    element['x'] = 'center{}'.format(element['x'])
+                else:
+                    element['x'] = 'center+{}'.format(element['x'])
+
+            elif element['anchor_x'] == 'right':
+                if element['x'] < 0:
+                    element['x'] = 'right{}'.format(element['x'])
+                else:
+                    element['x'] = 'right+{}'.format(element['x'])
+
+            elif element['anchor_x'] == 'left':
+                if element['x'] < 0:
+                    element['x'] = 'left{}'.format(element['x'])
+                else:
+                    element['x'] = 'left+{}'.format(element['x'])
+
+            self.log.debug("Changing x:%s to x:%s (Based on anchor_x:%s"
+                           "and %s width:%s)", old_x, element['x'],
+                           element['anchor_x'], display, width)
+
+        except KeyError:
+            pass
+
+        try:
+            if element['anchor_x'] in ('middle', 'center'):
+                YamlInterface.del_key_with_comments(element, 'anchor_x',
+                                                    self.log)
+        except KeyError:
+            pass
+
+        if ('anchor_x' in element and not 'x' in element and
+                element['anchor_x'] != 'center'):
+            element['x'] = element['anchor_x']
 
         if element_type == 'animation':
             element = self._migrate_animation(element)

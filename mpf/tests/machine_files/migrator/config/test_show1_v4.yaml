@@ -29,12 +29,12 @@
         -   type: text
             text: (machine|score1_label)
             anchor_y: top
-            y: 28
+            y: top-4
         -   type: text
             text: (machine|score1_name) (machine|score1_value)
             anchor_y: bottom
             number_grouping: true
-            y: 3
+            y: bottom+3
         -   type: rectangle
             width: 128
             height: 32
@@ -55,15 +55,15 @@
                 anchor_y: top
                 anchor_x: left
                 number_grouping: true
-                y: 29
-                x: 12
+                y: top-3
+                x: left+12
             -   type: text
                 text: 2. (machine|score3_name) (machine|score3_value)
                 anchor_y: bottom
                 anchor_x: left
                 number_grouping: true
-                y: 3
-                x: 10
+                y: bottom+3
+                x: left+10
 -   time: '+2'
     slides:
         test_show1_v3_slide_6:
@@ -75,15 +75,17 @@
             -   type: text
                 text: 3. (machine|score4_name) (machine|score4_value)
                 anchor_y: top
-                y: 29
-                x: 10
+                y: top-3
+                x: left+10
                 number_grouping: true
+                anchor_x: left
             -   type: text
                 text: 4. (machine|score5_name) (machine|score5_value)
                 anchor_y: bottom
                 number_grouping: true
-                y: 3
-                x: 10
+                y: bottom+3
+                x: left+10
+                anchor_x: left
 -   time: '+2'
     slides:
         test_show1_v3_slide_7:
@@ -96,6 +98,7 @@
                 text: MASTER LOOPER
                 anchor_y: top
                 style: medium
+                y: top
             -   type: text
                 text: (machine|loops1_name)
                 style: tall title
@@ -104,6 +107,7 @@
                 anchor_y: bottom
                 style: medium
                 number_grouping: true
+                y: bottom
 -   time: '+2'
     slides:
         test_show1_v3_slide_8:
@@ -114,8 +118,8 @@
             style: small
             anchor_y: top
             anchor_x: right
-            x: 48
-            y: 31
+            x: right-80
+            y: top-1
         -   type: text
             text: (machine|player2_score)
             number_grouping: true
@@ -123,8 +127,8 @@
             style: small
             anchor_y: top
             anchor_x: right
-            x: 127
-            y: 31
+            x: right-1
+            y: top-1
         -   type: text
             text: (machine|player3_score)
             number_grouping: true
@@ -132,8 +136,8 @@
             style: small
             anchor_y: bottom
             anchor_x: right
-            x: 48
-            y: 10
+            x: right-80
+            y: bottom+10
         -   type: text
             text: (machine|player4_score)
             number_grouping: true
@@ -141,13 +145,13 @@
             style: small
             anchor_y: bottom
             anchor_x: right
-            x: 127
-            y: 10
+            x: right-1
+            y: bottom+10
         -   type: text
             text: (machine|credits_string)
             style: small
-            anchor_x: center
             anchor_y: bottom
+            y: bottom
 -   time: '+1'
     lights:
         l_car_crash_bottom: ff

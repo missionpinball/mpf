@@ -263,16 +263,14 @@ slides:
         text: (player1|score)
         number_grouping: true
         min_digits: 2
-        anchor_y: center # center
-        anchor_x: center # center
-        y: 18 # -2
+        y: middle+2 # -2
       #persist_slide: yes
         style: tall title
     -   type: text
         text: BALL (player1|ball)    (machine|credits_string)
         anchor_y: bottom # bottom
         style: small
-        y: 1 # -1
+        y: bottom+1 # -1
 
     slide_2:
     -   type: text
@@ -282,8 +280,8 @@ slides:
         min_digits: 2
         anchor_y: top
         anchor_x: right
-        x: 68
-        y: 30
+        x: right-60
+        y: top-2
     -   type: text
         text: (player2|score)
         style: medium
@@ -291,15 +289,15 @@ slides:
         anchor_x: right # right
         number_grouping: true
         min_digits: 2
-        x: 126 # -2
-        y: 30 # 2
+        x: right-2 # -2
+        y: top-2 # 2
     -   type: text
         text: (player3|score)
         style: medium
         anchor_y: bottom # bottom
         anchor_x: right # right
-        y: 10 # -10
-        x: 68 # -60
+        y: bottom+10 # -10
+        x: right-60 # -60
         number_grouping: true
         min_digits: 2
     -   type: text
@@ -307,31 +305,28 @@ slides:
         style: medium
         anchor_y: bottom # bottom
         anchor_x: right # right
-        y: 10 # -10
-        x: 126 # -2
+        y: bottom+10 # -10
+        x: right-2 # -2
         number_grouping: true
         min_digits: 2
     -   type: text
         text: BALL (player1|ball)    (machine|credits_string)
         anchor_y: bottom # bottom
         style: small
-        y: 1 # -1
+        y: bottom+1 # -1
 
     window_slide_1:
     -   type: dmd
         width: 512
         height: 128
-        anchor_x: center # center
-        anchor_y: center # center
         pixel_color: ff5500
         dark_color: 220000
         z: 1
     -   type: text
         style: tall title
         text: MISSION PINBALL FRAMEWORK
-        anchor_x: center # center
         anchor_y: top # top
-        y: 197 # 3
+        y: top-3 # 3
         font_size: 30
         z: 1
         color: white
@@ -340,8 +335,6 @@ slides:
         width: 514
         height: 130
         z: 2
-        anchor_y: center # center
-        anchor_x: center # center
         color: 444444
 
     -   type: image
@@ -364,8 +357,8 @@ slides:
         text: DEMO MAN
         anchor_x: right # right
         anchor_y: bottom # bottom
-        y: 3 # -3
-        x: 558 # -42
+        y: bottom+3 # -3
+        x: right-42 # -42
         font_size: 30
         z: 1
         color: red
