@@ -117,16 +117,12 @@ class BallDevice(Device):
                 eject_confirmed=['idle', 'lost_balls'],
         )
 
-        self._initialize_init()
+    def _initialize(self):
+        # initialize right away
+        self._initialize_phase_2()
+        self._initialize_phase_3()
 
-    def _initialize_init(self):
-        # add handlers for delayed init. wait for platform and other devices
-        self.machine.events.add_handler('init_phase_2',
-                                        self._initialize_phase_2)
-
-        self.machine.events.add_handler('init_phase_3',
-                                        self._initialize_phase_3)
-
+        # this has to be delayed to after the switches were read
         self.machine.events.add_handler('init_phase_4',
                                         self._initialize_phase_4)
 
@@ -764,10 +760,13 @@ class BallDevice(Device):
                     'balldevice_{}_ok_to_receive'.format(target.name),
                     self._target_ready, target=target)
 
-    def _initialize_phase_2(self):
+    def load_config(self, config):
+        super().load_config(config)
+
         # load targets and timeouts
         self._parse_config()
 
+    def _initialize_phase_2(self):
         # validate that configuration is valid
         self._validate_config()
 
@@ -775,6 +774,9 @@ class BallDevice(Device):
         self._register_handlers()
 
     def _initialize_phase_3(self):
+        self.machine.ball_devices[self.config['captures_from']].ball_search.register(
+            self.config['ball_search_order'], self.ball_search)
+
         # Register events to watch for ejects targeted at this device
         for device in self.machine.ball_devices:
             for target in device.config['eject_targets']:
@@ -804,8 +806,6 @@ class BallDevice(Device):
                     break
 
     def _initialize_phase_4(self):
-        self.machine.ball_devices[self.config['captures_from']].ball_search.register(
-            self.config['ball_search_order'], self.ball_search)
         self._state_invalid_start()
 
     def _fire_coil_for_search(self, full_power):

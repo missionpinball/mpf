@@ -27,11 +27,21 @@ class Playfield(BallDevice):
         self.unexpected_balls = 0
         self.ball_search = BallSearch(self.machine, self)
 
-        if validate:
-            self.config = self.machine.config_validator.validate_config(
-                self.config_section, config, self.name)
-        else:
-            self.config = config
+        self.delay = DelayManager(self.machine.delayRegistry)
+
+        self.machine.ball_devices[name] = self
+
+        # Attributes
+        self._balls = 0
+        self.available_balls = 0
+        self.num_balls_requested = 0
+        self.queued_balls = list()
+        self._playfield = True
+
+    def load_config(self, config):
+        # do not call super here
+
+        self.config = config
 
         if self.config['debug']:
             self.debug = True
@@ -41,19 +51,8 @@ class Playfield(BallDevice):
         self.tags = self.config['tags']
         self.label = self.config['label']
 
-        self.delay = DelayManager(self.machine.delayRegistry)
-
-        self.machine.ball_devices[name] = self
-
         if 'default' in self.config['tags']:
             self.machine.playfield = self
-
-        # Attributes
-        self._balls = 0
-        self.available_balls = 0
-        self.num_balls_requested = 0
-        self.queued_balls = list()
-        self._playfield = True
 
     def _initialize(self):
         self.ball_controller = self.machine.ball_controller
@@ -63,7 +62,7 @@ class Playfield(BallDevice):
         # Watch for balls added to the playfield
         for device in self.machine.ball_devices:
             for target in device.config['eject_targets']:
-                if target == self.name:
+                if target.name == self.name:
                     self.machine.events.add_handler(
                         event='balldevice_' + device.name +
                         '_ball_eject_success',
