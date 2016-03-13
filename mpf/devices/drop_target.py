@@ -1,6 +1,7 @@
 """ Contains the base classes for drop targets and drop target banks."""
 
 from mpf.core.delays import DelayManager
+from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -168,7 +169,7 @@ class DropTarget(SystemWideDevice):
             self.reset_coil.pulse()
 
 
-class DropTargetBank(SystemWideDevice):
+class DropTargetBank(SystemWideDevice, ModeDevice):
     """Represents a bank of drop targets in a pinball machine by grouping
     together multiple `DropTarget` class devices.
 
@@ -281,3 +282,6 @@ class DropTargetBank(SystemWideDevice):
     def _bank_mixed(self):
         self.complete = False
         self.machine.events.post(self.name + '_mixed', down=self.down)
+
+    def remove(self):
+        pass

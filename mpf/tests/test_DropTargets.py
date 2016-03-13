@@ -1,10 +1,5 @@
-import unittest
-
-from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
-import time
-import math
+
 
 class TestDropTargets(MpfTestCase):
 
@@ -28,3 +23,5 @@ class TestDropTargets(MpfTestCase):
         self.assertIn('left5', self.machine.drop_targets)
         self.assertIn('left6', self.machine.drop_targets)
         self.assertIn('left_bank_2', self.machine.drop_target_banks)
+
+        self.machine.modes['mode1'].stop()
