@@ -22,34 +22,35 @@ class ShotGroup(Device):
 
         self.shots = list()  # list of strings
 
-        for shot in Util.string_to_list(config['shots']):
-            self.shots.append(machine.shots[shot])
+        super().__init__(machine, name)
 
-        # If this device is setup in a machine-wide config, make sure it has
-        # a default enable event.
+        self.rotation_enabled = True
 
-        # TODO add a mode parameter to the device constructor and do the logic
-        # there.
-        if not machine.modes:
+    def _initialize(self):
+        for shot in Util.string_to_list(self.config['shots']):
+            self.shots.append(self.machine.shots[shot])
 
+    def prepare_config(self, config):
+        # TODO: move to device_added_system_wide
+        if not self.machine.modes:
+            # If this device is setup in a machine-wide config, make sure it has
+            # a default enable event.
             if 'enable_events' not in config:
                 config['enable_events'] = 'ball_starting'
             if 'disable_events' not in config:
                 config['disable_events'] = 'ball_ended'
             if 'reset_events' not in config:
                 config['reset_events'] = 'ball_ended'
+        return config
 
-            if 'profile' in config:
-                for shot in self.shots:
-                    shot.update_enable_table(profile=config['profile'],
-                                             mode=None)
+    def device_added_system_wide(self):
+        # Called when a device is added system wide
+        super().device_added_system_wide()
 
-        super().__init__(machine, name, config, validate=validate)
-
-        self.rotation_enabled = True
-
-        if self.debug:
-            self._enable_related_device_debugging()
+        if 'profile' in self.config:
+            for shot in self.shots:
+                shot.update_enable_table(profile=self.config['profile'],
+                                         mode=None)
 
     def _enable_related_device_debugging(self):
 

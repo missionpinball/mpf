@@ -21,19 +21,7 @@ class Shot(Device):
     def __init__(self, machine, name, config=None, validate=True):
         # If this device is setup in a machine-wide config, make sure it has
         # a default enable event.
-
-        # TODO add a mode parameter to the device constructor and do the logic
-        # there.
-        if not machine.modes:
-
-            if 'enable_events' not in config:
-                config['enable_events'] = 'ball_starting'
-            if 'disable_events' not in config:
-                config['disable_events'] = 'ball_ended'
-            if 'reset_events' not in config:
-                config['reset_events'] = 'ball_ended'
-
-        super(Shot, self).__init__(machine, name, config, validate=validate)
+        super(Shot, self).__init__(machine, name)
 
         self.delay = mpf.core.delays.DelayManager(self.machine.delayRegistry)
 
@@ -48,6 +36,17 @@ class Shot(Device):
 
         self.active_mode = None
         self.active_settings = None
+
+    def prepare_config(self, config):
+        # TODO: move to device_added_system_wide
+        if not self.machine.modes:
+            if 'enable_events' not in config:
+                config['enable_events'] = 'ball_starting'
+            if 'disable_events' not in config:
+                config['disable_events'] = 'ball_ended'
+            if 'reset_events' not in config:
+                config['reset_events'] = 'ball_ended'
+        return config
 
     def device_added_system_wide(self):
         # Called when a device is added system wide
