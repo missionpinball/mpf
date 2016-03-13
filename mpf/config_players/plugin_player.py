@@ -8,6 +8,9 @@ class PluginPlayer(ConfigPlayer):
     MPF. This class is created on the MPF side of things.
     """
 
+    def __repr__(self):
+        return 'PluginPlayer.{}'.format(self.show_section)
+
     def _initialize(self):
         # overrides base method to just look for this config_player's section
         # in the config files for the purpose of adding event triggers. No
