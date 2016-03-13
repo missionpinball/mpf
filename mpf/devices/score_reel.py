@@ -199,8 +199,8 @@ class ScoreReelGroup(Device):
         # ScoreReelController
         machine.score_reel_controller = ScoreReelController(machine)
 
-    def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name, config, validate=validate)
+    def __init__(self, machine, name):
+        super().__init__(machine, name)
 
         self.wait_for_valid_queue = None
         self.valid = True  # Confirmed reels are showing the right values
@@ -879,8 +879,8 @@ class ScoreReel(Device):
     collection = 'score_reels'
     class_label = 'score_reel'
 
-    def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name, config, validate=validate)
+    def __init__(self, machine, name):
+        super().__init__(machine, name)
         self.delay = DelayManager(machine.delayRegistry)
 
         self.rollover_reel_advanced = False

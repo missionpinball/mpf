@@ -13,13 +13,12 @@ class DropTarget(Device):
     collection = 'drop_targets'
     class_label = 'drop_target'
 
-    def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name, config, validate=validate)
+    def __init__(self, machine, name):
+        super().__init__(machine, name)
 
         self._in_ball_search = False
         self.complete = False
         self.delay = DelayManager(machine.delayRegistry)
-
 
     def _initialize(self):
         self.reset_coil = self.config['reset_coil']
@@ -178,8 +177,8 @@ class DropTargetBank(Device):
     collection = 'drop_target_banks'
     class_label = 'drop_target_bank'
 
-    def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name, config, validate=validate)
+    def __init__(self, machine, name):
+        super().__init__(machine, name)
 
         self.drop_targets = list()
         self.reset_coil = None

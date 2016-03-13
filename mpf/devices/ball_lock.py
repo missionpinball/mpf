@@ -9,8 +9,8 @@ class BallLock(Device):
     collection = 'ball_locks'
     class_label = 'ball_lock'
 
-    def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name, config, validate=validate)
+    def __init__(self, machine, name):
+        super().__init__(machine, name)
 
         # initialise variables
         self.balls_locked = 0

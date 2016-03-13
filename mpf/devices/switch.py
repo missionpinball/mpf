@@ -10,7 +10,7 @@ class Switch(Device):
     collection = 'switches'
     class_label = 'switch'
 
-    def __init__(self, machine, name, config=None, validate=True):
+    def __init__(self, machine, name):
         super().__init__(machine, name)
 
         self.machine = machine

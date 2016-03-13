@@ -12,8 +12,7 @@ class Device(object):
     collection = None  # String name of the collection
     class_label = None  # String of the friendly name of the device class
 
-    def __init__(self, machine, name, config=None, platform_section=None,
-                 validate=True):
+    def __init__(self, machine, name):
 
         self.machine = machine
         self.name = name.lower()

@@ -13,9 +13,6 @@ class Servo(Device):
     collection = 'servos'
     class_label = 'servo'
 
-    def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name)
-
     def _initialize(self):
         self.load_platform_section('servo_controllers')
 

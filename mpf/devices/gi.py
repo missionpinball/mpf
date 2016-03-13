@@ -16,7 +16,7 @@ class Gi(Device):
     collection = 'gi'
     class_label = 'gi'
 
-    def __init__(self, machine, name, config=None, validate=True):
+    def __init__(self, machine, name):
         super().__init__(machine, name)
 
         self.registered_handlers = []

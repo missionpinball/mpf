@@ -22,7 +22,7 @@ class Driver(Device):
     collection = 'coils'
     class_label = 'coil'
 
-    def __init__(self, machine, name, config=None, validate=True):
+    def __init__(self, machine, name):
         super().__init__(machine, name)
 
         self.time_last_changed = 0

@@ -26,8 +26,8 @@ class Flipper(Device):
     collection = 'flippers'
     class_label = 'flipper'
 
-    def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name, config, validate=validate)
+    def __init__(self, machine, name):
+        super().__init__(machine, name)
 
         self.flipper_switches = []
 

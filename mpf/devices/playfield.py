@@ -15,7 +15,7 @@ class Playfield(BallDevice):
     class_label = 'playfield'
 
     # noinspection PyMissingConstructor
-    def __init__(self, machine, name, config=None, validate=True):
+    def __init__(self, machine, name):
         self.log = logging.getLogger('playfield')
 
         self.machine = machine

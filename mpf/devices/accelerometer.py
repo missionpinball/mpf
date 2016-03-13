@@ -16,7 +16,7 @@ class Accelerometer(Device):
     collection = 'accelerometers'
     class_label = 'accelerometer'
 
-    def __init__(self, machine, name, config=None, validate=True):
+    def __init__(self, machine, name):
         super().__init__(machine, name)
 
         self.history = False

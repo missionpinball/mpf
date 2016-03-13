@@ -57,7 +57,7 @@ class Led(Device):
 
             Led.leds_to_update = set()
 
-    def __init__(self, machine, name, config=None, validate=True):
+    def __init__(self, machine, name):
         super().__init__(machine, name)
 
         self.fade_in_progress = False

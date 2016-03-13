@@ -18,7 +18,7 @@ class ShotGroup(Device):
     collection = 'shot_groups'
     class_label = 'shot_group'
 
-    def __init__(self, machine, name, config=None, validate=True):
+    def __init__(self, machine, name):
 
         self.shots = list()  # list of strings
 

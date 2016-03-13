@@ -18,7 +18,7 @@ class Shot(Device):
     to track shots.
     """
 
-    def __init__(self, machine, name, config=None, validate=True):
+    def __init__(self, machine, name):
         # If this device is setup in a machine-wide config, make sure it has
         # a default enable event.
         super(Shot, self).__init__(machine, name)

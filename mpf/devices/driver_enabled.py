@@ -19,8 +19,8 @@ class DriverEnabled(Driver):
 
         DriverEnabled.enable_driver_mappings[driver].add(device)
 
-    def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name, config, validate=validate)
+    def __init__(self, machine, name):
+        super().__init__(machine, name)
 
         DriverEnabled.add_driver_enabled_device(self.hw_driver, self)
 

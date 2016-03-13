@@ -37,7 +37,7 @@ class MatrixLight(Device):
 
             MatrixLight.lights_to_update = set()
 
-    def __init__(self, machine, name, config=None, validate=True):
+    def __init__(self, machine, name):
         super().__init__(machine, name)
 
         self.registered_handlers = list()

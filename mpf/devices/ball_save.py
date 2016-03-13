@@ -9,8 +9,8 @@ class BallSave(Device):
     collection = 'ball_saves'
     class_label = 'ball_save'
 
-    def __init__(self, machine, name, config=None, validate=True):
-        super().__init__(machine, name, config, validate=validate)
+    def __init__(self, machine, name):
+        super().__init__(machine, name)
 
         self.delay = DelayManager(machine.delayRegistry)
         self.enabled = False

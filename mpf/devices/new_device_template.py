@@ -55,9 +55,9 @@ class YourNewDevice(Device):
         """
         pass
 
-    def __init__(self, machine, name, config=None, validate=True):
+    def __init__(self, machine, name):
         self.log = logging.getLogger('YourNewDevice.' + name)
-        super().__init__(machine, name, config, validate=validate)
+        super().__init__(machine, name)
 
         # Since this new device class is a subclass of Device and you're calling
         # super(), several attributes are available to you, including:

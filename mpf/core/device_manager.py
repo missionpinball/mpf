@@ -60,7 +60,7 @@ class DeviceManager(object):
         self.load_devices_config(validate=True)
         self.initialize_devices()
 
-    def create_devices(self, collection_name, config, validate=True):
+    def create_devices(self, collection_name, config):
         cls = self.device_classes[collection_name]
 
         collection = getattr(self.machine, collection_name)
