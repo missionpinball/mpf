@@ -95,14 +95,26 @@ class DeviceManager(object):
                 continue
 
             # Get the config section for these devices
-            collection = getattr(self.machine, collection_name)
             config = self.machine.config[config_name]
 
             # validate config
             for device_name in config:
                 if validate:
-                    config[device_name] = self.machine.config_validator.validate_config(
+                    self.machine.config_validator.validate_config(
                         device_cls.config_section, config[device_name.lower()], device_name.lower())
+
+        for device_type in self.machine.config['mpf']['device_modules']:
+
+            device_cls = Util.string_to_class("mpf.devices." + device_type)
+
+            collection_name, config_name = device_cls.get_config_info()
+
+            if config_name not in self.machine.config:
+                continue
+
+            # Get the config section for these devices
+            collection = getattr(self.machine, collection_name)
+            config = self.machine.config[config_name]
 
             # load config
             for device_name in config:
