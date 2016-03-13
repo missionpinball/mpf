@@ -82,6 +82,8 @@ class Device(object):
     # TODO: refactor to ModeDevice
     def device_added_to_mode(self, mode, player):
         # Called when a device is created by a mode
+        del mode
+        del player
         self._initialize()
 
     # TODO: refactor to ModeDevice
