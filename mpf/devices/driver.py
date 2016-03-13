@@ -23,17 +23,14 @@ class Driver(Device):
     class_label = 'coil'
 
     def __init__(self, machine, name, config=None, validate=True):
-        # TODO: why is this needed?
-        config['number_str'] = str(config['number']).upper()
-
         super().__init__(machine, name)
 
         self.time_last_changed = 0
         self.time_when_done = 0
 
-    def load_config(self, config):
+    def prepare_config(self, config):
         config['number_str'] = str(config['number']).upper()
-        super().load_config(config)
+        return config
 
     def _initialize(self):
         self.load_platform_section('coils')

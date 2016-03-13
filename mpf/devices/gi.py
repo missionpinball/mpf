@@ -17,12 +17,13 @@ class Gi(Device):
     class_label = 'gi'
 
     def __init__(self, machine, name, config=None, validate=True):
-        # TODO: why?
-        config['number_str'] = str(config['number']).upper()
-
         super().__init__(machine, name)
 
         self.registered_handlers = []
+
+    def prepare_config(self, config):
+        config['number_str'] = str(config['number']).upper()
+        return config
 
     def _initialize(self):
         self.load_platform_section('gis')

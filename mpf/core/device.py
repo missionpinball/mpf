@@ -34,6 +34,10 @@ class Device(object):
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
 
+    def prepare_config(self, config):
+        # returns the prepared config
+        return config
+
     def load_config(self, config):
         self.config = config
 

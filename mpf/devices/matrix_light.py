@@ -38,9 +38,6 @@ class MatrixLight(Device):
             MatrixLight.lights_to_update = set()
 
     def __init__(self, machine, name, config=None, validate=True):
-        # TODO: why?
-        config['number_str'] = str(config['number']).upper()
-
         super().__init__(machine, name)
 
         self.registered_handlers = list()
@@ -68,6 +65,10 @@ class MatrixLight(Device):
         # set up the X, Y coordinates
         self.x = None
         self.y = None
+
+    def prepare_config(self, config):
+        config['number_str'] = str(config['number']).upper()
+        return config
 
     def _initialize(self):
         self.load_platform_section('matrix_lights')

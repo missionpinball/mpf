@@ -58,9 +58,6 @@ class Led(Device):
             Led.leds_to_update = set()
 
     def __init__(self, machine, name, config=None, validate=True):
-        # TODO: why?
-        config['number_str'] = str(config['number']).upper()
-
         super().__init__(machine, name)
 
         self.fade_in_progress = False
@@ -89,6 +86,10 @@ class Led(Device):
 
         # Set color correction profile (if applicable)
         self._color_correction_profile = None
+
+    def prepare_config(self, config):
+        config['number_str'] = str(config['number']).upper()
+        return config
 
     def _initialize(self):
         self.load_platform_section('leds')

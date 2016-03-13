@@ -85,23 +85,26 @@ class DeviceManager(object):
             collection[device_name] = cls(self.machine, device_name, config[device_name], validate)
 
     def load_devices_config(self, validate=True):
-        for device_type in self.machine.config['mpf']['device_modules']:
 
-            device_cls = Util.string_to_class("mpf.devices." + device_type)
+        if validate:
+            for device_type in self.machine.config['mpf']['device_modules']:
 
-            collection_name, config_name = device_cls.get_config_info()
+                device_cls = Util.string_to_class("mpf.devices." + device_type)
 
-            if config_name not in self.machine.config:
-                continue
+                collection_name, config_name = device_cls.get_config_info()
 
-            # Get the config section for these devices
-            config = self.machine.config[config_name]
+                if config_name not in self.machine.config:
+                    continue
 
-            # validate config
-            for device_name in config:
-                if validate:
+                # Get the config section for these devices
+                collection = getattr(self.machine, collection_name)
+                config = self.machine.config[config_name]
+
+                # validate config
+                for device_name in config:
+                    config[device_name] = collection[device_name].prepare_config(config[device_name])
                     self.machine.config_validator.validate_config(
-                        device_cls.config_section, config[device_name.lower()], device_name.lower())
+                        device_cls.config_section, config[device_name], device_name)
 
         for device_type in self.machine.config['mpf']['device_modules']:
 
@@ -118,7 +121,7 @@ class DeviceManager(object):
 
             # load config
             for device_name in config:
-                collection[device_name].load_config(config[device_name.lower()])
+                collection[device_name].load_config(config[device_name])
 
     def initialize_devices(self):
         for device_type in self.machine.config['mpf']['device_modules']:

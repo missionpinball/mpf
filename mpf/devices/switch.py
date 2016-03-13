@@ -11,10 +11,6 @@ class Switch(Device):
     class_label = 'switch'
 
     def __init__(self, machine, name, config=None, validate=True):
-
-        # TODO: why?
-        config['number_str'] = str(config['number']).upper()
-
         super().__init__(machine, name)
 
         self.machine = machine
@@ -40,6 +36,10 @@ class Switch(Device):
 
         # register switch so other devices can add handlers to it
         self.machine.switch_controller.register_switch(name)
+
+    def prepare_config(self, config):
+        config['number_str'] = str(config['number']).upper()
+        return config
 
     def _initialize(self):
         self.load_platform_section('switches')

@@ -11,11 +11,9 @@ class Flasher(Device):
     collection = 'flashers'
     class_label = 'flasher'
 
-    def __init__(self, machine, name, config=None, validate=True):
-        # TODO: why?
+    def prepare_config(self, config):
         config['number_str'] = str(config['number']).upper()
-
-        super().__init__(machine, name)
+        return config
 
     def _initialize(self):
         self.load_platform_section('flashers')
