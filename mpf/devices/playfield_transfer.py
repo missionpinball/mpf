@@ -11,8 +11,10 @@ class PlayfieldTransfer(Device):
 
     def __init__(self, machine, name, config=None, validate=True):
         super().__init__(machine, name, config, validate=validate)
+        self.runs = 0
 
-        self.machine.events.add_handler('init_phase_2',
+    def _initialize(self):
+        self.machine.events.add_handler('init_phase_3',
                                         self.configure_switch)
 
         # load target playfield

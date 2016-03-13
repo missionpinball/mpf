@@ -17,6 +17,7 @@ class BallSave(Device):
         self.timer_started = False
         self.saves_remaining = 0
 
+    def _initialize(self):
         if self.config['balls_to_save'] == -1:
             self.unlimited_saves = True
         else:

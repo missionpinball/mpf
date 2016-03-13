@@ -19,6 +19,9 @@ class DropTarget(Device):
         self._in_ball_search = False
         self.complete = False
         self.delay = DelayManager(machine.delayRegistry)
+
+
+    def _initialize(self):
         self.reset_coil = self.config['reset_coil']
         self.knockdown_coil = self.config['knockdown_coil']
         self.banks = set()
@@ -185,6 +188,7 @@ class DropTargetBank(Device):
         self.down = 0
         self.up = 0
 
+    def _initialize(self):
         self.drop_targets = self.config['drop_targets']
         self.reset_coil = self.config['reset_coil']
         self.reset_coils = self.config['reset_coils']

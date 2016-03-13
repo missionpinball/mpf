@@ -57,6 +57,8 @@ class DeviceManager(object):
             except KeyError:
                 pass
 
+        self.initialize_devices()
+
     def create_devices(self, collection_name, config, validate=True):
         cls = self.device_classes[collection_name]
 
@@ -68,17 +70,46 @@ class DeviceManager(object):
             cls.device_class_init(self.machine)
 
         # create the devices
-        for device in config:
+        for device_name in config:
 
-            if not config[device]:
+            if not config[device_name]:
                 raise AssertionError("Device '{}' has an empty config."
-                                     .format(device))
+                                     .format(device_name))
 
-            elif type(config[device]) is not dict:
+            elif type(config[device_name]) is not dict:
                 raise AssertionError("Device '{}' does not have a valid config."
-                                     .format(device))
+                                     .format(device_name))
 
-            collection[device] = cls(self.machine, device, config[device], validate)
+            # TODO: remove config + validate here
+            collection[device_name] = cls(self.machine, device_name, config[device_name], validate)
+
+        # validate config
+        for device_name in config:
+            if validate:
+                config[device_name] = self.machine.config_validator.validate_config(
+                    cls.config_section, config[device_name.lower()], device_name.lower())
+
+        # load config
+        for device_name in config:
+            collection[device_name].load_config(config[device_name])
+
+    def initialize_devices(self):
+        for device_type in self.machine.config['mpf']['device_modules']:
+
+            device_cls = Util.string_to_class("mpf.devices." + device_type)
+
+            collection_name, config_name = device_cls.get_config_info()
+
+            if config_name not in self.machine.config:
+                continue
+
+            # Get the config section for these devices
+            collection = getattr(self.machine, collection_name)
+            config = self.machine.config[config_name]
+
+            # add machine wide
+            for device_name in config:
+                collection[device_name].device_added_system_wide()
 
     def get_device_control_events(self, config):
         """Scans a config dictionary and yields events, methods, delays, and

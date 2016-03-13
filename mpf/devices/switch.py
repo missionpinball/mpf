@@ -11,7 +11,10 @@ class Switch(Device):
     class_label = 'switch'
 
     def __init__(self, machine, name, config=None, validate=True):
+
+        # TODO: why?
         config['number_str'] = str(config['number']).upper()
+
         super().__init__(machine, name, config, platform_section='switches', validate=validate)
 
         self.machine = machine
@@ -32,15 +35,14 @@ class Switch(Device):
         self.recycle_clear_time = 0
         self.recycle_jitter_count = 0
 
+        self.last_changed = None
+        self.hw_timestamp = None
+
+    def _initialize(self):
         if self.config['type'].upper() == 'NC':
             self.invert = 1
 
         self.recycle_secs = self.config['recycle_time']
-
-        self.last_changed = None
-        self.hw_timestamp = None
-
-        self.log.debug("Creating '%s' with config: %s", name, self.config)
 
         self.hw_switch, self.number = (
             self.platform.configure_switch(self.config))

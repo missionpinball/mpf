@@ -38,12 +38,10 @@ class MatrixLight(Device):
             MatrixLight.lights_to_update = set()
 
     def __init__(self, machine, name, config=None, validate=True):
+        # TODO: why?
         config['number_str'] = str(config['number']).upper()
 
         super().__init__(machine, name, config, platform_section='matrix_lights', validate=validate)
-
-        self.hw_driver, self.number = (
-            self.platform.configure_matrixlight(self.config))
 
         self.registered_handlers = list()
 
@@ -71,11 +69,15 @@ class MatrixLight(Device):
         self.x = None
         self.y = None
 
-        if 'x' in config:
-            self.x = config['x']
+    def _initialize(self):
+        self.hw_driver, self.number = (
+            self.platform.configure_matrixlight(self.config))
 
-        if 'y' in config:
-            self.y = config['y']
+        if 'x' in self.config:
+            self.x = self.config['x']
+
+        if 'y' in self.config:
+            self.y = self.config['y']
 
     def on(self, brightness=255, fade_ms=0, priority=0, cache=True,
            force=False):

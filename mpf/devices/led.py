@@ -58,13 +58,10 @@ class Led(Device):
             Led.leds_to_update = set()
 
     def __init__(self, machine, name, config=None, validate=True):
+        # TODO: why?
         config['number_str'] = str(config['number']).upper()
+
         super().__init__(machine, name, config, platform_section='leds', validate=validate)
-
-        self.config['default_color'] = RGBColor(
-            RGBColor.string_to_rgb(self.config['default_color'], (255, 255, 255)))
-
-        self.hw_driver = self.platform.configure_led(self.config)
 
         self.fade_in_progress = False
         self.fade_destination_color = RGBColor()
@@ -92,6 +89,13 @@ class Led(Device):
 
         # Set color correction profile (if applicable)
         self._color_correction_profile = None
+
+    def _initialize(self):
+        self.config['default_color'] = RGBColor(
+            RGBColor.string_to_rgb(self.config['default_color'], (255, 255, 255)))
+
+        self.hw_driver = self.platform.configure_led(self.config)
+
         if self.config['color_correction_profile'] is not None:
             if self.config['color_correction_profile'] in self.machine.led_color_correction_profiles:
                 profile = self.machine.led_color_correction_profiles[self.config['color_correction_profile']]

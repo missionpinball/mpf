@@ -37,6 +37,7 @@ class Diverter(Device):
         # this because ball eject attempts pass the target device as an object
         # rather than by name.
 
+    def _initialize(self):
         # register for feeder device eject events
         for feeder_device in self.config['feeder_devices']:
             self.machine.events.add_handler(

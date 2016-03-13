@@ -17,10 +17,6 @@ class BallLock(Device):
         self.enabled = False
         self.lock_queue = deque()
 
-        # let ball devices initialise first
-        self.machine.events.add_handler('init_phase_3',
-                                        self._initialize)
-
     def _initialize(self):
         # load lock_devices
 

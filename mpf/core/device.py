@@ -24,25 +24,28 @@ class Device(object):
         self.platform = None
         self.config = dict()
 
-        if validate:
-            self.config = self.machine.config_validator.validate_config(
-                self.config_section, config, self.name)
+        self.tags = []
+        self.label = []
 
-        else:
-            self.config = config
+        #TODO: refactor
+        if platform_section:
+            if "platform" in config:
+                self.platform = self.machine.get_platform_sections(platform_section, config['platform'])
+            else:
+                self.platform = self.machine.get_platform_sections(platform_section, "")
 
-        if self.config['debug']:
-            self.enable_debugging()
-            self.log.debug("Configuring device with settings: '%s'", config)
+        if self.debug:
+            self.log.debug('Platform Driver: %s', self.platform)
+
+    def load_config(self, config):
+        self.config = config
 
         self.tags = self.config['tags']
         self.label = self.config['label']
 
-        if platform_section:
-            self.platform = self.machine.get_platform_sections(platform_section, config['platform'])
-
-        if self.debug:
-            self.log.debug('Platform Driver: %s', self.platform)
+        if self.config['debug']:
+            self.enable_debugging()
+            self.log.debug("Configuring device with settings: '%s'", config)
 
     def __repr__(self):
         return '<{self.class_label}.{self.name}>'.format(self=self)
@@ -67,14 +70,26 @@ class Device(object):
     def get_config_info(cls):
         return cls.collection, cls.config_section
 
-    def device_added_to_mode(self, mode, player):
-        # Called when a device is created by a mode
+    def _initialize(self):
+        # default initialize method
         pass
 
+    # TODO: refactor to SystemWideDevice
+    def device_added_system_wide(self):
+        # Called when a device is added system wide
+        self._initialize()
+
+    # TODO: refactor to ModeDevice
+    def device_added_to_mode(self, mode, player):
+        # Called when a device is created by a mode
+        self._initialize()
+
+    # TODO: refactor to ModeDevice
     def control_events_in_mode(self, mode):
         # Called on mode start if this device has any control events in that mode
         pass
 
+    # TODO: refactor to ModeDevice
     def remove(self):
         raise NotImplementedError(
             '{} does not have a remove() method'.format(self.name))

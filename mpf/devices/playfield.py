@@ -83,8 +83,8 @@ class Playfield(BallDevice):
         self.machine.events.add_handler('sw_' + self.name + '_active',
                                         self.playfield_switch_hit)
 
-        self.machine.events.add_handler('init_phase_2',
-                                        self._initialize)
+        #self.machine.events.add_handler('init_phase_2',
+        #                                self._initialize)
 
     def _initialize(self):
         self.ball_controller = self.machine.ball_controller

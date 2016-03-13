@@ -30,8 +30,9 @@ class Flipper(Device):
         super().__init__(machine, name, config, validate=validate)
 
         self.flipper_switches = []
-        self.flipper_switches.append(self.config['activation_switch'].name)
 
+    def _initialize(self):
+        self.flipper_switches.append(self.config['activation_switch'].name)
         self.platform = self.config['main_coil'].platform
 
         if self.debug:

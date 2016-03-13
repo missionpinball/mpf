@@ -17,16 +17,6 @@ class Multiball(Device):
         self.enabled = False
         self.shoot_again = False
 
-        # let ball devices initialise first
-        self.machine.events.add_handler('init_phase_3',
-                                        self._initialize)
-
-    def device_added_to_mode(self, mode, player):
-        del mode
-        del player
-        # initialize on mode
-        self._initialize()
-
     def remove(self):
         # disable mb when mode ends
         self.disable()

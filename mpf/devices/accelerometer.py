@@ -19,11 +19,13 @@ class Accelerometer(Device):
     def __init__(self, machine, name, config=None, validate=True):
         super().__init__(machine, name, config, platform_section='accelerometers', validate=validate)
 
+        self.history = False
+        self.value = False
+
+    def _initialize(self):
         self.platform.configure_accelerometer(self,
                                               number=self.config['number'],
                                               use_high_pass=False)
-        self.history = False
-        self.value = False
 
     def _calculate_vector_length(self, x, y, z):
         return math.sqrt(x * x + y * y + z * z)

@@ -17,12 +17,15 @@ class Gi(Device):
     class_label = 'gi'
 
     def __init__(self, machine, name, config=None, validate=True):
+        # TODO: why?
         config['number_str'] = str(config['number']).upper()
+
         super().__init__(machine, name, config, platform_section='gis', validate=validate)
 
-        self.hw_driver, self.number = self.platform.configure_gi(self.config)
-
         self.registered_handlers = []
+
+    def _initialize(self):
+        self.hw_driver, self.number = self.platform.configure_gi(self.config)
 
     def enable(self, brightness=255, **kwargs):
         """Enables this GI string.

@@ -49,6 +49,15 @@ class Shot(Device):
         self.active_mode = None
         self.active_settings = None
 
+    def device_added_system_wide(self):
+        # Called when a device is added system wide
+        super().device_added_system_wide()
+
+        self.update_enable_table(profile=self.config['profile'],
+                                 enable=False,
+                                 mode=None)
+
+    def _initialize(self):
         if not self.config['profile']:
             self.config['profile'] = 'default'
 
@@ -65,11 +74,6 @@ class Shot(Device):
                 switch_list.append(obj)
 
         self.config['switches'] = switch_list
-
-        if not self.machine.modes:
-            self.update_enable_table(profile=self.config['profile'],
-                                     enable=False,
-                                     mode=None)
 
     def _register_switch_handlers(self):
         if self.switch_handlers_active:
@@ -299,6 +303,8 @@ class Shot(Device):
         since the mode started after that.
 
         """
+        super().device_added_to_mode(mode, player)
+
         self.player_turn_start(player)
 
         # if not self.config['enable_events']:

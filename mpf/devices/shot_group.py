@@ -349,6 +349,8 @@ class ShotGroup(Device):
                                      '_complete')
 
     def device_added_to_mode(self, mode, player):
+        super().device_added_to_mode(mode, player)
+
         if not mode.config['shot_groups'][self.name]['enable_events']:
             enable = True
         else:
