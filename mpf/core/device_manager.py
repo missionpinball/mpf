@@ -57,6 +57,7 @@ class DeviceManager(object):
             except KeyError:
                 pass
 
+        self.load_devices_config(validate=True)
         self.initialize_devices()
 
     def create_devices(self, collection_name, config, validate=True):
@@ -83,15 +84,29 @@ class DeviceManager(object):
             # TODO: remove config + validate here
             collection[device_name] = cls(self.machine, device_name, config[device_name], validate)
 
-        # validate config
-        for device_name in config:
-            if validate:
-                config[device_name] = self.machine.config_validator.validate_config(
-                    cls.config_section, config[device_name.lower()], device_name.lower())
+    def load_devices_config(self, validate=True):
+        for device_type in self.machine.config['mpf']['device_modules']:
 
-        # load config
-        for device_name in config:
-            collection[device_name].load_config(config[device_name])
+            device_cls = Util.string_to_class("mpf.devices." + device_type)
+
+            collection_name, config_name = device_cls.get_config_info()
+
+            if config_name not in self.machine.config:
+                continue
+
+            # Get the config section for these devices
+            collection = getattr(self.machine, collection_name)
+            config = self.machine.config[config_name]
+
+            # validate config
+            for device_name in config:
+                if validate:
+                    config[device_name] = self.machine.config_validator.validate_config(
+                        device_cls.config_section, config[device_name.lower()], device_name.lower())
+
+            # load config
+            for device_name in config:
+                collection[device_name].load_config(config[device_name.lower()])
 
     def initialize_devices(self):
         for device_type in self.machine.config['mpf']['device_modules']:

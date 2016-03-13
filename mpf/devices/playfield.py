@@ -55,6 +55,9 @@ class Playfield(BallDevice):
         self.queued_balls = list()
         self._playfield = True
 
+    def _initialize(self):
+        self.ball_controller = self.machine.ball_controller
+
         # Set up event handlers
 
         # Watch for balls added to the playfield
@@ -82,12 +85,6 @@ class Playfield(BallDevice):
         # Watch for any switch hit which indicates a ball on the playfield
         self.machine.events.add_handler('sw_' + self.name + '_active',
                                         self.playfield_switch_hit)
-
-        #self.machine.events.add_handler('init_phase_2',
-        #                                self._initialize)
-
-    def _initialize(self):
-        self.ball_controller = self.machine.ball_controller
 
         for device in self.machine.playfield_transfers:
             if device.config['eject_target'] == self:

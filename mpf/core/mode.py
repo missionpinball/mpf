@@ -325,20 +325,20 @@ class Mode(object):
                         self.log.debug("Creating mode-based device: %s",
                                        device)
 
-                        # TODO this config is already validated, so add
-                        # something so it doesn't validate it again?
-
                         self.machine.device_manager.create_devices(
-                            collection.name, {device: settings},
-                            validate=False)
+                            collection.name, {device: settings})
 
                         # change device from str to object
                         device = collection[device]
+
+                        # config is already validated. just load it
+                        device.load_config(settings)
 
                         # Track that this device was added via this mode so we
                         # can remove it when the mode ends.
                         self.mode_devices.add(device)
 
+                        # TODO: postpone this similar to ball_controller
                         # This lets the device know it was created by a mode
                         # instead of machine-wide, as some devices want to do
                         # certain things here. We also pass the player object
