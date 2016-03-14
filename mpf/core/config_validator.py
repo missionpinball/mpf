@@ -681,7 +681,7 @@ smartmatrix:
     use_separate_thread: single|bool|true
 sound_player:
     track: single|str|None
-    volume: single|float|None
+    volume: single|gain|None
     loops: single|int|None
     priority: single|int|None
     max_queue_time: single|secs|None
