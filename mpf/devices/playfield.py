@@ -61,6 +61,8 @@ class Playfield(SystemWideDevice):
 
         # Watch for balls added to the playfield
         for device in self.machine.ball_devices:
+            if device.is_playfield():
+                continue
             for target in device.config['eject_targets']:
                 if target.name == self.name:
                     self.machine.events.add_handler(

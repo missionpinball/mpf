@@ -489,7 +489,6 @@ physical_rgb_dmd:
     channel_bits: list|int|8, 8, 8
     color_channel_map: single|str|rgb
 playfields:
-    eject_targets: list|str|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False

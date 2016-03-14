@@ -770,6 +770,8 @@ class BallDevice(SystemWideDevice):
 
         # Register events to watch for ejects targeted at this device
         for device in self.machine.ball_devices:
+            if device.is_playfield():
+                continue
             for target in device.config['eject_targets']:
                 if target.name == self.name:
                     self._source_devices.append(device)
