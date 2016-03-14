@@ -247,7 +247,7 @@ class BallDevice(SystemWideDevice):
     def _handle_unexpected_balls(self, balls):
         self.log.debug("Received %s unexpected balls", balls)
         self.machine.events.post('balldevice_captured_from_{}'.format(
-                self.config['captures_from']),
+                self.config['captures_from'].name),
                 balls=balls)
 
     def _handle_new_balls(self, balls):
@@ -631,14 +631,6 @@ class BallDevice(SystemWideDevice):
     # ---------------------- End of state handling code -----------------------
 
     def _parse_config(self):
-        # configure eject targets
-        new_list = list()
-
-        for target in self.config['eject_targets']:
-            new_list.append(self.machine.ball_devices[target])
-
-        self.config['eject_targets'] = new_list
-
         # ensure eject timeouts list matches the length of the eject targets
         if (len(self.config['eject_timeouts']) <
                 len(self.config['eject_targets'])):
@@ -773,7 +765,7 @@ class BallDevice(SystemWideDevice):
         self._register_handlers()
 
     def _initialize_phase_3(self):
-        self.machine.ball_devices[self.config['captures_from']].ball_search.register(
+        self.config['captures_from'].ball_search.register(
             self.config['ball_search_order'], self.ball_search)
 
         # Register events to watch for ejects targeted at this device
@@ -960,7 +952,7 @@ class BallDevice(SystemWideDevice):
                 for dummy_iterator in range(unclaimed_balls):
                     self.setup_eject_chain(path)
             else:
-                target = self.machine.ball_devices[self.config['captures_from']]
+                target = self.config['captures_from']
 
                 # try to eject to pf
                 path = self.find_path_to_target(target)
@@ -988,7 +980,7 @@ class BallDevice(SystemWideDevice):
                                  balls=abs(balls))
 
         # add ball to default target
-        self.machine.ball_devices[self.config['ball_missing_target']].add_missing_balls(balls)
+        self.config['ball_missing_target'].add_missing_balls(balls)
 
     def is_full(self):
         """Checks to see if this device is full, meaning it is holding either

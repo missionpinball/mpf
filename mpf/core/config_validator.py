@@ -84,12 +84,11 @@ ball_devices:
     entrance_events: dict|str:ms|None
     jam_switch: single|self.machine.switches[%]|None
     confirm_eject_type: single|str|target
-    captures_from: single|str|playfield
-    eject_targets: list|str|playfield
-    # can't convert eject_targets to objects til all ball_devices are setup
+    captures_from: single|self.machine.playfields[%]|playfield
+    eject_targets: list|self.machine.ball_devices[%]|playfield
     eject_timeouts: list|ms|None
     ball_missing_timeouts: list|ms|None
-    ball_missing_target: single|str|playfield
+    ball_missing_target: single|self.machine.playfields[%]|playfield
     confirm_eject_switch: single|self.machine.switches[%]|None
     confirm_eject_event: single|str|None
     max_eject_attempts: single|int|0
