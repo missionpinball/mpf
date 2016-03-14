@@ -680,12 +680,12 @@ smartmatrix:
     port: single|str|
     use_separate_thread: single|bool|true
 sound_player:
-    sound: single|str|
     track: single|str|None
     volume: single|float|None
     loops: single|int|None
     priority: single|int|None
     max_queue_time: single|secs|None
+    __allow_others__:
 sound_system:
     enabled: single|bool|True
     buffer: single|int|2048
