@@ -6,7 +6,6 @@ import sys
 
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
-from mpf.core.rgb_color import named_rgb_colors, RGBColor
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 
 log = logging.getLogger('ConfigProcessor')

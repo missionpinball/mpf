@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from mpf.core.config_player import ConfigPlayer
 
 

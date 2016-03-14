@@ -7,7 +7,6 @@ http://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly/
 import copy
 import logging
 import re
-import sys
 
 import ruamel.yaml as yaml
 from ruamel.yaml.reader import Reader
@@ -310,12 +309,10 @@ class YamlInterface(FileInterface):
                                mark.column+1)
                 if halt_on_error:
                     raise ValueError("YAML error found in file {}. Line {}, "
-                                     "Position {}".format(
-                                     filename, mark.line+1, mark.column+1))
+                                     "Position {}".format(filename, mark.line+1, mark.column+1))
 
             elif halt_on_error:
                 raise ValueError("Error found in file %s" % filename)
-
 
         except:
             self.log.debug("Couldn't load from file: %s", filename)
@@ -435,8 +432,5 @@ class YamlInterface(FileInterface):
 
         del dic[key]
         dic.ca.items.pop(key, None)
-
-
-
 
 file_interface_class = YamlInterface
