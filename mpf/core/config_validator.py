@@ -1105,10 +1105,16 @@ class ConfigValidator(object):
                 return str(item).lower() in ('yes', 'true')
 
         elif item_type == 'ms':
-            return Util.string_to_ms(item)
+            if item is None:
+                return None
+            else:
+                return Util.string_to_ms(item)
 
         elif item_type == 'secs':
-            return Util.string_to_secs(item)
+            if item is None:
+                return None
+            else:
+                return Util.string_to_secs(item)
 
         elif item_type == 'list_of_lists':
             return Util.list_of_lists(item)
@@ -1396,10 +1402,12 @@ class ConfigValidator(object):
                 item = True
 
         elif validator == 'ms':
-            item = Util.string_to_ms(item)
+            if item is not None:
+                item = Util.string_to_ms(item)
 
         elif validator == 'secs':
-            item = Util.string_to_secs(item)
+            if item is not None:
+                item = Util.string_to_secs(item)
 
         elif validator == 'list':
             item = Util.string_to_list(item)
