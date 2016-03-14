@@ -410,7 +410,7 @@ class YamlInterface(FileInterface):
             if logger and not delete_source:
                 logger.debug('Copying key: %s -> %s', source_key, dest_key)
 
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
 
         if delete_source:
