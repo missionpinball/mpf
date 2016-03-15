@@ -37,6 +37,7 @@ class Mode(object):
         self.mode_start_kwargs = dict()
         self.mode_stop_kwargs = dict()
         self.mode_devices = set()
+        self.start_event_kwargs = None
 
         self.player = None
         '''Reference to the current player object.'''
@@ -509,63 +510,24 @@ class ModeTimer(object):
         self.tick_var = self.mode.name + '_' + self.name + '_tick'
         self.mode.player[self.tick_var] = 0
 
-        self.running = False
-        self.start_value = 0
-        self.restart_on_complete = False
+        self.running = self.config['start_running']
+        self.start_value = self.config['start_value']
+        self.restart_on_complete = self.config['restart_on_complete']
         self._ticks = 0
-        self.end_value = None
+        self.end_value = self.config['end_value']
         self.ticks_remaining = 0
-        self.max_value = None
-        self.direction = 'up'
-        self.tick_secs = 1
+        self.max_value = self.config['max_value']
+        self.direction = self.config['direction'].lower()
+        self.tick_secs = self.config['tick_interval'] / 1000.0
         self.timer = None
-        self.bcp = False
+        self.bcp = self.config['bcp']
         self.event_keys = set()
         self.delay = DelayManager(self.machine.delayRegistry)
         self.log = logging.getLogger('ModeTimer.' + name)
-        self.debug = False
+        self.debug = self.config['debug']
 
-        if 'start_value' in self.config:
-            self.start_value = self.config['start_value']
-        else:
-            self.start_value = 0
-
-        if 'start_running' in self.config and self.config['start_running']:
-            self.running = True
-
-        if 'end_value' in self.config:
-            self.end_value = self.config['end_value']
-
-        if 'control_events' in self.config and self.config['control_events']:
-            if type(self.config['control_events']) is dict:
-                self.config['control_events'] = [self.config['control_events']]
-        else:
-            self.config['control_events'] = list()
-
-        if ('direction' in self.config and
-                self.config['direction'].lower() == 'down'):
-            self.direction = 'down'
-
-            if not self.end_value:
-                self.end_value = 0  # need it to be 0 not None
-
-        if 'tick_interval' in self.config:
-            self.tick_secs = Util.string_to_secs(self.config[
-                                                       'tick_interval'])
-
-        if 'max_value' in self.config:
-            self.max_value = self.config['max_value']
-
-        if ('restart_on_complete' in self.config and
-                self.config['restart_on_complete']):
-            self.restart_on_complete = True
-
-        if 'bcp' in self.config and self.config['bcp']:
-            self.bcp = True
-
-        if 'debug' in self.config and self.config['debug']:
-            self.debug = True
-            self.log.debug("Enabling Debug Logging")
+        if self.direction == 'down' and not self.end_value:
+            self.end_value = 0  # need it to be 0 not None
 
         self.mode.player[self.tick_var] = self.start_value
 
@@ -581,6 +543,12 @@ class ModeTimer(object):
             self.log.debug("direction: %s", self.direction)
             self.log.debug("tick_secs: %s", self.tick_secs)
             self.log.debug("--------------------------------------")
+
+        if self.config['control_events']:
+            if type(self.config['control_events']) is dict:
+                self.config['control_events'] = [self.config['control_events']]
+        else:
+            self.config['control_events'] = list()
 
         self._setup_control_events(self.config['control_events'])
 

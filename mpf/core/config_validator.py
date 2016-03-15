@@ -756,6 +756,17 @@ tilt:
     multiple_hit_window: single|ms|300ms
     settle_time: single|ms|5s
     tilt_warnings_player_var: single|str|tilt_warnings
+timers:
+    debug: single|bool|False
+    start_value: single|int|0
+    end_value: single|int|None
+    direction: single|str|up
+    max_value: single|ms|None
+    tick_interval: single|ms|1s
+    start_running: single|bool|False
+    control_events: ignore
+    restart_on_complete: single|bool|False
+    bcp: single|bool|False
 transitions:
     push:
         type: single|str|

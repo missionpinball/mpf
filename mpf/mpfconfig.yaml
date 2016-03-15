@@ -142,6 +142,7 @@ mpf:
       - shot_groups
       - shot_profiles
       - switches
+      - timers
 
 # Default settings for machines. All can be overridden
 
