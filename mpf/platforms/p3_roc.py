@@ -257,19 +257,19 @@ class HardwarePlatform(PROCBasePlatform):
             if event_type == 99:  # CTRL-C to quit todo does this go here?
                 self.machine.stop()
             elif event_type == self.pinproc.EventTypeSwitchClosedDebounced:
-                self.machine.switch_controller.process_switch(state=1,
-                                                              num=event_value)
+                self.machine.switch_controller.process_switch_by_num(state=1,
+                                                                     num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchOpenDebounced:
-                self.machine.switch_controller.process_switch(state=0,
-                                                              num=event_value)
+                self.machine.switch_controller.process_switch_by_num(state=0,
+                                                                     num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchClosedNondebounced:
-                self.machine.switch_controller.process_switch(state=1,
-                                                              num=event_value,
-                                                              debounced=False)
+                self.machine.switch_controller.process_switch_by_num(state=1,
+                                                                     num=event_value,
+                                                                     debounced=False)
             elif event_type == self.pinproc.EventTypeSwitchOpenNondebounced:
-                self.machine.switch_controller.process_switch(state=0,
-                                                              num=event_value,
-                                                              debounced=False)
+                self.machine.switch_controller.process_switch_by_num(state=0,
+                                                                     num=event_value,
+                                                                     debounced=False)
 
             # The P3-ROC will always send all three values sequentially.
             # Therefore, we will trigger after the Z value

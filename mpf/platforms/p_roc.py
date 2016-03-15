@@ -190,19 +190,19 @@ class HardwarePlatform(PROCBasePlatform):
             elif event_type == self.pinproc.EventTypeDMDFrameDisplayed:
                 pass
             elif event_type == self.pinproc.EventTypeSwitchClosedDebounced:
-                self.machine.switch_controller.process_switch(state=1,
-                                                              num=event_value)
+                self.machine.switch_controller.process_switch_by_num(state=1,
+                                                                     num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchOpenDebounced:
-                self.machine.switch_controller.process_switch(state=0,
-                                                              num=event_value)
+                self.machine.switch_controller.process_switch_by_num(state=0,
+                                                                     num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchClosedNondebounced:
-                self.machine.switch_controller.process_switch(state=1,
-                                                              num=event_value,
-                                                              debounced=False)
+                self.machine.switch_controller.process_switch_by_num(state=1,
+                                                                     num=event_value,
+                                                                     debounced=False)
             elif event_type == self.pinproc.EventTypeSwitchOpenNondebounced:
-                self.machine.switch_controller.process_switch(state=0,
-                                                              num=event_value,
-                                                              debounced=False)
+                self.machine.switch_controller.process_switch_by_num(state=0,
+                                                                     num=event_value,
+                                                                     debounced=False)
             else:
                 self.log.warning("Received unrecognized event from the P-ROC. "
                                  "Type: %s, Value: %s", event_type, event_value)

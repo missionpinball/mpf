@@ -243,8 +243,13 @@ class SwitchController(object):
         # rid of it, or move the switch device settings from process_switch()
         # to here.
 
-    def process_switch(self, name=None, state=1, logical=False, num=None,
-                       obj=None, debounced=True):
+    def process_switch_by_num(self, num, state=1, logical=False, debounced=True):
+        for switch in self.machine.switches:
+            if switch.number == num:
+                self.process_switch(name=switch.name, state=state, logical=logical, debounced=debounced)
+                return
+
+    def process_switch(self, name, state=1, logical=False, debounced=True):
         """Processes a new switch state change.
 
         Args:
@@ -261,8 +266,6 @@ class SwitchController(object):
                 hardware will send switch states in their raw (logical=False)
                 states, but other interfaces like the keyboard and OSC will use
                 logical=True.
-            num: The hardware number of the switch.
-            obj: The switch object.
             debounced: Whether or not the update for the switch you're sending
                 has been debounced or not. Default is True
 
@@ -281,34 +284,13 @@ class SwitchController(object):
         """
 
         self.log.debug("Processing switch. Name: %s, state: %s, logical: %s,"
-                       "num: %s, obj: %s, debounced: %s", name, state, logical,
-                       num, obj, debounced)
-        # Find the switch name
+                       "debounced: %s", name, state, logical, debounced)
 
-        if num is not None:  # can't be 'if num:` in case the num is 0.
-            for switch in self.machine.switches:
-                if switch.number == num:
-                    name = switch.name
-                    obj = switch
-                    break
-
-        elif obj:
-            name = obj.name
-
-        elif name:
-
-            try:
-                obj = self.machine.switches[name]
-            except KeyError:
-                raise AssertionError("Cannot process switch \"" + name + "\" as "
-                                     "this is not a valid switch name.")
-
-            name = obj.name  # switches this to the name MPF wants to use
-
-        if not obj:
-            self.log.warning("Received a state change from non-configured "
-                             "switch. Number: %s, Name: %s", num, name)
-            return
+        try:
+            obj = self.machine.switches[name]
+        except KeyError:
+            raise AssertionError("Cannot process switch \"" + name + "\" as "
+                                 "this is not a valid switch name.")
 
         # We need int, but this lets it come in as boolean also
         if state:

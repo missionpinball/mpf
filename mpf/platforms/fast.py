@@ -387,20 +387,20 @@ class HardwarePlatform(Platform):
         pass
 
     def receive_nw_open(self, msg):
-        self.machine.switch_controller.process_switch(state=0,
-                                                      num=(msg, 1))
+        self.machine.switch_controller.process_switch_by_num(state=0,
+                                                             num=(msg, 1))
 
     def receive_nw_closed(self, msg):
-        self.machine.switch_controller.process_switch(state=1,
-                                                      num=(msg, 1))
+        self.machine.switch_controller.process_switch_by_num(state=1,
+                                                             num=(msg, 1))
 
     def receive_local_open(self, msg):
-        self.machine.switch_controller.process_switch(state=0,
-                                                      num=(msg, 0))
+        self.machine.switch_controller.process_switch_by_num(state=0,
+                                                             num=(msg, 0))
 
     def receive_local_closed(self, msg):
-        self.machine.switch_controller.process_switch(state=1,
-                                                      num=(msg, 0))
+        self.machine.switch_controller.process_switch_by_num(state=1,
+                                                             num=(msg, 0))
 
     def receive_sa(self, msg):
 
