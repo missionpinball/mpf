@@ -366,25 +366,16 @@ class EventManager(object):
         event = event.lower()
 
         if self.debug:
-            # Use friendly_kwargs so the logger shows a "friendly" name of the
-            # callback handler instead of the bound method object reference.
-            friendly_kwargs = dict(kwargs)
-            if 'callback' in kwargs:
-                friendly_kwargs['callback'] = \
-                    (str(kwargs['callback']).split(' '))[2]
-            if self.debug:
-                self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
-                               "Args: %s", event, ev_type, callback,
-                               friendly_kwargs)
+            self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
+                           "Args: %s", event, ev_type, callback, kwargs)
 
         self.event_queue.append((event, ev_type, callback, kwargs))
         if self.debug:
-            if self.debug:
-                self.log.debug("============== EVENTS QUEUE =============")
-                for event in list(self.event_queue):
-                    self.log.debug("%s, %s, %s, %s", event[0], event[1],
-                                   event[2], event[3])
-                self.log.debug("=========================================")
+            self.log.debug("============== EVENTS QUEUE =============")
+            for event in list(self.event_queue):
+                self.log.debug("%s, %s, %s, %s", event[0], event[1],
+                               event[2], event[3])
+            self.log.debug("=========================================")
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
@@ -392,14 +383,8 @@ class EventManager(object):
         result = None
         queue = None
         if self.debug:
-            # Show friendly callback name. See comment in post() above.
-            friendly_kwargs = dict(kwargs)
-            if 'callback' in kwargs:
-                friendly_kwargs['callback'] = \
-                    (str(kwargs['callback']).split(' '))[2]
             self.log.debug("^^^^ Processing event '%s'. Type: %s, Callback: %s,"
-                           " Args: %s", event, ev_type, callback,
-                           friendly_kwargs)
+                           " Args: %s", event, ev_type, callback, kwargs)
 
         # Now let's call the handlers one-by-one, including any kwargs
         if event in self.registered_handlers:
