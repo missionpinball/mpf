@@ -156,3 +156,27 @@ class TestP3Roc(MpfTestCase):
             {'type': 4, 'value': 24}])
         self.machine_run()
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
+
+    def test_accelerometer(self):
+        # verify init
+        self.machine.default_platform.proc.write_data.assert_has_calls([
+            call(6, 0x0000, 0x000F),
+            call(6, 0x012A, 0x0000),
+            call(6, 0x010E, 0x0000),
+            call(6, 0x012A, 0x0005),
+            call(6, 0x012B, 0x0002),
+            call(6, 0x0000, 0x1E0F)
+        ])
+
+        self.machine.accelerometers.p3_roc_accelerometer.update_acceleration = MagicMock()
+
+        # process accelerometer event
+        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
+            {'type': 8, 'value': 4096},
+            {'type': 9, 'value': 0},
+            {'type': 10, 'value': 8192}
+        ])
+        self.machine_run()
+
+        # check correct decoding of 2 complement
+        self.machine.accelerometers.p3_roc_accelerometer.update_acceleration.assert_called_once_with(1.0, 0.0, -2.0)

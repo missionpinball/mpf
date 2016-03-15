@@ -42,3 +42,7 @@ servo_controller:
 servos:
     servo1:
         number: 3
+
+accelerometers:
+    p3_roc_accelerometer:
+        number: 1
