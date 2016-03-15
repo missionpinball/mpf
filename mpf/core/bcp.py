@@ -50,7 +50,7 @@ def decode_command_string(bcp_string):
 
     return (bcp_command.path.lower(),
             dict((k.lower(), urllib.parse.unquote(v[0]))
-                for k,v in kwargs.items()))
+            for k, v in kwargs.items()))
 
 
 def encode_command_string(bcp_command, **kwargs):
@@ -151,15 +151,10 @@ class BCP(object):
                                      'trigger': self.bcp_receive_trigger,
                                      'get': self.bcp_receive_get,
                                      'set': self.bcp_receive_set,
-                                     'reset_complete':
-                                         self.bcp_receive_reset_complete,
-                                     'external_show_start':
-                                        self.external_show_start,
-                                     'external_show_stop':
-                                        self.external_show_stop,
-                                     'external_show_frame':
-                                        self.external_show_frame,
-                                    }
+                                     'reset_complete': self.bcp_receive_reset_complete,
+                                     'external_show_start': self.external_show_start,
+                                     'external_show_stop': self.external_show_stop,
+                                     'external_show_frame': self.external_show_frame}
 
         self.dmd = None
         self.filter_player_events = True
@@ -195,29 +190,7 @@ class BCP(object):
         except KeyError:
             self.log.warning("No 'Volume:' section in config file")
 
-        if ('player_variables' in self.config and
-                self.config['player_variables']):
-
-            self.send_player_vars = True
-
-            self.config['player_variables'] = (
-                Util.string_to_list(self.config['player_variables']))
-
-            if '__all__' in self.config['player_variables']:
-                self.filter_player_events = False
-
-        self._setup_player_monitor()
-
-        if ('machine_variables' in self.config and
-                self.config['machine_variables']):
-
-            self.send_machine_vars = True
-
-            self.config['machine_variables'] = (
-                Util.string_to_list(self.config['machine_variables']))
-
-            if '__all__' in self.config['machine_variables']:
-                self.filter_machine_vars = False
+        self._parse_filters_from_config()
 
         self._setup_machine_var_monitor()
 
@@ -276,12 +249,35 @@ class BCP(object):
     def _setup_dmd(self):
         dmd_platform = self.machine.default_platform
 
-        if (not self.machine.options['force_platform'] and
-                    self.machine.config['hardware']['dmd'] != 'default'):
-            dmd_platform = (self.machine.hardware_platforms[
-                                self.machine.config['hardware']['dmd']])
+        if not self.machine.options['force_platform'] and self.machine.config['hardware']['dmd'] != 'default':
+            dmd_platform = self.machine.hardware_platforms[self.machine.config['hardware']['dmd']]
 
         self.dmd = dmd_platform.configure_dmd()
+
+    def _parse_filters_from_config(self):
+        if ('player_variables' in self.config and
+                self.config['player_variables']):
+
+            self.send_player_vars = True
+
+            self.config['player_variables'] = (
+                Util.string_to_list(self.config['player_variables']))
+
+            if '__all__' in self.config['player_variables']:
+                self.filter_player_events = False
+
+        self._setup_player_monitor()
+
+        if ('machine_variables' in self.config and
+                self.config['machine_variables']):
+
+            self.send_machine_vars = True
+
+            self.config['machine_variables'] = (
+                Util.string_to_list(self.config['machine_variables']))
+
+            if '__all__' in self.config['machine_variables']:
+                self.filter_machine_vars = False
 
     def _setup_bcp_connections(self):
         if not self.machine.options['bcp']:
@@ -600,9 +596,14 @@ class BCP(object):
 
         """
         self.machine.switch_controller.add_switch_handler(switch_name=name,
-            callback=self._switch_sender_callback, state=1, return_info=True)
+                                                          callback=self._switch_sender_callback,
+                                                          state=1,
+                                                          return_info=True)
+
         self.machine.switch_controller.add_switch_handler(switch_name=name,
-            callback=self._switch_sender_callback, state=0, return_info=True)
+                                                          callback=self._switch_sender_callback,
+                                                          state=0,
+                                                          return_info=True)
 
     def enable_bcp_switches(self, tag):
         """Enables sending BCP switch commands when a switch with a certain tag
@@ -624,9 +625,11 @@ class BCP(object):
 
         """
         self.machine.switch_controller.remove_switch_handler(switch_name=name,
-            callback=self._switch_sender_callback, state=1)
+                                                             callback=self._switch_sender_callback,
+                                                             state=1)
         self.machine.switch_controller.remove_switch_handler(switch_name=name,
-            callback=self._switch_sender_callback, state=0)
+                                                             callback=self._switch_sender_callback,
+                                                             state=0)
 
     def disable_bcp_switches(self, tag):
         """Disables sending BCP switch commands when a switch with a certain tag
@@ -711,12 +714,10 @@ class BCP(object):
             return
 
         for switch in self.machine.switches.items_tagged(up_tag):
-            self.machine.switch_controller.add_switch_handler(switch.name,
-                self.increase_volume)
+            self.machine.switch_controller.add_switch_handler(switch.name, self.increase_volume)
 
         for switch in self.machine.switches.items_tagged(down_tag):
-            self.machine.switch_controller.add_switch_handler(switch.name,
-                self.decrease_volume)
+            self.machine.switch_controller.add_switch_handler(switch.name, self.decrease_volume)
 
         self.volume_control_enabled = True
 
@@ -732,12 +733,10 @@ class BCP(object):
 
         """
         for switch in self.machine.switches.items_tagged(up_tag):
-            self.machine.switch_controller.remove_switch_handler(switch.name,
-                self.increase_volume)
+            self.machine.switch_controller.remove_switch_handler(switch.name, self.increase_volume)
 
         for switch in self.machine.switches.items_tagged(down_tag):
-            self.machine.switch_controller.remove_switch_handler(switch.name,
-                self.decrease_volume)
+            self.machine.switch_controller.remove_switch_handler(switch.name, self.decrease_volume)
 
         self.volume_control_enabled = False
 
@@ -755,6 +754,7 @@ class BCP(object):
                 callback for an event which has other kwargs.
 
         """
+        del kwargs
 
         try:
             volume = int(volume)
@@ -771,8 +771,8 @@ class BCP(object):
             self.track_volumes[track] = volume
             volume_float = round(volume/float(self.machine.config['volume']
                                               ['steps']), 2)
-            kwargs = {'volume_' + track: volume_float}
-            self.send('config', **kwargs)
+            send_kwargs = {'volume_' + track: volume_float}
+            self.send('config', **send_kwargs)
         except KeyError:
             self.log.warning('Received volume for unknown track "%s"', track)
 
@@ -841,8 +841,7 @@ class BCPClientSocket(object):
         self._send_goodbye = True
 
         self.bcp_commands = {'hello': self.receive_hello,
-                             'goodbye': self.receive_goodbye,
-                            }
+                             'goodbye': self.receive_goodbye}
 
         self.setup_client_socket()
 
@@ -857,7 +856,7 @@ class BCPClientSocket(object):
                            self.connection_attempts,
                            self.config['connection_attempts'])
 
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket = socket.socket()
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
             try:
@@ -934,6 +933,18 @@ class BCPClientSocket(object):
 
         self.sending_queue.put(message)
 
+    def _receive_command(self, socket_chars):
+       if socket_chars and '\n' in socket_chars:
+            message, socket_chars = socket_chars.split('\n', 1)
+
+            self.log.debug('Received "%s"', message)
+            cmd, kwargs = decode_command_string(message)
+
+            if cmd in self.bcp_commands:
+                self.bcp_commands[cmd](**kwargs)
+            else:
+                self.receive_queue.put((cmd, kwargs))
+
     def receive_loop(self):
         """Receive loop which reads incoming data, assembles commands, and puts
         them onto the receive queue.
@@ -987,16 +998,7 @@ class BCPClientSocket(object):
                             socket_chars = socket_chars[dmd_byte_length+1:]
                             self.machine.bcp.dmd.update(dmd_data)
 
-                        if '\n' in socket_chars:
-                            message, socket_chars = socket_chars.split('\n', 1)
-
-                            self.log.debug('Received "%s"', message)
-                            cmd, kwargs = decode_command_string(message)
-
-                            if cmd in self.bcp_commands:
-                                self.bcp_commands[cmd](**kwargs)
-                            else:
-                                self.receive_queue.put((cmd, kwargs))
+                        self._receive_command(socket_chars)
 
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -1010,17 +1012,7 @@ class BCPClientSocket(object):
                 while self.socket:
 
                     socket_chars += self.get_from_socket()
-
-                    if socket_chars and '\n' in socket_chars:
-                        message, socket_chars = socket_chars.split('\n', 1)
-
-                        self.log.debug('Received "%s"', message)
-                        cmd, kwargs = decode_command_string(message)
-
-                        if cmd in self.bcp_commands:
-                            self.bcp_commands[cmd](**kwargs)
-                        else:
-                            self.receive_queue.put((cmd, kwargs))
+                    self._receive_command(socket_chars)
 
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -1028,7 +1020,6 @@ class BCPClientSocket(object):
                                                    exc_traceback)
                 msg = ''.join(line for line in lines)
                 self.machine.crash_queue.put(msg)
-
 
     def get_from_socket(self, num_bytes=8192):
         """Reads whatever data is sitting in the receiving socket, converts it
