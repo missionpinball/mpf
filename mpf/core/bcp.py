@@ -933,18 +933,6 @@ class BCPClientSocket(object):
 
         self.sending_queue.put(message)
 
-    def _receive_command(self, socket_chars):
-       if socket_chars and '\n' in socket_chars:
-            message, socket_chars = socket_chars.split('\n', 1)
-
-            self.log.debug('Received "%s"', message)
-            cmd, kwargs = decode_command_string(message)
-
-            if cmd in self.bcp_commands:
-                self.bcp_commands[cmd](**kwargs)
-            else:
-                self.receive_queue.put((cmd, kwargs))
-
     def receive_loop(self):
         """Receive loop which reads incoming data, assembles commands, and puts
         them onto the receive queue.
@@ -998,7 +986,16 @@ class BCPClientSocket(object):
                             socket_chars = socket_chars[dmd_byte_length+1:]
                             self.machine.bcp.dmd.update(dmd_data)
 
-                        self._receive_command(socket_chars)
+                        if '\n' in socket_chars:
+                            message, socket_chars = socket_chars.split('\n', 1)
+
+                            self.log.debug('Received "%s"', message)
+                            cmd, kwargs = decode_command_string(message)
+
+                            if cmd in self.bcp_commands:
+                                self.bcp_commands[cmd](**kwargs)
+                            else:
+                                self.receive_queue.put((cmd, kwargs))
 
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -1012,7 +1009,17 @@ class BCPClientSocket(object):
                 while self.socket:
 
                     socket_chars += self.get_from_socket()
-                    self._receive_command(socket_chars)
+
+                    if socket_chars and '\n' in socket_chars:
+                        message, socket_chars = socket_chars.split('\n', 1)
+
+                        self.log.debug('Received "%s"', message)
+                        cmd, kwargs = decode_command_string(message)
+
+                        if cmd in self.bcp_commands:
+                            self.bcp_commands[cmd](**kwargs)
+                        else:
+                            self.receive_queue.put((cmd, kwargs))
 
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
