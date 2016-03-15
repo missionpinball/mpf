@@ -1246,6 +1246,7 @@ class SerialCommunicator(object):
         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(
             self.serial_connection, self.serial_connection, 1), newline='\r',
             line_buffering=True)
+        self.serial_io._CHUNK_SIZE = 1
 
         self.identify_connection()
         self.platform.register_processor_connection(self.remote_processor, self)
@@ -1261,7 +1262,7 @@ class SerialCommunicator(object):
         while True:
             self.platform.log.debug("Sending 'ID:' command to port '%s'",
                                     self.serial_connection.name)
-            self.serial_connection.write('ID:\r')
+            self.serial_connection.write('ID:\r'.encode())
             msg = self.serial_io.readline()  # todo timeout
             if msg.startswith('ID:'):
                 break
@@ -1312,7 +1313,7 @@ class SerialCommunicator(object):
         firmware_ok = True
 
         for board_id in range(8):
-            self.serial_connection.write('NN:{0}\r'.format(board_id))
+            self.serial_connection.write('NN:{0}\r'.format(board_id).encode())
             msg = self.serial_io.readline()
             if msg.startswith('NN:'):
 
@@ -1380,7 +1381,7 @@ class SerialCommunicator(object):
         try:
             while self.serial_connection:
                 msg = self.send_queue.get()
-                self.serial_connection.write(msg)
+                self.serial_connection.write(msg.encode())
 
                 if debug:
                     self.platform.log.info("Sending: %s", msg)
