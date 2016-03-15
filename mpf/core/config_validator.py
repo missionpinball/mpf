@@ -1,6 +1,5 @@
 import logging
 import re
-import sys
 from copy import deepcopy
 
 import ruamel.yaml as yaml
@@ -1058,12 +1057,10 @@ class ConfigValidator(object):
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
-                log.error(
-                        'Required setting missing from config file. Run with '
-                        'verbose logging and look for the last '
-                        'ConfigProcessor entry above this line to see where '
-                        'the problem is.')
-                sys.exit()
+                raise AssertionError('Required setting missing from config file. Run with '
+                                     'verbose logging and look for the last '
+                                     'ConfigProcessor entry above this line to see where '
+                                     'the problem is.')
             else:
                 item = default
 
@@ -1085,8 +1082,7 @@ class ConfigValidator(object):
             elif not default:
                 return dict()
             else:
-                log.error('Config error. "%s" is not a dictionary', item)
-                sys.exit()
+                raise AssertionError('Config error. "{}" is not a dictionary'.format(item))
 
         elif item_type == 'int':
             try:
@@ -1286,11 +1282,9 @@ class ConfigValidator(object):
                 item = dict()
 
         else:
-            self.log.error("Invalid Type '%s' in config spec %s:%s", item_type,
-                           validation_failure_info[0][0],
-                           validation_failure_info[1])
-            sys.exit()
-
+            raise AssertionError("Invalid Type '{}' in config spec {}:{}".format(item_type,
+                                 validation_failure_info[0][0],
+                                 validation_failure_info[1]))
         return item
 
     def check_for_invalid_sections(self, spec, config,
@@ -1490,12 +1484,10 @@ class ConfigValidator(object):
             return Util.string_to_gain(item)
 
         else:
-            self.log.error("Invalid Validator '%s' in config spec %s:%s",
-                           validator,
-                           validation_failure_info[0][0],
-                           validation_failure_info[1])
-            sys.exit()
-
+            raise AssertionError("Invalid Validator '{}' in config spec {}:{}".format(
+                                 validator,
+                                 validation_failure_info[0][0],
+                                 validation_failure_info[1]))
         return item
 
     def validation_error(self, item, validation_failure_info):
