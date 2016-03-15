@@ -292,6 +292,12 @@ class SwitchController(object):
             raise AssertionError("Cannot process switch \"" + name + "\" as "
                                  "this is not a valid switch name.")
 
+        # If this update is not debounced, only proceed if this switch is
+        # configured to not be debounced.
+
+        if not debounced and obj.config['debounce']:
+            return
+
         # We need int, but this lets it come in as boolean also
         if state:
             state = 1
@@ -308,13 +314,6 @@ class SwitchController(object):
                 # NC w/o logical (i.e. hardware state was sent) means logical
                 # state is the opposite
                 state ^= 1
-
-        # If this update is not debounced, only proceed if this switch is
-        # configured to not be debounced.
-
-        if not debounced:
-            if obj.config['debounce']:
-                return
 
         # Update the hardware state since we always want this to match real hw
         obj.hw_state = hw_state
@@ -346,6 +345,29 @@ class SwitchController(object):
         # Update the switch controller's logical state for this switch
         self.set_state(name, state)
 
+        self._call_handlers(name, state)
+
+        self._cancel_timed_handlers(name, state)
+
+        for monitor in self.monitors:
+            monitor(name, state)
+
+        self._post_switch_events(name, state)
+
+    def _cancel_timed_handlers(self, name, state):
+        # now check if the opposite state is in the active timed switches list
+        # if so, remove it
+        for k, v, in list(self.active_timed_switches.items()):
+            # using items() instead of iteritems() since we might want to
+            # delete while iterating
+
+            for item in v:
+                if item['switch_action'] == str(name) + '-' + str(state ^ 1):
+                    # ^1 in above line invertes the state
+                    if self.active_timed_switches[k]:
+                        del self.active_timed_switches[k]
+
+    def _call_handlers(self, name, state):
         # Combine name & state so we can look it up
         switch_key = str(name) + '-' + str(state)
 
@@ -381,23 +403,6 @@ class SwitchController(object):
                         entry['callback'](**entry['callback_kwargs'])
 
                         # todo need to add args and kwargs support to callback
-
-        # now check if the opposite state is in the active timed switches list
-        # if so, remove it
-        for k, v, in list(self.active_timed_switches.items()):
-            # using items() instead of iteritems() since we might want to
-            # delete while iterating
-
-            for item in v:
-                if item['switch_action'] == str(name) + '-' + str(state ^ 1):
-                    # ^1 in above line invertes the state
-                    if self.active_timed_switches[k]:
-                        del self.active_timed_switches[k]
-
-        for monitor in self.monitors:
-            monitor(name, state)
-
-        self._post_switch_events(name, state)
 
     def add_monitor(self, monitor):
         if monitor not in self.monitors:
