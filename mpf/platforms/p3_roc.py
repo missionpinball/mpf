@@ -31,6 +31,9 @@ class HardwarePlatform(PROCBasePlatform):
         self.log = logging.getLogger('P3-ROC')
         self.log.debug("Configuring P3-ROC hardware.")
 
+        # validate config for p3_roc
+        self.machine.config_validator.validate_config("p3_roc", self.machine.config['p_roc'])
+
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
         # are based on what the P3-ROC hardware can and cannot do.

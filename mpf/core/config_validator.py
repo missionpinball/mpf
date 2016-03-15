@@ -468,6 +468,16 @@ osc:
     machine_port: single|int|9000
     approved_client_ips: ignore
     client_updates: list|str|None
+p_roc:
+    lamp_matrix_strobe_time: single|ms|100ms
+    watchdog_time: single|ms|1s
+    use_watchdog: single|bool|True
+    dmd_timing_cycles: list|int|None
+    dmd_update_interval: single|ms|33ms
+p3_roc:
+    lamp_matrix_strobe_time: single|ms|100ms
+    watchdog_time: single|ms|1s
+    use_watchdog: single|bool|True
 physical_dmd:
     width: single|int|128
     height: single|int|32

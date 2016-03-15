@@ -329,25 +329,9 @@ class PDBConfig(object):
         self.proc = proc
 
         # Set config defaults
-        if 'p_roc' in config and 'lamp_matrix_strobe_time' \
-                in config['p_roc']:
-            self.lamp_matrix_strobe_time = int(config['p_roc']
-                                               ['lamp_matrix_strobe_time'])
-        else:
-            self.lamp_matrix_strobe_time = 100
-
-        if 'p_roc' in config and 'watchdog_time' \
-                in config['p_roc']:
-            self.watchdog_time = int(config['p_roc']
-                                     ['watchdog_time'])
-        else:
-            self.watchdog_time = 1000
-
-        if 'p_roc' in config and 'use_watchdog' \
-                in config['p_roc']:
-            self.use_watchdog = config['p_roc']['use_watchdog']
-        else:
-            self.use_watchdog = True
+        self.lamp_matrix_strobe_time = config['p_roc']['lamp_matrix_strobe_time']
+        self.watchdog_time = config['p_roc']['watchdog_time']
+        self.use_watchdog = config['p_roc']['use_watchdog']
 
         # Initialize some lists for data collecting
         coil_bank_list = []

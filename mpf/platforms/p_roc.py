@@ -40,6 +40,9 @@ class HardwarePlatform(PROCBasePlatform):
         self.log = logging.getLogger('P-ROC')
         self.log.debug("Configuring P-ROC hardware")
 
+        # validate config for p_roc
+        self.machine.config_validator.validate_config("p_roc", self.machine.config['p_roc'])
+
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
         # are based on what the P-ROC hardware can and cannot do.
@@ -231,18 +234,14 @@ class PROCDMD(object):
 
         # dmd_timing defaults should be 250, 400, 180, 800
 
-        if 'p_roc' in self.machine.config and 'dmd_timing_cycles' in self.machine.config['p_roc']:
+        if self.machine.config['p_roc']['dmd_timing_cycles']:
 
-            dmd_timing = Util.string_to_list(
-                self.machine.config['p_roc']['dmd_timing_cycles'])
-
-            dmd_timing = [int(i) for i in dmd_timing]
+            dmd_timing = Util.string_to_list(self.machine.config['p_roc']['dmd_timing_cycles'])
 
             self.proc.dmd_update_config(high_cycles=dmd_timing)
 
-        # Update DMD 30 times per second
-        # TODO: Add DMD update interval to config
-        self.machine.clock.schedule_interval(self.tick, 1/30.0)
+        # Schedule DMD updates
+        self.machine.clock.schedule_interval(self.tick, self.machine.config['p_roc']['dmd_update_interval'] / 1000.0)
 
     def update(self, data):
         """Updates the DMD with a new frame.

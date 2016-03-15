@@ -147,8 +147,8 @@ mpf:
 # Default settings for machines. All can be overridden
 
 p_roc:
-    lamp_matrix_strobe_time: 100
-    watchdog_time: 1000
+    lamp_matrix_strobe_time: 100ms
+    watchdog_time: 1s
     use_watchdog: True
 
 fast:
