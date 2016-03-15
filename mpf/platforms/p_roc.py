@@ -116,9 +116,9 @@ class HardwarePlatform(PROCBasePlatform):
             proc_num = self.pdbconfig.get_proc_number(device_type,
                                                       str(config['number']))
             if proc_num == -1:
-                self.log.error("Coil cannot be controlled by the P-ROC. "
-                               "Ignoring.")
-                return
+                raise AssertionError("Coil %s cannot be controlled by the P-ROC. ",
+                                     str(config['number']))
+
         else:
             proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
 
