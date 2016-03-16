@@ -609,9 +609,9 @@ class ScoreReelGroup(SystemWideDevice):
 
         self.log.debug("Will add '%s' to this reel group", value)
 
-        for position in range(len(value_list)):
-            if value_list[position]:
-                for dummy_num in range(value_list[position]):
+        for position, value in enumerate(value_list):
+            if value:
+                for dummy_num in range(value):
                     self.advance_queue.append(self.reels[position])
 
         # if there's a jump in progress we don't want to step on it, so we'll
@@ -757,7 +757,7 @@ class ScoreReelGroup(SystemWideDevice):
         output_list.reverse()
 
         # replace fake position digits with `None`
-        for i in range(len(output_list)):
+        for i, dummy_output in enumerate(output_list):
             if not self.reels[i]:
                 output_list[i] = None
 

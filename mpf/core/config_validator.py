@@ -1158,8 +1158,8 @@ class ConfigValidator(object):
         # build up the actual config spec we're going to use
         this_spec = self.config_spec
         config_spec = config_spec.split(':')
-        for i in range(len(config_spec)):
-            this_spec = this_spec[config_spec[i]]
+        for config in config_spec:
+            this_spec = this_spec[config]
 
         if not isinstance(this_spec, dict):
             this_spec = dict()
@@ -1167,10 +1167,10 @@ class ConfigValidator(object):
         if base_spec:
             this_base_spec = self.config_spec
             base_spec = base_spec.split(':')
-            for i in range(len(base_spec)):
+            for spec in base_spec:
                 # need to deepcopy so the orig base spec doesn't get polluted
                 # with this widget's spec
-                this_base_spec = deepcopy(this_base_spec[base_spec[i]])
+                this_base_spec = deepcopy(this_base_spec[spec])
 
             this_base_spec.update(this_spec)
             this_spec = this_base_spec

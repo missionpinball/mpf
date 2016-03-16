@@ -77,7 +77,7 @@ class Show(Asset):
 
         # Loop over all steps in the show file
         total_step_time = 0
-        for step_num in range(len(data)):
+        for step_num, step in enumerate(data):
             actions = dict()
 
             # Note: all times are stored/calculated in seconds.
@@ -91,11 +91,11 @@ class Show(Asset):
             # since the previous step).
 
             # Make sure there is a time entry for each step in the show file.
-            if 'time' not in data[step_num]:
+            if 'time' not in step:
                 raise ValueError("Show '%s' is missing a 'time:' value in step"
                                  " %s. " % (self.name, step_num))
 
-            step_time = Util.string_to_secs(data[step_num]['time'])
+            step_time = Util.string_to_secs(step['time'])
 
             # If the first step in the show is not at the very beginning of the
             # show (time = 0), automatically add a new empty step at time 0
@@ -104,7 +104,7 @@ class Show(Asset):
 
             # Calculate step time based on whether the step uses absolute or
             # relative time
-            if str(data[step_num]['time'])[0] == '+':
+            if str(step['time'])[0] == '+':
                 # Step time relative to previous step time
                 actions['time'] = step_time
             else:
@@ -127,7 +127,7 @@ class Show(Asset):
             total_step_time += actions['time']
 
             # Now process show step actions
-            for key, value in data[step_num].items():
+            for key, value in step.items():
 
                 # key: the section of the show, like 'leds'
                 # value: dic of express settings or dic of dics w full settings
@@ -149,7 +149,7 @@ class Show(Asset):
                     actions[key] = validated_config
 
                 elif key != 'time':
-                    actions[key] = data[step_num][key]
+                    actions[key] = step[key]
 
             self.show_steps.append(actions)
 
