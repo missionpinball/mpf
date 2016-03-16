@@ -1513,7 +1513,7 @@ class BallDevice(SystemWideDevice):
     def _cancel_eject_confirmation(self):
         if self.debug:
             self.log.debug("Canceling eject confirmations")
-            self.machine.events.remove_handler(self._eject_status)
+            self.machine.clock.unschedule(self._eject_status)
         self.eject_in_progress_target = None
 
         # Remove any event watching for success
