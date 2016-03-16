@@ -734,23 +734,23 @@ class ScoreReelGroup(SystemWideDevice):
         output_list = []
 
         # convert our number to a string
-        value = str(value)
+        str_value = str(value)
 
         # pad the string with leading zeros
-        value = value.zfill(len(self.reels))
+        str_value = str_value.zfill(len(self.reels))
 
         # slice off excess characters if the value is longer than num of reels
 
         # how many digits do we have to slice?
-        trim = len(value) - len(self.reels)
+        trim = len(str_value) - len(self.reels)
         # and... slice!
-        value = value[trim:]
+        str_value = str_value[trim:]
 
         # todo if we don't do the above trim then it will just show the highest
         # digits, effective "shifting" the score by one. Might be a fun feature?
 
         # generate our list with one digit per item
-        for digit in value:
+        for digit in str_value:
             output_list.append(int(digit))
 
         # reverse the list so the least significant is first

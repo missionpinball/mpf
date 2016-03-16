@@ -86,21 +86,21 @@ class LogicBlocks(object):
 
         if 'counters' in config:
             for item in config['counters']:
-                block = Counter(self.machine, item, player,
+                counter_block = Counter(self.machine, item, player,
                                 config['counters'][item])
-                blocks_added.add(block)
+                blocks_added.add(counter_block)
 
         if 'accruals' in config:
             for item in config['accruals']:
-                block = Accrual(self.machine, item, player,
+                accrual_block = Accrual(self.machine, item, player,
                                 config['accruals'][item])
-                blocks_added.add(block)
+                blocks_added.add(accrual_block)
 
         if 'sequences' in config:
             for item in config['sequences']:
-                block = Sequence(self.machine, item, player,
+                sequence_block = Sequence(self.machine, item, player,
                                  config['sequences'][item])
-                blocks_added.add(block)
+                blocks_added.add(sequence_block)
 
         # Enable any logic blocks that do not have specific enable events
         for block in blocks_added:

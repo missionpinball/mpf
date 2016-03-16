@@ -477,11 +477,9 @@ class Util(object):
             return 0
 
         elif '.' in time_string:
-            time_string = float(''.join(i for i in time_string if not i.isalpha()))
+            return int(float(''.join(i for i in time_string if not i.isalpha())))
         else:
-            time_string = ''.join(i for i in time_string if not i.isalpha())
-
-        return int(time_string)
+            return int(''.join(i for i in time_string if not i.isalpha()))
 
     @staticmethod
     def string_to_secs(time_string):
@@ -615,9 +613,6 @@ class Util(object):
             return min(max(Util.db_to_gain(float(gain_string)), 0.0), 1.0)
 
         try:
-            gain_string = float(gain_string)
+            return min(max(float(gain_string), 0.0), 1.0)
         except (TypeError, ValueError):
             return 1.0
-
-        return min(max(gain_string, 0.0), 1.0)
-

@@ -132,11 +132,11 @@ class MpfRoundTripConstructor(RoundTripConstructor):
             digits = [int(part) for part in value.split(':')]
             digits.reverse()
             base = 1
-            value = 0
+            int_value = 0
             for digit in digits:
-                value += digit*base
+                int_value += digit*base
                 base *= 60
-            return sign*value
+            return sign*int_value
         else:
             return sign*int(value)
 
@@ -167,11 +167,11 @@ class MpfConstructor(Constructor):
             digits = [int(part) for part in value.split(':')]
             digits.reverse()
             base = 1
-            value = 0
+            int_value = 0
             for digit in digits:
-                value += digit*base
+                int_value += digit*base
                 base *= 60
-            return sign*value
+            return sign*int_value
         else:
             return sign*int(value)
 
