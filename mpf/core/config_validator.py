@@ -104,6 +104,7 @@ ball_devices:
     player_controlled_eject_event: single|str|None
     ball_search_order: single|int|100
     auto_fire_on_unexpected_ball: single|bool|True
+    target_on_unexpected_ball: single|self.machine.ball_devices[%]|None
 ball_locks:
     balls_to_lock: single|int|
     lock_devices: list|self.machine.ball_devices[%]|

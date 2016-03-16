@@ -52,10 +52,10 @@ class TestBallDeviceRouting(MpfTestCase):
 
         c_launcher.pulse.assert_called_once_with()
         self.assertEqual(0, len(trough1.eject_queue))
-        self.assertEqual(0, len(trough2.eject_queue))
+        self.assertEqual(1, len(trough2.eject_queue))
+        self.assertEqual(0, len(target1.eject_queue))
         self.assertEqual("ejecting", launcher._state)
-        self.assertEqual(target1, launcher.eject_in_progress_target)
-        self.assertEqual(1, len(target1.eject_queue))
+        self.assertEqual(trough2, launcher.eject_in_progress_target)
 
         self.machine.switch_controller.process_switch("s_launcher", 0)
         self.advance_time_and_run(1)

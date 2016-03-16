@@ -57,6 +57,9 @@ class BallDevice(SystemWideDevice):
         spring plunger) eject.
         """
 
+        self._target_on_unexpected_ball = None
+        # Device will eject to this target when it captures an unexpected ball
+
         self._source_devices = list()
         # Ball devices that have this device listed among their eject targets
 
@@ -717,6 +720,14 @@ class BallDevice(SystemWideDevice):
             raise AssertionError("When using confirm_eject_type switch you " +
                                  "to specify a confirm_eject_switch")
 
+        if "drain" in self.tags and "trough" not in self.tags and not self.find_path_to_trough():
+            raise AssertionError("No path to trough but device is tagged as drain")
+
+        if ("drain" not in self.tags and "trough" not in self.tags and
+                not self.find_path_to_target(self._target_on_unexpected_ball)):
+            raise AssertionError("BallDevice {} has no path to target_on_unexpected_ball '{}'".format(
+                self.name, self._target_on_unexpected_ball.name))
+
     def _register_handlers(self):
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
@@ -758,6 +769,11 @@ class BallDevice(SystemWideDevice):
         self._parse_config()
 
     def _initialize_phase_2(self):
+        if self.config['target_on_unexpected_ball']:
+            self._target_on_unexpected_ball = self.config['target_on_unexpected_ball']
+        else:
+            self._target_on_unexpected_ball = self.config['captures_from']
+
         # validate that configuration is valid
         self._validate_config()
 
@@ -954,13 +970,16 @@ class BallDevice(SystemWideDevice):
                 for dummy_iterator in range(unclaimed_balls):
                     self.setup_eject_chain(path)
             else:
-                target = self.config['captures_from']
+                target = self._target_on_unexpected_ball
 
-                # try to eject to pf
+                # try to eject to configured target
                 path = self.find_path_to_target(target)
 
                 if not path:
-                    raise AssertionError("Could not find path to playfield")
+                    raise AssertionError("Could not find path to playfield {}".format(target.name))
+
+                if self.debug:
+                    self.log.info("Ejecting %s unexpected balls using path %s", unclaimed_balls, path)
 
                 for dummy_iterator in range(unclaimed_balls):
                     self.setup_eject_chain(path, not self.config['auto_fire_on_unexpected_ball'])
@@ -1212,9 +1231,6 @@ class BallDevice(SystemWideDevice):
         return False
 
     def find_path_to_target(self, target):
-        if 'trough' in self.tags:
-            return False
-
         # if we can eject to target directly just do it
         if target in self.config['eject_targets']:
             path = deque()
@@ -1224,6 +1240,8 @@ class BallDevice(SystemWideDevice):
         else:
             # otherwise find any target which can
             for target_device in self.config['eject_targets']:
+                if target_device.is_playfield():
+                    continue
                 path = target_device.find_path_to_target(target)
                 if path:
                     path.appendleft(self)

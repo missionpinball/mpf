@@ -1,0 +1,127 @@
+#config_version=4
+
+playfields:
+    playfield_front:
+        label: Playfield Front
+    playfield_back:
+        label: Playfield Back
+
+switches:
+  s_trough1_front:
+    number:
+  s_trough2_front:
+    number:
+  s_trough3_front:
+    number:
+  s_trough4_front:
+    number:
+  s_trough1_back:
+    number:
+  s_trough2_back:
+    number:
+  s_trough3_back:
+    number:
+  s_trough4_back:
+    number:
+  s_launcher_lane_front:
+    number:
+  s_launcher_lane_back:
+    number:
+  s_middle_front1:
+    number:
+  s_middle_back1:
+    number:
+  s_feeder_front:
+    number:
+  s_feeder_back:
+    number:
+  s_launcher_diverter_front:
+    number:
+  s_launcher_diverter_back:
+    number:
+
+coils:
+  c_trough_eject_front:
+    number:
+  c_trough_eject_back:
+    number:
+  c_launcher_eject_front:
+    number:
+  c_launcher_eject_back:
+    number:
+  c_lock_figur_front:
+    number:
+  c_lock_figur_back:
+    number:
+  c_feeder_front:
+    number:
+  c_feeder_back:
+    number:
+
+ball_devices:
+  bd_trough_front:
+    ball_switches: s_trough1_front, s_trough2_front, s_trough3_front, s_trough4_front
+    eject_coil: c_trough_eject_front
+    eject_targets: bd_launcher_front
+    tags: trough, home, drain
+    captures_from: playfield_front
+    debug: true
+  bd_trough_back:
+    ball_switches: s_trough1_back, s_trough2_back, s_trough3_back, s_trough4_back
+    eject_coil: c_trough_eject_back
+    eject_targets: bd_launcher_back
+    tags: trough, home, drain
+    captures_from: playfield_back
+    debug: true
+  bd_launcher_front:
+    ball_switches: s_launcher_lane_front
+    confirm_eject_type: switch
+    confirm_eject_switch: s_launcher_diverter_back
+    eject_coil: c_launcher_eject_front
+    eject_targets: bd_feeder_back, bd_trough_back
+    captures_from: playfield_front
+    debug: true
+  bd_launcher_back:
+    ball_switches: s_launcher_lane_back
+    confirm_eject_type: switch
+    confirm_eject_switch: s_launcher_diverter_front
+    eject_coil: c_launcher_eject_back
+    eject_targets: bd_feeder_front, bd_trough_front
+    captures_from: playfield_back
+    debug: true
+  bd_middle_front:
+    hold_switches: s_middle_front1
+    ball_switches: s_middle_front1
+    confirm_eject_type: target
+    hold_coil: c_lock_figur_front
+    eject_targets: playfield_front
+    captures_from: playfield_back
+    target_on_unexpected_ball: playfield_front
+    debug: true
+  bd_middle_back:
+    hold_switches: s_middle_back1
+    ball_switches: s_middle_back1
+    confirm_eject_type: target
+    hold_coil: c_lock_figur_back
+    eject_targets: playfield_back
+    captures_from: playfield_front
+    target_on_unexpected_ball: playfield_back
+    debug: true
+  bd_feeder_front:
+    ball_switches: s_feeder_front
+    hold_switches: s_feeder_front
+    hold_coil: c_feeder_front
+    eject_targets: playfield_front
+    captures_from: playfield_front
+    eject_timeouts: 2s
+    tags: ball_add_live
+    debug: true
+  bd_feeder_back:
+    ball_switches: s_feeder_back
+    hold_switches: s_feeder_back
+    hold_coil: c_feeder_back
+    eject_targets: playfield_back
+    captures_from: playfield_back
+    eject_timeouts: 2s
+    tags: ball_add_live
+    debug: true
