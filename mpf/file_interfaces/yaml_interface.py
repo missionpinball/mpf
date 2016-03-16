@@ -314,7 +314,7 @@ class YamlInterface(FileInterface):
             elif halt_on_error:
                 raise ValueError("Error found in file %s" % filename)
 
-        except:
+        except Exception:
             self.log.debug("Couldn't load from file: %s", filename)
 
             if halt_on_error:

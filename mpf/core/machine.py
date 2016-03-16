@@ -272,7 +272,8 @@ class MachineController(object):
                 self.config = pickle.load(f)
                 self.machine_config = self.config
 
-            except:
+            # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
+            except Exception:
                 self.log.warning("Could not load config from cache")
                 return False
 

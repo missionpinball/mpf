@@ -57,7 +57,8 @@ class WeakMethod:
                 return False
             s = self()
             return s is not None and s == other()
-        except:
+        # no way to specify this
+        except Exception:
             return False
 
     def __repr__(self):
