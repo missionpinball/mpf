@@ -1223,6 +1223,8 @@ class BallDevice(SystemWideDevice):
 
         # otherwise find any target which can
         for target_device in self.config['eject_targets']:
+            if target_device.is_playfield():
+                continue
             path = target_device.find_path_to_trough()
             if path:
                 path.appendleft(self)

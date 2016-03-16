@@ -14,7 +14,8 @@ coils:
         number:
     c_target1:
         number:
-
+    c_drain1:
+        number:
 
 switches:
     s_trough1_1:
@@ -28,6 +29,8 @@ switches:
     s_launcher:
         number:
     s_target1:
+        number:
+    s_drain1:
         number:
     s_playfield:
         number:
@@ -52,4 +55,8 @@ ball_devices:
         ball_switches: s_trough2_1, s_trough2_2
         tags: trough, drain, home
         confirm_eject_type: target
-
+    test_drain:
+        eject_coil: c_drain1
+        ball_switches: s_drain1
+        tags: drain
+        eject_targets: playfield, test_target1, test_trough2
