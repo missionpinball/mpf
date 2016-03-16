@@ -224,10 +224,7 @@ class EventManager(object):
 
         """
 
-        if event_name.lower() in self.registered_handlers:
-            return True
-        else:
-            return False
+        return event_name.lower() in self.registered_handlers
 
     def post(self, event, callback=None, **kwargs):
         """Posts an event which causes all the registered handlers to be
@@ -547,7 +544,4 @@ class QueuedEvent(object):
             waits.
 
         """
-        if not self.num_waiting:
-            return True
-        else:
-            return False
+        return not self.num_waiting

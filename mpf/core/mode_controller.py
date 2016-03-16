@@ -394,8 +394,5 @@ class ModeController(object):
             True if the mode is active, False if it is not.
 
         """
-        if mode_name in [x.name for x in self.active_modes
-                         if x.active is True]:
-            return True
-        else:
-            return False
+        return mode_name in [x.name for x in self.active_modes
+                             if x.active is True]

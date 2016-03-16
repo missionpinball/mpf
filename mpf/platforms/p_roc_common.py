@@ -71,10 +71,7 @@ class PROCBasePlatform(Platform):
                        driver_action, driver_settings)
 
         if 'debounced' in driver_settings_overrides:
-            if driver_settings_overrides['debounced']:
-                debounced = True
-            else:
-                debounced = False
+            debounced = bool(driver_settings_overrides['debounced'])
         elif switch_obj.config['debounce']:
             debounced = True
         else:

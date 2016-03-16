@@ -47,7 +47,6 @@ class OSC(object):
             self.config['machine_ip'] = socket.gethostbyname(
                                                         socket.gethostname())
 
-
         self.OSC_clients = dict()
         self.OSC_message = False
         self.client_needs_sync = False
@@ -58,10 +57,7 @@ class OSC(object):
         self.clients_to_add = list()
 
         # If this machine uses WPC driver boards then we can drive devices by #
-        if self.machine.config['hardware']['driverboards'][0:3] == 'wpc':
-            self.wpc = True
-        else:
-            self.wpc = False
+        self.wpc = (self.machine.config['hardware']['driverboards'][0:3] == 'wpc')
 
         # register for events
         self.machine.events.add_handler('init_phase_4', self.start)

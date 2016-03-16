@@ -578,10 +578,7 @@ class MachineController(object):
         class_, module = debug_path.split('|')
 
         try:
-            if module in self.active_debugger[class_]:
-                return True
-            else:
-                return False
+            return module in self.active_debugger[class_]
         except KeyError:
             return False
 
@@ -608,10 +605,7 @@ class MachineController(object):
         try:
             change = value-prev_value
         except TypeError:
-            if prev_value != value:
-                change = True
-            else:
-                change = False
+            change = prev_value != value
 
         if change or force_events:
 
@@ -654,10 +648,7 @@ class MachineController(object):
             return None
 
     def is_machine_var(self, name):
-        if name in self.machine_vars:
-            return True
-        else:
-            return False
+        return name in self.machine_vars
 
     def create_machine_var(self, name, value=0, persist=False,
                            expire_secs=None, silent=False):

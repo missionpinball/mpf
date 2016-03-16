@@ -19,11 +19,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.saves_remaining = 0
 
     def _initialize(self):
-        if self.config['balls_to_save'] == -1:
-            self.unlimited_saves = True
-        else:
-            self.unlimited_saves = False
-
+        self.unlimited_saves = self.config['balls_to_save'] == -1
         self.source_playfield = self.config['source_playfield']
 
         # todo change the delays to timers so we can add pause and extension

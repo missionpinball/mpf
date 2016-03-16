@@ -353,10 +353,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
     def device_added_to_mode(self, mode, player):
         super().device_added_to_mode(mode, player)
 
-        if not mode.config['shot_groups'][self.name]['enable_events']:
-            enable = True
-        else:
-            enable = False
+        enable = not mode.config['shot_groups'][self.name]['enable_events']
 
         if mode.config['shot_groups'][self.name]['profile']:
             profile = mode.config['shot_groups'][self.name]['profile']
@@ -393,10 +390,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                                    'config. Adding enable_table entries to '
                                    'member shots', mode)
 
-                if not self.config['enable_events']:
-                    enable = True
-                else:
-                    enable = False
+                enable = not self.config['enable_events']
 
                 if self.config['profile']:
                     profile = self.config['profile']

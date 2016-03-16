@@ -438,13 +438,10 @@ class BallDevice(SystemWideDevice):
 
         self.num_eject_attempts += 1
 
-        if (self.config['jam_switch'] and
-                self.machine.switch_controller.is_active(
-                        self.config['jam_switch'].name,
-                        ms=self.config['entrance_count_delay'])):
-            self.jam_switch_state_during_eject = True
-        else:
-            self.jam_switch_state_during_eject = False
+        self.jam_switch_state_during_eject = (self.config['jam_switch'] and
+                                              self.machine.switch_controller.is_active(
+                                                  self.config['jam_switch'].name,
+                                                  ms=self.config['entrance_count_delay']))
 
         if not self.trigger_event or self.mechanical_eject_in_progress:
             # no trigger_event -> just eject

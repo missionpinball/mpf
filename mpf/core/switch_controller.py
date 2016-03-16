@@ -174,13 +174,7 @@ class SwitchController(object):
         if not ms:
             ms = 0
 
-        if self.switches[switch_name]['state'] == state:
-            if ms <= self.ms_since_change(switch_name):
-                return True
-            else:
-                return False
-        else:
-            return False
+        return self.switches[switch_name]['state'] == state and ms <= self.ms_since_change(switch_name)
 
     def is_active(self, switch_name, ms=None):
         """Queries whether a switch is active.

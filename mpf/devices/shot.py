@@ -370,10 +370,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         # do this before the events are posted since events could change the
         # profile
-        if not self.enable_table[mode]['settings']['block']:
-            need_to_waterfall = True
-        else:
-            need_to_waterfall = False
+        need_to_waterfall = not self.enable_table[mode]['settings']['block']
 
         # post events
         self.machine.events.post('{}_hit'.format(self.name),

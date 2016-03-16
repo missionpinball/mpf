@@ -54,10 +54,7 @@ class Snux(object):
 
     @property
     def c_side_active(self):
-        if self.drivers_holding_c_side or self.c_side_done_time > self.machine.clock.get_time():
-            return True
-        else:
-            return False
+        return self.drivers_holding_c_side or self.c_side_done_time > self.machine.clock.get_time()
 
     def null_log_handler(self, *args, **kwargs):
         pass

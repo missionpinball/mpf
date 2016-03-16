@@ -114,10 +114,7 @@ class Player(object):
         try:
             change = value-prev_value
         except TypeError:
-            if prev_value != value:
-                change = True
-            else:
-                change = False
+            change = prev_value != value
 
         if change or new_entry:
 
@@ -146,9 +143,6 @@ class Player(object):
             yield name, value
 
     def is_player_var(self, var_name):
-        if var_name in self.vars:
-            return True
-        else:
-            return False
+        return var_name in self.vars
 
     # todo method to dump the player vars to disk?

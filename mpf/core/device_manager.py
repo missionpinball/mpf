@@ -331,10 +331,7 @@ class DeviceCollection(CaseInsensitiveDict):
             True or False, depending on whether the name is a valid device or
             not.
         """
-        if name.lower() in iter(self.keys()):
-            return True
-        else:
-            return False
+        return name.lower() in iter(self.keys())
 
     def number(self, number):
         """Returns a device object based on its number."""

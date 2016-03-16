@@ -120,10 +120,7 @@ class ShotProfileManager(object):
             else:
                 profile = self.machine.shots[shot].config['profile']
 
-            if not settings['enable_events']:
-                enable = True
-            else:
-                enable = False
+            enable = not settings['enable_events']
 
             if settings['debug']:
                 self.machine.shots[shot].enable_debugging()
