@@ -7,6 +7,7 @@ class LightPlayer(ConfigPlayer):
     show_section = 'lights'
     machine_collection_name = 'lights'
 
+    # pylint: disable-msg=too-many-arguments
     def play(self, settings, mode=None, caller=None, priority=None,
              play_kwargs=None, **kwargs):
 

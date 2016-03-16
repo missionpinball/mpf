@@ -190,6 +190,7 @@ class ConfigPlayer(object):
     def additional_processing(self, config):
         return config
 
+    # pylint: disable-msg=too-many-arguments
     def play(self, settings, mode=None, caller=None, priority=None,
              play_kwargs=None):
         del mode

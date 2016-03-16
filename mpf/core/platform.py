@@ -46,6 +46,7 @@ class Platform(object):
         """
         self.next_tick_time = self.machine.clock.get_time()
 
+    # pylint: disable-msg=too-many-arguments
     def set_hw_rule(self, sw_name, sw_activity, driver_name, driver_action,
                     disable_on_release=True, drive_now=False,
                     **driver_settings_overrides):
@@ -58,9 +59,8 @@ class Platform(object):
             driver_name: String name of the driver.
             driver_action: String 'pulse', 'hold', or 'disable' which describe
                 what action will be applied to this driver
-            debounced: Boolean which specifies whether this coil should activate
-                on a debounced or non-debounced switch change state. Default is
-                False (non-debounced).
+            disable_on_release: If set to True, the driver will disable when the
+                switch is released
             drive_now: Boolean which controls whether the coil should activate
                 immediately when this rule is applied if the switch currently in
                 in the state set in this rule.
@@ -85,6 +85,7 @@ class Platform(object):
                            disable_on_release, drive_now,
                            **driver_settings_overrides)
 
+    # pylint: disable-msg=too-many-arguments
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
                       disable_on_release, drive_now,
                       **driver_settings_overrides):

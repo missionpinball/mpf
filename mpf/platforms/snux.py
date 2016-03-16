@@ -174,6 +174,7 @@ class Snux(object):
         else:
             return self.platform_configure_driver(config, device_type)
 
+    # pylint: disable-msg=too-many-arguments
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
                       disable_on_release, drive_now,
                       **driver_settings_overrides):

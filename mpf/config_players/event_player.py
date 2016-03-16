@@ -6,6 +6,7 @@ class EventPlayer(ConfigPlayer):
     show_section = 'events'
     device_collection = None
 
+    # pylint: disable-msg=too-many-arguments
     def play(self, settings, mode=None, caller=None,
              priority=None, play_kwargs=None, **kwargs):
         super().play(settings, mode, caller, priority, play_kwargs)

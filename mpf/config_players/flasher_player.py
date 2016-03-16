@@ -5,6 +5,7 @@ class FlasherPlayer(ConfigPlayer):
     config_file_section = 'flasher_player'
     show_section = 'flashers'
 
+    # pylint: disable-msg=too-many-arguments
     def play(self, settings, mode=None, caller=None, priority=None,
              play_kwargs=None, **kwargs):
 

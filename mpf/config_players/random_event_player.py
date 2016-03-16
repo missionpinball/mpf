@@ -9,6 +9,7 @@ class RandomEventPlayer(ConfigPlayer):
     show_section = 'random_events'
     device_collection = None
 
+    # pylint: disable-msg=too-many-arguments
     def play(self, settings, mode=None, caller=None, priority=None,
              play_kwargs=None, **kwargs):
 

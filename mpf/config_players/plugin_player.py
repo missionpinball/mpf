@@ -39,6 +39,7 @@ class PluginPlayer(ConfigPlayer):
         for event in event_list:
             self.machine.bcp.remove_registered_trigger_event(event)
 
+    # pylint: disable-msg=too-many-arguments
     def play(self, settings, mode=None, caller=None, priority=None,
              play_kwargs=None, **kwargs):
         """Only used during shows."""
