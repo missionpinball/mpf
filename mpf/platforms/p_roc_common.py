@@ -1,5 +1,6 @@
 import logging
 from copy import deepcopy
+import time
 from mpf.core.platform import Platform
 from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
@@ -52,6 +53,7 @@ class PROCBasePlatform(Platform):
                 self.proc.reset(1)
             except IOError:
                 print("Retrying...")
+                time.sleep(1)
 
         self.log.info("Successfully connected to P-ROC/P3-ROC")
 
