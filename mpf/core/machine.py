@@ -91,15 +91,7 @@ class MachineController(object):
         self.hardware_platforms = dict()
         self.default_platform = None
 
-        if not self.options['force_platform']:
-            for section, platform in self.config['hardware'].items():
-                if platform.lower() != 'default' and section != 'driverboards':
-                    self.add_platform(platform)
-            self.set_default_platform(self.config['hardware']['platform'])
-
-        else:
-            self.add_platform(self.options['force_platform'])
-            self.set_default_platform(self.options['force_platform'])
+        self._load_hardware_platforms()
 
         # Do this here so there's a credit_string var even if they're not using
         # the credits mode
@@ -119,9 +111,7 @@ class MachineController(object):
         for platform in list(self.hardware_platforms.values()):
             platform.initialize()
 
-        self.validate_machine_config_section('machine')
-        self.validate_machine_config_section('hardware')
-        self.validate_machine_config_section('game')
+        self._validate_config()
 
         self._register_config_players()
         self._register_system_events()
@@ -150,10 +140,12 @@ class MachineController(object):
         # used by the config validator
         return self.machine_config['mpf']
 
+    def _validate_config(self):
+        self.validate_machine_config_section('machine')
+        self.validate_machine_config_section('hardware')
+        self.validate_machine_config_section('game')
+
     def validate_machine_config_section(self, section):
-
-        # todo change this to use the normal process_config2 meth
-
         if section not in ConfigValidator.config_spec:
             return
 
@@ -258,7 +250,7 @@ class MachineController(object):
             self.log.info("Machine config file #%s: %s", num+1, config_file)
 
             self.config = Util.dict_merge(self.config,
-                ConfigProcessor.load_config_file(config_file))
+                                          ConfigProcessor.load_config_file(config_file))
             self.machine_config = self.config
 
         if self.options['create_config_cache']:
@@ -349,6 +341,17 @@ class MachineController(object):
             self.log.debug("Loading '%s' core module", module)
             m = Util.string_to_class(module)(self)
             setattr(self, name, m)
+
+    def _load_hardware_platforms(self):
+        if not self.options['force_platform']:
+            for section, platform in self.config['hardware'].items():
+                if platform.lower() != 'default' and section != 'driverboards':
+                    self.add_platform(platform)
+            self.set_default_platform(self.config['hardware']['platform'])
+
+        else:
+            self.add_platform(self.options['force_platform'])
+            self.set_default_platform(self.options['force_platform'])
 
     def _load_plugins(self):
         self.log.info("Loading plugins...")
