@@ -12,6 +12,8 @@ from queue import Queue
 import copy
 import json
 
+from coverage import bytecode
+
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
@@ -1041,11 +1043,11 @@ class BCPClientSocket(object):
         """
         try:
             socket_bytes = self.socket.recv(num_bytes)
-        except:
+        except IOError:
             self.socket = None
-            socket_bytes = None
+            socket_bytes = bytearray()
 
-        return socket_bytes.decode('utf-8')
+        return socket_bytes.decode()
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
