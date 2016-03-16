@@ -445,7 +445,7 @@ class V4Migrator(VersionMigrator):
                 actions = [actions]
             this_events_shows = CommentedMap()
 
-            for i, action in enumerate(actions):
+            for dummy_i, action in enumerate(actions):
 
                 if 'show' in action:
                     show_name = action.pop('show')
@@ -469,16 +469,16 @@ class V4Migrator(VersionMigrator):
         if 'shot_profiles' not in self.fc:
             return
 
-        for name, settings in self.fc['shot_profiles'].items():
+        for settings in self.fc['shot_profiles'].values():
             if 'states' in settings:
-                for i, state_settings in enumerate(settings['states']):
+                for dummy_i, state_settings in enumerate(settings['states']):
                     if 'loops' in state_settings and state_settings['loops']:
                         state_settings['loops'] = -1
                     YamlInterface.rename_key('light_script', 'show',
                                              state_settings)
 
     def _add_to_show_player(self, event, show_dict):
-        for show, settings in show_dict.items():
+        for settings in show_dict.values():
             if 'loops' in settings:
                 if settings['loops']:
                     settings['loops'] = -1
@@ -673,10 +673,9 @@ class V4Migrator(VersionMigrator):
         except KeyError:
             pass
 
-        if ('anchor_y' in element and not 'y' in element and
+        if ('anchor_y' in element and 'y' not in element and
                 element['anchor_y'] != 'middle'):
             element['y'] = element['anchor_y']
-
 
         if 'x' in element:
             old_x = element['x']
@@ -725,7 +724,7 @@ class V4Migrator(VersionMigrator):
         except KeyError:
             pass
 
-        if ('anchor_x' in element and not 'x' in element and
+        if ('anchor_x' in element and 'x' not in element and
                 element['anchor_x'] != 'center'):
             element['x'] = element['anchor_x']
 
@@ -828,7 +827,7 @@ class V4Migrator(VersionMigrator):
 
         YamlInterface.rename_key('light_scripts', 'shows', self.fc, self.log)
 
-        for show_name, show_contents in self.fc['shows'].items():
+        for show_contents in self.fc['shows'].values():
             self._convert_tocks_to_time(show_contents)
 
             for step in show_contents:
@@ -980,7 +979,7 @@ class V4Migrator(VersionMigrator):
 
     def _remove_tags(self, dic):
         found = False
-        for k, v in dic.items():
+        for v in dic.values():
             if isinstance(v, dict):
                 for k1 in v.keys():
                     if k1.startswith('tag|'):
