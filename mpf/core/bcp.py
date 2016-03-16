@@ -12,8 +12,6 @@ from queue import Queue
 import copy
 import json
 
-from coverage import bytecode
-
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
