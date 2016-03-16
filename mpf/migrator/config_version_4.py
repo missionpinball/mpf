@@ -389,8 +389,8 @@ class V4Migrator(VersionMigrator):
             if 'sounds' in assets:
                 self.log.debug("Converting assets:sounds:")
 
-                for asset, settings in assets['sounds'].items():
-                    pass  # todo
+                # for asset, settings in assets['sounds'].items():
+                #     pass  # todo
 
     def _migrate_animation_assets(self):
         if 'animations' in self.fc:
