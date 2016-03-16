@@ -23,10 +23,26 @@ class HardwarePlatform(VirtualPlatform):
         self.machine.events.add_handler('machine_reset_phase_1',
                                         self._initialize2)
 
+    def set_target(self, source, target, **kwargs):
+        del kwargs
+        if not target.is_playfield():
+            driver = None
+            if source.config['eject_coil']:
+                driver = source.config['eject_coil'].hw_driver
+            elif source.config['hold_coil']:
+                driver = source.config['hold_coil'].hw_driver
+            if driver:
+                driver.set_target_device(target)
+
     def _initialize2(self):
         for device in self.machine.ball_devices:
             if device.is_playfield():
                 continue
+
+            # we assume that the device always reaches its target. diverters are ignored
+            self.machine.events.add_handler('balldevice_{}_ball_eject_attempt'.format(device.name),
+                                            self.set_target)
+
             if device.config['eject_coil']:
                 device.config['eject_coil'].hw_driver.register_ball_switches(
                         device.config['ball_switches'])
