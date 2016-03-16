@@ -32,6 +32,7 @@ class Accelerometer(SystemWideDevice):
     def _calculate_vector_length(self, x, y, z):
         return math.sqrt(x * x + y * y + z * z)
 
+    # pylint: disable-msg=too-many-arguments
     def _calculate_angle(self, x1, y1, z1, x2, y2, z2):
         dividor = (self._calculate_vector_length(x1, y1, z1) *
                    self._calculate_vector_length(x2, y2, z2))

@@ -424,7 +424,7 @@ class EventManager(object):
 
                     break
 
-                elif ev_type == 'relay' and type(result) is dict:
+                elif ev_type == 'relay' and isinstance(result, dict):
                     kwargs.update(result)
 
         if self.debug:

@@ -111,7 +111,7 @@ class Mode(object):
             this_section = self.config.get(section, None)
 
             if this_section:
-                if type(this_section) is dict:
+                if isinstance(this_section, dict):
                     for device, settings in this_section.items():
                         self.config[section][device] = (
                             self.machine.config_validator.validate_config(
@@ -165,7 +165,7 @@ class Mode(object):
             self._mode_start_wait_queue = kwargs['queue']
             self._mode_start_wait_queue.wait()
 
-        if type(priority) is int:
+        if isinstance(priority, int):
             self.priority = priority
         else:
             self.priority = self.config['mode']['priority']
@@ -545,7 +545,7 @@ class ModeTimer(object):
             self.log.debug("--------------------------------------")
 
         if self.config['control_events']:
-            if type(self.config['control_events']) is dict:
+            if isinstance(self.config['control_events'], dict):
                 self.config['control_events'] = [self.config['control_events']]
         else:
             self.config['control_events'] = list()

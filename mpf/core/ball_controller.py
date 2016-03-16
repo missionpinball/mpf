@@ -130,7 +130,7 @@ class BallController(object):
         self.log.debug("Checking to see if all the balls are in devices tagged"
                        " with '%s'", target)
 
-        if type(target) is str:
+        if isinstance(target, str):
             target = Util.string_to_list(target)
 
         count = 0

@@ -41,7 +41,7 @@ class Gi(SystemWideDevice):
                 brightness level. This is not implemented.
         """
         del kwargs
-        if type(brightness) is list:
+        if isinstance(brightness, list):
             brightness = brightness[0]
 
         if self.registered_handlers:

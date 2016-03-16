@@ -41,6 +41,8 @@ class Show(Asset):
 
         self.running = set()
         self.name = name
+        self.total_steps = None
+        self.show_steps = None
 
         if data:
             self.do_load_show(data=data)
@@ -168,12 +170,12 @@ class Show(Asset):
         if not path:
             path = list()
 
-        if type(data) is dict:
+        if isinstance(data, dict):
             for k, v in data.items():
                 self._check_token(path, k, 'key')
                 self._walk_show(v, path + [k])
 
-        elif type(data) is list:
+        elif isinstance(data, list):
             for i in data:
                 self._check_token(path, i, 'key')
                 if list_index is None:
@@ -190,12 +192,12 @@ class Show(Asset):
         if data == 'dummy_default!#$':
             data = self.show_steps
 
-        if type(data) is dict:
+        if isinstance(data, dict):
             new_dict = dict()
             for k, v in data.items():
                 new_dict[k] = self.get_show_steps(v)
             return new_dict
-        elif type(data) is list:
+        elif isinstance(data, list):
             new_list = list()
             for i in data:
                 new_list.append(self.get_show_steps(i))
@@ -369,8 +371,7 @@ class Show(Asset):
                                  reset=bool(reset),
                                  mode=mode,
                                  manual_advance=manual_advance,
-                                 play_kwargs=kwargs)
-                                 )
+                                 play_kwargs=kwargs))
 
         return this_show
 

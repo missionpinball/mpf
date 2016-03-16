@@ -316,10 +316,7 @@ class Shot(ModeDevice, SystemWideDevice):
             self.log.debug('Control events found in %s config. Updating'
                            ' enable_table', mode)
 
-        if not mode.config['shots'][self.name]['enable_events']:
-            enable = True
-        else:
-            enable = False
+        enable = not mode.config['shots'][self.name]['enable_events']
 
         self.update_enable_table(enable=enable,
                                  mode=mode)
@@ -805,7 +802,7 @@ class Shot(ModeDevice, SystemWideDevice):
             self.log.debug("Received request to add this shot to the %s group",
                            group)
 
-        if type(group) is str:
+        if isinstance(group, str):
 
             try:
                 group = self.machine.shot_groups[group]
@@ -822,7 +819,7 @@ class Shot(ModeDevice, SystemWideDevice):
             self.log.debug("Received request to remove this shot from the %s "
                            "group", group)
 
-        if type(group) is str:
+        if isinstance(group, str):
 
             try:
                 group = self.machine.shot_groups[group]

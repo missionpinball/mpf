@@ -40,7 +40,7 @@ class HardwarePlatform(Platform):
         if not self.opc_client:
             self._setup_opc_client()
 
-        if type(config['number']) is str and '-' in config['number']:
+        if isinstance(config['number'], str) and '-' in config['number']:
             channel, led = config['number'].split('-')
         else:
             led = config['number']

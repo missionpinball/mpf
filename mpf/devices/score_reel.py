@@ -790,12 +790,12 @@ class ScoreReelGroup(SystemWideDevice):
         output = ""
 
         for item in reel_list:
-            if type(item) is int:
+            if isinstance(item, int):
                 if item == -999:  # if any reels are unknown, then our int
                     return -999  # is unkown too.
                 else:
                     output += str(item)
-            elif type(item) is str and item.isdigit():
+            elif isinstance(item, str) and item.isdigit():
                 # Just in case we have an number that's a string
                 output += str(int(item))  # ensure no leading zeros
             else:

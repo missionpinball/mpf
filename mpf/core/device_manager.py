@@ -77,7 +77,7 @@ class DeviceManager(object):
                 raise AssertionError("Device '{}' has an empty config."
                                      .format(device_name))
 
-            elif type(config[device_name]) is not dict:
+            elif not isinstance(config[device_name], dict):
                 raise AssertionError("Device '{}' does not have a valid config."
                                      .format(device_name))
 

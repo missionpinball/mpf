@@ -1061,7 +1061,7 @@ class ConfigValidator(object):
 
         if '|' in spec:
             item_type, default = spec.split('|')
-            if type(default) is str and default.lower() == 'none':
+            if isinstance(default, str) and default.lower() == 'none':
                 default = None
         else:
             item_type = spec
@@ -1079,16 +1079,16 @@ class ConfigValidator(object):
             return Util.string_to_list(item)
 
         if item_type == 'list_of_dicts':
-            if type(item) is list:
+            if isinstance(item, list):
                 return item
-            elif type(item) is dict:
+            elif isinstance(item, dict):
                 return [item]
 
         elif item_type == 'set':
             return set(Util.string_to_list(item))
 
         elif item_type == 'dict':
-            if type(item) is dict or type(item) is CaseInsensitiveDict:
+            if isinstance(item, dict):
                 return item
             elif not default:
                 return dict()
@@ -1115,7 +1115,7 @@ class ConfigValidator(object):
                 return None
 
         elif item_type in ('boolean', 'bool'):
-            if type(item) is bool:
+            if isinstance(item, bool):
                 return item
             else:
                 return str(item).lower() in ('yes', 'true')
@@ -1187,7 +1187,7 @@ class ConfigValidator(object):
 
             elif k in source:  # validate the entry that exists
 
-                if type(this_spec[k]) is dict:
+                if isinstance(this_spec[k], dict):
                     # This means we're looking for a list of dicts
 
                     final_list = list()
@@ -1213,7 +1213,7 @@ class ConfigValidator(object):
 
             elif add_missing_keys:  # create the default entry
 
-                if type(this_spec[k]) is dict:
+                if isinstance(this_spec[k], dict):
                     processed_config[k] = list()
 
                 else:
@@ -1302,7 +1302,7 @@ class ConfigValidator(object):
                                    validation_failure_info):
 
         for k in config:
-            if type(k) is not dict:
+            if not isinstance(k, dict):
                 if k not in spec and k[0] != '_':
 
                     path_list = validation_failure_info[0].split(':')
@@ -1359,7 +1359,7 @@ class ConfigValidator(object):
             item = return_dict
 
         elif '%' in validator:
-            if type(item) is str:
+            if isinstance(item, str):
 
                 try:
                     item = eval(validator.replace('%', "'" + item + "'"))
@@ -1395,7 +1395,7 @@ class ConfigValidator(object):
 
         elif validator == 'num':
             # used for int or float, but does not convert one to the other
-            if type(item) not in (int, float):
+            if not isinstance(item, (int, float)):
                 try:
                     if '.' in item:
                         item = float(item)
@@ -1405,7 +1405,7 @@ class ConfigValidator(object):
                     pass
 
         elif validator in ('bool', 'boolean'):
-            if type(item) is str:
+            if isinstance(item, str):
                 if item.lower() in ['false', 'f', 'no', 'disable', 'off']:
                     item = False
 
@@ -1473,7 +1473,7 @@ class ConfigValidator(object):
                 return int(color[0]), int(color[1]), int(color[2])
 
         elif validator == 'bool_int':
-            if type(item) is str:
+            if isinstance(item, str):
                 if item.lower() in ('yes', 'true'):
                     return 1
                 else:
@@ -1508,4 +1508,3 @@ class ConfigValidator(object):
                         validation_failure_info[0][1],
                         validation_failure_info[1],
                         item))
-

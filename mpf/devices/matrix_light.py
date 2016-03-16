@@ -118,7 +118,7 @@ class MatrixLight(SystemWideDevice):
             return
 
         # todo add brightness 0 as the same as on(0)
-        if type(brightness) is list:
+        if isinstance(brightness, list):
             brightness = brightness[0]
 
         current_time = self.machine.clock.get_time()

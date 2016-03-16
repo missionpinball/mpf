@@ -58,7 +58,7 @@ class Migrator(object):
         for root, _, files in os.walk(self.machine_path):
             for file in files:
                 if (os.path.splitext(file)[1].lower() == EXTENSION and
-                            BACKUP_FOLDER_NAME not in root):
+                        BACKUP_FOLDER_NAME not in root):
                     self.log.debug("Found file: %s", os.path.join(root, file))
                     self.file_list.append(os.path.join(root, file))
 
@@ -93,7 +93,7 @@ class Migrator(object):
         # ignore everything that doesn't have the target extension
         for item in contents:
             if (os.path.isfile(os.path.join(root_folder, item)) and
-                        os.path.splitext(item)[1].lower() != EXTENSION):
+                    os.path.splitext(item)[1].lower() != EXTENSION):
                 return_list.append(item)
 
         return return_list
@@ -106,7 +106,7 @@ class Migrator(object):
         for file in self.file_list:
             file_content = FileManager.load(file, round_trip=True)
 
-            if type(file_content) == CommentedMap:
+            if isinstance(file_content, CommentedMap):
                 migrated_content = self.migrator.migrate_file(file,
                                                               file_content)
                 if migrated_content:
@@ -216,12 +216,12 @@ class VersionMigrator(object):
         cls.initialized = True
 
     def migrate(self):
-        if type(self.fc) == CommentedMap:
+        if isinstance(self.fc, CommentedMap):
             if not self._migrate_config_file():
                 return False
             self.log.debug("----------------------------------------")
             return self.fc
-        elif type(self.fc) == CommentedSeq:
+        elif isinstance(self.fc, CommentedSeq):
             if self.is_show_file():
                 self._migrate_show_file()
                 self.log.debug("----------------------------------------")
@@ -366,7 +366,7 @@ class VersionMigrator(object):
         for i, val in enumerate(key):
             if val == '__list__':
                 key[i] = 0
-            elif type(val) is int:
+            elif isinstance(val, int):
                 key[i] += 1
 
         return key

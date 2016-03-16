@@ -61,12 +61,12 @@ class ScoreController(object):
             if event_name in settings:
                 for var_name, value in settings[event_name].items():
 
-                    if (type(value) is int and
+                    if (isinstance(value, int) and
                             entry_mode == mode and
                             var_name not in blocked_variables):
                         self.add(value, var_name, mode)
 
-                    elif type(value) is str:
+                    elif isinstance(value, str):
                         value, block = value.split('|')
                         if entry_mode == mode and var_name not in blocked_variables:
                             self.add(value, var_name, mode)

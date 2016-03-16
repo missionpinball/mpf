@@ -192,6 +192,7 @@ _default_time = time.perf_counter
 '''A clock with the highest available resolution. '''
 
 try:
+    # pylint: disable-msg=wrong-import-position
     import ctypes
     if platform in ('win32', 'cygwin'):
         # Win32 Sleep function is only 10-millisecond resolution, so
@@ -215,6 +216,7 @@ try:
         if platform == 'darwin':
             _libc = ctypes.CDLL('libc.dylib')
         else:
+            # pylint: disable-msg=wrong-import-position
             from ctypes.util import find_library
             _libc = ctypes.CDLL(find_library('c'), use_errno=True)
 

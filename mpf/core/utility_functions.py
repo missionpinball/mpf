@@ -22,13 +22,13 @@ class Util(object):
         """
         if not source_dict:
             return dict()
-        elif type(source_dict) in (dict, OrderedDict):
+        elif isinstance(source_dict, dict):
             for k in list(source_dict.keys()):
-                if type(source_dict[k]) is dict:
+                if isinstance(source_dict[k], dict):
                     source_dict[k] = Util.keys_to_lower(source_dict[k])
 
             return dict((str(k).lower(), v) for k, v in source_dict.items())
-        elif type(source_dict) is list:
+        elif isinstance(source_dict, list):
             for num, item in enumerate(source_dict):
                 source_dict[num] = Util.keys_to_lower(item)
             return source_dict
@@ -46,16 +46,16 @@ class Util(object):
             spaces in the string.
 
         """
-        if type(string) is str:
+        if isinstance(string, str):
             # Convert commas to spaces, then split the string into a list
             new_list = string.replace(',', ' ').split()
             # Look for string values of "None" and convert them to Nonetypes.
             for index, value in enumerate(new_list):
-                if type(value) is str and value.lower() == 'none':
+                if isinstance(value, str) and value.lower() == 'none':
                     new_list[index] = None
             return new_list
 
-        elif type(string) is list:
+        elif isinstance(string, list):
             return string  # If it's already a list, do nothing
 
         elif string is None:
@@ -94,7 +94,7 @@ class Util(object):
         """ Converts an incoming string or list into a list of lists. """
         final_list = list()
 
-        if type(incoming_string) is str:
+        if isinstance(incoming_string, str):
             final_list = [Util.string_to_list(incoming_string)]
 
         else:
@@ -225,13 +225,13 @@ class Util(object):
 
         return_dict = dict()
 
-        if type(config) is dict:
+        if isinstance(config, dict):
             return config
-        elif type(config) is str:
+        elif isinstance(config, str):
             config = Util.string_to_list(config)
 
         # 'if' instead of 'elif' to pick up just-converted str
-        if type(config) is list:
+        if isinstance(config, list):
             for event in config:
                 return_dict[event] = 0
 
