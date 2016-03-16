@@ -1,8 +1,8 @@
 """Contains the Util class which includes many utility functions"""
-
 from copy import deepcopy
 import re
 from functools import reduce
+from ruamel.yaml.compat import ordereddict
 
 
 class Util(object):
@@ -23,7 +23,11 @@ class Util(object):
             return dict()
         elif isinstance(source_dict, dict):
             for k in list(source_dict.keys()):
-                if isinstance(source_dict[k], dict):
+                if isinstance(source_dict[k], ordereddict):
+                    # Dont know why but code will break with this specific dict
+                    # TODO: fix this!
+                    pass
+                elif isinstance(source_dict[k], dict):
                     source_dict[k] = Util.keys_to_lower(source_dict[k])
 
             return dict((str(k).lower(), v) for k, v in source_dict.items())
