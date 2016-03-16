@@ -709,16 +709,16 @@ class HardwarePlatform(Platform):
                              "'timed_hold', or 'pulse'" % driver_action)
 
         self.hw_rules[driver_obj] = {'mode': mode,
-                               'param1': param1,
-                               'param2': param2,
-                               'param3': param3,
-                               'param4': param4,
-                               'param5': param5,
-                               'switch': switch_obj.number}
+                                     'param1': param1,
+                                     'param2': param2,
+                                     'param3': param3,
+                                     'param4': param4,
+                                     'param5': param5,
+                                     'switch': switch_obj.number}
 
         cmd = (driver_settings['config_cmd'] +
                driver_obj.number[0] + ',' +
-               control  + ',' +
+               control + ',' +
                switch_obj.number[0] + ',' +
                mode + ',' +
                param1 + ',' +
@@ -928,9 +928,9 @@ class FASTDriver(DriverPlatformInterface):
             else:
                 raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
         elif pulse_power32 is not None:
-            return_dict['pwm32']  = Util.pwm32_to_hex_string(pulse_power32)
+            return_dict['pwm32'] = Util.pwm32_to_hex_string(pulse_power32)
         elif pulse_power is not None:
-            return_dict['pwm1']  = Util.pwm8_to_hex_string(pulse_power)
+            return_dict['pwm1'] = Util.pwm8_to_hex_string(pulse_power)
 
         if hold_pwm_mask:
             hold_pwm_mask = str(hold_pwm_mask)
@@ -976,14 +976,13 @@ class FASTDriver(DriverPlatformInterface):
             if (self.driver_settings['pwm1'] == 'ff' and
                     self.driver_settings['pwm2'] == 'ff' and
                     not ('allow_enable' in self.driver_settings and
-                    self.driver_settings['allow_enable'])):
+                         self.driver_settings['allow_enable'])):
 
                 raise AssertionError("Received a command to enable this coil "
-                                 "without pwm, but 'allow_enable' has not been"
-                                 "set to True in this coil's configuration.")
+                                     "without pwm, but 'allow_enable' has not been"
+                                     "set to True in this coil's configuration.")
 
             else:
-
                 cmd = (self.driver_settings['config_cmd'] +
                        self.driver_settings['number'] +
                        ',C1,00,18,' +
@@ -998,7 +997,7 @@ class FASTDriver(DriverPlatformInterface):
         self.send(cmd)
         # todo change hold to pulse with re-ups
 
-        #self.check_auto()
+        # self.check_auto()
 
     def pulse(self, milliseconds=None):
         """Pulses this driver. """
@@ -1207,6 +1206,7 @@ class FASTDMD(object):
 
 class SerialCommunicator(object):
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, platform, port, baud, send_queue, receive_queue):
         self.machine = machine
         self.platform = platform
@@ -1286,14 +1286,14 @@ class SerialCommunicator(object):
 
         if self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
-            #latest_version = DMD_LATEST_FW
+            # latest_version = DMD_LATEST_FW
             self.dmd = True
         elif self.remote_processor == 'NET':
             min_version = NET_MIN_FW
-            #latest_version = NET_LATEST_FW
+            # latest_version = NET_LATEST_FW
         else:
             min_version = RGB_MIN_FW
-            #latest_version = RGB_LATEST_FW
+            # latest_version = RGB_LATEST_FW
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
             raise AssertionError('Firmware version mismatch. MPF requires'
@@ -1331,14 +1331,12 @@ class SerialCommunicator(object):
                 if model:
                     self.platform.log.info('Fast IO Board {0}: Model: {1}, '
                                            'Firmware: {2}, Switches: {3}, '
-                                           'Drivers: {4}'.format(node_id, model,
-                                           fw, int(sw, 16), int(dr, 16)))
+                                           'Drivers: {4}'.format(node_id, model, fw, int(sw, 16), int(dr, 16)))
 
                     if StrictVersion(IO_MIN_FW) > str(fw):
                         self.platform.log.critical("Firmware version mismatch. MPF "
                                                    "requires the IO boards to be firmware {0}, but "
-                                                   "your Board {1} ({2}) is v{3}".format(IO_MIN_FW,
-                                                                                         node_id, model, fw))
+                                                   "your Board {1} ({2}) is v{3}".format(IO_MIN_FW, node_id, model, fw))
                         firmware_ok = False
 
         if not firmware_ok:

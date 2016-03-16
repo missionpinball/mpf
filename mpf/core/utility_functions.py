@@ -1,7 +1,6 @@
 """Contains the Util class which includes many utility functions"""
 
 from copy import deepcopy
-from collections import OrderedDict
 import re
 from functools import reduce
 
