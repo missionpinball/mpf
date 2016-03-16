@@ -229,7 +229,7 @@ class PROCBasePlatform(Platform):
                                       'reloadActive': False}, [])
 
         for entry in list(self.hw_switch_rules.keys()):  # slice for copy
-            if entry.startswith(self.machine.switches.number(sw_num).name):
+            if entry.startswith(sw_name):
 
                 # disable any drivers from this rule which are active now
                 # todo make this an option?

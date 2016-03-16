@@ -55,7 +55,16 @@ class TestP3Roc(MpfTestCase):
         p_roc_common.pinproc.normalize_machine_type = MagicMock(return_value=7)
         p_roc_common.pinproc.decode = None  # should not be called and therefore fail
         p_roc_common.pinproc.driver_state_pulse = MagicMock(
-            return_value="driver_state_pulse")
+            return_value={'driverNum': 8,
+                     'outputDriveTime': 0,
+                     'polarity': True,
+                     'state': False,
+                     'waitForFirstTimeSlot': False,
+                     'timeslots': 0,
+                     'patterOnTime': 0,
+                     'patterOffTime': 0,
+                     'patterEnable': False,
+                     'futureEnable': False})
 
         pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         super().setUp()
@@ -80,11 +89,28 @@ class TestP3Roc(MpfTestCase):
             number=number, cycle_seconds=0, now=True, schedule=0xffffffff)
 
     def test_hw_rule_pulse(self):
+        self.machine.coils.c_slingshot_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.autofires.ac_slingshot_test.enable()
         self.machine.autofires.ac_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
             40, 'closed_nondebounced',
             {'notifyHost': False, 'reloadActive': False},
-            ["driver_state_pulse"], False)
+            [{'patterEnable': False,
+              'patterOnTime': 0,
+              'timeslots': 0,
+              'futureEnable': False,
+              'state': False,
+              'patterOffTime': 0,
+              'outputDriveTime': 0,
+              'driverNum': 8,
+              'polarity': True,
+              'waitForFirstTimeSlot': False}],
+            False)
+
+        p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 10)
+
+        # test disable
+        self.machine.autofires.ac_slingshot_test.disable()
+        self.machine.autofires.ac_slingshot_test.platform.proc.driver_disable.assert_called_with(8)
 
     def test_servo_via_i2c(self):
         # assert on init
