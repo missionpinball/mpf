@@ -1010,6 +1010,26 @@ class ConfigValidator(object):
         self.log = logging.getLogger('ConfigProcessor')
         self.system_config = self.machine.get_system_config()
 
+        self.validator_list = {
+            "str": self._validate_type_str,
+            "lstr": self._validate_type_lstr,
+            "float": self._validate_type_float,
+            "int": self._validate_type_int,
+            "num": self._validate_type_num,
+            "bool": self._validate_type_bool,
+            "boolean": self._validate_type_bool,
+            "ms": self._validate_type_ms,
+            "secs": self._validate_type_secs,
+            "list": Util.string_to_list,
+            "int_from_hex": Util.hex_string_to_int,
+            "dict": self._validate_type_dict,
+            "kivycolor": self._validate_type_kivycolor,
+            "color": self._validate_type_color,
+            "bool_int": self._validate_type_bool_int,
+            "pow2": self._validate_type_pow2,
+            "gain": Util.string_to_gain,
+        }
+
     @classmethod
     def load_config_spec(cls, config_spec=None):
         if not config_spec:
@@ -1111,7 +1131,7 @@ class ConfigValidator(object):
         return processed_config
 
     def validate_config_item(self, spec, validation_failure_info,
-                              item='item not in config!@#', ):
+                             item='item not in config!@#', ):
 
         try:
             item_type, validation, default = spec.split('|')
@@ -1210,6 +1230,128 @@ class ConfigValidator(object):
                                              'setting "' + path_string + '", but this is not a valid '
                                                                          'setting name.')
 
+    def _validate_type_str(self, item):
+        if item is not None:
+            return str(item)
+        else:
+            return None
+
+    def _validate_type_lstr(self, item):
+        if item is not None:
+            return str(item).lower()
+        else:
+            return None
+
+    def _validate_type_float(self, item):
+        try:
+            return float(item)
+        except (TypeError, ValueError):
+            # TODO error
+            return item
+
+    def _validate_type_int(self, item):
+        try:
+            return int(item)
+        except (TypeError, ValueError):
+            # TODO error
+            return item
+
+    def _validate_type_num(self, item):
+        # used for int or float, but does not convert one to the other
+        if not isinstance(item, (int, float)):
+            try:
+                if '.' in item:
+                    return float(item)
+                else:
+                    return int(item)
+            except (TypeError, ValueError):
+                # TODO: error
+                return item
+        else:
+            return item
+
+    def _validate_type_bool(self, item):
+        if isinstance(item, str):
+            return item.lower() not in ['false', 'f', 'no', 'disable', 'off']
+        elif not item:
+            return False
+        else:
+            return True
+
+    def _validate_type_ms(self, item):
+        if item is not None:
+            return Util.string_to_ms(item)
+        else:
+            return None
+
+    def _validate_type_secs(self, item):
+        if item is not None:
+            return Util.string_to_secs(item)
+        else:
+            return None
+
+    def _validate_type_dict(self, item):
+        return item
+
+    def _validate_type_kivycolor(self, item):
+        # Validate colors that will be used by Kivy. The result is a 4-item
+        # list, RGBA, with individual values from 0.0 - 1.0
+        if not item:
+            return None
+
+        color_string = str(item).lower()
+
+        if color_string in named_rgb_colors:
+            color = list(named_rgb_colors[color_string])
+
+        elif Util.is_hex_string(color_string):
+            color = [int(x, 16) for x in
+                     re.split('([0-9a-f]{2})', color_string) if x != '']
+
+        else:
+            color = Util.string_to_list(color_string)
+
+        for i, x in enumerate(color):
+            color[i] = int(x) / 255
+
+        if len(color) == 3:
+            color.append(1)
+
+        return color
+
+    def _validate_type_color(self, item):
+        # Validates colors by name, hex, or list, into a 3-item list, RGB,
+        # with individual values from 0-255
+        color_string = str(item).lower()
+
+        if color_string in named_rgb_colors:
+            return named_rgb_colors[color_string]
+        elif Util.is_hex_string(color_string):
+            return RGBColor.hex_to_rgb(color_string)
+
+        else:
+            color = Util.string_to_list(color_string)
+            return int(color[0]), int(color[1]), int(color[2])
+
+    def _validate_type_bool_int(self, item):
+        if isinstance(item, str):
+            if item.lower() in ('yes', 'true'):
+                return 1
+            else:
+                return 0
+
+        elif item:
+            return 1
+        else:
+            return 0
+
+    def _validate_type_pow2(self, item):
+        if not Util.is_power2(item):
+            raise ValueError
+            # todo make a better error
+        else:
+            return item
+
     def validate_item(self, item, validator, validation_failure_info):
 
         try:
@@ -1232,150 +1374,26 @@ class ConfigValidator(object):
                                        validation_failure_info)
                 )
 
-            item = return_dict
+            return return_dict
 
         elif '%' in validator:
             if isinstance(item, str):
 
                 try:
-                    item = eval(validator.replace('%', "'" + item + "'"))
+                    return eval(validator.replace('%', "'" + item + "'"))
                 except KeyError:
                     self.validation_error(item, validation_failure_info)
             else:
-                item = None
-
-        elif validator == 'str':
-            if item is not None:
-                item = str(item)
-            else:
-                item = None
-
-        elif validator == 'lstr':
-            if item is not None:
-                item = str(item).lower()
-            else:
-                item = None
-
-        elif validator == 'float':
-            try:
-                item = float(item)
-            except (TypeError, ValueError):
-                # TODO error
-                pass
-
-        elif validator == 'int':
-            try:
-                item = int(item)
-            except (TypeError, ValueError):
-                pass
-
-        elif validator == 'num':
-            # used for int or float, but does not convert one to the other
-            if not isinstance(item, (int, float)):
-                try:
-                    if '.' in item:
-                        item = float(item)
-                    else:
-                        item = int(item)
-                except (TypeError, ValueError):
-                    pass
-
-        elif validator in ('bool', 'boolean'):
-            if isinstance(item, str):
-                if item.lower() in ['false', 'f', 'no', 'disable', 'off']:
-                    item = False
-
-            elif not item:
-                item = False
-
-            else:
-                item = True
-
-        elif validator == 'ms':
-            if item is not None:
-                item = Util.string_to_ms(item)
-
-        elif validator == 'secs':
-            if item is not None:
-                item = Util.string_to_secs(item)
-
-        elif validator == 'list':
-            item = Util.string_to_list(item)
-
-        elif validator == 'int_from_hex':
-            item = Util.hex_string_to_int(item)
-
-        elif validator == 'dict':
-            return item
-
-        elif validator == 'kivycolor':
-            # Validate colors that will be used by Kivy. The result is a 4-item
-            # list, RGBA, with individual values from 0.0 - 1.0
-            if not item:
                 return None
 
-            color_string = str(item).lower()
-
-            if color_string in named_rgb_colors:
-                color = list(named_rgb_colors[color_string])
-
-            elif Util.is_hex_string(color_string):
-                color = [int(x, 16) for x in
-                         re.split('([0-9a-f]{2})', color_string) if x != '']
-
-            else:
-                color = Util.string_to_list(color_string)
-
-            for i, x in enumerate(color):
-                color[i] = int(x) / 255
-
-            if len(color) == 3:
-                color.append(1)
-
-            return color
-
-        elif validator == 'color':
-            # Validates colors by name, hex, or list, into a 3-item list, RGB,
-            # with individual values from 0-255
-            color_string = str(item).lower()
-
-            if color_string in named_rgb_colors:
-                return named_rgb_colors[color_string]
-            elif Util.is_hex_string(color_string):
-                return RGBColor.hex_to_rgb(color_string)
-
-            else:
-                color = Util.string_to_list(color_string)
-                return int(color[0]), int(color[1]), int(color[2])
-
-        elif validator == 'bool_int':
-            if isinstance(item, str):
-                if item.lower() in ('yes', 'true'):
-                    return 1
-                else:
-                    return 0
-
-            elif item:
-                return 1
-            else:
-                return 0
-
-        elif validator == 'pow2':
-            if not Util.is_power2(item):
-                raise ValueError
-                # todo make a better error
-
-        elif validator == 'gain':
-            # Attenuation can be specified as a float value from 0.0 to 1.0 or as
-            # a decibel level -inf to 0.0 (must be labeled as db)
-            return Util.string_to_gain(item)
+        elif validator in self.validator_list:
+            return self.validator_list[validator](item)
 
         else:
             raise AssertionError("Invalid Validator '{}' in config spec {}:{}".format(
                                  validator,
                                  validation_failure_info[0][0],
                                  validation_failure_info[1]))
-        return item
 
     def validation_error(self, item, validation_failure_info):
         raise AssertionError(
