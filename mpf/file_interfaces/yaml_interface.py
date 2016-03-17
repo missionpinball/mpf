@@ -399,6 +399,7 @@ class YamlInterface(FileInterface):
 
         return commented_map
 
+    # pylint: disable-msg=too-many-arguments
     @staticmethod
     def copy_with_comments(source_dict, source_key, dest_dict, dest_key,
                            delete_source=False, logger=None):
