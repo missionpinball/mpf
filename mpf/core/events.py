@@ -431,7 +431,21 @@ class EventManager(object):
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
                            "Args: %s", event, ev_type, callback, kwargs)
 
-        if ev_type == 'queue' and not queue:
+        if ev_type == 'queue':
+            self._handle_queue(queue, callback, kwargs)
+        elif callback:
+            # For event types other than queue, we'll handle the callback here.
+            # Queue events with active waits will do the callback when the
+            # waits clear
+
+            if result:
+                # if our last handler returned something, add it to kwargs
+                kwargs['ev_result'] = result
+
+            self.callback_queue.append((callback, kwargs))
+
+    def _handle_queue(self, queue, callback, kwargs):
+        if callback and not queue:
             # If this was a queue event but there were no registered handlers,
             # then we need to do the callback now
             self.callback_queue.append((callback, kwargs))
@@ -448,17 +462,6 @@ class EventManager(object):
                 self.callback_queue.append((queue.callback, kwargs))
         elif queue and not queue.is_empty():
             queue.event_finished()
-
-        if callback and ev_type != 'queue':
-            # For event types other than queue, we'll handle the callback here.
-            # Queue events with active waits will do the callback when the
-            # waits clear
-
-            if result:
-                # if our last handler returned something, add it to kwargs
-                kwargs['ev_result'] = result
-
-            self.callback_queue.append((callback, kwargs))
 
     def process_event_queue(self):
         # Method which checks to see if there are any other events
