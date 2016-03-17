@@ -402,6 +402,7 @@ class SwitchController(object):
         if monitor not in self.monitors:
             self.monitors.append(monitor)
 
+    # pylint: disable-msg=too-many-arguments
     def add_switch_handler(self, switch_name, callback, state=1, ms=0,
                            return_info=False, callback_kwargs=None):
         """Register a handler to take action on a switch event.
