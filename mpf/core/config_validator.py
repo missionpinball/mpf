@@ -1154,45 +1154,46 @@ class ConfigValidator(object):
                 item = default
 
         if item_type == 'single':
-            item = self.validate_item(item, validation,
+            return self.validate_item(item, validation,
                                       validation_failure_info)
 
         elif item_type == 'list':
-            item = Util.string_to_list(item)
+            item_list = Util.string_to_list(item)
 
             new_list = list()
 
-            for i in item:
+            for i in item_list:
                 new_list.append(
                         self.validate_item(i, validation,
                                            validation_failure_info))
 
-            item = new_list
+            return new_list
 
         elif item_type == 'set':
-            item = set(Util.string_to_list(item))
+            item_set = set(Util.string_to_list(item))
 
             new_set = set()
 
-            for i in item:
+            for i in item_set:
                 new_set.add(
                         self.validate_item(i, validation,
                                            validation_failure_info))
 
-            item = new_set
+            return new_set
 
         elif item_type == 'dict':
-            item = self.validate_item(item, validation,
-                                      validation_failure_info)
+            item_dict = self.validate_item(item, validation,
+                                           validation_failure_info)
 
-            if not item:
-                item = dict()
+            if not item_dict:
+                return dict()
+            else:
+                return item_dict
 
         else:
             raise AssertionError("Invalid Type '{}' in config spec {}:{}".format(item_type,
                                  validation_failure_info[0][0],
                                  validation_failure_info[1]))
-        return item
 
     def check_for_invalid_sections(self, spec, config,
                                    validation_failure_info):
@@ -1334,13 +1335,7 @@ class ConfigValidator(object):
             return int(color[0]), int(color[1]), int(color[2])
 
     def _validate_type_bool_int(self, item):
-        if isinstance(item, str):
-            if item.lower() in ('yes', 'true'):
-                return 1
-            else:
-                return 0
-
-        elif item:
+        if self._validate_type_bool(item):
             return 1
         else:
             return 0
