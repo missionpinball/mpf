@@ -94,27 +94,27 @@ class TestConfig(MpfTestCase):
         results = self.machine.config_validator.validate_config_item(
             validation_string, 'test_failure_info', 'hello')
         self.assertEqual(results, 'hello')
-
-        validation_string = 'single|str|'
         results = self.machine.config_validator.validate_config_item(
             validation_string, 'test_failure_info', 1)
         self.assertEqual(results, '1')
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', "none")
+        self.assertEqual(results, None)
 
         # test lstr
         validation_string = 'single|lstr|'
         results = self.machine.config_validator.validate_config_item(
             validation_string, 'test_failure_info', 'HellO')
         self.assertEqual(results, 'hello')
-
-        validation_string = 'single|lstr|'
         results = self.machine.config_validator.validate_config_item(
             validation_string, 'test_failure_info', 'hello')
         self.assertEqual(results, 'hello')
-
-        validation_string = 'single|lstr|'
         results = self.machine.config_validator.validate_config_item(
             validation_string, 'test_failure_info', 'H1')
         self.assertEqual(results, 'h1')
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', 'none')
+        self.assertEqual(results, None)
 
         # test float validations
 
@@ -141,12 +141,19 @@ class TestConfig(MpfTestCase):
         self.assertAlmostEqual(results, 1.0, .01)
         self.assertEqual(type(results), float)
         results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', '1.0')
+        self.assertAlmostEqual(results, 1.0, .01)
+        self.assertEqual(type(results), float)
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', 1)
+        self.assertEqual(results, 1)
+        self.assertIs(type(results), int)
+        results = self.machine.config_validator.validate_config_item(
             validation_string, 'test_failure_info', '1')
         self.assertEqual(results, 1)
         self.assertIs(type(results), int)
 
         # test bool validations
-
         validation_string = 'single|bool|'
         results = self.machine.config_validator.validate_config_item(
             validation_string, 'test_failure_info', 'f')
@@ -167,8 +174,25 @@ class TestConfig(MpfTestCase):
             validation_string, 'test_failure_info', False)
         self.assertFalse(results)
 
-        # test ms conversions
+        # test bool_int validations
+        validation_string = 'single|bool_int|'
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', 'f')
+        self.assertEqual(0, results)
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', 't')
+        self.assertEqual(1, results)
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', 'false')
+        self.assertEqual(0, results)
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', False)
+        self.assertEqual(0, results)
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', "True")
+        self.assertEqual(1, results)
 
+        # test ms conversions
         validation_string = 'single|ms|'
         results = self.machine.config_validator.validate_config_item(
             validation_string, 'test_failure_info', 100)
@@ -324,3 +348,16 @@ class TestConfig(MpfTestCase):
         results = self.machine.config_validator.validate_config_item(
             validation_string, 'test_failure_info', '3db')
         self.assertEqual(results, 1.0)
+
+        # test pow2
+        validation_string = 'single|pow2|'
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', 128)
+        self.assertEqual(results, 128)
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', '128')
+        self.assertEqual(results, '128')
+
+        with self.assertRaises(ValueError):
+            self.machine.config_validator.validate_config_item(
+                validation_string, 'test_failure_info', '127')
