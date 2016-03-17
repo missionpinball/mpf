@@ -1413,6 +1413,75 @@ class BallDevice(SystemWideDevice):
         self.eject_success()
         return False
 
+    def _setup_eject_confirmation_to_playfield(self, target, timeout):
+        if self.debug:
+            self.log.debug("Target is a playfield. Will confirm eject " +
+                           "when a %s switch is hit", target.name)
+
+        self.machine.events.add_handler(
+                '{}_active'.format(target.name),
+                self._playfield_active, playfield=target)
+
+        if self.mechanical_eject_in_progress and self._state == "waiting_for_ball_mechanical":
+            if self.debug:
+                self.log.debug("Target is playfield. Will confirm after "
+                               "timeout if it did not return.")
+            timeout_combined = timeout + self._incoming_balls[0][1].config['eject_timeouts'][self]
+
+            if timeout == timeout_combined:
+                timeout_combined += 500
+
+            self.delay.add(name='playfield_confirmation',
+                           ms=timeout_combined,
+                           callback=self.eject_success)
+
+    def _setup_eject_confirmation_to_target(self, target, timeout):
+        if not target:
+            raise AssertionError("we got an eject confirmation request "
+                                 "with no target. This shouldn't happen. "
+                                 "Post to the forum if you see this.")
+
+        if self.debug:
+            self.log.debug("Will confirm eject via ball entry into '%s' "
+                           "with a confirmation timeout of %sms",
+                           target.name, timeout)
+
+        # ball_enter does mean sth different for the playfield.
+        if not target.is_playfield():
+            # watch for ball entry event on the target device
+            self.machine.events.add_handler(
+                    'balldevice_' + target.name +
+                    '_ball_enter', self.eject_success, priority=100000)
+
+    def _setup_eject_confirmation_via_switch(self):
+        if self.debug:
+            self.log.debug("Will confirm eject via activation of switch "
+                           "'%s'",
+                           self.config['confirm_eject_switch'].name)
+        # watch for that switch to activate momentarily
+        # for more complex scenarios use logic_block + event confirmation
+        self.machine.switch_controller.add_switch_handler(
+                switch_name=self.config['confirm_eject_switch'].name,
+                callback=self.eject_success,
+                state=1, ms=0)
+
+    def _setup_eject_confirmation_via_event(self):
+        if self.debug:
+            self.log.debug("Will confirm eject via posting of event '%s'",
+                           self.config['confirm_eject_event'])
+        # watch for that event
+        self.machine.events.add_handler(
+                self.config['confirm_eject_event'], self.eject_success)
+
+    def _setup_eject_confirmation_fake(self):
+            # for devices without ball_switches and entry_switch
+            # we use delay to keep the call order
+            if self.config['ball_switches']:
+                raise AssertionError("Cannot use fake with ball switches")
+
+            self.delay.add(name='target_eject_confirmation_timeout',
+                           ms=1, callback=self.eject_success)
+
     def _setup_eject_confirmation(self, target):
         # Called after an eject request to confirm the eject. The exact method
         # of confirmation depends on how this ball device has been configured
@@ -1434,74 +1503,19 @@ class BallDevice(SystemWideDevice):
                            callback=self._eject_timeout)
 
         if target and target.is_playfield():
-            if self.debug:
-                self.log.debug("Target is a playfield. Will confirm eject " +
-                               "when a %s switch is hit", target.name)
-
-            self.machine.events.add_handler(
-                    '{}_active'.format(target.name),
-                    self._playfield_active, playfield=target)
-
-            if self.mechanical_eject_in_progress and self._state == "waiting_for_ball_mechanical":
-                if self.debug:
-                    self.log.debug("Target is playfield. Will confirm after "
-                                   "timeout if it did not return.")
-                timeout_combined = timeout + self._incoming_balls[0][1].config['eject_timeouts'][self]
-
-                if timeout == timeout_combined:
-                    timeout_combined += 500
-
-                self.delay.add(name='playfield_confirmation',
-                               ms=timeout_combined,
-                               callback=self.eject_success)
+            self._setup_eject_confirmation_to_playfield(target, timeout)
 
         if self.config['confirm_eject_type'] == 'target':
-
-            if not target:
-                raise AssertionError("we got an eject confirmation request "
-                                     "with no target. This shouldn't happen. "
-                                     "Post to the forum if you see this.")
-
-            if self.debug:
-                self.log.debug("Will confirm eject via ball entry into '%s' "
-                               "with a confirmation timeout of %sms",
-                               target.name, timeout)
-
-            # ball_enter does mean sth different for the playfield.
-            if not target.is_playfield():
-                # watch for ball entry event on the target device
-                self.machine.events.add_handler(
-                        'balldevice_' + target.name +
-                        '_ball_enter', self.eject_success, priority=100000)
+            self._setup_eject_confirmation_to_target(target, timeout)
 
         elif self.config['confirm_eject_type'] == 'switch':
-            if self.debug:
-                self.log.debug("Will confirm eject via activation of switch "
-                               "'%s'",
-                               self.config['confirm_eject_switch'].name)
-            # watch for that switch to activate momentarily
-            # for more complex scenarios use logic_block + event confirmation
-            self.machine.switch_controller.add_switch_handler(
-                    switch_name=self.config['confirm_eject_switch'].name,
-                    callback=self.eject_success,
-                    state=1, ms=0)
+            self._setup_eject_confirmation_via_switch()
 
         elif self.config['confirm_eject_type'] == 'event':
-            if self.debug:
-                self.log.debug("Will confirm eject via posting of event '%s'",
-                               self.config['confirm_eject_event'])
-            # watch for that event
-            self.machine.events.add_handler(
-                    self.config['confirm_eject_event'], self.eject_success)
+            self._setup_eject_confirmation_via_event()
 
         elif self.config['confirm_eject_type'] == 'fake':
-            # for devices without ball_switches and entry_switch
-            # we use delay to keep the call order
-            if self.config['ball_switches']:
-                raise AssertionError("Cannot use fake with ball switches")
-
-            self.delay.add(name='target_eject_confirmation_timeout',
-                           ms=1, callback=self.eject_success)
+            self._setup_eject_confirmation_fake()
 
         else:
             raise AssertionError("Invalid confirm_eject_type setting: " +
