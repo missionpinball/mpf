@@ -1025,24 +1025,9 @@ class ConfigValidator(object):
         # todo I had the idea that we could unload the config spec to save
         # memory, but doing so will take more thought about timing
 
-    def validate_config(self, config_spec, source=None, section_name=None,
-                        base_spec=None, add_missing_keys=True):
-        # config_spec, str i.e. "device:shot"
-        # source is dict
-        # section_name is str used for logging failures
-
+    def _build_spec(self, config_spec, base_spec):
         if not self.config_spec:
             self.load_config_spec()
-
-        if source is None:
-            source = CaseInsensitiveDict()
-
-        if not section_name:
-            section_name = config_spec  # str
-
-        validation_failure_info = (config_spec, section_name)
-
-        orig_spec = config_spec  # str
 
         # build up the actual config spec we're going to use
         this_spec = self.config_spec
@@ -1064,6 +1049,25 @@ class ConfigValidator(object):
             this_base_spec.update(this_spec)
             this_spec = this_base_spec
 
+        return this_spec
+
+    # pylint: disable-msg=too-many-arguments
+    def validate_config(self, config_spec, source, section_name=None,
+                        base_spec=None, add_missing_keys=True):
+        # config_spec, str i.e. "device:shot"
+        # source is dict
+        # section_name is str used for logging failures
+
+        if source is None:
+            source = CaseInsensitiveDict()
+
+        if not section_name:
+            section_name = config_spec  # str
+
+        validation_failure_info = (config_spec, section_name)
+
+        this_spec = self._build_spec(config_spec, base_spec)
+
         if '__allow_others__' not in this_spec:
             self.check_for_invalid_sections(this_spec, source,
                                             validation_failure_info)
@@ -1083,7 +1087,7 @@ class ConfigValidator(object):
                     if k in source:
                         for i in source[k]:  # individual step
                             final_list.append(self.validate_config(
-                                    orig_spec + ':' + k, source=i,
+                                    config_spec + ':' + k, source=i,
                                     section_name=k))
 
                     processed_config[k] = final_list
