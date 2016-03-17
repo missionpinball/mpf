@@ -933,84 +933,51 @@ class BCPClientSocket(object):
 
         self.sending_queue.put(message)
 
-    def receive_loop(self):
-        """Receive loop which reads incoming data, assembles commands, and puts
-        them onto the receive queue.
-
-        This method is run as a thread.
-
-        """
-
+    def _receive_loop_dmd(self):
         socket_chars = ''
 
-        if 'dmd' in self.machine.config:
+        bytes_per_pixel = 1
 
-            bytes_per_pixel = 1
+        try:
+            if self.machine.config['dmd']['type'] == 'color':
+                bytes_per_pixel = 3
 
-            try:
-                if self.machine.config['dmd']['type'] == 'color':
-                    bytes_per_pixel = 3
+        except KeyError:
+            pass
 
-            except KeyError:
-                pass
+        dmd_byte_length = (self.machine.config['dmd']['width'] *
+                           self.machine.config['dmd']['height'] *
+                           bytes_per_pixel)
 
-            dmd_byte_length = (self.machine.config['dmd']['width'] *
-                               self.machine.config['dmd']['height'] *
-                               bytes_per_pixel)
+        self.log.debug("DMD frame byte length: %s*%s*%s = %s",
+                       self.machine.config['dmd']['width'],
+                       self.machine.config['dmd']['height'],
+                       bytes_per_pixel, dmd_byte_length)
 
-            self.log.debug("DMD frame byte length: %s*%s*%s = %s",
-                           self.machine.config['dmd']['width'],
-                           self.machine.config['dmd']['height'],
-                           bytes_per_pixel, dmd_byte_length)
+        try:
+            while self.socket:
 
-            try:
-                while self.socket:
+                socket_chars += self.get_from_socket()
 
-                    socket_chars += self.get_from_socket()
+                if socket_chars:
 
-                    if socket_chars:
+                    while socket_chars.startswith('dmd_frame'):
+                        # trim the `dmd_frame?` so we have just the data
+                        socket_chars = socket_chars[10:]
 
-                        while socket_chars.startswith('dmd_frame'):
-                            # trim the `dmd_frame?` so we have just the data
-                            socket_chars = socket_chars[10:]
+                        while len(socket_chars) < dmd_byte_length:
+                            # If we don't have the full data, loop until we
+                            # have it.
+                            socket_chars += self.get_from_socket()
 
-                            while len(socket_chars) < dmd_byte_length:
-                                # If we don't have the full data, loop until we
-                                # have it.
-                                socket_chars += self.get_from_socket()
+                        # trim the dmd bytes for the dmd data
+                        dmd_data = socket_chars[:dmd_byte_length]
+                        # Save the rest. This is +1 over the last step
+                        # since we need to skip the \n separator
+                        socket_chars = socket_chars[dmd_byte_length+1:]
+                        self.machine.bcp.dmd.update(dmd_data)
 
-                            # trim the dmd bytes for the dmd data
-                            dmd_data = socket_chars[:dmd_byte_length]
-                            # Save the rest. This is +1 over the last step
-                            # since we need to skip the \n separator
-                            socket_chars = socket_chars[dmd_byte_length+1:]
-                            self.machine.bcp.dmd.update(dmd_data)
-
-                        if '\n' in socket_chars:
-                            message, socket_chars = socket_chars.split('\n', 1)
-
-                            self.log.debug('Received "%s"', message)
-                            cmd, kwargs = decode_command_string(message)
-
-                            if cmd in self.bcp_commands:
-                                self.bcp_commands[cmd](**kwargs)
-                            else:
-                                self.receive_queue.put((cmd, kwargs))
-
-            except Exception:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                lines = traceback.format_exception(exc_type, exc_value,
-                                                   exc_traceback)
-                msg = ''.join(line for line in lines)
-                self.machine.crash_queue.put(msg)
-
-        else:
-            try:
-                while self.socket:
-
-                    socket_chars += self.get_from_socket()
-
-                    if socket_chars and '\n' in socket_chars:
+                    if '\n' in socket_chars:
                         message, socket_chars = socket_chars.split('\n', 1)
 
                         self.log.debug('Received "%s"', message)
@@ -1021,12 +988,49 @@ class BCPClientSocket(object):
                         else:
                             self.receive_queue.put((cmd, kwargs))
 
-            except Exception:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                lines = traceback.format_exception(exc_type, exc_value,
-                                                   exc_traceback)
-                msg = ''.join(line for line in lines)
-                self.machine.crash_queue.put(msg)
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value,
+                                               exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.machine.crash_queue.put(msg)
+
+    def _receive_loop_no_dmd(self):
+        socket_chars = ''
+        try:
+            while self.socket:
+
+                socket_chars += self.get_from_socket()
+
+                if socket_chars and '\n' in socket_chars:
+                    message, socket_chars = socket_chars.split('\n', 1)
+
+                    self.log.debug('Received "%s"', message)
+                    cmd, kwargs = decode_command_string(message)
+
+                    if cmd in self.bcp_commands:
+                        self.bcp_commands[cmd](**kwargs)
+                    else:
+                        self.receive_queue.put((cmd, kwargs))
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value,
+                                               exc_traceback)
+            msg = ''.join(line for line in lines)
+            self.machine.crash_queue.put(msg)
+
+    def receive_loop(self):
+        """Receive loop which reads incoming data, assembles commands, and puts
+        them onto the receive queue.
+
+        This method is run as a thread.
+
+        """
+        if 'dmd' in self.machine.config:
+            self._receive_loop_dmd()
+        else:
+            self._receive_loop_no_dmd()
 
     def get_from_socket(self, num_bytes=8192):
         """Reads whatever data is sitting in the receiving socket, converts it
