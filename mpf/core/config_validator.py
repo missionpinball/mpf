@@ -1093,7 +1093,7 @@ class ConfigValidator(object):
                     processed_config[k] = final_list
 
                 else:
-                    processed_config[k] = self.validate_config_item2(
+                    processed_config[k] = self.validate_config_item(
                             this_spec[k], item=source[k],
                             validation_failure_info=(validation_failure_info, k))
 
@@ -1103,14 +1103,14 @@ class ConfigValidator(object):
                     processed_config[k] = list()
 
                 else:
-                    processed_config[k] = self.validate_config_item2(
+                    processed_config[k] = self.validate_config_item(
                             this_spec[k],
                             validation_failure_info=(
                                 validation_failure_info, k))
 
         return processed_config
 
-    def validate_config_item2(self, spec, validation_failure_info,
+    def validate_config_item(self, spec, validation_failure_info,
                               item='item not in config!@#', ):
 
         try:
