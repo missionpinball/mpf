@@ -21,12 +21,8 @@ class SwitchPlayer(object):
         self.delay = DelayManager(self.machine.delayRegistry)
         self.current_step = 0
 
-        config_spec = '''
-                        start_event: string|machine_reset_phase_3
-                        '''
-
-        self.config = ConfigValidator.process_config(config_spec,
-                                                     self.machine.config['switch_player'])
+        self.config = self.machine.config['switch_player']
+        self.machine.config_validator.validate_config("switch_player", self.config)
 
         self.machine.events.add_handler(self.config['start_event'],
                                         self._start_event_callback)

@@ -714,6 +714,9 @@ sounds:
         attenuation: single|gain|1.0
         release_point: single|str|0
         release: single|str|10ms
+switch_player:
+    start_event: single|str|machine_reset_phase_3
+    steps: ignore
 switches:
     number: single|str|
     number_str: single|str|
