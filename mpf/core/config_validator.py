@@ -2,11 +2,9 @@ import logging
 import re
 from copy import deepcopy
 
-import ruamel.yaml as yaml
-
 from mpf._version import __version__
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
-from mpf.file_interfaces.yaml_interface import MpfLoader, YamlInterface
+from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.utility_functions import Util
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
