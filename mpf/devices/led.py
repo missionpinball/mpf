@@ -63,6 +63,7 @@ class Led(SystemWideDevice):
         self.fade_in_progress = False
         self.fade_destination_color = RGBColor()
         self.fade_end_time = None
+        self.default_fade_ms = None
 
         self.registered_handlers = list()
 
@@ -110,10 +111,24 @@ class Led(SystemWideDevice):
                                  " Color correction will not be applied to this LED.",
                                  self.config['color_correction_profile'])
 
+        if self.config['fade_ms'] is not None:
+            self.default_fade_ms = self.config['fade_ms']
+        elif self.machine.config['led_settings']:
+            self.default_fade_ms = (self.machine.config['led_settings']['default_led_fade_ms'])
+
     def set_color_correction_profile(self, profile):
         self._color_correction_profile = profile
 
-    def color(self, color, fade_ms=None, priority=0, cache=True, force=False,  blend=False):
+    def _cache_color(self, color, current_time, fade_ms, priority):
+        self.cache['color'] = color  # new color
+        self.cache['start_color'] = self.state['color']
+        self.cache['destination_color'] = self.state['destination_color']
+        self.cache['start_time'] = current_time
+        self.cache['destination_time'] = self.state['destination_time']
+        self.cache['fade_ms'] = fade_ms
+        self.cache['priority'] = priority
+
+    def color(self, color, fade_ms=None, priority=0, cache=True, force=False, blend=False):
         """Sets this LED to the color passed.
 
         Args:
@@ -136,19 +151,11 @@ class Led(SystemWideDevice):
         if priority < self.state['priority'] and not force:
             return
 
-        if fade_ms is None:
-            if self.config['fade_ms'] is not None:
-                fade_ms = self.config['fade_ms']
-                if self.debug:
-                    self.log.debug("Incoming fade_ms is none. Setting to %sms "
-                                   "based on this LED's default fade config",
-                                   fade_ms)
-            elif self.machine.config['led_settings']:
-                fade_ms = (self.machine.config['led_settings']
-                           ['default_led_fade_ms'])
-                if self.debug:
-                    self.log.debug("Incoming fade_ms is none. Setting to %sms "
-                                   "based on this global default fade", fade_ms)
+        if fade_ms is None and self.default_fade_ms is not None:
+            fade_ms = self.default_fade_ms
+            if self.debug and fade_ms:
+                self.log.debug("Incoming fade_ms is none. Setting to %sms "
+                               "based on this global default fade", fade_ms)
             # potential optimization make this not conditional
 
         current_time = self.machine.clock.get_time()
@@ -194,13 +201,7 @@ class Led(SystemWideDevice):
             self.state['color'] = color
 
         if cache:
-            self.cache['color'] = color  # new color
-            self.cache['start_color'] = self.state['color']
-            self.cache['destination_color'] = self.state['destination_color']
-            self.cache['start_time'] = current_time
-            self.cache['destination_time'] = self.state['destination_time']
-            self.cache['fade_ms'] = fade_ms
-            self.cache['priority'] = priority
+            self._cache_color(color, current_time, fade_ms, priority)
 
         Led.leds_to_update.add(self)
 
