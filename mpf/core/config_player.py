@@ -108,7 +108,7 @@ class ConfigPlayer(object):
 
         try:
             if self.device_collection:
-                devices =  self.device_collection.items_tagged(device)
+                devices = self.device_collection.items_tagged(device)
                 if not devices:
                     devices = [self.device_collection[device]]
 
@@ -227,4 +227,3 @@ class ConfigPlayer(object):
             return self.device_collection[device]
         except KeyError:
             return self.device_collection.items_tagged(device)
-
