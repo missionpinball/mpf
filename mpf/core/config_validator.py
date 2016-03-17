@@ -1136,7 +1136,7 @@ class ConfigValidator(object):
             return Util.list_of_lists(item)
 
     def validate_config(self, config_spec, source=None, section_name=None,
-                        target=None, result_type='dict', base_spec=None,
+                        result_type='dict', base_spec=None,
                         add_missing_keys=True):
         # config_spec, str i.e. "device:shot"
         # source is dict
@@ -1228,9 +1228,6 @@ class ConfigValidator(object):
                                 this_spec[k],
                                 validation_failure_info=(
                                     validation_failure_info, k))
-
-        if target:
-            processed_config = Util.dict_merge(target, processed_config)
 
         return processed_config
 
