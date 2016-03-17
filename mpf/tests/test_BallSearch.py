@@ -117,7 +117,7 @@ class TestBallSearch(MpfTestCase):
         self.machine.switch_controller.process_switch("s_drop_target3", 1)
         self.machine.switch_controller.process_switch("s_drop_target4", 1)
 
-        self.advance_time_and_run(10)
+        self.advance_time_and_run(10.1)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
 
         self.machine.ball_devices['playfield'].add_ball = MagicMock()
@@ -144,7 +144,7 @@ class TestBallSearch(MpfTestCase):
                 self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
                 assert not self.machine.coils['eject_coil1'].pulse.called
-                if i > 3 and i <= 6:
+                if 3 < i <= 6:
                     self.machine.coils['eject_coil2'].pulse.assert_called_with(5)
                 else:
                     self.machine.coils['eject_coil2'].pulse.assert_called_with()
@@ -203,7 +203,6 @@ class TestBallSearch(MpfTestCase):
                 else:
                     self.machine.coils['drop_target_reset4'].pulse.assert_called_with()
                     self.machine.coils['drop_target_knockdown4'].pulse.assert_called_with()
-
 
                 assert not self.machine.ball_devices['playfield'].add_ball.called
 
