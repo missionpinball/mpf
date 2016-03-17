@@ -1474,13 +1474,13 @@ class BallDevice(SystemWideDevice):
                 self.config['confirm_eject_event'], self.eject_success)
 
     def _setup_eject_confirmation_fake(self):
-            # for devices without ball_switches and entry_switch
-            # we use delay to keep the call order
-            if self.config['ball_switches']:
-                raise AssertionError("Cannot use fake with ball switches")
+        # for devices without ball_switches and entry_switch
+        # we use delay to keep the call order
+        if self.config['ball_switches']:
+            raise AssertionError("Cannot use fake with ball switches")
 
-            self.delay.add(name='target_eject_confirmation_timeout',
-                           ms=1, callback=self.eject_success)
+        self.delay.add(name='target_eject_confirmation_timeout',
+                       ms=1, callback=self.eject_success)
 
     def _setup_eject_confirmation(self, target):
         # Called after an eject request to confirm the eject. The exact method
