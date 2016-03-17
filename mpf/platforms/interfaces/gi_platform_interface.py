@@ -9,7 +9,7 @@ class GIPlatformInterface(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def on(self, brightness):
+    def on(self, brightness=255):
         """
         Sets the GI to the specified brightness level.
         Args:

@@ -177,7 +177,7 @@ class VirtualGI(GIPlatformInterface):
         self.number = number
         self.current_brightness = 0
 
-    def on(self, brightness):
+    def on(self, brightness=255):
         self.current_brightness = brightness
 
     def off(self):

@@ -210,7 +210,7 @@ class VirtualMatrixLight(MatrixLightPlatformInterface):
         self.log = logging.getLogger('VirtualMatrixLight')
         self.number = number
 
-    def on(self, brightness=255, fade_ms=0, start=0):
+    def on(self, brightness=255):
         pass
 
     def off(self):
@@ -230,7 +230,7 @@ class VirtualLED(RGBLEDPlatformInterface):
     def disable(self):
         pass
 
-    def enable(self, brightness_compensation=True):
+    def enable(self):
         pass
 
 
@@ -239,7 +239,7 @@ class VirtualGI(GIPlatformInterface):
         self.log = logging.getLogger('VirtualGI')
         self.number = number
 
-    def on(self, brightness):
+    def on(self, brightness=255):
         pass
 
     def off(self):

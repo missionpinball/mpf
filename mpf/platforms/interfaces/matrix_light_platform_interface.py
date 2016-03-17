@@ -9,7 +9,7 @@ class MatrixLightPlatformInterface(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def on(self, brightness):
+    def on(self, brightness=255):
         """
         Sets the matrix light to the specified brightness level.
         Args:
