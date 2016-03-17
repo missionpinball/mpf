@@ -2,7 +2,6 @@
 file."""
 
 import logging
-from mpf.core.config_validator import ConfigValidator
 from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
 
