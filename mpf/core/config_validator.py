@@ -1028,8 +1028,7 @@ class ConfigValidator(object):
         # memory, but doing so will take more thought about timing
 
     def validate_config(self, config_spec, source=None, section_name=None,
-                        result_type='dict', base_spec=None,
-                        add_missing_keys=True):
+                        base_spec=None, add_missing_keys=True):
         # config_spec, str i.e. "device:shot"
         # source is dict
         # section_name is str used for logging failures
@@ -1091,13 +1090,6 @@ class ConfigValidator(object):
 
                     processed_config[k] = final_list
 
-                elif result_type == 'list':
-                    # spec is dict
-                    # item is source
-                    processed_config = self.validate_config_item2(
-                            spec=this_spec[k], item=source[k],
-                            validation_failure_info=(validation_failure_info, k))
-
                 else:
                     processed_config[k] = self.validate_config_item2(
                             this_spec[k], item=source[k],
@@ -1109,17 +1101,10 @@ class ConfigValidator(object):
                     processed_config[k] = list()
 
                 else:
-                    if result_type == 'list':
-                        processed_config = self.validate_config_item2(
-                                this_spec[k],
-                                validation_failure_info=(
-                                    validation_failure_info, k))
-
-                    else:
-                        processed_config[k] = self.validate_config_item2(
-                                this_spec[k],
-                                validation_failure_info=(
-                                    validation_failure_info, k))
+                    processed_config[k] = self.validate_config_item2(
+                            this_spec[k],
+                            validation_failure_info=(
+                                validation_failure_info, k))
 
         return processed_config
 
