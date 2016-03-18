@@ -401,7 +401,7 @@ class Shot(ModeDevice, SystemWideDevice):
             self.log.debug("Notifying shot_group %s of new hit", group)
             group.hit(mode, profile, state)
 
-        if Shot.monitor_enabled:
+        if Shot.monitor_enabled and "shots" in self.machine.monitors:
             for callback in self.machine.monitors['shots']:
                 callback(name=self.name, profile=profile, state=state)
 

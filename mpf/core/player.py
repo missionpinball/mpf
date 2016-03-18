@@ -126,7 +126,7 @@ class Player(object):
                                      change=change,
                                      player_num=self.vars['number'])
 
-        if Player.monitor_enabled:
+        if Player.monitor_enabled and "player" in self.machine.monitors:
             for callback in self.machine.monitors['player']:
                 callback(name=name, value=self.vars[name],
                          prev_value=prev_value, change=change,
