@@ -1,0 +1,25 @@
+#config_version=4
+
+osc:
+  machine_ip: auto
+
+matrix_lights:
+  light1:
+    number: 1
+
+flippers:
+  flipper_left:
+    main_coil: c_flipper
+    activation_switch: s_flipper
+
+coils:
+  coil1:
+    number: 1
+  c_flipper:
+    number: 2
+
+switches:
+  switch1:
+    number: 1
+  s_flipper:
+    number: 2
