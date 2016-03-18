@@ -67,6 +67,7 @@ class OSC(object):
             "COIL": self.process_coil,
             "EV": self.process_event,
             "AUDITS": self.update_audits,
+            "CONFIG": self.process_config,
             "SYNC": self.process_sync,
             "WPCSYNC": self.process_wpcsync,
             "FLIPPER": self.process_flipper,
@@ -152,8 +153,8 @@ class OSC(object):
         # if the switch name is not valid and we're on WPC hardware, let's try
         # it as a number
         if (switch not in self.machine.switches and self.wpc and
-                self.machine.switches.config['number_str']('S' + str(switch))):
-            switch = self.machine.switches.config['number_str']('S' + str(switch)).name
+                self.machine.switches.number('S' + str(switch))):
+            switch = self.machine.switches.number('S' + str(switch)).name
 
         if switch in self.machine.switches:
             self.machine.switch_controller.process_switch(name=switch,
@@ -172,11 +173,9 @@ class OSC(object):
                 light = '0' + light
 
             if self.client_mode == 'wpc':
-                # todo change to generator
                 light = light.upper()
-                for l in self.machine.lights:
-                    if l.config['number_str'] == light:
-                        light = l.name
+                if self.machine.lights.number(light):
+                    light = self.machine.lights.number(light).name
 
         if light in self.machine.lights:
             self.machine.lights[light].on(int(255*data[0]))
@@ -263,25 +262,22 @@ class OSC(object):
                                                  name=category + '/' + entry,
                                                  data=self.machine.auditor.current_audits[category][entry])
 
-        if 'Player' in self.machine.auditor.current_audits:
-            for entry in self.machine.auditor.current_audits['Player']:
+        if 'player' in self.machine.auditor.current_audits:
+            for entry in self.machine.auditor.current_audits['player']:
                 self.client_send_osc_message(category="audits",
-                                             name='Player/' + entry + '/average',
-                                             data=self.machine.auditor.current_audits['Player'][entry]['average'])
+                                             name='player/' + entry + '/average',
+                                             data=self.machine.auditor.current_audits['player'][entry]['average'])
                 self.client_send_osc_message(category="audits",
-                                             name='Player/' + entry + '/total',
-                                             data=self.machine.auditor.current_audits['Player'][entry]['total'])
+                                             name='player/' + entry + '/total',
+                                             data=self.machine.auditor.current_audits['player'][entry]['total'])
                 i = 0
-                for dummy_iterator in (self.machine.auditor.current_audits['Player'][entry]['top']):
+                for dummy_iterator in (self.machine.auditor.current_audits['player'][entry]['top']):
                     self.client_send_osc_message(category="audits",
-                                                 name='Player/' + entry + '/top/' + str(i+1),
-                                                 data=self.machine.auditor.current_audits['Player'][entry]['top'][i])
+                                                 name='player/' + entry + '/top/' + str(i+1),
+                                                 data=self.machine.auditor.current_audits['player'][entry]['top'][i])
                     i += 1
 
     def process_config(self, event, data):
-        pass
-
-    def update_config(self, event, data):
         """Sends config data to the OSC client."""
 
         # This method just sends all config data to the client whenever any OSC
