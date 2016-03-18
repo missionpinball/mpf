@@ -94,6 +94,11 @@ class TestPluginConfigPlayer(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/plugin_config_player/'
 
+    def __init__(self, methodName):
+        super().__init__(methodName)
+        # remove config patch which disables bcp
+        del self.machine_config_patches['bcp']
+
     def test_plugin_config_player(self):
         self.patch_bcp()
         self.assertIn('tests', ConfigPlayer.show_players)

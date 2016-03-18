@@ -1,7 +1,13 @@
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.bcp import decode_command_string, encode_command_string
 
+
 class TestBcp(MpfTestCase):
+
+    def __init__(self, methodName):
+        super().__init__(methodName)
+        # remove config patch which disables bcp
+        del self.machine_config_patches['bcp']
 
     def test_decode_command_string(self):
         string_in = 'play?some_value=7&another_value=2'

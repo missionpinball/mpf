@@ -135,10 +135,12 @@ class BCP(object):
     def __init__(self, machine):
         if ('bcp' not in machine.config or
                 'connections' not in machine.config['bcp']):
+            self.configured = False
             return
 
         self.log = logging.getLogger('BCP')
         self.machine = machine
+        self.configured = True
 
         self.config = machine.config['bcp']
         self.receive_queue = Queue()
@@ -228,6 +230,8 @@ class BCP(object):
         return '<BCP Module>'
 
     def add_registered_trigger_event(self, event):
+        if not self.configured:
+            return
         try:
             self.registered_trigger_events[event] += 1
         except KeyError:
@@ -237,6 +241,8 @@ class BCP(object):
                                             name=event)
 
     def remove_registered_trigger_event(self, event):
+        if not self.configured:
+            return
         try:
             self.registered_trigger_events[event] -= 1
             if not self.registered_trigger_events[event]:
@@ -431,6 +437,8 @@ class BCP(object):
                 trigger?ball=1&string=hello
 
         """
+        if not self.configured:
+            return
 
         bcp_string = encode_command_string(bcp_command, **kwargs)
 

@@ -48,6 +48,7 @@ class MpfTestCase(unittest.TestCase):
         self.machine_config_patches['mpf'] = dict()
         self.machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
         self.machine_config_patches['mpf']['plugins'] = list()
+        self.machine_config_patches['bcp'] = []
         self.expected_duration = 1.0
 
     def getConfigFile(self):
