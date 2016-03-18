@@ -40,12 +40,15 @@ class TestMachineController(MachineController):
         super()._load_config()
         self.config = Util.dict_merge(self.config, self.test_config_patches)
 
+
 class MpfTestCase(unittest.TestCase):
-    machine_config_patches = dict()
-    machine_config_patches['mpf'] = dict()
-    machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
-    machine_config_patches['mpf']['plugins'] = list()
-    expected_duration = 1.0
+    def __init__(self, methodName='runTest'):
+        super().__init__(methodName)
+        self.machine_config_patches = dict()
+        self.machine_config_patches['mpf'] = dict()
+        self.machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
+        self.machine_config_patches['mpf']['plugins'] = list()
+        self.expected_duration = 1.0
 
     def getConfigFile(self):
         """Override this method in your own test class to point to the config
@@ -118,12 +121,10 @@ class MpfTestCase(unittest.TestCase):
             if not wait_until or (next_switch and wait_until > next_switch):
                 wait_until = next_switch
 
-            if not wait_until or (
-                next_show_step and wait_until > next_show_step):
+            if not wait_until or (next_show_step and wait_until > next_show_step):
                 wait_until = next_show_step
 
-            if wait_until and self.machine.clock.get_time() < wait_until < \
-                    end_time:
+            if wait_until and self.machine.clock.get_time() < wait_until < end_time:
                 self.set_time(wait_until)
                 self.machine_run()
             else:
@@ -187,7 +188,7 @@ class MpfTestCase(unittest.TestCase):
         try:
             self.machine = TestMachineController(
                 os.path.abspath(os.path.join(
-                mpf.core.__path__[0], os.pardir)), machine_path,
+                    mpf.core.__path__[0], os.pardir)), machine_path,
                 self.getOptions(), self.machine_config_patches)
             self.realTime = self.machine.clock.time
             self.testTime = self.realTime()
@@ -211,14 +212,15 @@ class MpfTestCase(unittest.TestCase):
                 pass
             raise e
 
-    def _mock_event_handler(self, eventName, **kwargs):
-        self._events[eventName] += 1
+    def _mock_event_handler(self, event_name, **kwargs):
+        del kwargs
+        self._events[event_name] += 1
 
-    def mock_event(self, eventName):
-        self._events[eventName] = 0
-        self.machine.events.add_handler(event=eventName,
+    def mock_event(self, event_name):
+        self._events[event_name] = 0
+        self.machine.events.add_handler(event=event_name,
                                         handler=self._mock_event_handler,
-                                        eventName=eventName)
+                                        event_name=event_name)
 
     def hit_switch_and_run(self, name, delta):
         self.machine.switch_controller.process_switch(name, 1)
