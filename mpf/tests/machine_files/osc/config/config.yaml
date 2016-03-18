@@ -2,6 +2,7 @@
 
 osc:
   machine_ip: auto
+  debug_messages: True
   client_updates:
     switches
     lights
@@ -9,7 +10,9 @@ osc:
 
 matrix_lights:
   light1:
-    number: 1
+    number: L77
+  light2:
+    number: '02'
 
 flippers:
   flipper_left:
@@ -24,8 +27,8 @@ coils:
 
 switches:
   switch1:
-    number: 1
+    number: S1
   switch2:
-    number: 2
+    number: S2
   s_flipper:
-    number: 3
+    number: S3
