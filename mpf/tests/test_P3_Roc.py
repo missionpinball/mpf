@@ -56,15 +56,15 @@ class TestP3Roc(MpfTestCase):
         p_roc_common.pinproc.decode = None  # should not be called and therefore fail
         p_roc_common.pinproc.driver_state_pulse = MagicMock(
             return_value={'driverNum': 8,
-                     'outputDriveTime': 0,
-                     'polarity': True,
-                     'state': False,
-                     'waitForFirstTimeSlot': False,
-                     'timeslots': 0,
-                     'patterOnTime': 0,
-                     'patterOffTime': 0,
-                     'patterEnable': False,
-                     'futureEnable': False})
+                          'outputDriveTime': 0,
+                          'polarity': True,
+                          'state': False,
+                          'waitForFirstTimeSlot': False,
+                          'timeslots': 0,
+                          'patterOnTime': 0,
+                          'patterOffTime': 0,
+                          'patterEnable': False,
+                          'futureEnable': False})
 
         pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         super().setUp()

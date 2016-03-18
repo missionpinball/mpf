@@ -334,55 +334,8 @@ class PDBConfig(object):
         self.use_watchdog = config['p_roc']['use_watchdog']
 
         # Initialize some lists for data collecting
-        coil_bank_list = []
-        lamp_source_bank_list = []
-        lamp_list = []
-        lamp_list_for_index = []
-
-        # Make a list of unique coil banks
-        if 'coils' in config:
-            for name in config['coils']:
-                item_dict = config['coils'][name]
-                coil = PDBCoil(self, str(item_dict['number']))
-                if coil.bank() not in coil_bank_list:
-                    coil_bank_list.append(coil.bank())
-
-        # Make a list of unique lamp source banks.  The P-ROC/P3-ROC only supports 2.
-        # TODO: What should be done if 2 is exceeded?
-        if 'matrix_lights' in config:
-            for name in config['matrix_lights']:
-                item_dict = config['matrix_lights'][name]
-                lamp = PDBLight(self, str(item_dict['number']))
-
-                # Catalog PDB banks
-                # Dedicated lamps don't use PDB banks. They use P-ROC direct
-                # driver pins (not available on P3-ROC).
-                if lamp.lamp_type == 'dedicated':
-                    pass
-
-                elif lamp.lamp_type == 'pdb':
-                    if lamp.source_bank() not in lamp_source_bank_list:
-                        lamp_source_bank_list.append(lamp.source_bank())
-
-                    # Create dicts of unique sink banks.  The source index is
-                    # needed when setting up the driver groups.
-                    lamp_dict = {'source_index':
-                                 lamp_source_bank_list.index(lamp.source_bank()),
-                                 'sink_bank': lamp.sink_bank(),
-                                 'source_output': lamp.source_output()}
-
-                    # lamp_dict_for_index.  This will be used later when the
-                    # p-roc numbers are requested.  The requestor won't know
-                    # the source_index, but it will know the source board.
-                    # This is why two separate lists are needed.
-                    lamp_dict_for_index = {'source_board': lamp.source_board(),
-                                           'sink_bank': lamp.sink_bank(),
-                                           'source_output':
-                                               lamp.source_output()}
-
-                    if lamp_dict not in lamp_list:
-                        lamp_list.append(lamp_dict)
-                        lamp_list_for_index.append(lamp_dict_for_index)
+        coil_bank_list = self._load_coil_bank_list_from_config(config)
+        lamp_source_bank_list, lamp_list, lamp_list_for_index = self._load_lamp_lists_from_config(config)
 
         # Create a list of indexes.  The PDB banks will be mapped into this
         # list. The index of the bank is used to calculate the P-ROC/P3-ROC driver
@@ -500,6 +453,63 @@ class PDBConfig(object):
         # the polarities on the Drivers.  Then enable them.
         self.configure_globals(proc, lamp_source_bank_list, False)
         self.configure_globals(proc, lamp_source_bank_list, True)
+
+    def _load_lamp_lists_from_config(self, config):
+        lamp_source_bank_list = []
+        lamp_list = []
+        lamp_list_for_index = []
+
+        # Make a list of unique lamp source banks.  The P-ROC/P3-ROC only supports 2.
+        # TODO: What should be done if 2 is exceeded?
+        if 'matrix_lights' in config:
+            for name in config['matrix_lights']:
+                item_dict = config['matrix_lights'][name]
+                lamp = PDBLight(self, str(item_dict['number']))
+
+                # Catalog PDB banks
+                # Dedicated lamps don't use PDB banks. They use P-ROC direct
+                # driver pins (not available on P3-ROC).
+                if lamp.lamp_type == 'dedicated':
+                    pass
+
+                elif lamp.lamp_type == 'pdb':
+                    if lamp.source_bank() not in lamp_source_bank_list:
+                        lamp_source_bank_list.append(lamp.source_bank())
+
+                    # Create dicts of unique sink banks.  The source index is
+                    # needed when setting up the driver groups.
+                    lamp_dict = {'source_index':
+                                 lamp_source_bank_list.index(lamp.source_bank()),
+                                 'sink_bank': lamp.sink_bank(),
+                                 'source_output': lamp.source_output()}
+
+                    # lamp_dict_for_index.  This will be used later when the
+                    # p-roc numbers are requested.  The requestor won't know
+                    # the source_index, but it will know the source board.
+                    # This is why two separate lists are needed.
+                    lamp_dict_for_index = {'source_board': lamp.source_board(),
+                                           'sink_bank': lamp.sink_bank(),
+                                           'source_output':
+                                               lamp.source_output()}
+
+                    if lamp_dict not in lamp_list:
+                        lamp_list.append(lamp_dict)
+                        lamp_list_for_index.append(lamp_dict_for_index)
+
+        return lamp_source_bank_list, lamp_list, lamp_list_for_index
+
+    def _load_coil_bank_list_from_config(self, config):
+        coil_bank_list = []
+
+        # Make a list of unique coil banks
+        if 'coils' in config:
+            for name in config['coils']:
+                item_dict = config['coils'][name]
+                coil = PDBCoil(self, str(item_dict['number']))
+                if coil.bank() not in coil_bank_list:
+                    coil_bank_list.append(coil.bank())
+
+        return coil_bank_list
 
     def initialize_drivers(self, proc):
         # Loop through all of the drivers, initializing them with the polarity.
