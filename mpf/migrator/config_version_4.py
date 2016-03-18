@@ -554,13 +554,10 @@ class V4Migrator(VersionMigrator):
 
         return elements
 
-    def _element_to_widget(self, element, display):
-        # takes an element dict, returns a widget dict
-
+    def _get_width_and_height_for_display(self, element, display):
         # Figure out which display we're working with so we can get the
         # size to update the positions later. This could be target or
         # display, since this meth is called from a few different places
-
         if 'target' in element:
             display = element['target']
         elif 'display' in element:
@@ -579,27 +576,9 @@ class V4Migrator(VersionMigrator):
                              "Run the migrator again with the -h and -w "
                              "options to manually specific width and height")
 
-        try:
-            element_type = element['type'].lower()
+        return width, height
 
-        except KeyError:
-            return False
-
-        type_map = dict(virtualdmd='dmd',
-                        text='text',
-                        shape='shape',
-                        animation='animation',
-                        image='image',
-                        movie='video',
-                        character_picker='character_picker',
-                        entered_chars='entered_chars')
-
-        # Migrate the element type
-        element['type'] = type_map[element_type]
-
-        self.log.debug('Converting "%s" display_element to "%s" widget',
-                       element_type, element['type'])
-
+    def _migrate_layer(self, element):
         # Migrate layer
         YamlInterface.rename_key('layer', 'z', element, self.log)
         YamlInterface.rename_key('h_pos', 'anchor_x', element, self.log)
@@ -611,19 +590,15 @@ class V4Migrator(VersionMigrator):
         YamlInterface.del_key_with_comments(element, 'thickness', self.log)
         YamlInterface.del_key_with_comments(element, 'bg_shade', self.log)
         YamlInterface.del_key_with_comments(element, 'slide', self.log)
+        return element
 
-        if element_type == 'text':
-            YamlInterface.rename_key('size', 'font_size', element, self.log)
+    def _format_anchor_and_value(self, anchor, value):
+        if value < 0:
+            return '{}{}'.format(anchor, value)
+        else:
+            return '{}+{}'.format(anchor, value)
 
-        if element_type != 'dmd':
-            YamlInterface.del_key_with_comments(element, 'bg_color', self.log)
-
-        if element_type == 'virtualdmd' and V4Migrator.color_dmd:
-            YamlInterface.del_key_with_comments(element, 'pixel_color',
-                                                self.log)
-            self.log.debug('Changing widget type from "dmd" to "color_dmd"')
-            element['type'] = 'color_dmd'
-
+    def _migrate_element_y_and_anchor(self, element, display, height):
         if 'y' in element:
             old_y = element['y']
             element['y'] *= -1
@@ -634,29 +609,12 @@ class V4Migrator(VersionMigrator):
             element['anchor_y'] = 'top'
 
         try:
-            if 'anchor_y' not in element:
-                if element['y'] < 0:
-                    element['y'] = 'bottom{}'.format(element['y'])
-                else:
-                    element['y'] = 'bottom+{}'.format(element['y'])
-
+            if 'anchor_y' not in element or element['anchor_y'] == 'bottom':
+                element['y'] = self._format_anchor_and_value('bottom', element['y'])
             elif element['anchor_y'] in ('middle', 'center'):
-                if element['y'] < 0:
-                    element['y'] = 'middle{}'.format(element['y'])
-                else:
-                    element['y'] = 'middle+{}'.format(element['y'])
-
+                element['y'] = self._format_anchor_and_value('middle', element['y'])
             elif element['anchor_y'] == 'top':
-                if element['y'] < 0:
-                    element['y'] = 'top{}'.format(element['y'])
-                else:
-                    element['y'] = 'top+{}'.format(element['y'])
-
-            elif element['anchor_y'] == 'bottom':
-                if element['y'] < 0:
-                    element['y'] = 'bottom{}'.format(element['y'])
-                else:
-                    element['y'] = 'bottom+{}'.format(element['y'])
+                element['y'] = self._format_anchor_and_value('top', element['y'])
 
             self.log.debug("Changing y:%s to y:%s (Based on anchor_y:%s"
                            "and %s height:%s)", old_y, element['y'],
@@ -676,7 +634,9 @@ class V4Migrator(VersionMigrator):
         if ('anchor_y' in element and 'y' not in element and
                 element['anchor_y'] != 'middle'):
             element['y'] = element['anchor_y']
+        return element
 
+    def _migrate_element_x_and_anchor(self, element, display, width):
         if 'x' in element:
             old_x = element['x']
         else:
@@ -686,29 +646,14 @@ class V4Migrator(VersionMigrator):
             element['anchor_x'] = 'left'
 
         try:
-            if 'anchor_x' not in element:
-                if element['x'] < 0:
-                    element['x'] = 'left{}'.format(element['x'])
-                else:
-                    element['x'] = 'left+{}'.format(element['x'])
+            if 'anchor_x' not in element or element['anchor_x'] == 'left':
+                element['x'] = self._format_anchor_and_value('left', element['x'])
 
             elif element['anchor_x'] in ('middle', 'center'):
-                if element['x'] < 0:
-                    element['x'] = 'center{}'.format(element['x'])
-                else:
-                    element['x'] = 'center+{}'.format(element['x'])
+                element['x'] = self._format_anchor_and_value('center', element['x'])
 
             elif element['anchor_x'] == 'right':
-                if element['x'] < 0:
-                    element['x'] = 'right{}'.format(element['x'])
-                else:
-                    element['x'] = 'right+{}'.format(element['x'])
-
-            elif element['anchor_x'] == 'left':
-                if element['x'] < 0:
-                    element['x'] = 'left{}'.format(element['x'])
-                else:
-                    element['x'] = 'left+{}'.format(element['x'])
+                element['x'] = self._format_anchor_and_value('right', element['x'])
 
             self.log.debug("Changing x:%s to x:%s (Based on anchor_x:%s"
                            "and %s width:%s)", old_x, element['x'],
@@ -727,6 +672,50 @@ class V4Migrator(VersionMigrator):
         if ('anchor_x' in element and 'x' not in element and
                 element['anchor_x'] != 'center'):
             element['x'] = element['anchor_x']
+        return element
+
+    def _element_to_widget(self, element, display):
+        # takes an element dict, returns a widget dict
+
+        width, height = self._get_width_and_height_for_display(element, display)
+
+        try:
+            element_type = element['type'].lower()
+
+        except KeyError:
+            return False
+
+        element = self._migrate_layer(element)
+
+        type_map = dict(virtualdmd='dmd',
+                        text='text',
+                        shape='shape',
+                        animation='animation',
+                        image='image',
+                        movie='video',
+                        character_picker='character_picker',
+                        entered_chars='entered_chars')
+
+        # Migrate the element type
+        element['type'] = type_map[element_type]
+
+        self.log.debug('Converting "%s" display_element to "%s" widget',
+                       element_type, element['type'])
+
+        if element_type == 'text':
+            YamlInterface.rename_key('size', 'font_size', element, self.log)
+
+        if element_type != 'dmd':
+            YamlInterface.del_key_with_comments(element, 'bg_color', self.log)
+
+        if element_type == 'virtualdmd' and V4Migrator.color_dmd:
+            YamlInterface.del_key_with_comments(element, 'pixel_color',
+                                                self.log)
+            self.log.debug('Changing widget type from "dmd" to "color_dmd"')
+            element['type'] = 'color_dmd'
+
+        element = self._migrate_element_x_and_anchor(element, display, height)
+        element = self._migrate_element_y_and_anchor(element, display, width)
 
         if element_type == 'animation':
             element = self._migrate_animation(element)
