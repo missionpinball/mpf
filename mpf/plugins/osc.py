@@ -30,10 +30,8 @@ class OSC(object):
             return
 
         if not import_success:
-            machine.log.warning('OSC plugin requires PyOSC which does not '
-                                'appear to be installed. No prob, but FYI '
-                                'that the OSC will not be available.')
-            return
+            raise AssertionError('OSC plugin requires PyOSC which does not '
+                                 'appear to be installed.')
 
         self.log = logging.getLogger('osc')
         self.machine = machine
@@ -61,6 +59,18 @@ class OSC(object):
 
         # register for events
         self.machine.events.add_handler('init_phase_4', self.start)
+
+        self.message_parsers = {
+            "SW": self.process_switch,
+            "REFRESH": self.process_refresh,
+            "LIGHT": self.process_light,
+            "COIL": self.process_coil,
+            "EV": self.process_event,
+            "AUDITS": self.update_audits,
+            "SYNC": self.process_sync,
+            "WPCSYNC": self.process_wpcsync,
+            "FLIPPER": self.process_flipper,
+        }
 
     def start(self):
         """Starts the OSC server."""
@@ -107,39 +117,34 @@ class OSC(object):
 
         try:
             name = addr.split("/")[2]
-        except ValueError:
+        except IndexError:
             name = None  # catches incoming messages that are just one part
 
         # if this client is not connected, set up a connection
         if client_address not in self.OSC_clients:
             self.found_new_osc_client(client_address)
 
-        if cat.upper() == 'SW':
-            self.process_switch(name, data)
-        elif cat.upper() == 'REFRESH':
-            self.client_needs_sync = True  # is this used anymore?
-        elif cat.upper() == 'LIGHT':
-            self.process_light(name, data)
-        elif cat.upper() == 'COIL':
-            self.process_coil(name, data)
-        elif cat.upper() == 'EV':
-            self.process_event(name, data)
-        elif cat.upper() == 'AUDITS':
-            self.update_audits(name, data)
-        elif cat.upper() == 'CONFIG':
-            self.process_config(name, data)
-        elif cat.upper() == 'SYNC':
-            if data[0] == 1:
-                self.client_mode = 'name'
-                self.client_update_all()
-        elif cat.upper() == 'WPCSYNC':
-            if data[0] == 1:
-                self.client_mode = 'wpc'
-                self.client_update_all()
-        elif cat.upper() == 'FLIPPER':
-            self.process_flipper(name, data)
+        if cat.upper() in self.message_parsers:
+            self.message_parsers[cat.upper()](name, data)
         elif self.config['debug_messages']:
             self.log.info("Last incoming OSC message was invalid")
+
+    def process_refresh(self, name, data):
+        del name
+        del data
+        self.client_needs_sync = True  # is this used anymore?
+
+    def process_sync(self, name, data):
+        del name
+        if data[0] == 1:
+            self.client_mode = 'name'
+            self.client_update_all()
+
+    def process_wpcsync(self, name, data):
+        del name
+        if data[0] == 1:
+            self.client_mode = 'wpc'
+            self.client_update_all()
 
     def process_switch(self, switch, data):
         """Processes a switch event received from the OSC client."""
