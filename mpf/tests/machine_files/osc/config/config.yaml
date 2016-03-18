@@ -2,6 +2,10 @@
 
 osc:
   machine_ip: auto
+  client_updates:
+    switches
+    lights
+    data
 
 matrix_lights:
   light1:
@@ -21,5 +25,7 @@ coils:
 switches:
   switch1:
     number: 1
-  s_flipper:
+  switch2:
     number: 2
+  s_flipper:
+    number: 3

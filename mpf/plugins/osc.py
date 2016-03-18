@@ -335,6 +335,9 @@ class OSC(object):
         name - the name of the object we're updating
         data - the data we're sending
         """
+        for client in self.clients_to_add:
+            self.setup_osc_client(client)
+
         if self.OSC_clients:
             self.OSC_message = OSCmodule.OSCMessage("/" + str(category) + "/" +
                                                     name)
@@ -356,9 +359,6 @@ class OSC(object):
             if client in self.OSC_clients:
                 del self.OSC_clients[client]
         self.clients_to_delete = []
-
-        for client in self.clients_to_add:
-            self.setup_osc_client(client)
 
     def found_new_osc_client(self, address):
         if address not in self.OSC_clients:
