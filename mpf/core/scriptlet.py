@@ -1,6 +1,6 @@
 """Contains the parent class for Scriptlets."""
-
 import logging
+from mpf.core.delays import DelayManager
 
 
 class Scriptlet(object):
@@ -10,6 +10,7 @@ class Scriptlet(object):
         self.name = name
         self.log = logging.getLogger('Scriptlet.' + name)
         self.log.debug("Loading Scriptlet: %s", name)
+        self.delay = DelayManager(self.machine.delayRegistry)
         self.on_load()
 
     def __repr__(self):
