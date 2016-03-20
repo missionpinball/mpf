@@ -112,9 +112,24 @@ class V4Migrator(VersionMigrator):
         self._migrate_light_player()
         self._migrate_shot_profiles()
         self._migrate_light_scripts()
+        self._migrate_mode_timers()
         self._migrate_assets('images')
         self._migrate_assets('videos')
         self._migrate_assets('sounds')
+
+    def _migrate_mode_timers(self):
+        if 'timers' in self.fc:
+            for timer_name in self.fc['timers']:
+                if "start_paused" in self.fc['timers'][timer_name]:
+                    if not self.fc['timers'][timer_name]['start_paused']:
+                        self.fc['timers'][timer_name]["start_running"] = True
+                    elif ("start_running" not in self.fc['timers'][timer_name] or
+                            not self.fc['timers'][timer_name]["start_running"]):
+                        self.fc['timers'][timer_name]["start_running"] = False
+                    else:
+                        raise ValueError("Both start_paused and start_running are true. This is impossible")
+
+                    YamlInterface.del_key_with_comments(self.fc['timers'][timer_name], 'start_paused', self.log)
 
     def _migrate_window(self):
         # Create a display from the window
