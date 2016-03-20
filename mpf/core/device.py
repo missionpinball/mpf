@@ -33,6 +33,11 @@ class Device(object):
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
 
+    def debug_log(self, msg, *args, **kwargs):
+        # Logs to debug if debug is enabled for the device
+        if self.debug:
+            self.log.debug(msg, args, kwargs)
+
     def prepare_config(self, config):
         # returns the prepared config
         return config
