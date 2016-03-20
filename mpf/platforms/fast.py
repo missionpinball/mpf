@@ -624,7 +624,6 @@ class HardwarePlatform(Platform):
         self.net_connection.send(self.watchdog_command)
 
     # pylint: disable-msg=too-many-arguments
-    # pylint: too-many-locals
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
                       disable_on_release=True, drive_now=False,
                       **driver_settings_overrides):
@@ -676,22 +675,23 @@ class HardwarePlatform(Platform):
         control = Util.int_to_hex_string(int(control))
 
         # todo need to implement disable_on_release
+        param = {}
 
         if driver_action == 'pulse':
             mode = '10'                               # Mode 10 settings
-            param1 = driver_settings['pulse_ms']      # initial pulse ms
-            param2 = driver_settings['pwm1']          # intial pwm
-            param3 = '00'                             # pulse 2 time
-            param4 = '00'                             # pulse 2 pwm
-            param5 = driver_settings['recycle_ms']    # recycle ms
+            param[1] = driver_settings['pulse_ms']      # initial pulse ms
+            param[2] = driver_settings['pwm1']          # intial pwm
+            param[3] = '00'                             # pulse 2 time
+            param[4] = '00'                             # pulse 2 pwm
+            param[5] = driver_settings['recycle_ms']    # recycle ms
 
         elif driver_action == 'hold':
             mode = '18'                               # Mode 18 settings
-            param1 = driver_settings['pulse_ms']      # intiial pulse ms
-            param2 = driver_settings['pwm1']          # intial pwm
-            param3 = driver_settings['pwm2']          # hold pwm
-            param4 = driver_settings['recycle_ms']    # recycle ms
-            param5 = '00'                             # not used with Mode 18
+            param[1] = driver_settings['pulse_ms']      # intiial pulse ms
+            param[2] = driver_settings['pwm1']          # intial pwm
+            param[3] = driver_settings['pwm2']          # hold pwm
+            param[4] = driver_settings['recycle_ms']    # recycle ms
+            param[5] = '00'                             # not used with Mode 18
 
         elif driver_action == 'timed_hold':
 
@@ -699,22 +699,22 @@ class HardwarePlatform(Platform):
             hold_value = driver_settings['activation_time']
 
             mode = '70'                               # Mode 70 settings
-            param1 = driver_settings['pulse_ms']      # intiial pulse ms
-            param2 = driver_settings['pwm1']          # intial pwm
-            param3 = hold_value                       # hold time
-            param4 = driver_settings['pwm2']          # hold pwm
-            param5 = driver_settings['recycle_ms']    # recycle ms
+            param[1] = driver_settings['pulse_ms']      # intiial pulse ms
+            param[2] = driver_settings['pwm1']          # intial pwm
+            param[3] = hold_value                       # hold time
+            param[4] = driver_settings['pwm2']          # hold pwm
+            param[5] = driver_settings['recycle_ms']    # recycle ms
 
         else:
             raise ValueError("Invalid driver action: '%s'. Expected 'hold', "
                              "'timed_hold', or 'pulse'" % driver_action)
 
         self.hw_rules[driver_obj] = {'mode': mode,
-                                     'param1': param1,
-                                     'param2': param2,
-                                     'param3': param3,
-                                     'param4': param4,
-                                     'param5': param5,
+                                     'param1': param[1],
+                                     'param2': param[2],
+                                     'param3': param[3],
+                                     'param4': param[4],
+                                     'param5': param[5],
                                      'switch': switch_obj.number}
 
         cmd = (driver_settings['config_cmd'] +
@@ -722,11 +722,11 @@ class HardwarePlatform(Platform):
                control + ',' +
                switch_obj.number[0] + ',' +
                mode + ',' +
-               param1 + ',' +
-               param2 + ',' +
-               param3 + ',' +
-               param4 + ',' +
-               param5)
+               param[1] + ',' +
+               param[2] + ',' +
+               param[3] + ',' +
+               param[4] + ',' +
+               param[5])
 
         driver_obj.autofire = cmd
         self.log.debug("Writing hardware rule: %s", cmd)
