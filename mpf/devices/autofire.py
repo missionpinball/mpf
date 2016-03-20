@@ -25,16 +25,12 @@ class AutofireCoil(SystemWideDevice):
 
         self.validate()
 
-        self.switch_activity = 1
-
-        if self.switch.invert:
-            self.switch_activity = 0
-
         if self.config['reverse_switch']:
-            self.switch_activity ^= 1
+            self.switch_activity = 0
+        else:
+            self.switch_activity = 1
 
-        if self.debug:
-            self.log.debug('Platform Driver: %s', self.platform)
+        self.debug_log('Platform Driver: %s', self.platform)
 
     def validate(self):
         """Autofire rules only work if the switch is on the same platform as the
