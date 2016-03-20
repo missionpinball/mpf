@@ -80,7 +80,7 @@ ball_devices:
     entrance_switch: single|self.machine.switches[%]|None
     entrance_events: dict|str:ms|None
     jam_switch: single|self.machine.switches[%]|None
-    confirm_eject_type: single|str|target
+    confirm_eject_type: single|enum(target,switch,event,fake)|target
     captures_from: single|self.machine.playfields[%]|playfield
     eject_targets: list|self.machine.ball_devices[%]|playfield
     eject_timeouts: list|ms|None
