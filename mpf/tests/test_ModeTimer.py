@@ -1,4 +1,8 @@
+# TODO: test remaining actions
+# TODO: test empty control_events
+
 from mpf.tests.MpfTestCase import MpfTestCase
+
 
 class TestModeTimer(MpfTestCase):
 

@@ -177,6 +177,10 @@ color_correction_profile:
     linear_cutoff: single|float|0.0
 config_player_common:
     priority: single|int|0
+control_events:
+    action: single|str|
+    event: single|str|
+    value: single|int|None
 credits:
     max_credits: single|int|0
     free_play: single|bool|yes
@@ -775,7 +779,7 @@ timers:
     max_value: single|ms|None
     tick_interval: single|ms|1s
     start_running: single|bool|False
-    control_events: ignore
+    control_events: list|subconfig(control_events)|None
     restart_on_complete: single|bool|False
     bcp: single|bool|False
 transitions:
