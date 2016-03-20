@@ -115,7 +115,7 @@ class Mode(object):
                     for device, settings in this_section.items():
                         self.config[section][device] = (
                             self.machine.config_validator.validate_config(
-                                section, settings))
+                                section, settings, "mode:" + self.name))
 
                 else:
                     self.config[section] = (self.machine.config_validator.validate_config(section, this_section))
