@@ -78,7 +78,7 @@ class Platform(object):
         switch_obj = self.machine.switches[sw_name]  # todo make a nice error
         driver_obj = self.machine.coils[driver_name]  # here too
 
-        if self.machine.switches[sw_name].invert:
+        if switch_obj.invert:
             sw_activity ^= 1
 
         self.write_hw_rule(switch_obj, sw_activity, driver_obj, driver_action,
