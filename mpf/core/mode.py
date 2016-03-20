@@ -544,8 +544,9 @@ class ModeTimer(object):
             self.log.debug("tick_secs: %s", self.tick_secs)
             self.log.debug("--------------------------------------")
 
-        if 'control_events' in self.config and isinstance(self.config['control_events'], dict):
-            self.config['control_events'] = [self.config['control_events']]
+        if self.config['control_events']:
+            if isinstance(self.config['control_events'], dict):
+                self.config['control_events'] = [self.config['control_events']]
         else:
             self.config['control_events'] = list()
 
