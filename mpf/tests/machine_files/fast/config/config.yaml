@@ -32,6 +32,9 @@ autofire_coils:
     ac_slingshot_test:
         coil: c_slingshot_test
         switch: s_slingshot_test
+    ac_inverted_switch:
+        coil: c_slingshot_test
+        switch: s_test_nc
 
 servos:
     servo1:

@@ -89,6 +89,13 @@ class TestFast(MpfTestCase):
         self.machine.autofires.ac_slingshot_test.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
+    def test_hw_rule_pulse_inverted_switch(self):
+        MockSerialCommunicator.expected_commands = {
+                "DN:09,11,1A,10,0A,ff,00,00,00": False
+        }
+        self.machine.autofires.ac_inverted_switch.enable()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
     def test_servo(self):
         # go to min position
         MockSerialCommunicator.expected_commands = {
