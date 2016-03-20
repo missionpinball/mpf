@@ -1,0 +1,25 @@
+#config_version=4
+
+switches:
+    s_test:
+        number: 7
+    s_test_nc:
+        number: 1A
+        type: 'NC'
+
+coils:
+    c_test:
+        number: 4
+        pulse_ms: 23
+    c_test2:
+        number: 5
+        pulse_ms: 23
+
+
+autofire_coils:
+    ac_test:
+        coil: c_test
+        switch: s_test
+    ac_test_inverted:
+        coil: c_test2
+        switch: s_test_nc
