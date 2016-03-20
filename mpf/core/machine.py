@@ -93,14 +93,7 @@ class MachineController(object):
 
         self._load_hardware_platforms()
 
-        # Do this here so there's a credit_string var even if they're not using
-        # the credits mode
-        try:
-            credit_string = self.config['credits']['free_play_string']
-        except KeyError:
-            credit_string = 'FREE PLAY'
-
-        self.create_machine_var('credits_string', credit_string, silent=True)
+        self._initialize_credit_string()
 
         self._load_core_modules()
         # order is specified in mpfconfig.yaml
@@ -108,14 +101,28 @@ class MachineController(object):
         # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
         # they're not set up yet when the hw platforms are constructed.
-        for platform in list(self.hardware_platforms.values()):
-            platform.initialize()
+        self._initialize_platforms()
 
         self._validate_config()
 
         self._register_config_players()
         self._register_system_events()
         self._load_machine_vars()
+        self._run_init_phases()
+
+        ConfigValidator.unload_config_spec()
+
+        self.clear_boot_hold('init')
+
+    @property
+    def bcp_client_connected(self):
+        return BCP.active_connections > 0
+
+    def get_system_config(self):
+        # used by the config validator
+        return self.machine_config['mpf']
+
+    def _run_init_phases(self):
         self.events.post("init_phase_1")
         self.events.process_event_queue()
         self.events.post("init_phase_2")
@@ -128,17 +135,20 @@ class MachineController(object):
         self.events.process_event_queue()
         self.events.post("init_phase_5")
         self.events.process_event_queue()
-        ConfigValidator.unload_config_spec()
 
-        self.clear_boot_hold('init')
+    def _initialize_platforms(self):
+        for platform in list(self.hardware_platforms.values()):
+            platform.initialize()
 
-    @property
-    def bcp_client_connected(self):
-        return BCP.active_connections > 0
+    def _initialize_credit_string(self):
+        # Do this here so there's a credit_string var even if they're not using
+        # the credits mode
+        try:
+            credit_string = self.config['credits']['free_play_string']
+        except KeyError:
+            credit_string = 'FREE PLAY'
 
-    def get_system_config(self):
-        # used by the config validator
-        return self.machine_config['mpf']
+        self.create_machine_var('credits_string', credit_string, silent=True)
 
     def _validate_config(self):
         self.validate_machine_config_section('machine')
@@ -650,6 +660,7 @@ class MachineController(object):
     def is_machine_var(self, name):
         return name in self.machine_vars
 
+    # pylint: disable-msg=too-many-arguments
     def create_machine_var(self, name, value=0, persist=False,
                            expire_secs=None, silent=False):
         """Creates a new machine variable:
