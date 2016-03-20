@@ -178,7 +178,7 @@ color_correction_profile:
 config_player_common:
     priority: single|int|0
 control_events:
-    action: single|str|
+    action: single|enum(add,substract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval)|
     event: single|str|
     value: single|int|None
 credits:
