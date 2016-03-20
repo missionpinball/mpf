@@ -1028,6 +1028,7 @@ class ConfigValidator(object):
             "bool_int": self._validate_type_bool_int,
             "pow2": self._validate_type_pow2,
             "gain": Util.string_to_gain,
+            "subconfig": self._validate_type_subconfig,
         }
 
     @classmethod
@@ -1231,6 +1232,9 @@ class ConfigValidator(object):
                                              'setting "' + path_string + '", but this is not a valid '
                                                                          'setting name.')
 
+    def _validate_type_subconfig(self, item, param):
+        return self.validate_config(param, item)
+
     def _validate_type_str(self, item):
         if item is not None:
             return str(item)
@@ -1381,6 +1385,11 @@ class ConfigValidator(object):
             else:
                 return None
 
+        elif '(' in validator and ')' in validator[-1:] == ')':
+            validator_parts = validator.split('(')
+            validator = validator_parts[0]
+            param = validator_parts[1][:-1]
+            return self.validator_list[validator](item, param)
         elif validator in self.validator_list:
             return self.validator_list[validator](item)
 
