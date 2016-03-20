@@ -624,6 +624,7 @@ class HardwarePlatform(Platform):
         self.net_connection.send(self.watchdog_command)
 
     # pylint: disable-msg=too-many-arguments
+    # pylint: too-many-locals
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
                       disable_on_release=True, drive_now=False,
                       **driver_settings_overrides):
