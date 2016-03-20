@@ -545,20 +545,13 @@ class ModeTimer(object):
             self.log.debug("--------------------------------------")
 
         if self.config['control_events']:
-            if isinstance(self.config['control_events'], dict):
-                self.config['control_events'] = [self.config['control_events']]
-        else:
-            self.config['control_events'] = list()
-
-        self._setup_control_events(self.config['control_events'])
+            self._setup_control_events(self.config['control_events'])
 
     def _setup_control_events(self, event_list):
-
         if self.debug:
             self.log.debug("Setting up control events")
 
         kwargs = None
-
         for entry in event_list:
             if entry['action'] == 'add':
                 handler = self.add_time
