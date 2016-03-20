@@ -1033,6 +1033,7 @@ class ConfigValidator(object):
             "pow2": self._validate_type_pow2,
             "gain": Util.string_to_gain,
             "subconfig": self._validate_type_subconfig,
+            "enum": self._validate_type_enum,
         }
 
     @classmethod
@@ -1238,6 +1239,13 @@ class ConfigValidator(object):
 
     def _validate_type_subconfig(self, item, param):
         return self.validate_config(param, item)
+
+    def _validate_type_enum(self, item, enum):
+        enum_values = enum.split(",")
+        if item in enum_values:
+            return item
+        else:
+            raise ValueError("{} is not in list of allowed values {}".format(item, str(enum)))
 
     def _validate_type_str(self, item):
         if item is not None:
