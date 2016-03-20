@@ -349,6 +349,7 @@ class BCP(object):
         Shot.monitor_enabled = True
         self.machine.register_monitor('shots', self._shot)
 
+    # pylint: disable-msg=too-many-arguments
     def _player_var_change(self, name, value, prev_value, change, player_num):
         if name == 'score':
             self.send('player_score', value=value, prev_value=prev_value,
@@ -395,24 +396,29 @@ class BCP(object):
                                                 self._bcp_event_callback,
                                                 command=settings['command'])
 
+    def _replace_variables(self, value, kwargs):
+        # Are there any text variables to replace on the fly?
+        # todo should this go here?
+        if '%' in value:
+            # first check for player vars (%var_name%)
+            if self.machine.game and self.machine.game.player:
+                for name, val in self.machine.game.player:
+                    if '%' + name + '%' in value:
+                        value = value.replace('%' + name + '%',
+                                              str(val))
+
+            # now check for single % which means event kwargs
+            for name, val in kwargs.items():
+                if '%' + name in value:
+                    value = value.replace('%' + name, str(val))
+
+        return value
+
     def _bcp_event_callback(self, command, params=None, **kwargs):
         if params:
             params = copy.deepcopy(params)
             for param, value in params.items():
-                # Are there any text variables to replace on the fly?
-                # todo should this go here?
-                if '%' in value:
-                    # first check for player vars (%var_name%)
-                    if self.machine.game and self.machine.game.player:
-                        for name, val in self.machine.game.player:
-                            if '%' + name + '%' in value:
-                                value = value.replace('%' + name + '%',
-                                                      str(val))
-
-                    # now check for single % which means event kwargs
-                    for name, val in kwargs.items():
-                        if '%' + name in value:
-                            params[param] = value.replace('%' + name, str(val))
+                params[param] = self._replace_variables(value, kwargs)
 
             self.send(command, **params)
 
