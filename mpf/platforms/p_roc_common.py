@@ -117,12 +117,8 @@ class PROCBasePlatform(Platform):
             if (driver_settings['pwm_on_ms'] and
                     driver_settings['pwm_off_ms']):
                 proc_actions.add('pulsed_patter')
-                pulse_ms = driver_settings['pulse_ms']
-                pwm_on = driver_settings['pwm_on_ms']
-                pwm_off = driver_settings['pwm_off_ms']
             else:
                 proc_actions.add('pulse')
-                pulse_ms = driver_settings['pulse_ms']
 
             if disable_on_release:
                 proc_actions.add('disable')
@@ -132,9 +128,6 @@ class PROCBasePlatform(Platform):
             if (driver_settings['pwm_on_ms'] and
                     driver_settings['pwm_off_ms']):
                 proc_actions.add('patter')
-                pulse_ms = driver_settings['pulse_ms']
-                pwm_on = driver_settings['pwm_on_ms']
-                pwm_off = driver_settings['pwm_off_ms']
             else:
                 proc_actions.add('enable')
 
@@ -157,11 +150,11 @@ class PROCBasePlatform(Platform):
 
             if proc_action == 'pulse':
                 this_driver = [self.pinproc.driver_state_pulse(
-                    driver_obj.hw_driver.state(), pulse_ms)]
+                    driver_obj.hw_driver.state(), driver_settings['pulse_ms'])]
 
             elif proc_action == 'patter':
                 this_driver = [self.pinproc.driver_state_patter(
-                    driver_obj.hw_driver.state(), pwm_on, pwm_off, pulse_ms,
+                    driver_obj.hw_driver.state(), driver_settings['pwm_on_ms'], driver_settings['pwm_off_ms'], driver_settings['pulse_ms'],
                     True)]
                 # todo above param True should not be there. Change to now?
 
@@ -178,8 +171,8 @@ class PROCBasePlatform(Platform):
 
             elif proc_action == 'pulsed_patter':
                 this_driver = [self.pinproc.driver_state_pulsed_patter(
-                    driver_obj.hw_driver.state(), pwm_on, pwm_off,
-                    pulse_ms)]
+                    driver_obj.hw_driver.state(), driver_settings['pwm_on_ms'], driver_settings['pwm_off_ms'],
+                    driver_settings['pulse_ms'])]
 
             event_type = self._get_event_type(this_sw_activity, debounced)
 
