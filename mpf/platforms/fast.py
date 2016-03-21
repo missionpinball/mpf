@@ -871,6 +871,34 @@ class FASTDriver(DriverPlatformInterface):
 
         return return_dict
 
+    def _merge_pulse_pwm_mask(self, return_dict, pulse_pwm_mask, pulse_power, pulse_power32):
+        if pulse_pwm_mask:
+            pulse_pwm_mask = str(pulse_pwm_mask)
+            if len(pulse_pwm_mask) == 32:
+                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
+            elif len(pulse_pwm_mask) == 8:
+                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
+            else:
+                raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
+        elif pulse_power32 is not None:
+            return_dict['pwm32'] = Util.pwm32_to_hex_string(pulse_power32)
+        elif pulse_power is not None:
+            return_dict['pwm1'] = Util.pwm8_to_hex_string(pulse_power)
+
+    def _merge_hold_pwm_mask(self, return_dict, hold_pwm_mask, hold_power, hold_power32):
+        if hold_pwm_mask:
+            hold_pwm_mask = str(hold_pwm_mask)
+            if len(hold_pwm_mask) == 32:
+                return_dict['pwm2'] = Util.bin_str_to_hex_str(hold_pwm_mask, 8)
+            elif len(hold_pwm_mask) == 8:
+                return_dict['pwm2'] = Util.bin_str_to_hex_str(hold_pwm_mask, 2)
+            else:
+                raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
+        elif hold_power32 is not None:
+            return_dict['pwm32'] = Util.pwm32_to_hex_string(hold_power32)
+        elif hold_power is not None:
+            return_dict['pwm2'] = Util.pwm8_to_hex_string(hold_power)
+
     # pylint: disable-msg=too-many-arguments
     def merge_driver_settings(self,
                               pulse_ms=None,
@@ -920,31 +948,9 @@ class FASTDriver(DriverPlatformInterface):
         if pulse_ms is not None:
             return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
 
-        if pulse_pwm_mask:
-            pulse_pwm_mask = str(pulse_pwm_mask)
-            if len(pulse_pwm_mask) == 32:
-                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
-            elif len(pulse_pwm_mask) == 8:
-                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
-            else:
-                raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
-        elif pulse_power32 is not None:
-            return_dict['pwm32'] = Util.pwm32_to_hex_string(pulse_power32)
-        elif pulse_power is not None:
-            return_dict['pwm1'] = Util.pwm8_to_hex_string(pulse_power)
+        self._merge_pulse_pwm_mask(return_dict, pulse_pwm_mask, pulse_power, pulse_power32)
 
-        if hold_pwm_mask:
-            hold_pwm_mask = str(hold_pwm_mask)
-            if len(hold_pwm_mask) == 32:
-                return_dict['pwm2'] = Util.bin_str_to_hex_str(hold_pwm_mask, 8)
-            elif len(hold_pwm_mask) == 8:
-                return_dict['pwm2'] = Util.bin_str_to_hex_str(hold_pwm_mask, 2)
-            else:
-                raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
-        elif hold_power32 is not None:
-            return_dict['pwm32'] = Util.pwm32_to_hex_string(hold_power32)
-        elif hold_power is not None:
-            return_dict['pwm2'] = Util.pwm8_to_hex_string(hold_power)
+        self._merge_hold_pwm_mask(return_dict, hold_pwm_mask, hold_power, hold_power32)
 
         return return_dict
 
