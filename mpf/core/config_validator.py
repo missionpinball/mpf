@@ -43,8 +43,8 @@ auditor:
     player: list|str|None
     num_player_top_records: single|int|1
 autofire_coils:
-    coil: single|self.machine.coils[%]|
-    switch: single|self.machine.switches[%]|
+    coil: single|machine(coils)|
+    switch: single|machine(switches)|
 #    latch: single|bool|False
     reverse_switch: single|bool|False
     delay: single|int|0
@@ -70,26 +70,26 @@ autofire_coils:
 ball_devices:
     exit_count_delay: single|ms|500ms
     entrance_count_delay: single|ms|500ms
-    eject_coil: single|self.machine.coils[%]|None
+    eject_coil: single|machine(coils)|None
     eject_coil_jam_pulse: single|ms|None
     eject_coil_retry_pulse: single|ms|None
-    hold_coil: single|self.machine.coils[%]|None
+    hold_coil: single|machine(coils)|None
     hold_coil_release_time: single|ms|1s
     hold_events: dict|str:ms|None
-    hold_switches: list|self.machine.switches[%]|None
-    entrance_switch: single|self.machine.switches[%]|None
+    hold_switches: list|machine(switches)|None
+    entrance_switch: single|machine(switches)|None
     entrance_events: dict|str:ms|None
-    jam_switch: single|self.machine.switches[%]|None
+    jam_switch: single|machine(switches)|None
     confirm_eject_type: single|enum(target,switch,event,fake)|target
-    captures_from: single|self.machine.playfields[%]|playfield
-    eject_targets: list|self.machine.ball_devices[%]|playfield
+    captures_from: single|machine(playfields)|playfield
+    eject_targets: list|machine(ball_devices)|playfield
     eject_timeouts: list|ms|None
     ball_missing_timeouts: list|ms|None
-    ball_missing_target: single|self.machine.playfields[%]|playfield
-    confirm_eject_switch: single|self.machine.switches[%]|None
+    ball_missing_target: single|machine(playfields)|playfield
+    confirm_eject_switch: single|machine(switches)|None
     confirm_eject_event: single|str|None
     max_eject_attempts: single|int|0
-    ball_switches: list|self.machine.switches[%]|None
+    ball_switches: list|machine(switches)|None
     ball_capacity: single|int|None
     tags: list|str|None
     label: single|str|%
@@ -102,11 +102,11 @@ ball_devices:
     player_controlled_eject_event: single|str|None
     ball_search_order: single|int|100
     auto_fire_on_unexpected_ball: single|bool|True
-    target_on_unexpected_ball: single|self.machine.ball_devices[%]|None
+    target_on_unexpected_ball: single|machine(ball_devices)|None
 ball_locks:
     balls_to_lock: single|int|
-    lock_devices: list|self.machine.ball_devices[%]|
-    source_playfield: single|self.machine.ball_devices[%]|playfield
+    lock_devices: list|machine(ball_devices)|
+    source_playfield: single|machine(ball_devices)|playfield
     request_new_balls_to_pf: single|bool|True
     tags: list|str|None
     label: single|str|%
@@ -116,7 +116,7 @@ ball_locks:
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_ending
     release_one_events: dict|str:ms|None
 ball_saves:
-    source_playfield: single|self.machine.ball_devices[%]|playfield
+    source_playfield: single|machine(ball_devices)|playfield
     active_time: single|ms|0
     hurry_up_time: single|ms|0
     grace_period: single|ms|0
@@ -184,14 +184,14 @@ control_events:
 credits:
     max_credits: single|int|0
     free_play: single|bool|yes
-    service_credits_switch: list|self.machine.switches[%]|None
+    service_credits_switch: list|machine(switches)|None
     fractional_credit_expiration_time: single|ms|0
     credit_expiration_time: single|ms|0
     persist_credits_while_off_time: single|secs|1h
     free_play_string: single|str|FREE PLAY
     credits_string: single|str|CREDITS
     switches:
-        switch: single|self.machine.switches[%]|None
+        switch: single|machine(switches)|None
         value: single|float|0.25
         type: single|str|money
     pricing_tiers:
@@ -205,14 +205,14 @@ displays:
 diverters:
     type: single|str|hold
     activation_time: single|ms|0
-    activation_switches: list|self.machine.switches[%]|None
-    disable_switches: list|self.machine.switches[%]|None
-    deactivation_switches: list|self.machine.switches[%]|None
-    activation_coil: single|self.machine.coils[%]|None
-    deactivation_coil: single|self.machine.coils[%]|None
-    targets_when_active: list|self.machine.ball_devices[%]|playfield
-    targets_when_inactive: list|self.machine.ball_devices[%]|playfield
-    feeder_devices: list|self.machine.ball_devices[%]|playfield
+    activation_switches: list|machine(switches)|None
+    disable_switches: list|machine(switches)|None
+    deactivation_switches: list|machine(switches)|None
+    activation_coil: single|machine(coils)|None
+    deactivation_coil: single|machine(coils)|None
+    targets_when_active: list|machine(ball_devices)|playfield
+    targets_when_inactive: list|machine(ball_devices)|playfield
+    feeder_devices: list|machine(ball_devices)|playfield
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -244,9 +244,9 @@ driver_enabled:
     enable_events: dict|str:ms|ball_started
     disable_events: dict|str:ms|ball_ending
 drop_targets:
-    switch: single|self.machine.switches[%]|
-    reset_coil: single|self.machine.coils[%]|None
-    knockdown_coil: single|self.machine.coils[%]|None
+    switch: single|machine(switches)|
+    reset_coil: single|machine(coils)|None
+    knockdown_coil: single|machine(coils)|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -254,9 +254,9 @@ drop_targets:
     knockdown_events: dict|str:ms|None
     ball_search_order: single|int|100
 drop_target_banks:
-    drop_targets: list|self.machine.drop_targets[%]|
-    reset_coil: single|self.machine.coils[%]|None
-    reset_coils: list|self.machine.coils[%]|None
+    drop_targets: list|machine(drop_targets)|
+    reset_coil: single|machine(coils)|None
+    reset_coils: list|machine(coils)|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -303,10 +303,10 @@ flashers:
     hold_pwm_mask: single|int|None
     recycle_ms: single|int|None
 flippers:
-    main_coil: single|self.machine.coils[%]|
-    hold_coil: single|self.machine.coils[%]|None
-    activation_switch: single|self.machine.switches[%]|
-    eos_switch: single|self.machine.switches[%]|None
+    main_coil: single|machine(coils)|
+    hold_coil: single|machine(coils)|None
+    activation_switch: single|machine(switches)|
+    eos_switch: single|machine(switches)|None
     use_eos: single|bool|False
     tags: list|str|None
     label: single|str|%
@@ -453,9 +453,9 @@ mode:
     restart_on_next_ball: single|bool|False
 multiballs:
     ball_count: single|int|
-    source_playfield: single|self.machine.ball_devices[%]|playfield
+    source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|ms|10s
-    ball_locks: list|self.machine.ball_locks[%]|None
+    ball_locks: list|machine(ball_locks)|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -513,17 +513,17 @@ playfields:
     ball_search_failed_action: single|str|new_ball
     ball_search_wait_after_iteration: single|ms|10s
 playfield_transfers:
-    ball_switch: single|self.machine.switches[%]|
-    eject_target: single|self.machine.ball_devices[%]|
-    captures_from: single|self.machine.ball_devices[%]|
+    ball_switch: single|machine(switches)|
+    eject_target: single|machine(ball_devices)|
+    captures_from: single|machine(ball_devices)|
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
 random_event_player:
     event_list: list|str|
 score_reels:
-    coil_inc: single|self.machine.coils[%]|None
-    coil_dec: single|self.machine.coils[%]|None
+    coil_inc: single|machine(coils)|None
+    coil_dec: single|machine(coils)|None
     rollover: single|bool|True
     limit_lo: single|int|0
     limit_hi: single|int|9
@@ -531,19 +531,19 @@ score_reels:
     hw_confirm_time: single|ms|300
 #    config: single|str|lazy
     confirm: single|str|strict
-    switch_0: single|self.machine.switches[%]|None
-    switch_1: single|self.machine.switches[%]|None
-    switch_2: single|self.machine.switches[%]|None
-    switch_3: single|self.machine.switches[%]|None
-    switch_4: single|self.machine.switches[%]|None
-    switch_5: single|self.machine.switches[%]|None
-    switch_6: single|self.machine.switches[%]|None
-    switch_7: single|self.machine.switches[%]|None
-    switch_8: single|self.machine.switches[%]|None
-    switch_9: single|self.machine.switches[%]|None
-    switch_10: single|self.machine.switches[%]|None
-    switch_11: single|self.machine.switches[%]|None
-    switch_12: single|self.machine.switches[%]|None
+    switch_0: single|machine(switches)|None
+    switch_1: single|machine(switches)|None
+    switch_2: single|machine(switches)|None
+    switch_3: single|machine(switches)|None
+    switch_4: single|machine(switches)|None
+    switch_5: single|machine(switches)|None
+    switch_6: single|machine(switches)|None
+    switch_7: single|machine(switches)|None
+    switch_8: single|machine(switches)|None
+    switch_9: single|machine(switches)|None
+    switch_10: single|machine(switches)|None
+    switch_11: single|machine(switches)|None
+    switch_12: single|machine(switches)|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -607,12 +607,12 @@ shots:
     profile: single|str|None
     switch: list|str|None
     switches: list|str|None
-    switch_sequence: list|self.machine.switches[%]|None
-    cancel_switch: list|self.machine.switches[%]|None
-    delay_switch: dict|self.machine.switches[%]:ms|None
+    switch_sequence: list|machine(switches)|None
+    cancel_switch: list|machine(switches)|None
+    delay_switch: dict|machine(switches):ms|None
     time: single|ms|0
-    # light: list|self.machine.lights[%]|None
-    # led: list|self.machine.leds[%]|None
+    # light: list|machine(lights)|None
+    # led: list|machine(leds)|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -1034,6 +1034,7 @@ class ConfigValidator(object):
             "gain": Util.string_to_gain,
             "subconfig": self._validate_type_subconfig,
             "enum": self._validate_type_enum,
+            "machine": self._validate_type_machine,
         }
 
     @classmethod
@@ -1237,15 +1238,28 @@ class ConfigValidator(object):
                                              'setting "' + path_string + '", but this is not a valid '
                                                                          'setting name.')
 
-    def _validate_type_subconfig(self, item, param):
+    def _validate_type_subconfig(self, item, param, validation_failure_info):
+        del validation_failure_info
         return self.validate_config(param, item)
 
-    def _validate_type_enum(self, item, enum):
-        enum_values = enum.split(",")
+    def _validate_type_enum(self, item, param, validation_failure_info):
+        del validation_failure_info
+        enum_values = param.split(",")
         if item in enum_values:
             return item
         else:
-            raise ValueError("{} is not in list of allowed values {}".format(item, str(enum)))
+            raise ValueError("{} is not in list of allowed values {}".format(item, str(param)))
+
+    def _validate_type_machine(self, item, param, validation_failure_info):
+        if item is None:
+            return None
+
+        section = getattr(self.machine, param, [])
+
+        if item in section:
+            return section[item]
+        else:
+            self.validation_error(item, validation_failure_info)
 
     def _validate_type_str(self, item):
         if item is not None:
@@ -1387,21 +1401,11 @@ class ConfigValidator(object):
 
             return return_dict
 
-        elif '%' in validator:
-            if isinstance(item, str):
-
-                try:
-                    return eval(validator.replace('%', "'" + item + "'"))
-                except KeyError:
-                    self.validation_error(item, validation_failure_info)
-            else:
-                return None
-
         elif '(' in validator and ')' in validator[-1:] == ')':
             validator_parts = validator.split('(')
             validator = validator_parts[0]
             param = validator_parts[1][:-1]
-            return self.validator_list[validator](item, param)
+            return self.validator_list[validator](item, param, validation_failure_info=validation_failure_info)
         elif validator in self.validator_list:
             return self.validator_list[validator](item)
 
