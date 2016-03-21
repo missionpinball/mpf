@@ -91,6 +91,12 @@ class TestFast(MpfTestCase):
         self.machine.autofires.ac_slingshot_test.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
+        MockSerialCommunicator.expected_commands = {
+                "DN:09,81": False
+        }
+        self.machine.autofires.ac_slingshot_test.disable()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
     def test_hw_rule_pulse_pwm(self):
         MockSerialCommunicator.expected_commands = {
                 "DN:10,89,00,10,0A,89,00,00,00": False
