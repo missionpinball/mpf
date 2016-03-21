@@ -42,3 +42,7 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
 
         """
         raise NotImplementedError('pulse method must be defined to use this base class')
+
+    def get_pulse_ms(self):
+        # returns the pulse_ms for this driver. needed by snux
+        raise NotImplementedError('pulse method must be defined to use this base class')
