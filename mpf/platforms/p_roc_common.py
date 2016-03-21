@@ -57,46 +57,55 @@ class PROCBasePlatform(Platform):
 
         self.log.info("Successfully connected to P-ROC/P3-ROC")
 
+    def _get_merged_driver_settings(self, driver_obj, driver_settings_overrides):
+        driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
+
+        driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
+            **driver_settings_overrides))
+
+        return driver_settings
+
+    def _get_debounce_setting(self, driver_settings_overrides, switch_obj):
+        if 'debounced' in driver_settings_overrides:
+            return bool(driver_settings_overrides['debounced'])
+        elif switch_obj.config['debounce']:
+            return True
+        else:
+            return False
+
+    def _get_event_type(self, sw_activity, debounced):
+        if sw_activity == 0 and debounced:
+            return "open_debounced"
+        elif sw_activity == 0 and not debounced:
+            return "open_nondebounced"
+        elif sw_activity == 1 and debounced:
+            return "closed_debounced"
+        else:  # if sw_activity == 1 and not debounced:
+            return "closed_nondebounced"
+
     # pylint: disable-msg=too-many-arguments
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
                       disable_on_release, drive_now,
                       **driver_settings_overrides):
 
-        driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
-
-        driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
-            **driver_settings_overrides))
+        driver_settings = self._get_merged_driver_settings(driver_obj, driver_settings_overrides)
 
         self.log.debug("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
                        " %s, Driver action: %s. Driver settings: %s",
                        switch_obj.name, sw_activity, driver_obj.name,
                        driver_action, driver_settings)
 
-        if 'debounced' in driver_settings_overrides:
-            debounced = bool(driver_settings_overrides['debounced'])
-        elif switch_obj.config['debounce']:
-            debounced = True
-        else:
-            debounced = False
+        debounced = self._get_debounce_setting(driver_settings_overrides, switch_obj)
 
         # Note the P-ROC uses a 125ms non-configurable recycle time. So any
         # non-zero value passed here will enable the 125ms recycle.
         # PinPROC calls this "reload active" (it's an "active reload timer")
-
-        reload_active = False
-        if driver_settings['recycle_ms']:
-            reload_active = True
-
         # We only want to notify_host for debounced switch events. We use non-
         # debounced for hw_rules since they're faster, but we don't want to
         # notify the host on them since the host would then get two events
         # one for the nondebounced followed by one for the debounced.
 
-        notify_host = False
-        if debounced:
-            notify_host = True
-
-        rule = {'notifyHost': notify_host, 'reloadActive': reload_active}
+        rule = {'notifyHost': debounced, 'reloadActive': bool(driver_settings['recycle_ms'])}
 
         # Now let's figure out what type of P-ROC action we need to take.
 
@@ -172,14 +181,7 @@ class PROCBasePlatform(Platform):
                     driver_obj.hw_driver.state(), pwm_on, pwm_off,
                     pulse_ms)]
 
-            if this_sw_activity == 0 and debounced:
-                event_type = "open_debounced"
-            elif this_sw_activity == 0 and not debounced:
-                event_type = "open_nondebounced"
-            elif this_sw_activity == 1 and debounced:
-                event_type = "closed_debounced"
-            else:  # if sw_activity == 1 and not debounced:
-                event_type = "closed_nondebounced"
+            event_type = self._get_event_type(this_sw_activity, debounced)
 
             # merge in any previously-configured driver rules for this switch
             final_driver = list(this_driver)  # need to make an actual copy
