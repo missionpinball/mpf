@@ -47,6 +47,8 @@ class TestFast(MpfTestCase):
             "DN:04,00,00,00" : False,
             "DN:06,00,00,00" : False,
             "DN:09,00,00,00" : False,
+            "DN:10,00,00,00" : False,
+            "DN:11,00,00,00" : False,
         }
         # FAST should never call sleep. Make it fail
         self.sleep = time.sleep
@@ -87,6 +89,32 @@ class TestFast(MpfTestCase):
                 "DN:09,01,16,10,0A,ff,00,00,00": False
         }
         self.machine.autofires.ac_slingshot_test.enable()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+    def test_hw_rule_pulse_pwm(self):
+        MockSerialCommunicator.expected_commands = {
+                "DN:10,89,00,10,0A,89,00,00,00": False
+        }
+        self.machine.coils.c_pulse_pwm_mask.pulse()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+        MockSerialCommunicator.expected_commands = {
+                "DN:10,C1,00,18,0A,89,AA,00": False
+        }
+        self.machine.coils.c_pulse_pwm_mask.enable()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+    def test_hw_rule_pulse_pwm32(self):
+        MockSerialCommunicator.expected_commands = {
+                "DN:11,89,00,10,0A,89898989,00,00,00": False
+        }
+        self.machine.coils.c_pulse_pwm32_mask.pulse()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+        MockSerialCommunicator.expected_commands = {
+                "DN:11,C1,00,18,0A,89898989,AA89AA89,00": False
+        }
+        self.machine.coils.c_pulse_pwm32_mask.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
     def test_hw_rule_pulse_inverted_switch(self):

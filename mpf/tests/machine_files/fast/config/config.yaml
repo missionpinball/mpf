@@ -26,7 +26,14 @@ coils:
         allow_enable: true
     c_slingshot_test:
         number: 9
-
+    c_pulse_pwm_mask:
+        number: 10
+        pulse_pwm_mask: 10001001
+        hold_pwm_mask: 10101010
+    c_pulse_pwm32_mask:
+        number: 11
+        pulse_pwm_mask: 10001001100010011000100110001001
+        hold_pwm_mask: 10101010100010011010101010001001
 
 autofire_coils:
     ac_slingshot_test:
