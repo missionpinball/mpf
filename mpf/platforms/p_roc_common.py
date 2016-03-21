@@ -1012,9 +1012,6 @@ class PROCDriver(DriverPlatformInterface):
         """
         return self.proc.driver_get_state(self.number)
 
-    def tick(self):
-        pass
-
 
 class PROCMatrixLight(MatrixLightPlatformInterface):
     def __init__(self, number, proc_driver):
