@@ -66,6 +66,42 @@ class TestP3Roc(MpfTestCase):
                           'patterEnable': False,
                           'futureEnable': False})
 
+        p_roc_common.pinproc.driver_state_pulsed_patter = MagicMock(
+            return_value={'driverNum': 9,
+                          'outputDriveTime': 0,
+                          'polarity': True,
+                          'state': False,
+                          'waitForFirstTimeSlot': False,
+                          'timeslots': 0,
+                          'patterOnTime': 0,
+                          'patterOffTime': 0,
+                          'patterEnable': False,
+                          'futureEnable': False})
+
+        p_roc_common.pinproc.driver_state_disable = MagicMock(
+            return_value={'driverNum': 10,
+                          'outputDriveTime': 0,
+                          'polarity': True,
+                          'state': False,
+                          'waitForFirstTimeSlot': False,
+                          'timeslots': 0,
+                          'patterOnTime': 0,
+                          'patterOffTime': 0,
+                          'patterEnable': False,
+                          'futureEnable': False})
+
+        p_roc_common.pinproc.driver_state_patter = MagicMock(
+            return_value={'driverNum': 11,
+                          'outputDriveTime': 0,
+                          'polarity': True,
+                          'state': False,
+                          'waitForFirstTimeSlot': False,
+                          'timeslots': 0,
+                          'patterOnTime': 0,
+                          'patterOffTime': 0,
+                          'patterEnable': False,
+                          'futureEnable': False})
+
         pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         super().setUp()
 
@@ -111,6 +147,240 @@ class TestP3Roc(MpfTestCase):
         # test disable
         self.machine.autofires.ac_slingshot_test.disable()
         self.machine.autofires.ac_slingshot_test.platform.proc.driver_disable.assert_called_with(8)
+
+    def test_hw_rule_pulse_inverted_switch(self):
+        self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=9)
+        self.machine.autofires.ac_switch_nc_test.enable()
+        self.machine.autofires.ac_switch_nc_test.platform.proc.switch_update_rule.assert_called_with(
+            41, 'open_nondebounced',
+            {'notifyHost': False, 'reloadActive': False},
+            [{'patterEnable': False,
+              'patterOnTime': 0,
+              'timeslots': 0,
+              'futureEnable': False,
+              'state': False,
+              'patterOffTime': 0,
+              'outputDriveTime': 0,
+              'driverNum': 9,
+              'polarity': True,
+              'waitForFirstTimeSlot': False}],
+            False)
+
+        p_roc_common.pinproc.driver_state_pulsed_patter.assert_called_with(9, 2, 8, 0)
+
+        # test disable
+        self.machine.autofires.ac_switch_nc_test.disable()
+        self.machine.autofires.ac_switch_nc_test.platform.proc.driver_disable.assert_called_with(9)
+
+    def test_hw_rule_pulse_disable_on_release(self):
+        self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
+        self.machine.default_platform.set_hw_rule(
+                sw_name="s_test",
+                sw_activity=1,
+                driver_name="c_test",
+                driver_action='pulse',
+                disable_on_release=True)
+
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(
+                23, 'closed_debounced',
+                {'notifyHost': True, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 8,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False}],
+                False),
+            call(
+                23, 'open_debounced',
+                {'notifyHost': True, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 10,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False}],
+                False),
+        ], any_order=True)
+
+        p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 23)
+        p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
+
+    def test_hw_rule_hold_pwm(self):
+        self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=8)
+        self.machine.default_platform.set_hw_rule(
+                sw_name="s_test",
+                sw_activity=1,
+                driver_name="c_coil_pwm_test",
+                driver_action='hold',
+                disable_on_release=False)
+
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(
+                23, 'closed_debounced',
+                {'notifyHost': True, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 11,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False}],
+                False),
+        ])
+
+        p_roc_common.pinproc.driver_state_patter.assert_called_with(8, 2, 8, 0, True)
+
+        # now add disable rule
+        self.machine.default_platform.set_hw_rule(
+                sw_name="s_test",
+                sw_activity=0,
+                driver_name="c_coil_pwm_test",
+                driver_action='disable',
+                disable_on_release=False)
+
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(
+                23, 'open_debounced',
+                {'notifyHost': True, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 10,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False}],
+                False),
+        ], any_order=True)
+
+        p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
+
+    def test_hw_rule_hold(self):
+        self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
+        self.machine.default_platform.set_hw_rule(
+                sw_name="s_test",
+                sw_activity=1,
+                driver_name="c_test",
+                driver_action='hold',
+                disable_on_release=True)
+
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(
+                23, 'closed_debounced',
+                {'notifyHost': True, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 8,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False}],
+                False),
+            call(
+                23, 'open_debounced',
+                {'notifyHost': True, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 10,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False}],
+                False),
+        ], any_order=True)
+
+        p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 0)
+        p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
+
+    def test_hw_rule_multiple_pulse(self):
+        self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
+        self.machine.default_platform.set_hw_rule(
+                sw_name="s_test",
+                sw_activity=1,
+                driver_name="c_test",
+                driver_action='pulse',
+                disable_on_release=False)
+
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(
+                23, 'closed_debounced',
+                {'notifyHost': True, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 8,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False}],
+                False),
+        ], any_order=True)
+
+        p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 23)
+
+        p_roc_common.pinproc.driver_state_pulse.assert_called_with = MagicMock()
+        self.machine.default_platform.proc.switch_update_rule = MagicMock()
+
+        self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=9)
+        self.machine.default_platform.set_hw_rule(
+                sw_name="s_test",
+                sw_activity=1,
+                driver_name="c_coil_pwm_test",
+                driver_action='pulse',
+                disable_on_release=False)
+
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(
+                23, 'closed_debounced',
+                {'notifyHost': True, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 9,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 {'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 8,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 ],
+                False),
+        ], any_order=False)
+
+        p_roc_common.pinproc.driver_state_pulse.assert_called_with(9, 23)
 
     def test_servo_via_i2c(self):
         # assert on init

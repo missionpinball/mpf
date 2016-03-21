@@ -17,24 +17,32 @@ switches:
         debounce: false
     s_slingshot_test:
         number: A2-B1-0
+    s_test_nc:
+        number: A2-B1-1
+        type: 'NC'
 
 coils:
     c_test:
         number: A1-B1-2
         pulse_ms: 23
-
     c_test_allow_enable:
         number: A1-B1-3
         pulse_ms: 23
         allow_enable: true
     c_slingshot_test:
         number: A0-B1-0
-
+    c_coil_pwm_test:
+        number: A0-B1-1
+        pwm_on_ms: 2
+        pwm_off_ms: 8
 
 autofire_coils:
     ac_slingshot_test:
         coil: c_slingshot_test
         switch: s_slingshot_test
+    ac_switch_nc_test:
+        coil: c_coil_pwm_test
+        switch: s_test_nc
 
 servo_controller:
     address: 0x40
