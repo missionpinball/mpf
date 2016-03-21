@@ -118,11 +118,14 @@ class TestP3Roc(MpfTestCase):
         with self.assertRaises(AssertionError):
             self.machine.coils.c_test.enable()
 
-    def test_allow_enable(self):
+    def test_allow_enable_disable(self):
         self.machine.coils.c_test_allow_enable.enable()
         number = self.machine.coils.c_test_allow_enable.hw_driver.number
         self.machine.coils.c_test_allow_enable.hw_driver.proc.driver_schedule.assert_called_with(
             number=number, cycle_seconds=0, now=True, schedule=0xffffffff)
+
+        self.machine.coils.c_test_allow_enable.disable()
+        self.machine.coils.c_test_allow_enable.hw_driver.proc.driver_disable.assert_called_with(number)
 
     def test_hw_rule_pulse(self):
         self.machine.coils.c_slingshot_test.hw_driver.state = MagicMock(return_value=8)
