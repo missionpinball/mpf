@@ -70,9 +70,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         """
         del mode
         del kwargs
-        if self.debug:
-            self.log.debug('Hit! Active profile: %s, Current state: %s',
-                           profile, profile)
+        self.debug_log('Hit! Active profile: %s, Current state: %s',
+                       profile, profile)
 
         self.machine.events.post(self.name + '_hit',
                                  profile=profile, state=state)
@@ -89,8 +88,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
-        if self.debug:
-            self.log.debug('Enabling from mode: %s', mode)
+        self.debug_log('Enabling from mode: %s', mode)
 
         for shot in self.config['shots']:
             shot.enable(mode)
@@ -102,8 +100,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
-        if self.debug:
-            self.log.debug('Disabling from mode: %s', mode)
+        self.debug_log('Disabling from mode: %s', mode)
 
         for shot in self.config['shots']:
             shot.disable(mode)
@@ -115,8 +112,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
-        if self.debug:
-            self.log.debug('Enabling rotation')
+        self.debug_log('Enabling rotation')
         self.rotation_enabled = True
 
     def disable_rotation(self, **kwargs):
@@ -125,8 +121,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
-        if self.debug:
-            self.log.debug('Disabling rotation')
+        self.debug_log('Disabling rotation')
         self.rotation_enabled = False
 
     def reset(self, mode=None, **kwargs):
@@ -136,8 +131,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
-        if self.debug:
-            self.log.debug('Resetting')
+        self.debug_log('Resetting')
         for shot in self.config['shots']:
             shot.reset(mode)
 
@@ -146,8 +140,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
-        if self.debug:
-            self.log.debug('Removing active profile')
+        self.debug_log('Removing active profile')
         for shot in self.config['shots']:
             shot.remove_active_profile(mode)
 
@@ -157,8 +150,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
-        if self.debug:
-            self.log.debug('Advancing')
+        self.debug_log('Advancing')
         for shot in self.config['shots']:
             shot.advance(mode)
 
@@ -196,8 +188,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         del kwargs
         if not self.rotation_enabled:
 
-            if self.debug:
-                self.log.debug("Received rotation request. "
+            self.debug_log("Received rotation request. "
                                "Rotation Enabled: %s. Will NOT rotate",
                                self.rotation_enabled)
 
@@ -261,9 +252,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             direction = shot_list[0].enable_table[mode]['settings']['rotation_pattern'][0]
             shot_list[0].enable_table[mode]['settings']['rotation_pattern'].rotate(-1)
 
-            if self.debug:
-                self.log.debug("Since no direction was specified, pulling from"
-                               " rotation pattern: '%s'", direction)
+            self.debug_log("Since no direction was specified, pulling from"
+                           " rotation pattern: '%s'", direction)
 
         # rotate that list
         if direction == 'right':
@@ -310,8 +300,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         shot_states = set()
 
-        if self.debug:
-            self.log.debug("Checking for complete. mode: %s", mode)
+        self.debug_log("Checking for complete. mode: %s", mode)
 
         for shot in self.config['shots']:
 
@@ -320,23 +309,20 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             if mode_state:
                 shot_states.add(mode_state)
 
-                if self.debug:
-                    self.log.debug("%s state: %s", shot.name,
-                                   shot.get_mode_state(mode))
+                self.debug_log("%s state: %s", shot.name,
+                               shot.get_mode_state(mode))
 
             else:
-                if self.debug:
-                    self.log.debug("Shot %s is not used in this mode. Aborting"
-                                   " check for complete", shot)
+                self.debug_log("Shot %s is not used in this mode. Aborting"
+                               " check for complete", shot)
                 return
 
         if len(shot_states) == 1:
             profile, state = shot_states.pop()
 
-            if self.debug:
-                self.log.debug(
-                    "Shot group is complete with profile :%s, state:"
-                    "%s", profile, state)
+            self.debug_log(
+                "Shot group is complete with profile :%s, state:"
+                "%s", profile, state)
 
             self.machine.events.post(self.name + '_complete')
             self.machine.events.post(self.name + '_' + profile + '_complete')
@@ -378,10 +364,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         for shot in self.config['shots']:
             if mode not in shot.enable_table:
 
-                if self.debug:
-                    self.log.debug('Control events found in %s '
-                                   'config. Adding enable_table entries to '
-                                   'member shots', mode)
+                self.debug_log('Control events found in %s '
+                               'config. Adding enable_table entries to '
+                               'member shots', mode)
 
                 enable = not self.config['enable_events']
 
@@ -395,6 +380,5 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                                          mode=mode)
 
     def remove(self):
-        if self.debug:
-            self.log.debug("Removing this shot group")
+        self.debug_log("Removing this shot group")
         del self.machine.shot_groups[self.name]

@@ -625,7 +625,7 @@ shots:
     __allow_others__:
 shot_groups:
     shots: list|machine(shots)|None
-    profile: single|str|None
+    profile: single|str|None    # TODO: convert from str to machine(profiles)
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
