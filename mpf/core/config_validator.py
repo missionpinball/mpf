@@ -642,6 +642,7 @@ shot_groups:
 shot_profiles:
     loop: single|bool|False
     show: single|str|None
+    advance_on_hit: single|bool|True
     state_names_to_rotate: list|str|None
     state_names_to_not_rotate: list|str|None
     rotation_pattern: list|str|R
@@ -656,7 +657,6 @@ shot_profiles:
         repeat: single|bool|True
         blend: single|bool|False
         speed: single|float|1
-        loops: single|int|0
         sync_ms:  single|int|0
         __allow_others__:
 show_player:
