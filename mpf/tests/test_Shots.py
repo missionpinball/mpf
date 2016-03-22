@@ -127,12 +127,43 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(3)
         self.hit_and_release_switch("switch_2")
         self.advance_time_and_run(1)
+        self.hit_and_release_switch("switch_3")
+        self.advance_time_and_run(1)
         self.assertEqual(0, self._events["shot_sequence_hit"])
 
         # test fast enough hit
         self.hit_and_release_switch("switch_1")
         self.advance_time_and_run(1)
         self.hit_and_release_switch("switch_2")
+        self.hit_and_release_switch("switch_3")
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self._events["shot_sequence_hit"])
+
+    def test_shot_sequence_delay(self):
+        self.mock_event("shot_sequence_hit")
+        self.start_game()
+
+        # test delay at the beginning. should not count
+        self.hit_and_release_switch("s_delay")
+        self.advance_time_and_run(.5)
+        self.hit_and_release_switch("switch_1")
+        self.advance_time_and_run(.5)
+        self.hit_and_release_switch("switch_2")
+        self.advance_time_and_run(.5)
+        self.hit_and_release_switch("switch_3")
+        self.advance_time_and_run(1)
+        self.assertEqual(0, self._events["shot_sequence_hit"])
+
+        self.advance_time_and_run(10)
+
+        # test delay_switch after first switch. should still count
+        self.hit_and_release_switch("switch_1")
+        self.advance_time_and_run(.5)
+        self.hit_and_release_switch("s_delay")
+        self.advance_time_and_run(.5)
+        self.hit_and_release_switch("switch_2")
+        self.advance_time_and_run(.5)
+        self.hit_and_release_switch("switch_3")
         self.advance_time_and_run(1)
         self.assertEqual(1, self._events["shot_sequence_hit"])
 

@@ -12,6 +12,8 @@ switches:
     number:
   switch_4:
     number:
+  s_delay:
+    number:
 
 matrix_lights:
   light_1:
@@ -60,7 +62,9 @@ shots:
     switch: switch_4
     led: led_4
   shot_sequence:
-    switch_sequence: switch_1, switch_2
+    switch_sequence: switch_1, switch_2, switch_3
+    delay_switch:
+      s_delay: 2s
     time: 2s
 
 
