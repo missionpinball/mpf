@@ -39,61 +39,57 @@ shots:
   shot_1:
     switch: switch_1
     light: light_1
+    debug: True
   shot_2:
     switch: switch_2
     light: light_2
+    debug: True
+    profile: three_states_loop
   shot_3:
     switch: switch_3
     light: tag1
+    debug: True
   shot_4:
     switch: switch_1
     light: light_1, light_2
     led: led_1
+    debug: True
   led_1:
     switch: switch_1
     led: led_1
+    debug: True
   led_2:
     switch: switch_2
     led: led_2
+    debug: True
   led_3:
     switch: switch_3
     led: led_3
+    debug: True
   led_4:
     switch: switch_4
     led: led_4
+    debug: True
   shot_sequence:
     switch_sequence: switch_1, switch_2, switch_3
     delay_switch:
       s_delay: 2s
     time: 2s
+    debug: True
 
 
 shot_groups:
   led_group:
     shots: led_1, led_2, led_3, led_4
+    debug: True
 
 shot_profiles:
-    hit_me:
-        states:
-            - name: active
-              show: flash
-              loops: -1
-              speed: 5
-            - name: complete
-              show: off
-        player_variable: laser
-    default:
-        states:
-          - name: unlit
-            show: off
-          - name: lit
-            show: on
-    drop_shot:
-        states:
-          - name: up
-            show: off
-          - name: down
-            show: on
+    three_states_loop:
+      loop: True
+      states:
+        - name: one
+        - name: two
+        - name: three
     token_show:
       states:
         - name: red

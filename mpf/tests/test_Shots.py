@@ -167,6 +167,46 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, self._events["shot_sequence_hit"])
 
+    def test_profile_advancing_no_loop(self):
+        self.start_game()
+
+        # unlit and two states in the beginning
+        self.assertEqual(2, len(self.machine.shots.shot_1.active_settings['settings']['states']))
+        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings['current_state_name'])
+
+        # one hit and it lits
+        self.hit_and_release_switch("switch_1")
+        self.assertEqual("lit", self.machine.shots.shot_1.active_settings['current_state_name'])
+        self.assertEqual(1, self.machine.game.player["shot_1_default"])
+
+        # it stays lit
+        self.hit_and_release_switch("switch_1")
+        self.assertEqual("lit", self.machine.shots.shot_1.active_settings['current_state_name'])
+        self.assertEqual(1, self.machine.game.player["shot_1_default"])
+
+    def test_profile_advancing_with_loop(self):
+        self.start_game()
+
+        self.assertEqual(3, len(self.machine.shots.shot_2.active_settings['settings']['states']))
+
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings['current_state_name'])
+
+        self.hit_and_release_switch("switch_2")
+        self.assertEqual("two", self.machine.shots.shot_2.active_settings['current_state_name'])
+        self.assertEqual(1, self.machine.game.player["shot_2_three_states_loop"])
+
+        self.hit_and_release_switch("switch_2")
+        self.assertEqual("three", self.machine.shots.shot_2.active_settings['current_state_name'])
+        self.assertEqual(2, self.machine.game.player["shot_2_three_states_loop"])
+
+        self.hit_and_release_switch("switch_2")
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings['current_state_name'])
+        self.assertEqual(0, self.machine.game.player["shot_2_three_states_loop"])
+
+        self.hit_and_release_switch("switch_2")
+        self.assertEqual("two", self.machine.shots.shot_2.active_settings['current_state_name'])
+        self.assertEqual(1, self.machine.game.player["shot_2_three_states_loop"])
+
     def test_show_in_profile_root(self):
         pass
 
