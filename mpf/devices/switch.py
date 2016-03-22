@@ -37,7 +37,8 @@ class Switch(SystemWideDevice):
         # register switch so other devices can add handlers to it
         self.machine.switch_controller.register_switch(name)
 
-    def prepare_config(self, config):
+    def prepare_config(self, config, is_mode_config):
+        del is_mode_config
         config['number_str'] = str(config['number']).upper()
         return config
 

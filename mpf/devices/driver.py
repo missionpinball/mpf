@@ -28,7 +28,8 @@ class Driver(SystemWideDevice):
         self.time_last_changed = 0
         self.time_when_done = 0
 
-    def prepare_config(self, config):
+    def prepare_config(self, config, is_mode_config):
+        del is_mode_config
         config['number_str'] = str(config['number']).upper()
         return config
 

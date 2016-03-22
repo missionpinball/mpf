@@ -21,7 +21,8 @@ class Gi(SystemWideDevice):
 
         self.registered_handlers = []
 
-    def prepare_config(self, config):
+    def prepare_config(self, config, is_mode_config):
+        del is_mode_config
         config['number_str'] = str(config['number']).upper()
         return config
 

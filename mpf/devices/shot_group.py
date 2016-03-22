@@ -31,9 +31,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         for shot in Util.string_to_list(self.config['shots']):
             self.shots.append(self.machine.shots[shot])
 
-    def prepare_config(self, config):
-        # TODO: move to device_added_system_wide
-        if not self.machine.modes:
+    def prepare_config(self, config, is_mode_config):
+        if not is_mode_config:
             # If this device is setup in a machine-wide config, make sure it has
             # a default enable event.
             if 'enable_events' not in config:

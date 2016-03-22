@@ -38,9 +38,8 @@ class Shot(ModeDevice, SystemWideDevice):
         self.active_mode = None
         self.active_settings = None
 
-    def prepare_config(self, config):
-        # TODO: move to device_added_system_wide
-        if not self.machine.modes:
+    def prepare_config(self, config, is_mode_config):
+        if not is_mode_config:
             if 'enable_events' not in config:
                 config['enable_events'] = 'ball_starting'
             if 'disable_events' not in config:

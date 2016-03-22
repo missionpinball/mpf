@@ -332,6 +332,9 @@ class Mode(object):
                         # change device from str to object
                         device = collection[device]
 
+                        # prepare config for mode
+                        settings = device.prepare_config(settings, True)
+
                         # config is already validated. just load it
                         device.load_config(settings)
 

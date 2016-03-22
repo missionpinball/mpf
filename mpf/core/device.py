@@ -38,7 +38,8 @@ class Device(object):
         if self.debug:
             self.log.debug(msg, args, kwargs)
 
-    def prepare_config(self, config):
+    def prepare_config(self, config, is_mode_config):
+        del is_mode_config
         # returns the prepared config
         return config
 
