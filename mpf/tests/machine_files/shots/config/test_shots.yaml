@@ -59,6 +59,10 @@ shots:
   led_4:
     switch: switch_4
     led: led_4
+  shot_sequence:
+    switch_sequence: switch_1, switch_2
+    time: 2s
+
 
 shot_groups:
   led_group:

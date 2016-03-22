@@ -1,6 +1,7 @@
 from mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
 
+
 class TestShots(MpfTestCase):
 
     def getConfigFile(self):
@@ -14,7 +15,6 @@ class TestShots(MpfTestCase):
         self.machine.events.post('game_start')
         self.advance_time_and_run()
         self.machine.game.balls_in_play = 1
-
 
     def test_loading_shots(self):
         # Make sure machine-wide shots load & mode-specific shots do not
@@ -86,7 +86,7 @@ class TestShots(MpfTestCase):
         self.shot_1_hit.assert_called_once_with(profile='default',
                                                 state='unlit')
         self.shot_1_default_hit.assert_called_once_with(profile='default',
-                                                state='unlit')
+                                                        state='unlit')
         self.shot_1_default_unlit_hit.assert_called_once_with(
                 profile='default', state='unlit')
 
@@ -117,6 +117,24 @@ class TestShots(MpfTestCase):
         self.machine.switch_controller.process_switch('switch_3', 0)
         self.advance_time_and_run()
         self.mode1_shot_1_hit.assert_not_called()
+
+    def test_shot_sequence(self):
+        self.mock_event("shot_sequence_hit")
+        self.start_game()
+
+        # test too slow hit
+        self.hit_and_release_switch("switch_1")
+        self.advance_time_and_run(3)
+        self.hit_and_release_switch("switch_2")
+        self.advance_time_and_run(1)
+        self.assertEqual(0, self._events["shot_sequence_hit"])
+
+        # test fast enough hit
+        self.hit_and_release_switch("switch_1")
+        self.advance_time_and_run(1)
+        self.hit_and_release_switch("switch_2")
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self._events["shot_sequence_hit"])
 
     def test_show_in_profile_root(self):
         pass
