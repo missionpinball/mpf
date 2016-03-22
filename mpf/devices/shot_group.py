@@ -256,7 +256,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         # rotate that list
         if direction == 'right':
-            shot_state_list.rotate()
+            shot_state_list.rotate(1)
         else:
             shot_state_list.rotate(-1)
 
