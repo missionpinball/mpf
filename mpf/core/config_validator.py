@@ -605,8 +605,8 @@ servos:
     platform: single|str|None
 shots:
     profile: single|str|None
-    switch: list|str|None
-    switches: list|str|None
+    switch: list|machine(switches)|None
+    switches: list|machine(switches)|None
     switch_sequence: list|machine(switches)|None
     cancel_switch: list|machine(switches)|None
     delay_switch: dict|machine(switches):ms|None

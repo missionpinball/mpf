@@ -61,19 +61,10 @@ class Shot(ModeDevice, SystemWideDevice):
         if not self.config['profile']:
             self.config['profile'] = 'default'
 
-        switch_list = list()
-        for switch in self.config['switch'] + self.config['switches']:
+        for switch in self.config['switch']:
 
-            try:
-                obj = self.machine.switches[switch]
-            except KeyError:
-                raise KeyError("Switch '%s' is not a valid switch name. Cannot"
-                               " add it to the shot", switch)
-
-            if obj not in switch_list:
-                switch_list.append(obj)
-
-        self.config['switches'] = switch_list
+            if switch not in self.config['switches']:
+                self.config['switches'].append(switch)
 
     def _register_switch_handlers(self):
         if self.switch_handlers_active:
