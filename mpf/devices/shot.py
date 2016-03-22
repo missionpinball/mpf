@@ -136,7 +136,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         if self.player[player_var] + steps >= len(profile['states']):
 
-            if profile['loops'] != 0:
+            if profile['loop']:
                 self.debug_log("Profile '%s' is in its final state "
                                "based a player variable %s=%s. Profile "
                                "setting for loop is True, so resetting to "
@@ -144,12 +144,12 @@ class Shot(ModeDevice, SystemWideDevice):
                                self.active_settings['profile'],
                                player_var, self.player[player_var])
 
-                self.player[profile['player_variable']] -= 1
+                self.player[profile['player_variable']] = 0
 
             else:
                 self.debug_log("Profile '%s' is in its final state "
                                "based a player variable %s=%s. Profile "
-                               "setting for loops=0, so state is not "
+                               "setting for loop=0, so state is not "
                                "advancing.",
                                self.active_settings['profile'],
                                player_var, self.player[player_var])
@@ -160,11 +160,13 @@ class Shot(ModeDevice, SystemWideDevice):
                            player_var, steps)
 
             self.player[player_var] += steps
-            self.update_current_state_name(mode)
 
-            for group in self.groups:
-                group.check_for_complete(mode)
-                # TODO should be made to work for lower priority things too?
+        # update state
+        self.update_current_state_name(mode)
+
+        for group in self.groups:
+            group.check_for_complete(mode)
+            # TODO should be made to work for lower priority things too?
 
         if self.active_settings['profile'] == profile_name:
 
@@ -324,11 +326,6 @@ class Shot(ModeDevice, SystemWideDevice):
         method will advance the currently-active shot profile.
 
         Args:
-            force: Boolean that forces this hit to be registered. Default is
-                False which means if there are no balls in play (e.g. after a
-                tilt) then this hit isn't processed. Set this to True if you
-                want to force the hit to be processed even if no balls are in
-                play.
 
         Note that the shot must be enabled in order for this hit to be
         processed.
