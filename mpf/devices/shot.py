@@ -631,8 +631,8 @@ class Shot(ModeDevice, SystemWideDevice):
             self._stop_show()
 
     def reset(self, mode=None, **kwargs):
-        """Resets the shot profile for the passed mode back to the first state (State 0).
-        This method is the same as calling jump(0).
+        """Resets the shot profile for the passed mode back to the first state (State 0) and
+        resets all sequences.
 
         """
         del kwargs
