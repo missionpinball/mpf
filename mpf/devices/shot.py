@@ -57,7 +57,13 @@ class Shot(ModeDevice, SystemWideDevice):
                                  enable=False,
                                  mode=None)
 
+    def _validate_config(self):
+        if len(self.config['switch_sequence']) and (len(self.config['switch']) or len(self.config['switches'])):
+            raise AssertionError("A shot can have either switch_sequence or switch/switches")
+
     def _initialize(self):
+        self._validate_config()
+
         if not self.config['profile']:
             self.config['profile'] = 'default'
 
@@ -184,12 +190,12 @@ class Shot(ModeDevice, SystemWideDevice):
             return
 
         self.debug_log("Updating lights 1: Profile: %s, "
-                           "lightshow_step: %s, Enabled: %s, Config "
-                           "setting for 'show_when_disabled': %s",
-                           self.active_settings['profile'], show_step,
-                           self.active_settings['enable'],
-                           self.active_settings['settings'][
-                               'show_when_disabled'])
+                       "lightshow_step: %s, Enabled: %s, Config "
+                       "setting for 'show_when_disabled': %s",
+                       self.active_settings['profile'], show_step,
+                       self.active_settings['enable'],
+                       self.active_settings['settings'][
+                           'show_when_disabled'])
 
         if (not self.active_settings['enable'] and
                 not self.active_settings['settings']['show_when_disabled']):
@@ -329,9 +335,11 @@ class Shot(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
+        # stop if there is no game or no balls in process
+        # also stop if there is an active delay but no sequence
         if (not self.machine.game or
                 (self.machine.game and not self.machine.game.balls_in_play) or
-                self.active_delay_switches):
+                (self.active_delay_switches and not len(self.config['switch_sequence']))):
             return
 
         if mode == 'default#$%':
@@ -650,7 +658,7 @@ class Shot(ModeDevice, SystemWideDevice):
             break
 
         self.debug_log("New enable_table order: %s",
-                           list(self.enable_table.keys()))
+                       list(self.enable_table.keys()))
 
         # top profile has changed
         if not old_settings or old_settings['profile'] != self.active_settings['profile']:
