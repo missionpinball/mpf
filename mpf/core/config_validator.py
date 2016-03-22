@@ -624,7 +624,7 @@ shots:
     remove_active_profile_events: dict|str:ms|None
     __allow_others__:
 shot_groups:
-    shots: list|str|None
+    shots: list|machine(shots)|None
     profile: single|str|None
     tags: list|str|None
     label: single|str|%

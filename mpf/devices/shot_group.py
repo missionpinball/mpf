@@ -21,15 +21,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
     def __init__(self, machine, name):
 
-        self.shots = list()  # list of strings
-
         super().__init__(machine, name)
 
         self.rotation_enabled = True
-
-    def _initialize(self):
-        for shot in Util.string_to_list(self.config['shots']):
-            self.shots.append(self.machine.shots[shot])
 
     def prepare_config(self, config, is_mode_config):
         if not is_mode_config:
@@ -48,7 +42,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         super().device_added_system_wide()
 
         if 'profile' in self.config:
-            for shot in self.shots:
+            for shot in self.config['shots']:
                 shot.update_enable_table(profile=self.config['profile'],
                                          mode=None)
 
@@ -57,11 +51,11 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self.log.debug(
             "Enabling debugging for this shot groups's member shots")
 
-        for shot in self.shots:
+        for shot in self.config['shots']:
             shot.enable_debugging()
 
     def _disable_related_device_debugging(self):
-        for shot in self.shots:
+        for shot in self.config['shots']:
             shot.disable_debugging()
 
     def hit(self, mode, profile, state, **kwargs):
@@ -98,7 +92,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         if self.debug:
             self.log.debug('Enabling from mode: %s', mode)
 
-        for shot in self.shots:
+        for shot in self.config['shots']:
             shot.enable(mode)
             shot.add_to_group(self)
 
@@ -111,7 +105,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         if self.debug:
             self.log.debug('Disabling from mode: %s', mode)
 
-        for shot in self.shots:
+        for shot in self.config['shots']:
             shot.disable(mode)
             shot.remove_from_group(self)
 
@@ -144,7 +138,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         del kwargs
         if self.debug:
             self.log.debug('Resetting')
-        for shot in self.shots:
+        for shot in self.config['shots']:
             shot.reset(mode)
 
     def remove_active_profile(self, mode, **kwargs):
@@ -154,7 +148,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         del kwargs
         if self.debug:
             self.log.debug('Removing active profile')
-        for shot in self.shots:
+        for shot in self.config['shots']:
             shot.remove_active_profile(mode)
 
     def advance(self, mode=None, **kwargs):
@@ -165,7 +159,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         del kwargs
         if self.debug:
             self.log.debug('Advancing')
-        for shot in self.shots:
+        for shot in self.config['shots']:
             shot.advance(mode)
 
     def rotate(self, direction=None, steps=1, states=None,
@@ -216,20 +210,20 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         if states:
             states = Util.string_to_lowercase_list(states)
         else:
-            states = self.shots[0].enable_table[mode]['settings'][
+            states = self.config['shots'][0].enable_table[mode]['settings'][
                 'state_names_to_rotate']
 
         if exclude_states:
             exclude_states = Util.string_to_lowercase_list(exclude_states)
         else:
             exclude_states = (
-                self.shots[0].enable_table[mode]['settings'][
+                self.config['shots'][0].enable_table[mode]['settings'][
                     'state_names_to_not_rotate'])
 
         shot_list = list()
 
         # build of a list of shots we're actually going to rotate
-        for shot in self.shots:
+        for shot in self.config['shots']:
 
             if ((not states or shot.enable_table[mode]['current_state_name'] in states) and
                     shot.enable_table[mode]['current_state_name'] not in exclude_states):
@@ -319,7 +313,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         if self.debug:
             self.log.debug("Checking for complete. mode: %s", mode)
 
-        for shot in self.shots:
+        for shot in self.config['shots']:
 
             mode_state = shot.get_mode_state(mode)
 
@@ -359,7 +353,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         else:
             profile = None
 
-        for shot in self.shots:
+        for shot in self.config['shots']:
             if mode not in shot.enable_table:
 
                 # if the mode is not in the shot's enable_table, that means we
@@ -381,7 +375,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # called if any control_events for this shot_group exist in the mode
         # config, regardless of whether or not the shot_group device was
         # initially created in this mode
-        for shot in self.shots:
+        for shot in self.config['shots']:
             if mode not in shot.enable_table:
 
                 if self.debug:
