@@ -28,12 +28,6 @@ matrix_lights:
 leds:
   led_1:
     number:
-  led_2:
-    number:
-  led_3:
-    number:
-  led_4:
-    number:
 
 shots:
   shot_1:
@@ -58,29 +52,11 @@ shots:
     switch: switch_1
     led: led_1
     debug: True
-  led_2:
-    switch: switch_2
-    led: led_2
-    debug: True
-  led_3:
-    switch: switch_3
-    led: led_3
-    debug: True
-  led_4:
-    switch: switch_4
-    led: led_4
-    debug: True
   shot_sequence:
     switch_sequence: switch_1, switch_2, switch_3
     delay_switch:
       s_delay: 2s
     time: 2s
-    debug: True
-
-
-shot_groups:
-  led_group:
-    shots: led_1, led_2, led_3, led_4
     debug: True
 
 shot_profiles:
@@ -90,17 +66,6 @@ shot_profiles:
         - name: one
         - name: two
         - name: three
-    token_show:
-      states:
-        - name: red
-          color: red
-          show: flash
-        - name: orange
-          color: orange
-          show: flash
-        - name: green
-          color: green
-          show: flash
 
 shows:
     flash:

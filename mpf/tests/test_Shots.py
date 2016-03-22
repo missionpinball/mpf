@@ -23,9 +23,6 @@ class TestShots(MpfTestCase):
         self.assertIn('shot_3', self.machine.shots)
         self.assertIn('shot_4', self.machine.shots)
         self.assertIn('led_1', self.machine.shots)
-        self.assertIn('led_2', self.machine.shots)
-        self.assertIn('led_3', self.machine.shots)
-        self.assertIn('led_4', self.machine.shots)
 
         self.assertNotIn('mode1_shot_1', self.machine.shots)
 
@@ -39,9 +36,6 @@ class TestShots(MpfTestCase):
         self.assertIn('shot_3', self.machine.shots)
         self.assertIn('shot_4', self.machine.shots)
         self.assertIn('led_1', self.machine.shots)
-        self.assertIn('led_2', self.machine.shots)
-        self.assertIn('led_3', self.machine.shots)
-        self.assertIn('led_4', self.machine.shots)
 
         # Stop the mode and make sure those shots go away
         self.machine.modes.mode1.stop()
@@ -53,9 +47,6 @@ class TestShots(MpfTestCase):
         self.assertIn('shot_3', self.machine.shots)
         self.assertIn('shot_4', self.machine.shots)
         self.assertIn('led_1', self.machine.shots)
-        self.assertIn('led_2', self.machine.shots)
-        self.assertIn('led_3', self.machine.shots)
-        self.assertIn('led_4', self.machine.shots)
 
     def test_hits(self):
         self.shot_1_hit = MagicMock()
