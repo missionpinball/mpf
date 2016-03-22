@@ -1,0 +1,33 @@
+#config_version=4
+
+switches:
+  switch_1:
+    number:
+  switch_2:
+    number:
+  switch_3:
+    number:
+  switch_4:
+    number:
+  s_rotate_l:
+    number:
+  s_rotate_r:
+    number:
+
+shots:
+  shot_1:
+    switch: switch_1
+  shot_2:
+    switch: switch_2
+  shot_3:
+    switch: switch_3
+  shot_4:
+    switch: switch_4
+
+shot_groups:
+  test_group:
+    shots: shot_1, shot_2, shot_3, shot_4
+    rotate_left_events: s_rotate_l_active
+    rotate_right_events: s_rotate_r_active
+    reset_events: shot_group_reset
+    debug: True
