@@ -154,7 +154,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         for shot in self.config['shots']:
             shot.advance(mode)
 
-    def rotate(self, direction=None, steps=1, states=None,
+    def rotate(self, direction=None, states=None,
                exclude_states=None, mode=None, **kwargs):
         """Rotates (or "shifts") the state of all the shots in this group.
         This is used for things like lane change, where hitting the flipper
@@ -170,7 +170,6 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                 to the left or right. Values are 'right' or 'left'. Default of
                 None will cause the shot group to rotate in the direction as
                 specified by the rotation_pattern.
-            steps: Integer of how many steps you want to rotate. Default is 1.
             states: A string of a state or a list of strings that represent the
                 targets that will be selected to rotate. If None (default), then
                 all targets will be included.
@@ -257,38 +256,36 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         # rotate that list
         if direction == 'right':
-            shot_state_list.rotate(steps)
+            shot_state_list.rotate()
         else:
-            shot_state_list.rotate(steps * -1)
+            shot_state_list.rotate(-1)
 
         # step through all our shots and update their states
         for i, shot in enumerate(shot_list):
             shot.jump(mode=mode, state=shot_state_list[i][0],
                       show_step=shot_state_list[i][1])
 
-    def rotate_right(self, mode=None, steps=1, **kwargs):
+    def rotate_right(self, mode=None, **kwargs):
         """Rotates the state of the shots to the right. This method is the
-        same as calling rotate('right', steps)
+        same as calling rotate('right')
 
         Args:
-            steps: Integer of how many steps you want to rotate. Default is 1.
             kwargs: unused
 
         """
         del kwargs
-        self.rotate(direction='right', steps=steps, mode=mode)
+        self.rotate(direction='right', mode=mode)
 
-    def rotate_left(self, steps=1, mode=None, **kwargs):
+    def rotate_left(self, mode=None, **kwargs):
         """Rotates the state of the shots to the left. This method is the
-        same as calling rotate('left', steps)
+        same as calling rotate('left')
 
         Args:
-            steps: Integer of how many steps you want to rotate. Default is 1.
             kwargs: unused
 
         """
         del kwargs
-        self.rotate(direction='left', steps=steps, mode=mode)
+        self.rotate(direction='left', mode=mode)
 
     def check_for_complete(self, mode):
         """Checks all the shots in this shot group. If they are all in the
