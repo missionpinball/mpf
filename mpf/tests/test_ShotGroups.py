@@ -16,6 +16,12 @@ class TestShotGroups(MpfTestCase):
         self.advance_time_and_run()
         self.machine.game.balls_in_play = 1
 
+    def stop_game(self):
+        # stop game
+        self.machine.game.game_ending()
+        self.advance_time_and_run()
+        self.assertIsNone(self.machine.game)
+
     def test_events_and_complete(self):
         self.start_game()
 
@@ -54,6 +60,8 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(4, self._events['test_group_default_unlit_hit'])
         self.assertEqual(5, self._events['test_group_default_hit'])
         self.assertEqual(5, self._events['test_group_hit'])
+
+        self.stop_game()
 
     def test_rotate(self):
         self.start_game()

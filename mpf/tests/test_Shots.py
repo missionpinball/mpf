@@ -15,6 +15,13 @@ class TestShots(MpfTestCase):
         self.machine.events.post('game_start')
         self.advance_time_and_run()
         self.machine.game.balls_in_play = 1
+        self.assertIsNotNone(self.machine.game)
+
+    def stop_game(self):
+        # stop game
+        self.machine.game.game_ending()
+        self.advance_time_and_run()
+        self.assertIsNone(self.machine.game)
 
     def test_loading_shots(self):
         # Make sure machine-wide shots load & mode-specific shots do not
@@ -108,6 +115,9 @@ class TestShots(MpfTestCase):
         self.machine.switch_controller.process_switch('switch_3', 0)
         self.advance_time_and_run()
         self.mode1_shot_1_hit.assert_not_called()
+
+        # stop the game (should not crash)
+        self.stop_game()
 
     def test_shot_sequence(self):
         self.mock_event("shot_sequence_hit")
