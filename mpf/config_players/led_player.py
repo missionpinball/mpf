@@ -12,6 +12,8 @@ class LedPlayer(ConfigPlayer):
     def play(self, settings, mode=None, caller=None, priority=0,
              play_kwargs=None, hold=False, **kwargs):
 
+        del kwargs
+
         if 'leds' in settings:
             settings = settings['leds']
 

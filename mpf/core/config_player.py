@@ -233,6 +233,7 @@ class ConfigPlayer(object):
         self.play(settings=settings, mode=mode, caller=mode,
                   priority=priority, hold=hold, **kwargs)
 
+    # pylint: disable-msg=too-many-arguments
     def show_play_callback(self, settings, mode, caller, priority,
                            play_kwargs, hold, **kwargs):
         # called from a show step
@@ -242,11 +243,12 @@ class ConfigPlayer(object):
             self.caller_target_map[caller] = set()
 
         self.play(settings=settings, mode=mode, caller=caller,
-                  priority=priority, hold=hold, **kwargs)
+                  priority=priority, play_kwargs=play_kwargs, hold=hold,
+                  **kwargs)
 
     # pylint: disable-msg=too-many-arguments
     def play(self, settings, mode=None, caller=None, priority=None,
-             hold=None, play_kwargs=None):
+             hold=None, play_kwargs=None, **kwargs):
 
         raise NotImplementedError
 
