@@ -370,5 +370,5 @@ class Led(SystemWideDevice):
 
     def clear_priority(self, priority, color='off'):
         if self.state['priority'] >= priority:
-            self.color(RGBColor(color), priority=priority)
+            self.color(RGBColor(color), priority=0, force=True)
 

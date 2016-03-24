@@ -9,12 +9,8 @@ class LedPlayer(ConfigPlayer):
     machine_collection_name = "leds"
 
     # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=None,
-             play_kwargs=None, **kwargs):
-
-        del kwargs
-
-        super().play(settings, mode, caller, priority, play_kwargs)
+    def play(self, settings, mode=None, caller=None, priority=0,
+             play_kwargs=None, hold=False, **kwargs):
 
         if 'leds' in settings:
             settings = settings['leds']

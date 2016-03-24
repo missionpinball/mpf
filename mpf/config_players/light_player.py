@@ -8,17 +8,20 @@ class LightPlayer(ConfigPlayer):
     machine_collection_name = 'lights'
 
     # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=None,
+    def play(self, settings, mode=None, caller=None, priority=0,
              play_kwargs=None, **kwargs):
 
         del kwargs
-
-        super().play(settings, mode, caller, priority, play_kwargs)
 
         if 'lights' in settings:
             settings = settings['lights']
 
         for light, s in settings.items():
+
+            try:
+                s['priority'] += priority
+            except KeyError:
+                s['priority'] = priority
 
             try:
                 light.on(**s)
@@ -36,7 +39,7 @@ class LightPlayer(ConfigPlayer):
     def clear(self, caller, priority):
         try:
             for light in self.caller_target_map[caller]:
-                light.off(priority=priority)
+                light.off(priority=0, force=True)
         except KeyError:
             pass
 

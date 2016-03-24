@@ -6,12 +6,10 @@ class GiPlayer(ConfigPlayer):
     show_section = 'gis'
 
     # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=None,
+    def play(self, settings, mode=None, caller=None, priority=0,
              play_kwargs=None, **kwargs):
 
         del kwargs
-
-        super().play(settings, mode, caller, priority, play_kwargs)
 
         if 'gis' in settings:
             settings = settings['gis']

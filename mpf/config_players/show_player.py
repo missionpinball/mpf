@@ -9,10 +9,8 @@ class ShowPlayer(ConfigPlayer):
     device_collection = None
 
     # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=None,
+    def play(self, settings, mode=None, caller=None, priority=0,
              play_kwargs=None, **kwargs):
-
-        super().play(settings, mode, caller, priority, play_kwargs)
 
         if not play_kwargs:
             play_kwargs = kwargs
@@ -25,8 +23,15 @@ class ShowPlayer(ConfigPlayer):
         settings = deepcopy(settings)
 
         for show, s in settings.items():
+
+            try:
+                s['priority'] += priority
+            except KeyError:
+                s['priority'] = priority
+
             if s['action'].lower() == 'play':
-                self.machine.shows[show].play(play_kwargs=play_kwargs, **s)
+                self.machine.shows[show].play(mode=mode,
+                                              play_kwargs=play_kwargs, **s)
 
             elif s['action'].lower() == 'stop':
                 self.machine.shows[show].stop(play_kwargs=play_kwargs, **s)
