@@ -421,9 +421,13 @@ class RGBColor(object):
         """
         if isinstance(start_color, RGBColor):
             start_color = start_color.rgb
+        else:
+            start_color = RGBColor(start_color).rgb
 
         if isinstance(end_color, RGBColor):
             end_color = end_color.rgb
+        else:
+            end_color = RGBColor(start_color).rgb
 
         output_color = tuple(start_color[i] + int(
             (end_color[i] - start_color[i]) * fraction) for i in range(3))
