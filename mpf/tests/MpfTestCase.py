@@ -67,6 +67,11 @@ class MpfTestCase(unittest.TestCase):
         """
         return 'tests/machine_files/null/'
 
+    def getAbsoluteMachinePath(self):
+        # creates an absolute path based on machine_path
+        return os.path.abspath(os.path.join(
+            mpf.core.__path__[0], os.pardir, self.getMachinePath()))
+
     def get_abs_path(self, path):
         return os.path.join(os.path.abspath(os.curdir), path)
 
@@ -183,8 +188,7 @@ class MpfTestCase(unittest.TestCase):
         self.save_and_prepare_sys_path()
 
         # init machine
-        machine_path = os.path.abspath(os.path.join(
-            mpf.core.__path__[0], os.pardir, self.getMachinePath()))
+        machine_path = self.getAbsoluteMachinePath()
 
         try:
             self.machine = TestMachineController(
