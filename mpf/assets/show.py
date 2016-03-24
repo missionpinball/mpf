@@ -40,6 +40,8 @@ class Show(Asset):
         self.token_finder = re.compile('(?<=\()(.*?)(?=\))')
 
         self.running = set()
+        '''Set of RunningShow() instances which represents running instances
+        of this show.'''
         self.name = name
         self.total_steps = None
         self.show_steps = None
@@ -289,10 +291,8 @@ class Show(Asset):
                 types blend. (You can't blend a coil or event, for example.)
             hold: Boolean which controls whether the lights or LEDs remain in
                 their final show state when the show ends. Default is None
-                which
-                means hold will be False if the show has more than one step,
-                and
-                True if there is only one step.
+                which means hold will be False if the show has more than one
+                step, and True if there is only one step.
             speed: Float of how fast your show runs. Your Show files
                 specify step times in actual time values.  When you play a
                 show,
@@ -317,7 +317,8 @@ class Show(Asset):
                 stopped.
             loops: Integer of how many times you want this show to repeat
                 before stopping. A value of -1 means that it repeats
-                indefinitely.
+                indefinitely. If the show only has one step, loops will be set
+                to 0, regardless of the actual number of loops
             sync_ms: Number of ms of the show sync cycle. A value of zero means
                 this show will also start playing immediately. See the full MPF
                 documentation for details on how this works.
@@ -325,6 +326,7 @@ class Show(Asset):
                 first position once it ends. Default is True.
             **kwargs: Not used, but included in case this method is used as an
                 event handler which might include additional kwargs.
+
         """
         self.name = '{}.{}'.format(self.name, self.get_id())
 
@@ -357,23 +359,21 @@ class Show(Asset):
         else:
             loops = 0
 
-        this_show = (RunningShow(machine=self.machine,
-                                 show=self,
-                                 show_steps=self.get_show_steps(),
-                                 priority=int(priority),
-                                 blend=bool(blend),
-                                 hold=bool(hold),
-                                 speed=float(speed),
-                                 start_step=int(start_step),
-                                 callback=callback,
-                                 loops=int(loops),
-                                 sync_ms=int(sync_ms),
-                                 reset=bool(reset),
-                                 mode=mode,
-                                 manual_advance=manual_advance,
-                                 play_kwargs=kwargs))
-
-        return this_show
+        return RunningShow(machine=self.machine,
+                           show=self,
+                           show_steps=self.get_show_steps(),
+                           priority=int(priority),
+                           blend=bool(blend),
+                           hold=bool(hold),
+                           speed=float(speed),
+                           start_step=int(start_step),
+                           callback=callback,
+                           loops=int(loops),
+                           sync_ms=int(sync_ms),
+                           reset=bool(reset),
+                           mode=mode,
+                           manual_advance=manual_advance,
+                           play_kwargs=kwargs)
 
     def _autoplay(self, *args, **kwargs):
         del args
@@ -435,7 +435,6 @@ class RunningShow(object):
         return "Running Show Instance: {}".format(self.name)
 
     def stop(self, hold=None):
-
         if self._stopped:
             return
 
@@ -475,11 +474,13 @@ class RunningShow(object):
                 if item_type in item_dict:
                     item_dict = item_dict[item_type]
 
-                ConfigPlayer.show_players[item_type].play(settings=item_dict,
-                                                          mode=self.mode,
-                                                          caller=self,
-                                                          priority=self.priority,
-                                                          play_kwargs=self.play_kwargs)
+                ConfigPlayer.show_players[item_type].show_play_callback(
+                    settings=item_dict,
+                    mode=self.mode,
+                    caller=self,
+                    priority=self.priority,
+                    hold=self.hold,
+                    play_kwargs=self.play_kwargs)
 
         # if we're at the end of the show
         if self.current_step == self._total_steps - 1:
