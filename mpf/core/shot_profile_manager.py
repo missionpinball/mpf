@@ -202,7 +202,7 @@ class ShotProfileManager(object):
                                "config: profile: %s, mode: %s",
                                settings['profile'], mode)
 
-            for shot in self.machine.shot_groups[shot_group].shots:
+            for shot in self.machine.shot_groups[shot_group].config['shots']:
                 if self.debug:
                     shot.log.debug("Updating enable_table from "
                                    "config: profile: %s, enable: %s, mode: %s",
