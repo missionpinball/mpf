@@ -18,6 +18,14 @@ class LedPlayer(ConfigPlayer):
         for led, s in settings.items():
             s['color'] = RGBColor(s['color'])
 
+            if 'cache' not in s:
+                s['cache'] = hold
+
+            try:
+                s['priority'] += priority
+            except KeyError:
+                s['priority'] = priority
+
             try:
                 led.color(**s)
                 if caller:
@@ -32,11 +40,21 @@ class LedPlayer(ConfigPlayer):
                             self.machine.leds[led])
 
     def clear(self, caller, priority):
+
         try:
             for led in self.caller_target_map[caller]:
                 led.clear_priority(priority)
         except KeyError:
             pass
+
+    def config_play_callback(self, settings, priority=0, mode=None,
+                             hold=None, **kwargs):
+        # led_player sections from config should set LEDs to hold
+
+        super().config_play_callback(settings=settings, priority=priority,
+                                     mode=mode, hold=True, **kwargs)
+
+        # todo change this in the base method?
 
     def get_express_config(self, value):
         value = str(value).replace(' ', '').lower()
