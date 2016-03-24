@@ -22,8 +22,6 @@ class BananaPlayer(ConfigPlayer):
     def play(self, settings, mode=None, caller=None, priority=None,
              play_kwargs=None, **kwargs):
 
-        super().play(settings, mode, caller, priority, play_kwargs)
-
         self.machine.banana_play_calls.append(PlayCall(
             settings, mode, caller, priority, play_kwargs, kwargs))
 
@@ -69,7 +67,7 @@ class TestConfigPlayers(MpfTestCase):
         self.assertEqual(play_call.mode, None)
         self.assertEqual(play_call.caller, None)  # todo
         self.assertEqual(play_call.play_kwargs, None)  # todo
-        self.assertEqual(play_call.kwargs, {})  # todo
+        self.assertEqual(play_call.kwargs, {'hold': None})  # todo
 
         self.machine.events.post('event2')
         self.advance_time_and_run()
@@ -81,7 +79,7 @@ class TestConfigPlayers(MpfTestCase):
         self.assertEqual(play_call.mode, None)
         self.assertEqual(play_call.caller, None)  # todo
         self.assertEqual(play_call.play_kwargs, None)  # todo
-        self.assertEqual(play_call.kwargs, {})  # todo
+        self.assertEqual(play_call.kwargs, {'hold': None})  # todo
 
         self.machine.events.post('event3')
         self.advance_time_and_run()
@@ -94,9 +92,9 @@ class TestConfigPlayers(MpfTestCase):
         self.assertEqual(play_call.mode, None)
         self.assertEqual(play_call.caller, None)  # todo
         self.assertEqual(play_call.play_kwargs, None)  # todo
-        self.assertEqual(play_call.kwargs, {})  # todo
+        self.assertEqual(play_call.kwargs, {'hold': None})  # todo
 
-        # event4 is in mode1, so make sure it is not called now
+        # event5 is in mode1, so make sure it is not called now
 
         self.assertEqual(0, len(self.machine.banana_play_calls))
 
@@ -117,9 +115,9 @@ class TestConfigPlayers(MpfTestCase):
         self.assertEqual(play_call.settings, {'bananas': {'express': {}}})
         # Mode should be passed properly
         self.assertEqual(play_call.mode, self.machine.modes['mode1'])
-        self.assertEqual(play_call.caller, None)  # todo
+        self.assertEqual(play_call.caller, self.machine.modes['mode1'])
         self.assertEqual(play_call.play_kwargs, None)  # todo
-        self.assertEqual(play_call.kwargs, {})  # todo
+        self.assertEqual(play_call.kwargs, {'hold': None})  # todo
 
         # stop the mode, make sure the event doesn't fire
         self.machine.modes['mode1'].stop()

@@ -141,6 +141,7 @@ class TestPluginConfigPlayer(MpfTestCase):
         # Start mode1
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
+        self.assertTrue(self.machine.modes['mode1'].active)
 
         # event4 is in test_player for mode1, so make sure it sends now
         self.sent_bcp_commands = list()

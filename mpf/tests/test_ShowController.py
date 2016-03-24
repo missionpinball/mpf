@@ -48,16 +48,20 @@ class TestShowController(MpfTestCase):
         # LEDs should start out off (current color is default RGBColor object)
         self.assertEqual(RGBColor(),
                          self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led_01.state['priority'])
         self.assertEqual(RGBColor(),
                          self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led_02.state['priority'])
 
         # Lights should start out off (brightness is 0)
         self.assertEqual(0,
                          self.machine.lights.light_01.hw_driver
                          .current_brightness)
+        self.assertEqual(0, self.machine.lights.light_01.state['priority'])
         self.assertEqual(0,
                          self.machine.lights.light_02.hw_driver
                          .current_brightness)
+        self.assertEqual(0, self.machine.lights.light_02.state['priority'])
 
         # GI should start out enabled/on (brightness is 255)
         self.assertEqual(255,
@@ -83,15 +87,27 @@ class TestShowController(MpfTestCase):
                       self.machine.mode_controller.active_modes)
         self.assertTrue(self.machine.shows['test_show1'].running)
 
+        # Grab the running show instance
+        running_show1 = [x for x in self.machine.shows['test_show1'].running if
+                         x.name.startswith('test_show1')][0]
+        self.assertIsNotNone(running_show1)
+
+        # Make sure the show is running at the proper priority (of the mode)
+        self.assertEqual(running_show1.priority, 200)
+
         # Check LEDs, lights, and GI after first show step
         self.assertEqual(RGBColor('006400'),
                          self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led_01.state['priority'])
         self.assertEqual(RGBColor('CCCCCC'),
                          self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led_02.state['priority'])
         self.assertEqual(204,
                     self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(200, self.machine.lights.light_01.state['priority'])
         self.assertEqual(120,
                     self.machine.lights.light_02.hw_driver.current_brightness)
+        self.assertEqual(200, self.machine.lights.light_02.state['priority'])
         self.assertEqual(255,
                          self.machine.gi.gi_01.hw_driver.current_brightness)
 
@@ -99,12 +115,17 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run(1.0)
         self.assertEqual(RGBColor('DarkGreen'),
                          self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led_01.state['priority'])
+
         self.assertEqual(RGBColor('Black'),
                          self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led_02.state['priority'])
         self.assertEqual(204,
                     self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(200, self.machine.lights.light_01.state['priority'])
         self.assertEqual(120,
                     self.machine.lights.light_02.hw_driver.current_brightness)
+        self.assertEqual(200, self.machine.lights.light_02.state['priority'])
         self.assertEqual(255,
                          self.machine.gi.gi_01.hw_driver.current_brightness)
 
@@ -112,14 +133,18 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run(1.0)
         self.assertEqual(RGBColor('DarkSlateGray'),
                          self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led_01.state['priority'])
         self.assertEqual(RGBColor('Tomato'),
                          self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led_02.state['priority'])
         self.assertEqual(255,
                          self.machine.lights.light_01.hw_driver
                          .current_brightness)
+        self.assertEqual(200, self.machine.lights.light_01.state['priority'])
         self.assertEqual(51,
                          self.machine.lights.light_02.hw_driver
                          .current_brightness)
+        self.assertEqual(200, self.machine.lights.light_02.state['priority'])
         self.assertEqual(153,
                          self.machine.gi.gi_01.hw_driver.current_brightness)
 
@@ -128,14 +153,18 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run(1.0)
         self.assertNotEqual(RGBColor('MidnightBlue'),
                             self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led_01.state['priority'])
         self.assertNotEqual(RGBColor('DarkOrange'),
                             self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led_02.state['priority'])
         self.assertEqual(255,
                          self.machine.lights.light_01.hw_driver
                          .current_brightness)
+        self.assertEqual(200, self.machine.lights.light_01.state['priority'])
         self.assertEqual(51,
                          self.machine.lights.light_02.hw_driver
                          .current_brightness)
+        self.assertEqual(200, self.machine.lights.light_02.state['priority'])
         self.assertEqual(51,
                          self.machine.gi.gi_01.hw_driver.current_brightness)
 
@@ -201,7 +230,30 @@ class TestShowController(MpfTestCase):
         self.machine.events.post('stop_mode1')
         self.machine_run()
         self.assertFalse(self.machine.mode_controller.is_active('mode1'))
+        self.assertTrue(running_show1._stopped)
+        self.assertFalse([x for x in self.machine.shows['test_show1'].running if
+                         x.name.startswith('test_show1')])
         self.advance_time_and_run(5)
+
+        # Make sure the lights and LEDs have reverted back to their prior
+        # states from before the show started
+
+        self.assertEqual(RGBColor(),
+                         self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led_01.state['priority'])
+        self.assertEqual(RGBColor(),
+                         self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led_02.state['priority'])
+        self.assertEqual(0,
+                         self.machine.lights.light_01.hw_driver
+                         .current_brightness)
+        self.assertEqual(0, self.machine.lights.light_01.state['priority'])
+        self.assertEqual(0,
+                         self.machine.lights.light_02.hw_driver
+                         .current_brightness)
+        self.assertEqual(0, self.machine.lights.light_02.state['priority'])
+        self.assertEqual(255,
+                         self.machine.gi.gi_01.hw_driver.current_brightness)
 
         # --------------------------------------------------------
         # test_show2 - Show with events and triggers

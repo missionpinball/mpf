@@ -32,9 +32,9 @@ led_player:
       fade: 20ms
       priority: 100
   event3:
-    led1: green-f500
-    led2: green - f 500ms
-    led3: green-f.5s
+    led1: lime-f500
+    led2: lime - f 500ms
+    led3: 00ff00-f.5s
   event4:
     tag1: 00ffff
 
@@ -46,8 +46,17 @@ shows:
       led1: red
       led2: red
       led3: red
-  - time: 1
+  show2:
+  - time: 0
     leds:
-      led1:
-        color: red
-        fade: 500ms
+      led1: red
+      led2: red
+      led3: red
+  - time: 1
+  show3:
+  - time: 0
+    leds:
+      led1: blue
+      led2: blue
+      led3: blue
+  - time: 1
