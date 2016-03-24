@@ -18,13 +18,12 @@ class ConfigPlayer(object):
         a clear method. Different config players can use this for different
         things. See the LedPlayer for an example.'''
 
-        self.machine.mode_controller.register_start_method(
-                self.register_player_events, self.config_file_section)
-
         ConfigPlayer.show_players[self.show_section] = self
         ConfigPlayer.config_file_players[self.config_file_section] = self
 
         self.machine.events.add_handler('init_phase_1', self._initialize)
+
+        self.mode_keys = dict()
 
     def __repr__(self):
         return 'ConfigPlayer.{}'.format(self.show_section)
@@ -38,6 +37,9 @@ class ConfigPlayer(object):
 
         self.machine.mode_controller.register_load_method(
                 self.process_mode_config, self.config_file_section)
+
+        self.machine.mode_controller.register_start_method(
+                self.mode_start, self.config_file_section)
 
         # Look through the machine config for config_player sections and
         # for shows to validate and process
@@ -170,6 +172,19 @@ class ConfigPlayer(object):
         return self.machine.config_validator.validate_config(
             self.config_file_section, value, base_spec='config_player_common')
 
+    def mode_start(self, config, priority, mode):
+        event_keys = self.register_player_events(config, mode, priority)
+
+        self.mode_keys[mode] = event_keys
+
+        return self.mode_stop, mode
+
+    def mode_stop(self, mode):
+        event_keys = self.mode_keys.pop(mode)
+
+        self.unload_player_events(event_keys)
+        self.clear(mode, mode.priority)
+
     def register_player_events(self, config, mode=None, priority=0):
         # config is localized
         key_list = list()
@@ -177,12 +192,12 @@ class ConfigPlayer(object):
         for event, settings in config.items():
             key_list.append(self.machine.events.add_handler(
                     event=event,
-                    handler=self.play,
+                    handler=self.config_play_callback,
                     priority=priority,
                     mode=mode,
                     settings=settings))
 
-        return self.unload_player_events, key_list
+        return key_list
 
     def unload_player_events(self, key_list):
         self.machine.events.remove_handlers_by_keys(key_list)
@@ -190,31 +205,50 @@ class ConfigPlayer(object):
     def additional_processing(self, config):
         return config
 
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=None,
-             play_kwargs=None):
-        del mode
-        del play_kwargs
-        del settings
-        del priority
-        # Be sure to include **kwargs in your subclass since events could come
-        # in with any parameters
+    def config_play_callback(self, settings, priority=0, mode=None,
+                             hold=None, **kwargs):
+        # called when a config_player event is posted
+
+        # calculate the base priority, which is a combination of the mode
+        # priority and any priority value
+
+        if mode:
+
+            if not mode.active:
+                # It's possible that an earlier event could have stopped the
+                # mode before this event was handled, so just double-check to
+                # make sure the mode is still active before proceeding.
+                return
+
+            if mode not in self.caller_target_map:
+                self.caller_target_map[mode] = set()
+                # todo call clear() on mode stop
+
+            priority += mode.priority
 
         # todo detect whether this has a single parent key
 
+        # todo play_kwargs
+
+        self.play(settings=settings, mode=mode, caller=mode,
+                  priority=priority, hold=hold, **kwargs)
+
+    def show_play_callback(self, settings, mode, caller, priority,
+                           play_kwargs, hold, **kwargs):
+        # called from a show step
+
+        # todo add caller processing? Or stop_key?
         if caller and caller not in self.caller_target_map:
             self.caller_target_map[caller] = set()
 
-        # todo mode and priority
+        self.play(settings=settings, mode=mode, caller=caller,
+                  priority=priority, hold=hold, **kwargs)
 
-        # if mode:
-        #     if not mode.active:
-        #         return
-        #
-        #     if 'priority' not in settings:
-        #         settings['priority'] = mode.priority
-        #     else:
-        #         settings['priority'] += mode.priority
+    # pylint: disable-msg=too-many-arguments
+    def play(self, settings, mode=None, caller=None, priority=None,
+             hold=None, play_kwargs=None):
+
+        raise NotImplementedError
 
     def clear(self, caller, priority):
         pass

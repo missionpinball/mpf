@@ -17,6 +17,9 @@ class PluginPlayer(ConfigPlayer):
         # future feature could be to make this switchable so a plugin could
         # ask MPF to do validation.
 
+        self.machine.mode_controller.register_start_method(
+            self.mode_start, self.config_file_section)
+
         if self.config_file_section in self.machine.config:
             self.register_player_events(
                 self.machine.config[self.config_file_section])
@@ -33,27 +36,24 @@ class PluginPlayer(ConfigPlayer):
             self.machine.bcp.add_registered_trigger_event(event)
             event_list.append(event)
 
-        return self.unload_player_events, event_list
+        return event_list
 
     def unload_player_events(self, event_list):
         for event in event_list:
             self.machine.bcp.remove_registered_trigger_event(event)
 
     # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=None,
+    def play(self, settings, mode=None, caller=None, priority=0,
              play_kwargs=None, **kwargs):
-        """Only used during shows."""
-
-        prior_play_kwargs = play_kwargs.pop('play_kwargs', None)
-
         # update in this roundabout way so any kwargs tied to this play call
         # overwrite any from a config
-        if prior_play_kwargs:
-            settings['play_kwargs'] = prior_play_kwargs.update(play_kwargs)
-        else:
-            settings['play_kwargs'] = play_kwargs
 
-        settings['play_kwargs'].update(kwargs)
+        try:
+            prior_play_kwargs = play_kwargs.pop('play_kwargs', None)
+            settings['play_kwargs'] = prior_play_kwargs.update(play_kwargs)
+            settings['play_kwargs'].update(kwargs)
+        except AttributeError:
+            settings['play_kwargs'] = play_kwargs
 
         self.machine.bcp.bcp_trigger(name='{}_play'.format(self.show_section),
                                      **settings)

@@ -76,6 +76,10 @@ class ShowController(object):
                                             data=settings,
                                             file=None)
 
+    def stop_shows_by_mode(self, mode):
+        for show in [x for x in self.running_shows if x.mode == mode]:
+            show.stop()
+
     def unload_show_player_shows(self, removal_tuple):
         event_keys, shows = removal_tuple
 
