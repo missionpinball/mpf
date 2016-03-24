@@ -121,3 +121,34 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual("unlit", self.machine.shots.shot_2.active_settings['current_state_name'])
         self.assertEqual("lit", self.machine.shots.shot_3.active_settings['current_state_name'])
         self.assertEqual("lit", self.machine.shots.shot_4.active_settings['current_state_name'])
+
+    def test_shot_group_in_mode(self):
+        self.start_game()
+
+        self.hit_and_release_switch("switch_1")
+
+        self.assertEqual("lit", self.machine.shots.shot_1.active_settings['current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings['current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings['current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings['current_state_name'])
+
+        # Start the mode
+        self.machine.modes.mode_shot_groups.start()
+        self.advance_time_and_run()
+
+        self.assertEqual("one", self.machine.shots.shot_1.active_settings['current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings['current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_3.active_settings['current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings['current_state_name'])
+
+        self.hit_and_release_switch("switch_1")
+        self.assertEqual("two", self.machine.shots.shot_1.active_settings['current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings['current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_3.active_settings['current_state_name'])
+
+        self.hit_and_release_switch("s_rotate_l")
+
+        self.assertEqual("one", self.machine.shots.shot_1.active_settings['current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings['current_state_name'])
+        self.assertEqual("two", self.machine.shots.shot_3.active_settings['current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_4.active_settings['current_state_name'])

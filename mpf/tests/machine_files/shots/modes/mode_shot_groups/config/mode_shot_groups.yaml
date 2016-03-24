@@ -1,0 +1,18 @@
+#config_version=4
+
+shot_groups:
+  test_group_in_mode:
+    shots: shot_1, shot_2, shot_3
+    profile: three_states_loop
+    rotate_left_events: s_rotate_l_active
+    rotate_right_events: s_rotate_r_active
+    reset_events: shot_group_in_mode_reset
+    debug: True
+
+shot_profiles:
+    three_states_loop:
+      loop: True
+      states:
+        - name: one
+        - name: two
+        - name: three
