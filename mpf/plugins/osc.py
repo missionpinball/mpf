@@ -42,8 +42,11 @@ class OSC(object):
             config_spec='osc', source=self.machine.config['osc'])
 
         if self.config['machine_ip'].lower() == 'auto':
-            self.config['machine_ip'] = socket.gethostbyname(
-                                                        socket.gethostname())
+            try:
+                self.config['machine_ip'] = (
+                    socket.gethostbyname(socket.gethostname()))
+            except socket.gaierror:
+                self.config['machine_ip'] = '127.0.0.1'
 
         self.OSC_clients = dict()
         self.OSC_message = False
