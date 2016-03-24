@@ -116,6 +116,7 @@ class V4Migrator(VersionMigrator):
         self._migrate_assets('images')
         self._migrate_assets('videos')
         self._migrate_assets('sounds')
+        self._migrate_switches()
 
     def _migrate_mode_timers(self):
         if 'timers' in self.fc:
@@ -850,6 +851,18 @@ class V4Migrator(VersionMigrator):
                         step['lights'] = CommentedMap()
                         YamlInterface.copy_with_comments(step, '(lights)',
                                                          step['lights'], '(lights)', True, self.log)
+
+    def _migrate_switches(self):
+        if 'switches' not in self.fc:
+            return
+
+        for switch_settings in self.fc['switches'].values():
+            YamlInterface.rename_key('activation_events',
+                                     'events_when_activated',
+                                     switch_settings, self.log)
+            YamlInterface.rename_key('deactivation_events',
+                                     'events_when_deactivated',
+                                     switch_settings, self.log)
 
     def _get_old_default_text_styles(self):
         # these are from MPF 0.21, but they are in the new v4 format

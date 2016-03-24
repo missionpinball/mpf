@@ -6,6 +6,8 @@ game:
 switches:
     s_left_rollover:
         number:
+        events_when_activated: event1
+        events_when_deactivated: event2
     s_center_rollover:
         number:
 matrix_lights:

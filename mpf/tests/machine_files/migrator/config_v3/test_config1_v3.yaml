@@ -9,6 +9,8 @@ game:
 switches:
     s_left_rollover:
       number:
+      activation_events: event1
+      deactivation_events: event2
     s_center_rollover:
       number:
 
