@@ -5,6 +5,7 @@ game:
     allow_start_with_loose_balls: True
 machine:
     glass_off_mode: False
+    min_balls: 3
 
 coils:
     outhole:
@@ -40,7 +41,7 @@ ball_devices:
         eject_coil: trough
         eject_targets: plunger
         confirm_eject_type: target
-        ball_capacity: 2
+        ball_capacity: 3
         debug: true
     plunger:
         tags: ball_add_live
