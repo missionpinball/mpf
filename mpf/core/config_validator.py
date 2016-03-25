@@ -78,6 +78,7 @@ ball_devices:
     hold_events: dict|str:ms|None
     hold_switches: list|machine(switches)|None
     entrance_switch: single|machine(switches)|None
+    entrance_switch_full_timeout: single|ms|0
     entrance_events: dict|str:ms|None
     jam_switch: single|machine(switches)|None
     confirm_eject_type: single|enum(target,switch,event,fake)|target
