@@ -178,6 +178,60 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual('idle', self.machine.ball_devices.trough._state)
         self.assertEqual('ejecting', self.machine.ball_devices.plunger._state)
 
+    def test_boot_with_two_balls_in_trough(self):
+        # two balls are in trough
+        self.machine.coils.outhole.pulse = MagicMock()
+        self.machine.coils.trough.pulse = MagicMock()
+
+        # but mpf does not know and assumes 0 in trough
+        self.assertEqual(0, self.machine.ball_devices.outhole.balls)
+        self.assertEqual(0, self.machine.ball_devices.trough.balls)
+        self.assertEqual(0, self.machine.ball_devices.playfield.balls)
+        self.assertEqual(0, self.machine.coils.outhole.pulse.call_count)
+        self.assertEqual(0, self.machine.coils.trough.pulse.call_count)
+        self.assertEqual('idle', self.machine.ball_devices.outhole._state)
+        self.assertEqual('idle', self.machine.ball_devices.trough._state)
+        self.assertEqual('idle', self.machine.ball_devices.plunger._state)
+
+        # starting a game should fail
+        self.hit_and_release_switch("start")
+        self.advance_time_and_run(1)
+        self.assertEqual(0, self.machine.coils.outhole.pulse.call_count)
+        self.assertEqual(0, self.machine.coils.trough.pulse.call_count)
+        self.assertIsNone(self.machine.game)
+
+        # a ball is added in while machine is running
+        self.hit_switch_and_run("outhole", 1)
+
+        self.assertEqual(1, self.machine.ball_devices.outhole.balls)
+        self.assertEqual(0, self.machine.ball_devices.trough.balls)
+        self.assertEqual(0, self.machine.ball_devices.playfield.balls)
+        self.assertEqual(1, self.machine.coils.outhole.pulse.call_count)
+        self.assertEqual(0, self.machine.coils.trough.pulse.call_count)
+        self.assertEqual('ejecting', self.machine.ball_devices.outhole._state)
+        self.assertEqual('idle', self.machine.ball_devices.trough._state)
+        self.assertEqual('idle', self.machine.ball_devices.plunger._state)
+
+        # outhole ejects and ball enters trough
+        self.release_switch_and_run("outhole", 1)
+        # ball three sits on entrance switch
+        self.hit_switch_and_run("trough_entry", 4)
+
+        # trough recognizes that its actually full
+        self.assertEqual(0, self.machine.ball_devices.outhole.balls)
+        self.assertEqual(3, self.machine.ball_devices.trough.balls)
+        self.assertEqual(0, self.machine.ball_devices.playfield.balls)
+        self.assertEqual(1, self.machine.coils.outhole.pulse.call_count)
+        self.assertEqual(0, self.machine.coils.trough.pulse.call_count)
+        self.assertEqual('idle', self.machine.ball_devices.outhole._state)
+        self.assertEqual('idle', self.machine.ball_devices.trough._state)
+        self.assertEqual('idle', self.machine.ball_devices.plunger._state)
+
+        # game should now start
+        self.hit_and_release_switch("start")
+        self.advance_time_and_run(1)
+        self.assertIsNotNone(self.machine.game)
+
     def test_single_ball_drain_and_eject(self):
         # tests that when a ball drains into the outhole and is in the process
         # of being ejected to the trough, MPF is able to also request a ball

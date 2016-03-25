@@ -38,6 +38,7 @@ ball_devices:
     trough:
         tags: trough, home
         entrance_switch: trough_entry
+        entrance_switch_full_timeout: 3s
         eject_coil: trough
         eject_targets: plunger
         confirm_eject_type: target
