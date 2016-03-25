@@ -308,7 +308,7 @@ class AssetManager(object):
 
         return config
 
-    # pylint: disable-msg=too-many-arguments
+    # pylint: disable-msg=too-many-locals
     def _create_asset_config_entries(self, asset_class, config, mode_name=None,
                                      path=None):
         """Scans a folder (and subfolders) and automatically creates or updates

@@ -262,13 +262,13 @@ class Show(Asset):
         return show
 
     # pylint: disable-msg=too-many-arguments
-    def play(self, priority=0, blend=False, hold=None,
+    def play(self, priority=0, hold=None,
              speed=1.0, start_step=0, callback=None,
              loops=-1, sync_ms=0, reset=True, mode=None,
              manual_advance=False, **kwargs):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
-        speed, priority, whether this show blends with others, etc. These are
+        speed, priority, etc. These are
         all set when the show plays. (For example, you could have a Show
         file which lights a bunch of lights sequentially in a circle pattern,
         but you can have that circle "spin" as fast as you want depending on
@@ -280,17 +280,6 @@ class Show(Asset):
                 the same item, the one with the higher priority will win.
                 ("Higher" means a bigger number, so a show with priority 2 will
                 override a priority 1.)
-            blend: Boolean which controls whether this show "blends" with lower
-                priority shows and scripts. For example, if this show turns a
-                light off, but a lower priority show has that light set to
-                blue,
-                then the light will "show through" as blue while it's off here.
-                If you don't want that behavior, set blend to be False. Then
-                off
-                here will be off for sure (unless there's a higher priority
-                show
-                or command that turns the light on). Note that not all item
-                types blend. (You can't blend a coil or event, for example.)
             hold: Boolean which controls whether the lights or LEDs remain in
                 their final show state when the show ends. Default is None
                 which means hold will be False if the show has more than one
@@ -335,7 +324,6 @@ class Show(Asset):
         if not self.loaded:
             self._autoplay_settings = dict(
                     priority=priority,
-                    blend=blend,
                     hold=hold,
                     speed=speed,
                     start_step=start_step,
@@ -365,7 +353,6 @@ class Show(Asset):
                            show=self,
                            show_steps=self.get_show_steps(),
                            priority=int(priority),
-                           blend=bool(blend),
                            hold=bool(hold),
                            speed=float(speed),
                            start_step=int(start_step),
@@ -397,7 +384,7 @@ class Show(Asset):
 
 class RunningShow(object):
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, machine, show, show_steps, priority, blend,
+    def __init__(self, machine, show, show_steps, priority,
                  hold, speed, start_step, callback, loops,
                  sync_ms, reset, mode, manual_advance, play_kwargs):
 
@@ -405,7 +392,6 @@ class RunningShow(object):
         self.show = show
         self.show_steps = show_steps
         self.priority = priority
-        self.blend = blend
         self.hold = hold
         self.speed = speed
         self.current_step = start_step
