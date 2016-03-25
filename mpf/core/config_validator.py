@@ -335,6 +335,7 @@ game:
     start_game_switch_tag: single|str|start
     add_player_switch_tag: single|str|start
     allow_start_with_loose_balls: single|bool|False
+    allow_start_with_ball_in_drain: single|bool|False
 gi_player:
     brightness: single|int_from_hex|ff
     __allow_others__:

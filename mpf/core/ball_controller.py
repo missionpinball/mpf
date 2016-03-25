@@ -103,10 +103,15 @@ class BallController(object):
                              "balls")
             return False
 
+        if self.machine.config['game']['allow_start_with_ball_in_drain']:
+            allowed_positions = ['home', 'trough', 'drain']
+        else:
+            allowed_positions = ['home', 'trough']
+
         if self.machine.config['game']['allow_start_with_loose_balls']:
             return
 
-        elif not self.are_balls_collected(['home', 'trough']):
+        elif not self.are_balls_collected(allowed_positions):
             self.collect_balls('home')
             self.log.warning("BallController denies game start. Balls are not "
                              "in their home positions.")
