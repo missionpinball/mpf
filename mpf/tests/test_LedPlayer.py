@@ -3,6 +3,7 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 from mpf.core.config_player import ConfigPlayer
 
+
 class TestLedPlayer(MpfTestCase):
 
     def getConfigFile(self):
@@ -52,27 +53,15 @@ class TestLedPlayer(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(RGBColor('red'),
                          self.machine.leds.led1.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led1.state['priority'])
+        self.assertEqual(200, self.machine.leds.led1.stack[0]['priority'])
 
         self.assertEqual(RGBColor('ff0000'),
                          self.machine.leds.led2.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led2.state['priority'])
+        self.assertEqual(0, self.machine.leds.led2.stack[0]['priority'])
 
         self.assertEqual(RGBColor('red'),
                          self.machine.leds.led3.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led3.state['priority'])
-
-        # Make sure they're cached since this is a led_player entry and not
-        # from a show
-        self.assertEqual(200, self.machine.leds.led1.cache['priority'])
-        self.assertEqual(RGBColor('red'),
-                         self.machine.leds.led1.cache['color'])
-        self.assertEqual(0, self.machine.leds.led2.cache['priority'])
-        self.assertEqual(RGBColor('ff0000'),
-                         self.machine.leds.led2.cache['color'])
-        self.assertEqual(0, self.machine.leds.led3.cache['priority'])
-        self.assertEqual(RGBColor('red'),
-                         self.machine.leds.led3.cache['color'])
+        self.assertEqual(0, self.machine.leds.led3.stack[0]['priority'])
 
         # should stay in this state forever
         self.advance_time_and_run(1)
@@ -81,7 +70,7 @@ class TestLedPlayer(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(RGBColor('red'),
                          self.machine.leds.led1.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led1.state['priority'])
+        self.assertEqual(200, self.machine.leds.led1.stack[0]['priority'])
 
         # test tags and fade in expanded config
 
@@ -90,14 +79,15 @@ class TestLedPlayer(MpfTestCase):
         # led2 should fade to blue since it was red before at priority 0
         self.machine.events.post('event2')
         self.advance_time_and_run(.01)
+
         self.assertEqual(RGBColor('red'),
                          self.machine.leds.led1.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led1.state['priority'])
+        self.assertEqual(200, self.machine.leds.led1.stack[0]['priority'])
 
         # fade is half way from red to blue
         self.assertEqual(RGBColor((128, 0, 127)),
                          self.machine.leds.led2.hw_driver.current_color)
-        self.assertEqual(100, self.machine.leds.led2.state['priority'])
+        self.assertEqual(100, self.machine.leds.led2.stack[0]['priority'])
 
         self.advance_time_and_run()
 
@@ -105,25 +95,23 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(RGBColor('blue'),
                          self.machine.leds.led2.hw_driver.current_color)
 
-        # reset leds, also tests "force"
-        self.machine.leds.led1.color(color='off', priority=0, force=True)
-        self.machine.leds.led2.color(color='off', priority=0, force=True)
-        self.machine.leds.led3.color(color='off', priority=0, force=True)
+        # reset leds
+        self.machine.leds.led1.clear_stack()
+        self.machine.leds.led2.clear_stack()
+        self.machine.leds.led3.clear_stack()
+        self.advance_time_and_run()
 
-        self.assertEqual('off', self.machine.leds.led1.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led1.state['priority'])
-        self.assertEqual('off', self.machine.leds.led1.cache['color'])
-        self.assertEqual(0, self.machine.leds.led1.cache['priority'])
+        self.assertEqual(RGBColor('off'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led1.stack[0]['priority'])
 
-        self.assertEqual('off', self.machine.leds.led2.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led2.state['priority'])
-        self.assertEqual('off', self.machine.leds.led2.cache['color'])
-        self.assertEqual(0, self.machine.leds.led2.cache['priority'])
+        self.assertEqual(RGBColor('off'),
+                         self.machine.leds.led2.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led2.stack[0]['priority'])
 
-        self.assertEqual('off', self.machine.leds.led3.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led3.state['priority'])
-        self.assertEqual('off', self.machine.leds.led3.cache['color'])
-        self.assertEqual(0, self.machine.leds.led3.cache['priority'])
+        self.assertEqual(RGBColor('off'),
+                         self.machine.leds.led3.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led3.stack[0]['priority'])
 
         # test fades via express config with a few different options
         self.machine.events.post('event3')
@@ -146,10 +134,11 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(RGBColor((0, 255, 0)),
                          self.machine.leds.led3.hw_driver.current_color)
 
-        # test tags in express format
-        self.machine.leds.led1.color(color='off', priority=0, force=True)
-        self.machine.leds.led2.color(color='off', priority=0, force=True)
-        self.machine.leds.led3.color(color='off', priority=0, force=True)
+        # reset leds
+        self.machine.leds.led1.clear_stack()
+        self.machine.leds.led2.clear_stack()
+        self.machine.leds.led3.clear_stack()
+        self.advance_time_and_run()
 
         # tag1 is led1 and led2
         self.machine.events.post('event4')
@@ -159,9 +148,9 @@ class TestLedPlayer(MpfTestCase):
                          self.machine.leds.led1.hw_driver.current_color)
         self.assertEqual(RGBColor((0, 255, 255)),
                          self.machine.leds.led2.hw_driver.current_color)
-        self.assertEqual('off',
+        self.assertEqual(RGBColor('off'),
                          self.machine.leds.led3.hw_driver.current_color)
-        self.assertEqual('off',
+        self.assertEqual(RGBColor('off'),
                          self.machine.leds.led3.hw_driver.current_color)
 
     def test_single_step_show(self):
@@ -177,11 +166,8 @@ class TestLedPlayer(MpfTestCase):
         # when a show ends with hold, the final step of the show will cache
         # the led settings
         self.assertEqual(RGBColor('red'),
-                         self.machine.leds.led1.state['color'])
-        self.assertEqual(0, self.machine.leds.led1.state['priority'])
-        self.assertEqual(RGBColor('red'),
-                         self.machine.leds.led1.cache['color'])
-        self.assertEqual(0, self.machine.leds.led1.cache['priority'])
+                         self.machine.leds.led1.stack[0]['color'])
+        self.assertEqual(0, self.machine.leds.led1.stack[0]['priority'])
 
     def test_show_hold_leds(self):
         self.machine.shows['show2'].play(loops=0, hold=True)
@@ -191,11 +177,8 @@ class TestLedPlayer(MpfTestCase):
                          self.machine.leds.led1.hw_driver.current_color)
 
         self.assertEqual(RGBColor('red'),
-                         self.machine.leds.led1.state['color'])
-        self.assertEqual(0, self.machine.leds.led1.state['priority'])
-        self.assertEqual(RGBColor('red'),
-                         self.machine.leds.led1.cache['color'])
-        self.assertEqual(0, self.machine.leds.led1.cache['priority'])
+                         self.machine.leds.led1.stack[0]['color'])
+        self.assertEqual(0, self.machine.leds.led1.stack[0]['priority'])
 
     def test_show_no_hold_leds(self):
         self.machine.shows['show2'].play(loops=0)
@@ -209,11 +192,8 @@ class TestLedPlayer(MpfTestCase):
 
         # led should be off when show ends
         self.assertEqual(RGBColor('off'),
-                         self.machine.leds.led1.state['color'])
-        self.assertEqual(0, self.machine.leds.led1.state['priority'])
-        self.assertEqual(RGBColor('off'),
-                         self.machine.leds.led1.cache['color'])
-        self.assertEqual(0, self.machine.leds.led1.cache['priority'])
+                         self.machine.leds.led1.stack[0]['color'])
+        self.assertEqual(0, self.machine.leds.led1.stack[0]['priority'])
 
     def test_show_same_priority(self):
         # start show2, leds are red
@@ -234,10 +214,6 @@ class TestLedPlayer(MpfTestCase):
 
     def test_show_higher_priority(self):
         # start show2, leds are red
-
-        return
-
-        # todo need to implement the config_player restore for this to work
 
         self.machine.shows['show2'].play()
         self.advance_time_and_run(.5)
@@ -264,3 +240,73 @@ class TestLedPlayer(MpfTestCase):
         self.advance_time_and_run(.5)
         self.assertEqual(RGBColor('red'),
                          self.machine.leds.led1.hw_driver.current_color)
+
+    def test_led_player_in_mode(self):
+        # post event1 to get the leds set in the base config
+        self.machine.events.post('event1')
+        self.advance_time_and_run()
+
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led2.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led3.hw_driver.current_color)
+
+        # post event5, nothing should change
+        self.machine.events.post('event5')
+        self.advance_time_and_run()
+
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led1.stack[0]['priority'])
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led2.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led2.stack[0]['priority'])
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led3.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led3.stack[0]['priority'])
+
+        # start the mode, priority 100
+        self.machine.modes['mode1'].start()
+        self.advance_time_and_run()
+
+        # post event5
+        self.machine.events.post('event5')
+        self.advance_time_and_run()
+
+        # led1 was red @200, mode1 is @100, so should still be red @200
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led1.stack[0]['priority'])
+        self.assertEqual(2, len(self.machine.leds.led1.stack))
+
+        # led2 was red @0, so now it should be orange @100
+        self.assertEqual(RGBColor('orange'),
+                         self.machine.leds.led2.hw_driver.current_color)
+        self.assertEqual(100, self.machine.leds.led2.stack[0]['priority'])
+        self.assertEqual(2, len(self.machine.leds.led2.stack))
+
+        # led3 was red @0, mode1 led_player has led3 @200 which should be
+        # added to the mode's base priority
+        self.assertEqual(RGBColor('orange'),
+                         self.machine.leds.led3.hw_driver.current_color)
+        self.assertEqual(300, self.machine.leds.led3.stack[0]['priority'])
+        self.assertEqual(2, len(self.machine.leds.led3.stack))
+
+        # stop the mode, LEDs should revert
+        self.machine.modes['mode1'].stop()
+        self.advance_time_and_run()
+
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertEqual(200, self.machine.leds.led1.stack[0]['priority'])
+        self.assertEqual(1, len(self.machine.leds.led1.stack))
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led2.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led2.stack[0]['priority'])
+        self.assertEqual(1, len(self.machine.leds.led2.stack))
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led3.hw_driver.current_color)
+        self.assertEqual(0, self.machine.leds.led3.stack[0]['priority'])
+        self.assertEqual(1, len(self.machine.leds.led3.stack))

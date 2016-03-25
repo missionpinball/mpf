@@ -1,0 +1,14 @@
+# config_version=4
+
+mode:
+  priority: 100
+
+led_player:
+  event5:
+    led1:
+      color: orange
+    led2:
+      color: orange
+    led3:
+      color: orange
+      priority: 200

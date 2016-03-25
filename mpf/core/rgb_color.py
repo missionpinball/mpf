@@ -152,6 +152,7 @@ named_rgb_colors = CaseInsensitiveDict(
     yellowgreen=(154, 205, 50),
 )
 
+
 class RGBColor(object):
     """
     The Color module provides utilities for working with RGB colors.  It is
@@ -495,6 +496,7 @@ class RGBColor(object):
         """
         named_rgb_colors[str(name)] = RGBColor(color).rgb
 
+
 class ColorException(Exception):
     """General exception thrown for color utilities non-exit exceptions."""
     pass
@@ -538,7 +540,8 @@ class RGBColorCorrectionProfile(object):
         Returns: None
 
         """
-        # Lookup table generation algorithm from the Fadecandy open source server code:
+        # Lookup table generation algorithm from the Fadecandy open source
+        # server code:
         # https://github.com/scanlime/fadecandy
         # Copyright (c) 2013 Micah Elizabeth Scott
         # The MIT License (MIT)

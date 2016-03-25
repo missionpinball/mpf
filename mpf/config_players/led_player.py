@@ -20,13 +20,15 @@ class LedPlayer(ConfigPlayer):
         for led, s in settings.items():
             s['color'] = RGBColor(s['color'])
 
-            if 'cache' not in s:
-                s['cache'] = hold
-
             try:
                 s['priority'] += priority
             except KeyError:
                 s['priority'] = priority
+
+            if caller:
+                s['key'] = caller
+            else:
+                s['key'] = mode
 
             try:
                 led.color(**s)
@@ -43,9 +45,11 @@ class LedPlayer(ConfigPlayer):
 
     def clear(self, caller, priority):
 
+        del priority
+
         try:
             for led in self.caller_target_map[caller]:
-                led.clear_priority(priority)
+                led.remove_from_stack(caller)
         except KeyError:
             pass
 

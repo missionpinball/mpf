@@ -48,20 +48,16 @@ class TestShowController(MpfTestCase):
         # LEDs should start out off (current color is default RGBColor object)
         self.assertEqual(RGBColor(),
                          self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led_01.state['priority'])
         self.assertEqual(RGBColor(),
                          self.machine.leds.led_02.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led_02.state['priority'])
 
         # Lights should start out off (brightness is 0)
         self.assertEqual(0,
                          self.machine.lights.light_01.hw_driver
                          .current_brightness)
-        self.assertEqual(0, self.machine.lights.light_01.state['priority'])
         self.assertEqual(0,
                          self.machine.lights.light_02.hw_driver
                          .current_brightness)
-        self.assertEqual(0, self.machine.lights.light_02.state['priority'])
 
         # GI should start out enabled/on (brightness is 255)
         self.assertEqual(255,
@@ -98,10 +94,10 @@ class TestShowController(MpfTestCase):
         # Check LEDs, lights, and GI after first show step
         self.assertEqual(RGBColor('006400'),
                          self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led_01.state['priority'])
+        self.assertEqual(200, self.machine.leds.led_01.stack[0]['priority'])
         self.assertEqual(RGBColor('CCCCCC'),
                          self.machine.leds.led_02.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led_02.state['priority'])
+        self.assertEqual(200, self.machine.leds.led_02.stack[0]['priority'])
         self.assertEqual(204,
                     self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertEqual(200, self.machine.lights.light_01.state['priority'])
@@ -115,11 +111,11 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run(1.0)
         self.assertEqual(RGBColor('DarkGreen'),
                          self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led_01.state['priority'])
+        self.assertEqual(200, self.machine.leds.led_01.stack[0]['priority'])
 
         self.assertEqual(RGBColor('Black'),
                          self.machine.leds.led_02.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led_02.state['priority'])
+        self.assertEqual(200, self.machine.leds.led_02.stack[0]['priority'])
         self.assertEqual(204,
                     self.machine.lights.light_01.hw_driver.current_brightness)
         self.assertEqual(200, self.machine.lights.light_01.state['priority'])
@@ -133,10 +129,10 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run(1.0)
         self.assertEqual(RGBColor('DarkSlateGray'),
                          self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led_01.state['priority'])
+        self.assertEqual(200, self.machine.leds.led_01.stack[0]['priority'])
         self.assertEqual(RGBColor('Tomato'),
                          self.machine.leds.led_02.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led_02.state['priority'])
+        self.assertEqual(200, self.machine.leds.led_02.stack[0]['priority'])
         self.assertEqual(255,
                          self.machine.lights.light_01.hw_driver
                          .current_brightness)
@@ -153,10 +149,10 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run(1.0)
         self.assertNotEqual(RGBColor('MidnightBlue'),
                             self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led_01.state['priority'])
+        self.assertEqual(200, self.machine.leds.led_01.stack[0]['priority'])
         self.assertNotEqual(RGBColor('DarkOrange'),
                             self.machine.leds.led_02.hw_driver.current_color)
-        self.assertEqual(200, self.machine.leds.led_02.state['priority'])
+        self.assertEqual(200, self.machine.leds.led_02.stack[0]['priority'])
         self.assertEqual(255,
                          self.machine.lights.light_01.hw_driver
                          .current_brightness)
@@ -231,8 +227,8 @@ class TestShowController(MpfTestCase):
         self.machine_run()
         self.assertFalse(self.machine.mode_controller.is_active('mode1'))
         self.assertTrue(running_show1._stopped)
-        self.assertFalse([x for x in self.machine.shows['test_show1'].running if
-                         x.name.startswith('test_show1')])
+        self.assertFalse([x for x in self.machine.shows['test_show1'].running
+                          if x.name.startswith('test_show1')])
         self.advance_time_and_run(5)
 
         # Make sure the lights and LEDs have reverted back to their prior
@@ -240,10 +236,10 @@ class TestShowController(MpfTestCase):
 
         self.assertEqual(RGBColor(),
                          self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led_01.state['priority'])
+        self.assertEqual(0, self.machine.leds.led_01.stack[0]['priority'])
         self.assertEqual(RGBColor(),
                          self.machine.leds.led_02.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led_02.state['priority'])
+        self.assertEqual(0, self.machine.leds.led_02.stack[0]['priority'])
         self.assertEqual(0,
                          self.machine.lights.light_01.hw_driver
                          .current_brightness)
@@ -421,11 +417,8 @@ class TestShowController(MpfTestCase):
         self.assertIn(self.machine.leds.led_01, copied_show[0]['leds'])
         self.assertIn(self.machine.leds.led_02, copied_show[0]['leds'])
         self.assertEqual(copied_show[0]['leds'][self.machine.leds.led_01],
-                         dict(color='006400', fade_ms=0, force=False,
-                              priority=0))
+                         dict(color='006400', fade_ms=0, priority=0))
         self.assertEqual(copied_show[0]['leds'][self.machine.leds.led_02],
-                         dict(color='cccccc', fade_ms=0, force=False,
-                              priority=0))
+                         dict(color='cccccc', fade_ms=0, priority=0))
         self.assertEqual(copied_show[3]['leds'][self.machine.leds.led_01],
-                         dict(color='midnightblue', fade_ms=500, force=False,
-                              priority=0))
+                         dict(color='midnightblue', fade_ms=500, priority=0))

@@ -1,203 +1,286 @@
+from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.core.rgb_color import RGBColor, RGBColorCorrectionProfile
+
+from mpf.core.config_player import ConfigPlayer
 
 
-class TestDeviceLED(MpfTestCase):
+class TestLed(MpfTestCase):
 
     def getConfigFile(self):
-        return 'test_shows.yaml'
+        return 'led.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/show_controller/'
+        return 'tests/machine_files/led/'
 
-    def get_platform(self):
-        return 'smart_virtual'
+    def test_color_and_stack(self):
+        led1 = self.machine.leds.led1
 
-    def testBasicOnAndOff(self):
-        """Tests setting some LED colors (using default arguments)"""
+        # set led1 to red and check the color and stack
+        led1.color('red')
 
-        # Make sure hardware devices have been configured for tests
-        self.assertIn('led_01', self.machine.leds)
-        self.assertIn('led_02', self.machine.leds)
+        # need to advance time since LEDs are updated once per frame via a
+        # clock.schedule_interval
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led1.hw_driver.current_color)
 
-        self.advance_time_and_run(10)
+        color_setting = led1.stack[0]
+        self.assertEqual(color_setting['priority'], 0)
+        self.assertEqual(color_setting['start_color'], RGBColor('off'))
+        self.assertEqual(color_setting['dest_time'], 0)
+        self.assertEqual(color_setting['dest_color'], RGBColor('red'))
+        self.assertEqual(color_setting['color'], RGBColor('red'))
+        self.assertIsNone(color_setting['key'])
 
-        self.assertIsNone(self.machine.leds.led_01._color_correction_profile)
-        self.assertIsNone(self.machine.leds.led_02._color_correction_profile)
-        # TODO: Fix custom color correction profile
-        #self.assertIsInstance(self.machine.leds['led_02']._color_correction_profile, RGBColorCorrectionProfile)
+        # test get_color()
+        self.assertEqual(led1.get_color(), RGBColor('red'))
 
-        # LEDs should start out off (current color is default RGBColor object)
-        self.assertEqual(RGBColor(), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor(), self.machine.leds.led_02.state['color'])
+        # set to blue & test
+        led1.color('blue')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('blue'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        color_setting = led1.stack[0]
+        self.assertEqual(color_setting['priority'], 0)
+        self.assertEqual(color_setting['start_color'], RGBColor('red'))
+        self.assertEqual(color_setting['dest_time'], 0)
+        self.assertEqual(color_setting['dest_color'], RGBColor('blue'))
+        self.assertEqual(color_setting['color'], RGBColor('blue'))
+        self.assertIsNone(color_setting['key'])
+        self.assertEqual(len(led1.stack), 1)
 
-        # --------------------------------------------------------
-        # Set some LED colors (using default arguments)
-        # --------------------------------------------------------
-        self.machine.leds.led_01.color(RGBColor('SteelBlue'))
-        self.assertEqual(RGBColor('SteelBlue'), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor('SteelBlue'), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(self.machine.clock.get_time(), self.machine.leds.led_01.cache['start_time'])
-        self.assertEqual(RGBColor('SteelBlue'), self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led_01.state['priority'])
-        self.machine.leds.led_02.color(RGBColor('006400'))
-        self.assertEqual(RGBColor('006400'), self.machine.leds.led_02.state['color'])
-        self.assertEqual(RGBColor('006400'), self.machine.leds.led_02.cache['color'])
-        self.assertEqual(self.machine.clock.get_time(), self.machine.leds.led_02.cache['start_time'])
-        self.assertEqual(RGBColor('006400'), self.machine.leds.led_02.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led_02.state['priority'])
+        # set it to green, at a higher priority, but with no key. Stack should
+        # reflect the higher priority, but still be len 1 since the key is the
+        # same (None)
+        led1.color('green', priority=100)
 
-        # Turn the LEDs off
-        self.machine.leds.led_01.color(RGBColor('Off'))
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor((0, 0, 0)), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(self.machine.clock.get_time(), self.machine.leds.led_01.cache['start_time'])
-        self.assertEqual(RGBColor('Black'), self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led_01.state['priority'])
-        self.machine.leds.led_02.color(RGBColor('Off'))
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_02.state['color'])
-        self.assertEqual(RGBColor((0, 0, 0)), self.machine.leds.led_02.cache['color'])
-        self.assertEqual(self.machine.clock.get_time(), self.machine.leds.led_02.cache['start_time'])
-        self.assertEqual(RGBColor('Black'), self.machine.leds.led_02.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led_02.state['priority'])
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('green'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertEqual(len(led1.stack), 1)
+        color_setting = led1.stack[0]
+        self.assertEqual(color_setting['priority'], 100)
+        self.assertEqual(color_setting['start_color'], RGBColor('blue'))
+        self.assertEqual(color_setting['dest_time'], 0)
+        self.assertEqual(color_setting['dest_color'], RGBColor('green'))
+        self.assertEqual(color_setting['color'], RGBColor('green'))
+        self.assertIsNone(color_setting['key'])
 
-    def testOneSecondFadeUp(self):
-        """One second fade from off (0, 0, 0) to white (255, 255, 255)"""
+        # set led1 orange, lower priority, but with a key, so led should stay
+        # green, but stack len should be 2
+        led1.color('orange', key='test')
 
-        # LED should start out off
-        self.machine.leds.led_01.off()
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['color'])
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('green'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertEqual(len(led1.stack), 2)
+        color_setting = led1.stack[0]
+        self.assertEqual(color_setting['priority'], 100)
+        self.assertEqual(color_setting['start_color'], RGBColor('blue'))
+        self.assertEqual(color_setting['dest_time'], 0)
+        self.assertEqual(color_setting['dest_color'], RGBColor('green'))
+        self.assertEqual(color_setting['color'], RGBColor('green'))
+        self.assertIsNone(color_setting['key'])
 
-        self.machine.leds.led_01.color(RGBColor('White'), fade_ms=1000)
-        self.machine_run()
-        fade_start_time = self.machine.clock.get_time()
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['start_color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['destination_color'])
-        self.assertEqual(self.machine.clock.get_time(), self.machine.leds.led_01.state['start_time'])
-        self.assertEqual(self.machine.clock.get_time() + 1, self.machine.leds.led_01.state['destination_time'])
-        self.assertEqual(RGBColor('Black'), self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(0, self.machine.leds.led_01.state['priority'])
-        self.assertTrue(self.machine.leds.led_01.fade_in_progress)
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['destination_color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.cache['start_color'])
-        self.assertEqual(fade_start_time, self.machine.leds.led_01.cache['start_time'])
-        self.assertEqual(fade_start_time + 1, self.machine.leds.led_01.cache['destination_time'])
-        self.assertEqual(1000, self.machine.leds.led_01.cache['fade_ms'])
-        self.assertEqual(0, self.machine.leds.led_01.cache['priority'])
+        # remove the orange key from the stack
+        led1.remove_from_stack('test')
+        self.assertEqual(len(led1.stack), 1)
 
-        self.machine_run()
+        # clear the stack
+        led1.clear_stack()
+        self.assertEqual(len(led1.stack), 0)
 
-        # Advance time 25% of the fade and check colors
-        self.advance_time_and_run(0.25)
-        self.assertEqual(RGBColor((63, 63, 63)), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['start_color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['destination_color'])
-        self.assertEqual(RGBColor((63, 63, 63)), self.machine.leds.led_01.hw_driver.current_color)
+        # test the stack ordering with different priorities & keys
+        led1.color('red', priority=200, key='red')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led1.hw_driver.current_color)
 
-        # Check cache (should not have changed)
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['destination_color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.cache['start_color'])
-        self.assertEqual(fade_start_time, self.machine.leds.led_01.cache['start_time'])
-        self.assertEqual(fade_start_time + 1, self.machine.leds.led_01.cache['destination_time'])
-        self.assertEqual(1000, self.machine.leds.led_01.cache['fade_ms'])
-        self.assertEqual(0, self.machine.leds.led_01.cache['priority'])
+        led1.color('blue', priority=300, key='blue')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('blue'),
+                         self.machine.leds.led1.hw_driver.current_color)
 
-        # Advance time another 25% of the fade and check colors
-        self.advance_time_and_run(0.25)
-        self.assertEqual(RGBColor((127, 127, 127)), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['start_color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['destination_color'])
-        self.assertEqual(RGBColor((127, 127, 127)), self.machine.leds.led_01.hw_driver.current_color)
+        led1.color('green', priority=200, key='green')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('blue'),
+                         self.machine.leds.led1.hw_driver.current_color)
 
-        # Check cache (should not have changed)
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['destination_color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.cache['start_color'])
-        self.assertEqual(fade_start_time, self.machine.leds.led_01.cache['start_time'])
-        self.assertEqual(fade_start_time + 1, self.machine.leds.led_01.cache['destination_time'])
-        self.assertEqual(1000, self.machine.leds.led_01.cache['fade_ms'])
-        self.assertEqual(0, self.machine.leds.led_01.cache['priority'])
+        led1.color('orange', priority=100, key='orange')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('blue'),
+                         self.machine.leds.led1.hw_driver.current_color)
 
-        # Advance time another 25% of the fade and check colors
-        self.advance_time_and_run(0.25)
-        self.assertEqual(RGBColor((191, 191, 191)), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['start_color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['destination_color'])
-        self.assertEqual(RGBColor((191, 191, 191)), self.machine.leds.led_01.hw_driver.current_color)
+        # verify the stack is right
+        # order should be priority, then insertion order (recent is higher), so
+        # should be: blue, green, red, orange
+        self.assertEqual(RGBColor('blue'), led1.stack[0]['color'])
+        self.assertEqual(RGBColor('green'), led1.stack[1]['color'])
+        self.assertEqual(RGBColor('red'), led1.stack[2]['color'])
+        self.assertEqual(RGBColor('orange'), led1.stack[3]['color'])
 
-        # Check cache (should not have changed)
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['destination_color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.cache['start_color'])
-        self.assertEqual(fade_start_time, self.machine.leds.led_01.cache['start_time'])
-        self.assertEqual(fade_start_time + 1, self.machine.leds.led_01.cache['destination_time'])
-        self.assertEqual(1000, self.machine.leds.led_01.cache['fade_ms'])
-        self.assertEqual(0, self.machine.leds.led_01.cache['priority'])
+        # test that a replacement key slots in properly
+        led1.color('red', priority=300, key='red')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'), led1.stack[0]['color'])
+        self.assertEqual(RGBColor('blue'), led1.stack[1]['color'])
+        self.assertEqual(RGBColor('green'), led1.stack[2]['color'])
+        self.assertEqual(RGBColor('orange'), led1.stack[3]['color'])
 
-        # Advance time the last 25% of the fade and check colors (should be done)
-        self.advance_time_and_run(0.25)
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['start_color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['destination_color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.hw_driver.current_color)
-        self.machine_run()
-        self.assertFalse(self.machine.leds.led_01.fade_in_progress)
+    def test_fades(self):
+        led1 = self.machine.leds.led1
 
-        # Check cache (should have been updated)
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['destination_color'])
-        self.assertEqual(0, self.machine.leds.led_01.cache['fade_ms'])
-        self.assertEqual(0, self.machine.leds.led_01.cache['priority'])
+        led1.color('red', fade_ms=2000)
 
-    def testInterruptFadeOut(self):
-        """Interrupt (kill) a one second fade from white to off"""
+        # check the stack before the fade starts
+        color_setting = led1.stack[0]
+        self.assertEqual(color_setting['priority'], 0)
+        self.assertEqual(color_setting['start_color'], RGBColor('off'))
+        self.assertEqual(color_setting['dest_time'],
+                         color_setting['start_time'] + 2)
+        self.assertEqual(color_setting['dest_color'], RGBColor('red'))
+        self.assertEqual(color_setting['color'], RGBColor('off'))
+        self.assertIsNone(color_setting['key'])
 
-        # LED should start out on (white)
-        self.machine.leds.led_01.color(RGBColor('White'))
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['color'])
+        # advance to half way through the fade
+        self.advance_time_and_run(1)
 
-        self.machine.leds.led_01.color(RGBColor('Off'), fade_ms=1000)
-        fade_start_time = self.machine.clock.get_time()
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['start_color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['destination_color'])
-        self.machine_run()
+        self.assertTrue(led1.fade_in_progress)
+        self.assertEqual(color_setting['priority'], 0)
+        self.assertEqual(color_setting['start_color'], RGBColor('off'))
+        self.assertEqual(color_setting['dest_time'],
+                         color_setting['start_time'] + 2)
+        self.assertEqual(color_setting['dest_color'], RGBColor('red'))
+        self.assertEqual(color_setting['color'], RGBColor((127, 0, 0)))
+        self.assertIsNone(color_setting['key'])
+        self.assertEqual(RGBColor((127, 0, 0)),
+                         self.machine.leds.led1.hw_driver.current_color)
 
-        # Advance time 50% of the fade and check colors
-        self.advance_time_and_run(0.5)
-        self.assertEqual(RGBColor((128, 128, 128)), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.state['start_color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['destination_color'])
-        self.assertEqual(RGBColor((128, 128, 128)), self.machine.leds.led_01.hw_driver.current_color)
+        # advance to after the fade is done
+        self.advance_time_and_run(2)
 
-        # Check cache (should not have changed)
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.cache['destination_color'])
-        self.assertEqual(RGBColor('White'), self.machine.leds.led_01.cache['start_color'])
-        self.assertEqual(fade_start_time, self.machine.leds.led_01.cache['start_time'])
-        self.assertEqual(fade_start_time + 1, self.machine.leds.led_01.cache['destination_time'])
-        self.assertEqual(1000, self.machine.leds.led_01.cache['fade_ms'])
-        self.assertEqual(0, self.machine.leds.led_01.cache['priority'])
+        self.assertFalse(led1.fade_in_progress)
+        self.assertEqual(color_setting['priority'], 0)
+        self.assertEqual(color_setting['start_color'], RGBColor('off'))
+        self.assertEqual(color_setting['dest_time'], 0)
+        self.assertEqual(color_setting['dest_color'], RGBColor('red'))
+        self.assertEqual(color_setting['color'], RGBColor('red'))
+        self.assertIsNone(color_setting['key'])
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led1.hw_driver.current_color)
 
-        # Now interrupt the fade
-        self.machine.leds.led_01._end_fade()
-        self.machine_run()
+    def test_interrupted_fade(self):
+        led1 = self.machine.leds.led1
 
-        # Fade should have been completed when killed
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['start_color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.state['destination_color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.hw_driver.current_color)
-        self.assertFalse(self.machine.leds.led_01.fade_in_progress)
+        led1.color('red', fade_ms=2000)
 
-        # Check cache (should have been updated)
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.cache['color'])
-        self.assertEqual(RGBColor('Off'), self.machine.leds.led_01.cache['destination_color'])
-        self.assertEqual(0, self.machine.leds.led_01.cache['fade_ms'])
-        self.assertEqual(0, self.machine.leds.led_01.cache['priority'])
+        # check the stack before the fade starts
+        color_setting = led1.stack[0]
+        self.assertEqual(color_setting['priority'], 0)
+        self.assertEqual(color_setting['start_color'], RGBColor('off'))
+        self.assertEqual(color_setting['dest_time'],
+                         color_setting['start_time'] + 2)
+        self.assertEqual(color_setting['dest_color'], RGBColor('red'))
+        self.assertEqual(color_setting['color'], RGBColor('off'))
+        self.assertIsNone(color_setting['key'])
 
-        # TODO: Add priority/force and cache restore tests
+        # advance to half way through the fade
+        self.advance_time_and_run(1)
 
+        self.assertTrue(led1.fade_in_progress)
+        self.assertEqual(color_setting['priority'], 0)
+        self.assertEqual(color_setting['start_color'], RGBColor('off'))
+        self.assertEqual(color_setting['dest_time'],
+                         color_setting['start_time'] + 2)
+        self.assertEqual(color_setting['dest_color'], RGBColor('red'))
+        self.assertEqual(color_setting['color'], RGBColor((127, 0, 0)))
+        self.assertIsNone(color_setting['key'])
+        self.assertEqual(RGBColor((127, 0, 0)),
+                         self.machine.leds.led1.hw_driver.current_color)
+
+        # kill the fade
+        led1._end_fade()
+
+        # advance to after the fade should have been done
+        self.advance_time_and_run(2)
+
+        # everything should still be the same as the last check (except
+        # dest_time should be 0)
+        self.assertFalse(led1.fade_in_progress)
+        self.assertEqual(color_setting['priority'], 0)
+        self.assertEqual(color_setting['start_color'], RGBColor('off'))
+        self.assertEqual(color_setting['dest_time'], 0)
+        self.assertEqual(color_setting['dest_color'], RGBColor('red'))
+        self.assertEqual(color_setting['color'], RGBColor((127, 0, 0)))
+        self.assertIsNone(color_setting['key'])
+        self.assertEqual(RGBColor((127, 0, 0)),
+                         self.machine.leds.led1.hw_driver.current_color)
+
+    def test_restore_to_fade_in_progress(self):
+        led1 = self.machine.leds.led1
+
+        led1.color('red', fade_ms=4000)
+        self.advance_time_and_run(1)
+
+        # fade is 25% complete
+        self.assertEqual(RGBColor((63, 0, 0)),
+                         self.machine.leds.led1.hw_driver.current_color)
+
+        # higher priority color which goes on top of fade (higher priority
+        # becuase it was added after the first, even though the priorities are
+        # the same)
+        led1.color('blue', key='test')
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('blue'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertFalse(led1.fade_in_progress)
+
+        led1.remove_from_stack('test')
+        # should go back to the fade in progress, which is now 75% complete
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor((191, 0, 0)),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertTrue(led1.fade_in_progress)
+
+        # go to 1 sec after fade and make sure it finished
+        self.advance_time_and_run(2)
+        self.assertEqual(RGBColor('red'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertFalse(led1.fade_in_progress)
+
+    def test_multiple_concurrent_fades(self):
+        # start one fade, and while that's in progress, start a second fade.
+        # the second fade should start from the wherever the current fade was.
+
+        led1 = self.machine.leds.led1
+
+        led1.color('red', fade_ms=4000)
+        self.advance_time_and_run(1)
+
+        # fade is 25% complete
+        self.assertEqual(RGBColor((63, 0, 0)),
+                         self.machine.leds.led1.hw_driver.current_color)
+
+        # start a blue 2s fade
+        led1.color('blue', key='test', fade_ms=2000)
+
+        # advance 1s, since we're half way to the blue fade from the 25% red,
+        # we should now be at 12.5% red and 50% blue
+        # Note: technically the red fade should continue even as it's being
+        # faded to blue, but meh, we'll handle that with alpha channels in the
+        # future
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor((32, 0, 127)),
+                         self.machine.leds.led1.hw_driver.current_color)
+
+        # advance past the end
+        self.advance_time_and_run(2)
+        self.assertEqual(RGBColor('blue'),
+                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertFalse(led1.fade_in_progress)
+
+    # TODO
+    # color correction profiles
+    # default fades
