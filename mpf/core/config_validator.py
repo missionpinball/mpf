@@ -373,7 +373,6 @@ images:
 led_player:
     color: single|str|white
     fade: single|ms|0
-    force: single|bool|false
     __allow_others__:
 led_settings:
     color_correction_profiles: single|dict|None
