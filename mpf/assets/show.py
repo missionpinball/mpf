@@ -28,6 +28,7 @@ class Show(Asset):
     pool_config_section = 'show_pools'
     asset_group_class = ShowPool
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, name, file=None, config=None, data=None):
         super().__init__(machine, name, file, config)
 
@@ -260,6 +261,7 @@ class Show(Asset):
 
         return show
 
+    # pylint: disable-msg=too-many-arguments
     def play(self, priority=0, blend=False, hold=None,
              speed=1.0, start_step=0, callback=None,
              loops=-1, sync_ms=0, reset=True, mode=None,
@@ -394,6 +396,7 @@ class Show(Asset):
 
 
 class RunningShow(object):
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, show, show_steps, priority, blend,
                  hold, speed, start_step, callback, loops,
                  sync_ms, reset, mode, manual_advance, play_kwargs):

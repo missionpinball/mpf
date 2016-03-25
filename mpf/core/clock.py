@@ -286,6 +286,7 @@ class ClockEvent(object):
         :meth:`__call__` methods.
     """
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, clock, loop, callback, timeout, starttime, cid,
                  priority=1, trigger=False):
         self.clock = clock

@@ -30,8 +30,8 @@ class Led(SystemWideDevice):
 
             machine.config_validator.validate_config(
                 'color_correction_profile',
-                 machine.config['led_settings']['color_correction_profiles']
-                 [profile_name], profile_parameters)
+                machine.config['led_settings']['color_correction_profiles']
+                [profile_name], profile_parameters)
 
             profile = RGBColorCorrectionProfile(profile_name)
             profile.generate_from_parameters(

@@ -162,6 +162,7 @@ class ShowController(object):
         for handler in self.registered_tick_handlers:
             handler()
 
+    # pylint: disable-msg=too-many-arguments
     def add_external_show_start_command_to_queue(self, name, priority=0,
                                                  blend=True, leds=None,
                                                  lights=None, flashers=None,
@@ -209,6 +210,7 @@ class ShowController(object):
         self.external_show_command_queue.put(
                 (self._process_external_show_stop_command, (name,)))
 
+    # pylint: disable-msg=too-many-arguments
     def add_external_show_frame_command_to_queue(self, name, led_data=None,
                                                  light_data=None,
                                                  flasher_data=None,
@@ -247,6 +249,7 @@ class ShowController(object):
             update_method, args = self.external_show_command_queue.get(False)
             update_method(*args)
 
+    # pylint: disable-msg=too-many-arguments
     def _process_external_show_start_command(self, name, priority, blend, leds,
                                              lights, flashers, gis, coils):
         """Processes an external show start command.  Runs in the main
@@ -341,6 +344,7 @@ class ShowController(object):
             #             self.machine.show_controller._add_to_event_queue(event)
 
 class ExternalShow(object):
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, name, priority=0, blend=True, leds=None,
                  lights=None, flashers=None, gis=None, coils=None):
 

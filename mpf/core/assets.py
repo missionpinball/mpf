@@ -106,6 +106,7 @@ class AssetManager(object):
         self.loader_thread.daemon = True
         self.loader_thread.start()
 
+    # pylint: disable-msg=too-many-arguments
     def register_asset_class(self, asset_class, attribute, config_section,
                              disk_asset_section,
                              path_string, extensions, priority,
@@ -307,6 +308,7 @@ class AssetManager(object):
 
         return config
 
+    # pylint: disable-msg=too-many-arguments
     def _create_asset_config_entries(self, asset_class, config, mode_name=None,
                                      path=None):
         """Scans a folder (and subfolders) and automatically creates or updates
