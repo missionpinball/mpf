@@ -189,7 +189,7 @@ class BallController(object):
 
         for device in self.machine.ball_devices:
             if device not in target_devices:
-                if device.balls:
+                if device.available_balls:
                     source_devices.add(device)
                     balls_to_collect = True
 
