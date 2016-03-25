@@ -5,7 +5,9 @@ install:
 - pip install coveralls
 - python setup.py install
 - git clone --branch dev https://github.com/missionpinball/mpf-examples.git
-script: coverage run -m unittest discover mpf/tests && cd mpf-examples/demo_man/ && python3 -m unittest discover -s tests/
+script:
+- coverage run -m unittest discover mpf/tests
+- cd mpf-examples/demo_man/ && python3 -m unittest discover -s tests/ && cd ../../
 after_success: coveralls
 deploy:
   provider: pypi
