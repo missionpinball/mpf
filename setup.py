@@ -71,6 +71,7 @@ community.''',
     install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial', 'mock'],
 
     tests_require=['mock'],
+    test_suite="mpf.tests",
 
     entry_points={
         'console_scripts': [
