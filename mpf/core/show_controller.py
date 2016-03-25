@@ -164,7 +164,7 @@ class ShowController(object):
 
     # pylint: disable-msg=too-many-arguments
     def add_external_show_start_command_to_queue(self, name, priority=0,
-                                                 blend=True, leds=None,
+                                                 leds=None,
                                                  lights=None, flashers=None,
                                                  gis=None, coils=None):
         """Called by BCP worker thread when an external show start command
@@ -177,8 +177,6 @@ class ShowController(object):
             name: The name of the external show, used as a key for
             subsequent show commands.
             priority: Integer value of the relative priority of this show.
-            blend: When an light is off in this show, should it allow lower
-                priority lights to show through?
             leds: A list of led device names that will be used in this show.
             lights: A list of light device names that will be used in this
             show.
@@ -194,7 +192,7 @@ class ShowController(object):
 
         self.external_show_command_queue.put(
                 (self._process_external_show_start_command,
-                 (name, priority, blend, leds,
+                 (name, priority, leds,
                   lights, flashers, gis, coils)))
 
     def add_external_show_stop_command_to_queue(self, name):
@@ -250,7 +248,7 @@ class ShowController(object):
             update_method(*args)
 
     # pylint: disable-msg=too-many-arguments
-    def _process_external_show_start_command(self, name, priority, blend, leds,
+    def _process_external_show_start_command(self, name, priority, leds,
                                              lights, flashers, gis, coils):
         """Processes an external show start command.  Runs in the main
         processing thread.
@@ -259,8 +257,6 @@ class ShowController(object):
             name: The name of the external show, used as a key for
             subsequent show commands.
             priority: Integer value of the relative priority of this show.
-            blend: When an light is off in this show, should it allow lower
-                priority lights to show through?
             leds: A list of led device names that will be used in this show.
             lights: A list of light device names that will be used in this
             show.
@@ -272,7 +268,7 @@ class ShowController(object):
             self.running_external_show_keys[name] = ExternalShow(self.machine,
                                                                  name,
                                                                  priority,
-                                                                 blend, leds,
+                                                                 leds,
                                                                  lights,
                                                                  flashers, gis,
                                                                  coils)
@@ -345,13 +341,12 @@ class ShowController(object):
 
 class ExternalShow(object):
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, machine, name, priority=0, blend=True, leds=None,
+    def __init__(self, machine, name, priority=0, leds=None,
                  lights=None, flashers=None, gis=None, coils=None):
 
         self.machine = machine
         self.name = name
         self.priority = priority
-        self.blend = blend
         self.name = None
         self.leds = list()
         self.lights = list()
