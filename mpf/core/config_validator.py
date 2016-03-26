@@ -141,7 +141,6 @@ coils:
     number: single|str|
     number_str: single|str|
     pulse_ms: single|int|None
-    long_pulse_ms: single|int|None
     pwm_on_ms: single|int|None
     pwm_off_ms: single|int|None
     pulse_power: single|int|None
