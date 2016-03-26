@@ -925,6 +925,8 @@ class FASTDriver(DriverPlatformInterface):
                               activation_time=None,
                               **kwargs):
 
+        del kwargs
+
         if pwm_on_ms:
             raise ValueError("The setting 'pwm_on_ms' is not valid with the "
                              "FAST platform. Use a hold_power or hold_pwm_mask"
@@ -1278,6 +1280,7 @@ class SerialCommunicator(object):
         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(
             self.serial_connection, self.serial_connection, 1), newline='\r',
             line_buffering=True)
+        # pylint: disable=W0212
         self.serial_io._CHUNK_SIZE = 1
 
         self.identify_connection()
