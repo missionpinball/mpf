@@ -848,7 +848,7 @@ class FASTDriver(DriverPlatformInterface):
         Resets a driver
 
         """
-        self.log.debug("Reseting driver %s", self.driver_settings)
+        self.log.debug("Resetting driver %s", self.driver_settings)
         cmd = (self.driver_settings['config_cmd'] +
                self.driver_settings['number'] +
                ',00,00,00')
@@ -865,7 +865,7 @@ class FASTDriver(DriverPlatformInterface):
             return_dict['allow_enable'] = False
 
         if pulse_ms > 255:
-            return_dict['pulse_ms'] = self.config['long_pulse_ms']
+            return_dict['pulse_ms'] = kwargs['long_pulse_ms']
         else:
             return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
 
@@ -950,7 +950,10 @@ class FASTDriver(DriverPlatformInterface):
             return_dict['recycle_ms'] = (Util.int_to_hex_string(recycle_ms))
 
         if pulse_ms is not None:
-            return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
+            if pulse_ms > 255:
+                return_dict['pulse_ms'] = kwargs['long_pulse_ms']
+            else:
+                return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
 
         self._merge_pulse_pwm_mask(return_dict, pulse_pwm_mask, pulse_power, pulse_power32)
 
