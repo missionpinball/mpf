@@ -6,7 +6,8 @@ import time
 class MockSerialCommunicator:
     expected_commands = []
 
-    def __init__(self, machine, send_queue, receive_queue, platform, baud, port):
+    def __init__(self, machine, send_queue, receive_queue, platform, baud,
+                 port):
         # ignored variable
         del machine, send_queue, baud, port
         self.platform = platform
@@ -19,7 +20,8 @@ class MockSerialCommunicator:
 
         if cmd in MockSerialCommunicator.expected_commands:
             if MockSerialCommunicator.expected_commands[cmd]:
-                self.receive_queue.put(MockSerialCommunicator.expected_commands[cmd])
+                self.receive_queue.put(
+                    MockSerialCommunicator.expected_commands[cmd])
             del MockSerialCommunicator.expected_commands[cmd]
         else:
             raise Exception(cmd)
@@ -49,6 +51,7 @@ class TestFast(MpfTestCase):
             "DN:09,00,00,00": False,
             "DN:10,00,00,00": False,
             "DN:11,00,00,00": False,
+            "DN:12,00,00,00": False,
         }
         # FAST should never call sleep. Make it fail
         self.sleep = time.sleep
@@ -70,6 +73,27 @@ class TestFast(MpfTestCase):
         }
         # pulse coil 4
         self.machine.coils.c_test.pulse()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+    def test_long_pulse(self):
+        # enable command
+        MockSerialCommunicator.expected_commands = {
+            "DN:12,C1,00,18,00,ff,ff,00": False
+        }
+        self.machine.coils.c_long_pulse.pulse()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+        # disable command
+        MockSerialCommunicator.expected_commands = {
+            "TN:12,02": False
+        }
+
+        self.advance_time_and_run(1)
+        # pulse_ms is 2000ms, so after 1s, this should not be sent
+        self.assertTrue(MockSerialCommunicator.expected_commands)
+
+        self.advance_time_and_run(1)
+        # but after 2s, it should be
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
     def test_enable_exception(self):
