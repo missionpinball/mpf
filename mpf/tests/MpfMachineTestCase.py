@@ -22,3 +22,6 @@ class MpfMachineTestCase(MpfTestCase):
     def getAbsoluteMachinePath(self):
         # do not use path relative to MPF folder
         return self.getMachinePath()
+
+    def get_platform(self):
+        return 'smart_virtual'
