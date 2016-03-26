@@ -864,7 +864,11 @@ class FASTDriver(DriverPlatformInterface):
         except KeyError:
             return_dict['allow_enable'] = False
 
-        return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
+        if pulse_ms > 255:
+            return_dict['pulse_ms'] = self.config['long_pulse_ms']
+        else:
+            return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
+
         return_dict['pwm1'] = 'ff'
         return_dict['pwm2'] = 'ff'
         return_dict['recycle_ms'] = '00'
