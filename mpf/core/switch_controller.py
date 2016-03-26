@@ -134,8 +134,10 @@ class SwitchController(object):
             for switch, number in switches:
                 try:
                     switch.state = switch_states[number] ^ switch.invert
-                except IndexError:
-                    pass
+                except (IndexError, KeyError):
+                    self.log.warning("Received a status update from hardware "
+                                     "switch %s, but that switch is not in "
+                                     "your config. Just FYI.", number)
 
     def verify_switches(self):
         """Loops through all the switches and queries their hardware states via
