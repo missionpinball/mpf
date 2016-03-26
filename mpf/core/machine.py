@@ -184,8 +184,10 @@ class MachineController(object):
 
     def _register_plugin_config_players(self):
 
+        self.log.debug("Registering Plugin Config Players")
         for entry_point in iter_entry_points(group='mpf.config_player',
                                              name=None):
+            self.log.debug("Registering %s", entry_point)
             entry_point.load()(self)
 
     def _load_machine_vars(self):
@@ -333,11 +335,11 @@ class MachineController(object):
         python_version = sys.version_info
 
         if not (python_version[0] == 3 and (
-                        python_version[1] == 4 or python_version[1] == 5)):
-            raise AssertionError("Incorrect Python version. MPF requires Python 3.4 "
-                                 "or 3.5. You have Python {}.{}.{}.". format(
-                                    python_version[0], python_version[1],
-                                    python_version[2]))
+                python_version[1] == 4 or python_version[1] == 5)):
+            raise AssertionError("Incorrect Python version. MPF requires "
+                                 "Python 3.4 or 3.5. You have Python {}.{}.{}."
+                                 .format(python_version[0], python_version[1],
+                                         python_version[2]))
 
         self.log.debug("Python version: %s.%s.%s", python_version[0],
                        python_version[1], python_version[2])

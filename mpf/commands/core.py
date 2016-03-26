@@ -96,8 +96,6 @@ class Command(object):
                             "when launching in a separate window so you can "
                             "see any errors before the window closes.")
 
-
-
         args = parser.parse_args(args)
         args.configfile = Util.string_to_list(args.configfile)
 

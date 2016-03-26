@@ -662,7 +662,6 @@ shot_profiles:
         __allow_others__:
 show_player:
     action: single|str|play
-    repeat: single|bool|True
     step_num: single|int|0
     loops: single|int|-1
     blend: single|bool|False
