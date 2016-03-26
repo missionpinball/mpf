@@ -694,7 +694,6 @@ class HardwarePlatform(Platform):
             param[5] = '00'                             # not used with Mode 18
 
         elif driver_action == 'timed_hold':
-
             # fast hold time is ms*100
             hold_value = driver_settings['activation_time']
 
@@ -865,7 +864,10 @@ class FASTDriver(DriverPlatformInterface):
             return_dict['allow_enable'] = False
 
         if pulse_ms > 255:
-            return_dict['pulse_ms'] = kwargs['long_pulse_ms']
+            if kwargs['long_pulse_ms'] is not None:
+                return_dict['pulse_ms'] = kwargs['long_pulse_ms']
+            else:
+                return_dict['pulse_ms'] = 'ff'
         else:
             return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
 
@@ -917,7 +919,6 @@ class FASTDriver(DriverPlatformInterface):
                               recycle_ms=None,
                               activation_time=None,
                               **kwargs):
-        del kwargs
 
         if pwm_on_ms:
             raise ValueError("The setting 'pwm_on_ms' is not valid with the "
@@ -951,7 +952,10 @@ class FASTDriver(DriverPlatformInterface):
 
         if pulse_ms is not None:
             if pulse_ms > 255:
-                return_dict['pulse_ms'] = kwargs['long_pulse_ms']
+                if kwargs['long_pulse_ms'] is not None:
+                    return_dict['pulse_ms'] = kwargs['long_pulse_ms']
+                else:
+                    return_dict['pulse_ms'] = 'ff'
             else:
                 return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
 
