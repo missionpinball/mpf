@@ -1031,8 +1031,10 @@ class FASTDriver(DriverPlatformInterface):
         """Pulses this driver. """
         if not milliseconds:
             hex_ms_string = self.driver_settings['pulse_ms']
-        else:
+        elif isinstance(milliseconds, int):
             hex_ms_string = Util.int_to_hex_string(milliseconds)
+        else:
+            hex_ms_string = milliseconds
 
         if self.autofire:
             cmd = (self.driver_settings['trigger_cmd'] +
