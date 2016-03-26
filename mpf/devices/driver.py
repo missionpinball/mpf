@@ -57,6 +57,7 @@ class Driver(SystemWideDevice):
 
         """
         del kwargs
+
         self.time_when_done = -1
         self.time_last_changed = self.machine.clock.get_time()
         self.log.debug("Enabling Driver")
@@ -84,33 +85,31 @@ class Driver(SystemWideDevice):
         """
         del kwargs
 
-        # handle default case first
-        if not milliseconds and not power:
-            self.log.debug("Pulsing Driver. Using default pulse_ms.")
-            ms_actual = self.hw_driver.pulse()
+        # todo power is broken with fast since they come in as strings
 
+        if not milliseconds:
+            milliseconds = self.hw_driver.driver_settings['pulse_ms']
+
+        if power and isinstance(milliseconds, int):
+            milliseconds *= power
         else:
-            if not milliseconds:
-                milliseconds = self.hw_driver.driver_settings['pulse_ms']
+            power = 1.0
 
-            if power:
-                milliseconds *= power
-            else:
-                power = 1.0
-
-            if 0 < milliseconds <= 255:
-                self.log.debug("Pulsing Driver. Overriding default pulse_ms with: "
-                               "%sms (%s power)", milliseconds, power)
-                ms_actual = self.hw_driver.pulse(milliseconds)
-            else:
-                self.log.debug("Enabling Driver for %sms (%s power)", milliseconds, power)
-                self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
-                                         ms=milliseconds,
-                                         callback=self.disable)
-                self.enable()
-                self.time_when_done = self.time_last_changed + (
-                    milliseconds / 1000.0)
-                ms_actual = milliseconds
+        if isinstance(milliseconds, str) or (
+                isinstance(milliseconds, int) and 0 < milliseconds <= 255):
+            self.log.debug("Pulsing Driver. %sms (%s power)", milliseconds,
+                           power)
+            ms_actual = self.hw_driver.pulse(milliseconds)
+        else:
+            self.log.debug("Enabling Driver for %sms (%s power)", milliseconds,
+                           power)
+            self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
+                                     ms=milliseconds,
+                                     callback=self.disable)
+            self.enable()
+            self.time_when_done = self.time_last_changed + (
+                milliseconds / 1000.0)
+            ms_actual = milliseconds
 
         if ms_actual != -1:
             self.time_when_done = self.time_last_changed + (ms_actual / 1000.0)

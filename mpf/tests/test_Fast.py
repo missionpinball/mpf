@@ -6,7 +6,8 @@ import time
 class MockSerialCommunicator:
     expected_commands = []
 
-    def __init__(self, machine, send_queue, receive_queue, platform, baud, port):
+    def __init__(self, machine, send_queue, receive_queue, platform, baud,
+                 port):
         # ignored variable
         del machine, send_queue, baud, port
         self.platform = platform
@@ -19,7 +20,8 @@ class MockSerialCommunicator:
 
         if cmd in MockSerialCommunicator.expected_commands:
             if MockSerialCommunicator.expected_commands[cmd]:
-                self.receive_queue.put(MockSerialCommunicator.expected_commands[cmd])
+                self.receive_queue.put(
+                    MockSerialCommunicator.expected_commands[cmd])
             del MockSerialCommunicator.expected_commands[cmd]
         else:
             raise Exception(cmd)
@@ -44,11 +46,12 @@ class TestFast(MpfTestCase):
             "SN:16,01,a,a": "SN:",
             "SN:07,01,a,a": "SN:",
             "SN:1A,01,a,a": "SN:",
-            "DN:04,00,00,00" : False,
-            "DN:06,00,00,00" : False,
-            "DN:09,00,00,00" : False,
-            "DN:10,00,00,00" : False,
-            "DN:11,00,00,00" : False,
+            "DN:04,00,00,00": False,
+            "DN:06,00,00,00": False,
+            "DN:09,00,00,00": False,
+            "DN:10,00,00,00": False,
+            "DN:11,00,00,00": False,
+            "DN:12,00,00,00": False,
         }
         # FAST should never call sleep. Make it fail
         self.sleep = time.sleep
@@ -66,10 +69,31 @@ class TestFast(MpfTestCase):
 
     def test_pulse(self):
         MockSerialCommunicator.expected_commands = {
-                "DN:04,89,00,10,17,ff,00,00,00": False
+            "DN:04,89,00,10,17,ff,00,00,00": False
         }
         # pulse coil 4
         self.machine.coils.c_test.pulse()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+    def test_long_pulse(self):
+        # enable command
+        MockSerialCommunicator.expected_commands = {
+            "DN:12,C1,00,18,00,ff,ff,00": False
+        }
+        self.machine.coils.c_long_pulse.pulse()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+        # disable command
+        MockSerialCommunicator.expected_commands = {
+            "TN:12,02": False
+        }
+
+        self.advance_time_and_run(1)
+        # pulse_ms is 2000ms, so after 1s, this should not be sent
+        self.assertTrue(MockSerialCommunicator.expected_commands)
+
+        self.advance_time_and_run(1)
+        # but after 2s, it should be
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
     def test_enable_exception(self):
@@ -79,46 +103,46 @@ class TestFast(MpfTestCase):
 
     def test_allow_enable(self):
         MockSerialCommunicator.expected_commands = {
-                "DN:06,C1,00,18,17,ff,ff,00": False
+            "DN:06,C1,00,18,17,ff,ff,00": False
         }
         self.machine.coils.c_test_allow_enable.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
     def test_hw_rule_pulse(self):
         MockSerialCommunicator.expected_commands = {
-                "DN:09,01,16,10,0A,ff,00,00,00": False
+            "DN:09,01,16,10,0A,ff,00,00,00": False
         }
         self.machine.autofires.ac_slingshot_test.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
         MockSerialCommunicator.expected_commands = {
-                "DN:09,81": False
+            "DN:09,81": False
         }
         self.machine.autofires.ac_slingshot_test.disable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
     def test_hw_rule_pulse_pwm(self):
         MockSerialCommunicator.expected_commands = {
-                "DN:10,89,00,10,0A,89,00,00,00": False
+            "DN:10,89,00,10,0A,89,00,00,00": False
         }
         self.machine.coils.c_pulse_pwm_mask.pulse()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
         MockSerialCommunicator.expected_commands = {
-                "DN:10,C1,00,18,0A,89,AA,00": False
+            "DN:10,C1,00,18,0A,89,AA,00": False
         }
         self.machine.coils.c_pulse_pwm_mask.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
     def test_hw_rule_pulse_pwm32(self):
         MockSerialCommunicator.expected_commands = {
-                "DN:11,89,00,10,0A,89898989,00,00,00": False
+            "DN:11,89,00,10,0A,89898989,00,00,00": False
         }
         self.machine.coils.c_pulse_pwm32_mask.pulse()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
         MockSerialCommunicator.expected_commands = {
-                "DN:11,C1,00,18,0A,89898989,AA89AA89,00": False
+            "DN:11,C1,00,18,0A,89898989,AA89AA89,00": False
         }
         self.machine.coils.c_pulse_pwm32_mask.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)

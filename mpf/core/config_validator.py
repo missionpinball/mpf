@@ -78,6 +78,7 @@ ball_devices:
     hold_events: dict|str:ms|None
     hold_switches: list|machine(switches)|None
     entrance_switch: single|machine(switches)|None
+    entrance_switch_full_timeout: single|ms|0
     entrance_events: dict|str:ms|None
     jam_switch: single|machine(switches)|None
     confirm_eject_type: single|enum(target,switch,event,fake)|target
@@ -334,6 +335,7 @@ game:
     start_game_switch_tag: single|str|start
     add_player_switch_tag: single|str|start
     allow_start_with_loose_balls: single|bool|False
+    allow_start_with_ball_in_drain: single|bool|False
 gi_player:
     brightness: single|int_from_hex|ff
     __allow_others__:

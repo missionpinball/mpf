@@ -2,9 +2,10 @@
 
 game:
     balls_per_game: 3
-    allow_start_with_loose_balls: True
+    allow_start_with_ball_in_drain: True
 machine:
     glass_off_mode: False
+    min_balls: 3
 
 coils:
     outhole:
@@ -37,10 +38,11 @@ ball_devices:
     trough:
         tags: trough, home
         entrance_switch: trough_entry
+        entrance_switch_full_timeout: 3s
         eject_coil: trough
         eject_targets: plunger
         confirm_eject_type: target
-        ball_capacity: 2
+        ball_capacity: 3
         debug: true
     plunger:
         tags: ball_add_live

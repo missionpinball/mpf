@@ -177,8 +177,9 @@ class BallDevice(SystemWideDevice):
         # Handle initial ball count with entrance_switch. If there is a ball on the entrance_switch at boot
         # assume that we are at max capacity.
         if (self.config['entrance_switch'] and self.config['ball_capacity'] and
+                self.config['entrance_switch_full_timeout'] and
                 self.machine.switch_controller.is_active(self.config['entrance_switch'].name,
-                                                         ms=self.config['entrance_count_delay'])):
+                                                         ms=self.config['entrance_switch_full_timeout'])):
             self.balls = self.config['ball_capacity']
 
         return self._count_balls()
@@ -745,6 +746,12 @@ class BallDevice(SystemWideDevice):
                     ms=0,
                     callback=self._entrance_switch_handler)
 
+            if self.config['entrance_switch_full_timeout'] and self.config['ball_capacity']:
+                self.machine.switch_controller.add_switch_handler(
+                        switch_name=self.config['entrance_switch'].name, state=1,
+                        ms=self.config['entrance_switch_full_timeout'],
+                        callback=self._entrance_switch_full_handler)
+
         # handle hold_coil activation when a ball hits a switch
         for switch in self.config['hold_switches']:
             self.machine.switch_controller.add_switch_handler(
@@ -1019,6 +1026,15 @@ class BallDevice(SystemWideDevice):
         # event handler for entrance events
         del kwargs
         self._entrance_switch_handler()
+
+    def _entrance_switch_full_handler(self):
+        # a ball is sitting on the entrance_switch. assume the device is full
+        new_balls = self.config['ball_capacity'] - self.balls
+        if new_balls > 0:
+            self.log.info("Ball is sitting on entrance_switch. Assuming device is full. Adding %s balls and setting"
+                          "balls to %s", new_balls, self.config['ball_capacity'])
+            self.balls += new_balls
+            self._handle_new_balls(new_balls)
 
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch

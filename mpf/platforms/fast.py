@@ -283,6 +283,11 @@ class HardwarePlatform(Platform):
 
         self._connect_to_hardware()
 
+        # todo this is a hack since the above call blocks it screws up the
+        # clock. Need to fix this for real
+
+        self.machine.clock.tick()
+
         if 'config_number_format' not in self.machine.config['fast']:
             self.machine.config['fast']['config_number_format'] = 'int'
 
@@ -677,6 +682,9 @@ class HardwarePlatform(Platform):
         # todo need to implement disable_on_release
         param = {}
 
+        if isinstance(driver_settings['pulse_ms'], int):
+            driver_settings['pulse_ms'] = 'ff'
+
         if driver_action == 'pulse':
             mode = '10'                               # Mode 10 settings
             param[1] = driver_settings['pulse_ms']      # initial pulse ms
@@ -694,7 +702,6 @@ class HardwarePlatform(Platform):
             param[5] = '00'                             # not used with Mode 18
 
         elif driver_action == 'timed_hold':
-
             # fast hold time is ms*100
             hold_value = driver_settings['activation_time']
 
@@ -848,7 +855,7 @@ class FASTDriver(DriverPlatformInterface):
         Resets a driver
 
         """
-        self.log.debug("Reseting driver %s", self.driver_settings)
+        self.log.debug("Resetting driver %s", self.driver_settings)
         cmd = (self.driver_settings['config_cmd'] +
                self.driver_settings['number'] +
                ',00,00,00')
@@ -864,7 +871,11 @@ class FASTDriver(DriverPlatformInterface):
         except KeyError:
             return_dict['allow_enable'] = False
 
-        return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
+        if pulse_ms > 255:
+            return_dict['pulse_ms'] = pulse_ms
+        else:
+            return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
+
         return_dict['pwm1'] = 'ff'
         return_dict['pwm2'] = 'ff'
         return_dict['recycle_ms'] = '00'
@@ -913,6 +924,7 @@ class FASTDriver(DriverPlatformInterface):
                               recycle_ms=None,
                               activation_time=None,
                               **kwargs):
+
         del kwargs
 
         if pwm_on_ms:
@@ -946,7 +958,10 @@ class FASTDriver(DriverPlatformInterface):
             return_dict['recycle_ms'] = (Util.int_to_hex_string(recycle_ms))
 
         if pulse_ms is not None:
-            return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
+            if pulse_ms > 255:
+                return_dict['pulse_ms'] = pulse_ms
+            else:
+                return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
 
         self._merge_pulse_pwm_mask(return_dict, pulse_pwm_mask, pulse_power, pulse_power32)
 
@@ -956,6 +971,7 @@ class FASTDriver(DriverPlatformInterface):
 
     def disable(self):
         """Disables (turns off) this driver. """
+
         cmd = (self.driver_settings['trigger_cmd'] +
                self.driver_settings['number'] + ',' + '02')
 
@@ -965,6 +981,7 @@ class FASTDriver(DriverPlatformInterface):
 
     def enable(self):
         """Enables (turns on) this driver. """
+
         if self.autofire:
             # If this driver is also configured for an autofire rule, we just
             # manually trigger it with the trigger_cmd and manual on ('03')
@@ -990,10 +1007,16 @@ class FASTDriver(DriverPlatformInterface):
                                      "set to True in this coil's configuration.")
 
             else:
+
+                if isinstance(self.driver_settings['pulse_ms'], int):
+                    pulse_ms = '00'
+                else:
+                    pulse_ms = self.driver_settings['pulse_ms']
+
                 cmd = (self.driver_settings['config_cmd'] +
                        self.driver_settings['number'] +
                        ',C1,00,18,' +
-                       self.driver_settings['pulse_ms'] + ',' +
+                       pulse_ms + ',' +
                        self.driver_settings['pwm1'] + ',' +
                        self.driver_settings['pwm2'] + ',' +
                        self.driver_settings['recycle_ms'])
@@ -1008,11 +1031,13 @@ class FASTDriver(DriverPlatformInterface):
 
     def pulse(self, milliseconds=None):
         """Pulses this driver. """
-
         if not milliseconds:
             hex_ms_string = self.driver_settings['pulse_ms']
-        else:
+        elif isinstance(milliseconds, int):
             hex_ms_string = Util.int_to_hex_string(milliseconds)
+        else:
+            hex_ms_string = milliseconds
+
         if self.autofire:
             cmd = (self.driver_settings['trigger_cmd'] +
                    self.driver_settings['number'] + ',' +
@@ -1255,6 +1280,7 @@ class SerialCommunicator(object):
         self.serial_io = io.TextIOWrapper(io.BufferedRWPair(
             self.serial_connection, self.serial_connection, 1), newline='\r',
             line_buffering=True)
+        # pylint: disable=W0212
         self.serial_io._CHUNK_SIZE = 1
 
         self.identify_connection()
