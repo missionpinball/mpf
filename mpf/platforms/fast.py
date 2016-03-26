@@ -283,6 +283,11 @@ class HardwarePlatform(Platform):
 
         self._connect_to_hardware()
 
+        # todo this is a hack since the above call blocks it screws up the
+        # clock. Need to fix this for real
+
+        self.machine.clock.tick()
+
         if 'config_number_format' not in self.machine.config['fast']:
             self.machine.config['fast']['config_number_format'] = 'int'
 
@@ -677,6 +682,9 @@ class HardwarePlatform(Platform):
         # todo need to implement disable_on_release
         param = {}
 
+        if isinstance(driver_settings['pulse_ms'], int):
+            driver_settings['pulse_ms'] = 'ff'
+
         if driver_action == 'pulse':
             mode = '10'                               # Mode 10 settings
             param[1] = driver_settings['pulse_ms']      # initial pulse ms
@@ -864,10 +872,7 @@ class FASTDriver(DriverPlatformInterface):
             return_dict['allow_enable'] = False
 
         if pulse_ms > 255:
-            if kwargs['long_pulse_ms'] is not None:
-                return_dict['pulse_ms'] = kwargs['long_pulse_ms']
-            else:
-                return_dict['pulse_ms'] = 'ff'
+            return_dict['pulse_ms'] = pulse_ms
         else:
             return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
 
@@ -952,10 +957,7 @@ class FASTDriver(DriverPlatformInterface):
 
         if pulse_ms is not None:
             if pulse_ms > 255:
-                if kwargs['long_pulse_ms'] is not None:
-                    return_dict['pulse_ms'] = kwargs['long_pulse_ms']
-                else:
-                    return_dict['pulse_ms'] = 'ff'
+                return_dict['pulse_ms'] = pulse_ms
             else:
                 return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
 
@@ -967,6 +969,7 @@ class FASTDriver(DriverPlatformInterface):
 
     def disable(self):
         """Disables (turns off) this driver. """
+
         cmd = (self.driver_settings['trigger_cmd'] +
                self.driver_settings['number'] + ',' + '02')
 
@@ -976,6 +979,7 @@ class FASTDriver(DriverPlatformInterface):
 
     def enable(self):
         """Enables (turns on) this driver. """
+
         if self.autofire:
             # If this driver is also configured for an autofire rule, we just
             # manually trigger it with the trigger_cmd and manual on ('03')
@@ -1001,10 +1005,16 @@ class FASTDriver(DriverPlatformInterface):
                                      "set to True in this coil's configuration.")
 
             else:
+
+                if isinstance(self.driver_settings['pulse_ms'], int):
+                    pulse_ms = '00'
+                else:
+                    pulse_ms = self.driver_settings['pulse_ms']
+
                 cmd = (self.driver_settings['config_cmd'] +
                        self.driver_settings['number'] +
                        ',C1,00,18,' +
-                       self.driver_settings['pulse_ms'] + ',' +
+                       pulse_ms + ',' +
                        self.driver_settings['pwm1'] + ',' +
                        self.driver_settings['pwm2'] + ',' +
                        self.driver_settings['recycle_ms'])
@@ -1019,11 +1029,11 @@ class FASTDriver(DriverPlatformInterface):
 
     def pulse(self, milliseconds=None):
         """Pulses this driver. """
-
         if not milliseconds:
             hex_ms_string = self.driver_settings['pulse_ms']
         else:
             hex_ms_string = Util.int_to_hex_string(milliseconds)
+
         if self.autofire:
             cmd = (self.driver_settings['trigger_cmd'] +
                    self.driver_settings['number'] + ',' +
