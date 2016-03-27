@@ -21,7 +21,14 @@ class TestTilt(MpfTestCase):
 
         self.machine.flippers.f_test_single.enable()
         self.assertEqual(1, self.machine.default_platform.write_hw_rule.called)
-        # TODO: check parameter for rule main pulse
+        self.assertEqual(
+            (self.machine.switches.s_flipper,
+             1,
+             self.machine.coils.c_flipper_main,
+             'hold',
+             True,
+             False), self.machine.default_platform.write_hw_rule._mock_call_args_list[0][0])
+
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
         self.machine.flippers.f_test_single.disable()
