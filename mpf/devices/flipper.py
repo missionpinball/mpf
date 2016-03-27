@@ -1,4 +1,6 @@
 """ Contains the base class for flippers."""
+from mpf.devices.driver import DriverConfig
+
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -25,10 +27,16 @@ class Flipper(SystemWideDevice):
         super().__init__(machine, name)
 
         self.flipper_switches = []
+        self.main_coil = None
+        self.hold_coil = None
 
     def _initialize(self):
         self.flipper_switches.append(self.config['activation_switch'].name)
         self.platform = self.config['main_coil'].platform
+        self.main_coil = DriverConfig(self.config['main_coil'], self.config)
+
+        if self.config['hold_coil']:
+            self.hold_coil = DriverConfig(self.config['hold_coil'], self.config)
 
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
@@ -112,24 +120,28 @@ class Flipper(SystemWideDevice):
     def _enable_single_coil_rule(self):
         self.log.debug('Enabling single coil rule')
 
-        self.platform.set_hw_rule(
-                sw_name=self.config['activation_switch'].name,
-                sw_activity=1,
-                driver_name=self.config['main_coil'].name,
-                driver_action='hold',
-                disable_on_release=True,
-                **self.config)
+        self.main_coil.add_pulse_and_enable_and_release_rule(self.config['activation_switch'])
+
+#        self.platform.set_hw_rule(
+#                sw_name=self.config['activation_switch'].name,
+#                sw_activity=1,
+#                driver_name=self.config['main_coil'].name,
+#                driver_action='hold',
+#                disable_on_release=True,
+#                **self.config)
 
     def _enable_main_coil_pulse_rule(self):
         self.log.debug('Enabling main coil pulse rule')
 
-        self.platform.set_hw_rule(
-                sw_name=self.config['activation_switch'].name,
-                sw_activity=1,
-                driver_name=self.config['main_coil'].name,
-                driver_action='pulse',
-                disable_on_release=True,
-                **self.config)
+        self.main_coil.add_pulse_and_release_rule(self.config['activation_switch'])
+
+#        self.platform.set_hw_rule(
+#                sw_name=self.config['activation_switch'].name,
+#                sw_activity=1,
+#                driver_name=self.config['main_coil'].name,
+#                driver_action='pulse',
+#                disable_on_release=True,
+#                **self.config)
 
     def _enable_hold_coil_rule(self):
         self.log.debug('Enabling hold coil rule')
@@ -144,6 +156,8 @@ class Flipper(SystemWideDevice):
 
     def _enable_main_coil_eos_cutoff_rule(self):
         self.log.debug('Enabling main coil EOS cutoff rule')
+
+        # TODO: did that ever work? only a disable rule?
 
         self.platform.set_hw_rule(
                 sw_name=self.config['eos_switch'],

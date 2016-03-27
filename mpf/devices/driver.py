@@ -1,4 +1,5 @@
 """ Contains the Driver parent class. """
+import copy
 
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -119,3 +120,38 @@ class Driver(SystemWideDevice):
     def timed_enable(self, milliseconds, **kwargs):
         del kwargs
         self.pulse(milliseconds)
+
+    def add_pulse_and_release_rule (self, enable_switch):
+        self.platform.set_hw_rule(
+            sw_name=enable_switch.name,
+            sw_activity=1,
+            driver_name=self.name,
+            driver_action='pulse',
+            disable_on_release=True,
+            **self.config)
+
+    def add_pulse_and_enable_and_release_rule(self, enable_switch):
+        self.platform.set_hw_rule(
+            sw_name=enable_switch.name,
+            sw_activity=1,
+            driver_name=self.name,
+            driver_action='hold',
+            disable_on_release=True,
+            **self.config)
+
+
+class DriverConfig(Driver):
+    def __init__(self, driver, config_overwrite):
+        self.driver = driver
+        self.name = driver.name
+        self.config_overwrite = config_overwrite
+        self.platform = driver.platform
+
+    @property
+    def config(self):
+        config = copy.deepcopy(self.driver.config)
+        for name, item in self.config_overwrite.items():
+            if item is not None:
+                config[name] = item
+
+        return config
