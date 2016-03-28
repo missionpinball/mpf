@@ -130,13 +130,9 @@ class Flipper(SystemWideDevice):
     def _enable_hold_coil_rule(self):
         self.log.debug('Enabling hold coil rule')
 
-        self.platform.set_hw_rule(
-                sw_name=self.config['activation_switch'].name,
-                sw_activity=1,
-                driver_name=self.config['hold_coil'].name,
-                driver_action='hold',
-                disable_on_release=True,
-                **self.config)
+        # TODO: why are we pulsing the hold coil?
+
+        self.hold_coil.set_pulse_on_hit_and_enable_and_release_rule(self.config['activation_switch'])
 
     def _enable_main_coil_eos_cutoff_rule(self):
         self.log.debug('Enabling main coil EOS cutoff rule')
