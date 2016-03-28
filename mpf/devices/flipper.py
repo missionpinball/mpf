@@ -120,7 +120,7 @@ class Flipper(SystemWideDevice):
     def _enable_single_coil_rule(self):
         self.log.debug('Enabling single coil rule')
 
-        self.main_coil.add_pulse_and_enable_and_release_rule(self.config['activation_switch'])
+        self.main_coil.set_pulse_on_hit_and_enable_and_release_rule(self.config['activation_switch'])
 
 #        self.platform.set_hw_rule(
 #                sw_name=self.config['activation_switch'].name,
@@ -133,7 +133,7 @@ class Flipper(SystemWideDevice):
     def _enable_main_coil_pulse_rule(self):
         self.log.debug('Enabling main coil pulse rule')
 
-        self.main_coil.add_pulse_and_release_rule(self.config['activation_switch'])
+        self.main_coil.set_pulse_on_hit_and_release_rule(self.config['activation_switch'])
 
 #        self.platform.set_hw_rule(
 #                sw_name=self.config['activation_switch'].name,

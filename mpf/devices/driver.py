@@ -121,7 +121,7 @@ class Driver(SystemWideDevice):
         del kwargs
         self.pulse(milliseconds)
 
-    def add_pulse_and_release_rule(self, enable_switch):
+    def set_pulse_on_hit_and_release_rule(self, enable_switch):
         self.platform.set_hw_rule(
             sw_name=enable_switch.name,
             sw_activity=1,
@@ -130,7 +130,7 @@ class Driver(SystemWideDevice):
             disable_on_release=True,
             **self.config)
 
-    def add_pulse_and_enable_and_release_rule(self, enable_switch):
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch):
         self.platform.set_hw_rule(
             sw_name=enable_switch.name,
             sw_activity=1,
