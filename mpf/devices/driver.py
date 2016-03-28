@@ -97,7 +97,7 @@ class Driver(SystemWideDevice):
             power = 1.0
 
         if isinstance(milliseconds, str) or (
-                isinstance(milliseconds, int) and 0 < milliseconds <= 255):
+                isinstance(milliseconds, int) and 0 < milliseconds <= self.platform.features['max_pulse']):
             self.log.debug("Pulsing Driver. %sms (%s power)", milliseconds,
                            power)
             ms_actual = self.hw_driver.pulse(milliseconds)
