@@ -232,35 +232,6 @@ class Show(Asset):
                 self.token_values[token] = list()
             self.token_values[token].append(path)
 
-    # def _replace_tokens(self, **kwargs):
-    #     keys_replaced = dict()
-    #     show = deepcopy(self.show_steps)
-    #
-    #     for token, replacement in kwargs.items():
-    #         if token in self.token_values:
-    #             for token_path in self.token_values[token]:
-    #                 target = show
-    #                 for x in token_path[:-1]:
-    #                     target = target[x]
-    #
-    #                 target[token_path[-1]] = replacement
-    #
-    #     for token, replacement in kwargs.items():
-    #         if token in self.token_keys:
-    #             key_name = '({})'.format(token)
-    #             for token_path in self.token_keys[token]:
-    #                 target = show
-    #                 for x in token_path:
-    #                     if x in keys_replaced:
-    #                         x = keys_replaced[x]
-    #
-    #                     target = target[x]
-    #
-    #                 target[replacement] = target.pop(key_name)
-    #                 keys_replaced[key_name] = replacement
-    #
-    #     return show
-
     # pylint: disable-msg=too-many-arguments
     def play(self, priority=0, hold=None,
              speed=1.0, start_step=0, callback=None,
@@ -406,6 +377,12 @@ class RunningShow(object):
 
         self.name = show.name
         self._total_steps = len(show_steps)
+
+        if self.hold is None:
+            if self._total_steps == 1:
+                self.hold = True
+            else:
+                self.hold = False
 
         if play_kwargs and show.tokens:
             self._replace_tokens(**play_kwargs)

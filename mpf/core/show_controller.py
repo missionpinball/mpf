@@ -96,9 +96,6 @@ class ShowController(object):
         if 'priority' in settings:
             settings['show_priority'] = settings['priority']
 
-        if 'hold' not in settings:
-            settings['hold'] = False
-
         if 'action' in settings and settings['action'] == 'stop':
 
             if 'script' in settings:
