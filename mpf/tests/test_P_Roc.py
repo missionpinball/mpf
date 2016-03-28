@@ -82,7 +82,7 @@ class TestPRoc(MpfTestCase):
 
     def test_hw_rule_pulse(self):
         self.machine.autofires.ac_slingshot_test.enable()
-        self.machine.autofires.ac_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
+        self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
                 40, 'closed_nondebounced',
                 {'notifyHost': False, 'reloadActive': False},
                 ["driver_state_pulse"], False)

@@ -162,6 +162,9 @@ class Driver(SystemWideDevice):
             disable_on_release=False,
             **self.config)
 
+    def clear_hw_rule(self, switch):
+        self.platform.clear_hw_rule(switch.name)
+
 
 class ReconfiguredDriver(Driver):
     def __init__(self, driver, config_overwrite):

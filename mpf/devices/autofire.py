@@ -39,4 +39,4 @@ class AutofireCoil(SystemWideDevice):
         """Disables the autofire coil rule."""
         del kwargs
         self.log.debug("Disabling")
-        self.platform.clear_hw_rule(self.switch.name)
+        self.coil.clear_hw_rule(self.switch)

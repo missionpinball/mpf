@@ -130,7 +130,7 @@ class TestP3Roc(MpfTestCase):
     def test_hw_rule_pulse(self):
         self.machine.coils.c_slingshot_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.autofires.ac_slingshot_test.enable()
-        self.machine.autofires.ac_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
+        self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
             40, 'closed_nondebounced',
             {'notifyHost': False, 'reloadActive': False},
             [{'patterEnable': False,
@@ -149,12 +149,12 @@ class TestP3Roc(MpfTestCase):
 
         # test disable
         self.machine.autofires.ac_slingshot_test.disable()
-        self.machine.autofires.ac_slingshot_test.platform.proc.driver_disable.assert_called_with(8)
+        self.machine.coils.c_slingshot_test.platform.proc.driver_disable.assert_called_with(8)
 
     def test_hw_rule_pulse_inverted_switch(self):
         self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=9)
         self.machine.autofires.ac_switch_nc_test.enable()
-        self.machine.autofires.ac_switch_nc_test.platform.proc.switch_update_rule.assert_called_with(
+        self.machine.coils.c_coil_pwm_test.platform.proc.switch_update_rule.assert_called_with(
             41, 'open_nondebounced',
             {'notifyHost': False, 'reloadActive': False},
             [{'patterEnable': False,
@@ -173,7 +173,7 @@ class TestP3Roc(MpfTestCase):
 
         # test disable
         self.machine.autofires.ac_switch_nc_test.disable()
-        self.machine.autofires.ac_switch_nc_test.platform.proc.driver_disable.assert_called_with(9)
+        self.machine.coils.c_coil_pwm_test.platform.proc.driver_disable.assert_called_with(9)
 
     def test_hw_rule_pulse_disable_on_release(self):
         self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
