@@ -122,26 +122,10 @@ class Flipper(SystemWideDevice):
 
         self.main_coil.set_pulse_on_hit_and_enable_and_release_rule(self.config['activation_switch'])
 
-#        self.platform.set_hw_rule(
-#                sw_name=self.config['activation_switch'].name,
-#                sw_activity=1,
-#                driver_name=self.config['main_coil'].name,
-#                driver_action='hold',
-#                disable_on_release=True,
-#                **self.config)
-
     def _enable_main_coil_pulse_rule(self):
         self.log.debug('Enabling main coil pulse rule')
 
         self.main_coil.set_pulse_on_hit_and_release_rule(self.config['activation_switch'])
-
-#        self.platform.set_hw_rule(
-#                sw_name=self.config['activation_switch'].name,
-#                sw_activity=1,
-#                driver_name=self.config['main_coil'].name,
-#                driver_action='pulse',
-#                disable_on_release=True,
-#                **self.config)
 
     def _enable_hold_coil_rule(self):
         self.log.debug('Enabling hold coil rule')
