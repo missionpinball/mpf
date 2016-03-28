@@ -39,8 +39,13 @@ class LedPlayer(ConfigPlayer):
                 try:
                     self._led_color(led, caller, **s)
                 except KeyError:
-                    for led1 in self.machine.leds.sitems_tagged(led):
-                        self._led_color(led1, caller, **s)
+                    led_list = Util.string_to_list(led)
+                    if len(led_list) > 1:
+                        for led1 in led_list:
+                            self._led_color(led1, caller, **s)
+                    else:
+                        for led1 in self.machine.leds.sitems_tagged(led):
+                            self._led_color(led1, caller, **s)
 
     def _led_color(self, led_name, caller=None, **s):
         self.machine.leds[led_name].color(**s)

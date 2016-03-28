@@ -378,6 +378,17 @@ class TestShowController(MpfTestCase):
         self.assertEqual(self.machine.leds.led_02.hw_driver.current_color,
                          RGBColor('red'))
 
+        # test passing multiple LEDs as string list
+        self.machine.leds.led_01.clear_stack()
+        self.advance_time_and_run()
+
+        self.machine.shows['leds_name_token'].play(leds='led_01, led_02')
+        self.advance_time_and_run(.5)
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
+                         RGBColor('red'))
+        self.assertEqual(self.machine.leds.led_02.hw_driver.current_color,
+                         RGBColor('red'))
+
         # test passing color as a token
         self.machine.leds.led_01.clear_stack()
         self.machine.leds.led_02.clear_stack()
@@ -431,6 +442,18 @@ class TestShowController(MpfTestCase):
         self.advance_time_and_run()
 
         self.machine.shows['lights_basic'].play(lights='tag1')
+        self.advance_time_and_run(.5)
+
+        self.assertEqual(255,
+            self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(255,
+            self.machine.lights.light_02.hw_driver.current_brightness)
+
+        # test lights as string list in show
+        self.machine.lights.light_01.off(force=True)
+        self.advance_time_and_run()
+
+        self.machine.shows['lights_basic'].play(lights='light_01 light_02')
         self.advance_time_and_run(.5)
 
         self.assertEqual(255,

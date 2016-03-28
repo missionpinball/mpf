@@ -32,8 +32,13 @@ class LightPlayer(ConfigPlayer):
                 try:
                     self._light_on(light, caller, **s)
                 except KeyError:
-                    for light1 in self.machine.lights.sitems_tagged(light):
-                        self._light_on(light1, caller, **s)
+                    light_list = Util.string_to_list(light)
+                    if len(light_list) > 1:
+                        for light1 in light_list:
+                            self._light_on(light1, caller, **s)
+                    else:
+                        for light1 in self.machine.lights.sitems_tagged(light):
+                            self._light_on(light1, caller, **s)
 
     def _light_on(self, light_name, caller=None, **s):
         self.machine.lights[light_name].on(**s)
