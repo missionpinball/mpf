@@ -1,4 +1,5 @@
 """ Contains the Switch parent class. """
+import copy
 
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -52,3 +53,31 @@ class Switch(SystemWideDevice):
 
         self.hw_switch, self.number = (
             self.platform.configure_switch(self.config))
+
+
+class ReconfigureSwitch():
+    # can overwrite platform specific config parameters and invert
+
+    def __init__(self, switch, config_switch_overwrite, invert):
+        self._config_overwrite = config_switch_overwrite
+        self._switch = switch
+        self._invert = invert
+
+    def __getattr__(self, item):
+        return getattr(self._switch, item)
+
+    @property
+    def invert(self):
+        if bool(self._invert) != bool(self._switch.invert):
+            return 1
+        else:
+            return 0
+
+    @property
+    def config(self):
+        config = copy.deepcopy(self._switch.config)
+        for name, item in self._config_overwrite.items():
+            if item is not None:
+                config[name] = item
+
+        return config
